@@ -1,0 +1,24 @@
+# we are doing a two-stage build to keep the size of
+# the final image low.
+
+# First stage build and cleanup
+#FROM python:3.8-slim
+FROM ubuntu:20.04
+ARG BUILD_ID
+LABEL stage=builder
+LABEL build=$BUILD_ID
+RUN apt-get update && apt-get install -y gcc python3 python3.8-venv && apt-get clean
+
+COPY / /daliuge
+
+RUN cd && python3 -m venv dlg && cd /daliuge && \
+    . ${HOME}/dlg/bin/activate && \
+    pip install numpy && \
+    pip install . && \
+    apt-get remove -y gcc && \
+    apt-get autoremove -y
+
+
+FROM ubuntu:20.04
+RUN apt-get update && apt-get install -y bash
+COPY --from=0 /root/dlg /root/dlg

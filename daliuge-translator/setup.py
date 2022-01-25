@@ -32,8 +32,8 @@ from setuptools import setup
 # dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
-MAJOR = 1
-MINOR = 0
+MAJOR = 2
+MINOR = 1
 PATCH = 0
 RELEASE = True
 VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
@@ -47,7 +47,7 @@ def get_git_version():
 
 def get_version_info():
     git_version = "Unknown"
-    if os.path.exists(".git"):
+    if os.path.exists("../.git"):
         git_version = get_git_version()
     full_version = VERSION
     if not RELEASE:
@@ -81,20 +81,28 @@ if not is_release:
 # Every time we overwrite the version file
 write_version_info()
 
+
+def package_files(directory):
+    paths = []
+    for (path, directories, filenames) in os.walk(directory):
+        for filename in filenames:
+            paths.append(os.path.join("..", path, filename))
+    return paths
+
+
+src_files = package_files("dlg")
+
+
 install_requires = [
+    "wheel",
     "bottle",
-    "cwlgen",
     "daliuge-common==%s" % (VERSION,),
     "metis>=0.2a3",
-    # Python 3.6 is only supported in NetworkX 2 and above
-    # But we are not compatible with 2.4 yet, so we need to constrain that
-    "networkx<2.4; python_version<'3.6'",
-    "networkx<2.4,>= 2.0; python_version>='3.6.0'",
+    "networkx",
     "numpy",
     "psutil",
     "pyswarm",
-    # 1.10 contains an important race-condition fix on lazy-loaded modules
-    "six>=1.10",
+    "ruamel.yaml.clib<=0.2.2",
 ]
 
 setup(
@@ -107,10 +115,10 @@ setup(
     url="https://github.com/ICRAR/daliuge",
     license="LGPLv2+",
     install_requires=install_requires,
-    include_package_data=True,
     packages=find_packages(),
-    entry_points={
-        'dlg.tool_commands': ['translator=dlg.translator.tool_commands']
+    package_data={
+        "dlg": src_files,
     },
+    entry_points={"dlg.tool_commands": ["translator=dlg.translator.tool_commands"]},
     test_suite="test",
 )

@@ -1,3 +1,7 @@
+# This is the main configuration file for the DALiuGE RAY cluster deployment on AWS
+# It is using a custom build docker image combining both Ray and DALiuGE into one
+# image. 
+#
 # An unique identifier for the head node and workers of this cluster.
 cluster_name: default
 
@@ -23,7 +27,7 @@ autoscaling_mode: default
 # and opens all the necessary ports to support the Ray cluster.
 # Empty string means disabled.
 docker:
-    image: "icrar/dlg_ray:1.1"
+    image: "icrar/dlg_ray:1.5"
     # image: "rayproject/ray:latest-cpu" # You can change this to latest-cpu if you don't need GPU support and want a faster startup
     container_name: "ray_container"
     # If true, pulls latest version of image. Otherwise, `docker run` will only pull the image
@@ -35,7 +39,7 @@ docker:
     # head_image: "rayproject/ray:latest-gpu"
     # Allow Ray to automatically detect GPUs
 
-    worker_image: "icrar/dlg_ray:1.1"
+    worker_image: "icrar/dlg_ray:1.5"
     worker_run_options: [-v /var/run/docker.sock:/var/run/docker.sock  -p 8265:8265]
 
 # The autoscaler will scale up the cluster to this target fraction of resource
@@ -106,11 +110,8 @@ worker_nodes:
 # Files or directories to copy to the head and worker nodes. The format is a
 # dictionary from REMOTE_PATH: LOCAL_PATH, e.g.
 file_mounts: {
+    # NOTE: the source directory is a local directory on the machine 'ray up' is called. 
     "/var/dlg_home":"/var/dlg_home"
-#    "/tmp/leap_test":"/Users/awicenec/tmp/leap_test",
-#    "/tmp/current_branch_sha": "/Users/awicenec/git/daliuge/.git/refs/heads/ray_test"
-#    "/path1/on/remote/machine": "/path1/on/local/machine",
-#    "/path2/on/remote/machine": "/path2/on/local/machine",
 }
 
 # Files or directories to copy from the head node to the worker nodes. The format is a
@@ -138,28 +139,31 @@ file_mounts_sync_continuously: False
 # enabled, these commands will run outside the container and before docker
 # is setup.
 initialization_commands: [
-    sudo ln -s /tmp/ray_tmp_mount/var/dlg_home /var/dlg_home,
-    # curl -fsSL https://get.docker.com -o get-docker.sh,
-    # sudo apt update,
-    # sudo apt remove docker,
-    # sudo sh get-docker.sh,
-    # sudo usermod -aG docker $USER,
-    # sudo systemctl restart docker -f
+    # this link is very important, as it enables docker components running on DALiuGE to
+    # see the working directory on the same path as the direct components.
+    sudo ln -Fs /tmp/ray_tmp_mount/default/var/dlg_home /var/dlg_home
 ]
-    # - sudo apt install -y gcc
 
 # List of shell commands to run to set up nodes.
 setup_commands:
-    - apt update
-    - apt install -y curl
+    - sudo apt update
+    - sudo apt install -y curl
+#   next two lines are working around a problem with permissions on ray. We need to get
+#   access to the docker socket from inside the ray container as user ray. But inside
+#   the container there is not even a docker group, only the socket is visible with a
+#   numberic group from the host. 
+    - g=$(ls -g /var/run/docker.sock | awk '{print $3}') && if [[ $g =~ ^[0-9]+$ ]] ; then sudo groupadd -g $g docker; fi;
+    - sudo usermod -a -G docker ray
 
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands: []
 
 # Custom commands that will be run on worker nodes after common setup.
 worker_setup_commands:
-    - apt update
-    - apt install -y curl
+    - sudo apt update
+    - sudo apt install -y curl
+    - g=$(ls -g /var/run/docker.sock | awk '{print $3}') && if [[ $g =~ ^[0-9 ]] ; then sudo groupadd -g $g docker; fi;
+    - sudo usermod -a -G docker ray
 
 # In order to get the leap_cli docker container mounting the /var/dlg_home directory correctly the leap_cli 
 # docker component needs to specify the following in the additional mounts parameter:
@@ -175,20 +179,15 @@ head_start_ray_commands:
     - ray stop
     - ulimit -n 65536; ray start --head --port=6379 --object-manager-port=8076 --autoscaling-config=~/ray_bootstrap_config.yaml
     # start DALiuGE data island manager
-    - dlg dim -d -v -H 0.0.0.0
-    - dlg nm -d -v -H 0.0.0.0 --dlg-path=/var/dlg_home/code
-    - IP_ADDR="`python -c 'import ray; print(ray._private.services.get_node_ip_address())'`"; curl -X POST http://localhost:8001/api/nodes/$IP_ADDR; curl -X DELETE http://localhost:8001/api/nodes/$IP_ADDR
-
-    # bug in registration creates two entires in DIM
-    # - IP_ADDR=`python -c 'import ray; print(ray.services.get_node_ip_address())'`; curl -X DELETE http://localhost:8001/api/nodes/$IP_ADDR
+    - dlg dim -d -vvv -H 0.0.0.0 -w /var/dlg_home/workspace
+    - dlg nm -d -vvv -H 0.0.0.0 --dlg-path=/var/dlg_home/code -w /var/dlg_home/workspace
+    - IP_ADDR="`python -c 'import ray; print(ray._private.services.get_node_ip_address())'`"; curl -X POST http://localhost:8001/api/nodes/$IP_ADDR
 
 # Command to start ray on worker nodes. You don't need to change this.
 worker_start_ray_commands:
     - ray stop
     - ulimit -n 65536; ray start --address=$RAY_HEAD_IP:6379 --object-manager-port=8076
     # start DALiuGE node manager
-    - dlg nm -vd -H 0.0.0.0 --dlg-path=/var/dlg_home/code
-    - IP_ADDR="`python -c 'import ray; print(ray._private.services.get_node_ip_address())'`"; curl -X POST http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR; curl -X DELETE http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR
-    # bug in registration creates two entires in DIM
-    # - IP_ADDR=`python -c 'import ray; print(ray.services.get_node_ip_address())'`; curl -X DELETE http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR
-
+    - dlg nm -vvvd -H 0.0.0.0 --dlg-path=/var/dlg_home/code -w /var/dlg_home/workspace
+    - IP_ADDR="`python -c 'import ray; print(ray._private.services.get_node_ip_address())'`"; curl -X POST http://$RAY_HEAD_IP:8001/api/nodes/$IP_ADDR
+ 

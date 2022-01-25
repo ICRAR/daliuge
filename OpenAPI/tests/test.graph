@@ -1,22 +1,28 @@
 {
     "modelData": {
-        "fileType": "graph",
-        "repoService": "Unknown",
-        "repoBranch": "",
-        "repo": "",
-        "filePath": "Vitaliy.graph",
+        "fileType": "Graph",
+        "repoService": "GitHub",
+        "repoBranch": "yan-812-2",
+        "repo": "ICRAR/daliuge",
+        "filePath": "OpenAPI/tests/test.graph",
+        "eagleVersion": "Unknown",
+        "eagleCommitHash": "Unknown",
+        "schemaVersion": "OJS",
+        "readonly": true,
         "sha": "",
-        "git_url": ""
+        "gitUrl": "",
+        "lastModifiedName": "",
+        "lastModifiedEmail": "",
+        "lastModifiedDatetime": ""
     },
     "nodeDataArray": [
         {
-            "category": "Component",
-            "categoryType": "Application",
+            "category": "PythonApp",
             "isData": false,
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "color": "#3498DB",
+            "color": "#0059a5",
             "drawOrderHint": 0,
             "key": -2,
             "text": "Sleep",
@@ -24,130 +30,201 @@
             "x": 486,
             "y": 22,
             "width": 200,
-            "height": 200,
-            "collapsed": false,
-            "showPorts": false,
+            "height": 72,
+            "collapsed": true,
+            "flipPorts": false,
             "streaming": false,
+            "precious": false,
             "subject": null,
-            "selected": false,
             "expanded": false,
-            "inputApplicationName": "",
-            "outputApplicationName": "",
-            "exitApplicationName": "",
-            "inputApplicationType": "Unknown",
-            "outputApplicationType": "Unknown",
-            "exitApplicationType": "None",
+            "readonly": true,
+            "git_url": "",
+            "sha": "",
             "inputPorts": [
                 {
                     "Id": "d73e47fb-2bb2-48c5-8d9e-7711df0eb8ff",
-                    "IdText": "data"
+                    "IdText": "data",
+                    "text": "",
+                    "event": false,
+                    "type": "",
+                    "description": ""
                 }
             ],
             "outputPorts": [
                 {
                     "Id": "323150da-ad2c-4162-8499-75c1f2e26e9f",
-                    "IdText": "data"
+                    "IdText": "data",
+                    "text": "",
+                    "event": false,
+                    "type": "",
+                    "description": ""
                 }
             ],
             "inputLocalPorts": [],
             "outputLocalPorts": [],
-            "inputAppFields": [],
-            "outputAppFields": [],
             "fields": [
                 {
                     "text": "Execution time",
                     "name": "execution_time",
                     "value": "0",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 },
                 {
                     "text": "Num CPUs",
                     "name": "num_cpus",
                     "value": "1",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 },
                 {
                     "text": "Group start",
                     "name": "group_start",
                     "value": "0",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 },
                 {
                     "text": "Appclass",
                     "name": "appclass",
                     "value": "dlg.apps.simple.SleepAndCopyApp",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 },
                 {
                     "text": "Arg01",
                     "name": "Arg01",
                     "value": "sleepTime=0",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 },
                 {
                     "text": "Arg02",
                     "name": "Arg02",
                     "value": "",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 },
                 {
                     "text": "Arg03",
                     "name": "Arg03",
                     "value": "",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 },
                 {
                     "text": "Arg04",
                     "name": "Arg04",
                     "value": "",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 },
                 {
                     "text": "Arg05",
                     "name": "Arg05",
                     "value": "",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 },
                 {
                     "text": "Arg06",
                     "name": "Arg06",
                     "value": "",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 },
                 {
                     "text": "Arg07",
                     "name": "Arg07",
                     "value": "",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 },
                 {
                     "text": "Arg08",
                     "name": "Arg08",
                     "value": "",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 },
                 {
                     "text": "Arg09",
                     "name": "Arg09",
                     "value": "",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 },
                 {
                     "text": "Arg10",
                     "name": "Arg10",
                     "value": "",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 }
-            ]
+            ],
+            "applicationParams": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "exitAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "exitApplicationKey": null
         },
         {
             "category": "File",
-            "categoryType": "Data",
             "isData": true,
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "color": "#394BB2",
+            "color": "#2c2c2c",
             "drawOrderHint": 0,
             "key": -4,
             "text": "Enter label",
@@ -155,70 +232,101 @@
             "x": 270,
             "y": 39,
             "width": 200,
-            "height": 200,
-            "collapsed": false,
-            "showPorts": false,
+            "height": 72,
+            "collapsed": true,
+            "flipPorts": false,
             "streaming": false,
+            "precious": false,
             "subject": null,
-            "selected": false,
             "expanded": false,
-            "inputApplicationName": "",
-            "outputApplicationName": "",
-            "exitApplicationName": "",
-            "inputApplicationType": "Unknown",
-            "outputApplicationType": "Unknown",
-            "exitApplicationType": "None",
+            "readonly": true,
+            "git_url": "",
+            "sha": "",
             "inputPorts": [
                 {
                     "Id": "85a7fdf2-1b99-4bd1-8b6d-bd69b112fed3",
-                    "IdText": "data"
+                    "IdText": "data",
+                    "text": "",
+                    "event": false,
+                    "type": "",
+                    "description": ""
                 }
             ],
             "outputPorts": [
                 {
                     "Id": "46af9588-6b4d-41fe-a2b3-1f8ed75918a2",
-                    "IdText": "data"
+                    "IdText": "data",
+                    "text": "",
+                    "event": false,
+                    "type": "",
+                    "description": ""
                 }
             ],
             "inputLocalPorts": [],
             "outputLocalPorts": [],
-            "inputAppFields": [],
-            "outputAppFields": [],
             "fields": [
                 {
                     "text": "Data volume",
                     "name": "data_volume",
                     "value": "5",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 },
                 {
                     "text": "Group end",
                     "name": "group_end",
                     "value": "0",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 },
                 {
                     "text": "filepath",
                     "name": "filepath",
                     "value": "test.graph",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 },
                 {
                     "text": "dirname",
                     "name": "dirname",
                     "value": "%PWD%",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 }
-            ]
+            ],
+            "applicationParams": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "exitAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "exitApplicationKey": null
         },
         {
             "category": "File",
-            "categoryType": "Data",
             "isData": true,
             "isGroup": false,
             "canHaveInputs": true,
             "canHaveOutputs": true,
-            "color": "#394BB2",
+            "color": "#2c2c2c",
             "drawOrderHint": 0,
             "key": -6,
             "text": "Enter label",
@@ -226,49 +334,73 @@
             "x": 834,
             "y": 39,
             "width": 200,
-            "height": 200,
-            "collapsed": false,
-            "showPorts": false,
+            "height": 72,
+            "collapsed": true,
+            "flipPorts": false,
             "streaming": false,
+            "precious": false,
             "subject": null,
-            "selected": false,
             "expanded": false,
-            "inputApplicationName": "",
-            "outputApplicationName": "",
-            "exitApplicationName": "",
-            "inputApplicationType": "Unknown",
-            "outputApplicationType": "Unknown",
-            "exitApplicationType": "None",
+            "readonly": true,
+            "git_url": "",
+            "sha": "",
             "inputPorts": [
                 {
                     "Id": "c44aca7c-6024-48ee-beff-f7ed5c1b3633",
-                    "IdText": "data"
+                    "IdText": "data",
+                    "text": "",
+                    "event": false,
+                    "type": "",
+                    "description": ""
                 }
             ],
             "outputPorts": [
                 {
                     "Id": "f7ecd8d3-6c7f-4c63-8474-4dacd64421af",
-                    "IdText": "data"
+                    "IdText": "data",
+                    "text": "",
+                    "event": false,
+                    "type": "",
+                    "description": ""
                 }
             ],
             "inputLocalPorts": [],
             "outputLocalPorts": [],
-            "inputAppFields": [],
-            "outputAppFields": [],
             "fields": [
                 {
                     "text": "Data volume",
                     "name": "data_volume",
                     "value": "5",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 },
                 {
                     "text": "Group end",
                     "name": "group_end",
                     "value": "0",
-                    "description": ""
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown",
+                    "precious": false
                 }
-            ]
+            ],
+            "applicationParams": [],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "exitAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "exitApplicationKey": null
         }
     ],
     "linkDataArray": [
@@ -276,13 +408,15 @@
             "from": -4,
             "fromPort": "46af9588-6b4d-41fe-a2b3-1f8ed75918a2",
             "to": -2,
-            "toPort": "d73e47fb-2bb2-48c5-8d9e-7711df0eb8ff"
+            "toPort": "d73e47fb-2bb2-48c5-8d9e-7711df0eb8ff",
+            "loop_aware": "0"
         },
         {
             "from": -2,
             "fromPort": "323150da-ad2c-4162-8499-75c1f2e26e9f",
             "to": -6,
-            "toPort": "c44aca7c-6024-48ee-beff-f7ed5c1b3633"
+            "toPort": "c44aca7c-6024-48ee-beff-f7ed5c1b3633",
+            "loop_aware": "0"
         }
     ]
 }

@@ -34,6 +34,7 @@ from ..common import Categories
 LG_VER_OLD = 1
 LG_VER_EAGLE_CONVERTED = 2
 LG_VER_EAGLE = 3
+LG_APPREF = "AppRef"
 
 TEMP_FILE_FOLDER = "/tmp"
 
@@ -49,6 +50,16 @@ def get_lg_ver_type(lgo):
     if len(nodes) == 0:
         raise Exception("Invalid LG, nodes not found")
 
+    # First check whether modelData and schemaVersion is in graph
+    if (
+        "modelData" in lgo
+        and len(lgo["modelData"]) > 0
+        and "schemaVersion" in lgo["modelData"]
+    ):
+        if lgo["modelData"]["schemaVersion"] != "OJS":
+            return lgo["modelData"]["schemaVersion"]
+
+    # else do the old stuff...
     for i, node in enumerate(nodes):
         if i > 5:
             break
@@ -57,7 +68,7 @@ def get_lg_ver_type(lgo):
             for fd in fds:
                 if "name" in fd:
                     kw = fd["name"]
-                    if kw in node and kw not in ['description']:
+                    if kw in node and kw not in ["description"]:
                         return LG_VER_EAGLE_CONVERTED
                     else:
                         return LG_VER_EAGLE
@@ -80,6 +91,14 @@ def get_lg_ver_type(lgo):
 
 def get_keyset(lgo):
     return set([x["key"] for x in lgo["nodeDataArray"]])
+
+
+def getNodesKeyDict(lgo):
+    """
+    Return a dictionary of all nodes with the key attribute value as the key
+    and the complete node as the value.
+    """
+    return dict([(x["key"], x) for x in lgo["nodeDataArray"]])
 
 
 def convert_fields(lgo):
@@ -187,9 +206,9 @@ def convert_mkn(lgo):
             node_mk["text"] = node_mk["text"] + "_InApp"
         else:
             node_mk["text"] = ipan
-#        del node_mk["inputApplicationName"]
-#        del node_mk["outputApplicationName"]
-#        del node_mk["outputAppFields"]
+        #        del node_mk["inputApplicationName"]
+        #        del node_mk["outputApplicationName"]
+        #        del node_mk["outputAppFields"]
         new_field = {
             "name": "num_of_inputs",
             "text": "Number of inputs",
@@ -213,9 +232,9 @@ def convert_mkn(lgo):
         old_new_parent_map_split_1[mkn_key] = k_new
         node_kn["application"] = node_kn["outputApplicationName"]
         node_kn["inputAppFields"] = node_kn["outputAppFields"]
-        del node_kn["inputApplicationName"]
-        del node_kn["outputApplicationName"]
-        del node_kn["outputAppFields"]
+        #        del node_kn["inputApplicationName"]
+        #        del node_kn["outputApplicationName"]
+        #        del node_kn["outputAppFields"]
 
         new_field_kn = {
             "name": "num_of_copies",
@@ -248,9 +267,9 @@ def convert_mkn(lgo):
         for mok in mkn_output_keys:
             n_products_map[mok] = k_new
 
-        del node_split_n["inputApplicationName"]
-        del node_split_n["outputApplicationName"]
-        del node_split_n["outputAppFields"]
+        #        del node_split_n["inputApplicationName"]
+        #        del node_split_n["outputApplicationName"]
+        #        del node_split_n["outputAppFields"]
         # del node_split_n['intputAppFields']
 
         new_field_kn = {
@@ -380,6 +399,19 @@ def convert_mkn_all_share_m(lgo):
     return lgo
 
 
+def getAppRefInputs(lgo):
+    """
+    Function to retrieve the inputs from an App node referenced by a group.
+    Used to recover the Gather node inputs for AppRef format graphs.
+    """
+    for node in lgo["nodeDataArray"]:
+        if node["category"] not in [Categories.SCATTER, Categories.GATHER]:
+            continue
+        has_app = None
+
+    pass
+
+
 def convert_construct(lgo):
     """
     1. for each scatter/gather, create a "new" application drop, which shares
@@ -398,18 +430,22 @@ def convert_construct(lgo):
     # application drop if a gather has internal input, which will result in
     # a cycle that is not allowed in DAG during graph translation
 
-# CAUTION: THIS IS VERY LIKELY TO CAUSE ISSUES, SINCE IT IS PICKING THE FIRST ONE FOUND!
-#    app_keywords = ["application", "inputApplicationType", "outputApplicationType"]
+    # CAUTION: THIS IS VERY LIKELY TO CAUSE ISSUES, SINCE IT IS PICKING THE FIRST ONE FOUND!
+    #    app_keywords = ["application", "inputApplicationType", "outputApplicationType"]
     app_keywords = ["inputApplicationType", "outputApplicationType"]
     for node in lgo["nodeDataArray"]:
-        if node["category"] not in [Categories.SCATTER, Categories.GATHER]:
+        if node["category"] not in [
+            Categories.SCATTER,
+            Categories.GATHER,
+            Categories.SERVICE,
+        ]:
             continue
         has_app = None
 
         # try to find a application using several app_keywords
         # disregard app_keywords that are not present, or have value "None"
         for ak in app_keywords:
-            if ak in node and node[ak] != "None":
+            if ak in node and node[ak] != "None" and node[ak] != "UnknownApplication":
                 has_app = ak
                 break
         if has_app is None:
@@ -418,24 +454,33 @@ def convert_construct(lgo):
         app_node = dict()
         app_node["key"] = node["key"]
         app_node["category"] = node[has_app]  # node['application']
-        app_node["text"] = node["text"]
+        if has_app[0] == "i":
+            app_node["text"] = node["text"]
+        else:
+            app_node["text"] = node["text"]
 
-        # Adding Reprodaya
-        app_node['reprodata'] = node['reprodata'].copy()
-
-        if 'mkn' in node:
-            app_node['mkn'] = node['mkn']
+        if "mkn" in node:
+            app_node["mkn"] = node["mkn"]
 
         if "group" in node:
             app_node["group"] = node["group"]
 
-        for app_fd_name in ["appFields", "inputAppFields"]:
-            if app_fd_name in node:
-                for afd in node[app_fd_name]:
+        INPUT_APP_FIELDS = "inputAppFields"
+        if INPUT_APP_FIELDS in node:
+            # inputAppFields are converted to fields to be processed like
+            # regular application drops
+            app_node["fields"] = list(node[INPUT_APP_FIELDS])
+            app_node["fields"] += node["fields"]
+            # TODO: remove, use fields list
+            for afd in node[INPUT_APP_FIELDS]:
                     app_node[afd["name"]] = afd["value"]
-                break
-        if Categories.GATHER == node["category"]:
+
+        if node["category"] == Categories.GATHER:
             app_node["group_start"] = 1
+
+        if node["category"] == Categories.SERVICE:
+            app_node["isService"] = True
+
         new_nodes.append(app_node)
 
         # step 2
@@ -457,8 +502,8 @@ def convert_construct(lgo):
             dup_app_node["category"] = node[has_app]  # node['application']
             dup_app_node["text"] = node["text"]
 
-            if 'mkn' in node:
-                dup_app_node['mkn'] = node['mkn']
+            if "mkn" in node:
+                dup_app_node["mkn"] = node["mkn"]
 
             if "group" in node:
                 dup_app_node["group"] = node["group"]
@@ -581,7 +626,10 @@ def convert_eagle_to_daliuge_json(lg_name):
                 group_node = nodes_all.get(group_key, "")
                 group_category = group_node.get("category", "")
 
-                if group_category == Categories.GATHER or group_category == Categories.GROUP_BY:
+                if (
+                    group_category == Categories.GATHER
+                    or group_category == Categories.GROUP_BY
+                ):
                     # Check if the node is first in that group.
                     fields = node["fields"]
                     for field in fields:
@@ -631,6 +679,6 @@ def convert_eagle_to_daliuge_json(lg_name):
 
 
 if __name__ == "__main__":
-    lg_name = "/Users/Chen/proj/daliuge/test/dropmake/logical_graphs/lofar_std.json"
+    lg_name = "/Users/Chen/proj/daliuge/test/dropmake/logical_graphs/lofar_std.graph"
     # convert_eagle_to_daliuge_json(lg_name)
     print(get_lg_ver_type(lg_name))
