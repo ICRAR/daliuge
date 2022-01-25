@@ -21,6 +21,7 @@
 #
 import http.client
 import json
+import codecs
 
 from dlg import utils
 
