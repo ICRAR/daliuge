@@ -33,7 +33,7 @@ import pkg_resources
 from pyswarm import pso
 
 from .utils.antichains import get_max_weighted_antichain
-from ..common import dropdict, get_roots
+from ..common import dropdict, get_roots, DropType
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ class Schedule(object):
                 lpl_str = []
                 lpl_c = 0
                 for lpn in self.longest_path:
-                    ww = G.node[lpn].get('num_cpus', 0)
+                    ww = G.nodes[lpn].get('num_cpus', 0)
                     lpl_str.append("{0}({1})".format(lpn, ww))
                     lpl_c += ww
                 logger.debug("lpl: %s", " -> ".join(lpl_str))
@@ -93,7 +93,7 @@ class Schedule(object):
 
             topo_sort = nx.topological_sort(G)
             for n in topo_sort:
-                node = G.node[n]
+                node = G.nodes[n]
                 try:
                     stt = node['stt']
                     edt = node['edt']
@@ -426,9 +426,9 @@ class KFamilyPartition(Partition):
             self._tmp_max_dop = dict()
         self_global_dag = self._global_dag
         for _w_attr in self._w_attr:
-            u_aw = self_global_dag.node[u].get(_w_attr, 1)
+            u_aw = self_global_dag.nodes[u].get(_w_attr, 1)
             kwargs[_w_attr] = u_aw
-        kwargs['weight'] = self_global_dag.node[u].get('weight', 5)
+        kwargs['weight'] = self_global_dag.nodes[u].get('weight', 5)
         self._dag.add_node(u, **kwargs)
         for k in self._w_attr:
             self._tmp_max_dop[k] = get_max_weighted_antichain(self._dag, w_attr=k)[0]
@@ -473,11 +473,11 @@ class Scheduler(object):
     """
     Static Scheduling consists of three steps:
     1. partition the DAG into an optimal number (M) of partitions
-        goal - minimising execution time while maintaining intra-partition DoP
+    goal - minimising execution time while maintaining intra-partition DoP
     2. merge partitions into a given number (N) of partitions (if M > N)
-        goal - minimise logical communication cost while maintaining load balancing
+    goal - minimise logical communication cost while maintaining load balancing
     3. map each merged partition to a resource unit
-        goal - minimise physical communication cost amongst resource units
+    goal - minimise physical communication cost amongst resource units
     """
 
     def __init__(self, drop_list, max_dop=8, dag=None):
@@ -527,8 +527,8 @@ class Scheduler(object):
         for e in self._part_edges:
             u = e[0]
             v = e[1]
-            ugid = self._dag.node[u].get('gid', None)
-            vgid = self._dag.node[v].get('gid', None)
+            ugid = self._dag.nodes[u].get('gid', None)
+            vgid = self._dag.nodes[v].get('gid', None)
             G.add_edge(ugid, vgid)  # repeating is fine
             ew = self._dag.adj[u][v]['weight']
             try:
@@ -593,14 +593,7 @@ class MySarkarScheduler(Scheduler):
 
     def is_time_critical(self, u, uw, unew, v, vw, vnew, curr_lpl, ow, rem_el):
         """
-        This is called ONLY IF override_cannot_add has returned "True"
-        Parameters:
-            u - node u, v - node v, uw - weight of node u, vw - weight of node v
-            curr_lpl - current longest path length, ow - current edge weight
-            rem_el - remainig edges to be zeroed
-            ow - original edge length
-        Returns:
-            Boolean
+        :return: True
 
         MySarkarScheduler always returns False
         """
@@ -632,7 +625,7 @@ class MySarkarScheduler(Scheduler):
         # Get hold of all gnodes that belong to "part_removed"
         # and re-assign them to the new partitions
         for n in part_removed._dag.nodes():
-            G.node[n]['gid'] = l_gid
+            G.nodes[n]['gid'] = l_gid
 
         index = None
         for i, part in enumerate(parts):
@@ -641,7 +634,7 @@ class MySarkarScheduler(Scheduler):
                 g_dict[p_gid - 1] = part
                 part._gid -= 1
                 for n in part._dag.nodes():
-                    G.node[n]['gid'] = part._gid
+                    G.nodes[n]['gid'] = part._gid
             elif (p_gid == r_gid):
                 # index = len(parts) - i - 1
                 index = i
@@ -710,9 +703,9 @@ class MySarkarScheduler(Scheduler):
 
         for i, e in enumerate(el):
             u = e[0]
-            gu = G.node[u]
+            gu = G.nodes[u]
             v = e[1]
-            gv = G.node[v]
+            gv = G.nodes[v]
             ow = G.adj[u][v]['weight']
             G.adj[u][v]['weight'] = 0  # edge zeroing
             ugid = gu.get('gid', None)
@@ -814,10 +807,10 @@ class PSOScheduler(Scheduler):
     The idea is to let "edgezeroing" becomes the search variable X
     The number of dimensions of X is the number of edges in DAG
     Possible values for each dimension is a discrete set {1, 2, 3}
-    where
-        10 - no zero (2 in base10) + 1
-        00 - zero w/o linearisation (0 in base10) + 1
-        01 - zero with linearisation (1 in base10) + 1
+    where:
+    * 10 - no zero (2 in base10) + 1
+    * 00 - zero w/o linearisation (0 in base10) + 1
+    * 01 - zero with linearisation (1 in base10) + 1
 
     if (deadline is present):
         the objective function sets up a partition scheme such that
@@ -909,9 +902,9 @@ class PSOScheduler(Scheduler):
                 raise SchedulerException("PSO position out of bound: {0}".format(pos))
 
             u = e[0]
-            gu = G.node[u]
+            gu = G.nodes[u]
             v = e[1]
-            gv = G.node[v]
+            gv = G.nodes[v]
             ow = G.adj[u][v]['weight']
             G.adj[u][v]['weight'] = 0  # edge zeroing
             recover_edge = False
@@ -1008,21 +1001,11 @@ class DAGUtil(object):
 
         Returns the longest path in a DAG
         If G has edges with 'weight' attribute the edge data are used as weight values.
-        Parameters
-        ----------
-        G : NetworkX DiGraph
-            Graph
-        weight : string (default 'weight')
-            Edge data key to use for weight
-        default_weight : integer (default 1)
-            The weight of edges that do not have a weight attribute
-        Returns a tuple with two elements
-        -------
-        path : list
-            Longest path
-        path_length : float
-            The length of the longest path
-
+        :param: G Graph (NetworkX DiGraph)
+        :param: weight Edge data key to use for weight (string)
+        :param: default_weight The weight of edges that do not have a weight attribute (integer)
+        :return: a tuple with two elements: `path` (list), the longest path, and
+        `path_length` (float) the length of the longest path.
         """
         dist = {}  # stores {v : (length, u)}
         if (topo_sort is None):
@@ -1031,8 +1014,8 @@ class DAGUtil(object):
             us = [
                 (dist[u][0] +  # accumulate
                  data.get(weight, default_weight) +  # edge weight
-                 G.node[u].get(weight, 0) +  # u node weight
-                 (G.node[v].get(weight, 0) if len(list(G.successors(v))) == 0 else 0),  # v node weight if no successor
+                 G.nodes[u].get(weight, 0) +  # u node weight
+                 (G.nodes[v].get(weight, 0) if len(list(G.successors(v))) == 0 else 0),  # v node weight if no successor
                  u)
                 for u, data in G.pred[v].items()]
             # Use the best predecessor if there is one and its distance is non-negative, otherwise terminate.
@@ -1063,7 +1046,7 @@ class DAGUtil(object):
         for antichain in nx.antichains(G):
             t = 0
             for n in antichain:
-                t += G.node[n].get(weight, default_weight)
+                t += G.nodes[n].get(weight, default_weight)
             if (t > max_width):
                 max_width = t
         return max_width
@@ -1111,7 +1094,7 @@ class DAGUtil(object):
         if (topo_sort is None):
             topo_sort = nx.topological_sort(G)
         for v in topo_sort:
-            gv = G.node[v]
+            gv = G.nodes[v]
             parents = list(G.predecessors(v))
             if (len(parents) == 0):
                 gv['stt'] = 0
@@ -1119,7 +1102,7 @@ class DAGUtil(object):
                 # get the latest end time of one of its parents
                 ledt = -1
                 for parent in parents:
-                    pedt = G.node[parent]['edt'] + G.adj[parent][v].get(weight, 0)
+                    pedt = G.nodes[parent]['edt'] + G.adj[parent][v].get(weight, 0)
                     if (pedt > ledt):
                         ledt = pedt
                 gv['stt'] = ledt
@@ -1138,7 +1121,7 @@ class DAGUtil(object):
         if (topo_sort is None):
             topo_sort = nx.topological_sort(G)
         for i, n in enumerate(topo_sort):
-            node = G.node[n]
+            node = G.nodes[n]
             try:
                 stt = node['stt']
                 edt = node['edt']
@@ -1189,13 +1172,12 @@ class DAGUtil(object):
     def build_dag_from_drops(drop_list, embed_drop=True, fake_super_root=False):
         """
         return a networkx Digraph (DAG)
-        fake_super_root:    whether to create a fake super root node in the DAG
-                            If set to True, it enables edge zero-based
-                            scheduling agorithms to make more aggressive merging
-
-        tw - task weight
-        dw - data weight / volume
+        :param: fake_super_root whether to create a fake super root node in the DAG
+        If set to True, it enables edge zero-based scheduling agorithms to make
+        more aggressive merging
         """
+        # tw - task weight
+        # dw - data weight / volume
         key_dict = dict()  # {oid : node_id}
         drop_dict = dict()  # {oid : drop}
         out_bound_keys = ['streamingConsumers', 'consumers', 'outputs']
@@ -1207,16 +1189,19 @@ class DAGUtil(object):
         for i, drop in enumerate(drop_list):
             oid = drop['oid']
             myk = i + 1
-            tt = drop['type']
-            if ('plain' == tt):
+            tt = drop["type"]
+            if (DropType.PLAIN == tt):
                 # if (drop['nm'] == 'StreamNull'):
                 #     obk = 'streamingConsumers'
                 # else:
                 #     obk = 'consumers' # outbound keyword
                 tw = 0
                 dtp = 0
-            elif ('app' == tt):
+            elif (DropType.APP == tt):
                 # obk = 'outputs'
+                tw = int(drop['tw'])
+                dtp = 1
+            elif DropType.SERVICE_APP == tt:
                 tw = int(drop['tw'])
                 dtp = 1
             else:
@@ -1232,13 +1217,13 @@ class DAGUtil(object):
             for obk in out_bound_keys:
                 if obk in drop:
                     for oup in drop[obk]:
-                        if ('plain' == tt):
+                        if (DropType.PLAIN == tt):
                             G.add_weighted_edges_from([(myk, key_dict[oup], int(drop['dw']))])
-                        elif ('app' == tt):
+                        elif (DropType.APP == tt):
                             G.add_weighted_edges_from([(myk, key_dict[oup], int(drop_dict[oup].get('dw', 5)))])
 
         if (fake_super_root):
-            super_root = dropdict({'oid': '-92', 'type': 'plain', 'storage': 'null'})
+            super_root = dropdict({'oid': '-92', "type": DropType.PLAIN, 'storage': 'null'})
             super_k = len(drop_list) + 1
             G.add_node(super_k, weight=0, dtp=0, drop_spec=super_root,
                        num_cpus=0, text='fake_super_root')
@@ -1286,9 +1271,9 @@ if __name__ == "__main__":
     G.add_weighted_edges_from([(4, 3, 1), (3, 2, 4), (2, 1, 2), (5, 3, 1)])
     G.add_weighted_edges_from([(3, 6, 5), (6, 7, 2)])
     G.add_weighted_edges_from([(9, 12, 2)])  # testing independent nodes
-    G.node[3]['weight'] = 65
+    G.nodes[3]['weight'] = 65
     print(G.pred[12].items())
-    print(G.node[G.predecessors(12)[0]])
+    print(G.nodes[G.predecessors(12)[0]])
 
     # print "prepre"
     # print len(G.pred[7].items())

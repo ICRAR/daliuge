@@ -44,7 +44,11 @@ class InvalidDropException(DaliugeException):
             self.oid = drop.oid
             self.uid = drop.uid
         self.reason = reason
-        self.msg = "InvalidDropException <Drop %s / %s>: %s" % (self.uid, self.oid, self.reason)
+        self.msg = "InvalidDropException <Drop %s / %s>: %s" % (
+            self.uid,
+            self.oid,
+            self.reason,
+        )
 
     def __str__(self, *args, **kwargs):
         return self.msg

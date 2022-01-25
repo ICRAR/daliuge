@@ -34,7 +34,7 @@
 #include "dlg_app.h"
 
 /*
-compontent_meta = dlg_component('dynlib_example', 'dynlib_example for dlg tests',
+component_meta = dlg_component('dynlib_example', 'dynlib_example for dlg tests',
                             [dlg_batch_input('binary/*', [])],
                             [dlg_batch_output('binary/*', [])],
                             [dlg_streaming_input('binary/*')])

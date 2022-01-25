@@ -27,30 +27,35 @@ thus represents the bottom of the DROP management hierarchy.
 import abc
 import collections
 import logging
+from psutil import cpu_count
 import multiprocessing.pool
 import os
+import queue
 import sys
 import threading
 import time
 
-import six
-from six.moves import queue as Queue  # @UnresolvedImport
-
+from glob import glob
 from . import constants
 from .drop_manager import DROPManager
 from .session import Session
+
+if sys.version_info >= (3, 8):
+    from .shared_memory_manager import DlgSharedMemoryManager
 from .. import rpc, utils
 from ..ddap_protocol import DROPStates
-from ..drop import AppDROP
-from ..exceptions import NoSessionException, SessionAlreadyExistsException, \
-    DaliugeException
+from ..drop import AppDROP, InMemoryDROP, SharedMemoryDROP
+from ..exceptions import (
+    NoSessionException,
+    SessionAlreadyExistsException,
+    DaliugeException,
+)
 from ..lifecycle.dlm import DataLifecycleManager
 
 logger = logging.getLogger(__name__)
 
 
 class NMDropEventListener(object):
-
     def __init__(self, nm, session_id):
         self._nm = nm
         self._session_id = session_id
@@ -62,12 +67,20 @@ class NMDropEventListener(object):
 
 class LogEvtListener(object):
     def handleEvent(self, event):
-        if event.type == 'status':
-            logger.debug('Drop uid=%s, oid=%s changed to state %s', event.uid, event.oid, event.status)
-        elif event.type == 'execStatus':
-            logger.debug('AppDrop uid=%s, oid=%s changed to execState %s', event.uid, event.oid, event.execStatus)
-        elif event.type == 'reproducibility':
-            logger.debug('Reproducibility event Drop uid=%s, oid=%s merkleroot=%s', event.uid, event.oid, event.reprodata['merkleroot'])
+        if event.type == "status":
+            logger.debug(
+                "Drop uid=%s, oid=%s changed to state %s",
+                event.uid,
+                event.oid,
+                event.status,
+            )
+        elif event.type == "execStatus":
+            logger.debug(
+                "AppDrop uid=%s, oid=%s changed to execState %s",
+                event.uid,
+                event.oid,
+                event.execStatus,
+            )
 
 
 class ErrorStatusListener(object):
@@ -78,7 +91,7 @@ class ErrorStatusListener(object):
         self._error_listener = error_listener
 
     def handleEvent(self, evt):
-        if evt.type == 'status' and evt.status == DROPStates.ERROR:
+        if evt.type == "status" and evt.status == DROPStates.ERROR:
             self._error_listener.on_error(self._session.drops[evt.uid])
 
 
@@ -87,10 +100,13 @@ def _load(obj, callable_attr):
     Returns object (a python object or a string denoting a class within a
     python module only if it has the indicated attribute and it is callable.
     """
-    if isinstance(obj, six.string_types):
+    if isinstance(obj, str):
         obj = utils.get_symbol(obj)()
     if not hasattr(obj, callable_attr) or not callable(getattr(obj, callable_attr)):
-        raise ValueError("%r doesn't contain an %s attribute that can be called" % (obj, callable_attr))
+        raise ValueError(
+            "%r doesn't contain an %s attribute that can be called"
+            % (obj, callable_attr)
+        )
     return obj
 
 
@@ -110,38 +126,54 @@ class NodeManagerBase(DROPManager):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self,
-                 useDLM=True,
-                 dlgPath=None,
-                 error_listener=None,
-                 event_listeners=[],
-                 max_threads=0):
+    def __init__(
+            self,
+            useDLM=False,
+            dlgPath=None,
+            error_listener=None,
+            event_listeners=[],
+            max_threads=0,
+            logdir=utils.getDlgLogsDir(),
+    ):
 
         self._dlm = DataLifecycleManager() if useDLM else None
         self._sessions = {}
+        self.logdir = logdir
 
-        # dlgPath contains code added by the user with possible
+        # dlgPath may contain code added by the user with possible
         # DROP applications
         if dlgPath:
             dlgPath = os.path.expanduser(dlgPath)
             if os.path.isdir(dlgPath):
                 logger.info("Adding %s to the system path", dlgPath)
                 sys.path.append(dlgPath)
+                # we also add underlying site-packages dir to support
+                # the --prefix installation of code
+                pyVer = f'{sys.version_info.major}.{sys.version_info.minor}'
+                extraPath = f'{dlgPath}/lib/python{pyVer}/site-packages'
+                logger.info("Adding %s to the system path", extraPath)
+                sys.path.append(extraPath)
 
         # Error listener used by users to deal with errors coming from specific
         # Drops in whatever way they want. This is a specific case of an event
         # listener, so we add it together with the rest of the user-supplied
         # event listeners
-        self._error_listener = _load(error_listener, 'on_error') if error_listener else None
-        self._event_listeners = [_load(l, 'handleEvent') for l in event_listeners]
+        self._error_listener = (
+            _load(error_listener, "on_error") if error_listener else None
+        )
+        self._event_listeners = [_load(l, "handleEvent") for l in event_listeners]
 
-        # Start our thread pool
-        if max_threads == 0:
-            self._threadpool = None
-        else:
+        # Start thread pool
+        self._threadpool = None
+        if max_threads == -1:  # default use all CPU cores
+            max_threads = cpu_count(logical=False)
+        else:  # never more than 200
             max_threads = max(min(max_threads, 200), 1)
-            logger.info("Initializing thread pool with %d threads", max_threads)
-            self._threadpool = multiprocessing.pool.ThreadPool(processes=max_threads)
+        if sys.version_info >= (3, 8):
+            self._memoryManager = DlgSharedMemoryManager()
+            if max_threads > 1:
+                logger.info("Initializing thread pool with %d threads", max_threads)
+                self._threadpool = multiprocessing.pool.ThreadPool(processes=max_threads)
 
         # Event handler that only logs status changes
         debugging = logger.isEnabledFor(logging.DEBUG)
@@ -187,7 +219,9 @@ class NodeManagerBase(DROPManager):
         subscription mechanism.
         """
         if not evt.session_id in self._sessions:
-            logger.warning("No session %s found, event will be dropped" % (evt.session_id))
+            logger.warning(
+                "No session %s found, event (%s) will be dropped" % (evt.session_id, evt.type)
+            )
             return
         self._sessions[evt.session_id].deliver_event(evt)
 
@@ -200,9 +234,6 @@ class NodeManagerBase(DROPManager):
             raise SessionAlreadyExistsException(sessionId)
         self._sessions[sessionId] = Session(sessionId, nm=self)
         logger.info("Created session %s", sessionId)
-
-    def getsession(self, sessionId):
-        return self._sessions[sessionId]
 
     def getSessionStatus(self, sessionId):
         self._check_session_id(sessionId)
@@ -228,49 +259,64 @@ class NodeManagerBase(DROPManager):
         #  TODO: Ensure returns reproducibility data.
         return self._sessions[sessionId].getGraph()
 
-    def getGraphReproData(self, sessionId):
-        #  TODO make graph reprodata accessible
-        return self._sessions[sessionId]._graphreprodata
+    def getLogDir(self):
+        return self.logdir
 
     def deploySession(self, sessionId, completedDrops=[]):
         self._check_session_id(sessionId)
         session = self._sessions[sessionId]
+        if hasattr(self, '_memoryManager'):
+            self._memoryManager.register_session(sessionId)
 
         def foreach(drop):
             if self._threadpool is not None:
                 drop._tp = self._threadpool
+                if isinstance(drop, InMemoryDROP):
+                    drop._sessID = sessionId
+                    self._memoryManager.register_drop(drop.uid, sessionId)
+            elif isinstance(drop, SharedMemoryDROP):
+                if sys.version_info < (3, 8):
+                    raise NotImplementedError(
+                        "Shared memory is not implemented when using Python < 3.8")
+                drop._sessID = sessionId
+                self._memoryManager.register_drop(drop.uid, sessionId)
             if self._dlm:
                 self._dlm.addDrop(drop)
 
             # Remote event forwarding
             evt_listener = NMDropEventListener(self, sessionId)
             if isinstance(drop, AppDROP):
-                drop.subscribe(evt_listener, 'producerFinished')
+                drop.subscribe(evt_listener, "producerFinished")
             else:
-                drop.subscribe(evt_listener, 'dropCompleted')
+                drop.subscribe(evt_listener, "dropCompleted")
 
             # Purely for logging purposes
             log_evt_listener = self._logging_event_listener
             if log_evt_listener:
-                drop.subscribe(log_evt_listener, 'status')
-                drop.subscribe(log_evt_listener, 'reproducibility')
+                drop.subscribe(log_evt_listener, "status")
                 if isinstance(drop, AppDROP):
-                    drop.subscribe(log_evt_listener, 'execStatus')
+                    drop.subscribe(log_evt_listener, "execStatus")
 
         # Add user-supplied listeners
         listeners = self._event_listeners[:]
         if self._error_listener:
             listeners.append(ErrorStatusListener(session, self._error_listener))
 
-        session.deploy(completedDrops=completedDrops, event_listeners=listeners, foreach=foreach)
+        session.deploy(
+            completedDrops=completedDrops, event_listeners=listeners, foreach=foreach
+        )
 
     def cancelSession(self, sessionId):
+        logger.info("Cancelling session: %s", sessionId)
         self._check_session_id(sessionId)
         self._sessions[sessionId].cancel()
 
     def destroySession(self, sessionId):
+        logger.info("Destroying session: %s", sessionId)
         self._check_session_id(sessionId)
         session = self._sessions.pop(sessionId)
+        if hasattr(self, '_memoryManager'):
+            self._memoryManager.shutdown_session(sessionId)
         session.destroy()
 
     def getSessionIds(self):
@@ -283,9 +329,11 @@ class NodeManagerBase(DROPManager):
 
     def trigger_drops(self, sessionId, uids):
         self._check_session_id(sessionId)
-        t = threading.Thread(target=self._sessions[sessionId].trigger_drops,
-                             name='Drop trigger',
-                             args=(uids,))
+        t = threading.Thread(
+            target=self._sessions[sessionId].trigger_drops,
+            name="Drop trigger",
+            args=(uids,),
+        )
         t.start()
 
     def add_node_subscriptions(self, sessionId, relationships):
@@ -317,6 +365,11 @@ class NodeManagerBase(DROPManager):
         self._check_session_id(sessionId)
         return self._sessions[sessionId].call_drop(uid, method, *args)
 
+    def shutdown(self):
+        if hasattr(self, '_threadpool') and self._threadpool is not None:
+            self._threadpool.close()
+            self._threadpool.join()
+
 
 class ZMQPubSubMixIn(object):
     """
@@ -344,7 +397,7 @@ class ZMQPubSubMixIn(object):
     handling of ZeroMQ resources simpler.
     """
 
-    subscription = collections.namedtuple('subscription', 'endpoint finished_evt')
+    subscription = collections.namedtuple("subscription", "endpoint finished_evt")
 
     def __init__(self, host, events_port):
         self._events_host = host
@@ -353,14 +406,18 @@ class ZMQPubSubMixIn(object):
     def start(self):
         self._pubsub_running = True
         super(ZMQPubSubMixIn, self).start()
-        self._events_in = Queue.Queue()
-        self._events_out = Queue.Queue()
-        self._subscriptions = Queue.Queue()
+        self._events_in = queue.Queue()
+        self._events_out = queue.Queue()
+        self._subscriptions = queue.Queue()
 
         # Starts background threads, but wait until their sockets are created
         timeout = 30
-        self._event_publisher = self._start_thread(self._publish_events, "Evt pub", timeout)
-        self._event_receiver = self._start_thread(self._receive_events, "Evt recv", timeout)
+        self._event_publisher = self._start_thread(
+            self._publish_events, "Evt pub", timeout
+        )
+        self._event_receiver = self._start_thread(
+            self._receive_events, "Evt recv", timeout
+        )
         self._event_deliverer = self._start_thread(self._deliver_events, "Evt delivery")
 
     def _start_thread(self, target, name, timeout=None):
@@ -369,7 +426,7 @@ class ZMQPubSubMixIn(object):
         t = threading.Thread(target=target, name=name, args=args)
         t.start()
         if evt and not evt.wait(timeout):
-            raise Exception('Failed to start %s thread in %d seconds' % (name, timeout))
+            raise Exception("Failed to start %s thread in %d seconds" % (name, timeout))
         return t
 
     def shutdown(self):
@@ -389,7 +446,9 @@ class ZMQPubSubMixIn(object):
         endpoint = "tcp://%s:%d" % (utils.zmq_safe(host), port)
         self._subscriptions.put(ZMQPubSubMixIn.subscription(endpoint, finished_evt))
         if not finished_evt.wait(timeout):
-            raise DaliugeException("ZMQ subscription not achieved within %d seconds" % (timeout,))
+            raise DaliugeException(
+                "ZMQ subscription not achieved within %d seconds" % (timeout,)
+            )
         logger.info("Subscribed for events originating from %s", endpoint)
 
     def _publish_events(self, sock_created):
@@ -397,7 +456,10 @@ class ZMQPubSubMixIn(object):
 
         pub = self._context.socket(zmq.PUB)  # @UndefinedVariable
         pub.set_hwm(0)  # Never drop messages that should be sent
-        endpoint = "tcp://%s:%d" % (utils.zmq_safe(self._events_host), self._events_port)
+        endpoint = "tcp://%s:%d" % (
+            utils.zmq_safe(self._events_host),
+            self._events_port,
+        )
         pub.bind(endpoint)
         logger.info("Publishing events via ZeroMQ on %s", endpoint)
         sock_created.set()
@@ -406,7 +468,7 @@ class ZMQPubSubMixIn(object):
 
             try:
                 obj = self._events_out.get_nowait()
-            except Queue.Empty:
+            except queue.Empty:
                 time.sleep(0.01)
                 continue
 
@@ -425,7 +487,7 @@ class ZMQPubSubMixIn(object):
             try:
                 evt = self._events_in.get_nowait()
                 self.deliver_event(evt)
-            except Queue.Empty:
+            except queue.Empty:
                 time.sleep(0.01)
 
     def _receive_events(self, sock_created):
@@ -434,7 +496,7 @@ class ZMQPubSubMixIn(object):
 
         sub = self._context.socket(zmq.SUB)  # @UndefinedVariable
         sub_endpoints = set()
-        sub.setsockopt(zmq.SUBSCRIBE, six.b(''))  # @UndefinedVariable
+        sub.setsockopt(zmq.SUBSCRIBE, b"")  # @UndefinedVariable
         sub_monitor = sub.get_monitor_socket()
         sock_created.set()
 
@@ -448,15 +510,17 @@ class ZMQPubSubMixIn(object):
                     subscription.finished_evt.set()
                 else:
                     sub.connect(subscription.endpoint)
-                    pending_connections[subscription.endpoint] = subscription.finished_evt
-            except Queue.Empty:
+                    pending_connections[
+                        subscription.endpoint
+                    ] = subscription.finished_evt
+            except queue.Empty:
                 pass
 
             try:
                 msg = recv_monitor_message(sub_monitor, flags=zmq.NOBLOCK)
-                if msg['event'] != zmq.EVENT_CONNECTED:
+                if msg["event"] != zmq.EVENT_CONNECTED:
                     continue
-                endpoint = utils.b2s(msg['endpoint'])
+                endpoint = utils.b2s(msg["endpoint"])
                 sub_endpoints.add(endpoint)
                 finished_evt = pending_connections.pop(endpoint)
                 finished_evt.set()
@@ -470,7 +534,11 @@ class ZMQPubSubMixIn(object):
                 time.sleep(0.01)
             except Exception:
                 # Figure out what to do here
-                logger.exception("Something bad happened in %s:%d to ZMQ :'(", self._events_host, self._events_port)
+                logger.exception(
+                    "Something bad happened in %s:%d to ZMQ :'(",
+                    self._events_host,
+                    self._events_port,
+                )
                 break
 
         # Flush pending connection events to avoid callers hanging out forever
@@ -486,22 +554,34 @@ EventMixIn = ZMQPubSubMixIn
 
 
 # Load the corresponding RPC classes and finish the construciton of NodeManager
-class RpcMixIn(rpc.RPCClient, rpc.RPCServer): pass
+class RpcMixIn(rpc.RPCClient, rpc.RPCServer):
+    pass
+
 
 
 # Final NodeManager class
 class NodeManager(EventMixIn, RpcMixIn, NodeManagerBase):
-
-    def __init__(self, useDLM=True, dlgPath=None, error_listener=None, event_listeners=[], max_threads=0,
-                 host=None, rpc_port=constants.NODE_DEFAULT_RPC_PORT,
-                 events_port=constants.NODE_DEFAULT_EVENTS_PORT):
+    def __init__(
+            self,
+            useDLM=True,
+            dlgPath=utils.getDlgPath(),
+            error_listener=None,
+            event_listeners=[],
+            max_threads=0,
+            logdir=utils.getDlgLogsDir(),
+            host=None,
+            rpc_port=constants.NODE_DEFAULT_RPC_PORT,
+            events_port=constants.NODE_DEFAULT_EVENTS_PORT,
+    ):
         # We "just know" that our RpcMixIn will have a create_context static
         # method, which in reality means we are using the ZeroRPCServer class
         self._context = RpcMixIn.create_context()
-        host = host or '127.0.0.1'
+        host = host or "127.0.0.1"
         EventMixIn.__init__(self, host, events_port)
         RpcMixIn.__init__(self, host, rpc_port)
-        NodeManagerBase.__init__(self, useDLM, dlgPath, error_listener, event_listeners, max_threads)
+        NodeManagerBase.__init__(
+            self, useDLM, dlgPath, error_listener, event_listeners, max_threads, logdir
+        )
 
     def shutdown(self):
         super(NodeManager, self).shutdown()

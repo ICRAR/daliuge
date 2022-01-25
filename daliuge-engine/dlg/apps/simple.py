@@ -20,53 +20,70 @@
 #    MA 02111-1307  USA
 #
 """Applications used as examples, for testing, or in simple situations"""
+import pickle
+import random
+from typing import List
+import urllib.error
+import urllib.request
 
 import time
+import ast
 import numpy as np
-import six.moves.cPickle as pickle
 
-from .. import droputils
-from ..drop import BarrierAppDROP, ContainerDROP
-from ..meta import dlg_float_param, dlg_string_param
-from ..meta import dlg_bool_param, dlg_int_param
-from ..meta import dlg_component, dlg_batch_input
-from ..meta import dlg_batch_output, dlg_streaming_input
-
+from dlg import droputils, utils
+from dlg.drop import BarrierAppDROP, BranchAppDrop, ContainerDROP
+from dlg.meta import (
+    dlg_float_param,
+    dlg_string_param,
+    dlg_bool_param,
+    dlg_int_param,
+    dlg_component,
+    dlg_batch_input,
+    dlg_batch_output,
+    dlg_streaming_input
+)
+from dlg.exceptions import DaliugeException
+from dlg.apps.pyfunc import serialize_data, deserialize_data
 
 class NullBarrierApp(BarrierAppDROP):
-    compontent_meta = dlg_component('NullBarrierApp', 'Null Barrier.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+    component_meta = dlg_component(
+        "NullBarrierApp",
+        "Null Barrier.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
     """A BarrierAppDrop that doesn't perform any work"""
+
     def run(self):
         pass
 
 
 ##
-# @brief SleepApp\n
+# @brief SleepApp
 # @details A simple APP that sleeps the specified amount of time (0 by default).
 # This is mainly useful (and used) to test graph translation and structure
 # without executing real algorithms. Very useful for debugging.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/sleepTime/5/Integer/readwrite
-#     \~English the number of seconds to sleep\n
-# @param[in] param/appclass/dlg.apps.simple.SleepApp/String/readonly
-#     \~English Application class\n
-
+# @param[in] param/sleepTime Sleep Time/5/Integer/readwrite/
+#     \~English The number of seconds to sleep
+# @param[in] param/appclass Application Class/dlg.apps.simple.SleepApp/String/readonly/
+#     \~English Application class
 # @par EAGLE_END
 class SleepApp(BarrierAppDROP):
     """A BarrierAppDrop that sleeps the specified amount of time (0 by default)"""
-    compontent_meta = dlg_component('SleepApp', 'Sleep App.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
 
-    sleepTime = dlg_float_param('sleep time', 0)
+    component_meta = dlg_component(
+        "SleepApp",
+        "Sleep App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    sleepTime = dlg_float_param("sleep time", 0)
 
     def initialize(self, **kwargs):
         super(SleepApp, self).initialize(**kwargs)
@@ -76,18 +93,15 @@ class SleepApp(BarrierAppDROP):
 
 
 ##
-# @brief CopyApp\n
+# @brief CopyApp
 # @details A simple APP that copies its inputs into its outputs.
 # All inputs are copied into all outputs in the order they were declared in
 # the graph. If an input is a container (e.g. a directory) it copies the
 # content recursively.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/appclass/dlg.apps.simple.CopyApp/String/readonly
-#     \~English Application class\n
-
+# @param[in] param/appclass Application Class/dlg.apps.simple.CopyApp/String/readonly/
+#     \~English Application class
 # @par EAGLE_END
 class CopyApp(BarrierAppDROP):
     """
@@ -95,10 +109,14 @@ class CopyApp(BarrierAppDROP):
     All inputs are copied into all outputs in the order they were declared in
     the graph.
     """
-    compontent_meta = dlg_component('CopyApp', 'Copy App.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+
+    component_meta = dlg_component(
+        "CopyApp",
+        "Copy App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
     def run(self):
         self.copyAll()
@@ -125,27 +143,25 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 
 
 ##
-# @brief RandomArrayApp\n
+# @brief RandomArrayApp
 # @details A testing APP that does not take any input and produces a random array of
 # type int64, if integer is set to True, else of type float64.
-# size indicates the number of elements ranging between the values low and high. 
+# size indicates the number of elements ranging between the values low and high.
 # The resulting array will be send to all connected output apps.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/size/100/Integer/readwrite
-#     \~English the siz of the array\n
-# @param[in] param/integer/True/Boolean/readwrite
-#     \~English Generate integer array?\n
-# @param[in] param/low/0/float/readwrite
-#     \~English low value of range in array [inclusive]\n
-# @param[in] param/high/1/float/readwrite
-#     \~English high value of range of array [exclusive]\n
-# @param[in] param/appclass/dlg.apps.simple.RandomArrayApp/String/readonly
-#     \~English Application class\n
-# @param[out] port/array
-#     \~English Port carrying the averaged array.
+# @param[in] param/size Size/100/Integer/readwrite/
+#     \~English The size of the array
+# @param[in] param/integer Integer/True/Boolean/readwrite/
+#     \~English Generate integer array?
+# @param[in] param/low Low/0/float/readwrite/
+#     \~English Low value of range in array [inclusive]
+# @param[in] param/high High/1/float/readwrite/
+#     \~English High value of range of array [exclusive]
+# @param[in] param/appclass Application class/dlg.apps.simple.RandomArrayApp/String/readonly/
+#     \~English Application class
+# @param[out] port/array Array/Array/
+#     \~English Port carrying the averaged array
 # @par EAGLE_END
 class RandomArrayApp(BarrierAppDROP):
     """
@@ -160,16 +176,20 @@ class RandomArrayApp(BarrierAppDROP):
     high:     float, upper boundary (will be converted to int for integer arrays)
     size:     int, number of array elements
     """
-    compontent_meta = dlg_component('RandomArrayApp', 'Random Array App.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
-    
+
+    component_meta = dlg_component(
+        "RandomArrayApp",
+        "Random Array App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
     # default values
-    integer = dlg_bool_param('integer', True)
-    low = dlg_float_param('low', 0)
-    high = dlg_float_param('high', 100)
-    size = dlg_int_param('size', 100)
+    integer = dlg_bool_param("integer", True)
+    low = dlg_float_param("low", 0)
+    high = dlg_float_param("high", 100)
+    size = dlg_int_param("size", 100)
     marray = []
 
     def initialize(self, **kwargs):
@@ -179,8 +199,7 @@ class RandomArrayApp(BarrierAppDROP):
         # At least one output should have been added
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                'At least one output should have been added to %r' % self)
+            raise Exception("At least one output should have been added to %r" % self)
         self.generateRandomArray()
         for o in outs:
             d = pickle.dumps(self.marray)
@@ -197,29 +216,27 @@ class RandomArrayApp(BarrierAppDROP):
             # self.low and self.high
             marray = (np.random.random(size=self.size) + self.low) * self.high
         self.marray = marray
-    
+
     def _getArray(self):
         return self.marray
 
 
 ##
-# @brief AverageArrays\n
+# @brief AverageArrays
 # @details A testing APP that takes multiple numpy arrays on input and calculates
-# the mean or the median, depending on the value provided in the method parameter. 
+# the mean or the median, depending on the value provided in the method parameter.
 # Users can add as many producers to the input array port as required and the resulting array
 # will also be send to all connected output apps.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/method/mean/string/readwrite
-#     \~English the methd used for averaging\n
-# @param[in] param/appclass/dlg.apps.simple.AverageArraysApp/String/readonly
-#     \~English Application class\n
-# @param[in] port/array
-#     \~English Port for the input array(s).
-# @param[out] port/array
-#     \~English Port carrying the averaged array.
+# @param[in] param/method Method/mean/String/readwrite/
+#     \~English The method used for averaging
+# @param[in] param/appclass Application Class/dlg.apps.simple.AverageArraysApp/String/readonly/
+#     \~English Application class
+# @param[in] port/array Array/array/
+#     \~English Port for the input array(s)
+# @param[out] port/array Array/Array/
+#     \~English Port carrying the averaged array
 # @par EAGLE_END
 class AverageArraysApp(BarrierAppDROP):
     """
@@ -233,15 +250,24 @@ class AverageArraysApp(BarrierAppDROP):
 
     method:  string <['mean']|'median'>, use mean or median as method.
     """
-    compontent_meta = dlg_component('RandomArrayApp', 'Random Array App.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+
+    from numpy import mean, median
+
+    component_meta = dlg_component(
+        "RandomArrayApp",
+        "Random Array App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
     # default values
-    methods = ['mean', 'median']
-    method = dlg_string_param('method', methods[0])
-    marray = []
+    methods = ["mean", "median"]
+    method = dlg_string_param("method", methods[0])
+
+    def __init__(self, oid, uid, **kwargs):
+        super().__init__(oid, kwargs)
+        self.marray = []
 
     def initialize(self, **kwargs):
         super(AverageArraysApp, self).initialize(**kwargs)
@@ -251,15 +277,14 @@ class AverageArraysApp(BarrierAppDROP):
 
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                'At least one output should have been added to %r' % self)
+            raise Exception("At least one output should have been added to %r" % self)
         self.getInputArrays()
-        avg = self.averageArray()
+        self._avg = self.averageArray()
         for o in outs:
-            d = pickle.dumps(avg)
+            d = pickle.dumps(self._avg)
             o.len = len(d)
             o.write(d)  # average across inputs
-    
+
     def getInputArrays(self):
         """
         Create the input array from all inputs received. Shape is
@@ -268,33 +293,36 @@ class AverageArraysApp(BarrierAppDROP):
         """
         ins = self.inputs
         if len(ins) < 1:
-            raise Exception(
-                'At least one input should have been added to %r' % self)
-
-        marray = [pickle.loads(droputils.allDropContents(inp)) for inp in ins]
+            raise Exception("At least one input should have been added to %r" % self)
+        marray = []
+        for inp in ins:
+            sarray = droputils.allDropContents(inp)
+            if len(sarray) == 0:
+                print(f"Input does not contain data!")
+            else:
+                sarray = pickle.loads(sarray)
+                marray.extend(sarray)
         self.marray = marray
 
-
     def averageArray(self):
-        
+
         method_to_call = getattr(np, self.method)
         return method_to_call(self.marray, axis=0)
 
+
 ##
-# @brief HelloWorldApp\n
+# @brief HelloWorldApp
 # @details A simple APP that implements the standard Hello World in DALiuGE.
 # It allows to change 'World' with some other string and it also permits
-# to connect the single output port to multiple sinks, which will all receive 
+# to connect the single output port to multiple sinks, which will all receive
 # the same message. App does not require any input.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/greet/World/String/readwrite
-#     \~English What appears after 'Hello '\n
-# @param[in] param/appclass/dlg.apps.simple.HelloWorldApp/String/readonly
-#     \~English Application class\n
-# @param[out] port/hello
+# @param[in] param/greet Greet/World/String/readwrite/
+#     \~English What appears after 'Hello '
+# @param[in] param/appclass Application Class/dlg.apps.simple.HelloWorldApp/String/readonly/
+#     \~English Application class
+# @param[out] port/hello Hello/String/
 #     \~English The port carrying the message produced by the app.
 # @par EAGLE_END
 class HelloWorldApp(BarrierAppDROP):
@@ -305,20 +333,277 @@ class HelloWorldApp(BarrierAppDROP):
     Keywords:
     greet:   string, [World], whom to greet.
     """
-    compontent_meta = dlg_component('HelloWorldApp', 'Hello World App.',
+
+    component_meta = dlg_component(
+        "HelloWorldApp",
+        "Hello World App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    greet = dlg_string_param("greet", "World")
+
+    def run(self):
+        ins = self.inputs
+        # if no inputs use the parameter else use the input
+        if len(ins) == 0:
+            self.greeting = "Hello %s" % self.greet
+        elif len(ins) != 1:
+            raise Exception("Only one input expected for %r" % self)
+        else:  # the input is expected to be a vector. We'll use the first element
+            self.greeting = "Hello %s" % str(
+                pickle.loads(droputils.allDropContents(ins[0]))[0]
+            )
+
+        outs = self.outputs
+        if len(outs) < 1:
+            raise Exception("At least one output should have been added to %r" % self)
+        for o in outs:
+            o.len = len(self.greeting.encode())
+            o.write(self.greeting.encode())  # greet across all outputs
+
+
+##
+# @brief UrlRetrieveApp
+# @details A simple APP that retrieves the content of a URL and writes
+# it to all outputs.
+# @par EAGLE_START
+# @param category PythonApp
+# @param[in] param/url URL/"https://eagle.icrar.org"/String/readwrite/
+#     \~English The URL to retrieve
+# @param[in] param/appclass Application Class/dlg.apps.simple.UrlRetrieveApp/String/readonly/
+#     \~English Application class
+# @param[out] port/content Content/String/
+#     \~English The port carrying the content read from the URL.
+# @par EAGLE_END
+class UrlRetrieveApp(BarrierAppDROP):
+    """
+    An App that retrieves the content of a URL
+
+    Keywords:
+    URL:   string, URL to retrieve.
+    """
+
+    component_meta = dlg_component(
+        "UrlRetrieveApp",
+        "URL Retrieve App",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    url = dlg_string_param("url", "")
+
+    def run(self):
+        try:
+            u = urllib.request.urlopen(self.url)
+        except urllib.error.URLError as e:
+            raise e.reason
+
+        content = u.read()
+
+        outs = self.outputs
+        if len(outs) < 1:
+            raise Exception("At least one output should have been added to %r" % self)
+        for o in outs:
+            o.len = len(content)
+            o.write(content)  # send content to all outputs
+
+
+##
+# @brief GenericScatterApp
+# @details An APP that splits about any object that can be converted to a numpy array
+# into as many parts as the app has outputs, provided that the initially converted numpy
+# array has enough elements. The return will be a numpy array of arrays, where the first
+# axis is of length len(outputs). The modulo remainder of the length of the original array and
+# the number of outputs will be distributed across the first len(outputs)-1 elements of the
+# resulting array.
+# @par EAGLE_START
+# @param category PythonApp
+# @param[in] param/appclass Application Class/dlg.apps.simple.GenericScatterApp/String/readonly/
+#     \~English Application class
+# @param[out] port/array Array/Array/
+#     \~English A numpy array of arrays, where the first axis is of length <numSplit>
+# @par EAGLE_END
+class GenericScatterApp(BarrierAppDROP):
+    """
+    An APP that splits an object that has a len attribute into <numSplit> parts and
+    returns a numpy array of arrays, where the first axis is of length <numSplit>.
+    """
+
+    component_meta = dlg_component(
+        "GenericScatterApp",
+        "Scatter an array like object into numSplit parts",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    # automatically populated by scatter node
+    num_of_copies: int = dlg_int_param("num_of_copies", 1)
+
+    def initialize(self, **kwargs):
+        super(GenericScatterApp, self).initialize(**kwargs)
+
+    def run(self):
+        numSplit = self.num_of_copies
+        cont = droputils.allDropContents(self.inputs[0])
+        # if the data is of type string it is not pickled, but stored as a binary string.
+        try:
+            inpArray = pickle.loads(cont)
+        except:
+            inpArray = cont.decode()
+        try:  # just checking whether the object is some object that can be used as an array
+            nObj = np.array(inpArray)
+        except:
+            raise
+        try:
+            result = np.array_split(nObj, numSplit)
+        except IndexError as err:
+            raise err
+        for i in range(numSplit):
+            o = self.outputs[i]
+            d = pickle.dumps(result[i])
+            o.len = len(d)
+            o.write(d)  # average across inputs
+
+
+##
+# @brief GenericNpyScatterApp
+# @details An APP that splits about any axis on any npy format data drop
+# into as many parts as the app has outputs, provided that the initially converted numpy
+# array has enough elements. The return will be a numpy array of arrays, where the first
+# axis is of length len(outputs). The modulo remainder of the length of the original array and
+# the number of outputs will be distributed across the first len(outputs)-1 elements of the
+# resulting array.
+# @par EAGLE_START
+# @param category PythonApp
+# @param[in] param/appclass Application Class/dlg.apps.simple.GenericNpyScatterApp/String/readonly/
+#     \~English Application class
+# @param[in] param/scatter_axes Scatter Axes/String/readwrite
+#     \~English The axes to split input ndarrays on, e.g. [0,0,0], length must
+#       match the number of input ports
+# @param[out] port/array Array/npy/
+#     \~English A numpy array of arrays
+# @par EAGLE_END
+class GenericNpyScatterApp(BarrierAppDROP):
+    """
+    An APP that splits an object that has a len attribute into <num_of_copies> parts and
+    returns a numpy array of arrays.
+    """
+
+    component_meta = dlg_component(
+        "GenericNpyScatterApp",
+        "Scatter an array like object into <num_of_copies> parts",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    # automatically populated by scatter node
+    num_of_copies: int = dlg_int_param("num_of_copies", 1)
+    scatter_axes: List[int] = dlg_string_param("scatter_axes", "[0]")
+
+    def initialize(self, **kwargs):
+        super(GenericNpyScatterApp, self).initialize(**kwargs)
+        self.scatter_axes = ast.literal_eval(self.scatter_axes)
+
+    def run(self):
+        if len(self.inputs) * self.num_of_copies != len(self.outputs):
+            raise DaliugeException(\
+                f"expected {len(self.inputs) * self.num_of_copies} outputs,\
+                 got {len(self.outputs)}")
+        if len(self.inputs) != len(self.scatter_axes):
+            raise DaliugeException(\
+                f"expected {len(self.inputs)} axes,\
+                 got {len(self.scatter_axes)}")
+
+        # split it as many times as we have outputs
+        self.num_of_copies = self.num_of_copies
+
+        for in_index in range(len(self.inputs)):
+            nObj = droputils.load_numpy(self.inputs[in_index])
+            try:
+                result = np.array_split(nObj, self.num_of_copies, axis=self.scatter_axes[in_index])
+            except IndexError as err:
+                raise err
+            for split_index in range(self.num_of_copies):
+                out_index = in_index * self.num_of_copies + split_index
+                droputils.save_numpy(self.outputs[out_index], result[split_index])
+
+
+class SimpleBranch(BranchAppDrop, NullBarrierApp):
+    """Simple branch app that is told the result of its condition"""
+
+    def initialize(self, **kwargs):
+        self.result = self._getArg(kwargs, "result", True)
+        BranchAppDrop.initialize(self, **kwargs)
+
+    def run(self):
+        pass
+
+    def condition(self):
+        return self.result
+
+
+##
+# @brief ListAppendThrashingApp\n
+# @details A testing APP that appends a random integer to a list num times.
+# This is a CPU intensive operation and can thus be used to provide a test for application threading
+# since this operation will not yield.
+# The resulting array will be sent to all connected output apps.
+# @par EAGLE_START
+# @param gitrepo $(GIT_REPO)
+# @param version $(PROJECT_VERSION)
+# @param category PythonApp
+# @param[in] param/size/100/Integer/readwrite
+#     \~English the size of the array\n
+# @param[in] param/appclass/dlg.apps.simple.ListAppendThrashingApp/String/readonly
+#     \~English Application class\n
+# @param[out] port/array
+#     \~English Port carrying the random array.
+# @par EAGLE_END
+class ListAppendThrashingApp(BarrierAppDROP):
+    """
+    A BarrierAppDrop that appends random integers to a list N times. It does
+    not require any inputs and writes the generated array to all of its
+    outputs.
+
+    Keywords:
+
+    size:     int, number of array elements
+    """
+    compontent_meta = dlg_component('ListAppendThrashingApp', 'List Append Thrashing',
                                     [dlg_batch_input('binary/*', [])],
                                     [dlg_batch_output('binary/*', [])],
                                     [dlg_streaming_input('binary/*')])
 
-    greet = dlg_string_param('greet', 'World')
+    def initialize(self, **kwargs):
+        self.size = self._getArg(kwargs, 'size', 100)
+        self.marray = []
+        super(ListAppendThrashingApp, self).initialize(**kwargs)
 
     def run(self):
-        self.greeting = 'Hello %s' % self.greet
-
+        # At least one output should have been added
         outs = self.outputs
         if len(outs) < 1:
             raise Exception(
                 'At least one output should have been added to %r' % self)
+        self.marray = self.generateArray()
         for o in outs:
-            o.len = len(self.greeting.encode())
-            o.write(self.greeting.encode())  # greet across all outputs
+            d = pickle.dumps(self.marray)
+            o.len = len(d)
+            o.write(pickle.dumps(self.marray))
+
+    def generateArray(self):
+        # This operation is wasteful to simulate an N^2 operation.
+        marray = []
+        for _ in range(int(self.size)):
+            marray = []
+            for i in range(int(self.size)):
+                marray.append(random.random())
+        return marray
+
+    def _getArray(self):
+        return self.marray

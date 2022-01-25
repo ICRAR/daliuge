@@ -28,11 +28,11 @@ technologies we support.
 
 import collections
 import logging
+import queue
 import threading
 
 import gevent
 import zerorpc
-from six.moves import queue as Queue  # @UnresolvedImport
 
 from . import utils
 
@@ -54,7 +54,14 @@ class RPCClientBase(RPCObject):
 
     def get_drop_attribute(self, hostname, port, session_id, uid, name):
 
-        logger.debug("Getting attribute %s for drop %s of session %s at %s:%d", name, uid, session_id, hostname, port)
+        logger.debug(
+            "Getting attribute %s for drop %s of session %s at %s:%d",
+            name,
+            uid,
+            session_id,
+            hostname,
+            port,
+        )
 
         client, closer = self.get_rpc_client(hostname, port)
 
@@ -92,13 +99,20 @@ class RPCServerBase(RPCObject):
 class ZeroRPCClient(RPCClientBase):
     """ZeroRPC client support"""
 
-    request = collections.namedtuple('request', 'method args queue')
-    response = collections.namedtuple('response', 'value is_exception')
+    request = collections.namedtuple("request", "method args queue")
+    response = collections.namedtuple("response", "value is_exception")
 
     def __init__(self, *args, **kwargs):
         super(ZeroRPCClient, self).__init__(*args, **kwargs)
-        if not hasattr(self, '_context'):
+        if not hasattr(self, "_context"):
             self._context = zerorpc.Context()
+        self._zrpcclients = {}
+        self._zrpcclientthreads = []
+        logger.debug("RPC Client created")
+
+    def __del__(self):
+        if self._context:
+            self._context.term()
 
     def start(self):
         super(ZeroRPCClient, self).start()
@@ -125,29 +139,33 @@ class ZeroRPCClient(RPCClientBase):
 
             # We start the new client on its own thread so it uses gevent, etc.
             # In this thread we create simply enqueue requests
-            req_queue = Queue.Queue()
+            req_queue = queue.Queue()
             tname_tpl, args = "zrpc(%s:%d)", (host, port)
-            t = threading.Thread(target=self.run_zrpcclient, args=(host, port, req_queue),
-                                 name=tname_tpl % args)
+            t = threading.Thread(
+                target=self.run_zrpcclient,
+                args=(host, port, req_queue),
+                name=tname_tpl % args,
+            )
             t.start()
 
             class QueueingClient(object):
                 def __make_call(self, method, *args):
-                    res_queue = Queue.Queue()
-                    req_queue.put(ZeroRPCClient.request(method, args, res_queue))
+                    res_queue = queue.Queue()
+                    request = ZeroRPCClient.request(method, args, res_queue)
+                    req_queue.put(request)
                     x = res_queue.get()
                     if x.is_exception:
                         raise x.value
                     return x.value
 
                 def call_drop(self, session_id, uid, name, *args):
-                    return self.__make_call('call_drop', session_id, uid, name, *args)
+                    return self.__make_call("call_drop", session_id, uid, name, *args)
 
                 def get_drop_property(self, session_id, uid, name):
-                    return self.__make_call('get_drop_property', session_id, uid, name)
+                    return self.__make_call("get_drop_property", session_id, uid, name)
 
                 def has_method(self, session_id, uid, name):
-                    return self.__make_call('has_method', session_id, uid, name)
+                    return self.__make_call("has_method", session_id, uid, name)
 
             client = QueueingClient()
             self._zrpcclients[endpoint] = client
@@ -168,7 +186,7 @@ class ZeroRPCClient(RPCClientBase):
             try:
                 req = req_queue.get_nowait()
                 gevent.spawn(self.queue_request, client, req)
-            except Queue.Empty:
+            except queue.Empty:
                 gevent.sleep(0.005)
 
     def process_response(self, req, async_response):
@@ -182,7 +200,7 @@ class ZeroRPCClient(RPCClientBase):
 
     def queue_request(self, client, req):
         # Pass "async" in a dictionary; 3.7+ fails because it's a keyword
-        async_result = client.__call__(req.method, *req.args, **{'async': True})
+        async_result = client.__call__(req.method, *req.args, **{"async": True})
         async_result.rawlink(lambda x: self.process_response(req, x))
 
     def get_rpc_client(self, hostname, port):
@@ -205,17 +223,25 @@ class ZeroRPCServer(RPCServerBase):
         # Starts the single-threaded ZeroRPC server for RPC requests
         timeout = 30
         server_started = threading.Event()
-        self._zrpcserverthread = threading.Thread(target=self.run_zrpcserver, name="ZeroRPC server",
-                                                  args=(self._rpc_host, self._rpc_port, server_started))
+        self._zrpcserverthread = threading.Thread(
+            target=self.run_zrpcserver,
+            name="ZeroRPC server",
+            args=(self._rpc_host, self._rpc_port, server_started),
+        )
         self._zrpcserverthread.start()
         if not server_started.wait(timeout):
-            raise Exception("ZeroRPC server didn't start within %d seconds" % (timeout,))
+            raise Exception(
+                "ZeroRPC server didn't start within %d seconds" % (timeout,)
+            )
 
     def run_zrpcserver(self, host, port, server_started):
         # Use context provided by subclass
         self._zrpcserver = zerorpc.Server(self, context=self._context)
         # zmq needs an address, not a hostname
-        endpoint = "tcp://%s:%d" % (utils.zmq_safe(host), port,)
+        endpoint = "tcp://%s:%d" % (
+            utils.zmq_safe(host),
+            port,
+        )
         self._zrpcserver.bind(endpoint)
         logger.info("Listening for RPC requests via ZeroRPC on %s", endpoint)
         server_started.set()
@@ -228,12 +254,17 @@ class ZeroRPCServer(RPCServerBase):
     def stop_zrpcserver(self):
         while self.rpc_running:
             gevent.sleep(0.01)
-        logger.info("Closing ZeroRPC server on tcp://%s:%d", utils.zmq_safe(self._rpc_host), self._rpc_port)
+        logger.info(
+            "Closing ZeroRPC server on tcp://%s:%d",
+            utils.zmq_safe(self._rpc_host),
+            self._rpc_port,
+        )
         self._zrpcserver.close()
 
     def shutdown(self):
         super(ZeroRPCServer, self).shutdown()
         self._zrpcserverthread.join()
+
 
 RPCServer, RPCClient = ZeroRPCServer, ZeroRPCClient
 
@@ -246,22 +277,33 @@ class DropProxy(object):
     """
 
     def __init__(self, rpc_client, hostname, port, sessionId, uid):
-        self.rpc_client = rpc_client
+        self.rpc_client = ZeroRPCClient()
         self.hostname = hostname
         self.port = port
         self.session_id = sessionId
         self.uid = uid
         logger.debug("Created %r", self)
+        self.rpc_client.start()
 
     def handleEvent(self, evt):
         pass
 
     def __getattr__(self, name):
-        if name == 'uid':
+        if name == "uid":
             return self.uid
-        elif name in ('inputs', 'streamingInputs', 'outputs', 'consumers', 'producers'):
+        elif name in ("inputs", "streamingInputs", "outputs", "consumers", "producers"):
             return []
-        return self.rpc_client.get_drop_attribute(self.hostname, self.port, self.session_id, self.uid, name)
+        return self.rpc_client.get_drop_attribute(
+            self.hostname, self.port, self.session_id, self.uid, name
+        )
 
     def __repr__(self):
-        return '<DropProxy %s, session %s @%s:%d>' % (self.uid, self.session_id, self.hostname, self.port)
+        return "<DropProxy %s, session %s @%s:%d>" % (
+            self.uid,
+            self.session_id,
+            self.hostname,
+            self.port,
+        )
+
+    def __del__(self):
+        self.rpc_client.shutdown()

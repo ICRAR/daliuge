@@ -19,7 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import itertools
 import json
 import logging
 import os
@@ -29,6 +28,8 @@ from .. import droputils
 from ..manager import constants
 from ..manager.client import BaseDROPManagerClient
 from ..manager.session import SessionStates
+import itertools
+
 
 logger = logging.getLogger(__name__)
 
@@ -37,23 +38,23 @@ class _StatusDumper(BaseDROPManagerClient):
     """A client that dumps the graph status each time a session is queried"""
 
     def __init__(self, *args, **kwargs):
-        self.dump_path = kwargs.pop('dump_path')
+        self.dump_path = kwargs.pop("dump_path")
         super(_StatusDumper, self).__init__(*args, **kwargs)
 
     def _dump_session_status(self, session_id):
         wgs = {
-            'ssid': session_id,
-            'gs': self.graph_status(session_id),
-            'ts': '%.3f' % time.time()
+            "ssid": session_id,
+            "gs": self.graph_status(session_id),
+            "ts": "%.3f" % time.time(),
         }
-        with open(self.dump_path, 'a') as fs:
+        with open(self.dump_path, "a") as fs:
             json.dump(wgs, fs)
             fs.write(os.linesep)
 
     def sessions(self):
         sessions = super(_StatusDumper, self).sessions()
         for session in sessions:
-            self._dump_session_status(session['sessionId'])
+            self._dump_session_status(session["sessionId"])
         return sessions
 
     def session(self, session_id):
@@ -67,11 +68,11 @@ def _is_end_state(session_status):
 
 
 def _get_client(host, port, timeout, status_dump_path=None):
-    kwargs = {'host': host, 'port': port, 'timeout': timeout}
+    kwargs = {"host": host, "port": port, "timeout": timeout}
     clazz = BaseDROPManagerClient
     if status_dump_path:
         clazz = _StatusDumper
-        kwargs['dump_path'] = status_dump_path
+        kwargs["dump_path"] = status_dump_path
     return clazz(**kwargs)
 
 
@@ -83,7 +84,7 @@ def _session_status(session):
                 status = list(itertools.chain(*status))
         return status
 
-    x = _get(session['status'])
+    x = _get(session["status"])
     return x
 
 
@@ -95,9 +96,14 @@ def _session_finished(session):
     return all(_is_end_state(s) for s in session_status)
 
 
-def monitor_sessions(session_id=None, poll_interval=10, host='127.0.0.1',
-                     port=constants.ISLAND_DEFAULT_REST_PORT, timeout=60,
-                     status_dump_path=None):
+def monitor_sessions(
+    session_id=None,
+    poll_interval=10,
+    host="127.0.0.1",
+    port=constants.ISLAND_DEFAULT_REST_PORT,
+    timeout=60,
+    status_dump_path=None,
+):
     """
     Monitors the execution status of all sessions (or the single session
     specified by `session_id`) by polling `host`:`port`, and returns when they
@@ -114,7 +120,7 @@ def monitor_sessions(session_id=None, poll_interval=10, host='127.0.0.1',
         while True:
             sessions = client.sessions()
             if all(_session_finished(s) for s in sessions):
-                return {s['sessionId']: _session_status(s) for s in sessions}
+                return {s["sessionId"]: _session_status(s) for s in sessions}
             time.sleep(poll_interval)
 
 
@@ -155,8 +161,15 @@ def fetch_reproducibility(session_id=None, poll_interval=10, host='127.0.0.1',
         time.sleep(poll_interval)
 
 
-def submit(pg, host='127.0.0.1', port=constants.ISLAND_DEFAULT_REST_PORT,
-           timeout=60, skip_deploy=False, session_id=None):
+
+def submit(
+    pg,
+    host="127.0.0.1",
+    port=constants.ISLAND_DEFAULT_REST_PORT,
+    timeout=60,
+    skip_deploy=False,
+    session_id=None,
+):
     """
     Submits a physical graph for execution. Additionally it waits until the
     graph has finished executing.

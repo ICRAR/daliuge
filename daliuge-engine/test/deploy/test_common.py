@@ -27,6 +27,8 @@ from dlg.common import Categories
 from dlg.deploy import common
 from dlg.manager import constants
 from dlg.manager.session import SessionStates
+
+
 from dlg.testutils import ManagerStarter
 
 default_repro = {"rmode": "1", "lg_blockhash": "x", "pgt_blockhash": "y", "pg_blockhash": "z"}
@@ -42,17 +44,22 @@ def add_test_reprodata(graph: list):
 
 
 class CommonTestsBase(ManagerStarter):
-
     def _submit(self):
-        pg = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY},
-              {"oid": "B", "type": "app", "app": "dlg.apps.simple.SleepApp", "inputs": ["A"], "outputs":["C"]},
-              {"oid": "C", "type": "plain", "storage": Categories.MEMORY},
-              ]
-        pg = add_test_reprodata(pg)
+        pg = [
+            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
+            {
+                "oid": "B",
+                "type": "app",
+                "app": "dlg.apps.simple.SleepApp",
+                "inputs": ["A"],
+                "outputs": ["C"],
+            },
+            {"oid": "C", "type": "plain", "storage": Categories.MEMORY},
+        ]
         for drop in pg:
-            drop['node'] = '127.0.0.1'
-            drop['island'] = '127.0.0.1'
-        return common.submit(pg, '127.0.0.1', self.port)
+            drop["node"] = "127.0.0.1"
+            drop["island"] = "127.0.0.1"
+        return common.submit(pg, "127.0.0.1", self.port)
 
     def assert_sessions_finished(self, status, *session_ids):
         for session_id in session_ids:
@@ -75,8 +82,12 @@ class CommonTestsBase(ManagerStarter):
     def test_monitor_with_dumping(self):
         dump_path = tempfile.mktemp()
         session_id = self._submit()
-        status = common.monitor_sessions(session_id=session_id, poll_interval=0.1,
-                                         port=self.port, status_dump_path=dump_path)
+        status = common.monitor_sessions(
+            session_id=session_id,
+            poll_interval=0.1,
+            port=self.port,
+            status_dump_path=dump_path,
+        )
         self.assert_session_finished(status)
         self.assertTrue(os.path.exists(dump_path))
         os.remove(dump_path)

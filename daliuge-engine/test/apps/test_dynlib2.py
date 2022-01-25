@@ -20,11 +20,13 @@
 #    MA 02111-1307  USA
 #
 import functools
+import io
 import os
 import time
 import unittest
 
-import six
+from .setp_up import build_shared_library
+from ..manager import test_dm
 from dlg import droputils
 from dlg.apps.dynlib import DynlibApp, DynlibStreamApp, DynlibProcApp
 from dlg.common import Categories
@@ -81,7 +83,7 @@ class DynlibAppTest(unittest.TestCase):
 
         # ~100 MBs of data should be copied over from a to c and d via b, etc
         data = os.urandom(1024 * 1024) * 100
-        reader = six.BytesIO(data)
+        reader = io.BytesIO(data)
         with droputils.DROPWaiterCtx(self, (c, d, f, g), 10):
             if streaming:
                 # Write the data in chunks so we actually exercise multiple calls
@@ -105,6 +107,7 @@ class DynlibAppTest(unittest.TestCase):
         """Checks that we can cancel a long-running dynlib proc app"""
 
         a = DynlibProcApp("a", "a", lib=_libpath, sleep_seconds=10)
+        a._rpc_server = True
         with droputils.DROPWaiterCtx(self, (), timeout=0):
             a.async_execute()
 
@@ -142,7 +145,12 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
                 "print_stats": print_stats,
                 "bufsize": bufsize,
             },
-            {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
+            {
+                "oid": "C",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["B"],
+            },
         ]
         rels = [DROPRel("A", DROPLinkType.INPUT, "B")]
         a_data = os.urandom(32)
@@ -159,7 +167,12 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
         =============    =======
         """
         g1 = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["B"]},
+            {
+                "oid": "A",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "consumers": ["B"],
+            },
             {
                 "oid": "B",
                 "type": "app",
@@ -198,7 +211,12 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
                 "print_stats": print_stats,
                 "bufsize": bufsize,
             },
-            {"oid": "D", "type": "plain", "storage": Categories.MEMORY, "producers": ["C"]},
+            {
+                "oid": "D",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["C"],
+            },
         ]
         rels = [
             DROPRel("A", DROPLinkType.INPUT, "C"),
@@ -239,7 +257,12 @@ class IntraNMDynlibProcAppTest(IntraNMMixIng, unittest.TestCase):
                 "bufsize": bufsize,
                 "crash_and_burn": True,
             },
-            {"oid": "D", "type": "plain", "storage": Categories.MEMORY, "producers": ["C"]},
+            {
+                "oid": "D",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["C"],
+            },
         ]
         rels = [
             DROPRel("A", DROPLinkType.INPUT, "C"),
@@ -296,4 +319,6 @@ class TestExceptionRaised(unittest.TestCase):
             )
             dynlib_app.run()
 
-        self.assertTrue("Couldn't allocate memory for read/write buffer" in str(context.exception))
+        self.assertTrue(
+            "Couldn't allocate memory for read/write buffer" in str(context.exception)
+        )

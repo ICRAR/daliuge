@@ -20,36 +20,13 @@
 #    MA 02111-1307  USA
 #
 """
-https://confluence.ska-sdp.org/display/PRODUCTTREE/C.1.2.4.4.2+DFM+Resource+Manager
-
-DFM resource managr uses the requested logical graphs, the available resources and
+The DALiuGE resource manager uses the requested logical graphs, the available resources and
 the profiling information and turns it into the partitioned physical graph,
 which will then be deployed and monitored by the Physical Graph Manager
-
-Examples of logical graph node JSON representation
-
-{ u'category': u'Memory',
-  u'data_volume': 25,
-  u'group': -58,
-  u'key': -59,
-  u'loc': u'40.96484375000006 -250.53115793863992',
-  u'text': u'Channel @ \nAll Day'},
-
-{ u'Arg01': u'',
-  u'Arg02': u'',
-  u'Arg03': u'',
-  u'Arg04': u'',
-  u'category': u'Component',
-  u'execution_time': 20,
-  u'group': -60,
-  u'key': -56,
-  u'loc': u'571.6718750000005 268.0000000000004',
-  u'text': u'DD Calibration'}
-
 """
 
-if __name__ == '__main__':
-    __package__ = 'dlg.dropmake'
+if __name__ == "__main__":
+    __package__ = "dlg.dropmake"
 
 import collections
 import datetime
@@ -62,16 +39,24 @@ import string
 import time
 from collections import defaultdict
 from itertools import product
+from typing import ValuesView
 
 import networkx as nx
 import numpy as np
-import six
 
+from .scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
+from .utils.bash_parameter import BashCommand
+from ..common import dropdict
+from ..common import Categories, DropType
+from ..common import STORAGE_TYPES, APP_DROP_TYPES
 from .dm_utils import (
+    LG_APPREF,
+    getNodesKeyDict,
     get_lg_ver_type,
     convert_construct,
     convert_fields,
     convert_mkn,
+    getAppRefInputs,
     LG_VER_EAGLE,
     LG_VER_EAGLE_CONVERTED,
 )
@@ -324,18 +309,28 @@ class LGNode:
         )
 
     def is_group_start(self):
-        return (
-                self.has_group()
-                and "group_start" in self.jd
-                and 1 == int(self.jd["group_start"])
-        )
+        result = False
+        if self.has_group() and "group_start" in self.jd:
+            gs = self.jd["group_start"]
+            if type(gs) == type(True):
+                result = gs
+            elif type(gs) in [type(1), type(1.0)]:
+                result = 1 == gs
+            elif type(gs) == type("s"):
+                result = gs.lower() in ("true", "1")
+        return result
 
     def is_group_end(self):
-        return (
-                self.has_group()
-                and "group_end" in self.jd
-                and 1 == int(self.jd["group_end"])
-        )
+        result = False
+        if self.has_group() and "group_end" in self.jd:
+            ge = self.jd["group_end"]
+            if type(ge) == type(True):
+                result = ge
+            elif type(ge) in [type(1), type(1.0)]:
+                result = 1 == ge
+            elif type(ge) == type("s"):
+                result = ge.lower() in ("true", "1")
+        return result
 
     def is_group(self):
         return self._isgrp
@@ -348,6 +343,12 @@ class LGNode:
 
     def is_loop(self):
         return self.is_group() and self._jd["category"] == Categories.LOOP
+
+    def is_service(self):
+        """
+        Determines whether a node the parent service node (not the input application)
+        """
+        return self._jd["category"] == Categories.SERVICE
 
     def is_groupby(self):
         return self._jd["category"] == Categories.GROUP_BY
@@ -377,6 +378,7 @@ class LGNode:
                 )
 
     def is_branch(self):
+        # This is the only special thing required for a branch
         return self._jd["category"] == Categories.BRANCH
 
     @property
@@ -501,7 +503,7 @@ class LGNode:
                             self._dop = int(self.jd[kw])
                             break
                     if self._dop is None:
-                        self._dop = 4  # dummy impl.
+                        self._dop = 4  # dummy impl. TODO: Why is this here?
                 elif self.is_gather():
                     try:
                         tlgn = self.inputs[0]
@@ -518,6 +520,8 @@ class LGNode:
                     self._dop = self.group_by_scatter_layers[0]
                 elif self.is_loop():
                     self._dop = int(self.jd.get("num_of_iter", 1))
+                elif self.is_service():
+                    self._dop = 1  # TODO: number of compute nodes
                 else:
                     raise GInvalidNode(
                         "Unrecognised (Group) Logical Graph Node: '{0}'".format(
@@ -544,11 +548,11 @@ class LGNode:
 
     def _update_key_value_attributes(self, kwargs):
         # get the arguments from new fields dictionary in a backwards compatible way
-        if 'fields' in self.jd:
-            for je in self.jd['fields']:
+        if "fields" in self.jd:
+            for je in self.jd["fields"]:
                 # The field to be used is not the text, but the name field
-                self.jd[je['name']]=je['value']
-                kwargs[je['name']] = je['value']
+                self.jd[je["name"]] = je["value"]
+                kwargs[je["name"]] = je["value"]
         for i in range(10):
             k = "Arg%02d" % (i + 1)
             if k not in self.jd:
@@ -560,14 +564,16 @@ class LGNode:
                     if len(k_v) > 1:
                         # Do substitutions for MKN
                         if "mkn" in self.jd:
-                            kwargs[k_v[0]] = self._mkn_substitution(self.jd["mkn"], k_v[1])
+                            kwargs[k_v[0]] = self._mkn_substitution(
+                                self.jd["mkn"], k_v[1]
+                            )
                         else:
                             kwargs[k_v[0]] = k_v[1]
 
-    def _create_test_drop_spec(self, oid, rank, kwargs):
+    def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
         """
         TODO
-        This is a test funciton only
+        This is a test function only
         should be replaced by LGNode class specific methods
         """
         drop_spec = None
@@ -580,12 +586,17 @@ class LGNode:
             if self.is_start_listener():
                 # create socket listener DROP first
                 drop_spec = dropdict(
-                    {"oid": oid, "type": "plain", "storage": drop_type, "rank": rank}
+                    {
+                        "oid": oid,
+                        "type": DropType.PLAIN,
+                        "storage": drop_type,
+                        "rank": rank,
+                    }
                 )
                 dropSpec_socket = dropdict(
                     {
                         "oid": "{0}-s".format(oid),
-                        "type": "app",
+                        "type": DropType.APP,
                         "app": "dlg.apps.simple.SleepApp",
                         "nm": "lstnr",
                         "tw": 5,
@@ -599,7 +610,12 @@ class LGNode:
                 dropSpec_socket.addOutput(drop_spec)
             else:
                 drop_spec = dropdict(
-                    {"oid": oid, "type": "plain", "storage": drop_type, "rank": rank}
+                    {
+                        "oid": oid,
+                        "type": DropType.PLAIN,
+                        "storage": drop_type,
+                        "rank": rank,
+                    }
                 )
             if drop_type == Categories.FILE:
                 dn = self.jd.get("dirname", None)
@@ -613,9 +629,8 @@ class LGNode:
                     kwargs["filepath"] = fp
             self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
-        elif (
-            drop_type in [Categories.COMPONENT, Categories.PYTHON_APP]
-        ):  # default generic component becomes "sleep and copy"
+        elif drop_type in [Categories.COMPONENT, Categories.PYTHON_APP, Categories.BRANCH]:
+            # default generic component becomes "sleep and copy"
             if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
                 app_class = "dlg.apps.simple.SleepApp"
             else:
@@ -640,20 +655,22 @@ class LGNode:
 
             kwargs["tw"] = execTime
             drop_spec = dropdict(
-                {"oid": oid, "type": "app", "app": app_class, "rank": rank}
+                {"oid": oid, "type": DropType.APP, "app": app_class, "rank": rank}
             )
+
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             if "mkn" in self.jd:
                 kwargs["mkn"] = self.jd["mkn"]
             self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
+
         elif drop_type in [Categories.DYNLIB_APP, Categories.DYNLIB_PROC_APP]:
             if "libpath" not in self.jd or len(self.jd["libpath"]) == 0:
                 raise GraphException("Missing 'libpath' in Drop {0}".format(self.text))
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": "app",
+                    "type": DropType.APP,
                     "app": "dlg.apps.dynlib.{}".format(drop_type),
                     "rank": rank,
                 }
@@ -673,7 +690,7 @@ class LGNode:
             else:
                 app_str = "dlg.apps.bash_shell_app.BashShellApp"
             drop_spec = dropdict(
-                {"oid": oid, "type": "app", "app": app_str, "rank": rank}
+                {"oid": oid, "type": DropType.APP, "app": app_str, "rank": rank}
             )
             if "execution_time" in self.jd:
                 kwargs["tw"] = int(self.jd["execution_time"])
@@ -693,6 +710,16 @@ class LGNode:
                 v = self.jd[k]
                 if v is not None and len(str(v)) > 0:
                     cmds.append(str(v))
+            # add more arguments - this is the new method of adding arguments in EAGLE
+            # the method above (Arg**) is retained for compatibility, but eventually should be removed
+            for k in [
+                "command",
+                "input_redirection",
+                "output_redirection",
+                "command_line_arguments",
+            ]:
+                if k in self.jd:
+                    cmds.append(self.jd[k])
             # kwargs['command'] = ' '.join(cmds)
             if drop_type == Categories.MPI:
                 kwargs["command"] = BashCommand(cmds).to_real_command()
@@ -704,7 +731,7 @@ class LGNode:
         elif drop_type == Categories.DOCKER:
             # Docker application.
             app_class = "dlg.apps.dockerapp.DockerApp"
-            typ = "app"
+            typ = DropType.APP
             drop_spec = dropdict(
                 {"oid": oid, "type": typ, "app": app_class, "rank": rank}
             )
@@ -714,8 +741,9 @@ class LGNode:
                 raise GraphException("Missing image for Construct '%s'" % self.text)
 
             command = str(self.jd.get("command"))
-            if command == "":
-                raise GraphException("Missing command for Construct '%s'" % self.text)
+            # There ARE containers which don't need/want a command
+            # if command == "":
+            #     raise GraphException("Missing command for Construct '%s'" % self.text)
 
             kwargs["tw"] = int(self.jd.get("execution_time", "5"))
             kwargs["image"] = image
@@ -728,13 +756,15 @@ class LGNode:
                 str(self.jd.get("removeContainer", "1"))
             )
             kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
+            kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
+            kwargs["shmSize"] = str(self.jd.get("shmSize",""))
             drop_spec.update(kwargs)
 
         elif drop_type == Categories.GROUP_BY:
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": "app",
+                    "type": DropType.APP,
                     "app": "dlg.apps.simple.SleepApp",
                     "rank": rank,
                 }
@@ -748,7 +778,7 @@ class LGNode:
             dropSpec_grp = dropdict(
                 {
                     "oid": "{0}-grp-data".format(oid),
-                    "type": "plain",
+                    "type": DropType.PLAIN,
                     "storage": Categories.MEMORY,
                     "nm": "grpdata",
                     "dw": dw,
@@ -764,7 +794,7 @@ class LGNode:
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": "app",
+                    "type": DropType.APP,
                     "app": "dlg.apps.simple.SleepApp",
                     "rank": rank,
                 }
@@ -778,7 +808,7 @@ class LGNode:
             dropSpec_gather = dropdict(
                 {
                     "oid": "{0}-gather-data".format(oid),
-                    "type": "plain",
+                    "type": DropType.PLAIN,
                     "storage": Categories.MEMORY,
                     "nm": "gthrdt",
                     "dw": dw,
@@ -790,34 +820,30 @@ class LGNode:
             kwargs["sleepTime"] = 1
             drop_spec.addOutput(dropSpec_gather)
             dropSpec_gather.addProducer(drop_spec)
-        elif drop_type == Categories.BRANCH:
-            # create an App first
+        elif drop_type == Categories.SERVICE:
+            raise GraphException(f"DROP type: {drop_type} should not appear in physical graph")
+            # drop_spec = dropdict(
+            #     {
+            #         "oid": oid,
+            #         "type": DropType.SERVICE_APP,
+            #         "app": "dlg.apps.simple.SleepApp",
+            #         "rank": rank
+            #     }
+            # )
+            # kwargs["tw"] = 1
+
+        # elif drop_type == Categories.BRANCH:
+        # Branches are now dealt with like any other application and essentially ignored by the translator.
+
+        elif drop_type in [Categories.START, Categories.END]:
+            # this is at least suspicious in terms of implementation....
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": "app",
-                    "app": "dlg.apps.simple.SleepApp",
-                    "rank": rank,
-                }
-            )
-            dropSpec_null = dropdict(
-                {
-                    "oid": "{0}-null_drop".format(oid),
-                    "type": "plain",
+                    "type": DropType.PLAIN,
                     "storage": Categories.NULL,
-                    "nm": "null",
-                    "dw": 0,
                     "rank": rank,
                 }
-            )
-            kwargs["null_drop"] = dropSpec_null
-            kwargs["tw"] = 0
-            kwargs["sleepTime"] = 1
-            drop_spec.addOutput(dropSpec_null)
-            dropSpec_null.addProducer(drop_spec)
-        elif drop_type in [Categories.START, Categories.END]:
-            drop_spec = dropdict(
-                {"oid": oid, "type": "plain", "storage": Categories.NULL, "rank": rank}
             )
         elif drop_type == Categories.LOOP:
             pass
@@ -840,12 +866,14 @@ class LGNode:
         kwargs["nm"] = self.text
         # Behaviour is that child-nodes inherit reproducibility data from their parents.
         kwargs["reprodata"] = self._reprodata.copy()
+        if "isService" in self.jd and self.jd["isService"]:
+            kwargs["type"] = DropType.SERVICE_APP
         dropSpec.update(kwargs)
         return dropSpec
 
     @staticmethod
     def str_to_bool(value, default_value=False):
-        res = True if value in ["1", "true", "yes"] else default_value
+        res = True if value in ["1", "true", "True", "yes"] else default_value
         return res
 
     @staticmethod
@@ -981,15 +1009,15 @@ class PGT(object):
                 return None
         if app_drop_only:
             lp = DAGUtil.get_longest_path(G, show_path=True)[0]
-            return sum(G.node[u].get(wk, 0) for u in lp)
+            return sum(G.nodes[u].get(wk, 0) for u in lp)
         else:
             return DAGUtil.get_longest_path(G, show_path=False)[1]
 
     @property
     def json(self):
         """
-            Return the JSON string representation of the PGT
-            for visualisation
+        Return the JSON string representation of the PGT
+        for visualisation
         """
         if self._json_str is None:
             self._json_str = self.to_gojs_json(visual=True)
@@ -1001,58 +1029,69 @@ class PGT(object):
     ):
         raise Exception("Not implemented. Call sub-class")
 
-    def to_pg_spec(self, node_list, ret_str=True, num_islands=1, tpl_nodes_len=0):
+    def to_pg_spec(self, node_list, ret_str=True, num_islands=1, tpl_nodes_len=0,
+        co_host_dim=True):
         """
         convert pgt to pg specification, and map that to the hardware resources
 
         node_list:
             A list of nodes (list), whose length == (num_islands + num_node_mgrs)
+            if co_locate_islands = False.
             We assume that the MasterDropManager's node is NOT in the node_list
 
         num_islands:
-            >1  - Partitions are "conceptually" clustered into Islands
-            1   - Partitions MAY BE physically merged without generating islands
-                depending on the length of node_list
+            - >1 Partitions are "conceptually" clustered into Islands
+            - 1 Partitions MAY BE physically merged without generating islands
+              depending on the length of node_list
+            - num_islands can't be < 1
 
+        tpl_nodes_len: if this is given we generate a pg_spec template
+            The pg_spec template is what needs to be send to a deferred deployemnt
+            where the daliuge system is started up afer submission (e.g. SLURM)
         """
+        logger.debug("tpl_nodes_len: %s, node_list: %s" % (tpl_nodes_len, node_list))
         if tpl_nodes_len > 0:  # generate pg_spec template
             node_list = range(tpl_nodes_len)  # create a fake list for now
-            # TODO proper branch
+
+        if 0 == self._num_parts_done:
+            raise GPGTException("The graph has not been partitioned yet")
 
         if node_list is None or 0 == len(node_list):
             raise GPGTException("Node list is empty!")
+        nodes_len = len(node_list)
 
         try:
             num_islands = int(num_islands)
         except:
-            raise GPGTException("Invalid num_islands: {0}".format(num_islands))
+            raise GPGTException("Invalid num_islands spec: {0}".format(num_islands))
         if num_islands < 1:
-            num_islands = 1
-
+            num_islands = 1 # need at least one island manager
+        if num_islands > nodes_len:
+            raise GPGTException("Number of islands must be <= number of specified nodes!")
         form_island = num_islands > 1
-        if 0 == self._num_parts_done:
-            raise GPGTException("The graph has not been partitioned yet")
-        nodes_len = len(node_list)
-        if nodes_len < 2:  # enough for at least 1 dim and 1 nm
+        if nodes_len < 1:  # we allow to run everything on a single node now!
             raise GPGTException("Too few nodes: {0}".format(nodes_len))
+
         num_parts = self._num_parts_done
         drop_list = self._drop_list + self._extra_drops
+
+        # deal with the co-hosting of DIMs
+        if not co_host_dim:
+            if form_island and num_parts > nodes_len:
+                raise GPGTException("Insufficient number of nodes: {0}".format(nodes_len))
+            is_list = node_list[0:num_islands]
+            nm_list = node_list[num_islands:]
+        else:
+            if form_island and num_islands + num_parts > nodes_len:
+                raise GPGTException("Insufficient number of nodes: {0}".format(nodes_len))
+            is_list = node_list
+            nm_list = node_list
+        nm_len = len(nm_list)
         logger.info(
-            "Drops count: {0}, partitions count: {1}, nodes count: {2}".format(
-                len(drop_list), num_parts, nodes_len
+            "Drops count: {0}, partitions count: {1}, nodes count: {2}, island count: {3}".format(
+                len(drop_list), num_parts, nodes_len, len(is_list)
             )
         )
-
-        if form_island and num_islands + num_parts > nodes_len:
-            # if form_island, each part should already be guaranteed
-            # to occupy one physical node
-            # i.e. nodes_len - num_islands >= num_parts (Eq.1)
-            # otherwise
-            raise GPGTException("Insufficient number of nodes: {0}".format(nodes_len))
-
-        is_list = node_list[0:num_islands]
-        nm_list = node_list[num_islands:]
-        nm_len = len(nm_list)
 
         if form_island:
             self.merge_partitions(num_islands, form_island=True)
@@ -1064,12 +1103,22 @@ class PGT(object):
 
         lm = self._oid_gid_map
         lm2 = self._gid_island_id_map
+        # when #partitions < #nodes the lm values are spread around range(#nodes)
+        # which leads to index out of range errors (TODO: find how _oid_gid_map is
+        # constructed). The next three lines are attempting to fix this, however
+        # then the test_metis_pgtp_gen_pg_island fails. This needs more investigation
+        # but is a corner case.
+        # values = set(dict(lm).values()) # old unique values
+        # values = dict(zip(values,range(len(values)))) # dict with new values
+        # lm = {k:values[v] for (k, v) in lm.items()} # replace old values with new
+
         if tpl_nodes_len:
             nm_list = ["#%s" % x for x in range(nm_len)]  # so that nm_list[i] == '#i'
             is_list = [
                 "#%s" % x for x in range(len(is_list))
             ]  # so that is_list[i] == '#i'
 
+        logger.info("nm_list: %s, is_list: %s, lm: %s, lm2: %s" % (nm_list, is_list, lm, lm2))
         for drop in drop_list:
             oid = drop["oid"]
             # For now, simply round robin, but need to consider
@@ -1106,9 +1155,9 @@ class PGT(object):
             key_dict[oid] = i + 1
             node["oid"] = oid
             tt = drop["type"]
-            if "plain" == tt:
+            if DropType.PLAIN == tt:
                 node["category"] = Categories.DATA
-            elif "app" == tt:
+            elif DropType.APP == tt:
                 node["category"] = Categories.COMPONENT
             node["text"] = drop["nm"]
             nodes.append(node)
@@ -1124,17 +1173,17 @@ class PGT(object):
                 for i, oup in enumerate(G.successors(myk)):
                     link = dict()
                     link["from"] = myk
-                    from_dt = 0 if drop["type"] == "plain" else 1
-                    to_dt = G.node[oup]["dt"]
+                    from_dt = 0 if drop["type"] == DropType.PLAIN else 1
+                    to_dt = G.nodes[oup]["dt"]
                     if from_dt == to_dt:
-                        to_drop = G.node[oup]["drop_spec"]
+                        to_drop = G.nodes[oup]["drop_spec"]
                         if from_dt == 0:
                             # add an extra app DROP
                             extra_oid = "{0}_TransApp_{1}".format(oid, i)
                             dropSpec = dropdict(
                                 {
                                     "oid": extra_oid,
-                                    "type": "app",
+                                    "type": DropType.APP,
                                     "app": "dlg.drop.BarrierAppDROP",
                                     "nm": "go_app",
                                     "tw": 1,
@@ -1152,7 +1201,7 @@ class PGT(object):
                             dropSpec = dropdict(
                                 {
                                     "oid": extra_oid,
-                                    "type": "plain",
+                                    "type": DropType.PLAIN,
                                     "storage": Categories.MEMORY,
                                     "nm": "go_data",
                                     "dw": 1,
@@ -1173,7 +1222,7 @@ class PGT(object):
                         # global graph updates
                         # the new drop must have the same gid as the to_drop
                         add_nodes.append(
-                            (lid, 1, mydt, dropSpec, G.node[oup].get("gid", None))
+                            (lid, 1, mydt, dropSpec, G.nodes[oup].get("gid", None))
                         )
                         remove_edges.append((myk, oup))
                         add_edges.append((myk, lid))
@@ -1204,9 +1253,9 @@ class PGT(object):
             node["key"] = (i + 1) * -1
             node["oid"] = oid
             tt = drop["type"]
-            if "plain" == tt:
+            if DropType.PLAIN == tt:
                 node["category"] = Categories.DATA
-            elif "app" == tt:
+            elif DropType.APP == tt:
                 node["category"] = Categories.COMPONENT
             node["text"] = drop["nm"]
             nodes.append(node)
@@ -1299,12 +1348,12 @@ class MetisPGTP(PGT):
             oid = drop["oid"]
             myk = i + 1
             tt = drop["type"]
-            if "plain" == tt:
+            if DropType.PLAIN == tt:
                 dst = "consumers"  # outbound keyword
                 ust = "producers"
                 tw = 1  # task weight is zero for a Data DROP
                 sz = drop.get("dw", 1)  # size
-            elif "app" == tt:
+            elif DropType.APP == tt:
                 dst = "outputs"
                 ust = "inputs"
                 tw = drop["tw"]
@@ -1317,9 +1366,9 @@ class MetisPGTP(PGT):
                 adj_drops += drop[ust]
 
             for inp in adj_drops:
-                if "plain" == tt:
+                if DropType.PLAIN == tt:
                     lw = drop["dw"]
-                elif "app" == tt:
+                elif DropType.APP == tt:
                     # lw = drop_dict[inp].get('dw', 1)
                     lw = droplist[key_dict[inp] - 1].get("dw", 1)
                 if lw <= 0:
@@ -1487,8 +1536,8 @@ class MetisPGTP(PGT):
         GG = self._G
         part_edges = defaultdict(int)  # k: from_gid + to_gid, v: sum_of_weight
         for e in GG.edges(data=True):
-            from_gid = GG.node[e[0]]["gid"]
-            to_gid = GG.node[e[1]]["gid"]
+            from_gid = GG.nodes[e[0]]["gid"]
+            to_gid = GG.nodes[e[1]]["gid"]
             k = "{0}**{1}".format(from_gid, to_gid)
             part_edges[k] += e[2]["weight"]
 
@@ -1713,9 +1762,12 @@ class MySarkarPGTP(PGT):
         # print("gojs_json called within MyKarkarPGTP from {0}".format(inspect.stack()[1][3]))
 
         if self._num_parts_done == 0 and self._partitions is None:
-            self._num_parts_done, _, self._ptime, self._partitions = (
-                self._scheduler.partition_dag()
-            )
+            (
+                self._num_parts_done,
+                _,
+                self._ptime,
+                self._partitions,
+            ) = self._scheduler.partition_dag()
             # print("%s: _num_parts_done = %d" % (self.__class__.__name__, self._num_parts_done))
             # print("len(self._partitions) = %d" % (len(self._partitions)))
             # for part in self._partitions:
@@ -1760,7 +1812,7 @@ class MySarkarPGTP(PGT):
 
             node_list = jsobj["nodeDataArray"]
             for node in node_list:
-                gid = G.node[node["key"]]["gid"]  # gojs group_id
+                gid = G.nodes[node["key"]]["gid"]  # gojs group_id
                 if gid is None:
                     raise GPGTException(
                         "Node {0} does not have a Partition".format(node["key"])
@@ -1874,7 +1926,7 @@ class LG:
         parse JSON into LG object graph first
         """
         self._g_var = []
-        if isinstance(f, six.string_types):
+        if isinstance(f, str):
             if not os.path.exists(f):
                 raise GraphException("Logical graph {0} not found".format(f))
             with open(f) as f:
@@ -1894,15 +1946,21 @@ class LG:
         self._gather_cache = dict()
 
         lgver = get_lg_ver_type(lg)
+
         if LG_VER_EAGLE == lgver:
             lg = convert_mkn(lg)
             lg = convert_fields(lg)
             lg = convert_construct(lg)
         elif LG_VER_EAGLE_CONVERTED == lgver:
             lg = convert_construct(lg)
+        elif LG_APPREF == lgver:
+            lg = convert_fields(lg)
+            lgk = getNodesKeyDict(lg)
         # This ensures that future schema version mods are catched early
         else:
-            raise GraphException("Logical graph version '{0}' not supported!".format(lgver))
+            raise GraphException(
+                "Logical graph version '{0}' not supported!".format(lgver)
+            )
         self._done_dict = dict()
         self._group_q = collections.defaultdict(list)
         self._output_q = collections.defaultdict(list)
@@ -1910,7 +1968,10 @@ class LG:
         all_list = []
         stream_output_ports = dict()  # key - port_id, value - construct key
         for jd in lg["nodeDataArray"]:
-            if jd["category"] == Categories.COMMENT or jd["category"] == Categories.DESCRIPTION:
+            if (
+                jd["category"] == Categories.COMMENT
+                or jd["category"] == Categories.DESCRIPTION
+            ):
                 continue
             lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
             all_list.append(lgn)
@@ -1941,6 +2002,13 @@ class LG:
             self.validate_link(src, tgt)
             src.add_output(tgt)
             tgt.add_input(src)
+            # duplicate link from referenced APP into Gathers
+            # if LG_APPREF == lgver and lgk[tgt]['category'] == 'Gather' and \
+            #     'inputApplicationRef' in lgk[tgt].keys():
+            #     if lgk[lk]['inputApplicationRef']:
+            #         ak = lgk[lk]['inputApplicationRef']
+            #         portId = lgk[ak]['inputPorts']
+
             # check stream links
             from_port = lk.get("fromPort", "__None__")
             if stream_output_ports.get(from_port, None) == lk["from"]:
@@ -1983,12 +2051,6 @@ class LG:
                     )
                 )
             # raise GInvalidLink("Gather {0} cannot be the input".format(src.id))
-        elif src.is_branch():
-            if tgt.jd["category"] not in APP_DROP_TYPES and (not tgt.is_end_node()):
-                raise GInvalidLink(
-                    "Branch {0}'s output {1} must be Component".format(src.id, tgt.id)
-                )
-
         if tgt.is_groupby():
             if src.is_group():
                 raise GInvalidLink(
@@ -2013,11 +2075,6 @@ class LG:
                         tgt.id, src.id
                     )
                 )
-        elif tgt.is_branch():
-            if not src.jd["category"] in STORAGE_TYPES:
-                raise GInvalidLink(
-                    "Branch {0}'s input {1} should be Data".format(tgt.id, src.id)
-                )
 
         if src.is_groupby() and not tgt.is_gather():
             raise GInvalidLink(
@@ -2025,17 +2082,6 @@ class LG:
                     src.id, tgt.id
                 )
             )
-
-        elif src.is_branch():
-            o = src.outputs
-            if len(o) < 2:
-                pass
-            else:
-                raise GInvalidLink(
-                    "Branch {0} must have two outputs, but it has {1} now".format(
-                        src.id, len(o)
-                    )
-                )
 
         if not src.h_related(tgt):
             ll = src.group
@@ -2081,6 +2127,7 @@ class LG:
         lpcxt:  Loop context
         """
         if lgn.is_group():
+            # services nodes are replaced with the input application in the logical graph
             extra_links_drops = not lgn.is_scatter()
             if extra_links_drops:
                 non_inputs = []
@@ -2156,16 +2203,15 @@ class LG:
                     grp_h = [str(x) for x in grp_h]
                     miid += "${0}".format("-".join(grp_h))
 
-                if (
-                        extra_links_drops and not lgn.is_loop()
-                ):  # make GroupBy and Gather drops
-                    src_gdrop = lgn.make_single_drop(miid)
-                    self._drop_dict[lgn.id].append(src_gdrop)
+                if extra_links_drops and not lgn.is_loop():
+                    # make GroupBy and Gather drops
+                    src_drop = lgn.make_single_drop(miid)
+                    self._drop_dict[lgn.id].append(src_drop)
                     if lgn.is_groupby():
-                        self._drop_dict["new_added"].append(src_gdrop["grp-data_drop"])
+                        self._drop_dict["new_added"].append(src_drop["grp-data_drop"])
                     elif lgn.is_gather():
                         pass
-                        # self._drop_dict['new_added'].append(src_gdrop['gather-data_drop'])
+                        # self._drop_dict['new_added'].append(src_drop['gather-data_drop'])
                 for child in lgn.children:
                     self.lgn_to_pgn(child, miid, get_child_lp_ctx(i))
         elif lgn.is_mpi():
@@ -2173,13 +2219,13 @@ class LG:
                 miid = "{0}/{1}".format(iid, i)
                 src_drop = lgn.make_single_drop(miid, loop_cxt=lpcxt, proc_index=i)
                 self._drop_dict[lgn.id].append(src_drop)
+        elif lgn.is_service():
+            # no action required, inputapp node aleady created and marked with "isService"
+            pass
         else:
-            # TODO !!
             src_drop = lgn.make_single_drop(iid, loop_cxt=lpcxt)
             self._drop_dict[lgn.id].append(src_drop)
-            if lgn.is_branch():
-                self._drop_dict["new_added"].append(src_drop["null_drop"])
-            elif lgn.is_start_listener():
+            if lgn.is_start_listener():
                 self._drop_dict["new_added"].append(src_drop["listener_drop"])
 
     @staticmethod
@@ -2220,20 +2266,18 @@ class LG:
             Categories.COMPONENT,
             Categories.DYNLIB_APP,
             Categories.DYNLIB_PROC_APP,
-            Categories.PYTHON_APP] and t_type in [
-                Categories.COMPONENT,
-                Categories.DYNLIB_APP,
-                Categories.DYNLIB_PROC_APP,
-                Categories.PYTHON_APP
-                ]
+            Categories.PYTHON_APP,
+        ] and t_type in [
+            Categories.COMPONENT,
+            Categories.DYNLIB_APP,
+            Categories.DYNLIB_PROC_APP,
+            Categories.PYTHON_APP,
+        ]
 
     def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink):
-        """
-        """
+        """ """
         sdrop = None
-        if slgn.is_branch():
-            sdrop = src_drop["null_drop"]
-        elif slgn.is_gather():
+        if slgn.is_gather():
             # sdrop = src_drop['gather-data_drop']
             pass
         elif slgn.is_groupby():
@@ -2268,7 +2312,7 @@ class LG:
                     "oid": "{0}-{1}-stream".format(
                         sdrop["oid"], tdrop["oid"].replace(self._session_id, "")
                     ),
-                    "type": "plain",
+                    "type": DropType.PLAIN,
                     "storage": Categories.NULL,
                     "nm": "StreamNull",
                     "dw": 0,
@@ -2384,7 +2428,7 @@ class LG:
                     slgn, tlgn, sdrops, tdrops, chunk_size, lk
                 )
             elif not slgn.is_group() and (not tlgn.is_group()):
-                if slgn.is_start_node() or tlgn.is_end_node():
+                if slgn.is_start_node():
                     continue
                 elif (
                         (slgn.group is not None)
@@ -2528,8 +2572,15 @@ class LG:
                     self._unroll_gather_as_output(
                         slgn, tlgn, sdrops, tdrops, chunk_size, lk
                     )
+                elif tlgn.is_service():
+                    # Only the service node's inputApplication will be translated
+                    # to the physical graph as a node of type SERVICE_APP instead of APP
+                    # per compute instance
+                    tlgn["type"] = DropType.SERVICE_APP
                 else:
-                    raise GraphException("Unsupported target group {0}".format(tlgn.id))
+                    raise GraphException(
+                        "Unsupported target group {0}".format(tlgn.jd["category"])
+                    )
 
         for _, v in self._gather_cache.items():
             input_list = v[1]
@@ -2561,12 +2612,8 @@ class LG:
 
         # clean up extra drops
         for lid, lgn in self._done_dict.items():
-            if (lgn.is_start_node() or lgn.is_end_node()) and lid in self._drop_dict:
+            if (lgn.is_start_node()) and lid in self._drop_dict:
                 del self._drop_dict[lid]
-            elif lgn.is_branch():
-                for branch_drop in self._drop_dict[lid]:
-                    if "null_drop" in branch_drop:
-                        del branch_drop["null_drop"]
             elif lgn.is_start_listener():
                 for sl_drop in self._drop_dict[lid]:
                     if "listener_drop" in sl_drop:
@@ -2592,7 +2639,9 @@ class LG:
             ret += drop_list
 
         for drop in ret:
-            if drop["type"] == "app" and drop["app"].endswith(Categories.BASH_SHELL_APP):
+            if drop["type"] == DropType.APP and drop["app"].endswith(
+                Categories.BASH_SHELL_APP
+            ):
                 bc = drop["command"]
                 drop["command"] = bc.to_real_command()
 
@@ -2625,7 +2674,7 @@ def fill(lg, params):
     flat_params = _flatten_dict(params)
     if hasattr(lg, "read"):
         lg = lg.read()
-    elif not isinstance(lg, six.string_types):
+    elif not isinstance(lg, str):
         lg = json.dumps(lg)
     lg = _LGTemplate(lg).substitute(flat_params)
     return json.loads(lg)
@@ -2675,7 +2724,7 @@ _known_algos = {
 
 
 def known_algorithms():
-    return [x for x in _known_algos.keys() if isinstance(x, six.string_types)]
+    return [x for x in _known_algos.keys() if isinstance(x, str)]
 
 
 def partition(
@@ -2689,7 +2738,7 @@ def partition(
 ):
     """Partitions a Physical Graph Template"""
 
-    if isinstance(algo, six.string_types):
+    if isinstance(algo, str):
         if algo not in _known_algos:
             raise ValueError(
                 "Unknown partitioning algorithm: %s. Known algorithms are: %r"
@@ -2786,15 +2835,21 @@ def partition(
     return pgt
 
 
-def resource_map(pgt, nodes, num_islands=1):
+def resource_map(pgt, nodes, num_islands=1, co_host_dim=True):
     """Maps a Physical Graph Template `pgt` to `nodes`"""
 
     if not nodes:
         err_info = "Empty node_list, cannot map the PG template"
         raise ValueError(err_info)
 
-    dim_list = nodes[0:num_islands]
-    nm_list = nodes[num_islands:]
+    if co_host_dim:
+        dim_list = nodes
+        nm_list = nodes
+    else:
+        dim_list = nodes[0:num_islands]
+        nm_list = nodes[num_islands:]
+    if type(pgt[0]) is str:
+        pgt = pgt[1]  # remove the graph name TODO: we may want to retain that
     for drop_spec in pgt:
         nidx = int(drop_spec["node"][1:])  # skip '#'
         drop_spec["node"] = nm_list[nidx]

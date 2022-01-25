@@ -19,9 +19,9 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-'''
+"""
 A module containing utility code for running remote commands over SSH.
-'''
+"""
 
 import logging
 import os
@@ -40,7 +40,7 @@ def execRemoteWithClient(client, command, timeout=None, bufsize=-1):
     """
     chan = client.get_transport().open_session()
     chan.settimeout(timeout)
-    chan.exec_command('/bin/bash -l -c "%s"' % (command.replace('"', '\"')))
+    chan.exec_command('/bin/bash -l -c "%s"' % (command.replace('"', '"')))
     # Otherwise do something like this:
     # chan.get_pty(width=80, height=24)
     # chan.invoke_shell()
@@ -54,12 +54,12 @@ def execRemoteWithClient(client, command, timeout=None, bufsize=-1):
         try:
             time.sleep(0.01)
         except KeyboardInterrupt:
-            chan.send('\x03')
+            chan.send("\x03")
 
     exitStatus = chan.recv_exit_status()
-    with chan.makefile('r', bufsize) as f:
+    with chan.makefile("r", bufsize) as f:
         stdout = f.read()
-    with chan.makefile_stderr('r', bufsize) as f:
+    with chan.makefile_stderr("r", bufsize) as f:
         stderr = f.read()
     return stdout, stderr, exitStatus
 
@@ -82,7 +82,9 @@ def createClient(host, username=None, pkeyPath=None):
     client = SSHClient()
     client.set_missing_host_key_policy(AutoAddPolicy())
 
-    pkey = RSAKey.from_private_key_file(os.path.expanduser(pkeyPath)) if pkeyPath else None
+    pkey = (
+        RSAKey.from_private_key_file(os.path.expanduser(pkeyPath)) if pkeyPath else None
+    )
     client.connect(host, username=username, pkey=pkey)
     return client
 
@@ -92,7 +94,15 @@ def __scpProgress(filename, size, sent):
         logger.debug("Finished scp-ing %s (%d bytes)", filename, sent)
 
 
-def copyFrom(host, remotePath, localPath='.', recursive=False, username=None, pkeyPath=None, timeout=None):
+def copyFrom(
+    host,
+    remotePath,
+    localPath=".",
+    recursive=False,
+    username=None,
+    pkeyPath=None,
+    timeout=None,
+):
     """
     Copies the files located at `host`:`remotePath` to `localPath` connecting
     to `host` as `username`. A `recursive` flag can be specified, as well as a
@@ -101,12 +111,22 @@ def copyFrom(host, remotePath, localPath='.', recursive=False, username=None, pk
     if timeout is None:
         timeout = 5.0
     client = createClient(host, username=username, pkeyPath=pkeyPath)
-    with scp.SCPClient(client.get_transport(), progress=__scpProgress, socket_timeout=timeout) as scpClient:
+    with scp.SCPClient(
+        client.get_transport(), progress=__scpProgress, socket_timeout=timeout
+    ) as scpClient:
         scpClient.get(remote_path=remotePath, local_path=localPath, recursive=recursive)
     client.close()
 
 
-def copyTo(host, localFiles, remotePath='.', recursive=False, username=None, pkeyPath=None, timeout=None):
+def copyTo(
+    host,
+    localFiles,
+    remotePath=".",
+    recursive=False,
+    username=None,
+    pkeyPath=None,
+    timeout=None,
+):
     """
     Copies the files located at `localPath` to `host`:`remotePath` connecting
     to `host` as `username`. A `recursive` flag can be specified, as well as a
@@ -115,6 +135,8 @@ def copyTo(host, localFiles, remotePath='.', recursive=False, username=None, pke
     if timeout is None:
         timeout = 5.0
     client = createClient(host, username=username, pkeyPath=pkeyPath)
-    with scp.SCPClient(client.get_transport(), progress=__scpProgress, socket_timeout=timeout) as scpClient:
+    with scp.SCPClient(
+        client.get_transport(), progress=__scpProgress, socket_timeout=timeout
+    ) as scpClient:
         scpClient.put(localFiles, remote_path=remotePath, recursive=recursive)
     client.close()

@@ -22,12 +22,14 @@
 
 import collections
 
-dlg_bool_param = collections.namedtuple('dlg_bool_param', 'description default_value')
-dlg_int_param = collections.namedtuple('dlg_int_param', 'description default_value')
-dlg_float_param = collections.namedtuple('dlg_float_param', 'description default_value')
-dlg_string_param = collections.namedtuple('dlg_string_param', 'description default_value')
-dlg_list_param = collections.namedtuple('dlg_list_param', 'description default_value')
-dlg_dict_param = collections.namedtuple('dlg_dict_param', 'description default_value')
+dlg_bool_param = collections.namedtuple("dlg_bool_param", "description default_value")
+dlg_int_param = collections.namedtuple("dlg_int_param", "description default_value")
+dlg_float_param = collections.namedtuple("dlg_float_param", "description default_value")
+dlg_string_param = collections.namedtuple(
+    "dlg_string_param", "description default_value"
+)
+dlg_list_param = collections.namedtuple("dlg_list_param", "description default_value")
+dlg_dict_param = collections.namedtuple("dlg_dict_param", "description default_value")
 
 
 class dlg_batch_input(object):
@@ -48,7 +50,9 @@ class dlg_streaming_input(object):
 
 
 class dlg_component(object):
-    def __init__(self, name, description, batch_inputs, batch_outputs, streaming_inputs):
+    def __init__(
+        self, name, description, batch_inputs, batch_outputs, streaming_inputs
+    ):
         self.name = name
         self.description = description
         self.batch_inputs = batch_inputs

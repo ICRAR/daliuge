@@ -39,6 +39,7 @@ from bottle import (
     route,
     request,
     get,
+    post,
     static_file,
     template,
     redirect,
@@ -46,13 +47,18 @@ from bottle import (
     HTTPResponse,
 )
 
-from ..cwl import create_workflow
+from urllib.parse import parse_qs, urlparse
+
+from ... import common, restutils
+from ...clients import CompositeManagerClient
 from ..pg_generator import unroll, partition, GraphException
 from ..pg_manager import PGManager
 from ..scheduler import SchedulerException
-from ... import common, restutils
-from ...clients import CompositeManagerClient
 
+logger = logging.getLogger(__name__)
+
+# Patched to be larger to accomodate large config drops
+bottle.BaseRequest.MEMFILE_MAX = 1024 * 512
 
 def file_as_string(fname, enc="utf8"):
     b = pkg_resources.resource_string(__name__, fname)  # @UndefinedVariable
@@ -116,7 +122,7 @@ def _repo_contents(root_dir):
 
         # Not great yet -- we should do a full second step pruning branches
         # of the tree that are empty
-        files = [f for f in fnames if f.endswith(".json")]
+        files = [f for f in fnames if f.endswith(".graph")]
         if files:
             contents[b(dirpath)] = files
 
@@ -166,9 +172,13 @@ def jsonbody_get():
     lg_name = request.query.get("lg_name")
     if lg_name is None or len(lg_name) == 0:
         all_lgs = lg_repo_contents()
-        first_dir = next(iter(all_lgs))
-        first_lg = first_dir + "/" + all_lgs[first_dir][0]
-        lg_name = first_lg
+        try:
+            first_dir = next(iter(all_lgs))
+            first_lg = first_dir + "/" + all_lgs[first_dir][0]
+            lg_name = first_lg
+        except StopIteration:
+            return "Nothing found in dir {0}\n".format(lg_path)
+            lg_name = None
 
     if lg_exists(lg_name):
         # print "Loading {0}".format(lg_name)
@@ -198,58 +208,6 @@ def pgtjsonbody_get():
         response.status = 404
         return "{0}: JSON graph {1} not found\n".format(err_prefix, pgt_name)
 
-@get("/pgt_cwl")
-def pgtcwl_get():
-    """
-    Return CWL representation of the logical graph
-    """
-    pgt_name = request.query.get("pgt_name")
-
-    if pgt_exists(pgt_name):
-        # get PGT from manager
-        pgtp = pg_mgr.get_pgt(pgt_name)
-
-        # build filename for CWL file from PGT filename
-        cwl_filename = pgt_name[:-6] + ".cwl"
-        zip_filename = pgt_name[:-6] + ".zip"
-
-        # create the workflow
-        import io
-        buffer = io.BytesIO()
-        try:
-            create_workflow(pgtp.drops, cwl_filename, buffer)
-        except Exception as e:
-            response.status = 400 # HTTP 400 Bad Request
-            return e
-
-        # respond with download of ZIP file
-        response.content_type = 'application/zip'
-        response.set_header("Content-Disposition", "attachment; filename=%s" % (zip_filename))
-        return buffer.getvalue()
-
-    else:
-        response.status = 404
-        return "{0}: JSON graph {1} not found\n".format(err_prefix, pgt_name)
-
-@get("/lg_editor")
-def load_lg_editor():
-    """
-    Let the LG editor load the specified logical graph JSON representation
-    """
-    lg_name = request.query.get("lg_name")
-    if lg_name is None or len(lg_name) == 0:
-        all_lgs = lg_repo_contents()
-        first_dir = next(iter(all_lgs))
-        lg_name = first_dir + "/" + all_lgs[first_dir][0]
-
-    if lg_exists(lg_name):
-        tpl = file_as_string("lg_editor.html")
-        all_lgs = lg_repo_contents()
-        return template(tpl, lg_json_name=lg_name, all_lgs=json.dumps(all_lgs))
-    else:
-        response.status = 404
-        return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
-
 
 @get("/pg_viewer")
 def load_pg_viewer():
@@ -259,10 +217,12 @@ def load_pg_viewer():
     pgt_name = request.query.get("pgt_view_name")
     if pgt_name is None or len(pgt_name) == 0:
         all_pgts = pgt_repo_contents()
-        print(all_pgts)
-        first_dir = next(iter(all_pgts))
-        pgt_name = first_dir + "/" + all_pgts[first_dir][0]
-
+        # print(all_pgts)
+        try:
+            first_dir = next(iter(all_pgts))
+            pgt_name = first_dir + "/" + all_pgts[first_dir][0]
+        except StopIteration:
+            pgt_name = None
     if pgt_exists(pgt_name):
         tpl = file_as_string("pg_viewer.html")
         return template(
@@ -273,8 +233,8 @@ def load_pg_viewer():
         )
     else:
         response.status = 404
-        return "{0}: physical graph template (view) {1} not found\n".format(
-            err_prefix, pgt_name
+        return "{0}: physical graph template (view) {1} not found {2}\n".format(
+            err_prefix, pgt_name, pgt_dir
         )
 
 
@@ -338,7 +298,7 @@ def gen_pg():
     """
     # if the 'deploy' checkbox is not checked, then the form submission will NOT contain a 'dlg_mgr_deploy' field
     deploy = request.query.get("dlg_mgr_deploy") is not None
-
+    mprefix = ""
     pgt_id = request.query.get("pgt_id")
     pgtp = pg_mgr.get_pgt(pgt_id)
     if pgtp is None:
@@ -347,22 +307,67 @@ def gen_pg():
             pgt_id
         )
 
-    mhost = request.query.get("dlg_mgr_host")
+    pgtpj = pgtp._gojs_json_obj
+    logger.info("PGTP: %s" % pgtpj)
+    num_partitions = 0
+    num_partitions = len(list(filter(lambda n:'isGroup' in n, pgtpj['nodeDataArray'])))
+    surl = urlparse(request.url)
+
+    mhost = ""
+    mport = -1
+    mprefix = ""
+    q = parse_qs(surl.query)
+    if "dlg_mgr_url" in q:
+        murl = q["dlg_mgr_url"][0]
+        mparse = urlparse(murl)
+        try:
+            (mhost, mport) = mparse.netloc.split(":")
+            mport = int(mport)
+        except:
+            mhost = mparse.netloc
+            if mparse.scheme == "http":
+                mport = 80
+            elif mparse.scheme == "https":
+                mport = 443
+        mprefix = mparse.path
+        if mprefix[-1] == "/":
+            mprefix = mprefix[:-1]
+    else:
+        mhost = request.query.get("dlg_mgr_host")
+        if request.query.get("dlg_mgr_port"):
+            mport = int(request.query.get("dlg_mgr_port"))
+
+    logger.debug("Manager host: %s" % mhost)
+    logger.debug("Manager port: %s" % mport)
+    logger.debug("Manager prefix: %s" % mprefix)
+
     if mhost is None:
-        response.status = 500
-        return "Must specify DALiUGE manager host"
+        if request.query.get("tpl_nodes_len"):
+            nnodes = int(request.query.get("tpl_nodes_len"))
+            nnodes = num_partitions
+        else:
+            response.status = 500
+            return "Must specify DALiUGE manager host or tpl_nodes_len"
+
+        pg_spec = pgtp.to_pg_spec([], ret_str=False, tpl_nodes_len=nnodes)
+        response.content_type = "application/json"
+        response.set_header(
+            "Content-Disposition", 'attachment; filename="%s"' % (pgt_id)
+        )
+        return json.dumps(pg_spec)
     try:
-        mport = int(request.query.get("dlg_mgr_port"))
-        mgr_client = CompositeManagerClient(host=mhost, port=mport, timeout=30)
+        mgr_client = CompositeManagerClient(
+            host=mhost, port=mport, url_prefix=mprefix, timeout=30
+        )
         # 1. get a list of nodes
         node_list = mgr_client.nodes()
         # 2. mapping PGTP to resources (node list)
-        pg_spec = pgtp.to_pg_spec([mhost] + node_list, ret_str=False)
+        pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
 
         if deploy:
             dt = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S.%f")
             ssid = "{0}_{1}".format(
-                pgt_id.split(".json")[0].split("_pgt")[0].split("/")[-1], dt
+                pgt_id.split(".graph")[0].split("_pgt")[0].split("/")[-1], dt
             )
             mgr_client.create_session(ssid)
             # print "session created"
@@ -373,10 +378,13 @@ def gen_pg():
             # mgr_client.deploy_session(ssid, completed_uids=[])
             # print "session deployed"
             # 3. redirect to the master drop manager
-            redirect("http://{0}:{1}/session?sessionId={2}".format(mhost, mport, ssid))
+            redirect(
+                "http://{0}:{1}{2}/session?sessionId={3}".format(
+                    mhost, mport, mprefix, ssid
+                )
+            )
         else:
-            response.content_type = 'application/json'
-            response.set_header("Content-Disposition", "attachment; filename=%s" % (pgt_id))
+            response.content_type = "application/json"
             return json.dumps(pg_spec)
     except restutils.RestClientException as re:
         response.status = 500
@@ -387,6 +395,55 @@ def gen_pg():
         response.status = 500
         print(traceback.format_exc())
         return "Fail to deploy physical graph: {0}".format(ex)
+
+
+@post("/gen_pg_spec")
+def gen_pg_spec():
+    """
+    RESTful interface to convert a PGT(P) into pg_spec
+    """
+    try:
+        pgt_id = request.json.get("pgt_id")
+        node_list = request.json.get("node_list")
+        manager_host = request.json.get("manager_host")
+        # try:
+        #     manager_port   = int(request.json.get("manager_port"));
+        # except:
+        #     manager_port = None
+        # manager_prefix = request.json.get("manager_prefix");
+        print("pgt_id:" + str(pgt_id))
+        print("node_list:" + str(node_list))
+        # print("manager_port:" + str(manager_port))
+        # print("manager_prefix:" + str(manager_prefix))
+    except Exception as ex:
+        response.status = 500
+        print(traceback.format_exc())
+        return "Unable to parse json body of request for pg_spec: {0}".format(ex)
+
+    pgtp = pg_mgr.get_pgt(pgt_id)
+    if pgtp is None:
+        response.status = 404
+        return "PGT(P) with id {0} not found in the Physical Graph Manager".format(
+            pgt_id
+        )
+
+    if node_list is None:
+        response.status = 500
+        return "Must specify DALiUGE nodes list"
+    try:
+        # mgr_client = CompositeManagerClient(host=manager_host, port=manager_port, url_prefix=manager_prefix, timeout=30)
+        # # 1. get a list of nodes
+        # node_list = mgr_client.nodes()
+        # # 2. mapping PGTP to resources (node list)
+        pg_spec = pgtp.to_pg_spec([manager_host] + node_list, ret_str=False)
+        # 3. get list of root nodes
+        root_uids = common.get_roots(pg_spec)
+        response.content_type = "application/json"
+        return json.dumps({"pg_spec": pg_spec, "root_uids": list(root_uids)})
+    except Exception as ex:
+        response.status = 500
+        print(traceback.format_exc())
+        return "Fail to generate pg_spec: {0}".format(ex)
 
 
 @get("/gen_pgt")
@@ -462,7 +519,9 @@ def gen_pgt_post():
             tpl,
             pgt_view_json_name=pgt_id,
             partition_info=part_info,
-            title="Physical Graph Template {}".format("" if par_algo == "none" else "Partitioning"),
+            title="Physical Graph Template {}".format(
+                "" if par_algo == "none" else "Partitioning"
+            ),
         )
     except GraphException as ge:
         trace_msg = traceback.format_exc()
@@ -478,8 +537,16 @@ def gen_pgt_post():
 
 
 def unroll_and_partition_with_params(lg_path, algo_params_source):
+    # Get the 'test' parameter
+    # NB: the test parameter is a string, so convert to boolean
+    test = algo_params_source.get("test", "false")
+    test = test.lower() == "true"
+
+    # Based on 'test' parameter, decide whether to use a replacement app
+    app = "dlg.apps.simple.SleepApp" if test else None
+
     # Unrolling LG to PGT.
-    pgt = unroll(lg_path)
+    pgt = unroll(lg_path, app=app)
 
     # Define partitioning parameters.
     algo = algo_params_source.get("algo", "none")
@@ -528,12 +595,21 @@ def save(lg_name, logical_graph):
 
 
 @get("/")
+@get("/")
 def root():
-    redirect("/lg_editor")
+    tpl = file_as_string("pg_viewer.html")
+    return template(
+        tpl,
+        pgt_view_json_name=None,
+        partition_info=None,
+        title="Physical Graph Template",
+    )
 
 
 def run(parser, args):
-    warnings.warn("Running the translator from daliuge is deprecated", DeprecationWarning)
+    warnings.warn(
+        "Running the translator from daliuge is deprecated", DeprecationWarning
+    )
     epilog = """
 If you have no Logical Graphs yet and want to see some you can grab a copy
 of those maintained at:
@@ -626,6 +702,7 @@ https://github.com/ICRAR/daliuge-logical-graphs
     # Simple and easy
     def handler(*_args):
         raise KeyboardInterrupt
+
     signal.signal(signal.SIGTERM, handler)
     signal.signal(signal.SIGINT, handler)
 

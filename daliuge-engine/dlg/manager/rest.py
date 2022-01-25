@@ -24,27 +24,41 @@ Module containing the REST layer that exposes the methods of the different
 Data Managers (DROPManager and DataIslandManager) to the outside world.
 """
 
+import cgi
 import functools
+import io
 import json
 import logging
+import os
+import tarfile
 import threading
 
 import bottle
 import pkg_resources
 
+from bottle import static_file
+
 from . import constants
-from .client import NodeManagerClient
+from .client import NodeManagerClient, DataIslandManagerClient
 from .. import utils
-from ..exceptions import InvalidGraphException, InvalidSessionState, \
-    DaliugeException, NoSessionException, SessionAlreadyExistsException, \
-    InvalidDropException, InvalidRelationshipException, SubManagerException
+from ..exceptions import (
+    InvalidGraphException,
+    InvalidSessionState,
+    DaliugeException,
+    NoSessionException,
+    SessionAlreadyExistsException,
+    InvalidDropException,
+    InvalidRelationshipException,
+    SubManagerException,
+)
 from ..restserver import RestServer
 from ..restutils import RestClient, RestClientException
+from .session import generateLogFileName
 
 logger = logging.getLogger(__name__)
 
 
-def file_as_string(fname, enc='utf8'):
+def file_as_string(fname, enc="utf8"):
     b = pkg_resources.resource_string(__name__, fname)  # @UndefinedVariable
     return utils.b2s(b, enc)
 
@@ -54,9 +68,24 @@ def daliuge_aware(func):
     def fwrapper(*args, **kwargs):
         try:
             res = func(*args, **kwargs)
+
+            if isinstance(res, (bytes, bottle.HTTPResponse)):
+                return res
+
             if res is not None:
-                bottle.response.content_type = 'application/json'
-                return json.dumps(res)
+                bottle.response.content_type = "application/json"
+                # set CORS headers
+                bottle.response.headers[
+                    "Access-Control-Allow-Origin"
+                ] = "http://localhost:8084"
+                bottle.response.headers["Access-Control-Allow-Credentials"] = "true"
+                bottle.response.headers[
+                    "Access-Control-Allow-Methods"
+                ] = "GET, POST, PUT, OPTIONS"
+                bottle.response.headers[
+                    "Access-Control-Allow-Headers"
+                ] = "Origin, Accept, Content-Type, Content-Encoding, X-Requested-With, X-CSRF-Token"
+            return json.dumps(res)
         except Exception as e:
             logger.exception("Error while fulfilling request")
 
@@ -82,13 +111,13 @@ def daliuge_aware(func):
                 eargs = {}
                 # args[1] is a dictionary of host:exception
                 for host, subex in e.args[1].items():
-                    eargs[host] = {'type': subex.__class__.__name__, 'args': subex.args}
+                    eargs[host] = {"type": subex.__class__.__name__, "args": subex.args}
             elif isinstance(e, DaliugeException):
                 status, eargs = 555, e.args
             else:
                 raise
 
-            error = {'type': e.__class__.__name__, 'args': eargs}
+            error = {"type": e.__class__.__name__, "args": eargs}
             bottle.response.status = status
             return json.dumps(error)
 
@@ -116,25 +145,30 @@ class ManagerRestServer(RestServer):
 
         # Mappings
         app = self.app
-        app.post('/api/stop', callback=self.stop_manager)
-        app.post('/api/sessions', callback=self.createSession)
-        app.get('/api/sessions', callback=self.getSessions)
-        app.get('/api/sessions/<sessionId>', callback=self.getSessionInformation)
-        app.delete('/api/sessions/<sessionId>', callback=self.destroySession)
-        app.get('/api/sessions/<sessionId>/status', callback=self.getSessionStatus)
-        app.post('/api/sessions/<sessionId>/deploy', callback=self.deploySession)
-        app.post('/api/sessions/<sessionId>/cancel', callback=self.cancelSession)
-        app.get('/api/sessions/<sessionId>/graph', callback=self.getGraph)
-        app.get('/api/sessions/<sessionId>/graph/size', callback=self.getGraphSize)
-        app.get('/api/sessions/<sessionId>/graph/status', callback=self.getGraphStatus)
-        app.post('/api/sessions/<sessionId>/graph/append', callback=self.addGraphParts)
-        app.get('/api/sessions/<sessionId>/repro/status', callback=self.getSessionReproStatus)
-        app.get('/api/sessions/<sessionId>/repro/data', callback=self.getSessionReproData)
+        app.post("/api/stop", callback=self.stop_manager)
+        app.post("/api/sessions", callback=self.createSession)
+        app.get("/api/sessions", callback=self.getSessions)
+        app.get("/api/sessions/<sessionId>", callback=self.getSessionInformation)
+        app.delete("/api/sessions/<sessionId>", callback=self.destroySession)
+        app.get("/api/sessions/<sessionId>/logs", callback=self.getLogFile)
+        app.get("/api/sessions/<sessionId>/status", callback=self.getSessionStatus)
+        app.post("/api/sessions/<sessionId>/deploy", callback=self.deploySession)
+        app.post("/api/sessions/<sessionId>/cancel", callback=self.cancelSession)
+        app.get("/api/sessions/<sessionId>/graph", callback=self.getGraph)
+        app.get("/api/sessions/<sessionId>/graph/size", callback=self.getGraphSize)
+        app.get("/api/sessions/<sessionId>/graph/status", callback=self.getGraphStatus)
+        app.post("/api/sessions/<sessionId>/graph/append", callback=self.addGraphParts)
 
+        app.route("/api/sessions", method="OPTIONS", callback=self.acceptPreflight)
+        app.route(
+            "/api/sessions/<sessionId>/graph/append",
+            method="OPTIONS",
+            callback=self.acceptPreflight2,
+        )
 
         # The non-REST mappings that serve HTML-related content
-        app.route('/static/<filepath:path>', callback=self.server_static)
-        app.get('/session', callback=self.visualizeSession)
+        app.route("/static/<filepath:path>", callback=self.server_static)
+        app.get("/session", callback=self.visualizeSession)
 
         # sub-class specifics
         self.initializeSpecifics(app)
@@ -149,8 +183,10 @@ class ManagerRestServer(RestServer):
     def _stop_manager(self):
         self.dm.shutdown()
         self.stop()
-        logger.info("Thanks for using our %s, come back again :-)" %
-                    (self.dm.__class__.__name__))
+        logger.info(
+            "Thanks for using our %s, come back again :-)"
+            % (self.dm.__class__.__name__)
+        )
 
     @daliuge_aware
     def stop_manager(self):
@@ -159,14 +195,28 @@ class ManagerRestServer(RestServer):
     @daliuge_aware
     def createSession(self):
         newSession = bottle.request.json
-        sessionId = newSession['sessionId']
+        sessionId = newSession["sessionId"]
         self.dm.createSession(sessionId)
+        return {"sessionId": sessionId}
+
+    @daliuge_aware
+    def acceptPreflight(self):
+        return {}
+
+    @daliuge_aware
+    def acceptPreflight2(self, sessionId):
+        return {}
 
     def sessions(self):
         sessions = []
         for sessionId in self.dm.getSessionIds():
-            sessions.append({'sessionId': sessionId, 'status': self.dm.getSessionStatus(sessionId),
-                             'size': self.dm.getGraphSize(sessionId)})
+            sessions.append(
+                {
+                    "sessionId": sessionId,
+                    "status": self.dm.getSessionStatus(sessionId),
+                    "size": self.dm.getGraphSize(sessionId),
+                }
+            )
         return sessions
 
     @daliuge_aware
@@ -175,10 +225,13 @@ class ManagerRestServer(RestServer):
 
     @daliuge_aware
     def getSessionInformation(self, sessionId):
-        graphDict = self.dm.getGraph(sessionId)
         status = self.dm.getSessionStatus(sessionId)
-        logger.debug("%s", json.dumps(graphDict))
-        return {'status': status, 'graph': graphDict}
+        try:
+            graphDict = self.dm.getGraph(sessionId)
+        except:  # Pristine state sessions don't have a graph, yet.
+            graphDict = {}
+            status = 0
+        return {"status": status, "graph": graphDict}
 
     @daliuge_aware
     def getSessionReproStatus(self, sessionId):
@@ -211,9 +264,10 @@ class ManagerRestServer(RestServer):
     @daliuge_aware
     def deploySession(self, sessionId):
         completedDrops = []
-        if 'completed' in bottle.request.forms:
-            completedDrops = bottle.request.forms['completed'].split(',')
+        if "completed" in bottle.request.forms:
+            completedDrops = bottle.request.forms["completed"].split(",")
         self.dm.deploySession(sessionId, completedDrops=completedDrops)
+        return {}
 
     @daliuge_aware
     def cancelSession(self, sessionId):
@@ -234,41 +288,48 @@ class ManagerRestServer(RestServer):
     # TODO: addGraphParts v/s addGraphSpec
     @daliuge_aware
     def addGraphParts(self, sessionId):
-        if bottle.request.content_type != 'application/json':
+        if bottle.request.content_type != "application/json":
             bottle.response.status = 415
             return
 
         # We also accept gzipped content
         hdrs = bottle.request.headers
-        if hdrs.get('Content-Encoding', None) == 'gzip':
+        if hdrs.get("Content-Encoding", None) == "gzip":
             json_content = utils.ZlibUncompressedStream(bottle.request.body)
         else:
             json_content = bottle.request.body
 
         graph_parts = bottle.json_loads(json_content.read())
+
         self.dm.addGraphSpec(sessionId, graph_parts)
+        return {"graph_parts": graph_parts}
 
     # ===========================================================================
     # non-REST methods
     # ===========================================================================
     def server_static(self, filepath):
-        staticRoot = pkg_resources.resource_filename(__name__, '/web/static')  # @UndefinedVariable
+        staticRoot = pkg_resources.resource_filename(
+            __name__, "/web/static"
+        )  # @UndefinedVariable
         return bottle.static_file(filepath, root=staticRoot)
 
     def visualizeSession(self):
         params = bottle.request.params
-        sessionId = params['sessionId'] if 'sessionId' in params else ''
-        selectedNode = params['node'] if 'node' in params else ''
-        viewMode = params['view'] if 'view' in params else ''
-        tpl = file_as_string('web/session.html')
+        sessionId = params["sessionId"] if "sessionId" in params else ""
+        selectedNode = params["node"] if "node" in params else ""
+        viewMode = params["view"] if "view" in params else ""
+        tpl = file_as_string("web/session.html")
         urlparts = bottle.request.urlparts
-        serverUrl = urlparts.scheme + '://' + urlparts.netloc
-        return bottle.template(tpl,
-                               sessionId=sessionId,
-                               selectedNode=selectedNode,
-                               viewMode=viewMode,
-                               serverUrl=serverUrl,
-                               dmType=self.dm.__class__.__name__)
+        serverUrl = urlparts.scheme + "://" + urlparts.netloc
+        return bottle.template(
+            tpl,
+            sessionId=sessionId,
+            selectedNode=selectedNode,
+            viewMode=viewMode,
+            serverUrl=serverUrl,
+            dmType=self.dm.__class__.__name__,
+        )
+
 
 
 class NMRestServer(ManagerRestServer):
@@ -278,42 +339,56 @@ class NMRestServer(ManagerRestServer):
     """
 
     def initializeSpecifics(self, app):
-        app.get('/api', callback=self.getNMStatus)
-        app.post('/api/sessions/<sessionId>/graph/link', callback=self.linkGraphParts)
-        app.post('/api/sessions/<sessionId>/subscriptions', callback=self.add_node_subscriptions)
-        app.post('/api/sessions/<sessionId>/trigger', callback=self.trigger_drops)
+        app.get("/api", callback=self.getNMStatus)
+        app.post("/api/sessions/<sessionId>/graph/link", callback=self.linkGraphParts)
+        app.post(
+            "/api/sessions/<sessionId>/subscriptions",
+            callback=self.add_node_subscriptions,
+        )
+        app.post("/api/sessions/<sessionId>/trigger", callback=self.trigger_drops)
         # The non-REST mappings that serve HTML-related content
-        app.get('/', callback=self.visualizeDM)
-        app.get('/api/shutdown', callback=self.shutdown_node_manager)
+        app.get("/", callback=self.visualizeDM)
+        app.get("/api/shutdown", callback=self.shutdown_node_manager)
 
     @daliuge_aware
     def shutdown_node_manager(self):
+        logger.debug("Shutting down node manager")
         self.dm.shutdown()
 
     @daliuge_aware
     def getNMStatus(self):
         # we currently return the sessionIds, more things might be added in the
         # future
-        return {'sessions': self.sessions()}
+        return {"sessions": self.sessions()}
+
+    @daliuge_aware
+    def getLogFile(self, sessionId):
+        logdir = self.dm.getLogDir()
+        logfile = generateLogFileName(logdir, sessionId)
+        if not os.path.isfile(logfile):
+            raise NoSessionException(sessionId, "Log file not found.")
+        return static_file(
+            os.path.basename(logfile), root=logdir, download=os.path.basename(logfile)
+        )
 
     @daliuge_aware
     def linkGraphParts(self, sessionId):
         params = bottle.request.params
-        lhOID = params['lhOID']
-        rhOID = params['rhOID']
-        linkType = int(params['linkType'])
+        lhOID = params["lhOID"]
+        rhOID = params["rhOID"]
+        linkType = int(params["linkType"])
         self.dm.linkGraphParts(sessionId, lhOID, rhOID, linkType)
 
     @daliuge_aware
     def add_node_subscriptions(self, sessionId):
-        if bottle.request.content_type != 'application/json':
+        if bottle.request.content_type != "application/json":
             bottle.response.status = 415
             return
         self.dm.add_node_subscriptions(sessionId, bottle.request.json)
 
     @daliuge_aware
     def trigger_drops(self, sessionId):
-        if bottle.request.content_type != 'application/json':
+        if bottle.request.content_type != "application/json":
             bottle.response.status = 415
             return
         self.dm.trigger_drops(sessionId, bottle.request.json)
@@ -322,13 +397,13 @@ class NMRestServer(ManagerRestServer):
     # non-REST methods
     # ===========================================================================
     def visualizeDM(self):
-        tpl = file_as_string('web/dm.html')
+        tpl = file_as_string("web/dm.html")
         urlparts = bottle.request.urlparts
-        serverUrl = urlparts.scheme + '://' + urlparts.netloc
-        return bottle.template(tpl,
-                               serverUrl=serverUrl,
-                               dmType=self.dm.__class__.__name__,
-                               reset='false')
+        serverUrl = urlparts.scheme + "://" + urlparts.netloc
+        return bottle.template(
+            tpl, serverUrl=serverUrl, dmType=self.dm.__class__.__name__, reset="false"
+        )
+
 
 
 class CompositeManagerRestServer(ManagerRestServer):
@@ -338,35 +413,51 @@ class CompositeManagerRestServer(ManagerRestServer):
     """
 
     def initializeSpecifics(self, app):
-        app.get('/api', callback=self.getCMStatus)
-        app.get('/api/nodes', callback=self.getCMNodes)
-        app.post('/api/nodes/<node>', callback=self.addCMNode)
-        app.delete('/api/nodes/<node>', callback=self.removeCMNode)
+        app.get("/api", callback=self.getCMStatus)
+        app.get("/api/nodes", callback=self.getCMNodes)
+        app.post("/api/nodes/<node>", callback=self.addCMNode)
+        app.delete("/api/nodes/<node>", callback=self.removeCMNode)
 
         # Query forwarding to sub-nodes
-        app.get('/api/nodes/<node>/sessions', callback=self.getNodeSessions)
-        app.get('/api/nodes/<node>/sessions/<sessionId>', callback=self.getNodeSessionInformation)
-        app.get('/api/nodes/<node>/sessions/<sessionId>/status', callback=self.getNodeSessionStatus)
-        app.get('/api/nodes/<node>/sessions/<sessionId>/graph', callback=self.getNodeGraph)
-        app.get('/api/nodes/<node>/sessions/<sessionId>/graph/status', callback=self.getNodeGraphStatus)
+        app.get("/api/nodes/<node>/sessions", callback=self.getNodeSessions)
+        app.get(
+            "/api/nodes/<node>/sessions/<sessionId>",
+            callback=self.getNodeSessionInformation,
+        )
+        app.get(
+            "/api/nodes/<node>/sessions/<sessionId>/status",
+            callback=self.getNodeSessionStatus,
+        )
+        app.get(
+            "/api/nodes/<node>/sessions/<sessionId>/graph", callback=self.getNodeGraph
+        )
+        app.get(
+            "/api/nodes/<node>/sessions/<sessionId>/graph/status",
+            callback=self.getNodeGraphStatus,
+        )
 
         # The non-REST mappings that serve HTML-related content
-        app.get('/', callback=self.visualizeDIM)
+        app.get("/", callback=self.visualizeDIM)
 
     @daliuge_aware
     def getCMStatus(self):
-        return {'hosts': self.dm.dmHosts, 'sessionIds': self.dm.getSessionIds()}
+        return {"hosts": self.dm.dmHosts, "sessionIds": self.dm.getSessionIds()}
 
     @daliuge_aware
     def getCMNodes(self):
         return self.dm.nodes
 
+    def getAllCMNodes(self):
+        return self.dm.nodes
+
     @daliuge_aware
     def addCMNode(self, node):
+        logger.debug("Adding node %s" % node)
         self.dm.add_node(node)
 
     @daliuge_aware
     def removeCMNode(self, node):
+        logger.debug("Removing node %s" % node)
         self.dm.remove_node(node)
 
     @daliuge_aware
@@ -375,6 +466,44 @@ class CompositeManagerRestServer(ManagerRestServer):
             raise Exception("%s not in current list of nodes" % (node,))
         with NodeManagerClient(host=node) as dm:
             return dm.sessions()
+
+    def _tarfile_write(self, tar, headers, stream):
+        file_header = headers.getheader("Content-Disposition")
+        length = headers.getheader("Content-Length")
+        _, params = cgi.parse_header(file_header)
+        filename = params["filename"]
+        info = tarfile.TarInfo(filename)
+        info.size = int(length)
+
+        content = []
+        while True:
+            buffer = stream.read()
+            if not buffer:
+                break
+            content.append(buffer)
+
+        tar.addfile(info, io.BytesIO(initial_bytes="".join(content).encode()))
+
+    @daliuge_aware
+    def getLogFile(self, sessionId):
+        fh = io.BytesIO()
+        with tarfile.open(fileobj=fh, mode="w:gz") as tar:
+            for node in self.getAllCMNodes():
+                with NodeManagerClient(host=node) as dm:
+                    try:
+                        stream, resp = dm.get_log_file(sessionId)
+                        self._tarfile_write(tar, resp, stream)
+                    except NoSessionException:
+                        pass
+
+        data = fh.getvalue()
+        size = len(data)
+        bottle.response.set_header("Content-type", "application/x-tar")
+        bottle.response["Content-Disposition"] = (
+            f"attachment; " f"filename=dlg_{sessionId}.tar"
+        )
+        bottle.response["Content-Length"] = size
+        return data
 
     @daliuge_aware
     def getNodeSessionInformation(self, node, sessionId):
@@ -408,29 +537,94 @@ class CompositeManagerRestServer(ManagerRestServer):
     # non-REST methods
     # ===========================================================================
     def visualizeDIM(self):
-        tpl = file_as_string('web/dim.html')
+        tpl = file_as_string("web/dim.html")
         urlparts = bottle.request.urlparts
-        selectedNode = bottle.request.params['node'] if 'node' in bottle.request.params else ''
-        serverUrl = urlparts.scheme + '://' + urlparts.netloc
-        return bottle.template(tpl,
-                               dmType=self.dm.__class__.__name__,
-                               dmPort=self.dm.dmPort,
-                               serverUrl=serverUrl,
-                               dmHosts=json.dumps(self.dm.dmHosts),
-                               nodes=json.dumps(self.dm.nodes),
-                               selectedNode=selectedNode)
+        selectedNode = (
+            bottle.request.params["node"] if "node" in bottle.request.params else ""
+        )
+        serverUrl = urlparts.scheme + "://" + urlparts.netloc
+        return bottle.template(
+            tpl,
+            dmType=self.dm.__class__.__name__,
+            dmPort=self.dm.dmPort,
+            serverUrl=serverUrl,
+            dmHosts=json.dumps(self.dm.dmHosts),
+            nodes=json.dumps(self.dm.nodes),
+            selectedNode=selectedNode,
+        )
+
 
 
 class MasterManagerRestServer(CompositeManagerRestServer):
-
     def initializeSpecifics(self, app):
         CompositeManagerRestServer.initializeSpecifics(self, app)
 
         # Query forwarding to daemons
-        app.post('/api/managers/<host>/dataisland', callback=self.createDataIsland)
+
+        app.post("/api/managers/<host>/dataisland", callback=self.createDataIsland)
+        app.post("/api/managers/<host>/node/start", callback=self.startNM)
+        app.post("/api/managers/<host>/node/stop", callback=self.stopNM)
+        # Querying about managers
+        app.get("/api/islands", callback=self.getDIMs)
+        app.get("/api/nodes", callback=self.getNMs)
+        app.get("/api/managers/<host>/node", callback=self.getNMInfo)
+        app.get("/api/managers/<host>/dataisland", callback=self.getDIMInfo)
+        app.get("/api/managers/<host>/master", callback=self.getMMInfo)
 
     @daliuge_aware
     def createDataIsland(self, host):
-        with RestClient(host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10) as c:
-            c._post_json('/managers/dataisland', bottle.request.body.read())
+        with RestClient(
+            host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10
+        ) as c:
+            c._post_json("/managers/dataisland", bottle.request.body.read())
         self.dm.addDmHost(host)
+
+    @daliuge_aware
+    def getDIMs(self):
+        return {"islands": self.dm.dmHosts}
+
+    @daliuge_aware
+    def getNMs(self):
+        return {"nodes": self.dm.nodes}
+
+    @daliuge_aware
+    def startNM(self, host):
+        port = constants.DAEMON_DEFAULT_REST_PORT
+        logger.debug("Sending NM start request to %s:%s" % (host, port))
+        with RestClient(host=host, port=port, timeout=10) as c:
+            return json.loads(c._POST("/managers/node/start").read())
+
+    @daliuge_aware
+    def stopNM(self, host):
+        port = constants.DAEMON_DEFAULT_REST_PORT
+        logger.debug("Sending NM stop request to %s:%s" % (host, port))
+        with RestClient(host=host, port=port, timeout=10) as c:
+            return json.loads(c._POST("/managers/node/stop").read())
+
+    @daliuge_aware
+    def getNMInfo(self, host):
+        port = constants.DAEMON_DEFAULT_REST_PORT
+        logger.debug("Sending request %s:%s/managers/node" % (host, port))
+        with RestClient(host=host, port=port, timeout=10) as c:
+            return json.loads(c._GET("/managers/node").read())
+
+    @daliuge_aware
+    def getDIMInfo(self, host):
+        with RestClient(
+            host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10
+        ) as c:
+            return json.loads(c._GET("/managers/dataisland").read())
+
+    @daliuge_aware
+    def getMMInfo(self, host):
+        with RestClient(
+            host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10
+        ) as c:
+            return json.loads(c._GET("/managers/master").read())
+
+    def getAllCMNodes(self):
+        nodes = []
+        for node in self.dm.dmHosts:
+            with DataIslandManagerClient(host=node) as dm:
+                nodes += dm.nodes()
+        return nodes

@@ -4,11 +4,6 @@ dlg.dropmake
 .. automodule:: dlg.dropmake
 .. contents::
 
-dlg.dropmake.web.lg_web
-^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: dlg.dropmake.web.lg_web
-        :members:
-
 dlg.dropmake.pg_generator
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: dlg.dropmake.pg_generator

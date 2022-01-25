@@ -1,0 +1,82 @@
+# This Dockerfile builds the daliuge-engine with casacore, the cbf-emulator and the plasma store inside.
+# TODO: This packaging of everything into the same image is not ideal and should be re-visited.
+#
+# The resulting image should allow to run leap-plasma as well.
+
+# We need the base image we built with the other Dockerfile
+FROM icrar/daliuge-common:master-casa
+
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends tzdata \
+    gnupg2 software-properties-common wget git git-lfs gcc g++ make tmux python3-pip cmake libboost1.71-all-dev
+
+# install casacore
+RUN mkdir -p /code && cd /code &&\
+    add-apt-repository -s ppa:kernsuite/kern-7 &&\
+    apt-add-repository multiverse &&\
+    apt-add-repository restricted &&\
+    apt update &&\
+    apt install -y casacore-dev
+
+# install python3-casacore
+# NOTE: pip3 python-casacore and apt python3-casacore bundles it's own libcasa_tables-xyz.so different to kernsuite. Installing with
+# the no-binary option will link to kernsuite shared libraries.
+RUN apt install -y python3-dev wcslib-dev libcfitsio-dev &&\
+    pip3 install --no-binary python-casacore python-casacore
+
+# build and install arrow-plasma
+# NOTE: nvidia-docker requires using newer cuda packages than ones included with arrow-plasma that do not overwrite the the docker cuda drivers
+RUN mkdir -p /code && cd /code &&\
+    git clone --recursive -b apache-arrow-4.0.0 https://github.com/apache/arrow.git &&\
+    cd arrow/cpp &&\
+    cmake -B build . -DCMAKE_BUILD_TYPE=Release -DARROW_PLASMA=ON -DARROW_TESTING=OFF &&\
+    cmake --build build/ --target all -j2 &&\
+    cmake --build build/ --target install &&\
+    ldconfig &&\
+    cd ../..
+
+# build and install plasmastman
+RUN mkdir -p /code && cd /code &&\
+    git clone --recursive https://gitlab.com/ska-telescope/plasma-storage-manager.git &&\
+    cd plasma-storage-manager &&\
+    cmake -B build . -DCMAKE_BUILD_TYPE=Release -DPlasma_DIR=/usr/local/lib/cmake/arrow -DArrow_DIR=/usr/local/lib/cmake/arrow -DBUILD_TESTING=OFF &&\
+    cmake --build build/ --target all -j2 &&\
+    cmake --build build/ --target install &&\
+    ldconfig &&\
+    cd ..
+
+# install pyarrow
+RUN pip3 install pyarrow==3.0.0
+
+# build and install cbf-sdp-emulator TODO: use master branch
+RUN mkdir -p /code && cd /code &&\
+    git clone --recursive https://gitlab.com/ska-telescope/cbf-sdp-emulator.git &&\
+    cd cbf-sdp-emulator &&\
+    . ~/dlg/bin/activate && pip3 install --extra-index-url=https://artefact.skao.int/repository/pypi-internal/simple -e .[plasma]
+
+COPY / /daliuge
+RUN . ~/dlg/bin/activate && pip install wheel && cd /daliuge && \
+    pip install . 
+
+RUN apt-get update &&  apt-get install -y curl
+
+# # Second stage build taking what's required from first stage
+# FROM icrar/dlg_ray.common:test
+
+# # copy sources and virtualenv
+# COPY --from=0 /daliuge/. /daliuge/.
+# COPY --from=0 /root/dlg /root/dlg
+RUN  mkdir -p /tmp/dlg/var/dlg_home 
+
+EXPOSE 9000
+EXPOSE 8000
+EXPOSE 8001
+EXPOSE 8002
+EXPOSE 5555
+EXPOSE 6666
+
+# enable the virtualenv path from daliuge-common
+ENV VIRTUAL_ENV=/root/dlg
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV DLG_ROOT="/tmp/dlg/var/dlg_home"
+
+CMD ["dlg", "daemon", "-vv"]

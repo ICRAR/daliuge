@@ -87,7 +87,12 @@ def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
             continue
 
         except socket.timeout:
-            logger.debug('Timed out while trying to connect to %s:%d with timeout of %f [s]', host, port, thisTimeout)
+            logger.debug(
+                "Timed out while trying to connect to %s:%d with timeout of %f [s]",
+                host,
+                port,
+                thisTimeout,
+            )
             return not checking_open
 
         except socket.error as e:
@@ -95,7 +100,11 @@ def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
             # If the connection becomes suddenly closed from the server-side.
             # We assume that it's not re-opening any time soon
             if e.errno == errno.ECONNRESET:
-                logger.debug("Connection closed by %s:%d, assuming it will stay closed", host, port)
+                logger.debug(
+                    "Connection closed by %s:%d, assuming it will stay closed",
+                    host,
+                    port,
+                )
                 if not return_socket:
                     return not checking_open
                 raise
@@ -109,7 +118,12 @@ def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
                 # Keep trying because we're checking if it's open
                 if timeout is not None:
                     if time.time() - start > timeout:
-                        logger.debug('Refused connection to %s:%d for more than %f seconds', host, port, timeout)
+                        logger.debug(
+                            "Refused connection to %s:%d for more than %f seconds",
+                            host,
+                            port,
+                            timeout,
+                        )
                         if not return_socket:
                             return False
                         raise

@@ -1,0 +1,52 @@
+
+  .node rect, .node polygon {
+    stroke-width: 2.0px;
+    stroke: #bbb;
+    padding: 4px 8px;
+  }
+  
+  /* DROP states */
+  .node.initialized :first-child, rect.initialized {
+    fill: #ffe;
+  }
+  
+  .node.writing :first-child, rect.writing {
+    fill: #ecde7b;
+  }
+  
+  .node.completed :first-child, rect.completed {
+    fill: #7bdc7b;
+  }
+  
+  .node.expired :first-child, rect.expired {
+    fill: #700000;
+  }
+  
+  .node.cancelled :first-child, rect.cancelled {
+    fill: #cccccc;
+  }
+
+  .node.skipped :first-child, rect.skipped {
+    fill: #53c4f6;
+  }
+
+  .node.deleted :first-child, rect.deleted {
+    color: #700000;
+  }
+  
+  /* AppDROP states */
+  .node.not_run :first-child, rect.not_run {
+    fill: #ffe;
+  }
+  
+  .node.running :first-child, rect.running {
+    fill: #ecde7b;
+  }
+  
+  .node.finished :first-child, rect.finished {
+    fill: #7bdc7b;
+  }
+  
+  .node.error :first-child, rect.error {
+    fill: #e44f33;
+  }

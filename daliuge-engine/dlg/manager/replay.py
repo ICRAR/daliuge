@@ -38,13 +38,12 @@ run_step = 7
 
 
 class ReplayManager(DROPManager):
-
     def __init__(self, graph_file, status_file):
 
         with open(graph_file) as gf:
             contents = json.load(gf)
-            session_id = contents['ssid']
-            self._graph = contents['g']
+            session_id = contents["ssid"]
+            self._graph = contents["g"]
 
         self._session_id = session_id
         self._status_filename = status_file
@@ -103,7 +102,9 @@ class ReplayManager(DROPManager):
 
         self.check_session_id(session_id)
         if self._session_status_reqno < run_step:
-            raise InvalidSessionState("Requesting status of graph that is not running yet")
+            raise InvalidSessionState(
+                "Requesting status of graph that is not running yet"
+            )
 
         while True:
             l = self._status_file.readline()
@@ -114,11 +115,11 @@ class ReplayManager(DROPManager):
 
             content = json.loads(l)
 
-            this_session_id = content['ssid']
+            this_session_id = content["ssid"]
             if this_session_id != session_id:
                 continue
 
-            graph_status = content['gs']
+            graph_status = content["gs"]
             self._last_graph_status = graph_status
 
             logger.info("Serving graph status")
@@ -139,17 +140,17 @@ class ReplayManager(DROPManager):
 
 
 class ReplayManagerServer(ManagerRestServer):
-
     def initializeSpecifics(self, app):
         super(ReplayManagerServer, self).initializeSpecifics(app)
-        app.post('/api/reset', callback=self.dm.reset)
-        app.get('/', callback=self.visualizeDM)
+        app.post("/api/reset", callback=self.dm.reset)
+        app.get("/", callback=self.visualizeDM)
 
     def visualizeDM(self):
-        tpl = pkg_resources.resource_string(__name__, 'web/dm.html')  # @UndefinedVariable
+        tpl = pkg_resources.resource_string(
+            __name__, "web/dm.html"
+        )  # @UndefinedVariable
         urlparts = bottle.request.urlparts
-        serverUrl = urlparts.scheme + '://' + urlparts.netloc
-        return bottle.template(tpl,
-                               serverUrl=serverUrl,
-                               dmType=self.dm.__class__.__name__,
-                               reset='true')
+        serverUrl = urlparts.scheme + "://" + urlparts.netloc
+        return bottle.template(
+            tpl, serverUrl=serverUrl, dmType=self.dm.__class__.__name__, reset="true"
+        )

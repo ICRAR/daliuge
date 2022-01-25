@@ -43,14 +43,11 @@ class PGUtil(object):
     def vstack_mat(A, B, separator=False):
         """
         Vertically stack two matrices that may have different # of colums
-        A:
-            matrix A (2d numpy array)
-        B:
-            matrix B (2d numy array)
-        separator:
-            whether to add an empty row separator between the two matrices (boolean)
-        Return:
-            the vertically stacked matrix (2d numpy array)
+
+        :param: A matrix A (2d numpy array)
+        :param: B matrix B (2d numy array)
+        :param: separator whether to add an empty row separator between the two matrices (boolean)
+        :return: the vertically stacked matrix (2d numpy array)
         """
         sa = A.shape
         sb = B.shape
@@ -94,7 +91,7 @@ class PGManager(object):
         self._pgt_fn_count += 1
         if self._pgt_fn_count == MAX_PGT_FN_CNT + 1:
             self._pgt_fn_count = 0
-        pgt_id = lg_name.replace(".json", "{0}_pgt.json".format(self._pgt_fn_count))
+        pgt_id = lg_name.replace(".graph", "{0}_pgt.graph".format(self._pgt_fn_count))
         pgt_path = "{0}/{1}".format(self._root_dir, pgt_id)
 
         try:
