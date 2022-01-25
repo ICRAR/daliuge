@@ -37,9 +37,19 @@ from dlg.testutils import ManagerStarter
 from dlg.exceptions import NoSessionException
 from test.manager import testutils
 
-
 hostname = "127.0.0.1"
 
+default_repro = {"rmode": "1", "lg_blockhash": "x", "pgt_blockhash": "y", "pg_blockhash": "z"}
+default_graph_repro = {"rmode": "1",
+                       "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
+                       "merkleroot": "a", "signature": "b"}
+
+
+def add_test_reprodata(graph: list):
+    for drop in graph:
+        drop['reprodata'] = default_repro.copy()
+    graph.append(default_graph_repro.copy())
+    return graph
 
 
 class DimAndNMStarter(ManagerStarter):
@@ -85,6 +95,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
                 "node": hostname,
             },
         ]
+        add_test_reprodata(graphSpec)
         self.mm.createSession(sessionId)
         self.mm.addGraphSpec(sessionId, graphSpec)
 
@@ -305,7 +316,7 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             # we need to add it manually before submitting -- otherwise it will
             # get rejected by the DIM.
             with pkg_resources.resource_stream(
-                "test", "graphs/complex.js"
+                    "test", "graphs/complex.js"
             ) as f:  # @UndefinedVariable
                 complexGraphSpec = json.load(codecs.getreader("utf-8")(f))
             for dropSpec in complexGraphSpec:
@@ -346,10 +357,10 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session
             while (
-                SessionStates.RUNNING
-                in testutils.get(self, "/sessions/%s/status" % (sessionId), restPort)[
-                    hostname
-                ].values()
+                    SessionStates.RUNNING
+                    in testutils.get(self, "/sessions/%s/status" % (sessionId), restPort)[
+                        hostname
+                    ].values()
             ):
                 time.sleep(0.2)
 

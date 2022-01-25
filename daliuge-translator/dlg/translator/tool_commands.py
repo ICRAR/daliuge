@@ -62,10 +62,10 @@ _param_types = {
     "min_goal": int,
     "ptype": int,
     "max_load_imb": int,
-                "max_cpu": int,
+    "max_cpu": int,
     "time_greedy": float,
     "deadline": int,
-                "topk": int,
+    "topk": int,
     "swarm_size": int,
     "max_mem": int,
 }
@@ -116,7 +116,7 @@ def submit(pg, opts):
         common.monitor_sessions_repro(session_id, host=opts.host, port=opts.port,
                                       poll_interval=opts.poll_interval)
         repro_data = common.fetch_reproducibility(session_id, host=opts.host, port=opts.port,
-                                     poll_interval=opts.poll_interval)
+                                                  poll_interval=opts.poll_interval)
         dump(repro_data['graph'])
 
 
@@ -185,7 +185,7 @@ def dlg_fill(parser, args):
     params = [p.split("=") for p in opts.parameter if param_spec_type(p) == "kv"]
     params = dict(params)
     for json_param in (
-        json.loads(p) for p in opts.parameter if param_spec_type(p) == "json"
+            json.loads(p) for p in opts.parameter if param_spec_type(p) == "json"
     ):
         params.update(json_param)
 
@@ -213,7 +213,7 @@ def _add_unroll_options(parser):
         type="string",
         help="Prefix to use for generated OIDs",
 
-                      default="1",
+        default="1",
     )
     parser.add_option(
         "-z",
@@ -351,7 +351,7 @@ def dlg_map(parser, args):
         type="int",
         dest="port",
         help="The port we connect to to deploy the graph",
-                      default=con.ISLAND_DEFAULT_REST_PORT,
+        default=con.ISLAND_DEFAULT_REST_PORT,
     )
     parser.add_option(
         "-P",
@@ -361,10 +361,12 @@ def dlg_map(parser, args):
         type="string",
         help="Path to the Physical Graph to submit (default: stdin)",
         default="-",
-    )parser.add_option("-N", "--nodes", action="store",
-                      dest="nodes", help="The nodes where the Physical Graph will be distributed, comma-separated",
-                      default=None,
     )
+    parser.add_option("-N", "--nodes", action="store",
+                      dest="nodes",
+                      help="The nodes where the Physical Graph will be distributed, comma-separated",
+                      default=None,
+                      )
     parser.add_option(
         "-i",
         "--islands",
@@ -406,7 +408,7 @@ def dlg_map(parser, args):
 
     repro = pgt.pop()  # TODO: Re-include
     pg = pg_generator.resource_map(pgt, nodes, opts.islands,
-        co_host_dim=opts.co_host_dim)
+                                   co_host_dim=opts.co_host_dim)
     pg.append(repro)
     dump(init_pg_repro_data(pg))
 
@@ -431,7 +433,7 @@ def dlg_submit(parser, args):
         type="int",
         dest="port",
         help="The port we connect to to deploy the graph",
-                      default=con.ISLAND_DEFAULT_REST_PORT,
+        default=con.ISLAND_DEFAULT_REST_PORT,
     )
     parser.add_option(
         "-P",
@@ -471,7 +473,7 @@ def dlg_submit(parser, args):
         "--poll-interval",
         type="float",
         help="Polling interval used for monitoring the execution (default: 10)",
-        default=10,)
+        default=10, )
     parser.add_option('-R', '--reproducibility', action='store_true', dest='reproducibility',
                       help='Fetch (and output) reproducibility data for the final execution graph (default: False)')
     (opts, args) = parser.parse_args(args)
@@ -481,7 +483,6 @@ def dlg_submit(parser, args):
         repro = pg[-1]
         submit(pg, opts)
         pg.append(repro)
-
 
 
 def register_commands():

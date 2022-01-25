@@ -23,6 +23,7 @@ import logging
 import tarfile
 import binascii
 import shutil
+import unittest
 
 from dlg.drop import FileDROP, PlasmaDROP, InMemoryDROP
 from dlg import droputils
