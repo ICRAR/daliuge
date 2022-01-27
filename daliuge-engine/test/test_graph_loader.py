@@ -23,7 +23,7 @@ import unittest
 
 from dlg import graph_loader
 from dlg.ddap_protocol import DROPLinkType, DROPRel
-from dlg.drop import InMemoryDROP, ContainerDROP, AppDROP, DirectoryContainer
+from dlg.drop import InMemoryDROP, SharedMemoryDROP, ContainerDROP, AppDROP, DirectoryContainer
 from dlg.common import Categories
 
 
@@ -37,6 +37,13 @@ class TestGraphLoader(unittest.TestCase):
         dropSpecList = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, InMemoryDROP)
+        self.assertEqual("A", a.oid)
+        self.assertEqual("A", a.uid)
+
+    def test_sharedMemoryDrop(self):
+        dropSpecList = [{"oid": "A", "type": "plain", "storage": Categories.SHMEM}]
+        a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
+        self.assertIsInstance(a, SharedMemoryDROP)
         self.assertEqual("A", a.oid)
         self.assertEqual("A", a.uid)
 
