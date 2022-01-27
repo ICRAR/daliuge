@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: daliuge-daemon-deployment
+  labels:
+    app: daliuge-daemon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: daliuge-daemon
+  template:
+    metadata:
+      labels:
+        app: daliuge-daemon
+    spec:
+      volumes:
+        - name: dlg-mount
+          hostPath:
+            path: {{ .Values.dlg_root_on_cluster_nodes }}
+      containers:
+      - name: daliuge-daemon
+        image: {{ .Values.containers.name }}
+        ports:
+        - containerPort: {{ .Values.containers.ports.containerPort }}
+        volumeMounts:
+        - mountPath: {{ .Values.dlg_root_in_container }}
+          name: dlg-mount
+        env:
+        - name: DLG_ROOT
+          valueFrom: 
+            configMapKeyRef:
+              name: daliuge-daemon-configmap
+              key: dlg_root
