@@ -22,21 +22,28 @@
 """Applications used as examples, for testing, or in simple situations"""
 import pickle
 import random
+from typing import List
 import urllib.error
 import urllib.request
 
 import time
+import ast
 import numpy as np
 
 from dlg import droputils, utils
 from dlg.drop import BarrierAppDROP, BranchAppDrop, ContainerDROP
-from dlg.meta import dlg_float_param, dlg_string_param
-from dlg.meta import dlg_bool_param, dlg_int_param
-from dlg.meta import dlg_component, dlg_batch_input
-from dlg.meta import dlg_batch_output, dlg_streaming_input
-
+from dlg.meta import (
+    dlg_float_param, 
+    dlg_string_param,
+    dlg_bool_param, 
+    dlg_int_param,
+    dlg_component, 
+    dlg_batch_input,
+    dlg_batch_output, 
+    dlg_streaming_input
+)
+from dlg.exceptions import DaliugeException
 from dlg.apps.pyfunc import serialize_data, deserialize_data
-
 
 class NullBarrierApp(BarrierAppDROP):
     component_meta = dlg_component(
@@ -433,12 +440,14 @@ class GenericScatterApp(BarrierAppDROP):
         [dlg_streaming_input("binary/*")],
     )
 
+    # automatically populated by scatter node
+    num_of_copies: int = dlg_int_param("num_of_copies", 1)
+
     def initialize(self, **kwargs):
         super(GenericScatterApp, self).initialize(**kwargs)
 
     def run(self):
-        # split it as many times as we have outputs
-        numSplit = len(self.outputs)
+        numSplit = self.num_of_copies
         cont = droputils.allDropContents(self.inputs[0])
         # if the data is of type string it is not pickled, but stored as a binary string.
         try:
@@ -460,6 +469,70 @@ class GenericScatterApp(BarrierAppDROP):
             o.write(d)  # average across inputs
 
 
+##
+# @brief GenericNpyScatterApp
+# @details An APP that splits about any axis on any npy format data drop
+# into as many parts as the app has outputs, provided that the initially converted numpy
+# array has enough elements. The return will be a numpy array of arrays, where the first
+# axis is of length len(outputs). The modulo remainder of the length of the original array and
+# the number of outputs will be distributed across the first len(outputs)-1 elements of the
+# resulting array.
+# @par EAGLE_START
+# @param category PythonApp
+# @param[in] param/appclass Application Class/dlg.apps.simple.GenericNpyScatterApp/String/readonly/
+#     \~English Application class
+# @param[in] param/scatter_axes Scatter Axes/String/readwrite
+#     \~English The axes to split input ndarrays on, e.g. [0,0,0], length must
+#       match the number of input ports
+# @param[out] port/array Array/npy/
+#     \~English A numpy array of arrays
+# @par EAGLE_END
+class GenericNpyScatterApp(BarrierAppDROP):
+    """
+    An APP that splits an object that has a len attribute into <num_of_copies> parts and
+    returns a numpy array of arrays.
+    """
+
+    component_meta = dlg_component(
+        "GenericNpyScatterApp",
+        "Scatter an array like object into <num_of_copies> parts",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    # automatically populated by scatter node
+    num_of_copies: int = dlg_int_param("num_of_copies", 1)
+    scatter_axes: List[int] = dlg_string_param("scatter_axes", "[0]")
+
+    def initialize(self, **kwargs):
+        super(GenericNpyScatterApp, self).initialize(**kwargs)
+        self.scatter_axes = ast.literal_eval(self.scatter_axes)
+
+    def run(self):
+        if len(self.inputs) * self.num_of_copies != len(self.outputs):
+            raise DaliugeException(\
+                f"expected {len(self.inputs) * self.num_of_copies} outputs,\
+                 got {len(self.outputs)}")
+        if len(self.inputs) != len(self.scatter_axes):
+            raise DaliugeException(\
+                f"expected {len(self.inputs)} axes,\
+                 got {len(self.scatter_axes)}")
+
+        # split it as many times as we have outputs
+        self.num_of_copies = self.num_of_copies
+
+        for in_index in range(len(self.inputs)):
+            nObj = droputils.load_numpy(self.inputs[in_index])
+            try:
+                result = np.array_split(nObj, self.num_of_copies, axis=self.scatter_axes[in_index])
+            except IndexError as err:
+                raise err
+            for split_index in range(self.num_of_copies):
+                out_index = in_index * self.num_of_copies + split_index
+                droputils.save_numpy(self.outputs[out_index], result[split_index])
+
+
 class SimpleBranch(BranchAppDrop, NullBarrierApp):
     """Simple branch app that is told the result of its condition"""
 
@@ -472,7 +545,6 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 
     def condition(self):
         return self.result
-
 
 
 ##

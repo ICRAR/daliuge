@@ -22,7 +22,7 @@
 """
 Module containing the core DROP classes.
 """
-
+import string
 from abc import ABCMeta, abstractmethod
 import ast
 import base64
@@ -43,6 +43,7 @@ import re
 import sys
 import inspect
 import binascii
+from typing import Union
 
 import numpy as np
 
@@ -58,6 +59,7 @@ from .ddap_protocol import (
 from .event import EventFirer
 from .exceptions import InvalidDropException, InvalidRelationshipException
 from .io import (
+    DataIO,
     OpenMode,
     FileIO,
     MemoryIO,
@@ -530,7 +532,7 @@ class AbstractDROP(EventFirer):
             return self._refCount > 0
 
     @track_current_drop
-    def write(self, data, **kwargs):
+    def write(self, data: Union[bytes, memoryview], **kwargs):
         """
         Writes the given `data` into this DROP. This method is only meant
         to be called while the DROP is in INITIALIZED or WRITING state;
@@ -601,7 +603,7 @@ class AbstractDROP(EventFirer):
         return nbytes
 
     @abstractmethod
-    def getIO(self):
+    def getIO(self) -> DataIO:
         """
         Returns an instance of one of the `dlg.io.DataIO` instances that
         handles the data contents of this DROP.
@@ -1168,6 +1170,22 @@ class PathBasedDrop(object):
         return self._path
 
 
+##
+# @brief File
+# @details A standard file on a filesystem mounted to the deployment machine
+# @par EAGLE_START
+# @par category File
+# @param[in] param/data_volume Data volume/5/Float/readwrite/
+#     \~English Estimated size of the data contained in this node
+# @param[in] param/group_end Group end/False/Boolean/readwrite/
+#     \~English Is this node the end of a group?
+# @param[in] param/check_filepath_exists Check file path exists/True/Boolean/readwrite/
+#     \~English Perform a check to make sure the file path exists before proceeding with the application
+# @param[in] param/filepath File Path//String/readwrite/
+#     \~English Path to the file for this node
+# @param[in] param/dirname Directory name//String/readwrite/
+#     \~English Path to the file for this node
+# @par EAGLE_END
 class FileDROP(AbstractDROP, PathBasedDrop):
     """
     A DROP that points to data stored in a mounted filesystem.
@@ -1328,6 +1346,28 @@ class FileDROP(AbstractDROP, PathBasedDrop):
         return "file://" + hostname + self._path
 
 
+##
+# @brief NGAS
+# @details An archive on the Next Generation Archive System (NGAS).
+# @par EAGLE_START
+# @par category File
+# @param[in] param/data_volume Data volume/5/Float/readwrite/
+#     \~English Estimated size of the data contained in this node
+# @param[in] param/group_end Group end/False/Boolean/readwrite/
+#     \~English Is this node the end of a group?
+# @param[in] param/ngsSrv NGAS Server/localhost/String/readwrite/
+#     \~English The URL of the NGAS Server
+# @param[in] param/ngasPort NGAS Port/7777/Integer/readwrite/
+#     \~English The port of the NGAS Server
+# @param[in] param/ngasFileId File ID//String/readwrite/
+#     \~English File ID on NGAS (for retrieval only)
+# @param[in] param/ngasConnectTimeout Connection timeout/2/Integer/readwrite/
+#     \~English Timeout for connecting to the NGAS server
+# @param[in] param/ngasMime NGAS mime-type/text\/ascii/String/readwrite/
+#     \~English Mime-type to be used for archiving
+# @param[in] param/ngasTimeout NGAS timeout/2/Integer/readwrite/
+#     \~English Timeout for receiving responses for NGAS
+# @par EAGLE_END
 class NgasDROP(AbstractDROP):
     """
     A DROP that points to data stored in an NGAS server
@@ -1426,6 +1466,16 @@ class NgasDROP(AbstractDROP):
         return "ngas://%s:%d/%s" % (self.ngasSrv, self.ngasPort, self.fileId)
 
 
+##
+# @brief Memory
+# @details In-memory storage of intermediate data products
+# @par EAGLE_START
+# @par category Memory
+# @param[in] param/data_volume Data volume/5/Float/readwrite/
+#     \~English Estimated size of the data contained in this node
+# @param[in] param/group_end Group end/False/Boolean/readwrite/
+#     \~English Is this node the end of a group?
+# @par EAGLE_END
 class InMemoryDROP(AbstractDROP):
     """
     A DROP that points data stored in memory.
@@ -1450,6 +1500,42 @@ class InMemoryDROP(AbstractDROP):
     def dataURL(self):
         hostname = os.uname()[1]
         return "mem://%s/%d/%d" % (hostname, os.getpid(), id(self._buf))
+
+
+class SharedMemoryDROP(AbstractDROP):
+    """
+    A DROP that points to data stored in shared memory.
+    This drop is functionality equivalent to an InMemory drop running in a concurrent environment.
+    In this case however, the requirement for shared memory is explicit.
+
+    @WARNING Currently implemented as writing to shmem and there is no backup behaviour.
+    """
+
+    def initialize(self, **kwargs):
+        args = []
+        if "pydata" in kwargs:
+            pydata = kwargs.pop("pydata")
+            if isinstance(pydata, str):
+                pydata = pydata.encode("utf8")
+            args.append(base64.b64decode(pydata))
+        self._buf = io.BytesIO(*args)
+
+    def getIO(self):
+        print(sys.version_info)
+        if sys.version_info >= (3, 8):
+            if hasattr(self, '_sessID'):
+                return SharedMemoryIO(self.oid, self._sessID)
+            else:
+                # Using Drop without manager, just generate a random name.
+                sess_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+                return SharedMemoryIO(self.oid, sess_id)
+        else:
+            raise NotImplementedError("Shared memory is only available with Python >= 3.8")
+
+    @property
+    def dataURL(self):
+        hostname = os.uname()[1]
+        return f"shmem://{hostname}/{os.getpid()}/{id(self._buf)}"
 
 
 class NullDROP(AbstractDROP):
@@ -2084,13 +2170,30 @@ class BranchAppDrop(BarrierAppDROP):
         self._notifyAppIsFinished()
 
 
+##
+# @brief Plasma
+# @details An object in a Apache Arrow Plasma in-memory object store
+# @par EAGLE_START
+# @par category Plasma
+# @param[in] param/data_volume Data volume/5/Float/readwrite/
+#     \~English Estimated size of the data contained in this node
+# @param[in] param/group_end Group end/False/Boolean/readwrite/
+#     \~English Is this node the end of a group?
+# @param[in] param/plasma_path Plasma Path//String/readwrite/
+#     \~English Path to the local plasma store
+# @param[in] param/object_id Object Id//String/readwrite/
+#     \~English PlasmaId of the object for all compute nodes
+# @param[in] param/use_staging Use Staging/False/Boolean/readwrite/
+#     \~English Enables writing to a dynamically resizeable staging buffer
+# @par EAGLE_END
 class PlasmaDROP(AbstractDROP):
     """
     A DROP that points to data stored in a Plasma Store
     """
 
-    object_id = dlg_string_param("object_id", None)
     plasma_path = dlg_string_param("plasma_path", "/tmp/plasma")
+    object_id = dlg_string_param("object_id", None)
+    use_staging = dlg_bool_param("use_staging", False)
 
     def initialize(self, **kwargs):
         object_id = self.uid
@@ -2100,13 +2203,33 @@ class PlasmaDROP(AbstractDROP):
             self.object_id = object_id
 
     def getIO(self):
-        return PlasmaIO(plasma.ObjectID(self.object_id), self.plasma_path)
+        return PlasmaIO(plasma.ObjectID(self.object_id),
+                                        self.plasma_path,
+                                        expected_size=self._expectedSize,
+                                        use_staging=self.use_staging)
 
     @property
     def dataURL(self):
         return "plasma://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
 
 
+##
+# @brief PlasmaFlight
+# @details An Apache Arrow Flight server providing distributed access
+# to a Plasma in-memory object store
+# @par EAGLE_START
+# @par category Plasma
+# @param[in] param/data_volume Data volume/5/Float/readwrite/
+#     \~English Estimated size of the data contained in this node
+# @param[in] param/group_end Group end/False/Boolean/readwrite/
+#     \~English Is this node the end of a group?
+# @param[in] param/plasma_path Plasma Path//String/readwrite/
+#     \~English Path to the local plasma store
+# @param[in] param/object_id Object Id//String/readwrite/
+#     \~English PlasmaId of the object for all compute nodes
+# @param[in] param/flight_path Flight Path//String/readwrite/
+#     \~English IP and flight port of the drop owner
+# @par EAGLE_END
 class PlasmaFlightDROP(AbstractDROP):
     """
     A DROP that points to data stored in a Plasma Store
@@ -2145,6 +2268,66 @@ class PlasmaFlightDROP(AbstractDROP):
     @property
     def dataURL(self):
         return "plasmaflight://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
+
+##
+# @brief ParameterSet
+# @details A set of parameters, wholly specified in EAGLE
+# @par EAGLE_START
+# @param category ParameterSet
+# @param[in] param/mode Parset mode/"YANDA"/String/readonly/False/To what standard DALiuGE should filter and serialize the parameters.
+# @param[in] param/config_data ConfigData/""/String/readwrite/False/Additional configuration information to be mixed in with the initial data
+# @param[out] port/Config ConfigFile/File/The output configuration file
+# @par EAGLE_END
+class ParameterSetDROP(AbstractDROP):
+    """
+    A generic configuration file template wrapper
+    This drop opens an (optional) file containing some initial configuration information, then
+    appends any additional specified parameters to it, finally serving it as a data object.
+    """
+
+    config_data = b''
+
+    mode = dlg_string_param('mode', None)
+
+    @abstractmethod
+    def serialize_parameters(self, parameters: dict, mode):
+        """
+        Returns a string representing a serialization of the parameters.
+        """
+        if mode == "YANDA":
+            # TODO: Add more complex value checking
+            return "\n".join(f"{x}={y}" for x, y in parameters.items())
+        # Add more formats (.ini for example)
+        return "\n".join(f"{x}={y}" for x, y in parameters.items())
+
+    @abstractmethod
+    def filter_parameters(self, parameters: dict, mode):
+        """
+        Returns a dictionary of parameters, with daliuge-internal or other parameters filtered out
+        """
+        if mode == 'YANDA':
+            forbidden_params = list(DEFAULT_INTERNAL_PARAMETERS)
+            if parameters['config_data'] == "":
+                forbidden_params.append('configData')
+            return {key: val for key, val in parameters.items() if
+                    key not in DEFAULT_INTERNAL_PARAMETERS}
+        return parameters
+
+    def initialize(self, **kwargs):
+        """
+        TODO: Open input file
+        """
+        self.config_data = self.serialize_parameters(
+            self.filter_parameters(self.parameters, self.mode), self.mode).encode('utf-8')
+
+    def getIO(self):
+        return MemoryIO(io.BytesIO(self.config_data))
+
+    @property
+    def dataURL(self):
+        hostname = os.uname()[1]
+        return f"config://{hostname}/{os.getpid()}/{id(self.config_data)}"
+
 
 ##
 # @brief ParameterSet
