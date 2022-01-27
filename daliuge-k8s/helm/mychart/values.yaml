@@ -1,0 +1,9 @@
+name: daliuge-daemon
+dlg_root_on_cluster_nodes: /dlg
+dlg_root_in_container: /dlg
+containers:
+  name: icrar/daliuge-engine:master
+  ports:
+    containerPort: 9000
+service:
+  port: 9000
