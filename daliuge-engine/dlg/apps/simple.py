@@ -319,7 +319,7 @@ class AverageArraysApp(BarrierAppDROP):
 # @param[in] param/function Function/sum/String/readwrite/
 #     \~English The function used for gathering
 # @param[in] param/function reduce_axes/None/String/readonly/
-#     \~English Application class
+#     \~English The ndarray axes to reduce, None reduces all axes for sum, prod, max, min functions
 # @param[in] port/array Array/npy/
 #     \~English Port for the input array(s)
 # @param[out] port/array Array/npy/
@@ -328,7 +328,7 @@ class AverageArraysApp(BarrierAppDROP):
 class GenericNpyGatherApp(BarrierAppDROP):
     """
     A BarrierAppDrop that reduces then gathers one or more inputs using cummulative operations.
-    function:  string <['sum']|'prod'|'min'|'max'>.
+    function:  string <['sum']|'prod'|'min'|'max'|'add'|'multiply'|'maximum'|'minimum'>.
     """
     component_meta = dlg_component(
         "GenericNpyGatherApp",
@@ -341,16 +341,16 @@ class GenericNpyGatherApp(BarrierAppDROP):
     # reduce and combine operation pair names
     functions = {
         # reduce and gather e.g. output dimension is reduces
-        "sum": "add",
-        "prod": "multiply",
-        "max": "maximum",
-        "min": "minimum",
+        "sum": "add",        # sum reduction of inputs along an axis first then reduces across drops
+        "prod": "multiply",  # prod reduction of inputs along an axis first then reduces across drops
+        "max": "maximum",    # max reduction of input along an axis first then reduces across drops
+        "min": "minimum",    # min reduction of input along an axis first then reduces across drops
 
         # gather only
-        "add": None,
-        "multiply": None,
-        "maximum": None,
-        "minimum": None
+        "add": None,         # elementwise addition of inputs, ndarrays must be of same shape
+        "multiply": None,    # elementwise multiplication of inputs, ndarrays must be of same shape
+        "maximum": None,     # elementwise maximums of inputs, ndarrays must be of same shape
+        "minimum": None      # elementwise minimums of inputs, ndarrays must be of same shape
     }
     function: str = dlg_string_param("function", "sum")
     reduce_axes: str = dlg_string_param("reduce_axes", "None")
