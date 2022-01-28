@@ -1,12 +1,13 @@
 apiVersion: v2
-name: daliuge-daemon
-version: 1.0.0
-appVersion: v1.0.0
-home: https://github.com/ICRAR/daliuge/daliuge-k8s
+appVersion: 2.0.1
 description: DALiuGE k8s deployment
+home: https://github.com/ICRAR/daliuge/daliuge-k8s
 keywords:
-  - daliuge
-  - workflow
+- daliuge
+- workflow
+kubeVersion: '>=1.10.0-0'
+name: daliuge-daemon
 sources:
-  - https://github.com/ICRAR/daliuge/daliuge-k8s
-kubeVersion: ">=1.10.0-0"
+- https://github.com/ICRAR/daliuge/daliuge-k8s
+type: application
+version: 0.1.0
