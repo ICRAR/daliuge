@@ -29,23 +29,19 @@ import subprocess
 from dlg.common.version import version as dlg_version
 
 
-def _write_chart(chart_dir, chart_name, name, version, app_version):
+def _write_chart(chart_dir, chart_name: str, name: str, version: str, app_version: str, home: str,
+                 description, keywords: list, sources: list, kubeVersion: str):
     chart_info = {'apiVersion': "v2", 'name': name, 'type': 'application', 'version': version,
-                  'appVersion': app_version}
+                  'appVersion': app_version, 'home': home, 'description': description,
+                  'keywords': keywords, 'sources': sources, 'kubeVersion': kubeVersion}
     # TODO: Fix app_version quotations.
     with open(f'{chart_dir}{os.sep}{chart_name}', 'w', encoding='utf-8') as chart_file:
         yaml.dump(chart_info, chart_file)
 
 
 def _write_values(chart_dir, config):
-    with open(f"{chart_dir}{os.sep}values.yaml", 'r', encoding='utf-8') as value_file:
-        try:
-            old_data = yaml.safe_load(value_file)
-        except yaml.YAMLError as error:
-            print(error)
-    value_data = {**old_data, **config}
-    with open(f"{chart_dir}{os.sep}values.yaml", 'w', encoding='utf-8') as value_file:
-        yaml.dump(value_data, value_file)
+    with open(f"{chart_dir}{os.sep}custom-values.yaml", 'w', encoding='utf-8') as value_file:
+        yaml.dump(config, value_file)
 
 
 class HelmClient:
@@ -53,12 +49,22 @@ class HelmClient:
     Writes necessary files to launch job with kubernetes.
     """
 
-    def __init__(self, chart_name="dlg-test", deploy_dir="./", deploy_name="daliuge-test",
+    def __init__(self, deploy_name, chart_name="dlg-test", deploy_dir="./",
                  submit=True, chart_version="0.1.0",
-                 value_config=None, physical_graph=None):
+                 value_config=None, physical_graph=None, chart_vars=None):
         if value_config is None:
             value_config = dict()
         self._chart_name = chart_name
+        self._chart_vars = {'name': 'daliuge-daemon',
+                            'appVersion': 'v1.0.0',
+                            'home': 'https://github.com/ICRAR/daliuge/daliuge-k8s',
+                            'description': 'DALiuGE k8s deployment',
+                            'keywords': ['daliuge', 'workflow'],
+                            'sources': ['https://github.com/ICRAR/daliuge/daliuge-k8s'],
+                            'kubeVersion': ">=1.10.0-0"
+                            }
+        if chart_vars is not None:
+            self._chart_vars.update(chart_vars)
         self._deploy_dir = deploy_dir
         self._chart_dir = os.path.join(self._deploy_dir, self._chart_name)
         self._chart_version = chart_version
@@ -77,11 +83,14 @@ class HelmClient:
         """
         # TODO: Interpret physical graph as helm-chart
         # run helm init
-        os.chdir(self._deploy_dir)
-        subprocess.check_output([f'helm create {self._chart_name}'], shell=True)
+        # os.chdir(self._deploy_dir)
+        # subprocess.check_output([f'helm create {self._chart_name}'], shell=True)
         # Update chart.yaml
         _write_chart(self._chart_dir, 'Chart.yaml', self._chart_name, self._chart_version,
-                     app_version=dlg_version)
+                     dlg_version,
+                     self._chart_vars['home'], self._chart_vars['description'],
+                     self._chart_vars['keywords'], self._chart_vars['sources'],
+                     self._chart_vars['kubeVersion'])
         # Update values.yaml
         _write_values(self._chart_dir, self._value_data)
         # Add charts
@@ -97,7 +106,10 @@ class HelmClient:
         if self._submit:
             os.chdir(self._deploy_dir)
             print(os.getcwd())
-            print(subprocess.check_output([f'helm install {self._deploy_name} {self._chart_name}/'],
+            instruction = f'helm install {self._deploy_name} {self._chart_name}/  ' \
+                          f'--values {self._chart_name}{os.sep}custom-values.yaml'
+            print(instruction)
+            print(subprocess.check_output([instruction],
                                           shell=True).decode('utf-8'))
         else:
             print(f"Created helm chart {self._chart_name} in {self._deploy_dir}")
