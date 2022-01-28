@@ -10,11 +10,12 @@ Finally, on minikube you may need to run the follwoing
 
 NOTE: On MacOS you can run with --clenaup and will start it and cleanup after. Not sure if this is the dame for all platforms.
 
+NOTE: Using --values my-values will overwrite any values specified in the values.yaml file.
 
 # Install/Setup
 From mychart directory
 
-helm install daliuge-daemon .
+helm install daliuge-daemon . --values my-values.yaml
 kubectl get svc -o wide
 curl -d '{"nodes": ["localhost"]}' -H "Content-Type: application/json" -X POST http://<IP address from above>:9000/managers/island/start
 helm uninstall daliuge-daemon
