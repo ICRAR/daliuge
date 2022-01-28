@@ -22,6 +22,12 @@
 """
 Contains a module translating physical graphs to kubernetes helm charts.
 """
+import http
+import json
+import re
+import urllib.request
+import time
+import requests
 import os
 
 import yaml
@@ -44,6 +50,15 @@ def _write_values(chart_dir, config):
         yaml.dump(config, value_file)
 
 
+def _find_num_nodes(pgt_data):
+    pgt = json.loads(pgt_data)
+    nodes = list(map(lambda x: x['node'], pgt))
+    islands = list(map(lambda x: x['island'], pgt))
+    num_islands = len(dict(zip(islands, nodes)))
+    num_nodes = list(map(lambda x, y: x + y, islands, nodes))
+    return num_islands, num_nodes
+
+
 class HelmClient:
     """
     Writes necessary files to launch job with kubernetes.
@@ -51,7 +66,7 @@ class HelmClient:
 
     def __init__(self, deploy_name, chart_name="dlg-test", deploy_dir="./",
                  submit=True, chart_version="0.1.0",
-                 value_config=None, physical_graph=None, chart_vars=None):
+                 value_config=None, physical_graph_file=None, chart_vars=None):
         if value_config is None:
             value_config = dict()
         self._chart_name = chart_name
@@ -71,12 +86,14 @@ class HelmClient:
         self._deploy_name = deploy_name
         self._submit = submit
         self._value_data = value_config if value_config is not None else {}
-        self._physical_graph = physical_graph if physical_graph is not None else []
+        self._physical_graph_file = physical_graph_file if physical_graph_file is not None else []
+        self._num_islands, self._num_nodes = _find_num_nodes(
+            self._physical_graph_file)
 
         if not os.path.isdir(self._deploy_dir):
             os.makedirs(self._deploy_dir)
 
-    def create_helm_chart(self, physical_graph_file):
+    def create_helm_chart(self):
         """
         Translates a physical graph to a kubernetes helm chart.
         For now, it will just try to run everything in a single container.
@@ -98,18 +115,41 @@ class HelmClient:
         # Update template
         # TODO: Update templates in helm
 
-    def submit_job(self):
+    def launch_helm(self):
         """
         Launches the built helm chart using the most straightforward commands possible.
         Assumes all files are prepared and validated.
         """
         if self._submit:
             os.chdir(self._deploy_dir)
-            print(os.getcwd())
             instruction = f'helm install {self._deploy_name} {self._chart_name}/  ' \
                           f'--values {self._chart_name}{os.sep}custom-values.yaml'
-            print(instruction)
-            print(subprocess.check_output([instruction],
-                                          shell=True).decode('utf-8'))
+            subprocess.check_output([instruction],
+                                    shell=True).decode('utf-8')
+            query = str(subprocess.check_output(['kubectl get svc -o wide'], shell=True))
+            pattern = r"-service\s*ClusterIP\s*\d+\.\d+\.\d+\.\d+"
+            ip_pattern = r"\d+\.\d+\.\d+\.\d+"
+            outcome = re.search(pattern, query)
+            if outcome:
+                manager_ip = re.search(ip_pattern, outcome.string)
+                # TODO: Dynamic port value
+                url = f"http://{manager_ip.group(0)}:9000/managers/island/start"
+                data = json.dumps({'nodes': ["localhost"]}).encode('utf-8')
+                header = {'Content-Type': 'application/json'}
+                time.sleep(10)
+                response = requests.post(url=url, data=data, headers=header)
+                print(response.content)
+                if response.status_code != http.HTTPStatus.OK:
+                    print("Cluster not running!")
+            else:
+                print("Could not find manager IP address")
+
         else:
             print(f"Created helm chart {self._chart_name} in {self._deploy_dir}")
+
+    def submit_job(self):
+        """
+        There is a semi-dynamic element to fetching the IPs of Node(s) to deploy to.
+        Hence, launching the chart and initiating graph execution have been de-coupled.
+        """
+        pass
