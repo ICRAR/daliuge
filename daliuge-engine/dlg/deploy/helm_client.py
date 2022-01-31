@@ -22,17 +22,18 @@
 """
 Contains a module translating physical graphs to kubernetes helm charts.
 """
-import http
 import json
 import re
 import time
-import requests
 import os
 
 import yaml
 import subprocess
 from dlg.common.version import version as dlg_version
+from dlg.manager.session import SessionStates
 from dlg.restutils import RestClient
+from dlg.clients import DataIslandManagerClient
+from dlg.deploy.common import submit
 
 
 def _write_chart(chart_dir, chart_name: str, name: str, version: str, app_version: str, home: str,
@@ -131,8 +132,8 @@ class HelmClient:
             os.chdir(self._deploy_dir)
             instruction = f'helm install {self._deploy_name} {self._chart_name}/  ' \
                           f'--values {self._chart_name}{os.sep}custom-values.yaml'
-            subprocess.check_output([instruction],
-                                    shell=True).decode('utf-8')
+            print(subprocess.check_output([instruction],
+                                          shell=True).decode('utf-8'))
             query = str(subprocess.check_output(['kubectl get svc -o wide'], shell=True))
             pattern = r"-service\s*ClusterIP\s*\d+\.\d+\.\d+\.\d+"
             ip_pattern = r"\d+\.\d+\.\d+\.\d+"
@@ -142,9 +143,13 @@ class HelmClient:
                 self._submission_endpoint = manager_ip.group(0)
                 # TODO: Dynamic port value
                 client = RestClient(self._submission_endpoint, 9000)
-                data = json.dumps({'nodes': ["localhost"]}).encode('utf-8')
+                data = json.dumps({'nodes': ["127.0.0.1"]}).encode('utf-8')
                 time.sleep(10)
-                response = json.loads(client._POST('/managers/island/start', content=data, content_type='application/json').read())
+                response = json.loads(client._POST('/managers/island/start', content=data,
+                                                   content_type='application/json').read())
+                print(response)
+                response = json.loads(client._POST('/managers/master/start', content=data,
+                                                   content_type='application/json').read())
                 print(response)
             else:
                 print("Could not find manager IP address")
@@ -157,4 +162,23 @@ class HelmClient:
         There is a semi-dynamic element to fetching the IPs of Node(s) to deploy to.
         Hence, launching the chart and initiating graph execution have been de-coupled.
         """
-        client = RestClient(self._submission_endpoint, 9000)
+        pg_data = json.loads(self._physical_graph_file)
+        submit(pg_data, self._submission_endpoint)
+        """        
+        client.createSession('1')
+        client.addGraphSpec('1', self._physical_graph_file)
+        client.deploySession('1', ["2022-01-31T15:27:02_-1_0"])
+        print(client.getGraph('1'))
+        attempts = 0
+        print(SessionStates.RUNNING)
+        while attempts < 10:
+            session_status = client.getSessionStatus('1')
+            print(session_status)
+            if session_status['127.0.0.1'] == SessionStates.FINISHED:
+                break
+            status = client.getGraphStatus('1')
+            print(status)
+            attempts += 1
+            time.sleep(2)
+        client.destroySession('1')
+        """
