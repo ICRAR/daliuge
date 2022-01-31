@@ -25,7 +25,6 @@ Contains a module translating physical graphs to kubernetes helm charts.
 import http
 import json
 import re
-import urllib.request
 import time
 import requests
 import os
@@ -33,6 +32,7 @@ import os
 import yaml
 import subprocess
 from dlg.common.version import version as dlg_version
+from dlg.restutils import RestClient
 
 
 def _write_chart(chart_dir, chart_name: str, name: str, version: str, app_version: str, home: str,
@@ -62,6 +62,7 @@ def _find_num_nodes(pgt_data):
 class HelmClient:
     """
     Writes necessary files to launch job with kubernetes.
+    TODO: Sort out setting of pgt data cleanly.
     """
 
     def __init__(self, deploy_name, chart_name="dlg-test", deploy_dir="./",
@@ -86,14 +87,19 @@ class HelmClient:
         self._deploy_name = deploy_name
         self._submit = submit
         self._value_data = value_config if value_config is not None else {}
-        self._physical_graph_file = physical_graph_file if physical_graph_file is not None else []
-        self._num_islands, self._num_nodes = _find_num_nodes(
-            self._physical_graph_file)
+        self._submission_endpoint = None
+        if physical_graph_file is not None:
+            self._set_physical_graph(physical_graph_file)
 
         if not os.path.isdir(self._deploy_dir):
             os.makedirs(self._deploy_dir)
 
-    def create_helm_chart(self):
+    def _set_physical_graph(self, physical_graph_content):
+        self._physical_graph_file = physical_graph_content
+        self._num_islands, self._num_nodes = _find_num_nodes(
+            self._physical_graph_file)
+
+    def create_helm_chart(self, physical_graph_content):
         """
         Translates a physical graph to a kubernetes helm chart.
         For now, it will just try to run everything in a single container.
@@ -112,6 +118,7 @@ class HelmClient:
         _write_values(self._chart_dir, self._value_data)
         # Add charts
         # TODO: Add charts to helm
+        self._set_physical_graph(physical_graph_content)
         # Update template
         # TODO: Update templates in helm
 
@@ -132,15 +139,13 @@ class HelmClient:
             outcome = re.search(pattern, query)
             if outcome:
                 manager_ip = re.search(ip_pattern, outcome.string)
+                self._submission_endpoint = manager_ip.group(0)
                 # TODO: Dynamic port value
-                url = f"http://{manager_ip.group(0)}:9000/managers/island/start"
+                client = RestClient(self._submission_endpoint, 9000)
                 data = json.dumps({'nodes': ["localhost"]}).encode('utf-8')
-                header = {'Content-Type': 'application/json'}
                 time.sleep(10)
-                response = requests.post(url=url, data=data, headers=header)
-                print(response.content)
-                if response.status_code != http.HTTPStatus.OK:
-                    print("Cluster not running!")
+                response = json.loads(client._POST('/managers/island/start', content=data, content_type='application/json').read())
+                print(response)
             else:
                 print("Could not find manager IP address")
 
@@ -152,4 +157,4 @@ class HelmClient:
         There is a semi-dynamic element to fetching the IPs of Node(s) to deploy to.
         Hence, launching the chart and initiating graph execution have been de-coupled.
         """
-        pass
+        client = RestClient(self._submission_endpoint, 9000)
