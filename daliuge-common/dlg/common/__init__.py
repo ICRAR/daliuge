@@ -39,6 +39,7 @@ class Categories:
     PLASMA = "Plasma"
     PLASMAFLIGHT = "PlasmaFlight"
     PARSET = "ParameterSet"
+    ENVIRONMENTVARS = "EnvironmentVars"
 
     MKN = "MKN"
     SCATTER = "Scatter"
@@ -72,7 +73,8 @@ STORAGE_TYPES = {
     Categories.JSON,
     Categories.PLASMA,
     Categories.PLASMAFLIGHT,
-    Categories.PARSET
+    Categories.PARSET,
+    Categories.ENVIRONMENTVARS
 }
 APP_DROP_TYPES = [
     Categories.COMPONENT,
