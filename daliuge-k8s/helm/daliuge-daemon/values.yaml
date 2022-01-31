@@ -5,5 +5,15 @@ containers:
   name: icrar/daliuge-engine:2.0.1
   ports:
     containerPort: 9000
+    deploymentPort: 8001
+    nodemanagerPort: 8000
 service:
-  port: 9000
+  daemon:
+    name: daemon-port
+    port: 9000
+  deployment:
+    name: deploy-port
+    port: 8001
+  nodemgr:
+    name: node-port
+    port: 8000
