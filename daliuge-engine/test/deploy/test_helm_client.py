@@ -26,6 +26,7 @@ import unittest
 import tempfile
 import os
 import yaml
+import json
 
 from dlg.common.version import version as dlg_version
 from dlg.deploy.helm_client import HelmClient
@@ -36,8 +37,8 @@ class TestHelmClient(unittest.TestCase):
 
     def test_create_default_helm_chart(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
-            helm_client = HelmClient(deploy_dir=tmp_dir)
-            helm_client.create_helm_chart([])
+            helm_client = HelmClient(deploy_dir=tmp_dir, deploy_name='my_fun_name')
+            helm_client.create_helm_chart('[]')
             chart_file_name = os.path.join(helm_client._chart_dir, "Chart.yaml")
             with open(chart_file_name, 'r', encoding='utf-8') as chart_file:
                 chart_data = yaml.safe_load(chart_file)
@@ -60,8 +61,8 @@ class TestHelmClient(unittest.TestCase):
             drop["node"] = "127.0.0.1"
             drop["island"] = "127.0.0.1"
         with tempfile.TemporaryDirectory() as tmp_dir:
-            helm_client = HelmClient(deploy_dir=tmp_dir)
-            helm_client.create_helm_chart(pg)
+            helm_client = HelmClient(deploy_dir=tmp_dir, deploy_name='dlg-test')
+            helm_client.create_helm_chart(json.dumps(pg))
             # TODO: Assert translation works
         self.fail("Test not yet implemented")
 
@@ -93,7 +94,7 @@ class TestHelmClient(unittest.TestCase):
              "island": "127.0.0.2"}
         ]
         with tempfile.TemporaryDirectory() as tmp_dir:
-            helm_client = HelmClient(deploy_dir=tmp_dir)
+            helm_client = HelmClient(deploy_dir=tmp_dir, deploy_name='dlg_test')
             helm_client.create_helm_chart(pg)
             # TODO: Assert translation works
         self.fail("Test not yet implemented")
