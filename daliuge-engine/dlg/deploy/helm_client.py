@@ -26,7 +26,10 @@ import json
 import re
 import time
 import os
+import shutil
+import pathlib
 
+import dlg
 import yaml
 import subprocess
 from dlg.common.version import version as dlg_version
@@ -34,13 +37,13 @@ from dlg.restutils import RestClient
 from dlg.deploy.common import submit
 
 
-def _write_chart(chart_dir, chart_name: str, name: str, version: str, app_version: str, home: str,
+def _write_chart(chart_dir, name: str, chart_name: str, version: str, app_version: str, home: str,
                  description, keywords: list, sources: list, kubeVersion: str):
-    chart_info = {'apiVersion': "v2", 'name': name, 'type': 'application', 'version': version,
+    chart_info = {'apiVersion': "v2", 'name': chart_name, 'type': 'application', 'version': version,
                   'appVersion': app_version, 'home': home, 'description': description,
                   'keywords': keywords, 'sources': sources, 'kubeVersion': kubeVersion}
     # TODO: Fix app_version quotations.
-    with open(f'{chart_dir}{os.sep}{chart_name}', 'w', encoding='utf-8') as chart_file:
+    with open(f'{chart_dir}{os.sep}{name}', 'w', encoding='utf-8') as chart_file:
         yaml.dump(chart_info, chart_file)
 
 
@@ -73,7 +76,7 @@ class HelmClient:
     TODO: Sort out setting of pgt data cleanly.
     """
 
-    def __init__(self, deploy_name, chart_name="dlg-test", deploy_dir="./",
+    def __init__(self, deploy_name, chart_name="daliuge-daemon", deploy_dir="./",
                  submit=True, chart_version="0.1.0",
                  value_config=None, physical_graph_file=None, chart_vars=None):
         if value_config is None:
@@ -90,7 +93,7 @@ class HelmClient:
         if chart_vars is not None:
             self._chart_vars.update(chart_vars)
         self._deploy_dir = deploy_dir
-        self._chart_dir = os.path.join(self._deploy_dir, self._chart_name)
+        self._chart_dir = os.path.join(self._deploy_dir, 'daliuge-daemon')
         self._chart_version = chart_version
         self._deploy_name = deploy_name
         self._submit = submit
@@ -99,8 +102,11 @@ class HelmClient:
         if physical_graph_file is not None:
             self._set_physical_graph(physical_graph_file)
 
-        if not os.path.isdir(self._deploy_dir):
-            os.makedirs(self._deploy_dir)
+        # Copy in template files.
+        library_root = pathlib.Path(os.path.dirname(dlg.__file__)).parent.parent
+        print(library_root)
+        shutil.copytree(os.path.join(library_root, 'daliuge-k8s', 'helm'), self._deploy_dir,
+                        dirs_exist_ok=True)
 
     def _set_physical_graph(self, physical_graph_content):
         self._physical_graph_file = physical_graph_content
