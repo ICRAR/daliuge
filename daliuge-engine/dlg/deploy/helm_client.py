@@ -30,9 +30,7 @@ import os
 import yaml
 import subprocess
 from dlg.common.version import version as dlg_version
-from dlg.manager.session import SessionStates
 from dlg.restutils import RestClient
-from dlg.clients import DataIslandManagerClient
 from dlg.deploy.common import submit
 
 
@@ -49,6 +47,15 @@ def _write_chart(chart_dir, chart_name: str, name: str, version: str, app_versio
 def _write_values(chart_dir, config):
     with open(f"{chart_dir}{os.sep}custom-values.yaml", 'w', encoding='utf-8') as value_file:
         yaml.dump(config, value_file)
+
+
+def _read_values(chart_dir):
+    with open(f"{chart_dir}{os.sep}values.yaml", 'r', encoding='utf-8') as old_file:
+        data = yaml.safe_load(old_file)
+    with open(f"{chart_dir}{os.sep}values.yaml", 'r', encoding='utf-8') as custom_file:
+        new_data = yaml.safe_load(custom_file)
+    data.update(new_data)
+    return data
 
 
 def _find_num_nodes(pgt_data):
@@ -105,11 +112,6 @@ class HelmClient:
         Translates a physical graph to a kubernetes helm chart.
         For now, it will just try to run everything in a single container.
         """
-        # TODO: Interpret physical graph as helm-chart
-        # run helm init
-        # os.chdir(self._deploy_dir)
-        # subprocess.check_output([f'helm create {self._chart_name}'], shell=True)
-        # Update chart.yaml
         _write_chart(self._chart_dir, 'Chart.yaml', self._chart_name, self._chart_version,
                      dlg_version,
                      self._chart_vars['home'], self._chart_vars['description'],
@@ -117,6 +119,7 @@ class HelmClient:
                      self._chart_vars['kubeVersion'])
         # Update values.yaml
         _write_values(self._chart_dir, self._value_data)
+        self._value_data = _read_values(self._chart_dir)
         # Add charts
         # TODO: Add charts to helm
         self._set_physical_graph(physical_graph_content)
@@ -141,21 +144,22 @@ class HelmClient:
             if outcome:
                 manager_ip = re.search(ip_pattern, outcome.string)
                 self._submission_endpoint = manager_ip.group(0)
-                # TODO: Dynamic port value
-                client = RestClient(self._submission_endpoint, 9000)
+                client = RestClient(self._submission_endpoint,
+                                    self._value_data['service']['daemon']['port'])
                 data = json.dumps({'nodes': ["127.0.0.1"]}).encode('utf-8')
-                time.sleep(10)
-                response = json.loads(client._POST('/managers/island/start', content=data,
-                                                   content_type='application/json').read())
-                print(response)
-                response = json.loads(client._POST('/managers/master/start', content=data,
-                                                   content_type='application/json').read())
-                print(response)
+                time.sleep(5)  # TODO: Deterministic deployment information
+                client._POST('/managers/island/start', content=data,
+                             content_type='application/json')
+                client._POST('/managers/master/start', content=data,
+                             content_type='application/json')
             else:
                 print("Could not find manager IP address")
 
         else:
             print(f"Created helm chart {self._chart_name} in {self._deploy_dir}")
+
+    def teardown(self):
+        subprocess.check_output(['helm uninstall daliuge-daemon'], shell=True)
 
     def submit_job(self):
         """
@@ -164,21 +168,3 @@ class HelmClient:
         """
         pg_data = json.loads(self._physical_graph_file)
         submit(pg_data, self._submission_endpoint)
-        """        
-        client.createSession('1')
-        client.addGraphSpec('1', self._physical_graph_file)
-        client.deploySession('1', ["2022-01-31T15:27:02_-1_0"])
-        print(client.getGraph('1'))
-        attempts = 0
-        print(SessionStates.RUNNING)
-        while attempts < 10:
-            session_status = client.getSessionStatus('1')
-            print(session_status)
-            if session_status['127.0.0.1'] == SessionStates.FINISHED:
-                break
-            status = client.getGraphStatus('1')
-            print(status)
-            attempts += 1
-            time.sleep(2)
-        client.destroySession('1')
-        """
