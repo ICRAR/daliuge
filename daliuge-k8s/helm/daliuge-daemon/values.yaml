@@ -12,8 +12,8 @@ service:
     name: daemon-port
     port: 9000
   deployment:
-    name: deploy-port
+    name: island-port
     port: 8001
   nodemgr:
-    name: node-port
+    name: node-manager-port
     port: 8000
