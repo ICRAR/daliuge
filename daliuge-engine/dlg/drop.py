@@ -76,9 +76,7 @@ DEFAULT_INTERNAL_PARAMETERS = {'storage', 'rank', 'loop_cxt', 'dw', 'iid', 'dt',
 
 if sys.version_info >= (3, 8):
     from .io import SharedMemoryIO
-from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking
-from .meta import dlg_float_param, dlg_int_param, dlg_list_param, \
-    dlg_string_param, dlg_bool_param, dlg_dict_param
+from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking, getDlgVariable
 from dlg.process import DlgProcess
 from .meta import (
     dlg_float_param,
@@ -222,6 +220,10 @@ class AbstractDROP(EventFirer):
         self._consumers = ListAsDict(self._consumers_uids)
         self._producers_uids = set()
         self._producers = ListAsDict(self._producers_uids)
+
+        # Matcher used to validate environment_variable_syntax
+        self._env_var_matcher = re.compile(r"\$[A-z|\d]+\..+")
+        self._dlg_var_matcher = re.compile(r"\$DLG_.+")
 
         # Set holding the state of the producers that have finished their
         # execution. Once all producers have finished, this DROP moves
@@ -601,6 +603,48 @@ class AbstractDROP(EventFirer):
             self.status = DROPStates.WRITING
 
         return nbytes
+
+    def autofill_environment_variables(self):
+        """
+        Runs through all parameters here, fetching those which match the env-var syntax when
+        discovered.
+        """
+        for param_key, param_val in self.parameters.items():
+            if self._env_var_matcher.fullmatch(str(param_val)):
+                self.parameters[param_key] = self.get_environment_variable(param_val)
+            if self._dlg_var_matcher.fullmatch(str(param_val)):
+                self.parameters[param_key] = getDlgVariable(param_val)
+
+    def get_environment_variable(self, key: str):
+        """
+        Expects keys of the form $store_name.var_name
+        $store_name.var_name.sub_var_name will query store_name for var_name.sub_var_name
+        """
+        if self._dlg_var_matcher.fullmatch(key):
+            return getDlgVariable(key)
+        if len(key) < 2 or key[0] != '$':
+            # Reject malformed entries
+            return None
+        key_edit = key[1:]
+        env_var_ref, env_var_key = key_edit.split('.')[0], '.'.join(key_edit.split('.')[1:])
+        env_var_drop = None
+        for producer in self.producers:
+            if producer.name == env_var_ref:
+                env_var_drop = producer
+        if env_var_drop is not None:  # TODO: Check for KeyValueDROP interface support
+            return env_var_drop.get(env_var_key)
+        else:
+            return None
+
+    def get_environment_variables(self, keys: list):
+        """
+        Expects multiple instances of the single key form
+        """
+        return_values = []
+        for key in keys:
+            # TODO: Accumulate calls to the same env_var_store to save communication
+            return_values.append(self.get_environment_variable(key))
+        return return_values
 
     @abstractmethod
     def getIO(self) -> DataIO:
@@ -2204,9 +2248,9 @@ class PlasmaDROP(AbstractDROP):
 
     def getIO(self):
         return PlasmaIO(plasma.ObjectID(self.object_id),
-                                        self.plasma_path,
-                                        expected_size=self._expectedSize,
-                                        use_staging=self.use_staging)
+                        self.plasma_path,
+                        expected_size=self._expectedSize,
+                        use_staging=self.use_staging)
 
     @property
     def dataURL(self):
@@ -2268,66 +2312,6 @@ class PlasmaFlightDROP(AbstractDROP):
     @property
     def dataURL(self):
         return "plasmaflight://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
-
-##
-# @brief ParameterSet
-# @details A set of parameters, wholly specified in EAGLE
-# @par EAGLE_START
-# @param category ParameterSet
-# @param[in] param/mode Parset mode/"YANDA"/String/readonly/False/To what standard DALiuGE should filter and serialize the parameters.
-# @param[in] param/config_data ConfigData/""/String/readwrite/False/Additional configuration information to be mixed in with the initial data
-# @param[out] port/Config ConfigFile/File/The output configuration file
-# @par EAGLE_END
-class ParameterSetDROP(AbstractDROP):
-    """
-    A generic configuration file template wrapper
-    This drop opens an (optional) file containing some initial configuration information, then
-    appends any additional specified parameters to it, finally serving it as a data object.
-    """
-
-    config_data = b''
-
-    mode = dlg_string_param('mode', None)
-
-    @abstractmethod
-    def serialize_parameters(self, parameters: dict, mode):
-        """
-        Returns a string representing a serialization of the parameters.
-        """
-        if mode == "YANDA":
-            # TODO: Add more complex value checking
-            return "\n".join(f"{x}={y}" for x, y in parameters.items())
-        # Add more formats (.ini for example)
-        return "\n".join(f"{x}={y}" for x, y in parameters.items())
-
-    @abstractmethod
-    def filter_parameters(self, parameters: dict, mode):
-        """
-        Returns a dictionary of parameters, with daliuge-internal or other parameters filtered out
-        """
-        if mode == 'YANDA':
-            forbidden_params = list(DEFAULT_INTERNAL_PARAMETERS)
-            if parameters['config_data'] == "":
-                forbidden_params.append('configData')
-            return {key: val for key, val in parameters.items() if
-                    key not in DEFAULT_INTERNAL_PARAMETERS}
-        return parameters
-
-    def initialize(self, **kwargs):
-        """
-        TODO: Open input file
-        """
-        self.config_data = self.serialize_parameters(
-            self.filter_parameters(self.parameters, self.mode), self.mode).encode('utf-8')
-
-    def getIO(self):
-        return MemoryIO(io.BytesIO(self.config_data))
-
-    @property
-    def dataURL(self):
-        hostname = os.uname()[1]
-        return f"config://{hostname}/{os.getpid()}/{id(self.config_data)}"
-
 
 ##
 # @brief ParameterSet
