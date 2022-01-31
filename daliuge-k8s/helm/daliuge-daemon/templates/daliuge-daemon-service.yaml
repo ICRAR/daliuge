@@ -7,5 +7,14 @@ spec:
     app: daliuge-daemon
   ports:
     - protocol: TCP
-      port: {{ .Values.service.port }}
+      name: {{ .Values.service.daemon.name }}
+      port: {{ .Values.service.daemon.port }}
       targetPort: {{ .Values.containers.ports.containerPort }}
+    - protocol: TCP
+      name: {{ .Values.service.deployment.name }}
+      port: {{ .Values.service.deployment.port }}
+      targetPort: {{ .Values.containers.ports.deploymentPort }}
+    - protocol: TCP
+      name: {{ .Values.service.nodemgr.name }}
+      port: {{ .Values.service.nodemgr.port }}
+      targetPort: {{ .Values.containers.ports.nodemanagerPort }}
