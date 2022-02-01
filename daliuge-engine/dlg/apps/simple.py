@@ -101,6 +101,7 @@ class SleepApp(BarrierAppDROP):
 # content recursively.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/appclass Application Class/dlg.apps.simple.CopyApp/String/readonly/
 #     \~English Application class
 # @par EAGLE_END
