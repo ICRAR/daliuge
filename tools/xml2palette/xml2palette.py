@@ -32,28 +32,31 @@ DOXYGEN_SETTINGS = [
 ]
 
 
-def get_filenames_from_command_line(argv):
+def get_options_from_command_line(argv):
     inputdir = ""
+    tag = ""
     outputfile = ""
     try:
-        opts, args = getopt.getopt(argv, "hi:o:", ["idir=", "ofile="])
+        opts, args = getopt.getopt(argv, "hi:t:o:", ["idir=", "tag=", "ofile="])
     except getopt.GetoptError:
-        print("xml2palette.py -i <input_directory> -o <output_file>")
+        print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
         sys.exit(2)
 
     if len(opts) < 2:
-        print("xml2palette.py -i <input_directory> -o <output_file>")
+        print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
         sys.exit()
 
     for opt, arg in opts:
         if opt == "-h":
-            print("xml2palette.py -i <input_directory> -o <output_file>")
+            print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
             sys.exit()
         elif opt in ("-i", "--idir"):
             inputdir = arg
+        elif opt in ("-t", "--tag"):
+            tag = arg
         elif opt in ("-o", "--ofile"):
             outputfile = arg
-    return inputdir, outputfile
+    return inputdir, tag, outputfile
 
 
 def check_environment_variables():
@@ -368,6 +371,7 @@ def create_palette_node_from_params(params):
     text = ""
     description = ""
     category = ""
+    tag = ""
     categoryType = ""
     inputPorts = []
     outputPorts = []
@@ -385,6 +389,8 @@ def create_palette_node_from_params(params):
 
         if key == "category":
             category = value
+        elif key == "tag":
+            tag = value
         elif key == "text":
             text = value
         elif key == "description":
@@ -471,6 +477,7 @@ def create_palette_node_from_params(params):
     return {
         "category": category,
         "categoryType": "Application",
+        "tag": tag,
         "isData": False,
         "isGroup": False,
         "canHaveInputs": True,
@@ -634,7 +641,7 @@ def process_compounddef(compounddef):
 if __name__ == "__main__":
     logging.basicConfig(format="%(asctime)s - %(message)s", datefmt="%d-%b-%y %H:%M:%S")
 
-    (inputdir, outputfile) = get_filenames_from_command_line(sys.argv[1:])
+    (inputdir, tag, outputfile) = get_options_from_command_line(sys.argv[1:])
 
     # create a temp directory for the output of doxygen
     output_directory = tempfile.TemporaryDirectory()
@@ -706,7 +713,10 @@ if __name__ == "__main__":
 
             # create a node
             n = create_palette_node_from_params(params)
-            nodes.append(n)
+
+            # if the node tag matches the command line tag, or no tag was specified on the command line, add the node to the list to output
+            if n["tag"] == tag or tag == "":
+                nodes.append(n)
 
         # check if gitrepo and version params were found and cache the values
         for param in params:
