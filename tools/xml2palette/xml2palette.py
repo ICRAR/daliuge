@@ -474,9 +474,9 @@ def create_palette_node_from_params(params):
     add_required_fields_for_category(fields, category)
 
     # create and return the node
+    # TODO: we can remove a bunch of these attributes (isData etc)
     return {
         "category": category,
-        "categoryType": "Application",
         "tag": tag,
         "isData": False,
         "isGroup": False,
