@@ -54,6 +54,7 @@ matrix:
         - git clone https://$GITHUB_TOKEN@github.com/ICRAR/EAGLE_test_repo
         - mkdir -p EAGLE_test_repo/$PROJECT_NAME
         - mv $PROJECT_NAME-$TRAVIS_BRANCH.palette EAGLE_test_repo/$PROJECT_NAME/
+        - mv $PROJECT_NAME-$TRAVIS_BRANCH-template.palette EAGLE_test_repo/$PROJECT_NAME/
         - cd EAGLE_test_repo
         - git add *
         - git diff-index --quiet HEAD || git commit -m "Automatically generated DALiuGE palette (branch $TRAVIS_BRANCH, commit $PROJECT_VERSION)"
