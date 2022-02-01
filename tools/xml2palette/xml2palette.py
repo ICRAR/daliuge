@@ -716,7 +716,6 @@ if __name__ == "__main__":
 
             # if the node tag matches the command line tag, or no tag was specified on the command line, add the node to the list to output
             if n["tag"] == tag or tag == "":
-                delattr(n, "tag")
                 nodes.append(n)
 
         # check if gitrepo and version params were found and cache the values
