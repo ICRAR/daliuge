@@ -1218,8 +1218,8 @@ class PathBasedDrop(object):
 # @brief File
 # @details A standard file on a filesystem mounted to the deployment machine
 # @par EAGLE_START
-# @par category File
-# @par tag template
+# @param category File
+# @param tag template
 # @param[in] param/data_volume Data volume/5/Float/readwrite/
 #     \~English Estimated size of the data contained in this node
 # @param[in] param/group_end Group end/False/Boolean/readwrite/
@@ -1395,7 +1395,7 @@ class FileDROP(AbstractDROP, PathBasedDrop):
 # @brief NGAS
 # @details An archive on the Next Generation Archive System (NGAS).
 # @par EAGLE_START
-# @par category NGAS
+# @param category NGAS
 # @param tag template
 # @param[in] param/data_volume Data volume/5/Float/readwrite/
 #     \~English Estimated size of the data contained in this node
@@ -1516,7 +1516,7 @@ class NgasDROP(AbstractDROP):
 # @brief Memory
 # @details In-memory storage of intermediate data products
 # @par EAGLE_START
-# @par category Memory
+# @param category Memory
 # @param tag template
 # @param[in] param/data_volume Data volume/5/Float/readwrite/
 #     \~English Estimated size of the data contained in this node
