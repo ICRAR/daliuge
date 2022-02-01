@@ -33,13 +33,13 @@ import numpy as np
 from dlg import droputils, utils
 from dlg.drop import BarrierAppDROP, BranchAppDrop, ContainerDROP
 from dlg.meta import (
-    dlg_float_param, 
+    dlg_float_param,
     dlg_string_param,
-    dlg_bool_param, 
+    dlg_bool_param,
     dlg_int_param,
-    dlg_component, 
+    dlg_component,
     dlg_batch_input,
-    dlg_batch_output, 
+    dlg_batch_output,
     dlg_streaming_input
 )
 from dlg.exceptions import DaliugeException
@@ -67,6 +67,7 @@ class NullBarrierApp(BarrierAppDROP):
 # without executing real algorithms. Very useful for debugging.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/sleepTime Sleep Time/5/Integer/readwrite/
 #     \~English The number of seconds to sleep
 # @param[in] param/appclass Application Class/dlg.apps.simple.SleepApp/String/readonly/

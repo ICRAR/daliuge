@@ -48,7 +48,8 @@ matrix:
         - git config --global user.name $GITHUB_USERNAME
         - git config --global user.email "$GITHUB_USERNAME@gmail.com"
       script:
-        - python3 tools/xml2palette/xml2palette.py -i ./ -o $PROJECT_NAME-$TRAVIS_BRANCH.palette
+        - python3 tools/xml2palette/xml2palette.py -i ./ -t daliuge -o $PROJECT_NAME-$TRAVIS_BRANCH.palette
+        - python3 tools/xml2palette/xml2palette.py -i ./ -t template -o $PROJECT_NAME-$TRAVIS_BRANCH-template.palette
       after_success:
         - git clone https://$GITHUB_TOKEN@github.com/ICRAR/EAGLE_test_repo
         - mkdir -p EAGLE_test_repo/$PROJECT_NAME
