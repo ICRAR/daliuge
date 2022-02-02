@@ -148,7 +148,7 @@ def find_field_by_name(fields, name):
 
 
 def add_required_fields_for_category(fields, category):
-    if category == "DynlibApp":
+    if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp"]:
         if find_field_by_name(fields, "execution_time") is None:
             fields.append(
                 create_field(
@@ -185,49 +185,14 @@ def add_required_fields_for_category(fields, category):
                     False,
                 )
             )
+    elif category == "DynlibApp":
         if find_field_by_name(fields, "libpath") is None:
             fields.append(
                 create_field(
                     "libpath", "Library path", "", "", "readwrite", "String", False
                 )
             )
-    elif category == "PythonApp" or category == "Branch":
-        if find_field_by_name(fields, "execution_time") is None:
-            fields.append(
-                create_field(
-                    "execution_time",
-                    "Execution time",
-                    5,
-                    "Estimated execution time",
-                    "readwrite",
-                    "Float",
-                    False,
-                )
-            )
-        if find_field_by_name(fields, "num_cpus") is None:
-            fields.append(
-                create_field(
-                    "num_cpus",
-                    "Num CPUs",
-                    1,
-                    "Number of cores used",
-                    "readwrite",
-                    "Integer",
-                    False,
-                )
-            )
-        if find_field_by_name(fields, "group_start") is None:
-            fields.append(
-                create_field(
-                    "group_start",
-                    "Group start",
-                    "false",
-                    "Component is start of a group",
-                    "readwrite",
-                    "Boolean",
-                    False,
-                )
-            )
+    elif category in ["PythonApp", "Branch"]:
         if find_field_by_name(fields, "appclass") is None:
             fields.append(
                 create_field(
@@ -237,6 +202,31 @@ def add_required_fields_for_category(fields, category):
                     "Application class",
                     "readwrite",
                     "String",
+                    False,
+                )
+            )
+    elif category in ["File", "Memory", "NGAS", "ParameterSet", "Plasma", "PlasmaFlight", "S3"]:
+        if find_field_by_name(fields, "data_volume") is None:
+            fields.append(
+                create_field(
+                    "data_volume",
+                    "Data volume",
+                    5,
+                    "Estimated size of the data contained in this node",
+                    "readwrite",
+                    "Integer",
+                    False,
+                )
+            )
+        if find_field_by_name(fields, "group_end") is None:
+            fields.append(
+                create_field(
+                    "group_end",
+                    "Group end",
+                    "false",
+                    "Component is end of a group",
+                    "readwrite",
+                    "Boolean",
                     False,
                 )
             )
