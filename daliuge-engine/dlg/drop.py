@@ -2202,7 +2202,7 @@ class BarrierAppDROP(InputFiredAppDROP):
 # @par EAGLE_START
 # @param category Branch
 # @param tag template
-# @param[in] param/appclass Application Class/dlg.apps.simple.HelloWorldApp/String/readonly/
+# @param[in] param/appclass Application Class/dlg.apps.simple.SimpleBranch/String/readonly/
 #     \~English Application class
 # @param[in] param/group_start Group start/False/Boolean/readwrite/
 #     \~English Is this node the start of a group?
