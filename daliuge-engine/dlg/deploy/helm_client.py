@@ -73,7 +73,6 @@ def _find_num_nodes(pgt_data):
 class HelmClient:
     """
     Writes necessary files to launch job with kubernetes.
-    TODO: Sort out setting of pgt data cleanly.
     """
 
     def __init__(self, deploy_name, chart_name="daliuge-daemon", deploy_dir="./",
