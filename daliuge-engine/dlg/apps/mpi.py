@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 # @brief MPI
 # @details An application component using the Message Passing Interface (MPI)
 # @par EAGLE_START
-# @param category MPI
+# @param category Mpi
 # @param tag template
 # @param[in] param/num_of_procs Num procs//Integer/readwrite/
 #     \~English Number of processes used for this application
