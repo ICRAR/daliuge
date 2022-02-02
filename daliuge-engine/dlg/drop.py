@@ -2196,7 +2196,17 @@ class BarrierAppDROP(InputFiredAppDROP):
         kwargs["n_effective_inputs"] = -1
         super(BarrierAppDROP, self).initialize(**kwargs)
 
-
+##
+# @brief Branch
+# @details A conditional branch to control flow
+# @par EAGLE_START
+# @param category Branch
+# @param tag template
+# @param[in] param/appclass Application Class/dlg.apps.simple.HelloWorldApp/String/readonly/
+#     \~English Application class
+# @param[in] param/group_start Group start/False/Boolean/readwrite/
+#     \~English Is this node the start of a group?
+# @par EAGLE_END
 class BranchAppDrop(BarrierAppDROP):
     """
     A special kind of application with exactly two outputs. After normal
