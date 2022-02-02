@@ -43,6 +43,6 @@ case "$1" in
         echo "Build finished!"
         exit 0;;
     *)
-        echo "Usage: build_engine.sh <dep|dev>"
+        echo "Usage: build_engine.sh <dep|dev|devall|casa>"
         exit 0;;
 esac
