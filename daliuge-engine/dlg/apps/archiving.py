@@ -81,6 +81,7 @@ class ExternalStoreApp(BarrierAppDROP):
 # @details Takes an input and archives it in an NGAS server.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/appclass Application class/dlg.apps.archiving.NgasArchivingApp/String/readonly/
 #     \~English Application class
 # @param[in] param/ngasSrv NGAS Server URL/localhost/String/readwrite/
