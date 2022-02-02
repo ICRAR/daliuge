@@ -45,6 +45,7 @@ from dlg.meta import (
 # single output via SSH's scp protocol.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/appclass Application Class/dlg.apps.scp.ScpApp/String/readonly/
 #     \~English Application class
 # @param[in] param/remoteUser Remote User//String/readwrite/
