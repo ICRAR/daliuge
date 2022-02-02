@@ -191,7 +191,7 @@ def add_required_fields_for_category(fields, category):
                     "libpath", "Library path", "", "", "readwrite", "String", False
                 )
             )
-    elif category == "PythonApp":
+    elif category == "PythonApp" or category == "Branch":
         if find_field_by_name(fields, "execution_time") is None:
             fields.append(
                 create_field(
