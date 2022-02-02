@@ -148,7 +148,7 @@ def find_field_by_name(fields, name):
 
 
 def add_required_fields_for_category(fields, category):
-    if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp"]:
+    if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp", "MPI"]:
         if find_field_by_name(fields, "execution_time") is None:
             fields.append(
                 create_field(
@@ -173,6 +173,8 @@ def add_required_fields_for_category(fields, category):
                     False,
                 )
             )
+
+    if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp"]:
         if find_field_by_name(fields, "group_start") is None:
             fields.append(
                 create_field(
@@ -185,14 +187,14 @@ def add_required_fields_for_category(fields, category):
                     False,
                 )
             )
-    elif category == "DynlibApp":
+    if category == "DynlibApp":
         if find_field_by_name(fields, "libpath") is None:
             fields.append(
                 create_field(
                     "libpath", "Library path", "", "", "readwrite", "String", False
                 )
             )
-    elif category in ["PythonApp", "Branch"]:
+    if category in ["PythonApp", "Branch"]:
         if find_field_by_name(fields, "appclass") is None:
             fields.append(
                 create_field(
@@ -205,7 +207,7 @@ def add_required_fields_for_category(fields, category):
                     False,
                 )
             )
-    elif category in ["File", "Memory", "NGAS", "ParameterSet", "Plasma", "PlasmaFlight", "S3"]:
+    if category in ["File", "Memory", "NGAS", "ParameterSet", "Plasma", "PlasmaFlight", "S3"]:
         if find_field_by_name(fields, "data_volume") is None:
             fields.append(
                 create_field(
@@ -218,6 +220,7 @@ def add_required_fields_for_category(fields, category):
                     False,
                 )
             )
+    if category in ["File", "Memory", "NGAS", "ParameterSet", "Plasma", "PlasmaFlight", "S3", "MPI"]:
         if find_field_by_name(fields, "group_end") is None:
             fields.append(
                 create_field(
