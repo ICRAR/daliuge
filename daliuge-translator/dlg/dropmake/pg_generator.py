@@ -548,6 +548,11 @@ class LGNode:
                 # The field to be used is not the text, but the name field
                 self.jd[je["name"]] = je["value"]
                 kwargs[je["name"]] = je["value"]
+        if "applicationParams" in self.jd:
+            kwargs["applicationParams"] = {}
+            for je in self.jd["applicationParams"]:
+                self.jd[je["name"]] = je["value"]
+                kwargs["applicationParams"][je["name"]] = je["value"]
         for i in range(10):
             k = "Arg%02d" % (i + 1)
             if k not in self.jd:
@@ -624,7 +629,7 @@ class LGNode:
                     kwargs["filepath"] = fp
             self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
-        elif drop_type in [Categories.COMPONENT, Categories.PYTHON_APP, Categories.BRANCH]:
+        elif drop_type in [Categories.COMPONENT, Categories.PYTHON_APP, Categories.BRANCH, Categories.DOCKER]:
             # default generic component becomes "sleep and copy"
             if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
                 app_class = "dlg.apps.simple.SleepApp"
@@ -720,37 +725,37 @@ class LGNode:
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             drop_spec.update(kwargs)
 
-        elif drop_type == Categories.DOCKER:
-            # Docker application.
-            app_class = "dlg.apps.dockerapp.DockerApp"
-            typ = DropType.APP
-            drop_spec = dropdict(
-                {"oid": oid, "type": typ, "app": app_class, "rank": rank}
-            )
+        # elif drop_type == Categories.DOCKER:
+        #     # Docker application.
+        #     app_class = "dlg.apps.dockerapp.DockerApp"
+        #     typ = DropType.APP
+        #     drop_spec = dropdict(
+        #         {"oid": oid, "type": typ, "app": app_class, "rank": rank}
+        #     )
 
-            image = str(self.jd.get("image"))
-            if image == "":
-                raise GraphException("Missing image for Construct '%s'" % self.text)
+        #     image = str(self.jd.get("image"))
+        #     if image == "":
+        #         raise GraphException("Missing image for Construct '%s'" % self.text)
 
-            command = str(self.jd.get("command"))
-            # There ARE containers which don't need/want a command
-            # if command == "":
-            #     raise GraphException("Missing command for Construct '%s'" % self.text)
+        #     command = str(self.jd.get("command"))
+        #     # There ARE containers which don't need/want a command
+        #     # if command == "":
+        #     #     raise GraphException("Missing command for Construct '%s'" % self.text)
 
-            kwargs["tw"] = int(self.jd.get("execution_time", "5"))
-            kwargs["image"] = image
-            kwargs["command"] = command
-            kwargs["user"] = str(self.jd.get("user", ""))
-            kwargs["ensureUserAndSwitch"] = self.str_to_bool(
-                str(self.jd.get("ensureUserAndSwitch", "0"))
-            )
-            kwargs["removeContainer"] = self.str_to_bool(
-                str(self.jd.get("removeContainer", "1"))
-            )
-            kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
-            kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
-            kwargs["shmSize"] = str(self.jd.get("shmSize",""))
-            drop_spec.update(kwargs)
+        #     kwargs["tw"] = int(self.jd.get("execution_time", "5"))
+        #     kwargs["image"] = image
+        #     kwargs["command"] = command
+        #     kwargs["user"] = str(self.jd.get("user", ""))
+        #     kwargs["ensureUserAndSwitch"] = self.str_to_bool(
+        #         str(self.jd.get("ensureUserAndSwitch", "0"))
+        #     )
+        #     kwargs["removeContainer"] = self.str_to_bool(
+        #         str(self.jd.get("removeContainer", "1"))
+        #     )
+        #     kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
+        #     kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
+        #     kwargs["shmSize"] = str(self.jd.get("shmSize",""))
+        #     drop_spec.update(kwargs)
 
         elif drop_type == Categories.GROUP_BY:
             drop_spec = dropdict(
