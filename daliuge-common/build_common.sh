@@ -32,6 +32,6 @@ case "$1" in
         echo "Build finished!"
         exit 0;;
     *)
-        echo "Usage: build_common.sh <dep|dev|casa>"
+        echo "Usage: build_common.sh <dep|dev|devcuda|casa>"
         exit 0;;
 esac
