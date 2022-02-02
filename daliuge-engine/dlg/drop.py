@@ -1304,7 +1304,7 @@ class FileDROP(DataDROP, PathBasedDrop):
         return FileIO(self._path)
 
     def delete(self):
-        AbstractDROP.delete(self)
+        super().delete()
         if self.delete_parent_directory:
             try:
                 os.rmdir(self._root)
