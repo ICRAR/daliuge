@@ -56,6 +56,7 @@ logger = logging.getLogger(__name__)
 # so data can be written into them through the framework.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/appclass Application Class/dlg.apps.socket_listener.SocketListener/String/readonly/
 #     \~English Application class
 # @param[in] param/host Host/127.0.0.1/String/readwrite/
