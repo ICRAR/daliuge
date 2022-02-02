@@ -23,7 +23,6 @@
 A demo implementation of a Helm-based DAliuGE deployment.
 
 Limitations:
-- Tested only with minikube
 - Assumes graphs will run on a single pod
 - Does not support external graph components (yet)
 """
@@ -90,7 +89,7 @@ def main():
     helm_client = HelmClient(
         deploy_name='daliuge-daemon',
         chart_name='daliuge-daemon',
-        deploy_dir='home/nicholas/dlg_temp'
+        deploy_dir='/home/nicholas/dlg_temp/demo'
     )
     helm_client.create_helm_chart(json.dumps(physical_graph))
     helm_client.launch_helm()
