@@ -12,11 +12,14 @@ case "$1" in
         exit 0 ;;
     "dev")
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
-        # export VCS_TAG="casa"
         echo "Building daliuge-common development version using tag ${VCS_TAG}"
-        # The complete casa and arrow installation is only required for the Plasma streaming
-        # and should not go much further.
         docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-common:${VCS_TAG} -f docker/Dockerfile.dev .
+        echo "Build finished!"
+        exit 0;;
+    "devcuda")
+        export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
+        echo "Building daliuge-common development version using tag ${VCS_TAG}"
+        docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-common:${VCS_TAG} -f docker/Dockerfile.cuda .
         echo "Build finished!"
         exit 0;;
     "casa")
