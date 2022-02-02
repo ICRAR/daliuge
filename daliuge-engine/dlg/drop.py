@@ -2221,7 +2221,8 @@ class BranchAppDrop(BarrierAppDROP):
 # @brief Plasma
 # @details An object in a Apache Arrow Plasma in-memory object store
 # @par EAGLE_START
-# @par category Plasma
+# @param category Plasma
+# @param tag template
 # @param[in] param/data_volume Data volume/5/Float/readwrite/
 #     \~English Estimated size of the data contained in this node
 # @param[in] param/group_end Group end/False/Boolean/readwrite/
@@ -2265,7 +2266,8 @@ class PlasmaDROP(AbstractDROP):
 # @details An Apache Arrow Flight server providing distributed access
 # to a Plasma in-memory object store
 # @par EAGLE_START
-# @par category Plasma
+# @param category PlasmaFlight
+# @param tag template
 # @param[in] param/data_volume Data volume/5/Float/readwrite/
 #     \~English Estimated size of the data contained in this node
 # @param[in] param/group_end Group end/False/Boolean/readwrite/
@@ -2321,6 +2323,7 @@ class PlasmaFlightDROP(AbstractDROP):
 # @details A set of parameters, wholly specified in EAGLE
 # @par EAGLE_START
 # @param category ParameterSet
+# @param tag template
 # @param[in] param/mode Parset mode/"YANDA"/String/readonly/False/To what standard DALiuGE should filter and serialize the parameters.
 # @param[in] param/config_data ConfigData/""/String/readwrite/False/Additional configuration information to be mixed in with the initial data
 # @param[out] port/Config ConfigFile/File/The output configuration file
