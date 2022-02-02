@@ -144,6 +144,7 @@ class HelmClient:
             print(subprocess.check_output([instruction],
                                           shell=True).decode('utf-8'))
             query = str(subprocess.check_output(['kubectl get svc -o wide'], shell=True))
+            # WARNING: May be problematic later if multiple services are running
             pattern = r"-service\s*ClusterIP\s*\d+\.\d+\.\d+\.\d+"
             ip_pattern = r"\d+\.\d+\.\d+\.\d+"
             outcome = re.search(pattern, query)
