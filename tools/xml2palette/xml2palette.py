@@ -148,7 +148,7 @@ def find_field_by_name(fields, name):
 
 
 def add_required_fields_for_category(fields, category):
-    if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp", "Mpi"]:
+    if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp", "Mpi", "Docker"]:
         if find_field_by_name(fields, "execution_time") is None:
             fields.append(
                 create_field(
@@ -174,7 +174,7 @@ def add_required_fields_for_category(fields, category):
                 )
             )
 
-    if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp"]:
+    if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp", "Docker"]:
         if find_field_by_name(fields, "group_start") is None:
             fields.append(
                 create_field(
