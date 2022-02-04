@@ -61,12 +61,12 @@ def _read_values(chart_dir):
     return data
 
 
-def _find_num_nodes(pgt_data):
+def _find_resources(pgt_data):
     pgt = json.loads(pgt_data)
     nodes = list(map(lambda x: x['node'], pgt))
     islands = list(map(lambda x: x['island'], pgt))
     num_islands = len(dict(zip(islands, nodes)))
-    num_nodes = list(map(lambda x, y: x + y, islands, nodes))
+    num_nodes = len(nodes)
     return num_islands, num_nodes
 
 
@@ -109,7 +109,7 @@ class HelmClient:
 
     def _set_physical_graph(self, physical_graph_content):
         self._physical_graph_file = physical_graph_content
-        self._num_islands, self._num_nodes = _find_num_nodes(
+        self._num_islands, self._num_nodes = _find_resources(
             self._physical_graph_file)
 
     def create_helm_chart(self, physical_graph_content):
