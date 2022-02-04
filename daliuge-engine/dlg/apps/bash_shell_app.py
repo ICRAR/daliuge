@@ -164,6 +164,9 @@ class BashShellBase(object):
         super(BashShellBase, self).initialize(**kwargs)
 
         self.proc = None
+        self._inputRedirect = self._getArg(kwargs, "input_redirection", None)
+        self._outputRedirect = self._getArg(kwargs, "output_redirection", None)
+        self._cmdLineArgs = self._getArg(kwargs, "command_line_arguments", None)
         self._applicationParams = self._getArg(kwargs, "applicationParams", None)
         self._argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
 
@@ -191,8 +194,12 @@ class BashShellBase(object):
         )
         argumentString = droputils.serialize_applicationParams(self._applicationParams, \
             self._argumentPrefix)
-        # complete command including all additional parameters
-        cmd = f"{self.command} {argumentString}" 
+        # complete command including all additional parameters and optional redirects
+        cmd = f"{self.command} {self._cmdLineArgs} {argumentString}"
+        if self._outputRedirect:
+            cmd = f"{cmd} > {self._outputRedirect}"
+        if self._inputRedirect:
+            cmd = f"cat {self._inputRedirect} > {cmd}"
 
         app_uid = self.uid
         # self.run_bash(self._command, self.uid, session_id, *args, **kwargs)
@@ -217,7 +224,7 @@ class BashShellBase(object):
 
         # Wrap everything inside bash
         cmd = ("/bin/bash", "-c", cmd)
-        logger.debug("Command after user creation and wrapping is: %s", cmd)
+        logger.debug("Command after wrapping is: %s", cmd)
 
         start = time.time()
 
