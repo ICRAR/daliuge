@@ -84,9 +84,8 @@ Numpy Zipped (.npz)
 Portable zipped numpy serialization format. Consists of a .zip directory holding one or more .npy
 files.
 
-
 Table Serialization
 -------------------
 
-For certain drops such as RDBMSDrop these drops serialize table data in the form of dataframe
-objects.
+For relational data drops such as RDBMSDrop, these drops manage their own record format and are
+interfaced using relational data objects such `dict`, `pyarrow.RecordBatch` or `pandas.DataFrame`.
