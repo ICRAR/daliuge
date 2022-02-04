@@ -164,6 +164,9 @@ class BashShellBase(object):
         super(BashShellBase, self).initialize(**kwargs)
 
         self.proc = None
+        self._applicationParams = self._getArg(kwargs, "applicationParams", None)
+        self._argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
+
         if not self.command:
             raise InvalidDropException(
                 self, "No command specified, cannot create BashShellApp"
@@ -186,7 +189,11 @@ class BashShellBase(object):
         session_id = (
             self._dlg_session.sessionId if self._dlg_session is not None else ""
         )
-        cmd = self.command
+        argumentString = droputils.serialize_applicationParams(self._applicationParams, \
+            self._argumentPrefix)
+        # complete command including all additional parameters
+        cmd = f"{self.command} {argumentString}" 
+
         app_uid = self.uid
         # self.run_bash(self._command, self.uid, session_id, *args, **kwargs)
 
