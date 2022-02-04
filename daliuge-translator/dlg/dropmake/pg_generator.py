@@ -548,8 +548,8 @@ class LGNode:
                 # The field to be used is not the text, but the name field
                 self.jd[je["name"]] = je["value"]
                 kwargs[je["name"]] = je["value"]
-        if "applicationParams" in self.jd:
-            kwargs["applicationParams"] = {}
+        kwargs["applicationParams"] = {} # make sure the dict always exists downstream
+        if "applicationParams" in self.jd: # and fill it if provided
             for je in self.jd["applicationParams"]:
                 self.jd[je["name"]] = je["value"]
                 kwargs["applicationParams"][je["name"]] = je["value"]
@@ -631,11 +631,36 @@ class LGNode:
             drop_spec.update(kwargs)
         elif drop_type in [Categories.COMPONENT, Categories.PYTHON_APP, Categories.BRANCH, Categories.DOCKER]:
             # default generic component becomes "sleep and copy"
-            if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
-                app_class = "dlg.apps.simple.SleepApp"
+            if drop_type not in [Categories.DOCKER]:
+                if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
+                    app_class = "dlg.apps.simple.SleepApp"
+                else:
+                    app_class = self.jd["appclass"]
             else:
-                app_class = self.jd["appclass"]
+                # deal with the Docker specific component params
+                app_class = "dlg.apps.dockerapp.DockerApp"
+                typ = DropType.APP
+                image = str(self.jd.get("image"))
+                if image == "":
+                    raise GraphException("Missing image for Docker component '%s'" % self.text)
 
+                command = str(self.jd.get("command"))
+                # There ARE containers which don't need/want a command
+                # if command == "":
+                #     raise GraphException("Missing command for Construct '%s'" % self.text)
+
+                kwargs["image"] = image
+                kwargs["command"] = command
+                kwargs["user"] = str(self.jd.get("user", ""))
+                kwargs["ensureUserAndSwitch"] = self.str_to_bool(
+                    str(self.jd.get("ensureUserAndSwitch", "0"))
+                )
+                kwargs["removeContainer"] = self.str_to_bool(
+                    str(self.jd.get("removeContainer", "1"))
+                )
+                kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
+                kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
+                kwargs["shmSize"] = str(self.jd.get("shmSize",""))
             if "execution_time" in self.jd:
                 execTime = int(self.jd["execution_time"])
                 if execTime < 0:
@@ -701,27 +726,29 @@ class LGNode:
                 )
             # add more arguments
             cmds = []
-            for i in range(10):
-                k = "Arg%02d" % (i + 1,)
-                if k not in self.jd:
-                    k = "arg%02d" % (i + 1,)
-                    if k not in self.jd:
-                        continue
-                v = self.jd[k]
-                if v is not None and len(str(v)) > 0:
-                    cmds.append(str(v))
+            # these are now in the function
+            # for i in range(10):
+            #     k = "Arg%02d" % (i + 1,)
+            #     if k not in self.jd:
+            #         k = "arg%02d" % (i + 1,)
+            #         if k not in self.jd:
+            #             continue
+            #     v = self.jd[k]
+            #     if v is not None and len(str(v)) > 0:
+            #         cmds.append(str(v))
             # add more arguments - this is the new method of adding arguments in EAGLE
             # the method above (Arg**) is retained for compatibility, but eventually should be removed
             for k in [
-                "command",
                 "input_redirection",
-                "output_redirection",
+                "command",
                 "command_line_arguments",
             ]:
                 if k in self.jd:
                     cmds.append(self.jd[k])
-            # kwargs['command'] = ' '.join(cmds)
+            self._update_key_value_attributes(kwargs) # get all the other params
+            cmds.append(self.jd["output_redirection"])
             kwargs["command"] = BashCommand(cmds)
+            # kwargs['command'] = ' '.join(cmds)
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             drop_spec.update(kwargs)
 
