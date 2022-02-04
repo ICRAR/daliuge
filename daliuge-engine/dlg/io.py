@@ -110,10 +110,10 @@ class DataIO(object):
 
     def size(self, **kwargs):
         """
-        Returns the current total size of the underlying stored object. If the
-        storage class does not support this it is supposed to return -1.
+        Returns the current total size of the underlying stored object. returns -1 if the
+        storage class does not support this.
         """
-        return _size(self)
+        return self._size()
 
     def isOpened(self):
         return self._mode is not None
