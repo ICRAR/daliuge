@@ -25,6 +25,7 @@ Module tests the helm chart translation and deployment functionality.
 import unittest
 import tempfile
 import os
+import sys
 import yaml
 import json
 
@@ -33,6 +34,7 @@ from dlg.deploy.helm_client import HelmClient
 from dlg.common import Categories
 
 
+@unittest.skipIf(sys.version_info <= (3, 8), "Copyign temp files fail on Python < 3.7")
 class TestHelmClient(unittest.TestCase):
 
     def test_create_default_helm_chart(self):
