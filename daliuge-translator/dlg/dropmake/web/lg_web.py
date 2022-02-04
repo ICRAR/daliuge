@@ -503,7 +503,6 @@ def gen_pgt_post():
     # Retrieve the graph name.
     reqform = request.forms
     lg_name = reqform.get("lg_name")
-    #print('gen_pgt_post()::lg_name' + lg_name + ',' + os.getcwd() + ',' + str(os.listdir()) + ',' + str(os.listdir('/daliuge')))
 
     # Retrieve json data.
     json_string = reqform.get("json_data")
