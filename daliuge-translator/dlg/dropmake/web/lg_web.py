@@ -456,7 +456,6 @@ def gen_pgt():
 
     query = request.query
     lg_name = query.get("lg_name")
-
     if not lg_exists(lg_name):
         response.status = 404
         return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
