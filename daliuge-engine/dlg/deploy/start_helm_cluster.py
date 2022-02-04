@@ -29,6 +29,7 @@ Limitations:
 import argparse
 import json
 import os
+import tempfile
 
 from dlg.dropmake import pg_generator
 from dlg.deploy.helm_client import HelmClient
@@ -51,6 +52,26 @@ def get_pg(opts, node_managers: list, data_island_managers: list):
     physical_graph = pg_generator.resource_map(pgt, node_managers + data_island_managers)
     # TODO: Add dumping to log-dir
     return physical_graph
+
+
+def start_helm(physical_graph_template, num_nodes: int):
+    # TODO: Dynamic helm chart logging dir
+    # TODO: Multiple node deployments
+    available_ips = ["127.0.0.1"]
+    pgt = json.loads(physical_graph_template)
+    pgt = pg_generator.partition(pgt, algo='metis', num_partitons=len(available_ips),
+                                 num_islands=len(available_ips))
+    pg = pg_generator.resource_map(pgt, available_ips + available_ips)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        helm_client = HelmClient(
+            deploy_name='daliuge-daemon',
+            chart_name='daliuge-daemon',
+            deploy_dir=tmp_dir
+        )
+        helm_client.create_helm_chart(json.dumps(pg))
+        helm_client.launch_helm()
+        helm_client.submit_job()
+        helm_client.teardown()
 
 
 def main():
