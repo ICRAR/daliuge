@@ -508,6 +508,10 @@ def gen_pgt_post():
     try:
         logical_graph = json.loads(json_string)
 
+        # debug
+        print("os.getcwd()" + str(os.getcwd()))
+        print("os.listdir()" + str(os.listdir()))
+
         # load LG schema
         with open(LG_SCHEMA_PATH, "r") as schema_file:
             lg_schema = json.load(schema_file)
