@@ -5,4 +5,4 @@ NGAS Components
 
 :class:`NgasDROP <dlg.drop.NgasDROP>`
 
-TODO
+*NOTE: The Daliuge Component Developement Guide is work in progress!*
