@@ -508,7 +508,6 @@ def gen_pgt_post():
     json_string = reqform.get("json_data")
     try:
         logical_graph = json.loads(json_string)
-        #print('gen_pgt_post()::logical_graph:' + str(logical_graph))
 
         # load LG schema
         with open(LG_SCHEMA_PATH, "r") as schema_file:
