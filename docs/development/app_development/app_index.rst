@@ -14,7 +14,7 @@ Detailed instructions can be found in the respective sections for
 each type of components. There are also separate sections describing
 integration and testing during component development. As mentioned already, for more complex and serious component development we strongly recommend to use the `component development template <https://github.com/ICRAR/daliuge-component-template>`_ we are providing, please refer to chapter :doc:`../template_primer` for more details. Most of the following sub-sections of this documentation are based on the usage of the template.
 
-*NOTE: The DCDG is work in progress!*
+*NOTE: The DALiuGE Component Developers Guide is work in progress!*
 
 .. toctree::
  :maxdepth: 2
@@ -25,8 +25,8 @@ integration and testing during component development. As mentioned already, for 
  dynlib_components
  docker_components
  service_components
- I_O
+ datadrop_io
  wrap_existing
  test_and_debug
- eagle_integration
+ eagle_app_integration
  deployment_testing
