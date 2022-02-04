@@ -653,6 +653,7 @@ class LGNode:
 
                 kwargs["image"] = image
                 kwargs["command"] = command
+                # TODO: User inside docker should follow user of engine.
                 kwargs["user"] = str(self.jd.get("user", ""))
                 kwargs["ensureUserAndSwitch"] = self.str_to_bool(
                     str(self.jd.get("ensureUserAndSwitch", "0"))
@@ -661,6 +662,10 @@ class LGNode:
                     str(self.jd.get("removeContainer", "1"))
                 )
                 kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
+                if kwargs["additionalBindings"]:
+                    kwargs["additionalBindings"] += ","
+                # always mount DLG_ROOT directory. ENV variable is only known in engine
+                kwargs["additionalBindings"] += "${DLG_ROOT}:${DLG_ROOT}"
                 kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
                 kwargs["shmSize"] = str(self.jd.get("shmSize",""))
             if "execution_time" in self.jd:
@@ -688,7 +693,7 @@ class LGNode:
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             if "mkn" in self.jd:
                 kwargs["mkn"] = self.jd["mkn"]
-            self._update_key_value_attributes(kwargs)
+            self._update_key_value_attributes(kwargs) # pass on all other kw-value pairs
             drop_spec.update(kwargs)
 
         elif drop_type in [Categories.DYNLIB_APP, Categories.DYNLIB_PROC_APP]:
