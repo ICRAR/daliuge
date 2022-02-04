@@ -26,6 +26,7 @@ import json
 import re
 import time
 import os
+import sys
 import shutil
 import pathlib
 
@@ -104,8 +105,11 @@ class HelmClient:
         # Copy in template files.
         library_root = pathlib.Path(os.path.dirname(dlg.__file__)).parent.parent
         print(library_root)
-        shutil.copytree(os.path.join(library_root, 'daliuge-k8s', 'helm'), self._deploy_dir,
-                        dirs_exist_ok=True)
+        if sys.version_info >= (3, 8):
+            shutil.copytree(os.path.join(library_root, 'daliuge-k8s', 'helm'), self._deploy_dir,
+                            dirs_exist_ok=True)
+        else:
+            shutil.copytree(os.path.join(library_root, 'daliuge-k8s', 'helm'), self._deploy_dir)
 
     def _set_physical_graph(self, physical_graph_content):
         self._physical_graph_file = physical_graph_content
