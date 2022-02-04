@@ -204,17 +204,28 @@ class DockerApp(BarrierAppDROP):
             )
 
         self._command = self._getArg(kwargs, "command", None)
+
         if not self._command:
             logger.warning(
                 "No command specified. Assume that a default command is executed in the container"
             )
+            # The above also means that we can't pass applicationParams
             # raise InvalidDropException(
             #     self, "No command specified, cannot create DockerApp")
+        else:
+            self._applicationParams = self._getArg(kwargs, "applicationParams", {})
+
+            # construct the actual command line from all application parameters
+            argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
+            argumentString = droputils.serialize_applicationParams(self._applicationParams, \
+                argumentPrefix)
+            self._command = f"{self._command} {argumentString}"
 
         # The user used to run the process in the docker container
         # By default docker containers run as root, but we don't want to run
         # a process using a different user because otherwise anything that that
         # process writes to the filesystem
+        # TODO: User switching should be changed to be transparent
         self._user = self._getArg(kwargs, "user", None)
 
         # In some cases we want to make sure the command in the container runs
