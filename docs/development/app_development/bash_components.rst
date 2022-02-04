@@ -2,7 +2,8 @@
 
 Bash Components
 ===============
-This type of components are probably the easiest to implement and for simple ones it is possible to do all the 'development' in EAGLE.
+
+:class:`BashShellApp <dlg.apps.bash_shell_app.BashShellApp>` components are probably the easiest to implement and for simple ones it is possible to do all the 'development' in EAGLE.
 
 'Hello World' in Bash through EAGLE
 -----------------------------------
