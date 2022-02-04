@@ -199,12 +199,13 @@ class RestClient(object):
         # Server errors are encoded in the body as json content
         if self._resp.status != http.HTTPStatus.OK:
 
-            msg = "Error on remote %s@%s:%s%s (status %d): " % (
+            msg = "Error on remote %s@%s:%s%s (status %d) (body %s): " % (
                 method,
                 self.host,
                 self.port,
                 url,
                 self._resp.status,
+                self._resp.read().decode("utf-8")
             )
 
             try:
