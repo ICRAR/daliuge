@@ -542,6 +542,8 @@ class LGNode:
         return "{0}_{1}_{2}".format(self._ssid, self.id, iid), rank
 
     def _update_key_value_attributes(self, kwargs):
+        # NOTE: We should really just pass all of these on un-altered and finally drop
+        #       support for the Arg%02d arguments.
         # get the arguments from new fields dictionary in a backwards compatible way
         if "fields" in self.jd:
             for je in self.jd["fields"]:
@@ -725,30 +727,9 @@ class LGNode:
                     "Missing execution_time for Construct '%s'" % self.text
                 )
             # add more arguments
-            cmds = []
-            # these are now in the function
-            # for i in range(10):
-            #     k = "Arg%02d" % (i + 1,)
-            #     if k not in self.jd:
-            #         k = "arg%02d" % (i + 1,)
-            #         if k not in self.jd:
-            #             continue
-            #     v = self.jd[k]
-            #     if v is not None and len(str(v)) > 0:
-            #         cmds.append(str(v))
-            # add more arguments - this is the new method of adding arguments in EAGLE
-            # the method above (Arg**) is retained for compatibility, but eventually should be removed
-            for k in [
-                "input_redirection",
-                "command",
-                "command_line_arguments",
-            ]:
-                if k in self.jd:
-                    cmds.append(self.jd[k])
+            cmds = [self.jd["command"]]
             self._update_key_value_attributes(kwargs) # get all the other params
-            cmds.append(self.jd["output_redirection"])
-            kwargs["command"] = BashCommand(cmds)
-            # kwargs['command'] = ' '.join(cmds)
+            kwargs["command"] = BashCommand(cmds) # NOTE: Not really required anymore?
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             drop_spec.update(kwargs)
 
