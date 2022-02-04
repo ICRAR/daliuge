@@ -28,7 +28,7 @@ Directory Container Drop (deprecated)
 :class:`DirectoryContainer <dlg.drop.DirectoryContainer>`
 
 Using Filesystem Components as Persistent Volume Storage
-========================================================
+--------------------------------------------------------
 
 Filesystem component paths are relative to the temporary DALiuGE workspace but may also be of absolute path to the
 the machine running DALiuGE engine of connected app drops, most commonly the default DALiuGE shared filesystem mount location

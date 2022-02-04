@@ -3,19 +3,6 @@
 Memory Components
 =================
 
-Buffer Protocol Drops
----------------------
-
-Python buffer protocol is a special interface available for numerous python objects synonymous to
-byte array syntax in C language, whereby python objects expose their raw bytes to other python
-objects. Memory components exposed via the buffer protocol drop interface can benefit from
-zero-copy reading and slicing by app components.
-
-To implement :method:`AbstractDROP::buffer` it is recommended to ensure zero copying is
-performed. String types in python3 use utf-8 character slicing and hence are not compatible with
-buffer protocol due to characters not being of fixed size. Consider supporting encoded strings in
-app drop I/O.
-
 In Memory Drop
 --------------
 
@@ -26,6 +13,21 @@ where data persistences is not needed before and after the workflow executes.
 Shared Memory Drop
 ------------------
 
-:class:`SharedMemoryDROP <dlg.drop.SharedMemoryDROP>`
+:class:`SharedMemoryDROP <dlg.drop.SharedMemoryDROP>` Is a special in-memory drop that allows
+multiple processes to read from the same memory location. See :ref:`graph.shared_memory` for
+further information.
 
-TODO
+Buffer Protocol
+---------------
+
+Python buffer protocol is a special interface available for numerous python objects synonymous to
+byte array syntax in C language, whereby python objects expose their raw bytes to other python
+objects. Memory components exposed via the buffer protocol drop interface can benefit from
+zero-copy reading and slicing by app components.
+
+To implement :py:meth:`DataIO.buffer <dlg.io.DataIO.buffer>` it is recommended to ensure zero copying is
+performed with memory based drops for greatly improved drop read performance.
+
+Note: String types in python3 use utf-8 character slicing and hence are not compatible with
+buffer protocol due to characters not being of fixed size. Consider supporting encoded strings in
+app drop I/O.
