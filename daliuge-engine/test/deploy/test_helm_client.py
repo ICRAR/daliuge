@@ -45,6 +45,9 @@ class TestHelmClient(unittest.TestCase):
                 self.assertEqual(helm_client._chart_name, chart_data['name'])
                 self.assertEqual(dlg_version, chart_data['appVersion'])
 
+    def test_custom_ports(self):
+        pass
+
     def test_create_single_node_helm_chart(self):
         pg = [
             {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
@@ -63,9 +66,11 @@ class TestHelmClient(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             helm_client = HelmClient(deploy_dir=tmp_dir, deploy_name='dlg-test')
             helm_client.create_helm_chart(json.dumps(pg))
-            # TODO: Assert translation works
-        self.fail("Test not yet implemented")
+            self.assertEqual(pg, json.loads(helm_client._physical_graph_file))
+            self.assertEqual(1, helm_client._num_islands)
+            self.assertEqual(3, helm_client._num_nodes)
 
+    @unittest.skip
     def test_create_multi_node_helm_chart(self):
         pg = [
             {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "node": "127.0.0.1",
@@ -97,7 +102,10 @@ class TestHelmClient(unittest.TestCase):
             helm_client = HelmClient(deploy_dir=tmp_dir, deploy_name='dlg_test')
             helm_client.create_helm_chart(pg)
             # TODO: Assert translation works
+            self.assertEqual(2, helm_client._num_islands)
+            self.assertEqual(5, helm_client._num_nodes)
         self.fail("Test not yet implemented")
 
+    @unittest.skip
     def test_submit_job(self):
         self.fail("Test not yet implemented")
