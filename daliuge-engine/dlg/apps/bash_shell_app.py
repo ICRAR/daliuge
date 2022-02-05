@@ -157,7 +157,8 @@ class BashShellBase(object):
     Common class for BashShell apps. It simply requires a command to be
     specified.
     """
-
+    #TODO: use the shlex module for most of the construction of the
+    # command line to get a proper and safe shell syntax
     command = dlg_string_param("Bash command", None)
 
     def initialize(self, **kwargs):
