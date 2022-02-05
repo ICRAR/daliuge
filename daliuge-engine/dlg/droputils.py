@@ -461,7 +461,13 @@ def serialize_applicationParams(applicationParams, prefix='--'):
             continue
         elif value is True:
             value = ''
-        args += [f'{prefix}{name} {value}']
+        # short and long version of keywords
+        if prefix == "--" and len(name) == 1:
+            arg = [f'-{name} {value}']
+        else:
+            arg = [f'{prefix}{name} {value}']
+        args += arg.strip() # remove unneccesary blanks
+        
     return f"{' '.join(args)}"
 
 
