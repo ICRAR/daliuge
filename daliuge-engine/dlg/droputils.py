@@ -446,7 +446,7 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
 
     return cmd
 
-def serialize_applicationParams(applicationParams, prefix='--'):
+def serialize_applicationParams(applicationParams, prefix='--', separator=' '):
     """
     Unpacks the applicationParams dictionary and returns a string
     that can be used as command line parameters.
@@ -465,8 +465,8 @@ def serialize_applicationParams(applicationParams, prefix='--'):
         if prefix == "--" and len(name) == 1:
             arg = [f'-{name} {value}']
         else:
-            arg = [f'{prefix}{name} {value}']
-        args += arg.strip() # remove unneccesary blanks
+            arg = [f'{prefix}{name}{separator}{value}'.strip()]
+        args += arg # remove unneccesary blanks
         
     return f"{' '.join(args)}"
 
