@@ -732,7 +732,9 @@ class LGNode:
                     "Missing execution_time for Construct '%s'" % self.text
                 )
             # add more arguments
-            cmds = [self.jd["command"]]
+            cmds = []
+            if "command" in self.jd:
+                cmds = [self.jd["command"]]
             self._update_key_value_attributes(kwargs) # get all the other params
             kwargs["command"] = BashCommand(cmds) # NOTE: Not really required anymore?
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
