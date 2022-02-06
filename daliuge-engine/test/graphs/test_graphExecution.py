@@ -50,6 +50,12 @@ class LocalDimStarter(ManagerStarter):
 
 
 class TestGraphs(LocalDimStarter, unittest.TestCase):
+    """
+    Class to test the execution of actual physical graphs, 
+    rather than python constructions. Add additional graphs
+    and associated tests as required.
+    """
+
     def createSessionAndAddGraph(self, sessionId, graphSpec="", sleepTime=0):
         self.dim.createSession(sessionId)
         self.assertEqual(0, self.dim.getGraphSize(sessionId))
@@ -67,7 +73,7 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
             "test", ddGraph) as f:  # @UndefinedVariable
             logger.debug(f'Loading graph: {f}')
             graphSpec = json.load(f)
-        self.createSessionAndAddGraph(sessionId, graphName=ddGraph)
+        self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
 
         # Deploy now and get A and C
         self.dim.deploySession(sessionId)
