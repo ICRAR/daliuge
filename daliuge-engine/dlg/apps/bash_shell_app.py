@@ -200,7 +200,7 @@ class BashShellBase(object):
         argumentString = droputils.serialize_applicationParams(self._applicationParams, \
             self._argumentPrefix, self._paramValueSeparator)
         # complete command including all additional parameters and optional redirects
-        cmd = f"{self.command} {self._cmdLineArgs} {argumentString}"
+        cmd = f"{self.command} {argumentString} {self._cmdLineArgs} "
         if self._outputRedirect:
             cmd = f"{cmd} > {self._outputRedirect}"
         if self._inputRedirect:
