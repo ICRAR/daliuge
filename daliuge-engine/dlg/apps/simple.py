@@ -609,7 +609,7 @@ class GenericNpyScatterApp(BarrierAppDROP):
         if len(self.inputs) != len(self.scatter_axes):
             raise DaliugeException(\
                 f"expected {len(self.inputs)} axes,\
-                 got {len(self.scatter_axes)}")
+                 got {len(self.scatter_axes)}, {self.scatter_axes}")
 
         # split it as many times as we have outputs
         self.num_of_copies = self.num_of_copies
