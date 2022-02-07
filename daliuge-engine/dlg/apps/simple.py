@@ -20,9 +20,10 @@
 #    MA 02111-1307  USA
 #
 """Applications used as examples, for testing, or in simple situations"""
+from numbers import Number
 import pickle
 import random
-from typing import List
+from typing import List, Optional
 import urllib.error
 import urllib.request
 
@@ -258,8 +259,8 @@ class AverageArraysApp(BarrierAppDROP):
     from numpy import mean, median
 
     component_meta = dlg_component(
-        "RandomArrayApp",
-        "Random Array App.",
+        "AverageArraysApp",
+        "Average Array App.",
         [dlg_batch_input("binary/*", [])],
         [dlg_batch_output("binary/*", [])],
         [dlg_streaming_input("binary/*")],
@@ -309,9 +310,92 @@ class AverageArraysApp(BarrierAppDROP):
         self.marray = marray
 
     def averageArray(self):
-
         method_to_call = getattr(np, self.method)
         return method_to_call(self.marray, axis=0)
+
+
+##
+# @brief GenericNpyGatherApp
+# @details A BarrierAppDrop that combines one or more inputs using cummulative operations.
+# @param category PythonApp
+# @param[in] param/appclass Application Class/dlg.apps.simple.GenericNpyGatherApp/String/readonly/
+#     \~English Application class
+# @param[in] param/function Function/sum/String/readwrite/
+#     \~English The function used for gathering
+# @param[in] param/function reduce_axes/None/String/readonly/
+#     \~English Application class
+# @param[in] port/array Array/npy/
+#     \~English Port for the input array(s)
+# @param[out] port/array Array/npy/
+#     \~English Port carrying the reduced array
+# @par EAGLE_END
+class GenericNpyGatherApp(BarrierAppDROP):
+    """
+    A BarrierAppDrop that reduces then gathers one or more inputs using cummulative operations.
+    function:  string <['sum']|'prod'|'min'|'max'>.
+    """
+    component_meta = dlg_component(
+        "GenericNpyGatherApp",
+        "Generic Npy Gather App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    # reduce and combine operation pair names
+    functions = {
+        # reduce and gather e.g. output dimension is reduces
+        "sum": "add",
+        "prod": "multiply",
+        "max": "maximum",
+        "min": "minimum",
+
+        # gather only
+        "add": None,
+        "multiply": None,
+        "maximum": None,
+        "minimum": None
+    }
+    function: str = dlg_string_param("function", "sum")
+    reduce_axes: str = dlg_string_param("reduce_axes", "None")
+
+    def __init__(self, oid, uid, **kwargs):
+        super().__init__(oid, kwargs)
+
+    def initialize(self, **kwargs):
+        super(GenericNpyGatherApp, self).initialize(**kwargs)
+        self.reduce_axes = ast.literal_eval(self.reduce_axes)
+
+    def run(self):
+        if len(self.inputs) < 1:
+            raise Exception(f"At least one input should have been added to {self}")
+        if len(self.outputs) < 1:
+            raise Exception(f"At least one output should have been added to {self}")
+        if self.function not in self.functions:
+            raise Exception(f"Function {self.function} not supported by {self}")
+
+        result = self.reduce_combine_inputs() if self.functions[self.function] is not None else self.combine_inputs()
+        for o in self.outputs:
+            droputils.save_numpy(o, result)
+
+    def reduce_combine_inputs(self):
+        result: Optional[Number] = None
+        reduce = getattr(np, f"{self.function}")
+        combine = getattr(np, f"{self.functions[self.function]}")
+        for input in self.inputs:
+            data = droputils.load_numpy(input)
+            result = reduce(data, axis=self.reduce_axes)\
+                if result is None\
+                else combine(result, reduce(data, axis=self.reduce_axes))
+        return result
+
+    def combine_inputs(self):
+        result: Optional[Number] = None
+        combine = getattr(np, f"{self.functions[self.function]}")
+        for input in self.inputs:
+            data = droputils.load_numpy(input)
+            result = data if result is None else combine(result, data)
+        return result
 
 
 ##
