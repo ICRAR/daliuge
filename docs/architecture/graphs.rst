@@ -234,6 +234,9 @@ shared-memory-drops which write to ``/dev/shm``. While relatively robust, one sh
 to ensure safe-access to memory-drops in this case, opting to use scatter/gather or other explicit
 aggregation stages where necessary.
 
+
+.. _graph.shared_memory:
+
 Shared Memory
 ^^^^^^^^^^^^^
 
