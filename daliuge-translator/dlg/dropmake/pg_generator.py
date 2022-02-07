@@ -550,11 +550,11 @@ class LGNode:
                 # The field to be used is not the text, but the name field
                 self.jd[je["name"]] = je["value"]
                 kwargs[je["name"]] = je["value"]
-        kwargs["applicationParams"] = {} # make sure the dict always exists downstream
-        if "applicationParams" in self.jd: # and fill it if provided
-            for je in self.jd["applicationParams"]:
+        kwargs["applicationArgs"] = {} # make sure the dict always exists downstream
+        if "applicationArgs" in self.jd: # and fill it if provided
+            for je in self.jd["applicationArgs"]:
                 self.jd[je["name"]] = je["value"]
-                kwargs["applicationParams"][je["name"]] = je["value"]
+                kwargs["applicationArgs"][je["name"]] = je["value"]
         for i in range(10):
             k = "Arg%02d" % (i + 1)
             if k not in self.jd:

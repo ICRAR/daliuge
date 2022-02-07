@@ -33,7 +33,7 @@
     },
     "nodeDataArray": [
         {
-            "applicationParams": [],
+            "applicationArgs": [],
             "category": "Loop",
             "collapsed": false,
             "color": "rgb(221, 173, 0)",
@@ -106,7 +106,7 @@
             "y": 337.06816127722925
         },
         {
-            "applicationParams": [],
+            "applicationArgs": [],
             "category": "BashShellApp",
             "collapsed": true,
             "color": "#0059a5",
@@ -211,7 +211,7 @@
             "y": 855.7366246240957
         },
         {
-            "applicationParams": [],
+            "applicationArgs": [],
             "category": "BashShellApp",
             "collapsed": false,
             "color": "#0059a5",
@@ -317,7 +317,7 @@
             "y": 454.94735749242614
         },
         {
-            "applicationParams": [],
+            "applicationArgs": [],
             "category": "File",
             "collapsed": true,
             "color": "#2c2c2c",
