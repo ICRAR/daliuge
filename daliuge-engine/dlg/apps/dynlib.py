@@ -348,6 +348,15 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
         self._c_app.n_streaming_inputs += 1
 
 
+##
+# @brief DynlibApp
+# @details An application component run from a dynamic library
+# @par EAGLE_START
+# @param category DynlibApp
+# @param tag template
+# @param[in] param/libpath Library Path//String/readwrite/
+#     \~English The location of the shared object/DLL that implements this application
+# @par EAGLE_END
 class DynlibApp(DynlibAppBase, BarrierAppDROP):
     """Loads a dynamic library into the current process and runs it"""
 
