@@ -168,8 +168,10 @@ class BashShellBase(object):
         self._inputRedirect = self._getArg(kwargs, "input_redirection", "")
         self._outputRedirect = self._getArg(kwargs, "output_redirection", "")
         self._cmdLineArgs = self._getArg(kwargs, "command_line_arguments", "")
-        self._applicationParams = self._getArg(kwargs, "applicationParams", {})
+        self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
         self._argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
+        self._paramValueSeparator = self._getArg(kwargs, \
+            "paramValueSeparator", " ")
 
         if not self.command:
             self.command = self._getArg(kwargs, "command", None)
@@ -195,10 +197,10 @@ class BashShellBase(object):
         session_id = (
             self._dlg_session.sessionId if self._dlg_session is not None else ""
         )
-        argumentString = droputils.serialize_applicationParams(self._applicationParams, \
-            self._argumentPrefix)
+        argumentString = droputils.serialize_applicationArgs(self._applicationArgs, \
+            self._argumentPrefix, self._paramValueSeparator)
         # complete command including all additional parameters and optional redirects
-        cmd = f"{self.command} {self._cmdLineArgs} {argumentString}"
+        cmd = f"{self.command} {argumentString} {self._cmdLineArgs} "
         if self._outputRedirect:
             cmd = f"{cmd} > {self._outputRedirect}"
         if self._inputRedirect:
