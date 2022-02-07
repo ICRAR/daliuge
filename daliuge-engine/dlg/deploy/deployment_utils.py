@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import json
 
 
 class ListTokens(object):
@@ -101,3 +102,51 @@ def _parse_list_tokens(token_iter):
 def list_as_string(s):
     """'a008,b[072-073,076]' --> ['a008', 'b072', 'b073', 'b076']"""
     return _parse_list_tokens(iter(_list_tokenizer(s)))
+
+
+def find_numislands(physical_graph_template_file):
+    """
+    Given the physical graph data extract the graph name and the total number of
+    nodes. We are not making a decision whether the island managers are running
+    on separate nodes here, thus the number is the sum of all island
+    managers and node managers. The values are only populated if not given on the
+    init already.
+    TODO: We will probably need to do the same with job duration and CPU number
+    """
+
+    pgt_data = json.loads(physical_graph_template_file)
+    try:
+        (pgt_name, pgt) = pgt_data
+    except:
+        raise ValueError(type(pgt_data))
+    nodes = list(map(lambda x: x['node'], pgt))
+    islands = list(map(lambda x: x['island'], pgt))
+    num_islands = len(dict(zip(islands, nodes)))
+    num_nodes = list(map(lambda x, y: x + y, islands, nodes))
+    pip_name = pgt_name
+    return num_islands, num_nodes, pip_name
+
+
+def label_job_dur(job_dur):
+    """
+    e.g. 135 min --> 02:15:00
+    """
+    seconds = job_dur * 60
+    minute, sec = divmod(seconds, 60)
+    hour, minute = divmod(minute, 60)
+    return "%02d:%02d:%02d" % (hour, minute, sec)
+
+
+def num_daliuge_nodes(num_nodes: int, run_proxy: bool):
+    """
+    Returns the number of daliuge nodes available to run workflow
+    """
+    if run_proxy:
+        ret = num_nodes - 1  # exclude the proxy node
+    else:
+        ret = num_nodes - 0  # exclude the data island node?
+    if ret <= 0:
+        raise Exception(
+            "Not enough nodes {0} to run DALiuGE.".format(num_nodes)
+        )
+    return ret
