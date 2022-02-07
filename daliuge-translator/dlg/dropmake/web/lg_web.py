@@ -54,11 +54,13 @@ from ...clients import CompositeManagerClient
 from ..pg_generator import unroll, partition, GraphException
 from ..pg_manager import PGManager
 from ..scheduler import SchedulerException
+from dlg.deploy.start_helm_cluster import start_helm
 
 logger = logging.getLogger(__name__)
 
 # Patched to be larger to accomodate large config drops
 bottle.BaseRequest.MEMFILE_MAX = 1024 * 512
+
 
 def file_as_string(fname, enc="utf8"):
     b = pkg_resources.resource_string(__name__, fname)  # @UndefinedVariable
@@ -290,6 +292,35 @@ def get_schedule_mat():
         return "Failed to get schedule matrices for {0}: {1}".format(pgt_id, ex)
 
 
+@get("/gen_pg_helm")
+def gen_pg_helm():
+    """
+    RESTful interface to deploy a PGT as a K8s helm chart.
+    """
+    # Get pgt_data
+    pgt_id = request.query.get("pgt_id")
+    pgtp = pg_mgr.get_pgt(pgt_id)
+    if pgtp is None:
+        response.status = 404
+        return "PGT(P) with id {0} not found in the Physical Graph Manager".format(
+            pgt_id
+        )
+
+    pgtpj = pgtp._gojs_json_obj
+    logger.info("PGTP: %s" % pgtpj)
+    num_partitions = len(list(filter(lambda n: 'isGroup' in n, pgtpj['nodeDataArray'])))
+    # Send pgt_data to helm_start
+    try:
+        start_helm(pgtp, num_partitions)
+    except Exception as ex:
+        response.status = 500
+        print(traceback.format_exc())
+        return "Fail to deploy physical graph: {0}".format(ex)
+    # TODO: Not sure what to redirect to yet
+    response.status = 200
+    return "Inspect your k8s dashboard for deployment status"
+
+
 @get("/gen_pg")
 def gen_pg():
     """
@@ -310,7 +341,7 @@ def gen_pg():
     pgtpj = pgtp._gojs_json_obj
     logger.info("PGTP: %s" % pgtpj)
     num_partitions = 0
-    num_partitions = len(list(filter(lambda n:'isGroup' in n, pgtpj['nodeDataArray'])))
+    num_partitions = len(list(filter(lambda n: 'isGroup' in n, pgtpj['nodeDataArray'])))
     surl = urlparse(request.url)
 
     mhost = ""
@@ -475,7 +506,7 @@ def gen_pgt():
             pgt_view_json_name=pgt_id,
             partition_info=part_info,
             title="Physical Graph Template%s"
-            % ("" if num_partitions == 0 else "Partitioning"),
+                  % ("" if num_partitions == 0 else "Partitioning"),
         )
     except GraphException as ge:
         response.status = 500
