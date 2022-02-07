@@ -67,10 +67,13 @@ def start_helm(physical_graph_template, num_nodes: int, deploy_dir: str):
         chart_name='daliuge-daemon',
         deploy_dir=deploy_dir
     )
-    helm_client.create_helm_chart(json.dumps(pg))
-    helm_client.launch_helm()
-    helm_client.submit_job()
-    helm_client.teardown()
+    try:
+        helm_client.create_helm_chart(json.dumps(pg))
+        helm_client.launch_helm()
+        helm_client.submit_job()
+        helm_client.teardown()
+    except Exception as ex:
+        raise
 
 
 def main():
