@@ -1,0 +1,89 @@
+[
+    {
+        "oid": "DD",
+        "type": "app",
+        "app": "dlg.apps.bash_shell_app.BashShellApp",
+        "rank": [
+            0
+        ],
+        "loop_cxt": null,
+        "tw": 5,
+        "execution_time": 5,
+        "num_cpus": 1,
+        "group_start": false,
+        "command": "dd",
+        "input_redirection": "",
+        "output_redirection": "",
+        "command_line_arguments": "",
+        "paramValueSeparator": "=",
+        "argumentPrefix": "",
+        "applicationArgs": {
+            "if": "%i0",
+            "of": "%o0",
+            "count": 10,
+            "bs": 1024
+        },
+        "iid": "0",
+        "lg_key": -2,
+        "dt": "BashShellApp",
+        "nm": "dd",
+        "inputs": [
+            "A"
+        ],
+        "outputs": [
+            "C"
+        ],
+        "node": "localhost",
+        "island": "localhost"
+    },
+    {
+        "oid": "A",
+        "type": "plain",
+        "storage": "File",
+        "rank": [
+            0
+        ],
+        "loop_cxt": null,
+        "dw": 5,
+        "check_filepath_exists": false,
+        "data_volume": 5,
+        "group_end": false,
+        "filepath": "",
+        "dirname": "",
+        "applicationArgs": {},
+        "iid": "0",
+        "lg_key": -3,
+        "dt": "File",
+        "nm": "Input File",
+        "consumers": [
+            "DD"
+        ],
+        "node": "localhost",
+        "island": "localhost"
+    },
+    {
+        "oid": "C",
+        "type": "plain",
+        "storage": "File",
+        "rank": [
+            0
+        ],
+        "loop_cxt": null,
+        "dw": 5,
+        "check_filepath_exists": true,
+        "data_volume": 5,
+        "group_end": false,
+        "filepath": "",
+        "dirname": "",
+        "applicationArgs": {},
+        "iid": "0",
+        "lg_key": -4,
+        "dt": "File",
+        "nm": "Output File",
+        "producers": [
+            "DD"
+        ],
+        "node": "localhost",
+        "island": "localhost"
+    }
+]

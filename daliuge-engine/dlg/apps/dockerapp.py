@@ -67,6 +67,31 @@ class ContainerIpWaiter(object):
         return self._uid, self._containerIp
 
 
+##
+# @brief Docker
+# @details
+# @par EAGLE_START
+# @param category Docker
+# @param tag template
+# @param[in] param/image Image//String/readwrite/
+#     \~English The name of the docker image to be used for this application
+# @param[in] param/tag Tag/1.0/String/readwrite/
+#     \~English The tag of the docker image to be used for this application
+# @param[in] param/digest Digest//String/readwrite/
+#     \~English The hexadecimal hash (long version) of the docker image to be used for this application
+# @param[in] param/command Command//String/readwrite/
+#     \~English The command line to run within the docker instance. The specified command will be executed in a bash shell. That means that images will need a bash shell.
+# @param[in] param/user User//String/readwrite/
+#     \~English Username of the user who will run the application within the docker image
+# @param[in] param/ensureUserAndSwitch Ensure User And Switch/False/Boolean/readwrite/
+#     \~English Make sure the user specified in the User parameter exists and then run the docker container as that user
+# @param[in] param/removeContainer Remove Container/True/Boolean/readwrite/
+#     \~English Instruct Docker engine to delete the container after execution is complete
+# @param[in] param/additionalBindings Additional Bindings//String/readwrite/
+#     \~English Directories which will be visible inside the container during run-time. Format is srcdir_on_host:trgtdir_on_container. Multiple entries can be separated by commas.
+# @param[in] param/portMappings Port Mappings//String/readwrite/
+#     \~English Port mappings on the host machine
+# @par EAGLE_END
 class DockerApp(BarrierAppDROP):
     """
     A BarrierAppDROP that represents a process running in a container
@@ -204,17 +229,28 @@ class DockerApp(BarrierAppDROP):
             )
 
         self._command = self._getArg(kwargs, "command", None)
+
         if not self._command:
             logger.warning(
                 "No command specified. Assume that a default command is executed in the container"
             )
+            # The above also means that we can't pass applicationArgs
             # raise InvalidDropException(
             #     self, "No command specified, cannot create DockerApp")
+        else:
+            self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
+
+            # construct the actual command line from all application parameters
+            argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
+            argumentString = droputils.serialize_applicationArgs(self._applicationArgs, \
+                argumentPrefix)
+            self._command = f"{self._command} {argumentString}"
 
         # The user used to run the process in the docker container
         # By default docker containers run as root, but we don't want to run
         # a process using a different user because otherwise anything that that
         # process writes to the filesystem
+        # TODO: User switching should be changed to be transparent
         self._user = self._getArg(kwargs, "user", None)
 
         # In some cases we want to make sure the command in the container runs

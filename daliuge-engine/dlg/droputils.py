@@ -446,6 +446,30 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
 
     return cmd
 
+def serialize_applicationArgs(applicationArgs, prefix='--', separator=' '):
+    """
+    Unpacks the applicationArgs dictionary and returns a string
+    that can be used as command line parameters.
+    """
+    if not isinstance(applicationArgs, dict):
+        logger.info("applicationArgs are not passed as a dict. Ignored!")
+    # construct the actual command line from all application parameters
+    args = []
+
+    for (name, value) in applicationArgs.items():
+        if value in [None, False, ""]:
+            continue
+        elif value is True:
+            value = ''
+        # short and long version of keywords
+        if prefix == "--" and len(name) == 1:
+            arg = [f'-{name} {value}']
+        else:
+            arg = [f'{prefix}{name}{separator}{value}'.strip()]
+        args += arg # remove unneccesary blanks
+        
+    return f"{' '.join(args)}"
+
 
 # Easing the transition from single- to multi-package
 get_leaves = common.get_leaves

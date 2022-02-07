@@ -66,6 +66,15 @@ Deployment with OpenOnDemand
 
 `OpenOnDemand <https://openondemand.org>`_ (OOD) is a system providing an interactive interface to remote compute resources. It is becoming increasingly popular with a number of HPC centers around the world. The two Australian research HPC centers Pawsey and NCI are planning to roll it out for their users. Independently we had realized that |daliuge| is missing a authentication, authorization and session management system and started looking into OOD as a solution for this. After a short evaluation we have started integrating OOD into the deployment for our small in-house compute cluster. In order to make this work we needed to implement an additional interface between the translator running on an external server (e.g. AWS) and OOD and then further on into the (SLURM) batch job system. This interface code is currently in a separate private git repository, but will be released as soon as we have finished testing it. The code mimics the |daliuge| data island manager's REST interface, but instead of launching the workflow directly it prepares a SLURM job submission script and places it into the queue. Users can then use the standard OOD web-pages to monitor the jobs and get access to the logs and results of the workflow execution. OOD allows the integration of multiple compute resources, including Kubernetes and also (to a certain degree) GCP, AWS and Azure. Once configured, users can choose to submit their jobs to any of those. Our OOD interface code has been implemented as an OOD embedded `Phusion Passenger <https://www.phusionpassenger.com/>`_ `Flask <https://flask.palletsprojects.com/en/2.0.x/>`_ application, which is `WSGI <https://wsgi.readthedocs.io>`_ compliant. Very little inside that application is OOD specific and can thus be easily ported to other deployment scenarios.
 
+Deployment with Kubernetes (Coming Soon)
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Kubernetes is a canonical container orchestration system.
+We are building support to deploy workflows as helm charts which will enable easier and more reliably deployments across more computing facilities.
+Support is currently limited but watch this space.
+
+
 Component Deployment
 ====================
 
@@ -89,4 +98,10 @@ Python components
 
 Components written in Python provide direct access to the whole |daliuge| engine runtime. They can use direct remote procedure calls and memory sharing even across multiple compute nodes. By default the engine is configured to use the multiprocessing module to launch the *application code* of the components using a maximum number of processes equal to the number of physical cores available on the computer. If there are more components than cores, then they are executed in serial. More advanced Python components, which are not restricted by the Python Global Interpreter Lock (GIL) don't really need this mechanism. Memory data components will automatically switch to use shared memory blocks between those processes. Note that the *component code* will still run in a single process together with the node manager. In the future, in order to minimize side effects, we might entirely switch to using separate processes for the execution of application code.
 
-In order to be able to use Python components, it must be possible for the engine to import the code and thus it must be accessible on the PYTHONPATH at runtime. By default the engine is configured to add the directory $DLG_ROOT/code to the PYTHONPATH and thus users can install their code there. In the case of running |daliuge| in docker containers $DLG_ROOT is mounted from the host and thus also the subdirectory code is modifyable directly on the host. In a typical HPC deployment scenario that directory will be on the user's home directory, or a shared volume, visible to all compute nodes. 
+In order to be able to use Python components, it must be possible for the engine to import the code and thus it must be accessible on the PYTHONPATH at runtime. By default the engine is configured to add the directory $DLG_ROOT/code to the PYTHONPATH and thus users can install their code there using a command like:
+
+.. code-block:: none
+
+  docker exec -ti daliuge-engine bash -c "pip install --prefix=\$DLG_ROOT/code dlg_example_cmpts" 
+
+Please note that the '\' character is required for this to work correctly. In the case of running |daliuge| in docker containers $DLG_ROOT is mounted from the host and thus also the subdirectory code is visible directly on the host. In a typical HPC deployment scenario that directory will be on the user's home directory, or a shared volume, visible to all compute nodes. 
