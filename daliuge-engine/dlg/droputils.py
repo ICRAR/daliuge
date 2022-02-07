@@ -446,17 +446,17 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
 
     return cmd
 
-def serialize_applicationParams(applicationParams, prefix='--', separator=' '):
+def serialize_applicationArgs(applicationArgs, prefix='--', separator=' '):
     """
-    Unpacks the applicationParams dictionary and returns a string
+    Unpacks the applicationArgs dictionary and returns a string
     that can be used as command line parameters.
     """
-    if not isinstance(applicationParams, dict):
-        logger.info("applicationParams are not passed as a dict. Ignored!")
+    if not isinstance(applicationArgs, dict):
+        logger.info("applicationArgs are not passed as a dict. Ignored!")
     # construct the actual command line from all application parameters
     args = []
 
-    for (name, value) in applicationParams.items():
+    for (name, value) in applicationArgs.items():
         if value in [None, False, ""]:
             continue
         elif value is True:

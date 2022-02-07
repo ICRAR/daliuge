@@ -17,7 +17,7 @@
         "command_line_arguments": "",
         "paramValueSeparator": "=",
         "argumentPrefix": "",
-        "applicationParams": {
+        "applicationArgs": {
             "if": "%i0",
             "of": "%o0",
             "count": 10,
@@ -50,7 +50,7 @@
         "group_end": false,
         "filepath": "",
         "dirname": "",
-        "applicationParams": {},
+        "applicationArgs": {},
         "iid": "0",
         "lg_key": -3,
         "dt": "File",
@@ -75,7 +75,7 @@
         "group_end": false,
         "filepath": "",
         "dirname": "",
-        "applicationParams": {},
+        "applicationArgs": {},
         "iid": "0",
         "lg_key": -4,
         "dt": "File",
