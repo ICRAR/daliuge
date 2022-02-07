@@ -107,6 +107,7 @@ def import_using_code(code):
 # being written to its corresponding output.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/appclass Application Class/dlg.apps.pyfunc.PyFuncApp/String/readonly/
 #     \~English Application class
 # @param[in] param/func_name Function Name//String/readwrite/
