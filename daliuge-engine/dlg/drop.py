@@ -1218,7 +1218,8 @@ class PathBasedDrop(object):
 # @brief File
 # @details A standard file on a filesystem mounted to the deployment machine
 # @par EAGLE_START
-# @par category File
+# @param category File
+# @param tag template
 # @param[in] param/data_volume Data volume/5/Float/readwrite/
 #     \~English Estimated size of the data contained in this node
 # @param[in] param/group_end Group end/False/Boolean/readwrite/
@@ -1394,7 +1395,8 @@ class FileDROP(AbstractDROP, PathBasedDrop):
 # @brief NGAS
 # @details An archive on the Next Generation Archive System (NGAS).
 # @par EAGLE_START
-# @par category File
+# @param category NGAS
+# @param tag template
 # @param[in] param/data_volume Data volume/5/Float/readwrite/
 #     \~English Estimated size of the data contained in this node
 # @param[in] param/group_end Group end/False/Boolean/readwrite/
@@ -1514,7 +1516,8 @@ class NgasDROP(AbstractDROP):
 # @brief Memory
 # @details In-memory storage of intermediate data products
 # @par EAGLE_START
-# @par category Memory
+# @param category Memory
+# @param tag template
 # @param[in] param/data_volume Data volume/5/Float/readwrite/
 #     \~English Estimated size of the data contained in this node
 # @param[in] param/group_end Group end/False/Boolean/readwrite/
@@ -2193,7 +2196,17 @@ class BarrierAppDROP(InputFiredAppDROP):
         kwargs["n_effective_inputs"] = -1
         super(BarrierAppDROP, self).initialize(**kwargs)
 
-
+##
+# @brief Branch
+# @details A conditional branch to control flow
+# @par EAGLE_START
+# @param category Branch
+# @param tag template
+# @param[in] param/appclass Application Class/dlg.apps.simple.SimpleBranch/String/readonly/
+#     \~English Application class
+# @param[in] param/group_start Group start/False/Boolean/readwrite/
+#     \~English Is this node the start of a group?
+# @par EAGLE_END
 class BranchAppDrop(BarrierAppDROP):
     """
     A special kind of application with exactly two outputs. After normal
@@ -2218,7 +2231,8 @@ class BranchAppDrop(BarrierAppDROP):
 # @brief Plasma
 # @details An object in a Apache Arrow Plasma in-memory object store
 # @par EAGLE_START
-# @par category Plasma
+# @param category Plasma
+# @param tag template
 # @param[in] param/data_volume Data volume/5/Float/readwrite/
 #     \~English Estimated size of the data contained in this node
 # @param[in] param/group_end Group end/False/Boolean/readwrite/
@@ -2262,7 +2276,8 @@ class PlasmaDROP(AbstractDROP):
 # @details An Apache Arrow Flight server providing distributed access
 # to a Plasma in-memory object store
 # @par EAGLE_START
-# @par category Plasma
+# @param category PlasmaFlight
+# @param tag template
 # @param[in] param/data_volume Data volume/5/Float/readwrite/
 #     \~English Estimated size of the data contained in this node
 # @param[in] param/group_end Group end/False/Boolean/readwrite/
@@ -2318,6 +2333,7 @@ class PlasmaFlightDROP(AbstractDROP):
 # @details A set of parameters, wholly specified in EAGLE
 # @par EAGLE_START
 # @param category ParameterSet
+# @param tag template
 # @param[in] param/mode Parset mode/"YANDA"/String/readonly/False/To what standard DALiuGE should filter and serialize the parameters.
 # @param[in] param/config_data ConfigData/""/String/readwrite/False/Additional configuration information to be mixed in with the initial data
 # @param[out] port/Config ConfigFile/File/The output configuration file
