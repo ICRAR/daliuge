@@ -22,13 +22,13 @@ spec:
       - name: daliuge-daemon
         image: {{ .Values.containers.name }}
         ports:
-        - containerPort: {{ .Values.containers.ports.containerPort }}
+          - containerPort: {{ .Values.containers.ports.containerPort }}
         volumeMounts:
         - mountPath: {{ .Values.dlg_root_in_container }}
           name: dlg-mount
         env:
         - name: DLG_ROOT
-          valueFrom: 
+          valueFrom:
             configMapKeyRef:
               name: daliuge-daemon-configmap
               key: dlg_root
