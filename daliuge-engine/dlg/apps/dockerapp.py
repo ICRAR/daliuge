@@ -234,15 +234,15 @@ class DockerApp(BarrierAppDROP):
             logger.warning(
                 "No command specified. Assume that a default command is executed in the container"
             )
-            # The above also means that we can't pass applicationParams
+            # The above also means that we can't pass applicationArgs
             # raise InvalidDropException(
             #     self, "No command specified, cannot create DockerApp")
         else:
-            self._applicationParams = self._getArg(kwargs, "applicationParams", {})
+            self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
 
             # construct the actual command line from all application parameters
             argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
-            argumentString = droputils.serialize_applicationParams(self._applicationParams, \
+            argumentString = droputils.serialize_applicationArgs(self._applicationArgs, \
                 argumentPrefix)
             self._command = f"{self._command} {argumentString}"
 

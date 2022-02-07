@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+from asyncio.log import logger
 import codecs
 import json
 import os
@@ -295,6 +296,7 @@ class TestREST(LocalDimStarter, unittest.TestCase):
                 "test", "graphs/complex.js"
             ) as f:  # @UndefinedVariable
                 complexGraphSpec = json.load(codecs.getreader("utf-8")(f))
+                logger.debug(f'Loaded graph: {f}')
             for dropSpec in complexGraphSpec:
                 dropSpec["node"] = hostname
             testutils.post(
