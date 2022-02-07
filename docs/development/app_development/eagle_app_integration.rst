@@ -1,4 +1,4 @@
-.. _eagle_integration:
+.. _eagle_app_integration:
 
 Component Description Generation
 ================================
