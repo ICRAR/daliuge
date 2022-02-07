@@ -157,17 +157,26 @@ class BashShellBase(object):
     Common class for BashShell apps. It simply requires a command to be
     specified.
     """
-
+    #TODO: use the shlex module for most of the construction of the
+    # command line to get a proper and safe shell syntax
     command = dlg_string_param("Bash command", None)
 
     def initialize(self, **kwargs):
         super(BashShellBase, self).initialize(**kwargs)
 
         self.proc = None
+        self._inputRedirect = self._getArg(kwargs, "input_redirection", "")
+        self._outputRedirect = self._getArg(kwargs, "output_redirection", "")
+        self._cmdLineArgs = self._getArg(kwargs, "command_line_arguments", "")
+        self._applicationParams = self._getArg(kwargs, "applicationParams", {})
+        self._argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
+
         if not self.command:
-            raise InvalidDropException(
-                self, "No command specified, cannot create BashShellApp"
-            )
+            self.command = self._getArg(kwargs, "command", None)
+            if not self.command:
+                raise InvalidDropException(
+                    self, "No command specified, cannot create BashShellApp"
+                )
 
     def _run_bash(self, inputs, outputs, stdin=None, stdout=subprocess.PIPE):
         """
@@ -186,7 +195,16 @@ class BashShellBase(object):
         session_id = (
             self._dlg_session.sessionId if self._dlg_session is not None else ""
         )
-        cmd = self.command
+        argumentString = droputils.serialize_applicationParams(self._applicationParams, \
+            self._argumentPrefix)
+        # complete command including all additional parameters and optional redirects
+        cmd = f"{self.command} {self._cmdLineArgs} {argumentString}"
+        if self._outputRedirect:
+            cmd = f"{cmd} > {self._outputRedirect}"
+        if self._inputRedirect:
+            cmd = f"cat {self._inputRedirect} > {cmd}"
+        cmd = cmd.strip()
+
         app_uid = self.uid
         # self.run_bash(self._command, self.uid, session_id, *args, **kwargs)
 
@@ -210,7 +228,7 @@ class BashShellBase(object):
 
         # Wrap everything inside bash
         cmd = ("/bin/bash", "-c", cmd)
-        logger.debug("Command after user creation and wrapping is: %s", cmd)
+        logger.debug("Command after wrapping is: %s", cmd)
 
         start = time.time()
 
