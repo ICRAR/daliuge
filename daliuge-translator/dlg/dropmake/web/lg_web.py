@@ -54,7 +54,7 @@ from ...clients import CompositeManagerClient
 from ..pg_generator import unroll, partition, GraphException
 from ..pg_manager import PGManager
 from ..scheduler import SchedulerException
-from dlg.deploy.start_helm_cluster import start_helm
+# from dlg.deploy.start_helm_cluster import start_helm
 
 logger = logging.getLogger(__name__)
 
@@ -311,7 +311,8 @@ def gen_pg_helm():
     num_partitions = len(list(filter(lambda n: 'isGroup' in n, pgtpj['nodeDataArray'])))
     # Send pgt_data to helm_start
     try:
-        start_helm(pgtp, num_partitions)
+        pass
+        # start_helm(pgtp, num_partitions)
     except Exception as ex:
         response.status = 500
         print(traceback.format_exc())
