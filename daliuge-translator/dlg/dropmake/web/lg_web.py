@@ -311,8 +311,7 @@ def gen_pg_helm():
     num_partitions = len(list(filter(lambda n: 'isGroup' in n, pgtpj['nodeDataArray'])))
     # Send pgt_data to helm_start
     try:
-        pass
-        # start_helm(pgtp, num_partitions, pgt_dir)
+        start_helm(pgtp, num_partitions, pgt_dir)
     except restutils.RestClientException as ex:
         response.status = 500
         print(traceback.format_exc())
