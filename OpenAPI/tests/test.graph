@@ -204,7 +204,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -306,7 +306,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -388,7 +388,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
