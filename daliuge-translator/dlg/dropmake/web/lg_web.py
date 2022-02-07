@@ -50,7 +50,6 @@ import pkg_resources
 from urllib.parse import parse_qs, urlparse
 
 from ... import common, restutils
-from ...deploy.start_helm_cluster import start_helm
 from ...clients import CompositeManagerClient
 from ..pg_generator import unroll, partition, GraphException
 from ..pg_manager import PGManager
@@ -298,6 +297,7 @@ def gen_pg_helm():
     RESTful interface to deploy a PGT as a K8s helm chart.
     """
     # Get pgt_data
+    from ...deploy.start_helm_cluster import start_helm
     pgt_id = request.query.get("pgt_id")
     pgtp = pg_mgr.get_pgt(pgt_id)
     if pgtp is None:
@@ -311,7 +311,8 @@ def gen_pg_helm():
     num_partitions = len(list(filter(lambda n: 'isGroup' in n, pgtpj['nodeDataArray'])))
     # Send pgt_data to helm_start
     try:
-        start_helm(pgtp, num_partitions, pgt_dir)
+        pass
+        # start_helm(pgtp, num_partitions, pgt_dir)
     except restutils.RestClientException as ex:
         response.status = 500
         print(traceback.format_exc())
