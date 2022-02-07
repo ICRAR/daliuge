@@ -54,7 +54,7 @@ def get_pg(opts, node_managers: list, data_island_managers: list):
     return physical_graph
 
 
-def start_helm(physical_graph_template, num_nodes: int, deploy_dir:str):
+def start_helm(physical_graph_template, num_nodes: int, deploy_dir: str):
     # TODO: Dynamic helm chart logging dir
     # TODO: Multiple node deployments
     available_ips = ["127.0.0.1"]
