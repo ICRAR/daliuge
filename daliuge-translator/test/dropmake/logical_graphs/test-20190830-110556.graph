@@ -26,7 +26,7 @@
     },
     "nodeDataArray": [
         {
-            "applicationParams": [],
+            "applicationArgs": [],
             "category": "BashShellApp",
             "collapsed": true,
             "color": "#0059a5",
@@ -221,7 +221,7 @@
             "y": 200
         },
         {
-            "applicationParams": [],
+            "applicationArgs": [],
             "category": "File",
             "collapsed": true,
             "color": "#2c2c2c",
