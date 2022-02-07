@@ -312,7 +312,7 @@ def gen_pg_helm():
     # Send pgt_data to helm_start
     try:
         start_helm(pgtp, num_partitions)
-    except Exception as ex:
+    except restutils.RestClientException as ex:
         response.status = 500
         print(traceback.format_exc())
         return "Fail to deploy physical graph: {0}".format(ex)
