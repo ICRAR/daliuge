@@ -48,6 +48,7 @@ logger = logging.getLogger(__name__)
 # via Plasma.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/plasma_path Plasma Path//String/readwrite/
 #     \~English Path to plasma store.
 # @param[in] param/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaConsumer/String/readonly/
@@ -135,6 +136,7 @@ class MSStreamingPlasmaConsumer(AppDROP):
 # via Plasma.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/plasma_path Plasma Path//String/readwrite/
 #     \~English Path to plasma store
 # @param[in] param/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaProducer/String/readonly/
@@ -203,6 +205,7 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
 # @details Batch read entire Measurement Set from Plasma.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/appclass Application class/dlg.apps.plasma.MSPlasmaReader/String/readonly/
 #     \~English Application class
 # @param[in] port/plasma_ms_input Plasma MS Input/Measurement Set/
@@ -265,6 +268,7 @@ class MSPlasmaReader(BarrierAppDROP):
 # @details Batch write entire Measurement Set to Plasma.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/appclass Application class/dlg.apps.plasma.MSPlasmaWriter/String/readonly/
 #     \~English Application class
 # @param[in] port/input_ms Input MS/Measurement Set/

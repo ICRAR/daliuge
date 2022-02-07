@@ -40,7 +40,6 @@ import netifaces
 
 from . import common
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -216,6 +215,16 @@ def getDlgPath():
     currently doesn't exist
     """
     return os.path.join(getDlgDir(), "code")
+
+
+def getDlgVariable(key: str):
+    """
+    Queries environment for variables assumed to start with 'DLG_'.
+    Special case for DLG_ROOT, since this is easily identifiable.
+    """
+    if key == "$DLG_ROOT":
+        return getDlgDir()
+    return os.environ.get(key[1:])
 
 
 def createDirIfMissing(path):
