@@ -78,6 +78,7 @@ class CRCApp(BarrierAppDROP):
 # i.e. A "streamingConsumer" of its predecessor in the graph
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/appclass Application Class/dlg.apps.crc.CRCStreamApp/String/readonly/
 #     \~English Application class
 # @param[out] port/data Data/String/
