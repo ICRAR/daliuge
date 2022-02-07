@@ -33,13 +33,13 @@ import numpy as np
 from dlg import droputils, utils
 from dlg.drop import BarrierAppDROP, BranchAppDrop, ContainerDROP
 from dlg.meta import (
-    dlg_float_param, 
+    dlg_float_param,
     dlg_string_param,
-    dlg_bool_param, 
+    dlg_bool_param,
     dlg_int_param,
-    dlg_component, 
+    dlg_component,
     dlg_batch_input,
-    dlg_batch_output, 
+    dlg_batch_output,
     dlg_streaming_input
 )
 from dlg.exceptions import DaliugeException
@@ -67,6 +67,7 @@ class NullBarrierApp(BarrierAppDROP):
 # without executing real algorithms. Very useful for debugging.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/sleepTime Sleep Time/5/Integer/readwrite/
 #     \~English The number of seconds to sleep
 # @param[in] param/appclass Application Class/dlg.apps.simple.SleepApp/String/readonly/
@@ -100,6 +101,7 @@ class SleepApp(BarrierAppDROP):
 # content recursively.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/appclass Application Class/dlg.apps.simple.CopyApp/String/readonly/
 #     \~English Application class
 # @par EAGLE_END
@@ -150,6 +152,7 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 # The resulting array will be send to all connected output apps.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/size Size/100/Integer/readwrite/
 #     \~English The size of the array
 # @param[in] param/integer Integer/True/Boolean/readwrite/
@@ -229,6 +232,7 @@ class RandomArrayApp(BarrierAppDROP):
 # will also be send to all connected output apps.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/method Method/mean/String/readwrite/
 #     \~English The method used for averaging
 # @param[in] param/appclass Application Class/dlg.apps.simple.AverageArraysApp/String/readonly/
@@ -318,6 +322,7 @@ class AverageArraysApp(BarrierAppDROP):
 # the same message. App does not require any input.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/greet Greet/World/String/readwrite/
 #     \~English What appears after 'Hello '
 # @param[in] param/appclass Application Class/dlg.apps.simple.HelloWorldApp/String/readonly/
@@ -370,6 +375,7 @@ class HelloWorldApp(BarrierAppDROP):
 # it to all outputs.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/url URL/"https://eagle.icrar.org"/String/readwrite/
 #     \~English The URL to retrieve
 # @param[in] param/appclass Application Class/dlg.apps.simple.UrlRetrieveApp/String/readonly/
@@ -421,6 +427,7 @@ class UrlRetrieveApp(BarrierAppDROP):
 # resulting array.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/appclass Application Class/dlg.apps.simple.GenericScatterApp/String/readonly/
 #     \~English Application class
 # @param[out] port/array Array/Array/
@@ -479,6 +486,7 @@ class GenericScatterApp(BarrierAppDROP):
 # resulting array.
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/appclass Application Class/dlg.apps.simple.GenericNpyScatterApp/String/readonly/
 #     \~English Application class
 # @param[in] param/scatter_axes Scatter Axes/String/readwrite
@@ -554,9 +562,8 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 # since this operation will not yield.
 # The resulting array will be sent to all connected output apps.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] param/size/100/Integer/readwrite
 #     \~English the size of the array\n
 # @param[in] param/appclass/dlg.apps.simple.ListAppendThrashingApp/String/readonly
