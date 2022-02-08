@@ -512,18 +512,20 @@ def gen_pgt_post():
         # debug
         print("os.getcwd()" + str(os.getcwd()))
         print("os.listdir()" + str(os.listdir()))
-        print("os.path.exists()" + str(os.path.exists(LG_SCHEMA_PATH)))
+        print("os.path.exists()" + LG_SCHEMA_PATH + " " + str(os.path.exists(LG_SCHEMA_PATH)))
+        print("os.path.exists()" + LG_SCHEMA_PATH_LOCAL + " " + str(os.path.exists(LG_SCHEMA_PATH_LOCAL)))
 
         # load LG schema
         if os.path.exists(LG_SCHEMA_PATH):
             with open(LG_SCHEMA_PATH, "r") as schema_file:
                 lg_schema = json.load(schema_file)
-        else:
+        elif os.path.exists(LG_SCHEMA_PATH_LOCAL):
             with open(LG_SCHEMA_PATH_LOCAL, "r") as schema_file:
                 lg_schema = json.load(schema_file)
 
         # validate JSON
-        validate(logical_graph, lg_schema)
+        if lg_schema is not None:
+            validate(logical_graph, lg_schema)
 
         # LG -> PGT
         pgt = unroll_and_partition_with_params(logical_graph, reqform)
