@@ -417,6 +417,7 @@ def create_palette_node_from_params(params):
             # parse description
             if "\n" in value:
                 logging.info(
+                    text + " " +
                     "cparam description ("
                     + value
                     + ") contains a newline character, removing."
@@ -427,7 +428,7 @@ def create_palette_node_from_params(params):
             # check that access is a known value
             if access != "readonly" and access != "readwrite":
                 logging.warning(
-                    "cparam '" + name + "' has unknown 'access' descriptor: " + access
+                    text + " cparam '" + name + "' has unknown 'access' descriptor: " + access
                 )
 
             # add a field
@@ -447,9 +448,16 @@ def create_palette_node_from_params(params):
             (param, internal_name) = parse_key(key)
             (name, default_value, type, access, precious) = parse_param_value(text, "a", value)
 
+            # warn if doc string is still using param instead of aparam
+            if key.startswith("param/"):
+                logging.warning(
+                    text + " param (" + internal_name + ") using obsolete 'param' description, defaulting to 'aparam'"
+                )
+
             # parse description
             if "\n" in value:
                 logging.info(
+                    text + " " +
                     "aparam description ("
                     + value
                     + ") contains a newline character, removing."
@@ -460,7 +468,7 @@ def create_palette_node_from_params(params):
             # check that access is a known value
             if access != "readonly" and access != "readwrite":
                 logging.warning(
-                    "aparam '" + name + "' has unknown 'access' descriptor: " + access
+                    text + " aparam '" + name + "' has unknown 'access' descriptor: " + access
                 )
 
             # add a field
