@@ -354,7 +354,7 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
 # @par EAGLE_START
 # @param category DynlibApp
 # @param tag template
-# @param[in] param/libpath Library Path//String/readwrite/
+# @param[in] cparam/libpath Library Path//String/readwrite/False/
 #     \~English The location of the shared object/DLL that implements this application
 # @par EAGLE_END
 class DynlibApp(DynlibAppBase, BarrierAppDROP):

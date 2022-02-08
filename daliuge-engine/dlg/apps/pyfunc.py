@@ -108,18 +108,18 @@ def import_using_code(code):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/appclass Application Class/dlg.apps.pyfunc.PyFuncApp/String/readonly/
+# @param[in] cparam/appclass Application Class/dlg.apps.pyfunc.PyFuncApp/String/readonly/False/
 #     \~English Application class
-# @param[in] param/func_name Function Name//String/readwrite/
+# @param[in] aparam/func_name Function Name//String/readwrite/False/
 #     \~English Python fuction name
-# @param[in] param/func_code Function Code//String/readwrite/
+# @param[in] aparam/func_code Function Code//String/readwrite/False/
 #     \~English Python fuction code, e.g. 'def fuction_name(args): return args'
-# @param[in] param/pickle Pickle//bool/readwrite/
+# @param[in] aparam/pickle Pickle//bool/readwrite/False/
 #     \~English Whether the python arguments are pickled.
-# @param[in] param/func_defaults Function Defaults//String/readwrite/
+# @param[in] aparam/func_defaults Function Defaults//String/readwrite/False/
 #     \~English Mapping from argname to default value. Should match only the last part
 #               of the argnames list
-# @param[in] param/func_arg_mapping Function Arguments Mapping//String/readwrite/
+# @param[in] aparam/func_arg_mapping Function Arguments Mapping//String/readwrite/False/
 #     \~English Mapping between argument name and input drop uids
 # @par EAGLE_END
 class PyFuncApp(BarrierAppDROP):
