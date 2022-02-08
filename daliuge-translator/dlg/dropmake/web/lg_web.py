@@ -32,6 +32,7 @@ import sys
 import threading
 import time
 import warnings
+from jsonschema import validate, ValidationError
 
 from bottle import (
     route,
@@ -86,6 +87,7 @@ ALGO_PARAMS = [
     ("max_mem", int),
 ]  # max_mem is only relevant for the old editor, not used in EAGLE
 
+LG_SCHEMA_PATH = "/daliuge/dlg-lg.graph.schema"
 
 def lg_path(lg_name):
     return "{0}/{1}".format(lg_dir, lg_name)
@@ -531,12 +533,22 @@ def gen_pgt_post():
     # Retrieve the graph name.
     reqform = request.forms
     lg_name = reqform.get("lg_name")
-    # print('lg_name', lg_name)
 
     # Retrieve json data.
     json_string = reqform.get("json_data")
     try:
         logical_graph = json.loads(json_string)
+
+        # load LG schema
+        lg_schema = None
+        if os.path.exists(LG_SCHEMA_PATH):
+            with open(LG_SCHEMA_PATH, "r") as schema_file:
+                lg_schema = json.load(schema_file)
+
+        # validate JSON (if schema was found)
+        if lg_schema is not None:
+            validate(logical_graph, lg_schema)
+
         # LG -> PGT
         pgt = unroll_and_partition_with_params(logical_graph, reqform)
         par_algo = reqform.get("algo", "none")
@@ -554,6 +566,8 @@ def gen_pgt_post():
                 "" if par_algo == "none" else "Partitioning"
             ),
         )
+    except ValidationError as ve:
+        return "Validation Error {1}: {0}".format(str(ve), lg_name)
     except GraphException as ge:
         trace_msg = traceback.format_exc()
         print(trace_msg)
