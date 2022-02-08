@@ -103,7 +103,7 @@ class SleepApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/appclass Application Class/dlg.apps.simple.CopyApp/String/readonly/
+# @param[in] param/appclass Application Class/dlg.apps.simple.CopyApp/String/readonly/False/
 #     \~English Application class
 # @par EAGLE_END
 class CopyApp(BarrierAppDROP):
@@ -234,9 +234,9 @@ class RandomArrayApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/method Method/mean/String/readwrite/
+# @param[in] aparam/method Method/mean/String/readwrite/False/
 #     \~English The method used for averaging
-# @param[in] param/appclass Application Class/dlg.apps.simple.AverageArraysApp/String/readonly/
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.AverageArraysApp/String/readonly/False/
 #     \~English Application class
 # @param[in] port/array Array/array/
 #     \~English Port for the input array(s)
