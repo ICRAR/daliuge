@@ -211,7 +211,7 @@
                                     "type": "string"
                                 },
                                 "value": {
-                                    "type": ["string","boolean","number"]
+                                    "type": ["string","boolean","number", "null"]
                                 },
                                 "description": {
                                     "type": "string"
@@ -237,7 +237,7 @@
                                     "type": "string"
                                 },
                                 "value": {
-                                    "type": ["string","boolean","number"]
+                                    "type": ["string","boolean","number", "null"]
                                 },
                                 "description": {
                                     "type": "string"
@@ -263,7 +263,7 @@
                                     "type": "string"
                                 },
                                 "value": {
-                                    "type": ["string","boolean","number"]
+                                    "type": ["string","boolean","number", "null"]
                                 },
                                 "description": {
                                     "type": "string"
@@ -277,7 +277,7 @@
                             ]
                         }
                     },
-                    "applicationParams": {
+                    "applicationArgs": {
                         "type": "array",
                         "items": {
                             "type": "object",
@@ -289,7 +289,7 @@
                                     "type": "string"
                                 },
                                 "value": {
-                                    "type": ["string","boolean","number"]
+                                    "type": ["string","boolean","number", "null"]
                                 },
                                 "description": {
                                     "type": "string"
@@ -315,7 +315,7 @@
                     "drawOrderHint",
                     "expanded",
                     "fields",
-                    "applicationParams",
+                    "applicationArgs",
                     "height",
                     "inputAppFields",
                     "inputApplicationName",
