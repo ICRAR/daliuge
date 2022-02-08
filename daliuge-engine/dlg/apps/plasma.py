@@ -49,9 +49,9 @@ logger = logging.getLogger(__name__)
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/plasma_path Plasma Path//String/readwrite/
+# @param[in] aparam/plasma_path Plasma Path//String/readwrite/False/
 #     \~English Path to plasma store.
-# @param[in] param/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaConsumer/String/readonly/
+# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaConsumer/String/readonly/False/
 #     \~English Application class
 # @param[in] port/plasma_ms_input Plasma MS Input/Measurement Set/
 #     \~English Plasma MS input
@@ -137,9 +137,9 @@ class MSStreamingPlasmaConsumer(AppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/plasma_path Plasma Path//String/readwrite/
+# @param[in] aparam/plasma_path Plasma Path//String/readwrite/False/
 #     \~English Path to plasma store
-# @param[in] param/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaProducer/String/readonly/
+# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaProducer/String/readonly/False/
 #     \~English Application class
 # @param[in] port/input_file Input File/File/
 #     \~English MS input file
@@ -206,7 +206,7 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/appclass Application class/dlg.apps.plasma.MSPlasmaReader/String/readonly/
+# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSPlasmaReader/String/readonly/False/
 #     \~English Application class
 # @param[in] port/plasma_ms_input Plasma MS Input/Measurement Set/
 #     \~English Plasma MS store input
@@ -269,7 +269,7 @@ class MSPlasmaReader(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/appclass Application class/dlg.apps.plasma.MSPlasmaWriter/String/readonly/
+# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSPlasmaWriter/String/readonly/False/
 #     \~English Application class
 # @param[in] port/input_ms Input MS/Measurement Set/
 #     \~English Input MS file

@@ -69,9 +69,9 @@ class NullBarrierApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/sleepTime Sleep Time/5/Integer/readwrite/
+# @param[in] aparam/sleepTime Sleep Time/5/Integer/readwrite/False/
 #     \~English The number of seconds to sleep
-# @param[in] param/appclass Application Class/dlg.apps.simple.SleepApp/String/readonly/
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.SleepApp/String/readonly/False/
 #     \~English Application class
 # @par EAGLE_END
 class SleepApp(BarrierAppDROP):
@@ -103,7 +103,7 @@ class SleepApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/appclass Application Class/dlg.apps.simple.CopyApp/String/readonly/False/
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.CopyApp/String/readonly/False/
 #     \~English Application class
 # @par EAGLE_END
 class CopyApp(BarrierAppDROP):
@@ -137,6 +137,16 @@ class CopyApp(BarrierAppDROP):
                 droputils.copyDropContents(inputDrop, outputDrop)
 
 
+##
+# @brief SleepAndCopyApp
+# @par EAGLE_START
+# @param category PythonApp
+# @param tag daliuge
+# @param[in] aparam/sleepTime Sleep Time/5/Integer/readwrite/False/
+#     \~English The number of seconds to sleep
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.SleepAndCopyApp/String/readonly/False/
+#     \~English Application class
+# @par EAGLE_END
 class SleepAndCopyApp(SleepApp, CopyApp):
     """A combination of the SleepApp and the CopyApp. It sleeps, then copies"""
 
@@ -154,15 +164,15 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/size Size/100/Integer/readwrite/
+# @param[in] aparam/size Size/100/Integer/readwrite/False/
 #     \~English The size of the array
-# @param[in] param/integer Integer/True/Boolean/readwrite/
+# @param[in] aparam/integer Integer/True/Boolean/readwrite/False/
 #     \~English Generate integer array?
-# @param[in] param/low Low/0/float/readwrite/
+# @param[in] aparam/low Low/0/float/readwrite/False/
 #     \~English Low value of range in array [inclusive]
-# @param[in] param/high High/1/float/readwrite/
+# @param[in] aparam/high High/1/float/readwrite/False/
 #     \~English High value of range of array [exclusive]
-# @param[in] param/appclass Application class/dlg.apps.simple.RandomArrayApp/String/readonly/
+# @param[in] cparam/appclass Application class/dlg.apps.simple.RandomArrayApp/String/readonly/False/
 #     \~English Application class
 # @param[out] port/array Array/Array/
 #     \~English Port carrying the averaged array
@@ -410,9 +420,9 @@ class GenericNpyGatherApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/greet Greet/World/String/readwrite/
+# @param[in] aparam/greet Greet/World/String/readwrite/
 #     \~English What appears after 'Hello '
-# @param[in] param/appclass Application Class/dlg.apps.simple.HelloWorldApp/String/readonly/
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.HelloWorldApp/String/readonly/
 #     \~English Application class
 # @param[out] port/hello Hello/String/
 #     \~English The port carrying the message produced by the app.
@@ -463,9 +473,9 @@ class HelloWorldApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/url URL/"https://eagle.icrar.org"/String/readwrite/
+# @param[in] aparam/url URL/"https://eagle.icrar.org"/String/readwrite/False/
 #     \~English The URL to retrieve
-# @param[in] param/appclass Application Class/dlg.apps.simple.UrlRetrieveApp/String/readonly/
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.UrlRetrieveApp/String/readonly/False/
 #     \~English Application class
 # @param[out] port/content Content/String/
 #     \~English The port carrying the content read from the URL.
