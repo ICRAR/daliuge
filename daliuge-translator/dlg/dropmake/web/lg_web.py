@@ -516,6 +516,7 @@ def gen_pgt_post():
         print("os.path.exists()" + LG_SCHEMA_PATH_LOCAL + " " + str(os.path.exists(LG_SCHEMA_PATH_LOCAL)))
 
         # load LG schema
+        lg_schema = None
         if os.path.exists(LG_SCHEMA_PATH):
             with open(LG_SCHEMA_PATH, "r") as schema_file:
                 lg_schema = json.load(schema_file)
