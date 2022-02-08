@@ -331,13 +331,13 @@ class StreamingInputBashAppBase(BashShellBase, AppDROP):
 # @par EAGLE_START
 # @param category BashShellApp
 # @param tag template
-# @param[in] param/command Command//String/readwrite/
+# @param[in] param/command Command//String/readwrite/False/
 #     \~English The command to be executed
-# @param[in] param/input_redirection Input Redirection//String/readwrite/
+# @param[in] param/input_redirection Input Redirection//String/readwrite/False/
 #     \~English The command line argument that specifies the input into this application
-# @param[in] param/output_redirection Output Redirection//String/readwrite/
+# @param[in] param/output_redirection Output Redirection//String/readwrite/False/
 #     \~English The command line argument that specifies the output from this application
-# @param[in] param/command_line_arguments Command Line Arguments//String/readwrite/
+# @param[in] param/command_line_arguments Command Line Arguments//String/readwrite/False/
 #     \~English Additional command line arguments to be added to the command line to be executed
 # @par EAGLE_END
 class BashShellApp(BashShellBase, BarrierAppDROP):

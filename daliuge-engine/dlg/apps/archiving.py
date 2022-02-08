@@ -82,7 +82,7 @@ class ExternalStoreApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/appclass Application class/dlg.apps.archiving.NgasArchivingApp/String/readonly/
+# @param[in] cparam/appclass Application class/dlg.apps.archiving.NgasArchivingApp/String/readonly/
 #     \~English Application class
 # @param[in] param/ngasSrv NGAS Server URL/localhost/String/readwrite/
 #     \~English URL of the NGAS Server
