@@ -1165,7 +1165,6 @@ class DataDROP(AbstractDROP):
         Returns an instance of one of the `dlg.io.DataIO` instances that
         handles the data contents of this DROP.
         """
-        pass
 
     def delete(self):
         """
@@ -1180,13 +1179,12 @@ class DataDROP(AbstractDROP):
         """
         return self.getIO().exists()
 
-    @abstractmethod
     def dataURL(self) -> str:
         """
         A URL that points to the data referenced by this DROP. Different
         DROP implementations will use different URI schemes.
         """
-        pass
+        return ""
 
 
 ##
@@ -2056,7 +2054,6 @@ class AppDROP(ContainerDROP):
         if e.type == "dropCompleted":
             self.dropCompleted(e.uid, e.status)
 
-    @abstractmethod
     def dropCompleted(self, uid, drop_state):
         """
         Callback invoked when the DROP with UID `uid` (which is either a
@@ -2064,7 +2061,6 @@ class AppDROP(ContainerDROP):
         COMPLETED or ERROR state. By default no action is performed.
         """
 
-    @abstractmethod
     def dataWritten(self, uid, data):
         """
         Callback invoked when `data` has been written into the DROP with
