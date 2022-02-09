@@ -2665,6 +2665,10 @@ class BarrierAppDROP(InputFiredAppDROP):
 # @param tag template
 # @param[in] cparam/appclass Application Class/dlg.apps.simple.SimpleBranch/String/readonly/False/
 #     \~English Application class
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
 # @par EAGLE_END
