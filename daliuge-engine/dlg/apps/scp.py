@@ -46,13 +46,19 @@ from dlg.meta import (
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/appclass Application Class/dlg.apps.scp.ScpApp/String/readonly/
+# @param[in] cparam/appclass Application Class/dlg.apps.scp.ScpApp/String/readonly/False/
 #     \~English Application class
-# @param[in] param/remoteUser Remote User//String/readwrite/
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] aparam/remoteUser Remote User//String/readwrite/False/
 #     \~English Remote user address
-# @param[in] param/pkeyPath Private Key Path//String/readwrite/
+# @param[in] aparam/pkeyPath Private Key Path//String/readwrite/False/
 #     \~English Private key path
-# @param[in] param/timeout Timeout//Float/readwrite/
+# @param[in] aparam/timeout Timeout//Float/readwrite/False/
 #     \~English Connection timeout in seconds
 # @param[in] port/file File/PathBasedDrop/
 #     \~English Input file path
