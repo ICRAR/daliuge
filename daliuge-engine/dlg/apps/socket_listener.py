@@ -59,6 +59,12 @@ logger = logging.getLogger(__name__)
 # @param tag daliuge
 # @param[in] cparam/appclass Application Class/dlg.apps.socket_listener.SocketListener/String/readonly/False/
 #     \~English Application class
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
 # @param[in] aparam/host Host/127.0.0.1/String/readwrite/False/
 #     \~English Host address
 # @param[in] aparam/port Port/1111/Integer/readwrite/False/

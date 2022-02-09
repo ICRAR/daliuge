@@ -84,6 +84,12 @@ class ExternalStoreApp(BarrierAppDROP):
 # @param tag daliuge
 # @param[in] cparam/appclass Application class/dlg.apps.archiving.NgasArchivingApp/String/readonly/False/
 #     \~English Application class
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
 # @param[in] aparam/ngasSrv NGAS Server URL/localhost/String/readwrite/False/
 #     \~English URL of the NGAS Server
 # @param[in] aparam/ngasPort NGAS Server Port/7777/Integer/readwrite/False/

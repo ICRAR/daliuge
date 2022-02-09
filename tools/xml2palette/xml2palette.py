@@ -267,7 +267,7 @@ def add_required_fields_for_category(text, fields, category):
             "paramValueSeparator",
             "Param Value Separator",
             " ",
-            "Separator between parameters on the command line",
+            "Separator character(s) between parameters on the command line",
             "readwrite",
             "String",
             False,
