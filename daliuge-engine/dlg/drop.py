@@ -1519,15 +1519,15 @@ class DataDROP(AbstractDROP):
 # @par EAGLE_START
 # @param category File
 # @param tag template
-# @param[in] param/data_volume Data volume/5/Float/readwrite/
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False/
 #     \~English Estimated size of the data contained in this node
-# @param[in] param/group_end Group end/False/Boolean/readwrite/
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False/
 #     \~English Is this node the end of a group?
-# @param[in] param/check_filepath_exists Check file path exists/True/Boolean/readwrite/
+# @param[in] aparam/check_filepath_exists Check file path exists/True/Boolean/readwrite/False/
 #     \~English Perform a check to make sure the file path exists before proceeding with the application
-# @param[in] param/filepath File Path//String/readwrite/
+# @param[in] aparam/filepath File Path//String/readwrite/False/
 #     \~English Path to the file for this node
-# @param[in] param/dirname Directory name//String/readwrite/
+# @param[in] aparam/dirname Directory name//String/readwrite/False/
 #     \~English Path to the file for this node
 # @par EAGLE_END
 class FileDROP(DataDROP, PathBasedDrop):
@@ -1696,21 +1696,21 @@ class FileDROP(DataDROP, PathBasedDrop):
 # @par EAGLE_START
 # @param category NGAS
 # @param tag template
-# @param[in] param/data_volume Data volume/5/Float/readwrite/
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False/
 #     \~English Estimated size of the data contained in this node
-# @param[in] param/group_end Group end/False/Boolean/readwrite/
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False/
 #     \~English Is this node the end of a group?
-# @param[in] param/ngsSrv NGAS Server/localhost/String/readwrite/
+# @param[in] aparam/ngsSrv NGAS Server/localhost/String/readwrite/False/
 #     \~English The URL of the NGAS Server
-# @param[in] param/ngasPort NGAS Port/7777/Integer/readwrite/
+# @param[in] aparam/ngasPort NGAS Port/7777/Integer/readwrite/False/
 #     \~English The port of the NGAS Server
-# @param[in] param/ngasFileId File ID//String/readwrite/
+# @param[in] aparam/ngasFileId File ID//String/readwrite/False/
 #     \~English File ID on NGAS (for retrieval only)
-# @param[in] param/ngasConnectTimeout Connection timeout/2/Integer/readwrite/
+# @param[in] aparam/ngasConnectTimeout Connection timeout/2/Integer/readwrite/False/
 #     \~English Timeout for connecting to the NGAS server
-# @param[in] param/ngasMime NGAS mime-type/text\/ascii/String/readwrite/
+# @param[in] aparam/ngasMime NGAS mime-type/"text/ascii"/String/readwrite/False/
 #     \~English Mime-type to be used for archiving
-# @param[in] param/ngasTimeout NGAS timeout/2/Integer/readwrite/
+# @param[in] aparam/ngasTimeout NGAS timeout/2/Integer/readwrite/False/
 #     \~English Timeout for receiving responses for NGAS
 # @par EAGLE_END
 class NgasDROP(DataDROP):
@@ -1817,9 +1817,9 @@ class NgasDROP(DataDROP):
 # @par EAGLE_START
 # @param category Memory
 # @param tag template
-# @param[in] param/data_volume Data volume/5/Float/readwrite/
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False/
 #     \~English Estimated size of the data contained in this node
-# @param[in] param/group_end Group end/False/Boolean/readwrite/
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False/
 #     \~English Is this node the end of a group?
 # @par EAGLE_END
 class InMemoryDROP(DataDROP):
@@ -2663,9 +2663,13 @@ class BarrierAppDROP(InputFiredAppDROP):
 # @par EAGLE_START
 # @param category Branch
 # @param tag template
-# @param[in] param/appclass Application Class/dlg.apps.simple.SimpleBranch/String/readonly/
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.SimpleBranch/String/readonly/False/
 #     \~English Application class
-# @param[in] param/group_start Group start/False/Boolean/readwrite/
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
 # @par EAGLE_END
 class BranchAppDrop(BarrierAppDROP):
@@ -2694,15 +2698,15 @@ class BranchAppDrop(BarrierAppDROP):
 # @par EAGLE_START
 # @param category Plasma
 # @param tag template
-# @param[in] param/data_volume Data volume/5/Float/readwrite/
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False/
 #     \~English Estimated size of the data contained in this node
-# @param[in] param/group_end Group end/False/Boolean/readwrite/
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False/
 #     \~English Is this node the end of a group?
-# @param[in] param/plasma_path Plasma Path//String/readwrite/
+# @param[in] aparam/plasma_path Plasma Path//String/readwrite/False/
 #     \~English Path to the local plasma store
-# @param[in] param/object_id Object Id//String/readwrite/
+# @param[in] aparam/object_id Object Id//String/readwrite/False/
 #     \~English PlasmaId of the object for all compute nodes
-# @param[in] param/use_staging Use Staging/False/Boolean/readwrite/
+# @param[in] aparam/use_staging Use Staging/False/Boolean/readwrite/False/
 #     \~English Enables writing to a dynamically resizeable staging buffer
 # @par EAGLE_END
 class PlasmaDROP(AbstractDROP):
@@ -2739,15 +2743,15 @@ class PlasmaDROP(AbstractDROP):
 # @par EAGLE_START
 # @param category PlasmaFlight
 # @param tag template
-# @param[in] param/data_volume Data volume/5/Float/readwrite/
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False/
 #     \~English Estimated size of the data contained in this node
-# @param[in] param/group_end Group end/False/Boolean/readwrite/
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False/
 #     \~English Is this node the end of a group?
-# @param[in] param/plasma_path Plasma Path//String/readwrite/
+# @param[in] aparam/plasma_path Plasma Path//String/readwrite/False/
 #     \~English Path to the local plasma store
-# @param[in] param/object_id Object Id//String/readwrite/
+# @param[in] aparam/object_id Object Id//String/readwrite/False/
 #     \~English PlasmaId of the object for all compute nodes
-# @param[in] param/flight_path Flight Path//String/readwrite/
+# @param[in] aparam/flight_path Flight Path//String/readwrite/False/
 #     \~English IP and flight port of the drop owner
 # @par EAGLE_END
 class PlasmaFlightDROP(AbstractDROP):

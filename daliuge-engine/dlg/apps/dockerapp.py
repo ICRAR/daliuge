@@ -74,23 +74,39 @@ class ContainerIpWaiter(object):
 # @par EAGLE_START
 # @param category Docker
 # @param tag template
-# @param[in] param/image Image//String/readwrite/
+# @param[in] cparam/image Image//String/readwrite/False/
 #     \~English The name of the docker image to be used for this application
-# @param[in] param/tag Tag/1.0/String/readwrite/
+# @param[in] cparam/tag Tag/1.0/String/readwrite/False/
 #     \~English The tag of the docker image to be used for this application
-# @param[in] param/digest Digest//String/readwrite/
+# @param[in] cparam/digest Digest//String/readwrite/False/
 #     \~English The hexadecimal hash (long version) of the docker image to be used for this application
-# @param[in] param/command Command//String/readwrite/
+# @param[in] cparam/command Command//String/readwrite/False/
 #     \~English The command line to run within the docker instance. The specified command will be executed in a bash shell. That means that images will need a bash shell.
-# @param[in] param/user User//String/readwrite/
+# @param[in] cparam/input_redirection Input Redirection//String/readwrite/False/
+#     \~English The command line argument that specifies the input into this application
+# @param[in] cparam/output_redirection Output Redirection//String/readwrite/False/
+#     \~English The command line argument that specifies the output from this application
+# @param[in] cparam/command_line_arguments Command Line Arguments//String/readwrite/False/
+#     \~English Additional command line arguments to be added to the command line to be executed
+# @param[in] cparam/paramValueSeparator Param value separator/ /String/readwrite/False/
+#     \~English Separator character(s) between parameters on the command line
+# @param[in] cparam/argumentPrefix Argument prefix/"--"/String/readwrite/False/
+#     \~English Prefix to each keyed argument on the command line
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/user User//String/readwrite/False/
 #     \~English Username of the user who will run the application within the docker image
-# @param[in] param/ensureUserAndSwitch Ensure User And Switch/False/Boolean/readwrite/
+# @param[in] cparam/ensureUserAndSwitch Ensure User And Switch/False/Boolean/readwrite/False/
 #     \~English Make sure the user specified in the User parameter exists and then run the docker container as that user
-# @param[in] param/removeContainer Remove Container/True/Boolean/readwrite/
+# @param[in] cparam/removeContainer Remove Container/True/Boolean/readwrite/False/
 #     \~English Instruct Docker engine to delete the container after execution is complete
-# @param[in] param/additionalBindings Additional Bindings//String/readwrite/
+# @param[in] cparam/additionalBindings Additional Bindings//String/readwrite/False/
 #     \~English Directories which will be visible inside the container during run-time. Format is srcdir_on_host:trgtdir_on_container. Multiple entries can be separated by commas.
-# @param[in] param/portMappings Port Mappings//String/readwrite/
+# @param[in] cparam/portMappings Port Mappings//String/readwrite/False/
 #     \~English Port mappings on the host machine
 # @par EAGLE_END
 class DockerApp(BarrierAppDROP):
