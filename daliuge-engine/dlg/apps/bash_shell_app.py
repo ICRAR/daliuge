@@ -331,14 +331,24 @@ class StreamingInputBashAppBase(BashShellBase, AppDROP):
 # @par EAGLE_START
 # @param category BashShellApp
 # @param tag template
-# @param[in] aparam/command Command//String/readwrite/False/
+# @param[in] cparam/command Command//String/readwrite/False/
 #     \~English The command to be executed
-# @param[in] aparam/input_redirection Input Redirection//String/readwrite/False/
+# @param[in] cparam/input_redirection Input Redirection//String/readwrite/False/
 #     \~English The command line argument that specifies the input into this application
-# @param[in] aparam/output_redirection Output Redirection//String/readwrite/False/
+# @param[in] cparam/output_redirection Output Redirection//String/readwrite/False/
 #     \~English The command line argument that specifies the output from this application
-# @param[in] aparam/command_line_arguments Command Line Arguments//String/readwrite/False/
+# @param[in] cparam/command_line_arguments Command Line Arguments//String/readwrite/False/
 #     \~English Additional command line arguments to be added to the command line to be executed
+# @param[in] cparam/paramValueSeparator Param value separator/ /String/readwrite/False/
+#     \~English Separator character(s) between parameters on the command line
+# @param[in] cparam/argumentPrefix Argument prefix/"--"/String/readwrite/False/
+#     \~English Prefix to each keyed argument on the command line
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
 # @par EAGLE_END
 class BashShellApp(BashShellBase, BarrierAppDROP):
     """

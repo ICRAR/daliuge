@@ -53,6 +53,12 @@ logger = logging.getLogger(__name__)
 #     \~English Path to plasma store.
 # @param[in] cparam/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaConsumer/String/readonly/False/
 #     \~English Application class
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
 # @param[in] port/plasma_ms_input Plasma MS Input/Measurement Set/
 #     \~English Plasma MS input
 # @param[out] port/output_file Output File/File/
@@ -141,6 +147,12 @@ class MSStreamingPlasmaConsumer(AppDROP):
 #     \~English Path to plasma store
 # @param[in] cparam/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaProducer/String/readonly/False/
 #     \~English Application class
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
 # @param[in] port/input_file Input File/File/
 #     \~English MS input file
 # @param[out] port/plasma_ms_output Plasma MS Output/Measurement Set/
@@ -208,6 +220,12 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
 # @param tag daliuge
 # @param[in] cparam/appclass Application class/dlg.apps.plasma.MSPlasmaReader/String/readonly/False/
 #     \~English Application class
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
 # @param[in] port/plasma_ms_input Plasma MS Input/Measurement Set/
 #     \~English Plasma MS store input
 # @param[out] port/output_ms Output MS/Measurement Set/
@@ -271,6 +289,12 @@ class MSPlasmaReader(BarrierAppDROP):
 # @param tag daliuge
 # @param[in] cparam/appclass Application class/dlg.apps.plasma.MSPlasmaWriter/String/readonly/False/
 #     \~English Application class
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
 # @param[in] port/input_ms Input MS/Measurement Set/
 #     \~English Input MS file
 # @param[out] port/plasma_ms_output Plasma MS Output/Measurement Set/
