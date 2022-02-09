@@ -420,9 +420,9 @@ class GenericNpyGatherApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] aparam/greet Greet/World/String/readwrite/
+# @param[in] aparam/greet Greet/World/String/readwrite/False/
 #     \~English What appears after 'Hello '
-# @param[in] cparam/appclass Application Class/dlg.apps.simple.HelloWorldApp/String/readonly/
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.HelloWorldApp/String/readonly/False/
 #     \~English Application class
 # @param[out] port/hello Hello/String/
 #     \~English The port carrying the message produced by the app.
@@ -525,7 +525,7 @@ class UrlRetrieveApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/appclass Application Class/dlg.apps.simple.GenericScatterApp/String/readonly/
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.GenericScatterApp/String/readonly/False/
 #     \~English Application class
 # @param[out] port/array Array/Array/
 #     \~English A numpy array of arrays, where the first axis is of length <numSplit>
@@ -584,9 +584,9 @@ class GenericScatterApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/appclass Application Class/dlg.apps.simple.GenericNpyScatterApp/String/readonly/
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.GenericNpyScatterApp/String/readonly/False/
 #     \~English Application class
-# @param[in] param/scatter_axes Scatter Axes/String/readwrite
+# @param[in] aparam/scatter_axes Scatter Axes//String/readwrite/False/
 #     \~English The axes to split input ndarrays on, e.g. [0,0,0], length must
 #       match the number of input ports
 # @param[out] port/array Array/npy/
@@ -661,11 +661,11 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/size/100/Integer/readwrite
+# @param[in] aparam/size Size/100/Integer/readwrite/False/
 #     \~English the size of the array\n
-# @param[in] param/appclass/dlg.apps.simple.ListAppendThrashingApp/String/readonly
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.ListAppendThrashingApp/String/readonly/False/
 #     \~English Application class\n
-# @param[out] port/array
+# @param[out] port/array Array/array/
 #     \~English Port carrying the random array.
 # @par EAGLE_END
 class ListAppendThrashingApp(BarrierAppDROP):

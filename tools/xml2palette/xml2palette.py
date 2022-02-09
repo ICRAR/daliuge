@@ -257,7 +257,7 @@ def create_field(internal_name, name, value, description, access, type, precious
 def add_field_if_missing(text, fields, internal_name, name, value, description, access, type, precious):
     if find_field_by_name(fields, internal_name) is None:
         logging.warning(
-            text + " component added " + internal_name + " cparam"
+            text + " component added missing " + internal_name + " cparam"
         )
         fields.append(
             create_field(internal_name, name, value, description, access, type, precious)
