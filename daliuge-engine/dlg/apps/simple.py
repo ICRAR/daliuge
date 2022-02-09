@@ -38,6 +38,7 @@ from dlg.meta import (
     dlg_string_param,
     dlg_bool_param, 
     dlg_int_param,
+    dlg_list_param,
     dlg_component, 
     dlg_batch_input,
     dlg_batch_output, 
@@ -353,14 +354,13 @@ class GenericNpyGatherApp(BarrierAppDROP):
         "minimum": None      # elementwise minimums of inputs, ndarrays must be of same shape
     }
     function: str = dlg_string_param("function", "sum")
-    reduce_axes: str = dlg_string_param("reduce_axes", "None")
+    reduce_axes: list = dlg_list_param("reduce_axes", "None")
 
     def __init__(self, oid, uid, **kwargs):
         super().__init__(oid, kwargs)
 
     def initialize(self, **kwargs):
-        super(GenericNpyGatherApp, self).initialize(**kwargs)
-        self.reduce_axes = ast.literal_eval(self.reduce_axes)
+        super().initialize(**kwargs)
 
     def run(self):
         if len(self.inputs) < 1:
