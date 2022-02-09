@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 # @par EAGLE_START
 # @param category Mpi
 # @param tag template
-# @param[in] param/num_of_procs Num procs//Integer/readwrite/
+# @param[in] cparam/num_of_procs Num procs/1/Integer/readwrite/False/
 #     \~English Number of processes used for this application
 # @par EAGLE_END
 class MPIApp(BarrierAppDROP):
