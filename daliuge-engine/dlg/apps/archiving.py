@@ -82,17 +82,23 @@ class ExternalStoreApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/appclass Application class/dlg.apps.archiving.NgasArchivingApp/String/readonly/
+# @param[in] cparam/appclass Application class/dlg.apps.archiving.NgasArchivingApp/String/readonly/False/
 #     \~English Application class
-# @param[in] param/ngasSrv NGAS Server URL/localhost/String/readwrite/
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] aparam/ngasSrv NGAS Server URL/localhost/String/readwrite/False/
 #     \~English URL of the NGAS Server
-# @param[in] param/ngasPort NGAS Server Port/7777/Integer/readwrite/
+# @param[in] aparam/ngasPort NGAS Server Port/7777/Integer/readwrite/False/
 #     \~English TCP/IP Port on the NGAS Server
-# @param[in] param/ngasMime NGAS Mime Type/"application/octet-stream"/String/readwrite/
+# @param[in] aparam/ngasMime NGAS Mime Type/"application/octet-stream"/String/readwrite/False/
 #     \~English Mime-type of the NGAS payload
-# @param[in] param/ngasTimeout NGAS Server Timeout/2/Integer/readonly/
+# @param[in] aparam/ngasTimeout NGAS Server Timeout/2/Integer/readonly/False/
 #     \~English Archiving request timeout
-# @param[in] param/ngasConnectTimeout NGAS Server Connect Timeout/2/Integer/readonly/
+# @param[in] aparam/ngasConnectTimeout NGAS Server Connect Timeout/2/Integer/readonly/False/
 #     \~English NGAS Server connection timeout
 # @param[in] port/fileObject File Object/File/
 #     \~English Input File Object

@@ -354,8 +354,14 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
 # @par EAGLE_START
 # @param category DynlibApp
 # @param tag template
-# @param[in] param/libpath Library Path//String/readwrite/
+# @param[in] cparam/libpath Library Path//String/readwrite/False/
 #     \~English The location of the shared object/DLL that implements this application
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
 # @par EAGLE_END
 class DynlibApp(DynlibAppBase, BarrierAppDROP):
     """Loads a dynamic library into the current process and runs it"""
