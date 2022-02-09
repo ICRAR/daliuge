@@ -79,7 +79,7 @@ class CRCApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] param/appclass Application Class/dlg.apps.crc.CRCStreamApp/String/readonly/False/
+# @param[in] cparam/appclass Application Class/dlg.apps.crc.CRCStreamApp/String/readonly/False/
 #     \~English Application class
 # @param[out] port/data Data/String/
 # @par EAGLE_END
