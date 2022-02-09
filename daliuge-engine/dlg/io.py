@@ -88,7 +88,7 @@ class DataIO(object):
             raise ValueError("Writing operation attempted on write-only DataIO object")
         return self._write(data, **kwargs)
 
-    def read(self, count, **kwargs):
+    def read(self, count: int, **kwargs):
         """
         Reads `count` bytes from the underlying storage.
         """
@@ -108,12 +108,12 @@ class DataIO(object):
         self._close()
         self._mode = None
 
-    def size(self, **kwargs):
+    def size(self, **kwargs) -> int:
         """
-        Returns the current total size of the underlying stored object. returns -1 if the
-        storage class does not support this.
+        Returns the current total size of the underlying stored object. If the
+        storage class does not support this it is supposed to return -1.
         """
-        return self._size()
+        return self._size(**kwargs)
 
     def isOpened(self):
         return self._mode is not None
@@ -149,14 +149,14 @@ class DataIO(object):
 
     @abstractmethod
     def _write(self, data, **kwargs) -> int:
-        return 0
+        pass
 
     @abstractmethod
     def _close(self, **kwargs):
         pass
 
     @abstractmethod
-    def _size(self, **kwargs):
+    def _size(self, **kwargs) -> int:
         pass
 
 
