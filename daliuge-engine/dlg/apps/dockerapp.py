@@ -41,7 +41,9 @@ from ..exceptions import InvalidDropException
 logger = logging.getLogger(__name__)
 
 # DLG_ROOT = '/dlg_root'
-DLG_ROOT = ""
+DLG_ROOT = "" if "DLG_ROOT" not in os.environ else os.environ["DLG_ROOT"]
+# TODO: the following is commented out because it breaks the dask tests for some reason
+# os.environ["DLG_ROOT"] = DLG_ROOT # make sure the environ variable is set
 
 DockerPath = collections.namedtuple("DockerPath", "path")
 
@@ -216,6 +218,11 @@ class DockerApp(BarrierAppDROP):
         BarrierAppDROP.initialize(self, **kwargs)
 
         self._image = self._getArg(kwargs, "image", None)
+        self._cmdLineArgs = self._getArg(kwargs, "command_line_arguments", "")
+        self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
+        self._argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
+        self._paramValueSeparator = self._getArg(kwargs, \
+            "paramValueSeparator", " ")
         if not self._image:
             raise InvalidDropException(
                 self, "No docker image specified, cannot create DockerApp"
@@ -238,13 +245,14 @@ class DockerApp(BarrierAppDROP):
             # raise InvalidDropException(
             #     self, "No command specified, cannot create DockerApp")
         else:
-            self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
 
             # construct the actual command line from all application parameters
-            argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
             argumentString = droputils.serialize_applicationArgs(self._applicationArgs, \
-                argumentPrefix)
-            self._command = f"{self._command} {argumentString}"
+                self._argumentPrefix)
+            # complete command including all additional parameters and optional redirects
+            cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
+            cmd = cmd.strip()
+            self._command = cmd
 
         # The user used to run the process in the docker container
         # By default docker containers run as root, but we don't want to run
@@ -278,9 +286,15 @@ class DockerApp(BarrierAppDROP):
         # on the host system. They are given either as a list or as a
         # comma-separated string
         self._additionalBindings = {}
-        bindings = self._getArg(kwargs, "additionalBindings", [])
+        bindings = []
+        if (len(DLG_ROOT) > 0): bindings = [f"{DLG_ROOT}:{DLG_ROOT}"]
+        bindings = [f"{DLG_ROOT}:{DLG_ROOT}"] # this is the default binding
+        bindings += self._getArg(kwargs, "additionalBindings", [])
         bindings = bindings.split(",") if isinstance(bindings, str) else bindings
         for binding in bindings:
+            if len(binding) == 0:
+                continue
+            logger.debug(f"Volume binding found: {binding}")
             if binding.find(":") == -1:
                 host_path = container_path = binding
             else:
@@ -394,8 +408,10 @@ class DockerApp(BarrierAppDROP):
                 for host_path, container_path in self._additionalBindings.items()
             ]
         binds = list(set(binds))  # make this a unique list else docker complains
-        if binds == [":"]:
-            binds = []
+        try: 
+            binds.remove(':')
+        except:
+            pass
         logger.debug("Volume bindings: %r", binds)
 
         portMappings = {}
