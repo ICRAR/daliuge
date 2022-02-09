@@ -147,92 +147,142 @@ def find_field_by_name(fields, name):
     return None
 
 
-def add_required_fields_for_category(fields, category):
+def add_required_fields_for_category(text, fields, category):
     if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp", "Mpi", "Docker"]:
-        if find_field_by_name(fields, "execution_time") is None:
-            fields.append(
-                create_field(
-                    "execution_time",
-                    "Execution time",
-                    5,
-                    "Estimated execution time",
-                    "readwrite",
-                    "Float",
-                    False,
-                )
-            )
-        if find_field_by_name(fields, "num_cpus") is None:
-            fields.append(
-                create_field(
-                    "num_cpus",
-                    "Num CPUs",
-                    1,
-                    "Number of cores used",
-                    "readwrite",
-                    "Integer",
-                    False,
-                )
-            )
+        add_field_if_missing(
+            text,
+            fields,
+            "execution_time",
+            "Execution time",
+            5,
+            "Estimated execution time",
+            "readwrite",
+            "Float",
+            False,
+        )
+        add_field_if_missing(
+            text,
+            fields,
+            "num_cpus",
+            "Num CPUs",
+            1,
+            "Number of cores used",
+            "readwrite",
+            "Integer",
+            False,
+        )
 
     if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp", "Docker"]:
-        if find_field_by_name(fields, "group_start") is None:
-            fields.append(
-                create_field(
-                    "group_start",
-                    "Group start",
-                    "false",
-                    "Component is start of a group",
-                    "readwrite",
-                    "Boolean",
-                    False,
-                )
-            )
+        add_field_if_missing(
+            text,
+            fields,
+            "group_start",
+            "Group start",
+            "false",
+            "Component is start of a group",
+            "readwrite",
+            "Boolean",
+            False,
+        )
+
     if category == "DynlibApp":
-        if find_field_by_name(fields, "libpath") is None:
-            fields.append(
-                create_field(
-                    "libpath", "Library path", "", "", "readwrite", "String", False
-                )
-            )
+        add_field_if_missing(text, fields, "libpath", "Library path", "", "", "readwrite", "String", False)
+
     if category in ["PythonApp", "Branch"]:
-        if find_field_by_name(fields, "appclass") is None:
-            fields.append(
-                create_field(
-                    "appclass",
-                    "Appclass",
-                    "dlg.apps.simple.SleepApp",
-                    "Application class",
-                    "readwrite",
-                    "String",
-                    False,
-                )
-            )
+        add_field_if_missing(
+            text,
+            fields,
+            "appclass",
+            "Appclass",
+            "dlg.apps.simple.SleepApp",
+            "Application class",
+            "readwrite",
+            "String",
+            False,
+        )
+
     if category in ["File", "Memory", "NGAS", "ParameterSet", "Plasma", "PlasmaFlight", "S3"]:
-        if find_field_by_name(fields, "data_volume") is None:
-            fields.append(
-                create_field(
-                    "data_volume",
-                    "Data volume",
-                    5,
-                    "Estimated size of the data contained in this node",
-                    "readwrite",
-                    "Integer",
-                    False,
-                )
-            )
+        add_field_if_missing(
+            text,
+            fields,
+            "data_volume",
+            "Data volume",
+            5,
+            "Estimated size of the data contained in this node",
+            "readwrite",
+            "Integer",
+            False,
+        )
+
     if category in ["File", "Memory", "NGAS", "ParameterSet", "Plasma", "PlasmaFlight", "S3", "Mpi"]:
-        if find_field_by_name(fields, "group_end") is None:
-            fields.append(
-                create_field(
-                    "group_end",
-                    "Group end",
-                    "false",
-                    "Component is end of a group",
-                    "readwrite",
-                    "Boolean",
-                    False,
-                )
-            )
+        add_field_if_missing(
+            text,
+            fields,
+            "group_end",
+            "Group end",
+            "false",
+            "Component is end of a group",
+            "readwrite",
+            "Boolean",
+            False,
+        )
+
+    if category in ["BashShellApp", "Mpi", "Docker", "Singularity"]:
+        add_field_if_missing(
+            text,
+            fields,
+            "input_redirection",
+            "Input redirection",
+            "",
+            "The command line argument that specifies the input into this application",
+            "readwrite",
+            "String",
+            False,
+        )
+        add_field_if_missing(
+            text,
+            fields,
+            "output_redirection",
+            "Output redirection",
+            "",
+            "The command line argument that specifies the output from this application",
+            "readwrite",
+            "String",
+            False,
+        )
+        add_field_if_missing(
+            text,
+            fields,
+            "command_line_arguments",
+            "Command line arguments",
+            "",
+            "Additional command line arguments to be added to the command line to be executed",
+            "readwrite",
+            "String",
+            False,
+        )
+        add_field_if_missing(
+            text,
+            fields,
+            "paramValueSeparator",
+            "Param Value Separator",
+            " ",
+            "Separator character(s) between parameters on the command line",
+            "readwrite",
+            "String",
+            False,
+        )
+        add_field_if_missing(
+            text,
+            fields,
+            "argumentPrefix",
+            "Argument prefix",
+            "--",
+            "Prefix to each keyed argument on the command line",
+            "readwrite",
+            "String",
+            False,
+        )
 
 
 def create_field(internal_name, name, value, description, access, type, precious):
@@ -246,6 +296,16 @@ def create_field(internal_name, name, value, description, access, type, precious
         "type": type,
         "precious": precious,
     }
+
+
+def add_field_if_missing(text, fields, internal_name, name, value, description, access, type, precious):
+    if find_field_by_name(fields, internal_name) is None:
+        logging.warning(
+            text + " component added missing " + internal_name + " cparam"
+        )
+        fields.append(
+            create_field(internal_name, name, value, description, access, type, precious)
+        )
 
 
 def parse_key(key):
@@ -268,7 +328,7 @@ def parse_key(key):
     return (object, internal_name)
 
 
-def parse_param_value(value):
+def parse_param_value(text, prefix, value):
     # parse the value as csv (delimited by '/')
     parts = []
     reader = csv.reader([value], delimiter="/", quotechar='"')
@@ -295,7 +355,9 @@ def parse_param_value(value):
         access = parts[3]
     else:
         logging.warning(
-            "param ("
+            text + " " +
+            prefix
+            + "param ("
             + external_name
             + ") has no 'access' descriptor, using default (readwrite) : "
             + value
@@ -304,7 +366,9 @@ def parse_param_value(value):
         precious = parts[4].lower() == "true"
     else:
         logging.warning(
-            "param ("
+            text + " " +
+            prefix
+            + "param ("
             + external_name
             + ") has no 'precious' descriptor, using default (False) : "
             + value
@@ -371,6 +435,7 @@ def create_palette_node_from_params(params):
     inputLocalPorts = []
     outputLocalPorts = []
     fields = []
+    applicationArgs = []
     gitrepo = os.environ.get("GIT_REPO")
     version = os.environ.get("PROJECT_VERSION")
 
@@ -388,15 +453,16 @@ def create_palette_node_from_params(params):
             text = value
         elif key == "description":
             description = value
-        elif key.startswith("param/"):
+        elif key.startswith("cparam/"):
             # parse the param key into name, type etc
             (param, internal_name) = parse_key(key)
-            (name, default_value, type, access, precious) = parse_param_value(value)
+            (name, default_value, type, access, precious) = parse_param_value(text, "c", value)
 
             # parse description
             if "\n" in value:
                 logging.info(
-                    "param description ("
+                    text + " " +
+                    "cparam description ("
                     + value
                     + ") contains a newline character, removing."
                 )
@@ -406,11 +472,51 @@ def create_palette_node_from_params(params):
             # check that access is a known value
             if access != "readonly" and access != "readwrite":
                 logging.warning(
-                    "param '" + name + "' has unknown 'access' descriptor: " + access
+                    text + " cparam '" + name + "' has unknown 'access' descriptor: " + access
                 )
 
             # add a field
             fields.append(
+                create_field(
+                    internal_name,
+                    name,
+                    default_value,
+                    param_description,
+                    access,
+                    type,
+                    precious,
+                )
+            )
+        elif key.startswith("aparam/") or key.startswith("param/"):
+            # parse the param key into name, type etc
+            (param, internal_name) = parse_key(key)
+            (name, default_value, type, access, precious) = parse_param_value(text, "a", value)
+
+            # warn if doc string is still using param instead of aparam
+            if key.startswith("param/"):
+                logging.warning(
+                    text + " param (" + internal_name + ") using obsolete 'param' description, defaulting to 'aparam'"
+                )
+
+            # parse description
+            if "\n" in value:
+                logging.info(
+                    text + " " +
+                    "aparam description ("
+                    + value
+                    + ") contains a newline character, removing."
+                )
+                value = value.replace("\n", " ")
+            param_description = parse_description(value).strip()
+
+            # check that access is a known value
+            if access != "readonly" and access != "readwrite":
+                logging.warning(
+                    text + " aparam '" + name + "' has unknown 'access' descriptor: " + access
+                )
+
+            # add a field
+            applicationArgs.append(
                 create_field(
                     internal_name,
                     name,
@@ -464,7 +570,7 @@ def create_palette_node_from_params(params):
                 logging.warning("Unknown port direction: " + direction)
 
     # add extra fields that must be included for the category
-    add_required_fields_for_category(fields, category)
+    add_required_fields_for_category(text, fields, category)
 
     # create and return the node
     # TODO: we can remove a bunch of these attributes (isData etc)
@@ -498,6 +604,7 @@ def create_palette_node_from_params(params):
         "inputAppFields": [],
         "outputAppFields": [],
         "fields": fields,
+        "applicationArgs": applicationArgs,
         "git_url": gitrepo,
         "sha": version,
     }
