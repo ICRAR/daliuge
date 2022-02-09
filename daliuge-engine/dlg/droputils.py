@@ -25,14 +25,17 @@ Utility methods and classes to be used when interacting with DROPs
 
 import collections
 import io
+import json
 import logging
+import pickle
 import re
 import threading
 import traceback
+from typing import IO, Any, AsyncIterable, BinaryIO, Dict, Iterable, overload
 import numpy as np
 
 from dlg.ddap_protocol import DROPStates
-from dlg.drop import AppDROP, AbstractDROP
+from dlg.drop import AppDROP, AbstractDROP, DataDROP, PathBasedDrop
 from dlg.io import IOForURL, OpenMode
 from dlg import common
 from dlg.common import DropType
@@ -129,7 +132,7 @@ def allDropContents(drop, bufsize=4096):
     return buf.getvalue()
 
 
-def copyDropContents(source, target, bufsize=4096):
+def copyDropContents(source: DataDROP, target: DataDROP, bufsize=4096):
     """
     Manually copies data from one DROP into another, in bufsize steps
     """
@@ -264,6 +267,37 @@ def listify(o):
     return [o]
 
 
+def save_pickle(drop: DataDROP, data: Any):
+    """Saves a python object in pkl format"""
+    pickle.dump(data, drop)
+
+
+def load_pickle(drop: DataDROP) -> Any:
+    """Loads a pkl formatted data object stored in a DataDROP.
+    Note: does not support streaming mode.
+    """
+    buf = io.BytesIO()
+    desc = drop.open()
+    while True:
+        data = drop.read(desc)
+        if not data:
+            break
+        buf.write(data)
+    drop.close(desc)
+    return pickle.loads(buf.getbuffer())
+
+
+async def save_pickle_iter(drop: DataDROP, data: Iterable[Any]):
+    for obj in data:
+        yield drop.write(obj)
+
+
+async def load_pickle_iter(drop: PathBasedDrop) -> AsyncIterable:
+    with open(drop.path, 'rb') as p:
+        while p.peek(1):
+            yield pickle.load(p)
+
+
 def save_numpy(drop, ndarray: np.ndarray, allow_pickle=False):
     """
     Saves a numpy ndarray to a drop in npy format
@@ -273,7 +307,7 @@ def save_numpy(drop, ndarray: np.ndarray, allow_pickle=False):
     drop.write(bio.getbuffer())
 
 
-def load_numpy(drop, allow_pickle=False) -> np.ndarray:
+def load_numpy(drop: DataDROP, allow_pickle=False) -> np.ndarray:
     """
     Loads a numpy ndarray from a drop in npy format
     """
@@ -282,6 +316,25 @@ def load_numpy(drop, allow_pickle=False) -> np.ndarray:
     res = np.load(io.BytesIO(dropio.buffer()), allow_pickle=allow_pickle)
     dropio.close()
     return res
+
+
+def save_jsonp(drop: PathBasedDrop, data: Dict[str, object]):
+    with open(drop.path, 'r') as f:
+        json.dump(data, f)
+
+
+def save_json(drop: DataDROP, data: Dict[str, object]):
+    # TODO: support BinaryIO or TextIO interface from DataIO?
+    json_string = json.dumps(data)
+    drop.write(json_string.encode('UTF-8'))
+
+
+def load_json(drop: DataDROP) -> dict:
+    dropio = drop.getIO()
+    dropio.open(OpenMode.OPEN_READ)
+    data = json.loads(dropio.buffer())
+    dropio.close()
+    return data
 
 class DROPFile(object):
     """
