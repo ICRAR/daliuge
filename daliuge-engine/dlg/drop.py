@@ -1519,15 +1519,15 @@ class DataDROP(AbstractDROP):
 # @par EAGLE_START
 # @param category File
 # @param tag template
-# @param[in] param/data_volume Data volume/5/Float/readwrite/
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False/
 #     \~English Estimated size of the data contained in this node
-# @param[in] param/group_end Group end/False/Boolean/readwrite/
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False/
 #     \~English Is this node the end of a group?
-# @param[in] param/check_filepath_exists Check file path exists/True/Boolean/readwrite/
+# @param[in] aparam/check_filepath_exists Check file path exists/True/Boolean/readwrite/False/
 #     \~English Perform a check to make sure the file path exists before proceeding with the application
-# @param[in] param/filepath File Path//String/readwrite/
+# @param[in] aparam/filepath File Path//String/readwrite/False/
 #     \~English Path to the file for this node
-# @param[in] param/dirname Directory name//String/readwrite/
+# @param[in] aparam/dirname Directory name//String/readwrite/False/
 #     \~English Path to the file for this node
 # @par EAGLE_END
 class FileDROP(DataDROP, PathBasedDrop):
@@ -1817,9 +1817,9 @@ class NgasDROP(DataDROP):
 # @par EAGLE_START
 # @param category Memory
 # @param tag template
-# @param[in] param/data_volume Data volume/5/Float/readwrite/
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False/
 #     \~English Estimated size of the data contained in this node
-# @param[in] param/group_end Group end/False/Boolean/readwrite/
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False/
 #     \~English Is this node the end of a group?
 # @par EAGLE_END
 class InMemoryDROP(DataDROP):
