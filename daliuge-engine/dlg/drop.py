@@ -43,7 +43,7 @@ import re
 import sys
 import inspect
 import binascii
-from typing import Union
+from typing import List, Union
 
 import numpy as np
 
@@ -858,9 +858,9 @@ class AbstractDROP(EventFirer):
 
 class PathBasedDrop(object):
     """Base class for data drops that handle paths (i.e., file and directory drops)"""
+    _path: str = None
 
     def initialize(self, **kwargs):
-        self._path = None
         PathBasedDrop.initialize(self, **kwargs)
 
     def get_dir(self, dirname):
@@ -886,7 +886,7 @@ class PathBasedDrop(object):
         return the_dir
 
     @property
-    def path(self):
+    def path(self) -> str:
         return self._path
 
 
@@ -1610,7 +1610,7 @@ class RDBMSDrop(DataDROP):
     def _cursor(self, conn):
         return contextlib.closing(conn.cursor())
 
-    def insert(self, vals):
+    def insert(self, vals: dict):
         """
         Inserts the values contained in the ``vals`` dictionary into the
         underlying table. The keys of ``vals`` are used as the column names.
@@ -2003,14 +2003,14 @@ class AppDROP(ContainerDROP):
                 inputDrop.addConsumer(self, False)
 
     @property
-    def inputs(self):
+    def inputs(self) -> List[DataDROP]:
         """
         The list of inputs set into this AppDROP
         """
         return list(self._inputs.values())
 
     @track_current_drop
-    def addOutput(self, outputDrop, back=True):
+    def addOutput(self, outputDrop: DataDROP, back=True):
         if outputDrop is self:
             raise InvalidRelationshipException(
                 DROPRel(outputDrop, DROPLinkType.OUTPUT, self),
@@ -2028,7 +2028,7 @@ class AppDROP(ContainerDROP):
             self.subscribe(outputDrop, "producerFinished")
 
     @property
-    def outputs(self):
+    def outputs(self) -> List[DataDROP]:
         """
         The list of outputs set into this AppDROP
         """
@@ -2042,7 +2042,7 @@ class AppDROP(ContainerDROP):
                 streamingInputDrop.addStreamingConsumer(self, False)
 
     @property
-    def streamingInputs(self):
+    def streamingInputs(self) -> List[DataDROP]:
         """
         The list of streaming inputs set into this AppDROP
         """
