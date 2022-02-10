@@ -88,7 +88,7 @@ class EnvironmentVarDROP(AbstractDROP, KeyValueDROP):
         If not present, attempts to fetch variable from environment
         """
         value = self._variables.get(key)
-        if not value:
+        if value is None:
             value = os.environ.get(key)
         return value
 
@@ -106,11 +106,3 @@ class EnvironmentVarDROP(AbstractDROP, KeyValueDROP):
     def dataURL(self):
         hostname = os.uname()[1]
         return f"config://{hostname}/{os.getpid()}/{id(self._variables)}"
-
-
-def env_var_drop_pg_repr():
-    """
-    Used when injecting a global Environment Variable Store
-    """
-    return {'oid': 'ENV', 'category': Categories.ENVIRONMENTVARS, 'type': 'plain', 'nm': 'ENV',
-            'storage': 'EnvironmentVars', 'dw': 1}
