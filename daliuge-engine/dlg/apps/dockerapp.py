@@ -26,6 +26,7 @@ Module containing docker-related applications and functions
 import collections
 import logging
 import os
+import pwd
 import threading
 import time
 from overrides import overrides
@@ -270,19 +271,16 @@ class DockerApp(BarrierAppDROP):
             cmd = cmd.strip()
             self._command = cmd
 
-        # The user used to run the process in the docker container
-        # By default docker containers run as root, but we don't want to run
-        # a process using a different user because otherwise anything that that
-        # process writes to the filesystem
-        # TODO: User switching should be changed to be transparent
-        self._user = self._getArg(kwargs, "user", None)
-
-        # In some cases we want to make sure the command in the container runs
-        # as a certain user, so we wrap up the command line in a small script
-        # that will create the user if missing and switch to it
-        self._ensureUserAndSwitch = self._getArg(
-            kwargs, "ensureUserAndSwitch", self._user is None
-        )
+        # The user used to run the process in the docker container is now always the user
+        # who originally started the DALiuGE process as well. The information is passed through
+        # from the host to the engine container (if run as docker) and then further to any
+        # container running as a component.
+        
+        pw = pwd.getpwuid(os.getuid())
+        self._user = pw.pw_name # use current user by default
+        self._uid = pw.pw_uid
+        self._gid = pw.pw_gid
+        logger.debug(f"User for docker container: {self._user} {self._uid}:{self._gid}")
 
         # By default containers are removed from the filesystem, but people
         # might want to preserve them.
@@ -304,7 +302,10 @@ class DockerApp(BarrierAppDROP):
         self._additionalBindings = {}
         bindings = []
         if (len(DLG_ROOT) > 0): bindings = [f"{DLG_ROOT}:{DLG_ROOT}"]
-        bindings = [f"{DLG_ROOT}:{DLG_ROOT}"] # this is the default binding
+        bindings = [f"{DLG_ROOT}:{DLG_ROOT}",
+                    f"{DLG_ROOT}/workspace/settings/passwd:/etc/passwd",
+                    f"{DLG_ROOT}/workspace/settings/group:/etc/group"
+                    ] # these are the default binding
         bindings += self._getArg(kwargs, "additionalBindings", [])
         bindings = bindings.split(",") if isinstance(bindings, str) else bindings
         for binding in bindings:
@@ -453,32 +454,9 @@ class DockerApp(BarrierAppDROP):
             cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
             logger.debug("Command after IP replacement is: %s", cmd)
 
-        # If a user has been given, we run the container as that user. It is
-        # useful to make sure that the USER environment variable is set in those
-        # cases (e.g., casapy requires this to correctly operate)
-        user = self._user
         env = {}
-        if user is not None:
-            env = {"USER": user}
-
-        if self._ensureUserAndSwitch is True:
-            # Append commands that will make sure a user is present with the
-            # same UID of the current user, and that the command that was
-            # supplied for this container runs as that user.
-            # Also make sure that the output will belong to that user
-            uid = os.getuid()
-            createUserAndGo = "id -u {0} &> /dev/null || adduser --uid {0} r; ".format(
-                uid
-            )
-            for dirname in set(
-                [os.path.dirname(x.path) for x in dockerOutputs.values()]
-            ):
-                createUserAndGo += 'chown -R {0}.{0} "{1}"; '.format(uid, dirname)
-            createUserAndGo += "su -l $(getent passwd {0} | cut -f1 -d:) -c /bin/bash -c 'cd {1}; {2}'".format(
-                uid, self.workdir, utils.escapeQuotes(cmd, doubleQuotes=False)
-            )
-
-            cmd = createUserAndGo
+        if self._user is not None:
+            env = {"USER": self._user}
 
         # Wrap everything inside bash
         if len(cmd) > 0:
@@ -488,14 +466,15 @@ class DockerApp(BarrierAppDROP):
             logger.debug("No command specified, executing container without!")
 
         c = DockerApp._get_client()
-
+        
+        logger.debug(f"Final user for container: {self._user}:{self._uid}")
         # Create container
         self.container = c.containers.create(
             self._image,
             cmd,
             volumes=binds,
             ports=portMappings,
-            user=user,
+            user=f"{self._uid}:{self._gid}",
             environment=env,
             working_dir=self.workdir,
             init=True,
