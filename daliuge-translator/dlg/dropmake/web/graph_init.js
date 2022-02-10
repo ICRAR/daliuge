@@ -50,6 +50,7 @@ function graphInit(type) {
             var nodeCatgShape = { 'Data': 'path://M 300 100 L 1000 100 L 800 200 L 100 200 z', 'Component': 'rect' }
             var nodeCount = 0
             var renderer = 'canvas'
+            var fontSize = 10
             data.nodeDataArray.forEach(element => {
                 nodeCount++
             })
@@ -69,6 +70,9 @@ function graphInit(type) {
             } else if (nodeCount > 150) {
                 $(".graphChanger").hide();
             }
+            if (nodeCount > 80) {
+                fontSize = 9
+            }
             console.log(type)
             data.nodeDataArray.forEach(element => {
                 newElement = {};
@@ -81,7 +85,7 @@ function graphInit(type) {
                     if (type === "sankey") {
                         newElement.label = {
                             'rotate': 45,
-                            'fontSize': 10,
+                            'fontSize': fontSize,
                             'offset': [-20, -20],
                             'fontWeight': 400,
                             'color': element.group.toString(),
@@ -91,9 +95,8 @@ function graphInit(type) {
                         };
                     } else {
                         newElement.label = {
-                            'fontSize': 10,
-                            'fontWeight': 900,
-                            'fontStyle': 'bold',
+                            'fontSize': fontSize,
+                            'fontWeight': 400,
                             'color': element.group,
                             "position": "inside",
                             // 'textBorderColor':'black',
