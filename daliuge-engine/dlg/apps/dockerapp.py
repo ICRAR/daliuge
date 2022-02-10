@@ -278,9 +278,9 @@ class DockerApp(BarrierAppDROP):
         
         pw = pwd.getpwuid(os.getuid())
         self._user = pw.pw_name # use current user by default
-        self._uid = pw.pw_uid
-        self._gid = pw.pw_gid
-        logger.debug(f"User for docker container: {self._user} {self._uid}:{self._gid}")
+        self._userid = pw.pw_uid
+        self._groupid = pw.pw_gid
+        logger.debug(f"User for docker container: {self._user} {self._userid}:{self._groupid}")
 
         # By default containers are removed from the filesystem, but people
         # might want to preserve them.
@@ -469,14 +469,14 @@ class DockerApp(BarrierAppDROP):
 
         c = DockerApp._get_client()
         
-        logger.debug(f"Final user for container: {self._user}:{self._uid}")
+        logger.debug(f"Final user for container: {self._user}:{self._userid}")
         # Create container
         self.container = c.containers.create(
             self._image,
             cmd,
             volumes=binds,
             ports=portMappings,
-            user=f"{self._uid}:{self._gid}",
+            user=f"{self._userid}:{self._groupid}",
             environment=env,
             working_dir=self.workdir,
             init=True,
