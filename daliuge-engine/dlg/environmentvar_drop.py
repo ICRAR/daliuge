@@ -26,7 +26,7 @@ import json
 
 from dlg.drop import AbstractDROP, DEFAULT_INTERNAL_PARAMETERS
 from dlg.io import MemoryIO
-
+from dlg.common import Categories
 
 class KeyValueDROP:
 
@@ -82,7 +82,14 @@ class EnvironmentVarDROP(AbstractDROP, KeyValueDROP):
         return MemoryIO(io.BytesIO(json.dumps(self._variables).encode('utf-8')))
 
     def get(self, key):
-        return self._variables.get(key)
+        """
+        Fetches key from internal store if present.
+        If not present, attempts to fetch variable from environment
+        """
+        value = self._variables.get(key)
+        if not value:
+            value = os.environ.get(key)
+        return value
 
     def get_multiple(self, keys: list):
         return_vars = []
@@ -98,3 +105,11 @@ class EnvironmentVarDROP(AbstractDROP, KeyValueDROP):
     def dataURL(self):
         hostname = os.uname()[1]
         return f"config://{hostname}/{os.getpid()}/{id(self._variables)}"
+
+
+def env_var_drop_pg_repr():
+    """
+    Used when injecting a global Environment Variable Store
+    """
+    return {'oid': 'ENV', 'category': Categories.ENVIRONMENTVARS, 'type': 'plain', 'nm': 'ENV',
+            'storage': 'Memory'}
