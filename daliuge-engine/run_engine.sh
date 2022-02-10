@@ -14,7 +14,7 @@ common_prep () {
     mkdir -p ${DLG_ROOT}/testdata
     mkdir -p ${DLG_ROOT}/code
     # get current user and group id and prepare passwd and group files
-    DOCKER_GID=`python docker/prepare_user.py`
+    DOCKER_GID=`python3 docker/prepare_user.py`
     DOCKER_OPTS=${DOCKER_OPTS}" --group-add ${DOCKER_GID}"
     DOCKER_OPTS=${DOCKER_OPTS}" -v ${DLG_ROOT}/workspace/settings/passwd:/etc/passwd"
     DOCKER_OPTS=${DOCKER_OPTS}" -v ${DLG_ROOT}/workspace/settings/group:/etc/group"
@@ -55,6 +55,16 @@ case "$1" in
         CONTAINER_NM="icrar/daliuge-engine:${VCS_TAG}-casa"
         echo "docker run -td ${DOCKER_OPTS}  ${CONTAINER_NM}"
         docker run -td ${DOCKER_OPTS}  ${CONTAINER_NM}
+        sleep 3
+        ./start_local_managers.sh
+        exit 0;;
+    "slim")
+        export DLG_ROOT="/tmp/dlg"
+        export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
+        common_prep
+        echo "Running Engine development version in background..."
+        echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine.slim"
+        docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine.slim
         sleep 3
         ./start_local_managers.sh
         exit 0;;
