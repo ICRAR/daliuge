@@ -1,3 +1,4 @@
+#!/bin/bash
 DOCKER_OPTS="\
 --shm-size=1g --ipc=shareable \
 --rm \
@@ -8,8 +9,7 @@ DOCKER_OPTS="\
 -p 8002:8002 -p 9000:9000 \
 --user $(id -u):$(id -g) \
 " 
-common_prep ()
-{
+common_prep () {
     mkdir -p ${DLG_ROOT}/workspace
     mkdir -p ${DLG_ROOT}/testdata
     mkdir -p ${DLG_ROOT}/code
@@ -30,7 +30,7 @@ case "$1" in
             echo "Please either create and grant access to $USER or build and run the development version."
         else
             VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
-            common_prep()
+            common_prep
             echo "Running Engine deployment version in background..."
             echo "docker run -td "${DOCKER_OPTS}"  icrar/daliuge-engine:${VCS_TAG}"
             docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
