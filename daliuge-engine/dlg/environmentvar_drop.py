@@ -24,7 +24,8 @@ import io
 import os
 import json
 
-from dlg.drop import AbstractDROP, DEFAULT_INTERNAL_PARAMETERS
+from dlg.ddap_protocol import AppDROPStates
+from dlg.drop import AbstractDROP, DEFAULT_INTERNAL_PARAMETERS, AppDROP, DataDROP
 from dlg.io import MemoryIO
 from dlg.common import Categories
 
@@ -112,4 +113,4 @@ def env_var_drop_pg_repr():
     Used when injecting a global Environment Variable Store
     """
     return {'oid': 'ENV', 'category': Categories.ENVIRONMENTVARS, 'type': 'plain', 'nm': 'ENV',
-            'storage': 'Memory'}
+            'storage': 'EnvironmentVars', 'dw': 1}
