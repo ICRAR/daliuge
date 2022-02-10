@@ -221,6 +221,8 @@ class AbstractDROP(EventFirer):
         self._producers_uids = set()
         self._producers = ListAsDict(self._producers_uids)
 
+        self._env_var_stores = set()
+
         # Matcher used to validate environment_variable_syntax
         self._env_var_matcher = re.compile(r"\$[A-z|\d]+\..+")
         self._dlg_var_matcher = re.compile(r"\$DLG_.+")
@@ -628,9 +630,9 @@ class AbstractDROP(EventFirer):
         key_edit = key[1:]
         env_var_ref, env_var_key = key_edit.split('.')[0], '.'.join(key_edit.split('.')[1:])
         env_var_drop = None
-        for producer in self.producers:
-            if producer.name == env_var_ref:
-                env_var_drop = producer
+        for var_store in self._env_var_stores:
+            if var_store.name == env_var_ref:
+                env_var_drop = var_store
         if env_var_drop is not None:  # TODO: Check for KeyValueDROP interface support
             return env_var_drop.get(env_var_key)
         else:
@@ -997,6 +999,10 @@ class AbstractDROP(EventFirer):
 
         # Don't add twice
         puid = producer.uid
+        if puid == 'ENV':
+            self._env_var_stores.add(producer)
+            return
+
         if puid in self._producers_uids:
             return
 
@@ -1867,7 +1873,6 @@ class SharedMemoryDROP(DataDROP):
         self._buf = io.BytesIO(*args)
 
     def getIO(self):
-        print(sys.version_info)
         if sys.version_info >= (3, 8):
             if hasattr(self, '_sessID'):
                 return SharedMemoryIO(self.oid, self._sessID)
