@@ -2466,7 +2466,12 @@ class InputFiredAppDROP(AppDROP):
     added to this application once the graph is being executed. The special
     value of -1 means that all inputs are considered as effective, in which case
     this class acts as a BarrierAppDROP, effectively blocking until all its
-    inputs have moved to the COMPLETED state.
+    inputs have moved to the COMPLETED, SKIPPED or ERROR state. Setting this
+    value to anything other than -1 or the number of inputs, results in
+    late arriving inputs to be ignored, even if they would successfully finish.
+    This requires careful implementation of the upstream and downstream apps to
+    deal with this situation. It is only really useful to control a combination
+    of maximum allowed execution time and acceptable number of completed inputs.
 
     An input error threshold controls the behavior of the application given an
     error in one or more of its inputs (i.e., a DROP moving to the ERROR state).
@@ -2552,13 +2557,13 @@ class InputFiredAppDROP(AppDROP):
 
             # calculate the number of errors that have already occurred
             percent_failed = math.floor((error_len / float(n_eff_inputs)) * 100)
-
-            logger.debug(
-                "Error on inputs for %r: %d/%d",
-                self,
-                percent_failed,
-                self.input_error_threshold,
-            )
+            if percent_failed > 0:
+                logger.debug(
+                    "Error rate on inputs for %r: %d/%d",
+                    self,
+                    percent_failed,
+                    self.input_error_threshold,
+                )
 
             # if we hit the input error threshold then ERROR the drop and move on
             if percent_failed > self.input_error_threshold:
