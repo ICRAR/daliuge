@@ -59,6 +59,12 @@ logger = logging.getLogger(__name__)
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
+#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
+#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] port/plasma_ms_input Plasma MS Input/Measurement Set/
 #     \~English Plasma MS input
 # @param[out] port/output_file Output File/File/
@@ -153,6 +159,12 @@ class MSStreamingPlasmaConsumer(AppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
+#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
+#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] port/input_file Input File/File/
 #     \~English MS input file
 # @param[out] port/plasma_ms_output Plasma MS Output/Measurement Set/
@@ -226,6 +238,12 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
+#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
+#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] port/plasma_ms_input Plasma MS Input/Measurement Set/
 #     \~English Plasma MS store input
 # @param[out] port/output_ms Output MS/Measurement Set/
@@ -295,6 +313,12 @@ class MSPlasmaReader(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
+#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
+#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] port/input_ms Input MS/Measurement Set/
 #     \~English Input MS file
 # @param[out] port/plasma_ms_output Plasma MS Output/Measurement Set/
