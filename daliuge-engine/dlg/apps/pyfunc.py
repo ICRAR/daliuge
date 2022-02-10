@@ -116,6 +116,12 @@ def import_using_code(code):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
+#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
+#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] aparam/func_name Function Name//String/readwrite/False/
 #     \~English Python fuction name
 # @param[in] aparam/func_code Function Code//String/readwrite/False/
