@@ -111,6 +111,8 @@ class SleepApp(BarrierAppDROP):
 # @param tag daliuge
 # @param[in] cparam/appclass Application Class/dlg.apps.simple.CopyApp/String/readonly/False/
 #     \~English Application class
+# @param[in] param/bufsize buffer size/65536/Integer/readwrite/
+#     \~English Application class
 # @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
 #     \~English Estimated execution time
 # @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
@@ -133,6 +135,8 @@ class CopyApp(BarrierAppDROP):
         [dlg_streaming_input("binary/*")],
     )
 
+    _bufsize = dlg_int_param("bufsize", 65536)
+
     def run(self):
         self.copyAll()
 
@@ -146,7 +150,7 @@ class CopyApp(BarrierAppDROP):
                 self.copyRecursive(child)
         else:
             for outputDrop in self.outputs:
-                droputils.copyDropContents(inputDrop, outputDrop)
+                droputils.copyDropContents(inputDrop, outputDrop, bufsize=self._bufsize)
 
 
 ##

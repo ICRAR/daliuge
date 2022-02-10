@@ -42,7 +42,8 @@ logger = logging.getLogger(__name__)
 
 # DLG_ROOT = '/dlg_root'
 DLG_ROOT = "" if "DLG_ROOT" not in os.environ else os.environ["DLG_ROOT"]
-#os.environ["DLG_ROOT"] = DLG_ROOT # make sure the environ variable is set
+# TODO: the following is commented out because it breaks the dask tests for some reason
+# os.environ["DLG_ROOT"] = DLG_ROOT # make sure the environ variable is set
 
 DockerPath = collections.namedtuple("DockerPath", "path")
 
