@@ -303,9 +303,11 @@ class DockerApp(BarrierAppDROP):
         bindings = []
         if (len(DLG_ROOT) > 0): bindings = [f"{DLG_ROOT}:{DLG_ROOT}"]
         bindings = [f"{DLG_ROOT}:{DLG_ROOT}",
+                    ] # these are the default binding
+        if os.path.exists(f"{DLG_ROOT}/workspace/settings/passwd:/etc/passwd") and\
+            os.path.exists(f"{DLG_ROOT}/workspace/settings/group:/etc/group"):
                     f"{DLG_ROOT}/workspace/settings/passwd:/etc/passwd",
                     f"{DLG_ROOT}/workspace/settings/group:/etc/group"
-                    ] # these are the default binding
         bindings += self._getArg(kwargs, "additionalBindings", [])
         bindings = bindings.split(",") if isinstance(bindings, str) else bindings
         for binding in bindings:
