@@ -42,7 +42,7 @@ gr = grp.getgrgid(pw.pw_gid)
 dgr = grp.getgrnam('docker')
 with open(os.path.join(workdir, "passwd"), "wt") as file:
     file.write(open(os.path.join(template_dir, "passwd.template"), "rt").read())
-    file.write(f"{pw.pw_name}:x:{pw.pw_uid}:{pw.pw_gid}:{pw.pw_gecos}:{os.environ['DLG_ROOT']}:/bin/bash")
+    file.write(f"{pw.pw_name}:x:{pw.pw_uid}:{pw.pw_gid}:{pw.pw_gecos}:{os.environ['DLG_ROOT']}:/bin/bash\n")
 with open(os.path.join(workdir, "group"), "wt") as file:
     file.write(open(os.path.join(template_dir, "group.template"), "rt").read())
     file.write(f"{gr.gr_name}:x:{gr.gr_gid}:\n")
