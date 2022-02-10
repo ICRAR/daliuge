@@ -61,6 +61,7 @@ from .dm_utils import (
     LG_VER_OLD,
     LG_VER_EAGLE_CONVERTED,
 )
+from dlg.environmentvar_drop import env_var_drop_pg_repr
 
 logger = logging.getLogger(__name__)
 
@@ -2690,6 +2691,19 @@ def unroll(lg, oid_prefix=None, zerorun=False, app=None):
     start = time.time()
     lg = LG(lg, ssid=oid_prefix)
     drop_list = lg.unroll_to_tpl()
+
+    env_var_drop = env_var_drop_pg_repr()
+    env_var_drop['consumers'] = []
+    for drop in drop_list:
+        print(drop)
+        env_var_drop['consumers'].append(drop['oid'])
+        if drop.get('producers'):
+            drop['producers'].append('ENV')
+        else:
+            drop['producers'] = ['ENV']
+
+    drop_list.append(env_var_drop)
+
     logger.info(
         "Logical Graph unroll completed in %.3f [s]. # of Drops: %d",
         (time.time() - start),
