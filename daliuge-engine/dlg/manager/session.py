@@ -159,6 +159,8 @@ class Session(object):
             logging.root.addHandler(self.file_handler)
         except AttributeError as e:
             print(e)
+        except FileNotFoundError as f:
+            print(f)
 
     @property
     def sessionId(self):
