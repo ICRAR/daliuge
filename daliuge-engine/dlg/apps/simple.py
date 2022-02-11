@@ -115,7 +115,7 @@ class SleepApp(BarrierAppDROP):
 # @param tag daliuge
 # @param[in] cparam/appclass Application Class/dlg.apps.simple.CopyApp/String/readonly/False/
 #     \~English Application class
-# @param[in] param/bufsize buffer size/65536/Integer/readwrite/
+# @param[in] cparam/bufsize buffer size/65536/Integer/readwrite/False/
 #     \~English Application class
 # @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
 #     \~English Estimated execution time
@@ -381,7 +381,9 @@ class AverageArraysApp(BarrierAppDROP):
 ##
 # @brief GenericNpyGatherApp
 # @details A BarrierAppDrop that combines one or more inputs using cummulative operations.
+# @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param[in] cparam/appclass Application Class/dlg.apps.simple.GenericNpyGatherApp/String/readonly/False/
 #     \~English Application class
 # @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
