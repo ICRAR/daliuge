@@ -525,7 +525,10 @@ class Session(object):
 
     def destroy(self):
         self.file_handler.close()
-        logging.root.removeHandler(self.file_handler)
+        try:
+            logging.root.removeHandler(self.file_handler)
+        except AttributeError as e:
+            print(e)
 
     __del__ = destroy
 
