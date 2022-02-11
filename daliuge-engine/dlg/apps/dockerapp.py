@@ -354,8 +354,8 @@ class DockerApp(BarrierAppDROP):
         # If none is provided use the session directory
         inspection = c.api.inspect_image(self._image)
         logger.debug("Docker Image inspection: %r", inspection)
-        # self.workdir = inspection.get("ContainerConfig", {}).get("WorkingDir", None)
-        self.workdir = None
+        self.workdir = inspection.get("ContainerConfig", {}).get("WorkingDir", None)
+        # self.workdir = None
         if not self.workdir:
             default_workingdir = os.path.join(utils.getDlgWorkDir(), self._session_id)
             self.workdir = self._getArg(kwargs, "workingDir", default_workingdir)
