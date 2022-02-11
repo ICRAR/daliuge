@@ -29,6 +29,7 @@ import os
 import pwd
 import threading
 import time
+import json
 from overrides import overrides
 
 from configobj import ConfigObj
@@ -239,6 +240,7 @@ class DockerApp(BarrierAppDROP):
         BarrierAppDROP.initialize(self, **kwargs)
 
         self._image = self._getArg(kwargs, "image", None)
+        self._env = self._getArg(kwargs, "env", None)
         self._cmdLineArgs = self._getArg(kwargs, "command_line_arguments", "")
         self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
         self._argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
@@ -460,9 +462,30 @@ class DockerApp(BarrierAppDROP):
             cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
             logger.debug("Command after IP replacement is: %s", cmd)
 
+        # deal with environment variables
         env = {}
         if self._user is not None:
-            env = {"USER": self._user}
+            env = {
+                "USER": self._user,
+                "DLG_ROOT": DLG_ROOT}
+        if self._env is not None:
+            logger.debug(f"Found environment variable setting: {self._env}")
+            if self._env.lower() == "all": # pass on all environment variables from host
+                env.update(os.environ)
+            elif self._env[0] in ["{", "["]:
+                try:
+                    addEnv = json.loads(self._env)
+                except:
+                   logger.warning("Ignoring provided environment variables: Format wrong? Check documentation")
+                if isinstance(addEnv, dict): # if it is a dict populate directly
+                    env.update(addEnv)
+                elif isinstance(addEnv, list): # if it is a list populate from host environment
+                    for e in addEnv: 
+                        env.update(os.environ[e])
+            else:
+                logger.warning("Ignoring provided environment variables: Format wrong! Check documentation")
+        logger.debug(f"Adding environment variables: {env}")
+
 
         # Wrap everything inside bash
         if len(cmd) > 0:
@@ -497,9 +520,6 @@ class DockerApp(BarrierAppDROP):
         self.container.start()
         logger.info("Started container %s", cId)
 
-        # Capture output
-        stdout = self.container.logs(stream=False, stdout=True, stderr=False)
-        stderr = self.container.logs(stream=False, stdout=False, stderr=True)
 
         # Figure out the container's IP and save it
         # Setting self.containerIp will trigger an event being sent to the
@@ -518,6 +538,13 @@ class DockerApp(BarrierAppDROP):
             self._exitCode = x
 
         end = time.time()
+
+        # Capture output
+        stdout = self.container.logs(stream=False, stdout=True, stderr=False)
+        stderr = self.container.logs(stream=False, stdout=False, stderr=True)
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode()
+            stderr = stderr.decode()
         logger.info(
             "Container %s finished in %.2f [s] with exit code %d",
             cId,
