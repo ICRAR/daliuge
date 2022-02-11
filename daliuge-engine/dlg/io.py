@@ -181,7 +181,8 @@ class NullIO(DataIO):
     def _close(self, **kwargs):
         pass
 
-    def _size(self, **kwargs):
+    @overrides
+    def _size(self, **kwargs) -> int:
         """
         Size is always 0 for this storage class
         """
@@ -211,7 +212,8 @@ class ErrorIO(DataIO):
     def _close(self, **kwargs):
         raise NotImplementedError()
 
-    def _size(self, **kwargs):
+    @overrides
+    def _size(self, **kwargs) -> int:
         raise NotImplementedError()
 
     def exists(self):
@@ -254,7 +256,8 @@ class MemoryIO(DataIO):
         # If we're writing we don't close the descriptor because it's our
         # self._buf, which won't be readable afterwards
 
-    def _size(self, **kwargs):
+    @overrides
+    def _size(self, **kwargs) -> int:
         """
         Return actual size of user data rather than the whole Python object
         """
@@ -322,7 +325,8 @@ class SharedMemoryIO(DataIO):
         self._buf.close()
         self._buf = None
 
-    def _size(self, **kwargs):
+    @overrides
+    def _size(self, **kwargs) -> int:
         return self._buf.size
 
     def exists(self):
@@ -360,7 +364,8 @@ class FileIO(DataIO):
     def _close(self, **kwargs):
         self._desc.close()
 
-    def _size(self, **kwargs):
+    @overrides
+    def _size(self, **kwargs) -> int:
         return os.path.getsize(self._fnm)
 
     def getFileName(self):
@@ -484,7 +489,8 @@ class NgasIO(DataIO):
         )
         return fs
 
-    def _size(self, **kwargs):
+    @overrides
+    def _size(self, **kwargs) -> int:
         return self._writtenDataSize
 
     def delete(self):
@@ -653,7 +659,8 @@ class PlasmaIO(DataIO):
         self._object_id = object_id
         self._reader = None
         self._writer = None
-        self._expected_size = expected_size
+        # treat sizes <1 as None
+        self._expected_size = expected_size if expected_size and expected_size > 0 else None
         self._buffer_size = 0
         self._use_staging = use_staging
 
@@ -688,7 +695,7 @@ class PlasmaIO(DataIO):
         If use_staging is True, any number of writes may occur with a small performance penalty.
         """
         # NOTE: data must be a collection of bytes for len to represent the buffer bytesize
-        assert isinstance(data, memoryview | bytes | bytearray | pyarrow.Buffer)
+        assert isinstance(data, Union[memoryview, bytes, bytearray, pyarrow.Buffer].__args__)
         databytes = data.nbytes if isinstance(data, memoryview) else len(data)
 
         if self._use_staging:
@@ -710,7 +717,7 @@ class PlasmaIO(DataIO):
         return len(data)
 
     @overrides
-    def _size(self, **kwargs):
+    def _size(self, **kwargs) -> int:
         return self._buffer_size
 
     def exists(self):
@@ -740,15 +747,15 @@ class PlasmaFlightIO(DataIO):
         use_staging = False
     ):
         super().__init__()
-        assert expected_size is None or expected_size > 0
         self._object_id = object_id
         self._plasma_path = plasma_path
         self._flight_path = flight_path
         self._reader = None
         self._writer = None
-        self._expected_size = expected_size
+        # treat sizes <1 as None
+        self._expected_size = expected_size if expected_size and expected_size > 0 else None
         self._buffer_size = 0
-        self._use_staging = False
+        self._use_staging = use_staging
 
     def _open(self, **kwargs):
         return PlasmaFlightClient(socket=self._plasma_path)
@@ -760,7 +767,7 @@ class PlasmaFlightIO(DataIO):
                 self._writer.close()
             else:
                 if self._expected_size != self._writer.tell():
-                    logger.debug("written %i but expected %i bytes", self._writer.tell(), self._expected_size)
+                    logger.debug(f"written {self._writer.tell()} but expected {self._expected_size} bytes")
                 self._desc.seal(self._object_id)
         if self._reader:
             self._reader.close()
@@ -774,7 +781,7 @@ class PlasmaFlightIO(DataIO):
     def _write(self, data, **kwargs):
 
         # NOTE: data must be a collection of bytes for len to represent the buffer bytesize
-        assert isinstance(data, memoryview | bytes | bytearray | pyarrow.Buffer)
+        assert isinstance(data, Union[memoryview, bytes, bytearray, pyarrow.Buffer].__args__)
         databytes = data.nbytes if isinstance(data, memoryview) else len(data)
         if not self._writer:
             if self._use_staging:
@@ -793,7 +800,7 @@ class PlasmaFlightIO(DataIO):
         return self._desc.exists(self._object_id, self._flight_path)
 
     @overrides
-    def _size(self, **kwargs):
+    def _size(self, **kwargs) -> int:
        return self._buffer_size
 
     def delete(self):
@@ -801,4 +808,4 @@ class PlasmaFlightIO(DataIO):
 
     @overrides
     def buffer(self) -> memoryview:
-        return self._desc.get(self._object_id, self._flight_path)
+        return self._desc.get_buffer(self._object_id, self._flight_path)
