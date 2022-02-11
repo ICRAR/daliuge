@@ -354,7 +354,8 @@ class DockerApp(BarrierAppDROP):
         # If none is provided use the session directory
         inspection = c.api.inspect_image(self._image)
         logger.debug("Docker Image inspection: %r", inspection)
-        self.workdir = inspection.get("ContainerConfig", {}).get("WorkingDir", None)
+        # self.workdir = inspection.get("ContainerConfig", {}).get("WorkingDir", None)
+        self.workdir = None
         if not self.workdir:
             default_workingdir = os.path.join(utils.getDlgWorkDir(), self._session_id)
             self.workdir = self._getArg(kwargs, "workingDir", default_workingdir)
@@ -472,7 +473,7 @@ class DockerApp(BarrierAppDROP):
         if self._user is not None:
             env = {
                 "USER": self._user,
-                "utils.getDlgDir()": utils.getDlgDir()}
+                "DLG_ROOT": utils.getDlgDir()}
         if self._env is not None:
             logger.debug(f"Found environment variable setting: {self._env}")
             if self._env.lower() == "all": # pass on all environment variables from host
