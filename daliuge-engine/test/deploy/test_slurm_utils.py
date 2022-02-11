@@ -22,12 +22,12 @@
 
 import unittest
 
-from dlg.deploy import slurm_utils
+from dlg.deploy import deployment_utils
 
 
 class TestSlurmUtils(unittest.TestCase):
     def assert_list_as_string(self, s, expected_list):
-        slurm_list = slurm_utils.list_as_string(s)
+        slurm_list = deployment_utils.list_as_string(s)
         self.assertEqual(expected_list, slurm_list)
 
     def test_list_as_string(self):

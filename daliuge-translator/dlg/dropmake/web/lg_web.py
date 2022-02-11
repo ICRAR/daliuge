@@ -32,6 +32,7 @@ import sys
 import threading
 import time
 import warnings
+from jsonschema import validate, ValidationError
 
 from bottle import (
     route,
@@ -60,6 +61,7 @@ logger = logging.getLogger(__name__)
 # Patched to be larger to accomodate large config drops
 bottle.BaseRequest.MEMFILE_MAX = 1024 * 512
 
+
 def file_as_string(fname, enc="utf8"):
     b = pkg_resources.resource_string(__name__, fname)  # @UndefinedVariable
     return common.b2s(b, enc)
@@ -85,6 +87,7 @@ ALGO_PARAMS = [
     ("max_mem", int),
 ]  # max_mem is only relevant for the old editor, not used in EAGLE
 
+LG_SCHEMA_PATH = "/daliuge/dlg-lg.graph.schema"
 
 def lg_path(lg_name):
     return "{0}/{1}".format(lg_dir, lg_name)
@@ -290,6 +293,36 @@ def get_schedule_mat():
         return "Failed to get schedule matrices for {0}: {1}".format(pgt_id, ex)
 
 
+@get("/gen_pg_helm")
+def gen_pg_helm():
+    """
+    RESTful interface to deploy a PGT as a K8s helm chart.
+    """
+    # Get pgt_data
+    from ...deploy.start_helm_cluster import start_helm
+    pgt_id = request.query.get("pgt_id")
+    pgtp = pg_mgr.get_pgt(pgt_id)
+    if pgtp is None:
+        response.status = 404
+        return "PGT(P) with id {0} not found in the Physical Graph Manager".format(
+            pgt_id
+        )
+
+    pgtpj = pgtp._gojs_json_obj
+    logger.info("PGTP: %s" % pgtpj)
+    num_partitions = len(list(filter(lambda n: 'isGroup' in n, pgtpj['nodeDataArray'])))
+    # Send pgt_data to helm_start
+    try:
+        start_helm(pgtp, num_partitions, pgt_dir)
+    except restutils.RestClientException as ex:
+        response.status = 500
+        print(traceback.format_exc())
+        return "Fail to deploy physical graph: {0}".format(ex)
+    # TODO: Not sure what to redirect to yet
+    response.status = 200
+    return "Inspect your k8s dashboard for deployment status"
+
+
 @get("/gen_pg")
 def gen_pg():
     """
@@ -310,7 +343,7 @@ def gen_pg():
     pgtpj = pgtp._gojs_json_obj
     logger.info("PGTP: %s" % pgtpj)
     num_partitions = 0
-    num_partitions = len(list(filter(lambda n:'isGroup' in n, pgtpj['nodeDataArray'])))
+    num_partitions = len(list(filter(lambda n: 'isGroup' in n, pgtpj['nodeDataArray'])))
     surl = urlparse(request.url)
 
     mhost = ""
@@ -475,7 +508,7 @@ def gen_pgt():
             pgt_view_json_name=pgt_id,
             partition_info=part_info,
             title="Physical Graph Template%s"
-            % ("" if num_partitions == 0 else "Partitioning"),
+                  % ("" if num_partitions == 0 else "Partitioning"),
         )
     except GraphException as ge:
         response.status = 500
@@ -500,12 +533,22 @@ def gen_pgt_post():
     # Retrieve the graph name.
     reqform = request.forms
     lg_name = reqform.get("lg_name")
-    # print('lg_name', lg_name)
 
     # Retrieve json data.
     json_string = reqform.get("json_data")
     try:
         logical_graph = json.loads(json_string)
+
+        # load LG schema
+        lg_schema = None
+        if os.path.exists(LG_SCHEMA_PATH):
+            with open(LG_SCHEMA_PATH, "r") as schema_file:
+                lg_schema = json.load(schema_file)
+
+        # validate JSON (if schema was found)
+        if lg_schema is not None:
+            validate(logical_graph, lg_schema)
+
         # LG -> PGT
         pgt = unroll_and_partition_with_params(logical_graph, reqform)
         par_algo = reqform.get("algo", "none")
@@ -523,6 +566,8 @@ def gen_pgt_post():
                 "" if par_algo == "none" else "Partitioning"
             ),
         )
+    except ValidationError as ve:
+        return "Validation Error {1}: {0}".format(str(ve), lg_name)
     except GraphException as ge:
         trace_msg = traceback.format_exc()
         print(trace_msg)
