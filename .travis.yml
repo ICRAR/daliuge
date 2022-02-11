@@ -48,11 +48,13 @@ matrix:
         - git config --global user.name $GITHUB_USERNAME
         - git config --global user.email "$GITHUB_USERNAME@gmail.com"
       script:
-        - python3 tools/xml2palette/xml2palette.py -i ./ -o $PROJECT_NAME-$TRAVIS_BRANCH.palette
+        - python3 tools/xml2palette/xml2palette.py -i ./ -t daliuge -o $PROJECT_NAME-$TRAVIS_BRANCH.palette
+        - python3 tools/xml2palette/xml2palette.py -i ./ -t template -o $PROJECT_NAME-$TRAVIS_BRANCH-template.palette
       after_success:
         - git clone https://$GITHUB_TOKEN@github.com/ICRAR/EAGLE_test_repo
         - mkdir -p EAGLE_test_repo/$PROJECT_NAME
         - mv $PROJECT_NAME-$TRAVIS_BRANCH.palette EAGLE_test_repo/$PROJECT_NAME/
+        - mv $PROJECT_NAME-$TRAVIS_BRANCH-template.palette EAGLE_test_repo/$PROJECT_NAME/
         - cd EAGLE_test_repo
         - git add *
         - git diff-index --quiet HEAD || git commit -m "Automatically generated DALiuGE palette (branch $TRAVIS_BRANCH, commit $PROJECT_VERSION)"
@@ -77,7 +79,7 @@ cache: pip
 
 before_install:
  - pip install -U coveralls pytest pytest-cov
- - pip install -U setuptools pip wheel
+ - pip install -U setuptools pip wheel dask
 
 install:
  - pip install -e daliuge-common/

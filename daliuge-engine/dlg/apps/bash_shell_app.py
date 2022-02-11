@@ -157,17 +157,28 @@ class BashShellBase(object):
     Common class for BashShell apps. It simply requires a command to be
     specified.
     """
-
+    #TODO: use the shlex module for most of the construction of the
+    # command line to get a proper and safe shell syntax
     command = dlg_string_param("Bash command", None)
 
     def initialize(self, **kwargs):
         super(BashShellBase, self).initialize(**kwargs)
 
         self.proc = None
+        self._inputRedirect = self._getArg(kwargs, "input_redirection", "")
+        self._outputRedirect = self._getArg(kwargs, "output_redirection", "")
+        self._cmdLineArgs = self._getArg(kwargs, "command_line_arguments", "")
+        self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
+        self._argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
+        self._paramValueSeparator = self._getArg(kwargs, \
+            "paramValueSeparator", " ")
+
         if not self.command:
-            raise InvalidDropException(
-                self, "No command specified, cannot create BashShellApp"
-            )
+            self.command = self._getArg(kwargs, "command", None)
+            if not self.command:
+                raise InvalidDropException(
+                    self, "No command specified, cannot create BashShellApp"
+                )
 
     def _run_bash(self, inputs, outputs, stdin=None, stdout=subprocess.PIPE):
         """
@@ -186,7 +197,16 @@ class BashShellBase(object):
         session_id = (
             self._dlg_session.sessionId if self._dlg_session is not None else ""
         )
-        cmd = self.command
+        argumentString = droputils.serialize_applicationArgs(self._applicationArgs, \
+            self._argumentPrefix, self._paramValueSeparator)
+        # complete command including all additional parameters and optional redirects
+        cmd = f"{self.command} {argumentString} {self._cmdLineArgs} "
+        if self._outputRedirect:
+            cmd = f"{cmd} > {self._outputRedirect}"
+        if self._inputRedirect:
+            cmd = f"cat {self._inputRedirect} > {cmd}"
+        cmd = cmd.strip()
+
         app_uid = self.uid
         # self.run_bash(self._command, self.uid, session_id, *args, **kwargs)
 
@@ -210,7 +230,7 @@ class BashShellBase(object):
 
         # Wrap everything inside bash
         cmd = ("/bin/bash", "-c", cmd)
-        logger.debug("Command after user creation and wrapping is: %s", cmd)
+        logger.debug("Command after wrapping is: %s", cmd)
 
         start = time.time()
 
@@ -305,6 +325,37 @@ class StreamingInputBashAppBase(BashShellBase, AppDROP):
 # * input-only stream
 # * full-stream
 #
+##
+# @brief BashShellApp
+# @details An application component able to run an arbitrary command within the Bash Shell
+# @par EAGLE_START
+# @param category BashShellApp
+# @param tag template
+# @param[in] cparam/command Command//String/readwrite/False/
+#     \~English The command to be executed
+# @param[in] cparam/input_redirection Input Redirection//String/readwrite/False/
+#     \~English The command line argument that specifies the input into this application
+# @param[in] cparam/output_redirection Output Redirection//String/readwrite/False/
+#     \~English The command line argument that specifies the output from this application
+# @param[in] cparam/command_line_arguments Command Line Arguments//String/readwrite/False/
+#     \~English Additional command line arguments to be added to the command line to be executed
+# @param[in] cparam/paramValueSeparator Param value separator/ /String/readwrite/False/
+#     \~English Separator character(s) between parameters on the command line
+# @param[in] cparam/argumentPrefix Argument prefix/"--"/String/readwrite/False/
+#     \~English Prefix to each keyed argument on the command line
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
+#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
+#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @par EAGLE_END
 class BashShellApp(BashShellBase, BarrierAppDROP):
     """
     An app that runs a bash command in batch mode; that is, it waits until all
