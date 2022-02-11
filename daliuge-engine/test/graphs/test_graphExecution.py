@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+from cmath import log
 import json
 import os
 import unittest
@@ -75,11 +76,14 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
             graphSpec = json.load(f)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
 
-        # Deploy now and get A and C
+        # Deploy now and get OIDs
+        bs = graphSpec[0]["applicationArgs"]["bs"]["value"]
+        count = graphSpec[0]["applicationArgs"]["count"]["value"]
         self.dim.deploySession(sessionId)
-        a, c = [self.dm._sessions[sessionId].drops[x] for x in ("A", "C")]
+        a, c = [self.dm._sessions[sessionId].drops[x] for x in ("2022-02-11T08:05:47_-5_0", "2022-02-11T08:05:47_-3_0")]
 
-        data = os.urandom(10)
+        data = os.urandom(bs*count)
+        logger.debug(f"Length of data produced: {len(data)}")
         with droputils.DROPWaiterCtx(self, c, 3):
             a.write(data)
             a.setCompleted()
