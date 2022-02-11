@@ -34,16 +34,17 @@ from .meta import dlg_string_param, dlg_list_param
 # @brief S3
 # @details A 'bucket' object available on Amazon's Simple Storage Service (S3)
 # @par EAGLE_START
-# @par category S3
-# @param[in] param/data_volume Data volume/5/Float/readwrite/
+# @param category S3
+# @param tag template
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False/
 #     \~English Estimated size of the data contained in this node
-# @param[in] param/group_end Group end/False/Boolean/readwrite/
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False/
 #     \~English Is this node the end of a group?
-# @param[in] param/bucket Bucket//String/readwrite/
+# @param[in] cparam/bucket Bucket//String/readwrite/False/
 #     \~English The S3 Bucket
-# @param[in] param/object_name Object Name//String/readwrite/
+# @param[in] cparam/object_name Object Name//String/readwrite/False/
 #     \~English The S3 Object
-# @param[in] param/profile_name Profile Name//String/readwrite/
+# @param[in] cparam/profile_name Profile Name//String/readwrite/False/
 #     \~English The S3 Profile
 # @par EAGLE_END
 class S3DROP(AbstractDROP):

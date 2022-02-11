@@ -32,7 +32,39 @@ from ..exceptions import InvalidDropException
 
 logger = logging.getLogger(__name__)
 
-
+##
+# @brief MPI
+# @details An application component using the Message Passing Interface (MPI)
+# @par EAGLE_START
+# @param category Mpi
+# @param tag template
+# @param[in] cparam/num_of_procs Num procs/1/Integer/readwrite/False/
+#     \~English Number of processes used for this application
+# @param[in] cparam/command Command//String/readwrite/False/
+#     \~English The command to be executed
+# @param[in] cparam/input_redirection Input Redirection//String/readwrite/False/
+#     \~English The command line argument that specifies the input into this application
+# @param[in] cparam/output_redirection Output Redirection//String/readwrite/False/
+#     \~English The command line argument that specifies the output from this application
+# @param[in] cparam/command_line_arguments Command Line Arguments//String/readwrite/False/
+#     \~English Additional command line arguments to be added to the command line to be executed
+# @param[in] cparam/paramValueSeparator Param value separator/ /String/readwrite/False/
+#     \~English Separator character(s) between parameters on the command line
+# @param[in] cparam/argumentPrefix Argument prefix/"--"/String/readwrite/False/
+#     \~English Prefix to each keyed argument on the command line
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False/
+#     \~English Is this node the end of a group?
+# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
+#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
+#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @par EAGLE_END
 class MPIApp(BarrierAppDROP):
     """
     An application drop representing an MPI job.
