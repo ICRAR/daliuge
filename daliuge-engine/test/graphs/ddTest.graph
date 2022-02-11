@@ -1,6 +1,6 @@
 [
     {
-        "oid": "DD",
+        "oid": "2022-02-11T08:05:47_-1_0",
         "type": "app",
         "app": "dlg.apps.bash_shell_app.BashShellApp",
         "rank": [
@@ -15,54 +15,69 @@
         "input_redirection": "",
         "output_redirection": "",
         "command_line_arguments": "",
+        "argumentPrefix": " ",
         "paramValueSeparator": "=",
-        "argumentPrefix": "",
         "applicationArgs": {
-            "if": "%i0",
-            "of": "%o0",
-            "count": 10,
-            "bs": 1024
+            "if": {
+                "text": "if",
+                "value": "%i0",
+                "defaultValue": "",
+                "description": "",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false
+            },
+            "of": {
+                "text": "of",
+                "value": "%o0",
+                "defaultValue": "",
+                "description": "",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false
+            },
+            "bs": {
+                "text": "bs",
+                "value": 1024,
+                "defaultValue": "",
+                "description": "Blocksize to be used for transfers",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false
+            },
+            "count": {
+                "text": "count",
+                "value": 10,
+                "defaultValue": "",
+                "description": "How many blocks should be transferred",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false
+            }
         },
         "iid": "0",
-        "lg_key": -2,
+        "lg_key": -1,
         "dt": "BashShellApp",
         "nm": "dd",
-        "inputs": [
-            "A"
-        ],
         "outputs": [
-            "C"
+            "2022-02-11T08:05:47_-3_0"
+        ],
+        "inputs": [
+            "2022-02-11T08:05:47_-5_0"
         ],
         "node": "localhost",
         "island": "localhost"
     },
     {
-        "oid": "A",
-        "type": "plain",
-        "storage": "File",
-        "rank": [
-            0
-        ],
-        "loop_cxt": null,
-        "dw": 5,
-        "check_filepath_exists": false,
-        "data_volume": 5,
-        "group_end": false,
-        "filepath": "",
-        "dirname": "",
-        "applicationArgs": {},
-        "iid": "0",
-        "lg_key": -3,
-        "dt": "File",
-        "nm": "Input File",
-        "consumers": [
-            "DD"
-        ],
-        "node": "localhost",
-        "island": "localhost"
-    },
-    {
-        "oid": "C",
+        "oid": "2022-02-11T08:05:47_-3_0",
         "type": "plain",
         "storage": "File",
         "rank": [
@@ -77,11 +92,68 @@
         "dirname": "",
         "applicationArgs": {},
         "iid": "0",
-        "lg_key": -4,
+        "lg_key": -3,
         "dt": "File",
-        "nm": "Output File",
+        "nm": "OutputFile",
         "producers": [
-            "DD"
+            "2022-02-11T08:05:47_-1_0"
+        ],
+        "node": "localhost",
+        "island": "localhost"
+    },
+    {
+        "oid": "2022-02-11T08:05:47_-5_0",
+        "type": "plain",
+        "storage": "File",
+        "rank": [
+            0
+        ],
+        "loop_cxt": null,
+        "dw": 5,
+        "check_filepath_exists": false,
+        "data_volume": 5,
+        "group_end": false,
+        "applicationArgs": {
+            "check_filepath_exists": {
+                "text": "Check file path exists",
+                "value": true,
+                "defaultValue": "True",
+                "description": "Perform a check to make sure the file path exists before proceeding with the application",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false
+            },
+            "filepath": {
+                "text": "File Path",
+                "value": "",
+                "defaultValue": "",
+                "description": "Path to the file for this node",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false
+            },
+            "dirname": {
+                "text": "Directory name",
+                "value": "",
+                "defaultValue": "",
+                "description": "Path to the file for this node",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false
+            }
+        },
+        "iid": "0",
+        "lg_key": -5,
+        "dt": "File",
+        "nm": "content",
+        "consumers": [
+            "2022-02-11T08:05:47_-1_0"
         ],
         "node": "localhost",
         "island": "localhost"
