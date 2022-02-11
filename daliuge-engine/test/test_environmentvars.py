@@ -19,10 +19,12 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-
+import os
+import tempfile
 import unittest
+
+from dlg.drop import AbstractDROP, FileDROP
 from dlg.environmentvar_drop import EnvironmentVarDROP
-from dlg.drop import AbstractDROP
 from dlg.utils import getDlgDir
 
 
@@ -176,3 +178,12 @@ class TestEnvironmentVarDROP(unittest.TestCase):
         self.assertEqual(getDlgDir(), test_drop.get_environment_variable('$DLG_ROOT'))
         self.assertEqual('$DLG_NONEXISTS', test_drop.parameters['non_dlg_var'])
         self.assertEqual('$DLG_NONEXISTS', test_drop.get_environment_variable('$DLG_NONEXISTS'))
+
+    def test_filename_integration(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            os.environ['DLG_ROOT'] = tmp_dir
+            os.environ['DLG_FILE'] = 'test_file'
+            test_drop = FileDROP(oid='a', uid='a', filepath="$DLG_FILE", dirname="$DLG_ROOT")
+            test_drop.write(b"1234")
+            self.assertEqual(tmp_dir, test_drop.dirname)
+            self.assertEqual('test_file', test_drop.filepath)
