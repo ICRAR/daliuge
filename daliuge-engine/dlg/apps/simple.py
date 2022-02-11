@@ -79,10 +79,8 @@ class NullBarrierApp(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
-# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
-#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @par EAGLE_END
@@ -117,7 +115,7 @@ class SleepApp(BarrierAppDROP):
 # @param tag daliuge
 # @param[in] cparam/appclass Application Class/dlg.apps.simple.CopyApp/String/readonly/False/
 #     \~English Application class
-# @param[in] param/bufsize buffer size/65536/Integer/readwrite/
+# @param[in] cparam/bufsize buffer size/65536/Integer/readwrite/False/
 #     \~English Application class
 # @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
 #     \~English Estimated execution time
@@ -125,10 +123,8 @@ class SleepApp(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
-# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
-#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @par EAGLE_END
@@ -180,10 +176,8 @@ class CopyApp(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
-# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
-#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @par EAGLE_END
@@ -220,10 +214,8 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
-# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
-#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[out] port/array Array/Array/
@@ -306,10 +298,8 @@ class RandomArrayApp(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
-# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
-#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] port/array Array/array/
@@ -391,12 +381,24 @@ class AverageArraysApp(BarrierAppDROP):
 ##
 # @brief GenericNpyGatherApp
 # @details A BarrierAppDrop that combines one or more inputs using cummulative operations.
+# @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/appclass Application Class/dlg.apps.simple.GenericNpyGatherApp/String/readonly/
+# @param tag daliuge
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.GenericNpyGatherApp/String/readonly/False/
 #     \~English Application class
-# @param[in] param/function Function/sum/String/readwrite/
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[in] cparam/function Function/sum/String/readwrite/False/
 #     \~English The function used for gathering
-# @param[in] param/function reduce_axes/None/String/readonly/
+# @param[in] cparam/function reduce_axes/None/String/readonly/False/
 #     \~English The ndarray axes to reduce, None reduces all axes for sum, prod, max, min functions
 # @param[in] port/array Array/npy/
 #     \~English Port for the input array(s)
@@ -494,10 +496,8 @@ class GenericNpyGatherApp(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
-# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
-#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[out] port/hello Hello/String/
@@ -559,10 +559,8 @@ class HelloWorldApp(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
-# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
-#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[out] port/content Content/String/
@@ -621,10 +619,8 @@ class UrlRetrieveApp(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
-# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
-#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[out] port/array Array/Array/
@@ -692,10 +688,8 @@ class GenericScatterApp(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
-# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
-#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] aparam/scatter_axes Scatter Axes//String/readwrite/False/
@@ -783,10 +777,8 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
-# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
-#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[out] port/array Array/array/
