@@ -26,6 +26,7 @@ Module containing docker-related applications and functions
 import collections
 import logging
 import os
+import pwd
 import threading
 import time
 from overrides import overrides
@@ -41,7 +42,9 @@ from ..exceptions import InvalidDropException
 logger = logging.getLogger(__name__)
 
 # DLG_ROOT = '/dlg_root'
-DLG_ROOT = ""
+DLG_ROOT = "" if "DLG_ROOT" not in os.environ else os.environ["DLG_ROOT"]
+# TODO: the following is commented out because it breaks the dask tests for some reason
+# os.environ["DLG_ROOT"] = DLG_ROOT # make sure the environ variable is set
 
 DockerPath = collections.namedtuple("DockerPath", "path")
 
@@ -67,6 +70,53 @@ class ContainerIpWaiter(object):
         return self._uid, self._containerIp
 
 
+##
+# @brief Docker
+# @details
+# @par EAGLE_START
+# @param category Docker
+# @param tag template
+# @param[in] cparam/image Image//String/readwrite/False/
+#     \~English The name of the docker image to be used for this application
+# @param[in] cparam/tag Tag/1.0/String/readwrite/False/
+#     \~English The tag of the docker image to be used for this application
+# @param[in] cparam/digest Digest//String/readwrite/False/
+#     \~English The hexadecimal hash (long version) of the docker image to be used for this application
+# @param[in] cparam/command Command//String/readwrite/False/
+#     \~English The command line to run within the docker instance. The specified command will be executed in a bash shell. That means that images will need a bash shell.
+# @param[in] cparam/input_redirection Input Redirection//String/readwrite/False/
+#     \~English The command line argument that specifies the input into this application
+# @param[in] cparam/output_redirection Output Redirection//String/readwrite/False/
+#     \~English The command line argument that specifies the output from this application
+# @param[in] cparam/command_line_arguments Command Line Arguments//String/readwrite/False/
+#     \~English Additional command line arguments to be added to the command line to be executed
+# @param[in] cparam/paramValueSeparator Param value separator/ /String/readwrite/False/
+#     \~English Separator character(s) between parameters on the command line
+# @param[in] cparam/argumentPrefix Argument prefix/"--"/String/readwrite/False/
+#     \~English Prefix to each keyed argument on the command line
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
+#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
+#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[in] cparam/user User//String/readwrite/False/
+#     \~English Username of the user who will run the application within the docker image
+# @param[in] cparam/ensureUserAndSwitch Ensure User And Switch/False/Boolean/readwrite/False/
+#     \~English Make sure the user specified in the User parameter exists and then run the docker container as that user
+# @param[in] cparam/removeContainer Remove Container/True/Boolean/readwrite/False/
+#     \~English Instruct Docker engine to delete the container after execution is complete
+# @param[in] cparam/additionalBindings Additional Bindings//String/readwrite/False/
+#     \~English Directories which will be visible inside the container during run-time. Format is srcdir_on_host:trgtdir_on_container. Multiple entries can be separated by commas.
+# @param[in] cparam/portMappings Port Mappings//String/readwrite/False/
+#     \~English Port mappings on the host machine
+# @par EAGLE_END
 class DockerApp(BarrierAppDROP):
     """
     A BarrierAppDROP that represents a process running in a container
@@ -191,6 +241,11 @@ class DockerApp(BarrierAppDROP):
         BarrierAppDROP.initialize(self, **kwargs)
 
         self._image = self._getArg(kwargs, "image", None)
+        self._cmdLineArgs = self._getArg(kwargs, "command_line_arguments", "")
+        self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
+        self._argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
+        self._paramValueSeparator = self._getArg(kwargs, \
+            "paramValueSeparator", " ")
         if not self._image:
             raise InvalidDropException(
                 self, "No docker image specified, cannot create DockerApp"
@@ -204,25 +259,34 @@ class DockerApp(BarrierAppDROP):
             )
 
         self._command = self._getArg(kwargs, "command", None)
+
         if not self._command:
             logger.warning(
                 "No command specified. Assume that a default command is executed in the container"
             )
+            # The above also means that we can't pass applicationArgs
             # raise InvalidDropException(
             #     self, "No command specified, cannot create DockerApp")
+        else:
 
-        # The user used to run the process in the docker container
-        # By default docker containers run as root, but we don't want to run
-        # a process using a different user because otherwise anything that that
-        # process writes to the filesystem
-        self._user = self._getArg(kwargs, "user", None)
+            # construct the actual command line from all application parameters
+            argumentString = droputils.serialize_applicationArgs(self._applicationArgs, \
+                self._argumentPrefix)
+            # complete command including all additional parameters and optional redirects
+            cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
+            cmd = cmd.strip()
+            self._command = cmd
 
-        # In some cases we want to make sure the command in the container runs
-        # as a certain user, so we wrap up the command line in a small script
-        # that will create the user if missing and switch to it
-        self._ensureUserAndSwitch = self._getArg(
-            kwargs, "ensureUserAndSwitch", self._user is None
-        )
+        # The user used to run the process in the docker container is now always the user
+        # who originally started the DALiuGE process as well. The information is passed through
+        # from the host to the engine container (if run as docker) and then further to any
+        # container running as a component.
+        
+        pw = pwd.getpwuid(os.getuid())
+        self._user = pw.pw_name # use current user by default
+        self._userid = pw.pw_uid
+        self._groupid = pw.pw_gid
+        logger.debug(f"User for docker container: {self._user} {self._userid}:{self._groupid}")
 
         # By default containers are removed from the filesystem, but people
         # might want to preserve them.
@@ -242,9 +306,20 @@ class DockerApp(BarrierAppDROP):
         # on the host system. They are given either as a list or as a
         # comma-separated string
         self._additionalBindings = {}
-        bindings = self._getArg(kwargs, "additionalBindings", [])
+        bindings = []
+        if (len(DLG_ROOT) > 0): bindings = [f"{DLG_ROOT}:{DLG_ROOT}"]
+        bindings = [f"{DLG_ROOT}:{DLG_ROOT}",
+                    ] # these are the default binding
+        if os.path.exists(f"{DLG_ROOT}/workspace/settings/passwd:/etc/passwd") and\
+            os.path.exists(f"{DLG_ROOT}/workspace/settings/group:/etc/group"):
+                    f"{DLG_ROOT}/workspace/settings/passwd:/etc/passwd",
+                    f"{DLG_ROOT}/workspace/settings/group:/etc/group"
+        bindings += self._getArg(kwargs, "additionalBindings", [])
         bindings = bindings.split(",") if isinstance(bindings, str) else bindings
         for binding in bindings:
+            if len(binding) == 0:
+                continue
+            logger.debug(f"Volume binding found: {binding}")
             if binding.find(":") == -1:
                 host_path = container_path = binding
             else:
@@ -358,8 +433,10 @@ class DockerApp(BarrierAppDROP):
                 for host_path, container_path in self._additionalBindings.items()
             ]
         binds = list(set(binds))  # make this a unique list else docker complains
-        if binds == [":"]:
-            binds = []
+        try:
+            binds.remove(':')
+        except:
+            pass
         logger.debug("Volume bindings: %r", binds)
 
         portMappings = {}
@@ -385,32 +462,9 @@ class DockerApp(BarrierAppDROP):
             cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
             logger.debug("Command after IP replacement is: %s", cmd)
 
-        # If a user has been given, we run the container as that user. It is
-        # useful to make sure that the USER environment variable is set in those
-        # cases (e.g., casapy requires this to correctly operate)
-        user = self._user
         env = {}
-        if user is not None:
-            env = {"USER": user}
-
-        if self._ensureUserAndSwitch is True:
-            # Append commands that will make sure a user is present with the
-            # same UID of the current user, and that the command that was
-            # supplied for this container runs as that user.
-            # Also make sure that the output will belong to that user
-            uid = os.getuid()
-            createUserAndGo = "id -u {0} &> /dev/null || adduser --uid {0} r; ".format(
-                uid
-            )
-            for dirname in set(
-                [os.path.dirname(x.path) for x in dockerOutputs.values()]
-            ):
-                createUserAndGo += 'chown -R {0}.{0} "{1}"; '.format(uid, dirname)
-            createUserAndGo += "su -l $(getent passwd {0} | cut -f1 -d:) -c /bin/bash -c 'cd {1}; {2}'".format(
-                uid, self.workdir, utils.escapeQuotes(cmd, doubleQuotes=False)
-            )
-
-            cmd = createUserAndGo
+        if self._user is not None:
+            env = {"USER": self._user}
 
         # Wrap everything inside bash
         if len(cmd) > 0:
@@ -420,14 +474,15 @@ class DockerApp(BarrierAppDROP):
             logger.debug("No command specified, executing container without!")
 
         c = DockerApp._get_client()
-
+        
+        logger.debug(f"Final user for container: {self._user}:{self._userid}")
         # Create container
         self.container = c.containers.create(
             self._image,
             cmd,
             volumes=binds,
             ports=portMappings,
-            user=user,
+            user=f"{self._userid}:{self._groupid}",
             environment=env,
             working_dir=self.workdir,
             init=True,

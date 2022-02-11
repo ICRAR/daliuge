@@ -81,17 +81,30 @@ class ExternalStoreApp(BarrierAppDROP):
 # @details Takes an input and archives it in an NGAS server.
 # @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/appclass Application class/dlg.apps.archiving.NgasArchivingApp/String/readonly/
+# @param tag daliuge
+# @param[in] cparam/appclass Application class/dlg.apps.archiving.NgasArchivingApp/String/readonly/False/
 #     \~English Application class
-# @param[in] param/ngasSrv NGAS Server URL/localhost/String/readwrite/
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
+#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
+#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[in] aparam/ngasSrv NGAS Server URL/localhost/String/readwrite/False/
 #     \~English URL of the NGAS Server
-# @param[in] param/ngasPort NGAS Server Port/7777/Integer/readwrite/
+# @param[in] aparam/ngasPort NGAS Server Port/7777/Integer/readwrite/False/
 #     \~English TCP/IP Port on the NGAS Server
-# @param[in] param/ngasMime NGAS Mime Type/"application/octet-stream"/String/readwrite/
+# @param[in] aparam/ngasMime NGAS Mime Type/"application/octet-stream"/String/readwrite/False/
 #     \~English Mime-type of the NGAS payload
-# @param[in] param/ngasTimeout NGAS Server Timeout/2/Integer/readonly/
+# @param[in] aparam/ngasTimeout NGAS Server Timeout/2/Integer/readonly/False/
 #     \~English Archiving request timeout
-# @param[in] param/ngasConnectTimeout NGAS Server Connect Timeout/2/Integer/readonly/
+# @param[in] aparam/ngasConnectTimeout NGAS Server Connect Timeout/2/Integer/readonly/False/
 #     \~English NGAS Server connection timeout
 # @param[in] port/fileObject File Object/File/
 #     \~English Input File Object
