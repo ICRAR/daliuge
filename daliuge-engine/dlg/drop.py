@@ -1585,7 +1585,7 @@ class FileDROP(DataDROP, PathBasedDrop):
 
         # Extract the dirname from filepath and append it to dirname
         filepath_d = os.path.dirname(filepath)
-        if dirname:
+        if not isabs(filepath_d) and dirname:
             filepath_d = os.path.join(dirname, filepath_d)
         return filepath_b, filepath_d
 
@@ -1623,6 +1623,7 @@ class FileDROP(DataDROP, PathBasedDrop):
 
         self._root = dirname
         self._path = os.path.join(dirname, filepath)
+        logger.debug(f"Set path of drop {self._uid}: {self._path}")
         if check and not os.path.isfile(self._path):
             raise InvalidDropException(
                 self, "File does not exist or is not a file: %s" % self._path
