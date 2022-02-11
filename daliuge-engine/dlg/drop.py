@@ -1847,6 +1847,7 @@ class PlasmaFlightDROP(DataDROP):
     object_id = dlg_string_param("object_id", None)
     plasma_path: str = dlg_string_param("plasma_path", "/tmp/plasma")
     flight_path: str = dlg_string_param("flight_path", None)
+    use_staging: bool = dlg_bool_param("use_staging", False)
 
     def initialize(self, **kwargs):
         object_id = self.uid
@@ -1872,6 +1873,7 @@ class PlasmaFlightDROP(DataDROP):
             self.plasma_path,
             flight_path=self.flight_path,
             expected_size=self._expectedSize,
+            use_staging=self.use_staging
         )
 
     @property
