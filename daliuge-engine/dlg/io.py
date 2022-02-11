@@ -50,7 +50,7 @@ class OpenMode:
     OPEN_WRITE, OPEN_READ = range(2)
 
 
-class DataIO(object):
+class DataIO():
     """
     A class used to read/write data stored in a particular kind of storage in an
     abstract way. This base class simply declares a number of methods that
@@ -70,11 +70,12 @@ class DataIO(object):
     """
 
     __metaclass__ = ABCMeta
+    _mode: Optional[OpenMode]
 
     def __init__(self):
         self._mode = None
 
-    def open(self, mode, **kwargs):
+    def open(self, mode: OpenMode, **kwargs):
         """
         Opens the underlying storage where the data represented by this instance
         is stored. Depending on the value of `mode` subsequent calls to
@@ -121,10 +122,13 @@ class DataIO(object):
         return self._size(**kwargs)
 
     def isOpened(self):
+        """
+        Returns true if the io is currently opened for read or write.
+        """
         return self._mode is not None
 
     @abstractmethod
-    def exists(self):
+    def exists(self) -> bool:
         """
         Returns `True` if the data represented by this DataIO exists indeed in
         the underlying storage mechanism
@@ -175,7 +179,7 @@ class NullIO(DataIO):
     def _read(self, count=4096, **kwargs):
         return None
 
-    def _write(self, data, **kwargs):
+    def _write(self, data, **kwargs) -> int:
         return len(data)
 
     def _close(self, **kwargs):
@@ -188,9 +192,11 @@ class NullIO(DataIO):
         """
         return 0
 
-    def exists(self):
+    @overrides
+    def exists(self) -> bool:
         return True
 
+    @overrides
     def delete(self):
         pass
 
@@ -200,15 +206,19 @@ class ErrorIO(DataIO):
     An DataIO method that throws exceptions if any of its methods is invoked
     """
 
+    @overrides
     def _open(self, **kwargs):
         raise NotImplementedError()
 
+    @overrides
     def _read(self, count=4096, **kwargs):
         raise NotImplementedError()
 
-    def _write(self, data, **kwargs):
+    @overrides
+    def _write(self, data, **kwargs) -> int:
         raise NotImplementedError()
 
+    @overrides
     def _close(self, **kwargs):
         raise NotImplementedError()
 
@@ -216,9 +226,11 @@ class ErrorIO(DataIO):
     def _size(self, **kwargs) -> int:
         raise NotImplementedError()
 
-    def exists(self):
+    @overrides
+    def exists(self) -> bool:
         raise NotImplementedError()
 
+    @overrides
     def delete(self):
         raise NotImplementedError()
 
@@ -243,13 +255,16 @@ class MemoryIO(DataIO):
         else:
             raise ValueError()
 
-    def _write(self, data, **kwargs):
+    @overrides
+    def _write(self, data, **kwargs) -> int:
         self._desc.write(data)
         return len(data)
 
+    @overrides
     def _read(self, count=4096, **kwargs):
         return self._desc.read(count)
 
+    @overrides
     def _close(self, **kwargs):
         if self._mode == OpenMode.OPEN_READ:
             self._desc.close()
@@ -263,9 +278,11 @@ class MemoryIO(DataIO):
         """
         return self._buf.getbuffer().nbytes
 
-    def exists(self):
+    @overrides
+    def exists(self) -> bool:
         return not self._buf.closed
 
+    @overrides
     def delete(self):
         self._buf.close()
 
@@ -287,6 +304,7 @@ class SharedMemoryIO(DataIO):
         self._pos = 0
         self._buf = None
 
+    @overrides
     def _open(self, **kwargs):
         self._pos = 0
         if self._buf is None:
@@ -295,7 +313,8 @@ class SharedMemoryIO(DataIO):
             self._buf = DlgSharedMemory(self._name)
         return self._buf
 
-    def _write(self, data, **kwargs):
+    @overrides
+    def _write(self, data, **kwargs) -> int:
         total_size = len(data) + self._written
         if total_size > self._buf.size:
             self._buf.resize(total_size)
@@ -309,6 +328,7 @@ class SharedMemoryIO(DataIO):
             # might be tolerable and guarantees that the size of the underlying buffer is tight.
         return len(data)
 
+    @overrides
     def _read(self, count=4096, **kwargs):
         if self._pos == self._buf.size:
             return None
@@ -319,6 +339,7 @@ class SharedMemoryIO(DataIO):
         self._pos = end
         return out
 
+    @overrides
     def _close(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
             self._buf.resize(self._written)
@@ -329,9 +350,11 @@ class SharedMemoryIO(DataIO):
     def _size(self, **kwargs) -> int:
         return self._buf.size
 
-    def exists(self):
+    @overrides
+    def exists(self) -> bool:
         return self._buf is not None
 
+    @overrides
     def delete(self):
         self._close()
 
@@ -354,13 +377,16 @@ class FileIO(DataIO):
             # let the higher layer deal with this.
             pass
 
+    @overrides
     def _read(self, count=4096, **kwargs):
         return self._desc.read(count)
 
-    def _write(self, data, **kwargs):
+    @overrides
+    def _write(self, data, **kwargs) -> int:
         self._desc.write(data)
         return len(data)
 
+    @overrides
     def _close(self, **kwargs):
         self._desc.close()
 
@@ -374,9 +400,11 @@ class FileIO(DataIO):
         """
         return self._fnm
 
-    def exists(self):
+    @overrides
+    def exists(self) -> bool:
         return os.path.isfile(self._fnm)
 
+    @overrides
     def delete(self):
         os.unlink(self._fnm)
 
@@ -426,6 +454,7 @@ class NgasIO(DataIO):
             self._ngasSrv, self._ngasPort, self._ngasTimeout
         )
 
+    @overrides
     def _open(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
             # The NGAS client API doesn't have a way to continually feed an ARCHIVE
@@ -436,6 +465,7 @@ class NgasIO(DataIO):
             self._writtenDataSize = 0
         return self._getClient()
 
+    @overrides
     def _close(self, **kwargs):
         client = self._desc
         if self._mode == OpenMode.OPEN_WRITE:
@@ -459,16 +489,19 @@ class NgasIO(DataIO):
         # Release the reference to _desc so the client object gets destroyed
         del self._desc
 
+    @overrides
     def _read(self, count, **kwargs):
         # Read data from NGAS and give it back to our reader
         self._desc.retrieve2File(self._fileId, cmd="QRETRIEVE")
 
-    def _write(self, data, **kwargs):
+    @overrides
+    def _write(self, data, **kwargs) -> int:
         self._buf += data
         self._writtenDataSize += len(data)
         return len(data)
 
-    def exists(self):
+    @overrides
+    def exists(self) -> bool:
         import ngamsLib  # @UnresolvedImport
 
         status = self._getClient().sendCmd("STATUS", pars=[["fileId", self._fileId]])
@@ -575,7 +608,7 @@ class NgasLiteIO(DataIO):
     def _read(self, count=4096, **kwargs):
         return self._desc.read(count)
 
-    def _write(self, data, **kwargs):
+    def _write(self, data, **kwargs) -> int:
         if self._is_length_unknown():
             self._buf += data
         else:
@@ -583,13 +616,14 @@ class NgasLiteIO(DataIO):
         logger.debug("Wrote %s bytes" % len(data))
         return len(data)
 
-    def exists(self):
+    def exists(self) -> bool:
         raise NotImplementedError("This method is not supported by this class")
 
     def fileStatus(self):
-        logger.debug("Getting status of file %s" % self._fileId)
+        logger.debug("Getting status of file %s", self._fileId)
         return ngaslite.fileStatus(self._ngasSrv, self._ngasPort, self._fileId)
 
+    @overrides
     def delete(self):
         pass  # We never delete stuff from NGAS
 
@@ -720,9 +754,11 @@ class PlasmaIO(DataIO):
     def _size(self, **kwargs) -> int:
         return self._buffer_size
 
-    def exists(self):
+    @overrides
+    def exists(self) -> bool:
         return self._object_id in self._desc.list()
 
+    @overrides
     def delete(self):
         self._desc.delete([self._object_id])
 
@@ -778,7 +814,7 @@ class PlasmaFlightIO(DataIO):
             self._reader = pyarrow.BufferReader(data)
         return self._reader.read1(count)
 
-    def _write(self, data, **kwargs):
+    def _write(self, data, **kwargs) -> int:
 
         # NOTE: data must be a collection of bytes for len to represent the buffer bytesize
         assert isinstance(data, Union[memoryview, bytes, bytearray, pyarrow.Buffer].__args__)
@@ -796,13 +832,15 @@ class PlasmaFlightIO(DataIO):
         self._writer.write(data)
         return len(data)
 
-    def exists(self):
+    @overrides
+    def exists(self) -> bool:
         return self._desc.exists(self._object_id, self._flight_path)
 
     @overrides
     def _size(self, **kwargs) -> int:
-       return self._buffer_size
+        return self._buffer_size
 
+    @overrides
     def delete(self):
         pass
 
