@@ -152,10 +152,13 @@ class Session(object):
         if self._nm is not None:
             logdir = self._nm.logdir
         logfile = generateLogFileName(logdir, self.sessionId)
-        self.file_handler = logging.FileHandler(logfile)
-        self.file_handler.setFormatter(fmt)
-        self.file_handler.addFilter(SessionFilter(self.sessionId))
-        logging.root.addHandler(self.file_handler)
+        try:
+            self.file_handler = logging.FileHandler(logfile)
+            self.file_handler.setFormatter(fmt)
+            self.file_handler.addFilter(SessionFilter(self.sessionId))
+            logging.root.addHandler(self.file_handler)
+        except AttributeError as e:
+            print(e)
 
     @property
     def sessionId(self):
