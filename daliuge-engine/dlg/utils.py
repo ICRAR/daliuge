@@ -224,7 +224,7 @@ def getDlgVariable(key: str):
     """
     if key == "$DLG_ROOT":
         return getDlgDir()
-    value = os.environ.get(key)
+    value = os.environ.get(key[1:])
     if value is None:
         return key
     return value
