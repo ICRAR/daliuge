@@ -2184,19 +2184,8 @@ class PlasmaFlightDROP(DataDROP):
             self.object_id = object_id
 
     def getIO(self):
-        if isinstance(self.object_id, str):
-            object_id = plasma.ObjectID(self.object_id.encode("ascii"))
-        elif isinstance(self.object_id, bytes):
-            object_id = plasma.ObjectID(self.object_id)
-        else:
-            raise Exception(
-                "Invalid argument "
-                + str(self.object_id)
-                + " expected str, got"
-                + str(type(self.object_id))
-            )
         return PlasmaFlightIO(
-            object_id,
+            plasma.ObjectID(self.object_id),
             self.plasma_path,
             flight_path=self.flight_path,
             expected_size=self._expectedSize,
@@ -2213,11 +2202,12 @@ class PlasmaFlightDROP(DataDROP):
 # @details A set of parameters, wholly specified in EAGLE
 # @par EAGLE_START
 # @param category ParameterSet
+# @param tag template
 # @param[in] param/mode Parset mode/"YANDA"/String/readonly/False/To what standard DALiuGE should filter and serialize the parameters.
 # @param[in] param/config_data ConfigData/""/String/readwrite/False/Additional configuration information to be mixed in with the initial data
 # @param[out] port/Config ConfigFile/File/The output configuration file
 # @par EAGLE_END
-class ParameterSetDROP(DataDROP):
+class ParameterSetDROP(AbstractDROP):
     """
     A generic configuration file template wrapper
     This drop opens an (optional) file containing some initial configuration information, then
@@ -2699,168 +2689,6 @@ class BranchAppDrop(BarrierAppDROP):
         BarrierAppDROP.execute(self, _send_notifications=False)
         self.outputs[1 if self.condition() else 0].skip()
         self._notifyAppIsFinished()
-
-
-##
-# @brief Plasma
-# @details An object in a Apache Arrow Plasma in-memory object store
-# @par EAGLE_START
-# @param category Plasma
-# @param tag template
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False/
-#     \~English Is this node the end of a group?
-# @param[in] aparam/plasma_path Plasma Path//String/readwrite/False/
-#     \~English Path to the local plasma store
-# @param[in] aparam/object_id Object Id//String/readwrite/False/
-#     \~English PlasmaId of the object for all compute nodes
-# @param[in] aparam/use_staging Use Staging/False/Boolean/readwrite/False/
-#     \~English Enables writing to a dynamically resizeable staging buffer
-# @par EAGLE_END
-class PlasmaDROP(AbstractDROP):
-    """
-    A DROP that points to data stored in a Plasma Store
-    """
-
-    plasma_path = dlg_string_param("plasma_path", "/tmp/plasma")
-    object_id = dlg_string_param("object_id", None)
-    use_staging = dlg_bool_param("use_staging", False)
-
-    def initialize(self, **kwargs):
-        object_id = self.uid
-        if len(self.uid) != 20:
-            object_id = np.random.bytes(20)
-        if not self.object_id:
-            self.object_id = object_id
-
-    def getIO(self):
-        return PlasmaIO(plasma.ObjectID(self.object_id),
-                        self.plasma_path,
-                        expected_size=self._expectedSize,
-                        use_staging=self.use_staging)
-
-    @property
-    def dataURL(self):
-        return "plasma://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
-
-
-##
-# @brief PlasmaFlight
-# @details An Apache Arrow Flight server providing distributed access
-# to a Plasma in-memory object store
-# @par EAGLE_START
-# @param category PlasmaFlight
-# @param tag template
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False/
-#     \~English Is this node the end of a group?
-# @param[in] aparam/plasma_path Plasma Path//String/readwrite/False/
-#     \~English Path to the local plasma store
-# @param[in] aparam/object_id Object Id//String/readwrite/False/
-#     \~English PlasmaId of the object for all compute nodes
-# @param[in] aparam/flight_path Flight Path//String/readwrite/False/
-#     \~English IP and flight port of the drop owner
-# @par EAGLE_END
-class PlasmaFlightDROP(AbstractDROP):
-    """
-    A DROP that points to data stored in a Plasma Store
-    """
-
-    object_id = dlg_string_param("object_id", None)
-    plasma_path = dlg_string_param("plasma_path", "/tmp/plasma")
-    flight_path = dlg_string_param("flight_path", None)
-
-    def initialize(self, **kwargs):
-        object_id = self.uid
-        if len(self.uid) != 20:
-            object_id = np.random.bytes(20)
-        if self.object_id is None:
-            self.object_id = object_id
-
-    def getIO(self):
-        if isinstance(self.object_id, str):
-            object_id = plasma.ObjectID(self.object_id.encode("ascii"))
-        elif isinstance(self.object_id, bytes):
-            object_id = plasma.ObjectID(self.object_id)
-        else:
-            raise Exception(
-                "Invalid argument "
-                + str(self.object_id)
-                + " expected str, got"
-                + str(type(self.object_id))
-            )
-        return PlasmaFlightIO(
-            object_id,
-            self.plasma_path,
-            flight_path=self.flight_path,
-            size=self._expectedSize,
-        )
-
-    @property
-    def dataURL(self):
-        return "plasmaflight://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
-
-##
-# @brief ParameterSet
-# @details A set of parameters, wholly specified in EAGLE
-# @par EAGLE_START
-# @param category ParameterSet
-# @param tag template
-# @param[in] param/mode Parset mode/"YANDA"/String/readonly/False/To what standard DALiuGE should filter and serialize the parameters.
-# @param[in] param/config_data ConfigData/""/String/readwrite/False/Additional configuration information to be mixed in with the initial data
-# @param[out] port/Config ConfigFile/File/The output configuration file
-# @par EAGLE_END
-class ParameterSetDROP(AbstractDROP):
-    """
-    A generic configuration file template wrapper
-    This drop opens an (optional) file containing some initial configuration information, then
-    appends any additional specified parameters to it, finally serving it as a data object.
-    """
-
-    config_data = b''
-
-    mode = dlg_string_param('mode', None)
-
-    @abstractmethod
-    def serialize_parameters(self, parameters: dict, mode):
-        """
-        Returns a string representing a serialization of the parameters.
-        """
-        if mode == "YANDA":
-            # TODO: Add more complex value checking
-            return "\n".join(f"{x}={y}" for x, y in parameters.items())
-        # Add more formats (.ini for example)
-        return "\n".join(f"{x}={y}" for x, y in parameters.items())
-
-    @abstractmethod
-    def filter_parameters(self, parameters: dict, mode):
-        """
-        Returns a dictionary of parameters, with daliuge-internal or other parameters filtered out
-        """
-        if mode == 'YANDA':
-            forbidden_params = list(DEFAULT_INTERNAL_PARAMETERS)
-            if parameters['config_data'] == "":
-                forbidden_params.append('configData')
-            return {key: val for key, val in parameters.items() if
-                    key not in DEFAULT_INTERNAL_PARAMETERS}
-        return parameters
-
-    def initialize(self, **kwargs):
-        """
-        TODO: Open input file
-        """
-        self.config_data = self.serialize_parameters(
-            self.filter_parameters(self.parameters, self.mode), self.mode).encode('utf-8')
-
-    def getIO(self):
-        return MemoryIO(io.BytesIO(self.config_data))
-
-    @property
-    def dataURL(self):
-        hostname = os.uname()[1]
-        return f"config://{hostname}/{os.getpid()}/{id(self.config_data)}"
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
