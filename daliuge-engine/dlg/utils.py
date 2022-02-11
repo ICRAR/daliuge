@@ -224,7 +224,10 @@ def getDlgVariable(key: str):
     """
     if key == "$DLG_ROOT":
         return getDlgDir()
-    return os.environ.get(key[1:])
+    value = os.environ.get(key)
+    if value is None:
+        return key
+    return value
 
 
 def createDirIfMissing(path):
