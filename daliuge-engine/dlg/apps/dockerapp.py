@@ -100,10 +100,8 @@ class ContainerIpWaiter(object):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
-# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
-#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] cparam/user User//String/readwrite/False/
@@ -281,7 +279,7 @@ class DockerApp(BarrierAppDROP):
         # who originally started the DALiuGE process as well. The information is passed through
         # from the host to the engine container (if run as docker) and then further to any
         # container running as a component.
-        
+
         pw = pwd.getpwuid(os.getuid())
         self._user = pw.pw_name # use current user by default
         self._userid = pw.pw_uid
@@ -474,7 +472,7 @@ class DockerApp(BarrierAppDROP):
             logger.debug("No command specified, executing container without!")
 
         c = DockerApp._get_client()
-        
+
         logger.debug(f"Final user for container: {self._user}:{self._userid}")
         # Create container
         self.container = c.containers.create(
