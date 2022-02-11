@@ -48,10 +48,23 @@ logger = logging.getLogger(__name__)
 # via Plasma.
 # @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/plasma_path Plasma Path//String/readwrite/
+# @param tag daliuge
+# @param[in] aparam/plasma_path Plasma Path//String/readwrite/False/
 #     \~English Path to plasma store.
-# @param[in] param/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaConsumer/String/readonly/
+# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaConsumer/String/readonly/False/
 #     \~English Application class
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
+#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
+#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] port/plasma_ms_input Plasma MS Input/Measurement Set/
 #     \~English Plasma MS input
 # @param[out] port/output_file Output File/File/
@@ -135,10 +148,23 @@ class MSStreamingPlasmaConsumer(AppDROP):
 # via Plasma.
 # @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/plasma_path Plasma Path//String/readwrite/
+# @param tag daliuge
+# @param[in] aparam/plasma_path Plasma Path//String/readwrite/False/
 #     \~English Path to plasma store
-# @param[in] param/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaProducer/String/readonly/
+# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaProducer/String/readonly/False/
 #     \~English Application class
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
+#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
+#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] port/input_file Input File/File/
 #     \~English MS input file
 # @param[out] port/plasma_ms_output Plasma MS Output/Measurement Set/
@@ -203,8 +229,21 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
 # @details Batch read entire Measurement Set from Plasma.
 # @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/appclass Application class/dlg.apps.plasma.MSPlasmaReader/String/readonly/
+# @param tag daliuge
+# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSPlasmaReader/String/readonly/False/
 #     \~English Application class
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
+#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
+#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] port/plasma_ms_input Plasma MS Input/Measurement Set/
 #     \~English Plasma MS store input
 # @param[out] port/output_ms Output MS/Measurement Set/
@@ -265,8 +304,21 @@ class MSPlasmaReader(BarrierAppDROP):
 # @details Batch write entire Measurement Set to Plasma.
 # @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/appclass Application class/dlg.apps.plasma.MSPlasmaWriter/String/readonly/
+# @param tag daliuge
+# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSPlasmaWriter/String/readonly/False/
 #     \~English Application class
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
+#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
+#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] port/input_ms Input MS/Measurement Set/
 #     \~English Input MS file
 # @param[out] port/plasma_ms_output Plasma MS Output/Measurement Set/

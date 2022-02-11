@@ -107,18 +107,31 @@ def import_using_code(code):
 # being written to its corresponding output.
 # @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/appclass Application Class/dlg.apps.pyfunc.PyFuncApp/String/readonly/
+# @param tag daliuge
+# @param[in] cparam/appclass Application Class/dlg.apps.pyfunc.PyFuncApp/String/readonly/False/
 #     \~English Application class
-# @param[in] param/func_name Function Name//String/readwrite/
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
+#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
+#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[in] aparam/func_name Function Name//String/readwrite/False/
 #     \~English Python fuction name
-# @param[in] param/func_code Function Code//String/readwrite/
+# @param[in] aparam/func_code Function Code//String/readwrite/False/
 #     \~English Python fuction code, e.g. 'def fuction_name(args): return args'
-# @param[in] param/pickle Pickle//bool/readwrite/
+# @param[in] aparam/pickle Pickle//bool/readwrite/False/
 #     \~English Whether the python arguments are pickled.
-# @param[in] param/func_defaults Function Defaults//String/readwrite/
+# @param[in] aparam/func_defaults Function Defaults//String/readwrite/False/
 #     \~English Mapping from argname to default value. Should match only the last part
 #               of the argnames list
-# @param[in] param/func_arg_mapping Function Arguments Mapping//String/readwrite/
+# @param[in] aparam/func_arg_mapping Function Arguments Mapping//String/readwrite/False/
 #     \~English Mapping between argument name and input drop uids
 # @par EAGLE_END
 class PyFuncApp(BarrierAppDROP):
