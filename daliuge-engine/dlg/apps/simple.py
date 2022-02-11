@@ -79,8 +79,8 @@ class NullBarrierApp(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @par EAGLE_END
@@ -123,8 +123,8 @@ class SleepApp(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @par EAGLE_END
@@ -176,8 +176,8 @@ class CopyApp(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @par EAGLE_END
@@ -214,8 +214,8 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[out] port/array Array/Array/
@@ -298,8 +298,8 @@ class RandomArrayApp(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] port/array Array/array/
@@ -390,8 +390,8 @@ class AverageArraysApp(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] cparam/function Function/sum/String/readwrite/False/
@@ -494,8 +494,8 @@ class GenericNpyGatherApp(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[out] port/hello Hello/String/
@@ -557,8 +557,8 @@ class HelloWorldApp(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[out] port/content Content/String/
@@ -617,8 +617,8 @@ class UrlRetrieveApp(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[out] port/array Array/Array/
@@ -686,8 +686,8 @@ class GenericScatterApp(BarrierAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] aparam/scatter_axes Scatter Axes//String/readwrite/False/
@@ -775,8 +775,8 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[out] port/array Array/array/
