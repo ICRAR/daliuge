@@ -42,10 +42,7 @@ from ..exceptions import InvalidDropException
 
 logger = logging.getLogger(__name__)
 
-# DLG_ROOT = '/dlg_root'
-DLG_ROOT = "" if "DLG_ROOT" not in os.environ else os.environ["DLG_ROOT"]
-# TODO: the following is commented out because it breaks the dask tests for some reason
-# os.environ["DLG_ROOT"] = DLG_ROOT # make sure the environ variable is set
+DLG_ROOT = utils.getDlgDir()
 
 DockerPath = collections.namedtuple("DockerPath", "path")
 
@@ -250,6 +247,9 @@ class DockerApp(BarrierAppDROP):
             raise InvalidDropException(
                 self, "No docker image specified, cannot create DockerApp"
             )
+        self._session_id = (
+            self._dlg_session.sessionId if self._dlg_session is not None else ""
+        )
 
         if ":" not in self._image:
             logger.warning(
@@ -307,13 +307,12 @@ class DockerApp(BarrierAppDROP):
         # comma-separated string
         self._additionalBindings = {}
         bindings = []
-        if (len(DLG_ROOT) > 0): bindings = [f"{DLG_ROOT}:{DLG_ROOT}"]
         bindings = [f"{DLG_ROOT}:{DLG_ROOT}",
                     ] # these are the default binding
-        if os.path.exists(f"{DLG_ROOT}/workspace/settings/passwd:/etc/passwd") and\
-            os.path.exists(f"{DLG_ROOT}/workspace/settings/group:/etc/group"):
-                    f"{DLG_ROOT}/workspace/settings/passwd:/etc/passwd",
-                    f"{DLG_ROOT}/workspace/settings/group:/etc/group"
+        if os.path.exists(f"{utils.getDlgWorkDir()}/settings/passwd:/etc/passwd") and\
+            os.path.exists(f"{utils.getDlgWorkDir()}/workspace/settings/group:/etc/group"):
+                    f"{utils.getDlgWorkDir()}/workspace/settings/passwd:/etc/passwd",
+                    f"{utils.getDlgWorkDir()}/workspace/settings/group:/etc/group"
         bindings += self._getArg(kwargs, "additionalBindings", [])
         bindings = bindings.split(",") if isinstance(bindings, str) else bindings
         for binding in bindings:
@@ -351,12 +350,14 @@ class DockerApp(BarrierAppDROP):
             logger.debug("Image '%s' found, no need to pull it", self._image)
 
         # Check if the image specifies a working directory
-        # If it doesn't use the one provided by the user
+        # If it doesn't use the one provided by the user. 
+        # If none is provided use the session directory
         inspection = c.api.inspect_image(self._image)
         logger.debug("Docker Image inspection: %r", inspection)
         self.workdir = inspection.get("ContainerConfig", {}).get("WorkingDir", None)
         if not self.workdir:
-            self.workdir = self._getArg(kwargs, "workingDir", "/")
+            default_workingdir = os.path.join(utils.getDlgWorkDir(), self._session_id)
+            self.workdir = self._getArg(kwargs, "workingDir", default_workingdir)
 
         c.api.close()
 
@@ -398,10 +399,10 @@ class DockerApp(BarrierAppDROP):
         fsInputs = {uid: i for uid, i in iitems if droputils.has_path(i)}
         fsOutputs = {uid: o for uid, o in oitems if droputils.has_path(o)}
         dockerInputs = {
-            uid: DockerPath(DLG_ROOT + i.path) for uid, i in fsInputs.items()
+            uid: DockerPath(utils.getDlgDir() + i.path) for uid, i in fsInputs.items()
         }
         dockerOutputs = {
-            uid: DockerPath(DLG_ROOT + o.path) for uid, o in fsOutputs.items()
+            uid: DockerPath(utils.getDlgDir() + o.path) for uid, o in fsOutputs.items()
         }
         dataURLInputs = {uid: i for uid, i in iitems if not droputils.has_path(i)}
         dataURLOutputs = {uid: o for uid, o in oitems if not droputils.has_path(o)}
@@ -416,7 +417,7 @@ class DockerApp(BarrierAppDROP):
         else:
             cmd = ""
 
-        # We bind the inputs and outputs inside the docker under the DLG_ROOT
+        # We bind the inputs and outputs inside the docker under the utils.getDlgDir()
         # directory, maintaining the rest of their original paths.
         # Outputs are bound only up to their dirname (see class doc for details)
         # Volume bindings are setup for FileDROPs and DirectoryContainers only
@@ -464,10 +465,14 @@ class DockerApp(BarrierAppDROP):
 
         # deal with environment variables
         env = {}
+        env.update({
+            "DLG_UID": self._uid},
+        )
+        if self._session_id: env.update({"DLG_SESSION_ID": self._session_id})
         if self._user is not None:
             env = {
                 "USER": self._user,
-                "DLG_ROOT": DLG_ROOT}
+                "utils.getDlgDir()": utils.getDlgDir()}
         if self._env is not None:
             logger.debug(f"Found environment variable setting: {self._env}")
             if self._env.lower() == "all": # pass on all environment variables from host
