@@ -24,10 +24,8 @@ import io
 import os
 import json
 
-from dlg.ddap_protocol import AppDROPStates
-from dlg.drop import AbstractDROP, DEFAULT_INTERNAL_PARAMETERS, AppDROP, DataDROP
+from dlg.drop import AbstractDROP, DEFAULT_INTERNAL_PARAMETERS
 from dlg.io import MemoryIO
-from dlg.common import Categories
 
 class KeyValueDROP:
 
