@@ -524,8 +524,8 @@ class Session(object):
         return dict(self._graph)
 
     def destroy(self):
-        self.file_handler.close()
         try:
+            self.file_handler.close()
             logging.root.removeHandler(self.file_handler)
         except AttributeError as e:
             print(e)
