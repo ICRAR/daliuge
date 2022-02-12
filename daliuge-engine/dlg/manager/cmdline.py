@@ -262,7 +262,8 @@ def start(options, parser):
     # Start directly
     else:
         working_dir = options.work_dir or "."
-        utils.createDirIfMissing(working_dir)
+        tree = "/settings"
+        utils.createDirIfMissing(working_dir+tree)
         os.chdir(working_dir)
         launchServer(options)
 
