@@ -497,7 +497,7 @@ def prepareUser(DLG_ROOT="."):
         os.makedirs(workdir, exist_ok=True)
     except:
         raise
-    template_dir = os.path.join(os.path.dirname(__file__), ".")
+    template_dir = os.path.dirname(__file__)
     # get current user info
     pw = pwd.getpwuid(os.getuid())
     gr = grp.getgrgid(pw.pw_gid)
