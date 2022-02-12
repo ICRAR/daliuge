@@ -38,7 +38,7 @@ case "$1" in
             exit 0
         fi;;
     "dev")
-        export DLG_ROOT="/tmp/dlg"
+        export DLG_ROOT="$HOME/dlg"
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
         common_prep
         echo "Running Engine development version in background..."
