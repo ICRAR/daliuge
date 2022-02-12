@@ -247,9 +247,6 @@ class DockerApp(BarrierAppDROP):
             raise InvalidDropException(
                 self, "No docker image specified, cannot create DockerApp"
             )
-        self._session_id = (
-            self._dlg_session.sessionId if self._dlg_session is not None else ""
-        )
 
         if ":" not in self._image:
             logger.warning(
@@ -306,19 +303,15 @@ class DockerApp(BarrierAppDROP):
         # on the host system. They are given either as a list or as a
         # comma-separated string
         self._additionalBindings = {}
-        bindings = []
         bindings = [f"{DLG_ROOT}:{DLG_ROOT}",
-                    ] # these are the default binding
-        if os.path.exists(f"{utils.getDlgWorkDir()}/settings/passwd:/etc/passwd") and\
-            os.path.exists(f"{utils.getDlgWorkDir()}/workspace/settings/group:/etc/group"):
-                    f"{utils.getDlgWorkDir()}/workspace/settings/passwd:/etc/passwd",
-                    f"{utils.getDlgWorkDir()}/workspace/settings/group:/etc/group"
+                    f"{DLG_ROOT}/workspace/settings/passwd:/etc/passwd",
+                    f"{DLG_ROOT}/workspace/settings/group:/etc/group"
+        ]
         bindings += self._getArg(kwargs, "additionalBindings", [])
         bindings = bindings.split(",") if isinstance(bindings, str) else bindings
         for binding in bindings:
             if len(binding) == 0:
                 continue
-            logger.debug(f"Volume binding found: {binding}")
             if binding.find(":") == -1:
                 host_path = container_path = binding
             else:
@@ -356,8 +349,9 @@ class DockerApp(BarrierAppDROP):
         logger.debug("Docker Image inspection: %r", inspection)
         self.workdir = inspection.get("ContainerConfig", {}).get("WorkingDir", None)
         # self.workdir = None
+        self._sessionId = (self._dlg_session.sessionId if self._dlg_session else "")
         if not self.workdir:
-            default_workingdir = os.path.join(utils.getDlgWorkDir(), self._session_id)
+            default_workingdir = os.path.join(utils.getDlgWorkDir(), self._sessionId)
             self.workdir = self._getArg(kwargs, "workingDir", default_workingdir)
 
         c.api.close()
@@ -400,10 +394,12 @@ class DockerApp(BarrierAppDROP):
         fsInputs = {uid: i for uid, i in iitems if droputils.has_path(i)}
         fsOutputs = {uid: o for uid, o in oitems if droputils.has_path(o)}
         dockerInputs = {
-            uid: DockerPath(utils.getDlgDir() + i.path) for uid, i in fsInputs.items()
+#            uid: DockerPath(utils.getDlgDir() + i.path) for uid, i in fsInputs.items()
+            uid: DockerPath(i.path) for uid, i in fsInputs.items()
         }
         dockerOutputs = {
-            uid: DockerPath(utils.getDlgDir() + o.path) for uid, o in fsOutputs.items()
+#            uid: DockerPath(utils.getDlgDir() + o.path) for uid, o in fsOutputs.items()
+            uid: DockerPath(o.path) for uid, o in fsOutputs.items()
         }
         dataURLInputs = {uid: i for uid, i in iitems if not droputils.has_path(i)}
         dataURLOutputs = {uid: o for uid, o in oitems if not droputils.has_path(o)}
@@ -427,9 +423,11 @@ class DockerApp(BarrierAppDROP):
             os.path.dirname(o.path) + ":" + os.path.dirname(dockerOutputs[uid].path)
             for uid, o in fsOutputs.items()
         ]
+        logger.debug("Input/output bindings: %r", binds)
         if (
             len(self._additionalBindings.items()) > 0
         ):  # else we end up with a ':' in the mounts list
+            logger.debug("Additional bindings: %r", self._additionalBindings)
             binds += [
                 host_path + ":" + container_path
                 for host_path, container_path in self._additionalBindings.items()
@@ -469,11 +467,13 @@ class DockerApp(BarrierAppDROP):
         env.update({
             "DLG_UID": self._uid},
         )
-        if self._session_id: env.update({"DLG_SESSION_ID": self._session_id})
+        if self._dlg_session:
+            env.update({"DLG_SESSION_ID":self._dlg_session.sessionId})
         if self._user is not None:
-            env = {
+            env.update({
                 "USER": self._user,
-                "DLG_ROOT": utils.getDlgDir()}
+                "DLG_ROOT": utils.getDlgDir()
+                })
         if self._env is not None:
             logger.debug(f"Found environment variable setting: {self._env}")
             if self._env.lower() == "all": # pass on all environment variables from host
