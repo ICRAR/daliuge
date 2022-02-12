@@ -233,6 +233,7 @@ def createDirIfMissing(path):
     """
     try:
         os.makedirs(path)
+        logger.debug(f"created path {path}")
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
