@@ -115,7 +115,7 @@ class lib64_path(install):
 # Core requirements of DALiuGE
 # Keep alpha-sorted PLEASE!
 install_requires = [
-    "wheel",
+    "wheel", # need to get wheel first...
     "bottle",
     "configobj",
     "crc32c",

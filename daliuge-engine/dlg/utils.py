@@ -35,6 +35,8 @@ import threading
 import time
 import zlib
 import re
+import grp
+import pwd
 
 import netifaces
 
@@ -487,6 +489,28 @@ class ExistingProcess(object):
             return
         while self.poll() == None:
             time.sleep(0.1)
+
+
+def prepareUser(DLG_ROOT="."):
+    workdir = f"{DLG_ROOT}/workspace/settings"
+    try:
+        os.makedirs(workdir, exist_ok=True)
+    except:
+        raise
+    template_dir = os.path.join(os.path.dirname(__file__), ".")
+    # get current user info
+    pw = pwd.getpwuid(os.getuid())
+    gr = grp.getgrgid(pw.pw_gid)
+    dgr = grp.getgrnam('docker')
+    with open(os.path.join(workdir, "passwd"), "wt") as file:
+        file.write(open(os.path.join(template_dir, "passwd.template"), "rt").read())
+        file.write(f"{pw.pw_name}:x:{pw.pw_uid}:{pw.pw_gid}:{pw.pw_gecos}:{DLG_ROOT}:/bin/bash\n")
+    with open(os.path.join(workdir, "group"), "wt") as file:
+        file.write(open(os.path.join(template_dir, "group.template"), "rt").read())
+        file.write(f"{gr.gr_name}:x:{gr.gr_gid}:\n")
+        file.write(f"docker:x:{dgr.gr_gid}\n")
+
+    return dgr.gr_gid
 
 
 # Backwards compatibility
