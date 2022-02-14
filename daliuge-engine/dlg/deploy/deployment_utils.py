@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 import json
+import subprocess
 
 
 class ListTokens(object):
@@ -150,3 +151,11 @@ def num_daliuge_nodes(num_nodes: int, run_proxy: bool):
             "Not enough nodes {0} to run DALiuGE.".format(num_nodes)
         )
     return ret
+
+
+def find_node_ips():
+    query = subprocess.check_output([
+        r'kubectl get nodes --selector=kubernetes.io/role!=master -o jsonpath={.items[*].status.addresses[?\(@.type==\"InternalIP\"\)].address}'],
+        shell=True)
+    node_ips = query.decode(encoding='utf-8').split(' ')
+    return node_ips
