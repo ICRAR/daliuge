@@ -34,6 +34,7 @@ import dlg
 import yaml
 import subprocess
 from dlg.common.version import version as dlg_version
+from dlg.deploy.deployment_utils import find_node_ips
 from dlg.restutils import RestClient
 from dlg.deploy.common import submit
 
@@ -66,9 +67,9 @@ def _find_resources(pgt_data):
     pgt = json.loads(pgt_data)
     nodes = list(map(lambda x: x['node'], pgt))
     islands = list(map(lambda x: x['island'], pgt))
-    num_islands = len(dict(zip(islands, nodes)))
-    num_nodes = len(nodes)
-    return num_islands, num_nodes
+    islands = list(set(islands))
+    nodes = list(set(nodes))
+    return islands, nodes
 
 
 class HelmClient:
@@ -99,6 +100,7 @@ class HelmClient:
         self._submit = submit
         self._value_data = value_config if value_config is not None else {}
         self._submission_endpoint = None
+        self._k8s_nodes = find_node_ips()
         if physical_graph_file is not None:
             self._set_physical_graph(physical_graph_file)
 
@@ -113,7 +115,7 @@ class HelmClient:
 
     def _set_physical_graph(self, physical_graph_content):
         self._physical_graph_file = physical_graph_content
-        self._num_islands, self._num_nodes = _find_resources(
+        self._islands, self._nodes = _find_resources(
             self._physical_graph_file)
 
     def create_helm_chart(self, physical_graph_content):
@@ -121,6 +123,9 @@ class HelmClient:
         Translates a physical graph to a kubernetes helm chart.
         For now, it will just try to run everything in a single container.
         """
+        # Add charts
+        # TODO: Add charts to helm
+        self._set_physical_graph(physical_graph_content)
         _write_chart(self._chart_dir, 'Chart.yaml', self._chart_name, self._chart_version,
                      dlg_version,
                      self._chart_vars['home'], self._chart_vars['description'],
@@ -129,11 +134,8 @@ class HelmClient:
         # Update values.yaml
         _write_values(self._chart_dir, self._value_data)
         self._value_data = _read_values(self._chart_dir)
-        # Add charts
-        # TODO: Add charts to helm
-        self._set_physical_graph(physical_graph_content)
         # Update template
-        # TODO: Update templates in helm
+        # TODO: Set number of replicas
 
     def launch_helm(self):
         """
@@ -146,18 +148,25 @@ class HelmClient:
                           f'--values {self._chart_name}{os.sep}custom-values.yaml'
             print(subprocess.check_output([instruction],
                                           shell=True).decode('utf-8'))
+            req_machines = set()
+            req_machines.update(set(self._nodes))
+            req_machines.update(set(self._islands))
+            num_machines = len(req_machines)
+            del req_machines
+            instruction = f'kubectl scale --replicas={num_machines} deployment {self._deploy_name}-deployment'
+            print(subprocess.check_output([instruction],
+                                          shell=True).decode('utf-8'))
             query = str(subprocess.check_output(['kubectl get svc -o wide'], shell=True))
             # WARNING: May be problematic later if multiple services are running
             pattern = r"-service\s*ClusterIP\s*\d+\.\d+\.\d+\.\d+"
             ip_pattern = r"\d+\.\d+\.\d+\.\d+"
             outcome = re.search(pattern, query)
             if outcome:
-                manager_ip = re.search(ip_pattern, outcome.string)
-                self._submission_endpoint = manager_ip.group(0)
+                manager_ip = re.search(ip_pattern, outcome.string).group(0)
+                self._submission_endpoint = manager_ip
                 client = RestClient(self._submission_endpoint,
-                                    self._value_data['service']['daemon']['port'])
-                data = json.dumps({'nodes': ["127.0.0.1"]}).encode('utf-8')
-                time.sleep(5)  # TODO: Deterministic deployment information
+                                    self._value_data['service']['daemon']['port'], timeout=30)
+                data = json.dumps({'nodes': self._nodes}).encode('utf-8')
                 client._POST('/managers/island/start', content=data,
                              content_type='application/json')
                 client._POST('/managers/master/start', content=data,
