@@ -14,6 +14,16 @@ spec:
       labels:
         app: daliuge-daemon
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - daliuge-daemon
+              topologyKey: kubernetes.io/hostname
       volumes:
         - name: dlg-mount
           hostPath:
