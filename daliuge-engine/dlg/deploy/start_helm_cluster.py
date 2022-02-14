@@ -29,8 +29,8 @@ Limitations:
 import argparse
 import json
 import os
-import tempfile
 
+from dlg.deploy.deployment_utils import find_node_ips
 from dlg.dropmake import pg_generator
 from dlg.deploy.helm_client import HelmClient
 
@@ -43,11 +43,11 @@ def get_pg(opts, node_managers: list, data_island_managers: list):
 
     if opts.logical_graph:
         unrolled_graph = pg_generator.unroll(opts.logical_graph)
-        pgt = pg_generator.partition(unrolled_graph, algo='metis', num_partitons=num_nms,
+        pgt = pg_generator.partition(unrolled_graph, algo='mysarkar', num_partitons=num_nms,
                                      num_islands=num_dims)
         del unrolled_graph
     else:
-        with open(opts.physical_graph, 'rb', encoding='utf-8') as pg_file:
+        with open(opts.physical_graph, 'r', encoding='utf-8') as pg_file:
             pgt = json.load(pg_file)
     physical_graph = pg_generator.resource_map(pgt, node_managers + data_island_managers)
     # TODO: Add dumping to log-dir
@@ -56,10 +56,9 @@ def get_pg(opts, node_managers: list, data_island_managers: list):
 
 def start_helm(physical_graph_template, num_nodes: int, deploy_dir: str):
     # TODO: Dynamic helm chart logging dir
-    # TODO: Multiple node deployments
-    available_ips = ["127.0.0.1"]
+    available_ips = find_node_ips()
     pgt = json.loads(physical_graph_template)
-    pgt = pg_generator.partition(pgt, algo='metis', num_partitons=len(available_ips),
+    pgt = pg_generator.partition(pgt, algo='min_num_parts', num_partitons=len(available_ips),
                                  num_islands=len(available_ips))
     pg = pg_generator.resource_map(pgt, available_ips + available_ips)
     helm_client = HelmClient(
@@ -96,6 +95,15 @@ def main():
         help="The filename of the physical graph (template) to deploy",
         default=None,
     )
+    parser.add_argument(
+        "-N",
+        "--num_nodes",
+        action="store",
+        type=int,
+        dest="num_nodes",
+        help="The number of compute nodes you would like to try and deploy",
+        default=1
+    )
 
     options = parser.parse_args()
     if bool(options.logical_graph) == bool(options.physical_graph):
@@ -106,13 +114,16 @@ def main():
         if graph_file_name and not os.path.exists(graph_file_name):
             parser.error(f"Cannot locate graph_file at {graph_file_name}")
 
-    available_ips = ["127.0.0.1"]
-    physical_graph = get_pg(options, available_ips, available_ips)
+    if options.num_nodes <= 0:
+        parser.error("The number of nodes must be a positive integer")
 
+    available_ips = find_node_ips()
+    physical_graph = get_pg(options, available_ips, [available_ips[0]])
+    # TODO: dynamic deployment directory.
     helm_client = HelmClient(
         deploy_name='daliuge-daemon',
         chart_name='daliuge-daemon',
-        deploy_dir='/home/nicholas/dlg_temp/demo'
+        deploy_dir='/home/nicholas/dlg_temp/demo',
     )
     helm_client.create_helm_chart(json.dumps(physical_graph))
     helm_client.launch_helm()
