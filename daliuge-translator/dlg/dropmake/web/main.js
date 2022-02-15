@@ -8,6 +8,12 @@ $(document).ready(function () {
 
     $('#rest_deploy_button').click(restDeploy);
 
+    $('#helm_deploy_button').click(function(){
+        $("#gen_helm_button").val("Generate &amp; Deploy Physical Graph")
+        $("#dlg_helm_deploy").prop("checked", true)
+        $("#pg_helm_form").submit()
+    })
+
     //deploy physical graph button listener
     $("#deploy_button").click(function () {
         $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
