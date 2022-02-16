@@ -47,6 +47,7 @@ from dlg.deploy import common
 from dlg import utils
 from dlg.common import tool
 from dlg.dropmake import pg_generator
+from dlg.translator.tool_commands import parse_partition_algo_params
 from dlg.manager import cmdline
 from dlg.manager.client import NodeManagerClient
 from dlg.manager.constants import (
@@ -299,7 +300,7 @@ def get_pg(opts, nms, dims):
         unrolled = pg_generator.unroll(
             opts.logical_graph, opts.ssid, opts.zerorun, APPS[opts.app]
         )
-        algo_params = tool.parse_partition_algo_params(opts.algo_params)
+        algo_params = parse_partition_algo_params(opts.algo_params)
         pgt = pg_generator.partition(
             unrolled,
             opts.part_algo,

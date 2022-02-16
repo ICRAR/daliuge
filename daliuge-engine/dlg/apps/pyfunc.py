@@ -127,8 +127,8 @@ def import_using_code(code):
 # @param[in] aparam/pickle Pickle//bool/readwrite/False/
 #     \~English Whether the python arguments are pickled.
 # @param[in] aparam/func_defaults Function Defaults//String/readwrite/False/
-#     \~English Mapping from argname to default value. Should match only the last part
-#               of the argnames list
+#     \~English Mapping from argname to default value. Should match only the last part of the argnames list. 
+#               Values are interpreted as Python code literals and that means string values need to be quoted.
 # @param[in] aparam/func_arg_mapping Function Arguments Mapping//String/readwrite/False/
 #     \~English Mapping between argument name and input drop uids
 # @par EAGLE_END
@@ -160,7 +160,7 @@ class PyFuncApp(BarrierAppDROP):
 
     func_name = dlg_string_param("func_name", None)
 
-    # fcode = dlg_bytes_param("func_code", None) # bytes or base64 string
+    # func_code = dlg_bytes_param("func_code", None) # bytes or base64 string
 
     pickle = dlg_bool_param("pickle", True)
 
@@ -168,30 +168,51 @@ class PyFuncApp(BarrierAppDROP):
 
     func_defaults = dlg_dict_param("func_defaults", {})
 
+
     f: Callable
     fdefaults: dict
 
     def initialize(self, **kwargs):
         BarrierAppDROP.initialize(self, **kwargs)
 
-        self.fcode = self._getArg(kwargs, "func_code", None)
-        if not self.func_name and not self.fcode:
+        self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
+
+        self.func_code = self._getArg(kwargs, "func_code", None)
+
+        # check for args in applicationArgs, original still has preference
+        for kw in [
+            "func_code",
+            "func_name",
+            "func_arg_mapping",
+            "pickle",
+            "func_defaults"
+            ]:
+            dum_arg = new_arg = "gIbbERiSH:askldhgol"
+            if kw in self._applicationArgs: # these are the preferred ones now
+                if isinstance(self._applicationArgs[kw]["value"], bool): # always transfer booleans
+                    new_arg = self._applicationArgs[kw]['value']
+                elif self._applicationArgs[kw]["value"]: # only transfer if there is a value
+                    # we allow python expressions as values, means that strings need to be quoted
+                    new_arg = self._applicationArgs[kw]['value']
+                
+            if new_arg != dum_arg:
+                logger.debug(f"Setting {kw} to {new_arg}")
+                self.__setattr__(kw, new_arg)
+
+
+
+        if not self.func_name and not self.func_code:
             raise InvalidDropException(
                 self, "No function specified (either via name or code)"
             )
 
         # Lookup function or import bytecode as a function
-        if not self.fcode:
+        if not self.func_code:
             self.f = import_using_name(self, self.func_name)
         else:
-            if not isinstance(self.fcode, bytes):
-                self.fcode = base64.b64decode(self.fcode.encode("utf8"))
-            self.f = import_using_code(self.fcode)
-
-        # Mapping from argname to default value. Should match only the last part
-        # of the argnames list
-        if isinstance(self.func_defaults, str):
-            self.func_defaults = ast.literal_eval(self.func_defaults)
+            if not isinstance(self.func_code, bytes):
+                self.func_code = base64.b64decode(self.func_code.encode("utf8"))
+            self.f = import_using_code(self.func_code)
 
         if self.pickle:
             self.fdefaults = {name: deserialize_data(d) for name, d in self.func_defaults.items()}
