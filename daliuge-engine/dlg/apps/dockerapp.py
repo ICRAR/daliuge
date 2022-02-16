@@ -257,22 +257,24 @@ class DockerApp(BarrierAppDROP):
 
         self._command = self._getArg(kwargs, "command", None)
 
-        if not self._command:
+        self._noBash = False
+        if not self._command or self._command[:2].strip() == "%%":
             logger.warning(
-                "No command specified. Assume that a default command is executed in the container"
+                "Assume a default command is executed in the container"
             )
-            # The above also means that we can't pass applicationArgs
-            # raise InvalidDropException(
-            #     self, "No command specified, cannot create DockerApp")
-        else:
+            self._command = self._command.strip()[2:].strip() if self._command else ""
+            self._noBash = True
+            # This makes sure that we can retain any command defined in the image, but still be
+            # able to add any arguments straight after. This requires to use the placeholder string
+            # "%%" at the start of the command, else it is interpreted as a normal command.
 
-            # construct the actual command line from all application parameters
-            argumentString = droputils.serialize_applicationArgs(self._applicationArgs, \
-                self._argumentPrefix)
-            # complete command including all additional parameters and optional redirects
-            cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
-            cmd = cmd.strip()
-            self._command = cmd
+        # construct the actual command line from all application parameters
+        argumentString = droputils.serialize_applicationArgs(self._applicationArgs, \
+            self._argumentPrefix, self._paramValueSeparator)
+        # complete command including all additional parameters and optional redirects
+        cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
+        cmd = cmd.strip()
+        self._command = cmd
 
         # The user used to run the process in the docker container is now always the user
         # who originally started the DALiuGE process as well. The information is passed through
@@ -494,11 +496,12 @@ class DockerApp(BarrierAppDROP):
 
 
         # Wrap everything inside bash
-        if len(cmd) > 0:
+        if len(cmd) > 0 and not self._noBash:
             cmd = '/bin/bash -c "%s"' % (utils.escapeQuotes(cmd, singleQuotes=False))
             logger.debug("Command after user creation and wrapping is: %s", cmd)
         else:
-            logger.debug("No command specified, executing container without!")
+            logger.debug("executing container withdefault cmd and wrapped arguments")
+            cmd = f"{utils.escapeQuotes(cmd, singleQuotes=False)}"
 
         c = DockerApp._get_client()
 
