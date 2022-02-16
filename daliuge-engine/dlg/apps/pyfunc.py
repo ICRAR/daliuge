@@ -216,8 +216,14 @@ class PyFuncApp(BarrierAppDROP):
 
         if self.pickle:
             self.fdefaults = {name: deserialize_data(d) for name, d in self.func_defaults.items()}
-        else:
+        elif isinstance(self.func_defaults, str):
+            self.func_defaults = ast.literal_eval(self.func_defaults)
+        if isinstance(self.func_defaults, dict) and \
+            list(self.func_defaults.keys()) == ["kwargs", "args"]:
             self.fdefaults = self.func_defaults
+        else:
+            logger.error(f"Wrong format or type for function defaults for {self.f.__name__}: {self.func_defaults}, {type(self.func_defaults)}")
+            raise ValueError
 
         logger.debug(f"Default values for function {self.func_name}: {self.fdefaults}")
 
@@ -239,7 +245,14 @@ class PyFuncApp(BarrierAppDROP):
 
         # Keyword arguments are made up by the default values plus the inputs
         # that match one of the keyword argument names
+        n_args = (len(self.fdefaults["args"]), len(self.fdefaults["kwargs"]))
         argnames = inspect.getfullargspec(self.f).args
+        n_args_req = len(argnames)
+        if n_args_req > sum(n_args):
+            logger.warning(f"Function {self.f.__name__} expects {n_args_req} argument defaults")
+            logger.warning(f"only {sum(n_args)} found!")
+            logger.error("Please correct the function default specification")
+            raise ValueError
 
         kwargs = {
             name: inputs.pop(uid)
@@ -247,8 +260,26 @@ class PyFuncApp(BarrierAppDROP):
             if name in self.fdefaults or name not in argnames
         }
 
-        # The rest of the inputs are the positional arguments
+        # The rest of the inputs are missing arguments
         args = list(inputs.values())
+
+        if len(kwargs) + n_args[1] < n_args_req: # There are kwargs missing fill with defaults
+            def_kwargs = self.func_defaults["kwargs"]
+            for kw in def_kwargs.keys():
+                if kw not in kwargs:
+                    kwargs.update({kw: def_kwargs[kw]})
+
+
+        # fill the rest with default args
+        n_missing = n_args_req - len(kwargs) - len(args)
+        if n_missing > 0:
+            logger.warning(f"Expected {n_args_req} inputs for {self.f.__name__} missing {n_missing}")
+            logger.debug(f"Trying to fill with arg defaults")
+            for a in range(n_missing):
+                try:
+                    args.append(self.fdefaults["args"][a])
+                except IndexError:
+                    logger.error("Insufficient number of function defaults?", exc_info=True)
 
         logger.debug(f"Running {self.func_name} with args={args}, kwargs={kwargs}")
         result = self.f(*args, **kwargs)
