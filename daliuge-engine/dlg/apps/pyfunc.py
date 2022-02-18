@@ -143,11 +143,31 @@ class PyFuncApp(BarrierAppDROP):
     being written to its corresponding output.
 
     Users indicate the function to be wrapped via the ``func_name`` parameter.
+    In this case func_name needs to specify a funtion in the standard form
+
+    ``module.function``
+
+    and the module needs to be accessible on the PYTHONPATH of the DALiuGE 
+    engine. Note that the engine is expanding the standard PYTHONPATH with
+    DLG_ROOT/code. That directory is always available, even if the engine is
+    running in a docker container.
+
     Otherwise, users can also *send* over the python code using the ``func_code``
     parameter. The code needs to be base64-encoded and produced with the marshal
     module of the same Python version used to run DALiuGE.
 
-    Both inputs and outputs are serialized using the pickle protocol.
+    Both inputs and outputs are (de-)serialized using the pickle protocol if the value
+    of the respective boolean component parameter is set to True. This is also
+    applied to func_defaults and func_arg_mappings.
+
+    In addition to the input mapping the implementation also allows to set defaults
+    both in the function itself and in a logical graph. If set in the logical graph
+    using the func_defaults parameter, the defaults need to be specified as a 
+    dictionary of the form
+    
+    ``{"kwargs":{"kw1_name":kw1_value, "kw2_name":kw2_value}, "args":[arg1, arg2]}``
+
+    The positional args will be used in order of appearance.
     """
 
     component_meta = dlg_component(
@@ -218,14 +238,18 @@ class PyFuncApp(BarrierAppDROP):
             self.fdefaults = {name: deserialize_data(d) for name, d in self.func_defaults.items()}
         elif isinstance(self.func_defaults, str):
             self.func_defaults = ast.literal_eval(self.func_defaults)
-        if isinstance(self.func_defaults, dict) and \
+        if isinstance(self.func_defaults, dict) and len(self.func_defaults) > 0 and \
             list(self.func_defaults.keys()) == ["kwargs", "args"]:
-            self.fdefaults = self.func_defaults
+            pass
+        elif isinstance(self.func_defaults, (dict, str)) and len(self.func_defaults) == 0:
+            pass
+        elif isinstance(self.func_defaults, dict):
+            self.func_defaults = {"kwargs": self.func_defaults, "args":[]}
         else:
             logger.error(f"Wrong format or type for function defaults for {self.f.__name__}: {self.func_defaults}, {type(self.func_defaults)}")
             raise ValueError
 
-        logger.debug(f"Default values for function {self.func_name}: {self.fdefaults}")
+        logger.debug(f"Default values for function {self.func_name}: {self.func_defaults}")
 
         # Mapping between argument name and input drop uids
         logger.debug(f"Input mapping: {self.func_arg_mapping}")
@@ -243,27 +267,33 @@ class PyFuncApp(BarrierAppDROP):
         for uid, drop in self._inputs.items():
             inputs[uid] = all_contents(drop)
 
+
+        self.funcargs = {"kwargs":{}, "args":[]}
+
         # Keyword arguments are made up by the default values plus the inputs
         # that match one of the keyword argument names
-        n_args = (len(self.fdefaults["args"]), len(self.fdefaults["kwargs"]))
+        n_def = len(self.func_defaults) 
+        # if defaults dict has not been specified at all we'll go ahead anyway
+        n_args = (len(self.func_defaults["args"]), len(self.func_defaults["kwargs"])) if n_def else (0,0)
         argnames = inspect.getfullargspec(self.f).args
         n_args_req = len(argnames)
-        if n_args_req > sum(n_args):
+        if n_def and (n_args_req > (sum(n_args))):
             logger.warning(f"Function {self.f.__name__} expects {n_args_req} argument defaults")
             logger.warning(f"only {sum(n_args)} found!")
-            logger.error("Please correct the function default specification")
-            raise ValueError
+            logger.warning("Please correct the function default specification")
+            #raise ValueError
 
         kwargs = {
             name: inputs.pop(uid)
             for name, uid in self.func_arg_mapping.items()
             if name in self.fdefaults or name not in argnames
         }
-
+        self.funcargs["kwargs"] = kwargs
         # The rest of the inputs are missing arguments
         args = list(inputs.values())
+        self.funcargs["args"] = args
 
-        if len(kwargs) + n_args[1] < n_args_req: # There are kwargs missing fill with defaults
+        if len(kwargs) + n_args[1] + len(args) < n_args_req: # There are kwargs missing fill with defaults
             def_kwargs = self.func_defaults["kwargs"]
             for kw in def_kwargs.keys():
                 if kw not in kwargs:
@@ -277,9 +307,9 @@ class PyFuncApp(BarrierAppDROP):
             logger.debug(f"Trying to fill with arg defaults")
             for a in range(n_missing):
                 try:
-                    args.append(self.fdefaults["args"][a])
+                    args.append(self.func_defaults["args"][a])
                 except IndexError:
-                    logger.error("Insufficient number of function defaults?", exc_info=True)
+                    logger.warning("Insufficient number of function defaults?", exc_info=True)
 
         logger.debug(f"Running {self.func_name} with args={args}, kwargs={kwargs}")
         result = self.f(*args, **kwargs)
