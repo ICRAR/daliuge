@@ -627,6 +627,15 @@ def main():
 
     dim_proc = None
     # start the NM
+    if remote.is_nm:
+        nm_proc = start_node_mgr(
+            log_dir,
+            remote.my_ip,
+            logv=logv,
+            max_threads=options.max_threads,
+            host=None if options.all_nics else remote.my_ip,
+            event_listeners=options.event_listeners,
+                )
     if options.num_islands == 1:
         if remote.is_proxy:
             # Wait until the Island Manager is open
