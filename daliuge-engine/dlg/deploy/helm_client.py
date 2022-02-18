@@ -153,12 +153,12 @@ class HelmClient:
             req_machines.update(set(self._islands))
             num_machines = len(req_machines)
             del req_machines
-            instruction = f'kubectl scale --replicas={num_machines} deployment {self._deploy_name}-deployment'
-            print(subprocess.check_output([instruction],
-                                          shell=True).decode('utf-8'))
+            # instruction = f'kubectl scale --replicas={num_machines} statefulset/{self._deploy_name}-deployment'
+            #print(subprocess.check_output([instruction],
+            #                              shell=True).decode('utf-8'))
             query = str(subprocess.check_output(['kubectl get svc -o wide'], shell=True))
             # WARNING: May be problematic later if multiple services are running
-            pattern = r"-service\s*ClusterIP\s*\d+\.\d+\.\d+\.\d+"
+            pattern = r"-service\s*NodePort\s*\d+\.\d+\.\d+\.\d+"
             ip_pattern = r"\d+\.\d+\.\d+\.\d+"
             outcome = re.search(pattern, query)
             if outcome:
@@ -166,7 +166,8 @@ class HelmClient:
                 self._submission_endpoint = manager_ip
                 client = RestClient(self._submission_endpoint,
                                     self._value_data['service']['daemon']['port'], timeout=30)
-                data = json.dumps({'nodes': self._nodes}).encode('utf-8')
+                data = json.dumps({'nodes': ['127.0.0.1']}).encode('utf-8')
+                time.sleep(5)
                 client._POST('/managers/island/start', content=data,
                              content_type='application/json')
                 client._POST('/managers/master/start', content=data,
