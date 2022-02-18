@@ -47,6 +47,7 @@ def prepareUser(DLG_ROOT="."):
     with open(os.path.join(workdir, "group"), "wt") as file:
         file.write(open(os.path.join(template_dir, "group.template"), "rt").read())
         file.write(f"{gr.gr_name}:x:{gr.gr_gid}:\n")
-        file.write(f"docker:x:{dgr.gr_gid}\n")
+        file.write(f"docker:x:{dgr.gr_gid}:{pw.pw_name}\n")
+        file.write(f"sudo:x:27:{gr.gr_name}\n")
 
     return dgr.gr_gid
