@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: daliuge-daemon-deployment
   labels:
@@ -9,21 +9,22 @@ spec:
   selector:
     matchLabels:
       app: daliuge-daemon
+  serviceName: "daliuge"
   template:
     metadata:
       labels:
         app: daliuge-daemon
     spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app
-                    operator: In
-                    values:
-                      - daliuge-daemon
-              topologyKey: kubernetes.io/hostname
+      #affinity:
+      #  podAntiAffinity:
+      #    requiredDuringSchedulingIgnoredDuringExecution:
+      #      - labelSelector:
+      #          matchExpressions:
+      #            - key: app
+      #              operator: In
+      #              values:
+      #                - daliuge-daemon
+      #        topologyKey: kubernetes.io/hostname
       volumes:
         - name: dlg-mount
           hostPath:
