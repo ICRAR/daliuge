@@ -123,7 +123,7 @@ def main():
     helm_client = HelmClient(
         deploy_name='daliuge-daemon',
         chart_name='daliuge-daemon',
-        deploy_dir='/home/nicholas/dlg_temp/demo',
+        deploy_dir='~/dlg_temp/demo',
     )
     helm_client.create_helm_chart(json.dumps(physical_graph))
     helm_client.launch_helm()
