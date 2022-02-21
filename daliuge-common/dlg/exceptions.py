@@ -24,15 +24,18 @@ Module containing common exceptions used throughout Daliuge.
 In particular DaliugeException should be the root of all our exceptions.
 """
 
+
 class DaliugeException(Exception):
     """
     The parent of all exceptions thrown by Daliuge
     """
 
+
 class InvalidDropException(DaliugeException):
     """
     An exception thrown when a Drop is created with a set of invalid arguments.
     """
+
     def __init__(self, drop, reason):
         DaliugeException.__init__(self, drop, reason)
         if isinstance(drop, (list, tuple)):
@@ -41,16 +44,22 @@ class InvalidDropException(DaliugeException):
             self.oid = drop.oid
             self.uid = drop.uid
         self.reason = reason
-        self.msg = "InvalidDropException <Drop %s / %s>: %s" % (self.uid, self.oid, self.reason)
+        self.msg = "InvalidDropException <Drop %s / %s>: %s" % (
+            self.uid,
+            self.oid,
+            self.reason,
+        )
 
     def __str__(self, *args, **kwargs):
         return self.msg
+
 
 class InvalidRelationshipException(DaliugeException):
     """
     An exception thrown when a relationship between two Drops has been
     instructed but is invalid in nature.
     """
+
     def __init__(self, rel, reason):
         DaliugeException.__init__(self, rel, reason)
         self.rel = rel
@@ -60,11 +69,13 @@ class InvalidRelationshipException(DaliugeException):
     def __str__(self, *args, **kwargs):
         return self.msg
 
+
 class InvalidGraphException(DaliugeException):
     """
     An exception thrown when an invalid graph, or part of a graph, is given to
     Daliuge.
     """
+
 
 class NoDropException(DaliugeException):
     """
@@ -82,6 +93,7 @@ class NoDropException(DaliugeException):
             ret += ". Reason: %s" % (self._reason)
         return ret
 
+
 class NoSessionException(DaliugeException):
     """
     An exception thrown when a session ID is pointing to a non-existing session
@@ -97,6 +109,7 @@ class NoSessionException(DaliugeException):
         if self._reason:
             ret += ". Reason: %s" % (self._reason)
         return ret
+
 
 class SessionAlreadyExistsException(DaliugeException):
     """
@@ -115,11 +128,13 @@ class SessionAlreadyExistsException(DaliugeException):
             ret += ". Reason: %s" % (self._reason)
         return ret
 
+
 class InvalidSessionState(DaliugeException):
     """
     An exception thrown when an operation is requested on a session that is not
     in the expected state for that operation.
     """
+
 
 class SubManagerException(DaliugeException):
     """

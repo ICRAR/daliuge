@@ -136,9 +136,9 @@ def create_small_seq_graph():
     G = nx.DiGraph()
     G.add_edge(1, 2)
     G.add_edge(2, 3)
-    G.node[1]['weight'] = 5
-    G.node[2]['weight'] = 4
-    G.node[3]['weight'] = 7
+    G.nodes[1]['weight'] = 5
+    G.nodes[2]['weight'] = 4
+    G.nodes[3]['weight'] = 7
     #print("")
     return G, 7
 
@@ -149,10 +149,10 @@ def create_medium_seq_graph():
     G.add_edge(4, 6)
     G.add_edge(5, 6)
     G.add_edge(6, 7)
-    G.node[4]['weight'] = 3
-    G.node[5]['weight'] = 2
-    G.node[6]['weight'] = 6
-    G.node[7]['weight'] = 1
+    G.nodes[4]['weight'] = 3
+    G.nodes[5]['weight'] = 2
+    G.nodes[6]['weight'] = 6
+    G.nodes[7]['weight'] = 1
     return G, 7
 
 def create_small_parral_graph():
@@ -160,17 +160,17 @@ def create_small_parral_graph():
     G.add_edge(1, 2)
     G.add_edge(1, 3)
 
-    G.node[1]['weight'] = 5
-    G.node[2]['weight'] = 6
-    G.node[3]['weight'] = 7
+    G.nodes[1]['weight'] = 5
+    G.nodes[2]['weight'] = 6
+    G.nodes[3]['weight'] = 7
     return G, 13
 
 def create_medium_parral_graph():
     G = create_small_parral_graph()[0]
     G.add_edge(2, 4)
     G.add_edge(2, 5)
-    G.node[4]['weight'] = 3
-    G.node[5]['weight'] = 4
+    G.nodes[4]['weight'] = 3
+    G.nodes[5]['weight'] = 4
     return G, 14
 
 if __name__ == "__main__":

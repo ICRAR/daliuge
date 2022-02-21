@@ -39,22 +39,22 @@ from .exceptions import InvalidDropException
 
 logger = logging.getLogger(__name__)
 
+
 class ResultTransmitter(BarrierAppDROP):
-    '''Collects data from all inputs and transmits it to whomever connects to
-    the given host/port'''
+    """Collects data from all inputs and transmits it to whomever connects to
+    the given host/port"""
 
     def initialize(self, **kwargs):
         BarrierAppDROP.initialize(self, input_error_threshold=100, **kwargs)
-        self.host = self._getArg(kwargs, 'host', '127.0.0.1')
-        self.port = self._getArg(kwargs, 'port', None)
+        self.host = self._getArg(kwargs, "host", "127.0.0.1")
+        self.port = self._getArg(kwargs, "port", None)
         if self.port is None:
             raise InvalidDropException(self, "Missing port parameter")
 
     def run(self):
-
         def read_result(x):
             if x.status == DROPStates.ERROR:
-                return 'Error'
+                return "Error"
             return pickle.loads(droputils.allDropContents(x))
 
         results = map(read_result, self.inputs)  # @UndefinedVariable
@@ -70,24 +70,27 @@ class ResultTransmitter(BarrierAppDROP):
         client, _ = s.accept()
         with contextlib.closing(client):
             client = client.makefile("wb")
-            client.write(struct.pack('>i', len(results)))
+            client.write(struct.pack(">i", len(results)))
             client.write(results)
 
 
 def _get_client(**kwargs):
 
-    if 'client' in kwargs:
-        return kwargs['client']
+    if "client" in kwargs:
+        return kwargs["client"]
 
     from .manager.client import NodeManagerClient
     from .manager import constants
-    host = kwargs.get('host', '127.0.0.1')
-    port = kwargs.get('port', constants.NODE_DEFAULT_REST_PORT)
-    timeout = kwargs.get('timeout', None)
+
+    host = kwargs.get("host", "127.0.0.1")
+    port = kwargs.get("port", constants.NODE_DEFAULT_REST_PORT)
+    timeout = kwargs.get("timeout", None)
     return NodeManagerClient(host, port, timeout)
+
 
 def _is_list_of_delayeds(x):
     return isinstance(x, (list, tuple)) and len(x) > 0 and isinstance(x[0], _DataDrop)
+
 
 def compute(value, **kwargs):
     """Returns the result of the (possibly) delayed computation by sending
@@ -101,8 +104,16 @@ def compute(value, **kwargs):
     port = 10000
     # Add one final application that will wait for all results
     # and transmit them back to us
-    transmitter_oid = '-1'
-    transmitter = dropdict({"type": 'app', 'app': 'dlg.dask_emulation.ResultTransmitter', 'oid': transmitter_oid, 'port': port, 'nm': 'result transmitter'})
+    transmitter_oid = "-1"
+    transmitter = dropdict(
+        {
+            "type": "app",
+            "app": "dlg.dask_emulation.ResultTransmitter",
+            "oid": transmitter_oid,
+            "port": port,
+            "nm": "result transmitter",
+        }
+    )
     for leaf_oid in droputils.get_leaves(graph.values()):
         graph[leaf_oid].addConsumer(transmitter)
     graph[transmitter_oid] = transmitter
@@ -110,21 +121,22 @@ def compute(value, **kwargs):
     graph = list(graph.values())
 
     # Submit and wait
-    session_id = 'session-%f' % time.time()
+    session_id = "session-%f" % time.time()
     client = _get_client(**kwargs)
     client.create_session(session_id)
     client.append_graph(session_id, graph)
     client.deploy_session(session_id, completed_uids=droputils.get_roots(graph))
 
-    timeout = kwargs.get('timeout', None)
-    s = utils.connect_to('localhost', port, timeout)
+    timeout = kwargs.get("timeout", None)
+    s = utils.connect_to("localhost", port, timeout)
     s.settimeout(timeout)
     with contextlib.closing(s):
         s = s.makefile("rb")
-        nbytes = struct.unpack('>i', s.read(4))[0]
+        nbytes = struct.unpack(">i", s.read(4))[0]
         ret = pickle.loads(s.read(nbytes))
         logger.info("Received %r from graph computation", ret)
         return ret
+
 
 class _DelayedDrop(object):
 
@@ -152,7 +164,7 @@ class _DelayedDrop(object):
 
     @property
     def oid(self):
-        return self.dropdict['oid']
+        return self.dropdict["oid"]
 
     def compute(self, **kwargs):
         return compute(self, **kwargs)
@@ -171,7 +183,7 @@ class _DelayedDrop(object):
             return
         oid = str(self.next_drop_oid)
         dd = self.dropdict
-        dd['oid'] = oid
+        dd["oid"] = oid
         visited.add(self)
         graph[oid] = dd
         logger.debug("Appended %r/%s to the Physical Graph", self, oid)
@@ -201,16 +213,26 @@ class _DelayedDrop(object):
         up_dd = upstream.dropdict
         if isinstance(self, _DataDrop):
             self_dd.addProducer(up_dd)
-            logger.debug("Set %r/%s as producer of %r/%s", upstream, upstream.oid, self, self.oid)
+            logger.debug(
+                "Set %r/%s as producer of %r/%s", upstream, upstream.oid, self, self.oid
+            )
         else:
             self_dd.addInput(up_dd)
-            logger.debug("Set %r/%s as input of %r/%s", upstream, upstream.oid, self, self.oid)
+            logger.debug(
+                "Set %r/%s as input of %r/%s", upstream, upstream.oid, self, self.oid
+            )
 
 
 class _Listifier(BarrierAppDROP):
     """Returns a list with all objects as contents"""
+
     def run(self):
-        self.outputs[0].write(pickle.dumps([pickle.loads(droputils.allDropContents(x)) for x in self.inputs]))
+        self.outputs[0].write(
+            pickle.dumps(
+                [pickle.loads(droputils.allDropContents(x)) for x in self.inputs]
+            )
+        )
+
 
 class _DelayedDrops(_DelayedDrop):
     """One or more _DelayedDrops treated as a single item"""
@@ -245,10 +267,13 @@ class _DelayedDrops(_DelayedDrop):
         return self.drops[i]
 
     def make_dropdict(self):
-        return dropdict({"type": 'app', 'app': 'dlg.dask_emulation._Listifier', 'nm': 'listifier'})
+        return dropdict(
+            {"type": "app", "app": "dlg.dask_emulation._Listifier", "nm": "listifier"}
+        )
 
     def __repr__(self):
         return "<_DelayedDrops n=%d>" % (len(self.drops),)
+
 
 class _AppDrop(_DelayedDrop):
     """Defines a PyFuncApp drop for a given function `f`"""
@@ -257,7 +282,7 @@ class _AppDrop(_DelayedDrop):
         _DelayedDrop.__init__(self)
         self.f = f
         self.fname = None
-        if hasattr(f, '__name__'):
+        if hasattr(f, "__name__"):
             self.fname = f.__name__
         self.fcode, self.fdefaults = pyfunc.serialize_func(f)
         self.original_kwarg_names = []
@@ -268,15 +293,17 @@ class _AppDrop(_DelayedDrop):
 
         self.kwarg_names = list(self.original_kwarg_names)
         self.kwarg_names.reverse()
-        my_dropdict = dropdict({"type": 'app', 'app': 'dlg.apps.pyfunc.PyFuncApp', 'func_arg_mapping': {}})
+        my_dropdict = dropdict(
+            {"type": "app", "app": "dlg.apps.pyfunc.PyFuncApp", "func_arg_mapping": {}}
+        )
         if self.fname is not None:
-            simple_fname = self.fname.split('.')[-1]
-            my_dropdict['func_name'] = self.fname
-            my_dropdict['nm'] = simple_fname
+            simple_fname = self.fname.split(".")[-1]
+            my_dropdict["func_name"] = self.fname
+            my_dropdict["nm"] = simple_fname
         if self.fcode is not None:
-            my_dropdict['func_code'] = utils.b2s(base64.b64encode(self.fcode))
+            my_dropdict["func_code"] = utils.b2s(base64.b64encode(self.fcode))
         if self.fdefaults:
-            my_dropdict['func_defaults'] = self.fdefaults
+            my_dropdict["func_defaults"] = self.fdefaults
         return my_dropdict
 
     def _add_upstream(self, dep):
@@ -284,8 +311,10 @@ class _AppDrop(_DelayedDrop):
         if self.kwarg_names:
             name = self.kwarg_names.pop()
             if name is not None:
-                logger.debug("Adding %s/%s to function mapping for %s", name, dep.oid, self.fname)
-                self.dropdict['func_arg_mapping'][name] = dep.oid
+                logger.debug(
+                    "Adding %s/%s to function mapping for %s", name, dep.oid, self.fname
+                )
+                self.dropdict["func_arg_mapping"][name] = dep.oid
 
     def _to_delayed_arg(self, arg):
 
@@ -302,7 +331,12 @@ class _AppDrop(_DelayedDrop):
 
     def __call__(self, *args, **kwargs):
 
-        logger.debug("Delayed function %s called with %d args and %d kwargs", self.fname, len(args), len(kwargs))
+        logger.debug(
+            "Delayed function %s called with %d args and %d kwargs",
+            self.fname,
+            len(args),
+            len(kwargs),
+        )
         for arg in args:
             self.inputs.append(self._to_delayed_arg(arg))
             self.original_kwarg_names.append(None)
@@ -319,7 +353,10 @@ class _AppDrop(_DelayedDrop):
     def __repr__(self):
         return "<_DelayedApp fname=%s, nout=%s>" % (self.fname, str(self.nout))
 
+
 _no_data = object()
+
+
 class _DataDrop(_DelayedDrop):
     """Defines an in-memory drop"""
 
@@ -332,15 +369,16 @@ class _DataDrop(_DelayedDrop):
         logger.debug("Created %r", self)
 
     def make_dropdict(self):
-        my_dropdict = dropdict({"type": 'plain', 'storage': Categories.MEMORY})
+        my_dropdict = dropdict({"type": "plain", "storage": Categories.MEMORY})
         if not self.producer:
-            my_dropdict['pydata'] = pyfunc.serialize_data(self.pydata)
+            my_dropdict["pydata"] = pyfunc.serialize_data(self.pydata)
         return my_dropdict
 
     def __repr__(self):
         if not self.producer:
             return "<_DataDrop, pydata=%r>" % (self.pydata,)
         return "<_DataDrop, producer=%r>" % self.producer
+
 
 class _DataDropSequence(_DataDrop):
     """One or more _DataDrops that can be subscribed"""
@@ -363,10 +401,11 @@ class _DataDropSequence(_DataDrop):
     def __repr__(self):
         return "<_DataDropSequence nout=%d, producer=%r>" % (self.nout, self.producer)
 
+
 def delayed(x, *args, **kwargs):
     """Like dask.delayed, but quietly swallowing anything other than `nout`"""
-    if 'nout' in kwargs:
-        nout = kwargs['nout']
+    if "nout" in kwargs:
+        nout = kwargs["nout"]
     elif args:
         nout = args[0]
     else:
