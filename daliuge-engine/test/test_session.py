@@ -28,14 +28,14 @@ from dlg.exceptions import InvalidGraphException
 from dlg.droputils import DROPWaiterCtx
 from dlg.common import Categories
 
+
 class TestSession(unittest.TestCase):
-
     def test_sessionStates(self):
-        with Session('1') as s:
+        with Session("1") as s:
             self.assertEqual(SessionStates.PRISTINE, s.status)
-            self.assertRaises(Exception, s.linkGraphParts, '', '', 0)
+            self.assertRaises(Exception, s.linkGraphParts, "", "", 0)
 
-            s.addGraphSpec([{"oid":"A", "type":"container"}])
+            s.addGraphSpec([{"oid": "A", "type": "container"}])
             self.assertEqual(SessionStates.BUILDING, s.status)
 
             s.deploy()
@@ -43,90 +43,169 @@ class TestSession(unittest.TestCase):
 
             # Now we can't do any of these
             self.assertRaises(Exception, s.deploy)
-            self.assertRaises(Exception, s.addGraphSpec, '')
-            self.assertRaises(Exception, s.linkGraphParts, '', '', 0)
+            self.assertRaises(Exception, s.addGraphSpec, "")
+            self.assertRaises(Exception, s.linkGraphParts, "", "", 0)
 
     def test_sessionStates_noDrops(self):
         # No drops created, we can deploy right away
-        with Session('1') as s:
+        with Session("1") as s:
             self.assertEqual(SessionStates.PRISTINE, s.status)
             s.deploy()
             self.assertEqual(SessionStates.FINISHED, s.status)
 
-        with Session('2') as s:
-            self.assertRaises(InvalidGraphException, s.deploy, completedDrops=['a'])
+        with Session("2") as s:
+            self.assertRaises(InvalidGraphException, s.deploy, completedDrops=["a"])
 
     def test_addGraphSpec(self):
-        with Session('1') as s:
-            s.addGraphSpec([{"oid":"A", "type":"container"}])
-            s.addGraphSpec([{"oid":"B", "type":"container"}])
-            s.addGraphSpec([{"oid":"C", "type":"container"}])
+        with Session("1") as s:
+            s.addGraphSpec([{"oid": "A", "type": "container"}])
+            s.addGraphSpec([{"oid": "B", "type": "container"}])
+            s.addGraphSpec([{"oid": "C", "type": "container"}])
 
             # Adding an existing DROP
-            self.assertRaises(Exception, s.addGraphSpec, [{"oid":"A", "type":"container"}])
+            self.assertRaises(
+                Exception, s.addGraphSpec, [{"oid": "A", "type": "container"}]
+            )
 
             # Adding invalid specs
-            self.assertRaises(Exception, s.addGraphSpec, [{"oid":"D", "type":"app"}]) # missing "storage"
-            self.assertRaises(Exception, s.addGraphSpec, [{"oid":"D", "type":"plain", "storage":"invalid"}]) # invalid "storage"
-            self.assertRaises(Exception, s.addGraphSpec, [{"oid":"D", "type":"invalid"}]) # invalid "type"
-            self.assertRaises(Exception, s.addGraphSpec, [{"oid":"D", "type":"app", "storage":Categories.NULL, "outputs":["X"]}]) # missing X DROP
+            self.assertRaises(
+                Exception, s.addGraphSpec, [{"oid": "D", "type": "app"}]
+            )  # missing "storage"
+            self.assertRaises(
+                Exception,
+                s.addGraphSpec,
+                [{"oid": "D", "type": "plain", "storage": "invalid"}],
+            )  # invalid "storage"
+            self.assertRaises(
+                Exception, s.addGraphSpec, [{"oid": "D", "type": "invalid"}]
+            )  # invalid "type"
+            self.assertRaises(
+                Exception,
+                s.addGraphSpec,
+                [
+                    {
+                        "oid": "D",
+                        "type": "app",
+                        "storage": Categories.NULL,
+                        "outputs": ["X"],
+                    }
+                ],
+            )  # missing X DROP
 
     def test_linking(self):
-        with Session('1') as s:
-            s.addGraphSpec([{"oid":"A", "type":"container"}])
-            s.addGraphSpec([{"oid":"B", "type":"app", "storage":Categories.NULL, "app":"dlg.apps.crc.CRCApp"}])
-            s.addGraphSpec([{"oid":"C", "type":"container"}])
+        with Session("1") as s:
+            s.addGraphSpec([{"oid": "A", "type": "container"}])
+            s.addGraphSpec(
+                [
+                    {
+                        "oid": "B",
+                        "type": "app",
+                        "storage": Categories.NULL,
+                        "app": "dlg.apps.crc.CRCApp",
+                    }
+                ]
+            )
+            s.addGraphSpec([{"oid": "C", "type": "container"}])
 
             # Link them now
-            s.linkGraphParts('A', 'B', DROPLinkType.CONSUMER)
-            s.linkGraphParts('B', 'C', DROPLinkType.OUTPUT)
+            s.linkGraphParts("A", "B", DROPLinkType.CONSUMER)
+            s.linkGraphParts("B", "C", DROPLinkType.OUTPUT)
 
             # Deploy and check that the actual DROPs are linked together
             s.deploy()
             roots = s.roots
             self.assertEqual(1, len(roots))
             a = s.roots[0]
-            self.assertEqual('A', a.oid)
+            self.assertEqual("A", a.oid)
             self.assertEqual(1, len(a.consumers))
             b = a.consumers[0]
-            self.assertEqual('B', b.oid)
+            self.assertEqual("B", b.oid)
             self.assertEqual(1, len(b.outputs))
             c = b.outputs[0]
-            self.assertEqual('C', c.oid)
+            self.assertEqual("C", c.oid)
 
     def test_cancel(self):
-        '''Cancels a whole graph execution'''
-        with Session('1') as s:
-            s.addGraphSpec([{"oid":"A", "type":"plain", "storage":Categories.MEMORY, 'consumers': ['B']},
-                            {"oid":"B", "type":"app", "app":"dlg.apps.simple.SleepApp", "sleepTime": 2},
-                            {"oid":"C", "type":"plain", "storage":Categories.MEMORY, 'producers': ['B']}])
+        """Cancels a whole graph execution"""
+        with Session("1") as s:
+            s.addGraphSpec(
+                [
+                    {
+                        "oid": "A",
+                        "type": "plain",
+                        "storage": Categories.MEMORY,
+                        "consumers": ["B"],
+                    },
+                    {
+                        "oid": "B",
+                        "type": "app",
+                        "app": "dlg.apps.simple.SleepApp",
+                        "sleepTime": 2,
+                    },
+                    {
+                        "oid": "C",
+                        "type": "plain",
+                        "storage": Categories.MEMORY,
+                        "producers": ["B"],
+                    },
+                ]
+            )
             s.deploy()
             self.assertEqual(SessionStates.RUNNING, s.status)
             s.cancel()
             self.assertEqual(SessionStates.CANCELLED, s.status)
-            for uid in 'ABC':
+            for uid in "ABC":
                 self.assertEqual(DROPStates.CANCELLED, s.drops[uid].status)
-            self.assertEqual(AppDROPStates.CANCELLED, s.drops['B'].execStatus)
+            self.assertEqual(AppDROPStates.CANCELLED, s.drops["B"].execStatus)
 
     def test_partial_cancel(self):
-        '''Like test_cancel, but only part of the graph should be cancelled'''
-        with Session('1') as s:
-            s.addGraphSpec([{"oid":"A", "type":"plain", "storage":Categories.MEMORY, 'consumers': ['B']},
-                            {"oid":"B", "type":"app", "app":"dlg.apps.simple.SleepApp", "sleepTime": 0},
-                            {"oid":"C", "type":"plain", "storage":Categories.MEMORY, 'producers': ['B'], 'consumers': ['D']},
-                            {"oid":"D", "type":"app", "app":"dlg.apps.simple.SleepApp", "sleepTime": 10},
-                            {"oid":"E", "type":"plain", "storage":Categories.MEMORY, 'producers': ['D']}])
+        """Like test_cancel, but only part of the graph should be cancelled"""
+        with Session("1") as s:
+            s.addGraphSpec(
+                [
+                    {
+                        "oid": "A",
+                        "type": "plain",
+                        "storage": Categories.MEMORY,
+                        "consumers": ["B"],
+                    },
+                    {
+                        "oid": "B",
+                        "type": "app",
+                        "app": "dlg.apps.simple.SleepApp",
+                        "sleepTime": 0,
+                    },
+                    {
+                        "oid": "C",
+                        "type": "plain",
+                        "storage": Categories.MEMORY,
+                        "producers": ["B"],
+                        "consumers": ["D"],
+                    },
+                    {
+                        "oid": "D",
+                        "type": "app",
+                        "app": "dlg.apps.simple.SleepApp",
+                        "sleepTime": 10,
+                    },
+                    {
+                        "oid": "E",
+                        "type": "plain",
+                        "storage": Categories.MEMORY,
+                        "producers": ["D"],
+                    },
+                ]
+            )
             s.deploy()
             self.assertEqual(SessionStates.RUNNING, s.status)
 
             # Move first three drops to completed, D should take longer to execute
-            with DROPWaiterCtx(self, s.drops['C'], 1):
-                s.drops['A'].write(b'x')
-                s.drops['A'].setCompleted()
+            with DROPWaiterCtx(self, s.drops["C"], 1):
+                s.drops["A"].write(b"x")
+                s.drops["A"].setCompleted()
             # Cancel the session, A, B and C should remain COMPLETED
             s.cancel()
             self.assertEqual(SessionStates.CANCELLED, s.status)
-            for uid in 'ABC':
+            for uid in "ABC":
                 self.assertEqual(DROPStates.COMPLETED, s.drops[uid].status)
-            for uid in 'DE':
+            for uid in "DE":
                 self.assertEqual(DROPStates.CANCELLED, s.drops[uid].status)

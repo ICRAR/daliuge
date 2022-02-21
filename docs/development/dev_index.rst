@@ -19,6 +19,7 @@ Please refer to the |daliuge| :doc:`../intro` for a top-level introduction to th
  :maxdepth: 2
 
  dev_intro
+ template_primer
  app_development/app_index
  data_development/data_index
 

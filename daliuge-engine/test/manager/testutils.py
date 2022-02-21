@@ -25,33 +25,38 @@ import json
 from dlg import utils
 import codecs
 
+
 def _get(url, port):
-    conn = http.client.HTTPConnection('localhost', port, timeout=3)
-    conn.request('GET', '/api' + url)
+    conn = http.client.HTTPConnection("localhost", port, timeout=3)
+    conn.request("GET", "/api" + url)
     return conn.getresponse(), conn
+
 
 def get(test, url, port):
     res, conn = _get(url, port)
     test.assertEqual(http.HTTPStatus.OK, res.status)
-    jsonRes = json.load(codecs.getreader('utf-8')(res))
+    jsonRes = json.load(codecs.getreader("utf-8")(res))
     res.close()
     conn.close()
     return jsonRes
 
+
 def post(test, url, port, content=None, mimeType=None):
-    conn = http.client.HTTPConnection('localhost', port, timeout=3)
-    headers = {mimeType or 'Content-Type': 'application/json'} if content else {}
-    conn.request('POST', '/api' + url, content, headers)
+    conn = http.client.HTTPConnection("localhost", port, timeout=3)
+    headers = {mimeType or "Content-Type": "application/json"} if content else {}
+    conn.request("POST", "/api" + url, content, headers)
     res = conn.getresponse()
     test.assertEqual(http.HTTPStatus.OK, res.status)
     conn.close()
 
+
 def delete(test, url, port):
-    conn = http.client.HTTPConnection('localhost', port, timeout=3)
-    conn.request('DELETE', '/api' + url)
+    conn = http.client.HTTPConnection("localhost", port, timeout=3)
+    conn.request("DELETE", "/api" + url)
     res = conn.getresponse()
     test.assertEqual(http.HTTPStatus.OK, res.status)
     conn.close()
+
 
 class terminating(object):
     """

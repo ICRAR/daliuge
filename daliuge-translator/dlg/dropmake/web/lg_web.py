@@ -32,6 +32,7 @@ import sys
 import threading
 import time
 import warnings
+from jsonschema import validate, ValidationError
 
 from bottle import (
     route,
@@ -42,15 +43,12 @@ from bottle import (
     template,
     redirect,
     response,
-    HTTPResponse
+    HTTPResponse,
 )
 import bottle
 import pkg_resources
 
-from urllib.parse import (
-    parse_qs,
-    urlparse
-)
+from urllib.parse import parse_qs, urlparse
 
 from ... import common, restutils
 from ...clients import CompositeManagerClient
@@ -59,6 +57,10 @@ from ..pg_manager import PGManager
 from ..scheduler import SchedulerException
 
 logger = logging.getLogger(__name__)
+
+# Patched to be larger to accomodate large config drops
+bottle.BaseRequest.MEMFILE_MAX = 1024 * 512
+
 
 def file_as_string(fname, enc="utf8"):
     b = pkg_resources.resource_string(__name__, fname)  # @UndefinedVariable
@@ -85,6 +87,7 @@ ALGO_PARAMS = [
     ("max_mem", int),
 ]  # max_mem is only relevant for the old editor, not used in EAGLE
 
+LG_SCHEMA_PATH = "/daliuge/dlg-lg.graph.schema"
 
 def lg_path(lg_name):
     return "{0}/{1}".format(lg_dir, lg_name)
@@ -290,6 +293,36 @@ def get_schedule_mat():
         return "Failed to get schedule matrices for {0}: {1}".format(pgt_id, ex)
 
 
+@get("/gen_pg_helm")
+def gen_pg_helm():
+    """
+    RESTful interface to deploy a PGT as a K8s helm chart.
+    """
+    # Get pgt_data
+    from ...deploy.start_helm_cluster import start_helm
+    pgt_id = request.query.get("pgt_id")
+    pgtp = pg_mgr.get_pgt(pgt_id)
+    if pgtp is None:
+        response.status = 404
+        return "PGT(P) with id {0} not found in the Physical Graph Manager".format(
+            pgt_id
+        )
+
+    pgtpj = pgtp._gojs_json_obj
+    logger.info("PGTP: %s" % pgtpj)
+    num_partitions = len(list(filter(lambda n: 'isGroup' in n, pgtpj['nodeDataArray'])))
+    # Send pgt_data to helm_start
+    try:
+        start_helm(pgtp, num_partitions, pgt_dir)
+    except restutils.RestClientException as ex:
+        response.status = 500
+        print(traceback.format_exc())
+        return "Fail to deploy physical graph: {0}".format(ex)
+    # TODO: Not sure what to redirect to yet
+    response.status = 200
+    return "Inspect your k8s dashboard for deployment status"
+
+
 @get("/gen_pg")
 def gen_pg():
     """
@@ -298,7 +331,7 @@ def gen_pg():
     """
     # if the 'deploy' checkbox is not checked, then the form submission will NOT contain a 'dlg_mgr_deploy' field
     deploy = request.query.get("dlg_mgr_deploy") is not None
-    mprefix = ''
+    mprefix = ""
     pgt_id = request.query.get("pgt_id")
     pgtp = pg_mgr.get_pgt(pgt_id)
     if pgtp is None:
@@ -306,23 +339,31 @@ def gen_pg():
         return "PGT(P) with id {0} not found in the Physical Graph Manager".format(
             pgt_id
         )
+
+    pgtpj = pgtp._gojs_json_obj
+    logger.info("PGTP: %s" % pgtpj)
+    num_partitions = 0
+    num_partitions = len(list(filter(lambda n: 'isGroup' in n, pgtpj['nodeDataArray'])))
     surl = urlparse(request.url)
 
+    mhost = ""
+    mport = -1
+    mprefix = ""
     q = parse_qs(surl.query)
-    if 'dlg_mgr_url' in q:
-        murl = q['dlg_mgr_url'][0]
+    if "dlg_mgr_url" in q:
+        murl = q["dlg_mgr_url"][0]
         mparse = urlparse(murl)
         try:
-            (mhost, mport) = mparse.netloc.split(':')
+            (mhost, mport) = mparse.netloc.split(":")
             mport = int(mport)
         except:
             mhost = mparse.netloc
-            if mparse.scheme == 'http':
+            if mparse.scheme == "http":
                 mport = 80
-            elif mparse.scheme == 'https':
-                mport = 443            
+            elif mparse.scheme == "https":
+                mport = 443
         mprefix = mparse.path
-        if mprefix[-1] == '/':
+        if mprefix[-1] == "/":
             mprefix = mprefix[:-1]
     else:
         mhost = request.query.get("dlg_mgr_host")
@@ -332,16 +373,29 @@ def gen_pg():
     logger.debug("Manager host: %s" % mhost)
     logger.debug("Manager port: %s" % mport)
     logger.debug("Manager prefix: %s" % mprefix)
-    
+
     if mhost is None:
-        response.status = 500
-        return "Must specify DALiUGE manager host"
+        if request.query.get("tpl_nodes_len"):
+            nnodes = int(request.query.get("tpl_nodes_len"))
+            nnodes = num_partitions
+        else:
+            response.status = 500
+            return "Must specify DALiUGE manager host or tpl_nodes_len"
+
+        pg_spec = pgtp.to_pg_spec([], ret_str=False, tpl_nodes_len=nnodes)
+        response.content_type = "application/json"
+        response.set_header(
+            "Content-Disposition", 'attachment; filename="%s"' % (pgt_id)
+        )
+        return json.dumps(pg_spec)
     try:
-        mgr_client = CompositeManagerClient(host=mhost, port=mport, url_prefix=mprefix, timeout=30)
+        mgr_client = CompositeManagerClient(
+            host=mhost, port=mport, url_prefix=mprefix, timeout=30
+        )
         # 1. get a list of nodes
         node_list = mgr_client.nodes()
         # 2. mapping PGTP to resources (node list)
-        pg_spec = pgtp.to_pg_spec([mhost] + node_list, ret_str=False)
+        pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
 
         if deploy:
             dt = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S.%f")
@@ -357,10 +411,13 @@ def gen_pg():
             # mgr_client.deploy_session(ssid, completed_uids=[])
             # print "session deployed"
             # 3. redirect to the master drop manager
-            redirect("http://{0}:{1}{2}/session?sessionId={3}".format(mhost, mport, mprefix, ssid))
+            redirect(
+                "http://{0}:{1}{2}/session?sessionId={3}".format(
+                    mhost, mport, mprefix, ssid
+                )
+            )
         else:
-            response.content_type = 'application/json'
-            response.set_header("Content-Disposition", "attachment; filename=%s" % (pgt_id))
+            response.content_type = "application/json"
             return json.dumps(pg_spec)
     except restutils.RestClientException as re:
         response.status = 500
@@ -379,9 +436,9 @@ def gen_pg_spec():
     RESTful interface to convert a PGT(P) into pg_spec
     """
     try:
-        pgt_id         = request.json.get("pgt_id");
-        node_list      = request.json.get("node_list");
-        manager_host   = request.json.get("manager_host");
+        pgt_id = request.json.get("pgt_id")
+        node_list = request.json.get("node_list")
+        manager_host = request.json.get("manager_host")
         # try:
         #     manager_port   = int(request.json.get("manager_port"));
         # except:
@@ -414,8 +471,8 @@ def gen_pg_spec():
         pg_spec = pgtp.to_pg_spec([manager_host] + node_list, ret_str=False)
         # 3. get list of root nodes
         root_uids = common.get_roots(pg_spec)
-        response.content_type = 'application/json'
-        return json.dumps({'pg_spec':pg_spec,'root_uids':list(root_uids)})
+        response.content_type = "application/json"
+        return json.dumps({"pg_spec": pg_spec, "root_uids": list(root_uids)})
     except Exception as ex:
         response.status = 500
         print(traceback.format_exc())
@@ -451,7 +508,7 @@ def gen_pgt():
             pgt_view_json_name=pgt_id,
             partition_info=part_info,
             title="Physical Graph Template%s"
-            % ("" if num_partitions == 0 else "Partitioning"),
+                  % ("" if num_partitions == 0 else "Partitioning"),
         )
     except GraphException as ge:
         response.status = 500
@@ -476,12 +533,22 @@ def gen_pgt_post():
     # Retrieve the graph name.
     reqform = request.forms
     lg_name = reqform.get("lg_name")
-    # print('lg_name', lg_name)
 
     # Retrieve json data.
     json_string = reqform.get("json_data")
     try:
         logical_graph = json.loads(json_string)
+
+        # load LG schema
+        lg_schema = None
+        if os.path.exists(LG_SCHEMA_PATH):
+            with open(LG_SCHEMA_PATH, "r") as schema_file:
+                lg_schema = json.load(schema_file)
+
+        # validate JSON (if schema was found)
+        if lg_schema is not None:
+            validate(logical_graph, lg_schema)
+
         # LG -> PGT
         pgt = unroll_and_partition_with_params(logical_graph, reqform)
         par_algo = reqform.get("algo", "none")
@@ -495,8 +562,12 @@ def gen_pgt_post():
             tpl,
             pgt_view_json_name=pgt_id,
             partition_info=part_info,
-            title="Physical Graph Template {}".format("" if par_algo == "none" else "Partitioning"),
+            title="Physical Graph Template {}".format(
+                "" if par_algo == "none" else "Partitioning"
+            ),
         )
+    except ValidationError as ve:
+        return "Validation Error {1}: {0}".format(str(ve), lg_name)
     except GraphException as ge:
         trace_msg = traceback.format_exc()
         print(trace_msg)
@@ -576,12 +647,14 @@ def root():
         tpl,
         pgt_view_json_name=None,
         partition_info=None,
-        title="Physical Graph Template"
+        title="Physical Graph Template",
     )
 
 
 def run(parser, args):
-    warnings.warn("Running the translator from daliuge is deprecated", DeprecationWarning)
+    warnings.warn(
+        "Running the translator from daliuge is deprecated", DeprecationWarning
+    )
     epilog = """
 If you have no Logical Graphs yet and want to see some you can grab a copy
 of those maintained at:
@@ -674,6 +747,7 @@ https://github.com/ICRAR/daliuge-logical-graphs
     # Simple and easy
     def handler(*_args):
         raise KeyboardInterrupt
+
     signal.signal(signal.SIGTERM, handler)
     signal.signal(signal.SIGINT, handler)
 

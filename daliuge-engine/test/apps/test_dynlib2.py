@@ -143,7 +143,12 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
                 "print_stats": print_stats,
                 "bufsize": bufsize,
             },
-            {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
+            {
+                "oid": "C",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["B"],
+            },
         ]
         rels = [DROPRel("A", DROPLinkType.INPUT, "B")]
         a_data = os.urandom(32)
@@ -160,7 +165,12 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
         =============    =======
         """
         g1 = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["B"]},
+            {
+                "oid": "A",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "consumers": ["B"],
+            },
             {
                 "oid": "B",
                 "type": "app",
@@ -199,7 +209,12 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
                 "print_stats": print_stats,
                 "bufsize": bufsize,
             },
-            {"oid": "D", "type": "plain", "storage": Categories.MEMORY, "producers": ["C"]},
+            {
+                "oid": "D",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["C"],
+            },
         ]
         rels = [
             DROPRel("A", DROPLinkType.INPUT, "C"),
@@ -240,7 +255,12 @@ class IntraNMDynlibProcAppTest(IntraNMMixIng, unittest.TestCase):
                 "bufsize": bufsize,
                 "crash_and_burn": True,
             },
-            {"oid": "D", "type": "plain", "storage": Categories.MEMORY, "producers": ["C"]},
+            {
+                "oid": "D",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["C"],
+            },
         ]
         rels = [
             DROPRel("A", DROPLinkType.INPUT, "C"),
@@ -297,4 +317,6 @@ class TestExceptionRaised(unittest.TestCase):
             )
             dynlib_app.run()
 
-        self.assertTrue("Couldn't allocate memory for read/write buffer" in str(context.exception))
+        self.assertTrue(
+            "Couldn't allocate memory for read/write buffer" in str(context.exception)
+        )

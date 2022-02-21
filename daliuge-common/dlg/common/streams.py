@@ -41,7 +41,7 @@ class ZlibCompressedStream(object):
     def readall(self):
 
         if not self.compressor:
-            return b''
+            return b""
 
         content = self.content
         response = []
@@ -58,7 +58,7 @@ class ZlibCompressedStream(object):
 
         response.append(compressor.flush())
         self.compressor = None
-        return b''.join(response)
+        return b"".join(response)
 
     def read(self, n=-1):
 
@@ -66,9 +66,9 @@ class ZlibCompressedStream(object):
             return self.readall()
 
         if self.buflen >= n:
-            data = b''.join(self.buf)
+            data = b"".join(self.buf)
             self.buf = [data[n:]]
-            self.buflen -= n;
+            self.buflen -= n
             return data[:n]
 
         # Dump contents of previous buffer
@@ -76,14 +76,14 @@ class ZlibCompressedStream(object):
         written = 0
         if self.buflen:
             written += self.buflen
-            data = b''.join(self.buf)
+            data = b"".join(self.buf)
             response.append(data)
             self.buf = []
             self.buflen = 0
 
         compressor = self.compressor
         if not compressor:
-            return b''.join(response)
+            return b"".join(response)
 
         while True:
 
@@ -113,11 +113,10 @@ class ZlibCompressedStream(object):
             if written == n or not compressor:
                 break
 
-        return b''.join(response)
+        return b"".join(response)
 
 
 class JSONStream(object):
-
     def __init__(self, objects):
         if isinstance(objects, (list, tuple, types.GeneratorType)):
             self.objects = enumerate(objects)
@@ -137,7 +136,7 @@ class JSONStream(object):
 
         if self.buflen >= n:
             self.buflen -= n
-            data = b''.join(self.buf)
+            data = b"".join(self.buf)
             self.buf = [data[n:]]
             return data[:n]
 
@@ -146,28 +145,28 @@ class JSONStream(object):
 
         # Dump contents of previous buffer
         if self.buflen:
-            data = b''.join(self.buf)
+            data = b"".join(self.buf)
             written += self.buflen
             response.append(data)
             self.buf = []
             self.buflen = 0
 
         if self.nreads and not self.isiter:
-            return b''.join(response)
+            return b"".join(response)
         self.nreads += 1
 
         while True:
 
             if self.isiter:
                 try:
-                    i,obj = next(self.objects)
-                    json_out = b'[' if i == 0 else b','
-                    json_out += json.dumps(obj).encode('latin1')
+                    i, obj = next(self.objects)
+                    json_out = b"[" if i == 0 else b","
+                    json_out += json.dumps(obj).encode("latin1")
                 except StopIteration:
-                    json_out = b']'
-                    self.isiter = False # not nice, but prevents more reads
+                    json_out = b"]"
+                    self.isiter = False  # not nice, but prevents more reads
             else:
-                json_out = json.dumps(self.objects).encode('latin1')
+                json_out = json.dumps(self.objects).encode("latin1")
 
             if json_out:
                 size = len(json_out)
@@ -191,4 +190,4 @@ class JSONStream(object):
             if not self.isiter:
                 break
 
-        return b''.join(response)
+        return b"".join(response)

@@ -31,7 +31,7 @@ import pyarrow.plasma as plasma
 logger = logging.getLogger(__name__)
 
 
-class PlasmaFlightClient():
+class PlasmaFlightClient:
     def __init__(self, socket: str, scheme: str = "grpc+tcp", connection_args={}):
         """
         Args:
@@ -45,14 +45,23 @@ class PlasmaFlightClient():
 
     def list_flights(self, location: str):
         flight_client = paf.FlightClient(
-            f"{self._scheme}://{location}", **self._connection_args)
+            f"{self._scheme}://{location}", **self._connection_args
+        )
         return flight_client.list_flights()
 
-    def get_flight(self, object_id: plasma.ObjectID, location: Optional[str]) -> paf.FlightStreamReader:
-        descriptor = paf.FlightDescriptor.for_path(object_id.binary().hex().encode('utf-8'))
+    def get_flight(
+        self, object_id: plasma.ObjectID, location: Optional[str]
+    ) -> paf.FlightStreamReader:
+        descriptor = paf.FlightDescriptor.for_path(
+            object_id.binary().hex().encode("utf-8")
+        )
         if location is not None:
-            logger.debug(f"connecting to {self._scheme}://{location} with descriptor {descriptor}")
-            flight_client = paf.FlightClient(f"{self._scheme}://{location}", **self._connection_args)
+            logger.debug(
+                f"connecting to {self._scheme}://{location} with descriptor {descriptor}"
+            )
+            flight_client = paf.FlightClient(
+                f"{self._scheme}://{location}", **self._connection_args
+            )
             info = flight_client.get_flight_info(descriptor)
             for endpoint in info.endpoints:
                 logger.debug(f"using endpoint locations {endpoint.locations}")
@@ -69,7 +78,9 @@ class PlasmaFlightClient():
     def put(self, data: memoryview, object_id: plasma.ObjectID):
         self.plasma_client.put_raw_buffer(data, object_id)
 
-    def get(self, object_id: plasma.ObjectID, owner: Optional[str] = None) -> memoryview:
+    def get(
+        self, object_id: plasma.ObjectID, owner: Optional[str] = None
+    ) -> memoryview:
         logger.debug(f"PlasmaFlightClient Get {object_id}")
         if self.plasma_client.contains(object_id):
             # first check if the local store contains the object
@@ -92,9 +103,15 @@ class PlasmaFlightClient():
             return True
         # check remote
         if owner is not None:
-            client = paf.FlightClient(f"{self._scheme}://{owner}", **self._connection_args)
+            client = paf.FlightClient(
+                f"{self._scheme}://{owner}", **self._connection_args
+            )
             try:
-                info = client.get_flight_info(paf.FlightDescriptor.for_path(object_id.binary().hex().encode('utf-8')))
+                info = client.get_flight_info(
+                    paf.FlightDescriptor.for_path(
+                        object_id.binary().hex().encode("utf-8")
+                    )
+                )
                 return True
             except:
                 return False

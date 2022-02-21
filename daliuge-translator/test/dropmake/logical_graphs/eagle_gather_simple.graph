@@ -417,7 +417,7 @@
                 {
                     "text": "File path",
                     "name": "filepath",
-                    "value": "/tmp/.dlg/var/dlg_home/testdata/test.empty.ms",
+                    "value": "/tmp/dlg/var/dlg_home/testdata/test.empty.ms",
                     "description": "",
                     "readonly": false,
                     "type": "Unknown"

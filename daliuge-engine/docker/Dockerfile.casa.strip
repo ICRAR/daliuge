@@ -8,7 +8,7 @@ FROM icrar/daliuge-common:${VCS_TAG}
 RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends gcc python3-pip curl python3-casacore
 
 COPY / /daliuge
-RUN . /root/dlg/bin/activate && cd /daliuge && \
+RUN . /root/dlg/bin/activate && pip install wheel && cd /daliuge && \
     pip install . 
 
 EXPOSE 9000
@@ -21,6 +21,6 @@ EXPOSE 8002
 # enable the virtualenv path from daliuge-common
 ENV VIRTUAL_ENV=/root/dlg
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-ENV DLG_ROOT="/tmp/.dlg/var/dlg_home"
+ENV DLG_ROOT="/tmp/dlg/var/dlg_home"
 
 CMD ["dlg", "daemon", "-vv"]

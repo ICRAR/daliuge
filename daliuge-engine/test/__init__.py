@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 
+
 def __setupTestLogging():
 
     import os
@@ -27,12 +28,13 @@ def __setupTestLogging():
 
     # If we indicated a logging level for the tests we use that level
     # for our framework (and enable logging)
-    level = os.environ.get('DALIUGE_TESTS_LOGLEVEL', None)
+    level = os.environ.get("DALIUGE_TESTS_LOGLEVEL", None)
     if level:
         fmt = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
         logging.basicConfig(format=fmt, level=level)
     else:
         logging.root.addHandler(logging.NullHandler())
+
 
 __setupTestLogging()
 del __setupTestLogging

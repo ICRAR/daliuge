@@ -19,12 +19,12 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-'''
+"""
 A very simple implementation of an HSM, without knowing much actually about how
 HSMs work and what they actually offer in terms of APIs.
 
 @author: rtobar
-'''
+"""
 
 import logging
 
@@ -33,17 +33,17 @@ from ..hsm import store
 
 logger = logging.getLogger(__name__)
 
-class HierarchicalStorageManager(object):
 
+class HierarchicalStorageManager(object):
     def __init__(self):
         self._stores = []
         self.addStore(store.MemoryStore())
-        self.addStore(store.FileSystemStore('/', '/tmp/daliuge_tfiles'))
+        self.addStore(store.FileSystemStore("/", "/tmp/daliuge_tfiles"))
 
     def addStore(self, newStore):
-        '''
+        """
         @param newStore store.AbstractStore
-        '''
+        """
         logger.debug("Adding store to HSM: " + str(newStore))
         self._stores.append(newStore)
 

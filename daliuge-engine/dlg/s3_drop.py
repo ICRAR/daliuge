@@ -30,17 +30,35 @@ from .io import ErrorIO
 from .meta import dlg_string_param, dlg_list_param
 
 
+##
+# @brief S3
+# @details A 'bucket' object available on Amazon's Simple Storage Service (S3)
+# @par EAGLE_START
+# @param category S3
+# @param tag template
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False/
+#     \~English Estimated size of the data contained in this node
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False/
+#     \~English Is this node the end of a group?
+# @param[in] cparam/bucket Bucket//String/readwrite/False/
+#     \~English The S3 Bucket
+# @param[in] cparam/object_name Object Name//String/readwrite/False/
+#     \~English The S3 Object
+# @param[in] cparam/profile_name Profile Name//String/readwrite/False/
+#     \~English The S3 Profile
+# @par EAGLE_END
 class S3DROP(AbstractDROP):
     """
     A DROP that points to data stored in S3
     """
-    bucket = dlg_string_param('bucket', None)
-    key = dlg_string_param('key', None)
-    storage_class = dlg_string_param('storage_class', None)
-    tags = dlg_list_param('tags', None)
-    aws_access_key_id = dlg_string_param('aws_access_key_id', None)
-    aws_secret_access_key = dlg_string_param('aws_secret_access_key', None)
-    profile_name = dlg_string_param('profile_name', None)
+
+    bucket = dlg_string_param("bucket", None)
+    key = dlg_string_param("key", None)
+    storage_class = dlg_string_param("storage_class", None)
+    tags = dlg_list_param("tags", None)
+    aws_access_key_id = dlg_string_param("aws_access_key_id", None)
+    aws_secret_access_key = dlg_string_param("aws_secret_access_key", None)
+    profile_name = dlg_string_param("profile_name", None)
 
     def __init__(self, oid, uid, **kwargs):
         super().__init__(oid, uid, **kwargs)
@@ -52,7 +70,7 @@ class S3DROP(AbstractDROP):
         Returns the path to the S3 object
         :return: the path
         """
-        return '{}/{}'.format(self.bucket, self.key)
+        return "{}/{}".format(self.bucket, self.key)
 
     @property
     def dataURL(self):
@@ -65,7 +83,7 @@ class S3DROP(AbstractDROP):
         except botocore.exceptions.ClientError as e:
             # If a client error is thrown, then check that it was a 404 error.
             # If it was a 404 error, then the bucket does not exist.
-            error_code = int(e.response['Error']['Code'])
+            error_code = int(e.response["Error"]["Code"])
             if error_code == 404:
                 return False
 
@@ -74,7 +92,7 @@ class S3DROP(AbstractDROP):
         except botocore.exceptions.ClientError as e:
             # If a client error is thrown, then check that it was a 404 error.
             # If it was a 404 error, then the bucket does not exist.
-            error_code = int(e.response['Error']['Code'])
+            error_code = int(e.response["Error"]["Code"])
             if error_code == 404:
                 return False
 
@@ -97,14 +115,17 @@ class S3DROP(AbstractDROP):
 
     def _get_s3_connection(self):
         if self._s3 is None:
-            if (self.profile_name is not None
-                    or self.aws_access_key_id is not None
-                    or self.aws_secret_access_key is not None):
+            if (
+                self.profile_name is not None
+                or self.aws_access_key_id is not None
+                or self.aws_secret_access_key is not None
+            ):
                 session = boto3.session.Session(
                     profile_name=self.profile_name,
                     aws_access_key_id=self.aws_access_key_id,
-                    aws_secret_access_key=self.aws_secret_access_key)
-                self._s3 = session.resource('s3')
+                    aws_secret_access_key=self.aws_secret_access_key,
+                )
+                self._s3 = session.resource("s3")
             else:
-                self._s3 = boto3.resource('s3')
+                self._s3 = boto3.resource("s3")
         return self._s3
