@@ -1,11 +1,10 @@
-{{- if .Values.master.enabled -}}
 apiVersion: v1
 kind: Service
 metadata:
   name: daliuge-daemon-service
 spec:
   selector:
-    app: daliuge-daemon-{{ .Values.deploy_id }}
+    statefulset.kubernetes.io/pod-name: daliuge-daemon-0
   ports:
     - protocol: TCP
       name: {{ .Values.service.daemon.name }}
@@ -19,4 +18,3 @@ spec:
       name: {{ .Values.service.nodemgr.name }}
       port: {{ .Values.service.nodemgr.port }}
       targetPort: {{ .Values.containers.ports.nodemanagerPort }}
-{{- end }}
