@@ -7,6 +7,8 @@
  <meta name="viewport" content="width=device-width, maximum-scale=1.0">
  <link rel="shortcut icon" type="image/jpg" href="/static/src/icons/liuFavIcon.svg"/>
 
+ <script src="/static/src/d3/d3.v5.min.js"></script>
+ <script src="/static/src/d3/dagre-d3.min.js"></script>
  <script src="/static/src/jquery.min.js"></script>
  <script src="/static/src/bootstrap/js/bootstrap.bundle.min.js"></script>
  <script src="/static/src/html2canvas.min.js"></script>
@@ -15,6 +17,7 @@
  <script src="/static/src/echarts-dagre.min.js"></script>
  <script src="/static/src/lib/fflate/index.js"></script>
  <script src="/static/src/require.js"></script>
+ <script src="/static/main.js"></script>
 
  <!-- CSS -->
 <link rel="stylesheet" href="/static/src/bootstrap/css/bootstrap.min.css">
@@ -150,5 +153,99 @@
 
     <!-- init script includes require, this links main js and echarts -->
     <script src="/static/graph_init.js"></script>
+    <script>
+    view_as_graph()
+    function view_as_graph() {
+
+        /* Remove the list-related stuff */
+        d3.select('#pg-list').remove()
+        d3.select('#pg-progress-bar').remove();
+
+        const heightValue = 300;
+        const widthValue = 600;
+        // Set up zoom support
+        var svg = d3.select("svg"),
+        svgGroup = svg.append("g");
+        var inner = svg.select("g");
+
+        // svg.call(d3.zoom().on("zoom", function () {
+        // 	inner.attr("transform", "translate(" + d3.event.translate + ")"
+        // 			+ "scale(" + d3.event.scale + ")");
+        // }))
+
+        var zoom = d3.zoom().on("zoom", function () {//Add mouse wheel zoom event
+        inner.attr("transform", d3.event.transform);
+        });
+        svg.call(zoom);
+
+        var g = new dagreD3.graphlib.Graph({compound:true})
+        .setGraph({
+            nodesep : 70,
+            ranksep : 50,
+            rankdir : "LR", // Left-to-right layout
+            marginx : 20,
+            marginy : 20
+        })
+        .setDefaultEdgeLabel(function () { return {}; });
+
+        var render = getRender();
+        function drawGraph() {
+            inner.call(render, g);
+            // render(inner,g)
+        }
+
+        //zoom WIP
+        // var initialScale = 0.30;
+        // root.call(zoom.transform, d3.zoomIdentity.translate((fullWidth - width * initialScale) / 2, 20).scale(initialScale));
+
+        // svg.attr('height', g.graph().height * initialScale + 40);
+
+        var orientButtons = d3.selectAll('#graph-orientation-buttons button');
+            orientButtons.on('click', function() {
+            direction = d3.event.currentTarget.value;
+            orientButtons.attr("disabled", "disabled");
+            orientButtons.filter("[value=" + direction + "]").classed("active", true);
+            orientButtons.filter(":not([value=" + direction + "])").classed("active", false);
+            g.graph().rankdir = direction;
+            drawGraph();
+            orientButtons.attr("disabled", null);
+            status_update_handler()
+        });
+
+        // This works assuming that the status list comes in the same order
+        // that the graph was created, which is true
+        // Anyway, we could double-check in the future
+        var delay = 1000;
+        var graph_update_handler = drawGraphForDrops.bind(null, g, drawGraph);
+        var status_update_handler = function(statuses) {
+            d3.selectAll('g.nodes').selectAll('g.node')
+            .data(statuses).attr("class", function(s) {
+                return "node " + get_status_name(s);
+            });
+        };
+
+        $.ajax({
+            //get data
+            url: "/pgt_jsonbody?pgt_name="+pgtName,
+            dataType: "json",
+            type: 'get',
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+                if (404 == XMLHttpRequest.status) {
+                alert('Server cannot locate physical graph file ' + pgtName.toString())
+                } else {
+                alert('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
+                }
+            },
+            success: function(data){
+                console.log(data)
+                graph_update_handler(data)
+            }
+        });
+
+
+        // startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
+        //                 status_update_handler, 1000);	
+    }
+    </script>
 </body>
 </html>
