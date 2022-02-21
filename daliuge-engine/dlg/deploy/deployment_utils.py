@@ -163,25 +163,31 @@ def find_node_ips():
     return node_ips
 
 
-def find_service_ips():
-    query = str(subprocess.check_output([
-        r'kubectl get svc -o wide'],
-        shell=True))
-    pattern = r"daliuge-daemon-service\s*ClusterIP\s*\d+\.\d+\.\d+\.\d+"
+def find_service_ips(num_expected, retries=3, timeout=10):
+    pattern = r"^daliuge-daemon-service-.*\s*ClusterIP\s*\d+\.\d+\.\d+\.\d+"
     ip_pattern = r"\d+\.\d+\.\d+\.\d+"
-    outcome = re.findall(pattern, query)
     ips = []
-    for service in outcome:
-        ip = re.search(ip_pattern, service)
-        if ip:
-            ips.append(ip.group(0))
+    attempts = 0
+    while len(ips) < num_expected and attempts < retries:
+        ips = []
+        query = subprocess.check_output([
+            r'kubectl get svc -o wide'],
+            shell=True).decode(encoding='utf-8')
+        outcome = re.findall(pattern, query, re.M)
+        for service in outcome:
+            ip = re.search(ip_pattern, service)
+            if ip:
+                ips.append(ip.group(0))
+        print(ips)
+        time.sleep(timeout)
     return ips
 
 
-def find_pod_ips(retries=3, timeout=10):
+def find_pod_ips(num_expected, retries=3, timeout=10):
     ips = []
     attempts = 0
-    while ips == [] and attempts < retries:
+    while len(ips) < num_expected and attempts < retries:
+        ips = []
         query = str(subprocess.check_output([
             r'kubectl get pods -o wide'],
             shell=True).decode(encoding='utf-8'))
