@@ -29,12 +29,99 @@ $(document).ready(function () {
     })
 
     //get saved settings from local storage or set a default value
-    fillOutSettings()
-
+   
     $('#settingsModal').on('hidden.bs.modal', function () {
         fillOutSettings()
-    });
+  });
 });
+
+function getRender() {
+
+	var render = new dagreD3.render();
+
+	// Add our custom shape (parallelogram, similar to the PIP PDR document)
+	render.shapes().parallelogram = function(parent, bbox, node) {
+		var w = bbox.width,
+		h = bbox.height,
+		points = [
+		    { x: 0,     y: 0},
+		    { x: w*0.8, y: 0},
+		    { x: w,     y: -h},
+		    { x: w*0.2, y: -h},
+		];
+		var shapeSvg = parent.insert("polygon", ":first-child")
+		.attr("points", points.map(function(d) { return d.x + "," + d.y; }).join(" "))
+		.attr("transform", "translate(" + (-w/2) + "," + (h/2) + ")");
+
+		node.intersect = function(point) {
+			return dagreD3.intersect.polygon(node, points, point);
+		};
+
+		return shapeSvg;
+	};
+	console.log("returning render")
+	return render;
+}
+
+
+function drawGraphForDrops(g, drawGraph, oids, doSpecs) {
+
+  var TO_MANY_LTR_RELS = ['consumers', 'streamingConsumers', 'outputs']
+  var TO_MANY_RTL_RELS = ['inputs', 'streamingInputs', 'producers']
+  
+	// Keep track of modifications to see if we need to re-draw
+	var modified = false;
+
+	// #1: create missing nodes in the graph
+	// Because oids is sorted, they will be created in oid order
+	var time0 = new Date().getTime();
+	for(var idx in oids) {
+		var doSpec = doSpecs[oids[idx]];
+		modified |= _addNode(g, doSpec);
+	}
+
+	var time1 = new Date().getTime();
+	console.log('Took %d [ms] to create the nodes', (time1 - time0))
+
+	// #2: establish missing relationships
+	for(var idx in oids) {
+		var doSpec = doSpecs[oids[idx]];
+		var lhOid = doSpec.oid;
+
+		// x-to-many relationships producing lh->rh edges
+		for(var relIdx in TO_MANY_LTR_RELS) {
+			var rel = TO_MANY_LTR_RELS[relIdx];
+			if( rel in doSpec ) {
+				for(var rhOid in doSpec[rel]) {
+					modified |= _addEdge(g, lhOid, doSpec[rel][rhOid]);
+				}
+			}
+		}
+		// x-to-many relationships producing rh->lh edges
+		for(var relIdx in TO_MANY_RTL_RELS) {
+			var rel = TO_MANY_RTL_RELS[relIdx];
+			if( rel in doSpec ) {
+				for(var rhOid in doSpec[rel]) {
+					modified |= _addEdge(g, doSpec[rel][rhOid], lhOid);
+				}
+			}
+		}
+		// there currently are no x-to-one relationships producing rh->lh edges
+		// there currently are no x-to-one relationships producing lh->rh edges
+	}
+
+	var time2 = new Date().getTime();
+	console.log('Took %d [ms] to create the edges', (time2 - time1))
+
+	if( modified ) {
+		drawGraph();
+	}
+
+	var time3 = new Date().getTime();
+	console.log('Took %d [ms] to draw the hole thing', (time3 - time2))
+
+    zoomFit()
+}
 
 function saveSettings() {
     var newUrl = new URL($("#managerUrlInput").val());
