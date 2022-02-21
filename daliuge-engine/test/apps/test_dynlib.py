@@ -40,7 +40,9 @@ print_stats = 0
 bufsize = 20 * 1024 * 1024
 
 
-@unittest.skipUnless(build_shared_library(_libname, _libpath), "Example dynamic library not available")
+@unittest.skipUnless(
+    build_shared_library(_libname, _libpath), "Example dynamic library not available"
+)
 class DynlibAppTest(unittest.TestCase):
     def test_simple_batch_copy(self):
         self._test_simple_copy(False)
@@ -141,7 +143,12 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
                 "print_stats": print_stats,
                 "bufsize": bufsize,
             },
-            {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
+            {
+                "oid": "C",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["B"],
+            },
         ]
         rels = [DROPRel("A", DROPLinkType.INPUT, "B")]
         a_data = os.urandom(32)
@@ -158,7 +165,12 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
         =============    =======
         """
         g1 = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["B"]},
+            {
+                "oid": "A",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "consumers": ["B"],
+            },
             {
                 "oid": "B",
                 "type": "app",
@@ -197,7 +209,12 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
                 "print_stats": print_stats,
                 "bufsize": bufsize,
             },
-            {"oid": "D", "type": "plain", "storage": Categories.MEMORY, "producers": ["C"]},
+            {
+                "oid": "D",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["C"],
+            },
         ]
         rels = [
             DROPRel("A", DROPLinkType.INPUT, "C"),
@@ -209,12 +226,16 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
         )
 
 
-@unittest.skipUnless(build_shared_library(_libname, _libpath), "Example dynamic library not available")
+@unittest.skipUnless(
+    build_shared_library(_libname, _libpath), "Example dynamic library not available"
+)
 class IntraNMDynlibAppTest(IntraNMMixIng, unittest.TestCase):
     app = "dlg.apps.dynlib.DynlibApp"
 
 
-@unittest.skipUnless(build_shared_library(_libname, _libpath), "Example dynamic library not available")
+@unittest.skipUnless(
+    build_shared_library(_libname, _libpath), "Example dynamic library not available"
+)
 class IntraNMDynlibProcAppTest(IntraNMMixIng, unittest.TestCase):
     app = "dlg.apps.dynlib.DynlibProcApp"
 
@@ -234,7 +255,12 @@ class IntraNMDynlibProcAppTest(IntraNMMixIng, unittest.TestCase):
                 "bufsize": bufsize,
                 "crash_and_burn": 1,
             },
-            {"oid": "D", "type": "plain", "storage": Categories.MEMORY, "producers": ["C"]},
+            {
+                "oid": "D",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["C"],
+            },
         ]
         rels = [
             DROPRel("A", DROPLinkType.INPUT, "C"),

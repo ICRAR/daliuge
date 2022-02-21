@@ -25,7 +25,9 @@ DROPs that we have developed as examples and for real-life use. Most of them
 are based on the :class:`BarrierAppDROP`.
 """
 
+
 def get_include_dir():
     """The path that C/C++ applications need to add to use the dlg.h header"""
     import os
+
     return os.path.dirname(__file__)

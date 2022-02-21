@@ -34,4 +34,3 @@ from fabfileTemplate import hl
 from fabfileTemplate import pkgmgr
 from fabfileTemplate import system
 from fabfileTemplate import utils
-

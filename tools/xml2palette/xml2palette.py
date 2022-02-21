@@ -18,42 +18,45 @@ next_key = -1
 #       make sure to retrieve some of these from environment variables
 DOXYGEN_SETTINGS = [
     ("OPTIMIZE_OUTPUT_JAVA", "YES"),
-    ("AUTOLINK_SUPPORT",     "NO"),
+    ("AUTOLINK_SUPPORT", "NO"),
     ("IDL_PROPERTY_SUPPORT", "NO"),
-    ("RECURSIVE",            "YES"),
-    ("EXCLUDE_PATTERNS",     "*/web/*"),
-    ("VERBATIM_HEADERS",     "NO"),
-    ("GENERATE_HTML",        "NO"),
-    ("GENERATE_LATEX",       "NO"),
-    ("GENERATE_XML",         "YES"),
-    ("XML_PROGRAMLISTING",   "NO"),
+    ("RECURSIVE", "YES"),
+    ("EXCLUDE_PATTERNS", "*/web/*"),
+    ("VERBATIM_HEADERS", "NO"),
+    ("GENERATE_HTML", "NO"),
+    ("GENERATE_LATEX", "NO"),
+    ("GENERATE_XML", "YES"),
+    ("XML_PROGRAMLISTING", "NO"),
     ("ENABLE_PREPROCESSING", "NO"),
-    ("CLASS_DIAGRAMS",       "NO")
+    ("CLASS_DIAGRAMS", "NO"),
 ]
 
 
-def get_filenames_from_command_line(argv):
-    inputdir = ''
-    outputfile = ''
+def get_options_from_command_line(argv):
+    inputdir = ""
+    tag = ""
+    outputfile = ""
     try:
-        opts, args = getopt.getopt(argv,"hi:o:",["idir=","ofile="])
+        opts, args = getopt.getopt(argv, "hi:t:o:", ["idir=", "tag=", "ofile="])
     except getopt.GetoptError:
-        print("xml2palette.py -i <input_directory> -o <output_file>")
+        print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
         sys.exit(2)
 
     if len(opts) < 2:
-        print("xml2palette.py -i <input_directory> -o <output_file>")
+        print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
         sys.exit()
 
     for opt, arg in opts:
-        if opt == '-h':
-            print("xml2palette.py -i <input_directory> -o <output_file>")
+        if opt == "-h":
+            print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
             sys.exit()
         elif opt in ("-i", "--idir"):
             inputdir = arg
+        elif opt in ("-t", "--tag"):
+            tag = arg
         elif opt in ("-o", "--ofile"):
             outputfile = arg
-    return inputdir, outputfile
+    return inputdir, tag, outputfile
 
 
 def check_environment_variables():
@@ -70,19 +73,19 @@ def check_environment_variables():
 
 
 def modify_doxygen_options(doxygen_filename, options):
-    with open(doxygen_filename, 'r') as dfile:
+    with open(doxygen_filename, "r") as dfile:
         contents = dfile.readlines()
 
-    #print(contents)
+    # print(contents)
 
-    with open(doxygen_filename, 'w') as dfile:
+    with open(doxygen_filename, "w") as dfile:
         for index, line in enumerate(contents):
-            if line[0] == '#':
+            if line[0] == "#":
                 continue
             if len(line) <= 1:
                 continue
 
-            parts = line.split('=')
+            parts = line.split("=")
             first_part = parts[0].strip()
             written = False
 
@@ -103,6 +106,7 @@ def get_next_key():
 
     return next_key + 1
 
+
 def create_uuid(seed):
     rnd = random.Random()
     rnd.seed(seed)
@@ -111,88 +115,223 @@ def create_uuid(seed):
     return new_uuid
 
 
-def create_port(component_name, port_name, direction, event, type):
+def create_port(
+    component_name, internal_name, external_name, direction, event, type, description
+):
     seed = {
         "component_name": component_name,
-        "port_name": port_name,
+        "internal_name": internal_name,
+        "external_name": external_name,
         "direction": direction,
         "event": event,
-        "type": type
+        "type": type,
+        "description": description,
     }
 
     port_uuid = create_uuid(str(seed))
 
     return {
         "Id": str(port_uuid),
-        "IdText": port_name,
+        "IdText": internal_name,
+        "text": external_name,
         "event": event,
-        "type": type
+        "type": type,
+        "description": description,
     }
 
 
 def find_field_by_name(fields, name):
     for field in fields:
-        if field['name'] == name:
+        if field["name"] == name:
             return field
     return None
 
 
-def add_required_fields_for_category(fields, category):
+def add_required_fields_for_category(text, fields, category):
+    if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp", "Mpi", "Docker"]:
+        add_field_if_missing(
+            text,
+            fields,
+            "execution_time",
+            "Execution time",
+            5,
+            "Estimated execution time",
+            "readwrite",
+            "Float",
+            False,
+        )
+        add_field_if_missing(
+            text,
+            fields,
+            "num_cpus",
+            "Num CPUs",
+            1,
+            "Number of cores used",
+            "readwrite",
+            "Integer",
+            False,
+        )
+
+    if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp", "Docker"]:
+        add_field_if_missing(
+            text,
+            fields,
+            "group_start",
+            "Group start",
+            "false",
+            "Component is start of a group",
+            "readwrite",
+            "Boolean",
+            False,
+        )
+
     if category == "DynlibApp":
-        if find_field_by_name(fields, "execution_time") is None:
-            fields.append(create_field("execution_time", "Execution time", 5, "Estimated execution time", "readwrite", "Float"))
-        if find_field_by_name(fields, "num_cpus") is None:
-            fields.append(create_field("num_cpus", "Num CPUs", 1, "Number of cores used", "readwrite", "Integer"))
-        if find_field_by_name(fields, "group_start") is None:
-            fields.append(create_field("group_start", "Group start", "false", "Component is start of a group", "readwrite", "Boolean"))
-        if find_field_by_name(fields, "libpath") is None:
-            fields.append(create_field("libpath", "Library path", "", "", "readwrite", "String"))
-    elif category == "PythonApp":
-        if find_field_by_name(fields, "execution_time") is None:
-            fields.append(create_field("execution_time", "Execution time", 5, "Estimated execution time", "readwrite", "Float"))
-        if find_field_by_name(fields, "num_cpus") is None:
-            fields.append(create_field("num_cpus", "Num CPUs", 1, "Number of cores used", "readwrite", "Integer"))
-        if find_field_by_name(fields, "group_start") is None:
-            fields.append(create_field("group_start", "Group start", "false", "Component is start of a group", "readwrite", "Boolean"))
-        if find_field_by_name(fields, "appclass") is None:
-            fields.append(create_field("appclass", "Appclass", "dlg.apps.simple.SleepApp", "Application class", "readwrite", "String"))
+        add_field_if_missing(text, fields, "libpath", "Library path", "", "", "readwrite", "String", False)
+
+    if category in ["PythonApp", "Branch"]:
+        add_field_if_missing(
+            text,
+            fields,
+            "appclass",
+            "Appclass",
+            "dlg.apps.simple.SleepApp",
+            "Application class",
+            "readwrite",
+            "String",
+            False,
+        )
+
+    if category in ["File", "Memory", "NGAS", "ParameterSet", "Plasma", "PlasmaFlight", "S3"]:
+        add_field_if_missing(
+            text,
+            fields,
+            "data_volume",
+            "Data volume",
+            5,
+            "Estimated size of the data contained in this node",
+            "readwrite",
+            "Integer",
+            False,
+        )
+
+    if category in ["File", "Memory", "NGAS", "ParameterSet", "Plasma", "PlasmaFlight", "S3", "Mpi"]:
+        add_field_if_missing(
+            text,
+            fields,
+            "group_end",
+            "Group end",
+            "false",
+            "Component is end of a group",
+            "readwrite",
+            "Boolean",
+            False,
+        )
+
+    if category in ["BashShellApp", "Mpi", "Docker", "Singularity"]:
+        add_field_if_missing(
+            text,
+            fields,
+            "input_redirection",
+            "Input redirection",
+            "",
+            "The command line argument that specifies the input into this application",
+            "readwrite",
+            "String",
+            False,
+        )
+        add_field_if_missing(
+            text,
+            fields,
+            "output_redirection",
+            "Output redirection",
+            "",
+            "The command line argument that specifies the output from this application",
+            "readwrite",
+            "String",
+            False,
+        )
+        add_field_if_missing(
+            text,
+            fields,
+            "command_line_arguments",
+            "Command line arguments",
+            "",
+            "Additional command line arguments to be added to the command line to be executed",
+            "readwrite",
+            "String",
+            False,
+        )
+        add_field_if_missing(
+            text,
+            fields,
+            "paramValueSeparator",
+            "Param Value Separator",
+            " ",
+            "Separator character(s) between parameters on the command line",
+            "readwrite",
+            "String",
+            False,
+        )
+        add_field_if_missing(
+            text,
+            fields,
+            "argumentPrefix",
+            "Argument prefix",
+            "--",
+            "Prefix to each keyed argument on the command line",
+            "readwrite",
+            "String",
+            False,
+        )
 
 
-def create_field(internal_name, name, value, description, access, type):
+def create_field(internal_name, name, value, description, access, type, precious):
     return {
         "text": name,
         "name": internal_name,
         "value": value,
+        "default": value,
         "description": description,
         "readonly": access == "readonly",
-        "type": type
+        "type": type,
+        "precious": precious,
     }
 
 
-def parse_param_key(key):
+def add_field_if_missing(text, fields, internal_name, name, value, description, access, type, precious):
+    if find_field_by_name(fields, internal_name) is None:
+        logging.warning(
+            text + " component added missing " + internal_name + " cparam"
+        )
+        fields.append(
+            create_field(internal_name, name, value, description, access, type, precious)
+        )
+
+
+def parse_key(key):
     # parse the key as csv (delimited by '/')
     parts = []
-    reader = csv.reader([key], delimiter='/', quotechar='"')
+    reader = csv.reader([key], delimiter="/", quotechar='"')
     for row in reader:
         parts = row
 
-    # init attributes of the param
-    param = ""
+    # init attributes of the param/port
+    object = ""
     internal_name = ""
 
     # assign attributes (if present)
     if len(parts) > 0:
-        param = parts[0]
+        object = parts[0]
     if len(parts) > 1:
         internal_name = parts[1]
 
-    return (param, internal_name)
+    return (object, internal_name)
 
 
-def parse_param_value(value):
+def parse_param_value(text, prefix, value):
     # parse the value as csv (delimited by '/')
     parts = []
-    reader = csv.reader([value], delimiter='/', quotechar='"')
+    reader = csv.reader([value], delimiter="/", quotechar='"')
     for row in reader:
         parts = row
 
@@ -201,6 +340,7 @@ def parse_param_value(value):
     default_value = ""
     type = "String"
     access = "readwrite"
+    precious = False
 
     # assign attributes (if present)
     if len(parts) > 0:
@@ -209,20 +349,76 @@ def parse_param_value(value):
         default_value = parts[1]
     if len(parts) > 2:
         type = parts[2]
-    if len(parts) > 3:
+    if (
+        len(parts) > 4
+    ):  # NOTE: correct that we start looking for >4, but access element 3
         access = parts[3]
     else:
-        logging.warning("param (" + external_name + ") has no 'access' descriptor, using default (readwrite) : " + value)
+        logging.warning(
+            text + " " +
+            prefix
+            + "param ("
+            + external_name
+            + ") has no 'access' descriptor, using default (readwrite) : "
+            + value
+        )
+    if len(parts) > 5:
+        precious = parts[4].lower() == "true"
+    else:
+        logging.warning(
+            text + " " +
+            prefix
+            + "param ("
+            + external_name
+            + ") has no 'precious' descriptor, using default (False) : "
+            + value
+        )
 
-    return (external_name, default_value, type, access)
+    return (external_name, default_value, type, access, precious)
+
+
+def parse_port_value(value):
+    # parse the value as csv (delimited by '/')
+    parts = []
+    reader = csv.reader([value], delimiter="/", quotechar='"')
+    for row in reader:
+        parts = row
+
+    # init attributes of the param
+    name = ""
+    type = "String"
+
+    # assign attributes (if present)
+    if len(parts) > 0:
+        name = parts[0]
+    if len(parts) > 1:
+        type = parts[1]
+    else:
+        logging.warning(
+            "port ("
+            + name
+            + ") has no 'type' descriptor, using default (String) : "
+            + value
+            + " "
+            + str(len(parts))
+            + " "
+            + str(parts)
+        )
+
+    return (name, type)
 
 
 def parse_description(value):
     # parse the value as csv (delimited by '/')
     parts = []
-    reader = csv.reader([value], delimiter='/', quotechar='"')
+    reader = csv.reader([value], delimiter="/", quotechar='"')
     for row in reader:
         parts = row
+
+    # if parts is empty
+    if len(parts) == 0:
+        logging.warning("unable to parse description from: " + value)
+        return ""
 
     return parts[-1]
 
@@ -232,76 +428,155 @@ def create_palette_node_from_params(params):
     text = ""
     description = ""
     category = ""
+    tag = ""
     categoryType = ""
     inputPorts = []
     outputPorts = []
     inputLocalPorts = []
     outputLocalPorts = []
     fields = []
-    gitrepo = ""
-    version = ""
+    applicationArgs = []
+    gitrepo = os.environ.get("GIT_REPO")
+    version = os.environ.get("PROJECT_VERSION")
 
     # process the params
     for param in params:
-        key = param['key']
-        direction = param['direction']
-        value = param['value']
+        key = param["key"]
+        direction = param["direction"]
+        value = param["value"]
 
         if key == "category":
             category = value
+        elif key == "tag":
+            tag = value
         elif key == "text":
             text = value
         elif key == "description":
             description = value
-        elif key == "gitrepo":
-            gitrepo = value
-        elif key == "version":
-            version = value
-        elif key.startswith("param/"):
+        elif key.startswith("cparam/"):
             # parse the param key into name, type etc
-            (param, internal_name) = parse_param_key(key)
-            (name, default_value, type, access) = parse_param_value(value)
+            (param, internal_name) = parse_key(key)
+            (name, default_value, type, access, precious) = parse_param_value(text, "c", value)
 
-            # parse desscription
+            # parse description
             if "\n" in value:
-                logging.info("param description (" + value + ") contains a newline character, removing.")
+                logging.info(
+                    text + " " +
+                    "cparam description ("
+                    + value
+                    + ") contains a newline character, removing."
+                )
                 value = value.replace("\n", " ")
             param_description = parse_description(value).strip()
 
             # check that access is a known value
             if access != "readonly" and access != "readwrite":
-                logging.warning("param '" + name + "' has unknown 'access' descriptor: " + access)
+                logging.warning(
+                    text + " cparam '" + name + "' has unknown 'access' descriptor: " + access
+                )
 
             # add a field
-            fields.append(create_field(internal_name, name, default_value, param_description, access, type))
+            fields.append(
+                create_field(
+                    internal_name,
+                    name,
+                    default_value,
+                    param_description,
+                    access,
+                    type,
+                    precious,
+                )
+            )
+        elif key.startswith("aparam/") or key.startswith("param/"):
+            # parse the param key into name, type etc
+            (param, internal_name) = parse_key(key)
+            (name, default_value, type, access, precious) = parse_param_value(text, "a", value)
+
+            # warn if doc string is still using param instead of aparam
+            if key.startswith("param/"):
+                logging.warning(
+                    text + " param (" + internal_name + ") using obsolete 'param' description, defaulting to 'aparam'"
+                )
+
+            # parse description
+            if "\n" in value:
+                logging.info(
+                    text + " " +
+                    "aparam description ("
+                    + value
+                    + ") contains a newline character, removing."
+                )
+                value = value.replace("\n", " ")
+            param_description = parse_description(value).strip()
+
+            # check that access is a known value
+            if access != "readonly" and access != "readwrite":
+                logging.warning(
+                    text + " aparam '" + name + "' has unknown 'access' descriptor: " + access
+                )
+
+            # add a field
+            applicationArgs.append(
+                create_field(
+                    internal_name,
+                    name,
+                    default_value,
+                    param_description,
+                    access,
+                    type,
+                    precious,
+                )
+            )
         elif key.startswith("port/"):
-            # parse the port into data
-            if key.count("/") == 1:
-                (port, name) = key.split("/")
-                logging.warning("port '" + name + "' on '" + text + "' component has no 'type' descriptor, using default (Unknown)")
-                type = "Unknown"
-            elif key.count("/") == 2:
-                (port, name, type) = key.split("/")
-            else:
-                logging.warning("port expects format `param[Direction] port/Name/Data Type`: got " + key)
-                continue
+            (port, internal_name) = parse_key(key)
+            (name, type) = parse_port_value(value)
+
+            # parse description
+            if "\n" in value:
+                logging.info(
+                    "port description ("
+                    + value
+                    + ") contains a newline character, removing."
+                )
+                value = value.replace("\n", " ")
+            port_description = parse_description(value)
 
             # add the port
             if direction == "in":
-                inputPorts.append(create_port(text, name, direction, False, type))
+                inputPorts.append(
+                    create_port(
+                        text,
+                        internal_name,
+                        name,
+                        direction,
+                        False,
+                        type,
+                        port_description,
+                    )
+                )
             elif direction == "out":
-                outputPorts.append(create_port(text, name, direction, False, type))
+                outputPorts.append(
+                    create_port(
+                        text,
+                        internal_name,
+                        name,
+                        direction,
+                        False,
+                        type,
+                        port_description,
+                    )
+                )
             else:
                 logging.warning("Unknown port direction: " + direction)
 
-
     # add extra fields that must be included for the category
-    add_required_fields_for_category(fields, category)
+    add_required_fields_for_category(text, fields, category)
 
     # create and return the node
+    # TODO: we can remove a bunch of these attributes (isData etc)
     return {
         "category": category,
-        "categoryType": "Application",
+        "tag": tag,
         "isData": False,
         "isGroup": False,
         "canHaveInputs": True,
@@ -329,8 +604,9 @@ def create_palette_node_from_params(params):
         "inputAppFields": [],
         "outputAppFields": [],
         "fields": fields,
+        "applicationArgs": applicationArgs,
         "git_url": gitrepo,
-        "sha": version
+        "sha": version,
     }
 
 
@@ -344,13 +620,13 @@ def write_palette_json(outputfile, nodes, gitrepo, version):
             "readonly": True,
             "filePath": outputfile,
             "sha": version,
-            "git_url": gitrepo
+            "git_url": gitrepo,
         },
         "nodeDataArray": nodes,
-        "linkDataArray": []
+        "linkDataArray": [],
     }
 
-    with open(outputfile, 'w') as outfile:
+    with open(outputfile, "w") as outfile:
         json.dump(palette, outfile, indent=4)
 
 
@@ -369,17 +645,15 @@ def process_compounddef(compounddef):
         if len(briefdescription) > 0:
             if briefdescription[0].text is None:
                 logging.warning("No brief description text")
-                result.append({
-                    "key":"text",
-                    "direction":None,
-                    "value":""
-                })
+                result.append({"key": "text", "direction": None, "value": ""})
             else:
-                result.append({
-                    "key":"text",
-                    "direction":None,
-                    "value":briefdescription[0].text.strip(" .")
-                })
+                result.append(
+                    {
+                        "key": "text",
+                        "direction": None,
+                        "value": briefdescription[0].text.strip(" ."),
+                    }
+                )
 
     # get child of compounddef called "detaileddescription"
     detaileddescription = None
@@ -410,7 +684,9 @@ def process_compounddef(compounddef):
 
     # add description
     if description != "":
-        result.append({"key":"description", "direction":None, "value":description.strip()})
+        result.append(
+            {"key": "description", "direction": None, "value": description.strip()}
+        )
 
     # check that we found an EAGLE_START, otherwise this is just regular doxygen, skip it
     if not found_eagle_start:
@@ -457,15 +733,15 @@ def process_compounddef(compounddef):
                     else:
                         value = pichild[0].text.strip()
 
-        result.append({"key":key,"direction":direction,"value":value})
+        result.append({"key": key, "direction": direction, "value": value})
 
     return result
 
 
 if __name__ == "__main__":
-    logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+    logging.basicConfig(format="%(asctime)s - %(message)s", datefmt="%d-%b-%y %H:%M:%S", level = logging.INFO)
 
-    (inputdir, outputfile) = get_filenames_from_command_line(sys.argv[1:])
+    (inputdir, tag, outputfile) = get_options_from_command_line(sys.argv[1:])
 
     # create a temp directory for the output of doxygen
     output_directory = tempfile.TemporaryDirectory()
@@ -485,22 +761,41 @@ if __name__ == "__main__":
     doxygen_file.close()
 
     # create a default Doxyfile
-    os.system("doxygen -g " + doxygen_filename)
+    subprocess.call(
+        ["doxygen", "-g", doxygen_filename],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    logging.info("Wrote doxygen configuration file (Doxyfile) to " + doxygen_filename)
 
     # modify options in the Doxyfile
     modify_doxygen_options(doxygen_filename, DOXYGEN_SETTINGS)
 
     # run doxygen
-    #os.system("doxygen " + doxygen_filename)
-    subprocess.call(['doxygen', doxygen_filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # os.system("doxygen " + doxygen_filename)
+    subprocess.call(
+        ["doxygen", doxygen_filename],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
 
     # run xsltproc
     output_xml_filename = output_directory.name + "/xml/doxygen.xml"
-    os.system("xsltproc " + output_directory.name + "/xml/combine.xslt " + output_directory.name + "/xml/index.xml > " + output_xml_filename)
 
+    with open(output_xml_filename, "w") as outfile:
+        subprocess.call(
+            [
+                "xsltproc",
+                output_directory.name + "/xml/combine.xslt",
+                output_directory.name + "/xml/index.xml",
+            ],
+            stdout=outfile,
+            stderr=subprocess.DEVNULL,
+        )
 
-    gitrepo = ""
-    version = ""
+    # get environment variables
+    gitrepo = os.environ.get("GIT_REPO")
+    version = os.environ.get("PROJECT_VERSION")
 
     # init nodes array
     nodes = []
@@ -514,16 +809,20 @@ if __name__ == "__main__":
 
         # if no params were found, or only the name and description were found, then don't bother creating a node
         if len(params) > 2:
-            #print("params (" + str(len(params)) + "): " + str(params))
+            # print("params (" + str(len(params)) + "): " + str(params))
 
             # create a node
             n = create_palette_node_from_params(params)
-            nodes.append(n)
+
+            # if the node tag matches the command line tag, or no tag was specified on the command line, add the node to the list to output
+            if n["tag"] == tag or tag == "":
+                logging.info("Adding component: " + n["text"])
+                nodes.append(n)
 
         # check if gitrepo and version params were found and cache the values
         for param in params:
-            key = param['key']
-            value = param['value']
+            key = param["key"]
+            value = param["value"]
 
             if key == "gitrepo":
                 gitrepo = value

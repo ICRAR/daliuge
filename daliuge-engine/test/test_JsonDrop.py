@@ -27,8 +27,8 @@ import unittest
 
 from dlg.json_drop import JsonDROP
 
-DIR = '/tmp/daliuge_tfiles'
-FILE_TEXT = '''
+DIR = "/tmp/daliuge_tfiles"
+FILE_TEXT = """
 {
   "Observed from": "20-Jan-2014/04:20:12.0",
   "Observed to": "20-Jan-2014/06:01:40.0",
@@ -74,7 +74,7 @@ FILE_TEXT = '''
   "Bottom edge": "941.000",
   "Observation": "EVLA(26 antennas)"
 }
-'''
+"""
 
 
 class TestJsonDROP(unittest.TestCase):
@@ -83,15 +83,15 @@ class TestJsonDROP(unittest.TestCase):
         if not os.path.exists(DIR):
             os.makedirs(DIR)
 
-        #with open(os.path.join(DIR, 'oid___uid'), mode='w') as write_file:
-        with open(os.path.join(DIR, 'uid'), mode='w') as write_file:
+        # with open(os.path.join(DIR, 'oid___uid'), mode='w') as write_file:
+        with open(os.path.join(DIR, "uid"), mode="w") as write_file:
             write_file.write(FILE_TEXT)
 
     def test_Json1(self):
-        drop = JsonDROP('oid', 'uid')
+        drop = JsonDROP("oid", "uid")
 
-        self.assertEqual(drop['Bottom edge'], '941.000')
-        self.assertEqual(drop['Observation'], 'EVLA(26 antennas)')
+        self.assertEqual(drop["Bottom edge"], "941.000")
+        self.assertEqual(drop["Observation"], "EVLA(26 antennas)")
 
-        spectral_windows = drop['Spectral Windows']
-        self.assertEqual(len(spectral_windows['Spectral Windows']), 15)
+        spectral_windows = drop["Spectral Windows"]
+        self.assertEqual(len(spectral_windows["Spectral Windows"]), 15)
