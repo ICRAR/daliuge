@@ -32,6 +32,37 @@ from ..exceptions import InvalidDropException
 
 logger = logging.getLogger(__name__)
 
+##
+# @brief MPI
+# @details An application component using the Message Passing Interface (MPI)
+# @par EAGLE_START
+# @param category Mpi
+# @param tag template
+# @param[in] cparam/num_of_procs Num procs/1/Integer/readwrite/False/
+#     \~English Number of processes used for this application
+# @param[in] cparam/command Command//String/readwrite/False/
+#     \~English The command to be executed
+# @param[in] cparam/input_redirection Input Redirection//String/readwrite/False/
+#     \~English The command line argument that specifies the input into this application
+# @param[in] cparam/output_redirection Output Redirection//String/readwrite/False/
+#     \~English The command line argument that specifies the output from this application
+# @param[in] cparam/command_line_arguments Command Line Arguments//String/readwrite/False/
+#     \~English Additional command line arguments to be added to the command line to be executed
+# @param[in] cparam/paramValueSeparator Param value separator/ /String/readwrite/False/
+#     \~English Separator character(s) between parameters on the command line
+# @param[in] cparam/argumentPrefix Argument prefix/"--"/String/readwrite/False/
+#     \~English Prefix to each keyed argument on the command line
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False/
+#     \~English Is this node the end of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @par EAGLE_END
 class MPIApp(BarrierAppDROP):
     """
     An application drop representing an MPI job.
@@ -48,12 +79,14 @@ class MPIApp(BarrierAppDROP):
     def initialize(self, **kwargs):
         super(MPIApp, self).initialize(**kwargs)
 
-        self._command = self._getArg(kwargs, 'command', None)
-        self._maxprocs = self._getArg(kwargs, 'maxprocs', 1)
-        self._use_wrapper = self._getArg(kwargs, 'use_wrapper', False)
-        self._args = self._getArg(kwargs, 'args', [])
+        self._command = self._getArg(kwargs, "command", None)
+        self._maxprocs = self._getArg(kwargs, "maxprocs", 1)
+        self._use_wrapper = self._getArg(kwargs, "use_wrapper", False)
+        self._args = self._getArg(kwargs, "args", [])
         if not self._command:
-            raise InvalidDropException(self, 'No command specified, cannot create MPIApp')
+            raise InvalidDropException(
+                self, "No command specified, cannot create MPIApp"
+            )
 
     def run(self):
         from mpi4py import MPI
@@ -67,24 +100,35 @@ class MPIApp(BarrierAppDROP):
             # Likewise, we barrier on the children communicator, and thus
             # we wait until all children processes are completed
             cmd = sys.executable
-            args = ['-m', __name__, self._command] + self._args
+            args = ["-m", __name__, self._command] + self._args
 
         errcodes = []
 
         # Spawn the new MPI communicator and wait until it finishes
         # (it sends the stdout, stderr and exit codes of the programs)
-        logger.info("Executing MPI app in new communicator with %d ranks and command: %s %s", self._maxprocs, cmd, args)
+        logger.info(
+            "Executing MPI app in new communicator with %d ranks and command: %s %s",
+            self._maxprocs,
+            cmd,
+            args,
+        )
 
         vendor, version = MPI.get_vendor()  # @UndefinedVariable
         info = MPI.Info.Create()  # @UndefinedVariable
-        logger.debug("MPI vendor is %s, version %s", vendor, '.'.join([str(x) for x in version]))  # @UndefinedVariable
-        comm_children = MPI.COMM_SELF.Spawn(cmd, args=args, maxprocs=self._maxprocs, errcodes=errcodes, info=info)  # @UndefinedVariable
+        logger.debug(
+            "MPI vendor is %s, version %s", vendor, ".".join([str(x) for x in version])
+        )  # @UndefinedVariable
+        comm_children = MPI.COMM_SELF.Spawn(
+            cmd, args=args, maxprocs=self._maxprocs, errcodes=errcodes, info=info
+        )  # @UndefinedVariable
 
         n_children = comm_children.Get_remote_size()
         logger.info("%d MPI children apps spawned, gathering exit data", n_children)
 
         if self._use_wrapper:
-            children_data = comm_children.gather(('','', 0), root=MPI.ROOT)  # @UndefinedVariable
+            children_data = comm_children.gather(
+                ("", "", 0), root=MPI.ROOT
+            )  # @UndefinedVariable
             exit_codes = [x[2] for x in children_data]
             logger.info("Exit codes gathered from children processes: %r", exit_codes)
 
@@ -93,7 +137,12 @@ class MPIApp(BarrierAppDROP):
                 if code == 0:
                     continue
                 any_failed = True
-                logger.error("stdout/stderr follow for rank %d:\nSTDOUT\n======\n%s\n\nSTDERR\n======\n%s", rank, stdout, stderr)
+                logger.error(
+                    "stdout/stderr follow for rank %d:\nSTDOUT\n======\n%s\n\nSTDERR\n======\n%s",
+                    rank,
+                    stdout,
+                    stderr,
+                )
 
             if any_failed:
                 raise Exception("One or more MPI children didn't exit cleanly")
@@ -107,10 +156,11 @@ def module_as_main():
     # Get the parent communicator before anything else happens
     # This way we ensure the communicator is valid
     from mpi4py import MPI
+
     parent_comm = MPI.Comm.Get_parent()  # @UndefinedVariable
 
     def handle(signNo, stack_frame):
-        parent_comm.gather(('', 'Received signal %d' % (signNo,), -1), root=0)
+        parent_comm.gather(("", "Received signal %d" % (signNo,), -1), root=0)
 
     signal.signal(signal.SIGINT, handle)
     signal.signal(signal.SIGTERM, handle)
@@ -119,14 +169,21 @@ def module_as_main():
     # argv[0] is the name of this module
     # argv[1:] is the actual command + args
     try:
-        proc = subprocess.Popen(sys.argv[1:], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False, close_fds=False)
+        proc = subprocess.Popen(
+            sys.argv[1:],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=False,
+            close_fds=False,
+        )
         stdout, stderr = proc.communicate()
         code = proc.returncode
     except Exception as e:
-        stdout, stderr, code = '', str(e), -1
+        stdout, stderr, code = "", str(e), -1
 
     # Gather the results in the spawner rank and good bye
     parent_comm.gather((stdout, stderr, code), root=0)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     module_as_main()

@@ -19,11 +19,11 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-'''
+"""
 Created on 22 Jun 2015
 
 @author: rtobar
-'''
+"""
 
 import os
 import shutil
@@ -38,13 +38,12 @@ from dlg.lifecycle import dlm
 
 
 class TestDataLifecycleManager(unittest.TestCase):
-
     def tearDown(self):
         shutil.rmtree("/tmp/daliuge_tfiles", True)
         shutil.rmtree("/tmp/sdp-hsm", True)
 
     def _writeAndClose(self, drop):
-        drop.write(b' ')
+        drop.write(b" ")
         # all DROPs submitted to this method have expectedSize=1, so this
         # will trigger the change to COMPLETED
 
@@ -55,12 +54,12 @@ class TestDataLifecycleManager(unittest.TestCase):
 
     def test_dropAddition(self):
         with dlm.DataLifecycleManager() as manager:
-            drop = FileDROP('oid:A', 'uid:A1', expectedSize=10)
+            drop = FileDROP("oid:A", "uid:A1", expectedSize=10)
             manager.addDrop(drop)
 
     def test_dropCompleteTriggersReplication(self):
         with dlm.DataLifecycleManager() as manager:
-            drop = FileDROP('oid:A', 'uid:A1', expectedSize=1)
+            drop = FileDROP("oid:A", "uid:A1", expectedSize=1)
             manager.addDrop(drop)
             self._writeAndClose(drop)
 
@@ -70,7 +69,7 @@ class TestDataLifecycleManager(unittest.TestCase):
             self.assertEqual(2, len(manager.getDropUids(drop)))
 
             # Try the same with a non-precious data object, it shouldn't be replicated
-            drop = FileDROP('oid:B', 'uid:B1', expectedSize=1, precious=False)
+            drop = FileDROP("oid:B", "uid:B1", expectedSize=1, precious=False)
             manager.addDrop(drop)
             self._writeAndClose(drop)
             self.assertEqual(DROPPhases.GAS, drop.phase)
@@ -79,7 +78,7 @@ class TestDataLifecycleManager(unittest.TestCase):
     def test_expiringNormalDrop(self):
 
         with dlm.DataLifecycleManager(checkPeriod=0.5) as manager:
-            drop = FileDROP('oid:A', 'uid:A1', expectedSize=1, lifespan=0.5)
+            drop = FileDROP("oid:A", "uid:A1", expectedSize=1, lifespan=0.5)
             manager.addDrop(drop)
 
             # Writing moves the DROP to COMPLETE
@@ -90,10 +89,11 @@ class TestDataLifecycleManager(unittest.TestCase):
 
             self.assertEqual(DROPStates.EXPIRED, drop.status)
 
-
     def test_lostDrop(self):
         with dlm.DataLifecycleManager(checkPeriod=0.5) as manager:
-            drop = FileDROP('oid:A', 'uid:A1', expectedSize=1, lifespan=10, precious=False)
+            drop = FileDROP(
+                "oid:A", "uid:A1", expectedSize=1, lifespan=10, precious=False
+            )
             manager.addDrop(drop)
             self._writeAndClose(drop)
 
@@ -108,7 +108,9 @@ class TestDataLifecycleManager(unittest.TestCase):
 
     def test_cleanupExpiredDrops(self):
         with dlm.DataLifecycleManager(checkPeriod=0.5, cleanupPeriod=2) as manager:
-            drop = FileDROP('oid:A', 'uid:A1', expectedSize=1, lifespan=1, precious=False)
+            drop = FileDROP(
+                "oid:A", "uid:A1", expectedSize=1, lifespan=1, precious=False
+            )
             manager.addDrop(drop)
             self._writeAndClose(drop)
 
@@ -134,11 +136,19 @@ class TestDataLifecycleManager(unittest.TestCase):
         is still there or not
         """
         with dlm.DataLifecycleManager(checkPeriod=0.5, cleanupPeriod=2) as manager:
-            a = DirectoryContainer('a', 'a', precious=False, expireAfterUse=True, dirname=tempfile.mkdtemp())
+            a = DirectoryContainer(
+                "a",
+                "a",
+                precious=False,
+                expireAfterUse=True,
+                dirname=tempfile.mkdtemp(),
+            )
             b_dirname = tempfile.mkdtemp()
-            b = DirectoryContainer('b', 'b', precious=False, expireAfterUse=False, dirname=b_dirname)
-            c = BarrierAppDROP('c', 'c')
-            d = BarrierAppDROP('d', 'd')
+            b = DirectoryContainer(
+                "b", "b", precious=False, expireAfterUse=False, dirname=b_dirname
+            )
+            c = BarrierAppDROP("c", "c")
+            d = BarrierAppDROP("d", "d")
             a.addConsumer(c)
             a.addConsumer(d)
             b.addConsumer(c)
@@ -150,7 +160,7 @@ class TestDataLifecycleManager(unittest.TestCase):
             manager.addDrop(c)
 
             # Make sure all consumers are done
-            with DROPWaiterCtx(self, [c,d], 1):
+            with DROPWaiterCtx(self, [c, d], 1):
                 a.setCompleted()
                 b.setCompleted()
 
@@ -163,5 +173,6 @@ class TestDataLifecycleManager(unittest.TestCase):
             self.assertTrue(b.exists())
             b.delete()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

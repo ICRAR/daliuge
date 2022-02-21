@@ -34,7 +34,17 @@ class DROPLinkType:
     * PRODUCER           / OUTPUT
     * PARENT             / CHILD
     """
-    CONSUMER, STREAMING_CONSUMER, PRODUCER, PARENT, CHILD, INPUT, STREAMING_INPUT, OUTPUT = range(8)
+
+    (
+        CONSUMER,
+        STREAMING_CONSUMER,
+        PRODUCER,
+        PARENT,
+        CHILD,
+        INPUT,
+        STREAMING_INPUT,
+        OUTPUT,
+    ) = range(8)
 
 
 class DROPStates:
@@ -44,7 +54,17 @@ class DROPStates:
     COMPLETED. Later, they transition through EXPIRED, eventually arriving to
     DELETED.
     """
-    INITIALIZED, WRITING, COMPLETED, ERROR, EXPIRED, DELETED, CANCELLED, SKIPPED = range(8)
+
+    (
+        INITIALIZED,
+        WRITING,
+        COMPLETED,
+        ERROR,
+        EXPIRED,
+        DELETED,
+        CANCELLED,
+        SKIPPED,
+    ) = range(8)
 
 
 class AppDROPStates:
@@ -54,6 +74,7 @@ class AppDROPStates:
     are started. Depending on the execution result they eventually move to the
     FINISHED or ERROR state.
     """
+
     NOT_RUN, RUNNING, FINISHED, ERROR, CANCELLED, SKIPPED = range(6)
 
 
@@ -64,6 +85,7 @@ class DROPPhases:
     of replicas. Phases range from PLASMA (no replicas, volatile storage) to
     SOLID (fully backed up replica available).
     """
+
     PLASMA, GAS, SOLID, LIQUID, LOST = range(5)
 
 
@@ -75,6 +97,7 @@ class ChecksumTypes:
     the data they represent, and therefore also know the method used to
     calculate it.
     """
+
     CRC_32, CRC_32C = range(2)
 
 
@@ -93,10 +116,11 @@ class ExecutionMode:
     Note that if all DROPs in a graph have ExecutionMode == DROP it means that
     the graph effectively drives its own execution without external intervention.
     """
+
     DROP, EXTERNAL = range(2)
 
 
 # This is read: "lhs is rel of rhs" (e.g., A is PRODUCER of B)
 # lhs and rhs are DROP OIDs
 # rel is one of DROPLinkType
-DROPRel = collections.namedtuple('DROPRel', ['lhs', 'rel', 'rhs'])
+DROPRel = collections.namedtuple("DROPRel", ["lhs", "rel", "rhs"])

@@ -1,0 +1,715 @@
+{
+    "linkDataArray": [
+        {
+            "from": -1,
+            "fromPort": "b845e9f8-d19c-4fc7-a073-8bcc64e086e2",
+            "loop_aware": "0",
+            "to": -2,
+            "toPort": "a8ecb5d5-55d3-4d2e-80d4-7f019afdf179"
+        },
+        {
+            "from": -2,
+            "fromPort": "7c3bdeac-cb1d-4502-9ada-d7fc65344200",
+            "loop_aware": "0",
+            "to": -3,
+            "toPort": "03b96b10-8f1a-4fec-b1d9-f6799146dd77"
+        },
+        {
+            "from": -2,
+            "fromPort": "7c3bdeac-cb1d-4502-9ada-d7fc65344200",
+            "loop_aware": "0",
+            "to": -5,
+            "toPort": "72238898-292f-4a5f-85c0-6474b810caad"
+        },
+        {
+            "from": -2,
+            "fromPort": "7c3bdeac-cb1d-4502-9ada-d7fc65344200",
+            "loop_aware": "0",
+            "to": -4,
+            "toPort": "2b5dc75a-2588-4ef2-bf5a-b2a22b32ba23"
+        },
+        {
+            "from": -3,
+            "fromPort": "886fe73c-4f86-4551-a1b9-94fe9ed247a0",
+            "loop_aware": "0",
+            "to": -6,
+            "toPort": "9857a4e2-2f05-4850-bafd-24581f530e32"
+        },
+        {
+            "from": -5,
+            "fromPort": "8b4258f6-1504-4988-9638-233782dee15b",
+            "loop_aware": "0",
+            "to": -7,
+            "toPort": "b221cb23-e256-49c5-b3d2-0bc6f2b3c53a"
+        },
+        {
+            "from": -4,
+            "fromPort": "d6f695db-2e2e-42d3-98a4-4713872a2b98",
+            "loop_aware": "0",
+            "to": -8,
+            "toPort": "9b6ec8c5-6cd9-4b0b-a52b-394b018d5bbd"
+        }
+    ],
+    "modelData": {
+        "eagleCommitHash": "Unknown",
+        "eagleVersion": "Unknown",
+        "filePath": "Diagram-2022-01-06-11-21-40.graph",
+        "fileType": "Graph",
+        "gitUrl": "",
+        "lastModifiedDatetime": 0,
+        "lastModifiedEmail": "",
+        "lastModifiedName": "",
+        "readonly": true,
+        "repo": "",
+        "repoBranch": "",
+        "repoService": "Unknown",
+        "schemaVersion": "OJS",
+        "sha": ""
+    },
+    "nodeDataArray": [
+        {
+            "applicationArgs": [],
+            "category": "PythonApp",
+            "collapsed": false,
+            "color": "#0059a5",
+            "description": "An application component in the form of a Python app",
+            "drawOrderHint": 0,
+            "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "5",
+                    "description": "Estimate of execution time (in seconds) for this application.",
+                    "name": "execution_time",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "defaultValue": "1",
+                    "description": "Number of CPUs used for this application.",
+                    "name": "num_cpus",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Integer",
+                    "value": 1
+                },
+                {
+                    "defaultValue": "false",
+                    "description": "Is this node the start of a group?",
+                    "name": "group_start",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Boolean",
+                    "value": false
+                },
+                {
+                    "defaultValue": "test.graphsRepository",
+                    "description": "The python class that implements this application",
+                    "name": "appclass",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Appclass",
+                    "type": "String",
+                    "value": "dlg.apps.simple.HelloWorldApp"
+                }
+            ],
+            "flipPorts": false,
+            "git_url": "",
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [],
+            "isGroup": false,
+            "key": -1,
+            "outputAppFields": [],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "b845e9f8-d19c-4fc7-a073-8bcc64e086e2",
+                    "IdText": "hello",
+                    "description": " The port carrying the message produced by the app.",
+                    "event": false,
+                    "text": "Hello",
+                    "type": "String"
+                }
+            ],
+            "precious": false,
+            "readonly": false,
+            "sha": "",
+            "streaming": false,
+            "subject": null,
+            "text": "Python App",
+            "width": 200,
+            "x": 346,
+            "y": 563
+        },
+        {
+            "applicationArgs": [],
+            "category": "SharedMemory",
+            "collapsed": false,
+            "color": "#2c2c2c",
+            "description": "Shared memory storage of intermediate data products. Implemented using shmem.",
+            "drawOrderHint": 0,
+            "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "5",
+                    "description": "Estimated size of the data contained in this node",
+                    "name": "data_volume",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Data volume",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "defaultValue": "false",
+                    "description": "Is this node the end of a group?",
+                    "name": "group_end",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group end",
+                    "type": "Boolean",
+                    "value": false
+                }
+            ],
+            "flipPorts": false,
+            "git_url": "",
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "a8ecb5d5-55d3-4d2e-80d4-7f019afdf179",
+                    "IdText": "hello",
+                    "description": " The port carrying the message produced by the app.",
+                    "event": false,
+                    "text": "Hello",
+                    "type": "String"
+                }
+            ],
+            "isGroup": false,
+            "key": -2,
+            "outputAppFields": [],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "7c3bdeac-cb1d-4502-9ada-d7fc65344200",
+                    "IdText": "data",
+                    "description": "",
+                    "event": false,
+                    "text": "Data",
+                    "type": "String"
+                }
+            ],
+            "precious": false,
+            "readonly": false,
+            "sha": "",
+            "streaming": false,
+            "subject": null,
+            "text": "Shared Memory",
+            "width": 200,
+            "x": 596,
+            "y": 565
+        },
+        {
+            "applicationArgs": [],
+            "category": "PythonApp",
+            "collapsed": false,
+            "color": "#0059a5",
+            "description": "An application component in the form of a Python app",
+            "drawOrderHint": 0,
+            "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "5",
+                    "description": "Estimate of execution time (in seconds) for this application.",
+                    "name": "execution_time",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "defaultValue": "1",
+                    "description": "Number of CPUs used for this application.",
+                    "name": "num_cpus",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Integer",
+                    "value": 1
+                },
+                {
+                    "defaultValue": "false",
+                    "description": "Is this node the start of a group?",
+                    "name": "group_start",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Boolean",
+                    "value": false
+                },
+                {
+                    "defaultValue": "test.graphsRepository",
+                    "description": "The python class that implements this application",
+                    "name": "appclass",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Appclass",
+                    "type": "String",
+                    "value": "dlg.apps.simple.CopyApp"
+                }
+            ],
+            "flipPorts": false,
+            "git_url": "",
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "03b96b10-8f1a-4fec-b1d9-f6799146dd77",
+                    "IdText": "data",
+                    "description": "",
+                    "event": false,
+                    "text": "Data",
+                    "type": "String"
+                }
+            ],
+            "isGroup": false,
+            "key": -3,
+            "outputAppFields": [],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "886fe73c-4f86-4551-a1b9-94fe9ed247a0",
+                    "IdText": "data",
+                    "description": "",
+                    "event": false,
+                    "text": "Data",
+                    "type": "String"
+                }
+            ],
+            "precious": false,
+            "readonly": false,
+            "sha": "",
+            "streaming": false,
+            "subject": null,
+            "text": "Python App",
+            "width": 200,
+            "x": 860,
+            "y": 395
+        },
+        {
+            "applicationArgs": [],
+            "category": "PythonApp",
+            "collapsed": false,
+            "color": "#0059a5",
+            "description": "An application component in the form of a Python app",
+            "drawOrderHint": 0,
+            "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "5",
+                    "description": "Estimate of execution time (in seconds) for this application.",
+                    "name": "execution_time",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "defaultValue": "1",
+                    "description": "Number of CPUs used for this application.",
+                    "name": "num_cpus",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Integer",
+                    "value": 1
+                },
+                {
+                    "defaultValue": "false",
+                    "description": "Is this node the start of a group?",
+                    "name": "group_start",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Boolean",
+                    "value": false
+                },
+                {
+                    "defaultValue": "test.graphsRepository",
+                    "description": "The python class that implements this application",
+                    "name": "appclass",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Appclass",
+                    "type": "String",
+                    "value": "dlg.apps.simple.CopyApp"
+                }
+            ],
+            "flipPorts": false,
+            "git_url": "",
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "2b5dc75a-2588-4ef2-bf5a-b2a22b32ba23",
+                    "IdText": "data",
+                    "description": "",
+                    "event": false,
+                    "text": "Data",
+                    "type": "String"
+                }
+            ],
+            "isGroup": false,
+            "key": -4,
+            "outputAppFields": [],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "d6f695db-2e2e-42d3-98a4-4713872a2b98",
+                    "IdText": "data",
+                    "description": "",
+                    "event": false,
+                    "text": "Data",
+                    "type": "String"
+                }
+            ],
+            "precious": false,
+            "readonly": false,
+            "sha": "",
+            "streaming": false,
+            "subject": null,
+            "text": "Python App",
+            "width": 200,
+            "x": 857,
+            "y": 653
+        },
+        {
+            "applicationArgs": [],
+            "category": "PythonApp",
+            "collapsed": false,
+            "color": "#0059a5",
+            "description": "An application component in the form of a Python app",
+            "drawOrderHint": 0,
+            "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "5",
+                    "description": "Estimate of execution time (in seconds) for this application.",
+                    "name": "execution_time",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "defaultValue": "1",
+                    "description": "Number of CPUs used for this application.",
+                    "name": "num_cpus",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Integer",
+                    "value": 1
+                },
+                {
+                    "defaultValue": "false",
+                    "description": "Is this node the start of a group?",
+                    "name": "group_start",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Boolean",
+                    "value": false
+                },
+                {
+                    "defaultValue": "test.graphsRepository",
+                    "description": "The python class that implements this application",
+                    "name": "appclass",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Appclass",
+                    "type": "String",
+                    "value": "dlg.apps.simple.CopyApp"
+                }
+            ],
+            "flipPorts": false,
+            "git_url": "",
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "72238898-292f-4a5f-85c0-6474b810caad",
+                    "IdText": "data",
+                    "description": "",
+                    "event": false,
+                    "text": "Data",
+                    "type": "String"
+                }
+            ],
+            "isGroup": false,
+            "key": -5,
+            "outputAppFields": [],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "8b4258f6-1504-4988-9638-233782dee15b",
+                    "IdText": "data",
+                    "description": "",
+                    "event": false,
+                    "text": "Data",
+                    "type": "String"
+                }
+            ],
+            "precious": false,
+            "readonly": false,
+            "sha": "",
+            "streaming": false,
+            "subject": null,
+            "text": "Python App",
+            "width": 200,
+            "x": 856,
+            "y": 525
+        },
+        {
+            "applicationArgs": [],
+            "category": "SharedMemory",
+            "collapsed": false,
+            "color": "#2c2c2c",
+            "description": "Shared memory storage of intermediate data products. Implemented using shmem.",
+            "drawOrderHint": 0,
+            "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "5",
+                    "description": "Estimated size of the data contained in this node",
+                    "name": "data_volume",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Data volume",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "defaultValue": "false",
+                    "description": "Is this node the end of a group?",
+                    "name": "group_end",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group end",
+                    "type": "Boolean",
+                    "value": false
+                }
+            ],
+            "flipPorts": false,
+            "git_url": "",
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "9857a4e2-2f05-4850-bafd-24581f530e32",
+                    "IdText": "data",
+                    "description": "",
+                    "event": false,
+                    "text": "Data",
+                    "type": "String"
+                }
+            ],
+            "isGroup": false,
+            "key": -6,
+            "outputAppFields": [],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [],
+            "precious": false,
+            "readonly": false,
+            "sha": "",
+            "streaming": false,
+            "subject": null,
+            "text": "Shared Memory",
+            "width": 200,
+            "x": 1183,
+            "y": 384
+        },
+        {
+            "applicationArgs": [],
+            "category": "SharedMemory",
+            "collapsed": false,
+            "color": "#2c2c2c",
+            "description": "Shared memory storage of intermediate data products. Implemented using shmem.",
+            "drawOrderHint": 0,
+            "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "5",
+                    "description": "Estimated size of the data contained in this node",
+                    "name": "data_volume",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Data volume",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "defaultValue": "false",
+                    "description": "Is this node the end of a group?",
+                    "name": "group_end",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group end",
+                    "type": "Boolean",
+                    "value": false
+                }
+            ],
+            "flipPorts": false,
+            "git_url": "",
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "b221cb23-e256-49c5-b3d2-0bc6f2b3c53a",
+                    "IdText": "data",
+                    "description": "",
+                    "event": false,
+                    "text": "Data",
+                    "type": "String"
+                }
+            ],
+            "isGroup": false,
+            "key": -7,
+            "outputAppFields": [],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [],
+            "precious": false,
+            "readonly": false,
+            "sha": "",
+            "streaming": false,
+            "subject": null,
+            "text": "Shared Memory",
+            "width": 200,
+            "x": 1199,
+            "y": 532
+        },
+        {
+            "applicationArgs": [],
+            "category": "SharedMemory",
+            "collapsed": false,
+            "color": "#2c2c2c",
+            "description": "Shared memory storage of intermediate data products. Implemented using shmem.",
+            "drawOrderHint": 0,
+            "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "5",
+                    "description": "Estimated size of the data contained in this node",
+                    "name": "data_volume",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Data volume",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "defaultValue": "false",
+                    "description": "Is this node the end of a group?",
+                    "name": "group_end",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group end",
+                    "type": "Boolean",
+                    "value": false
+                }
+            ],
+            "flipPorts": false,
+            "git_url": "",
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "9b6ec8c5-6cd9-4b0b-a52b-394b018d5bbd",
+                    "IdText": "data",
+                    "description": "",
+                    "event": false,
+                    "text": "Data",
+                    "type": "String"
+                }
+            ],
+            "isGroup": false,
+            "key": -8,
+            "outputAppFields": [],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [],
+            "precious": false,
+            "readonly": false,
+            "sha": "",
+            "streaming": false,
+            "subject": null,
+            "text": "Shared Memory",
+            "width": 200,
+            "x": 1165,
+            "y": 676
+        }
+    ]
+}

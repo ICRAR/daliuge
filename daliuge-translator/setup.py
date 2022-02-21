@@ -32,8 +32,8 @@ from setuptools import setup
 # dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
-MAJOR = 1
-MINOR = 0
+MAJOR = 2
+MINOR = 2
 PATCH = 0
 RELEASE = True
 VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
@@ -86,19 +86,20 @@ def package_files(directory):
     paths = []
     for (path, directories, filenames) in os.walk(directory):
         for filename in filenames:
-            paths.append(os.path.join('..', path, filename))
+            paths.append(os.path.join("..", path, filename))
     return paths
 
 
-src_files = package_files('dlg')
+src_files = package_files("dlg")
 
 
 install_requires = [
+    "wheel",
     "bottle",
-   "daliuge-common==%s" % (VERSION,),
+    "daliuge-common==%s" % (VERSION,),
+    "jsonschema",
     "metis>=0.2a3",
-    # We are not compatible with networkx 2.4 yet, so we need to constrain that
-    "networkx<2.4",
+    "networkx",
     "numpy",
     "psutil",
     "pyswarm",
@@ -119,8 +120,6 @@ setup(
     package_data={
         "dlg": src_files,
     },
-    entry_points = {
-        'dlg.tool_commands': ['translator=dlg.translator.tool_commands']
-    },
+    entry_points={"dlg.tool_commands": ["translator=dlg.translator.tool_commands"]},
     test_suite="test",
 )

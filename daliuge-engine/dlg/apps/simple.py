@@ -20,29 +20,43 @@
 #    MA 02111-1307  USA
 #
 """Applications used as examples, for testing, or in simple situations"""
+from numbers import Number
 import pickle
+import random
+from typing import List, Optional
 import urllib.error
 import urllib.request
 
 import time
+import ast
 import numpy as np
 
-from .. import droputils, utils
-from ..drop import BarrierAppDROP, BranchAppDrop, ContainerDROP
-from ..meta import dlg_float_param, dlg_string_param
-from ..meta import dlg_bool_param, dlg_int_param
-from ..meta import dlg_component, dlg_batch_input
-from ..meta import dlg_batch_output, dlg_streaming_input
-
+from dlg import droputils, utils
+from dlg.drop import BarrierAppDROP, BranchAppDrop, ContainerDROP
+from dlg.meta import (
+    dlg_float_param,
+    dlg_string_param,
+    dlg_bool_param,
+    dlg_int_param,
+    dlg_component,
+    dlg_batch_input,
+    dlg_batch_output,
+    dlg_streaming_input
+)
+from dlg.exceptions import DaliugeException
 from dlg.apps.pyfunc import serialize_data, deserialize_data
 
 class NullBarrierApp(BarrierAppDROP):
-    compontent_meta = dlg_component('NullBarrierApp', 'Null Barrier.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+    component_meta = dlg_component(
+        "NullBarrierApp",
+        "Null Barrier.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
     """A BarrierAppDrop that doesn't perform any work"""
+
     def run(self):
         pass
 
@@ -53,23 +67,35 @@ class NullBarrierApp(BarrierAppDROP):
 # This is mainly useful (and used) to test graph translation and structure
 # without executing real algorithms. Very useful for debugging.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/sleepTime Sleep Time/5/Integer/readwrite/
+# @param tag daliuge
+# @param[in] aparam/sleepTime Sleep Time/5/Integer/readwrite/False/
 #     \~English The number of seconds to sleep
-# @param[in] param/appclass Application Class/dlg.apps.simple.SleepApp/String/readonly/
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.SleepApp/String/readonly/False/
 #     \~English Application class
-
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @par EAGLE_END
 class SleepApp(BarrierAppDROP):
     """A BarrierAppDrop that sleeps the specified amount of time (0 by default)"""
-    compontent_meta = dlg_component('SleepApp', 'Sleep App.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
 
-    sleepTime = dlg_float_param('sleep time', 0)
+    component_meta = dlg_component(
+        "SleepApp",
+        "Sleep App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    sleepTime = dlg_float_param("sleep time", 0)
 
     def initialize(self, **kwargs):
         super(SleepApp, self).initialize(**kwargs)
@@ -85,12 +111,22 @@ class SleepApp(BarrierAppDROP):
 # the graph. If an input is a container (e.g. a directory) it copies the
 # content recursively.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/appclass Application Class/dlg.apps.simple.CopyApp/String/readonly/
+# @param tag daliuge
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.CopyApp/String/readonly/False/
 #     \~English Application class
-
+# @param[in] cparam/bufsize buffer size/65536/Integer/readwrite/False/
+#     \~English Application class
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @par EAGLE_END
 class CopyApp(BarrierAppDROP):
     """
@@ -98,10 +134,16 @@ class CopyApp(BarrierAppDROP):
     All inputs are copied into all outputs in the order they were declared in
     the graph.
     """
-    compontent_meta = dlg_component('CopyApp', 'Copy App.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+
+    component_meta = dlg_component(
+        "CopyApp",
+        "Copy App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    _bufsize = dlg_int_param("bufsize", 65536)
 
     def run(self):
         self.copyAll()
@@ -116,9 +158,29 @@ class CopyApp(BarrierAppDROP):
                 self.copyRecursive(child)
         else:
             for outputDrop in self.outputs:
-                droputils.copyDropContents(inputDrop, outputDrop)
+                droputils.copyDropContents(inputDrop, outputDrop, bufsize=self._bufsize)
 
 
+##
+# @brief SleepAndCopyApp
+# @par EAGLE_START
+# @param category PythonApp
+# @param tag daliuge
+# @param[in] aparam/sleepTime Sleep Time/5/Integer/readwrite/False/
+#     \~English The number of seconds to sleep
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.SleepAndCopyApp/String/readonly/False/
+#     \~English Application class
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @par EAGLE_END
 class SleepAndCopyApp(SleepApp, CopyApp):
     """A combination of the SleepApp and the CopyApp. It sleeps, then copies"""
 
@@ -134,20 +196,29 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 # size indicates the number of elements ranging between the values low and high.
 # The resulting array will be send to all connected output apps.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/size Size/100/Integer/readwrite/
+# @param tag daliuge
+# @param[in] aparam/size Size/100/Integer/readwrite/False/
 #     \~English The size of the array
-# @param[in] param/integer Integer/True/Boolean/readwrite/
+# @param[in] aparam/integer Integer/True/Boolean/readwrite/False/
 #     \~English Generate integer array?
-# @param[in] param/low Low/0/float/readwrite/
+# @param[in] aparam/low Low/0/float/readwrite/False/
 #     \~English Low value of range in array [inclusive]
-# @param[in] param/high High/1/float/readwrite/
+# @param[in] aparam/high High/1/float/readwrite/False/
 #     \~English High value of range of array [exclusive]
-# @param[in] param/appclass Application class/dlg.apps.simple.RandomArrayApp/String/readonly/
+# @param[in] cparam/appclass Application class/dlg.apps.simple.RandomArrayApp/String/readonly/False/
 #     \~English Application class
-# @param[out] port/array
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[out] port/array Array/Array/
 #     \~English Port carrying the averaged array
 # @par EAGLE_END
 class RandomArrayApp(BarrierAppDROP):
@@ -163,16 +234,20 @@ class RandomArrayApp(BarrierAppDROP):
     high:     float, upper boundary (will be converted to int for integer arrays)
     size:     int, number of array elements
     """
-    compontent_meta = dlg_component('RandomArrayApp', 'Random Array App.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+
+    component_meta = dlg_component(
+        "RandomArrayApp",
+        "Random Array App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
     # default values
-    integer = dlg_bool_param('integer', True)
-    low = dlg_float_param('low', 0)
-    high = dlg_float_param('high', 100)
-    size = dlg_int_param('size', 100)
+    integer = dlg_bool_param("integer", True)
+    low = dlg_float_param("low", 0)
+    high = dlg_float_param("high", 100)
+    size = dlg_int_param("size", 100)
     marray = []
 
     def initialize(self, **kwargs):
@@ -182,8 +257,7 @@ class RandomArrayApp(BarrierAppDROP):
         # At least one output should have been added
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                'At least one output should have been added to %r' % self)
+            raise Exception("At least one output should have been added to %r" % self)
         self.generateRandomArray()
         for o in outs:
             d = pickle.dumps(self.marray)
@@ -212,16 +286,25 @@ class RandomArrayApp(BarrierAppDROP):
 # Users can add as many producers to the input array port as required and the resulting array
 # will also be send to all connected output apps.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/method Method/mean/String/readwrite/
+# @param tag daliuge
+# @param[in] aparam/method Method/mean/String/readwrite/False/
 #     \~English The method used for averaging
-# @param[in] param/appclass Application Class/dlg.apps.simple.AverageArraysApp/String/readonly/
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.AverageArraysApp/String/readonly/False/
 #     \~English Application class
-# @param[in] port/array
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[in] port/array Array/array/
 #     \~English Port for the input array(s)
-# @param[out] port/array
+# @param[out] port/array Array/Array/
 #     \~English Port carrying the averaged array
 # @par EAGLE_END
 class AverageArraysApp(BarrierAppDROP):
@@ -236,16 +319,24 @@ class AverageArraysApp(BarrierAppDROP):
 
     method:  string <['mean']|'median'>, use mean or median as method.
     """
+
     from numpy import mean, median
-    compontent_meta = dlg_component('RandomArrayApp', 'Random Array App.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+
+    component_meta = dlg_component(
+        "AverageArraysApp",
+        "Average Array App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
     # default values
-    methods = ['mean', 'median']
-    method = dlg_string_param('method', methods[0])
-    marray = []
+    methods = ["mean", "median"]
+    method = dlg_string_param("method", methods[0])
+
+    def __init__(self, oid, uid, **kwargs):
+        super().__init__(oid, kwargs)
+        self.marray = []
 
     def initialize(self, **kwargs):
         super(AverageArraysApp, self).initialize(**kwargs)
@@ -255,12 +346,11 @@ class AverageArraysApp(BarrierAppDROP):
 
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                'At least one output should have been added to %r' % self)
+            raise Exception("At least one output should have been added to %r" % self)
         self.getInputArrays()
-        avg = self.averageArray()
+        self._avg = self.averageArray()
         for o in outs:
-            d = pickle.dumps(avg)
+            d = pickle.dumps(self._avg)
             o.len = len(d)
             o.write(d)  # average across inputs
 
@@ -272,17 +362,120 @@ class AverageArraysApp(BarrierAppDROP):
         """
         ins = self.inputs
         if len(ins) < 1:
-            raise Exception(
-                'At least one input should have been added to %r' % self)
-
-        marray = [pickle.loads(droputils.allDropContents(inp)) for inp in ins]
+            raise Exception("At least one input should have been added to %r" % self)
+        marray = []
+        for inp in ins:
+            sarray = droputils.allDropContents(inp)
+            if len(sarray) == 0:
+                print(f"Input does not contain data!")
+            else:
+                sarray = pickle.loads(sarray)
+                marray.extend(sarray)
         self.marray = marray
 
-
     def averageArray(self):
-
         method_to_call = getattr(np, self.method)
         return method_to_call(self.marray, axis=0)
+
+
+##
+# @brief GenericNpyGatherApp
+# @details A BarrierAppDrop that combines one or more inputs using cummulative operations.
+# @par EAGLE_START
+# @param category PythonApp
+# @param tag daliuge
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.GenericNpyGatherApp/String/readonly/False/
+#     \~English Application class
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[in] cparam/function Function/sum/String/readwrite/False/
+#     \~English The function used for gathering
+# @param[in] cparam/function reduce_axes/None/String/readonly/False/
+#     \~English The ndarray axes to reduce, None reduces all axes for sum, prod, max, min functions
+# @param[in] port/array Array/npy/
+#     \~English Port for the input array(s)
+# @param[out] port/array Array/npy/
+#     \~English Port carrying the reduced array
+# @par EAGLE_END
+class GenericNpyGatherApp(BarrierAppDROP):
+    """
+    A BarrierAppDrop that reduces then gathers one or more inputs using cummulative operations.
+    function:  string <['sum']|'prod'|'min'|'max'|'add'|'multiply'|'maximum'|'minimum'>.
+
+    """
+    component_meta = dlg_component(
+        "GenericNpyGatherApp",
+        "Generic Npy Gather App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    # reduce and combine operation pair names
+    functions = {
+        # reduce and gather e.g. output dimension is reduces
+
+        "sum": "add",        # sum reduction of inputs along an axis first then reduces across drops
+        "prod": "multiply",  # prod reduction of inputs along an axis first then reduces across drops
+        "max": "maximum",    # max reduction of input along an axis first then reduces across drops
+        "min": "minimum",    # min reduction of input along an axis first then reduces across drops
+
+        # gather only
+        "add": None,         # elementwise addition of inputs, ndarrays must be of same shape
+        "multiply": None,    # elementwise multiplication of inputs, ndarrays must be of same shape
+        "maximum": None,     # elementwise maximums of inputs, ndarrays must be of same shape
+        "minimum": None      # elementwise minimums of inputs, ndarrays must be of same shape
+
+    }
+    function: str = dlg_string_param("function", "sum")
+    reduce_axes: str = dlg_string_param("reduce_axes", "None")
+
+    def __init__(self, oid, uid, **kwargs):
+        super().__init__(oid, kwargs)
+
+    def initialize(self, **kwargs):
+        super(GenericNpyGatherApp, self).initialize(**kwargs)
+        self.reduce_axes = ast.literal_eval(self.reduce_axes)
+
+    def run(self):
+        if len(self.inputs) < 1:
+            raise Exception(f"At least one input should have been added to {self}")
+        if len(self.outputs) < 1:
+            raise Exception(f"At least one output should have been added to {self}")
+        if self.function not in self.functions:
+            raise Exception(f"Function {self.function} not supported by {self}")
+
+        result = self.reduce_combine_inputs() if self.functions[self.function] is not None else self.combine_inputs()
+        for o in self.outputs:
+            droputils.save_numpy(o, result)
+
+    def reduce_combine_inputs(self):
+        result: Optional[Number] = None
+        reduce = getattr(np, f"{self.function}")
+        combine = getattr(np, f"{self.functions[self.function]}")
+        for input in self.inputs:
+            data = droputils.load_numpy(input)
+            result = reduce(data, axis=self.reduce_axes)\
+                if result is None\
+                else combine(result, reduce(data, axis=self.reduce_axes))
+        return result
+
+    def combine_inputs(self):
+        result: Optional[Number] = None
+        combine = getattr(np, f"{self.functions[self.function]}")
+        for input in self.inputs:
+            data = droputils.load_numpy(input)
+            result = data if result is None else combine(result, data)
+        return result
+
 
 ##
 # @brief HelloWorldApp
@@ -291,17 +484,25 @@ class AverageArraysApp(BarrierAppDROP):
 # to connect the single output port to multiple sinks, which will all receive
 # the same message. App does not require any input.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/greet Greet/World/String/readwrite/
+# @param tag daliuge
+# @param[in] aparam/greet Greet/World/String/readwrite/False/
 #     \~English What appears after 'Hello '
-# @param[in] param/appclass Application Class/dlg.apps.simple.HelloWorldApp/String/readonly/
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.HelloWorldApp/String/readonly/False/
 #     \~English Application class
-# @param[out] port/hello
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[out] port/hello Hello/String/
 #     \~English The port carrying the message produced by the app.
 # @par EAGLE_END
-
 class HelloWorldApp(BarrierAppDROP):
     """
     An App that writes 'Hello World!' or 'Hello <greet>!' to all of
@@ -310,40 +511,61 @@ class HelloWorldApp(BarrierAppDROP):
     Keywords:
     greet:   string, [World], whom to greet.
     """
-    compontent_meta = dlg_component('HelloWorldApp', 'Hello World App.',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
 
-    greet = dlg_string_param('greet', 'World')
+    component_meta = dlg_component(
+        "HelloWorldApp",
+        "Hello World App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    greet = dlg_string_param("greet", "World")
 
     def run(self):
-        self.greeting = 'Hello %s' % self.greet
+        ins = self.inputs
+        # if no inputs use the parameter else use the input
+        if len(ins) == 0:
+            self.greeting = "Hello %s" % self.greet
+        elif len(ins) != 1:
+            raise Exception("Only one input expected for %r" % self)
+        else:  # the input is expected to be a vector. We'll use the first element
+            self.greeting = "Hello %s" % str(
+                pickle.loads(droputils.allDropContents(ins[0]))[0]
+            )
 
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                'At least one output should have been added to %r' % self)
+            raise Exception("At least one output should have been added to %r" % self)
         for o in outs:
             o.len = len(self.greeting.encode())
             o.write(self.greeting.encode())  # greet across all outputs
 
+
 ##
 # @brief UrlRetrieveApp
-# @details A simple APP that retrieves the content of a URL and writes.
+# @details A simple APP that retrieves the content of a URL and writes
 # it to all outputs.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/url URL/"https://eagle.icrar.org"/String/readwrite/
+# @param tag daliuge
+# @param[in] aparam/url URL/"https://eagle.icrar.org"/String/readwrite/False/
 #     \~English The URL to retrieve
-# @param[in] param/appclass Application Class/dlg.apps.simple.UrlRetrieveApp/String/readonly/
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.UrlRetrieveApp/String/readonly/False/
 #     \~English Application class
-# @param[out] port/content
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[out] port/content Content/String/
 #     \~English The port carrying the content read from the URL.
 # @par EAGLE_END
-
 class UrlRetrieveApp(BarrierAppDROP):
     """
     An App that retrieves the content of a URL
@@ -351,12 +573,16 @@ class UrlRetrieveApp(BarrierAppDROP):
     Keywords:
     URL:   string, URL to retrieve.
     """
-    compontent_meta = dlg_component('UrlRetrieveApp', 'URL Retrieve App',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
 
-    url = dlg_string_param('url', '')
+    component_meta = dlg_component(
+        "UrlRetrieveApp",
+        "URL Retrieve App",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    url = dlg_string_param("url", "")
 
     def run(self):
         try:
@@ -368,11 +594,11 @@ class UrlRetrieveApp(BarrierAppDROP):
 
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                'At least one output should have been added to %r' % self)
+            raise Exception("At least one output should have been added to %r" % self)
         for o in outs:
             o.len = len(content)
             o.write(content)  # send content to all outputs
+
 
 ##
 # @brief GenericScatterApp
@@ -383,32 +609,45 @@ class UrlRetrieveApp(BarrierAppDROP):
 # the number of outputs will be distributed across the first len(outputs)-1 elements of the
 # resulting array.
 # @par EAGLE_START
-# @param gitrepo $(GIT_REPO)
-# @param version $(PROJECT_VERSION)
 # @param category PythonApp
-# @param[in] param/appclass Application Class/dlg.apps.simple.GenericScatterApp/String/readonly/
+# @param tag daliuge
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.GenericScatterApp/String/readonly/False/
 #     \~English Application class
-# @param[out] port/content
-#     \~English The port carrying the content read from the URL.
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[out] port/array Array/Array/
+#     \~English A numpy array of arrays, where the first axis is of length <numSplit>
 # @par EAGLE_END
-
-
 class GenericScatterApp(BarrierAppDROP):
     """
     An APP that splits an object that has a len attribute into <numSplit> parts and
     returns a numpy array of arrays, where the first axis is of length <numSplit>.
     """
-    compontent_meta = dlg_component('GenericScatterApp', 'Scatter an array like object into numSplit parts',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+
+    component_meta = dlg_component(
+        "GenericScatterApp",
+        "Scatter an array like object into numSplit parts",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    # automatically populated by scatter node
+    num_of_copies: int = dlg_int_param("num_of_copies", 1)
 
     def initialize(self, **kwargs):
         super(GenericScatterApp, self).initialize(**kwargs)
 
     def run(self):
-        # split it as many times as we have outputs
-        numSplit = len(self.outputs)
+        numSplit = self.num_of_copies
         cont = droputils.allDropContents(self.inputs[0])
         # if the data is of type string it is not pickled, but stored as a binary string.
         try:
@@ -429,11 +668,87 @@ class GenericScatterApp(BarrierAppDROP):
             o.len = len(d)
             o.write(d)  # average across inputs
 
+
+##
+# @brief GenericNpyScatterApp
+# @details An APP that splits about any axis on any npy format data drop
+# into as many parts as the app has outputs, provided that the initially converted numpy
+# array has enough elements. The return will be a numpy array of arrays, where the first
+# axis is of length len(outputs). The modulo remainder of the length of the original array and
+# the number of outputs will be distributed across the first len(outputs)-1 elements of the
+# resulting array.
+# @par EAGLE_START
+# @param category PythonApp
+# @param tag daliuge
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.GenericNpyScatterApp/String/readonly/False/
+#     \~English Application class
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[in] aparam/scatter_axes Scatter Axes//String/readwrite/False/
+#     \~English The axes to split input ndarrays on, e.g. [0,0,0], length must
+#       match the number of input ports
+# @param[out] port/array Array/npy/
+#     \~English A numpy array of arrays
+# @par EAGLE_END
+class GenericNpyScatterApp(BarrierAppDROP):
+    """
+    An APP that splits an object that has a len attribute into <num_of_copies> parts and
+    returns a numpy array of arrays.
+    """
+
+    component_meta = dlg_component(
+        "GenericNpyScatterApp",
+        "Scatter an array like object into <num_of_copies> parts",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    # automatically populated by scatter node
+    num_of_copies: int = dlg_int_param("num_of_copies", 1)
+    scatter_axes: List[int] = dlg_string_param("scatter_axes", "[0]")
+
+    def initialize(self, **kwargs):
+        super(GenericNpyScatterApp, self).initialize(**kwargs)
+        self.scatter_axes = ast.literal_eval(self.scatter_axes)
+
+    def run(self):
+        if len(self.inputs) * self.num_of_copies != len(self.outputs):
+            raise DaliugeException(\
+                f"expected {len(self.inputs) * self.num_of_copies} outputs,\
+                 got {len(self.outputs)}")
+        if len(self.inputs) != len(self.scatter_axes):
+            raise DaliugeException(\
+                f"expected {len(self.inputs)} axes,\
+                 got {len(self.scatter_axes)}, {self.scatter_axes}")
+
+        # split it as many times as we have outputs
+        self.num_of_copies = self.num_of_copies
+
+        for in_index in range(len(self.inputs)):
+            nObj = droputils.load_numpy(self.inputs[in_index])
+            try:
+                result = np.array_split(nObj, self.num_of_copies, axis=self.scatter_axes[in_index])
+            except IndexError as err:
+                raise err
+            for split_index in range(self.num_of_copies):
+                out_index = in_index * self.num_of_copies + split_index
+                droputils.save_numpy(self.outputs[out_index], result[split_index])
+
+
 class SimpleBranch(BranchAppDrop, NullBarrierApp):
     """Simple branch app that is told the result of its condition"""
 
     def initialize(self, **kwargs):
-        self.result = self._getArg(kwargs, 'result', True)
+        self.result = self._getArg(kwargs, "result", True)
         BranchAppDrop.initialize(self, **kwargs)
 
     def run(self):
@@ -441,3 +756,74 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 
     def condition(self):
         return self.result
+
+
+##
+# @brief ListAppendThrashingApp
+# @details A testing APP that appends a random integer to a list num times.
+# This is a CPU intensive operation and can thus be used to provide a test for application threading
+# since this operation will not yield.
+# The resulting array will be sent to all connected output apps.
+# @par EAGLE_START
+# @param category PythonApp
+# @param tag daliuge
+# @param[in] aparam/size Size/100/Integer/readwrite/False/
+#     \~English the size of the array
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.ListAppendThrashingApp/String/readonly/False/
+#     \~English Application class
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[out] port/array Array/array/
+#     \~English Port carrying the random array.
+# @par EAGLE_END
+class ListAppendThrashingApp(BarrierAppDROP):
+    """
+    A BarrierAppDrop that appends random integers to a list N times. It does
+    not require any inputs and writes the generated array to all of its
+    outputs.
+
+    Keywords:
+
+    size:     int, number of array elements
+    """
+    compontent_meta = dlg_component('ListAppendThrashingApp', 'List Append Thrashing',
+                                    [dlg_batch_input('binary/*', [])],
+                                    [dlg_batch_output('binary/*', [])],
+                                    [dlg_streaming_input('binary/*')])
+
+    def initialize(self, **kwargs):
+        self.size = self._getArg(kwargs, 'size', 100)
+        self.marray = []
+        super(ListAppendThrashingApp, self).initialize(**kwargs)
+
+    def run(self):
+        # At least one output should have been added
+        outs = self.outputs
+        if len(outs) < 1:
+            raise Exception(
+                'At least one output should have been added to %r' % self)
+        self.marray = self.generateArray()
+        for o in outs:
+            d = pickle.dumps(self.marray)
+            o.len = len(d)
+            o.write(pickle.dumps(self.marray))
+
+    def generateArray(self):
+        # This operation is wasteful to simulate an N^2 operation.
+        marray = []
+        for _ in range(int(self.size)):
+            marray = []
+            for i in range(int(self.size)):
+                marray.append(random.random())
+        return marray
+
+    def _getArray(self):
+        return self.marray

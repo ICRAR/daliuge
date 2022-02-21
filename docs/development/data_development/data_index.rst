@@ -4,8 +4,8 @@
 .. _data_index:
 
 
-|daliuge| Data Component Developers Guide
-#########################################
+|daliuge| *Data* Component Developers Guide
+###########################################
 
 This chapter describes what developers need to do to write a new data component that can be used as a Data Drop during the execution of a |daliuge| graph.
 
@@ -14,31 +14,25 @@ Different from most other frameworks |daliuge| makes data components first class
 * Abstraction of the I/O interface particularities of the underlying data storage mechanism.
 * Implementation of the DALiuGE data state engine, which is the |daliuge| mechansim to drive the execution of the workflow graphs.
 
-Types of Data Components
-------------------------
+Components
+==========
 
-|daliuge| out of the box includes the following five main Data Components:
+.. toctree::
+ :maxdepth: 2
 
-#. Posix file data components
-#. Memory data components
-#. S3 data components
-#. NGAS data components
-#. Apache Plasma data components
+ filesystem_components
+ memory_components
+ plasma_components
+ ngas_components
+ rdbms_components
+ cloud_storage_components
+ parameter_components
 
-This range covers most of the use cases in workflows we have encountered sofar, and thus in most cases it is likely not required to develop additional ones. 
+Custom Components
+=================
 
-.. default-domain:: py
+.. toctree::
+ :maxdepth: 2
 
-Python Data Component Class
----------------------------
-
-Adding a new data component is still possible and briefly outlined here. Depending on the I/O model of such a new component, the development can be derived from either one of the existing higher level data components, the lower level :class:`DataIO <dlg.io.DataIO>` abstract class, or even lower with the :class:`AbstractDROP <dlg.drop.AbstractDROP>` class. The best way to get started is to checkout the code of existing data components like , e.g. the :class:`JsonDROP <dlg.json_drop.JsonDROP>` or the the :class:`S3DROP <dlg.s3_drop.S3DROP>`
-
-I/O
----
-
-A data components' input and output methods are defined by the abstract class :class:`DataIO <dlg.io.DataIO>`. The methods in that class are just empty definitions and have to be implemented by the actual data component.
-
-
-*NOTE: The DCDG is work in progress!*
+ writing_data_components
 
