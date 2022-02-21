@@ -32,17 +32,18 @@ from .constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from .drop_manager import DROPManager
 from .. import remote, graph_loader
 from ..ddap_protocol import DROPRel
-from ..exceptions import InvalidGraphException, DaliugeException, \
-    SubManagerException
+from ..exceptions import InvalidGraphException, DaliugeException, SubManagerException
 from ..utils import portIsOpen
 
 
 logger = logging.getLogger(__name__)
 
+
 def uid_for_drop(dropSpec):
-    if 'uid' in dropSpec:
-        return dropSpec['uid']
-    return dropSpec['oid']
+    if "uid" in dropSpec:
+        return dropSpec["uid"]
+    return dropSpec["oid"]
+
 
 def sanitize_relations(interDMRelations, graph):
 
@@ -66,13 +67,13 @@ def sanitize_relations(interDMRelations, graph):
     # all this code to immediately use those UIDs instead.
     #
     # NOTE: It seems that the comment above is the result of a misunderstasnding
-    # of the concept of OIDs and UIDs. OIDs are objectIDs provided by the 
+    # of the concept of OIDs and UIDs. OIDs are objectIDs provided by the
     # user or rather the translation system, they can't be UIDs, since those
     # have to be created by the underlying system implementing the actual drops.
     # The reason for that is that the UIDs are required to be unique within
     # the system runtime, the OIDs only have to be unique for a certain object.
     # In fact there could be multiple drops using to the same OID, but having
-    # different UIDs. The idea would be that system generates the UIDs during 
+    # different UIDs. The idea would be that system generates the UIDs during
     # generation of the drops. In fact the user does not need to and should not
     # know about the UIDs at all and in general the system does not need to
     # know about the OIDs.
@@ -84,11 +85,13 @@ def sanitize_relations(interDMRelations, graph):
         newDMRelations.append(new_rel)
     interDMRelations[:] = newDMRelations
 
+
 def group_by_node(uids, graph):
     uids_by_node = collections.defaultdict(list)
     for uid in uids:
-        uids_by_node[graph[uid]['node']].append(uid)
+        uids_by_node[graph[uid]["node"]].append(uid)
     return uids_by_node
+
 
 class CompositeManager(DROPManager):
     """
@@ -113,7 +116,15 @@ class CompositeManager(DROPManager):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, dmPort, partitionAttr, subDmId, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
+    def __init__(
+        self,
+        dmPort,
+        partitionAttr,
+        subDmId,
+        dmHosts=[],
+        pkeyPath=None,
+        dmCheckTimeout=10,
+    ):
         """
         Creates a new CompositeManager. The sub-DMs it manages are to be located
         at `dmHosts`, and should be listening on port `dmPort`.
@@ -135,10 +146,12 @@ class CompositeManager(DROPManager):
         self._dmHosts = dmHosts
         self._graph = {}
         self._drop_rels = {}
-        self._sessionIds = [] # TODO: it's still unclear how sessions are managed at the composite-manager level
+        self._sessionIds = (
+            []
+        )  # TODO: it's still unclear how sessions are managed at the composite-manager level
         self._pkeyPath = pkeyPath
         self._dmCheckTimeout = dmCheckTimeout
-        n_threads = max(1,min(len(dmHosts),20))
+        n_threads = max(1, min(len(dmHosts), 20))
         self._tp = multiprocessing.pool.ThreadPool(n_threads)
 
         # The list of bottom-level nodes that are covered by this manager
@@ -151,7 +164,9 @@ class CompositeManager(DROPManager):
 
     def startDMChecker(self):
         self._dmCheckerEvt = threading.Event()
-        self._dmCheckerThread = threading.Thread(name='DMChecker Thread', target=self._checkDM)
+        self._dmCheckerThread = threading.Thread(
+            name="DMChecker Thread", target=self._checkDM
+        )
         self._dmCheckerThread.start()
 
     def stopDMChecker(self):
@@ -172,7 +187,10 @@ class CompositeManager(DROPManager):
                 if self._dmCheckerEvt.is_set():
                     break
                 if not self.check_dm(host, timeout=self._dmCheckTimeout):
-                    logger.error("Couldn't contact manager for host %s, will try again later", host)
+                    logger.error(
+                        "Couldn't contact manager for host %s, will try again later",
+                        host,
+                    )
             if self._dmCheckerEvt.wait(60):
                 break
 
@@ -206,13 +224,15 @@ class CompositeManager(DROPManager):
     def dmAt(self, host, port=None):
 
         if not self.check_dm(host, port):
-            raise SubManagerException('Manager expected but not running in %s:%d' % (host, port))
+            raise SubManagerException(
+                "Manager expected but not running in %s:%d" % (host, port)
+            )
 
         port = port or self._dmPort
         return NodeManagerClient(host, port, 10)
 
     def getSessionIds(self):
-        return self._sessionIds;
+        return self._sessionIds
 
     #
     # Replication of commands to underlying drop managers
@@ -236,7 +256,9 @@ class CompositeManager(DROPManager):
 
         except Exception as e:
             exceptions[host] = e
-            logger.exception("Error while %s on host %s, session %s", action, host, sessionId)
+            logger.exception(
+                "Error while %s on host %s, session %s", action, host, sessionId
+            )
 
     def replicate(self, sessionId, f, action, collect=None, iterable=None, port=None):
         """
@@ -245,9 +267,17 @@ class CompositeManager(DROPManager):
         thrExs = {}
         iterable = iterable or self._dmHosts
         port = port or self._dmPort
-        self._tp.map(functools.partial(self._do_in_host, action, sessionId, thrExs, f, collect, port), iterable)
+        self._tp.map(
+            functools.partial(
+                self._do_in_host, action, sessionId, thrExs, f, collect, port
+            ),
+            iterable,
+        )
         if thrExs:
-            msg = "More than one error occurred while %s on session %s" % (action, sessionId)
+            msg = "More than one error occurred while %s on session %s" % (
+                action,
+                sessionId,
+            )
             raise SubManagerException(msg, thrExs)
 
     #
@@ -255,44 +285,46 @@ class CompositeManager(DROPManager):
     #
     def _createSession(self, dm, host, sessionId):
         dm.createSession(sessionId)
-        logger.debug('Successfully created session %s on %s', sessionId, host)
+        logger.debug("Successfully created session %s on %s", sessionId, host)
 
     def createSession(self, sessionId):
         """
         Creates a session in all underlying DMs.
         """
-        logger.info('Creating Session %s in all hosts', sessionId)
+        logger.info("Creating Session %s in all hosts", sessionId)
         self.replicate(sessionId, self._createSession, "creating sessions")
-        logger.info('Successfully created session %s in all hosts', sessionId)
+        logger.info("Successfully created session %s in all hosts", sessionId)
         self._sessionIds.append(sessionId)
 
     def _cancelSession(self, dm, host, sessionId):
         dm.cancelSession(sessionId)
-        logger.debug('Successfully cancelled session %s on %s', sessionId, host)
+        logger.debug("Successfully cancelled session %s on %s", sessionId, host)
 
     def cancelSession(self, sessionId):
         """
         Cancels a session in all underlying DMs.
         """
-        logger.info('Cancelled session %s in all hosts', sessionId)
+        logger.info("Cancelled session %s in all hosts", sessionId)
         self.replicate(sessionId, self._cancelSession, "cancelling sessions")
 
     def _destroySession(self, dm, host, sessionId):
         dm.destroySession(sessionId)
-        logger.debug('Successfully destroyed session %s on %s', sessionId, host)
+        logger.debug("Successfully destroyed session %s on %s", sessionId, host)
 
     def destroySession(self, sessionId):
         """
         Destroy a session in all underlying DMs.
         """
-        logger.info('Destroying Session %s in all hosts', sessionId)
+        logger.info("Destroying Session %s in all hosts", sessionId)
         self.replicate(sessionId, self._destroySession, "creating sessions")
         self._sessionIds.remove(sessionId)
 
     def _add_node_subscriptions(self, dm, host_and_subscriptions, sessionId):
         host, subscriptions = host_and_subscriptions
         dm.add_node_subscriptions(sessionId, subscriptions)
-        logger.debug("Successfully added relationship info to session %s on %s", sessionId, host)
+        logger.debug(
+            "Successfully added relationship info to session %s on %s", sessionId, host
+        )
 
     def _addGraphSpec(self, dm, host_and_graphspec, sessionId):
         host, graphSpec = host_and_graphspec
@@ -305,16 +337,23 @@ class CompositeManager(DROPManager):
         # belong to the same host, so we can submit that graph into the individual
         # DMs. For this we need to make sure that our graph has a the correct
         # attribute set
-        logger.info('Separating graph')
+        logger.info("Separating graph")
         perPartition = collections.defaultdict(list)
         for dropSpec in graphSpec:
             if self._partitionAttr not in dropSpec:
-                msg = "Drop %s doesn't specify a %s attribute" % (dropSpec['oid'], self._partitionAttr)
+                msg = "Drop %s doesn't specify a %s attribute" % (
+                    dropSpec["oid"],
+                    self._partitionAttr,
+                )
                 raise InvalidGraphException(msg)
 
             partition = dropSpec[self._partitionAttr]
             if partition not in self._dmHosts:
-                msg = "Drop %s's %s %s does not belong to this DM" % (dropSpec['oid'], self._partitionAttr, partition)
+                msg = "Drop %s's %s %s does not belong to this DM" % (
+                    dropSpec["oid"],
+                    self._partitionAttr,
+                    partition,
+                )
                 raise InvalidGraphException(msg)
 
             perPartition[partition].append(dropSpec)
@@ -329,14 +368,19 @@ class CompositeManager(DROPManager):
         for dropSpecs in perPartition.values():
             inter_partition_rels += graph_loader.removeUnmetRelationships(dropSpecs)
         sanitize_relations(inter_partition_rels, self._graph)
-        logger.info('Removed (and sanitized) %d inter-dm relationships', len(inter_partition_rels))
+        logger.info(
+            "Removed (and sanitized) %d inter-dm relationships",
+            len(inter_partition_rels),
+        )
 
         # Store the inter-partition relationships; later on they have to be
         # communicated to the NMs so they can establish them as needed.
-        drop_rels = collections.defaultdict(functools.partial(collections.defaultdict, list))
+        drop_rels = collections.defaultdict(
+            functools.partial(collections.defaultdict, list)
+        )
         for rel in inter_partition_rels:
-            rhn = self._graph[rel.rhs]['node']
-            lhn = self._graph[rel.lhs]['node']
+            rhn = self._graph[rel.rhs]["node"]
+            lhn = self._graph[rel.lhs]["node"]
             drop_rels[lhn][rhn].append(rel)
             drop_rels[rhn][lhn].append(rel)
 
@@ -345,33 +389,49 @@ class CompositeManager(DROPManager):
 
         # Create the individual graphs on each DM now that they are correctly
         # separated.
-        logger.info('Adding individual graphSpec of session %s to each DM', sessionId)
-        self.replicate(sessionId, self._addGraphSpec, "appending graphSpec to individual DMs", iterable=perPartition.items())
-        logger.info('Successfully added individual graphSpec of session %s to each DM', sessionId)
+        logger.info("Adding individual graphSpec of session %s to each DM", sessionId)
+        self.replicate(
+            sessionId,
+            self._addGraphSpec,
+            "appending graphSpec to individual DMs",
+            iterable=perPartition.items(),
+        )
+        logger.info(
+            "Successfully added individual graphSpec of session %s to each DM",
+            sessionId,
+        )
 
     def _deploySession(self, dm, host, sessionId):
         dm.deploySession(sessionId)
-        logger.debug('Successfully deployed session %s on %s', sessionId, host)
+        logger.debug("Successfully deployed session %s on %s", sessionId, host)
 
     def _triggerDrops(self, dm, host_and_uids, sessionId):
         host, uids = host_and_uids
         dm.trigger_drops(sessionId, uids)
-        logger.info("Successfully triggered drops for session %s on %s", sessionId, host)
+        logger.info(
+            "Successfully triggered drops for session %s on %s", sessionId, host
+        )
 
     def deploySession(self, sessionId, completedDrops=[]):
 
         # Indicate the node managers that they have to subscribe to events
         # published by some nodes
         if self._drop_rels.get(sessionId, None):
-            self.replicate(sessionId, self._add_node_subscriptions, "adding relationship information",
-                           port=constants.NODE_DEFAULT_REST_PORT,
-                           iterable=self._drop_rels[sessionId].items())
+            self.replicate(
+                sessionId,
+                self._add_node_subscriptions,
+                "adding relationship information",
+                port=constants.NODE_DEFAULT_REST_PORT,
+                iterable=self._drop_rels[sessionId].items(),
+            )
             logger.info("Delivered node subscription list to node managers")
-            logger.debug("Number of subscriptions: %s" % len(self._drop_rels[sessionId].items()))
+            logger.debug(
+                "Number of subscriptions: %s" % len(self._drop_rels[sessionId].items())
+            )
 
-        logger.info('Deploying Session %s in all hosts', sessionId)
+        logger.info("Deploying Session %s in all hosts", sessionId)
         self.replicate(sessionId, self._deploySession, "deploying session")
-        logger.info('Successfully deployed session %s in all hosts', sessionId)
+        logger.info("Successfully deployed session %s in all hosts", sessionId)
 
         # Now that everything is wired up we move the requested DROPs to COMPLETED
         # (instead of doing it at the DM-level deployment time, in which case
@@ -379,20 +439,28 @@ class CompositeManager(DROPManager):
         if completedDrops:
             not_found = set(completedDrops) - set(self._graph)
             if not_found:
-                raise DaliugeException("UIDs for completed drops not found: %r", not_found)
-            logger.info('Moving Drops to COMPLETED right away: %r', completedDrops)
+                raise DaliugeException(
+                    "UIDs for completed drops not found: %r", not_found
+                )
+            logger.info("Moving Drops to COMPLETED right away: %r", completedDrops)
             completed_by_host = group_by_node(completedDrops, self._graph)
-            self.replicate(sessionId, self._triggerDrops, "triggering drops",
-                           port=constants.NODE_DEFAULT_REST_PORT,
-                           iterable=completed_by_host.items())
-            logger.info('Successfully triggered drops')
+            self.replicate(
+                sessionId,
+                self._triggerDrops,
+                "triggering drops",
+                port=constants.NODE_DEFAULT_REST_PORT,
+                iterable=completed_by_host.items(),
+            )
+            logger.info("Successfully triggered drops")
 
     def _getGraphStatus(self, dm, host, sessionId):
         return dm.getGraphStatus(sessionId)
 
     def getGraphStatus(self, sessionId):
         allStatus = {}
-        self.replicate(sessionId, self._getGraphStatus, "getting graph status", collect=allStatus)
+        self.replicate(
+            sessionId, self._getGraphStatus, "getting graph status", collect=allStatus
+        )
         return allStatus
 
     def _getGraph(self, dm, host, sessionId):
@@ -401,11 +469,20 @@ class CompositeManager(DROPManager):
     def getGraph(self, sessionId):
 
         allGraphs = {}
-        self.replicate(sessionId, self._getGraph, "getting the graph", collect=allGraphs)
+        self.replicate(
+            sessionId, self._getGraph, "getting the graph", collect=allGraphs
+        )
 
         # The graphs coming from the DMs are not interconnected, we need to
         # add the missing connections to the graph before returning upstream
-        rels = set([z for x in self._drop_rels[sessionId].values() for y in x.values() for z in y])
+        rels = set(
+            [
+                z
+                for x in self._drop_rels[sessionId].values()
+                for y in x.values()
+                for z in y
+            ]
+        )
         for rel in rels:
             graph_loader.addLink(rel.rel, allGraphs[rel.rhs], rel.lhs)
 
@@ -416,7 +493,12 @@ class CompositeManager(DROPManager):
 
     def getSessionStatus(self, sessionId):
         allStatus = {}
-        self.replicate(sessionId, self._getSessionStatus, "getting the graph status", collect=allStatus)
+        self.replicate(
+            sessionId,
+            self._getSessionStatus,
+            "getting the graph status",
+            collect=allStatus,
+        )
         return allStatus
 
     def _getGraphSize(self, dm, host, sessionId):
@@ -424,8 +506,11 @@ class CompositeManager(DROPManager):
 
     def getGraphSize(self, sessionId):
         allCounts = []
-        self.replicate(sessionId, self._getGraphSize, "getting the graph size", collect=allCounts)
+        self.replicate(
+            sessionId, self._getGraphSize, "getting the graph size", collect=allCounts
+        )
         return sum(allCounts)
+
 
 class DataIslandManager(CompositeManager):
     """
@@ -433,16 +518,19 @@ class DataIslandManager(CompositeManager):
     """
 
     def __init__(self, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
-        super(DataIslandManager, self).__init__(NODE_DEFAULT_REST_PORT,
-                                                'node',
-                                                'nm',
-                                                dmHosts=dmHosts,
-                                                pkeyPath=pkeyPath,
-                                                dmCheckTimeout=dmCheckTimeout)
+        super(DataIslandManager, self).__init__(
+            NODE_DEFAULT_REST_PORT,
+            "node",
+            "nm",
+            dmHosts=dmHosts,
+            pkeyPath=pkeyPath,
+            dmCheckTimeout=dmCheckTimeout,
+        )
 
         # In the case of the Data Island the dmHosts are the final nodes as well
         self._nodes = dmHosts
-        logger.info('Created DataIslandManager for hosts: %r', self._dmHosts)
+        logger.info("Created DataIslandManager for hosts: %r", self._dmHosts)
+
 
 class MasterManager(CompositeManager):
     """
@@ -450,10 +538,12 @@ class MasterManager(CompositeManager):
     """
 
     def __init__(self, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
-        super(MasterManager, self).__init__(ISLAND_DEFAULT_REST_PORT,
-                                            'island',
-                                            'dim',
-                                            dmHosts=dmHosts,
-                                            pkeyPath=pkeyPath,
-                                            dmCheckTimeout=dmCheckTimeout)
-        logger.info('Created MasterManager for hosts: %r', self._dmHosts)
+        super(MasterManager, self).__init__(
+            ISLAND_DEFAULT_REST_PORT,
+            "island",
+            "dim",
+            dmHosts=dmHosts,
+            pkeyPath=pkeyPath,
+            dmCheckTimeout=dmCheckTimeout,
+        )
+        logger.info("Created MasterManager for hosts: %r", self._dmHosts)

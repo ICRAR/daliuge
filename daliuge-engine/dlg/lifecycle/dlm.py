@@ -19,7 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-'''
+"""
 A simple implementation of the data lifecycle manager (DLM).
 
 The following is an extract of PDR.02.02 "DATA Sub-element design report",
@@ -116,7 +116,7 @@ Data Lifecycle Configurator Manager, but for the prototyping we can use a self-
 configured (and/or hardcoded) DLM
 
 @author: rtobar
-'''
+"""
 
 import logging
 import random
@@ -133,11 +133,13 @@ from ..drop import ContainerDROP
 
 logger = logging.getLogger(__name__)
 
+
 class DataLifecycleManagerBackgroundTask(threading.Thread):
-    '''
+    """
     A thread that periodically runs some of the methods on the given DLM until
     signaled to stop
-    '''
+    """
+
     def __init__(self, dlm, period, finishedEvent):
         threading.Thread.__init__(self, name="DLMBackgroundTask")
         self._dlm = dlm
@@ -153,10 +155,11 @@ class DataLifecycleManagerBackgroundTask(threading.Thread):
                 break
             self.doTask(dlm)
 
+
 class DROPChecker(DataLifecycleManagerBackgroundTask):
-    '''
+    """
     A thread that performs several checks on existing DROPs
-    '''
+    """
 
     def doTask(self, dlm):
         # Expire DROPs that are already too old
@@ -166,41 +169,43 @@ class DROPChecker(DataLifecycleManagerBackgroundTask):
         # if they are not found
         dlm.deleteLostDrops()
 
+
 class DROPGarbageCollector(DataLifecycleManagerBackgroundTask):
-    '''
+    """
     A thread that performs "garbage collection" of DROPs; that is, it physically
     deleted DROPs that are marked as EXPIRED
-    '''
+    """
 
     def doTask(self, dlm):
         # The names says it all
         dlm.deleteExpiredDrops()
 
+
 class DROPMover(DataLifecycleManagerBackgroundTask):
-    '''
+    """
     A thread that automatically moves DROPs between layers of the HSM.
     This is supposed to be based on rules and configuration parameters which we
     still don't consider here. The driving rule we currently use is how
     frequently is the DROP accessed.
-    '''
+    """
 
     def doTask(self, dlm):
         dlm.moveDropsAround()
 
-class DropEventListener(object):
 
+class DropEventListener(object):
     def __init__(self, dlm):
         self._dlm = dlm
 
     def handleEvent(self, event):
-        if event.type == 'open':
+        if event.type == "open":
             self._dlm.handleOpenedDrop(event.oid, event.uid)
-        elif event.type == 'status':
+        elif event.type == "status":
             if event.status == DROPStates.COMPLETED:
                 self._dlm.handleCompletedDrop(event.uid)
 
-class DataLifecycleManager(object):
 
+class DataLifecycleManager(object):
     def __init__(self, **kwargs):
         self._hsm = manager.HierarchicalStorageManager()
         self._reg = registry.InMemoryRegistry()
@@ -213,19 +218,21 @@ class DataLifecycleManager(object):
         self._drops = {}
 
         self._checkPeriod = 10
-        if 'checkPeriod' in kwargs:
-            self._checkPeriod = float(kwargs['checkPeriod'])
+        if "checkPeriod" in kwargs:
+            self._checkPeriod = float(kwargs["checkPeriod"])
 
-        self._cleanupPeriod = 10*self._checkPeriod
-        if 'cleanupPeriod' in kwargs:
-            self._cleanupPeriod = float(kwargs['cleanupPeriod'])
+        self._cleanupPeriod = 10 * self._checkPeriod
+        if "cleanupPeriod" in kwargs:
+            self._cleanupPeriod = float(kwargs["cleanupPeriod"])
 
     def startup(self):
         # Spawn the background threads
         finishedEvent = threading.Event()
         dropChecker = DROPChecker(self, self._checkPeriod, finishedEvent)
         dropChecker.start()
-        dropGarbageCollector = DROPGarbageCollector(self, self._cleanupPeriod, finishedEvent)
+        dropGarbageCollector = DROPGarbageCollector(
+            self, self._cleanupPeriod, finishedEvent
+        )
         dropGarbageCollector.start()
 
         self._dropChecker = dropChecker
@@ -254,7 +261,6 @@ class DataLifecycleManager(object):
     def __exit__(self, typ, value, traceback):
         self.cleanup()
 
-
     def _deleteDrop(self, drop):
         logger.debug("Deleting DROP %r", drop)
         drop.delete()
@@ -275,24 +281,31 @@ class DataLifecycleManager(object):
             # Expire-after-use: mark as expired if all consumers
             # are finished using this DROP
             if drop.expireAfterUse:
-                allDone = all([c.execStatus in [AppDROPStates.FINISHED, AppDROPStates.ERROR] for c in drop.consumers])
+                allDone = all(
+                    [
+                        c.execStatus in [AppDROPStates.FINISHED, AppDROPStates.ERROR]
+                        for c in drop.consumers
+                    ]
+                )
                 if not allDone:
                     continue
 
             # Otherwise, we check the expiration date
             # (if no lifespan was specified for the DROP, its expiration
             # date will be -1 and it will be skipped)
-            elif drop.expirationDate == -1 or \
-                 now <= drop.expirationDate:
+            elif drop.expirationDate == -1 or now <= drop.expirationDate:
                 continue
 
             if drop.isBeingRead():
-                logger.info("%r has expired but is currently being read, " \
-                             "will skip expiration for the time being", drop)
+                logger.info(
+                    "%r has expired but is currently being read, "
+                    "will skip expiration for the time being",
+                    drop,
+                )
                 continue
 
             # Finally!
-            logger.debug('Marking %r as EXPIRED', drop)
+            logger.debug("Marking %r as EXPIRED", drop)
             drop.status = DROPStates.EXPIRED
 
     def _disappeared(self, drop):
@@ -308,7 +321,7 @@ class DataLifecycleManager(object):
                 continue
 
             toRemove.append(drop.uid)
-            logger.warning('%r has disappeared', drop)
+            logger.warning("%r has disappeared", drop)
 
             # Check if it's replicated
             uids = self._reg.getDropUids(drop)
@@ -326,19 +339,29 @@ class DataLifecycleManager(object):
                     if not self._disappeared(siblingDrop):
                         replicas.append(siblingDrop)
                     else:
-                        logger.warning('%r (replicated from %r) has disappeared', siblingDrop, drop)
+                        logger.warning(
+                            "%r (replicated from %r) has disappeared", siblingDrop, drop
+                        )
                         toRemove.append(siblingDrop.uid)
 
                 if len(replicas) > 1:
-                    logger.info("%r has still more than one replica, no action needed", drop)
+                    logger.info(
+                        "%r has still more than one replica, no action needed", drop
+                    )
                 elif len(replicas) == 1:
-                    logger.info("Only one replica left for DROP %r, will create a new one", drop)
+                    logger.info(
+                        "Only one replica left for DROP %r, will create a new one", drop
+                    )
                     self.replicateDrop(replicas[0])
                 else:
                     definitelyLost = True
 
             if definitelyLost:
-                logger.error("No available replica found for DROP %s/%s, the data is DEFINITELY LOST", drop.oid, drop.uid)
+                logger.error(
+                    "No available replica found for DROP %s/%s, the data is DEFINITELY LOST",
+                    drop.oid,
+                    drop.uid,
+                )
                 drop.phase = DROPPhases.LOST
                 self._reg.setDropPhase(drop, drop.phase)
 
@@ -347,10 +370,10 @@ class DataLifecycleManager(object):
             del self._drops[uid]
 
     def moveDropsAround(self):
-        '''
+        """
         Moves DROPs to different layers of the HSM if necessary, currently based
         only on the access times
-        '''
+        """
         # Big questions here that need some answers/experimentation
         #  1 "Migrating" implies that the data is no longer in its original
         #    location, but has been moved rather than copied to a new place.
@@ -431,9 +454,9 @@ class DataLifecycleManager(object):
             self._reg.recordNewAccess(oid)
 
     def handleCompletedDrop(self, uid):
-        '''
+        """
         :param string uid:
-        '''
+        """
         # Check the kind of storage used by this DROP. If it's already persisted
         # in a persistent storage media we don't need to save it again
 
@@ -449,9 +472,9 @@ class DataLifecycleManager(object):
         return not isinstance(drop, ContainerDROP)
 
     def replicateDrop(self, drop):
-        '''
+        """
         :param dlg.drop.AbstractDROP drop:
-        '''
+        """
 
         # Check that the DROP is complete already
         if drop.status != DROPStates.COMPLETED:
@@ -491,14 +514,21 @@ class DataLifecycleManager(object):
     def _replicate(self, drop, store):
 
         # Dummy, but safe, new UID
-        newUid = 'uid:' + ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(10)])
+        newUid = "uid:" + "".join(
+            [
+                random.SystemRandom().choice(string.ascii_letters + string.digits)
+                for _ in range(10)
+            ]
+        )
 
-        logger.debug('Creating new DROP with uid %s from %r', newUid, drop)
+        logger.debug("Creating new DROP with uid %s from %r", newUid, drop)
 
         # For the time being we manually copy the contents of the current DROP into it
-        newDrop = store.createDrop(drop.oid, newUid, expectedSize=drop.size, precious=drop.precious)
+        newDrop = store.createDrop(
+            drop.oid, newUid, expectedSize=drop.size, precious=drop.precious
+        )
         droputils.copyDropContents(drop, newDrop)
 
-        logger.debug('%r successfully replicated to %r', drop, newDrop)
+        logger.debug("%r successfully replicated to %r", drop, newDrop)
 
         return newDrop, newUid

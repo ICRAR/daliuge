@@ -46,6 +46,9 @@ before accepting it, but delays the creation of the Drops until deployment time.
 Once the Drops are created, the Node Drop Manager exposes them via a proxy to allow
 remote method executions on them.
 
+The node manager is also responsible for launching drops on separate processes and managing
+shared memory access between them.
+
 Data Island Drop Manager
 ^^^^^^^^^^^^^^^^^^^^^^^^
 

@@ -30,16 +30,25 @@ from dlg import common
 
 
 class TestTool(unittest.TestCase):
-
     def test_pipeline(self):
         """A pipeline from an LG all the way to a finished graph execution"""
-        lg = pkg_resources.resource_filename( # @UndefinedVariable
-            'test.dropmake', 'logical_graphs/cont_img.graph')
+        lg = pkg_resources.resource_filename(  # @UndefinedVariable
+            "test.dropmake", "logical_graphs/cont_img.graph"
+        )
 
-        fill = tool.start_process('fill', ['-L', lg], stdout=subprocess.PIPE)
-        unroll = tool.start_process('unroll', ['-z', '--app', '1'], stdin=fill.stdout, stdout=subprocess.PIPE)
-        partition = tool.start_process('partition', stdin=unroll.stdout, stdout=subprocess.PIPE)
-        map_ = tool.start_process('map', ['-N', '127.0.0.1,127.0.0.1'], stdin=partition.stdout, stdout=subprocess.PIPE)
+        fill = tool.start_process("fill", ["-L", lg], stdout=subprocess.PIPE)
+        unroll = tool.start_process(
+            "unroll", ["-z", "--app", "1"], stdin=fill.stdout, stdout=subprocess.PIPE
+        )
+        partition = tool.start_process(
+            "partition", stdin=unroll.stdout, stdout=subprocess.PIPE
+        )
+        map_ = tool.start_process(
+            "map",
+            ["-N", "127.0.0.1,127.0.0.1"],
+            stdin=partition.stdout,
+            stdout=subprocess.PIPE,
+        )
         mapped_graph, _ = map_.communicate()
 
         for proc in fill, unroll, partition, map_:

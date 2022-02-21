@@ -178,6 +178,8 @@ currently attempts to address the following optimisation goals:
 
 * **Minimise the number of DataIslands** but subject to (1) a given **completion time deadline**, and (2) a given *DoP* (e.g. number of cores per node) that each DataIsland is allowed to take advantage of. In this problem, both completion time and resource footprint become the minimisation goals. The motivation of this problem is clear. In an scenario where two different schedules can complete the processing pipelinewithin, say, 5 minutes, the schedule that consumes less resources is preferred. Since a DataIsland is mapped onto resources, and its capacity is already constrained by a given DoP, the number of DataIslands is proportional to the amount of resources needed. Consequently, schedules that require less number of DataIslands are superior. Inspired by the `hardware/software co-design <http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=558708>`_ method in embedded systems design, |daliuge| uses a "look-ahead" strategy at each optimisation step to adaptively choose from two conflicting objective functions (deadline or resource) for local optimisation, which is more likely to lead to the global optimum than greedy strategies.
 
+In addition to the automatic deployment and scheduling options, there is also a special construct component available, called 'Exclusive Force Node', to allow users to enforce the placement of certain parts of the graph on a single compute node (NOTE: This is still work-in-progress.). In the case that a scattered section of the graph is enclosed in such an Exclusive Force Node construct, each of the scattered sections will be deployed on a compute node. In case there are not enough compute nodes available to accommodate all the scattered sections, some of them might be deployed (in whole, but together) on a single node. This also shows the risk of using such 'hints': It essentially reduces the degrees of freedom of the scheduling algorithm(s) and thus might turn out to be less optimal at runtime.
+
 Physical Graph
 ^^^^^^^^^^^^^^
 
@@ -220,6 +222,57 @@ threshold (defaults to 0) is passed (i.e., when more than a given percentage of
 inputs move to **ERROR**) or if their execution fails. This way whole branches of execution might fail, but
 after reaching a gathering point the execution might still resume if enough
 inputs are present.
+
+
+Parallelism
+^^^^^^^^^^^
+
+Speaking about execution, |daliuge| also exhibits multiprocessing of drops using Python's native
+`multiprocessing library <https://docs.python.org/3.8/library/multiprocessing.html>`_.
+If enabled, drops are launched for execution on their own threads and all memory-drops become
+shared-memory-drops which write to ``/dev/shm``. While relatively robust, one should be careful
+to ensure safe-access to memory-drops in this case, opting to use scatter/gather or other explicit
+aggregation stages where necessary.
+
+
+.. _graph.shared_memory:
+
+Shared Memory
+^^^^^^^^^^^^^
+
+In order to enable truly parallel Python components, a lightweight method to share data between system processes is needed.
+This approach (with caveats) essentially defeats the GIL and therefore requires an explanation; but first, the caveats.
+
+* SharedMemoryDROPs are not thread-safe - simultaneous access (writing or reading) incurrs undefined behaviour - use other, more heavy-weight data stores if necessary.
+* You must be using Python 3.8 or newer - our implementation relies on features only included from 3.8 onwards.
+* Windows is not supported - but if enough demand was present, it could be implemented back in.
+
+Onto the solution.
+To share memory between processes, we create files in ``/dev/shmem`` for each drop, brokered by an imaginatively named ``SharedMemoryManager``.
+Each DALiuGE Node Manager has an associated SharedMemoryManager which addresses shared memory by ``session/uid`` pairs.
+The need to create *named* blocks of shared memory necessitates the development of our own manager, rather than using the standard implementation.
+Upon session completion (or failure), the SharedMemoryManager destroys all shared memory blocks associated with that session.
+SharedMemoryDROPs can grow or shrink automatically and arbitrarily or be provided a specific size to use. Their default size is 4096 bytes.
+Shrunk memory will be truncated, grown blocks will contain a copy of the old data.
+
+As mentioned previously, if DALiuGE is configured to utilise multiple cores, there is no need to specifically use SharedMemoryDROPs, InMemoryDROPs will be switched automatically.
+However, if the need arises, one can specifically use SharedMemoryDROPs.
+
+Environment Variables
+^^^^^^^^^^^^^^^^^^^^^
+Often, several workflow components rely on shared global configuration values, usually stored in
+imaginatively named configuration files.
+DALiuGE supports this approach, of course, but offers additional, more transparent options.
+The EnvironmentVarDROP is a simple key-value store accessible at runtime by all drops in a workflow.
+One can include multiple ``EnivronmentVarDROP``s in a single workflow, **but each variable store must have a unique name**.
+In a logical graph, reference environment variables as component or application parameters with the following syntax:
+``${EnvironmentVarDROP_Name}.{Variable_name}``
+The translator and engine handle parsing and filling of these parameters automatically.
+Variables beginning with ``$DLG_``, such as ``$DLG_ROOT`` are an exception which are handled seperately.
+These variables come from the deployment themselves and are fetched from the deployment environment at runtime.
+
+One may also access these variables individually at runtime using the ``get_environment_variable(key)`` function, which accepts a key in the syntax mentioned above, returning ``None`` if the variable store or key does not exist.
+
 
 .. |lgt| replace:: *logical graph template*
 .. |lg| replace:: *logical graph*

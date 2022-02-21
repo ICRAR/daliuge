@@ -34,19 +34,22 @@ import socket
 import threading
 import time
 import zlib
+import re
+import grp
+import pwd
 
 import netifaces
 
 from . import common
 
-
 logger = logging.getLogger(__name__)
+
 
 def timed_import(module_name):
     """Imports `module_name` and log how long it took to import it"""
     start = time.time()
     module = importlib.import_module(module_name)
-    logger.info('Imported %s in %.3f seconds', module_name, time.time() - start)
+    logger.info("Imported %s in %.3f seconds", module_name, time.time() - start)
     return module
 
 
@@ -58,46 +61,58 @@ def get_local_ip_addr():
     ifaces = netifaces.interfaces()
     if_addrs = [(netifaces.ifaddresses(iface), iface) for iface in ifaces]
     if_inet_addrs = [(tup[0][PROTO], tup[1]) for tup in if_addrs if PROTO in tup[0]]
-    iface_addrs = [(s['addr'], tup[1]) for tup in if_inet_addrs for s in tup[0] \
-                    if 'addr' in s and not s['addr'].startswith('127.')]
+    iface_addrs = [
+        (s["addr"], tup[1])
+        for tup in if_inet_addrs
+        for s in tup[0]
+        if "addr" in s and not s["addr"].startswith("127.")
+    ]
     return iface_addrs
+
 
 def get_all_ipv4_addresses():
     """Get a list of all IPv4 interfaces found in this computer"""
     proto = netifaces.AF_INET
-    return [addr['addr']
+    return [
+        addr["addr"]
         for iface in netifaces.interfaces()
-        for iface_proto, addrs in netifaces.ifaddresses(iface).items() if proto == iface_proto
-        for addr in addrs if 'addr' in addr
+        for iface_proto, addrs in netifaces.ifaddresses(iface).items()
+        if proto == iface_proto
+        for addr in addrs
+        if "addr" in addr
     ]
 
-def register_service(zc, service_type_name, service_name, ipaddr, port, protocol='tcp'):
+
+def register_service(zc, service_type_name, service_name, ipaddr, port, protocol="tcp"):
     """
     ZeroConf: Register service type, protocol, ipaddr and port
 
     Returns ZeroConf object and ServiceInfo object
     """
     import zeroconf
+
     sn = service_name if len(service_name) <= 15 else service_name[:15]
-    stn = '_{0}._{1}.local.'.format(service_type_name, protocol)
-    sn = '{0}.{1}'.format(sn, stn)
+    stn = "_{0}._{1}.local.".format(service_type_name, protocol)
+    sn = "{0}.{1}".format(sn, stn)
 
     # "addresses" deprecates "address" in 0.23+
     address = socket.inet_aton(ipaddr)
     kwargs = {}
-    if tuple(map(int, zeroconf.__version__.split('.')))[:2] >= (0, 23):
-        kwargs['addresses'] = [address]
+    if tuple(map(int, zeroconf.__version__.split(".")))[:2] >= (0, 23):
+        kwargs["addresses"] = [address]
     else:
-        kwargs['address'] = address
+        kwargs["address"] = address
     info = zeroconf.ServiceInfo(stn, sn, port=port, properties={}, **kwargs)
     zc.register_service(info)
     return info
+
 
 def deregister_service(zc, info):
     """
     ZeroConf: Deregister service
     """
     zc.unregister_service(info)
+
 
 def browse_service(zc, service_type_name, protocol, callback):
     """
@@ -112,19 +127,22 @@ def browse_service(zc, service_type_name, protocol, callback):
     Returns ZeroConf object
     """
     from zeroconf import ServiceBrowser
-    stn = '_{0}._{1}.local.'.format(service_type_name, protocol)
+
+    stn = "_{0}._{1}.local.".format(service_type_name, protocol)
     browser = ServiceBrowser(zc, stn, handlers=[callback])
     return browser
+
 
 def zmq_safe(host_or_addr):
     """Converts `host_or_addr` to a format that is safe for ZMQ to use"""
 
     # The catch-all IP address, ZMQ needs a *
-    if host_or_addr == '0.0.0.0':
-        return '*'
+    if host_or_addr == "0.0.0.0":
+        return "*"
 
     # Return otherwise always an IP address
     return socket.gethostbyname(host_or_addr)
+
 
 def to_externally_contactable_host(host, prefer_local=False):
     """
@@ -137,31 +155,33 @@ def to_externally_contactable_host(host, prefer_local=False):
 
     # A specific address was used for binding, use that
     # (regardless of the user preference), making sure we return an IP
-    if host != '0.0.0.0':
+    if host != "0.0.0.0":
         return socket.gethostbyname(host)
 
     # host was "all interfaces", select one based on preference
     # if only one interface is found we assume it's a loopback interface
     addresses = get_all_ipv4_addresses()
     if prefer_local or len(addresses) == 1:
-        return '127.0.0.1'
+        return "127.0.0.1"
 
     # Choose the first non-127.0.0.1 one
     for a in addresses:
-        if not a.startswith('127.'):
+        if not a.startswith("127."):
             return a
 
     # All addresses were loopbacks! let's return the last one
     raise a
+
 
 def getDlgDir():
     """
     Returns the root of the directory structure used by the DALiuGE framework at
     runtime.
     """
-    if 'DLG_ROOT' in os.environ:
-        return os.environ['DLG_ROOT']
-    return os.path.join(os.path.expanduser("~"), ".dlg")
+    if "DLG_ROOT" in os.environ:
+        return os.environ["DLG_ROOT"]
+    return os.path.join(os.path.expanduser("~"), "dlg")
+
 
 def getDlgPidDir():
     """
@@ -169,7 +189,8 @@ def getDlgPidDir():
     its PIDs. If `createIfMissing` is True, the directory will be created if it
     currently doesn't exist
     """
-    return os.path.join(getDlgDir(), 'pid')
+    return os.path.join(getDlgDir(), "pid")
+
 
 def getDlgLogsDir():
     """
@@ -177,15 +198,17 @@ def getDlgLogsDir():
     its logs. If `createIfMissing` is True, the directory will be created if it
     currently doesn't exist
     """
-    return os.path.join(getDlgDir(), 'logs')
+    return os.path.join(getDlgDir(), "logs")
+
 
 def getDlgWorkDir():
     """
     Returns the location of the directory used by the DALiuGE framework to store
-    its logs. If `createIfMissing` is True, the directory will be created if it
+    results. If `createIfMissing` is True, the directory will be created if it
     currently doesn't exist
     """
-    return os.path.join(getDlgDir(), 'workspace')
+    return os.path.join(getDlgDir(), "workspace")
+
 
 def getDlgPath():
     """
@@ -193,7 +216,18 @@ def getDlgPath():
     for additional code. If `createIfMissing` is True, the directory will be created if it
     currently doesn't exist
     """
-    return os.path.join(getDlgDir(), 'code')
+    return os.path.join(getDlgDir(), "code")
+
+
+def getDlgVariable(key: str):
+    """
+    Queries environment for variables assumed to start with 'DLG_'.
+    Special case for DLG_ROOT, since this is easily identifiable.
+    """
+    if key == "$DLG_ROOT":
+        return getDlgDir()
+    return os.environ.get(key[1:])
+
 
 def createDirIfMissing(path):
     """
@@ -201,23 +235,31 @@ def createDirIfMissing(path):
     """
     try:
         os.makedirs(path)
+        logger.debug(f"created path {path}")
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
+
 
 def isabs(path):
     """Like os.path.isabs, but handles None"""
     return path and os.path.isabs(path)
 
+
 def fname_to_pipname(fname):
     """
-    Converts a graph filename (assuming it's a .json file) to its "pipeline"
+    Converts a graph filename (extension .json or .graph) to its "pipeline"
     name (the basename without the extension).
     """
-    fname = fname.split('/')[-1]
-    if fname.endswith('.json'):
-        fname = fname[:-5]
+    fname = os.path.split(fname)[-1]
+    m = re.compile(r'.json$|.graph$')
+    res = m.search(fname)
+    logger.info("regex result %s", res)
+
+    if res:
+        fname = fname[:res.start()]
     return fname
+
 
 def escapeQuotes(s, singleQuotes=True, doubleQuotes=True):
     """
@@ -225,10 +267,11 @@ def escapeQuotes(s, singleQuotes=True, doubleQuotes=True):
     in a shell invocation or similar.
     """
     if singleQuotes:
-        s = s.replace("'","'\\''")
+        s = s.replace("'", "'\\''")
     if doubleQuotes:
-        s = s.replace('"','\\"')
+        s = s.replace('"', '\\"')
     return s
+
 
 def prepare_sql(sql, paramstyle, data=()):
     """
@@ -256,19 +299,25 @@ def prepare_sql(sql, paramstyle, data=()):
     # format    ANSI C printf format codes, e.g. ...WHERE name=%s
     # pyformat  Python extended format codes, e.g. ...WHERE name=%(name)s
 
-    logger.debug('Generating %d markers with paramstyle = %s', n, paramstyle)
+    logger.debug("Generating %d markers with paramstyle = %s", n, paramstyle)
 
-    if   paramstyle == 'qmark':    markers = ['?'             for i in range(n)]
-    elif paramstyle == 'numeric':  markers = [':%d'%(i)       for i in range(n)]
-    elif paramstyle == 'named':    markers = [':n%d'%(i)      for i in range(n)]
-    elif paramstyle == 'format':   markers = [':%s'           for i in range(n)]
-    elif paramstyle == 'pyformat': markers = [':%%(n%d)s'%(i) for i in range(n)]
-    else: raise Exception('Unknown paramstyle: %s' % (paramstyle))
+    if paramstyle == "qmark":
+        markers = ["?" for i in range(n)]
+    elif paramstyle == "numeric":
+        markers = [":%d" % (i) for i in range(n)]
+    elif paramstyle == "named":
+        markers = [":n%d" % (i) for i in range(n)]
+    elif paramstyle == "format":
+        markers = [":%s" for i in range(n)]
+    elif paramstyle == "pyformat":
+        markers = [":%%(n%d)s" % (i) for i in range(n)]
+    else:
+        raise Exception("Unknown paramstyle: %s" % (paramstyle))
 
     sql = sql.format(*markers)
 
-    if paramstyle in ['format', 'pyformat']:
-        data = {'n%d'%(i): d for i,d in enumerate(data)}
+    if paramstyle in ["format", "pyformat"]:
+        data = {"n%d" % (i): d for i, d in enumerate(data)}
 
     return (sql, data)
 
@@ -281,8 +330,8 @@ def object_tracking(name):
     """
 
     current_object = threading.local()
-    def track_current_drop(f):
 
+    def track_current_drop(f):
         @functools.wraps(f)
         def _wrapper(*args, **kwargs):
             try:
@@ -295,17 +344,20 @@ def object_tracking(name):
                 return f(*args, **kwargs)
             finally:
                 setattr(current_object, name, previous)
+
         return _wrapper
 
     track_current_drop.tlocal = current_object
     return track_current_drop
 
+
 def get_symbol(name):
     """Gets the global symbol ``name``, which is an "absolute path" to a python
     name in the form of ``pkg.subpkg.subpkg.module.name``"""
-    parts = name.split('.')
-    module = importlib.import_module('.'.join(parts[:-1]))
+    parts = name.split(".")
+    module = importlib.import_module(".".join(parts[:-1]))
     return getattr(module, parts[-1])
+
 
 class ZlibUncompressedStream(object):
     """
@@ -322,7 +374,7 @@ class ZlibUncompressedStream(object):
     def readall(self):
 
         if not self.decompressor:
-            return b''
+            return b""
 
         content = self.content
         response = io.BytesIO()
@@ -350,9 +402,9 @@ class ZlibUncompressedStream(object):
 
         # The buffer has still enough data
         if self.buflen >= n:
-            data = b''.join(self.buf)
+            data = b"".join(self.buf)
             self.buf = [data[n:]]
-            self.buflen -= n;
+            self.buflen -= n
             return data[:n]
 
         response = []
@@ -360,7 +412,7 @@ class ZlibUncompressedStream(object):
         # Dump contents of previous buffer
         written = 0
         if self.buflen:
-            data = b''.join(self.buf)
+            data = b"".join(self.buf)
             written += self.buflen
             response.append(data)
             self.buf = []
@@ -368,7 +420,7 @@ class ZlibUncompressedStream(object):
 
         decompressor = self.decompressor
         if not decompressor:
-            return b''.join(response)
+            return b"".join(response)
 
         while True:
 
@@ -402,7 +454,8 @@ class ZlibUncompressedStream(object):
             if written == n or decompressor is None:
                 break
 
-        return b''.join(response)
+        return b"".join(response)
+
 
 class ExistingProcess(object):
     """A Popen-like class around an existing process"""
@@ -436,6 +489,29 @@ class ExistingProcess(object):
             return
         while self.poll() == None:
             time.sleep(0.1)
+
+
+def prepareUser(DLG_ROOT="."):
+    workdir = f"{DLG_ROOT}/workspace/settings"
+    try:
+        os.makedirs(workdir, exist_ok=True)
+    except:
+        raise
+    template_dir = os.path.dirname(__file__)
+    # get current user info
+    pw = pwd.getpwuid(os.getuid())
+    gr = grp.getgrgid(pw.pw_gid)
+    dgr = grp.getgrnam('docker')
+    with open(os.path.join(workdir, "passwd"), "wt") as file:
+        file.write(open(os.path.join(template_dir, "passwd.template"), "rt").read())
+        file.write(f"{pw.pw_name}:x:{pw.pw_uid}:{pw.pw_gid}:{pw.pw_gecos}:{DLG_ROOT}:/bin/bash\n")
+    with open(os.path.join(workdir, "group"), "wt") as file:
+        file.write(open(os.path.join(template_dir, "group.template"), "rt").read())
+        file.write(f"{gr.gr_name}:x:{gr.gr_gid}:\n")
+        file.write(f"docker:x:{dgr.gr_gid}\n")
+
+    return dgr.gr_gid
+
 
 # Backwards compatibility
 terminate_or_kill = common.terminate_or_kill

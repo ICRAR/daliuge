@@ -76,16 +76,39 @@ NOTE: |daliuge| requires python 3.7 or later. It is always recommended to instal
 
   pip install --upgrade pip
 
-Like for the docker installation the local installation also follows the same pattern. First install the daliuge-common part::
+Like for the docker installation the local installation also follows the same pattern. 
 
- cd daliuge-common && pip install -e .
+Install from GitHub
+"""""""""""""""""""
+
+The following commands are installing the |daliuge| parts directly from github. In this case you won't have access to the sources, but the system will run. First install the daliuge-common part::
+
+  pip install 'git+https://github.com/ICRAR/daliuge.git#egg&subdirectory=daliuge-common'
 
 then install the daliuge-engine::
 
- cd ../daliuge-engine && pip install -e .
+  pip install 'git+https://github.com/ICRAR/daliuge.git#egg&subdirectory=daliuge-engine'
 
 and finally, if required also install the daliuge-translator::
 
- cd ../daliuge-translator && pip install -e .
+  pip install 'git+https://github.com/ICRAR/daliuge.git#egg&subdirectory=daliuge-translator'
+
+Install from sources
+""""""""""""""""""""
+
+If you want to have access to the sources you can run the installation in a slightly different way. Again this should be be done from within a virtual environment. First start with cloning the repository::
+
+  git clone https://github.com/ICRAR/daliuge
+
+then install the individual parts::
+
+  cd daliuge
+  cd daliuge-common
+  pip install .
+  cd ../daliuge-engine
+  pip install .
+  cd ../daliuge-translator
+  pip install .
+
 
 .. include:: README ray.rst

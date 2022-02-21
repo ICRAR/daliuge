@@ -48,29 +48,43 @@ logger = logging.getLogger(__name__)
 # via Plasma.
 # @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/plasma_path Plasma Path//String/readwrite/
+# @param tag daliuge
+# @param[in] aparam/plasma_path Plasma Path//String/readwrite/False/
 #     \~English Path to plasma store.
-# @param[in] param/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaConsumer/String/readonly/
+# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaConsumer/String/readonly/False/
 #     \~English Application class
-# @param[in] port/plasma_ms_input
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[in] port/plasma_ms_input Plasma MS Input/Measurement Set/
 #     \~English Plasma MS input
-# @param[out] port/output_file
+# @param[out] port/output_file Output File/File/
 #     \~English MS output file
 # @par EAGLE_END
 class MSStreamingPlasmaConsumer(AppDROP):
-    compontent_meta = dlg_component('MSStreamingPlasmaConsumer', 'MS Plasma Consumer',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+    component_meta = dlg_component(
+        "MSStreamingPlasmaConsumer",
+        "MS Plasma Consumer",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
-    plasma_path = dlg_string_param('plasma_path', '/tmp/plasma')
+    plasma_path = dlg_string_param("plasma_path", "/tmp/plasma")
 
     def initialize(self, **kwargs):
         self.config = {
-            'reception': {
+            "reception": {
                 "consumer": "plasma_writer",
                 "test_entry": 5,
-                "plasma_path": self.plasma_path
+                "plasma_path": self.plasma_path,
             }
         }
         self.thread = None
@@ -83,24 +97,29 @@ class MSStreamingPlasmaConsumer(AppDROP):
         outs = self.outputs
         if len(outs) < 1:
             raise Exception(
-                'At least one output MS should have been connected to %r' % self)
+                "At least one output MS should have been connected to %r" % self
+            )
         self.output_file = outs[0]._path
         if self.plasma_path:
-            self.config['reception']['plasma_path'] = self.plasma_path
+            self.config["reception"]["plasma_path"] = self.plasma_path
 
-        runner = plasma_processor.Runner(self.output_file,
-                                         self.config['reception']['plasma_path'],
-                                         max_payload_misses=30,
-                                         max_measurement_sets=1)
+        runner = plasma_processor.Runner(
+            self.output_file,
+            self.config["reception"]["plasma_path"],
+            max_payload_misses=30,
+            max_measurement_sets=1,
+        )
         runner.process_timeout = 0.1
         await runner.run()
 
     def dataWritten(self, uid, data):
         with self.lock:
             if self.started is False:
+
                 def thread_func():
                     loop = asyncio.new_event_loop()
                     loop.run_until_complete(self._run_consume())
+
                 self.thread = Thread(target=thread_func)
                 self.thread.start()
                 self.started = True
@@ -127,36 +146,50 @@ class MSStreamingPlasmaConsumer(AppDROP):
 # via Plasma.
 # @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/plasma_path Plasma Path//String/readwrite/
+# @param tag daliuge
+# @param[in] aparam/plasma_path Plasma Path//String/readwrite/False/
 #     \~English Path to plasma store
-# @param[in] param/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaProducer/String/readonly/
+# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaProducer/String/readonly/False/
 #     \~English Application class
-# @param[in] port/input_file
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[in] port/input_file Input File/File/
 #     \~English MS input file
-# @param[out] port/plasma_ms_output
+# @param[out] port/plasma_ms_output Plasma MS Output/Measurement Set/
 #     \~English Plasma MS output
 # @par EAGLE_END
 class MSStreamingPlasmaProducer(BarrierAppDROP):
-    compontent_meta = dlg_component('MSStreamingPlasmaProducer', 'MS Plasma Producer',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+    component_meta = dlg_component(
+        "MSStreamingPlasmaProducer",
+        "MS Plasma Producer",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
-    plasma_path = dlg_string_param('plasma_path', '/tmp/plasma')
+    plasma_path = dlg_string_param("plasma_path", "/tmp/plasma")
 
     def initialize(self, **kwargs):
         super(MSStreamingPlasmaProducer, self).initialize(**kwargs)
         self.config = {
-            'reception': {
+            "reception": {
                 "consumer": "plasma_writer",
                 "test_entry": 5,
-                "plasma_path": self.plasma_path
+                "plasma_path": self.plasma_path,
             }
         }
 
     async def _run_producer(self):
         if self.plasma_path:
-            self.config['reception']['plasma_path'] = self.plasma_path
+            self.config["reception"]["plasma_path"] = self.plasma_path
 
         c = plasma_writer.consumer(self.config, utils.FakeTM(self.input_file))
         while not c.find_processors():
@@ -173,16 +206,16 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
 
             # For for the response to arrive
             await asyncio.get_event_loop().run_in_executor(
-                None, c.get_response, c.output_refs.pop(0), 10)
+                None, c.get_response, c.output_refs.pop(0), 10
+            )
 
     def run(self):
         # self.input_file = kwargs.get('input_file')
         ins = self.inputs
         if len(ins) < 1:
-            raise Exception(
-                'At least one MS should have been connected to %r' % self)
+            raise Exception("At least one MS should have been connected to %r" % self)
         self.input_file = ins[0]._path
-        self.outputs[0].write(b'init')
+        self.outputs[0].write(b"init")
         loop = asyncio.new_event_loop()
         loop.run_until_complete(self._run_producer())
 
@@ -192,15 +225,25 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
 # @details Batch read entire Measurement Set from Plasma.
 # @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/appclass Application class/dlg.apps.plasma.MSPlasmaReader/String/readonly/
+# @param tag daliuge
+# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSPlasmaReader/String/readonly/False/
 #     \~English Application class
-# @param[in] port/plasma_ms_input
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[in] port/plasma_ms_input Plasma MS Input/Measurement Set/
 #     \~English Plasma MS store input
-# @param[out] port/output_ms
+# @param[out] port/output_ms Output MS/Measurement Set/
 #     \~English Output MS file
 # @par EAGLE_END
 class MSPlasmaReader(BarrierAppDROP):
-
     def initialize(self, **kwargs):
         super(MSPlasmaReader, self).initialize(**kwargs)
 
@@ -214,21 +257,21 @@ class MSPlasmaReader(BarrierAppDROP):
         abs_path = os.path.dirname(os.path.abspath(path))
         filename = os.path.basename(path)
 
-        value = ms.pop('/')
-        with tables.table(abs_path + '/' + filename, value[0], nrow=len(value[1])) as t:
+        value = ms.pop("/")
+        with tables.table(abs_path + "/" + filename, value[0], nrow=len(value[1])) as t:
             with t.row() as r:
                 for idx, val in enumerate(value[1]):
                     r.put(idx, val)
 
         for key, value in ms.items():
-            name = abs_path + '/' + filename + '/' + key
+            name = abs_path + "/" + filename + "/" + key
             with tables.table(name, value[0], nrow=len(value[1])) as t:
                 with t.row() as r:
                     for idx, val in enumerate(value[1]):
-                        if val.get('LOG', None) == []:
-                            val['LOG'] = ''
-                        if val.get('SCHEDULE', None) == []:
-                            val['SCHEDULE'] = ''
+                        if val.get("LOG", None) == []:
+                            val["LOG"] = ""
+                        if val.get("SCHEDULE", None) == []:
+                            val["SCHEDULE"] = ""
                         r.put(idx, val)
 
     def _deserialize_table(self, in_stream, path):
@@ -255,15 +298,25 @@ class MSPlasmaReader(BarrierAppDROP):
 # @details Batch write entire Measurement Set to Plasma.
 # @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/appclass Application class/dlg.apps.plasma.MSPlasmaWriter/String/readonly/
+# @param tag daliuge
+# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSPlasmaWriter/String/readonly/False/
 #     \~English Application class
-# @param[in] port/input_ms
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[in] port/input_ms Input MS/Measurement Set/
 #     \~English Input MS file
-# @param[out] port/plasma_ms_output
+# @param[out] port/plasma_ms_output Plasma MS Output/Measurement Set/
 #     \~English Plasma MS store output
 # @par EAGLE_END
 class MSPlasmaWriter(BarrierAppDROP):
-
     def initialize(self, **kwargs):
         super(MSPlasmaWriter, self).initialize(**kwargs)
 
@@ -280,7 +333,7 @@ class MSPlasmaWriter(BarrierAppDROP):
 
     def _serialize_table(self, path):
         ms = {}
-        self._read_table(path, ms, table_name='/')
+        self._read_table(path, ms, table_name="/")
 
         with tables.table(path) as t:
             sub = t.getsubtables()

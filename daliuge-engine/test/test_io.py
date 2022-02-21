@@ -22,18 +22,18 @@
 import unittest
 from dlg.io import NullIO, OpenMode
 
-class TestIO(unittest.TestCase):
 
+class TestIO(unittest.TestCase):
     def test_invalidUseCases(self):
         io = NullIO()
 
         # Not opened yet
-        self.assertRaises(ValueError, io.write, '')
-        self.assertRaises(ValueError, io.read, '')
+        self.assertRaises(ValueError, io.write, "")
+        self.assertRaises(ValueError, io.read, "")
 
         # Opening in read-only mode
         io.open(OpenMode.OPEN_READ)
-        self.assertRaises(ValueError, io.write, '')
+        self.assertRaises(ValueError, io.write, "")
         io.close()
 
         # Opening in write-only mode
