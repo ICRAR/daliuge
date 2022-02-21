@@ -20,13 +20,15 @@
 
 import re
 
-inp_regex = re.compile(r'%i\[(-[0-9]+)\]')
-out_regex = re.compile(r'%o\[(-[0-9]+)\]')
+inp_regex = re.compile(r"%i\[(-[0-9]+)\]")
+out_regex = re.compile(r"%o\[(-[0-9]+)\]")
+
 
 class BashCommand(object):
     """
     An efficient implementation of the bash command with parameters
     """
+
     def __init__(self, cmds):
         """
         create the logical form of the bash command line
@@ -34,46 +36,55 @@ class BashCommand(object):
         cmds: a list such that ' '.join(cmds) looks something like:
                  'python /home/dfms/myclean.py -d %i[-21] -f %i[-3] %o[-2] -v'
         """
-        self._input_map = dict() # key: logical drop id, value: a list of physical oids
+        self._input_map = dict()  # key: logical drop id, value: a list of physical oids
         self._output_map = dict()
-        cmd = ' '.join(cmds)
-        self._cmds = cmd.replace(';', ' ; ').split() # re-split just in case hidden spaces
-        #self._cmds = re.split(';| *', cmd) # resplit for * as well as spaces
+        cmd = " ".join(cmds)
+        self._cmds = cmd.replace(
+            ";", " ; "
+        ).split()  # re-split just in case hidden spaces
+        # self._cmds = re.split(';| *', cmd) # resplit for * as well as spaces
 
         for m in inp_regex.finditer(cmd):
-            self._input_map[int(m.group(1))] = set() #TODO - check if sequence needs to be reserved!
+            self._input_map[
+                int(m.group(1))
+            ] = set()  # TODO - check if sequence needs to be reserved!
         for m in out_regex.finditer(cmd):
             self._output_map[int(m.group(1))] = set()
 
     def add_input_param(self, lgn_id, oid):
         lgn_id = int(lgn_id)
-        if (lgn_id in self._input_map):
+        if lgn_id in self._input_map:
             self._input_map[lgn_id].add(oid)
 
     def add_output_param(self, lgn_id, oid):
         lgn_id = int(lgn_id)
-        if (lgn_id in self._output_map):
+        if lgn_id in self._output_map:
             self._output_map[lgn_id].add(oid)
 
     def to_real_command(self):
-
         def _get_delimit(matchobj):
-            return ' ' if matchobj.start() == 0 else ','
+            return " " if matchobj.start() == 0 else ","
 
         cmds = self._cmds
         for k in range(len(cmds)):
             d = cmds[k]
             imatch = inp_regex.search(d)
             omatch = out_regex.search(d)
-            if (imatch is not None):
+            if imatch is not None:
                 lgn_id = int(imatch.group(1))
-                cmds[k] = d.replace(imatch.group(0),
-                _get_delimit(imatch).\
-                join(['%i[{0}]'.format(x) for x in self._input_map[lgn_id]]))
-            elif (omatch is not None):
+                cmds[k] = d.replace(
+                    imatch.group(0),
+                    _get_delimit(imatch).join(
+                        ["%i[{0}]".format(x) for x in self._input_map[lgn_id]]
+                    ),
+                )
+            elif omatch is not None:
                 lgn_id = int(omatch.group(1))
-                cmds[k] = d.replace(omatch.group(0),
-                _get_delimit(omatch).\
-                join(['%o[{0}]'.format(x) for x in self._output_map[lgn_id]]))
+                cmds[k] = d.replace(
+                    omatch.group(0),
+                    _get_delimit(omatch).join(
+                        ["%o[{0}]".format(x) for x in self._output_map[lgn_id]]
+                    ),
+                )
 
-        return ' '.join(cmds)
+        return " ".join(cmds)

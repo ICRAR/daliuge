@@ -19,11 +19,11 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-'''
+"""
 Created on 20 Jul 2015
 
 @author: rtobar
-'''
+"""
 
 import unittest
 
@@ -34,7 +34,6 @@ from dlg.droputils import DROPFile
 
 
 class DropUtilsTest(unittest.TestCase):
-
     def _createGraph(self):
         """
         Creates the following graph of DROPs:
@@ -46,16 +45,16 @@ class DropUtilsTest(unittest.TestCase):
         B, C, G and H are AppDOs. The names have been given in breadth-first
         order (although H has a dependency on I)
         """
-        a =          InMemoryDROP('a', 'a')
-        b =        BarrierAppDROP('b', 'b')
-        c =        BarrierAppDROP('c', 'c')
-        d =          InMemoryDROP('d', 'd')
-        e =          InMemoryDROP('e', 'e')
-        f =          InMemoryDROP('f', 'f')
-        g =        BarrierAppDROP('g', 'g')
-        h =        BarrierAppDROP('h', 'h')
-        i =          InMemoryDROP('i', 'i')
-        j =          InMemoryDROP('j', 'j')
+        a = InMemoryDROP("a", "a")
+        b = BarrierAppDROP("b", "b")
+        c = BarrierAppDROP("c", "c")
+        d = InMemoryDROP("d", "d")
+        e = InMemoryDROP("e", "e")
+        f = InMemoryDROP("f", "f")
+        g = BarrierAppDROP("g", "g")
+        h = BarrierAppDROP("h", "h")
+        i = InMemoryDROP("i", "i")
+        j = InMemoryDROP("j", "j")
 
         a.addConsumer(b)
         a.addConsumer(c)
@@ -101,7 +100,9 @@ class DropUtilsTest(unittest.TestCase):
             downstreamNodes = [downstreamNodes]
 
         # Normal check
-        self.assertSetEqual(set(downstreamNodes), set(droputils.getDownstreamObjects(node)))
+        self.assertSetEqual(
+            set(downstreamNodes), set(droputils.getDownstreamObjects(node))
+        )
         # Check the other way too
         for downNode in downstreamNodes:
             self.assertTrue(node in droputils.getUpstreamObjects(downNode))
@@ -121,7 +122,7 @@ class DropUtilsTest(unittest.TestCase):
         Checks that our DFS method is correct
         """
         a, b, c, d, e, f, g, h, i, j = self._createGraph()
-        nodesList = [drop for drop,_ in droputils.depthFirstTraverse(a)]
+        nodesList = [drop for drop, _ in droputils.depthFirstTraverse(a)]
         self.assertListEqual([a, b, d, g, i, h, j, c, e, f], nodesList)
 
     def testBreadthFirstSearch(self):
@@ -129,7 +130,7 @@ class DropUtilsTest(unittest.TestCase):
         Checks that our BFS method is correct
         """
         a, b, c, d, e, f, g, h, i, j = self._createGraph()
-        nodesList = [drop for drop,_ in droputils.breadFirstTraverse(a)]
+        nodesList = [drop for drop, _ in droputils.breadFirstTraverse(a)]
         self.assertListEqual([a, b, c, d, e, f, g, h, i, j], nodesList)
 
     def testGetEndNodes(self):
@@ -146,10 +147,10 @@ class DropUtilsTest(unittest.TestCase):
         a given DROP. The DROPFile class will decide whether the data should be read
         directly or through the DROP
         """
-        drop = FileDROP('a', 'a', expectedSize=5)
-        drop.write(b'abcde')
+        drop = FileDROP("a", "a", expectedSize=5)
+        drop.write(b"abcde")
         with DROPFile(drop) as f:
-            self.assertEqual(b'abcde', f.read())
+            self.assertEqual(b"abcde", f.read())
             self.assertTrue(drop.isBeingRead())
             self.assertIsNotNone(f._io)
         self.assertFalse(drop.isBeingRead())
@@ -163,11 +164,11 @@ class DropUtilsTest(unittest.TestCase):
 
         visitedNodes = []
         for drop, downStreamDrops in droputils.breadFirstTraverse(a):
-            downStreamDrops[:] = [x for x in downStreamDrops if x.uid not in ('b','f')]
+            downStreamDrops[:] = [x for x in downStreamDrops if x.uid not in ("b", "f")]
             visitedNodes.append(drop)
 
         self.assertEqual(5, len(visitedNodes))
-        self.assertListEqual(visitedNodes, [a,c,e,h,j])
+        self.assertListEqual(visitedNodes, [a, c, e, h, j])
 
     def test_get_roots(self):
         """
@@ -177,39 +178,70 @@ class DropUtilsTest(unittest.TestCase):
         """
         A --> B
         """
-        pg_spec = [{"oid":"A", "type":"plain", "storage":Categories.MEMORY, "consumers":["B"]},
-                   {"oid":"B", "type":"app", "app":"test.test_graph_loader.DummyApp"}]
+        pg_spec = [
+            {
+                "oid": "A",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "consumers": ["B"],
+            },
+            {"oid": "B", "type": "app", "app": "test.test_graph_loader.DummyApp"},
+        ]
         roots = droputils.get_roots(pg_spec)
         self.assertEqual(1, len(roots))
-        self.assertEqual('A', next(iter(roots)))
+        self.assertEqual("A", next(iter(roots)))
 
         """
         A --> B
         The same, but now B references A
         """
-        pg_spec = [{"oid":"A", "type":"plain", "storage":Categories.MEMORY},
-                   {"oid":"B", "type":"app", "app":"test.test_graph_loader.DummyApp", "inputs": ["A"]}]
+        pg_spec = [
+            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
+            {
+                "oid": "B",
+                "type": "app",
+                "app": "test.test_graph_loader.DummyApp",
+                "inputs": ["A"],
+            },
+        ]
         roots = droputils.get_roots(pg_spec)
         self.assertEqual(1, len(roots))
-        self.assertEqual('A', next(iter(roots)))
+        self.assertEqual("A", next(iter(roots)))
 
         """
         A --> C --> D --|
                         |--> E --> F
         B --------------|
         """
-        pg_spec = [{"oid":"A", "type":"plain", "storage": Categories.MEMORY},
-                   {"oid":"B", "type":"plain", "storage": Categories.MEMORY},
-                   {"oid":"C", "type":"app", "app":"dlg.apps.crc.CRCApp", "inputs": ['A']},
-                   {"oid":"D", "type":"plain", "storage": Categories.MEMORY, "producers": ["C"]},
-                   {"oid":"E", "type":"app", "app":"test.test_drop.SumupContainerChecksum", "inputs": ["D"]},
-                   {"oid":"F", "type":"plain", "storage": Categories.MEMORY, "producers":["E"]}]
+        pg_spec = [
+            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
+            {"oid": "B", "type": "plain", "storage": Categories.MEMORY},
+            {"oid": "C", "type": "app", "app": "dlg.apps.crc.CRCApp", "inputs": ["A"]},
+            {
+                "oid": "D",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["C"],
+            },
+            {
+                "oid": "E",
+                "type": "app",
+                "app": "test.test_drop.SumupContainerChecksum",
+                "inputs": ["D"],
+            },
+            {
+                "oid": "F",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["E"],
+            },
+        ]
         roots = droputils.get_roots(pg_spec)
         self.assertEqual(2, len(roots))
-        self.assertListEqual(['A', 'B'], sorted(roots))
+        self.assertListEqual(["A", "B"], sorted(roots))
 
         # The same as before but using dropdicts
         pg_spec_dropdicts = [dropdict(dropspec) for dropspec in pg_spec]
         roots = droputils.get_roots(pg_spec_dropdicts)
         self.assertEqual(2, len(roots))
-        self.assertListEqual(['A', 'B'], sorted(roots))
+        self.assertListEqual(["A", "B"], sorted(roots))

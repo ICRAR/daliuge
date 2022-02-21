@@ -50,14 +50,33 @@ def measure(n, droptype):
 
     return mem2 - mem1, uTime2 - uTime1, sTime2 - sTime1
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
 
     parser = OptionParser()
-    parser.add_option("--csv", action="store_true", dest="csv", help = "Output results in CSV format", default=False)
-    parser.add_option("-i", "--instances", action="store", type="int",
-                      dest="instances", help = "Number of DROP instances to create and measure")
-    parser.add_option("-t", "--type", action="store", type="string",
-                      dest="type", help = "DROP type to instantiate")
+    parser.add_option(
+        "--csv",
+        action="store_true",
+        dest="csv",
+        help="Output results in CSV format",
+        default=False,
+    )
+    parser.add_option(
+        "-i",
+        "--instances",
+        action="store",
+        type="int",
+        dest="instances",
+        help="Number of DROP instances to create and measure",
+    )
+    parser.add_option(
+        "-t",
+        "--type",
+        action="store",
+        type="string",
+        dest="type",
+        help="DROP type to instantiate",
+    )
     (options, args) = parser.parse_args(sys.argv)
 
     if options.type is None:
@@ -66,18 +85,37 @@ if __name__ == '__main__':
         parser.error("Number of instances to create not specified")
 
     n = options.instances
-    parts = options.type.split('.')
-    modname = '.'.join(parts[:-1])
+    parts = options.type.split(".")
+    modname = ".".join(parts[:-1])
     classname = parts[-1]
     droptype = getattr(importlib.import_module(modname), classname)
     mem, uTime, sTime = measure(n, droptype)
     tTime = uTime + sTime
-    memAvg, uTimeAvg, sTimeAvg, tTimeAvg = [x/float(n) for x in (mem, uTime, sTime, tTime)]
+    memAvg, uTimeAvg, sTimeAvg, tTimeAvg = [
+        x / float(n) for x in (mem, uTime, sTime, tTime)
+    ]
 
     if options.csv:
-        print("%s,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f" % (options.type, n, mem, uTime*1e3, sTime*1e3, tTime*1e3, memAvg, uTimeAvg*1e6, sTimeAvg*1e6, tTimeAvg*1e6))
+        print(
+            "%s,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f"
+            % (
+                options.type,
+                n,
+                mem,
+                uTime * 1e3,
+                sTime * 1e3,
+                tTime * 1e3,
+                memAvg,
+                uTimeAvg * 1e6,
+                sTimeAvg * 1e6,
+                tTimeAvg * 1e6,
+            )
+        )
     else:
-        print("%d bytes used by %d %ss (%.2f bytes per DROP)" % (mem, n, droptype.__name__, memAvg))
+        print(
+            "%d bytes used by %d %ss (%.2f bytes per DROP)"
+            % (mem, n, droptype.__name__, memAvg)
+        )
         print("Total time:  %.2f msec (%.2f msec per DROP)" % (tTime, tTimeAvg))
         print("User time:   %.2f msec (%.2f msec per DROP)" % (uTime, uTimeAvg))
         print("System time: %.2f msec (%.2f msec per DROP)" % (sTime, sTimeAvg))

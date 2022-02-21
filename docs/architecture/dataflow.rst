@@ -82,4 +82,3 @@ Concretely, we have made the following changes to the existing dataflow model:
   the structure of the derived **Logical Graph** at all, it can dramatically change the structure of the 
   associated **Physical Graph Template** and **Physical Graph**. For example a scatter construct in a **Logical Graph Template** has 
   exactly the same strcuture for 2 and for 100,000 splits, but the **Physical Graph** will show either 2 or 100,000 branches.
-

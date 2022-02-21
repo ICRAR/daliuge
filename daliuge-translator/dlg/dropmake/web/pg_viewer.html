@@ -13,7 +13,7 @@
  <script src="/static/src/bootstrap/js/bootstrap.bundle.min.js"></script>
  <script src="/static/src/html2canvas.min.js"></script>
  <script src="/static/src/FileSaver.js"></script>
- <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.1.1/echarts.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.2.2/echarts.min.js"></script>
  <script src="/static/src/echarts-dagre.min.js"></script>
  <script src="/static/src/lib/fflate/index.js"></script>
  <script src="/static/src/require.js"></script>
@@ -82,6 +82,9 @@
                 </ul>
                 <ul class="nav navbar-nav  ml-auto">
                     <li class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link tooltip tooltipBottom" data-text="Deploy Physical Graph via HELM" id="helm_deploy_button" value="Deploy Physical Graph via HELM">HELM Deploy</a>
+                    </li>
+                    <li class="nav-item">
                         <a href="javascript:void(0)" class="nav-link tooltip tooltipBottom" data-text="Deploy Physical Graph via REST" id="rest_deploy_button" value="Deploy Physical Graph via REST">REST Deploy</a>
                     </li>
                     <li class="nav-item">
@@ -135,6 +138,10 @@
                         <input type="checkbox" id="dlg_mgr_deploy" style="visibility:hidden;" name="dlg_mgr_deploy" value="deploy" checked>
                         <input type="hidden" name="pgt_id" value="{{pgt_view_json_name}}">
                       </form>
+                    <form action="/gen_pg_helm" method="get" id="pg_helm_form" target="_blank">
+                        <input type="checkbox" id="dlg_helm_deploy" style="visibility:hidden;" name="dlg_helm_deploy" value="helm_deploy" checked>
+                        <input type="hidden" name="pgt_id" value="{{pgt_view_json_name}}">
+                    </form>
                 </div>
                 <div class="modal-footer">
                     <button onClick="" type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>

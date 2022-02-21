@@ -19,15 +19,17 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-'''
+"""
 Module containing docker-related applications and functions
-'''
+"""
 
 import collections
 import logging
 import os
+import pwd
 import threading
 import time
+import json
 from overrides import overrides
 
 from configobj import ConfigObj
@@ -40,10 +42,9 @@ from ..exceptions import InvalidDropException
 
 logger = logging.getLogger(__name__)
 
-#DLG_ROOT = '/dlg_root'
-DLG_ROOT = ''
+DLG_ROOT = utils.getDlgDir()
 
-DockerPath = collections.namedtuple('DockerPath', 'path')
+DockerPath = collections.namedtuple("DockerPath", "path")
 
 
 class ContainerIpWaiter(object):
@@ -56,7 +57,7 @@ class ContainerIpWaiter(object):
     def __init__(self, drop):
         self._evt = threading.Event()
         self._uid = drop.uid
-        drop.subscribe(self, 'containerIp')
+        drop.subscribe(self, "containerIp")
 
     def handleEvent(self, e):
         self._containerIp = e.containerIp
@@ -66,6 +67,52 @@ class ContainerIpWaiter(object):
         self._evt.wait(timeout)
         return self._uid, self._containerIp
 
+
+##
+# @brief Docker
+# @details
+# @par EAGLE_START
+# @param category Docker
+# @param tag template
+# @param[in] cparam/image Image//String/readwrite/False/
+#     \~English The name of the docker image to be used for this application
+# @param[in] cparam/tag Tag/1.0/String/readwrite/False/
+#     \~English The tag of the docker image to be used for this application
+# @param[in] cparam/digest Digest//String/readwrite/False/
+#     \~English The hexadecimal hash (long version) of the docker image to be used for this application
+# @param[in] cparam/command Command//String/readwrite/False/
+#     \~English The command line to run within the docker instance. The specified command will be executed in a bash shell. That means that images will need a bash shell.
+# @param[in] cparam/input_redirection Input Redirection//String/readwrite/False/
+#     \~English The command line argument that specifies the input into this application
+# @param[in] cparam/output_redirection Output Redirection//String/readwrite/False/
+#     \~English The command line argument that specifies the output from this application
+# @param[in] cparam/command_line_arguments Command Line Arguments//String/readwrite/False/
+#     \~English Additional command line arguments to be added to the command line to be executed
+# @param[in] cparam/paramValueSeparator Param value separator/ /String/readwrite/False/
+#     \~English Separator character(s) between parameters on the command line
+# @param[in] cparam/argumentPrefix Argument prefix/"--"/String/readwrite/False/
+#     \~English Prefix to each keyed argument on the command line
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[in] cparam/user User//String/readwrite/False/
+#     \~English Username of the user who will run the application within the docker image
+# @param[in] cparam/ensureUserAndSwitch Ensure User And Switch/False/Boolean/readwrite/False/
+#     \~English Make sure the user specified in the User parameter exists and then run the docker container as that user
+# @param[in] cparam/removeContainer Remove Container/True/Boolean/readwrite/False/
+#     \~English Instruct Docker engine to delete the container after execution is complete
+# @param[in] cparam/additionalBindings Additional Bindings//String/readwrite/False/
+#     \~English Directories which will be visible inside the container during run-time. Format is srcdir_on_host:trgtdir_on_container. Multiple entries can be separated by commas.
+# @param[in] cparam/portMappings Port Mappings//String/readwrite/False/
+#     \~English Port mappings on the host machine
+# @par EAGLE_END
 class DockerApp(BarrierAppDROP):
     """
     A BarrierAppDROP that represents a process running in a container
@@ -189,59 +236,100 @@ class DockerApp(BarrierAppDROP):
     def initialize(self, **kwargs):
         BarrierAppDROP.initialize(self, **kwargs)
 
-        self._image = self._getArg(kwargs, 'image', None)
+        self._image = self._getArg(kwargs, "image", None)
+        self._env = self._getArg(kwargs, "env", None)
+        self._cmdLineArgs = self._getArg(kwargs, "command_line_arguments", "")
+        self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
+        self._argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
+        self._paramValueSeparator = self._getArg(kwargs, \
+            "paramValueSeparator", " ")
         if not self._image:
-            raise InvalidDropException(self, 'No docker image specified, cannot create DockerApp')
+            raise InvalidDropException(
+                self, "No docker image specified, cannot create DockerApp"
+            )
 
         if ":" not in self._image:
             logger.warning(
-                "%r: Image %s is too generic since it doesn't specify a tag", self, self._image)
+                "%r: Image %s is too generic since it doesn't specify a tag",
+                self,
+                self._image,
+            )
 
-        self._command = self._getArg(kwargs, 'command', None)
-        if not self._command:
-            raise InvalidDropException(
-                self, "No command specified, cannot create DockerApp")
+        self._command = self._getArg(kwargs, "command", None)
 
-        # The user used to run the process in the docker container
-        # By default docker containers run as root, but we don't want to run
-        # a process using a different user because otherwise anything that that
-        # process writes to the filesystem
-        self._user = self._getArg(kwargs, 'user', None)
+        self._noBash = False
+        if not self._command or self._command[:2].strip() == "%%":
+            logger.warning(
+                "Assume a default command is executed in the container"
+            )
+            self._command = self._command.strip()[2:].strip() if self._command else ""
+            self._noBash = True
+            # This makes sure that we can retain any command defined in the image, but still be
+            # able to add any arguments straight after. This requires to use the placeholder string
+            # "%%" at the start of the command, else it is interpreted as a normal command.
 
-        # In some cases we want to make sure the command in the container runs
-        # as a certain user, so we wrap up the command line in a small script
-        # that will create the user if missing and switch to it
-        self._ensureUserAndSwitch = self._getArg(kwargs, 'ensureUserAndSwitch', self._user is None)
+        # construct the actual command line from all application parameters
+        argumentString = droputils.serialize_applicationArgs(self._applicationArgs, \
+            self._argumentPrefix, self._paramValueSeparator)
+        # complete command including all additional parameters and optional redirects
+        cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
+        cmd = cmd.strip()
+        self._command = cmd
+
+        # The user used to run the process in the docker container is now always the user
+        # who originally started the DALiuGE process as well. The information is passed through
+        # from the host to the engine container (if run as docker) and then further to any
+        # container running as a component.
+
+        pw = pwd.getpwuid(os.getuid())
+        self._user = pw.pw_name # use current user by default
+        self._userid = pw.pw_uid
+        self._groupid = pw.pw_gid
+        logger.debug(f"User for docker container: {self._user} {self._userid}:{self._groupid}")
 
         # By default containers are removed from the filesystem, but people
         # might want to preserve them.
         # TODO: This might be something that the data lifecycle manager could
         # handle, but for the time being we do it here
-        self._removeContainer = self._getArg(kwargs, 'removeContainer', True)
+        self._removeContainer = self._getArg(kwargs, "removeContainer", True)
 
         # Ports - a comma seperated list of the host port mappings of form:
         # "hostport1:containerport1, hostport2:containerport2"
-        self._portMappings = self._getArg(kwargs, 'portMappings', "")
+        self._portMappings = self._getArg(kwargs, "portMappings", "")
         logger.info(f"portMappings: {self._portMappings}")
+
+        self._shmSize = self._getArg(kwargs, "shmSize", "")
+        logger.info(f"shmSize: {self._shmSize}")
 
         # Additional volume bindings can be specified for existing files/dirs
         # on the host system. They are given either as a list or as a
         # comma-separated string
         self._additionalBindings = {}
-        bindings = self._getArg(kwargs, 'additionalBindings', [])
-        bindings = bindings.split(',') if isinstance(bindings, str) else bindings
+        bindings = [f"{DLG_ROOT}:{DLG_ROOT}",
+                    f"{DLG_ROOT}/workspace/settings/passwd:/etc/passwd",
+                    f"{DLG_ROOT}/workspace/settings/group:/etc/group"
+        ]
+        bindings += self._getArg(kwargs, "additionalBindings", [])
+        bindings = bindings.split(",") if isinstance(bindings, str) else bindings
         for binding in bindings:
-            if binding.find(':') == -1:
+            if len(binding) == 0:
+                continue
+            if binding.find(":") == -1:
                 host_path = container_path = binding
             else:
-                host_path, container_path = binding.split(':')
-                
-# NOTE: The following prevents mounts from host directly into secondary container if DALiuGE is running inside docker already.
-#            if not os.path.exists(host_path):
-#                raise InvalidDropException(self, "'Path %s doesn't exist, cannot use as additional volume binding" % (host_path,))
+                host_path, container_path = binding.split(":")
+
+            # NOTE: The following prevents mounts from host directly into secondary container if DALiuGE is running inside docker already.
+            #            if not os.path.exists(host_path):
+            #                raise InvalidDropException(self, "'Path %s doesn't exist, cannot use as additional volume binding" % (host_path,))
             self._additionalBindings[host_path] = container_path
 
-        logger.info("%r with image '%s' and command '%s' created", self, self._image, self._command)
+        logger.info(
+            "%r with image '%s' and command '%s' created",
+            self,
+            self._image,
+            self._command,
+        )
 
         # Check if we have the image; otherwise pull it.
         c = DockerApp._get_client()
@@ -252,17 +340,21 @@ class DockerApp(BarrierAppDROP):
             start = time.time()
             c.images.pull(self._image)
             end = time.time()
-            logger.debug("Took %.2f [s] to pull image '%s'", (end-start), self._image)
+            logger.debug("Took %.2f [s] to pull image '%s'", (end - start), self._image)
         else:
             logger.debug("Image '%s' found, no need to pull it", self._image)
 
         # Check if the image specifies a working directory
-        # If it doesn't use the one provided by the user
+        # If it doesn't use the one provided by the user. 
+        # If none is provided use the session directory
         inspection = c.api.inspect_image(self._image)
         logger.debug("Docker Image inspection: %r", inspection)
-        self.workdir = inspection.get('ContainerConfig', {}).get('WorkingDir', None)
+        self.workdir = inspection.get("ContainerConfig", {}).get("WorkingDir", None)
+        # self.workdir = None
+        self._sessionId = (self._dlg_session.sessionId if self._dlg_session else "")
         if not self.workdir:
-            self.workdir = self._getArg(kwargs, 'workingDir', '/')
+            default_workingdir = os.path.join(utils.getDlgWorkDir(), self._sessionId)
+            self.workdir = self._getArg(kwargs, "workingDir", default_workingdir)
 
         c.api.close()
 
@@ -277,7 +369,7 @@ class DockerApp(BarrierAppDROP):
     @containerIp.setter
     def containerIp(self, containerIp):
         self._containerIp = containerIp
-        self._fire('containerIp', containerIp=containerIp)
+        self._fire("containerIp", containerIp=containerIp)
 
     @property
     def containerId(self):
@@ -288,9 +380,9 @@ class DockerApp(BarrierAppDROP):
         # The only interest we currently have is the containerIp of other
         # DockerApps, and only if our command actually uses this IP
         if isinstance(drop, DockerApp):
-            if '%containerIp[{0}]%'.format(drop.uid) in self._command:
+            if "%containerIp[{0}]%".format(drop.uid) in self._command:
                 self._waiters.append(ContainerIpWaiter(drop))
-                logger.debug('%r: Added ContainerIpWaiter for %r', self, drop)
+                logger.debug("%r: Added ContainerIpWaiter for %r", self, drop)
 
     def run(self):
 
@@ -301,38 +393,68 @@ class DockerApp(BarrierAppDROP):
 
         iitems = self._inputs.items()
         oitems = self._outputs.items()
-        fsInputs  = {uid: i for uid,i in iitems if droputils.has_path(i)}
-        fsOutputs = {uid: o for uid,o in oitems if droputils.has_path(o)}
-        dockerInputs  = {uid: DockerPath(DLG_ROOT + i.path) for uid,i in fsInputs.items()}
-        dockerOutputs = {uid: DockerPath(DLG_ROOT + o.path) for uid,o in fsOutputs.items()}
-        dataURLInputs  = {uid: i for uid,i in iitems if not droputils.has_path(i)}
-        dataURLOutputs = {uid: o for uid,o in oitems if not droputils.has_path(o)}
+        fsInputs = {uid: i for uid, i in iitems if droputils.has_path(i)}
+        fsOutputs = {uid: o for uid, o in oitems if droputils.has_path(o)}
+        dockerInputs = {
+#            uid: DockerPath(utils.getDlgDir() + i.path) for uid, i in fsInputs.items()
+            uid: DockerPath(i.path) for uid, i in fsInputs.items()
+        }
+        dockerOutputs = {
+#            uid: DockerPath(utils.getDlgDir() + o.path) for uid, o in fsOutputs.items()
+            uid: DockerPath(o.path) for uid, o in fsOutputs.items()
+        }
+        dataURLInputs = {uid: i for uid, i in iitems if not droputils.has_path(i)}
+        dataURLOutputs = {uid: o for uid, o in oitems if not droputils.has_path(o)}
 
-        cmd = droputils.replace_path_placeholders(self._command, dockerInputs, dockerOutputs)
-        cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
+        if self._command:
+            cmd = droputils.replace_path_placeholders(
+                self._command, dockerInputs, dockerOutputs
+            )
+            cmd = droputils.replace_dataurl_placeholders(
+                cmd, dataURLInputs, dataURLOutputs
+            )
+        else:
+            cmd = ""
 
-        # We bind the inputs and outputs inside the docker under the DLG_ROOT
+        # We bind the inputs and outputs inside the docker under the utils.getDlgDir()
         # directory, maintaining the rest of their original paths.
         # Outputs are bound only up to their dirname (see class doc for details)
         # Volume bindings are setup for FileDROPs and DirectoryContainers only
-        binds  = [                i.path  + ":" +                  dockerInputs[uid].path  for uid,i in fsInputs.items()]
-        binds += [os.path.dirname(o.path) + ":" + os.path.dirname(dockerOutputs[uid].path) for uid,o in fsOutputs.items()]
-        binds += [host_path + ":" + container_path  for host_path, container_path in self._additionalBindings.items()]
-        binds = list(set(binds))   # make this a unique list else docker complains
+        binds = [i.path + ":" + dockerInputs[uid].path for uid, i in fsInputs.items()]
+        binds += [
+            os.path.dirname(o.path) + ":" + os.path.dirname(dockerOutputs[uid].path)
+            for uid, o in fsOutputs.items()
+        ]
+        logger.debug("Input/output bindings: %r", binds)
+        if (
+            len(self._additionalBindings.items()) > 0
+        ):  # else we end up with a ':' in the mounts list
+            logger.debug("Additional bindings: %r", self._additionalBindings)
+            binds += [
+                host_path + ":" + container_path
+                for host_path, container_path in self._additionalBindings.items()
+            ]
+        binds = list(set(binds))  # make this a unique list else docker complains
+        try:
+            binds.remove(':')
+        except:
+            pass
         logger.debug("Volume bindings: %r", binds)
 
         portMappings = {}
-        for mapping in self._portMappings.split(','):
+        for mapping in self._portMappings.split(","):
             if mapping:
-                if mapping.find(':') == -1:
+                if mapping.find(":") == -1:
                     host_port = container_port = mapping
                 else:
-                    host_port, container_port = mapping.split(':')
+                    host_port, container_port = mapping.split(":")
                 if host_port not in portMappings:
                     logger.debug(f"mapping port {host_port} -> {container_port}")
                     portMappings[host_port] = int(container_port)
                 else:
-                    raise Exception(f"Duplicate port {host_port} in container port mappings")
+                    raise Exception(
+                        f"Duplicate port {host_port} in container port mappings"
+                    )
         logger.debug(f"port mappings: {portMappings}")
 
         # Wait until the DockerApps this application runtime depends on have
@@ -342,45 +464,61 @@ class DockerApp(BarrierAppDROP):
             cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
             logger.debug("Command after IP replacement is: %s", cmd)
 
-        # If a user has been given, we run the container as that user. It is
-        # useful to make sure that the USER environment variable is set in those
-        # cases (e.g., casapy requires this to correctly operate)
-        user = self._user
-        env  = {}
-        if user is not None:
-            env = {'USER':user}
+        # deal with environment variables
+        env = {}
+        env.update({
+            "DLG_UID": self._uid},
+        )
+        if self._dlg_session:
+            env.update({"DLG_SESSION_ID":self._dlg_session.sessionId})
+        if self._user is not None:
+            env.update({
+                "USER": self._user,
+                "DLG_ROOT": utils.getDlgDir()
+                })
+        if self._env is not None:
+            logger.debug(f"Found environment variable setting: {self._env}")
+            if self._env.lower() == "all": # pass on all environment variables from host
+                env.update(os.environ)
+            elif self._env[0] in ["{", "["]:
+                try:
+                    addEnv = json.loads(self._env)
+                except:
+                   logger.warning("Ignoring provided environment variables: Format wrong? Check documentation")
+                if isinstance(addEnv, dict): # if it is a dict populate directly
+                    env.update(addEnv)
+                elif isinstance(addEnv, list): # if it is a list populate from host environment
+                    for e in addEnv: 
+                        env.update(os.environ[e])
+            else:
+                logger.warning("Ignoring provided environment variables: Format wrong! Check documentation")
+        logger.debug(f"Adding environment variables: {env}")
 
-        if self._ensureUserAndSwitch is True:
-            # Append commands that will make sure a user is present with the
-            # same UID of the current user, and that the command that was
-            # supplied for this container runs as that user.
-            # Also make sure that the output will belong to that user
-            uid = os.getuid()
-            createUserAndGo = "id -u {0} &> /dev/null || adduser --uid {0} r; ".format(uid)
-            for dirname in set([os.path.dirname(x.path) for x in dockerOutputs.values()]):
-                createUserAndGo += 'chown -R {0}.{0} "{1}"; '.format(uid, dirname)
-            createUserAndGo += "su -l $(getent passwd {0} | cut -f1 -d:) -c /bin/bash -c 'cd {1}; {2}'".format(uid, self.workdir, utils.escapeQuotes(cmd, doubleQuotes=False))
-
-            cmd = createUserAndGo
 
         # Wrap everything inside bash
-        cmd = '/bin/bash -c "%s"' % (utils.escapeQuotes(cmd, singleQuotes=False))
-
-        logger.debug("Command after user creation and wrapping is: %s", cmd)
+        if len(cmd) > 0 and not self._noBash:
+            cmd = '/bin/bash -c "%s"' % (utils.escapeQuotes(cmd, singleQuotes=False))
+            logger.debug("Command after user creation and wrapping is: %s", cmd)
+        else:
+            logger.debug("executing container withdefault cmd and wrapped arguments")
+            cmd = f"{utils.escapeQuotes(cmd, singleQuotes=False)}"
 
         c = DockerApp._get_client()
 
+        logger.debug(f"Final user for container: {self._user}:{self._userid}")
         # Create container
         self.container = c.containers.create(
-                self._image,
-                cmd,
-                volumes=binds,
-                ports=portMappings,
-                user=user,
-                environment=env,
-                working_dir=self.workdir,
-                init=True,
-                auto_remove=self._removeContainer
+            self._image,
+            cmd,
+            volumes=binds,
+            ports=portMappings,
+            user=f"{self._userid}:{self._groupid}",
+            environment=env,
+            working_dir=self.workdir,
+            init=True,
+            shm_size=self._shmSize,
+            # auto_remove=self._removeContainer,
+            detach=True,
         )
         self._containerId = cId = self.container.id
         logger.info("Created container %s for %r", cId, self)
@@ -391,41 +529,68 @@ class DockerApp(BarrierAppDROP):
         self.container.start()
         logger.info("Started container %s", cId)
 
+
         # Figure out the container's IP and save it
         # Setting self.containerIp will trigger an event being sent to the
         # registered listeners
         inspection = c.api.inspect_container(cId)
         logger.debug("Docker inspection: %r", inspection)
-        self.containerIp = inspection['NetworkSettings']['IPAddress']
-
-        # Capture output
-        stdout = self.container.logs(stream=False, stdout=True, stderr=False)
-        stderr = self.container.logs(stream=False, stdout=False, stderr=True)
+        self.containerIp = inspection["NetworkSettings"]["IPAddress"]
 
         # Wait until it finishes
         # In docker-py < 3 the .wait() method returns the exit code directly
         # In docker-py >= 3 the .wait() method returns a dictionary with the API response
         x = self.container.wait()
-        if isinstance(x, dict) and 'StatusCode' in x:
-            self._exitCode = x['StatusCode']
+        if isinstance(x, dict) and "StatusCode" in x:
+            self._exitCode = x["StatusCode"]
         else:
             self._exitCode = x
 
         end = time.time()
-        logger.info("Container %s finished in %.2f [s] with exit code %d", cId, (end-start), self._exitCode)
+
+        # Capture output
+        stdout = self.container.logs(stream=False, stdout=True, stderr=False)
+        stderr = self.container.logs(stream=False, stdout=False, stderr=True)
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode()
+            stderr = stderr.decode()
+        logger.info(
+            "Container %s finished in %.2f [s] with exit code %d",
+            cId,
+            (end - start),
+            self._exitCode,
+        )
 
         if self._exitCode == 0 and logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Container %s finished successfully, output follows.\n==STDOUT==\n%s==STDERR==\n%s", cId, stdout, stderr)
+            logger.debug(
+                "Container %s finished successfully, output follows.\n==STDOUT==\n%s==STDERR==\n%s",
+                cId,
+                stdout,
+                stderr,
+            )
         elif self._exitCode != 0:
-            msg = "Container %s didn't finish successfully (exit code %d)" % (cId, self._exitCode)
+            msg = "Container %s didn't finish successfully (exit code %d)" % (
+                cId,
+                self._exitCode,
+            )
 
             if self._exitCode == 137 or self._exitCode == 139 or self._exitCode == 143:
                 # termination via SIGKILL, SIGSEGV, and SIGTERM is expected for some services
-                logger.warning(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s", stdout, stderr)
+                logger.warning(
+                    msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s",
+                    stdout,
+                    stderr,
+                )
             else:
-                logger.error(msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s", stdout, stderr)
+                logger.error(
+                    msg + ", output follows.\n==STDOUT==\n%s==STDERR==\n%s",
+                    stdout,
+                    stderr,
+                )
                 raise Exception(msg)
 
+        if self._removeContainer:
+            self.container.remove()
         c.api.close()
 
     @overrides
@@ -450,7 +615,7 @@ class DockerApp(BarrierAppDROP):
 
     @classmethod
     def _get_client(cls):
-        return docker.from_env(version='auto', **cls._kwargs_from_env())
+        return docker.from_env(version="auto", **cls._kwargs_from_env())
 
     @classmethod
     def _kwargs_from_env(cls, ssl_version=None, assert_hostname=False):
@@ -460,7 +625,7 @@ class DockerApp(BarrierAppDROP):
         :param assert_hostname: perform hostname checking
         :return:
         """
-        config_file_name = os.path.join(utils.getDlgDir(), 'dlg.settings')
+        config_file_name = os.path.join(utils.getDlgDir(), "dlg.settings")
         if os.path.exists(config_file_name):
             return ConfigObj(config_file_name)
         return {}

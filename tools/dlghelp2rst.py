@@ -28,26 +28,30 @@ from dlg.common import tool
 # unfortunately this does not preserve the same order
 # tool._load_commands()
 
+
 def load_commands(allOut):
-    o = subprocess.run(['dlg', '-h'], capture_output=True)
+    o = subprocess.run(["dlg", "-h"], capture_output=True)
     main_help = o.stdout.decode()
-    allOut['dlg'] =main_help
-    commands = list(map(lambda x:x[1:].split(' ',1)[0], o.stdout.decode().split('\n')[3:-3]))
+    allOut["dlg"] = main_help
+    commands = list(
+        map(lambda x: x[1:].split(" ", 1)[0], o.stdout.decode().split("\n")[3:-3])
+    )
     return commands
+
 
 def main(allOut):
     for c in load_commands(allOut):
-        key = 'dlg %s' %c
-        head = 'Command: %s' % key
+        key = "dlg %s" % c
+        head = "Command: %s" % key
         print(head)
-        print('-' * len(head))
-        print('Help output::\n')
-        o = subprocess.run(['dlg',c,'-h'], capture_output=True)
+        print("-" * len(head))
+        print("Help output::\n")
+        o = subprocess.run(["dlg", c, "-h"], capture_output=True)
         allOut[key] = o.stdout.decode()
-        print('   ' + allOut[key].replace('\n','\n   ')) # indent
+        print("   " + allOut[key].replace("\n", "\n   "))  # indent
         print()
- 
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     allOut = OrderedDict()
     main(allOut)

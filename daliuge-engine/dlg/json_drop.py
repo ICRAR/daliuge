@@ -34,6 +34,7 @@ class JsonDROP(FileDROP):
     """
     Very simple implementation derived from the :class:`FileDROP <dlg.drop.FileDROP>` class
     """
+
     def __init__(self, oid, uid, **kwargs):
         self._data = None
         super(JsonDROP, self).__init__(oid, uid, **kwargs)
@@ -45,5 +46,5 @@ class JsonDROP(FileDROP):
         return self._data[item]
 
     def _load(self):
-        with open(self.path, mode='r') as json_file:
+        with open(self.path, mode="r") as json_file:
             self._data = json.load(json_file)
