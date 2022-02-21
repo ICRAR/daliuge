@@ -49,9 +49,7 @@ def get_pg(opts, node_managers: list, data_island_managers: list):
     else:
         with open(opts.physical_graph, 'r', encoding='utf-8') as pg_file:
             pgt = json.load(pg_file)
-    physical_graph = pg_generator.resource_map(pgt, node_managers + data_island_managers)
-    # TODO: Add dumping to log-dir
-    return physical_graph
+    return pgt
 
 
 def start_helm(physical_graph_template, num_nodes: int, deploy_dir: str):
@@ -127,7 +125,7 @@ def main():
     )
     helm_client.create_helm_chart(json.dumps(physical_graph))
     helm_client.launch_helm()
-    # helm_client.submit_job()
+    helm_client.submit_job()
     helm_client.teardown()
 
 
