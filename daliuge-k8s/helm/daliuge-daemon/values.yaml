@@ -1,6 +1,7 @@
 name: daliuge-daemon
 dlg_root_on_cluster_nodes: /dlg
 dlg_root_in_container: /dlg
+deploy_id: master
 containers:
   name: icrar/daliuge-engine:2.0.1
   ports:

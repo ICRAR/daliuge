@@ -37,6 +37,7 @@ from dlg.deploy.deployment_utils import find_node_ips, find_service_ips, find_po
 from dlg.restutils import RestClient
 from dlg.deploy.common import submit
 from dlg.dropmake import pg_generator
+from dlg.constants import MASTER_DEFAULT_REST_PORT
 
 
 def _num_deployments_required(islands, nodes):
@@ -129,12 +130,14 @@ class HelmClient:
         self._num_machines = _num_deployments_required(self._islands, self._nodes)
 
     def _find_pod_details(self):
-        service_ips = find_service_ips()
-        pod_ips = find_pod_ips()
+        # NOTE: +1 for the master.
+        service_ips = find_service_ips(self._num_machines+1)
+        pod_ips = find_pod_ips(self._num_machines+1)
         labels = sorted([str(x) for x in range(self._num_machines)])
         for i in range(len(labels)):
-            self._pod_details[labels[i]] = {'ip': pod_ips[i]}
-        self._pod_details['master'] = {'ip': service_ips[0]}
+            self._pod_details[labels[i]] = {'ip': pod_ips[i], 'svc': service_ips[i]}
+        self._pod_details['master'] = {'ip': pod_ips[-1],
+                                       'svc': service_ips[-1]}
         print(self._pod_details)
 
     def create_helm_chart(self, physical_graph_content):
@@ -155,13 +158,13 @@ class HelmClient:
         # Update template
 
     def start_manager(self, manager_node):
-        self._submission_endpoint = self._pod_details[manager_node]['ip']
+        self._submission_endpoint = self._pod_details[manager_node]['svc']
         client = RestClient(self._submission_endpoint,
                             self._value_data['service']['daemon']['port'], timeout=30)
         node_ips = [x['ip'] for x in self._pod_details.values()]
-        node_ips.remove(self._pod_details['master']['ip'])
         data = json.dumps({'nodes': node_ips}).encode('utf-8')
         time.sleep(5)
+        print(f"Starting manager on {self._submission_endpoint}")
         client._POST('/managers/island/start', content=data,
                      content_type='application/json')
         client._POST('/managers/master/start', content=data,
@@ -169,13 +172,19 @@ class HelmClient:
 
     def start_nodes(self):
         ips = [x['svc'] for x in self._pod_details.values()]
+        ips.remove(self._pod_details['master']['svc'])
         for ip in ips:
             client = RestClient(
                 ip,
-                self._value_data['service']['nodemgr']['port'],
+                self._value_data['service']['daemon']['port'],
                 timeout=30
             )
-            client._GET('/managers/node/start')
+            time.sleep(5)
+            print(f"Starting node on {ip}")
+            node_ips = [x['ip'] for x in self._pod_details.values()]
+            data = json.dumps({'nodes': node_ips}).encode('utf-8')
+            client._POST("/managers/island/start", content=data,
+                         content_type='application/json')
 
     def launch_helm(self):
         """
@@ -184,17 +193,21 @@ class HelmClient:
         """
         if self._submit:
             os.chdir(self._deploy_dir)
-            instruction = f'helm install {self._deploy_name} {self._chart_name}/  ' \
+            _write_values(self._chart_dir, {'deploy_id': 'master', 'name': f'{self._chart_name}-master'})
+            instruction = f'helm install {self._deploy_name}-master {self._chart_name}/  ' \
                           f'--values {self._chart_name}{os.sep}custom-values.yaml'
             print(subprocess.check_output([instruction],
-                                              shell=True).decode('utf-8'))
-            instruction = f'kubectl scale --replicas={self._num_machines} statefulset/{self._deploy_name}'
-            print(subprocess.check_output([instruction],
                                           shell=True).decode('utf-8'))
-
-            # TODO: Check running nodes before launching another
+            for i in range(self._num_machines):
+                _write_values(self._chart_dir, {'deploy_id': i, 'name': f'{self._chart_name}-{i}'})
+                instruction = f'helm install {self._deploy_name}-{i} {self._chart_name}/  ' \
+                              f'--values {self._chart_name}{os.sep}custom-values.yaml'
+                print(subprocess.check_output([instruction],
+                                              shell=True).decode('utf-8'))
+                # TODO: Check running nodes before launching another
             self._find_pod_details()
             self.start_manager("master")
+            self.start_nodes()
         else:
             print(f"Created helm chart {self._chart_name} in {self._deploy_dir}")
 
@@ -214,4 +227,4 @@ class HelmClient:
         print(json.dumps(physical_graph, indent=4))
         # TODO: Add dumping to log-dir
         print(self._submission_endpoint)
-        submit(physical_graph, self._submission_endpoint, skip_deploy=True)
+        submit(physical_graph, self._submission_endpoint, port=MASTER_DEFAULT_REST_PORT, skip_deploy=True)
