@@ -34,9 +34,16 @@ import dlg
 import yaml
 import subprocess
 from dlg.common.version import version as dlg_version
-from dlg.deploy.deployment_utils import find_node_ips
+from dlg.deploy.deployment_utils import find_node_ips, find_service_ips, find_pod_ips
 from dlg.restutils import RestClient
 from dlg.deploy.common import submit
+
+
+def _num_deployments_required(islands, nodes):
+    machines = set()
+    machines.update(islands)
+    machines.update(nodes)
+    return len(machines)
 
 
 def _write_chart(chart_dir, name: str, chart_name: str, version: str, app_version: str, home: str,
@@ -50,7 +57,7 @@ def _write_chart(chart_dir, name: str, chart_name: str, version: str, app_versio
 
 
 def _write_values(chart_dir, config):
-    with open(f"{chart_dir}{os.sep}custom-values.yaml", 'w', encoding='utf-8') as value_file:
+    with open(f"{chart_dir}{os.sep}custom-values.yaml", 'w+', encoding='utf-8') as value_file:
         yaml.dump(config, value_file)
 
 
@@ -101,6 +108,8 @@ class HelmClient:
         self._value_data = value_config if value_config is not None else {}
         self._submission_endpoint = None
         self._k8s_nodes = find_node_ips()
+        self._num_machines = 1
+        self._pod_details = {}
         if physical_graph_file is not None:
             self._set_physical_graph(physical_graph_file)
 
@@ -117,6 +126,16 @@ class HelmClient:
         self._physical_graph_file = physical_graph_content
         self._islands, self._nodes = _find_resources(
             self._physical_graph_file)
+        self._num_machines = _num_deployments_required(self._islands, self._nodes)
+
+    def _find_pod_details(self):
+        service_ips = find_service_ips()
+        pod_ips = find_pod_ips()
+        labels = sorted([str(x) for x in range(self._num_machines)])
+        for i in range(len(labels)):
+            self._pod_details[labels[i]] = {'svc': service_ips[i],
+                                            'ip': pod_ips[i]}
+        print(self._pod_details)
 
     def create_helm_chart(self, physical_graph_content):
         """
@@ -124,7 +143,6 @@ class HelmClient:
         For now, it will just try to run everything in a single container.
         """
         # Add charts
-        # TODO: Add charts to helm
         self._set_physical_graph(physical_graph_content)
         _write_chart(self._chart_dir, 'Chart.yaml', self._chart_name, self._chart_version,
                      dlg_version,
@@ -135,7 +153,28 @@ class HelmClient:
         _write_values(self._chart_dir, self._value_data)
         self._value_data = _read_values(self._chart_dir)
         # Update template
-        # TODO: Set number of replicas
+
+    def start_manager(self, manager_node):
+        self._submission_endpoint = self._pod_details[manager_node]['svc']
+        client = RestClient(self._submission_endpoint,
+                            self._value_data['service']['daemon']['port'], timeout=30)
+        node_ips = [x['ip'] for x in self._pod_details.values()]
+        data = json.dumps({'nodes': node_ips}).encode('utf-8')
+        time.sleep(5)
+        client._POST('/managers/island/start', content=data,
+                     content_type='application/json')
+        client._POST('/managers/master/start', content=data,
+                     content_type='application/json')
+
+    def start_nodes(self):
+        ips = [x['svc'] for x in self._pod_details.values()]
+        for ip in ips:
+            client = RestClient(
+                ip,
+                self._value_data['service']['nodemgr']['port'],
+                timeout=30
+            )
+            client._GET('/managers/node/start')
 
     def launch_helm(self):
         """
@@ -144,42 +183,21 @@ class HelmClient:
         """
         if self._submit:
             os.chdir(self._deploy_dir)
-            instruction = f'helm install {self._deploy_name} {self._chart_name}/  ' \
-                          f'--values {self._chart_name}{os.sep}custom-values.yaml'
-            print(subprocess.check_output([instruction],
-                                          shell=True).decode('utf-8'))
-            req_machines = set()
-            req_machines.update(set(self._nodes))
-            req_machines.update(set(self._islands))
-            num_machines = len(req_machines)
-            del req_machines
-            # instruction = f'kubectl scale --replicas={num_machines} statefulset/{self._deploy_name}-deployment'
-            #print(subprocess.check_output([instruction],
-            #                              shell=True).decode('utf-8'))
-            query = str(subprocess.check_output(['kubectl get svc -o wide'], shell=True))
-            # WARNING: May be problematic later if multiple services are running
-            pattern = r"-service\s*NodePort\s*\d+\.\d+\.\d+\.\d+"
-            ip_pattern = r"\d+\.\d+\.\d+\.\d+"
-            outcome = re.search(pattern, query)
-            if outcome:
-                manager_ip = re.search(ip_pattern, outcome.string).group(0)
-                self._submission_endpoint = manager_ip
-                client = RestClient(self._submission_endpoint,
-                                    self._value_data['service']['daemon']['port'], timeout=30)
-                data = json.dumps({'nodes': ['127.0.0.1']}).encode('utf-8')
-                time.sleep(5)
-                client._POST('/managers/island/start', content=data,
-                             content_type='application/json')
-                client._POST('/managers/master/start', content=data,
-                             content_type='application/json')
-            else:
-                print("Could not find manager IP address")
-
+            for i in range(self._num_machines):
+                _write_values(self._chart_dir, {'deploy_id': i, 'name': f'{self._chart_name}-{i}'})
+                instruction = f'helm install {self._deploy_name}-{i} {self._chart_name}/  ' \
+                              f'--values {self._chart_name}{os.sep}custom-values.yaml'
+                print(subprocess.check_output([instruction],
+                                              shell=True).decode('utf-8'))
+                # TODO: Check running nodes before launching another
+            self._find_pod_details()
+            self.start_manager("0")
         else:
             print(f"Created helm chart {self._chart_name} in {self._deploy_dir}")
 
     def teardown(self):
-        subprocess.check_output(['helm uninstall daliuge-daemon'], shell=True)
+        for i in range(self._num_machines):
+            subprocess.check_output([f'helm uninstall daliuge-daemon-{i}'], shell=True)
 
     def submit_job(self):
         """

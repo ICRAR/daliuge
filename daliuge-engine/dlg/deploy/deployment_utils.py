@@ -21,6 +21,8 @@
 #
 import json
 import subprocess
+import re
+import time
 
 
 class ListTokens(object):
@@ -159,3 +161,37 @@ def find_node_ips():
         shell=True)
     node_ips = query.decode(encoding='utf-8').split(' ')
     return node_ips
+
+
+def find_service_ips():
+    query = str(subprocess.check_output([
+        r'kubectl get svc -o wide'],
+        shell=True))
+    pattern = r"daliuge-daemon-service-\d+\s*ClusterIP\s*\d+\.\d+\.\d+\.\d+"
+    ip_pattern = r"\d+\.\d+\.\d+\.\d+"
+    outcome = re.findall(pattern, query)
+    ips = []
+    for service in outcome:
+        ip = re.search(ip_pattern, service)
+        if ip:
+            ips.append(ip.group(0))
+    return ips
+
+
+def find_pod_ips(retries=3, timeout=10):
+    ips = []
+    attempts = 0
+    while ips == [] and attempts < retries:
+        query = str(subprocess.check_output([
+            r'kubectl get pods -o wide'],
+            shell=True).decode(encoding='utf-8'))
+        pattern = r"^daliuge-daemon-deployment.*"
+        ip_pattern = r"\d+\.\d+\.\d+\.\d+"
+        outcome = re.findall(pattern, query, re.M)
+        for pod in outcome:
+            ip = re.search(ip_pattern, pod)
+            if ip:
+                ips.append(ip.group(0))
+        print(ips)
+        time.sleep(timeout)
+    return ips
