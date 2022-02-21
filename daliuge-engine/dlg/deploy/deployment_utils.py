@@ -167,7 +167,7 @@ def find_service_ips():
     query = str(subprocess.check_output([
         r'kubectl get svc -o wide'],
         shell=True))
-    pattern = r"daliuge-daemon-service-\d+\s*ClusterIP\s*\d+\.\d+\.\d+\.\d+"
+    pattern = r"daliuge-daemon-service\s*ClusterIP\s*\d+\.\d+\.\d+\.\d+"
     ip_pattern = r"\d+\.\d+\.\d+\.\d+"
     outcome = re.findall(pattern, query)
     ips = []
@@ -185,7 +185,7 @@ def find_pod_ips(retries=3, timeout=10):
         query = str(subprocess.check_output([
             r'kubectl get pods -o wide'],
             shell=True).decode(encoding='utf-8'))
-        pattern = r"^daliuge-daemon-deployment.*"
+        pattern = r"^daliuge-daemon.*"
         ip_pattern = r"\d+\.\d+\.\d+\.\d+"
         outcome = re.findall(pattern, query, re.M)
         for pod in outcome:
