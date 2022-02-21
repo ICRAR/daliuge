@@ -1,18 +1,19 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: daliuge-daemon-deployment-{{ .Values.deploy_id }}
+  name: daliuge-daemon
   labels:
-    app: daliuge-daemon-{{ .Values.deploy_id }}
+    app: daliuge-daemon
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: daliuge-daemon-{{ .Values.deploy_id }}
+      app: daliuge-daemon
+  serviceName: "daliuge"
   template:
     metadata:
       labels:
-        app: daliuge-daemon-{{ .Values.deploy_id }}
+        app: daliuge-daemon
     spec:
       volumes:
         - name: dlg-mount
@@ -30,5 +31,5 @@ spec:
         - name: DLG_ROOT
           valueFrom:
             configMapKeyRef:
-              name: daliuge-daemon-configmap-{{ .Values.deploy_id }}
+              name: daliuge-daemon-configmap
               key: dlg_root

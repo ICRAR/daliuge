@@ -23,7 +23,6 @@
 Contains a module translating physical graphs to kubernetes helm charts.
 """
 import json
-import re
 import time
 import os
 import sys
@@ -37,6 +36,7 @@ from dlg.common.version import version as dlg_version
 from dlg.deploy.deployment_utils import find_node_ips, find_service_ips, find_pod_ips
 from dlg.restutils import RestClient
 from dlg.deploy.common import submit
+from dlg.dropmake import pg_generator
 
 
 def _num_deployments_required(islands, nodes):
@@ -133,8 +133,8 @@ class HelmClient:
         pod_ips = find_pod_ips()
         labels = sorted([str(x) for x in range(self._num_machines)])
         for i in range(len(labels)):
-            self._pod_details[labels[i]] = {'svc': service_ips[i],
-                                            'ip': pod_ips[i]}
+            self._pod_details[labels[i]] = {'ip': pod_ips[i]}
+        self._pod_details['master'] = {'ip': service_ips[0]}
         print(self._pod_details)
 
     def create_helm_chart(self, physical_graph_content):
@@ -155,10 +155,11 @@ class HelmClient:
         # Update template
 
     def start_manager(self, manager_node):
-        self._submission_endpoint = self._pod_details[manager_node]['svc']
+        self._submission_endpoint = self._pod_details[manager_node]['ip']
         client = RestClient(self._submission_endpoint,
                             self._value_data['service']['daemon']['port'], timeout=30)
         node_ips = [x['ip'] for x in self._pod_details.values()]
+        node_ips.remove(self._pod_details['master']['ip'])
         data = json.dumps({'nodes': node_ips}).encode('utf-8')
         time.sleep(5)
         client._POST('/managers/island/start', content=data,
@@ -183,26 +184,34 @@ class HelmClient:
         """
         if self._submit:
             os.chdir(self._deploy_dir)
-            for i in range(self._num_machines):
-                _write_values(self._chart_dir, {'deploy_id': i, 'name': f'{self._chart_name}-{i}'})
-                instruction = f'helm install {self._deploy_name}-{i} {self._chart_name}/  ' \
-                              f'--values {self._chart_name}{os.sep}custom-values.yaml'
-                print(subprocess.check_output([instruction],
+            instruction = f'helm install {self._deploy_name} {self._chart_name}/  ' \
+                          f'--values {self._chart_name}{os.sep}custom-values.yaml'
+            print(subprocess.check_output([instruction],
                                               shell=True).decode('utf-8'))
-                # TODO: Check running nodes before launching another
+            instruction = f'kubectl scale --replicas={self._num_machines} statefulset/{self._deploy_name}'
+            print(subprocess.check_output([instruction],
+                                          shell=True).decode('utf-8'))
+
+            # TODO: Check running nodes before launching another
             self._find_pod_details()
-            self.start_manager("0")
+            self.start_manager("master")
         else:
             print(f"Created helm chart {self._chart_name} in {self._deploy_dir}")
 
     def teardown(self):
-        for i in range(self._num_machines):
-            subprocess.check_output([f'helm uninstall daliuge-daemon-{i}'], shell=True)
+        subprocess.check_output([f'helm uninstall daliuge-daemon'], shell=True)
 
     def submit_job(self):
         """
         There is a semi-dynamic element to fetching the IPs of Node(s) to deploy to.
         Hence, launching the chart and initiating graph execution have been de-coupled.
         """
-        pg_data = json.loads(self._physical_graph_file)
-        submit(pg_data, self._submission_endpoint)
+        # TODO: Check all nodes are operational first.
+        pgt_data = json.loads(self._physical_graph_file)
+        node_ips = [x['ip'] for x in self._pod_details.values()]
+        node_ips.remove(self._pod_details['master']['ip'])
+        physical_graph = pg_generator.resource_map(pgt_data, node_ips)
+        print(json.dumps(physical_graph, indent=4))
+        # TODO: Add dumping to log-dir
+        print(self._submission_endpoint)
+        submit(physical_graph, self._submission_endpoint, skip_deploy=True)
