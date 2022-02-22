@@ -59,6 +59,8 @@ class DockerTests(unittest.TestCase):
 
         if cls._temp is None:
             cls._temp = "/tmp/daliuge_tfiles"
+        
+        _dum = utils.prepareUser(DLG_ROOT=utils.getDlgDir())
 
     def tearDown(self):
         shutil.rmtree("/tmp/daliuge_tfiles", True)
