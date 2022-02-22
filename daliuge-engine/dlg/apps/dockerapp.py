@@ -305,9 +305,9 @@ class DockerApp(BarrierAppDROP):
         # on the host system. They are given either as a list or as a
         # comma-separated string
         self._additionalBindings = {}
-        bindings = [f"{DLG_ROOT}:{DLG_ROOT}",
-                    f"{DLG_ROOT}/workspace/settings/passwd:/etc/passwd",
-                    f"{DLG_ROOT}/workspace/settings/group:/etc/group"
+        bindings = [f"{utils.getDlgDir()}:{utils.getDlgDir()}",
+                    f"{utils.getDlgDir()}/workspace/settings/passwd:/etc/passwd",
+                    f"{utils.getDlgDir()}/workspace/settings/group:/etc/group"
         ]
         bindings += self._getArg(kwargs, "additionalBindings", [])
         bindings = bindings.split(",") if isinstance(bindings, str) else bindings
