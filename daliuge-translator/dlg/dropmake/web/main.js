@@ -64,10 +64,7 @@ function getRender() {
 }
 
 
-function drawGraphForDrops(g, drawGraph, oids, doSpecs) {
-
-  var TO_MANY_LTR_RELS = ['consumers', 'streamingConsumers', 'outputs']
-  var TO_MANY_RTL_RELS = ['inputs', 'streamingInputs', 'producers']
+function drawGraphForDrops(g, drawGraph, data) {
   
 	// Keep track of modifications to see if we need to re-draw
 	var modified = false;
@@ -75,52 +72,58 @@ function drawGraphForDrops(g, drawGraph, oids, doSpecs) {
 	// #1: create missing nodes in the graph
 	// Because oids is sorted, they will be created in oid order
 	var time0 = new Date().getTime();
-	for(var idx in oids) {
-		var doSpec = doSpecs[oids[idx]];
-		modified |= _addNode(g, doSpec);
+  var nodes = data['nodeDataArray'];
+  var links = data['linkDataArray']
+  console.log(nodes)
+	for(var idx of nodes.keys()) {
+		var node = nodes[idx];
+		modified |= _addNode(g, node);
 	}
 
 	var time1 = new Date().getTime();
 	console.log('Took %d [ms] to create the nodes', (time1 - time0))
 
 	// #2: establish missing relationships
-	for(var idx in oids) {
-		var doSpec = doSpecs[oids[idx]];
-		var lhOid = doSpec.oid;
-
-		// x-to-many relationships producing lh->rh edges
-		for(var relIdx in TO_MANY_LTR_RELS) {
-			var rel = TO_MANY_LTR_RELS[relIdx];
-			if( rel in doSpec ) {
-				for(var rhOid in doSpec[rel]) {
-					modified |= _addEdge(g, lhOid, doSpec[rel][rhOid]);
-				}
-			}
-		}
-		// x-to-many relationships producing rh->lh edges
-		for(var relIdx in TO_MANY_RTL_RELS) {
-			var rel = TO_MANY_RTL_RELS[relIdx];
-			if( rel in doSpec ) {
-				for(var rhOid in doSpec[rel]) {
-					modified |= _addEdge(g, doSpec[rel][rhOid], lhOid);
-				}
-			}
-		}
-		// there currently are no x-to-one relationships producing rh->lh edges
-		// there currently are no x-to-one relationships producing lh->rh edges
+	for(var idx of links.keys()) {
+    g.setEdge(nodes[links[idx]['from']]['oid'], nodes[links[idx]['to']]['oid'], {width: 40});
 	}
-
-	var time2 = new Date().getTime();
-	console.log('Took %d [ms] to create the edges', (time2 - time1))
+  console.log(g)
 
 	if( modified ) {
 		drawGraph();
 	}
 
-	var time3 = new Date().getTime();
-	console.log('Took %d [ms] to draw the hole thing', (time3 - time2))
-
     zoomFit()
+}
+
+function _addNode(g, node) {
+
+  console.log("adding node")
+  var TYPE_SHAPES= {Component:'rect', Data:'parallelogram'}
+
+	if( g.hasNode(g) ) {
+		return false;
+	}
+
+	var typeClass = node.category;
+	var typeShape = TYPE_SHAPES[node.category];
+	var notes = node.text;
+
+	var oid = node.oid;
+	var html = '<div class="drop-label" id="id_' + oid + '">';
+	html += '<span class="notes">' + notes + '</span>';
+	html += '<span style="font-size: 13px;">' + oid + '</span>';
+	html += "</div>";
+	g.setNode(oid, {
+		labelType: "html",
+		label: html,
+		rx: 5,
+		ry: 5,
+		padding: 0,
+		class: typeClass,
+		shape: typeShape
+	});
+	return true;
 }
 
 function saveSettings() {

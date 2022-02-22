@@ -157,15 +157,14 @@
     view_as_graph()
     function view_as_graph() {
 
-        /* Remove the list-related stuff */
-        d3.select('#pg-list').remove()
-        d3.select('#pg-progress-bar').remove();
-
+        
         const heightValue = 300;
         const widthValue = 600;
         // Set up zoom support
-        var svg = d3.select("svg"),
-        svgGroup = svg.append("g");
+
+        d3.select("#SVGArea").append("svg").attr("id", "smallD3Graph").append("g").attr("id","root")
+	    var svg = d3.select("#smallD3Graph")
+        // svgGroup = svg.append("g");
         var inner = svg.select("g");
 
         // svg.call(d3.zoom().on("zoom", function () {
@@ -190,6 +189,7 @@
 
         var render = getRender();
         function drawGraph() {
+            console.log("rendering")
             inner.call(render, g);
             // render(inner,g)
         }
@@ -246,6 +246,37 @@
         // startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
         //                 status_update_handler, 1000);	
     }
+
+    function zoomFit() {
+
+        // Center the graph
+        var zoom = d3.zoom().on("zoom", function () {//Add mouse wheel zoom event
+            inner.attr("transform", d3.event.transform);
+        });
+        var svg = d3.select('#smallD3Graph')
+        ;
+
+        var root = svg.select('#root');
+        var boot = $(".output");
+        var bounds = root.node().getBBox();
+        var parent = root.node().parentElement;
+        var fullWidth = parent.clientWidth,
+            fullHeight = parent.clientHeight;
+        var width = bounds.width,
+            height = bounds.height,
+            initialScale;
+        var widthScale = ((fullWidth-80)/width);
+        var heightScale = ((fullHeight-200)/height)
+        if (heightScale<widthScale){
+            initialScale = heightScale;
+        } else {
+            initialScale = widthScale;
+        };
+        initialScale = initialScale
+        var xCenterOffset = -(fullWidth - fullWidth) / 2;
+        boot.attr("transform", "translate(" + (fullWidth-(width*initialScale))/2 + ", " + ((fullHeight-80)-(height*initialScale))/2 + ")"+' scale('+initialScale+')');
+    }
+
     </script>
 </body>
 </html>
