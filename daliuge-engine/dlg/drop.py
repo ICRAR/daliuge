@@ -338,7 +338,8 @@ class AbstractDROP(EventFirer):
 
         # Useful to have access to all EAGLE parameters without a priori knowledge
         self._parameters = dict(kwargs)
-
+        self.autofill_environment_variables()
+        kwargs.update(self._parameters)
         # Sub-class initialization; mark ourselves as INITIALIZED after that
         self.initialize(**kwargs)
         self._status = (
@@ -624,17 +625,20 @@ class AbstractDROP(EventFirer):
             return getDlgVariable(key)
         if len(key) < 2 or key[0] != '$':
             # Reject malformed entries
-            return None
+            return key
         key_edit = key[1:]
         env_var_ref, env_var_key = key_edit.split('.')[0], '.'.join(key_edit.split('.')[1:])
         env_var_drop = None
-        for producer in self.producers:
+        for producer in self._producers:
             if producer.name == env_var_ref:
                 env_var_drop = producer
         if env_var_drop is not None:  # TODO: Check for KeyValueDROP interface support
-            return env_var_drop.get(env_var_key)
+            ret_val = env_var_drop.get(env_var_key)
+            if ret_val is None:
+                return key
+            return ret_val
         else:
-            return None
+            return key
 
     def get_environment_variables(self, keys: list):
         """
@@ -1564,11 +1568,10 @@ class FileDROP(DataDROP, PathBasedDrop):
 
     In the table, ``$f`` is the value of ``filepath``, ``$d`` is the value of
     ``dirname``, ``$u`` is the drop's UID and ``$B`` is the base directory for
-    this drop's session, namelly ``/the/cwd/$session_id``.
+    this drop's session, namely ``/the/cwd/$session_id``.
     """
-
-    filepath = dlg_string_param("filepath", None)
-    dirname = dlg_string_param("dirname", None)
+    # filepath = dlg_string_param("filepath", None)
+    # dirname = dlg_string_param("dirname", None)
     delete_parent_directory = dlg_bool_param("delete_parent_directory", False)
     check_filepath_exists = dlg_bool_param("check_filepath_exists", False)
 
@@ -1597,7 +1600,8 @@ class FileDROP(DataDROP, PathBasedDrop):
         """
         # filepath, dirpath the two pieces of information we offer users to tweak
         # These are very intermingled but are not exactly the same, see below
-
+        self.filepath = self.parameters.get('filepath', None)
+        self.dirname = self.parameters.get('dirname', None)
         # Duh!
         if isabs(self.filepath) and self.dirname:
             raise InvalidDropException(
@@ -1608,7 +1612,6 @@ class FileDROP(DataDROP, PathBasedDrop):
         # filename-only components (e.g., dirname='lala' and filename='1/2'
         # results in dirname='lala/1' and filename='2'
         filepath, dirname = self.sanitize_paths(self.filepath, self.dirname)
-
         # We later check if the file exists, but only if the user has specified
         # an absolute dirname/filepath (otherwise it doesn't make sense, since
         # we create our own filenames/dirnames dynamically as necessary
@@ -1868,7 +1871,6 @@ class SharedMemoryDROP(DataDROP):
         self._buf = io.BytesIO(*args)
 
     def getIO(self):
-        print(sys.version_info)
         if sys.version_info >= (3, 8):
             if hasattr(self, '_sessID'):
                 return SharedMemoryIO(self.oid, self._sessID)
