@@ -9,7 +9,7 @@ RUN apt-get update &&\
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc python3-pip curl
 
 COPY / /daliuge
-RUN . /root/dlg/bin/activate && pip install wheel && cd /daliuge && \
+RUN . /dlg/bin/activate && pip install wheel && cd /daliuge && \
     pip install . 
 
 EXPOSE 9000
