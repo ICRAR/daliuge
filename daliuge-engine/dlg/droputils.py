@@ -510,20 +510,31 @@ def serialize_applicationArgs(applicationArgs, prefix='--', separator=' '):
         logger.info("applicationArgs are not passed as a dict. Ignored!")
     # construct the actual command line from all application parameters
     args = []
-
-    for (name, value) in applicationArgs.items():
-        if value in [None, False, ""]:
+    pargs = []
+    positional = False
+    precious = False
+    for (name, vdict) in applicationArgs.items():
+        if vdict in [None, False, ""]:
             continue
-        elif value is True:
+        elif isinstance(vdict,bool):
             value = ''
+        elif isinstance(vdict, dict):
+            precious = vdict["precious"]
+            value = vdict["value"]
+            if value in [None, False, ""] and not precious:
+                continue
+            positional = vdict["positional"]
         # short and long version of keywords
-        if prefix == "--" and len(name) == 1:
-            arg = [f'-{name} {value}']
+        if positional:
+            pargs.append(str(value).strip())
         else:
-            arg = [f'{prefix}{name}{separator}{value}'.strip()]
-        args += arg # remove unneccesary blanks
+            if prefix == "--" and len(name) == 1:
+                arg = [f'-{name} {value}']
+            else:
+                arg = [f'{prefix}{name}{separator}{value}'.strip()]
+            args += arg
         
-    return f"{' '.join(args)}"
+    return f"{' '.join(args + pargs)}" # add positional arguments to end of args
 
 
 # Easing the transition from single- to multi-package
