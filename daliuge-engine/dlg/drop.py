@@ -1577,6 +1577,9 @@ class FileDROP(DataDROP, PathBasedDrop):
 
     def sanitize_paths(self, filepath, dirname):
 
+        # first replace any ENV_VARS on the names
+        if filepath: filepath = os.path.expandvars(filepath)
+        if dirname: dirname = os.path.expandvars(dirname)
         # No filepath has been given, there's nothing to sanitize
         if not filepath:
             return filepath, dirname
