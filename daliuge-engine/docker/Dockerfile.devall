@@ -6,7 +6,7 @@ FROM icrar/daliuge-common:${VCS_TAG:-latest}
 #     gcc g++ gdb casacore-dev clang-tidy-10 clang-tidy libboost1.71-all-dev libgsl-dev
 
 RUN apt-get update &&\
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc python3-pip curl
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc curl python3-pip python3-numpy
 
 COPY / /daliuge
 RUN . /dlg/bin/activate && pip install wheel && cd /daliuge && \
