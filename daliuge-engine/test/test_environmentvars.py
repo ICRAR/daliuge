@@ -19,10 +19,12 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-
+import os
+import tempfile
 import unittest
+
+from dlg.drop import AbstractDROP, FileDROP
 from dlg.environmentvar_drop import EnvironmentVarDROP
-from dlg.drop import AbstractDROP
 from dlg.utils import getDlgDir
 
 
@@ -92,8 +94,9 @@ class TestEnvironmentVarDROP(unittest.TestCase):
         self.assertEqual({'first': 1, 'second': 'sec'},
                          test_drop.get_environment_variable('$env_vars.dict_var'))
         self.assertEqual([1, 2.0, '3'], test_drop.get_environment_variable('$env_vars.list_var'))
-        self.assertIsNone(test_drop.get_environment_variable('$env_vars.non_var'))
-        self.assertIsNone(test_drop.get_environment_variable('$env_vars.uid'))
+        self.assertEqual('$env_vars.non_var',
+                         test_drop.get_environment_variable('$env_vars.non_var'))
+        self.assertEqual('$env_vars.uid', test_drop.get_environment_variable('$env_vars.uid'))
 
     def test_drop_get_multiple(self):
         """
@@ -104,14 +107,15 @@ class TestEnvironmentVarDROP(unittest.TestCase):
         env_drop = create_std_env_vars(name=env_name)
         test_drop = AbstractDROP(uid='b', oid='b')
         test_drop.addProducer(env_drop)
-        expected_vars = [None, '/HOME/', 3, False, 0.5, {'first': 1, 'second': 'sec'},
-                         [1, 2.0, '3'], None]
+        expected_vars = [f'${env_name}.uid', '/HOME/', 3, False, 0.5, {'first': 1, 'second': 'sec'},
+                         [1, 2.0, '3'], f'${env_name}.non_var']
         query_keys = ['uid', 'dir_var', 'int_var', 'bool_var', 'float_var', 'dict_var', 'list_var',
                       'non_var']
         query_keys = [f'${env_name}.{x}' for x in query_keys]  # Build queries of the correct form
         # Add some purposefully malformed vars
-        query_keys.extend(['dir_var', '$non_store.non_var'])
-        expected_vars.extend([None, None])
+        extra_keys = ['dir_var', '$non_store.non_var']
+        query_keys.extend(extra_keys)
+        expected_vars.extend(extra_keys)
         self.assertEqual(expected_vars, test_drop.get_environment_variables(query_keys))
 
     def test_drop_get_empty(self):
@@ -122,8 +126,8 @@ class TestEnvironmentVarDROP(unittest.TestCase):
         env_drop = create_empty_env_vars(name=env_name)
         test_drop = AbstractDROP(uid='c', oid='c')
         test_drop.addProducer(env_drop)
-        self.assertEqual(None, test_drop.get_environment_variable(''))
-        self.assertEqual(None, test_drop.get_environment_variable('$'))
+        self.assertEqual('', test_drop.get_environment_variable(''))
+        self.assertEqual('$', test_drop.get_environment_variable('$'))
 
     def test_drop_get_multiEnv(self):
         """
@@ -142,10 +146,12 @@ class TestEnvironmentVarDROP(unittest.TestCase):
                          test_drop.get_environment_variable(f"${env2_name}.dir_var"))
         self.assertEqual(3, test_drop.get_environment_variable(f"${env1_name}.int_var"))
         self.assertEqual(4, test_drop.get_environment_variable(f"${env2_name}.int_var"))
-        self.assertIsNone(test_drop.get_environment_variable(f'{env1_name}.int_var'))
-        self.assertIsNone(test_drop.get_environment_variable(f'.int_var'))
-        self.assertIsNone(test_drop.get_environment_variable(f'$third_env.int_var'))
-        self.assertEqual(['/HOME/', '/DIFFERENT/', 3, 4, None, None],
+        self.assertEqual(f'{env1_name}.int_var',
+                         test_drop.get_environment_variable(f'{env1_name}.int_var'))
+        self.assertEqual(f'.int_var', test_drop.get_environment_variable(f'.int_var'))
+        self.assertEqual(f'$third_env.int_var',
+                         test_drop.get_environment_variable(f'$third_env.int_var'))
+        self.assertEqual(['/HOME/', '/DIFFERENT/', 3, 4, f'${env1_name}.non_var', '$fake.var'],
                          test_drop.get_environment_variables(
                              [f'${env1_name}.dir_var', f'${env2_name}.dir_var',
                               f'${env1_name}.int_var', f'${env2_name}.int_var',
@@ -170,5 +176,14 @@ class TestEnvironmentVarDROP(unittest.TestCase):
         test_drop.autofill_environment_variables()
         self.assertEqual(getDlgDir(), test_drop.parameters['dlg_root'])
         self.assertEqual(getDlgDir(), test_drop.get_environment_variable('$DLG_ROOT'))
-        self.assertEqual(None, test_drop.parameters['non_dlg_var'])
-        self.assertEqual(None, test_drop.get_environment_variable('$DLG_NONEXISTS'))
+        self.assertEqual('$DLG_NONEXISTS', test_drop.parameters['non_dlg_var'])
+        self.assertEqual('$DLG_NONEXISTS', test_drop.get_environment_variable('$DLG_NONEXISTS'))
+
+    def test_filename_integration(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            os.environ['DLG_ROOT'] = tmp_dir
+            os.environ['DLG_FILE'] = 'test_file'
+            test_drop = FileDROP(oid='a', uid='a', filepath="$DLG_FILE", dirname="$DLG_ROOT")
+            test_drop.write(b"1234")
+            self.assertEqual(tmp_dir, test_drop.dirname)
+            self.assertEqual('test_file', test_drop.filepath)
