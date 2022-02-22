@@ -353,8 +353,12 @@
   height: min-content !important;
 }
 
+#SVGArea .node .drop-label :first-child{
+  font-weight: 700;
+}
+
 #SVGArea .drop-label{
-  padding: 5% 16%;
+  padding: 5% 18%;
 }
 
 #SVGArea path.path {
