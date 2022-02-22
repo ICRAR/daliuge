@@ -22,6 +22,7 @@
 """
 Module containing the core DROP classes.
 """
+from sqlite3 import OperationalError
 import string
 from abc import ABCMeta, abstractmethod
 import ast
@@ -1223,7 +1224,8 @@ class DataDROP(AbstractDROP):
         """
         return self.getIO().exists()
 
-    def dataURL(self) -> str:
+    @property
+    def dataURL(self):
         """
         A URL that points to the data referenced by this DROP. Different
         DROP implementations will use different URI schemes.
@@ -1738,8 +1740,9 @@ class ContainerDROP(DataDROP):
     def getIO(self):
         return ErrorIO()
 
+    @property
     def dataURL(self):
-        raise NotImplementedError()
+        raise OperationalError()
 
     def addChild(self, child):
 
