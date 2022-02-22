@@ -1305,7 +1305,7 @@ class FileDROP(DataDROP, PathBasedDrop):
 
         # Extract the dirname from filepath and append it to dirname
         filepath_d = os.path.dirname(filepath)
-        if dirname:
+        if not isabs(filepath_d) and dirname:
             filepath_d = os.path.join(dirname, filepath_d)
         return filepath_b, filepath_d
 
@@ -1343,6 +1343,7 @@ class FileDROP(DataDROP, PathBasedDrop):
 
         self._root = dirname
         self._path = os.path.join(dirname, filepath)
+        logger.debug(f"Set path of drop {self._uid}: {self._path}")
         if check and not os.path.isfile(self._path):
             raise InvalidDropException(
                 self, "File does not exist or is not a file: %s" % self._path
@@ -1920,67 +1921,6 @@ class PlasmaFlightDROP(DataDROP):
         return "plasmaflight://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
 
 
-##
-# @brief ParameterSet
-# @details A set of parameters, wholly specified in EAGLE
-# @par EAGLE_START
-# @param category ParameterSet
-# @param tag template
-# @param[in] param/mode Parset mode/"YANDA"/String/readonly/False/To what standard DALiuGE should filter and serialize the parameters.
-# @param[in] param/config_data ConfigData/""/String/readwrite/False/Additional configuration information to be mixed in with the initial data
-# @param[out] port/Config ConfigFile/File/The output configuration file
-# @par EAGLE_END
-class ParameterSetDROP(DataDROP):
-    """
-    A generic configuration file template wrapper
-    This drop opens an (optional) file containing some initial configuration information, then
-    appends any additional specified parameters to it, finally serving it as a data object.
-    """
-
-    config_data = b''
-
-    mode = dlg_string_param('mode', None)
-
-    @abstractmethod
-    def serialize_parameters(self, parameters: dict, mode):
-        """
-        Returns a string representing a serialization of the parameters.
-        """
-        if mode == "YANDA":
-            # TODO: Add more complex value checking
-            return "\n".join(f"{x}={y}" for x, y in parameters.items())
-        # Add more formats (.ini for example)
-        return "\n".join(f"{x}={y}" for x, y in parameters.items())
-
-    @abstractmethod
-    def filter_parameters(self, parameters: dict, mode):
-        """
-        Returns a dictionary of parameters, with daliuge-internal or other parameters filtered out
-        """
-        if mode == 'YANDA':
-            forbidden_params = list(DEFAULT_INTERNAL_PARAMETERS)
-            if parameters['config_data'] == "":
-                forbidden_params.append('configData')
-            return {key: val for key, val in parameters.items() if
-                    key not in DEFAULT_INTERNAL_PARAMETERS}
-        return parameters
-
-    def initialize(self, **kwargs):
-        """
-        TODO: Open input file
-        """
-        self.config_data = self.serialize_parameters(
-            self.filter_parameters(self.parameters, self.mode), self.mode).encode('utf-8')
-
-    def getIO(self):
-        return MemoryIO(io.BytesIO(self.config_data))
-
-    @property
-    def dataURL(self):
-        hostname = os.uname()[1]
-        return f"config://{hostname}/{os.getpid()}/{id(self.config_data)}"
-
-
 # ===============================================================================
 # AppDROP classes follow
 # ===============================================================================
@@ -2387,10 +2327,8 @@ class BarrierAppDROP(InputFiredAppDROP):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
-# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
-#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @par EAGLE_END
