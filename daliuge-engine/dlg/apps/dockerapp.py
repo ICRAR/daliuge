@@ -485,7 +485,17 @@ class DockerApp(BarrierAppDROP):
                     addEnv = json.loads(self._env)
                 except:
                    logger.warning("Ignoring provided environment variables: Format wrong? Check documentation")
+                   addEnv = {}
                 if isinstance(addEnv, dict): # if it is a dict populate directly
+                    # but replace placeholders first
+                    for key in addEnv:
+                        value = droputils.replace_path_placeholders(
+                            addEnv[key], dockerInputs, dockerOutputs
+                        )
+                        value = droputils.replace_dataurl_placeholders(
+                            value, dataURLInputs, dataURLOutputs
+                        )
+                        addEnv[key] = value
                     env.update(addEnv)
                 elif isinstance(addEnv, list): # if it is a list populate from host environment
                     for e in addEnv: 
@@ -500,7 +510,7 @@ class DockerApp(BarrierAppDROP):
             cmd = '/bin/bash -c "%s"' % (utils.escapeQuotes(cmd, singleQuotes=False))
             logger.debug("Command after user creation and wrapping is: %s", cmd)
         else:
-            logger.debug("executing container withdefault cmd and wrapped arguments")
+            logger.debug("executing container with default cmd and wrapped arguments")
             cmd = f"{utils.escapeQuotes(cmd, singleQuotes=False)}"
 
         c = DockerApp._get_client()
