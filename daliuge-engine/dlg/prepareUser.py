@@ -29,6 +29,7 @@ app inside the container is the same as outside.
 import os
 import pwd
 import grp
+import platform
 
 def prepareUser(DLG_ROOT="."):
     workdir = f"{DLG_ROOT}/workspace/settings"
@@ -40,7 +41,11 @@ def prepareUser(DLG_ROOT="."):
     # get current user info
     pw = pwd.getpwuid(os.getuid())
     gr = grp.getgrgid(pw.pw_gid)
-    dgr = grp.getgrnam('docker')
+    if platform.system() == 'Darwin':
+        grpnam = 'staff'
+    else:
+        grpnam = 'docker'
+    dgr = grp.getgrnam(grpnam)
     with open(os.path.join(workdir, "passwd"), "wt") as file:
         file.write(open(os.path.join(template_dir, "passwd.template"), "rt").read())
         file.write(f"{pw.pw_name}:x:{pw.pw_uid}:{pw.pw_gid}:{pw.pw_gecos}:{DLG_ROOT}:/bin/bash\n")

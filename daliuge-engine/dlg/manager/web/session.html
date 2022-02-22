@@ -160,12 +160,15 @@ if (dimUrl === "null" || !dimUrl){
 
 function view_as_graph(sessionId, selectedNode, serverUrl) {
 
+	/* Remove the list-related stuff */
+	d3.select('#pg-list').remove()
+	d3.select('#pg-progress-bar').remove();
+
 	const heightValue = 300;
 	const widthValue = 600;
 	// Set up zoom support
-	$("#main").append("<svg id='smallD3Graph'></svg>")
-	var svg = d3.select("#smallD3Graph"),
-    svgGroup = svg.append("g");
+	var svg = d3.select("svg");
+    // svgGroup = svg.append("g");
 	var inner = svg.select("g");
 
 	// svg.call(d3.zoom().on("zoom", function () {
