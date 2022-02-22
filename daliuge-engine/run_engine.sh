@@ -1,3 +1,4 @@
+#!/bin/bash
 DOCKER_OPTS="\
 --shm-size=1g --ipc=shareable \
 --rm \
@@ -14,7 +15,7 @@ common_prep ()
     mkdir -p ${DLG_ROOT}/testdata
     mkdir -p ${DLG_ROOT}/code
     # get current user and group id and prepare passwd and group files
-    DOCKER_GID=`python -c "from dlg.prepareUser import prepareUser; print(prepareUser(DLG_ROOT='${DLG_ROOT}'))"`
+    DOCKER_GID=`python3 -c "from dlg.prepareUser import prepareUser; print(prepareUser(DLG_ROOT='${DLG_ROOT}'))"`
     DOCKER_OPTS=${DOCKER_OPTS}" --group-add ${DOCKER_GID}"
     DOCKER_OPTS=${DOCKER_OPTS}" -v ${DLG_ROOT}/workspace/settings/passwd:/etc/passwd"
     DOCKER_OPTS=${DOCKER_OPTS}" -v ${DLG_ROOT}/workspace/settings/group:/etc/group"
@@ -30,7 +31,7 @@ case "$1" in
             echo "Please either create and grant access to $USER or build and run the development version."
         else
             VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
-            common_prep()
+            common_prep
             echo "Running Engine deployment version in background..."
             echo "docker run -td "${DOCKER_OPTS}"  icrar/daliuge-engine:${VCS_TAG}"
             docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}

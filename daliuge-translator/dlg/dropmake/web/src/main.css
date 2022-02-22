@@ -333,6 +333,90 @@
     transition-delay: 1s;
 }
 
+
+.node rect, .node polygon {
+  stroke-width: 2.0px;
+  stroke: #bbb;
+  padding: 4px 8px;
+}
+
+/* DROP states */
+
+#SVGArea .node :first-child, #SVGArea rect {
+  fill: rgb(48, 206, 87);
+  width:300px;
+  height:85px;
+}
+
+#SVGArea .node span{
+  display: block;
+  height: min-content !important;
+}
+
+#SVGArea .drop-label{
+  padding: 5% 16%;
+}
+
+.node.initialized :first-child, rect.initialized {
+  fill: #ffe;
+}
+
+.node.writing :first-child, rect.writing {
+  fill: #ecde7b;
+}
+
+.node.completed :first-child, rect.completed {
+  fill: #7bdc7b;
+}
+
+.node.expired :first-child, rect.expired {
+  fill: #700000;
+}
+
+.node.cancelled :first-child, rect.cancelled {
+  fill: #cccccc;
+}
+
+.node.skipped :first-child, rect.skipped {
+  fill: #53c4f6;
+}
+
+.node.deleted :first-child, rect.deleted {
+  color: #700000;
+}
+
+/* AppDROP states */
+.node.not_run :first-child, rect.not_run {
+  fill: #ffe;
+}
+
+.node.running :first-child, rect.running {
+  fill: #ecde7b;
+}
+
+.node.finished :first-child, rect.finished {
+  fill: #7bdc7b;
+}
+
+.node.error :first-child, rect.error {
+  fill: #e44f33;
+}
+
+#SVGArea{
+  width:auto;
+  height:auto;
+  position: absolute;
+  top: 80px;
+  bottom: 25px;
+  left:0px;
+  right:0px;
+}
+
+#smallD3Graph{
+  width:100%;
+  height:100%;
+}
+
 #graphNameWrapper{
     position: absolute;
     top: 56px;
