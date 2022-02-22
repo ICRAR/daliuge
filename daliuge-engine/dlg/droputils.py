@@ -307,7 +307,6 @@ def save_numpy(drop, ndarray: np.ndarray, allow_pickle=False):
     # a .write() method. Try np.save(drop, array)
     np.save(bio, ndarray, allow_pickle=allow_pickle)
     drop.write(bio.getbuffer())
-    drop.close()
 
 
 def load_numpy(drop: DataDROP, allow_pickle=False) -> np.ndarray:
@@ -319,6 +318,7 @@ def load_numpy(drop: DataDROP, allow_pickle=False) -> np.ndarray:
     res = np.load(io.BytesIO(dropio.buffer()), allow_pickle=allow_pickle)
     dropio.close()
     return res
+
 
 def save_jsonp(drop: PathBasedDrop, data: Dict[str, object]):
     with open(drop.path, 'r') as f:
@@ -337,6 +337,7 @@ def load_json(drop: DataDROP) -> dict:
     data = json.loads(dropio.buffer())
     dropio.close()
     return data
+
 
 class DROPFile(object):
     """

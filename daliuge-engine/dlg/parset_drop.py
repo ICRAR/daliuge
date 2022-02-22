@@ -23,7 +23,7 @@ import io
 import os
 from abc import abstractmethod
 
-from dlg.drop import AbstractDROP, DEFAULT_INTERNAL_PARAMETERS
+from dlg.drop import DataDROP, DEFAULT_INTERNAL_PARAMETERS
 from dlg.io import MemoryIO
 from dlg.meta import dlg_string_param
 
@@ -40,7 +40,7 @@ from dlg.meta import dlg_string_param
 # @param[in] aparam/config_data ConfigData/""/String/readwrite/False/Additional configuration information to be mixed in with the initial data
 # @param[out] port/Config ConfigFile/File/The output configuration file
 # @par EAGLE_END
-class ParameterSetDROP(AbstractDROP):
+class ParameterSetDROP(DataDROP):
     """
     A generic configuration file template wrapper
     This drop opens an (optional) file containing some initial configuration information, then
