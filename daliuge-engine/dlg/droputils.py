@@ -303,8 +303,11 @@ def save_numpy(drop, ndarray: np.ndarray, allow_pickle=False):
     Saves a numpy ndarray to a drop in npy format
     """
     bio = io.BytesIO()
+    # np.save accepts a "file-like" object which basically just requires
+    # a .write() method. Try np.save(drop, array)
     np.save(bio, ndarray, allow_pickle=allow_pickle)
     drop.write(bio.getbuffer())
+    drop.close()
 
 
 def load_numpy(drop: DataDROP, allow_pickle=False) -> np.ndarray:
@@ -316,7 +319,6 @@ def load_numpy(drop: DataDROP, allow_pickle=False) -> np.ndarray:
     res = np.load(io.BytesIO(dropio.buffer()), allow_pickle=allow_pickle)
     dropio.close()
     return res
-
 
 def save_jsonp(drop: PathBasedDrop, data: Dict[str, object]):
     with open(drop.path, 'r') as f:
