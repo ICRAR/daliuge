@@ -54,8 +54,8 @@ function graphInit(type) {
             data.nodeDataArray.forEach(element => {
                 nodeCount++
             })
-            console.log(nodeCount)
-                //pick initial graph depending on node amount
+            
+            //pick initial graph depending on node amount
             if (type === "default") {
                 if (nodeCount < 100) {
                     type = "graph"
