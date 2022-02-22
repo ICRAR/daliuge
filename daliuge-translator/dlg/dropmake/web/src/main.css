@@ -357,6 +357,11 @@
   padding: 5% 16%;
 }
 
+#SVGArea path.path {
+  stroke: #999;
+  stroke-width: 1.5px;
+}
+
 .node.initialized :first-child, rect.initialized {
   fill: #ffe;
 }
