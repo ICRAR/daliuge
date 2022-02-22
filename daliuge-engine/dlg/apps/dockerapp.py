@@ -29,6 +29,7 @@ import os
 import pwd
 import threading
 import time
+import json
 from overrides import overrides
 
 from configobj import ConfigObj
@@ -41,10 +42,7 @@ from ..exceptions import InvalidDropException
 
 logger = logging.getLogger(__name__)
 
-# DLG_ROOT = '/dlg_root'
-DLG_ROOT = "" if "DLG_ROOT" not in os.environ else os.environ["DLG_ROOT"]
-# TODO: the following is commented out because it breaks the dask tests for some reason
-# os.environ["DLG_ROOT"] = DLG_ROOT # make sure the environ variable is set
+DLG_ROOT = utils.getDlgDir()
 
 DockerPath = collections.namedtuple("DockerPath", "path")
 
@@ -100,10 +98,8 @@ class ContainerIpWaiter(object):
 #     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error threshold (0 and 100)"/0/Integer/readwrite/False/
-#     \~English Indicates the tolerance to erroneous effective inputs, and after which the application will not be run but moved to the ERROR state
-# @param[in] cparam/n_effective_inputs Number of effective inputs/-1/Integer/readwrite/False/
-#     \~English Application will block until this number of inputs have moved to the COMPLETED state. Special value of -1 means that all inputs are considered as effective
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] cparam/user User//String/readwrite/False/
@@ -241,6 +237,7 @@ class DockerApp(BarrierAppDROP):
         BarrierAppDROP.initialize(self, **kwargs)
 
         self._image = self._getArg(kwargs, "image", None)
+        self._env = self._getArg(kwargs, "env", None)
         self._cmdLineArgs = self._getArg(kwargs, "command_line_arguments", "")
         self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
         self._argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
@@ -260,28 +257,30 @@ class DockerApp(BarrierAppDROP):
 
         self._command = self._getArg(kwargs, "command", None)
 
-        if not self._command:
+        self._noBash = False
+        if not self._command or self._command[:2].strip() == "%%":
             logger.warning(
-                "No command specified. Assume that a default command is executed in the container"
+                "Assume a default command is executed in the container"
             )
-            # The above also means that we can't pass applicationArgs
-            # raise InvalidDropException(
-            #     self, "No command specified, cannot create DockerApp")
-        else:
+            self._command = self._command.strip()[2:].strip() if self._command else ""
+            self._noBash = True
+            # This makes sure that we can retain any command defined in the image, but still be
+            # able to add any arguments straight after. This requires to use the placeholder string
+            # "%%" at the start of the command, else it is interpreted as a normal command.
 
-            # construct the actual command line from all application parameters
-            argumentString = droputils.serialize_applicationArgs(self._applicationArgs, \
-                self._argumentPrefix)
-            # complete command including all additional parameters and optional redirects
-            cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
-            cmd = cmd.strip()
-            self._command = cmd
+        # construct the actual command line from all application parameters
+        argumentString = droputils.serialize_applicationArgs(self._applicationArgs, \
+            self._argumentPrefix, self._paramValueSeparator)
+        # complete command including all additional parameters and optional redirects
+        cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
+        cmd = cmd.strip()
+        self._command = cmd
 
         # The user used to run the process in the docker container is now always the user
         # who originally started the DALiuGE process as well. The information is passed through
         # from the host to the engine container (if run as docker) and then further to any
         # container running as a component.
-        
+
         pw = pwd.getpwuid(os.getuid())
         self._user = pw.pw_name # use current user by default
         self._userid = pw.pw_uid
@@ -306,20 +305,15 @@ class DockerApp(BarrierAppDROP):
         # on the host system. They are given either as a list or as a
         # comma-separated string
         self._additionalBindings = {}
-        bindings = []
-        if (len(DLG_ROOT) > 0): bindings = [f"{DLG_ROOT}:{DLG_ROOT}"]
         bindings = [f"{DLG_ROOT}:{DLG_ROOT}",
-                    ] # these are the default binding
-        if os.path.exists(f"{DLG_ROOT}/workspace/settings/passwd:/etc/passwd") and\
-            os.path.exists(f"{DLG_ROOT}/workspace/settings/group:/etc/group"):
                     f"{DLG_ROOT}/workspace/settings/passwd:/etc/passwd",
                     f"{DLG_ROOT}/workspace/settings/group:/etc/group"
+        ]
         bindings += self._getArg(kwargs, "additionalBindings", [])
         bindings = bindings.split(",") if isinstance(bindings, str) else bindings
         for binding in bindings:
             if len(binding) == 0:
                 continue
-            logger.debug(f"Volume binding found: {binding}")
             if binding.find(":") == -1:
                 host_path = container_path = binding
             else:
@@ -351,12 +345,16 @@ class DockerApp(BarrierAppDROP):
             logger.debug("Image '%s' found, no need to pull it", self._image)
 
         # Check if the image specifies a working directory
-        # If it doesn't use the one provided by the user
+        # If it doesn't use the one provided by the user. 
+        # If none is provided use the session directory
         inspection = c.api.inspect_image(self._image)
         logger.debug("Docker Image inspection: %r", inspection)
         self.workdir = inspection.get("ContainerConfig", {}).get("WorkingDir", None)
+        # self.workdir = None
+        self._sessionId = (self._dlg_session.sessionId if self._dlg_session else "")
         if not self.workdir:
-            self.workdir = self._getArg(kwargs, "workingDir", "/")
+            default_workingdir = os.path.join(utils.getDlgWorkDir(), self._sessionId)
+            self.workdir = self._getArg(kwargs, "workingDir", default_workingdir)
 
         c.api.close()
 
@@ -398,10 +396,12 @@ class DockerApp(BarrierAppDROP):
         fsInputs = {uid: i for uid, i in iitems if droputils.has_path(i)}
         fsOutputs = {uid: o for uid, o in oitems if droputils.has_path(o)}
         dockerInputs = {
-            uid: DockerPath(DLG_ROOT + i.path) for uid, i in fsInputs.items()
+#            uid: DockerPath(utils.getDlgDir() + i.path) for uid, i in fsInputs.items()
+            uid: DockerPath(i.path) for uid, i in fsInputs.items()
         }
         dockerOutputs = {
-            uid: DockerPath(DLG_ROOT + o.path) for uid, o in fsOutputs.items()
+#            uid: DockerPath(utils.getDlgDir() + o.path) for uid, o in fsOutputs.items()
+            uid: DockerPath(o.path) for uid, o in fsOutputs.items()
         }
         dataURLInputs = {uid: i for uid, i in iitems if not droputils.has_path(i)}
         dataURLOutputs = {uid: o for uid, o in oitems if not droputils.has_path(o)}
@@ -416,7 +416,7 @@ class DockerApp(BarrierAppDROP):
         else:
             cmd = ""
 
-        # We bind the inputs and outputs inside the docker under the DLG_ROOT
+        # We bind the inputs and outputs inside the docker under the utils.getDlgDir()
         # directory, maintaining the rest of their original paths.
         # Outputs are bound only up to their dirname (see class doc for details)
         # Volume bindings are setup for FileDROPs and DirectoryContainers only
@@ -425,9 +425,11 @@ class DockerApp(BarrierAppDROP):
             os.path.dirname(o.path) + ":" + os.path.dirname(dockerOutputs[uid].path)
             for uid, o in fsOutputs.items()
         ]
+        logger.debug("Input/output bindings: %r", binds)
         if (
             len(self._additionalBindings.items()) > 0
         ):  # else we end up with a ':' in the mounts list
+            logger.debug("Additional bindings: %r", self._additionalBindings)
             binds += [
                 host_path + ":" + container_path
                 for host_path, container_path in self._additionalBindings.items()
@@ -462,19 +464,47 @@ class DockerApp(BarrierAppDROP):
             cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
             logger.debug("Command after IP replacement is: %s", cmd)
 
+        # deal with environment variables
         env = {}
+        env.update({
+            "DLG_UID": self._uid},
+        )
+        if self._dlg_session:
+            env.update({"DLG_SESSION_ID":self._dlg_session.sessionId})
         if self._user is not None:
-            env = {"USER": self._user}
+            env.update({
+                "USER": self._user,
+                "DLG_ROOT": utils.getDlgDir()
+                })
+        if self._env is not None:
+            logger.debug(f"Found environment variable setting: {self._env}")
+            if self._env.lower() == "all": # pass on all environment variables from host
+                env.update(os.environ)
+            elif self._env[0] in ["{", "["]:
+                try:
+                    addEnv = json.loads(self._env)
+                except:
+                   logger.warning("Ignoring provided environment variables: Format wrong? Check documentation")
+                if isinstance(addEnv, dict): # if it is a dict populate directly
+                    env.update(addEnv)
+                elif isinstance(addEnv, list): # if it is a list populate from host environment
+                    for e in addEnv: 
+                        env.update(os.environ[e])
+            else:
+                logger.warning("Ignoring provided environment variables: Format wrong! Check documentation")
+        logger.debug(f"Adding environment variables: {env}")
+
 
         # Wrap everything inside bash
-        if len(cmd) > 0:
+        if len(cmd) > 0 and not self._noBash:
             cmd = '/bin/bash -c "%s"' % (utils.escapeQuotes(cmd, singleQuotes=False))
             logger.debug("Command after user creation and wrapping is: %s", cmd)
         else:
-            logger.debug("No command specified, executing container without!")
+            logger.debug("executing container withdefault cmd and wrapped arguments")
+            cmd = f"{utils.escapeQuotes(cmd, singleQuotes=False)}"
 
         c = DockerApp._get_client()
-        
+
         logger.debug(f"Final user for container: {self._user}:{self._userid}")
         # Create container
         self.container = c.containers.create(
@@ -499,9 +529,6 @@ class DockerApp(BarrierAppDROP):
         self.container.start()
         logger.info("Started container %s", cId)
 
-        # Capture output
-        stdout = self.container.logs(stream=False, stdout=True, stderr=False)
-        stderr = self.container.logs(stream=False, stdout=False, stderr=True)
 
         # Figure out the container's IP and save it
         # Setting self.containerIp will trigger an event being sent to the
@@ -520,6 +547,13 @@ class DockerApp(BarrierAppDROP):
             self._exitCode = x
 
         end = time.time()
+
+        # Capture output
+        stdout = self.container.logs(stream=False, stdout=True, stderr=False)
+        stderr = self.container.logs(stream=False, stdout=False, stderr=True)
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode()
+            stderr = stderr.decode()
         logger.info(
             "Container %s finished in %.2f [s] with exit code %d",
             cId,
