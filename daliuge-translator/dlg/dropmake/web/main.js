@@ -75,9 +75,13 @@ function drawGraphForDrops(g, drawGraph, data) {
   var nodes = data['nodeDataArray'];
   var links = data['linkDataArray']
   console.log(nodes)
+  var nodes_dict = {};
 	for(var idx of nodes.keys()) {
 		var node = nodes[idx];
-		modified |= _addNode(g, node);
+    if (node.oid){
+      modified |= _addNode(g, node);
+      nodes_dict[node.key] = {node}
+    }
 	}
 
 	var time1 = new Date().getTime();
@@ -85,20 +89,21 @@ function drawGraphForDrops(g, drawGraph, data) {
 
 	// #2: establish missing relationships
 	for(var idx of links.keys()) {
-    g.setEdge(nodes[links[idx]['from']]['oid'], nodes[links[idx]['to']]['oid'], {width: 40});
+    var findex = links[idx]['from']
+    var tindex = links[idx]['to']
+    g.setEdge(nodes_dict[findex].node.oid, nodes_dict[tindex].node.oid, {width: 40});
 	}
   console.log(g)
 
 	if( modified ) {
 		drawGraph();
 	}
-
     zoomFit()
 }
 
 function _addNode(g, node) {
 
-  console.log("adding node")
+
   var TYPE_SHAPES= {Component:'rect', Data:'parallelogram'}
 
 	if( g.hasNode(g) ) {
@@ -114,6 +119,7 @@ function _addNode(g, node) {
 	html += '<span class="notes">' + notes + '</span>';
 	html += '<span style="font-size: 13px;">' + oid + '</span>';
 	html += "</div>";
+  console.log("setting")
 	g.setNode(oid, {
 		labelType: "html",
 		label: html,
