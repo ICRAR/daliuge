@@ -122,16 +122,17 @@ class HelmClient:
         else:
             shutil.copytree(os.path.join(library_root, 'daliuge-k8s', 'helm'), self._deploy_dir)
 
-    def _set_physical_graph(self, physical_graph_content):
+    def _set_physical_graph(self, physical_graph_content, co_host=True):
         self._physical_graph_file = physical_graph_content
         self._islands, self._nodes = _find_resources(
             self._physical_graph_file)
-        self._num_machines = _num_deployments_required(self._islands, self._nodes)
+        self._num_machines = _num_deployments_required(self._islands,
+                                                       self._nodes) - 1 if co_host else 0
 
     def _find_pod_details(self):
         # NOTE: +1 for the master.
-        service_ips = find_service_ips(self._num_machines+1)
-        pod_ips = find_pod_ips(self._num_machines+1)
+        service_ips = find_service_ips(self._num_machines + 1)
+        pod_ips = find_pod_ips(self._num_machines + 1)
         labels = sorted([str(x) for x in range(self._num_machines)])
         for i in range(len(labels)):
             self._pod_details[labels[i]] = {'ip': pod_ips[i], 'svc': service_ips[i]}
@@ -139,13 +140,13 @@ class HelmClient:
                                        'svc': service_ips[-1]}
         print(self._pod_details)
 
-    def create_helm_chart(self, physical_graph_content):
+    def create_helm_chart(self, physical_graph_content, co_host=True):
         """
         Translates a physical graph to a kubernetes helm chart.
         For now, it will just try to run everything in a single container.
         """
         # Add charts
-        self._set_physical_graph(physical_graph_content)
+        self._set_physical_graph(physical_graph_content, co_host)
         _write_chart(self._chart_dir, 'Chart.yaml', self._chart_name, self._chart_version,
                      dlg_version,
                      self._chart_vars['home'], self._chart_vars['description'],
@@ -185,14 +186,15 @@ class HelmClient:
             client._POST("/managers/master/start", content=data,
                          content_type='application/json')
 
-    def launch_helm(self):
+    def launch_helm(self, co_host=True):
         """
         Launches the built helm chart using the most straightforward commands possible.
         Assumes all files are prepared and validated.
         """
         if self._submit:
             os.chdir(self._deploy_dir)
-            _write_values(self._chart_dir, {'deploy_id': 'master', 'name': f'{self._chart_name}-master'})
+            _write_values(self._chart_dir,
+                          {'deploy_id': 'master', 'name': f'{self._chart_name}-master'})
             instruction = f'helm install {self._deploy_name}-master {self._chart_name}/  ' \
                           f'--values {self._chart_name}{os.sep}custom-values.yaml'
             print(subprocess.check_output([instruction],
@@ -215,7 +217,7 @@ class HelmClient:
             print(f"Created helm chart {self._chart_name} in {self._deploy_dir}")
 
     def teardown(self):
-        for i in range(self._num_machines-1, -1, -1):
+        for i in range(self._num_machines - 1, -1, -1):
             subprocess.check_output([f'helm uninstall daliuge-daemon-{i}'], shell=True)
         subprocess.check_output([f'helm uninstall daliuge-daemon-master'], shell=True)
 
@@ -228,7 +230,7 @@ class HelmClient:
         pgt_data = json.loads(self._physical_graph_file)
         # node_ips = [x['ip'] for x in self._pod_details.values()]
         # node_ips.remove(self._pod_details['master']['ip'])
-        #node_ips = [self._pod_details['master']['ip']] + node_ips
+        # node_ips = [self._pod_details['master']['ip']] + node_ips
         node_ips = ['127.0.0.1']
         physical_graph = pg_generator.resource_map(pgt_data, node_ips, co_host_dim=True)
         # TODO: Add dumping to log-dir
