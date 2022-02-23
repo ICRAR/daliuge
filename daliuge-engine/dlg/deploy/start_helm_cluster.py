@@ -30,21 +30,22 @@ import argparse
 import json
 import os
 
+import dlg.restutils
+import dlg.exceptions
 from dlg.deploy.deployment_utils import find_node_ips
 from dlg.dropmake import pg_generator
 from dlg.deploy.helm_client import HelmClient
 
 
-def get_pg(opts, node_managers: list, data_island_managers: list):
+def get_pg(opts, num_node_managers, num_data_island_managers):
     if not opts.logical_graph and not opts.physical_graph:
         return []
-    num_nms = len(node_managers)
-    num_dims = len(data_island_managers)
 
     if opts.logical_graph:
         unrolled_graph = pg_generator.unroll(opts.logical_graph)
-        pgt = pg_generator.partition(unrolled_graph, algo='mysarkar', num_partitons=num_nms,
-                                     num_islands=num_dims)
+        pgt = pg_generator.partition(unrolled_graph, algo='metis',
+                                     num_partitons=num_node_managers,
+                                     num_islands=num_data_island_managers)
         del unrolled_graph
     else:
         with open(opts.physical_graph, 'r', encoding='utf-8') as pg_file:
@@ -115,8 +116,7 @@ def main():
     if options.num_nodes <= 0:
         parser.error("The number of nodes must be a positive integer")
 
-    available_ips = find_node_ips()
-    physical_graph = get_pg(options, available_ips, [available_ips[0]])
+    physical_graph = get_pg(options, 1, 1)
     # TODO: dynamic deployment directory.
     helm_client = HelmClient(
         deploy_name='daliuge-daemon',
@@ -124,9 +124,16 @@ def main():
         deploy_dir='/home/nicholas/dlg_temp/demo/',
     )
     helm_client.create_helm_chart(json.dumps(physical_graph))
-    helm_client.launch_helm()
-    helm_client.submit_job()
-    helm_client.teardown()
+    try:
+        helm_client.launch_helm()
+        helm_client.query_nodes()
+        helm_client.submit_job()
+    except dlg.restutils.RestClientException as exp:
+        raise exp
+    except dlg.exceptions.InvalidGraphException as exp2:
+        raise exp2
+    finally:
+        helm_client.teardown()
 
 
 if __name__ == "__main__":

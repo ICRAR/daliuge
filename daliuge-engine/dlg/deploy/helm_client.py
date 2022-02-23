@@ -33,11 +33,10 @@ import dlg
 import yaml
 import subprocess
 from dlg.common.version import version as dlg_version
-from dlg.deploy.deployment_utils import find_node_ips, find_service_ips, find_pod_ips
+from dlg.deploy.deployment_utils import find_node_ips, find_service_ips, find_pod_ips, wait_for_pods
 from dlg.restutils import RestClient
 from dlg.deploy.common import submit
 from dlg.dropmake import pg_generator
-from dlg.constants import MASTER_DEFAULT_REST_PORT
 
 
 def _num_deployments_required(islands, nodes):
@@ -162,13 +161,13 @@ class HelmClient:
         client = RestClient(self._submission_endpoint,
                             self._value_data['service']['daemon']['port'], timeout=30)
         node_ips = [x['ip'] for x in self._pod_details.values()]
-        data = json.dumps({'nodes': node_ips}).encode('utf-8')
+        data = json.dumps({'nodes': ['127.0.0.1']}).encode('utf-8')
         time.sleep(5)
         print(f"Starting manager on {self._submission_endpoint}")
         client._POST('/managers/island/start', content=data,
-                     content_type='application/json')
+                     content_type='application/json').read()
         client._POST('/managers/master/start', content=data,
-                     content_type='application/json')
+                     content_type='application/json').read()
 
     def start_nodes(self):
         ips = [x['svc'] for x in self._pod_details.values()]
@@ -181,9 +180,9 @@ class HelmClient:
             )
             time.sleep(5)
             print(f"Starting node on {ip}")
-            node_ips = [x['ip'] for x in self._pod_details.values()]
-            data = json.dumps({'nodes': node_ips}).encode('utf-8')
-            client._POST("/managers/island/start", content=data,
+            node_ips = ['127.0.0.1'] + [x['ip'] for x in self._pod_details.values()]
+            data = json.dumps({'nodes': ['127.0.0.1']}).encode('utf-8')
+            client._POST("/managers/master/start", content=data,
                          content_type='application/json')
 
     def launch_helm(self):
@@ -206,13 +205,19 @@ class HelmClient:
                                               shell=True).decode('utf-8'))
                 # TODO: Check running nodes before launching another
             self._find_pod_details()
-            self.start_manager("master")
-            self.start_nodes()
+            if wait_for_pods(self._num_machines):
+                self.start_manager("master")
+                self.start_nodes()
+            else:
+                print("ERROR: Machines did not start in timeframe allocated")
+                self.teardown()
         else:
             print(f"Created helm chart {self._chart_name} in {self._deploy_dir}")
 
     def teardown(self):
-        subprocess.check_output([f'helm uninstall daliuge-daemon'], shell=True)
+        for i in range(self._num_machines-1, -1, -1):
+            subprocess.check_output([f'helm uninstall daliuge-daemon-{i}'], shell=True)
+        subprocess.check_output([f'helm uninstall daliuge-daemon-master'], shell=True)
 
     def submit_job(self):
         """
@@ -221,10 +226,14 @@ class HelmClient:
         """
         # TODO: Check all nodes are operational first.
         pgt_data = json.loads(self._physical_graph_file)
-        node_ips = [x['ip'] for x in self._pod_details.values()]
-        node_ips.remove(self._pod_details['master']['ip'])
-        physical_graph = pg_generator.resource_map(pgt_data, node_ips)
+        # node_ips = [x['ip'] for x in self._pod_details.values()]
+        # node_ips.remove(self._pod_details['master']['ip'])
+        #node_ips = [self._pod_details['master']['ip']] + node_ips
+        node_ips = ['127.0.0.1']
+        print(node_ips)
+        print(json.dumps(pgt_data, indent=4))
+        physical_graph = pg_generator.resource_map(pgt_data, node_ips, co_host_dim=True)
         print(json.dumps(physical_graph, indent=4))
         # TODO: Add dumping to log-dir
         print(self._submission_endpoint)
-        submit(physical_graph, self._submission_endpoint, port=MASTER_DEFAULT_REST_PORT, skip_deploy=True)
+        submit(physical_graph, self._submission_endpoint, skip_deploy=False)

@@ -8,6 +8,7 @@ containers:
     containerPort: 9000
     deploymentPort: 8001
     nodemanagerPort: 8000
+    masterPort: 8002
 service:
   daemon:
     name: daemon-port
@@ -18,3 +19,6 @@ service:
   nodemgr:
     name: node-manager-port
     port: 8000
+  master:
+    name: master-port
+    port: 8002

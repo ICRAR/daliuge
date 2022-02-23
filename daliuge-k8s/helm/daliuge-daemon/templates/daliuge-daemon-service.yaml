@@ -18,3 +18,7 @@ spec:
       name: {{ .Values.service.nodemgr.name }}
       port: {{ .Values.service.nodemgr.port }}
       targetPort: {{ .Values.containers.ports.nodemanagerPort }}
+    - protocol: TCP
+      name: {{ .Values.service.master.name }}
+      port: {{ .Values.service.master.port }}
+      targetPort: {{ .Values.containers.ports.masterPort }}

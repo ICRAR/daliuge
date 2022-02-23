@@ -201,3 +201,34 @@ def find_pod_ips(num_expected, retries=3, timeout=10):
         print(ips)
         time.sleep(timeout)
     return ips
+
+
+def _status_all_running(statuses):
+    if statuses == []:
+        return False
+    for status in statuses:
+        if status != "Running":
+            return False
+    return True
+
+
+def wait_for_pods(num_expected, retries=18, timeout=10):
+    all_running = False
+    attempts = 0
+    while not all_running and attempts < retries:
+        query = str(subprocess.check_output([
+            r'kubectl get pods -o wide'],
+            shell=True).decode(encoding='utf-8'))
+        print(query)
+        pattern = r"^daliuge-daemon.*"
+        outcome = re.findall(pattern, query, re.M)
+        if len(outcome) < num_expected:
+            all_running = False
+            continue
+        all_running = True
+        for pod in outcome:
+            if "Running" not in pod:
+                all_running = False
+        attempts += 1
+        time.sleep(timeout)
+    return all_running
