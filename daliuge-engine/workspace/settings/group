@@ -18,6 +18,7 @@ voice:x:22:
 cdrom:x:24:
 floppy:x:25:
 tape:x:26:
+sudo:x:27:
 audio:x:29:
 dip:x:30:
 www-data:x:33:
@@ -39,3 +40,5 @@ nogroup:x:65534:
 crontab:x:101:
 messagebus:x:102:
 ssh:x:103:
+awicenec:x:1000:
+docker:x:131

@@ -179,8 +179,12 @@ def getDlgDir():
     runtime.
     """
     if "DLG_ROOT" in os.environ:
-        return os.environ["DLG_ROOT"]
-    return os.path.join(os.path.expanduser("~"), "dlg")
+        path = os.environ["DLG_ROOT"]
+    else:
+        path = os.path.join(os.path.expanduser("~"), "dlg")
+        os.environ["DLG_ROOT"] = path
+    logger.debug(f"DLG_ROOT directory is {path}")
+    return path
 
 
 def getDlgPidDir():
@@ -226,7 +230,10 @@ def getDlgVariable(key: str):
     """
     if key == "$DLG_ROOT":
         return getDlgDir()
-    return os.environ.get(key[1:])
+    value = os.environ.get(key[1:])
+    if value is None:
+        return key
+    return value
 
 
 def createDirIfMissing(path):
@@ -491,7 +498,7 @@ class ExistingProcess(object):
             time.sleep(0.1)
 
 
-def prepareUser(DLG_ROOT="."):
+def prepareUser(DLG_ROOT=getDlgDir()):
     workdir = f"{DLG_ROOT}/workspace/settings"
     try:
         os.makedirs(workdir, exist_ok=True)
@@ -505,11 +512,13 @@ def prepareUser(DLG_ROOT="."):
     with open(os.path.join(workdir, "passwd"), "wt") as file:
         file.write(open(os.path.join(template_dir, "passwd.template"), "rt").read())
         file.write(f"{pw.pw_name}:x:{pw.pw_uid}:{pw.pw_gid}:{pw.pw_gecos}:{DLG_ROOT}:/bin/bash\n")
+        logger.debug(f"passwd file written {file.name}")
     with open(os.path.join(workdir, "group"), "wt") as file:
         file.write(open(os.path.join(template_dir, "group.template"), "rt").read())
         file.write(f"{gr.gr_name}:x:{gr.gr_gid}:\n")
         file.write(f"docker:x:{dgr.gr_gid}\n")
-
+        logger.debug(f"Group file written {file.name}")
+    
     return dgr.gr_gid
 
 

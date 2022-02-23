@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 
+from asyncio.log import logger
 import os
 import shutil
 import tempfile
@@ -60,10 +61,14 @@ class DockerTests(unittest.TestCase):
         if cls._temp is None:
             cls._temp = "/tmp/daliuge_tfiles"
         
+        os.environ["DLG_ROOT"] = cls._temp
+        logger.info(f"Preparing pwd and group files in {utils.getDlgDir()}")
         _dum = utils.prepareUser(DLG_ROOT=utils.getDlgDir())
 
-    def tearDown(self):
-        shutil.rmtree("/tmp/daliuge_tfiles", True)
+    @classmethod
+    def tearDownClass(cls):
+        logger.debug(f"Removing temp directory {cls._temp}")
+        shutil.rmtree(cls._temp, True)
 
     def test_simpleCopy(self):
         """
@@ -127,7 +132,7 @@ class DockerTests(unittest.TestCase):
         b.handleInterest(c)
 
         data = os.urandom(10)
-        with DROPWaiterCtx(self, d, 100):
+        with DROPWaiterCtx(self, d, 10):
             a.write(data)
             a.setCompleted()
 

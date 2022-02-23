@@ -27,7 +27,6 @@ import json
 from dlg.drop import AbstractDROP, DEFAULT_INTERNAL_PARAMETERS
 from dlg.io import MemoryIO
 
-
 class KeyValueDROP:
 
     @abc.abstractmethod
@@ -82,7 +81,14 @@ class EnvironmentVarDROP(AbstractDROP, KeyValueDROP):
         return MemoryIO(io.BytesIO(json.dumps(self._variables).encode('utf-8')))
 
     def get(self, key):
-        return self._variables.get(key)
+        """
+        Fetches key from internal store if present.
+        If not present, attempts to fetch variable from environment
+        """
+        value = self._variables.get(key)
+        if value is None:
+            value = os.environ.get(key)
+        return value
 
     def get_multiple(self, keys: list):
         return_vars = []
