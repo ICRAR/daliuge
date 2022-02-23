@@ -47,6 +47,7 @@ from dlg.deploy import common
 from dlg import utils
 from dlg.common import tool
 from dlg.dropmake import pg_generator
+from dlg.translator.tool_commands import parse_partition_algo_params
 from dlg.manager import cmdline
 from dlg.manager.client import NodeManagerClient
 from dlg.manager.constants import (
@@ -299,7 +300,7 @@ def get_pg(opts, nms, dims):
         unrolled = pg_generator.unroll(
             opts.logical_graph, opts.ssid, opts.zerorun, APPS[opts.app]
         )
-        algo_params = tool.parse_partition_algo_params(opts.algo_params)
+        algo_params = parse_partition_algo_params(opts.algo_params)
         pgt = pg_generator.partition(
             unrolled,
             opts.part_algo,
@@ -626,6 +627,15 @@ def main():
 
     dim_proc = None
     # start the NM
+    if remote.is_nm:
+        nm_proc = start_node_mgr(
+            log_dir,
+            remote.my_ip,
+            logv=logv,
+            max_threads=options.max_threads,
+            host=None if options.all_nics else remote.my_ip,
+            event_listeners=options.event_listeners,
+                )
     if options.num_islands == 1:
         if remote.is_proxy:
             # Wait until the Island Manager is open
