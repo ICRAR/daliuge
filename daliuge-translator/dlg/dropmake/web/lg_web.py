@@ -310,10 +310,10 @@ def gen_pg_helm():
 
     pgtpj = pgtp._gojs_json_obj
     logger.info("PGTP: %s" % pgtpj)
-    num_partitions = len(list(filter(lambda n: 'isGroup' in n, pgtpj['nodeDataArray'])))
+    pg_spec = pgtp.to_pg_spec(0, ret_str=False, tpl_nodes_len=1)
     # Send pgt_data to helm_start
     try:
-        start_helm(pgtp, num_partitions, pgt_dir)
+        start_helm(json.dumps(pg_spec), 1, pgt_dir)
     except restutils.RestClientException as ex:
         response.status = 500
         print(traceback.format_exc())
