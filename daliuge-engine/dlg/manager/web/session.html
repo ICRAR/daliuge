@@ -190,6 +190,8 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 	})
 	.setDefaultEdgeLabel(function () { return {}; });
 
+	console.log("g"+g)
+
 	var render = getRender();
 	function drawGraph() {
 		inner.call(render, g);
