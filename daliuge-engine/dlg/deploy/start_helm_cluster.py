@@ -33,7 +33,6 @@ import tempfile
 
 import dlg.restutils
 import dlg.exceptions
-from dlg.deploy.deployment_utils import find_node_ips
 from dlg.dropmake import pg_generator
 from dlg.deploy.helm_client import HelmClient
 
@@ -57,14 +56,14 @@ def get_pg(opts, num_node_managers, num_data_island_managers):
 def start_helm(physical_graph_template, num_nodes: int, deploy_dir: str):
     # TODO: Dynamic helm chart logging dir
     pgt = json.loads(physical_graph_template)
-    pgt = pg_generator.partition(pgt, algo='min_num_parts', num_partitons=1,
+    pgt = pg_generator.partition(pgt, algo='metis', num_partitons=1,
                                  num_islands=1)
     helm_client = HelmClient(
         deploy_name='daliuge-daemon',
         chart_name='daliuge-daemon',
         deploy_dir=deploy_dir
     )
-    helm_client.create_helm_chart(json.dumps(pgt))
+    helm_client.create_helm_chart(json.dumps(pgt), co_host=True)
     try:
         helm_client.launch_helm()
         helm_client.submit_job()
@@ -74,6 +73,7 @@ def start_helm(physical_graph_template, num_nodes: int, deploy_dir: str):
         raise exp2
     finally:
         helm_client.teardown()
+        print("Finished deployment")
 
 
 def main():
