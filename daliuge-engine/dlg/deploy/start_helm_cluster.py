@@ -29,6 +29,7 @@ Limitations:
 import argparse
 import json
 import os
+import tempfile
 
 import dlg.restutils
 import dlg.exceptions
@@ -55,23 +56,24 @@ def get_pg(opts, num_node_managers, num_data_island_managers):
 
 def start_helm(physical_graph_template, num_nodes: int, deploy_dir: str):
     # TODO: Dynamic helm chart logging dir
-    available_ips = find_node_ips()
     pgt = json.loads(physical_graph_template)
-    pgt = pg_generator.partition(pgt, algo='min_num_parts', num_partitons=len(available_ips),
-                                 num_islands=len(available_ips))
-    pg = pg_generator.resource_map(pgt, available_ips + available_ips)
+    pgt = pg_generator.partition(pgt, algo='min_num_parts', num_partitons=1,
+                                 num_islands=1)
     helm_client = HelmClient(
         deploy_name='daliuge-daemon',
         chart_name='daliuge-daemon',
         deploy_dir=deploy_dir
     )
+    helm_client.create_helm_chart(json.dumps(pgt))
     try:
-        helm_client.create_helm_chart(json.dumps(pg))
         helm_client.launch_helm()
         helm_client.submit_job()
+    except dlg.restutils.RestClientException as exp:
+        raise exp
+    except dlg.exceptions.InvalidGraphException as exp2:
+        raise exp2
+    finally:
         helm_client.teardown()
-    except Exception as ex:
-        raise
 
 
 def main():
@@ -118,22 +120,22 @@ def main():
 
     physical_graph = get_pg(options, 1, 1)
     # TODO: dynamic deployment directory.
-    helm_client = HelmClient(
-        deploy_name='daliuge-daemon',
-        chart_name='daliuge-daemon',
-        deploy_dir='/home/nicholas/dlg_temp/demo/',
-    )
-    helm_client.create_helm_chart(json.dumps(physical_graph))
-    try:
-        helm_client.launch_helm()
-        helm_client.query_nodes()
-        helm_client.submit_job()
-    except dlg.restutils.RestClientException as exp:
-        raise exp
-    except dlg.exceptions.InvalidGraphException as exp2:
-        raise exp2
-    finally:
-        helm_client.teardown()
+    with tempfile.TemporaryDirectory() as tdir:
+        helm_client = HelmClient(
+            deploy_name='daliuge-daemon',
+            chart_name='daliuge-daemon',
+            deploy_dir=tdir,
+        )
+        helm_client.create_helm_chart(json.dumps(physical_graph))
+        try:
+            helm_client.launch_helm()
+            helm_client.submit_job()
+        except dlg.restutils.RestClientException as exp:
+            raise exp
+        except dlg.exceptions.InvalidGraphException as exp2:
+            raise exp2
+        finally:
+            helm_client.teardown()
 
 
 if __name__ == "__main__":
