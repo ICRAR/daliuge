@@ -30,7 +30,7 @@ case "$1" in
             echo "Please either create and grant access to $USER or build and run the development version."
         else
             VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
-            common_prep()
+            common_prep
             echo "Running Engine deployment version in background..."
             echo "docker run -td "${DOCKER_OPTS}"  icrar/daliuge-engine:${VCS_TAG}"
             docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
