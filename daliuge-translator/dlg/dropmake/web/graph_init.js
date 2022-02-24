@@ -50,7 +50,7 @@ function graphInit(graphType){
             $("#" + graphType + "Button").addClass("active")
 
             //hide graph change buttons when they dont make sense locks the graph to sankey if node count is over 300
-            if (nodeCount > 300) {
+            if (nodeCount > 600) {
                 $("#view-mode-buttons").hide();
             } else {
                 $("#view-mode-buttons").show();
@@ -308,7 +308,7 @@ function echartsGraphInit(type, data) {
 function graphSetup(type, chart, graphData, graphDataParts) {
 
     // don't show labels if there are too many nodes.
-    var show_labels = (graphData.nodeDataArray.length > 320) ? false : true;
+    var show_labels = (graphData.nodeDataArray.length > 350) ? false : true;
 
     chart.setOption({
         tooltip: {
