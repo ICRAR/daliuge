@@ -265,7 +265,7 @@ class BashShellBase(object):
             logger.error(mesage_stdouts(message, pstdout, pstderr))
             raise Exception(message)
 
-    def dataURL(self):
+    def dataURL(self) -> str:
         return type(self).__name__
 
     def cancel(self):
