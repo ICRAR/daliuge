@@ -37,7 +37,6 @@ function graphInit(graphType){
             
             //reset graph divs
             $("#main").empty()
-            $("#SVGArea").empty()
 
             //initiate the correct function
             if(graphType === "sankey"){
@@ -68,7 +67,7 @@ function dagGraphInit(data) {
   const widthValue = 600;
 
   // Set up zoom support
-  d3.select("#SVGArea").append("svg").attr("id", "smallD3Graph").append("g").attr("id","root")
+  d3.select("#main").append("div").attr("id","dagGraphArea").append("svg").attr("id", "smallD3Graph").append("g").attr("id","root")
     var svg = d3.select("#smallD3Graph")
     var inner = svg.select("g");
 
@@ -238,28 +237,6 @@ function echartsGraphInit(type, data) {
     // var nodeCount = 0
     var renderer = 'canvas'
     var fontSize = 10
-    // data.nodeDataArray.forEach(element => {
-    //     nodeCount++
-    // })
-
-    //pick initial graph depending on node amount
-    // if (type === "default") {
-    //     if (nodeCount < 100) {
-    //         type = "graph"
-    //     } else {
-            // type = "sankey"
-    //     }
-    // }
-    //hide other graph option when it doesnt make sense
-    // if (nodeCount < 50) {
-    //     $(".graphChanger").hide();
-    //     renderer = 'svg'
-    // } else if (nodeCount > 150) {
-    //     $(".graphChanger").hide();
-    // }
-    // if (nodeCount > 80) {
-    //     fontSize = 9
-    // }
     data.nodeDataArray.forEach(element => {
         newElement = {};
         if (!element.hasOwnProperty("isGroup")) {
@@ -268,27 +245,16 @@ function echartsGraphInit(type, data) {
             //data options
             newElement.name = element.text + '-' + element.key.toString();
 
-            // if (type === "sankey") {
-                newElement.label = {
-                    'rotate': 45,
-                    'fontSize': fontSize,
-                    'offset': [-20, -20],
-                    'fontWeight': 400,
-                    'color': element.group.toString(),
-                    // 'textBorderColor':'black',
-                    // 'textBorderWidth' : 2.5,
-                    // 'textBorderType' : 'solid'
-                };
-            // } else {
-            //     newElement.label = {
-            //         'fontSize': fontSize,
-            //         'fontWeight': 400,
-            //         'color': element.group,
-            //         "position": "inside",
-            //         // 'textBorderColor':'black',
-            //         // 'textBorderWidth' : 2.5,
-            //     };
-            // }
+            newElement.label = {
+                'rotate': 45,
+                'fontSize': fontSize,
+                'offset': [-20, -20],
+                'fontWeight': 400,
+                'color': element.group.toString(),
+                // 'textBorderColor':'black',
+                // 'textBorderWidth' : 2.5,
+                // 'textBorderType' : 'solid'
+            };
 
             newElement.itemStyle = {};
             newElement.itemStyle.color = nodeCatgColors[element.category];
@@ -342,7 +308,7 @@ function echartsGraphInit(type, data) {
 function graphSetup(type, chart, graphData, graphDataParts) {
 
     // don't show labels if there are too many nodes.
-    var show_labels = (graphData.nodeDataArray.length > 350) ? false : true;
+    var show_labels = (graphData.nodeDataArray.length > 320) ? false : true;
 
     chart.setOption({
         tooltip: {
