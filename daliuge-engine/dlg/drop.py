@@ -24,7 +24,7 @@ Module containing the core DROP classes.
 """
 from sqlite3 import OperationalError
 import string
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 import ast
 import base64
 import collections
@@ -1224,13 +1224,12 @@ class DataDROP(AbstractDROP):
         """
         return self.getIO().exists()
 
-    @property
-    def dataURL(self):
+    @abstractproperty
+    def dataURL(self) -> str:
         """
         A URL that points to the data referenced by this DROP. Different
         DROP implementations will use different URI schemes.
         """
-        return ""
 
 
 ##
@@ -1406,7 +1405,7 @@ class FileDROP(DataDROP, PathBasedDrop):
         self._fire("dropCompleted", status=DROPStates.COMPLETED)
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         hostname = os.uname()[1]  # TODO: change when necessary
         return "file://" + hostname + self._path
 
@@ -1528,7 +1527,7 @@ class NgasDROP(DataDROP):
         self._fire("dropCompleted", status=DROPStates.COMPLETED)
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         return "ngas://%s:%d/%s" % (self.ngasSrv, self.ngasPort, self.fileId)
 
 
@@ -1564,7 +1563,7 @@ class InMemoryDROP(DataDROP):
             return MemoryIO(self._buf)
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         hostname = os.uname()[1]
         return "mem://%s/%d/%d" % (hostname, os.getpid(), id(self._buf))
 
@@ -1600,7 +1599,7 @@ class SharedMemoryDROP(DataDROP):
             raise NotImplementedError("Shared memory is only available with Python >= 3.8")
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         hostname = os.uname()[1]
         return f"shmem://{hostname}/{os.getpid()}/{id(self._buf)}"
 
@@ -1614,7 +1613,7 @@ class NullDROP(DataDROP):
         return NullIO()
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         return "null://"
 
 
@@ -1712,7 +1711,7 @@ class RDBMSDrop(DataDROP):
                 return []
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         return "rdbms://%s/%s/%r" % (
             self._db_drv.__name__,
             self._db_table,
@@ -1869,7 +1868,7 @@ class PlasmaDROP(DataDROP):
                                         use_staging=self.use_staging)
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         return "plasma://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
 
 
@@ -1917,7 +1916,7 @@ class PlasmaFlightDROP(DataDROP):
         )
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         return "plasmaflight://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
 
 
