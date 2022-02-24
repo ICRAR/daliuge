@@ -95,6 +95,6 @@ class EnvironmentVarDROP(AbstractDROP, KeyValueDROP):
             'Setting EnvironmentVariables mid-execution is not currently implemented')
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         hostname = os.uname()[1]
         return f"config://{hostname}/{os.getpid()}/{id(self._variables)}"

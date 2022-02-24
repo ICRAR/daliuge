@@ -86,6 +86,6 @@ class ParameterSetDROP(DataDROP):
         return MemoryIO(io.BytesIO(self.config_data))
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         hostname = os.uname()[1]
         return f"config://{hostname}/{os.getpid()}/{id(self.config_data)}"

@@ -73,7 +73,7 @@ class S3DROP(AbstractDROP):
         return "{}/{}".format(self.bucket, self.key)
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         return "s3://{}/{}".format(self.bucket, self.key)
 
     def exists(self):
