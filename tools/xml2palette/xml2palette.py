@@ -160,6 +160,8 @@ def add_required_fields_for_category(text, fields, category):
             "readwrite",
             "Float",
             False,
+            [],
+            False,
         )
         add_field_if_missing(
             text,
@@ -170,6 +172,8 @@ def add_required_fields_for_category(text, fields, category):
             "Number of cores used",
             "readwrite",
             "Integer",
+            False,
+            [],
             False,
         )
 
@@ -184,10 +188,12 @@ def add_required_fields_for_category(text, fields, category):
             "readwrite",
             "Boolean",
             False,
+            [],
+            False,
         )
 
     if category == "DynlibApp":
-        add_field_if_missing(text, fields, "libpath", "Library path", "", "", "readwrite", "String", False)
+        add_field_if_missing(text, fields, "libpath", "Library path", "", "", "readwrite", "String", False, [], False)
 
     if category in ["PythonApp", "Branch"]:
         add_field_if_missing(
@@ -199,6 +205,8 @@ def add_required_fields_for_category(text, fields, category):
             "Application class",
             "readwrite",
             "String",
+            False,
+            [],
             False,
         )
 
@@ -213,6 +221,8 @@ def add_required_fields_for_category(text, fields, category):
             "readwrite",
             "Integer",
             False,
+            [],
+            False,
         )
 
     if category in ["File", "Memory", "NGAS", "ParameterSet", "Plasma", "PlasmaFlight", "S3", "Mpi"]:
@@ -225,6 +235,8 @@ def add_required_fields_for_category(text, fields, category):
             "Component is end of a group",
             "readwrite",
             "Boolean",
+            False,
+            [],
             False,
         )
 
@@ -239,6 +251,8 @@ def add_required_fields_for_category(text, fields, category):
             "readwrite",
             "String",
             False,
+            [],
+            False,
         )
         add_field_if_missing(
             text,
@@ -249,6 +263,8 @@ def add_required_fields_for_category(text, fields, category):
             "The command line argument that specifies the output from this application",
             "readwrite",
             "String",
+            False,
+            [],
             False,
         )
         add_field_if_missing(
@@ -261,6 +277,8 @@ def add_required_fields_for_category(text, fields, category):
             "readwrite",
             "String",
             False,
+            [],
+            False,
         )
         add_field_if_missing(
             text,
@@ -271,6 +289,8 @@ def add_required_fields_for_category(text, fields, category):
             "Separator character(s) between parameters on the command line",
             "readwrite",
             "String",
+            False,
+            [],
             False,
         )
         add_field_if_missing(
@@ -283,10 +303,12 @@ def add_required_fields_for_category(text, fields, category):
             "readwrite",
             "String",
             False,
+            [],
+            False,
         )
 
 
-def create_field(internal_name, name, value, description, access, type, precious):
+def create_field(internal_name, name, value, description, access, type, precious, options, positional):
     return {
         "text": name,
         "name": internal_name,
@@ -296,16 +318,18 @@ def create_field(internal_name, name, value, description, access, type, precious
         "readonly": access == "readonly",
         "type": type,
         "precious": precious,
+        "options": options,
+        "positional": positional
     }
 
 
-def add_field_if_missing(text, fields, internal_name, name, value, description, access, type, precious):
+def add_field_if_missing(text, fields, internal_name, name, value, description, access, type, precious, options, positional):
     if find_field_by_name(fields, internal_name) is None:
         logging.warning(
             text + " component added missing " + internal_name + " cparam"
         )
         fields.append(
-            create_field(internal_name, name, value, description, access, type, precious)
+            create_field(internal_name, name, value, description, access, type, precious, options, positional)
         )
 
 
@@ -342,6 +366,8 @@ def parse_param_value(text, prefix, value):
     type = "String"
     access = "readwrite"
     precious = False
+    options = []
+    positional = False
 
     # assign attributes (if present)
     if len(parts) > 0:
@@ -350,9 +376,7 @@ def parse_param_value(text, prefix, value):
         default_value = parts[1]
     if len(parts) > 2:
         type = parts[2]
-    if (
-        len(parts) > 4
-    ):  # NOTE: correct that we start looking for >4, but access element 3
+    if len(parts) > 4:  # NOTE: correct that we start looking for >4, but access element 3
         access = parts[3]
     else:
         logging.warning(
@@ -374,8 +398,30 @@ def parse_param_value(text, prefix, value):
             + ") has no 'precious' descriptor, using default (False) : "
             + value
         )
+    if len(parts) > 6:
+        options = parts[5].split(',')
+    else:
+        logging.warning(
+            text + " " +
+            prefix
+            + "param ("
+            + external_name
+            + ") has no 'options', using default ([]) : "
+            + value
+        )
+    if len(parts) > 7:
+        options = parts[6].lower()
+    else:
+        logging.warning(
+            text + " " +
+            prefix
+            + "param ("
+            + external_name
+            + ") has no 'positional', using default (False) : "
+            + value
+        )
 
-    return (external_name, default_value, type, access, precious)
+    return (external_name, default_value, type, access, precious, options, positional)
 
 
 def parse_port_value(value):
@@ -457,7 +503,7 @@ def create_palette_node_from_params(params):
         elif key.startswith("cparam/"):
             # parse the param key into name, type etc
             (param, internal_name) = parse_key(key)
-            (name, default_value, type, access, precious) = parse_param_value(text, "c", value)
+            (name, default_value, type, access, precious, options, positional) = parse_param_value(text, "c", value)
 
             # check that type is in the list of known types
             if type not in KNOWN_PARAM_DATA_TYPES:
@@ -492,12 +538,14 @@ def create_palette_node_from_params(params):
                     access,
                     type,
                     precious,
+                    options,
+                    positional,
                 )
             )
         elif key.startswith("aparam/") or key.startswith("param/"):
             # parse the param key into name, type etc
             (param, internal_name) = parse_key(key)
-            (name, default_value, type, access, precious) = parse_param_value(text, "a", value)
+            (name, default_value, type, access, precious, options, positional) = parse_param_value(text, "a", value)
 
             # warn if doc string is still using param instead of aparam
             if key.startswith("param/"):
@@ -538,6 +586,8 @@ def create_palette_node_from_params(params):
                     access,
                     type,
                     precious,
+                    options,
+                    positional,
                 )
             )
         elif key.startswith("port/"):
