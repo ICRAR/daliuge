@@ -31,6 +31,7 @@ DOXYGEN_SETTINGS = [
     ("CLASS_DIAGRAMS", "NO"),
 ]
 
+KNOWN_PARAM_DATA_TYPES = ["String", "Integer", "Float", "Complex", "Boolean", "Select", "Password", "Json"]
 
 def get_options_from_command_line(argv):
     inputdir = ""
@@ -458,6 +459,12 @@ def create_palette_node_from_params(params):
             (param, internal_name) = parse_key(key)
             (name, default_value, type, access, precious) = parse_param_value(text, "c", value)
 
+            # check that type is in the list of known types
+            if type not in KNOWN_PARAM_DATA_TYPES:
+                logging.warning(
+                    text + " cparam '" + name + "' has unknown type: " + type
+                )
+
             # parse description
             if "\n" in value:
                 logging.info(
@@ -496,6 +503,12 @@ def create_palette_node_from_params(params):
             if key.startswith("param/"):
                 logging.warning(
                     text + " param (" + internal_name + ") using obsolete 'param' description, defaulting to 'aparam'"
+                )
+
+            # check that type is in the list of known types
+            if type not in KNOWN_PARAM_DATA_TYPES:
+                logging.warning(
+                    text + " aparam '" + name + "' has unknown type: " + type
                 )
 
             # parse description
