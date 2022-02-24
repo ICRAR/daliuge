@@ -76,8 +76,8 @@
                         </div>
                     </li> -->
                     <div class="btn-group" role="group" id="view-mode-buttons">
-                        <button type="button" id="graphButton" value="graph" class="btn btn-secondary tooltip tooltipBottom graphChanger" data-text="Better For Small Graphs" >Dagre</button>
-                        <button type="button" id="sankeyButton" value="sankey" class="btn btn-secondary tooltip tooltipBottom graphChanger" data-text="Better For Big Graph" >Sankey</button>
+                        <button type="button" id="dagButton" onclick="graphInit('dag')" class="btn btn-secondary tooltip tooltipBottom graphChanger" data-text="Better For Small Graphs" >Dag</button>
+                        <button type="button" id="sankeyButton" onclick="graphInit('sankey')" class="btn btn-secondary tooltip tooltipBottom graphChanger" data-text="Better For Big Graph" >Sankey</button>
                    </div>
                 </ul>
                 <ul class="nav navbar-nav  ml-auto">
@@ -154,129 +154,7 @@
     <!-- init script includes require, this links main js and echarts -->
     <script src="/static/graph_init.js"></script>
     <script>
-    view_as_graph()
-    function view_as_graph() {
-
-        
-        const heightValue = 300;
-        const widthValue = 600;
-        // Set up zoom support
-
-        d3.select("#SVGArea").append("svg").attr("id", "smallD3Graph").append("g").attr("id","root")
-	    var svg = d3.select("#smallD3Graph")
-        // svgGroup = svg.append("g");
-        var inner = svg.select("g");
-
-        // svg.call(d3.zoom().on("zoom", function () {
-        // 	inner.attr("transform", "translate(" + d3.event.translate + ")"
-        // 			+ "scale(" + d3.event.scale + ")");
-        // }))
-
-        var zoom = d3.zoom().on("zoom", function () {//Add mouse wheel zoom event
-        inner.attr("transform", d3.event.transform);
-        });
-        svg.call(zoom);
-
-        var g = new dagreD3.graphlib.Graph({compound:true})
-        .setGraph({
-            nodesep : 70,
-            ranksep : 50,
-            rankdir : "LR", // Left-to-right layout
-            marginx : 20,
-            marginy : 20
-        })
-        .setDefaultEdgeLabel(function () { return {}; });
-
-        var render = getRender();
-        function drawGraph() {
-            console.log("rendering")
-            inner.call(render, g);
-            // render(inner,g)
-        }
-
-        //zoom WIP
-        // var initialScale = 0.30;
-        // root.call(zoom.transform, d3.zoomIdentity.translate((fullWidth - width * initialScale) / 2, 20).scale(initialScale));
-
-        // svg.attr('height', g.graph().height * initialScale + 40);
-
-        var orientButtons = d3.selectAll('#graph-orientation-buttons button');
-            orientButtons.on('click', function() {
-            direction = d3.event.currentTarget.value;
-            orientButtons.attr("disabled", "disabled");
-            orientButtons.filter("[value=" + direction + "]").classed("active", true);
-            orientButtons.filter(":not([value=" + direction + "])").classed("active", false);
-            g.graph().rankdir = direction;
-            drawGraph();
-            orientButtons.attr("disabled", null);
-            status_update_handler()
-        });
-
-        // This works assuming that the status list comes in the same order
-        // that the graph was created, which is true
-        // Anyway, we could double-check in the future
-        var delay = 1000;
-        var graph_update_handler = drawGraphForDrops.bind(null, g, drawGraph);
-        var status_update_handler = function(statuses) {
-            d3.selectAll('g.nodes').selectAll('g.node')
-            .data(statuses).attr("class", function(s) {
-                return "node " + get_status_name(s);
-            });
-        };
-
-        $.ajax({
-            //get data
-            url: "/pgt_jsonbody?pgt_name="+pgtName,
-            dataType: "json",
-            type: 'get',
-            error: function(XMLHttpRequest, textStatus, errorThrown) {
-                if (404 == XMLHttpRequest.status) {
-                alert('Server cannot locate physical graph file ' + pgtName.toString())
-                } else {
-                alert('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
-                }
-            },
-            success: function(data){
-                console.log(data)
-                graph_update_handler(data)
-            }
-        });
-
-
-        // startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
-        //                 status_update_handler, 1000);	
-    }
-
-    function zoomFit() {
-
-        // Center the graph
-        var zoom = d3.zoom().on("zoom", function () {//Add mouse wheel zoom event
-            inner.attr("transform", d3.event.transform);
-        });
-        var svg = d3.select('#smallD3Graph')
-        ;
-
-        var root = svg.select('#root');
-        var boot = $(".output");
-        var bounds = root.node().getBBox();
-        var parent = root.node().parentElement;
-        var fullWidth = parent.clientWidth,
-            fullHeight = parent.clientHeight;
-        var width = bounds.width,
-            height = bounds.height,
-            initialScale;
-        var widthScale = ((fullWidth-80)/width);
-        var heightScale = ((fullHeight-200)/height)
-        if (heightScale<widthScale){
-            initialScale = heightScale;
-        } else {
-            initialScale = widthScale;
-        };
-        initialScale = initialScale
-        var xCenterOffset = -(fullWidth - fullWidth) / 2;
-        boot.attr("transform", "translate(" + (fullWidth-(width*initialScale))/2 + ", " + ((fullHeight-80)-(height*initialScale))/2 + ")"+' scale('+initialScale+')');
-    }
-
+    graphInit("default")
     </script>
 </body>
 </html>
