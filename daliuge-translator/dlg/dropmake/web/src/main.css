@@ -342,26 +342,27 @@
 
 /* DROP states */
 
-#SVGArea .node :first-child, #SVGArea rect {
-  fill: rgb(48, 206, 87);
+#main #dagGraphArea .node :first-child, #main #dagGraphArea rect {
+  fill: #9ab4d0;
   width:300px;
   height:85px;
+  stroke: black;
 }
 
-#SVGArea .node span{
+#main #dagGraphArea .node span{
   display: block;
   height: min-content !important;
 }
 
-#SVGArea .node .drop-label :first-child{
+#main #dagGraphArea .node .drop-label :first-child{
   font-weight: 700;
 }
 
-#SVGArea .drop-label{
+#main #dagGraphArea .drop-label{
   padding: 5% 18%;
 }
 
-#SVGArea path.path {
+#main #dagGraphArea path.path {
   stroke: #999;
   stroke-width: 1.5px;
 }
@@ -411,7 +412,7 @@
   fill: #e44f33;
 }
 
-#SVGArea{
+#main #dagGraphArea{
   width:auto;
   height:auto;
   position: absolute;
