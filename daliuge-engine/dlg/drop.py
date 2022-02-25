@@ -1824,9 +1824,9 @@ class NgasDROP(DataDROP):
 # @par EAGLE_START
 # @param category Memory
 # @param tag template
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False/
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False/
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
 #     \~English Is this node the end of a group?
 # @par EAGLE_END
 class InMemoryDROP(DataDROP):
