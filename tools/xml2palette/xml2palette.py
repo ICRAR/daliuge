@@ -399,7 +399,10 @@ def parse_param_value(text, prefix, value):
             + value
         )
     if len(parts) > 6:
-        options = parts[5].split(',')
+        if parts[5].strip() == "":
+            options = []
+        else:
+            options = parts[5].strip().split(',')
     else:
         logging.warning(
             text + " " +
@@ -410,7 +413,7 @@ def parse_param_value(text, prefix, value):
             + value
         )
     if len(parts) > 7:
-        options = parts[6].lower()
+        positional = parts[6].lower()
     else:
         logging.warning(
             text + " " +
