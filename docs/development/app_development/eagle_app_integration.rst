@@ -52,17 +52,22 @@ Component Parameters are specified using the "param" command from doxygen. The c
 
 .. code-block:: python
 
-  # @param param/<internal_name> <user-facing name>/<default_value>/<type>/<access_descriptor>/<precious>/<options>/<positional>/<description>
+  # @param cparam/<internal_name> <user-facing name>/<default_value>/<type>/<access_descriptor>/<precious>/<options>/<positional>/<description>
   #
   # e.g.
   #
-  # @param param/start_frequency Start Frequency/500/Integer/readwrite/False//False/
+  # @param cparam/start_frequency Start Frequency/500/Integer/readwrite/False//False/
   #     \~English the start frequency to read from
   #     \~Chinese 要读取的起始频率
 
 The **precious** flag indicates that the value of the parameter should always be shown to the user, even when the parameter contains its default value. The flag also enforces that the parameter will always end-up on the command line, regardless of whether it contains the default value.
 
 The **positional** flag indicates that this parameter is a positional argument on a command line, and will be added to the command line without a prefix.
+
+Component Parameters vs. Application Parameters
+"""""""""""""""""""""""""""""""""""""""""""""""
+
+TODO
 
 Parameter Types
 """""""""""""""
@@ -104,15 +109,17 @@ Complete example for C/C++
   * of the parset to load a measurement set.
   * \par EAGLE_START
   * \param category DynlibApp
-  * \param[in] param/start_frequency Start Frequency/500/Integer/readwrite/False//False/
+  * \param[in] aparam/start_frequency Start Frequency/500/Integer/readwrite/False//False/
   *     \~English the start frequency to read from
   *     \~Chinese 要读取的起始频率
-  * \param[in] param/end_frequency End Frequency/500/Integer/readwrite/False//False/
+  * \param[in] aparam/end_frequency End Frequency/500/Integer/readwrite/False//False/
   *     \~English the end frequency to read from
   *     \~Chinese 要读取的结束频率
-  * \param[in] param/channels Channels/64/Integer/readonly/False//False/
+  * \param[in] aparam/channels Channels/64/Integer/readonly/False//False/
   *     \~English how many channels to load
   *     \~Chinese 需要加载的通道数量
+  * \param[in] aparam/method Method/mean/Select/readwrite/False/mean,median/False/
+  *     \~English The method used for averaging
   * \param[in] port/config Config/String/
   *     \~English the configuration of the input_port
   *     \~Chinese 输入端口的设置
@@ -136,15 +143,17 @@ Complete example for Python
   # of the parset to load a measurement set.
   # @par EAGLE_START
   # @param category PythonApp
-  # @param[in] param/start_frequency Start Frequency/500/Integer/readwrite/False//False/
+  # @param[in] aparam/start_frequency Start Frequency/500/Integer/readwrite/False//False/
   #     \~English the start frequency to read from
   #     \~Chinese 要读取的起始频率
-  # @param[in] param/end_frequency End Frequency/500/Integer/readwrite/False//False/
+  # @param[in] aparam/end_frequency End Frequency/500/Integer/readwrite/False//False/
   #     \~English the end frequency to read from
   #     \~Chinese 要读取的结束频率
-  # @param[in] param/channels Channels/64/Integer/readonly/False//False/
+  # @param[in] aparam/channels Channels/64/Integer/readonly/False//False/
   #     \~English how many channels to load
   #     \~Chinese 需要加载的通道数量
+  # @param[in] aparam/method Method/mean/Select/readwrite/False/mean,median/False/
+  #     \~English The method used for averaging
   # @param[in] port/config Config/String/
   #     \~English the configuration of the input_port
   #     \~Chinese 输入端口的设置
