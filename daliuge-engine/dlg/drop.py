@@ -1523,15 +1523,15 @@ class DataDROP(AbstractDROP):
 # @par EAGLE_START
 # @param category File
 # @param tag template
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False/
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False/
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
 #     \~English Is this node the end of a group?
-# @param[in] aparam/check_filepath_exists Check file path exists/True/Boolean/readwrite/False/
+# @param[in] aparam/check_filepath_exists Check file path exists/True/Boolean/readwrite/False//False/
 #     \~English Perform a check to make sure the file path exists before proceeding with the application
-# @param[in] aparam/filepath File Path//String/readwrite/False/
+# @param[in] aparam/filepath File Path//String/readwrite/False//False/
 #     \~English Path to the file for this node
-# @param[in] aparam/dirname Directory name//String/readwrite/False/
+# @param[in] aparam/dirname Directory name//String/readwrite/False//False/
 #     \~English Path to the file for this node
 # @par EAGLE_END
 class FileDROP(DataDROP, PathBasedDrop):
@@ -2614,17 +2614,17 @@ class BarrierAppDROP(InputFiredAppDROP):
 # @par EAGLE_START
 # @param category Branch
 # @param tag template
-# @param[in] cparam/appclass Application Class/dlg.apps.simple.SimpleBranch/String/readonly/False/
+# @param[in] cparam/appclass Application Class/dlg.apps.simple.SimpleBranch/String/readonly/False//False/
 #     \~English Application class
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
 #     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
 #     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
 #     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @par EAGLE_END
 class BranchAppDrop(BarrierAppDROP):
