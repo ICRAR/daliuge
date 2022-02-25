@@ -202,9 +202,9 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 #     \~English The size of the array
 # @param[in] aparam/integer Integer/True/Boolean/readwrite/False//False/
 #     \~English Generate integer array?
-# @param[in] aparam/low Low/0/float/readwrite/False//False/
+# @param[in] aparam/low Low/0/Float/readwrite/False//False/
 #     \~English Low value of range in array [inclusive]
-# @param[in] aparam/high High/1/float/readwrite/False//False/
+# @param[in] aparam/high High/1/Float/readwrite/False//False/
 #     \~English High value of range of array [exclusive]
 # @param[in] cparam/appclass Application class/dlg.apps.simple.RandomArrayApp/String/readonly/False//False/
 #     \~English Application class
