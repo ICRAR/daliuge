@@ -511,6 +511,17 @@ def create_palette_node_from_params(params):
                     text + " cparam '" + name + "' has unknown type: " + type
                 )
 
+            # check that a param of type "Select" has some options specified,
+            # and check that every param with some options specified is of type "Select"
+            if type == "Select" and len(options) == 0:
+                logging.warning(
+                    text + " cparam '" + name + "' is of type 'Select' but has no options specified: " + str(options)
+                )
+            if len(options) > 0 and type != "Select":
+                logging.warning(
+                    text + " cparam '" + name + "' has at least one option specified but is not of type 'Select': " + type
+                )
+
             # parse description
             if "\n" in value:
                 logging.info(
@@ -557,6 +568,17 @@ def create_palette_node_from_params(params):
             if type not in KNOWN_PARAM_DATA_TYPES:
                 logging.warning(
                     text + " aparam '" + name + "' has unknown type: " + type
+                )
+
+            # check that a param of type "Select" has some options specified,
+            # and check that every param with some options specified is of type "Select"
+            if type == "Select" and len(options) == 0:
+                logging.warning(
+                    text + " aparam '" + name + "' is of type 'Select' but has no options specified: " + str(options)
+                )
+            if len(options) > 0 and type != "Select":
+                logging.warning(
+                    text + " aparam '" + name + "' has at least one option specified but is not of type 'Select': " + type
                 )
 
             # parse description
