@@ -39,7 +39,6 @@ $(document).ready(function () {
 });
 
 function deployAction(){
-    console.log("click")
     $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
     $("#dlg_mgr_deploy").prop("checked", true)
     $("#pg_form").submit();
