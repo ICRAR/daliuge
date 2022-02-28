@@ -220,6 +220,7 @@ def start_mm(node_list, log_dir, logv=1):
 
 
 def _stop(endpoints):
+    LOGGER.info(f"Stopping ThreadPool")
     def _the_stop(endpoint):
         common.BaseDROPManagerClient(endpoint[0], endpoint[1]).stop()
 
@@ -230,14 +231,17 @@ def _stop(endpoints):
 
 
 def stop_nms(ips):
+    LOGGER.info(f"Stopping node managers on nodes {ips}")
     _stop([(ip, NODE_DEFAULT_REST_PORT) for ip in ips])
 
 
 def stop_dims(ips):
+    LOGGER.info(f"Stopping island managers on nodes {ips}")
     _stop([(ip, ISLAND_DEFAULT_REST_PORT) for ip in ips])
 
 
 def stop_mm(ip_addr):
+    LOGGER.info(f"Stopping master managers on node {ip_addr}")
     _stop([(ip_addr, MASTER_DEFAULT_REST_PORT)])
 
 

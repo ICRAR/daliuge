@@ -64,16 +64,16 @@ class ICRARoodConfig(DefaultConfig):
     """
     # The following is more a workaround than a solution
     # requires the user to have a venv exectly in that place
-    VENV = """
-    source $HOME/dlg/venv/bin/activate
-    """
+    ACCOUNT = os.environ['USER']
+    HOME_DIR = os.environ['HOME']
+    LOG_DIR = f"{HOME_DIR}/dlg/runs"
+    VENV = f"source {HOME_DIR}/dlg/venv/bin/activate"
+
     def __init__(self):
         super(ICRARoodConfig, self).__init__()
 
     def init_list(self):  # TODO please fill in
-        HOME_DIR = os.environ['HOME']
-        ACCOUNT = os.environ['USER']
-        return [ACCOUNT, f"{HOME_DIR}/dlg/runs", 
+        return [self.ACCOUNT, self.LOG_DIR, 
         self.MODULES,
         self.VENV]
 
