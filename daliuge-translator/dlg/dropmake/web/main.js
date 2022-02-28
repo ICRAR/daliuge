@@ -6,19 +6,21 @@ $(document).ready(function () {
         $(".dropdown-menu").dropdown('hide')
     })
 
-    $('#rest_deploy_button').click(restDeploy);
+    //handles switching of the dynamic deploy split button
+    $("#deployDropdowns .dropdown-menu .dropdown-item").click(function(){
+        //take note of previous main button and the one that was just pressed
+        var oldActive = $("#deployDropdowns").children()[0];
+        var oldActiveId = $(oldActive).attr("id")
+        var newActive = event.target
+        var newActiveId = $(newActive).attr("id")
 
-    $('#helm_deploy_button').click(function(){
-        $("#gen_helm_button").val("Generate &amp; Deploy Physical Graph")
-        $("#dlg_helm_deploy").prop("checked", true)
-        $("#pg_helm_form").submit()
-    })
-
-    //deploy physical graph button listener
-    $("#deploy_button").click(function () {
-        $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
-        $("#dlg_mgr_deploy").prop("checked", true)
-        $("#pg_form").submit();
+        //replaces main button
+        $("#deployDropdowns").children()[0].remove()
+        $(newActive).clone().prependTo($("#deployDropdowns"))
+        
+        //toggles dropdown options
+        $("#deployDropdowns .dropdown-menu #"+newActiveId).hide()
+        $("#deployDropdowns .dropdown-menu #"+oldActiveId).show()
     })
 
     //export physical graph button listener
@@ -35,6 +37,23 @@ $(document).ready(function () {
         fillOutSettings()
     });
 });
+
+function deployAction(){
+    console.log("click")
+    $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
+    $("#dlg_mgr_deploy").prop("checked", true)
+    $("#pg_form").submit();
+}
+
+function helmDeployAction(){
+    $("#gen_helm_button").val("Generate &amp; Deploy Physical Graph")
+    $("#dlg_helm_deploy").prop("checked", true)
+    $("#pg_helm_form").submit()
+}
+
+function restDeployAction(){
+    restDeploy()
+}
 
 function saveSettings() {
     var newUrl = new URL($("#managerUrlInput").val());
