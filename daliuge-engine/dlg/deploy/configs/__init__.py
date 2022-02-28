@@ -29,6 +29,7 @@ __sub_tpl_str = """#!/bin/bash --login
 #SBATCH --time=$JOB_DURATION
 #SBATCH --error=err-%j.log
 $MODULES
+$VENV
 
 srun -l $PY_BIN -m dlg.deploy.start_dlg_cluster -l $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION --ssid $SESSION_ID --remote-mechanism slurm
 """
@@ -37,6 +38,7 @@ init_tpl = string.Template(__sub_tpl_str)
 
 class DefaultConfig(object):
     MODULES = ""
+    VENV = ""
     def __init__(self):
         self._dict = dict()
         l = self.init_list()
@@ -57,7 +59,13 @@ class DefaultConfig(object):
 
 class ICRARoodConfig(DefaultConfig):
     MODULES = """
+module load python/3.8.12
 """
+    # The following is more a workaround than a solution
+    # requires the user to have a venv exectly in that place
+    VENV = """
+source $HOME/dlg/venv/bin/activate
+    """
     def __init__(self):
         super(ICRARoodConfig, self).__init__()
 
@@ -80,6 +88,7 @@ module swap PrgEnv-cray PrgEnv-gnu
 module load python/2.7.10
 module load mpi4py
 """
+    VENV = ""
     def __init__(self):
         super(GalaxyASKAPConfig, self).__init__()
 
