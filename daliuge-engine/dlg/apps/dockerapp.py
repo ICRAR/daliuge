@@ -309,8 +309,10 @@ class DockerApp(BarrierAppDROP):
                     f"{utils.getDlgDir()}/workspace/settings/passwd:/etc/passwd",
                     f"{utils.getDlgDir()}/workspace/settings/group:/etc/group"
         ]
-        bindings += self._getArg(kwargs, "additionalBindings", [])
-        bindings = bindings.split(",") if isinstance(bindings, str) else bindings
+        additionalBindings = self._getArg(kwargs, "additionalBindings", [])
+        additionalBindings = additionalBindings.split(",") if isinstance(additionalBindings, str) \
+            else additionalBindings
+        bindings += additionalBindings
         for binding in bindings:
             if len(binding) == 0:
                 continue
