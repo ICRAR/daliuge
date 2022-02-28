@@ -1,0 +1,3 @@
+[console_scripts]
+zerorpc = zerorpc.cli:main
+
