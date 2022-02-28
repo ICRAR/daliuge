@@ -21,4 +21,4 @@ ENV VIRTUAL_ENV=/dlg
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV DLG_ROOT="/tmp/dlg"
 
-CMD ["dlg", "daemon", "-vv"]
+CMD ["dlg", "daemon", "-v"]

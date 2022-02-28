@@ -77,6 +77,7 @@ class SlurmClient:
             self._config.getpar("log_root") if (log_root is None) else log_root
         )
         self.modules = self._config.getpar("modules")
+        self.venv = self._config.getpar("venv")
         self._num_nodes = num_nodes
         self._job_dur = job_dur
         self._logical_graph = logical_graph
@@ -140,6 +141,7 @@ class SlurmClient:
         pardict["ALL_NICS"] = "-u" if self._all_nics else ""
         pardict["CHECK_WITH_SESSION"] = "-S" if self._check_with_session else ""
         pardict["MODULES"] = self.modules
+        pardict["VENV"] = self.venv
 
         job_desc = init_tpl.safe_substitute(pardict)
         return job_desc
