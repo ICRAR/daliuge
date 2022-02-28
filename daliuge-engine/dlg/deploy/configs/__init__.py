@@ -44,7 +44,8 @@ class DefaultConfig(object):
         l = self.init_list()
         self.setpar("acc", l[0])
         self.setpar("log_root", l[1])
-        self.setpar("modules",l[2])
+        self.setpar("modules",l[2].strip())
+        self.setpar("venv",l[3].strip())
 
     def init_list(self):
         pass
@@ -59,12 +60,12 @@ class DefaultConfig(object):
 
 class ICRARoodConfig(DefaultConfig):
     MODULES = """
-module load python/3.8.12
-"""
+    module load python/3.8.12
+    """
     # The following is more a workaround than a solution
     # requires the user to have a venv exectly in that place
     VENV = """
-source $HOME/dlg/venv/bin/activate
+    source $HOME/dlg/venv/bin/activate
     """
     def __init__(self):
         super(ICRARoodConfig, self).__init__()
@@ -72,7 +73,9 @@ source $HOME/dlg/venv/bin/activate
     def init_list(self):  # TODO please fill in
         HOME_DIR = os.environ['HOME']
         ACCOUNT = os.environ['USER']
-        return [ACCOUNT, f"{HOME_DIR}/dlg/runs", self.MODULES]
+        return [ACCOUNT, f"{HOME_DIR}/dlg/runs", 
+        self.MODULES,
+        self.VENV]
 
 class GalaxyMWAConfig(DefaultConfig):
     def __init__(self):
