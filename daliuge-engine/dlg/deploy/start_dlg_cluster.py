@@ -688,7 +688,7 @@ def main():
         )
         start_mm(remote.dim_ips, log_dir, logv=logv)
         monitoring_thread.join()
-        stop_mm("127.0.0.1")
+        stop_mm("127.0.0.1") # TODO: I don't think we need this and least not in the single island case
         stop_dims(remote.dim_ips)
     else:
         nm_ips = remote.recv_dim_nodes()
