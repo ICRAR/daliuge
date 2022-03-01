@@ -36,13 +36,7 @@ case "$1" in
         docker build --build-arg VCS_TAG=${C_TAG} --no-cache -t icrar/daliuge-engine:${VCS_TAG} -f docker/Dockerfile.devall .
         echo "Build finished!"
         exit 0;;
-    "casa")
-        export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
-        echo "Building daliuge-engine development version"
-        docker build --build-arg VCS_TAG=${VCS_TAG}-casa --no-cache -t icrar/daliuge-engine:${VCS_TAG}-casa -f docker/Dockerfile.casa .
-        echo "Build finished!"
-        exit 0;;
     *)
-        echo "Usage: build_engine.sh <dep|dev|devall|casa>"
+        echo "Usage: build_engine.sh <dep|dev|devall>"
         exit 0;;
 esac
