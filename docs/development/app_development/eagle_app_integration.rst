@@ -52,11 +52,11 @@ Component Parameters are specified using the "param" command from doxygen. The c
 
 .. code-block:: python
 
-  # @param cparam/<internal_name> <user-facing name>/<default_value>/<type>/<access_descriptor>/<precious>/<options>/<positional>/<description>
+  # @param[<direction>] cparam/<internal_name> <user-facing name>/<default_value>/<type>/<access_descriptor>/<precious>/<options>/<positional>/<description>
   #
   # e.g.
   #
-  # @param cparam/start_frequency Start Frequency/500/Integer/readwrite/False//False/
+  # @param[in] cparam/start_frequency Start Frequency/500/Integer/readwrite/False//False/
   #     \~English the start frequency to read from
   #     \~Chinese 要读取的起始频率
 
@@ -67,7 +67,17 @@ The **positional** flag indicates that this parameter is a positional argument o
 Component Parameters vs. Application Parameters
 """""""""""""""""""""""""""""""""""""""""""""""
 
-TODO
+There are two different types of parameter that can be specified on a component. These two types are: Component Parameter (cparam) and Application Parameter (aparam). Component parameters are intended to direct the behaviour of the DALiuGE component itself, while Application parameters are intended to direct the application underneath the component. For example, a component may have Component Parameter describing the number of CPUs to be used for execution, but a application parameter for the arguments on the command line for the component.
+
+The two types of parameters use different keywords (cparam vs. aparam), as shown in the example below.
+
+.. code-block:: python
+
+  # @param[in] cparam/start_frequency Start Frequency/500/Integer/readwrite/False//False/
+  #     \~English the start frequency to read from
+  * @param[in] aparam/method Method/mean/Select/readwrite/False/mean,median/False/
+  *     \~English The method used for averaging
+
 
 Parameter Types
 """""""""""""""
@@ -82,6 +92,15 @@ Available types are:
 #. Select
 #. Password
 #. Json
+
+The Select parameters describe parameters that only have a small number of valid values. The valid values are specified in the "options" part of the Doxygen command, using a comma separated list. For example:
+
+.. code-block:: python
+
+  * @param[in] aparam/method Method/mean/Select/readwrite/False/mean,median/False/
+  *     \~English The method used for averaging
+
+All other parameter types have empty options.
 
 Ports
 """""
