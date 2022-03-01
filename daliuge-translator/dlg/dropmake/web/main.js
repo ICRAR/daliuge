@@ -247,8 +247,7 @@ async function restDeploy() {
         .then(handleFetchErrors)
         .then(response => {
             if (response.redirected) {
-                // window.location.href = response.url;
-                window.open(response.url, 'deploy_target', 'popup').focus();
+                window.open(response.url, 'rest_deploy_target');
             }
         })
         .catch(function (error) {
