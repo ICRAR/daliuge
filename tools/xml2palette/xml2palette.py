@@ -32,6 +32,8 @@ DOXYGEN_SETTINGS = [
 ]
 
 KNOWN_PARAM_DATA_TYPES = ["String", "Integer", "Float", "Complex", "Boolean", "Select", "Password", "Json"]
+KNOWN_CONSTRUCT_TYPES = ["Scatter", "Gather"]
+
 
 def get_options_from_command_line(argv):
     inputdir = ""
@@ -479,6 +481,7 @@ def create_palette_node_from_params(params):
     description = ""
     category = ""
     tag = ""
+    construct = ""
     categoryType = ""
     inputPorts = []
     outputPorts = []
@@ -497,6 +500,8 @@ def create_palette_node_from_params(params):
 
         if key == "category":
             category = value
+        elif key == "construct":
+            construct = value
         elif key == "tag":
             tag = value
         elif key == "text":
@@ -661,14 +666,11 @@ def create_palette_node_from_params(params):
     add_required_fields_for_category(text, fields, category)
 
     # create and return the node
-    # TODO: we can remove a bunch of these attributes (isData etc)
-    return {
+    return ({
+        "tag": tag, "construct": construct
+    },
+    {
         "category": category,
-        "tag": tag,
-        "isData": False,
-        "isGroup": False,
-        "canHaveInputs": True,
-        "canHaveOutputs": True,
         "drawOrderHint": 0,
         "key": get_next_key(),
         "text": text,
@@ -681,10 +683,8 @@ def create_palette_node_from_params(params):
         "expanded": False,
         "inputApplicationName": "",
         "outputApplicationName": "",
-        "exitApplicationName": "",
         "inputApplicationType": "None",
         "outputApplicationType": "None",
-        "exitApplicationType": "None",
         "inputPorts": inputPorts,
         "outputPorts": outputPorts,
         "inputLocalPorts": inputLocalPorts,
@@ -695,7 +695,7 @@ def create_palette_node_from_params(params):
         "applicationArgs": applicationArgs,
         "git_url": gitrepo,
         "sha": version,
-    }
+    })
 
 
 def write_palette_json(outputfile, nodes, gitrepo, version):
@@ -826,6 +826,51 @@ def process_compounddef(compounddef):
     return result
 
 
+def create_construct_node(type, node):
+
+    # check that type is in the list of known types
+    if type not in KNOWN_CONSTRUCT_TYPES:
+        logging.warning(
+            text + " construct for node'" + node["text"] + "' has unknown type: " + type
+        )
+
+    construct_node = {
+        "category": type,
+        "description": "A default " + type + " construct for the " + node["text"] + " component.",
+        "fields": [],
+        "applicationArgs": [],
+        "git_url": gitrepo,
+        "key": get_next_key(),
+        "precious": False,
+        "sha": version,
+        "streaming": False,
+        "text": type + "/" + node["text"]
+    }
+
+    if type == "Scatter" or type == "Gather":
+        construct_node["inputAppFields"] = node["fields"]
+        construct_node["inputAppArgs"] = node["applicationArgs"]
+        construct_node["inputApplicationKey"] = node["key"]
+        construct_node["inputApplicationName"] = node["text"]
+        construct_node["inputApplicationType"] = node["category"]
+        construct_node["inputApplicationDescription"] = node["description"]
+        construct_node["inputLocalPorts"] = node["outputPorts"]
+        construct_node["inputPorts"] = node["inputPorts"]
+        construct_node["outputAppFields"] = []
+        construct_node["outputAppArgs"] = []
+        construct_node["outputApplicationKey"] = None
+        construct_node["outputApplicationName"] = ""
+        construct_node["outputApplicationType"] = "None"
+        construct_node["outputApplicationDescription"] = ""
+        construct_node["outputLocalPorts"] = []
+        construct_node["outputPorts"] = []
+    else:
+        pass # not sure what to do for other types like MKN yet
+
+    return construct_node
+
+
+
 if __name__ == "__main__":
     logging.basicConfig(format="%(asctime)s - %(message)s", datefmt="%d-%b-%y %H:%M:%S", level = logging.INFO)
 
@@ -900,12 +945,18 @@ if __name__ == "__main__":
             # print("params (" + str(len(params)) + "): " + str(params))
 
             # create a node
-            n = create_palette_node_from_params(params)
+            data, node = create_palette_node_from_params(params)
 
             # if the node tag matches the command line tag, or no tag was specified on the command line, add the node to the list to output
-            if n["tag"] == tag or tag == "":
-                logging.info("Adding component: " + n["text"])
-                nodes.append(n)
+            if data["tag"] == tag or tag == "":
+                logging.info("Adding component: " + node["text"])
+                nodes.append(node)
+
+            # if a construct is found, add to nodes
+            if data["construct"] != "":
+                logging.info("Adding component: " + data["construct"] + "/" + node["text"])
+                construct_node = create_construct_node(data["construct"], node)
+                nodes.append(construct_node)
 
         # check if gitrepo and version params were found and cache the values
         for param in params:
