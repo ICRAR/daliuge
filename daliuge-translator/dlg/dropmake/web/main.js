@@ -1,6 +1,5 @@
 $(document).ready(function () {
     // jquery starts here
-
     //hides the dropdown navbar elements when stopping hovering over the element
     $(".dropdown-menu").mouseleave(function () {
         $(".dropdown-menu").dropdown('hide')
@@ -9,6 +8,7 @@ $(document).ready(function () {
     //handles switching of the dynamic deploy split button
     $("#deployDropdowns .dropdown-menu .dropdown-item").click(function(){
         //take note of previous main button and the one that was just pressed
+
         var oldActive = $("#deployDropdowns").children()[0];
         var oldActiveId = $(oldActive).attr("id")
         var newActive = event.target
@@ -31,6 +31,7 @@ $(document).ready(function () {
     })
 
     //get saved settings from local storage or set a default value
+    fillOutSettings()
    
     $('#settingsModal').on('hidden.bs.modal', function () {
         fillOutSettings()
