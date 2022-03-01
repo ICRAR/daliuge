@@ -74,43 +74,43 @@ class ContainerIpWaiter(object):
 # @par EAGLE_START
 # @param category Docker
 # @param tag template
-# @param[in] cparam/image Image//String/readwrite/False/
+# @param[in] cparam/image Image//String/readwrite/False//False/
 #     \~English The name of the docker image to be used for this application
-# @param[in] cparam/tag Tag/1.0/String/readwrite/False/
+# @param[in] cparam/tag Tag/1.0/String/readwrite/False//False/
 #     \~English The tag of the docker image to be used for this application
-# @param[in] cparam/digest Digest//String/readwrite/False/
+# @param[in] cparam/digest Digest//String/readwrite/False//False/
 #     \~English The hexadecimal hash (long version) of the docker image to be used for this application
-# @param[in] cparam/command Command//String/readwrite/False/
+# @param[in] cparam/command Command//String/readwrite/False//False/
 #     \~English The command line to run within the docker instance. The specified command will be executed in a bash shell. That means that images will need a bash shell.
-# @param[in] cparam/input_redirection Input Redirection//String/readwrite/False/
+# @param[in] cparam/input_redirection Input Redirection//String/readwrite/False//False/
 #     \~English The command line argument that specifies the input into this application
-# @param[in] cparam/output_redirection Output Redirection//String/readwrite/False/
+# @param[in] cparam/output_redirection Output Redirection//String/readwrite/False//False/
 #     \~English The command line argument that specifies the output from this application
-# @param[in] cparam/command_line_arguments Command Line Arguments//String/readwrite/False/
+# @param[in] cparam/command_line_arguments Command Line Arguments//String/readwrite/False//False/
 #     \~English Additional command line arguments to be added to the command line to be executed
-# @param[in] cparam/paramValueSeparator Param value separator/ /String/readwrite/False/
+# @param[in] cparam/paramValueSeparator Param value separator/ /String/readwrite/False//False/
 #     \~English Separator character(s) between parameters on the command line
-# @param[in] cparam/argumentPrefix Argument prefix/"--"/String/readwrite/False/
+# @param[in] cparam/argumentPrefix Argument prefix/"--"/String/readwrite/False//False/
 #     \~English Prefix to each keyed argument on the command line
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
 #     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
 #     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
 #     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
-# @param[in] cparam/user User//String/readwrite/False/
+# @param[in] cparam/user User//String/readwrite/False//False/
 #     \~English Username of the user who will run the application within the docker image
-# @param[in] cparam/ensureUserAndSwitch Ensure User And Switch/False/Boolean/readwrite/False/
+# @param[in] cparam/ensureUserAndSwitch Ensure User And Switch/False/Boolean/readwrite/False//False/
 #     \~English Make sure the user specified in the User parameter exists and then run the docker container as that user
-# @param[in] cparam/removeContainer Remove Container/True/Boolean/readwrite/False/
+# @param[in] cparam/removeContainer Remove Container/True/Boolean/readwrite/False//False/
 #     \~English Instruct Docker engine to delete the container after execution is complete
-# @param[in] cparam/additionalBindings Additional Bindings//String/readwrite/False/
+# @param[in] cparam/additionalBindings Additional Bindings//String/readwrite/False//False/
 #     \~English Directories which will be visible inside the container during run-time. Format is srcdir_on_host:trgtdir_on_container. Multiple entries can be separated by commas.
-# @param[in] cparam/portMappings Port Mappings//String/readwrite/False/
+# @param[in] cparam/portMappings Port Mappings//String/readwrite/False//False/
 #     \~English Port mappings on the host machine
 # @par EAGLE_END
 class DockerApp(BarrierAppDROP):
@@ -347,7 +347,7 @@ class DockerApp(BarrierAppDROP):
             logger.debug("Image '%s' found, no need to pull it", self._image)
 
         # Check if the image specifies a working directory
-        # If it doesn't use the one provided by the user. 
+        # If it doesn't use the one provided by the user.
         # If none is provided use the session directory
         inspection = c.api.inspect_image(self._image)
         logger.debug("Docker Image inspection: %r", inspection)
@@ -500,7 +500,7 @@ class DockerApp(BarrierAppDROP):
                         addEnv[key] = value
                     env.update(addEnv)
                 elif isinstance(addEnv, list): # if it is a list populate from host environment
-                    for e in addEnv: 
+                    for e in addEnv:
                         env.update(os.environ[e])
             else:
                 logger.warning("Ignoring provided environment variables: Format wrong! Check documentation")
