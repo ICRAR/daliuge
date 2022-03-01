@@ -43,7 +43,18 @@ In order to support the direct usage of newly written application components in 
 
 #. The *category* param should be set to *DynlibApp* for C/C++ code, and *PythonApp* for Python code.
 
+#. The *construct* param should be set to Scatter or Gather. Or omitted entirely for components that will not be embedded inside a construct.
+
 The additional comments describe both the input/output ports for a component, and the parameters of a component. Shown below are example comments for C/C++ and Python applications.
+
+Construct
+"""""""""
+
+If a component is intended to implement a scatter or gather construct, then the *construct* param should be added to the Doxygen markup. When a component is flagged with a construct param, the component will be added to the palette as usual, but the component will also be added to the palette a second time embedded within an appropriate construct. Here is an example usage:
+
+.. code-block:: python
+
+  # @param construct Scatter
 
 Parameters
 """"""""""
