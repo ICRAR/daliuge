@@ -835,7 +835,6 @@ def create_construct_node(type, node):
         )
 
     construct_node = {
-        "applicationArgs": [],
         "category": type,
         "description": "A default " + type + " construct for the " + node["text"] + " component.",
         "fields": [],
@@ -845,7 +844,7 @@ def create_construct_node(type, node):
         "precious": False,
         "sha": version,
         "streaming": False,
-        "text": "Scatter" + "/" + node["text"]
+        "text": type + "/" + node["text"]
     }
 
     if type == "Scatter" or type == "Gather":
