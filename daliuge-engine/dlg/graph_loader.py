@@ -44,6 +44,7 @@ from .drop import (
     PlasmaDROP,
     PlasmaFlightDROP
 )
+from .environmentvar_drop import EnvironmentVarDROP
 from dlg.parset_drop import ParameterSetDROP
 from .exceptions import InvalidGraphException
 from .json_drop import JsonDROP
@@ -60,7 +61,8 @@ STORAGE_TYPES = {
     Categories.JSON: JsonDROP,
     Categories.PLASMA: PlasmaDROP,
     Categories.PLASMAFLIGHT: PlasmaFlightDROP,
-    Categories.PARSET: ParameterSetDROP
+    Categories.PARSET: ParameterSetDROP,
+    Categories.ENVIRONMENTVARS: EnvironmentVarDROP
 }
 
 try:

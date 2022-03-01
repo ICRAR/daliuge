@@ -81,15 +81,20 @@
                    </div>
                 </ul>
                 <ul class="nav navbar-nav  ml-auto">
-                    <li class="nav-item">
-                        <a href="javascript:void(0)" class="nav-link tooltip tooltipBottom" data-text="Deploy Physical Graph via HELM" id="helm_deploy_button" value="Deploy Physical Graph via HELM">HELM Deploy</a>
+                    <li class="nav-item dropdown">
+                        <div class="btn-group" id="deployDropdowns">
+                                <a href="javascript:void(0)" onclick="deployAction()" class="dropdown-item tooltip tooltipBottom" data-text="Generate and deploy physical graph" id="deploy_button" value="Generate &amp; Deploy Physical Graph">Deploy</a>
+                            <button type="button" class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              <span class="sr-only">Toggle Dropdown</span>
+                            </button>
+                            <div class="dropdown-menu">
+                                <a href="javascript:void(0)" onclick="deployAction()" class="dropdown-item tooltip tooltipLeft" style="display: none;" data-text="Generate and deploy physical graph" id="deploy_button" value="Generate &amp; Deploy Physical Graph">Deploy</a>
+                                <a href="javascript:void(0)" onclick="helmDeployAction()" class="dropdown-item tooltip tooltipLeft" data-text="Deploy Physical Graph via HELM" id="helm_deploy_button" value="Deploy Physical Graph via HELM">HELM Deploy</a>
+                                <a href="javascript:void(0)" onclick="restDeployAction()" class="dropdown-item tooltip tooltipLeft" data-text="Deploy Physical Graph via REST" id="rest_deploy_button" value="Deploy Physical Graph via REST">REST Deploy</a>
+                            </div>
+                          </div>
                     </li>
-                    <li class="nav-item">
-                        <a href="javascript:void(0)" class="nav-link tooltip tooltipBottom" data-text="Deploy Physical Graph via REST" id="rest_deploy_button" value="Deploy Physical Graph via REST">REST Deploy</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="javascript:void(0)" class="nav-link tooltip tooltipBottom" data-text="Generate and deploy physical graph" id="deploy_button" value="Generate &amp; Deploy Physical Graph">Deploy</a>
-                    </li>
+                   
                     <li class="nav-item dropdown">
                         <a href="javascript:void(0)" class="nav-link dropdown-toggle" id="navbarExportDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             Export
