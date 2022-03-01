@@ -121,8 +121,8 @@ def find_numislands(physical_graph_template_file):
         raise ValueError(type(pgt_data))
     nodes = list(map(lambda x: x['node'], pgt))
     islands = list(map(lambda x: x['island'], pgt))
-    num_islands = len(dict(zip(islands, nodes)))
-    num_nodes = list(map(lambda x, y: x + y, islands, nodes))
+    num_islands = len(dict(zip(islands,range(len(islands)))))
+    num_nodes = len(dict(zip(nodes,range(len(nodes)))))
     pip_name = pgt_name
     return num_islands, num_nodes, pip_name
 
