@@ -383,6 +383,7 @@ class AverageArraysApp(BarrierAppDROP):
 # @details A BarrierAppDrop that combines one or more inputs using cummulative operations.
 # @par EAGLE_START
 # @param category PythonApp
+# @param construct Gather
 # @param tag daliuge
 # @param[in] cparam/appclass Application Class/dlg.apps.simple.GenericNpyGatherApp/String/readonly/False//False/
 #     \~English Application class
@@ -610,6 +611,7 @@ class UrlRetrieveApp(BarrierAppDROP):
 # resulting array.
 # @par EAGLE_START
 # @param category PythonApp
+# @param construct Scatter
 # @param tag daliuge
 # @param[in] cparam/appclass Application Class/dlg.apps.simple.GenericScatterApp/String/readonly/False//False/
 #     \~English Application class
@@ -679,6 +681,7 @@ class GenericScatterApp(BarrierAppDROP):
 # resulting array.
 # @par EAGLE_START
 # @param category PythonApp
+# @param construct Scatter
 # @param tag daliuge
 # @param[in] cparam/appclass Application Class/dlg.apps.simple.GenericNpyScatterApp/String/readonly/False//False/
 #     \~English Application class
