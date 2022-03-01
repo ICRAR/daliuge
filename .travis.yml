@@ -36,9 +36,7 @@ matrix:
     # NOTE: The OpenAPI code still needs to be removed
     # - python: "3.8"
     #   env: TEST_OPENAPI=1
-    # NOTE: commenting 3.7 for now.
-    # travis early build stage fails non-reproducible
-    # - python: "3.7"
+    - python: "3.7"
     - name: doxygen
       before_install:
       install:
@@ -81,7 +79,7 @@ cache: pip
 
 before_install:
  - pip install -U coveralls pytest pytest-cov
- - pip install -U setuptools pip wheel dask
+ - pip install -U setuptools==60.8.2 pip wheel dask
 
 install:
  - pip install -e daliuge-common/
