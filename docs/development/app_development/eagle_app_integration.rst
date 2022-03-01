@@ -26,20 +26,14 @@ The xml2palette.py script can be run using this command line:
 
 .. code-block:: none
 
-  python3 xml2palette.py -i <path_to_input_directory> -o <path_output_file>
+  python3 xml2palette.py -i <path_to_input_directory> -t <tag> -o <path_output_file>
 
 
-The xml2palette.py script expects several enviroment variables to be present:
+If no tag is specified, all components found in the input directory will part of the output file. If, however, a tag is specified, then only those components with a matching tag will be part of the output. Tags can be added to the Doxygen comments for a component using:
 
-#. PROJECT_NAME (e.g. "leap")
-#. PROJECT_VERSION (e.g. "abcd1234")
-#. GIT_REPO (e.g. "https://gitlab.com/ska-telescope/icrar-leap-accelerate.git")
+.. code-block:: python
 
-These requirements can all be combined together on a single command line:
-
-.. code-block:: none
-
-  PROJECT_NAME=<project_name> PROJECT_VERSION=$(git rev-parse --short HEAD) GIT_REPO=$(git config --get remote.origin.url) python3 xml2palette.py -i <path_to_input_directory> -o <path_output_file>
+  # @param tag <tag_name>
 
 Component Doxygen Markup Guide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -58,15 +52,55 @@ Component Parameters are specified using the "param" command from doxygen. The c
 
 .. code-block:: python
 
-  # @param param/<internal_name> <user-facing name>/<default_value>/<type>/<access_descriptor>/<precious>/<description>
+  # @param[<direction>] cparam/<internal_name> <user-facing name>/<default_value>/<type>/<access_descriptor>/<precious>/<options>/<positional>/<description>
   #
   # e.g.
   #
-  # @param param/start_frequency Start Frequency/500/Integer/readwrite/False/
+  # @param[in] cparam/start_frequency Start Frequency/500/Integer/readwrite/False//False/
   #     \~English the start frequency to read from
   #     \~Chinese 要读取的起始频率
 
 The **precious** flag indicates that the value of the parameter should always be shown to the user, even when the parameter contains its default value. The flag also enforces that the parameter will always end-up on the command line, regardless of whether it contains the default value.
+
+The **positional** flag indicates that this parameter is a positional argument on a command line, and will be added to the command line without a prefix.
+
+Component Parameters vs. Application Parameters
+"""""""""""""""""""""""""""""""""""""""""""""""
+
+There are two different types of parameter that can be specified on a component. These two types are: Component Parameter (cparam) and Application Parameter (aparam). Component parameters are intended to direct the behaviour of the DALiuGE component itself, while Application parameters are intended to direct the application underneath the component. For example, a component may have Component Parameter describing the number of CPUs to be used for execution, but a application parameter for the arguments on the command line for the component.
+
+The two types of parameters use different keywords (cparam vs. aparam), as shown in the example below.
+
+.. code-block:: python
+
+  # @param[in] cparam/start_frequency Start Frequency/500/Integer/readwrite/False//False/
+  #     \~English the start frequency to read from
+  * @param[in] aparam/method Method/mean/Select/readwrite/False/mean,median/False/
+  *     \~English The method used for averaging
+
+
+Parameter Types
+"""""""""""""""
+
+Available types are:
+
+#. String
+#. Integer
+#. Float
+#. Complex
+#. Boolean
+#. Select
+#. Password
+#. Json
+
+The Select parameters describe parameters that only have a small number of valid values. The valid values are specified in the "options" part of the Doxygen command, using a comma separated list. For example:
+
+.. code-block:: python
+
+  * @param[in] aparam/method Method/mean/Select/readwrite/False/mean,median/False/
+  *     \~English The method used for averaging
+
+All other parameter types have empty options.
 
 Ports
 """""
@@ -94,15 +128,17 @@ Complete example for C/C++
   * of the parset to load a measurement set.
   * \par EAGLE_START
   * \param category DynlibApp
-  * \param[in] param/start_frequency Start Frequency/500/Integer/readwrite/False/
+  * \param[in] aparam/start_frequency Start Frequency/500/Integer/readwrite/False//False/
   *     \~English the start frequency to read from
   *     \~Chinese 要读取的起始频率
-  * \param[in] param/end_frequency End Frequency/500/Integer/readwrite/False/
+  * \param[in] aparam/end_frequency End Frequency/500/Integer/readwrite/False//False/
   *     \~English the end frequency to read from
   *     \~Chinese 要读取的结束频率
-  * \param[in] param/channels Channels/64/Integer/readonly/False/
+  * \param[in] aparam/channels Channels/64/Integer/readonly/False//False/
   *     \~English how many channels to load
   *     \~Chinese 需要加载的通道数量
+  * \param[in] aparam/method Method/mean/Select/readwrite/False/mean,median/False/
+  *     \~English The method used for averaging
   * \param[in] port/config Config/String/
   *     \~English the configuration of the input_port
   *     \~Chinese 输入端口的设置
@@ -126,15 +162,17 @@ Complete example for Python
   # of the parset to load a measurement set.
   # @par EAGLE_START
   # @param category PythonApp
-  # @param[in] param/start_frequency Start Frequency/500/Integer/readwrite/False/
+  # @param[in] aparam/start_frequency Start Frequency/500/Integer/readwrite/False//False/
   #     \~English the start frequency to read from
   #     \~Chinese 要读取的起始频率
-  # @param[in] param/end_frequency End Frequency/500/Integer/readwrite/False/
+  # @param[in] aparam/end_frequency End Frequency/500/Integer/readwrite/False//False/
   #     \~English the end frequency to read from
   #     \~Chinese 要读取的结束频率
-  # @param[in] param/channels Channels/64/Integer/readonly/False/
+  # @param[in] aparam/channels Channels/64/Integer/readonly/False//False/
   #     \~English how many channels to load
   #     \~Chinese 需要加载的通道数量
+  # @param[in] aparam/method Method/mean/Select/readwrite/False/mean,median/False/
+  #     \~English The method used for averaging
   # @param[in] port/config Config/String/
   #     \~English the configuration of the input_port
   #     \~Chinese 输入端口的设置
