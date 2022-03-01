@@ -267,35 +267,35 @@ def listify(o):
     return [o]
 
 
-def save_pickle(drop: DataDROP, data: Any):
-    """Saves a python object in pkl format"""
-    pickle.dump(data, drop)
+# def save_pickle(drop: DataDROP, data: Any):
+#     """Saves a python object in pkl format"""
+#     pickle.dump(data, drop)
 
 
-def load_pickle(drop: DataDROP) -> Any:
-    """Loads a pkl formatted data object stored in a DataDROP.
-    Note: does not support streaming mode.
-    """
-    buf = io.BytesIO()
-    desc = drop.open()
-    while True:
-        data = drop.read(desc)
-        if not data:
-            break
-        buf.write(data)
-    drop.close(desc)
-    return pickle.loads(buf.getbuffer())
+# def load_pickle(drop: DataDROP) -> Any:
+#     """Loads a pkl formatted data object stored in a DataDROP.
+#     Note: does not support streaming mode.
+#     """
+#     buf = io.BytesIO()
+#     desc = drop.open()
+#     while True:
+#         data = drop.read(desc)
+#         if not data:
+#             break
+#         buf.write(data)
+#     drop.close(desc)
+#     return pickle.loads(buf.getbuffer())
 
 
-async def save_pickle_iter(drop: DataDROP, data: Iterable[Any]):
-    for obj in data:
-        yield drop.write(obj)
+# async def save_pickle_iter(drop: DataDROP, data: Iterable[Any]):
+#     for obj in data:
+#         yield drop.write(obj)
 
 
-async def load_pickle_iter(drop: PathBasedDrop) -> AsyncIterable:
-    with open(drop.path, 'rb') as p:
-        while p.peek(1):
-            yield pickle.load(p)
+# async def load_pickle_iter(drop: PathBasedDrop) -> AsyncIterable:
+#     with open(drop.path, 'rb') as p:
+#         while p.peek(1):
+#             yield pickle.load(p)
 
 
 def save_numpy(drop, ndarray: np.ndarray, allow_pickle=False):
@@ -320,23 +320,23 @@ def load_numpy(drop: DataDROP, allow_pickle=False) -> np.ndarray:
     return res
 
 
-def save_jsonp(drop: PathBasedDrop, data: Dict[str, object]):
-    with open(drop.path, 'r') as f:
-        json.dump(data, f)
+# def save_jsonp(drop: PathBasedDrop, data: Dict[str, object]):
+#     with open(drop.path, 'r') as f:
+#         json.dump(data, f)
 
 
-def save_json(drop: DataDROP, data: Dict[str, object]):
-    # TODO: support BinaryIO or TextIO interface from DataIO?
-    json_string = json.dumps(data)
-    drop.write(json_string.encode('UTF-8'))
+# def save_json(drop: DataDROP, data: Dict[str, object]):
+#     # TODO: support BinaryIO or TextIO interface from DataIO?
+#     json_string = json.dumps(data)
+#     drop.write(json_string.encode('UTF-8'))
 
 
-def load_json(drop: DataDROP) -> dict:
-    dropio = drop.getIO()
-    dropio.open(OpenMode.OPEN_READ)
-    data = json.loads(dropio.buffer())
-    dropio.close()
-    return data
+# def load_json(drop: DataDROP) -> dict:
+#     dropio = drop.getIO()
+#     dropio.open(OpenMode.OPEN_READ)
+#     data = json.loads(dropio.buffer())
+#     dropio.close()
+#     return data
 
 
 class DROPFile(object):
