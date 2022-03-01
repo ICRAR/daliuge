@@ -265,6 +265,7 @@ class NodeManagerBase(DROPManager):
             self._memoryManager.register_session(sessionId)
 
         def foreach(drop):
+            drop.autofill_environment_variables()
             if self._threadpool is not None:
                 drop._tp = self._threadpool
                 if isinstance(drop, InMemoryDROP):
