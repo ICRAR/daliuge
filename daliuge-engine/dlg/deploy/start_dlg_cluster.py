@@ -216,10 +216,14 @@ def start_mm(node_list, log_dir, logv=1):
         "-m",
         "2048",
     ]
-    cmdline.dlgMM(parser, args)
+    proc = tool.start_process("mm", args)
+    LOGGER.info("Master manager process started with pid %d", proc.pid)
+    return proc
+#    cmdline.dlgMM(parser, args)
 
 
 def _stop(endpoints):
+    LOGGER.info(f"Stopping ThreadPool")
     def _the_stop(endpoint):
         common.BaseDROPManagerClient(endpoint[0], endpoint[1]).stop()
 
@@ -230,28 +234,31 @@ def _stop(endpoints):
 
 
 def stop_nms(ips):
+    LOGGER.info(f"Stopping node managers on nodes {ips}")
     _stop([(ip, NODE_DEFAULT_REST_PORT) for ip in ips])
 
 
 def stop_dims(ips):
+    LOGGER.info(f"Stopping island managers on nodes {ips}")
     _stop([(ip, ISLAND_DEFAULT_REST_PORT) for ip in ips])
 
 
 def stop_mm(ip_addr):
+    LOGGER.info(f"Stopping master managers on node {ip_addr}")
     _stop([(ip_addr, MASTER_DEFAULT_REST_PORT)])
 
 
-def submit_and_monitor(physical_graph, opts, port):
+def submit_and_monitor(physical_graph, opts, host, port):
     def _task():
         dump_path = None
         if opts.dump:
             dump_path = os.path.join(opts.log_dir, "status-monitoring.json")
-        session_id = common.submit(physical_graph, host="127.0.0.1", port=port,
+        session_id = common.submit(physical_graph, host=host, port=port,
                                    session_id=opts.ssid)
         while True:
             try:
                 common.monitor_sessions(
-                    session_id, host="127.0.0.1", port=port, status_dump_path=dump_path
+                    session_id, host=host, port=port, status_dump_path=dump_path
                 )
                 break
             except:
@@ -657,7 +664,7 @@ def main():
 
             physical_graph = get_pg(options, remote.nm_ips, remote.dim_ips)
             monitoring_thread = submit_and_monitor(
-                physical_graph, options, ISLAND_DEFAULT_REST_PORT
+                physical_graph, options, remote.my_ip, ISLAND_DEFAULT_REST_PORT
             )
             monitoring_thread.join()
             stop_dims(remote.dim_ips)
@@ -684,11 +691,11 @@ def main():
             )
 
         monitoring_thread = submit_and_monitor(
-            physical_graph, options, MASTER_DEFAULT_REST_PORT
+            physical_graph, options, remote.my_ip, MASTER_DEFAULT_REST_PORT
         )
-        start_mm(remote.dim_ips, log_dir, logv=logv)
+        mm_proc = start_mm(remote.dim_ips, log_dir, logv=logv)
         monitoring_thread.join()
-        stop_mm("127.0.0.1")
+        stop_mm(remote.my_ip) # TODO: I don't think we need this and least not in the single island case
         stop_dims(remote.dim_ips)
     else:
         nm_ips = remote.recv_dim_nodes()
