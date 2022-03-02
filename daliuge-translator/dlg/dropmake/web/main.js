@@ -283,14 +283,14 @@ async function helmDeploy() {
     const append_graph = await fetch(append_graph_url, {
         credentials: 'include',
         method: 'POST',
-        mode: 'no-cors',
+        mode: request_mode,
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'text/plain',
             'Content-Encoding': 'gzip'
         },
         referrerPolicy: 'origin',
-        body: JSON.stringify(pg_spec_response.pg_spec)
-        //body: new Blob([compressed_pg_spec], {type: 'application/json'})
+        //body: JSON.stringify(pg_spec_response.pg_spec)
+        body: new Blob([compressed_pg_spec], {type: 'application/json'})
         // body: new Blob([buf])
     })
         .then(handleFetchErrors)
