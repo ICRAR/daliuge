@@ -1,3 +1,4 @@
+#!/bin/bash
 DOCKER_OPTS="\
 --shm-size=1g --ipc=shareable \
 --rm \
@@ -14,7 +15,7 @@ common_prep ()
     mkdir -p ${DLG_ROOT}/testdata
     mkdir -p ${DLG_ROOT}/code
     # get current user and group id and prepare passwd and group files
-    DOCKER_GID=`python -c "from dlg.prepareUser import prepareUser; print(prepareUser(DLG_ROOT='${DLG_ROOT}'))"`
+    DOCKER_GID=`python3 -c "from dlg.prepareUser import prepareUser; print(prepareUser(DLG_ROOT='${DLG_ROOT}'))"`
     DOCKER_OPTS=${DOCKER_OPTS}" --group-add ${DOCKER_GID}"
     DOCKER_OPTS=${DOCKER_OPTS}" -v ${DLG_ROOT}/workspace/settings/passwd:/etc/passwd"
     DOCKER_OPTS=${DOCKER_OPTS}" -v ${DLG_ROOT}/workspace/settings/group:/etc/group"
