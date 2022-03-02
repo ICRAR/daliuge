@@ -293,36 +293,6 @@ def get_schedule_mat():
         return "Failed to get schedule matrices for {0}: {1}".format(pgt_id, ex)
 
 
-@get("/gen_pg_helm")
-def gen_pg_helm():
-    """
-    RESTful interface to deploy a PGT as a K8s helm chart.
-    """
-    # Get pgt_data
-    from ...deploy.start_helm_cluster import start_helm
-    pgt_id = request.query.get("pgt_id")
-    pgtp = pg_mgr.get_pgt(pgt_id)
-    if pgtp is None:
-        response.status = 404
-        return "PGT(P) with id {0} not found in the Physical Graph Manager".format(
-            pgt_id
-        )
-
-    pgtpj = pgtp._gojs_json_obj
-    logger.info("PGTP: %s" % pgtpj)
-    pg_spec = pgtp.to_pg_spec(0, ret_str=False, tpl_nodes_len=1)
-    # Send pgt_data to helm_start
-    try:
-        start_helm(json.dumps(pg_spec), 1, pgt_dir)
-    except restutils.RestClientException as ex:
-        response.status = 500
-        print(traceback.format_exc())
-        return "Fail to deploy physical graph: {0}".format(ex)
-    # TODO: Not sure what to redirect to yet
-    response.status = 200
-    return "Inspect your k8s dashboard for deployment status"
-
-
 @get("/gen_pg")
 def gen_pg():
     """
