@@ -28,6 +28,7 @@ import os
 import sys
 import shutil
 import pathlib
+import re
 
 import dlg
 import yaml
@@ -79,6 +80,19 @@ def _find_resources(pgt_data):
     return islands, nodes
 
 
+def check_k8s_env():
+    """
+    Makes sure kubectl can be called and is accessible.
+    """
+    try:
+        output = subprocess.run(['kubectl version'], capture_output=True,
+                                shell=True).stdout
+        pattern = re.compile(r'^Client Version:.*\nServer Version:.*')
+        return re.match(pattern, output.decode(encoding='utf-8'))
+    except subprocess.SubprocessError as err:
+        raise err
+
+
 class HelmClient:
     """
     Writes necessary files to launch job with kubernetes.
@@ -89,6 +103,7 @@ class HelmClient:
                  value_config=None, physical_graph_file=None, chart_vars=None):
         if value_config is None:
             value_config = dict()
+        self._k8s_access = check_k8s_env()
         self._chart_name = chart_name
         self._chart_vars = {'name': 'daliuge-daemon',
                             'appVersion': 'v1.0.0',
@@ -145,6 +160,8 @@ class HelmClient:
         Translates a physical graph to a kubernetes helm chart.
         For now, it will just try to run everything in a single container.
         """
+        if not self._k8s_access:
+            raise RuntimeError("Cannot access k8s")
         # Add charts
         self._set_physical_graph(physical_graph_content, co_host)
         _write_chart(self._chart_dir, 'Chart.yaml', self._chart_name, self._chart_version,
@@ -158,6 +175,8 @@ class HelmClient:
         # Update template
 
     def start_manager(self, manager_node):
+        if not self._k8s_access:
+            raise RuntimeError("Cannot access k8s")
         self._submission_endpoint = self._pod_details[manager_node]['svc']
         client = RestClient(self._submission_endpoint,
                             self._value_data['service']['daemon']['port'], timeout=30)
@@ -171,6 +190,8 @@ class HelmClient:
                      content_type='application/json').read()
 
     def start_nodes(self):
+        if not self._k8s_access:
+            raise RuntimeError("Cannot access k8s")
         ips = [x['svc'] for x in self._pod_details.values()]
         ips.remove(self._pod_details['master']['svc'])
         for ip in ips:
@@ -191,6 +212,8 @@ class HelmClient:
         Launches the built helm chart using the most straightforward commands possible.
         Assumes all files are prepared and validated.
         """
+        if not self._k8s_access:
+            raise RuntimeError("Cannot access k8s")
         if self._submit:
             os.chdir(self._deploy_dir)
             _write_values(self._chart_dir,
@@ -217,6 +240,8 @@ class HelmClient:
             print(f"Created helm chart {self._chart_name} in {self._deploy_dir}")
 
     def teardown(self):
+        if not self._k8s_access:
+            raise RuntimeError("Cannot access k8s")
         for i in range(self._num_machines - 1, -1, -1):
             subprocess.check_output([f'helm uninstall daliuge-daemon-{i}'], shell=True)
         subprocess.check_output([f'helm uninstall daliuge-daemon-master'], shell=True)
@@ -226,6 +251,8 @@ class HelmClient:
         There is a semi-dynamic element to fetching the IPs of Node(s) to deploy to.
         Hence, launching the chart and initiating graph execution have been de-coupled.
         """
+        if not self._k8s_access:
+            raise RuntimeError("Cannot access k8s")
         # TODO: Check all nodes are operational first.
         pgt_data = json.loads(self._physical_graph_file)
         # node_ips = [x['ip'] for x in self._pod_details.values()]
