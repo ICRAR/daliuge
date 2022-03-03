@@ -163,8 +163,10 @@ def start_node_mgr(
         "--event-listeners",
         event_listeners,
     ]
+    # if event_listeners: args += ["--event-listeners", event_listeners]
     # return cmdline.dlgNM(optparse.OptionParser(), args)
     proc = tool.start_process("nm", args)
+    # time.sleep(3)
     LOGGER.info("Node manager process started with pid %d", proc.pid)
     return proc
 
@@ -333,6 +335,7 @@ def get_pg(opts, nms, dims):
         timeout=MM_WAIT_TIME,
         retry=3,
     )
+    LOGGER.info(f"Mapping graph to available resources: nms {nms}, dims {dims}")
     physical_graph = pg_generator.resource_map(pgt, dims + nms, num_islands=num_dims,
                                                co_host_dim=opts.co_host_dim)
     graph_name = os.path.basename(opts.log_dir)
@@ -494,7 +497,7 @@ def main():
         action="store_true",
         dest="all_nics",
         help="Listen on all NICs for a node manager",
-        default=False,
+        default=True,
     )
 
     parser.add_option(
@@ -631,10 +634,9 @@ def main():
         LOGGER.debug("Dumping list of nodes to %s", nodesfile)
         with open(nodesfile, "wt") as env_file:
             env_file.write("\n".join(remote.sorted_peers))
-
-    # start NM if current node is NM node
+    dim_proc = None
+    # start the NM
     if remote.is_nm:
-        LOGGER.info(f"Node {remote.my_ip} is hosting a Node Manager")
         nm_proc = start_node_mgr(
             log_dir,
             remote.my_ip,
@@ -643,53 +645,66 @@ def main():
             host=None if options.all_nics else remote.my_ip,
             event_listeners=options.event_listeners,
                 )
-    # start proxy if current node is proxy node
-    if remote.is_proxy:
-        # Wait until the Island Manager is open
-        LOGGER.info(f"Node {remote.my_ip} is hosting a proxy")
-        if utils.portIsOpen(remote.hl_mgr_ip, ISLAND_DEFAULT_REST_PORT, 100):
-            start_proxy(
-                remote.hl_mgr_ip,
-                ISLAND_DEFAULT_REST_PORT,
-                options.monitor_host,
-                options.monitor_port,
-            )
-        else:
-            LOGGER.warning(
-                "Couldn't connect to the main drop manager, proxy not started"
-            )
-
-    # start DIM, and MM if current node is DIM and highest-level
-    # and submit graph
-    if remote.is_highest_level_manager or (remote.my_ip in remote.dim_ips):
-        LOGGER.info(f"Starting island manager on node: {remote.my_ip}")
-        dim_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
-
-        if remote.is_highest_level_manager:
-            LOGGER.info(f"Node {remote.my_ip} is hosting the highest level manager")
-            mm_proc = start_mm(remote.dim_ips, log_dir, logv=logv)
-            physical_graph = get_pg(options, remote.nm_ips, remote.dim_ips)
-
-            # if more than one DIM
-            if len(remote.dim_ips) > 1:
-                remote.send_dim_nodes(physical_graph)
-                # make sure all DIMs are up running
-                dim_ips_up = check_hosts(
-                    remote.dim_ips, ISLAND_DEFAULT_REST_PORT, timeout=MM_WAIT_TIME, retry=10
+    if options.num_islands == 1:
+        if remote.is_proxy:
+            # Wait until the Island Manager is open
+            if utils.portIsOpen(remote.hl_mgr_ip, ISLAND_DEFAULT_REST_PORT, 100):
+                start_proxy(
+                    remote.hl_mgr_ip,
+                    ISLAND_DEFAULT_REST_PORT,
+                    options.monitor_host,
+                    options.monitor_port,
                 )
-                if len(dim_ips_up) < len(remote.dim_ips):
-                    LOGGER.warning(
-                        "Not all DIMs were up and running: %d/%d",
-                        len(dim_ips_up),
-                        len(remote.dim_ips),
-                    )
+            else:
+                LOGGER.warning(
+                    "Couldn't connect to the main drop manager, proxy not started"
+                )
+        else:
+            if remote.my_ip in remote.dim_ips:
+                LOGGER.info(f"Starting island managers on nodes: {remote.dim_ips}")
+                dim_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
+
+            physical_graph = get_pg(options, remote.nm_ips, remote.dim_ips)
             monitoring_thread = submit_and_monitor(
                 physical_graph, options, remote.my_ip, ISLAND_DEFAULT_REST_PORT
             )
             monitoring_thread.join()
-            stop_mm(remote.my_ip)
-            stop_dims(remote.dim_ips)
-            stop_nms(remote.nm_ips)
+            if remote.my_ip in remote.dim_ips:
+                stop_dims(remote.dim_ips)
+                stop_nms(remote.nm_ips)
+        if dim_proc is not None:
+            # Stop DALiuGE.
+            LOGGER.info("Stopping DALiuGE island manager on rank %d", remote.rank)
+            utils.terminate_or_kill(dim_proc, 5)
+
+    elif remote.is_highest_level_manager:
+
+        physical_graph = get_pg(options, remote.nm_ips, remote.dim_ips)
+        remote.send_dim_nodes(physical_graph)
+
+        # 7. make sure all DIMs are up running
+        dim_ips_up = check_hosts(
+            remote.dim_ips, ISLAND_DEFAULT_REST_PORT, timeout=MM_WAIT_TIME, retry=10
+        )
+        if len(dim_ips_up) < len(remote.dim_ips):
+            LOGGER.warning(
+                "Not all DIMs were up and running: %d/%d",
+                len(dim_ips_up),
+                len(remote.dim_ips),
+            )
+
+        monitoring_thread = submit_and_monitor(
+            physical_graph, options, remote.my_ip, MASTER_DEFAULT_REST_PORT
+        )
+        mm_proc = start_mm(remote.dim_ips, log_dir, logv=logv)
+        monitoring_thread.join()
+        stop_mm(remote.my_ip) # TODO: I don't think we need this and least not in the single island case
+        stop_dims(remote.dim_ips)
+    else:
+        nm_ips = remote.recv_dim_nodes()
+        proc = start_dim(nm_ips, log_dir, remote.my_ip, logv=logv)
+        utils.wait_or_kill(proc, 1e8, period=5)
+        stop_nms(remote.nm_ips)
 
 
 if __name__ == "__main__":

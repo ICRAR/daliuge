@@ -2849,12 +2849,9 @@ def resource_map(pgt, nodes, num_islands=1, co_host_dim=True):
         err_info = "Empty node_list, cannot map the PG template"
         raise ValueError(err_info)
 
-    if co_host_dim:
-        dim_list = nodes
-        nm_list = nodes
-    else:
-        dim_list = nodes[0:num_islands]
-        nm_list = nodes[num_islands:]
+    # if co_host_dim == True the island nodes appear twice
+    dim_list = nodes[0:num_islands]
+    nm_list = nodes[num_islands:]
     if type(pgt[0]) is str:
         pgt = pgt[1]  # remove the graph name TODO: we may want to retain that
     for drop_spec in pgt:
