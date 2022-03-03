@@ -46,6 +46,9 @@
                 },
                 "lastModifiedDatetime": {
                     "type": "integer"
+                },
+                "numLGNodes": {
+                    "type": "integer"
                 }
             },
             "required": [
@@ -62,7 +65,8 @@
                 "schemaVersion",
                 "lastModifiedName",
                 "lastModifiedEmail",
-                "lastModifiedDatetime"
+                "lastModifiedDatetime",
+                "numLGNodes"
             ]
         },
         "nodeDataArray": {
