@@ -30,8 +30,8 @@ import subprocess
 from dlg.runtime import __git_version__ as git_commit
 
 from dlg.deploy.configs import ConfigFactory, init_tpl
-from deployment_constants import DEFAULT_AWS_MON_PORT, DEFAULT_AWS_MON_HOST
-from deployment_utils import find_numislands, label_job_dur
+from dlg.deploy.deployment_constants import DEFAULT_AWS_MON_PORT, DEFAULT_AWS_MON_HOST
+from dlg.deploy.deployment_utils import find_numislands, label_job_dur
 
 
 class SlurmClient:
