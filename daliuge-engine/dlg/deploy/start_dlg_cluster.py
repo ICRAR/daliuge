@@ -139,7 +139,8 @@ def get_workspace_dir(log_dir):
 
 
 def start_node_mgr(
-        log_dir, my_ip, logv=1, max_threads=0, host=None, event_listeners=""
+        log_dir, my_ip, logv=1, max_threads=0, host=None, event_listeners="",
+        use_tool=True
 ):
     """
     Start node manager
@@ -160,15 +161,17 @@ def start_node_mgr(
         "-t",
         str(max_threads),
         "--no-dlm",
-        "--event-listeners",
-        event_listeners,
     ]
-    # if event_listeners: args += ["--event-listeners", event_listeners]
-    # return cmdline.dlgNM(optparse.OptionParser(), args)
-    proc = tool.start_process("nm", args)
-    # time.sleep(3)
-    LOGGER.info("Node manager process started with pid %d", proc.pid)
-    return proc
+    if event_listeners: args += ["--event-listeners", event_listeners]
+
+    if use_tool: 
+        # This returns immediately
+        proc = tool.start_process("nm", args)
+        LOGGER.info("Node manager process started with pid %d", proc.pid)
+        return proc
+    else:
+        # This blocks until NM shutdown externally
+        return cmdline.dlgNM(optparse.OptionParser(), args)
 
 
 def start_dim(node_list, log_dir, origin_ip, logv=1):
@@ -250,13 +253,18 @@ def stop_mm(ip_addr):
     _stop([(ip_addr, MASTER_DEFAULT_REST_PORT)])
 
 
-def submit_and_monitor(physical_graph, opts, host, port):
+def submit_and_monitor(physical_graph, opts, host, port, submit=True):
     def _task():
         dump_path = None
         if opts.dump:
             dump_path = os.path.join(opts.log_dir, "status-monitoring.json")
-        session_id = common.submit(physical_graph, host=host, port=port,
+        if submit: 
+            session_id = common.submit(physical_graph, host=host, port=port,
                                    session_id=opts.ssid)
+        else:
+            session_id = opts.ssid
+
+        LOGGER.info(f"Start monitoring session(s) '{session_id}' on host {host}:{port}")
         while True:
             try:
                 common.monitor_sessions(
@@ -264,7 +272,8 @@ def submit_and_monitor(physical_graph, opts, host, port):
                 )
                 break
             except:
-                LOGGER.exception("Monitoring failed, restarting it")
+                LOGGER.exception(f"Monitoring {host}:{port} failed, restarting it")
+                time.sleep(5)
 
     threads = threading.Thread(target=_task)
     threads.start()
@@ -636,16 +645,23 @@ def main():
             env_file.write("\n".join(remote.sorted_peers))
     dim_proc = None
     # start the NM
-    if remote.is_nm:
-        nm_proc = start_node_mgr(
-            log_dir,
-            remote.my_ip,
-            logv=logv,
-            max_threads=options.max_threads,
-            host=None if options.all_nics else remote.my_ip,
-            event_listeners=options.event_listeners,
-                )
     if options.num_islands == 1:
+        submit = True
+        REST_PORT = ISLAND_DEFAULT_REST_PORT
+
+        # need to check for NM first and go on of co-hosted
+        if remote.is_nm:
+            co_hosted = (remote.my_ip in remote.dim_ips)
+            nm_proc = start_node_mgr(
+                log_dir,
+                remote.my_ip,
+                logv=logv,
+                max_threads=options.max_threads,
+                host=None if options.all_nics else remote.my_ip,
+                event_listeners=options.event_listeners,
+                use_tool = co_hosted
+                    )
+
         if remote.is_proxy:
             # Wait until the Island Manager is open
             if utils.portIsOpen(remote.hl_mgr_ip, ISLAND_DEFAULT_REST_PORT, 100):
@@ -659,25 +675,31 @@ def main():
                 LOGGER.warning(
                     "Couldn't connect to the main drop manager, proxy not started"
                 )
-        else:
-            if remote.my_ip in remote.dim_ips:
+        elif remote.my_ip in remote.dim_ips:
                 LOGGER.info(f"Starting island managers on nodes: {remote.dim_ips}")
                 dim_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
+                # whichever way we came from, now we have to wait until session is finished
+                # we always monitor the island, else we will have race conditions
+                physical_graph = get_pg(options, remote.nm_ips, remote.dim_ips)
+                monitoring_thread = submit_and_monitor(
+                    physical_graph, options, remote.dim_ips[0], REST_PORT, submit=co_hosted
+                )
+                monitoring_thread.join()
+                # now the session is finished
 
-            physical_graph = get_pg(options, remote.nm_ips, remote.dim_ips)
-            monitoring_thread = submit_and_monitor(
-                physical_graph, options, remote.my_ip, ISLAND_DEFAULT_REST_PORT
-            )
-            monitoring_thread.join()
-            if remote.my_ip in remote.dim_ips:
+                # still shutting DIM down first to avoid monitoring conflicts
                 stop_dims(remote.dim_ips)
+                # now stop all the NMs
                 stop_nms(remote.nm_ips)
-        if dim_proc is not None:
-            # Stop DALiuGE.
-            LOGGER.info("Stopping DALiuGE island manager on rank %d", remote.rank)
-            utils.terminate_or_kill(dim_proc, 5)
+
+        # shouldn't need this in addition
+        # if dim_proc is not None:
+        #     # Stop DALiuGE.
+        #     LOGGER.info("Stopping DALiuGE island manager on rank %d", remote.rank)
+        #     utils.terminate_or_kill(dim_proc, 5)
 
     elif remote.is_highest_level_manager:
+        # TODO: In the case of more than one island the NMs are not yet started
 
         physical_graph = get_pg(options, remote.nm_ips, remote.dim_ips)
         remote.send_dim_nodes(physical_graph)
