@@ -163,8 +163,10 @@ def start_node_mgr(
         "--event-listeners",
         event_listeners,
     ]
+    # if event_listeners: args += ["--event-listeners", event_listeners]
     # return cmdline.dlgNM(optparse.OptionParser(), args)
     proc = tool.start_process("nm", args)
+    # time.sleep(3)
     LOGGER.info("Node manager process started with pid %d", proc.pid)
     return proc
 
@@ -333,6 +335,7 @@ def get_pg(opts, nms, dims):
         timeout=MM_WAIT_TIME,
         retry=3,
     )
+    LOGGER.info(f"Mapping graph to available resources: nms {nms}, dims {dims}")
     physical_graph = pg_generator.resource_map(pgt, dims + nms, num_islands=num_dims,
                                                co_host_dim=opts.co_host_dim)
     graph_name = os.path.basename(opts.log_dir)
@@ -494,7 +497,7 @@ def main():
         action="store_true",
         dest="all_nics",
         help="Listen on all NICs for a node manager",
-        default=False,
+        default=True,
     )
 
     parser.add_option(
@@ -614,9 +617,7 @@ def main():
                  "%(name)s#%(funcName)s:%(lineno)s %(message)s"
     logging.basicConfig(filename=logfile, level=logging.DEBUG, format=log_format)
 
-    LOGGER.info("Starting DALiuGE cluster with %d nodes", remote.size)
-    LOGGER.debug("Cluster nodes: %r", remote.sorted_peers)
-    LOGGER.debug("Using %s as the local IP where required", remote.my_ip)
+    LOGGER.info("This node has IP address: %s", remote.my_ip)
 
     envfile_name = os.path.join(log_dir, "env.txt")
     LOGGER.debug("Dumping process' environment to %s", envfile_name)
@@ -626,12 +627,13 @@ def main():
 
     logv = max(min(3, options.verbose_level), 1)
 
+    # need to dump nodes file first
     if remote.is_highest_level_manager:
+        LOGGER.info(f"Node {remote.my_ip} is hosting the highest level manager")
         nodesfile = os.path.join(log_dir, "nodes.txt")
         LOGGER.debug("Dumping list of nodes to %s", nodesfile)
         with open(nodesfile, "wt") as env_file:
             env_file.write("\n".join(remote.sorted_peers))
-
     dim_proc = None
     # start the NM
     if remote.is_nm:
@@ -658,8 +660,8 @@ def main():
                     "Couldn't connect to the main drop manager, proxy not started"
                 )
         else:
-            LOGGER.info(f"Starting island managers on nodes: {remote.dim_ips}")
             if remote.my_ip in remote.dim_ips:
+                LOGGER.info(f"Starting island managers on nodes: {remote.dim_ips}")
                 dim_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
 
             physical_graph = get_pg(options, remote.nm_ips, remote.dim_ips)
@@ -667,8 +669,9 @@ def main():
                 physical_graph, options, remote.my_ip, ISLAND_DEFAULT_REST_PORT
             )
             monitoring_thread.join()
-            stop_dims(remote.dim_ips)
-            stop_nms(remote.nm_ips)
+            if remote.my_ip in remote.dim_ips:
+                stop_dims(remote.dim_ips)
+                stop_nms(remote.nm_ips)
         if dim_proc is not None:
             # Stop DALiuGE.
             LOGGER.info("Stopping DALiuGE island manager on rank %d", remote.rank)
