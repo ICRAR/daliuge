@@ -73,7 +73,6 @@ def _read_values(chart_dir):
 
 def _find_resources(pgt_data):
     pgt = json.loads(pgt_data)
-    print(json.dumps(pgt, indent=4))
     nodes = list(map(lambda x: x['node'], pgt))
     islands = list(map(lambda x: x['island'], pgt))
     islands = list(set(islands))
