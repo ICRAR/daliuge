@@ -192,7 +192,6 @@ async function helmDeploy() {
     const append_graph_url = manager_url + "/api/sessions/" + sessionId + "/graph/append";
     const deploy_graph_url = manager_url + "/api/sessions/" + sessionId + "/deploy";
     const mgr_url = manager_url + "/session?sessionId=" + sessionId;
-
     // fetch the PGT from this server
     console.log("sending request to ", pgt_url);
     console.log("graph name:", pgtName);
@@ -204,11 +203,6 @@ async function helmDeploy() {
         .catch(function (error) {
             alert(error + "\nGetting PGT unsuccessful: Unable to contiune!");
         });
-
-    // This is for a deferred start of daliuge, e.g. on SLURM
-    console.log("sending request to ", create_helm_url);
-    var body = [pgtName, pgt]; // we send the name in the body with the pgt
-    // console.log("Sending PGT with name:", body);
     // fetch the nodelist from engine
     console.log("sending request to ", node_list_url);
     const node_list = await fetch(node_list_url, {
@@ -225,7 +219,6 @@ async function helmDeploy() {
         .catch(function (error) {
             alert(error + "\nGetting node_list unsuccessful: Unable to contiune!");
         });
-
     console.log("node_list", node_list);
     // build object containing manager data
     const pg_spec_request_data = {
@@ -251,7 +244,6 @@ async function helmDeploy() {
         });
 
     console.log("pg_spec response", pg_spec_response);
-
     // create session on engine
     const session_data = {"sessionId": sessionId};
     const create_session = await fetch(create_session_url, {
@@ -270,9 +262,7 @@ async function helmDeploy() {
         .catch(function (error) {
             alert(error + "\nCreating session unsuccessful: Unable to contiune!");
         });
-
     console.log("create session response", create_session);
-
     // gzip the pg_spec
     console.log(pg_spec_response.pg_spec);
     const buf = fflate.strToU8(JSON.stringify(pg_spec_response.pg_spec));
@@ -285,7 +275,7 @@ async function helmDeploy() {
         method: 'POST',
         mode: request_mode,
         headers: {
-            'Content-Type': 'text/plain',
+            'Content-Type': 'application/json',
             'Content-Encoding': 'gzip'
         },
         referrerPolicy: 'origin',
@@ -299,7 +289,6 @@ async function helmDeploy() {
             alert(error + "\nUnable to contiune!");
         });
     console.log("append graph response", append_graph);
-
     // deploy graph
     // NOTE: URLSearchParams here turns the object into a x-www-form-urlencoded form
     const deploy_graph = await fetch(deploy_graph_url, {
