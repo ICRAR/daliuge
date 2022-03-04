@@ -73,6 +73,7 @@ def _read_values(chart_dir):
 
 def _find_resources(pgt_data):
     pgt = json.loads(pgt_data)
+    print(json.dumps(pgt, indent=4))
     nodes = list(map(lambda x: x['node'], pgt))
     islands = list(map(lambda x: x['island'], pgt))
     islands = list(set(islands))
@@ -246,7 +247,7 @@ class HelmClient:
             subprocess.check_output([f'helm uninstall daliuge-daemon-{i}'], shell=True)
         subprocess.check_output([f'helm uninstall daliuge-daemon-master'], shell=True)
 
-    def submit_job(self):
+    def submit_pgt(self):
         """
         There is a semi-dynamic element to fetching the IPs of Node(s) to deploy to.
         Hence, launching the chart and initiating graph execution have been de-coupled.
@@ -262,3 +263,15 @@ class HelmClient:
         physical_graph = pg_generator.resource_map(pgt_data, node_ips, co_host_dim=True)
         # TODO: Add dumping to log-dir
         submit(physical_graph, self._submission_endpoint, skip_deploy=False)
+
+    def submit_pg(self):
+        """
+        There is a semi-dynamic element to fetching the IPs of Node(s) to deploy to.
+        Hence, launching the chart and initiating graph execution have been de-coupled.
+        """
+        if not self._k8s_access:
+            raise RuntimeError("Cannot access k8s")
+        # TODO: Check all nodes are operational first.
+        pg_data = json.loads(self._physical_graph_file)
+        # TODO: Add dumping to log-dir
+        submit(pg_data, self._submission_endpoint, skip_deploy=False)

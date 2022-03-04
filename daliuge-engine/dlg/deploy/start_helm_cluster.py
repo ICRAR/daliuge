@@ -66,7 +66,7 @@ def start_helm(physical_graph_template, num_nodes: int, deploy_dir: str):
     helm_client.create_helm_chart(json.dumps(pgt), co_host=True)
     try:
         helm_client.launch_helm()
-        helm_client.submit_job()
+        helm_client.submit_pgt()
     except dlg.restutils.RestClientException as exp:
         raise exp
     except dlg.exceptions.InvalidGraphException as exp2:
@@ -129,7 +129,7 @@ def main():
         helm_client.create_helm_chart(json.dumps(physical_graph))
         try:
             helm_client.launch_helm()
-            helm_client.submit_job()
+            helm_client.submit_pgt()
         except dlg.restutils.RestClientException as exp:
             raise exp
         except dlg.exceptions.InvalidGraphException as exp2:
