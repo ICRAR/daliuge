@@ -307,7 +307,8 @@ async function helmDeploy() {
 
     console.log("deploy graph response", deploy_graph);
     // Open DIM session page in new tab
-    window.open(mgr_url, '_blank').focus();
+    // Until we have somewhere else to re-direct helm deployments. This is probably for the best.
+    //window.open(mgr_url, '_blank').focus();
 }
 
 
