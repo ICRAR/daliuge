@@ -33,6 +33,7 @@ DOXYGEN_SETTINGS = [
 
 KNOWN_PARAM_DATA_TYPES = ["String", "Integer", "Float", "Complex", "Boolean", "Select", "Password", "Json"]
 KNOWN_CONSTRUCT_TYPES = ["Scatter", "Gather"]
+KNOWN_DATA_CATEGORIES = ["File", "Memory", "SharedMemory", "NGAS", "ParameterSet", "S3", "Plasma", "PlasmaFlight"]
 
 
 def get_options_from_command_line(argv):
@@ -345,7 +346,6 @@ def create_palette_node_from_params(params):
     category = ""
     tag = ""
     construct = ""
-    categoryType = ""
     inputPorts = []
     outputPorts = []
     inputLocalPorts = []
@@ -439,6 +439,12 @@ def create_palette_node_from_params(params):
             if type not in KNOWN_PARAM_DATA_TYPES:
                 logging.warning(
                     text + " aparam '" + name + "' has unknown type: " + type
+                )
+
+            # check that category if suitable for aparams
+            if category in KNOWN_DATA_CATEGORIES:
+                logging.warning(
+                    text + " has aparam, which is not suitable for a " + category + " node"
                 )
 
             # check that a param of type "Select" has some options specified,
@@ -815,11 +821,11 @@ if __name__ == "__main__":
                 logging.info("Adding component: " + node["text"])
                 nodes.append(node)
 
-            # if a construct is found, add to nodes
-            if data["construct"] != "":
-                logging.info("Adding component: " + data["construct"] + "/" + node["text"])
-                construct_node = create_construct_node(data["construct"], node)
-                nodes.append(construct_node)
+                # if a construct is found, add to nodes
+                if data["construct"] != "":
+                    logging.info("Adding component: " + data["construct"] + "/" + node["text"])
+                    construct_node = create_construct_node(data["construct"], node)
+                    nodes.append(construct_node)
 
         # check if gitrepo and version params were found and cache the values
         for param in params:
