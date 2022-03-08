@@ -1855,6 +1855,17 @@ class InMemoryDROP(DataDROP):
         return "mem://%s/%d/%d" % (hostname, os.getpid(), id(self._buf))
 
 
+##
+# @brief SharedMemory
+# @details Data stored in shared memory
+# @par EAGLE_START
+# @param category SharedMemory
+# @param tag template
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
+#     \~English Estimated size of the data contained in this node
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
+#     \~English Is this node the end of a group?
+# @par EAGLE_END
 class SharedMemoryDROP(DataDROP):
     """
     A DROP that points to data stored in shared memory.
@@ -2118,16 +2129,17 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
 # @brief Plasma
 # @details An object in a Apache Arrow Plasma in-memory object store
 # @par EAGLE_START
-# @par category Plasma
-# @param[in] param/data_volume Data volume/5/Float/readwrite/
+# @param category Plasma
+# @param tag template
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
-# @param[in] param/group_end Group end/False/Boolean/readwrite/
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
 #     \~English Is this node the end of a group?
-# @param[in] param/plasma_path Plasma Path//String/readwrite/
+# @param[in] cparam/plasma_path Plasma Path//String/readwrite/False//False/
 #     \~English Path to the local plasma store
-# @param[in] param/object_id Object Id//String/readwrite/
+# @param[in] cparam/object_id Object Id//String/readwrite/False//False/
 #     \~English PlasmaId of the object for all compute nodes
-# @param[in] param/use_staging Use Staging/False/Boolean/readwrite/
+# @param[in] cparam/use_staging Use Staging/False/Boolean/readwrite/False//False/
 #     \~English Enables writing to a dynamically resizeable staging buffer
 # @par EAGLE_END
 class PlasmaDROP(DataDROP):
@@ -2162,16 +2174,17 @@ class PlasmaDROP(DataDROP):
 # @details An Apache Arrow Flight server providing distributed access
 # to a Plasma in-memory object store
 # @par EAGLE_START
-# @par category Plasma
-# @param[in] param/data_volume Data volume/5/Float/readwrite/
+# @param category PlasmaFlight
+# @param tag template
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
-# @param[in] param/group_end Group end/False/Boolean/readwrite/
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
 #     \~English Is this node the end of a group?
-# @param[in] param/plasma_path Plasma Path//String/readwrite/
+# @param[in] cparam/plasma_path Plasma Path//String/readwrite/False//False/
 #     \~English Path to the local plasma store
-# @param[in] param/object_id Object Id//String/readwrite/
+# @param[in] cparam/object_id Object Id//String/readwrite/False//False/
 #     \~English PlasmaId of the object for all compute nodes
-# @param[in] param/flight_path Flight Path//String/readwrite/
+# @param[in] cparam/flight_path Flight Path//String/readwrite/False//False/
 #     \~English IP and flight port of the drop owner
 # @par EAGLE_END
 class PlasmaFlightDROP(DataDROP):
@@ -2647,23 +2660,6 @@ class BranchAppDrop(BarrierAppDROP):
         self._notifyAppIsFinished()
 
 
-##
-# @brief Plasma
-# @details An object in a Apache Arrow Plasma in-memory object store
-# @par EAGLE_START
-# @param category Plasma
-# @param tag template
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
-# @param[in] cparam/plasma_path Plasma Path//String/readwrite/False//False/
-#     \~English Path to the local plasma store
-# @param[in] cparam/object_id Object Id//String/readwrite/False//False/
-#     \~English PlasmaId of the object for all compute nodes
-# @param[in] cparam/use_staging Use Staging/False/Boolean/readwrite/False//False/
-#     \~English Enables writing to a dynamically resizeable staging buffer
-# @par EAGLE_END
 class PlasmaDROP(AbstractDROP):
     """
     A DROP that points to data stored in a Plasma Store
@@ -2691,24 +2687,6 @@ class PlasmaDROP(AbstractDROP):
         return "plasma://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
 
 
-##
-# @brief PlasmaFlight
-# @details An Apache Arrow Flight server providing distributed access
-# to a Plasma in-memory object store
-# @par EAGLE_START
-# @param category PlasmaFlight
-# @param tag template
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
-# @param[in] cparam/plasma_path Plasma Path//String/readwrite/False//False/
-#     \~English Path to the local plasma store
-# @param[in] cparam/object_id Object Id//String/readwrite/False//False/
-#     \~English PlasmaId of the object for all compute nodes
-# @param[in] cparam/flight_path Flight Path//String/readwrite/False//False/
-#     \~English IP and flight port of the drop owner
-# @par EAGLE_END
 class PlasmaFlightDROP(AbstractDROP):
     """
     A DROP that points to data stored in a Plasma Store
