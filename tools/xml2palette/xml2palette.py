@@ -152,30 +152,30 @@ def find_field_by_name(fields, name):
 
 def check_required_fields_for_category(text, fields, category):
     if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp", "Mpi", "Docker"]:
-        alert_if_missing(text, "execution_time")
-        alert_if_missing(text, "num_cpus")
+        alert_if_missing(text, fields, "execution_time")
+        alert_if_missing(text, fields, "num_cpus")
 
     if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp", "Docker"]:
-        alert_if_missing(text, "group_start")
+        alert_if_missing(text, fields, "group_start")
 
     if category == "DynlibApp":
-        alert_if_missing(text, "libpath")
+        alert_if_missing(text, fields, "libpath")
 
     if category in ["PythonApp", "Branch"]:
-        alert_if_missing(text, "appclass")
+        alert_if_missing(text, fields, "appclass")
 
     if category in ["File", "Memory", "NGAS", "ParameterSet", "Plasma", "PlasmaFlight", "S3"]:
-        alert_if_missing(text, "data_volume")
+        alert_if_missing(text, fields, "data_volume")
 
     if category in ["File", "Memory", "NGAS", "ParameterSet", "Plasma", "PlasmaFlight", "S3", "Mpi"]:
-        alert_if_missing(text, "group_end")
+        alert_if_missing(text, fields, "group_end")
 
     if category in ["BashShellApp", "Mpi", "Docker", "Singularity"]:
-        alert_if_missing(text, "input_redirection")
-        alert_if_missing(text, "output_redirection")
-        alert_if_missing(text, "command_line_arguments")
-        alert_if_missing(text, "paramValueSeparator")
-        alert_if_missing(text, "argumentPrefix")
+        alert_if_missing(text, fields, "input_redirection")
+        alert_if_missing(text, fields, "output_redirection")
+        alert_if_missing(text, fields, "command_line_arguments")
+        alert_if_missing(text, fields, "paramValueSeparator")
+        alert_if_missing(text, fields, "argumentPrefix")
 
 
 def create_field(internal_name, name, value, description, access, type, precious, options, positional):
@@ -193,11 +193,9 @@ def create_field(internal_name, name, value, description, access, type, precious
     }
 
 
-def alert_if_missing(text, internal_name):
+def alert_if_missing(text, fields, internal_name):
     if find_field_by_name(fields, internal_name) is None:
-        logging.warning(
-            text + " component added missing " + internal_name + " cparam"
-        )
+        logging.warning(text + " component missing " + internal_name + " cparam")
 
 
 def parse_key(key):
