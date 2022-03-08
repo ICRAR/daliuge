@@ -1855,6 +1855,17 @@ class InMemoryDROP(DataDROP):
         return "mem://%s/%d/%d" % (hostname, os.getpid(), id(self._buf))
 
 
+##
+# @brief SharedMemory
+# @details Data stored in shared memory
+# @par EAGLE_START
+# @param category SharedMemory
+# @param tag template
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
+#     \~English Estimated size of the data contained in this node
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
+#     \~English Is this node the end of a group?
+# @par EAGLE_END
 class SharedMemoryDROP(DataDROP):
     """
     A DROP that points to data stored in shared memory.
