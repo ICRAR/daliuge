@@ -2118,7 +2118,7 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
 # @brief Plasma
 # @details An object in a Apache Arrow Plasma in-memory object store
 # @par EAGLE_START
-# @par category Plasma
+# @param category Plasma
 # @param tag template
 # @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
@@ -2163,7 +2163,7 @@ class PlasmaDROP(DataDROP):
 # @details An Apache Arrow Flight server providing distributed access
 # to a Plasma in-memory object store
 # @par EAGLE_START
-# @par category Plasma
+# @param category Plasma
 # @param tag template
 # @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
