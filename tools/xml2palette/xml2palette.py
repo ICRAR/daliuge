@@ -150,164 +150,32 @@ def find_field_by_name(fields, name):
     return None
 
 
-def add_required_fields_for_category(text, fields, category):
+def check_required_fields_for_category(text, fields, category):
     if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp", "Mpi", "Docker"]:
-        add_field_if_missing(
-            text,
-            fields,
-            "execution_time",
-            "Execution time",
-            5,
-            "Estimated execution time",
-            "readwrite",
-            "Float",
-            False,
-            [],
-            False,
-        )
-        add_field_if_missing(
-            text,
-            fields,
-            "num_cpus",
-            "Num CPUs",
-            1,
-            "Number of cores used",
-            "readwrite",
-            "Integer",
-            False,
-            [],
-            False,
-        )
+        alert_if_missing(text, "execution_time")
+        alert_if_missing(text, "num_cpus")
 
     if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp", "Docker"]:
-        add_field_if_missing(
-            text,
-            fields,
-            "group_start",
-            "Group start",
-            "false",
-            "Component is start of a group",
-            "readwrite",
-            "Boolean",
-            False,
-            [],
-            False,
-        )
+        alert_if_missing(text, "group_start")
 
     if category == "DynlibApp":
-        add_field_if_missing(text, fields, "libpath", "Library path", "", "", "readwrite", "String", False, [], False)
+        alert_if_missing(text, "libpath")
 
     if category in ["PythonApp", "Branch"]:
-        add_field_if_missing(
-            text,
-            fields,
-            "appclass",
-            "Appclass",
-            "dlg.apps.simple.SleepApp",
-            "Application class",
-            "readwrite",
-            "String",
-            False,
-            [],
-            False,
-        )
+        alert_if_missing(text, "appclass")
 
     if category in ["File", "Memory", "NGAS", "ParameterSet", "Plasma", "PlasmaFlight", "S3"]:
-        add_field_if_missing(
-            text,
-            fields,
-            "data_volume",
-            "Data volume",
-            5,
-            "Estimated size of the data contained in this node",
-            "readwrite",
-            "Integer",
-            False,
-            [],
-            False,
-        )
+        alert_if_missing(text, "data_volume")
 
     if category in ["File", "Memory", "NGAS", "ParameterSet", "Plasma", "PlasmaFlight", "S3", "Mpi"]:
-        add_field_if_missing(
-            text,
-            fields,
-            "group_end",
-            "Group end",
-            "false",
-            "Component is end of a group",
-            "readwrite",
-            "Boolean",
-            False,
-            [],
-            False,
-        )
+        alert_if_missing(text, "group_end")
 
     if category in ["BashShellApp", "Mpi", "Docker", "Singularity"]:
-        add_field_if_missing(
-            text,
-            fields,
-            "input_redirection",
-            "Input redirection",
-            "",
-            "The command line argument that specifies the input into this application",
-            "readwrite",
-            "String",
-            False,
-            [],
-            False,
-        )
-        add_field_if_missing(
-            text,
-            fields,
-            "output_redirection",
-            "Output redirection",
-            "",
-            "The command line argument that specifies the output from this application",
-            "readwrite",
-            "String",
-            False,
-            [],
-            False,
-        )
-        add_field_if_missing(
-            text,
-            fields,
-            "command_line_arguments",
-            "Command line arguments",
-            "",
-            "Additional command line arguments to be added to the command line to be executed",
-            "readwrite",
-            "String",
-            False,
-            [],
-            False,
-        )
-        add_field_if_missing(
-            text,
-            fields,
-            "paramValueSeparator",
-            "Param Value Separator",
-            " ",
-            "Separator character(s) between parameters on the command line",
-            "readwrite",
-            "String",
-            False,
-            [],
-            False,
-        )
-        add_field_if_missing(
-            text,
-            fields,
-            "argumentPrefix",
-            "Argument prefix",
-            "--",
-            "Prefix to each keyed argument on the command line",
-            "readwrite",
-            "String",
-            False,
-            [],
-            False,
-        )
+        alert_if_missing(text, "input_redirection")
+        alert_if_missing(text, "output_redirection")
+        alert_if_missing(text, "command_line_arguments")
+        alert_if_missing(text, "paramValueSeparator")
+        alert_if_missing(text, "argumentPrefix")
 
 
 def create_field(internal_name, name, value, description, access, type, precious, options, positional):
@@ -325,13 +193,10 @@ def create_field(internal_name, name, value, description, access, type, precious
     }
 
 
-def add_field_if_missing(text, fields, internal_name, name, value, description, access, type, precious, options, positional):
+def alert_if_missing(text, internal_name):
     if find_field_by_name(fields, internal_name) is None:
         logging.warning(
             text + " component added missing " + internal_name + " cparam"
-        )
-        fields.append(
-            create_field(internal_name, name, value, description, access, type, precious, options, positional)
         )
 
 
@@ -662,8 +527,8 @@ def create_palette_node_from_params(params):
             else:
                 logging.warning("Unknown port direction: " + direction)
 
-    # add extra fields that must be included for the category
-    add_required_fields_for_category(text, fields, category)
+    # check for presence of extra fields that must be included for each category
+    check_required_fields_for_category(text, fields, category)
 
     # create and return the node
     return ({
