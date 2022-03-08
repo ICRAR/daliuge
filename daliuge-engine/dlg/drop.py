@@ -2174,7 +2174,7 @@ class PlasmaDROP(DataDROP):
 # @details An Apache Arrow Flight server providing distributed access
 # to a Plasma in-memory object store
 # @par EAGLE_START
-# @param category Plasma
+# @param category PlasmaFlight
 # @param tag template
 # @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
