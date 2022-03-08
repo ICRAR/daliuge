@@ -33,6 +33,7 @@ DOXYGEN_SETTINGS = [
 
 KNOWN_PARAM_DATA_TYPES = ["String", "Integer", "Float", "Complex", "Boolean", "Select", "Password", "Json"]
 KNOWN_CONSTRUCT_TYPES = ["Scatter", "Gather"]
+KNOWN_DATA_CATEGORIES = ["File", "Memory", "SharedMemory", "NGAS", "ParameterSet", "S3", "Plasma", "PlasmaFlight"]
 
 
 def get_options_from_command_line(argv):
@@ -150,164 +151,32 @@ def find_field_by_name(fields, name):
     return None
 
 
-def add_required_fields_for_category(text, fields, category):
+def check_required_fields_for_category(text, fields, category):
     if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp", "Mpi", "Docker"]:
-        add_field_if_missing(
-            text,
-            fields,
-            "execution_time",
-            "Execution time",
-            5,
-            "Estimated execution time",
-            "readwrite",
-            "Float",
-            False,
-            [],
-            False,
-        )
-        add_field_if_missing(
-            text,
-            fields,
-            "num_cpus",
-            "Num CPUs",
-            1,
-            "Number of cores used",
-            "readwrite",
-            "Integer",
-            False,
-            [],
-            False,
-        )
+        alert_if_missing(text, fields, "execution_time")
+        alert_if_missing(text, fields, "num_cpus")
 
     if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp", "Docker"]:
-        add_field_if_missing(
-            text,
-            fields,
-            "group_start",
-            "Group start",
-            "false",
-            "Component is start of a group",
-            "readwrite",
-            "Boolean",
-            False,
-            [],
-            False,
-        )
+        alert_if_missing(text, fields, "group_start")
 
     if category == "DynlibApp":
-        add_field_if_missing(text, fields, "libpath", "Library path", "", "", "readwrite", "String", False, [], False)
+        alert_if_missing(text, fields, "libpath")
 
     if category in ["PythonApp", "Branch"]:
-        add_field_if_missing(
-            text,
-            fields,
-            "appclass",
-            "Appclass",
-            "dlg.apps.simple.SleepApp",
-            "Application class",
-            "readwrite",
-            "String",
-            False,
-            [],
-            False,
-        )
+        alert_if_missing(text, fields, "appclass")
 
     if category in ["File", "Memory", "NGAS", "ParameterSet", "Plasma", "PlasmaFlight", "S3"]:
-        add_field_if_missing(
-            text,
-            fields,
-            "data_volume",
-            "Data volume",
-            5,
-            "Estimated size of the data contained in this node",
-            "readwrite",
-            "Integer",
-            False,
-            [],
-            False,
-        )
+        alert_if_missing(text, fields, "data_volume")
 
     if category in ["File", "Memory", "NGAS", "ParameterSet", "Plasma", "PlasmaFlight", "S3", "Mpi"]:
-        add_field_if_missing(
-            text,
-            fields,
-            "group_end",
-            "Group end",
-            "false",
-            "Component is end of a group",
-            "readwrite",
-            "Boolean",
-            False,
-            [],
-            False,
-        )
+        alert_if_missing(text, fields, "group_end")
 
     if category in ["BashShellApp", "Mpi", "Docker", "Singularity"]:
-        add_field_if_missing(
-            text,
-            fields,
-            "input_redirection",
-            "Input redirection",
-            "",
-            "The command line argument that specifies the input into this application",
-            "readwrite",
-            "String",
-            False,
-            [],
-            False,
-        )
-        add_field_if_missing(
-            text,
-            fields,
-            "output_redirection",
-            "Output redirection",
-            "",
-            "The command line argument that specifies the output from this application",
-            "readwrite",
-            "String",
-            False,
-            [],
-            False,
-        )
-        add_field_if_missing(
-            text,
-            fields,
-            "command_line_arguments",
-            "Command line arguments",
-            "",
-            "Additional command line arguments to be added to the command line to be executed",
-            "readwrite",
-            "String",
-            False,
-            [],
-            False,
-        )
-        add_field_if_missing(
-            text,
-            fields,
-            "paramValueSeparator",
-            "Param Value Separator",
-            " ",
-            "Separator character(s) between parameters on the command line",
-            "readwrite",
-            "String",
-            False,
-            [],
-            False,
-        )
-        add_field_if_missing(
-            text,
-            fields,
-            "argumentPrefix",
-            "Argument prefix",
-            "--",
-            "Prefix to each keyed argument on the command line",
-            "readwrite",
-            "String",
-            False,
-            [],
-            False,
-        )
+        alert_if_missing(text, fields, "input_redirection")
+        alert_if_missing(text, fields, "output_redirection")
+        alert_if_missing(text, fields, "command_line_arguments")
+        alert_if_missing(text, fields, "paramValueSeparator")
+        alert_if_missing(text, fields, "argumentPrefix")
 
 
 def create_field(internal_name, name, value, description, access, type, precious, options, positional):
@@ -325,14 +194,9 @@ def create_field(internal_name, name, value, description, access, type, precious
     }
 
 
-def add_field_if_missing(text, fields, internal_name, name, value, description, access, type, precious, options, positional):
+def alert_if_missing(text, fields, internal_name):
     if find_field_by_name(fields, internal_name) is None:
-        logging.warning(
-            text + " component added missing " + internal_name + " cparam"
-        )
-        fields.append(
-            create_field(internal_name, name, value, description, access, type, precious, options, positional)
-        )
+        logging.warning(text + " component missing " + internal_name + " cparam")
 
 
 def parse_key(key):
@@ -482,7 +346,6 @@ def create_palette_node_from_params(params):
     category = ""
     tag = ""
     construct = ""
-    categoryType = ""
     inputPorts = []
     outputPorts = []
     inputLocalPorts = []
@@ -578,6 +441,12 @@ def create_palette_node_from_params(params):
                     text + " aparam '" + name + "' has unknown type: " + type
                 )
 
+            # check that category if suitable for aparams
+            if category in KNOWN_DATA_CATEGORIES:
+                logging.warning(
+                    text + " has aparam, which is not suitable for a " + category + " node"
+                )
+
             # check that a param of type "Select" has some options specified,
             # and check that every param with some options specified is of type "Select"
             if type == "Select" and len(options) == 0:
@@ -662,8 +531,8 @@ def create_palette_node_from_params(params):
             else:
                 logging.warning("Unknown port direction: " + direction)
 
-    # add extra fields that must be included for the category
-    add_required_fields_for_category(text, fields, category)
+    # check for presence of extra fields that must be included for each category
+    check_required_fields_for_category(text, fields, category)
 
     # create and return the node
     return ({
@@ -952,11 +821,11 @@ if __name__ == "__main__":
                 logging.info("Adding component: " + node["text"])
                 nodes.append(node)
 
-            # if a construct is found, add to nodes
-            if data["construct"] != "":
-                logging.info("Adding component: " + data["construct"] + "/" + node["text"])
-                construct_node = create_construct_node(data["construct"], node)
-                nodes.append(construct_node)
+                # if a construct is found, add to nodes
+                if data["construct"] != "":
+                    logging.info("Adding component: " + data["construct"] + "/" + node["text"])
+                    construct_node = create_construct_node(data["construct"], node)
+                    nodes.append(construct_node)
 
         # check if gitrepo and version params were found and cache the values
         for param in params:
