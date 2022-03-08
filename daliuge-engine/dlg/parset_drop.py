@@ -36,8 +36,8 @@ from dlg.meta import dlg_string_param
 # @param tag template
 # @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/Estimated size of the data contained in this node
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/Is this node the end of a group?
-# @param[in] aparam/mode Parset mode/"YANDA"/String/readonly/False//False/To what standard DALiuGE should filter and serialize the parameters.
-# @param[in] aparam/config_data ConfigData/""/String/readwrite/False//False/Additional configuration information to be mixed in with the initial data
+# @param[in] cparam/mode Parset mode/"YANDA"/String/readonly/False//False/To what standard DALiuGE should filter and serialize the parameters.
+# @param[in] cparam/config_data ConfigData/""/String/readwrite/False//False/Additional configuration information to be mixed in with the initial data
 # @param[out] port/Config ConfigFile/File/The output configuration file
 # @par EAGLE_END
 class ParameterSetDROP(AbstractDROP):
