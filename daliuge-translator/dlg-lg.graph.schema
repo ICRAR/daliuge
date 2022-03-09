@@ -65,8 +65,7 @@
                 "schemaVersion",
                 "lastModifiedName",
                 "lastModifiedEmail",
-                "lastModifiedDatetime",
-                "numLGNodes"
+                "lastModifiedDatetime"
             ]
         },
         "nodeDataArray": {
