@@ -34,13 +34,14 @@ import numpy as np
 from dlg import droputils, utils
 from dlg.drop import BarrierAppDROP, BranchAppDrop, ContainerDROP
 from dlg.meta import (
-    dlg_float_param,
+    dlg_float_param, 
     dlg_string_param,
-    dlg_bool_param,
+    dlg_bool_param, 
     dlg_int_param,
-    dlg_component,
+    dlg_list_param,
+    dlg_component, 
     dlg_batch_input,
-    dlg_batch_output,
+    dlg_batch_output, 
     dlg_streaming_input
 )
 from dlg.exceptions import DaliugeException
@@ -437,14 +438,13 @@ class GenericNpyGatherApp(BarrierAppDROP):
 
     }
     function: str = dlg_string_param("function", "sum")
-    reduce_axes: str = dlg_string_param("reduce_axes", "None")
+    reduce_axes: list = dlg_list_param("reduce_axes", "None")
 
     def __init__(self, oid, uid, **kwargs):
         super().__init__(oid, kwargs)
 
     def initialize(self, **kwargs):
-        super(GenericNpyGatherApp, self).initialize(**kwargs)
-        self.reduce_axes = ast.literal_eval(self.reduce_axes)
+        super().initialize(**kwargs)
 
     def run(self):
         if len(self.inputs) < 1:

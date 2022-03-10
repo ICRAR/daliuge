@@ -18,9 +18,7 @@ be extended for new data drop types to be processed by the translator.
 
 *NOTE: The Daliuge Component Developement Guide is work in progress!*
 
-Eagle Data Integeration
------------------------
-
-Eagle can be extended with custom data drops.
+Eagle Custom Data Drops Integeration
+------------------------------------
 
 *NOTE: The Daliuge Component Developement Guide is work in progress!*

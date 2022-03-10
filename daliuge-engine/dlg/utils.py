@@ -33,6 +33,7 @@ import signal
 import socket
 import threading
 import time
+from typing import Tuple
 import zlib
 import re
 import grp
@@ -280,7 +281,7 @@ def escapeQuotes(s, singleQuotes=True, doubleQuotes=True):
     return s
 
 
-def prepare_sql(sql, paramstyle, data=()):
+def prepare_sql(sql, paramstyle, data=()) -> Tuple[str, dict]:
     """
     Prepares the given SQL statement for proper execution depending on the
     parameter style supported by the database driver. For this the SQL statement
@@ -293,7 +294,7 @@ def prepare_sql(sql, paramstyle, data=()):
 
     n = len(data)
     if not n:
-        return (sql, ())
+        return (sql, {})
 
     # Depending on the different vendor, we need to write the parameters in
     # the SQL calls using different notations. This method will produce an
