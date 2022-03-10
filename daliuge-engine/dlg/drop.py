@@ -22,8 +22,9 @@
 """
 Module containing the core DROP classes.
 """
+from sqlite3 import OperationalError
 import string
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 import ast
 import base64
 import collections
@@ -43,7 +44,7 @@ import re
 import sys
 import inspect
 import binascii
-from typing import Union
+from typing import List, Union
 
 import numpy as np
 
@@ -424,187 +425,6 @@ class AbstractDROP(EventFirer):
         method implementation, which is usually the case).
         """
 
-    def incrRefCount(self):
-        """
-        Increments the reference count of this DROP by one atomically.
-        """
-        with self._refLock:
-            self._refCount += 1
-
-    def decrRefCount(self):
-        """
-        Decrements the reference count of this DROP by one atomically.
-        """
-        with self._refLock:
-            self._refCount -= 1
-
-    @track_current_drop
-    def open(self, **kwargs):
-        """
-        Opens the DROP for reading, and returns a "DROP descriptor"
-        that must be used when invoking the read() and close() methods.
-        DROPs maintain a internal reference count based on the number
-        of times they are opened for reading; because of that after a successful
-        call to this method the corresponding close() method must eventually be
-        invoked. Failing to do so will result in DROPs not expiring and
-        getting deleted.
-        """
-        if self.status != DROPStates.COMPLETED:
-            raise Exception(
-                "%r is in state %s (!=COMPLETED), cannot be opened for reading"
-                % (
-                    self,
-                    self.status,
-                )
-            )
-
-        io = self.getIO()
-        logger.debug("Opening drop %s" % (self.oid))
-        io.open(OpenMode.OPEN_READ, **kwargs)
-
-        # Save the IO object in the dictionary and return its descriptor instead
-        while True:
-            descriptor = random.SystemRandom().randint(-(2 ** 31), 2 ** 31 - 1)
-            if descriptor not in self._rios:
-                break
-        self._rios[descriptor] = io
-
-        # This occurs only after a successful opening
-        self.incrRefCount()
-        self._fire("open")
-
-        return descriptor
-
-    @track_current_drop
-    def close(self, descriptor, **kwargs):
-        """
-        Closes the given DROP descriptor, decreasing the DROP's
-        internal reference count and releasing the underlying resources
-        associated to the descriptor.
-        """
-        self._checkStateAndDescriptor(descriptor)
-
-        # Decrement counter and then actually close
-        self.decrRefCount()
-        io = self._rios.pop(descriptor)
-        io.close(**kwargs)
-
-    def _closeWriters(self):
-        """
-        Close our writing IO instance.
-        If written externally, self._wio will have remained None
-        """
-        if self._wio:
-            try:
-                self._wio.close()
-            except:
-                pass  # this will make sure that a previous issue does not cause the graph to hang!
-                # raise Exception("Problem closing file!")
-            self._wio = None
-
-    def read(self, descriptor, count=4096, **kwargs):
-        """
-        Reads `count` bytes from the given DROP `descriptor`.
-        """
-        self._checkStateAndDescriptor(descriptor)
-        io = self._rios[descriptor]
-        return io.read(count, **kwargs)
-
-    def _checkStateAndDescriptor(self, descriptor):
-        if self.status != DROPStates.COMPLETED:
-            raise Exception(
-                "%r is in state %s (!=COMPLETED), cannot be read"
-                % (
-                    self,
-                    self.status,
-                )
-            )
-        if descriptor is None:
-            raise ValueError("Illegal empty descriptor given")
-        if descriptor not in self._rios:
-            raise Exception(
-                "Illegal descriptor %d given, remember to open() first" % (descriptor)
-            )
-
-    def isBeingRead(self):
-        """
-        Returns `True` if the DROP is currently being read; `False`
-        otherwise
-        """
-        with self._refLock:
-            return self._refCount > 0
-
-    @track_current_drop
-    def write(self, data: Union[bytes, memoryview], **kwargs):
-        """
-        Writes the given `data` into this DROP. This method is only meant
-        to be called while the DROP is in INITIALIZED or WRITING state;
-        once the DROP is COMPLETE or beyond only reading is allowed.
-        The underlying storage mechanism is responsible for implementing the
-        final writing logic via the `self.writeMeta()` method.
-        """
-
-        if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            raise Exception("No more writing expected")
-
-        if not isinstance(data, (bytes, memoryview)):
-            raise Exception("Data type not of binary type: %s", type(data).__name__)
-
-        # We lazily initialize our writing IO instance because the data of this
-        # DROP might not be written through this DROP
-        if not self._wio:
-            self._wio = self.getIO()
-            try:
-                self._wio.open(OpenMode.OPEN_WRITE)
-            except:
-                self.status = DROPStates.ERROR
-                raise Exception("Problem opening drop for write!")
-        nbytes = self._wio.write(data)
-
-        dataLen = len(data)
-        if nbytes != dataLen:
-            # TODO: Maybe this should be an actual error?
-            logger.warning(
-                "Not all data was correctly written by %s (%d/%d bytes written)"
-                % (self, nbytes, dataLen)
-            )
-
-        # see __init__ for the initialization to None
-        if self._size is None:
-            self._size = 0
-        self._size += nbytes
-
-        # Trigger our streaming consumers
-        if self._streamingConsumers:
-            for streamingConsumer in self._streamingConsumers:
-                streamingConsumer.dataWritten(self.uid, data)
-
-        # Update our internal checksum
-        if not checksum_disabled:
-            self._updateChecksum(data)
-
-        # If we know how much data we'll receive, keep track of it and
-        # automatically switch to COMPLETED
-        if self._expectedSize > 0:
-            remaining = self._expectedSize - self._size
-            if remaining > 0:
-                self.status = DROPStates.WRITING
-            else:
-                if remaining < 0:
-                    logger.warning(
-                        "Received and wrote more bytes than expected: "
-                        + str(-remaining)
-                    )
-                logger.debug(
-                    "Automatically moving %r to COMPLETED, all expected data arrived"
-                    % (self,)
-                )
-                self.setCompleted()
-        else:
-            self.status = DROPStates.WRITING
-
-        return nbytes
-
     def autofill_environment_variables(self):
         """
         Runs through all parameters here, fetching those which match the env-var syntax when
@@ -649,105 +469,6 @@ class AbstractDROP(EventFirer):
             # TODO: Accumulate calls to the same env_var_store to save communication
             return_values.append(self.get_environment_variable(key))
         return return_values
-
-    @abstractmethod
-    def getIO(self) -> DataIO:
-        """
-        Returns an instance of one of the `dlg.io.DataIO` instances that
-        handles the data contents of this DROP.
-        """
-
-    def delete(self):
-        """
-        Deletes the data represented by this DROP.
-        """
-        self.getIO().delete()
-
-    def exists(self):
-        """
-        Returns `True` if the data represented by this DROP exists indeed
-        in the underlying storage mechanism
-        """
-        return self.getIO().exists()
-
-    @abstractmethod
-    def dataURL(self):
-        """
-        A URL that points to the data referenced by this DROP. Different
-        DROP implementations will use different URI schemes.
-        """
-
-    def _updateChecksum(self, chunk):
-        # see __init__ for the initialization to None
-        if self._checksum is None:
-            self._checksum = 0
-            self._checksumType = _checksumType
-        self._checksum = crc32c(chunk, self._checksum)
-
-    @property
-    def checksum(self):
-        """
-        The checksum value for the data represented by this DROP. Its
-        value is automatically calculated if the data was actually written
-        through this DROP (using the `self.write()` method directly or
-        indirectly). In the case that the data has been externally written, the
-        checksum can be set externally after the DROP has been moved to
-        COMPLETED or beyond.
-
-        :see: `self.checksumType`
-        """
-        if self.status == DROPStates.COMPLETED and self._checksum is None:
-            # Generate on the fly
-            io = self.getIO()
-            io.open(OpenMode.OPEN_READ)
-            data = io.read(4096)
-            while data is not None and len(data) > 0:
-                self._updateChecksum(data)
-                data = io.read(4096)
-            io.close()
-        return self._checksum
-
-    @checksum.setter
-    def checksum(self, value):
-        if self._checksum is not None:
-            raise Exception(
-                "The checksum for DROP %s is already calculated, cannot overwrite with new value"
-                % (self)
-            )
-        if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            raise Exception(
-                "DROP %s is still not fully written, cannot manually set a checksum yet"
-                % (self)
-            )
-        self._checksum = value
-
-    @property
-    def checksumType(self):
-        """
-        The algorithm used to compute this DROP's data checksum. Its value
-        if automatically set if the data was actually written through this
-        DROP (using the `self.write()` method directly or indirectly). In
-        the case that the data has been externally written, the checksum type
-        can be set externally after the DROP has been moved to COMPLETED
-        or beyond.
-
-        :see: `self.checksum`
-        """
-        return self._checksumType
-
-    @checksumType.setter
-    def checksumType(self, value):
-        if self._checksumType is not None:
-            raise Exception(
-                "The checksum type for DROP %s is already set, cannot overwrite with new value"
-                % (self)
-            )
-        if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            raise Exception(
-                "DROP %s is still not fully written, cannot manually set a checksum type yet"
-                % (self)
-            )
-        self._checksumType = value
 
     @property
     def oid(self):
@@ -1186,9 +907,9 @@ class AbstractDROP(EventFirer):
 
 class PathBasedDrop(object):
     """Base class for data drops that handle paths (i.e., file and directory drops)"""
+    _path: str = None
 
     def initialize(self, **kwargs):
-        self._path = None
         PathBasedDrop.initialize(self, **kwargs)
 
     def get_dir(self, dirname):
@@ -1214,7 +935,7 @@ class PathBasedDrop(object):
         return the_dir
 
     @property
-    def path(self):
+    def path(self) -> str:
         return self._path
 
 
@@ -1493,7 +1214,6 @@ class DataDROP(AbstractDROP):
         Returns an instance of one of the `dlg.io.DataIO` instances that
         handles the data contents of this DROP.
         """
-        pass
 
     def delete(self):
         """
@@ -1508,13 +1228,12 @@ class DataDROP(AbstractDROP):
         """
         return self.getIO().exists()
 
-    @abstractmethod
+    @abstractproperty
     def dataURL(self) -> str:
         """
         A URL that points to the data referenced by this DROP. Different
         DROP implementations will use different URI schemes.
         """
-        pass
 
 
 ##
@@ -1692,7 +1411,7 @@ class FileDROP(DataDROP, PathBasedDrop):
         self._fire("dropCompleted", status=DROPStates.COMPLETED)
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         hostname = os.uname()[1]  # TODO: change when necessary
         return "file://" + hostname + self._path
 
@@ -1814,7 +1533,7 @@ class NgasDROP(DataDROP):
         self._fire("dropCompleted", status=DROPStates.COMPLETED)
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         return "ngas://%s:%d/%s" % (self.ngasSrv, self.ngasPort, self.fileId)
 
 
@@ -1850,7 +1569,7 @@ class InMemoryDROP(DataDROP):
             return MemoryIO(self._buf)
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         hostname = os.uname()[1]
         return "mem://%s/%d/%d" % (hostname, os.getpid(), id(self._buf))
 
@@ -1896,7 +1615,7 @@ class SharedMemoryDROP(DataDROP):
             raise NotImplementedError("Shared memory is only available with Python >= 3.8")
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         hostname = os.uname()[1]
         return f"shmem://{hostname}/{os.getpid()}/{id(self._buf)}"
 
@@ -1910,7 +1629,7 @@ class NullDROP(DataDROP):
         return NullIO()
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         return "null://"
 
 
@@ -1954,7 +1673,7 @@ class RDBMSDrop(DataDROP):
     def _cursor(self, conn):
         return contextlib.closing(conn.cursor())
 
-    def insert(self, vals):
+    def insert(self, vals: dict):
         """
         Inserts the values contained in the ``vals`` dictionary into the
         underlying table. The keys of ``vals`` are used as the column names.
@@ -2008,7 +1727,7 @@ class RDBMSDrop(DataDROP):
                 return []
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         return "rdbms://%s/%s/%r" % (
             self._db_drv.__name__,
             self._db_table,
@@ -2037,8 +1756,9 @@ class ContainerDROP(DataDROP):
     def getIO(self):
         return ErrorIO()
 
+    @property
     def dataURL(self):
-        raise NotImplementedError()
+        raise OperationalError()
 
     def addChild(self, child):
 
@@ -2165,7 +1885,7 @@ class PlasmaDROP(DataDROP):
                                         use_staging=self.use_staging)
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         return "plasma://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
 
 
@@ -2193,8 +1913,9 @@ class PlasmaFlightDROP(DataDROP):
     """
 
     object_id = dlg_string_param("object_id", None)
-    plasma_path = dlg_string_param("plasma_path", "/tmp/plasma")
-    flight_path = dlg_string_param("flight_path", None)
+    plasma_path: str = dlg_string_param("plasma_path", "/tmp/plasma")
+    flight_path: str = dlg_string_param("flight_path", None)
+    use_staging: bool = dlg_bool_param("use_staging", False)
 
     def initialize(self, **kwargs):
         object_id = self.uid
@@ -2204,26 +1925,16 @@ class PlasmaFlightDROP(DataDROP):
             self.object_id = object_id
 
     def getIO(self):
-        if isinstance(self.object_id, str):
-            object_id = plasma.ObjectID(self.object_id.encode("ascii"))
-        elif isinstance(self.object_id, bytes):
-            object_id = plasma.ObjectID(self.object_id)
-        else:
-            raise Exception(
-                "Invalid argument "
-                + str(self.object_id)
-                + " expected str, got"
-                + str(type(self.object_id))
-            )
         return PlasmaFlightIO(
-            object_id,
+            plasma.ObjectID(self.object_id),
             self.plasma_path,
             flight_path=self.flight_path,
-            size=self._expectedSize,
+            expected_size=self._expectedSize,
+            use_staging=self.use_staging
         )
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         return "plasmaflight://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
 
 
@@ -2289,14 +2000,14 @@ class AppDROP(ContainerDROP):
                 inputDrop.addConsumer(self, False)
 
     @property
-    def inputs(self):
+    def inputs(self) -> List[DataDROP]:
         """
         The list of inputs set into this AppDROP
         """
         return list(self._inputs.values())
 
     @track_current_drop
-    def addOutput(self, outputDrop, back=True):
+    def addOutput(self, outputDrop: DataDROP, back=True):
         if outputDrop is self:
             raise InvalidRelationshipException(
                 DROPRel(outputDrop, DROPLinkType.OUTPUT, self),
@@ -2314,7 +2025,7 @@ class AppDROP(ContainerDROP):
             self.subscribe(outputDrop, "producerFinished")
 
     @property
-    def outputs(self):
+    def outputs(self) -> List[DataDROP]:
         """
         The list of outputs set into this AppDROP
         """
@@ -2328,7 +2039,7 @@ class AppDROP(ContainerDROP):
                 streamingInputDrop.addStreamingConsumer(self, False)
 
     @property
-    def streamingInputs(self):
+    def streamingInputs(self) -> List[DataDROP]:
         """
         The list of streaming inputs set into this AppDROP
         """
@@ -2342,7 +2053,6 @@ class AppDROP(ContainerDROP):
         if e.type == "dropCompleted":
             self.dropCompleted(e.uid, e.status)
 
-    @abstractmethod
     def dropCompleted(self, uid, drop_state):
         """
         Callback invoked when the DROP with UID `uid` (which is either a
@@ -2350,7 +2060,6 @@ class AppDROP(ContainerDROP):
         COMPLETED or ERROR state. By default no action is performed.
         """
 
-    @abstractmethod
     def dataWritten(self, uid, data):
         """
         Callback invoked when `data` has been written into the DROP with
@@ -2658,73 +2367,6 @@ class BranchAppDrop(BarrierAppDROP):
         BarrierAppDROP.execute(self, _send_notifications=False)
         self.outputs[1 if self.condition() else 0].skip()
         self._notifyAppIsFinished()
-
-
-class PlasmaDROP(AbstractDROP):
-    """
-    A DROP that points to data stored in a Plasma Store
-    """
-
-    plasma_path = dlg_string_param("plasma_path", "/tmp/plasma")
-    object_id = dlg_string_param("object_id", None)
-    use_staging = dlg_bool_param("use_staging", False)
-
-    def initialize(self, **kwargs):
-        object_id = self.uid
-        if len(self.uid) != 20:
-            object_id = np.random.bytes(20)
-        if not self.object_id:
-            self.object_id = object_id
-
-    def getIO(self):
-        return PlasmaIO(plasma.ObjectID(self.object_id),
-                        self.plasma_path,
-                        expected_size=self._expectedSize,
-                        use_staging=self.use_staging)
-
-    @property
-    def dataURL(self):
-        return "plasma://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
-
-
-class PlasmaFlightDROP(AbstractDROP):
-    """
-    A DROP that points to data stored in a Plasma Store
-    """
-
-    object_id = dlg_string_param("object_id", None)
-    plasma_path = dlg_string_param("plasma_path", "/tmp/plasma")
-    flight_path = dlg_string_param("flight_path", None)
-
-    def initialize(self, **kwargs):
-        object_id = self.uid
-        if len(self.uid) != 20:
-            object_id = np.random.bytes(20)
-        if self.object_id is None:
-            self.object_id = object_id
-
-    def getIO(self):
-        if isinstance(self.object_id, str):
-            object_id = plasma.ObjectID(self.object_id.encode("ascii"))
-        elif isinstance(self.object_id, bytes):
-            object_id = plasma.ObjectID(self.object_id)
-        else:
-            raise Exception(
-                "Invalid argument "
-                + str(self.object_id)
-                + " expected str, got"
-                + str(type(self.object_id))
-            )
-        return PlasmaFlightIO(
-            object_id,
-            self.plasma_path,
-            flight_path=self.flight_path,
-            size=self._expectedSize,
-        )
-
-    @property
-    def dataURL(self):
-        return "plasmaflight://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods

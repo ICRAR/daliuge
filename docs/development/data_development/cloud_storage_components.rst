@@ -3,7 +3,7 @@
 Cloud Storage Components
 ========================
 
-AWS S3 Drop (experimental)
+AWS S3 Drop (Experimental)
 --------------------------
 
 :class:`S3DROP <dlg.s3_drop.S3DROP>` Uses AWS S3 storage for containing drop contents

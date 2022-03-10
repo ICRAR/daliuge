@@ -91,7 +91,7 @@ class MSStreamingPlasmaConsumer(AppDROP):
         self.lock = Lock()
         self.started = False
         self.complete_called = 0
-        super(MSStreamingPlasmaConsumer, self).initialize(**kwargs)
+        super().initialize(**kwargs)
 
     async def _run_consume(self):
         outs = self.outputs
@@ -178,7 +178,7 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
     plasma_path = dlg_string_param("plasma_path", "/tmp/plasma")
 
     def initialize(self, **kwargs):
-        super(MSStreamingPlasmaProducer, self).initialize(**kwargs)
+        super().initialize(**kwargs)
         self.config = {
             "reception": {
                 "consumer": "plasma_writer",
@@ -245,7 +245,7 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
 # @par EAGLE_END
 class MSPlasmaReader(BarrierAppDROP):
     def initialize(self, **kwargs):
-        super(MSPlasmaReader, self).initialize(**kwargs)
+        super().initialize(**kwargs)
 
     def _write_table(self, ms, path, delete=True):
         if delete is True:
@@ -318,7 +318,7 @@ class MSPlasmaReader(BarrierAppDROP):
 # @par EAGLE_END
 class MSPlasmaWriter(BarrierAppDROP):
     def initialize(self, **kwargs):
-        super(MSPlasmaWriter, self).initialize(**kwargs)
+        super().initialize(**kwargs)
 
     def _read_table(self, table_path, ms, table_name=None):
         if not table_name:
