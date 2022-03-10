@@ -27,6 +27,8 @@ with the data that needs to be written.
 String Serialization
 --------------------
 
+Many data drops are capable of storing data in different formats managed by the app drop.
+
 Raw String
 """"""""""
 
@@ -63,8 +65,8 @@ using `dicttoxml` or both serialization and deserialiation using `xml.etree.Elem
 Binary Serialization
 --------------------
 
-Data drops specify the location the I/O interface reads and writes to but the app drop
-may decide the type of binary format to write.
+Data drops may also store binary formats that are typically more efficient than string formats
+and may utilize the python buffer protocol.
 
 Pickle (.pkl)
 """""""""""""
@@ -87,5 +89,13 @@ files.
 Table Serialization
 -------------------
 
-For relational data drops such as RDBMSDrop, these drops manage their own record format and are
+parquet  (.parquet)
+"""""""""""""""""""
+
+Open source column-based relational data format from Apache.
+
+Drop Specialized Serialization
+------------------------------
+
+Data drops such as RDBMSDrop drops manage their own record format and are
 interfaced using relational data objects such `dict`, `pyarrow.RecordBatch` or `pandas.DataFrame`.
