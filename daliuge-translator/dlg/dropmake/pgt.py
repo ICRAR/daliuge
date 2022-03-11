@@ -28,39 +28,17 @@ which will then be deployed and monitored by the Physical Graph Manager
 if __name__ == "__main__":
     __package__ = "dlg.dropmake"
 
-from collections import defaultdict
-import collections
-import datetime
+
 import json
 import logging
 import math
-import os
-import random
-import string
-import time
-import io
-from itertools import product
-
-import numpy as np
 
 from dlg.dropmake.lg import GraphException
 from dlg.dropmake.scheduler import DAGUtil
-from dlg.dropmake.utils.bash_parameter import BashCommand
 from dlg.common import dropdict
 from dlg.common import Categories, DropType
-from dlg.common import STORAGE_TYPES, APP_DROP_TYPES
-from dlg.dropmake.dm_utils import (
-    LG_APPREF,
-    getNodesKeyDict,
-    get_lg_ver_type,
-    convert_construct,
-    convert_fields,
-    convert_mkn,
-    getAppRefInputs,
-    LG_VER_EAGLE,
-    LG_VER_OLD,
-    LG_VER_EAGLE_CONVERTED,
-)
+
+logger = logging.getLogger(__name__)
 
 
 class GPGTNoNeedMergeException(GraphException):
