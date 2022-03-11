@@ -28,7 +28,6 @@ which will then be deployed and monitored by the Physical Graph Manager
 if __name__ == "__main__":
     __package__ = "dlg.dropmake"
 
-from collections import defaultdict
 import collections
 import datetime
 import json
@@ -36,9 +35,7 @@ import logging
 import math
 import os
 import random
-import string
 import time
-import io
 from itertools import product
 
 import numpy as np
