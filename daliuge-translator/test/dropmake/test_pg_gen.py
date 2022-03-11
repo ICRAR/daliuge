@@ -24,8 +24,6 @@ import unittest, pkg_resources
 from dlg.dropmake.lg import LG
 from dlg.dropmake.pgt import PGT, GPGTNoNeedMergeException
 from dlg.dropmake.pgtp import MetisPGTP, MySarkarPGTP, MinNumPartsPGTP
-from dlg.dropmake import pg_generator
-from dlg.translator.tool_commands import unroll
 
 """
 python -m unittest test.dropmake.test_pg_gen
