@@ -25,7 +25,7 @@ import unittest
 import pkg_resources
 import psutil
 
-from dlg.dropmake.pg_generator import LG
+from dlg.dropmake.lg import LG
 from dlg.dropmake.scheduler import (
     Scheduler,
     MySarkarScheduler,
