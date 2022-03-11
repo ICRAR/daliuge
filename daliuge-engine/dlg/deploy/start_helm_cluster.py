@@ -45,7 +45,7 @@ def get_pg(opts, num_node_managers, num_data_island_managers):
     if opts.logical_graph:
         unrolled_graph = pg_generator.unroll(opts.logical_graph)
         pgt = pg_generator.partition(unrolled_graph, algo='metis',
-                                     num_partitons=num_node_managers,
+                                     num_partitions=num_node_managers,
                                      num_islands=num_data_island_managers)
         del unrolled_graph
     else:
@@ -119,7 +119,7 @@ def main():
     if options.num_nodes <= 0:
         parser.error("The number of nodes must be a positive integer")
 
-    physical_graph = get_pg(options, 1, 1)
+    physical_graph = get_pg(options, options.num_nodes, 1)
     # TODO: dynamic deployment directory.
     with tempfile.TemporaryDirectory() as tdir:
         helm_client = HelmClient(
