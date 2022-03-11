@@ -21,38 +21,14 @@
 #
 
 from collections import defaultdict
-import collections
-import datetime
 import json
 import logging
-import math
-import os
-import random
-import string
-import time
-import io
-from itertools import product
 
 import networkx as nx
-import numpy as np
 
 from dlg.dropmake.pgt import PGT, GraphException
 from dlg.dropmake.scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
-from dlg.dropmake.utils.bash_parameter import BashCommand
-from dlg.common import Categories, DropType
-from dlg.common import STORAGE_TYPES, APP_DROP_TYPES
-from dlg.dropmake.dm_utils import (
-    LG_APPREF,
-    getNodesKeyDict,
-    get_lg_ver_type,
-    convert_construct,
-    convert_fields,
-    convert_mkn,
-    getAppRefInputs,
-    LG_VER_EAGLE,
-    LG_VER_OLD,
-    LG_VER_EAGLE_CONVERTED,
-)
+from dlg.common import DropType
 
 logger = logging.getLogger(__name__)
 
