@@ -23,21 +23,24 @@
 Contains a module translating physical graphs to kubernetes helm charts.
 """
 import json
-import time
+import logging
 import os
-import sys
-import shutil
 import pathlib
 import re
+import shutil
+import subprocess
+import sys
+import time
 
 import dlg
 import yaml
-import subprocess
 from dlg.common.version import version as dlg_version
-from dlg.deploy.deployment_utils import find_node_ips, find_service_ips, find_pod_ips, wait_for_pods
-from dlg.restutils import RestClient
 from dlg.deploy.common import submit
+from dlg.deploy.deployment_utils import find_node_ips, find_service_ips, find_pod_ips, wait_for_pods
 from dlg.dropmake import pg_generator
+from dlg.restutils import RestClient
+
+logger = logging.getLogger(__name__)
 
 
 def _num_deployments_required(islands, nodes):
@@ -60,6 +63,7 @@ def _write_chart(chart_dir, name: str, chart_name: str, version: str, app_versio
 def _write_values(chart_dir, config):
     with open(f"{chart_dir}{os.sep}custom-values.yaml", 'w+', encoding='utf-8') as value_file:
         yaml.dump(config, value_file)
+    logger.info('Written custom-values file.')
 
 
 def _read_values(chart_dir):
@@ -68,6 +72,7 @@ def _read_values(chart_dir):
     with open(f"{chart_dir}{os.sep}values.yaml", 'r', encoding='utf-8') as custom_file:
         new_data = yaml.safe_load(custom_file)
     data.update(new_data)
+    logger.info('Read yaml values file')
     return data
 
 
@@ -130,7 +135,7 @@ class HelmClient:
 
         # Copy in template files.
         library_root = pathlib.Path(os.path.dirname(dlg.__file__)).parent.parent
-        print(library_root)
+        logger.debug(f'Helm chart copied to: {library_root}')
         if sys.version_info >= (3, 8):
             shutil.copytree(os.path.join(library_root, 'daliuge-k8s', 'helm'), self._deploy_dir,
                             dirs_exist_ok=True)
@@ -153,7 +158,7 @@ class HelmClient:
             self._pod_details[labels[i]] = {'ip': pod_ips[i], 'svc': service_ips[i]}
         self._pod_details['master'] = {'ip': pod_ips[-1],
                                        'svc': service_ips[-1]}
-        print(self._pod_details)
+        logger.debug(f'Pod details: {self._pod_details}')
 
     def create_helm_chart(self, physical_graph_content, co_host=True):
         """
@@ -183,7 +188,7 @@ class HelmClient:
         node_ips = [x['ip'] for x in self._pod_details.values()]
         data = json.dumps({'nodes': ['127.0.0.1']}).encode('utf-8')
         time.sleep(5)
-        print(f"Starting manager on {self._submission_endpoint}")
+        logger.debug(f"Starting manager on {self._submission_endpoint}")
         client._POST('/managers/island/start', content=data,
                      content_type='application/json').read()
         client._POST('/managers/master/start', content=data,
@@ -201,7 +206,7 @@ class HelmClient:
                 timeout=30
             )
             time.sleep(5)
-            print(f"Starting node on {ip}")
+            logger.debug(f"Starting node on {ip}")
             node_ips = ['127.0.0.1'] + [x['ip'] for x in self._pod_details.values()]
             data = json.dumps({'nodes': ['127.0.0.1']}).encode('utf-8')
             client._POST("/managers/master/start", content=data,
@@ -220,24 +225,26 @@ class HelmClient:
                           {'deploy_id': 'master', 'name': f'{self._chart_name}-master'})
             instruction = f'helm install {self._deploy_name}-master {self._chart_name}/  ' \
                           f'--values {self._chart_name}{os.sep}custom-values.yaml'
-            print(subprocess.check_output([instruction],
-                                          shell=True).decode('utf-8'))
+            process_return_string = subprocess.check_output([instruction],
+                                                            shell=True).decode('utf-8')
+            logger.debug(f"{process_return_string}")
             for i in range(self._num_machines):
                 _write_values(self._chart_dir, {'deploy_id': i, 'name': f'{self._chart_name}-{i}'})
                 instruction = f'helm install {self._deploy_name}-{i} {self._chart_name}/  ' \
                               f'--values {self._chart_name}{os.sep}custom-values.yaml'
-                print(subprocess.check_output([instruction],
-                                              shell=True).decode('utf-8'))
+                process_return_string = subprocess.check_output([instruction],
+                                                                shell=True).decode('utf-8')
+                logger.debug(f"{process_return_string}")
                 # TODO: Check running nodes before launching another
             self._find_pod_details()
             if wait_for_pods(self._num_machines):
                 self.start_manager("master")
                 self.start_nodes()
             else:
-                print("ERROR: Machines did not start in timeframe allocated")
+                logger.error("K8s pods did not start in timeframe allocated")
                 self.teardown()
         else:
-            print(f"Created helm chart {self._chart_name} in {self._deploy_dir}")
+            logger.info(f"Created helm chart {self._chart_name} in {self._deploy_dir}")
 
     def teardown(self):
         if not self._k8s_access:
