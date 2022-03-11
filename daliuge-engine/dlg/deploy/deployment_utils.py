@@ -20,9 +20,12 @@
 #    MA 02111-1307  USA
 #
 import json
-import subprocess
+import logging
 import re
+import subprocess
 import time
+
+logger = logging.getLogger(__name__)
 
 
 class ListTokens(object):
@@ -178,7 +181,7 @@ def find_service_ips(num_expected, retries=3, timeout=10):
             ip = re.search(ip_pattern, service)
             if ip:
                 ips.append(ip.group(0))
-        print(ips)
+        logger.info(f"K8s service ips: {ips}")
         time.sleep(timeout)
     return ips
 
@@ -198,7 +201,7 @@ def find_pod_ips(num_expected, retries=3, timeout=10):
             ip = re.search(ip_pattern, pod)
             if ip:
                 ips.append(ip.group(0))
-        print(ips)
+        logger.info(f"K8s pod ips: {ips}")
         time.sleep(timeout)
     return ips
 
@@ -219,7 +222,7 @@ def wait_for_pods(num_expected, retries=18, timeout=10):
         query = str(subprocess.check_output([
             r'kubectl get pods -o wide'],
             shell=True).decode(encoding='utf-8'))
-        print(query)
+        logger.info(query)
         pattern = r"^daliuge-daemon.*"
         outcome = re.findall(pattern, query, re.M)
         if len(outcome) < num_expected:

@@ -29,12 +29,13 @@ Limitations:
 import argparse
 import json
 import os
+import logging
 import tempfile
 
-import dlg.restutils
 import dlg.exceptions
-from dlg.dropmake import pg_generator
+import dlg.restutils
 from dlg.deploy.helm_client import HelmClient
+from dlg.dropmake import pg_generator
 
 
 def get_pg(opts, num_node_managers, num_data_island_managers):
@@ -73,7 +74,7 @@ def start_helm(physical_graph_template, num_nodes: int, deploy_dir: str):
         raise exp2
     finally:
         helm_client.teardown()
-        print("Finished deployment")
+        logging.info("Finished deployment")
 
 
 def main():
@@ -139,4 +140,5 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     main()
