@@ -32,6 +32,9 @@ import json
 import logging
 import string
 import time
+from dlg.dropmake.lg import LG, GraphException
+from dlg.dropmake.pgt import PGT
+from dlg.dropmake.pgtp import MetisPGTP, MySarkarPGTP, MinNumPartsPGTP, PSOPGTP
 
 logger = logging.getLogger(__name__)
 
@@ -158,6 +161,8 @@ def partition(
     topk = algo_params.get("topk", 30)
     swarm_size = algo_params.get("swarm_size", 40)
 
+    max_dop = {"num_cpus": max_cpu, "mem_usage": max_mem}
+
     if algo == ALGO_NONE:
         pgt = PGT(pgt)
 
@@ -176,7 +181,6 @@ def partition(
         )
 
     elif algo == ALGO_MY_SARKAR:
-        max_dop = {"num_cpus": max_cpu, "mem_usage": max_mem}
         pgt = MySarkarPGTP(
             pgt, num_partitions, partition_label, max_dop, merge_parts=could_merge
         )
