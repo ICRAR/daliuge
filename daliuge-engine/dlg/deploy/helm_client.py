@@ -35,6 +35,7 @@ import time
 import dlg
 import yaml
 from dlg.common.version import version as dlg_version
+from dlg.constants import NODE_DEFAULT_REST_PORT
 from dlg.deploy.common import submit
 from dlg.deploy.deployment_utils import find_node_ips, find_service_ips, find_pod_ips, wait_for_pods
 from dlg.dropmake import pg_generator
@@ -186,7 +187,8 @@ class HelmClient:
         client = RestClient(self._submission_endpoint,
                             self._value_data['service']['daemon']['port'], timeout=30)
         node_ips = [x['ip'] for x in self._pod_details.values()]
-        data = json.dumps({'nodes': ['127.0.0.1']}).encode('utf-8')
+        print(node_ips)
+        data = json.dumps({'nodes': node_ips}).encode('utf-8')
         time.sleep(5)
         logger.debug(f"Starting manager on {self._submission_endpoint}")
         client._POST('/managers/island/start', content=data,
@@ -207,12 +209,14 @@ class HelmClient:
             )
             time.sleep(5)
             logger.debug(f"Starting node on {ip}")
-            node_ips = ['127.0.0.1'] + [x['ip'] for x in self._pod_details.values()]
-            data = json.dumps({'nodes': ['127.0.0.1']}).encode('utf-8')
-            client._POST("/managers/master/start", content=data,
-                         content_type='application/json')
+            # node_ips = ['127.0.0.1'] + [x['ip'] for x in self._pod_details.values()]
+            node_ips = [x['ip'] for x in self._pod_details.values()]
+            # data = json.dumps({'nodes': ['127.0.0.1']}).encode('utf-8')
+            data = json.dumps({'nodes': node_ips}).encode('utf-8')
+            client._POST('/managers/master/start', content=data,
+                         content_type='application/json').read()
 
-    def launch_helm(self, co_host=True):
+    def launch_helm(self, co_host=False):
         """
         Launches the built helm chart using the most straightforward commands possible.
         Assumes all files are prepared and validated.
@@ -227,19 +231,19 @@ class HelmClient:
                           f'--values {self._chart_name}{os.sep}custom-values.yaml'
             process_return_string = subprocess.check_output([instruction],
                                                             shell=True).decode('utf-8')
-            logger.debug(f"{process_return_string}")
+            logger.info(f"{process_return_string}")
             for i in range(self._num_machines):
                 _write_values(self._chart_dir, {'deploy_id': i, 'name': f'{self._chart_name}-{i}'})
                 instruction = f'helm install {self._deploy_name}-{i} {self._chart_name}/  ' \
                               f'--values {self._chart_name}{os.sep}custom-values.yaml'
                 process_return_string = subprocess.check_output([instruction],
                                                                 shell=True).decode('utf-8')
-                logger.debug(f"{process_return_string}")
+                logger.info(f"{process_return_string}")
                 # TODO: Check running nodes before launching another
             self._find_pod_details()
             if wait_for_pods(self._num_machines):
                 self.start_manager("master")
-                self.start_nodes()
+                # self.start_nodes()
             else:
                 logger.error("K8s pods did not start in timeframe allocated")
                 self.teardown()
@@ -262,13 +266,14 @@ class HelmClient:
             raise RuntimeError("Cannot access k8s")
         # TODO: Check all nodes are operational first.
         pgt_data = json.loads(self._physical_graph_file)
-        # node_ips = [x['ip'] for x in self._pod_details.values()]
-        # node_ips.remove(self._pod_details['master']['ip'])
-        # node_ips = [self._pod_details['master']['ip']] + node_ips
-        node_ips = ['127.0.0.1']
+        node_ips = [x['ip'] for x in self._pod_details.values()]
+        node_ips.remove(self._pod_details['master']['ip'])
+        node_ips = [self._pod_details['master']['ip']] + node_ips
+        # node_ips = ['127.0.0.1']
         physical_graph = pg_generator.resource_map(pgt_data, node_ips, co_host_dim=True)
         # TODO: Add dumping to log-dir
-        submit(physical_graph, self._submission_endpoint, skip_deploy=False)
+        submit(physical_graph, self._submission_endpoint, port=NODE_DEFAULT_REST_PORT,
+               skip_deploy=False)
 
     def submit_pg(self):
         """
