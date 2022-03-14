@@ -46,6 +46,9 @@
                 },
                 "lastModifiedDatetime": {
                     "type": "integer"
+                },
+                "numLGNodes": {
+                    "type": "integer"
                 }
             },
             "required": [

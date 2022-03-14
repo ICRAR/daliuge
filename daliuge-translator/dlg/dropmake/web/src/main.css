@@ -333,6 +333,100 @@
     transition-delay: 1s;
 }
 
+
+.node rect, .node polygon {
+  stroke-width: 2.0px;
+  stroke: #bbb;
+  padding: 4px 8px;
+}
+
+/* DROP states */
+
+#main #dagGraphArea .node :first-child, #main #dagGraphArea rect {
+  fill: #9ab4d0;
+  width:300px;
+  height:85px;
+  stroke: black;
+}
+
+#main #dagGraphArea .node span{
+  display: block;
+  height: min-content !important;
+}
+
+#main #dagGraphArea .node .drop-label :first-child{
+  font-weight: 700;
+}
+
+#main #dagGraphArea .drop-label{
+  padding: 5% 18%;
+}
+
+#main #dagGraphArea path.path {
+  stroke: #999;
+  stroke-width: 1.5px;
+}
+
+.node.initialized :first-child, rect.initialized {
+  fill: #ffe;
+}
+
+.node.writing :first-child, rect.writing {
+  fill: #ecde7b;
+}
+
+.node.completed :first-child, rect.completed {
+  fill: #7bdc7b;
+}
+
+.node.expired :first-child, rect.expired {
+  fill: #700000;
+}
+
+.node.cancelled :first-child, rect.cancelled {
+  fill: #cccccc;
+}
+
+.node.skipped :first-child, rect.skipped {
+  fill: #53c4f6;
+}
+
+.node.deleted :first-child, rect.deleted {
+  color: #700000;
+}
+
+/* AppDROP states */
+.node.not_run :first-child, rect.not_run {
+  fill: #ffe;
+}
+
+.node.running :first-child, rect.running {
+  fill: #ecde7b;
+}
+
+.node.finished :first-child, rect.finished {
+  fill: #7bdc7b;
+}
+
+.node.error :first-child, rect.error {
+  fill: #e44f33;
+}
+
+#main #dagGraphArea{
+  width:auto;
+  height:auto;
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  left:0px;
+  right:0px;
+}
+
+#smallD3Graph{
+  width:100%;
+  height:100%;
+}
+
 #graphNameWrapper{
     position: absolute;
     top: 56px;
@@ -400,6 +494,48 @@
     color:white;
 }
 
+
+#deployDropdowns{
+  padding: 0.35rem 1rem;
+}
+
+#deployDropdowns button:focus{
+    color: #001d3b;
+    background-color: white !important;
+    border-color: white;
+}
+
+#deployDropdowns button:active{
+  color: #001d3b;
+  background-color: white !important;
+  border-color: white;
+}
+
+#deployDropdowns button :hover{
+  color: #001d3b;
+  background-color: rgb(216, 216, 216);
+  border-color: rgb(216, 216, 216);
+}
+
+#deployDropdowns a:not(.dropdown-menu a){
+  border: 1px white solid;
+  border-radius: 0.2rem;
+  box-shadow: none !important;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  padding: 2px 5px;
+}
+
+#deployDropdowns a:hover:not(.dropdown-menu a) {
+  background-color: rgb(216, 216, 216);
+  color: #001d3b;
+}
+
+#deployDropdowns a:active:not(.dropdown-menu a) {
+  background-color: white;
+  color: #001d3b;
+}
+
 #exportJsonBtn{
     display: inline-block;
 }
@@ -438,10 +574,6 @@
 
 #navbarExportDropdown{
     color:white;
-}
-
-#deploy_button, #rest_deploy_button, #helm_deploy_button{
-    color: white;
 }
 
 #settingsModal .modal-header{

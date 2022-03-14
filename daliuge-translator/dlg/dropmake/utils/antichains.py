@@ -30,6 +30,7 @@ A special case (K = 1) of the Maximum Weighted K-families based on
 A detailed proof can be found on Page 2 (Corollary)
     https://link.springer.com/article/10.1007/BF00333130
 """
+from asyncio.log import logger
 import sys
 
 import networkx as nx
@@ -43,19 +44,19 @@ def _create_split_graph(dag, w_attr='weight'):
         xi = '{0}_x'.format(el[0])
         yi = '{0}_y'.format(el[0])
         #print(el)
-        bpg.add_edge('s', xi, capacity=el[1].get(w_attr, 1), weight=0)
-        bpg.add_edge(xi, yi, capacity=sys.maxsize, weight=1)
-        bpg.add_edge(yi, 't', capacity=el[1].get(w_attr, 1), weight=0)
+        bpg.add_edge('s', xi, capacity=int(el[1].get(w_attr, 1)), weight=0)
+        bpg.add_edge(xi, yi, capacity=int(sys.maxsize), weight=1)
+        bpg.add_edge(yi, 't', capacity=int(el[1].get(w_attr, 1)), weight=0)
 
         el_des = nx.descendants(dag, el[0])
         el_pred = nx.ancestors(dag, el[0])
 
         for udown in el_des:
             bpg.add_edge(xi, '{0}_y'.format(udown),
-            capacity=sys.maxsize, weight=0)
+            capacity=float(sys.maxsize), weight=0)
         for uup in el_pred:
             bpg.add_edge('{0}_x'.format(uup), yi,
-            capacity=sys.maxsize, weight=0)
+            capacity=float(sys.maxsize), weight=0)
 
     return bpg
 
@@ -76,8 +77,9 @@ def _get_pi_solution(split_graph):
         H = nx.DiGraph()
         H.add_nodes_from(split_graph)
         for ed in split_graph.edges(data=True):
-            Cxy = ed[2].get('capacity', sys.maxsize)
-            Axy = ed[2]['weight']
+            Cxy = int(ed[2].get('capacity', sys.maxsize))
+            Axy = int(ed[2]['weight'])
+            logger.debug(f"Found capacity and weight: {Axy}, {Cxy}")
             if (Axy == 0 and Cxy > 0):
                 H.add_edge(ed[0], ed[1], capacity=Cxy, weight=Axy)
 

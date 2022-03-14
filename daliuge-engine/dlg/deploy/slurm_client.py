@@ -77,6 +77,7 @@ class SlurmClient:
             self._config.getpar("log_root") if (log_root is None) else log_root
         )
         self.modules = self._config.getpar("modules")
+        self.venv = self._config.getpar("venv")
         self._num_nodes = num_nodes
         self._job_dur = job_dur
         self._logical_graph = logical_graph
@@ -114,12 +115,13 @@ class SlurmClient:
         """
         log_dir = "{0}/{1}".format(self._log_root, self.get_log_dirname())
         pardict = dict()
+        pardict["VENV"] = self.venv
         pardict["NUM_NODES"] = str(self._num_nodes)
         pardict["PIP_NAME"] = self._pip_name
         pardict["SESSION_ID"] = os.path.split(log_dir)[-1]
         pardict["JOB_DURATION"] = label_job_dur(self._job_dur)
         pardict["ACCOUNT"] = self._acc
-        pardict["PY_BIN"] = sys.executable
+        pardict["PY_BIN"] = 'python3' if pardict["VENV"] else sys.executable
         pardict["LOG_DIR"] = log_dir
         pardict["GRAPH_PAR"] = (
             '-L "{0}"'.format(self._logical_graph)

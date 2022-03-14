@@ -1,20 +1,26 @@
 $(document).ready(function () {
     // jquery starts here
-
     //hides the dropdown navbar elements when stopping hovering over the element
     $(".dropdown-menu").mouseleave(function () {
         $(".dropdown-menu").dropdown('hide')
     })
 
-    $('#rest_deploy_button').click(restDeploy);
+    //handles switching of the dynamic deploy split button
+    $("#deployDropdowns .dropdown-menu .dropdown-item").click(function(){
+        //take note of previous main button and the one that was just pressed
 
-    $('#helm_deploy_button').click(helmDeploy);
+        var oldActive = $("#deployDropdowns").children()[0];
+        var oldActiveId = $(oldActive).attr("id")
+        var newActive = event.target
+        var newActiveId = $(newActive).attr("id")
 
-    //deploy physical graph button listener
-    $("#deploy_button").click(function () {
-        $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
-        $("#dlg_mgr_deploy").prop("checked", true)
-        $("#pg_form").submit();
+        //replaces main button
+        $("#deployDropdowns").children()[0].remove()
+        $(newActive).clone().prependTo($("#deployDropdowns"))
+
+        //toggles dropdown options
+        $("#deployDropdowns .dropdown-menu #"+newActiveId).hide()
+        $("#deployDropdowns .dropdown-menu #"+oldActiveId).show()
     })
 
     //export physical graph button listener
@@ -29,8 +35,22 @@ $(document).ready(function () {
 
     $('#settingsModal').on('hidden.bs.modal', function () {
         fillOutSettings()
-    });
+  });
 });
+
+function deployAction(){
+    $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
+    $("#dlg_mgr_deploy").prop("checked", true)
+    $("#pg_form").submit();
+}
+
+function helmDeployAction(){
+    helmDeploy()
+}
+
+function restDeployAction(){
+    restDeploy()
+}
 
 function saveSettings() {
     var newUrl = new URL($("#managerUrlInput").val());
@@ -391,7 +411,8 @@ async function restDeploy() {
         .then(handleFetchErrors)
         .then(response => {
             if (response.redirected) {
-                window.location.href = response.url;
+                // window.location.href = response.url;
+                window.open(response.url, 'deploy_target').focus();
             }
         })
         .catch(function (error) {

@@ -36,8 +36,8 @@ import time
 import os
 
 from dlg.deploy.configs import ConfigFactory  # get all available configurations
-from deployment_constants import DEFAULT_AWS_MON_PORT, DEFAULT_AWS_MON_HOST
-from slurm_client import SlurmClient
+from dlg.deploy.deployment_constants import DEFAULT_AWS_MON_PORT, DEFAULT_AWS_MON_HOST
+from dlg.deploy.slurm_client import SlurmClient
 
 FACILITIES = ConfigFactory.available()
 

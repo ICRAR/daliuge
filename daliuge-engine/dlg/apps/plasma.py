@@ -49,19 +49,19 @@ logger = logging.getLogger(__name__)
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] aparam/plasma_path Plasma Path//String/readwrite/False/
+# @param[in] aparam/plasma_path Plasma Path//String/readwrite/False//False/
 #     \~English Path to plasma store.
-# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaConsumer/String/readonly/False/
+# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaConsumer/String/readonly/False//False/
 #     \~English Application class
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
 #     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
 #     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
 #     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] port/plasma_ms_input Plasma MS Input/Measurement Set/
 #     \~English Plasma MS input
@@ -91,7 +91,7 @@ class MSStreamingPlasmaConsumer(AppDROP):
         self.lock = Lock()
         self.started = False
         self.complete_called = 0
-        super(MSStreamingPlasmaConsumer, self).initialize(**kwargs)
+        super().initialize(**kwargs)
 
     async def _run_consume(self):
         outs = self.outputs
@@ -147,19 +147,19 @@ class MSStreamingPlasmaConsumer(AppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] aparam/plasma_path Plasma Path//String/readwrite/False/
+# @param[in] aparam/plasma_path Plasma Path//String/readwrite/False//False/
 #     \~English Path to plasma store
-# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaProducer/String/readonly/False/
+# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSStreamingPlasmaProducer/String/readonly/False//False/
 #     \~English Application class
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
 #     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
 #     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
 #     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] port/input_file Input File/File/
 #     \~English MS input file
@@ -178,7 +178,7 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
     plasma_path = dlg_string_param("plasma_path", "/tmp/plasma")
 
     def initialize(self, **kwargs):
-        super(MSStreamingPlasmaProducer, self).initialize(**kwargs)
+        super().initialize(**kwargs)
         self.config = {
             "reception": {
                 "consumer": "plasma_writer",
@@ -226,17 +226,17 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSPlasmaReader/String/readonly/False/
+# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSPlasmaReader/String/readonly/False//False/
 #     \~English Application class
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
 #     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
 #     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
 #     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] port/plasma_ms_input Plasma MS Input/Measurement Set/
 #     \~English Plasma MS store input
@@ -245,7 +245,7 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
 # @par EAGLE_END
 class MSPlasmaReader(BarrierAppDROP):
     def initialize(self, **kwargs):
-        super(MSPlasmaReader, self).initialize(**kwargs)
+        super().initialize(**kwargs)
 
     def _write_table(self, ms, path, delete=True):
         if delete is True:
@@ -299,17 +299,17 @@ class MSPlasmaReader(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSPlasmaWriter/String/readonly/False/
+# @param[in] cparam/appclass Application class/dlg.apps.plasma.MSPlasmaWriter/String/readonly/False//False/
 #     \~English Application class
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
 #     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
 #     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
 #     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] port/input_ms Input MS/Measurement Set/
 #     \~English Input MS file
@@ -318,7 +318,7 @@ class MSPlasmaReader(BarrierAppDROP):
 # @par EAGLE_END
 class MSPlasmaWriter(BarrierAppDROP):
     def initialize(self, **kwargs):
-        super(MSPlasmaWriter, self).initialize(**kwargs)
+        super().initialize(**kwargs)
 
     def _read_table(self, table_path, ms, table_name=None):
         if not table_name:

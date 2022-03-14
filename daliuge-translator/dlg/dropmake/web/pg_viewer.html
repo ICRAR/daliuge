@@ -7,6 +7,8 @@
  <meta name="viewport" content="width=device-width, maximum-scale=1.0">
  <link rel="shortcut icon" type="image/jpg" href="/static/src/icons/liuFavIcon.svg"/>
 
+ <script src="/static/src/d3/d3.v5.min.js"></script>
+ <script src="/static/src/d3/dagre-d3.min.js"></script>
  <script src="/static/src/jquery.min.js"></script>
  <script src="/static/src/bootstrap/js/bootstrap.bundle.min.js"></script>
  <script src="/static/src/html2canvas.min.js"></script>
@@ -73,20 +75,25 @@
                         </div>
                     </li> -->
                     <div class="btn-group" role="group" id="view-mode-buttons">
-                        <button type="button" id="graphButton" value="graph" class="btn btn-secondary tooltip tooltipBottom graphChanger" data-text="Better For Small Graphs" >Dagre</button>
-                        <button type="button" id="sankeyButton" value="sankey" class="btn btn-secondary tooltip tooltipBottom graphChanger" data-text="Better For Big Graph" >Sankey</button>
+                        <button type="button" id="dagButton" onclick="graphInit('dag')" class="btn btn-secondary tooltip tooltipBottom graphChanger" data-text="Better For Small Graphs" >Dag</button>
+                        <button type="button" id="sankeyButton" onclick="graphInit('sankey')" class="btn btn-secondary tooltip tooltipBottom graphChanger" data-text="Better For Big Graph" >Sankey</button>
                    </div>
                 </ul>
                 <ul class="nav navbar-nav  ml-auto">
-                    <li class="nav-item">
-                        <a href="javascript:void(0)" class="nav-link tooltip tooltipBottom" data-text="Deploy Physical Graph via HELM" id="helm_deploy_button" value="Deploy Physical Graph via HELM">HELM Deploy (Experimental)</a>
+                    <li class="nav-item dropdown">
+                        <div class="btn-group" id="deployDropdowns">
+                                <a href="javascript:void(0)" onclick="deployAction()" class="dropdown-item tooltip tooltipBottom" data-text="Generate and deploy physical graph" id="deploy_button" value="Generate &amp; Deploy Physical Graph">Deploy</a>
+                            <button type="button" class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              <span class="sr-only">Toggle Dropdown</span>
+                            </button>
+                            <div class="dropdown-menu">
+                                <a href="javascript:void(0)" onclick="deployAction()" class="dropdown-item tooltip tooltipLeft" style="display: none;" data-text="Generate and deploy physical graph" id="deploy_button" value="Generate &amp; Deploy Physical Graph">Deploy</a>
+                                <a href="javascript:void(0)" onclick="helmDeployAction()" class="dropdown-item tooltip tooltipLeft" data-text="Deploy Physical Graph via HELM" id="helm_deploy_button" value="Deploy Physical Graph via HELM">HELM Deploy</a>
+                                <a href="javascript:void(0)" onclick="restDeployAction()" class="dropdown-item tooltip tooltipLeft" data-text="Deploy Physical Graph via REST" id="rest_deploy_button" value="Deploy Physical Graph via REST">REST Deploy</a>
+                            </div>
+                          </div>
                     </li>
-                    <li class="nav-item">
-                        <a href="javascript:void(0)" class="nav-link tooltip tooltipBottom" data-text="Deploy Physical Graph via REST" id="rest_deploy_button" value="Deploy Physical Graph via REST">REST Deploy</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="javascript:void(0)" class="nav-link tooltip tooltipBottom" data-text="Generate and deploy physical graph" id="deploy_button" value="Generate &amp; Deploy Physical Graph">Deploy</a>
-                    </li>
+
                     <li class="nav-item dropdown">
                         <a href="javascript:void(0)" class="nav-link dropdown-toggle" id="navbarExportDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             Export
@@ -112,7 +119,6 @@
             <span id="graphName">{{pgt_view_json_name}}</span>
     </div>
     <div id="main"></div>
-    <div id="SVGArea"></div>
     <div id="runinfoWrapper">
         <span id="runinfo" >{{partition_info}}</span>
     </div>
@@ -127,7 +133,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form action="/gen_pg" method="get" id="pg_form" target="_blank">
+                    <form action="/gen_pg" method="get" target="blank" name="deploy_target" id="pg_form" >
                         <div class="settingsSection">
                             <span>DALiuGE Manager URL:</span>
                             <input id="managerUrlInput" type="text" name="dlg_mgr_url" value="http://localhost:8001" size="40" style="font-size:16px;">
@@ -135,6 +141,10 @@
                         <input type="checkbox" id="dlg_mgr_deploy" style="visibility:hidden;" name="dlg_mgr_deploy" value="deploy" checked>
                         <input type="hidden" name="pgt_id" value="{{pgt_view_json_name}}">
                       </form>
+                    <form action="/gen_pg_helm" method="get" id="pg_helm_form" target="_blank" name="deploy_helm_target">
+                        <input type="checkbox" id="dlg_helm_deploy" style="visibility:hidden;" name="dlg_helm_deploy" value="helm_deploy" checked>
+                        <input type="hidden" name="pgt_id" value="{{pgt_view_json_name}}">
+                    </form>
                 </div>
                 <div class="modal-footer">
                     <button onClick="" type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -146,5 +156,9 @@
 
     <!-- init script includes require, this links main js and echarts -->
     <script src="/static/graph_init.js"></script>
+    <script>
+        // initiating the graph for the first time
+        graphInit("default")
+    </script>
 </body>
 </html>

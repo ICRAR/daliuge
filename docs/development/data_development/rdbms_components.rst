@@ -3,7 +3,7 @@
 RDBMS Components
 ================
 
-RDBMS Drop (legacy)
+RDBMS Drop (Legacy)
 -------------------
 
 :class:`RDBMSDrop <dlg.drop.RDBMSDrop>` is a generic relational database storage drop that uses SQL

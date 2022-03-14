@@ -17,12 +17,12 @@ File Drop
 and inspection of individual app component I/O. The downside of using file drops is reduced I/O performance compared to
 alternative memory based drops that can instead utilize buffer protocol.
 
-Container Drop (deprecated)
+Container Drop (Legacy)
 ---------------------------
 
 :class:`ContainerDROP <dlg.drop.ContainerDROP>`
 
-Directory Container Drop (deprecated)
+Directory Container Drop (Legacy)
 -------------------------------------
 
 :class:`DirectoryContainer <dlg.drop.DirectoryContainer>`

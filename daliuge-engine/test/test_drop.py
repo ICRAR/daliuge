@@ -93,6 +93,10 @@ class SumupContainerChecksum(BarrierAppDROP):
 
 
 class TestDROP(unittest.TestCase):
+    """
+    DataDROP related unit tests
+    """
+
     def setUp(self):
         """
         library-specific setup
@@ -183,7 +187,7 @@ class TestDROP(unittest.TestCase):
         finally:
             store.terminate()
 
-    def test__dynamic_write_plasmaFlightDROP(self):
+    def test_dynamic_write_plasmaFlightDROP(self):
         """
         Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
         """
