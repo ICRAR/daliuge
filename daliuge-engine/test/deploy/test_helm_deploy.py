@@ -29,7 +29,7 @@ import tempfile
 import unittest
 
 import yaml
-from dlg.deploy.helm_client import check_k8s_env
+from dlg.deploy.deployment_utils import check_k8s_env
 
 if check_k8s_env():
     from dlg.common.version import version as dlg_version

@@ -26,7 +26,6 @@ import json
 import logging
 import os
 import pathlib
-import re
 import shutil
 import subprocess
 import sys
@@ -38,7 +37,8 @@ import yaml
 from dlg.common.version import version as dlg_version
 from dlg.constants import NODE_DEFAULT_REST_PORT
 from dlg.deploy.common import submit
-from dlg.deploy.deployment_utils import find_node_ips, find_service_ips, find_pod_ips, wait_for_pods
+from dlg.deploy.deployment_utils import find_node_ips, find_service_ips, find_pod_ips, \
+    wait_for_pods, check_k8s_env
 from dlg.dropmake import pg_generator
 from dlg.restutils import RestClient
 
@@ -85,19 +85,6 @@ def _find_resources(pgt_data):
     islands = list(set(islands))
     nodes = list(set(nodes))
     return islands, nodes
-
-
-def check_k8s_env():
-    """
-    Makes sure kubectl can be called and is accessible.
-    """
-    try:
-        output = subprocess.run(['kubectl version'], capture_output=True,
-                                shell=True).stdout
-        pattern = re.compile(r'^Client Version:.*\nServer Version:.*')
-        return re.match(pattern, output.decode(encoding='utf-8'))
-    except subprocess.SubprocessError:
-        return False
 
 
 class HelmClient:
@@ -321,4 +308,3 @@ class HelmClient:
         session_id = self.submit_pg()
         monitoring_thread = self._monitor(session_id)
         monitoring_thread.join()
-
