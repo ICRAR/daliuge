@@ -72,7 +72,7 @@ class TestHelmClient(unittest.TestCase):
             drop["island"] = "127.0.0.1"
         with tempfile.TemporaryDirectory() as tmp_dir:
             helm_client = HelmClient(deploy_dir=tmp_dir, deploy_name='dlg-test')
-            helm_client.create_helm_chart(json.dumps(pg))
+            helm_client.create_helm_chart(json.dumps(pg), co_host=False)
             self.assertEqual(pg, json.loads(helm_client._physical_graph_file))
             self.assertEqual(1, helm_client._num_machines)
 
@@ -105,7 +105,7 @@ class TestHelmClient(unittest.TestCase):
         ]
         with tempfile.TemporaryDirectory() as tmp_dir:
             helm_client = HelmClient(deploy_dir=tmp_dir, deploy_name='dlg_test')
-            helm_client.create_helm_chart(json.dumps(pg))
+            helm_client.create_helm_chart(json.dumps(pg), co_host=False)
             # TODO: Assert translation works
             self.assertEqual(2, helm_client._num_machines)
 
