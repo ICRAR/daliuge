@@ -324,7 +324,7 @@ async function helmDeploy() {
         .catch(function (error) {
             alert(error + "\nUnable to contiune!");
         });
-
+    //alert("Chart deployed, check the dashboard of your k8s cluster for status updates.")
     console.log("deploy graph response", deploy_graph);
     // Open DIM session page in new tab
     // Until we have somewhere else to re-direct helm deployments. This is probably for the best.
