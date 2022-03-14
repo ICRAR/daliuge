@@ -108,28 +108,28 @@ def import_using_code(code):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] cparam/appclass Application Class/dlg.apps.pyfunc.PyFuncApp/String/readonly/False/
+# @param[in] cparam/appclass Application Class/dlg.apps.pyfunc.PyFuncApp/String/readonly/False//False/
 #     \~English Application class
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False/
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
 #     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False/
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
 #     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False/
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False/
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
 #     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False/
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
-# @param[in] aparam/func_name Function Name//String/readwrite/False/
+# @param[in] aparam/func_name Function Name//String/readwrite/False//False/
 #     \~English Python fuction name
-# @param[in] aparam/func_code Function Code//String/readwrite/False/
+# @param[in] aparam/func_code Function Code//String/readwrite/False//False/
 #     \~English Python fuction code, e.g. 'def fuction_name(args): return args'
-# @param[in] aparam/pickle Pickle//bool/readwrite/False/
+# @param[in] aparam/pickle Pickle//Boolean/readwrite/False//False/
 #     \~English Whether the python arguments are pickled.
-# @param[in] aparam/func_defaults Function Defaults//String/readwrite/False/
-#     \~English Mapping from argname to default value. Should match only the last part of the argnames list. 
+# @param[in] aparam/func_defaults Function Defaults//String/readwrite/False//False/
+#     \~English Mapping from argname to default value. Should match only the last part of the argnames list.
 #               Values are interpreted as Python code literals and that means string values need to be quoted.
-# @param[in] aparam/func_arg_mapping Function Arguments Mapping//String/readwrite/False/
+# @param[in] aparam/func_arg_mapping Function Arguments Mapping//String/readwrite/False//False/
 #     \~English Mapping between argument name and input drop uids
 # @par EAGLE_END
 class PyFuncApp(BarrierAppDROP):
@@ -147,7 +147,7 @@ class PyFuncApp(BarrierAppDROP):
 
     ``module.function``
 
-    and the module needs to be accessible on the PYTHONPATH of the DALiuGE 
+    and the module needs to be accessible on the PYTHONPATH of the DALiuGE
     engine. Note that the engine is expanding the standard PYTHONPATH with
     DLG_ROOT/code. That directory is always available, even if the engine is
     running in a docker container.
@@ -162,9 +162,9 @@ class PyFuncApp(BarrierAppDROP):
 
     In addition to the input mapping the implementation also allows to set defaults
     both in the function itself and in a logical graph. If set in the logical graph
-    using the func_defaults parameter, the defaults need to be specified as a 
+    using the func_defaults parameter, the defaults need to be specified as a
     dictionary of the form
-    
+
     ``{"kwargs":{"kw1_name":kw1_value, "kw2_name":kw2_value}, "args":[arg1, arg2]}``
 
     The positional args will be used in order of appearance.
@@ -214,7 +214,7 @@ class PyFuncApp(BarrierAppDROP):
                 elif self._applicationArgs[kw]["value"]: # only transfer if there is a value
                     # we allow python expressions as values, means that strings need to be quoted
                     new_arg = self._applicationArgs[kw]['value']
-                
+
             if new_arg != dum_arg:
                 logger.debug(f"Setting {kw} to {new_arg}")
                 self.__setattr__(kw, new_arg)
@@ -272,7 +272,7 @@ class PyFuncApp(BarrierAppDROP):
 
         # Keyword arguments are made up by the default values plus the inputs
         # that match one of the keyword argument names
-        n_def = len(self.func_defaults) 
+        n_def = len(self.func_defaults)
         # if defaults dict has not been specified at all we'll go ahead anyway
         n_args = (len(self.func_defaults["args"]), len(self.func_defaults["kwargs"])) if n_def else (0,0)
         argnames = inspect.getfullargspec(self.f).args
