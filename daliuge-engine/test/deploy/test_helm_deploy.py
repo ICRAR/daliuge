@@ -22,20 +22,23 @@
 """
 Module tests the helm chart translation and deployment functionality.
 """
-import unittest
-import tempfile
+import json
 import os
 import sys
-import yaml
-import json
+import tempfile
+import unittest
 
-from dlg.common.version import version as dlg_version
-from dlg.deploy.helm_client import HelmClient, check_k8s_env
-from dlg.common import Categories
+import yaml
+from dlg.deploy.helm_client import check_k8s_env
+
+if check_k8s_env():
+    from dlg.common.version import version as dlg_version
+    from dlg.common import Categories
+    from dlg.deploy.helm_client import HelmClient
 
 
 @unittest.skipIf(sys.version_info <= (3, 8), "Copying temp files fail on Python < 3.7")
-@unittest.skipIf(not check_k8s_env(), "K8s not available")
+@unittest.skipIf(not check_k8s_env(), "K8s is not available")
 class TestHelmClient(unittest.TestCase):
 
     def test_create_default_helm_chart(self):
