@@ -23,7 +23,7 @@ import io
 import os
 from abc import abstractmethod
 
-from dlg.drop import AbstractDROP, DEFAULT_INTERNAL_PARAMETERS
+from dlg.drop import DataDROP, DEFAULT_INTERNAL_PARAMETERS
 from dlg.io import MemoryIO
 from dlg.meta import dlg_string_param
 
@@ -34,13 +34,13 @@ from dlg.meta import dlg_string_param
 # @par EAGLE_START
 # @param category ParameterSet
 # @param tag template
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False/Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False/Is this node the end of a group?
-# @param[in] aparam/mode Parset mode/"YANDA"/String/readonly/False/To what standard DALiuGE should filter and serialize the parameters.
-# @param[in] aparam/config_data ConfigData/""/String/readwrite/False/Additional configuration information to be mixed in with the initial data
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/Estimated size of the data contained in this node
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/Is this node the end of a group?
+# @param[in] cparam/mode Parset mode/"YANDA"/String/readonly/False//False/To what standard DALiuGE should filter and serialize the parameters.
+# @param[in] cparam/config_data ConfigData/""/String/readwrite/False//False/Additional configuration information to be mixed in with the initial data
 # @param[out] port/Config ConfigFile/File/The output configuration file
 # @par EAGLE_END
-class ParameterSetDROP(AbstractDROP):
+class ParameterSetDROP(DataDROP):
     """
     A generic configuration file template wrapper
     This drop opens an (optional) file containing some initial configuration information, then
@@ -86,6 +86,6 @@ class ParameterSetDROP(AbstractDROP):
         return MemoryIO(io.BytesIO(self.config_data))
 
     @property
-    def dataURL(self):
+    def dataURL(self) -> str:
         hostname = os.uname()[1]
         return f"config://{hostname}/{os.getpid()}/{id(self.config_data)}"
