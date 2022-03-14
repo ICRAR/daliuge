@@ -130,7 +130,7 @@ def main():
         helm_client.create_helm_chart(json.dumps(physical_graph))
         try:
             helm_client.launch_helm()
-            helm_client.submit_pgt()
+            helm_client.submit_and_monitor_pgt()
         except dlg.restutils.RestClientException as exp:
             raise exp
         except dlg.exceptions.InvalidGraphException as exp2:

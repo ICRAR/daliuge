@@ -30,6 +30,7 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 import time
 
 import dlg
@@ -247,6 +248,7 @@ class HelmClient:
             else:
                 logger.error("K8s pods did not start in timeframe allocated")
                 self.teardown()
+                raise RuntimeWarning("K8s pods did not start in timeframe allocated")
         else:
             logger.info(f"Created helm chart {self._chart_name} in {self._deploy_dir}")
 
@@ -256,6 +258,23 @@ class HelmClient:
         for i in range(self._num_machines - 1, -1, -1):
             subprocess.check_output([f'helm uninstall daliuge-daemon-{i}'], shell=True)
         subprocess.check_output([f'helm uninstall daliuge-daemon-master'], shell=True)
+
+    def _monitor(self, session_id=None):
+
+        def _task():
+            while True:
+                try:
+                    dlg.deploy.common.monitor_sessions(
+                        session_id=session_id, host=self._submission_endpoint,
+                        port=NODE_DEFAULT_REST_PORT
+                    )
+                    break
+                except:
+                    logger.exception("Monitoring failed, attempting to restart")
+
+        threads = threading.Thread(target=_task)
+        threads.start()
+        return threads
 
     def submit_pgt(self):
         """
@@ -275,6 +294,14 @@ class HelmClient:
         submit(physical_graph, self._submission_endpoint, port=NODE_DEFAULT_REST_PORT,
                skip_deploy=False)
 
+    def submit_and_monitor_pgt(self):
+        """
+        Combines submission and monitoring steps of a pgt.
+        """
+        session_id = self.submit_pgt()
+        monitoring_thread = self._monitor(session_id)
+        monitoring_thread.join()
+
     def submit_pg(self):
         """
         There is a semi-dynamic element to fetching the IPs of Node(s) to deploy to.
@@ -286,3 +313,12 @@ class HelmClient:
         pg_data = json.loads(self._physical_graph_file)
         # TODO: Add dumping to log-dir
         submit(pg_data, self._submission_endpoint, port=NODE_DEFAULT_REST_PORT, skip_deploy=False)
+
+    def submit_and_monitor_pg(self):
+        """
+        Combines submission and monitoring steps of a pg.
+        """
+        session_id = self.submit_pg()
+        monitoring_thread = self._monitor(session_id)
+        monitoring_thread.join()
+
