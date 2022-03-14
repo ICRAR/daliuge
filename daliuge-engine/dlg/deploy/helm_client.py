@@ -96,8 +96,8 @@ def check_k8s_env():
                                 shell=True).stdout
         pattern = re.compile(r'^Client Version:.*\nServer Version:.*')
         return re.match(pattern, output.decode(encoding='utf-8'))
-    except subprocess.SubprocessError as err:
-        raise err
+    except subprocess.SubprocessError:
+        return False
 
 
 class HelmClient:
@@ -144,12 +144,12 @@ class HelmClient:
         else:
             shutil.copytree(os.path.join(library_root, 'daliuge-k8s', 'helm'), self._deploy_dir)
 
-    def _set_physical_graph(self, physical_graph_content, co_host=True):
+    def _set_physical_graph(self, physical_graph_content):
         self._physical_graph_file = physical_graph_content
         self._islands, self._nodes = _find_resources(
             self._physical_graph_file)
         self._num_machines = _num_deployments_required(self._islands,
-                                                       self._nodes) - 1 if co_host else 0
+                                                       self._nodes)
 
     def _find_pod_details(self):
         # NOTE: +1 for the master.
@@ -162,7 +162,7 @@ class HelmClient:
                                        'svc': service_ips[-1]}
         logger.debug(f'Pod details: {self._pod_details}')
 
-    def create_helm_chart(self, physical_graph_content, co_host=True):
+    def create_helm_chart(self, physical_graph_content):
         """
         Translates a physical graph to a kubernetes helm chart.
         For now, it will just try to run everything in a single container.
@@ -170,7 +170,7 @@ class HelmClient:
         if not self._k8s_access:
             raise RuntimeError("Cannot access k8s")
         # Add charts
-        self._set_physical_graph(physical_graph_content, co_host)
+        self._set_physical_graph(physical_graph_content)
         _write_chart(self._chart_dir, 'Chart.yaml', self._chart_name, self._chart_version,
                      dlg_version,
                      self._chart_vars['home'], self._chart_vars['description'],
