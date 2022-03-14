@@ -285,4 +285,4 @@ class HelmClient:
         # TODO: Check all nodes are operational first.
         pg_data = json.loads(self._physical_graph_file)
         # TODO: Add dumping to log-dir
-        submit(pg_data, self._submission_endpoint, skip_deploy=False)
+        submit(pg_data, self._submission_endpoint, port=NODE_DEFAULT_REST_PORT, skip_deploy=False)
