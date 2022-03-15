@@ -41,8 +41,7 @@ case "$1" in
     "slim")
         export VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
         echo "Building translator slim version ${VCS_TAG}"
-        python updateVersion.py
-        docker-compose -f ./docker/docker-compose.dep.yml build
+        docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-translator:${VCS_TAG} -f docker/Dockerfile .
         echo "Build finished! Slimming the image now"
         echo ""
         echo ""
@@ -52,6 +51,6 @@ case "$1" in
         --http-probe=true icrar/daliuge-translator:${VCS_TAG} --tag icrar/daliuge-translator:${VCS_TAG}
 	    ;;
     *)
-        echo "Usage: build_translator.sh <dep|dev>"
+        echo "Usage: build_translator.sh <dep|dev|slim>"
         exit 0;;
 esac
