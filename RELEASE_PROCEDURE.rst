@@ -18,8 +18,8 @@ Release procedure
     VERSION_MINOR=Y
     VERSION_PATCH=Z
     VERSION=$VERSION_MAJOR.$VERSION_MINOR.$VERSION_PATCH
-    SETUP_FILES="daliuge-common/setup.py daliuge-translator/setup.py daliuge-engine/setup.py setup.py"
-    sed -i "s/MAJOR = .*/MAJOR = $VERSION_MAJOR/; s/MINOR = .*/MINOR = $VERSION_MINOR/; s/PATCH = .*/PATCH = $VERSION_PATCH/" $SETUP_FILES
+    SETUP_FILES="daliuge-common/setup.py daliuge-translator/setup.py daliuge-engine/setup.py"
+    echo $SETUP_FILES | xargs sed -i "s/MAJOR = .*/MAJOR = $VERSION_MAJOR/; s/MINOR = .*/MINOR = $VERSION_MINOR/; s/PATCH = .*/PATCH = $VERSION_PATCH/"
 
 * Double-check these are the only changes you will commit
   ::
