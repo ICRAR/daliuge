@@ -38,6 +38,19 @@ case "$1" in
         docker build --build-arg VCS_TAG=${VCS_TAG}-casa --no-cache -t icrar/daliuge-translator:${VCS_TAG}-casa -f docker/Dockerfile.dev .
         echo "Build finished!"
         exit 0;;
+    "slim")
+        export VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
+        echo "Building translator slim version ${VCS_TAG}"
+        python updateVersion.py
+        docker-compose -f ./docker/docker-compose.dep.yml build
+        echo "Build finished! Slimming the image now"
+        echo ""
+        echo ""
+        echo ">>>>> docker-slim output <<<<<<<<<"
+        docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock dslim/docker-slim build --include-shell \
+        --include-path /usr/local/lib --include-path /usr/local/bin --include-path /daliuge --include-path /dlg \
+        --http-probe=true icrar/daliuge-translator:${VCS_TAG} --tag icrar/daliuge-translator:${VCS_TAG}
+	    ;;
     *)
         echo "Usage: build_translator.sh <dep|dev>"
         exit 0;;
