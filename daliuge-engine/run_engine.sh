@@ -69,6 +69,6 @@ case "$1" in
         ./start_local_managers.sh
         exit 0;;
     *)
-        echo "Usage run_engine.sh <dep|dev>"
+        echo "Usage run_engine.sh <dep|dev|slim>"
         exit 0;;
 esac
