@@ -25,8 +25,8 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV DLG_ROOT="/tmp/dlg/var/dlg_home"
 
 RUN apt install -y git python3-dev
-RUN pip install 'git+https://github.com/ICRAR/dlg-nifty-components.git'
+RUN pip install dlg-nifty-components
+RUN pip install dlg-casacore-components
 RUN pip install --extra-index-url=https://artefact.skao.int/repository/pypi-internal/simple 'ska-sdp-cbf-emulator[plasma]>=1.6.11'
-RUN pip install 'git+https://github.com/ICRAR/dlg-casacore-components.git'
 
 CMD ["dlg", "daemon", "-vv"]
