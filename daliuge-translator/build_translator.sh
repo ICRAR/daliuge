@@ -41,14 +41,14 @@ case "$1" in
     "slim")
         export VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
         echo "Building translator slim version ${VCS_TAG}"
-        docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-translator:${VCS_TAG} -f docker/Dockerfile .
+        docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-translator.big:${VCS_TAG} -f docker/Dockerfile .
         echo "Build finished! Slimming the image now"
         echo ""
         echo ""
         echo ">>>>> docker-slim output <<<<<<<<<"
         docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock dslim/docker-slim build --include-shell \
         --include-path /usr/local/lib --include-path /usr/local/bin --include-path /daliuge --include-path /dlg \
-        --http-probe=true icrar/daliuge-translator:${VCS_TAG} --tag icrar/daliuge-translator:${VCS_TAG}
+        --http-probe=true  --tag=icrar/daliuge-translator:${VCS_TAG} icrar/daliuge-translator.big:${VCS_TAG}
 	    ;;
     *)
         echo "Usage: build_translator.sh <dep|dev|slim>"
