@@ -452,6 +452,7 @@ def convert_construct(lgo):
             continue
         # step 1
         app_node = dict()
+        app_node['reprodata'] = node['reprodata'].copy()
         app_node["key"] = node["key"]
         app_node["category"] = node[has_app]  # node['application']
         if has_app[0] == "i":

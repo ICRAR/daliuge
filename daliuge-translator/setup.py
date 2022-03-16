@@ -33,8 +33,8 @@ from setuptools import setup
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
 MAJOR = 2
-MINOR = 1
-PATCH = 0
+MINOR = 2
+PATCH = 1
 RELEASE = True
 VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
 VERSION_FILE = "dlg/translator/version.py"
@@ -97,6 +97,7 @@ install_requires = [
     "wheel",
     "bottle",
     "daliuge-common==%s" % (VERSION,),
+    "jsonschema",
     "metis>=0.2a3",
     "networkx",
     "numpy",

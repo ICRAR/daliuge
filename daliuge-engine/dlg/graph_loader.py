@@ -45,9 +45,10 @@ from .drop import (
     NullDROP,
     EndDROP,
     PlasmaDROP,
-    PlasmaFlightDROP,
-    ParameterSetDROP
+    PlasmaFlightDROP
 )
+from .environmentvar_drop import EnvironmentVarDROP
+from dlg.parset_drop import ParameterSetDROP
 from .exceptions import InvalidGraphException
 from .json_drop import JsonDROP
 from .common import Categories, DropType
@@ -63,7 +64,8 @@ STORAGE_TYPES = {
     Categories.JSON: JsonDROP,
     Categories.PLASMA: PlasmaDROP,
     Categories.PLASMAFLIGHT: PlasmaFlightDROP,
-    Categories.PARSET: ParameterSetDROP
+    Categories.PARSET: ParameterSetDROP,
+    Categories.ENVIRONMENTVARS: EnvironmentVarDROP
 }
 
 try:
@@ -263,7 +265,7 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
         drop = cf(dropSpec, session=session)
         if session is not None:
             # Now using per-drop reproducibility setting.
-            drop.reproducibility_level = ReproducibilityFlags(int(dropSpec['reprodata']['rmode']))
+            drop.reproducibility_level = ReproducibilityFlags(int(dropSpec.get('reprodata', {}).get('rmode', '0')))
             # session.reprodata['rmode']
         drops[drop.oid] = drop
 

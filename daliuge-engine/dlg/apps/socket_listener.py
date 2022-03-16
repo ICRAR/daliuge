@@ -55,15 +55,26 @@ logger = logging.getLogger(__name__)
 # so data can be written into them through the framework.
 # @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/appclass Application Class/dlg.apps.socket_listener.SocketListener/String/readonly/
+# @param tag daliuge
+# @param[in] cparam/appclass Application Class/dlg.apps.socket_listener.SocketListener/String/readonly/False//False/
 #     \~English Application class
-# @param[in] param/host Host/127.0.0.1/String/readwrite/
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[in] aparam/host Host/127.0.0.1/String/readwrite/False//False/
 #     \~English Host address
-# @param[in] param/port Port/1111/Integer/readwrite/
+# @param[in] aparam/port Port/1111/Integer/readwrite/False//False/
 #     \~English Host port
-# @param[in] param/bufsize Buffer Size/4096/String/readwrite/
+# @param[in] aparam/bufsize Buffer Size/4096/String/readwrite/False//False/
 #     \~English Receive buffer size
-# @param[in] param/reuseAddr Reuse Address/False/Boolean/readwrite/
+# @param[in] aparam/reuseAddr Reuse Address/False/Boolean/readwrite/False//False/
 #     \~English
 # @param[out] port/data Data/String/
 # @par EAGLE_END

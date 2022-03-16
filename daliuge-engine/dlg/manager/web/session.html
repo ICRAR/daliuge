@@ -144,6 +144,7 @@
 	                 status_update_handler, 1000);
 }
 
+//breadcrumbs
 var dimUrlQuery = new URL(window.location.href);
 var dimUrl = dimUrlQuery.searchParams.get("dim_url");
 
@@ -166,8 +167,8 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 	const heightValue = 300;
 	const widthValue = 600;
 	// Set up zoom support
-	var svg = d3.select("svg"),
-    svgGroup = svg.append("g");
+	var svg = d3.select("svg");
+    // svgGroup = svg.append("g");
 	var inner = svg.select("g");
 
 	// svg.call(d3.zoom().on("zoom", function () {
@@ -189,6 +190,8 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 		marginy : 20
 	})
 	.setDefaultEdgeLabel(function () { return {}; });
+
+	console.log("g"+g)
 
 	var render = getRender();
 	function drawGraph() {
