@@ -32,7 +32,7 @@ import threading
 import time
 import traceback
 import warnings
-from jsonschema import validate, ValidationError
+from urllib.parse import parse_qs, urlparse
 
 import bottle
 import pkg_resources
@@ -47,15 +47,13 @@ from bottle import (
     response,
     HTTPResponse,
 )
-
-from urllib.parse import parse_qs, urlparse
-
 from dlg import common, restutils
 from dlg.clients import CompositeManagerClient
-from dlg.dropmake.pg_generator import unroll, partition
 from dlg.dropmake.lg import GraphException
+from dlg.dropmake.pg_generator import unroll, partition
 from dlg.dropmake.pg_manager import PGManager
 from dlg.dropmake.scheduler import SchedulerException
+from jsonschema import validate, ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +87,7 @@ ALGO_PARAMS = [
 ]  # max_mem is only relevant for the old editor, not used in EAGLE
 
 LG_SCHEMA_PATH = "/daliuge/dlg-lg.graph.schema"
+
 
 def lg_path(lg_name):
     return "{0}/{1}".format(lg_dir, lg_name)
