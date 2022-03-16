@@ -91,7 +91,10 @@ class LGNode:
         self._dop = None
         self._gaw = None
         self._grpw = None
-        self._reprodata = jd.get('reprodata', {}).copy()
+        self._reprodata = None
+        temp_repro = jd.get('repodata', None)
+        if temp_repro is not None:
+            self._reprodata = temp_repro.copy()
         if "isGroup" in jd and jd["isGroup"] is True:
             self._isgrp = True
             for wn in group_q[self.id]:
@@ -976,7 +979,7 @@ class LG:
         # key - lgn id, val - a list of pgns associated with this lgn
         self._drop_dict = collections.defaultdict(list)
         self._lgn_list = all_list
-        self._reprodata = lg.get("reprodata", {})
+        self._reprodata = lg.get("reprodata", None)
 
     def validate_link(self, src, tgt):
         # print("validate_link()", src.id, src.is_scatter(), tgt.id, tgt.is_scatter())
