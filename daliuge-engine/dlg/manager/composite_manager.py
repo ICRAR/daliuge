@@ -336,7 +336,7 @@ class CompositeManager(DROPManager):
         # belong to the same host, so we can submit that graph into the individual
         # DMs. For this we need to make sure that our graph has a the correct
         # attribute set
-        logger.info("Separating graph")
+        logger.info(f"Separating graph using partition attribute {self._partitionAttr}")
         perPartition = collections.defaultdict(list)
         try:
             if graphSpec[-1]['merkleroot'] is not None:
@@ -369,6 +369,7 @@ class CompositeManager(DROPManager):
         # At each partition the relationships between DROPs should be local at the
         # moment of submitting the graph; thus we record the inter-partition
         # relationships separately and remove them from the original graph spec
+        logger.info(f"Graph splitted into {perPartition.keys()}")
         inter_partition_rels = []
         for dropSpecs in perPartition.values():
             inter_partition_rels += graph_loader.removeUnmetRelationships(dropSpecs)

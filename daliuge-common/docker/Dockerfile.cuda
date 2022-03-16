@@ -1,0 +1,38 @@
+# we are doing a two-stage build to keep the size of
+# the final image low.
+
+# First stage build and cleanup
+#FROM python:3.8-slim
+FROM ubuntu:20.04
+ARG BUILD_ID
+LABEL stage=builder
+LABEL build=$BUILD_ID
+RUN apt-get update && apt-get install -y gcc python3 python3.8-venv && apt-get clean
+
+COPY / /daliuge
+
+RUN cd && python3 -m venv dlg && cd /daliuge && \
+    . ${HOME}/dlg/bin/activate && \
+    pip install numpy && \
+    pip install . && \
+    apt-get remove -y gcc && \
+    apt-get autoremove -y
+
+
+FROM ubuntu:20.04
+RUN apt-get update && apt-get install -y bash
+COPY --from=0 /root/dlg /root/dlg
+
+RUN apt install -y wget gnupg2 software-properties-common
+RUN mkdir -p /code && cd /code &&\
+    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin &&\
+    mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600 &&\
+    apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub &&\
+    add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /" &&\
+    apt update
+
+RUN DEBIAN_FRONTEND=noninteractive apt -y --no-install-recommends install \
+    cuda-minimal-build-11-2 cuda-libraries-11-2 cuda-libraries-dev-11-2 &&\
+    ln -s /usr/local/cuda-11.2 /usr/local/cuda &&\
+    ln -s /usr/local/cuda/targets/x86_64-linux/lib /usr/local/cuda/lib &&\
+    ln -s /usr/local/cuda/targets/x86_64-linux/include /usr/local/cuda/include

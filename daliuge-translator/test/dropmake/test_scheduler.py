@@ -24,17 +24,16 @@ import unittest
 
 import pkg_resources
 import psutil
-from dlg.dropmake.pg_generator import LG
+from dlg.dropmake.lg import LG
 from dlg.dropmake.scheduler import (Scheduler, MySarkarScheduler, DAGUtil,
                                     Partition, MinNumPartsScheduler, PSOScheduler,
-)
+                                    )
 
 if "DALIUGE_TESTS_RUNLONGTESTS" in os.environ:
     skip_long_tests = not bool(os.environ["DALIUGE_TESTS_RUNLONGTESTS"])
 else:
-    if (psutil.Process().username().lower() in ("chen", "cwu")) and
-            bool(int(os.environ.get("TEST_PSO_SCHEDULER", 0))
-    ):
+    if (psutil.Process().username().lower() in ("chen", "cwu")) and bool(
+            int(os.environ.get("TEST_PSO_SCHEDULER", 0))):
         skip_long_tests = False
     else:
         skip_long_tests = True
@@ -44,7 +43,6 @@ def get_lg_fname(lg_name):
     return pkg_resources.resource_filename(
         __name__, "logical_graphs/{0}".format(lg_name)
     )  # @UndefinedVariable
-
 
 
 class TestScheduler(unittest.TestCase):

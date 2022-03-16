@@ -688,6 +688,8 @@ def init_runtime_repro_data(rg: dict, reprodata: dict):
     :param reprodata:
     :return:
     """
+    if reprodata is None:
+        return {'reprodata': {}}
     rmode = rflag_caster(reprodata['rmode'])
     if not rmode_supported(rmode):
         # TODO: Logging needs sessionID at this stage
