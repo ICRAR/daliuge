@@ -67,8 +67,7 @@ matrix:
       python: "3.8"
       before_install:
       install:
-        - pip install sphinx sphinx-rtd-theme
-        - pip install gputil
+        - pip install sphinx sphinx-rtd-theme gputil merkelib
       script:
         - READTHEDOCS=True make -C docs html SPHINXOPTS="-W --keep-going"
 
