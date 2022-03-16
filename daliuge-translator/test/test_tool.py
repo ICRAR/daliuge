@@ -55,5 +55,7 @@ class TestTool(unittest.TestCase):
 
         # It's valid JSON content, and actually a physical graph
         mapped_graph = json.loads(common.b2s(mapped_graph))
+        # TODO: REPRODATA ATTACHED
+        mapped_graph.pop()  # Get rid of reprodata
         self.assertTrue(list(common.get_roots(mapped_graph)))
         self.assertTrue(list(common.get_leaves(mapped_graph)))
