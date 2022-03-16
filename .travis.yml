@@ -68,6 +68,7 @@ matrix:
       before_install:
       install:
         - pip install sphinx sphinx-rtd-theme
+        - pip install gputil
       script:
         - READTHEDOCS=True make -C docs html SPHINXOPTS="-W --keep-going"
 
