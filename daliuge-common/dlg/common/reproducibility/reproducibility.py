@@ -175,6 +175,9 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
     data = {}
+    if drop.get('reprodata', None) is None:
+        drop['reprodata'] = {'rmode': str(REPRO_DEFAULT.value),
+                             'lg_blockhash': None}
     rmode = rflag_caster(drop['reprodata']['rmode'])
     if not rmode_supported(rmode):
         logger.warning('Requested reproducibility mode %s not yet implemented', str(rmode))
