@@ -123,8 +123,10 @@ install_requires = [
     "daliuge-common==%s" % (VERSION,),
     "dill",
     "docker",
+    "gputil>=1.4.0",
     "lockfile",
     # 0.10.6 builds correctly with old (<=3.10) Linux kernels
+    "merklelib>=1.0"
     "netifaces>=0.10.6",
     "numpy",
     "overrides",
