@@ -180,7 +180,10 @@ class BashShellBase(object):
                     self, "No command specified, cannot create BashShellApp"
                 )
 
-    def _run_bash(self, inputs, outputs, stdin=None, stdout=subprocess.PIPE):
+        self._recompute_data = {}
+
+    def _run_bash(self, inputs, outputs, stdin=None,
+                  stdout=subprocess.PIPE):
         """
         Runs the given `cmd`. If any `inputs` and/or `outputs` are given
         (dictionaries of uid:drop elements) they are used to replace any placeholder
@@ -252,10 +255,13 @@ class BashShellBase(object):
         if stdout != subprocess.PIPE:
             pstdout = b"<piped-out>"
         pcode = process.returncode
-
         end = time.time()
         logger.info("Finished in %.3f [s] with exit code %d", (end - start), pcode)
 
+        logger.info("Finished in %.3f [s] with exit code %d", (end - start), pcode)
+        self._recompute_data['stdout'] = str(pstdout)
+        self._recompute_data['stderr'] = str(pstderr)
+        self._recompute_data['status'] = str(pcode)
         if pcode == 0 and logger.isEnabledFor(logging.DEBUG):
             logger.debug(
                 mesage_stdouts("Command finished successfully", pstdout, pstderr)
@@ -274,6 +280,10 @@ class BashShellBase(object):
             os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
         except:
             logger.exception("Error while terminating process %r", self.proc)
+
+    def generate_recompute_data(self):
+        self._recompute_data['command'] = self.command
+        return self._recompute_data
 
 
 class StreamingInputBashAppBase(BashShellBase, AppDROP):

@@ -39,7 +39,7 @@ from dlg.meta import (
     dlg_bool_param, 
     dlg_int_param,
     dlg_list_param,
-    dlg_component, 
+    dlg_component,
     dlg_batch_input,
     dlg_batch_output, 
     dlg_streaming_input

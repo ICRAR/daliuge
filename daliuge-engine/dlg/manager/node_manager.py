@@ -239,6 +239,9 @@ class NodeManagerBase(DROPManager):
         self._check_session_id(sessionId)
         return self._sessions[sessionId].status
 
+    def getSessionReproStatus(self, sessionId):
+        return self._sessions[sessionId].reprostatus
+
     def linkGraphParts(self, sessionId, lhOID, rhOID, linkType):
         self._check_session_id(sessionId)
         self._sessions[sessionId].linkGraphParts(lhOID, rhOID, linkType)
@@ -253,6 +256,7 @@ class NodeManagerBase(DROPManager):
 
     def getGraph(self, sessionId):
         self._check_session_id(sessionId)
+        #  TODO: Ensure returns reproducibility data.
         return self._sessions[sessionId].getGraph()
 
     def getLogDir(self):
@@ -291,6 +295,7 @@ class NodeManagerBase(DROPManager):
             log_evt_listener = self._logging_event_listener
             if log_evt_listener:
                 drop.subscribe(log_evt_listener, "status")
+                drop.subscribe(log_evt_listener, 'reproducibility')
                 if isinstance(drop, AppDROP):
                     drop.subscribe(log_evt_listener, "execStatus")
 
@@ -553,6 +558,7 @@ EventMixIn = ZMQPubSubMixIn
 # Load the corresponding RPC classes and finish the construciton of NodeManager
 class RpcMixIn(rpc.RPCClient, rpc.RPCServer):
     pass
+
 
 
 # Final NodeManager class

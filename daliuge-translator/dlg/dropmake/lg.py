@@ -39,11 +39,9 @@ import time
 from itertools import product
 
 import numpy as np
-
-from dlg.dropmake.utils.bash_parameter import BashCommand
-from dlg.common import dropdict
 from dlg.common import Categories, DropType
 from dlg.common import STORAGE_TYPES, APP_DROP_TYPES
+from dlg.common import dropdict
 from dlg.dropmake.dm_utils import (
     LG_APPREF,
     getNodesKeyDict,
@@ -51,11 +49,10 @@ from dlg.dropmake.dm_utils import (
     convert_construct,
     convert_fields,
     convert_mkn,
-    getAppRefInputs,
     LG_VER_EAGLE,
-    LG_VER_OLD,
     LG_VER_EAGLE_CONVERTED,
 )
+from dlg.dropmake.utils.bash_parameter import BashCommand
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +91,7 @@ class LGNode:
         self._dop = None
         self._gaw = None
         self._grpw = None
+        self._reprodata = jd['reprodata'].copy()
         if "isGroup" in jd and jd["isGroup"] is True:
             self._isgrp = True
             for wn in group_q[self.id]:
@@ -159,10 +157,10 @@ class LGNode:
         Add a group member
         """
         if (
-            lg_node.is_group()
-            and not (lg_node.is_scatter())
-            and not (lg_node.is_loop())
-            and not (lg_node.is_groupby())
+                lg_node.is_group()
+                and not (lg_node.is_scatter())
+                and not (lg_node.is_loop())
+                and not (lg_node.is_groupby())
         ):
             raise GInvalidNode(
                 "Only Scatters or Loops can be nested, but {0} is neither".format(
@@ -285,9 +283,9 @@ class LGNode:
 
     def is_start_listener(self):
         return (
-            len(self.inputs) == 1
-            and self.inputs[0].jd["category"] == Categories.START
-            and self.jd["category"] in STORAGE_TYPES
+                len(self.inputs) == 1
+                and self.inputs[0].jd["category"] == Categories.START
+                and self.jd["category"] in STORAGE_TYPES
         )
 
     def is_group_start(self):
@@ -529,20 +527,12 @@ class LGNode:
         return "{0}_{1}_{2}".format(self._ssid, self.id, iid), rank
 
     def _update_key_value_attributes(self, kwargs):
-        # NOTE: We should really just pass all of these on un-altered and finally drop
-        #       support for the Arg%02d arguments.
         # get the arguments from new fields dictionary in a backwards compatible way
         if "fields" in self.jd:
             for je in self.jd["fields"]:
                 # The field to be used is not the text, but the name field
                 self.jd[je["name"]] = je["value"]
                 kwargs[je["name"]] = je["value"]
-        kwargs["applicationArgs"] = {} # make sure the dict always exists downstream
-        if "applicationArgs" in self.jd: # and fill it if provided
-            for je in self.jd["applicationArgs"]:
-                j = {je["name"]:{k:je[k] for k in je if k not in ['name']}}
-                self.jd.update(j)
-                kwargs["applicationArgs"].update(j)
         for i in range(10):
             k = "Arg%02d" % (i + 1)
             if k not in self.jd:
@@ -619,43 +609,13 @@ class LGNode:
                     kwargs["filepath"] = fp
             self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
-        elif drop_type in [Categories.COMPONENT, Categories.PYTHON_APP, Categories.BRANCH, Categories.DOCKER]:
+        elif drop_type in [Categories.COMPONENT, Categories.PYTHON_APP, Categories.BRANCH]:
             # default generic component becomes "sleep and copy"
-            if drop_type not in [Categories.DOCKER]:
-                if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
-                    app_class = "dlg.apps.simple.SleepApp"
-                else:
-                    app_class = self.jd["appclass"]
+            if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
+                app_class = "dlg.apps.simple.SleepApp"
             else:
-                # deal with the Docker specific component params
-                app_class = "dlg.apps.dockerapp.DockerApp"
-                typ = DropType.APP
-                image = str(self.jd.get("image"))
-                if image == "":
-                    raise GraphException("Missing image for Docker component '%s'" % self.text)
+                app_class = self.jd["appclass"]
 
-                command = str(self.jd.get("command"))
-                # There ARE containers which don't need/want a command
-                # if command == "":
-                #     raise GraphException("Missing command for Construct '%s'" % self.text)
-
-                kwargs["image"] = image
-                kwargs["command"] = command
-                # TODO: User inside docker should follow user of engine.
-                kwargs["user"] = str(self.jd.get("user", ""))
-                kwargs["ensureUserAndSwitch"] = self.str_to_bool(
-                    str(self.jd.get("ensureUserAndSwitch", "0"))
-                )
-                kwargs["removeContainer"] = self.str_to_bool(
-                    str(self.jd.get("removeContainer", "1"))
-                )
-                kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
-                if kwargs["additionalBindings"]:
-                    kwargs["additionalBindings"] += ","
-                # always mount DLG_ROOT directory. ENV variable is only known in engine
-                kwargs["additionalBindings"] += "${DLG_ROOT}:${DLG_ROOT}"
-                kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
-                kwargs["shmSize"] = str(self.jd.get("shmSize",""))
             if "execution_time" in self.jd:
                 execTime = int(self.jd["execution_time"])
                 if execTime < 0:
@@ -681,7 +641,7 @@ class LGNode:
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             if "mkn" in self.jd:
                 kwargs["mkn"] = self.jd["mkn"]
-            self._update_key_value_attributes(kwargs) # pass on all other kw-value pairs
+            self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
 
         elif drop_type in [Categories.DYNLIB_APP, Categories.DYNLIB_PROC_APP]:
@@ -721,44 +681,65 @@ class LGNode:
                 )
             # add more arguments
             cmds = []
-            if "command" in self.jd:
-                cmds = [self.jd["command"]]
-            self._update_key_value_attributes(kwargs) # get all the other params
-            kwargs["command"] = BashCommand(cmds) # NOTE: Not really required anymore?
+            for i in range(10):
+                k = "Arg%02d" % (i + 1,)
+                if k not in self.jd:
+                    k = "arg%02d" % (i + 1,)
+                    if k not in self.jd:
+                        continue
+                v = self.jd[k]
+                if v is not None and len(str(v)) > 0:
+                    cmds.append(str(v))
+            # add more arguments - this is the new method of adding arguments in EAGLE
+            # the method above (Arg**) is retained for compatibility, but eventually should be removed
+            for k in [
+                "command",
+                "input_redirection",
+                "output_redirection",
+                "command_line_arguments",
+            ]:
+                if k in self.jd:
+                    cmds.append(self.jd[k])
+            # kwargs['command'] = ' '.join(cmds)
+            if drop_type == Categories.MPI:
+                kwargs["command"] = BashCommand(cmds).to_real_command()
+            else:
+                kwargs["command"] = BashCommand(
+                    cmds)  # TODO: Check if this actually solves a problem.
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             drop_spec.update(kwargs)
 
-        # elif drop_type == Categories.DOCKER:
-        #     # Docker application.
-        #     app_class = "dlg.apps.dockerapp.DockerApp"
-        #     typ = DropType.APP
-        #     drop_spec = dropdict(
-        #         {"oid": oid, "type": typ, "app": app_class, "rank": rank}
-        #     )
+        elif drop_type == Categories.DOCKER:
+            # Docker application.
+            app_class = "dlg.apps.dockerapp.DockerApp"
+            typ = DropType.APP
+            drop_spec = dropdict(
+                {"oid": oid, "type": typ, "app": app_class, "rank": rank}
+            )
 
-        #     image = str(self.jd.get("image"))
-        #     if image == "":
-        #         raise GraphException("Missing image for Construct '%s'" % self.text)
+            image = str(self.jd.get("image"))
+            if image == "":
+                raise GraphException("Missing image for Construct '%s'" % self.text)
 
-        #     command = str(self.jd.get("command"))
-        #     # There ARE containers which don't need/want a command
-        #     # if command == "":
-        #     #     raise GraphException("Missing command for Construct '%s'" % self.text)
+            command = str(self.jd.get("command"))
+            # There ARE containers which don't need/want a command
+            # if command == "":
+            #     raise GraphException("Missing command for Construct '%s'" % self.text)
 
-        #     kwargs["tw"] = int(self.jd.get("execution_time", "5"))
-        #     kwargs["image"] = image
-        #     kwargs["command"] = command
-        #     kwargs["user"] = str(self.jd.get("user", ""))
-        #     kwargs["ensureUserAndSwitch"] = self.str_to_bool(
-        #         str(self.jd.get("ensureUserAndSwitch", "0"))
-        #     )
-        #     kwargs["removeContainer"] = self.str_to_bool(
-        #         str(self.jd.get("removeContainer", "1"))
-        #     )
-        #     kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
-        #     kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
-        #     kwargs["shmSize"] = str(self.jd.get("shmSize",""))
-        #     drop_spec.update(kwargs)
+            kwargs["tw"] = int(self.jd.get("execution_time", "5"))
+            kwargs["image"] = image
+            kwargs["command"] = command
+            kwargs["user"] = str(self.jd.get("user", ""))
+            kwargs["ensureUserAndSwitch"] = self.str_to_bool(
+                str(self.jd.get("ensureUserAndSwitch", "0"))
+            )
+            kwargs["removeContainer"] = self.str_to_bool(
+                str(self.jd.get("removeContainer", "1"))
+            )
+            kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
+            kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
+            kwargs["shmSize"] = str(self.jd.get("shmSize", ""))
+            drop_spec.update(kwargs)
 
         elif drop_type == Categories.GROUP_BY:
             drop_spec = dropdict(
@@ -864,6 +845,8 @@ class LGNode:
         kwargs["lg_key"] = self.id
         kwargs["dt"] = self.jd["category"]
         kwargs["nm"] = self.text
+        # Behaviour is that child-nodes inherit reproducibility data from their parents.
+        kwargs["reprodata"] = self._reprodata.copy()
         if "isService" in self.jd and self.jd["isService"]:
             kwargs["type"] = DropType.SERVICE_APP
         dropSpec.update(kwargs)
@@ -939,8 +922,8 @@ class LG:
         stream_output_ports = dict()  # key - port_id, value - construct key
         for jd in lg["nodeDataArray"]:
             if (
-                jd["category"] == Categories.COMMENT
-                or jd["category"] == Categories.DESCRIPTION
+                    jd["category"] == Categories.COMMENT
+                    or jd["category"] == Categories.DESCRIPTION
             ):
                 continue
             lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
@@ -955,9 +938,9 @@ class LG:
 
         for lgn in all_list:
             if (
-                lgn.is_start()
-                and lgn.jd["category"] != Categories.COMMENT
-                and lgn.jd["category"] != Categories.DESCRIPTION
+                    lgn.is_start()
+                    and lgn.jd["category"] != Categories.COMMENT
+                    and lgn.jd["category"] != Categories.DESCRIPTION
             ):
                 if lgn.jd["category"] == Categories.VARIABLES:
                     self._g_var.append(lgn)
@@ -992,6 +975,7 @@ class LG:
         # key - lgn id, val - a list of pgns associated with this lgn
         self._drop_dict = collections.defaultdict(list)
         self._lgn_list = all_list
+        self._reprodata = lg["reprodata"]
 
     def validate_link(self, src, tgt):
         # print("validate_link()", src.id, src.is_scatter(), tgt.id, tgt.is_scatter())
@@ -1010,9 +994,9 @@ class LG:
 
         if src.is_gather():
             if not (
-                tgt.jd["category"] in APP_DROP_TYPES
-                and tgt.is_group_start()
-                and src.inputs[0].h_level == tgt.h_level
+                    tgt.jd["category"] in APP_DROP_TYPES
+                    and tgt.is_group_start()
+                    and src.inputs[0].h_level == tgt.h_level
             ):
                 raise GInvalidLink(
                     "Gather {0}'s output {1} must be a Group-Start Component inside a Group with the same H level as Gather's input".format(
@@ -1130,9 +1114,9 @@ class LG:
                             self._lg_links.append(lk)
                 else:
                     for (
-                        gs
+                            gs
                     ) in (
-                        gs_list
+                            gs_list
                     ):  # add artificial logical links to the "first" children
                         lgn.add_input(gs)
                         gs.add_output(lgn)
@@ -1203,7 +1187,7 @@ class LG:
         Yield successive n-sized chunks from l.
         """
         for i in range(0, len(l), n):
-            yield l[i : i + n]
+            yield l[i: i + n]
 
     def _unroll_gather_as_output(self, slgn, tlgn, sdrops, tdrops, chunk_size, llink):
         if slgn.h_level < tlgn.h_level:
@@ -1237,11 +1221,11 @@ class LG:
             Categories.DYNLIB_PROC_APP,
             Categories.PYTHON_APP,
         ] and t_type in [
-            Categories.COMPONENT,
-            Categories.DYNLIB_APP,
-            Categories.DYNLIB_PROC_APP,
-            Categories.PYTHON_APP,
-        ]
+                   Categories.COMPONENT,
+                   Categories.DYNLIB_APP,
+                   Categories.DYNLIB_PROC_APP,
+                   Categories.PYTHON_APP,
+               ]
 
     def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink):
         """ """
@@ -1353,7 +1337,7 @@ class LG:
                 # 1. GroupBy's "natual" output must be a Scatter (i.e. group)
                 # 2. Scatter "naturally" does not have output
                 if (
-                    slgn.is_gather() and tlgn.gid != sid
+                        slgn.is_gather() and tlgn.gid != sid
                 ):  # not the artifical link between gather and its own start child
                     # gather iteration case, tgt must be a Group-Start Component
                     # this is a way to manually sequentialise a Scatter that has a high DoP
@@ -1368,7 +1352,7 @@ class LG:
                         if j >= tlgn.group.dop and j % tlgn.group.dop == 0:
                             continue
                         while j < (i + 2) * slgn.gather_width and j < tlgn.group.dop * (
-                            i + 1
+                                i + 1
                         ):
                             gather_input_list = self._gather_cache[ga_drop["oid"]][1]
                             # TODO merge this code into the function
@@ -1400,11 +1384,11 @@ class LG:
                 if slgn.is_start_node():
                     continue
                 elif (
-                    (slgn.group is not None)
-                    and slgn.group.is_loop()
-                    and slgn.gid == tlgn.gid
-                    and slgn.is_group_end()
-                    and tlgn.is_group_start()
+                        (slgn.group is not None)
+                        and slgn.group.is_loop()
+                        and slgn.gid == tlgn.gid
+                        and slgn.is_group_end()
+                        and tlgn.is_group_start()
                 ):
                     # Re-link to the next iteration's start
                     lsd = len(sdrops)
@@ -1420,7 +1404,7 @@ class LG:
                     #     pass
                     loop_chunk_size = slgn.group.dop
                     for i, chunk in enumerate(
-                        self._split_list(sdrops, loop_chunk_size)
+                            self._split_list(sdrops, loop_chunk_size)
                     ):
                         # logger.debug("{0} ** {1}".format(i, loop_chunk_size))
                         for j, sdrop in enumerate(chunk):
@@ -1439,11 +1423,11 @@ class LG:
                     #     if (i < lsd - 1):
                     #         self._link_drops(slgn, tlgn, sdrop, tdrops[i + 1])
                 elif (
-                    slgn.group is not None
-                    and slgn.group.is_loop()
-                    and tlgn.group is not None
-                    and tlgn.group.is_loop()
-                    and (not slgn.h_related(tlgn))
+                        slgn.group is not None
+                        and slgn.group.is_loop()
+                        and tlgn.group is not None
+                        and tlgn.group.is_loop()
+                        and (not slgn.h_related(tlgn))
                 ):
                     # stepwise locking for links between two Loops
                     for sdrop, tdrop in product(sdrops, tdrops):
@@ -1452,10 +1436,10 @@ class LG:
                 else:
                     lpaw = ("%s-%s" % (sid, tid)) in self_loop_aware_set
                     if (
-                        slgn.group is not None
-                        and slgn.group.is_loop()
-                        and lpaw
-                        and slgn.h_level > tlgn.h_level
+                            slgn.group is not None
+                            and slgn.group.is_loop()
+                            and lpaw
+                            and slgn.h_level > tlgn.h_level
                     ):
                         loop_iter = slgn.group.dop
                         for i, chunk in enumerate(self._split_list(sdrops, chunk_size)):
@@ -1464,10 +1448,10 @@ class LG:
                                 if j % loop_iter == loop_iter - 1:
                                     self._link_drops(slgn, tlgn, sdrop, tdrops[i], lk)
                     elif (
-                        tlgn.group is not None
-                        and tlgn.group.is_loop()
-                        and lpaw
-                        and slgn.h_level < tlgn.h_level
+                            tlgn.group is not None
+                            and tlgn.group.is_loop()
+                            and lpaw
+                            and slgn.h_level < tlgn.h_level
                     ):
                         loop_iter = tlgn.group.dop
                         for i, chunk in enumerate(self._split_list(tdrops, chunk_size)):
@@ -1496,7 +1480,7 @@ class LG:
                             # the last bit of iid (current h id) is the local GrougBy key, i.e. inner most loop context id
                             gby = src_ctx[-1]
                             if (
-                                slgn.h_level - 2 == tlgn.h_level and tlgn.h_level > 0
+                                    slgn.h_level - 2 == tlgn.h_level and tlgn.h_level > 0
                             ):  # groupby itself is nested inside a scatter
                                 # group key consists of group context id + inner most loop context id
                                 gctx = "/".join(src_ctx[0:-2])
@@ -1609,9 +1593,13 @@ class LG:
 
         for drop in ret:
             if drop["type"] == DropType.APP and drop["app"].endswith(
-                Categories.BASH_SHELL_APP
+                    Categories.BASH_SHELL_APP
             ):
                 bc = drop["command"]
                 drop["command"] = bc.to_real_command()
 
         return ret
+
+    @property
+    def reprodata(self):
+        return self._reprodata

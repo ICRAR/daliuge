@@ -27,10 +27,9 @@ import logging
 import os
 import time
 
+import scp
 from paramiko.client import SSHClient, AutoAddPolicy
 from paramiko.rsakey import RSAKey
-import scp
-
 
 logger = logging.getLogger(__name__)
 

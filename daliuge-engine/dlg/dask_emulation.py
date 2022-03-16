@@ -36,7 +36,6 @@ from .ddap_protocol import DROPStates
 from .drop import BarrierAppDROP
 from .exceptions import InvalidDropException
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -139,7 +138,6 @@ def compute(value, **kwargs):
 
 
 class _DelayedDrop(object):
-
     _drop_count = 0
 
     def __init__(self, producer=None):
@@ -234,6 +232,7 @@ class _Listifier(BarrierAppDROP):
         )
 
 
+
 class _DelayedDrops(_DelayedDrop):
     """One or more _DelayedDrops treated as a single item"""
 
@@ -244,7 +243,6 @@ class _DelayedDrops(_DelayedDrop):
         logger.debug("Created %r", self)
 
     def _to_physical_graph(self, visited, graph):
-
         output = _DataDrop(producer=self)
         output._append_to_graph(visited, graph)
 

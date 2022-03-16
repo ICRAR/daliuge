@@ -30,7 +30,6 @@ import logging
 
 from ..hsm import store
 
-
 logger = logging.getLogger(__name__)
 
 

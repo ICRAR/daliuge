@@ -21,9 +21,9 @@
 #
 import http.client
 import json
+import codecs
 
 from dlg import utils
-import codecs
 
 
 def _get(url, port):

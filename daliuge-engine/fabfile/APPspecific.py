@@ -153,6 +153,7 @@ def start_APP_and_check_status():
     success("dlg help is working...")
 
 
+
 def sysinitstart_APP_and_check_status():
     """
     Starts the APP daemon process and checks that the server is up and running
@@ -163,7 +164,6 @@ def sysinitstart_APP_and_check_status():
 
 
 def APP_build_cmd():
-
     # The installation of the bsddb package (needed by ngamsCore) is in
     # particular difficult because it requires some flags to be passed on
     # (particularly if using MacOSX's port
@@ -175,6 +175,7 @@ def APP_build_cmd():
     build_cmd.append("pip install .")
 
     return " ".join(build_cmd)
+
 
 
 def prepare_APP_data_dir():
@@ -246,6 +247,7 @@ def cleanup():
     run("rm -rf daliuge_*")
     run("rm -rf DALIUGE")
     run("if [ -f .bash_profile.orig ]; then mv .bash_profile.orig .bash_profile; fi")
+
 
 
 def install_docker_compose():
