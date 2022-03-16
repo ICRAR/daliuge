@@ -846,7 +846,8 @@ class LGNode:
         kwargs["dt"] = self.jd["category"]
         kwargs["nm"] = self.text
         # Behaviour is that child-nodes inherit reproducibility data from their parents.
-        kwargs["reprodata"] = self._reprodata.copy()
+        if self._reprodata is not None:
+            kwargs["reprodata"] = self._reprodata.copy()
         if "isService" in self.jd and self.jd["isService"]:
             kwargs["type"] = DropType.SERVICE_APP
         dropSpec.update(kwargs)
