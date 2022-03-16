@@ -24,10 +24,10 @@
 Dropmake utils
 """
 
+import copy
 import json
 import os
 import os.path as osp
-import copy
 
 from ..common import Categories
 
@@ -452,7 +452,7 @@ def convert_construct(lgo):
             continue
         # step 1
         app_node = dict()
-        app_node[has_app] = node[has_app]
+        app_node['reprodata'] = node['reprodata'].copy()
         app_node["key"] = node["key"]
         app_node["category"] = node[has_app]  # node['application']
         if has_app[0] == "i":
@@ -558,9 +558,9 @@ def convert_construct(lgo):
                 if "group" not in to_node and "group" not in gather_construct:
                     cond1 = True
                 elif (
-                    "group" in to_node
-                    and "group" in gather_construct
-                    and to_node["group"] == gather_construct["group"]
+                        "group" in to_node
+                        and "group" in gather_construct
+                        and to_node["group"] == gather_construct["group"]
                 ):
                     cond1 = True
                 else:

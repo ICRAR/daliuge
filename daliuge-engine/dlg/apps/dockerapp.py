@@ -363,6 +363,9 @@ class DockerApp(BarrierAppDROP):
         self._containerIp = None
         self._containerId = None
         self._waiters = []
+        self._recompute_data = {'image': self._image,
+                                'user': self._user,
+                                'command': self._command}
 
     @property
     def containerIp(self):
@@ -465,7 +468,6 @@ class DockerApp(BarrierAppDROP):
             uid, ip = waiter.waitForIp()
             cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
             logger.debug("Command after IP replacement is: %s", cmd)
-
         # deal with environment variables
         env = {}
         env.update({
@@ -641,3 +643,6 @@ class DockerApp(BarrierAppDROP):
         if os.path.exists(config_file_name):
             return ConfigObj(config_file_name)
         return {}
+
+    def generate_recompute_data(self):
+        return self._recompute_data

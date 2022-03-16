@@ -57,6 +57,7 @@ def deserialize_data(d):
     return pickle.loads(base64.b64decode(d.encode("latin1")))
 
 
+
 def serialize_func(f):
 
     if isinstance(f, str):
@@ -91,6 +92,7 @@ def import_using_name(app, fname):
         )
     except AttributeError:
         raise InvalidDropException(app, "Module %s has no member %s" % (modname, fname))
+
 
 
 def import_using_code(code):
@@ -253,6 +255,7 @@ class PyFuncApp(BarrierAppDROP):
 
         # Mapping between argument name and input drop uids
         logger.debug(f"Input mapping: {self.func_arg_mapping}")
+        self._recompute_data = {}
 
     def run(self):
 
@@ -313,15 +316,20 @@ class PyFuncApp(BarrierAppDROP):
 
         logger.debug(f"Running {self.func_name} with args={args}, kwargs={kwargs}")
         result = self.f(*args, **kwargs)
-
+        self._recompute_data['args'] = args
+        self._recompute_data['kwargs'] = kwargs
         # Depending on how many outputs we have we treat our result
         # as an iterable or as a single object. Each result is pickled
         # and written to its corresponding output
+        self.write_results(result)
+
+    def write_results(self, result):
         outputs = self.outputs
         if len(outputs) == 1:
             result = [result]
         for r, o in zip(result, outputs):
-            if self.pickle:
-                o.write(pickle.dumps(r))  # @UndefinedVariable
-            else:
-                o.write(repr(r).encode('utf-8'))
+            self._recompute_data[o.dataURL] = str(r)  # TODO: Revise if this is not ideal
+            o.write(pickle.dumps(r))  # @UndefinedVariable
+
+    def generate_recompute_data(self):
+        return self._recompute_data

@@ -188,6 +188,7 @@ def getDlgDir():
     return path
 
 
+
 def getDlgPidDir():
     """
     Returns the location of the directory used by the DALiuGE framework to store
@@ -195,6 +196,7 @@ def getDlgPidDir():
     currently doesn't exist
     """
     return os.path.join(getDlgDir(), "pid")
+
 
 
 def getDlgLogsDir():
@@ -519,7 +521,7 @@ def prepareUser(DLG_ROOT=getDlgDir()):
         file.write(f"{gr.gr_name}:x:{gr.gr_gid}:\n")
         file.write(f"docker:x:{dgr.gr_gid}\n")
         logger.debug(f"Group file written {file.name}")
-    
+
     return dgr.gr_gid
 
 

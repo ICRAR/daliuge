@@ -26,14 +26,16 @@ import json
 import logging
 import optparse
 import os
-import traceback
 import signal
 import sys
 import threading
 import time
+import traceback
 import warnings
 from jsonschema import validate, ValidationError
 
+import bottle
+import pkg_resources
 from bottle import (
     route,
     request,
@@ -45,8 +47,6 @@ from bottle import (
     response,
     HTTPResponse,
 )
-import bottle
-import pkg_resources
 
 from urllib.parse import parse_qs, urlparse
 

@@ -23,13 +23,24 @@ import os
 import tempfile
 import unittest
 
+from dlg.common import Categories
 from dlg.deploy import common
 from dlg.manager import constants
 from dlg.manager.session import SessionStates
 
 
 from dlg.testutils import ManagerStarter
-from dlg.common import Categories
+
+default_repro = {"rmode": "1", "lg_blockhash": "x", "pgt_blockhash": "y", "pg_blockhash": "z"}
+default_graph_repro = {"rmode": "1", "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
+                       "merkleroot": "a", "signature": "b"}
+
+
+def add_test_reprodata(graph: list):
+    for drop in graph:
+        drop['reprodata'] = default_repro.copy()
+    graph.append(default_graph_repro.copy())
+    return graph
 
 
 class CommonTestsBase(ManagerStarter):
@@ -45,6 +56,7 @@ class CommonTestsBase(ManagerStarter):
             },
             {"oid": "C", "type": "plain", "storage": Categories.MEMORY},
         ]
+        pg = add_test_reprodata(pg)
         for drop in pg:
             drop["node"] = "127.0.0.1"
             drop["island"] = "127.0.0.1"
@@ -83,7 +95,6 @@ class CommonTestsBase(ManagerStarter):
 
 
 class TestDeployCommonNM(CommonTestsBase, unittest.TestCase):
-
     port = constants.NODE_DEFAULT_REST_PORT
 
     def assert_session_finished(self, status):
@@ -99,7 +110,6 @@ class TestDeployCommonNM(CommonTestsBase, unittest.TestCase):
 
 
 class TestDeployCommonDIM(TestDeployCommonNM, unittest.TestCase):
-
     port = constants.ISLAND_DEFAULT_REST_PORT
 
     def assert_session_finished(self, status):
@@ -115,7 +125,6 @@ class TestDeployCommonDIM(TestDeployCommonNM, unittest.TestCase):
 
 
 class TestDeployCommonMM(TestDeployCommonDIM, unittest.TestCase):
-
     port = constants.MASTER_DEFAULT_REST_PORT
 
     def setUp(self):

@@ -44,7 +44,6 @@ except:
 
 @unittest.skipIf(docker_unavailable, "Docker daemon not available")
 class DockerTests(unittest.TestCase):
-
     _temp = None
     _docker_available = False
 

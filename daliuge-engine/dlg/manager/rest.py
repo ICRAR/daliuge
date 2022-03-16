@@ -234,6 +234,26 @@ class ManagerRestServer(RestServer):
         return {"status": status, "graph": graphDict}
 
     @daliuge_aware
+    def getSessionReproStatus(self, sessionId):
+        return self.dm.getSessionReproStatus(sessionId)
+
+    @daliuge_aware
+    def getSessionsReproStatus(self):
+        sessions = []
+        for sessionId in self.dm.getSessionIds():
+            sessions.append({'sessionId': sessionId, 'status': self.dm.getSessionStatus(sessionId),
+                             'size': self.dm.getGraphSize(sessionId),
+                             'repro': self.dm.getSessionReproStatus(sessionId)})
+        return sessions
+
+    @daliuge_aware
+    def getSessionReproData(self, sessionId):
+        #  For now, we only have information on a per-graph basis.
+        graphDict = self.dm.getGraph(sessionId)
+        reprodata = self.dm.getGraphReproData(sessionId)
+        return {'graph': graphDict, 'reprodata': reprodata}
+
+    @daliuge_aware
     def destroySession(self, sessionId):
         self.dm.destroySession(sessionId)
 
@@ -311,6 +331,7 @@ class ManagerRestServer(RestServer):
         )
 
 
+
 class NMRestServer(ManagerRestServer):
     """
     A REST server for NodeManagers. It includes mappings for NM-specific
@@ -382,6 +403,7 @@ class NMRestServer(ManagerRestServer):
         return bottle.template(
             tpl, serverUrl=serverUrl, dmType=self.dm.__class__.__name__, reset="false"
         )
+
 
 
 class CompositeManagerRestServer(ManagerRestServer):
@@ -530,6 +552,7 @@ class CompositeManagerRestServer(ManagerRestServer):
             nodes=json.dumps(self.dm.nodes),
             selectedNode=selectedNode,
         )
+
 
 
 class MasterManagerRestServer(CompositeManagerRestServer):

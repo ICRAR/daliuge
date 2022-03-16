@@ -20,12 +20,12 @@
 #    MA 02111-1307  USA
 #
 
-import unittest
-import os
-import pkg_resources
-
-from dlg.dropmake import pg_generator
 import json
+import os
+import unittest
+
+import pkg_resources
+from dlg.dropmake import pg_generator
 
 lg_dir = pkg_resources.resource_filename(
     __name__, "logical_graphs"

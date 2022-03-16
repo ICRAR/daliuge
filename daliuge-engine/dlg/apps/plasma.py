@@ -19,8 +19,9 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import os
 import io
+import os
+
 import numpy as np
 import logging
 import asyncio
@@ -244,6 +245,28 @@ class MSStreamingPlasmaProducer(BarrierAppDROP):
 #     \~English Output MS file
 # @par EAGLE_END
 class MSPlasmaReader(BarrierAppDROP):
+    """
+    A BarrierAppDROP that reads a CASA measurement from a plasma store and writes out to file.
+
+    Example:
+        a = FileDROP('a', 'a', filepath=in_file)
+        b = MSPlasmaWriter('b', 'b')
+        c = PlasmaDROP('c', 'c')
+        d = MSPlasmaReader('d', 'd')
+        e = FileDROP('e', 'e', filepath=out_file)
+    """
+    compontent_meta = dlg_component('MSPlasmaWriter', 'Measurement Set Plasma Writer.',
+                                    [dlg_batch_input('binary/*', [])],
+                                    [dlg_batch_output('binary/*', [])],
+                                    [dlg_streaming_input('binary/*')])
+
+    ms_output_path = dlg_string_param('ms_output_path', None)
+
+    def __init__(self, oid, uid, **kwargs):
+        super().__init__(oid, uid, kwargs)
+        self.reproduce_data = {}
+        self.recompute_data = {}
+
     def initialize(self, **kwargs):
         super().initialize(**kwargs)
 
@@ -278,6 +301,7 @@ class MSPlasmaReader(BarrierAppDROP):
         load_bytes = io.BytesIO(in_stream)
         ms = np.load(load_bytes, allow_pickle=True).flat[0]
         self._write_table(ms, path)
+        self.reproduce_data['data_hash'] = common_hash(ms)
 
     def run(self, **kwargs):
         if len(self.inputs) != 1:
@@ -287,10 +311,19 @@ class MSPlasmaReader(BarrierAppDROP):
 
         inp = self.inputs[0]
         out = self.outputs[0].path
+        self.recompute_data['in'] = str(inp)
+        self.recompute_data['out'] = str(out)
 
         desc = inp.open()
         input_stream = inp.read(desc)
         self._deserialize_table(input_stream, out)
+
+    def generate_recompute_data(self):
+        self.recompute_data['status'] = self.status
+        return self.recompute_data
+
+    def generate_reproduce_data(self):
+        return self.reproduce_data
 
 
 ##
@@ -317,6 +350,28 @@ class MSPlasmaReader(BarrierAppDROP):
 #     \~English Plasma MS store output
 # @par EAGLE_END
 class MSPlasmaWriter(BarrierAppDROP):
+    """
+    A BarrierAppDROP that reads a CASA measurement set and writes it out to a plasma store.
+
+    Example:
+        a = FileDROP('a', 'a', filepath=in_file)
+        b = MSPlasmaWriter('b', 'b')
+        c = PlasmaDROP('c', 'c')
+        d = MSPlasmaReader('d', 'd')
+        e = FileDROP('e', 'e', filepath=out_file)
+    """
+    compontent_meta = dlg_component('MSPlasmaWriter', 'Measurement Set Plasma Writer.',
+                                    [dlg_batch_input('binary/*', [])],
+                                    [dlg_batch_output('binary/*', [])],
+                                    [dlg_streaming_input('binary/*')])
+
+    ms_input_path = dlg_string_param('ms_input_path', None)
+
+    def __init__(self, oid, uid, **kwargs):
+        super().__init__(oid, uid, kwargs)
+        self.recompute_data = {}
+        self.reproduce_data = {}
+
     def initialize(self, **kwargs):
         super().initialize(**kwargs)
 
@@ -352,5 +407,15 @@ class MSPlasmaWriter(BarrierAppDROP):
 
         inp = self.inputs[0].path
         out = self.outputs[0]
+        self.recompute_data['in'] = str(inp)
+        self.recompute_data['out'] = str(out)
         out_bytes = self._serialize_table(inp)
         out.write(out_bytes)
+        self.reproduce_data['data_hash'] = common_hash(out_bytes)
+
+    def generate_recompute_data(self):
+        self.recompute_data['status'] = self.status
+        return self.recompute_data
+
+    def generate_reproduce_data(self):
+        return self.reproduce_data

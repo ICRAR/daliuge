@@ -30,11 +30,10 @@ from . import constants
 from .client import NodeManagerClient
 from .constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from .drop_manager import DROPManager
-from .. import remote, graph_loader
+from .. import graph_loader
 from ..ddap_protocol import DROPRel
 from ..exceptions import InvalidGraphException, DaliugeException, SubManagerException
 from ..utils import portIsOpen
-
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +44,8 @@ def uid_for_drop(dropSpec):
     return dropSpec["oid"]
 
 
-def sanitize_relations(interDMRelations, graph):
 
+def sanitize_relations(interDMRelations, graph):
     # TODO: Big change required to remove this hack here
     #
     # Values in the interDMRelations array use OIDs to identify drops.
@@ -339,6 +338,13 @@ class CompositeManager(DROPManager):
         # attribute set
         logger.info(f"Separating graph using partition attribute {self._partitionAttr}")
         perPartition = collections.defaultdict(list)
+        try:
+            if graphSpec[-1]['merkleroot'] is not None:
+                self._graph['reprodata'] = graphSpec.pop()
+                logger.debug("Composite manager found reprodata in dropspecList, rmode=%s",
+                             self._graph['reprodata']['rmode'])
+        except KeyError:
+            pass
         for dropSpec in graphSpec:
             if self._partitionAttr not in dropSpec:
                 msg = "Drop %s doesn't specify a %s attribute" % (
@@ -360,7 +366,6 @@ class CompositeManager(DROPManager):
 
             # Add the drop specs to our graph
             self._graph[uid_for_drop(dropSpec)] = dropSpec
-
         # At each partition the relationships between DROPs should be local at the
         # moment of submitting the graph; thus we record the inter-partition
         # relationships separately and remove them from the original graph spec
@@ -531,6 +536,7 @@ class DataIslandManager(CompositeManager):
         # In the case of the Data Island the dmHosts are the final nodes as well
         self._nodes = dmHosts
         logger.info("Created DataIslandManager for hosts: %r", self._dmHosts)
+
 
 
 class MasterManager(CompositeManager):

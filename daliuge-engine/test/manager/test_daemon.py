@@ -29,7 +29,7 @@ from dlg import utils, restutils
 from dlg.manager import constants
 from dlg.manager.client import MasterManagerClient
 from dlg.manager.proc_daemon import DlgDaemon
-
+from six.moves import http_client as httplib  # @UnresolvedImport
 
 _TIMEOUT = 10
 

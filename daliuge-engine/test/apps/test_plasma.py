@@ -19,14 +19,15 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import unittest
 import logging
 import tarfile
 import binascii
 import shutil
+import unittest
 
 from dlg.drop import FileDROP, PlasmaDROP, InMemoryDROP
 from dlg import droputils
+from dlg.drop import FileDROP, PlasmaDROP
 
 cbf_unavailable = True
 try:

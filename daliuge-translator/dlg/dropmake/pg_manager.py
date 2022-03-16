@@ -22,14 +22,14 @@
 Refer to
 https://confluence.ska-sdp.org/display/PRODUCTTREE/C.1.2.4.4.4+DFM+Physical+Graph+Manager
 """
+import json
 import os
-import threading, json
+import threading
 
 import numpy as np
 
 from dlg.dropmake.lg import GraphException
 from dlg.dropmake.scheduler import DAGUtil, SchedulerException
-
 
 MAX_PGT_FN_CNT = 300
 

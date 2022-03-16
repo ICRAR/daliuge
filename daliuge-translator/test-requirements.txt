@@ -2,3 +2,5 @@ gitpython
 ruamel.yaml==0.16.0; python_version=='2.7'
 typing>=3.7.4
 pyyaml>=6.0
+GPUtil
+merklelib

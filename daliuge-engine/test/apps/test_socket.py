@@ -19,17 +19,16 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import os
 import unittest
 
-from dlg import utils
 from dlg import droputils
+from dlg import utils
 from dlg.apps.socket_listener import SocketListenerApp
-from dlg.drop import InMemoryDROP
 from dlg.ddap_protocol import DROPStates
+from dlg.drop import InMemoryDROP
 from dlg.droputils import DROPWaiterCtx
 from test.test_drop import SumupContainerChecksum
-import os
-
 
 try:
     from crc32c import crc32c  # @UnusedImport

@@ -24,9 +24,8 @@ import subprocess
 import unittest
 
 import pkg_resources
-
-from dlg.common import tool
 from dlg import common
+from dlg.common import tool
 
 
 class TestTool(unittest.TestCase):

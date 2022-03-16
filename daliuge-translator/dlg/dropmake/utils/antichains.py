@@ -107,6 +107,7 @@ def _get_pi_solution(split_graph):
                 pai[n] = 1
         return pai
 
+
 def get_max_weighted_antichain(dag, w_attr='weight'):
     """
     Given a a nextworkx DiGraph `dag`, return a tuple.
@@ -120,19 +121,20 @@ def get_max_weighted_antichain(dag, w_attr='weight'):
     bpg = _create_split_graph(dag, w_attr=w_attr)
     pai = _get_pi_solution(bpg)
 
-    w_antichain_len = 0 #weighted antichain length
+    w_antichain_len = 0  # weighted antichain length
     antichain_names = []
     for h in range(2):
         for nd in bpg.nodes():
             if (nd.endswith('_x')):
                 y_nd = nd.split('_x')[0] + '_y'
                 if ((1 - pai[nd] + pai['s'] == h) and
-                (pai[y_nd] - pai[nd] == 1)):
+                        (pai[y_nd] - pai[nd] == 1)):
                     w_antichain_len += bpg.adj['s'][nd]['capacity']
-                    #print(' *** %d' % bpg.edge['s'][nd]['capacity'])
+                    # print(' *** %d' % bpg.edge['s'][nd]['capacity'])
                     antichain_names.append(nd)
 
     return w_antichain_len, antichain_names
+
 
 def create_small_seq_graph():
     G = nx.DiGraph()
@@ -143,6 +145,7 @@ def create_small_seq_graph():
     G.nodes[3]['weight'] = 7
     #print("")
     return G, 7
+
 
 def create_medium_seq_graph():
     G = create_small_seq_graph()[0]
@@ -157,6 +160,7 @@ def create_medium_seq_graph():
     G.nodes[7]['weight'] = 1
     return G, 7
 
+
 def create_small_parral_graph():
     G = nx.DiGraph()
     G.add_edge(1, 2)
@@ -167,6 +171,7 @@ def create_small_parral_graph():
     G.nodes[3]['weight'] = 7
     return G, 13
 
+
 def create_medium_parral_graph():
     G = create_small_parral_graph()[0]
     G.add_edge(2, 4)
@@ -174,6 +179,7 @@ def create_medium_parral_graph():
     G.nodes[4]['weight'] = 3
     G.nodes[5]['weight'] = 4
     return G, 14
+
 
 if __name__ == "__main__":
     gs = [create_small_seq_graph(),

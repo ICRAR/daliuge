@@ -29,8 +29,8 @@ import multiprocessing
 import random
 
 from dlg import droputils
-from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.common import dropdict, Categories
+from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.drop import BarrierAppDROP
 from dlg.manager.node_manager import NodeManager
 
@@ -42,17 +42,29 @@ except:
 random.seed(42)
 
 hostname = "localhost"
+default_repro = {"rmode": "1", "lg_blockhash": "x", "pgt_blockhash": "y", "pg_blockhash": "z"}
+default_graph_repro = {"rmode": "1", "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
+                       "merkleroot": "a", "signature": "b"}
+
+
+def add_test_reprodata(graph: list):
+    for drop in graph:
+        drop['reprodata'] = default_repro.copy()
+    graph.append(default_graph_repro.copy())
+    return graph
 
 
 def memory(uid, **kwargs):
-    dropSpec = dropdict({"oid": uid, "type": "plain", "storage": Categories.MEMORY})
+    dropSpec = dropdict({"oid": uid, "type": "plain", "storage": Categories.MEMORY,
+                         "reprodata": default_repro.copy()})
     dropSpec.update(kwargs)
     return dropSpec
 
 
 def sleepAndCopy(uid, **kwargs):
     dropSpec = dropdict(
-        {"oid": uid, "type": "app", "app": "dlg.apps.simple.SleepAndCopyApp"}
+        {"oid": uid, "type": "app", "app": "dlg.apps.simple.SleepAndCopyApp",
+         "reprodata": default_repro.copy()}
     )
     dropSpec.update(kwargs)
     return dropSpec
@@ -114,7 +126,8 @@ class NMTestsMixIn(object):
         """Utility to run a graph in two Node Managers"""
 
         dm1, dm2 = node_managers or [self._start_dm(threads=threads) for _ in range(2)]
-
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
         quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
         self.assertEqual(len(g1), len(dm1._sessions[sessionId].drops))
@@ -172,6 +185,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
                 "producers": ["B"],
             },
         ]
+        add_test_reprodata(g)
         dm = self._start_dm(**kwargs)
         dm.createSession(sessionId)
         dm.addGraphSpec(sessionId, g)
@@ -294,7 +308,8 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
                 "producers": ["E"],
             },
         ]
-
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         rels = [
             DROPRel("D", DROPLinkType.INPUT, "E"),
             DROPRel("B", DROPLinkType.INPUT, "E"),
@@ -377,7 +392,8 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
             sleepAndCopy("N", inputs=["L", "M"], outputs=["O"], sleepTime=0),
             memory("O"),
         ]
-
+        for g in [g1, g2, g3, g4]:
+            add_test_reprodata(g)
         rels_12 = [DROPRel("A", DROPLinkType.INPUT, "B")]
         rels_13 = [DROPRel("A", DROPLinkType.INPUT, "G")]
         rels_24 = [DROPRel("F", DROPLinkType.PRODUCER, "L")]
@@ -459,7 +475,8 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
                 }
             )
             rels.append(DROPRel("A", DROPLinkType.INPUT, b_oid))
-
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
         quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
         self.assertEqual(1, len(dm1._sessions[sessionId].drops))
@@ -524,7 +541,8 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
                 "node": ip_addr_2,
             },
         ]
-
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         rels = [
             DROPRel("D", DROPLinkType.INPUT, "E"),
             DROPRel("D", DROPLinkType.INPUT, "F"),
@@ -620,6 +638,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         """
 
         graph = [{"oid": "A", "type": "plain", "storage": Categories.SHMEM}]
+        graph = add_test_reprodata(graph)
         dm = self._start_dm()
         sessionID = "s1"
         if sys.version_info < (3, 8):
@@ -644,6 +663,7 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
             },
             {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
         ]
+        add_test_reprodata(g)
         dm = self._start_dm(threads=multiprocessing.cpu_count(), **kwargs)
         dm.createSession(sessionId)
         dm.addGraphSpec(sessionId, g)
@@ -752,6 +772,8 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
             DROPRel("D", DROPLinkType.INPUT, "E"),
             DROPRel("B", DROPLinkType.INPUT, "E"),
         ]
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
         quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
 
@@ -834,6 +856,8 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         rels_13 = [DROPRel("A", DROPLinkType.INPUT, "G")]
         rels_24 = [DROPRel("F", DROPLinkType.PRODUCER, "L")]
         rels_34 = [DROPRel("K", DROPLinkType.PRODUCER, "M")]
+        for g in [g1, g2, g3, g4]:
+            add_test_reprodata(g)
         quickDeploy(
             dm1, sessionId, g1, {nm_conninfo(1): rels_12, nm_conninfo(2): rels_13}
         )
@@ -891,7 +915,7 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         =======    ====================
         """
 
-        dm1, dm2 = [self._start_dm(threads=multiprocessing.cpu_count()) for _ in range(2)]
+        dm1, dm2 = [self._start_dm() for _ in range(2)]
 
         sessionId = f"s{random.randint(0, 1000)}"
         N = 100
@@ -911,7 +935,8 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
                 }
             )
             rels.append(DROPRel("A", DROPLinkType.INPUT, b_oid))
-
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
         quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
         self.assertEqual(1, len(dm1._sessions[sessionId].drops))
@@ -991,6 +1016,8 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
             DROPRel("D", DROPLinkType.INPUT, "E"),
             DROPRel("D", DROPLinkType.INPUT, "F"),
         ]
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
         quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
 

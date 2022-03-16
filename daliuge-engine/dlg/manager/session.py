@@ -25,10 +25,15 @@ Module containing the logic of a session -- a given graph execution
 
 import collections
 import inspect
+import json
 import logging
+import os
 import threading
 import time
 import socket
+
+from dlg.common.reproducibility.reproducibility import init_runtime_repro_data
+from dlg.utils import createDirIfMissing
 
 from . import constants
 from .. import droputils
@@ -50,7 +55,6 @@ from ..exceptions import (
     NoDropException,
     DaliugeException,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +85,23 @@ class LeavesCompletionListener(object):
         )
         if self._completed == self._nexpected:
             self._session.finish()
+
+
+class ReproFinishedListener(object):
+    def __init__(self, graph, session):
+        self._session = session
+        self._nexpected = len(graph)
+        self._completed = 0
+
+    def handleEvent(self, evt):
+        self._completed += 1
+        self._session.append_reprodata(evt.oid, evt.reprodata)
+        logger.debug("%d/%d drops filed reproducibility", self._completed, self._nexpected)
+        if self._completed == self._nexpected:
+            logger.debug("Building Reproducibility BlockDAG")
+            init_runtime_repro_data(self._session._graph, self._session._graphreprodata)
+            self._session.reprostatus = True
+            self._session.write_reprodata()
 
 
 class EndListener(object):
@@ -134,6 +155,8 @@ class Session(object):
         self._error_status_listener = None
         self._nm = nm
         self._dropsubs = {}
+        self._graphreprodata = None
+        self._reprofinished = False
 
         class SessionFilter(logging.Filter):
             def __init__(self, sessionId):
@@ -184,6 +207,28 @@ class Session(object):
     def drops(self):
         return self._drops
 
+    @property
+    def reprodata(self):
+        return self._graphreprodata
+
+    @property
+    def reprostatus(self):
+        return self._reprofinished
+
+    @reprostatus.setter
+    def reprostatus(self, status):
+        with self._statusLock:  # TODO: Consider creating another lock
+            self._reprofinished = status
+
+    def write_reprodata(self):
+        parts = [utils.getDlgLogsDir(), self._sessionId]
+        the_dir = os.path.abspath(os.path.normpath(os.path.join(*parts)))
+        createDirIfMissing(the_dir)
+        the_path = os.path.join(the_dir, 'reprodata.out')
+        with open(the_path, 'w+') as file:
+            json.dump(self._graphreprodata, open(the_path, 'w+'), indent=4)
+
+
     @track_current_session
     def addGraphSpec(self, graphSpec):
         """
@@ -193,7 +238,10 @@ class Session(object):
         DROP. Each DROP specification is checked to see it contains
         all the necessary details to construct a proper DROP. If one
         DROP specification is found to be inconsistent the whole operation
-        fill wail.
+        will fail.
+
+        This operation also 'slices off' a dictionary containing graph-wide
+        reproducibility information. This is stored as a class variable for later use.
 
         Adding graph specs to the session is only allowed while the session is
         in the PRISTINE or BUILDING status; otherwise an exception will be
@@ -214,7 +262,7 @@ class Session(object):
         self.status = SessionStates.BUILDING
 
         # This will check the consistency of each dropSpec
-        graphSpecDict = graph_loader.loadDropSpecs(graphSpec)
+        graphSpecDict, self._graphreprodata = graph_loader.loadDropSpecs(graphSpec)
 
         # Check for duplicates
         duplicates = set(graphSpecDict) & set(self._graph)
@@ -299,6 +347,9 @@ class Session(object):
         )
         logger.info("%d drops successfully created", len(self._graph))
 
+        #  Add listeners for reproducibility information
+        repro_listener = ReproFinishedListener(self._graph, self)
+
         for drop, _ in droputils.breadFirstTraverse(self._roots):
 
             # Register them
@@ -313,6 +364,8 @@ class Session(object):
             # Register them with the error handler
             for l in event_listeners:
                 drop.subscribe(l)
+            #  Register each drop for reproducibility listening
+            drop.subscribe(repro_listener, 'reproducibility')
 
         logger.info("Stored all drops, proceeding with further customization")
 
@@ -391,7 +444,7 @@ class Session(object):
         Called when an event has been fired by a remote drop.
         The event is then delivered to the interested drops of this session.
         """
-        if not evt.uid in self._dropsubs:
+        if evt.uid not in self._dropsubs:
             logger.debug("No subscription found for drop %s", evt.uid)
             return
         for tgt in self._dropsubs[evt.uid]:
@@ -404,12 +457,8 @@ class Session(object):
         evt_consumer = (
             DROPLinkType.CONSUMER,
             DROPLinkType.STREAMING_CONSUMER,
-            DROPLinkType.OUTPUT,
-        )
-        evt_producer = (
-            DROPLinkType.INPUT,
-            DROPLinkType.STREAMING_INPUT,
-            DROPLinkType.PRODUCER,
+            DROPLinkType.OUTPUT,)
+        evt_producer = (DROPLinkType.INPUT, DROPLinkType.STREAMING_INPUT, DROPLinkType.PRODUCER,
         )
 
         for host, droprels in relationships.items():
@@ -455,6 +504,13 @@ class Session(object):
                     mname = LINKTYPE_1TON_BACK_APPEND_METHOD[rel.rel]
 
                 self._proxyinfo.append((host, rpc_port, local_uid, mname, remote_uid))
+
+    def append_reprodata(self, oid, reprodata):
+        if oid in self._graph:
+            if self._graph[oid].get('reprodata') is None:
+                return
+            self._graph[oid]['reprodata']['rg_data'] = reprodata.get('data', {})
+            self._graph[oid]['reprodata']['rg_data']['merkleroot'] = reprodata.get('merkleroot', b'')
 
     @track_current_session
     def finish(self):

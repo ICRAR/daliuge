@@ -28,8 +28,11 @@ import collections
 import importlib
 import logging
 
+from dlg.common.reproducibility.constants import ReproducibilityFlags
+
 from . import droputils
 from .apps.socket_listener import SocketListenerApp
+from .common import Categories
 from .ddap_protocol import DROPRel, DROPLinkType
 from .drop import (
     ContainerDROP,
@@ -192,6 +195,7 @@ def check_dropspec(n, dropSpec):
         )
 
 
+
 def loadDropSpecs(dropSpecList):
     """
     Loads the DROP definitions from `dropSpectList`, checks that
@@ -199,10 +203,18 @@ def loadDropSpecs(dropSpecList):
     all DROP specifications (i.e., a dictionary of dictionaries) keyed on
     the OID of each DROP. Unlike `readObjectGraph` and `readObjectGraphS`,
     this method doesn't actually create the DROPs themselves.
+
+    Slices off graph-wise reproducibility data for later use
     """
 
     # Step #1: Check the DROP specs and collect them
     dropSpecs = {}
+    reprodata = None
+    if dropSpecList is None:
+        raise InvalidGraphException("DropSpec is empty %r" % dropSpecList)
+    if dropSpecList[-1].get('merkleroot'):
+            reprodata = dropSpecList.pop()
+            logger.debug("Found reprodata in dropSpecList, rmode=%s", reprodata['rmode'])
     for n, dropSpec in enumerate(dropSpecList):
 
         # "type" and 'oit' are mandatory
@@ -233,11 +245,11 @@ def loadDropSpecs(dropSpecList):
                 dropSpecs[dropSpec[rel]]
 
     # Done!
-    return dropSpecs
+    return dropSpecs, reprodata
+
 
 
 def createGraphFromDropSpecList(dropSpecList, session=None):
-
     logger.debug("Found %d DROP definitions", len(dropSpecList))
 
     # Step #1: create the actual DROPs
@@ -251,6 +263,10 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
 
         cf = __CREATION_FUNCTIONS[dropType]
         drop = cf(dropSpec, session=session)
+        if session is not None:
+            # Now using per-drop reproducibility setting.
+            drop.reproducibility_level = ReproducibilityFlags(int(dropSpec.get('reprodata', {}).get('rmode', '0')))
+            # session.reprodata['rmode']
         drops[drop.oid] = drop
 
     # Step #2: establish relationships
