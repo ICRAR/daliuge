@@ -22,7 +22,6 @@
 """Backwards compatibility for client"""
 from .. import clients
 
-
 BaseDROPManagerClient = clients.BaseDROPManagerClient
 NodeManagerClient = clients.NodeManagerClient
 CompositeManagerClient = clients.CompositeManagerClient

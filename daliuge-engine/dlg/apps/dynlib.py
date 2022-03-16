@@ -32,7 +32,6 @@ from ..ddap_protocol import AppDROPStates
 from ..drop import AppDROP, BarrierAppDROP
 from ..exceptions import InvalidDropException
 
-
 logger = logging.getLogger(__name__)
 
 _read_cb_type = ctypes.CFUNCTYPE(
@@ -92,6 +91,12 @@ class CDlgApp(ctypes.Structure):
         ("done", _app_done_cb_type),
         ("data", ctypes.c_void_p),
     ]
+
+    def pack_python(self):
+        out = {}
+        for key, val in self._fields_.items():
+            out[key] = six.b(str(val))
+        return out
 
 
 def _to_c_input(i):
@@ -347,6 +352,10 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
         super(DynlibStreamApp, self).addStreamingInput(streamingInputDrop, back)
         self._c_app.n_streaming_inputs += 1
 
+    def generate_recompute_data(self):
+        out = {'status': self.status}
+        return out.update(self._c_app.pack_python())
+
 
 ##
 # @brief DynlibApp
@@ -379,6 +388,10 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
         prepare_c_ranks(self._c_app, self.ranks)
         self._ensure_c_outputs_are_set()
         run(self.lib, self._c_app, input_closers)
+
+    def generate_recompute_data(self):
+        out = {'status': self.status}
+        return out.update(self._c_app.pack_python())
 
 
 class FinishSubprocess(Exception):

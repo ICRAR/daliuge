@@ -30,7 +30,10 @@ import numpy as np
 from dlg.dask_emulation import delayed as dlg_delayed
 from dlg.dask_emulation import compute as dlg_compute
 from dlg.common import tool
+from dlg.dask_emulation import compute as dlg_compute
+from dlg.dask_emulation import delayed as dlg_delayed
 from dlg.utils import terminate_or_kill
+from six.moves import reduce  # @UnresolvedImport
 
 try:
     from dask import delayed as dask_delayed
@@ -47,12 +50,14 @@ def add_list(numbers):
     return functools.reduce(add, numbers)
 
 
+
 def subtract(x, y):
     return x - y
 
 
 def subtract_list(numbers):
     return functools.reduce(subtract, numbers)
+
 
 
 def multiply(x, y):

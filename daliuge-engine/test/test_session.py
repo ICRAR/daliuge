@@ -23,10 +23,22 @@ import unittest
 
 from dlg import runtime
 from dlg.ddap_protocol import DROPLinkType, DROPStates, AppDROPStates
-from dlg.manager.session import Session, SessionStates
-from dlg.exceptions import InvalidGraphException
 from dlg.droputils import DROPWaiterCtx
+from dlg.exceptions import InvalidGraphException
+from dlg.manager.session import SessionStates, Session
 from dlg.common import Categories
+
+default_repro = {"rmode": "1", "lg_blockhash": "x", "pgt_blockhash": "y", "pg_blockhash": "z"}
+default_graph_repro = {"rmode": "1",
+                       "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
+                       "merkleroot": "a", "signature": "b"}
+
+
+def add_test_reprodata(graph: list):
+    for drop in graph:
+        drop['reprodata'] = default_repro.copy()
+    graph.append(default_graph_repro.copy())
+    return graph
 
 
 class TestSession(unittest.TestCase):
@@ -34,8 +46,7 @@ class TestSession(unittest.TestCase):
         with Session("1") as s:
             self.assertEqual(SessionStates.PRISTINE, s.status)
             self.assertRaises(Exception, s.linkGraphParts, "", "", 0)
-
-            s.addGraphSpec([{"oid": "A", "type": "container"}])
+            s.addGraphSpec(add_test_reprodata([{"oid": "A", "type": "container"}]))
             self.assertEqual(SessionStates.BUILDING, s.status)
 
             s.deploy()
@@ -58,54 +69,42 @@ class TestSession(unittest.TestCase):
 
     def test_addGraphSpec(self):
         with Session("1") as s:
-            s.addGraphSpec([{"oid": "A", "type": "container"}])
-            s.addGraphSpec([{"oid": "B", "type": "container"}])
-            s.addGraphSpec([{"oid": "C", "type": "container"}])
+            s.addGraphSpec(add_test_reprodata([{"oid": "A", "type": "container"}]))
+            s.addGraphSpec(add_test_reprodata([{"oid": "B", "type": "container"}]))
+            s.addGraphSpec(add_test_reprodata([{"oid": "C", "type": "container"}]))
 
             # Adding an existing DROP
             self.assertRaises(
-                Exception, s.addGraphSpec, [{"oid": "A", "type": "container"}]
-            )
+                Exception, s.addGraphSpec, add_test_reprodata([{"oid": "A", "type": "container"}]
+                                                              ))
 
             # Adding invalid specs
             self.assertRaises(
-                Exception, s.addGraphSpec, [{"oid": "D", "type": "app"}]
-            )  # missing "storage"
-            self.assertRaises(
-                Exception,
-                s.addGraphSpec,
-                [{"oid": "D", "type": "plain", "storage": "invalid"}],
-            )  # invalid "storage"
-            self.assertRaises(
-                Exception, s.addGraphSpec, [{"oid": "D", "type": "invalid"}]
-            )  # invalid "type"
-            self.assertRaises(
-                Exception,
-                s.addGraphSpec,
-                [
-                    {
-                        "oid": "D",
-                        "type": "app",
-                        "storage": Categories.NULL,
-                        "outputs": ["X"],
-                    }
-                ],
-            )  # missing X DROP
+                Exception, s.addGraphSpec,
+                add_test_reprodata([{"oid": "D", "type": "app"}]))  # missing "storage"
+            self.assertRaises(Exception, s.addGraphSpec,
+                              add_test_reprodata(
+                                  [{"oid": "D", "type": "plain", "storage": "invalid"}],
+                                  ))  # invalid "storage"
+            self.assertRaises(Exception, s.addGraphSpec, add_test_reprodata(
+                [{"oid": "D", "type": "invalid"}]))  # invalid "type"
+            self.assertRaises(Exception, s.addGraphSpec,
+                              add_test_reprodata([{"oid": "D", "type": "app",
+                                                   "storage": Categories.NULL, "outputs": ["X"],
+                                                   }
+                                                  ],
+                                                 ))  # missing X DROP
 
     def test_linking(self):
         with Session("1") as s:
-            s.addGraphSpec([{"oid": "A", "type": "container"}])
+            s.addGraphSpec(add_test_reprodata([{"oid": "A", "type": "container"}]))
             s.addGraphSpec(
-                [
-                    {
-                        "oid": "B",
-                        "type": "app",
-                        "storage": Categories.NULL,
-                        "app": "dlg.apps.crc.CRCApp",
-                    }
-                ]
-            )
-            s.addGraphSpec([{"oid": "C", "type": "container"}])
+                add_test_reprodata([{"oid": "B", "type": "app", "storage": Categories.NULL,
+                                     "app": "dlg.apps.crc.CRCApp",
+                                     }
+                                    ]
+                                   ))
+            s.addGraphSpec(add_test_reprodata([{"oid": "C", "type": "container"}]))
 
             # Link them now
             s.linkGraphParts("A", "B", DROPLinkType.CONSUMER)
@@ -128,27 +127,15 @@ class TestSession(unittest.TestCase):
         """Cancels a whole graph execution"""
         with Session("1") as s:
             s.addGraphSpec(
-                [
-                    {
-                        "oid": "A",
-                        "type": "plain",
-                        "storage": Categories.MEMORY,
-                        "consumers": ["B"],
-                    },
-                    {
-                        "oid": "B",
-                        "type": "app",
-                        "app": "dlg.apps.simple.SleepApp",
-                        "sleepTime": 2,
-                    },
-                    {
-                        "oid": "C",
-                        "type": "plain",
-                        "storage": Categories.MEMORY,
-                        "producers": ["B"],
-                    },
-                ]
-            )
+                add_test_reprodata(
+                    [{"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["B"],
+                      },
+                     {"oid": "B", "type": "app", "app": "dlg.apps.simple.SleepApp", "sleepTime": 2,
+                      },
+                     {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"],
+                      },
+                     ]
+                    ))
             s.deploy()
             self.assertEqual(SessionStates.RUNNING, s.status)
             s.cancel()
@@ -161,40 +148,22 @@ class TestSession(unittest.TestCase):
         """Like test_cancel, but only part of the graph should be cancelled"""
         with Session("1") as s:
             s.addGraphSpec(
-                [
-                    {
-                        "oid": "A",
-                        "type": "plain",
-                        "storage": Categories.MEMORY,
-                        "consumers": ["B"],
-                    },
-                    {
-                        "oid": "B",
-                        "type": "app",
-                        "app": "dlg.apps.simple.SleepApp",
-                        "sleepTime": 0,
-                    },
-                    {
-                        "oid": "C",
-                        "type": "plain",
-                        "storage": Categories.MEMORY,
-                        "producers": ["B"],
-                        "consumers": ["D"],
-                    },
-                    {
-                        "oid": "D",
-                        "type": "app",
-                        "app": "dlg.apps.simple.SleepApp",
-                        "sleepTime": 10,
-                    },
-                    {
-                        "oid": "E",
-                        "type": "plain",
-                        "storage": Categories.MEMORY,
-                        "producers": ["D"],
-                    },
-                ]
-            )
+                add_test_reprodata(
+                    [{"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["B"],
+                      },
+                     {"oid": "B", "type": "app", "app": "dlg.apps.simple.SleepApp", "sleepTime": 0,
+                      },
+                     {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"],
+                      "consumers": ["D"],
+                      },
+                     {
+                         "oid": "D", "type": "app", "app": "dlg.apps.simple.SleepApp",
+                         "sleepTime": 10,
+                     },
+                     {"oid": "E", "type": "plain", "storage": Categories.MEMORY, "producers": ["D"],
+                      },
+                     ]
+                    ))
             s.deploy()
             self.assertEqual(SessionStates.RUNNING, s.status)
 

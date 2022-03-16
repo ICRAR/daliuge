@@ -124,6 +124,44 @@ def monitor_sessions(
             time.sleep(poll_interval)
 
 
+def monitor_sessions_repro(session_id=None, poll_interval=10, host='127.0.0.1',
+                           port=constants.ISLAND_DEFAULT_REST_PORT, timeout=60,
+                           status_dump_path=None):
+    """
+    Very similar to monitoring execution status of all (or one) session specified by `session_id`
+    by polling `host`:`port`, and returns when they all have finalized their reproducibility data.
+    """
+    client = _get_client(host, port, timeout, status_dump_path)
+    if session_id:
+        while True:
+            repro_status = client.session_repro_status(session_id)
+            if repro_status:
+                return True
+            time.sleep(poll_interval)
+    else:
+        while True:
+            sessions = client.sessions()
+            if all(client.session_repro_status(s) for s in sessions):
+                return {s['sessionId']: s['repro'] for s in sessions}
+            time.sleep(poll_interval)
+
+
+def fetch_reproducibility(session_id=None, poll_interval=10, host='127.0.0.1',
+                          port=constants.ISLAND_DEFAULT_REST_PORT, timeout=60):
+    """
+    Fetches the final graph and associated reproducibility information for `session_id`.
+    """
+    if session_id is None:
+        return {}
+    client = _get_client(host, port, timeout)
+    while True:
+        repro_data = client.session_repro_data(session_id)
+        if repro_data is not None:
+            return repro_data
+        time.sleep(poll_interval)
+
+
+
 def submit(
     pg,
     host="127.0.0.1",
@@ -138,7 +176,7 @@ def submit(
     """
     client = _get_client(host, port, timeout)
     session_id = session_id or "%f" % (time.time())
-    completed_uids = droputils.get_roots(pg)
+    completed_uids = droputils.get_roots(pg[:-1])
     with client:
         client.create_session(session_id)
         logger.info("Session %s created", session_id)
