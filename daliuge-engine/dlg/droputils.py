@@ -242,7 +242,6 @@ def breadFirstTraverse(toVisit):
 
     # See how many arguments we should used when calling func
     while toVisit:
-
         # Pay the node a visit
         node = toVisit.popleft()
         dependencies = getDownstreamObjects(node)

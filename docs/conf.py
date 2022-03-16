@@ -4,12 +4,12 @@
 # sphinx-quickstart on Mon Feb  8 16:19:47 2016.
 
 import os
-import shlex
 import subprocess
 import sys
 from datetime import datetime
 
 read_the_docs_build = os.environ.get("READTHEDOCS", None) == "True"
+
 
 
 def prepare_for_docs(path):

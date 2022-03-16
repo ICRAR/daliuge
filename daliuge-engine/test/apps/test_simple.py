@@ -39,6 +39,7 @@ from dlg.apps.simple import (
     ListAppendThrashingApp
 )
 from dlg.apps.simple import RandomArrayApp, AverageArraysApp, HelloWorldApp
+from dlg.apps.simple import SleepApp, CopyApp, SleepAndCopyApp
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import NullDROP, InMemoryDROP, FileDROP, NgasDROP
 if sys.version_info >= (3, 8):

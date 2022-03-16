@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 """Common utilities used by daliuge packages"""
+import sys
 from .osutils import terminate_or_kill, wait_or_kill
 from .network import check_port, connect_to, portIsClosed, portIsOpen, write_to
 from .streams import ZlibCompressedStream, JSONStream

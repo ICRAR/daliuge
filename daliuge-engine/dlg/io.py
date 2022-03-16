@@ -359,6 +359,7 @@ class SharedMemoryIO(DataIO):
         self._close()
 
 
+
 class FileIO(DataIO):
     """
     A file-based implementation of DataIO
@@ -480,11 +481,11 @@ class NgasIO(DataIO):
                 dataSize=self._writtenDataSize,
             )
             self._buf = None
-            if reply != 200:
+            if reply.http_status != 200:
                 # Probably msg is not enough, we need to unpack the status XML doc
                 # from the returning data and extract the real error message from
                 # there
-                raise Exception(msg)
+                raise Exception(reply.message)
 
         # Release the reference to _desc so the client object gets destroyed
         del self._desc
@@ -496,7 +497,10 @@ class NgasIO(DataIO):
 
     @overrides
     def _write(self, data, **kwargs) -> int:
-        self._buf += data
+        if type(data) == bytes:
+            self._buf += str(data)
+        else:
+            self._buf += data
         self._writtenDataSize += len(data)
         return len(data)
 
