@@ -68,7 +68,7 @@
     },
     "nodeDataArray": [
         {
-            "applicationParams": [],
+            "applicationArgs": [],
             "category": "PythonApp",
             "collapsed": false,
             "color": "#0059a5",
@@ -154,7 +154,7 @@
             "y": 563
         },
         {
-            "applicationParams": [],
+            "applicationArgs": [],
             "category": "SharedMemory",
             "collapsed": false,
             "color": "#2c2c2c",
@@ -229,7 +229,7 @@
             "y": 565
         },
         {
-            "applicationParams": [],
+            "applicationArgs": [],
             "category": "PythonApp",
             "collapsed": false,
             "color": "#0059a5",
@@ -324,7 +324,7 @@
             "y": 395
         },
         {
-            "applicationParams": [],
+            "applicationArgs": [],
             "category": "PythonApp",
             "collapsed": false,
             "color": "#0059a5",
@@ -419,7 +419,7 @@
             "y": 653
         },
         {
-            "applicationParams": [],
+            "applicationArgs": [],
             "category": "PythonApp",
             "collapsed": false,
             "color": "#0059a5",
@@ -514,7 +514,7 @@
             "y": 525
         },
         {
-            "applicationParams": [],
+            "applicationArgs": [],
             "category": "SharedMemory",
             "collapsed": false,
             "color": "#2c2c2c",
@@ -580,7 +580,7 @@
             "y": 384
         },
         {
-            "applicationParams": [],
+            "applicationArgs": [],
             "category": "SharedMemory",
             "collapsed": false,
             "color": "#2c2c2c",
@@ -646,7 +646,7 @@
             "y": 532
         },
         {
-            "applicationParams": [],
+            "applicationArgs": [],
             "category": "SharedMemory",
             "collapsed": false,
             "color": "#2c2c2c",

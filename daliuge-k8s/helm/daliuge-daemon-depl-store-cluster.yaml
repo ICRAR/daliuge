@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: daliuge-daemon-deployment
+  labels:
+    app: daliuge-daemon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: daliuge-daemon
+  template:
+    metadata:
+      labels:
+        app: daliuge-daemon
+    spec:
+      volumes:
+        - name: daliuge-pv-storage
+          persistentVolumeClaim:
+            claimName: daliuge-pv-claim
+      containers:
+      - name: daliuge-daemon
+        image: icrar/daliuge-engine:master
+        ports:
+        - containerPort: 9000
+        volumeMounts:
+        - mountPath: "/dlg"
+          name: daliuge-pv-storage
+        env:
+        - name: DLG_ROOT
+          valueFrom: 
+            configMapKeyRef:
+              name: daliuge-daemon-configmap
+              key: dlg_root

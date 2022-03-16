@@ -3,22 +3,17 @@
 
 # First stage build and cleanup
 #FROM python:3.8-slim
-FROM rayproject/ray:74cbf0-py38
+FROM ubuntu:20.04
 ARG BUILD_ID
 LABEL stage=builder
 LABEL build=$BUILD_ID
-RUN sudo apt-get update && sudo apt-get install -y gcc
+RUN apt-get update && apt-get install -y gcc python3 python3.8-venv python3-pip python3-distutils libmetis-dev curl && apt-get clean
 
 COPY / /daliuge
 
-RUN cd && python -m venv dlg && cd /daliuge && \
-    . /home/ray/dlg/bin/activate && \
-    pip install numpy && \
-    pip install . && \
-    sudo apt-get remove -y gcc
+RUN cd / && python3 -m venv dlg && cd /daliuge && \
+    . /dlg/bin/activate && \
+    pip install wheel numpy && \
+    pip install .
 
-
-FROM rayproject/ray:74cbf0-py38
-RUN sudo apt-get update && sudo apt-get install -y git
-COPY --from=0 /home/ray/dlg /home/ray/dlg
-RUN sudo chown -R ray:users /home/ray/dlg
+# we don't clean this up, will be done in the derived images

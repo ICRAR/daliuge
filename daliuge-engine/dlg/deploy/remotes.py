@@ -27,7 +27,7 @@ import time
 import re
 import socket
 
-from . import slurm_utils
+from . import deployment_utils
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +176,7 @@ class SlurmRemote(FilesystemBasedRemote):
         self._set_world(
             int(os.environ["SLURM_PROCID"]),
             int(os.environ["SLURM_NTASKS"]),
-            slurm_utils.list_as_string(os.environ["SLURM_NODELIST"]),
+            deployment_utils.list_as_string(os.environ["SLURM_NODELIST"]),
         )
 
 

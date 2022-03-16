@@ -54,7 +54,7 @@
             "inputLocalPorts": [],
             "outputLocalPorts": [],
             "fields": [],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -117,7 +117,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -191,7 +191,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -266,7 +266,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -447,7 +447,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -520,7 +520,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -617,7 +617,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -781,7 +781,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -945,7 +945,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -1009,7 +1009,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -1082,7 +1082,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -1134,7 +1134,7 @@
             "inputLocalPorts": [],
             "outputLocalPorts": [],
             "fields": [],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -1289,7 +1289,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -1362,7 +1362,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -1426,7 +1426,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -1487,7 +1487,7 @@
             "inputLocalPorts": [],
             "outputLocalPorts": [],
             "fields": [],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -1541,7 +1541,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -1595,7 +1595,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -1769,7 +1769,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -1823,7 +1823,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -1877,7 +1877,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],

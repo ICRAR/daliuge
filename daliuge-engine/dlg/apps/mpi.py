@@ -31,7 +31,37 @@ from ..exceptions import InvalidDropException
 
 logger = logging.getLogger(__name__)
 
-
+##
+# @brief MPI
+# @details An application component using the Message Passing Interface (MPI)
+# @par EAGLE_START
+# @param category Mpi
+# @param tag template
+# @param[in] cparam/num_of_procs Num procs/1/Integer/readwrite/False//False/
+#     \~English Number of processes used for this application
+# @param[in] cparam/command Command//String/readwrite/False//False/
+#     \~English The command to be executed
+# @param[in] cparam/input_redirection Input Redirection//String/readwrite/False//False/
+#     \~English The command line argument that specifies the input into this application
+# @param[in] cparam/output_redirection Output Redirection//String/readwrite/False//False/
+#     \~English The command line argument that specifies the output from this application
+# @param[in] cparam/command_line_arguments Command Line Arguments//String/readwrite/False//False/
+#     \~English Additional command line arguments to be added to the command line to be executed
+# @param[in] cparam/paramValueSeparator Param value separator/ /String/readwrite/False//False/
+#     \~English Separator character(s) between parameters on the command line
+# @param[in] cparam/argumentPrefix Argument prefix/"--"/String/readwrite/False//False/
+#     \~English Prefix to each keyed argument on the command line
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
+#     \~English Number of cores used
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
+#     \~English Is this node the end of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @par EAGLE_END
 class MPIApp(BarrierAppDROP):
     """
     An application drop representing an MPI job.

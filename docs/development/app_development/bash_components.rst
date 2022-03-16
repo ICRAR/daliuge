@@ -2,7 +2,8 @@
 
 Bash Components
 ===============
-This type of components are probably the easiest to implement and for simple ones it is possible to do all the 'development' in EAGLE.
+
+:class:`BashShellApp <dlg.apps.bash_shell_app.BashShellApp>` components are probably the easiest to implement and for simple ones it is possible to do all the 'development' in EAGLE.
 
 'Hello World' in Bash through EAGLE
 -----------------------------------
@@ -58,6 +59,26 @@ In addition to the session log file the same information is also contained in th
     tail -f dlgNM.log
 
 When you now deploy the graph again and watch the terminal output, you will see a lot of messages pass through.
+
+Treatment of Command Line Parameters
+------------------------------------
+|daliuge| has multiple ways to pass command line parameters to a bash command. The same feature is also used for Docker, Singularity and MPI components. In order to facilitate this |daliuge| is using a few reserved component parameters:
+
+* command: The value is used as the command (utility) to be executed. It is possible to specify more complex command lines in this value, but the end-user needs to know the syntax.
+* command_line_arguments: Similar to the command, but the value only contains any additional arguments. Again the end-user needs to know all the details.
+* Arg00 - Arg09: (.. deprecated::  use applicationArgs instead, only kept for backwards compatibility)
+* applicationArgs: This is serialized as separate dictionary in JSON and every applicationParam is one entry where the key is the parameter name. This is the most recent way of defining and passing arguments on the command line and allows the developer to define every single argument in detail, including some description text, default value, write protection and type specification/verification. EAGLE displays the complete set and allows users to spicify and modify the content. |daliuge| will process and concatenate all of the parameters and attach them to the command line. In order to enable the user/developer to control the behaviour of the processing there are two additional parameters:
+* argumentPrefix: The value is prepended to each of the parameter names of the applicationArgs. If not specified, the default is '--'. In addition, if argumentPrefix=='--' and an argument name is only a single character long, the argumentPrefix will be changed to '-'. This allows the construction of POSIX compliant option arguments as well as short argument names.
+* paramValueSeparator: The value is used to concatenate the argument name and the value. The default is ' ' (space). Some utilities are using a syntax like 'arg=value'. In that case this parameter can be set accordingly.
+* input_redirection: the value will be prepended to the command line (cmd) using 'cat {value} > '.
+* output_redirection: the value will be appended to the command line (cmd) using '> {value}'.
+
+Not all of them need to be present in a component, only the ones the component developer wants to offer to the user. In particular the applicationArgs have been introduced to support complex utilties which can feature more than 100 arguments (think about tar). If more than one way of specifying arguments is available to an end-user, they can be used together, but the order in which these parts are concatenated might produce unwanted results. The final command line is constructed in the following way (not including the deprecated ArgXX parameters)::
+    cat {input_redirection.value} > {command.value} {argumentPrefix.value}{applicationArgs.name}{paramValueSeparator}{applicationArgs.value} {command_line_arguments.value} > {output_redirection}
+
+The applicationArgs are treated in the order of appearance. After the construction of the command line, any placeholder strings will be replaced with actual values. In particular strings of the form '%iX' (where X is the index number of the inputs of this component), will be replaced with the input URL of the input with that index (counting from 0). Similarly '%oX' will be replaced with the respective output URLs.
+
+Eventually we will also drop support for the command_line_arguments parameters. However, currently the applicationArgs can't be used to specify positional arguments (just a value) and thus, as a fallback users can still use one the command_line_arguments to achieve that. It should also be noted that for really simple commands, like the one used in the helloWorld example, users can simply specify that in the command parameter directly and ommit all of the others. 
 
 .. _advanced_bash:
 

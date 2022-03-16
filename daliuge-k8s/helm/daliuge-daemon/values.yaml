@@ -1,0 +1,19 @@
+name: daliuge-daemon
+dlg_root_on_cluster_nodes: /dlg
+dlg_root_in_container: /dlg
+containers:
+  name: icrar/daliuge-engine:2.0.1
+  ports:
+    containerPort: 9000
+    deploymentPort: 8001
+    nodemanagerPort: 8000
+service:
+  daemon:
+    name: daemon-port
+    port: 9000
+  deployment:
+    name: island-port
+    port: 8001
+  nodemgr:
+    name: node-manager-port
+    port: 8000

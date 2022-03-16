@@ -85,7 +85,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -175,7 +175,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [
                 {
                     "text": "Execution time",
@@ -499,7 +499,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -582,7 +582,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -665,7 +665,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -857,7 +857,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -969,7 +969,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -1059,7 +1059,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [
                 {
                     "text": "Execution time",
@@ -1242,7 +1242,7 @@
             "inputLocalPorts": [],
             "outputLocalPorts": [],
             "fields": [],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],
@@ -1324,7 +1324,7 @@
                     "precious": false
                 }
             ],
-            "applicationParams": [],
+            "applicationArgs": [],
             "inputAppFields": [],
             "outputAppFields": [],
             "exitAppFields": [],

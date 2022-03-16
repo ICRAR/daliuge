@@ -4,6 +4,7 @@ Specialized Components
 ======================
 In addition users can develop a number of specialized components, which are based on dedicated base classes.
 
+#. Start and Stop Components
 #. Branch Components
 #. MPI Components
 #. Python-function Components
@@ -15,6 +16,5 @@ Built-in Application Components
 ===============================
 |daliuge| comes with a set of built-in components for testing and further use:
 
-#. Plasma and Plasma-Flight Components
 #. RPC Component
 #. SCP Component

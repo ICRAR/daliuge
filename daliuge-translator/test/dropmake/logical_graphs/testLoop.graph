@@ -1,414 +1,426 @@
 {
-    "modelData": {
-        "fileType": "Graph",
-        "repoService": "GitHub",
-        "repoBranch": "yan-812-2",
-        "repo": "ICRAR/daliuge",
-        "filePath": "daliuge-translator/test/dropmake/logical_graphs/testLoop.graph",
-        "eagleVersion": "Unknown",
-        "eagleCommitHash": "Unknown",
-        "schemaVersion": "OJS",
-        "readonly": true,
-        "sha": "",
-        "gitUrl": "",
-        "lastModifiedName": "",
-        "lastModifiedEmail": "",
-        "lastModifiedDatetime": ""
-    },
-    "nodeDataArray": [
-        {
-            "category": "Loop",
-            "isData": false,
-            "isGroup": true,
-            "canHaveInputs": false,
-            "canHaveOutputs": false,
-            "color": "rgb(221, 173, 0)",
-            "drawOrderHint": 0,
-            "key": -1,
-            "text": "Loop",
-            "description": "Placeholder 'loop' description",
-            "x": 606.4859101595122,
-            "y": 337.06816127722925,
-            "width": 385.98717625064404,
-            "height": 378.12856316963075,
-            "collapsed": false,
-            "flipPorts": false,
-            "streaming": false,
-            "precious": false,
-            "subject": null,
-            "expanded": true,
-            "readonly": true,
-            "git_url": "",
-            "sha": "",
-            "inputPorts": [
-                {
-                    "Id": "123e02e1-0e35-47a3-8dca-2525f71a6766",
-                    "IdText": "event",
-                    "text": "",
-                    "event": false,
-                    "type": "",
-                    "description": ""
-                }
-            ],
-            "outputPorts": [
-                {
-                    "Id": "1eeee75a-c2d6-49ea-b94b-5c208b8f3f0c",
-                    "IdText": "event",
-                    "text": "",
-                    "event": false,
-                    "type": "",
-                    "description": ""
-                }
-            ],
-            "inputLocalPorts": [
-                {
-                    "Id": "a21aba04-cf68-4dab-b57f-dd0dba9e4c91",
-                    "IdText": "event",
-                    "text": "",
-                    "event": false,
-                    "type": "",
-                    "description": ""
-                }
-            ],
-            "outputLocalPorts": [
-                {
-                    "Id": "05863afc-5933-4eef-9f64-5e10a4b86ac6",
-                    "IdText": "event",
-                    "text": "",
-                    "event": false,
-                    "type": "",
-                    "description": ""
-                }
-            ],
-            "fields": [
-                {
-                    "text": "Number loops",
-                    "name": "num_of_iter",
-                    "value": "5",
-                    "defaultValue": "",
-                    "description": "",
-                    "readonly": false,
-                    "type": "Unknown",
-                    "precious": false
-                }
-            ],
-            "applicationParams": [],
-            "inputAppFields": [],
-            "outputAppFields": [],
-            "exitAppFields": [],
-            "inputApplicationName": "event",
-            "inputApplicationType": "UnknownApplication",
-            "inputApplicationKey": -5,
-            "outputApplicationName": "",
-            "outputApplicationType": "None",
-            "outputApplicationKey": null,
-            "exitApplicationName": "event",
-            "exitApplicationType": "UnknownApplication",
-            "exitApplicationKey": -6
-        },
-        {
-            "category": "BashShellApp",
-            "isData": false,
-            "isGroup": false,
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "color": "#0059a5",
-            "drawOrderHint": 0,
-            "key": -2,
-            "text": "SleepExternal",
-            "description": "An application component run within the Bash Shell",
-            "x": 736.1530259962292,
-            "y": 855.7366246240957,
-            "width": 200,
-            "height": 72,
-            "collapsed": true,
-            "flipPorts": false,
-            "streaming": false,
-            "precious": false,
-            "subject": null,
-            "expanded": false,
-            "readonly": true,
-            "git_url": "",
-            "sha": "",
-            "inputPorts": [
-                {
-                    "Id": "b133f803-42f7-4c70-83b7-803bf8ec3035",
-                    "IdText": "event",
-                    "text": "",
-                    "event": false,
-                    "type": "",
-                    "description": ""
-                }
-            ],
-            "outputPorts": [
-                {
-                    "Id": "1765f421-782c-4972-ab76-ac0c23bd95e3",
-                    "IdText": "event",
-                    "text": "",
-                    "event": false,
-                    "type": "",
-                    "description": ""
-                }
-            ],
-            "inputLocalPorts": [],
-            "outputLocalPorts": [],
-            "fields": [
-                {
-                    "text": "Execution time",
-                    "name": "execution_time",
-                    "value": "5",
-                    "defaultValue": "",
-                    "description": "",
-                    "readonly": false,
-                    "type": "Unknown",
-                    "precious": false
-                },
-                {
-                    "text": "Num CPUs",
-                    "name": "num_cpus",
-                    "value": "1",
-                    "defaultValue": "",
-                    "description": "",
-                    "readonly": false,
-                    "type": "Unknown",
-                    "precious": false
-                },
-                {
-                    "text": "Group start",
-                    "name": "group_start",
-                    "value": "0",
-                    "defaultValue": "",
-                    "description": "",
-                    "readonly": false,
-                    "type": "Unknown",
-                    "precious": false
-                },
-                {
-                    "text": "Arg01",
-                    "name": "Arg01",
-                    "value": "sleep 5",
-                    "defaultValue": "",
-                    "description": "The command line to be executed",
-                    "readonly": false,
-                    "type": "Unknown",
-                    "precious": false
-                }
-            ],
-            "applicationParams": [],
-            "inputAppFields": [],
-            "outputAppFields": [],
-            "exitAppFields": [],
-            "inputApplicationName": "",
-            "inputApplicationType": "None",
-            "inputApplicationKey": null,
-            "outputApplicationName": "",
-            "outputApplicationType": "None",
-            "outputApplicationKey": null,
-            "exitApplicationName": "",
-            "exitApplicationType": "None",
-            "exitApplicationKey": null
-        },
-        {
-            "category": "Memory",
-            "isData": true,
-            "isGroup": false,
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "color": "#2c2c2c",
-            "drawOrderHint": 0,
-            "key": -3,
-            "text": "Memory",
-            "description": "",
-            "x": 700.7892671316696,
-            "y": 593.7828552569915,
-            "width": 200,
-            "height": 72,
-            "collapsed": true,
-            "flipPorts": false,
-            "streaming": false,
-            "precious": false,
-            "subject": null,
-            "expanded": false,
-            "readonly": true,
-            "git_url": "",
-            "sha": "",
-            "group": -1,
-            "inputPorts": [
-                {
-                    "Id": "ae981288-d839-4890-bb11-f54f336cfad0",
-                    "IdText": "event",
-                    "text": "",
-                    "event": false,
-                    "type": "",
-                    "description": ""
-                }
-            ],
-            "outputPorts": [
-                {
-                    "Id": "b7c36b5e-dbe7-4d9d-ad2f-abec81071de5",
-                    "IdText": "event",
-                    "text": "",
-                    "event": false,
-                    "type": "",
-                    "description": ""
-                }
-            ],
-            "inputLocalPorts": [],
-            "outputLocalPorts": [],
-            "fields": [
-                {
-                    "text": "Data volume",
-                    "name": "data_volume",
-                    "value": "5",
-                    "defaultValue": "",
-                    "description": "",
-                    "readonly": false,
-                    "type": "Unknown",
-                    "precious": false
-                },
-                {
-                    "text": "Group end",
-                    "name": "group_end",
-                    "value": "1",
-                    "defaultValue": "",
-                    "description": "",
-                    "readonly": false,
-                    "type": "Unknown",
-                    "precious": false
-                }
-            ],
-            "applicationParams": [],
-            "inputAppFields": [],
-            "outputAppFields": [],
-            "exitAppFields": [],
-            "inputApplicationName": "",
-            "inputApplicationType": "None",
-            "inputApplicationKey": null,
-            "outputApplicationName": "",
-            "outputApplicationType": "None",
-            "outputApplicationKey": null,
-            "exitApplicationName": "",
-            "exitApplicationType": "None",
-            "exitApplicationKey": null
-        },
-        {
-            "category": "BashShellApp",
-            "isData": false,
-            "isGroup": false,
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "color": "#0059a5",
-            "drawOrderHint": 0,
-            "key": -4,
-            "text": "SleepInternal",
-            "description": "An application component run within the Bash Shell",
-            "x": 692.9306540506565,
-            "y": 454.94735749242614,
-            "width": 200,
-            "height": 72,
-            "collapsed": false,
-            "flipPorts": false,
-            "streaming": false,
-            "precious": false,
-            "subject": null,
-            "expanded": false,
-            "readonly": true,
-            "git_url": "",
-            "sha": "",
-            "group": -1,
-            "inputPorts": [
-                {
-                    "Id": "b133f803-42f7-4c70-83b7-803bf8ec3035",
-                    "IdText": "event",
-                    "text": "",
-                    "event": false,
-                    "type": "",
-                    "description": ""
-                }
-            ],
-            "outputPorts": [
-                {
-                    "Id": "1765f421-782c-4972-ab76-ac0c23bd95e3",
-                    "IdText": "event",
-                    "text": "",
-                    "event": false,
-                    "type": "",
-                    "description": ""
-                }
-            ],
-            "inputLocalPorts": [],
-            "outputLocalPorts": [],
-            "fields": [
-                {
-                    "text": "Execution time",
-                    "name": "execution_time",
-                    "value": "5",
-                    "defaultValue": "",
-                    "description": "",
-                    "readonly": false,
-                    "type": "Unknown",
-                    "precious": false
-                },
-                {
-                    "text": "Num CPUs",
-                    "name": "num_cpus",
-                    "value": "1",
-                    "defaultValue": "",
-                    "description": "",
-                    "readonly": false,
-                    "type": "Unknown",
-                    "precious": false
-                },
-                {
-                    "text": "Group start",
-                    "name": "group_start",
-                    "value": "1",
-                    "defaultValue": "",
-                    "description": "",
-                    "readonly": false,
-                    "type": "Unknown",
-                    "precious": false
-                },
-                {
-                    "text": "Arg01",
-                    "name": "Arg01",
-                    "value": "sleep 3",
-                    "defaultValue": "",
-                    "description": "The command line to be executed",
-                    "readonly": false,
-                    "type": "Unknown",
-                    "precious": false
-                }
-            ],
-            "applicationParams": [],
-            "inputAppFields": [],
-            "outputAppFields": [],
-            "exitAppFields": [],
-            "inputApplicationName": "",
-            "inputApplicationType": "None",
-            "inputApplicationKey": null,
-            "outputApplicationName": "",
-            "outputApplicationType": "None",
-            "outputApplicationKey": null,
-            "exitApplicationName": "",
-            "exitApplicationType": "None",
-            "exitApplicationKey": null
-        }
-    ],
     "linkDataArray": [
         {
             "from": -4,
             "fromPort": "1765f421-782c-4972-ab76-ac0c23bd95e3",
+            "loop_aware": "1",
             "to": -3,
-            "toPort": "ae981288-d839-4890-bb11-f54f336cfad0",
-            "loop_aware": "0"
+            "toPort": "102d6fc6-eea7-434b-9196-65a42a79cf13"
         },
         {
             "from": -3,
-            "fromPort": "b7c36b5e-dbe7-4d9d-ad2f-abec81071de5",
+            "fromPort": "b8739916-45c0-41e1-b38d-afede242bcfd",
+            "loop_aware": "1",
             "to": -2,
-            "toPort": "b133f803-42f7-4c70-83b7-803bf8ec3035",
-            "loop_aware": "1"
+            "toPort": "b133f803-42f7-4c70-83b7-803bf8ec3035"
+        }
+    ],
+    "modelData": {
+        "eagleCommitHash": "dce847d911db5b8d2245775bb6d5c719eb4aa061",
+        "eagleVersion": "v4.1.0",
+        "filePath": "testLoop.graph",
+        "fileType": "Graph",
+        "gitUrl": "",
+        "lastModifiedDatetime": 1644027730,
+        "lastModifiedEmail": "",
+        "lastModifiedName": "",
+        "readonly": true,
+        "repo": "",
+        "repoBranch": "",
+        "repoService": "Unknown",
+        "schemaVersion": "OJS",
+        "sha": ""
+    },
+    "nodeDataArray": [
+        {
+            "applicationArgs": [],
+            "category": "Loop",
+            "collapsed": false,
+            "color": "rgb(221, 173, 0)",
+            "description": "Placeholder 'loop' description",
+            "drawOrderHint": 0,
+            "expanded": true,
+            "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "name": "num_of_iter",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Number loops",
+                    "type": "Unknown",
+                    "value": "5"
+                }
+            ],
+            "flipPorts": false,
+            "git_url": "",
+            "height": 378.12856316963075,
+            "inputAppFields": [],
+            "inputApplicationKey": -5,
+            "inputApplicationName": "event",
+            "inputApplicationType": "UnknownApplication",
+            "inputLocalPorts": [
+                {
+                    "Id": "1eeee75a-c2d6-49ea-b94b-5c208b8f3f0c",
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "",
+                    "type": ""
+                },
+                {
+                    "Id": "a21aba04-cf68-4dab-b57f-dd0dba9e4c91",
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "",
+                    "type": ""
+                }
+            ],
+            "inputPorts": [
+                {
+                    "Id": "123e02e1-0e35-47a3-8dca-2525f71a6766",
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "",
+                    "type": ""
+                }
+            ],
+            "isGroup": true,
+            "key": -1,
+            "outputAppFields": [],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [],
+            "precious": false,
+            "readonly": true,
+            "sha": "",
+            "streaming": false,
+            "subject": null,
+            "text": "Loop",
+            "width": 385.98717625064404,
+            "x": 606.4859101595122,
+            "y": 337.06816127722925
+        },
+        {
+            "applicationArgs": [],
+            "category": "BashShellApp",
+            "collapsed": true,
+            "color": "#0059a5",
+            "description": "An application component run within the Bash Shell",
+            "drawOrderHint": 0,
+            "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "name": "execution_time",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "name": "num_cpus",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Unknown",
+                    "value": "1"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "name": "group_start",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Unknown",
+                    "value": "0"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "The command line to be executed",
+                    "name": "Arg01",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Arg01",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "defaultValue": "sleep",
+                    "description": "",
+                    "name": "command",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "command",
+                    "type": "String",
+                    "value": "sleep"
+                }
+            ],
+            "flipPorts": false,
+            "git_url": "",
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "b133f803-42f7-4c70-83b7-803bf8ec3035",
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "",
+                    "type": ""
+                }
+            ],
+            "isGroup": false,
+            "key": -2,
+            "outputAppFields": [],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "1765f421-782c-4972-ab76-ac0c23bd95e3",
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "",
+                    "type": ""
+                }
+            ],
+            "precious": false,
+            "readonly": true,
+            "sha": "",
+            "streaming": false,
+            "subject": null,
+            "text": "SleepExternal",
+            "width": 200,
+            "x": 736.1530259962292,
+            "y": 855.7366246240957
+        },
+        {
+            "applicationArgs": [],
+            "category": "BashShellApp",
+            "collapsed": false,
+            "color": "#0059a5",
+            "description": "An application component run within the Bash Shell",
+            "drawOrderHint": 0,
+            "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "name": "execution_time",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "name": "num_cpus",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Unknown",
+                    "value": "1"
+                },
+                {
+                    "defaultValue": "false",
+                    "description": "",
+                    "name": "group_start",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Boolean",
+                    "value": true
+                },
+                {
+                    "defaultValue": "",
+                    "description": "The command line to be executed",
+                    "name": "Arg01",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Arg01",
+                    "type": "Unknown",
+                    "value": "3"
+                },
+                {
+                    "defaultValue": "sleep",
+                    "description": "",
+                    "name": "command",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "command",
+                    "type": "String",
+                    "value": "sleep"
+                }
+            ],
+            "flipPorts": false,
+            "git_url": "",
+            "group": -1,
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "b133f803-42f7-4c70-83b7-803bf8ec3035",
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "",
+                    "type": ""
+                }
+            ],
+            "isGroup": false,
+            "key": -4,
+            "outputAppFields": [],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "1765f421-782c-4972-ab76-ac0c23bd95e3",
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "",
+                    "type": ""
+                }
+            ],
+            "precious": false,
+            "readonly": true,
+            "sha": "",
+            "streaming": false,
+            "subject": null,
+            "text": "SleepInternal",
+            "width": 200,
+            "x": 692.9306540506565,
+            "y": 454.94735749242614
+        },
+        {
+            "applicationArgs": [],
+            "category": "File",
+            "collapsed": true,
+            "color": "#2c2c2c",
+            "description": "A standard file on a filesystem mounted to the deployment machine",
+            "drawOrderHint": 0,
+            "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "5",
+                    "description": "Estimated size of the data contained in this node",
+                    "name": "data_volume",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Data volume",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "defaultValue": "false",
+                    "description": "Is this node the end of a group?",
+                    "name": "group_end",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group end",
+                    "type": "Boolean",
+                    "value": true
+                },
+                {
+                    "defaultValue": "true",
+                    "description": "Perform a check to make sure the file path exists before proceeding with the application",
+                    "name": "check_filepath_exists",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Check file path exists",
+                    "type": "Boolean",
+                    "value": true
+                },
+                {
+                    "defaultValue": "",
+                    "description": "Path to the file for this node",
+                    "name": "filepath",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "File path",
+                    "type": "String",
+                    "value": ""
+                },
+                {
+                    "defaultValue": "",
+                    "description": "Name of the directory containing the file for this node",
+                    "name": "dirname",
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Directory name",
+                    "type": "String",
+                    "value": ""
+                }
+            ],
+            "flipPorts": false,
+            "git_url": "",
+            "group": -1,
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "102d6fc6-eea7-434b-9196-65a42a79cf13",
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "event",
+                    "type": "event"
+                }
+            ],
+            "isGroup": false,
+            "key": -3,
+            "outputAppFields": [],
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "b8739916-45c0-41e1-b38d-afede242bcfd",
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "event",
+                    "type": "event"
+                }
+            ],
+            "precious": false,
+            "readonly": true,
+            "sha": "",
+            "streaming": false,
+            "subject": null,
+            "text": "event",
+            "width": 200,
+            "x": 723.5418400234428,
+            "y": 594.3419910582609
         }
     ]
 }

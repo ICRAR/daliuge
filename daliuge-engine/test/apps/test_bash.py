@@ -83,7 +83,7 @@ class BashAppTests(unittest.TestCase):
         assert_message_is_correct(msg, 'echo -n "{0}" > %o0'.format(msg))
         msg = 'This is a message with a double quotes: "'
         assert_message_is_correct(msg, "echo -n '{0}' > %o0".format(msg))
-
+    
     def test_envvars(self):
         """Checks that the DLG_* environment variables are available to bash programs"""
 

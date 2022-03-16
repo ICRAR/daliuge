@@ -80,8 +80,19 @@ class CRCApp(BarrierAppDROP):
 # i.e. A "streamingConsumer" of its predecessor in the graph
 # @par EAGLE_START
 # @param category PythonApp
-# @param[in] param/appclass Application Class/dlg.apps.crc.CRCStreamApp/String/readonly/
+# @param tag daliuge
+# @param[in] cparam/appclass Application Class/dlg.apps.crc.CRCStreamApp/String/readonly/False//False/
 #     \~English Application class
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[out] port/data Data/String/
 # @par EAGLE_END
 class CRCStreamApp(AppDROP):

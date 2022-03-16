@@ -88,7 +88,7 @@ you should always do that before calling the initialize of the base class, in th
 .. _graphs.figs.tmpl_params2:
 .. figure:: ../../images/tmpl_params2.png
 
-see chapter :doc:`eagle_integration` for more details on the syntax. When you now checkin your code to the github repo a github action will generate the palette (JSON description of your components) automatically and you can load it into EAGLE to construct a workflow.
+see chapter :doc:`eagle_app_integration` for more details on the syntax. When you now checkin your code to the github repo a github action will generate the palette (JSON description of your components) automatically and you can load it into EAGLE to construct a workflow.
 
 Adding input and output ports
 -----------------------------
@@ -97,7 +97,7 @@ Ports are another way of getting data and information in and out of your compone
 .. _graphs.figs.tmpl_ports1:
 .. figure:: ../../images/tmpl_ports1.png
 
-again the details for the syntax are described in the chapter :doc:`eagle_integration`. Acessing and using the ports in your component follows always the same pattern and it might be good to separate the reading and writing part out into explicit class methods, although that is not stricly required:
+again the details for the syntax are described in the chapter :doc:`eagle_app_integration`. Acessing and using the ports in your component follows always the same pattern and it might be good to separate the reading and writing part out into explicit class methods, although that is not stricly required:
 
 .. _graphs.figs.tmpl_ports2:
 .. figure:: ../../images/tmpl_ports2.png

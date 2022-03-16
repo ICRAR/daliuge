@@ -138,7 +138,7 @@ def addCommonOptions(parser, defaultPort):
     parser.add_option(
         "-w",
         "--work-dir",
-        help="Working directory, defaults to '/' in daemon mode, '.' in interactive mode",
+        help="Working directory, defaults to DLG_ROOT/workspace in daemon mode, '.' in interactive mode",
         default=utils.getDlgWorkDir(),
     )
     parser.add_option(
@@ -229,7 +229,7 @@ def start(options, parser):
                 )
                 working_dir = "."
             else:
-                working_dir = "/"
+                working_dir = utils.getDlgWorkDir()
         with daemon.DaemonContext(
             pidfile=PIDLockFile(pidfile, 1),
             files_preserve=[fileHandler.stream],
@@ -262,7 +262,8 @@ def start(options, parser):
     # Start directly
     else:
         working_dir = options.work_dir or "."
-        utils.createDirIfMissing(working_dir)
+        tree = "/settings"
+        utils.createDirIfMissing(working_dir+tree)
         os.chdir(working_dir)
         launchServer(options)
 

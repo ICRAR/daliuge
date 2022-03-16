@@ -33,8 +33,11 @@ import signal
 import socket
 import threading
 import time
+from typing import Tuple
 import zlib
 import re
+import grp
+import pwd
 
 import netifaces
 
@@ -177,8 +180,12 @@ def getDlgDir():
     runtime.
     """
     if "DLG_ROOT" in os.environ:
-        return os.environ["DLG_ROOT"]
-    return os.path.join(os.path.expanduser("~"), "dlg")
+        path = os.environ["DLG_ROOT"]
+    else:
+        path = os.path.join(os.path.expanduser("~"), "dlg")
+        os.environ["DLG_ROOT"] = path
+    logger.debug(f"DLG_ROOT directory is {path}")
+    return path
 
 
 
@@ -219,6 +226,18 @@ def getDlgPath():
     return os.path.join(getDlgDir(), "code")
 
 
+def getDlgVariable(key: str):
+    """
+    Queries environment for variables assumed to start with 'DLG_'.
+    Special case for DLG_ROOT, since this is easily identifiable.
+    """
+    if key == "$DLG_ROOT":
+        return getDlgDir()
+    value = os.environ.get(key[1:])
+    if value is None:
+        return key
+    return value
+
 
 def createDirIfMissing(path):
     """
@@ -226,6 +245,7 @@ def createDirIfMissing(path):
     """
     try:
         os.makedirs(path)
+        logger.debug(f"created path {path}")
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
@@ -263,7 +283,7 @@ def escapeQuotes(s, singleQuotes=True, doubleQuotes=True):
     return s
 
 
-def prepare_sql(sql, paramstyle, data=()):
+def prepare_sql(sql, paramstyle, data=()) -> Tuple[str, dict]:
     """
     Prepares the given SQL statement for proper execution depending on the
     parameter style supported by the database driver. For this the SQL statement
@@ -276,7 +296,7 @@ def prepare_sql(sql, paramstyle, data=()):
 
     n = len(data)
     if not n:
-        return (sql, ())
+        return (sql, {})
 
     # Depending on the different vendor, we need to write the parameters in
     # the SQL calls using different notations. This method will produce an
@@ -479,6 +499,30 @@ class ExistingProcess(object):
             return
         while self.poll() == None:
             time.sleep(0.1)
+
+
+def prepareUser(DLG_ROOT=getDlgDir()):
+    workdir = f"{DLG_ROOT}/workspace/settings"
+    try:
+        os.makedirs(workdir, exist_ok=True)
+    except:
+        raise
+    template_dir = os.path.dirname(__file__)
+    # get current user info
+    pw = pwd.getpwuid(os.getuid())
+    gr = grp.getgrgid(pw.pw_gid)
+    dgr = grp.getgrnam('docker')
+    with open(os.path.join(workdir, "passwd"), "wt") as file:
+        file.write(open(os.path.join(template_dir, "passwd.template"), "rt").read())
+        file.write(f"{pw.pw_name}:x:{pw.pw_uid}:{pw.pw_gid}:{pw.pw_gecos}:{DLG_ROOT}:/bin/bash\n")
+        logger.debug(f"passwd file written {file.name}")
+    with open(os.path.join(workdir, "group"), "wt") as file:
+        file.write(open(os.path.join(template_dir, "group.template"), "rt").read())
+        file.write(f"{gr.gr_name}:x:{gr.gr_gid}:\n")
+        file.write(f"docker:x:{dgr.gr_gid}\n")
+        logger.debug(f"Group file written {file.name}")
+
+    return dgr.gr_gid
 
 
 # Backwards compatibility

@@ -36,8 +36,8 @@ from setuptools.command.install import install
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
 MAJOR = 2
-MINOR = 1
-PATCH = 0
+MINOR = 2
+PATCH = 1
 RELEASE = True
 VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
 VERSION_FILE = "dlg/runtime/version.py"
@@ -116,7 +116,7 @@ class lib64_path(install):
 # Core requirements of DALiuGE
 # Keep alpha-sorted PLEASE!
 install_requires = [
-    "wheel",
+    "wheel", # need to get wheel first...
     "bottle",
     "configobj",
     "crc32c",
@@ -134,6 +134,7 @@ install_requires = [
     "python-daemon",
     "pyzmq",
     "scp",
+    "pyyaml",
     # 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
     "zeroconf >= 0.19.1",
     # 0.6 brings python3 support plus other fixes
