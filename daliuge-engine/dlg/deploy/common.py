@@ -101,7 +101,7 @@ def monitor_sessions(
     poll_interval=10,
     host="127.0.0.1",
     port=constants.ISLAND_DEFAULT_REST_PORT,
-    timeout=60,
+    timeout=30,
     status_dump_path=None,
 ):
     """
@@ -166,7 +166,7 @@ def submit(
     pg,
     host="127.0.0.1",
     port=constants.ISLAND_DEFAULT_REST_PORT,
-    timeout=60,
+    timeout=30,
     skip_deploy=False,
     session_id=None,
 ):

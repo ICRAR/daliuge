@@ -28,234 +28,51 @@ parse the log result, and produce the plot
 
 import datetime
 import optparse
-import os
 import pwd
 import re
 import socket
-import string
-import subprocess
 import sys
 import time
-import json
+import os
 
-from dlg import utils
-from dlg.deploy.configs import *   # get all available configurations
-from dlg.runtime import __git_version__ as git_commit
+from dlg.deploy.configs import ConfigFactory  # get all available configurations
+from dlg.deploy.deployment_constants import DEFAULT_AWS_MON_PORT, DEFAULT_AWS_MON_HOST
+from dlg.deploy.slurm_client import SlurmClient
 
-default_aws_mon_host = "sdp-dfms.ddns.net"  # TODO: need to change this
-default_aws_mon_port = 8898
+FACILITIES = ConfigFactory.available()
 
-facilities = ConfigFactory.available()
 
-class SlurmClient(object):
+def get_timestamp(line):
     """
-    parameters we can control:
-
-    1. user group / account name (Required)
-    2. whether to submit a graph, and if so provide graph path
-    3. # of nodes (of Drop Managers)
-    4. how long to run
-    5. whether to produce offline graph vis
-    6. whether to attach proxy for remote monitoring, and if so provide
-        DLG_MON_HOST
-        DLG_MON_PORT
-    7. Root directory of the Log files (Required)
+    microsecond precision
     """
-
-    def __init__(
-        self,
-        log_root=None,
-        acc=None,
-        physical_graph_template_data=None, # JSON formatted physical graph template
-        logical_graph=None,
-        job_dur=30,
-        num_nodes=None,
-        run_proxy=False,
-        mon_host=default_aws_mon_host,
-        mon_port=default_aws_mon_port,
-        logv=1,
-        facility=None,
-        zerorun=False,
-        max_threads=0,
-        sleepncopy=False,
-        num_islands=None,
-        all_nics=False,
-        check_with_session=False,
-        submit=True,
-        pip_name=None,
-    ):
-        self._config = ConfigFactory.create_config(facility=facility)
-        self._acc = self._config.getpar("acc") if (acc is None) else acc
-        self._log_root = (
-            self._config.getpar("log_root") if (log_root is None) else log_root
-        )
-        self.modules = self._config.getpar("modules")
-        self._num_nodes = num_nodes
-        self._job_dur = job_dur
-        self._logical_graph = logical_graph
-        self._physical_graph_template_data = physical_graph_template_data
-        self._visualise_graph = False
-        self._run_proxy = run_proxy
-        self._mon_host = mon_host
-        self._mon_port = mon_port
-        self._pip_name = pip_name
-        self._logv = logv
-        self._zerorun = zerorun
-        self._max_threads = max_threads
-        self._sleepncopy = sleepncopy
-        self._num_islands = num_islands
-        self._all_nics = all_nics
-        self._check_with_session = check_with_session
-        self._submit = submit
-        self._dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
-        self._set_name_and_nodenumber()
-
-    def _set_name_and_nodenumber(self):
-        """
-        Given the physical graph data extract the graph name and the total number of 
-        nodes. We are not making a decision whether the island managers are running
-        on separate nodes here, thus the number is the sum of all island
-        managers and node managers. The values are only populated if not given on the
-        init already.
-
-        TODO: We will probably need to do the same with job duration and CPU number
-        """
-        pgt_data = json.loads(self._physical_graph_template_data)
-        try:
-            (pgt_name, pgt) = pgt_data
-        except:
-            raise ValueError(type(pgt_data))
-        nodes = list(map(lambda x:x['node'], pgt))
-        islands = list(map(lambda x:x['island'], pgt))
-        if self._num_islands == None:
-            self._num_islands = len(dict(zip(islands,nodes)))
-        if self._num_nodes == None:
-            num_nodes = list(map(lambda x,y:x+y, islands, nodes))
-            self._num_nodes = len(dict(zip(num_nodes, nodes))) # uniq comb.
-        if (self._pip_name == None): 
-            self._pip_name = pgt_name
-        return 
+    split = line.split()
+    date_time = "{0}T{1}".format(split[0], split[1])
+    pattern = "%Y-%m-%dT%H:%M:%S,%f"
+    epoch = time.mktime(time.strptime(date_time, pattern))
+    return datetime.datetime.strptime(date_time, pattern).microsecond / 1e6 + epoch
 
 
-    @property
-    def num_daliuge_nodes(self):
-        if self._run_proxy:
-            ret = self._num_nodes - 1  # exclude the proxy node
-        else:
-            ret = self._num_nodes - 0  # exclude the data island node?
-        if ret <= 0:
-            raise Exception(
-                "Not enough nodes {0} to run DALiuGE.".format(self._num_nodes)
-            )
-        return ret
-
-    def get_log_dirname(self):
-        """
-        (pipeline name_)[Nnum_of_daliuge_nodes]_[time_stamp]
-        """
-        # Moved setting of dtstr to init to ensure it doesn't change for this instance of SlurmClient()
-        #dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
-        graph_name = self._pip_name.split('_')[0] # use only the part of the graph name
-        return "{0}_{1}".format(graph_name, self._dtstr)
-
-    def label_job_dur(self):
-        """
-        e.g. 135 min --> 02:15:00
-        """
-        seconds = self._job_dur * 60
-        m, s = divmod(seconds, 60)
-        h, m = divmod(m, 60)
-        return "%02d:%02d:%02d" % (h, m, s)
-
-    def create_job_desc(self, physical_graph_file):
-        log_dir = "{0}/{1}".format(self._log_root, self.get_log_dirname())
-        pardict = dict()
-        pardict["NUM_NODES"] = str(self._num_nodes)
-        pardict["PIP_NAME"] = self._pip_name
-        pardict["SESSION_ID"] = os.path.split(log_dir)[-1]
-        pardict["JOB_DURATION"] = self.label_job_dur()
-        pardict["ACCOUNT"] = self._acc
-        pardict["PY_BIN"] = sys.executable
-        pardict["LOG_DIR"] = log_dir
-        pardict["GRAPH_PAR"] = (
-            '-L "{0}"'.format(self._logical_graph)
-            if self._logical_graph
-            else '-P "{0}"'.format(physical_graph_file)
-            if physical_graph_file
-            else ""
-        )
-        pardict["PROXY_PAR"] = (
-            "-m %s -o %d" % (self._mon_host, self._mon_port) if self._run_proxy else ""
-        )
-        pardict["GRAPH_VIS_PAR"] = "-d" if self._visualise_graph else ""
-        pardict["LOGV_PAR"] = "-v %d" % self._logv
-        pardict["ZERORUN_PAR"] = "-z" if self._zerorun else ""
-        pardict["MAXTHREADS_PAR"] = "-t %d" % (self._max_threads)
-        pardict["SNC_PAR"] = "--app 1" if self._sleepncopy else "--app 0"
-        pardict["NUM_ISLANDS_PAR"] = "-s %d" % (self._num_islands)
-        pardict["ALL_NICS"] = "-u" if self._all_nics else ""
-        pardict["CHECK_WITH_SESSION"] = "-S" if self._check_with_session else ""
-        pardict["MODULES"] = self.modules
-
-        job_desc = init_tpl.safe_substitute(pardict)
-        return job_desc
-
-
-    def submit_job(self):
-        log_dir = "{0}/{1}".format(self._log_root, self.get_log_dirname())
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
-
-        physical_graph_file = "{0}/{1}".format(log_dir, 
-            self._pip_name)
-        with open(physical_graph_file, 'w') as pf:
-            pf.write(self._physical_graph_template_data)
-            pf.close()
-
-        job_file = "{0}/jobsub.sh".format(log_dir)
-        job_desc = self.create_job_desc(physical_graph_file)
-        with open(job_file, "w") as jf:
-            jf.write(job_desc)
-
-        with open(os.path.join(log_dir, "git_commit.txt"), "w") as gf:
-            gf.write(git_commit)
-        if self._submit:
-            os.chdir(log_dir)  # so that slurm logs will be dumped here
-            print(subprocess.check_output(["sbatch", job_file]))
-        else:
-            print(f"Created job submission script {job_file}")
-
-
-class LogEntryPair(object):
-    """ """
+class LogEntryPair:
+    """
+    Generates log entries
+    """
 
     def __init__(self, name, gstart, gend):
         self._name = name
-        self._gstart = (
-            gstart + 2
-        )  # group 0 is the whole matching line, group 1 is the catchall
+        self._gstart = (gstart + 2)  # group 0 is the whole matching line, group 1 is the catchall
         self._gend = gend + 2
         self._start_time = None
         self._end_time = None
-        self._other = dict()  # hack
-
-    def get_timestamp(self, line):
-        """
-        microsecond precision
-        """
-        sp = line.split()
-        date_time = "{0}T{1}".format(sp[0], sp[1])
-        pattern = "%Y-%m-%dT%H:%M:%S,%f"
-        epoch = time.mktime(time.strptime(date_time, pattern))
-        return datetime.datetime.strptime(date_time, pattern).microsecond / 1e6 + epoch
+        self._other = {}
 
     def check_start(self, match, line):
         if self._start_time is None and match.group(self._gstart):
-            self._start_time = self.get_timestamp(line)
+            self._start_time = get_timestamp(line)
 
     def check_end(self, match, line):
         if self._end_time is None and match.group(self._gend):
-            self._end_time = self.get_timestamp(line)
+            self._end_time = get_timestamp(line)
             if self._name == "unroll":
                 self._other["num_drops"] = int(line.split()[-1])
             elif self._name == "node managers":
@@ -267,7 +84,8 @@ class LogEntryPair(object):
 
     def get_duration(self):
         if (self._start_time is None) or (self._end_time is None):
-            # print "Cannot calc duration for '{0}': start_time:{1}, end_time:{2}".format(self._name,
+            # print "Cannot calc duration for
+            # '{0}': start_time:{1}, end_time:{2}".format(self._name,
             # self._start_time, self._end_time)
             return None
         return self._end_time - self._start_time
@@ -276,8 +94,55 @@ class LogEntryPair(object):
         self._start_time = None
         self._end_time = None
 
+    @property
+    def name(self):
+        return self._name
 
-class LogParser(object):
+    @property
+    def other(self):
+        return self._other
+
+
+def build_dim_log_entry_pairs():
+    return [
+        LogEntryPair(name, g1, g2)
+        for name, g1, g2 in (
+            ("unroll", 0, 1),
+            ("translate", 2, 3),
+            ("gen pg spec", 3, 4),
+            ("create session", 5, 6),
+            ("separate graph", 7, 8),
+            ("add session to all", 9, 10),
+            ("deploy session to all", 11, 12),
+            ("build drop connections", 13, 14),
+            ("trigger drops", 15, 16),
+            ("node managers", 17, 17),
+        )
+    ]
+
+
+def build_nm_log_entry_pairs():
+    return [
+        LogEntryPair(name, g1, g2)
+        for name, g1, g2 in (
+            ("completion_time_old", 0, 3),  # Old master branch
+            ("completion_time", 2, 3),
+            ("node_deploy_time", 1, 2),
+        )
+    ]
+
+
+def construct_catchall_pattern(node_type):
+    pattern_strs = LogParser.kwords.get(node_type)
+    patterns = [
+        x.format(".*").replace("(", r"\(").replace(")", r"\)") for x in pattern_strs
+    ]
+    catchall = "|".join(["(%s)" % (s,) for s in patterns])
+    catchall = ".*(%s).*" % (catchall,)
+    return re.compile(catchall)
+
+
+class LogParser:
     """
     TODO: This needs adjustment to new log directory names!!
 
@@ -345,90 +210,54 @@ class LogParser(object):
         if not self.check_log_dir(log_dir):
             raise Exception("No DIM log found at: {0}".format(log_dir))
         self._log_dir = log_dir
-        self._dim_catchall_pattern = self.construct_catchall_pattern(node_type="dim")
-        self._nm_catchall_pattern = self.construct_catchall_pattern(node_type="nm")
-
-    def build_dim_log_entry_pairs(self):
-        return [
-            LogEntryPair(name, g1, g2)
-            for name, g1, g2 in (
-                ("unroll", 0, 1),
-                ("translate", 2, 3),
-                ("gen pg spec", 3, 4),
-                ("create session", 5, 6),
-                ("separate graph", 7, 8),
-                ("add session to all", 9, 10),
-                ("deploy session to all", 11, 12),
-                ("build drop connections", 13, 14),
-                ("trigger drops", 15, 16),
-                ("node managers", 17, 17),
-            )
-        ]
-
-    def build_nm_log_entry_pairs(self):
-        return [
-            LogEntryPair(name, g1, g2)
-            for name, g1, g2 in (
-                ("completion_time_old", 0, 3),  # Old master branch
-                ("completion_time", 2, 3),
-                ("node_deploy_time", 1, 2),
-            )
-        ]
-
-    def construct_catchall_pattern(self, node_type):
-        pattern_strs = LogParser.kwords.get(node_type)
-        patterns = [
-            x.format(".*").replace("(", r"\(").replace(")", r"\)") for x in pattern_strs
-        ]
-        catchall = "|".join(["(%s)" % (s,) for s in patterns])
-        catchall = ".*(%s).*" % (catchall,)
-        return re.compile(catchall)
+        self._dim_catchall_pattern = construct_catchall_pattern(node_type="dim")
+        self._nm_catchall_pattern = construct_catchall_pattern(node_type="nm")
 
     def parse(self, out_csv=None):
         """
         e.g. lofar_std_N4_2016-08-22T11-52-11
         """
         logb_name = os.path.basename(self._log_dir)
-        ss = re.search("_N[0-9]+_", logb_name)
-        if ss is None:
+        search_string = re.search("_N[0-9]+_", logb_name)
+        if search_string is None:
             raise Exception("Invalid log directory: {0}".format(self._log_dir))
-        delimit = ss.group(0)
-        sp = logb_name.split(delimit)
-        pip_name = sp[0]
-        do_date = sp[1]
+        delimit = search_string.group(0)
+        split = logb_name.split(delimit)
+        pip_name = split[0]
+        do_date = split[1]
         num_nodes = int(delimit.split("_")[1][1:])
         user_name = pwd.getpwuid(os.stat(self._dim_log_f[0]).st_uid).pw_name
         gitf = os.path.join(self._log_dir, "git_commit.txt")
         if os.path.exists(gitf):
-            with open(gitf, "r") as gf:
-                git_commit = gf.readline().strip()
+            with open(gitf, "r") as git_file:
+                git_commit = git_file.readline().strip()
         else:
             git_commit = "None"
 
         # parse DIM log
-        dim_log_pairs = self.build_dim_log_entry_pairs()
+        dim_log_pairs = build_dim_log_entry_pairs()
         for lff in self._dim_log_f:
             with open(lff, "r") as dimlog:
                 for line in dimlog:
-                    m = self._dim_catchall_pattern.match(line)
-                    if not m:
+                    matches = self._dim_catchall_pattern.match(line)
+                    if not matches:
                         continue
                     for lep in dim_log_pairs:
-                        lep.check_start(m, line)
-                        lep.check_end(m, line)
+                        lep.check_start(matches, line)
+                        lep.check_end(matches, line)
 
         num_drops = -1
         temp_dim = []
         num_node_mgrs = 0
         for lep in dim_log_pairs:
             add_dur = True
-            if "unroll" == lep._name:
-                num_drops = lep._other.get("num_drops", -1)
-            elif "node managers" == lep._name:
-                num_node_mgrs = lep._other.get("num_node_mgrs", 0)
+            if lep.name == "unroll":
+                num_drops = lep.other.get("num_drops", -1)
+            elif lep.name == "node managers":
+                num_node_mgrs = lep.other.get("num_node_mgrs", 0)
                 add_dur = False
-            elif "build drop connections" == lep._name:
-                num_edges = lep._other.get("num_edges", -1)
+            elif lep.name == "build drop connections":
+                num_edges = lep.other.get("num_edges", -1)
                 temp_dim.append(str(num_edges))
             if add_dur:
                 temp_dim.append(str(lep.get_duration()))
@@ -439,32 +268,32 @@ class LogParser(object):
         num_finished_sess = 0
 
         num_dims = 0
-        for df in os.listdir(self._log_dir):
+        for log_directory_file_name in os.listdir(self._log_dir):
 
             # Check this is a dir and contains the NM log
-            if not os.path.isdir(os.path.join(self._log_dir, df)):
+            if not os.path.isdir(os.path.join(self._log_dir, log_directory_file_name)):
                 continue
-            nm_logf = os.path.join(self._log_dir, df, "dlgNM.log")
-            nm_dim_logf = os.path.join(self._log_dir, df, "dlgDIM.log")
-            nm_mm_logf = os.path.join(self._log_dir, df, "dlgMM.log")
+            nm_logf = os.path.join(self._log_dir, log_directory_file_name, "dlgNM.log")
+            nm_dim_logf = os.path.join(self._log_dir, log_directory_file_name, "dlgDIM.log")
+            nm_mm_logf = os.path.join(self._log_dir, log_directory_file_name, "dlgMM.log")
             if not os.path.exists(nm_logf):
                 if os.path.exists(nm_dim_logf) or os.path.exists(nm_mm_logf):
                     num_dims += 1
                 continue
 
             # Start anew every time
-            nm_log_pairs = self.build_nm_log_entry_pairs()
+            nm_log_pairs = build_nm_log_entry_pairs()
             nm_logs.append(nm_log_pairs)
 
             # Read NM log and fill all LogPair objects
             with open(nm_logf, "r") as nmlog:
                 for line in nmlog:
-                    m = self._nm_catchall_pattern.match(line)
-                    if not m:
+                    matches = self._nm_catchall_pattern.match(line)
+                    if not matches:
                         continue
                     for lep in nm_log_pairs:
-                        lep.check_start(m, line)
-                        lep.check_end(m, line)
+                        lep.check_start(matches, line)
+                        lep.check_end(matches, line)
 
             # Looking for the deployment times and counting for finished sessions
             for lep in nm_log_pairs:
@@ -474,9 +303,9 @@ class LogParser(object):
                 if dur is None:
                     continue
 
-                if lep._name in ("completion_time", "completion_time_old"):
+                if lep.name in ("completion_time", "completion_time_old"):
                     num_finished_sess += 1
-                elif lep._name == "node_deploy_time":
+                elif lep.name == "node_deploy_time":
                     if dur > max_node_deploy_time:
                         max_node_deploy_time = dur
 
@@ -505,14 +334,13 @@ class LogParser(object):
         max_exec_time = 0
         for log_entry_pairs in nm_logs:
 
-            indexed_leps = {lep._name: lep for lep in log_entry_pairs}
+            indexed_leps = {lep.name: lep for lep in log_entry_pairs}
             deploy_time = indexed_leps["node_deploy_time"].get_duration()
             if deploy_time is None:  # since some node managers failed to start
                 continue
-            exec_time = (
-                indexed_leps["completion_time"].get_duration()
-                or indexed_leps["completion_time_old"].get_duration()
-            )
+            exec_time = (indexed_leps["completion_time"].get_duration()
+                         or indexed_leps["completion_time_old"].get_duration()
+                         )
             if exec_time is None:
                 continue
             real_exec_time = exec_time - (max_node_deploy_time - deploy_time)
@@ -534,9 +362,9 @@ class LogParser(object):
         num_dims = num_dims if num_dims == 1 else num_dims - 1  # exclude master manager
         add_line = ",".join(ret + temp_dim + temp_nm + [str(int(num_dims))])
         if out_csv is not None:
-            with open(out_csv, "a") as of:
-                of.write(add_line)
-                of.write(os.linesep)
+            with open(out_csv, "a") as out_file:
+                out_file.write(add_line)
+                out_file.write(os.linesep)
         else:
             print(add_line)
 
@@ -556,8 +384,9 @@ class LogParser(object):
         return False
 
 
-if __name__ == "__main__":
-    parser = optparse.OptionParser(usage='\n%prog -a [1|2] -f <facility> [options]\n\n%prog -h for further help')
+def main():
+    parser = optparse.OptionParser(
+        usage='\n%prog -a [1|2] -f <facility> [options]\n\n%prog -h for further help')
 
     parser.add_option(
         "-a",
@@ -642,7 +471,7 @@ if __name__ == "__main__":
         type="string",
         dest="mon_host",
         help="Monitor host IP (optional)",
-        default=default_aws_mon_host,
+        default=DEFAULT_AWS_MON_HOST,
     )
     parser.add_option(
         "-o",
@@ -651,7 +480,7 @@ if __name__ == "__main__":
         type="int",
         dest="mon_port",
         help="The port to bind DALiuGE monitor",
-        default=default_aws_mon_port,
+        default=DEFAULT_AWS_MON_PORT,
     )
     parser.add_option(
         "-v",
@@ -731,9 +560,9 @@ if __name__ == "__main__":
         "-f",
         "--facility",
         dest="facility",
-        choices=facilities,
+        choices=FACILITIES,
         action="store",
-        help=f"The facility for which to create a submission job\nValid options: {facilities}",
+        help=f"The facility for which to create a submission job\nValid options: {FACILITIES}",
         default=None,
     )
     parser.add_option(
@@ -744,12 +573,12 @@ if __name__ == "__main__":
         default=True,
     )
 
-    (opts, args) = parser.parse_args(sys.argv)
+    (opts, _) = parser.parse_args(sys.argv)
     if not (opts.action and opts.facility) and not opts.configs:
         parser.error("Missing required parameters!")
-    if opts.facility not in facilities:
-        parser.error(f"Unknown facility provided. Please choose from {facilities}")
-        
+    if opts.facility not in FACILITIES:
+        parser.error(f"Unknown facility provided. Please choose from {FACILITIES}")
+
     if opts.action == 2:
         if opts.log_dir is None:
             # you can specify:
@@ -765,14 +594,14 @@ if __name__ == "__main__":
                 )
             # or a root log directory
             else:
-                for df in os.listdir(log_root):
-                    df = os.path.join(log_root, df)
-                    if os.path.isdir(df):
+                for log_dir in os.listdir(log_root):
+                    log_dir = os.path.join(log_root, log_dir)
+                    if os.path.isdir(log_dir):
                         try:
-                            log_parser = LogParser(df)
+                            log_parser = LogParser(log_dir)
                             log_parser.parse(out_csv=opts.csv_output)
                         except Exception as exp:
-                            print("Fail to parse {0}: {1}".format(df, exp))
+                            print("Fail to parse {0}: {1}".format(log_dir, exp))
         else:
             log_parser = LogParser(opts.log_dir)
             log_parser.parse(out_csv=opts.csv_output)
@@ -786,7 +615,7 @@ if __name__ == "__main__":
             if path_to_graph_file and not os.path.exists(path_to_graph_file):
                 parser.error("Cannot locate graph file at '{0}'".format(path_to_graph_file))
 
-        pc = SlurmClient(
+        client = SlurmClient(
             facility=opts.facility,
             job_dur=opts.job_dur,
             num_nodes=opts.num_nodes,
@@ -801,12 +630,16 @@ if __name__ == "__main__":
             check_with_session=opts.check_with_session,
             logical_graph=opts.logical_graph,
             physical_graph=opts.physical_graph,
-            submit=True if opts.submit in ['True','true'] else False,
+            submit=opts.submit in ['True', 'true'],
         )
-        pc._visualise_graph = opts.visualise_graph
-        pc.submit_job()
-    elif opts.configs == True:
-        print(f"Available facilities: {facilities}")
+        client._visualise_graph = opts.visualise_graph
+        client.submit_job()
+    elif opts.configs:
+        print(f"Available facilities: {FACILITIES}")
     else:
         parser.print_help()
         parser.error("Invalid input!")
+
+
+if __name__ == "__main__":
+    main()

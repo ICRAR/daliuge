@@ -68,7 +68,7 @@ def _PyFuncApp(oid, uid, f, **kwargs):
 
     fcode, fdefaults = pyfunc.serialize_func(f)
     return pyfunc.PyFuncApp(
-        oid, uid, func_name=fname, func_code=fcode, func_defaults=fdefaults, **kwargs
+        oid, uid, func_name=fname, func_code=fcode, func_defaults=fdefaults, pickle=True, **kwargs
     )
 
 
