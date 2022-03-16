@@ -87,7 +87,7 @@ class ScatterTest(unittest.TestCase):
         Expected behaviour should be the same as any other type of graph - they are all logical
         components
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/simpleScatter.graph")
+        lgt = _init_graph("test/reproducibility/reproGraphs/simpleScatter.graph")
         init_lgt_repro_data(lgt, rmode=ReproducibilityFlags.RERUN.value)
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt)[1]
@@ -110,7 +110,7 @@ class ScatterTest(unittest.TestCase):
         """
         scatter = 'simpleScatter'
         noscatter = 'simpleNoScatter'
-        graph_loc = 'test/reproducibility/topoGraphs/'
+        graph_loc = 'test/reproducibility/reproGraphs/'
         _run_full_workflow(rmode=ReproducibilityFlags.RERUN, workflow=scatter,
                            workflow_loc=graph_loc, scratch_loc=self.temp_out.name)
         _run_full_workflow(rmode=ReproducibilityFlags.RERUN, workflow=noscatter,
