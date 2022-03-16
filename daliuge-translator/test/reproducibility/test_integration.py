@@ -70,8 +70,8 @@ class IntegrationNothingTest(unittest.TestCase):
         Opens a simple computationSandwich graph in a temporary directory
         No data should be present at any level of abstraction, reflected by a null merkleroot.
         """
-        graph_name = 'computationSandwich'
-        graph_loc = 'test/reproducibility/topoGraphs/'
+        graph_name = 'HelloSPython'
+        graph_loc = 'test/reproducibility/reproGraphs/'
         rmode = ReproducibilityFlags.NOTHING
         _run_full_workflow(rmode=rmode, workflow=graph_name,
                            workflow_loc=graph_loc, scratch_loc=self.temp_out.name)
