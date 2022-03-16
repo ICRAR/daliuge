@@ -66,4 +66,5 @@ setup(
     entry_points={
         "console_scripts": ["dlg=dlg.common.tool:run"]
     },  # One tool to rule them all
+    install_requires=install_requires
 )
