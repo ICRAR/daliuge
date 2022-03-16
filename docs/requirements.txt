@@ -5,5 +5,5 @@ sphinx_rtd_theme
 sphinx-autobuild
 myst-parser
 ipython
-GPUtil
-merklelib
+merklelib >= 1.0
+gputil >= 1.4.0
