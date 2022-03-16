@@ -31,14 +31,13 @@ The registry simply (for the time being) keeps a record of:
 @author: rtobar
 """
 
-from abc import abstractmethod, ABCMeta
 import importlib
 import logging
 import time
+from abc import abstractmethod, ABCMeta
 
 from ..ddap_protocol import DROPPhases
 from ..utils import prepare_sql
-
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +106,7 @@ class Registry:
     def _checkDropIsInRegistry(self, oid):
         if not oid in self._drops:
             raise Exception("DROP %s is not present in the registry" % (oid))
+
 
 
 class InMemoryRegistry(Registry):

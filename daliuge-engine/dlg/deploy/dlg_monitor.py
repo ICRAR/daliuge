@@ -51,7 +51,6 @@ import time
 
 from ..utils import b2s
 
-
 BUFF_SIZE = 16384
 outstanding_conn = 20
 default_publication_port = 20000
@@ -142,6 +141,7 @@ class Server(http.server.HTTPServer):
 
 
 sockandaddr = collections.namedtuple("sockandaddr", "sock addr")
+
 
 
 class Monitor:
