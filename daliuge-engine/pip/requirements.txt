@@ -5,10 +5,7 @@ configobj
 crc32c
 dill
 docker
-GPUtil
 lockfile
-GPUtil
-merklelib
 metis>=0.2a3
 # 0.10.6 builds correctly with old (<=3.10) Linux kernels
 netifaces>=0.10.6
