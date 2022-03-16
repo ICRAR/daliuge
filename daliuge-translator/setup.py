@@ -92,12 +92,13 @@ def package_files(directory):
 
 src_files = package_files("dlg")
 
-
 install_requires = [
     "wheel",
     "bottle",
     "daliuge-common==%s" % (VERSION,),
+    "gputil>=1.4.0",
     "jsonschema",
+    "merklelib>=1.0",
     "metis>=0.2a3",
     "networkx",
     "numpy",
