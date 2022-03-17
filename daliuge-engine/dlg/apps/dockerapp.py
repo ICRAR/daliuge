@@ -236,7 +236,6 @@ class DockerApp(BarrierAppDROP):
     running in a container must quit themselves after successfully performing
     their task.
     """
-
     _container: Optional[Container] = None
 
     # signals for stopping this drop must first wait
@@ -245,7 +244,7 @@ class DockerApp(BarrierAppDROP):
     # be to use a stopcontainer member variable flag. As soon as the container is
     # created the running process checks to see if it should stop. Use lock for
     # atomicity with _container and _stopflag.
-    _containerLock = multiprocessing.synchronize.Lock
+    _containerLock: multiprocessing.synchronize.Lock
 
     @property
     def container(self) -> Optional[Container]:
