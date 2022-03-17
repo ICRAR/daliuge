@@ -37,6 +37,7 @@ class FieldOps(Enum):
     """
     STORE = 0
     COUNT = 1
+    REMOVE_FIRST = 2  # Removes the first char of an assumed string
 
 
 def extract_fields(drop: dict, fields: dict):
@@ -51,6 +52,8 @@ def extract_fields(drop: dict, fields: dict):
                 data[key] = drop.get(key)
             elif op == FieldOps.COUNT:
                 data[key] = len(drop.get(key))
+            elif op == FieldOps.REMOVE_FIRST:
+                data[key] = drop.get(key)[1:]
     return data
 
 
@@ -145,52 +148,35 @@ def lg_block_fields(category: Categories, category_type: str, rmode: Reproducibi
     return data
 
 
-def pgt_block_fields(drop, rmode: ReproducibilityFlags):
-    if drop == Categories.START:
-        return {}
-    elif drop == Categories.END:
-        return {}
-    elif drop == Categories.MEMORY:
-        return {}
-    elif drop == Categories.SHMEM:
-        return {}
-    elif drop == Categories.FILE:
-        return {}
-    elif drop == Categories.NGAS:
-        return {}
-    elif drop == Categories.S3:
-        return {}
-    elif drop == Categories.PLASMA:
-        return {}
-    elif drop == Categories.PLASMAFLIGHT:
-        return {}
-    elif drop == Categories.PARSET:
-        return {}
-    elif drop == Categories.ENVIRONMENTVARS:
-        return {}
-    elif drop == Categories.SCATTER:
-        return {}
-    elif drop == Categories.GATHER:
-        return {}
-    elif drop == Categories.LOOP:
-        return {}
-    elif drop == Categories.DATA:
-        return {}
-    elif drop == Categories.COMPONENT:
-        return {}
-    elif drop == Categories.PYTHON_APP:
-        return {}
-    elif drop == Categories.BASH_SHELL_APP:
-        return {}
-    elif drop == Categories.MPI:
-        return {}
-    elif drop == Categories.DYNLIB_APP:
-        return {}
-    elif drop == Categories.DYNLIB_PROC_APP:
-        return {}
-    else:
-        return {}
+def pgt_unroll_block_fields(category_type, rmode: ReproducibilityFlags):
+    data = {}
+    if rmode == ReproducibilityFlags.NOTHING:
+        return data
+    if rmode != ReproducibilityFlags.NOTHING:
+        data['type'] = FieldOps.STORE
+    if rmode != ReproducibilityFlags.REPRODUCE:
+        if category_type != 'plain':
+            data['dt'] = FieldOps.STORE
+    if category_type == 'plain':
+        data['storage'] = FieldOps.STORE
+    if rmode in (ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
+        data['rank'] = FieldOps.STORE
+
+    return data
 
 
-def pg_block_fields(data, rmode: ReproducibilityFlags):
-    return {}
+def pgt_partition_block_fields(rmode: ReproducibilityFlags):
+    data = {}
+    if rmode in (ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
+        data['node'] = FieldOps.REMOVE_FIRST
+        data['island'] = FieldOps.REMOVE_FIRST
+    return data
+
+
+def pg_block_fields(rmode: ReproducibilityFlags):
+    # These two happen to have the same data.
+    data = {}
+    if rmode in (ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
+        data['node'] = FieldOps.STORE
+        data['island'] = FieldOps.STORE
+    return data
