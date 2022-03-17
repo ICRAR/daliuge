@@ -76,8 +76,8 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
     """
     if not rmode_supported(level):
         raise NotImplementedError("Reproducibility level %s not yet supported" % level.name)
-    category_type = drop['categoryType']
-    category = drop['category']
+    category_type = drop.get('categoryType', "")  # Made conditional to support older graphs
+    category = drop.get('category', "")
 
     # Cheeky way to get field list into dicts. map(dict, drop...) makes a copy
     fields = {e.pop('name'): e['value'] for e in map(dict, drop['fields'])}
