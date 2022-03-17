@@ -139,10 +139,8 @@ def accumulate_pg_drop_data(drop: dict):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
         drop['reprodata']['rmode'] = str(rmode.value)
-    data = {}
-    if rmode in (ReproducibilityFlags.REPLICATE_COMP, ReproducibilityFlags.RECOMPUTE):
-        data['node'] = drop['node']
-        data['island'] = drop['island']
+    pg_fields = pg_block_fields(rmode)
+    data = extract_fields(drop, pg_fields)
     return data
 
 
