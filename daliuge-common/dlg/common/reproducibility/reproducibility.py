@@ -36,7 +36,7 @@ from dlg.common.reproducibility.constants import ReproducibilityFlags, \
     REPRO_DEFAULT, PROTOCOL_VERSION, HASHING_ALG, \
     rmode_supported, rflag_caster
 from dlg.common.reproducibility.reproducibility_fields import lgt_block_fields, lg_block_fields,\
-    extract_fields
+    pgt_unroll_block_fields, pgt_partition_block_fields, pg_block_fields, extract_fields
 from merklelib import MerkleTree
 
 logger = logging.getLogger(__name__)
@@ -92,7 +92,6 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
     :param drop:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
-    data = {}
     if drop.get('reprodata', None) is None:
         drop['reprodata'] = {'rmode': str(REPRO_DEFAULT.value),
                              'lg_blockhash': None}
@@ -101,23 +100,9 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
         logger.warning('Requested reproducibility mode %s not yet implemented', str(rmode))
         rmode = REPRO_DEFAULT
         drop['reprodata']['rmode'] = str(rmode.value)
-    if rmode == ReproducibilityFlags.NOTHING:
-        return data
-    if rmode == ReproducibilityFlags.REPRODUCE:
-        data['type'] = drop['type']
-        if drop['type'] == 'plain':
-            data['storage'] = drop['storage']
-        return data
-    if rmode.value >= ReproducibilityFlags.RERUN.value:
-        data['type'] = drop['type']
-        if data['type'] == 'plain':
-            data['storage'] = drop['storage']
-        else:
-            data['dt'] = drop['dt']
-            # WARNING: Added to differentiate between subtle component differences.
-    if rmode in (ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
-        data['rank'] = drop['rank']
-
+    drop_type = drop['type']
+    pgt_fields = pgt_unroll_block_fields(drop_type, rmode)
+    data = extract_fields(drop, pgt_fields)
     return data
 
 
@@ -132,7 +117,9 @@ def accumulate_pgt_partition_drop_data(drop: dict):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
         drop['reprodata']['rmode'] = str(rmode.value)
-    data = accumulate_pgt_unroll_drop_data(drop)
+    pgt_fields = pgt_partition_block_fields(rmode)
+    data = extract_fields(drop, pgt_fields)
+    data.update(accumulate_pgt_unroll_drop_data(drop))
     # This is the only piece of new information added at the partition level
     # It is only pertinent to Repetition and Computational replication
     if rmode in (ReproducibilityFlags.REPLICATE_COMP, ReproducibilityFlags.RECOMPUTE):
