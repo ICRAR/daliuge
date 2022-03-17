@@ -35,7 +35,8 @@ from dlg.common import Categories
 from dlg.common.reproducibility.constants import ReproducibilityFlags, \
     REPRO_DEFAULT, PROTOCOL_VERSION, HASHING_ALG, \
     rmode_supported, rflag_caster
-from dlg.common.reproducibility.reproducibility_fields import lgt_block_fields, extract_fields
+from dlg.common.reproducibility.reproducibility_fields import lgt_block_fields, lg_block_fields,\
+    extract_fields
 from merklelib import MerkleTree
 
 logger = logging.getLogger(__name__)
@@ -73,82 +74,15 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
     :param level:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
-    data = {}
-    if level == ReproducibilityFlags.NOTHING:
-        return data
-
+    if not rmode_supported(level):
+        raise NotImplementedError("Reproducibility level %s not yet supported" % level.name)
     category_type = drop['categoryType']
     category = drop['category']
 
     # Cheeky way to get field list into dicts. map(dict, drop...) makes a copy
     fields = {e.pop('name'): e['value'] for e in map(dict, drop['fields'])}
-
-    if not rmode_supported(level):
-        raise NotImplementedError("Reproducibility level %s not yet supported" % level.name)
-    if level == ReproducibilityFlags.RERUN:
-        pass
-    elif level in (ReproducibilityFlags.REPEAT, ReproducibilityFlags.REPLICATE_COMP,
-                   ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_TOTAL):
-        if category_type == 'Application':
-            data['execution_time'] = fields['execution_time']
-            data['num_cpus'] = fields['num_cpus']
-            if category == Categories.BASH_SHELL_APP:
-                data['command'] = fields['Arg01']
-            elif category == Categories.DYNLIB_APP:  # TODO: Deal with DYNLIB_PROC
-                data['libpath'] = fields['libpath']
-            elif category == Categories.MPI:
-                data['num_of_procs'] = fields['num_of_procs']
-            elif category == Categories.DOCKER:
-                data['image'] = fields['image']
-                data['command'] = fields['command']
-                data['user'] = fields['user']
-                data['ensureUserAndSwitch'] = fields['ensureUserAndSwitch']
-                data['removeContainer'] = fields['removeContainer']
-                data['additionalBindings'] = fields['additionalBindings']
-            elif category == Categories.COMPONENT:
-                data['appclass'] = fields['appclass']
-        elif category_type == Categories.DATA:
-            data['data_volume'] = fields['data_volume']
-            if category == Categories.MEMORY:
-                pass
-            elif category == Categories.FILE:
-                data['check_filepath_exists'] = fields['check_filepath_exists']
-            elif category == Categories.S3:
-                pass
-            elif category == Categories.NGAS:
-                pass
-            elif category == Categories.JSON:
-                pass
-            elif category == Categories.NULL:
-                pass
-        elif category_type == 'Group':
-            data['inputApplicationName'] = drop['inputApplicationName']
-            data['inputApplicationType'] = drop['inputApplicationType']
-            if category == Categories.GROUP_BY:
-                data['group_key'] = fields['group_key']
-                data['group_axis'] = fields['group_axis']
-            elif category == Categories.GATHER:
-                data['num_of_inputs'] = fields['num_of_inputs']
-                if 'gather_axis' in fields.keys():
-                    data['gather_axis'] = fields['gather_axis']
-            elif category == Categories.SCATTER:
-                data['num_of_copies'] = fields['num_of_copies']
-                if 'scatter_axis' in fields.keys():
-                    data['scatter_axis'] = fields['scatter_axis']
-            elif category == Categories.LOOP:
-                data['num_of_iter'] = fields['num_of_iter']
-        elif category_type == 'Control':
-            pass
-        elif category_type == 'Other':
-            pass
-    elif level == ReproducibilityFlags.REPRODUCE:
-        pass
-    if level in (ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
-        if category_type == Categories.DATA:
-            if category == Categories.FILE:
-                data['filepath'] = fields['filepath']
-                data['dirname'] = fields['dirname']
-
+    lg_fields = lg_block_fields(category_type, category, level)
+    data = extract_fields(fields, lg_fields)
     return data
 
 

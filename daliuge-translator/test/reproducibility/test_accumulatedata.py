@@ -436,7 +436,7 @@ class AccumulateLGRepeatData(unittest.TestCase):
         file.close()
 
     def _bash(self, drop):
-        expected = {'execution_time', 'num_cpus', 'command'}
+        expected = {'execution_time', 'num_cpus', 'Arg01'}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
@@ -782,7 +782,7 @@ class AccumulateLGRecomputeData(unittest.TestCase):
         file.close()
 
     def _bash(self, drop):
-        expected = {'execution_time', 'num_cpus', 'command'}
+        expected = {'execution_time', 'num_cpus', 'Arg01'}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
@@ -1759,7 +1759,7 @@ class AccumulateLGReplicateCompData(unittest.TestCase):
         file.close()
 
     def _bash(self, drop):
-        expected = {'execution_time', 'num_cpus', 'command'}
+        expected = {'execution_time', 'num_cpus', 'Arg01'}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
@@ -2105,7 +2105,7 @@ class AccumulateLGReplicateTotalData(unittest.TestCase):
         file.close()
 
     def _bash(self, drop):
-        expected = {'execution_time', 'num_cpus', 'command'}
+        expected = {'execution_time', 'num_cpus', 'Arg01'}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 

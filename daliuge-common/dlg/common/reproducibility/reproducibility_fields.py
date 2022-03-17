@@ -67,51 +67,82 @@ def lgt_block_fields(rmode: ReproducibilityFlags):
     return data
 
 
-def lg_block_fields(drop: Categories, rmode: ReproducibilityFlags):
-    if drop == Categories.START:
+def lg_block_fields(category: Categories, category_type: str, rmode: ReproducibilityFlags):
+    data = {}
+    if rmode in (
+            ReproducibilityFlags.NOTHING, ReproducibilityFlags.RERUN,
+            ReproducibilityFlags.REPRODUCE, ReproducibilityFlags.REPLICATE_SCI):
+        return data
+    # Drop category considerations
+    if category == "Application":
+        data['execution_time'] = FieldOps.STORE
+        data['num_cpus'] = FieldOps.STORE
+    elif category == "Group":
+        data['inputApplicationName'] = FieldOps.STORE
+        data['inputApplicationType'] = FieldOps.STORE
+    elif category == Categories.DATA:  # An anomaly, I know
+        data['data_volume'] = FieldOps.STORE
+
+    # Drop type considerations
+    if category_type == Categories.START:
+        pass
+    elif category_type == Categories.END:
+        pass
+    elif category_type == Categories.MEMORY:
+        pass
+    elif category_type == Categories.SHMEM:
+        pass
+    elif category_type == Categories.FILE:
+        data['check_filepath_exists'] = FieldOps.STORE
+        if rmode in (ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
+            data['filepath'] = FieldOps.STORE
+            data['dirname'] = FieldOps.STORE
+    elif category_type == Categories.NGAS:
+        pass
+    elif category_type == Categories.S3:
+        pass
+    elif category_type == Categories.PLASMA:
+        # TODO: Investigate Plasma fields
+        pass
+    elif category_type == Categories.PLASMAFLIGHT:
+        # TODO: Investigate PlasmaFlight Fields
+        pass
+    elif category_type == Categories.PARSET:
+        # TODO: Workout how to absorb all fields
+        pass
+    elif category_type == Categories.ENVIRONMENTVARS:
+        pass
+    elif category_type == Categories.SCATTER:
+        data['num_of_copies'] = FieldOps.STORE
+        data['scatter_axis'] = FieldOps.STORE
+    elif category_type == Categories.GATHER:
+        data['num_of_inputs'] = FieldOps.STORE
+        data['gather_axis'] = FieldOps.STORE
+    elif category_type == Categories.LOOP:
+        data['num_of_iter'] = FieldOps.STORE
+    elif category_type == Categories.GROUP_BY:
+        data['group_key'] = FieldOps.STORE
+        data['group_axis'] = FieldOps.STORE
+    elif category_type == Categories.PYTHON_APP:
         return {}
-    elif drop == Categories.END:
-        return {}
-    elif drop == Categories.MEMORY:
-        return {}
-    elif drop == Categories.SHMEM:
-        return {}
-    elif drop == Categories.FILE:
-        return {}
-    elif drop == Categories.NGAS:
-        return {}
-    elif drop == Categories.S3:
-        return {}
-    elif drop == Categories.PLASMA:
-        return {}
-    elif drop == Categories.PLASMAFLIGHT:
-        return {}
-    elif drop == Categories.PARSET:
-        return {}
-    elif drop == Categories.ENVIRONMENTVARS:
-        return {}
-    elif drop == Categories.SCATTER:
-        return {}
-    elif drop == Categories.GATHER:
-        return {}
-    elif drop == Categories.LOOP:
-        return {}
-    elif drop == Categories.DATA:
-        return {}
-    elif drop == Categories.COMPONENT:
-        return {}
-    elif drop == Categories.PYTHON_APP:
-        return {}
-    elif drop == Categories.BASH_SHELL_APP:
-        return {}
-    elif drop == Categories.MPI:
-        return {}
-    elif drop == Categories.DYNLIB_APP:
-        return {}
-    elif drop == Categories.DYNLIB_PROC_APP:
-        return {}
-    else:
-        return {}
+    elif category_type == Categories.COMPONENT:
+        data['appclass'] = FieldOps.STORE
+    elif category_type == Categories.BASH_SHELL_APP:
+        data['Arg01'] = FieldOps.STORE
+    elif category_type == Categories.MPI:
+        data['num_of_procs'] = FieldOps.STORE
+    elif category_type == Categories.DOCKER:
+        data['image'] = FieldOps.STORE
+        data['command'] = FieldOps.STORE
+        data['user'] = FieldOps.STORE
+        data['ensureUserAndSwitch'] = FieldOps.STORE
+        data['removeContainer'] = FieldOps.STORE
+        data['additionalBindings'] = FieldOps.STORE
+    elif category_type == Categories.DYNLIB_APP:
+        data['libpath'] = FieldOps.STORE
+    elif category_type == Categories.DYNLIB_PROC_APP:
+        data['libpath'] = FieldOps.STORE
+    return data
 
 
 def pgt_block_fields(drop, rmode: ReproducibilityFlags):
