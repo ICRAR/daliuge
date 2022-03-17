@@ -35,6 +35,7 @@ from dlg.common import Categories
 from dlg.common.reproducibility.constants import ReproducibilityFlags, \
     REPRO_DEFAULT, PROTOCOL_VERSION, HASHING_ALG, \
     rmode_supported, rflag_caster
+from dlg.common.reproducibility.reproducibility_fields import lgt_block_fields, extract_fields
 from merklelib import MerkleTree
 
 logger = logging.getLogger(__name__)
@@ -58,27 +59,10 @@ def accumulate_lgt_drop_data(drop: dict, level: ReproducibilityFlags):
     :param level:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
-    data = {}
-    if level == ReproducibilityFlags.NOTHING:
-        return data
-
-    category_type = drop['categoryType']
-    category = drop['category']
-
     if not rmode_supported(level):
         raise NotImplementedError("Reproducibility level %s not yet supported" % level.name)
-
-    if level == ReproducibilityFlags.REPRODUCE:
-        data['category_type'] = category_type
-        data['category'] = category
-        return data  # Early return to avoid next conditional
-
-    if level.value >= ReproducibilityFlags.RERUN.value:
-        data['category_type'] = category_type
-        data['category'] = category
-        data['numInputPorts'] = len(drop['inputPorts'])
-        data['numOutputPorts'] = len(drop['outputPorts'])
-        data['streaming'] = drop['streaming']
+    relevant_fields = lgt_block_fields(level)
+    data = extract_fields(drop, relevant_fields)
     return data
 
 
@@ -550,7 +534,7 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
             if rmode != ReproducibilityFlags.NOTHING:
                 if rmode == ReproducibilityFlags.REPRODUCE.value:
                     # WARNING: Hack! may break later, proceed with caution
-                    if dropset[did][0]['reprodata']['lgt_data']['category_type'] == Categories.DATA \
+                    if dropset[did][0]['reprodata']['lgt_data']['categoryType'] == Categories.DATA \
                             and (dropset[did][1] == 0 or dropset[did][2] == 0):
                         # Add my new hash to the parent-hash list
                         if did not in parenthash.keys():

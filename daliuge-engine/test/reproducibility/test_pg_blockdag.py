@@ -38,7 +38,7 @@ def _generate_dummy_compute(rmode: ReproducibilityFlags):
     return {'oid': 1,
             'reprodata': {
                 'rmode': str(rmode.value),
-                'lgt_data': {'category_type': Categories.BASH_SHELL_APP},
+                'lgt_data': {'categoryType': Categories.BASH_SHELL_APP},
                 'lg_blockhash': '1',
                 'pgt_data': {
                     'merkleroot': '2'
@@ -62,7 +62,7 @@ def _generate_dummy_data(rmode: ReproducibilityFlags):
     return {'oid': 1,
             'reprodata': {
                 'rmode': str(rmode.value),
-                'lgt_data': {'category_type': Categories.DATA},
+                'lgt_data': {'categoryType': Categories.DATA},
                 'lg_blockhash': 'a',
                 'pgt_data': {
                     'merkleroot': 'b'
