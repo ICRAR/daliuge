@@ -399,7 +399,7 @@ class DockerApp(BarrierAppDROP):
     def run(self):
         # lock this object to prevent other processes from signaling until the
         # container object is running.
-        with self._containerLock as ctx:
+        with self._containerLock:
             # Replace any placeholder in the commandline with the proper path or
             # dataURL, depending on the type of input/output it is
             # In the case of fs-based i/o we replace the command-line with the path
@@ -622,37 +622,39 @@ class DockerApp(BarrierAppDROP):
 
     @overrides
     def setCompleted(self):
-        super().setCompleted()
-        # TODO: in some cases this is triggered before the main thread builds the container..
-        # Perhaps use a mutex/lock shared by run and stop events
-        if self.container is not None:
-            self.container.stop()
-        else:
-            logger.debug("docker app completed but container is None")
+        with self._containerLock:
+            super().setCompleted()
+            if self.container is not None:
+                self.container.stop()
+            else:
+                logger.debug("docker app completed but container is None")
 
     @overrides
     def setError(self):
-        super().setError()
-        if self.container  is not None:
-            self.container.stop()
-        else:
-            logger.debug("docker app errored but container is None")
+        with self._containerLock:
+            super().setError()
+            if self.container is not None:
+                self.container.stop()
+            else:
+                logger.debug("docker app errored but container is None")
 
     @overrides
     def cancel(self):
-        super().cancel()
-        if self.container  is not None:
-            self.container.stop()
-        else:
-            logger.debug("docker app canceled but container is None")
+        with self._containerLock:
+            super().cancel()
+            if self.container is not None:
+                self.container.stop()
+            else:
+                logger.debug("docker app canceled but container is None")
 
     @overrides
     def skip(self):
-        super().skip()
-        if self.container  is not None:
-            self.container.stop()
-        else:
-            logger.debug("docker app skipped but container is None")
+        with self._containerLock:
+            super().skip()
+            if self.container is not None:
+                self.container.stop()
+            else:
+                logger.debug("docker app skipped but container is None")
 
     @classmethod
     def _get_client(cls):
