@@ -945,7 +945,7 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.pgt_node_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(expected, list(hash_data.keys()))
+            self.assertEqual(sorted(expected), sorted(list(hash_data.keys())))
 
     def test_data_accumulate(self):
         """
@@ -955,7 +955,7 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.pgt_file_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(expected, list(hash_data.keys()))
+            self.assertEqual(sorted(expected), sorted(list(hash_data.keys())))
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
