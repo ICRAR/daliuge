@@ -17,6 +17,8 @@ File Drop
 and inspection of individual app component I/O. The downside of using file drops is reduced I/O performance compared to
 alternative memory based drops that can instead utilize buffer protocol.
 
+Environment variables can be used in the the file path location using the '$' literal, e.g. '$DLG_ROOT' evaluates to '/home/username/dlg'
+
 Container Drop (Legacy)
 ---------------------------
 

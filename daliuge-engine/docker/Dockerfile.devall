@@ -20,13 +20,16 @@ EXPOSE 8001
 EXPOSE 8002
 
 # enable the virtualenv path from daliuge-common
-ENV VIRTUAL_ENV=/root/dlg
+ENV VIRTUAL_ENV=/dlg
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-ENV DLG_ROOT="/tmp/dlg/var/dlg_home"
+ENV DLG_ROOT="/tmp/dlg"
 
 RUN apt install -y git python3-dev
-RUN pip install 'git+https://github.com/ICRAR/dlg-nifty-components.git'
-RUN pip install --extra-index-url=https://artefact.skao.int/repository/pypi-internal/simple 'ska-sdp-cbf-emulator[plasma]>=1.6.4'
-RUN pip install 'git+https://github.com/ICRAR/dlg-casacore-components.git'
+#RUN pip install 'git+https://github.com/ICRAR/dlg-nifty-components.git'
+#RUN pip install 'git+https://github.com/ICRAR/dlg-casacore-components.git'
+
+RUN pip install --extra-index-url=https://artefact.skao.int/repository/pypi-internal/simple 'ska-sdp-cbf-emulator[plasma]>=1.6.11'
+RUN pip install dlg-nifty-components
+RUN pip install dlg-casacore-components
 
 CMD ["dlg", "daemon", "-vv"]
