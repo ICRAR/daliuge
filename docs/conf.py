@@ -47,6 +47,7 @@ MOCK_MODULES = (
     "crc32c",
     "dill",
     "docker",
+    "docker.models",
     "gevent",
     "lockfile",
     "metis",

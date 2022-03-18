@@ -32,7 +32,7 @@ import pwd
 import threading
 import time
 import json
-from typing import Container, Optional
+from typing import Optional
 from overrides import overrides
 
 from configobj import ConfigObj
