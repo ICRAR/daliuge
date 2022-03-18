@@ -48,6 +48,7 @@ MOCK_MODULES = (
     "dill",
     "docker",
     "docker.models",
+    "docker.models.containers",
     "gevent",
     "lockfile",
     "metis",
