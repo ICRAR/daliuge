@@ -32,6 +32,7 @@ import threading
 import time
 import traceback
 import warnings
+from json import JSONDecodeError
 from urllib.parse import parse_qs, urlparse
 
 import bottle
@@ -49,6 +50,9 @@ from bottle import (
 )
 from dlg import common, restutils
 from dlg.clients import CompositeManagerClient
+from dlg.common.reproducibility.constants import REPRO_DEFAULT
+from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data, \
+    init_pgt_unroll_repro_data, init_pgt_partition_repro_data
 from dlg.dropmake.lg import GraphException
 from dlg.dropmake.pg_generator import unroll, partition
 from dlg.dropmake.pg_manager import PGManager
@@ -148,13 +152,21 @@ def jsonbody_post():
     # see the table in http://bottlepy.org/docs/dev/tutorial.html#html-form-handling
     lg_name = request.forms["lg_name"]
     if lg_exists(lg_name):
+        # TODO: Add rmode to post form
         lg_content = request.forms["lg_content"]
+        try:
+            lg_content = json.loads(lg_content)
+        except JSONDecodeError:
+            logger.warning(f"Could not decode lgt {lg_content}")
+        lg_content = init_lg_repro_data(init_lgt_repro_data(lg_content, str(REPRO_DEFAULT.value)))
         lg_path = "{0}/{1}".format(lg_dir, lg_name)
         post_sem.acquire()
         try:
             # overwrite file on disks
             # print "writing to {0}".format(lg_path)
             with open(lg_path, "w") as f:
+                if isinstance(lg_content, dict):
+                    lg_content = json.dumps(lg_content)
                 f.write(lg_content)
         except Exception as excmd2:
             response.status = 500
@@ -591,8 +603,7 @@ def unroll_and_partition_with_params(lg_path, algo_params_source):
     app = "dlg.apps.simple.SleepApp" if test else None
 
     # Unrolling LG to PGT.
-    pgt = unroll(lg_path, app=app)
-
+    pgt = init_pgt_unroll_repro_data(unroll(lg_path, app=app))
     # Define partitioning parameters.
     algo = algo_params_source.get("algo", "none")
     num_partitions = algo_params_source.get("num_par", default=1, type=int)
@@ -604,7 +615,7 @@ def unroll_and_partition_with_params(lg_path, algo_params_source):
     for name, typ in ALGO_PARAMS:
         if name in algo_params_source:
             algo_params[name] = algo_params_source.get(name, type=typ)
-
+    reprodata = pgt.pop()
     # Partition the PGT
     pgt = partition(
         pgt,
@@ -616,6 +627,16 @@ def unroll_and_partition_with_params(lg_path, algo_params_source):
         **algo_params
     )
 
+
+    pgt_spec = pgt.to_pg_spec(
+        [],
+        ret_str=False,
+        num_islands=num_islands,
+        tpl_nodes_len=num_partitions + num_islands,
+    )
+    init_pgt_partition_repro_data(pgt_spec)
+    reprodata = pgt_spec.pop()
+    pgt.reprodata = reprodata
     return pgt
 
 
