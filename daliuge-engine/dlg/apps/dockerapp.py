@@ -26,6 +26,7 @@ Module containing docker-related applications and functions
 import collections
 import logging
 import multiprocessing
+import multiprocessing.synchronize
 import os
 import pwd
 import threading
@@ -237,13 +238,16 @@ class DockerApp(BarrierAppDROP):
     """
     _container: Optional[Container] = None
 
-    _containerLock = multiprocessing.Lock()
+    # signals for stopping this drop must first wait
+    # for the container to become available
+    _containerLock = multiprocessing.synchronize.Lock
 
     @property
     def container(self) -> Optional[Container]:
         return self._container
 
     def initialize(self, **kwargs):
+        self._containerLock = multiprocessing.Lock()
         super().initialize(**kwargs)
 
         self._image = self._getArg(kwargs, "image", None)
