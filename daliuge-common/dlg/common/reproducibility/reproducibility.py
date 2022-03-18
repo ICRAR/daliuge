@@ -546,6 +546,11 @@ def init_lg_repro_data(lg: dict):
     for drop in lg.get('nodeDataArray', []):
         init_lg_repro_drop_data(drop)
     leaves, visited = lg_build_blockdag(lg)
+    if 'reprodata' not in lg:
+        reprodata = {'rmode': str(REPRO_DEFAULT), 'meta_data': accumulate_meta_data()}
+        meta_tree = MerkleTree(reprodata.items(), common_hash)
+        reprodata['merkleroot'] = meta_tree.merkle_root
+        lg['reprodata'] = reprodata
     lg['reprodata']['signature'] = agglomerate_leaves(leaves)
     logger.info("Reproducibility data finished at LG level")
     return lg
@@ -591,11 +596,6 @@ def init_pg_repro_data(pg: list):
     :return: The same pg object with new information appended
     """
     reprodata = pg.pop()
-    rmode = rflag_caster(reprodata['rmode'])
-    if not rmode_supported(rmode):
-        logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
-        rmode = REPRO_DEFAULT
-        reprodata['rmode'] = str(rmode.value)
     for drop in pg:
         init_pg_repro_drop_data(drop)
     leaves, visited = build_blockdag(pg, 'pg')
