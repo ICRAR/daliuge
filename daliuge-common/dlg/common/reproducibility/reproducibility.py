@@ -120,7 +120,14 @@ def accumulate_pgt_partition_drop_data(drop: dict):
     :param drop:
     :return:
     """
-    rmode = rflag_caster(drop['reprodata']['rmode'])
+    if drop.get('reprodata') is None:
+        drop['reprodata'] = {'rmode': str(REPRO_DEFAULT.value),
+                             'lg_blockhash': None}
+    if drop['reprodata'].get('rmode') is None:
+        rmode = REPRO_DEFAULT
+        drop['reprodata']['rmode'] = str(rmode.value)
+    else:
+        rmode = rflag_caster(drop['reprodata']['rmode'])
     if not rmode_supported(rmode):
         logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         rmode = REPRO_DEFAULT
@@ -567,12 +574,9 @@ def init_pgt_partition_repro_data(pgt: list):
     :param pgt: The physical graph template structure (a list of drops + reprodata dictionary)
     :return: The same pgt object with new information recorded
     """
-    return pgt
     reprodata = pgt.pop()
-    pgt.append(reprodata)
     for drop in pgt:
-        pass
-        # init_pgt_partition_repro_drop_data(drop)
+        init_pgt_partition_repro_drop_data(drop)
     leaves, visited = [], [] # build_blockdag(pgt, 'pgt')
     reprodata['signature'] = agglomerate_leaves(leaves)
     pgt.append(reprodata)
