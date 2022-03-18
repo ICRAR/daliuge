@@ -30,6 +30,8 @@ arranged top-to-bottom as logical to physical to runtime.
 """
 import collections
 import logging
+import json
+from json import JSONDecodeError
 
 from dlg.common import Categories
 from dlg.common.reproducibility.constants import ReproducibilityFlags, \
@@ -92,14 +94,20 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
     :param drop:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
-    if drop.get('reprodata', None) is None:
+    if drop.get('reprodata') is None:
         drop['reprodata'] = {'rmode': str(REPRO_DEFAULT.value),
                              'lg_blockhash': None}
-    rmode = rflag_caster(drop['reprodata']['rmode'])
+    if drop['reprodata'].get('rmode') is None:
+        rmode = REPRO_DEFAULT
+        drop['reprodata']['rmode'] = str(rmode.value)
+    else:
+        rmode = rflag_caster(drop['reprodata']['rmode'])
     if not rmode_supported(rmode):
         logger.warning('Requested reproducibility mode %s not yet implemented', str(rmode))
         rmode = REPRO_DEFAULT
         drop['reprodata']['rmode'] = str(rmode.value)
+    if drop.get('type') is None:
+        return {}
     drop_type = drop['type']
     pgt_fields = pgt_unroll_block_fields(drop_type, rmode)
     data = extract_fields(drop, pgt_fields)
@@ -277,7 +285,12 @@ def build_pgt_block_data(drop: dict):
     :param drop: The drop description
     :return:
     """
-    block_data = [drop['reprodata']['pgt_data']['merkleroot'], drop['reprodata']['lg_blockhash']]
+    block_data = []
+    if 'pgt_data' in drop['reprodata']:
+        if 'merkleroot' in drop['reprodata']['pgt_data']:
+            block_data.append(drop['reprodata']['pgt_data']['merkleroot'])
+    if 'lg_blockhash' in drop['reprodata']:
+        block_data.append(drop['reprodata']['lg_blockhash'])
     for parenthash in sorted(drop['reprodata']['pgt_parenthashes'].values()):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data, common_hash)
@@ -329,12 +342,12 @@ def lg_build_blockdag(logical_graph: dict):
     leaves = []
     visited = []
     queue = collections.deque()
-    for drop in logical_graph['nodeDataArray']:
+    for drop in logical_graph.get('nodeDataArray', []):
         did = int(drop['key'])
         dropset[did] = [drop, 0, 0]
         neighbourset[did] = []
 
-    for edge in logical_graph['linkDataArray']:
+    for edge in logical_graph.get('linkDataArray', []):
         src = int(edge['from'])
         dest = int(edge['to'])
         dropset[dest][1] += 1
@@ -416,10 +429,9 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
     leaves = []
     visited = []
     queue = collections.deque()
-
     for drop in drops:
         did = drop['oid']
-        dropset[did] = [drop, 0, 0]  # To guarantee all nodes have entries
+        dropset[did] = [drop, 0, 0]
     for drop in drops:
         did = drop['oid']
         neighbourset[did] = []
@@ -435,13 +447,11 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
                 dropset[dest][1] += 1
                 dropset[did][2] += 1
                 neighbourset[did].append(dest)  # TODO: Appending may not be correct behaviour
-
     for did in dropset:
         if dropset[did][1] == 0:
             queue.append(did)
         if not neighbourset[did]:  # Leaf node
             leaves.append(did)
-
     while queue:
         did = queue.pop()
         block_builder(dropset[did][0])
@@ -475,8 +485,9 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
                     dropset[neighbour][0]['reprodata'][parentstr].update(parenthash)
             if dropset[neighbour][1] == 0:
                 queue.append(neighbour)
+
     if len(visited) != len(dropset):
-        raise Exception("Not a DAG")
+        logger.warning("Not a DAG")
 
     for i in range(len(leaves)):
         leaf = leaves[i]
@@ -511,7 +522,7 @@ def init_lgt_repro_data(lgt: dict, rmode: str):
     reprodata = {'rmode': str(rmode.value), 'meta_data': accumulate_meta_data()}
     meta_tree = MerkleTree(reprodata.items(), common_hash)
     reprodata['merkleroot'] = meta_tree.merkle_root
-    for drop in lgt['nodeDataArray']:
+    for drop in lgt.get('nodeDataArray', []):
         init_lgt_repro_drop_data(drop, rmode)
     lgt['reprodata'] = reprodata
     logger.info("Reproducibility data finished at LGT level")
@@ -525,7 +536,7 @@ def init_lg_repro_data(lg: dict):
     :param lg: The logical graph data structure (a JSON object (a dict))
     :return: The same lgt object with new information appended
     """
-    for drop in lg['nodeDataArray']:
+    for drop in lg.get('nodeDataArray', []):
         init_lg_repro_drop_data(drop)
     leaves, visited = lg_build_blockdag(lg)
     lg['reprodata']['signature'] = agglomerate_leaves(leaves)
@@ -556,10 +567,13 @@ def init_pgt_partition_repro_data(pgt: list):
     :param pgt: The physical graph template structure (a list of drops + reprodata dictionary)
     :return: The same pgt object with new information recorded
     """
+    return pgt
     reprodata = pgt.pop()
+    pgt.append(reprodata)
     for drop in pgt:
-        init_pgt_partition_repro_drop_data(drop)
-    leaves, visited = build_blockdag(pgt, 'pgt')
+        pass
+        # init_pgt_partition_repro_drop_data(drop)
+    leaves, visited = [], [] # build_blockdag(pgt, 'pgt')
     reprodata['signature'] = agglomerate_leaves(leaves)
     pgt.append(reprodata)
     logger.info("Reproducibility data finished at PGT partition level")
