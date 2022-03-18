@@ -114,8 +114,7 @@ def unroll(lg, oid_prefix=None, zerorun=False, app=None):
         for dropspec in drop_list:
             if "app" in dropspec:
                 dropspec["app"] = app
-    if lg.reprodata != {}:
-        drop_list.append(lg.reprodata)
+    drop_list.append(lg.reprodata)
     return drop_list
 
 
