@@ -67,6 +67,7 @@ class PGT(object):
         self._merge_parts = False
         self._island_labels = ["Data", "Compute"]
         self._data_movement = None
+        self._reprodata = {}
 
     def _can_merge(self, new_num_parts):
         if new_num_parts <= 0:
@@ -178,8 +179,17 @@ class PGT(object):
         """
         if self._json_str is None:
             self._json_str = self.to_gojs_json(visual=True)
+
         return self._json_str
         # return self.to_gojs_json()
+
+    @property
+    def reprodata(self):
+        return self._reprodata
+
+    @reprodata.setter
+    def reprodata(self, value):
+        self._reprodata = value
 
     def merge_partitions(
         self, new_num_parts, form_island=False, island_type=0, visual=False
