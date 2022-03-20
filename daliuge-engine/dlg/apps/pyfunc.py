@@ -193,6 +193,11 @@ class PyFuncApp(BarrierAppDROP):
     fdefaults: dict
 
     def initialize(self, **kwargs):
+        """
+        The initialization of a function component is mainly dealing with mapping 
+        inputs and provided applicationArgs to the function arguments. All of this 
+        should be driven by matching names, but currently that is not being done.
+        """
         BarrierAppDROP.initialize(self, **kwargs)
 
         self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
@@ -210,16 +215,16 @@ class PyFuncApp(BarrierAppDROP):
             dum_arg = new_arg = "gIbbERiSH:askldhgol"
             if kw in self._applicationArgs: # these are the preferred ones now
                 if isinstance(self._applicationArgs[kw]["value"], bool): # always transfer booleans
-                    new_arg = self._applicationArgs[kw]['value']
+                    new_arg = self._applicationArgs[kw].pop()
                 elif self._applicationArgs[kw]["value"]: # only transfer if there is a value
                     # we allow python expressions as values, means that strings need to be quoted
-                    new_arg = self._applicationArgs[kw]['value']
+                    new_arg = self._applicationArgs[kw].pop()
 
             if new_arg != dum_arg:
                 logger.debug(f"Setting {kw} to {new_arg}")
                 self.__setattr__(kw, new_arg)
 
-
+        num_args = len(self._applicationArgs) # number of additional arguments provided
 
         if not self.func_name and not self.func_code:
             raise InvalidDropException(
