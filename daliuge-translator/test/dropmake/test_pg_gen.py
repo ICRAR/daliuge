@@ -62,7 +62,8 @@ class TestPGGen(unittest.TestCase):
         lg = LG(fp)
         drop_list = lg.unroll_to_tpl()
         pgt = PGT(drop_list)
-        # print pgt.to_gojs_json()
+        pg_json = pgt.to_gojs_json()
+        # we should really check the output here
 
     def test_metis_pgtp(self):
         lgnames = [
