@@ -125,29 +125,30 @@ class dropdict(dict):
     DROPManager.
     """
 
-    def _addSomething(self, other, key):
+    def _addSomething(self, other, key, IdText=None):
         if key not in self:
             self[key] = []
         if other["oid"] not in self[key]:
-            self[key].append(other["oid"])
+            append = {other["oid"]:IdText} if IdText else other["oid"]
+            self[key].append(append)
 
-    def addConsumer(self, other):
-        self._addSomething(other, "consumers")
+    def addConsumer(self, other, IdText=None):
+        self._addSomething(other, "consumers", IdText=IdText)
 
-    def addStreamingConsumer(self, other):
-        self._addSomething(other, "streamingConsumers")
+    def addStreamingConsumer(self, other, IdText=None):
+        self._addSomething(other, "streamingConsumers", IdText=IdText)
 
-    def addInput(self, other):
-        self._addSomething(other, "inputs")
+    def addInput(self, other, IdText=None):
+        self._addSomething(other, "inputs", IdText=IdText)
 
-    def addStreamingInput(self, other):
-        self._addSomething(other, "streamingInputs")
+    def addStreamingInput(self, other, IdText=None):
+        self._addSomething(other, "streamingInputs", IdText=IdText)
 
-    def addOutput(self, other):
-        self._addSomething(other, "outputs")
+    def addOutput(self, other, IdText=None):
+        self._addSomething(other, "outputs", IdText=IdText)
 
-    def addProducer(self, other):
-        self._addSomething(other, "producers")
+    def addProducer(self, other, IdText=None):
+        self._addSomething(other, "producers", IdText=IdText)
 
 
 def get_roots(pg_spec):
