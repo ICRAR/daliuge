@@ -1195,6 +1195,7 @@ class DAGUtil(object):
             for obk in out_bound_keys:
                 if obk in drop:
                     for oup in drop[obk]:
+                        oup = list(oup.keys())[0] if isinstance(oup, dict) else oup
                         if (DropType.PLAIN == tt):
                             G.add_weighted_edges_from([(myk, key_dict[oup], int(drop['dw']))])
                         elif (DropType.APP == tt):
