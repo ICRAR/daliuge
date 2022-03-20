@@ -20,6 +20,8 @@
 #    MA 02111-1307  USA
 #
 import unittest
+import json
+import pkg_resources
 
 from dlg import graph_loader
 from dlg.ddap_protocol import DROPLinkType, DROPRel
@@ -128,3 +130,14 @@ class TestGraphLoader(unittest.TestCase):
         self.assertEqual("B", a["consumers"][0])
         self.assertFalse("producers" in a)
         self.assertFalse("streamingConsumers" in c)
+
+    def test_namedPorts(self):
+        """
+        Use a graph with named ports and check whether it is loading
+        """
+        with pkg_resources.resource_stream(
+                "test", "graphs/funcTestPG_namedPorts.graph"
+            ) as f:  # @UndefinedVariable
+            graphSpec = json.load(f)
+        graph_loader.loadDropSpecs(graphSpec)
+        

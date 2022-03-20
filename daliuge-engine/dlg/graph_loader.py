@@ -28,6 +28,8 @@ import collections
 import importlib
 import logging
 
+from numpy import isin
+
 from . import droputils
 from .apps.socket_listener import SocketListenerApp
 from .ddap_protocol import DROPRel, DROPLinkType
@@ -225,12 +227,15 @@ def loadDropSpecs(dropSpecList):
                 # A KeyError will be raised if a oid has been specified in the
                 # relationship list but doesn't exist in the list of DROPs
                 for oid in dropSpec[rel]:
+                    oid = list(oid.keys())[0] if isinstance(oid,dict) else oid
                     dropSpecs[oid]
 
             # N-1 relationships
             elif rel in __TOONE:
+                port = list(dropSpecs[rel].keys()) if isinstance(dropSpecs[rel],dict) else\
+                    dropSpecs[rel]
                 # See comment above
-                dropSpecs[dropSpec[rel]]
+                dropSpecs[port]
 
     # Done!
     return dropSpecs
