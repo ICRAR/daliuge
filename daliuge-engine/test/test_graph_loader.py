@@ -128,8 +128,9 @@ class TestGraphLoader(unittest.TestCase):
 
         self.assertEqual(1, len(a["consumers"]))
         self.assertEqual("B", a["consumers"][0])
-        self.assertFalse("producers" in a)
-        self.assertFalse("streamingConsumers" in c)
+        self.assertFalse("producers" in a and len(a["producers"])>0)
+        self.assertFalse("streamingConsumers" in c and \
+            len(c["streamingConsumers"])>0)
 
     def test_namedPorts(self):
         """
@@ -139,5 +140,5 @@ class TestGraphLoader(unittest.TestCase):
                 "test", "graphs/funcTestPG_namedPorts.graph"
             ) as f:  # @UndefinedVariable
             graphSpec = json.load(f)
-        graph_loader.loadDropSpecs(graphSpec)
+        dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         
