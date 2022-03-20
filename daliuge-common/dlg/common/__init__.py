@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 """Common utilities used by daliuge packages"""
+from numpy import isin
 from .osutils import terminate_or_kill, wait_or_kill
 from .network import check_port, connect_to, portIsClosed, portIsOpen, write_to
 from .streams import ZlibCompressedStream, JSONStream
@@ -150,6 +151,22 @@ class dropdict(dict):
     def addProducer(self, other, IdText=None):
         self._addSomething(other, "producers", IdText=IdText)
 
+def _sanitize_links(links):
+    """
+    Links can now be dictionaries, but we only need
+    the key.
+    """
+    if isinstance(links,list):
+        nlinks = []
+        for l in links:
+            if isinstance(l,dict): # could be a list of dicts
+                nlinks.extend(list(l.keys()))
+            else:
+                nlinks.extend(l) if isinstance(l,list) else nlinks.append(l)
+        return nlinks
+    elif isinstance(links, dict):
+        return list(links.keys()) if isinstance(links,dict) else links
+
 
 def get_roots(pg_spec):
     """
@@ -170,14 +187,17 @@ def get_roots(pg_spec):
             if dropspec.get("inputs", None) or dropspec.get("streamingInputs", None):
                 nonroots.add(oid)
             if dropspec.get("outputs", None):
-                nonroots |= set(dropspec["outputs"])
+                do = _sanitize_links(dropspec["outputs"])
+                nonroots |= set(do)
         elif dropspec["type"] == DropType.PLAIN:
             if dropspec.get("producers", None):
                 nonroots.add(oid)
             if dropspec.get("consumers", None):
-                nonroots |= set(dropspec["consumers"])
+                dc = _sanitize_links(dropspec["consumers"])
+                nonroots |= set(dc)
             if dropspec.get("streamingConsumers", None):
-                nonroots |= set(dropspec["streamingConsumers"])
+                dsc = _sanitize_links(dropspec["streamingConsumers"])
+                nonroots |= set(dsc)
 
     return all_oids - nonroots
 
@@ -201,18 +221,23 @@ def get_leaves(pg_spec):
             if dropspec.get("outputs", None):
                 nonleaves.add(oid)
             if dropspec.get("streamingInputs", None):
-                nonleaves |= set(dropspec["streamingInputs"])
+                dsi = _sanitize_links(dropspec["streamingInputs"])
+                nonleaves |= set(dsi)
             if dropspec.get("inputs", None):
-                nonleaves |= set(dropspec["inputs"])
+                di = _sanitize_links(dropspec["inputs"])
+                nonleaves |= set(di)
         if dropspec["type"] == DropType.SERVICE_APP:
             nonleaves.add(oid)  # services are never leaves
             if dropspec.get("streamingInputs", None):
-                nonleaves |= set(dropspec["streamingInputs"])
+                dsi = _sanitize_links(dropspec["streamingInputs"])
+                nonleaves |= set(dsi)
             if dropspec.get("inputs", None):
-                nonleaves |= set(dropspec["inputs"])
+                di = _sanitize_links(dropspec["inputs"])
+                nonleaves |= set(di)
         elif dropspec["type"] == DropType.PLAIN:
             if dropspec.get("producers", None):
-                nonleaves |= set(dropspec["producers"])
+                dp = _sanitize_links(dropspec["producers"])
+                nonleaves |= set(dp)
             if dropspec.get("consumers", None) or dropspec.get(
                 "streamingConsumers", None
             ):
