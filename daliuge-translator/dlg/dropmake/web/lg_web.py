@@ -152,13 +152,13 @@ def jsonbody_post():
     # see the table in http://bottlepy.org/docs/dev/tutorial.html#html-form-handling
     lg_name = request.forms["lg_name"]
     if lg_exists(lg_name):
-        # TODO: Add rmode to post form
+        rmode = request.forms.get('rmode', str(REPRO_DEFAULT.value))
         lg_content = request.forms["lg_content"]
         try:
             lg_content = json.loads(lg_content)
         except JSONDecodeError:
             logger.warning(f"Could not decode lgt {lg_content}")
-        lg_content = init_lg_repro_data(init_lgt_repro_data(lg_content, str(REPRO_DEFAULT.value)))
+        lg_content = init_lg_repro_data(init_lgt_repro_data(lg_content, rmode))
         lg_path = "{0}/{1}".format(lg_dir, lg_name)
         post_sem.acquire()
         try:
