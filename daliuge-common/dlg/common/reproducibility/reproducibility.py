@@ -30,8 +30,6 @@ arranged top-to-bottom as logical to physical to runtime.
 """
 import collections
 import logging
-import json
-from json import JSONDecodeError
 
 from dlg.common import Categories
 from dlg.common.reproducibility.constants import ReproducibilityFlags, \
