@@ -40,8 +40,9 @@ def get_options_from_command_line(argv):
     inputdir = ""
     tag = ""
     outputfile = ""
+    allow_missing_eagle_start = False
     try:
-        opts, args = getopt.getopt(argv, "hi:t:o:", ["idir=", "tag=", "ofile="])
+        opts, args = getopt.getopt(argv, "hi:t:o:s", ["idir=", "tag=", "ofile="])
     except getopt.GetoptError:
         print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
         sys.exit(2)
@@ -60,7 +61,9 @@ def get_options_from_command_line(argv):
             tag = arg
         elif opt in ("-o", "--ofile"):
             outputfile = arg
-    return inputdir, tag, outputfile
+        elif opt in ("-s"):
+            allow_missing_eagle_start = True
+    return inputdir, tag, outputfile, allow_missing_eagle_start
 
 
 def check_environment_variables():
@@ -341,6 +344,8 @@ def parse_description(value):
 
 # NOTE: color, x, y, width, height are not specified in palette node, they will be set by the EAGLE importer
 def create_palette_node_from_params(params):
+    print("create_palette_node_from_params:" + str(params))
+
     text = ""
     description = ""
     category = ""
@@ -620,30 +625,29 @@ def process_compounddef(compounddef):
             break
 
     # check that detailed description was found
-    if detaileddescription is None:
-        return result
+    if detaileddescription is not None:
 
-    # search children of detaileddescription node for a para node with "simplesect" children, who have "title" children with text "EAGLE_START" and "EAGLE_END"
-    para = None
-    description = ""
-    for ddchild in detaileddescription:
-        if ddchild.tag == "para":
-            if ddchild.text is not None:
-                description += ddchild.text + "\n"
-            for pchild in ddchild:
-                if pchild.tag == "simplesect":
-                    for sschild in pchild:
-                        if sschild.tag == "title":
-                            if sschild.text.strip() == "EAGLE_START":
-                                found_eagle_start = True
+        # search children of detaileddescription node for a para node with "simplesect" children, who have "title" children with text "EAGLE_START" and "EAGLE_END"
+        para = None
+        description = ""
+        for ddchild in detaileddescription:
+            if ddchild.tag == "para":
+                if ddchild.text is not None:
+                    description += ddchild.text + "\n"
+                for pchild in ddchild:
+                    if pchild.tag == "simplesect":
+                        for sschild in pchild:
+                            if sschild.tag == "title":
+                                if sschild.text.strip() == "EAGLE_START":
+                                    found_eagle_start = True
 
-                    para = ddchild
+                        para = ddchild
 
-    # add description
-    if description != "":
-        result.append(
-            {"key": "description", "direction": None, "value": description.strip()}
-        )
+        # add description
+        if description != "":
+            result.append(
+                {"key": "description", "direction": None, "value": description.strip()}
+            )
 
     # check that we found an EAGLE_START, otherwise this is just regular doxygen, skip it
     if not found_eagle_start:
@@ -695,6 +699,49 @@ def process_compounddef(compounddef):
     return result
 
 
+def process_compounddef_default(compounddef):
+    result = []
+
+    # check memberdefs
+    for child in compounddef:
+        if child.tag == "sectiondef" and child.get("kind") == "func":
+
+            for grandchild in child:
+                if grandchild.tag == "memberdef" and grandchild.get("kind") == "function":
+                    print("found memberdef kind: function")
+
+                    member = {"params":[]}
+
+                    for ggchild in grandchild:
+                        if ggchild.tag == "name":
+                            print("found name:" + ggchild.text)
+                            member["params"].append({"key": "text", "direction": None, "value": ggchild.text})
+                        if ggchild.tag == "detaileddescription":
+                            if len(ggchild) > 0:
+                                print("found detaileddescription:" + ggchild.text + "!" + str(ggchild[0][0].text))
+                                member["params"].append({"key": "description", "direction": None, "value": ggchild[0][0].text})
+                        if ggchild.tag == "param":
+                            type = ""
+                            name = ""
+
+                            for gggchild in ggchild:
+                                if gggchild.tag == "type":
+                                    type = gggchild.text
+                                if gggchild.tag == "declname":
+                                    name = gggchild.text
+
+                            print("found param:" + str(name) + " " + str(type))
+                            member["params"].append({"key":"cparam/"+str(name), "direction":"in", "value":str(name) + "//" + str(type) + "/readwrite/False//False/"})
+
+
+                    # some defaults
+                    member["params"].append({"key": "category", "direction": None, "value": "PyFuncApp"})
+
+                    result.append(member)
+
+    return result
+
+
 def create_construct_node(type, node):
 
     # check that type is in the list of known types
@@ -739,11 +786,43 @@ def create_construct_node(type, node):
     return construct_node
 
 
+def params_to_nodes(params):
+    result = []
+
+    # if no params were found, or only the name and description were found, then don't bother creating a node
+    if len(params) > 2:
+        # print("params (" + str(len(params)) + "): " + str(params))
+
+        # create a node
+        data, node = create_palette_node_from_params(params)
+
+        # if the node tag matches the command line tag, or no tag was specified on the command line, add the node to the list to output
+        if data["tag"] == tag or tag == "":
+            logging.info("Adding component: " + node["text"])
+            result.append(node)
+
+            # if a construct is found, add to nodes
+            if data["construct"] != "":
+                logging.info("Adding component: " + data["construct"] + "/" + node["text"])
+                construct_node = create_construct_node(data["construct"], node)
+                result.append(construct_node)
+
+    # check if gitrepo and version params were found and cache the values
+    for param in params:
+        key = param["key"]
+        value = param["value"]
+
+        if key == "gitrepo":
+            gitrepo = value
+        elif key == "version":
+            version = value
+
+    return result
 
 if __name__ == "__main__":
     logging.basicConfig(format="%(asctime)s - %(message)s", datefmt="%d-%b-%y %H:%M:%S", level = logging.INFO)
 
-    (inputdir, tag, outputfile) = get_options_from_command_line(sys.argv[1:])
+    (inputdir, tag, outputfile, allow_missing_eagle_start) = get_options_from_command_line(sys.argv[1:])
 
     # create a temp directory for the output of doxygen
     output_directory = tempfile.TemporaryDirectory()
@@ -795,6 +874,10 @@ if __name__ == "__main__":
             stderr=subprocess.DEVNULL,
         )
 
+    # debug - copy output xml to local dir
+    os.system('cp ' + output_xml_filename + ' output.xml')
+    logging.info("Wrote doxygen XML to output.xml")
+
     # get environment variables
     gitrepo = os.environ.get("GIT_REPO")
     version = os.environ.get("PROJECT_VERSION")
@@ -807,35 +890,24 @@ if __name__ == "__main__":
     xml_root = tree.getroot()
 
     for compounddef in xml_root:
-        params = process_compounddef(compounddef)
 
-        # if no params were found, or only the name and description were found, then don't bother creating a node
-        if len(params) > 2:
-            # print("params (" + str(len(params)) + "): " + str(params))
+        # debug - we need to determine this correctly
+        is_eagle_node = False
 
-            # create a node
-            data, node = create_palette_node_from_params(params)
+        if is_eagle_node or not allow_missing_eagle_start:
+            params = process_compounddef(compounddef)
 
-            # if the node tag matches the command line tag, or no tag was specified on the command line, add the node to the list to output
-            if data["tag"] == tag or tag == "":
-                logging.info("Adding component: " + node["text"])
-                nodes.append(node)
+            ns = params_to_nodes(params)
+            nodes.extend(ns)
 
-                # if a construct is found, add to nodes
-                if data["construct"] != "":
-                    logging.info("Adding component: " + data["construct"] + "/" + node["text"])
-                    construct_node = create_construct_node(data["construct"], node)
-                    nodes.append(construct_node)
+        else: # not eagle node
+            functions = process_compounddef_default(compounddef)
 
-        # check if gitrepo and version params were found and cache the values
-        for param in params:
-            key = param["key"]
-            value = param["value"]
+            for f in functions:
+                #print("f:" + str(f))
+                ns = params_to_nodes(f["params"])
+                nodes.extend(ns)
 
-            if key == "gitrepo":
-                gitrepo = value
-            elif key == "version":
-                version = value
 
     # write the output json file
     write_palette_json(outputfile, nodes, gitrepo, version)
