@@ -273,7 +273,9 @@ class PyFuncApp(BarrierAppDROP):
             all_contents = lambda x: ast.literal_eval(droputils.allDropContents(x).decode('utf-8'))
 
         inputs = collections.OrderedDict()
+        logger.debug(f"Found inputs {self._inputs}")
         for uid, drop in self._inputs.items():
+
             inputs[uid] = all_contents(drop)
 
 
