@@ -718,8 +718,22 @@ def process_compounddef_default(compounddef):
                             member["params"].append({"key": "text", "direction": None, "value": ggchild.text})
                         if ggchild.tag == "detaileddescription":
                             if len(ggchild) > 0:
-                                print("found detaileddescription:" + ggchild.text + "!" + str(ggchild[0][0].text))
-                                member["params"].append({"key": "description", "direction": None, "value": ggchild[0][0].text})
+
+                                # get detailed description text
+                                dd = ggchild[0][0].text
+
+                                # get return type, if it exists
+                                if dd.rfind(":return:") != -1:
+                                    return_part = dd[dd.rfind(":return:")+8:].strip().replace('\n', '')
+                                    output_port_name = "output" # TODO
+                                    member["params"].append({"key": "port/"+str(output_port_name), "direction": "out", "value": str(output_port_name) + "/String/" + str(return_part) })
+
+                                # get first part of description, up until when the param are mentioned
+                                description = dd[:dd.find(":param")].strip()
+
+                                # TODO: look through the rest of the description to get description of params
+
+                                member["params"].append({"key": "description", "direction": None, "value": description})
                         if ggchild.tag == "param":
                             type = ""
                             name = ""
@@ -731,11 +745,11 @@ def process_compounddef_default(compounddef):
                                     name = gggchild.text
 
                             print("found param:" + str(name) + " " + str(type))
-                            member["params"].append({"key":"cparam/"+str(name), "direction":"in", "value":str(name) + "//" + str(type) + "/readwrite/False//False/"})
+                            member["params"].append({"key":"aparam/"+str(name), "direction":"in", "value":str(name) + "//" + str(type) + "/readwrite/False//False/"})
 
 
                     # some defaults
-                    member["params"].append({"key": "category", "direction": None, "value": "PyFuncApp"})
+                    member["params"].append({"key": "category", "direction": None, "value": "PythonApp"})
 
                     result.append(member)
 
