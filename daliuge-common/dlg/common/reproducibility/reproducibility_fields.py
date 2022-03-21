@@ -109,19 +109,20 @@ def lg_block_fields(category: Categories, category_type: str, rmode: Reproducibi
     elif category_type == Categories.S3:
         pass
     elif category_type == Categories.PLASMA:
-        # TODO: Investigate Plasma fields
-        pass
+        data['plasma_path'] = FieldOps.STORE
+        data['object_id'] = FieldOps.STORE
     elif category_type == Categories.PLASMAFLIGHT:
-        # TODO: Investigate PlasmaFlight Fields
-        pass
+        data['plasma_path'] = FieldOps.STORE
+        data['object_id'] = FieldOps.STORE
+        data['flight_path'] = FieldOps.STORE
     elif category_type == Categories.PARSET:
-        # TODO: Workout how to absorb all fields
         pass
     elif category_type == Categories.ENVIRONMENTVARS:
         pass
     elif category_type == Categories.MKN:
-        # TODO: Investigate MKN fields
-        pass
+        data['m'] = FieldOps.STORE
+        data['k'] = FieldOps.STORE
+        data['n'] = FieldOps.STORE
     elif category_type == Categories.SCATTER:
         data['num_of_copies'] = FieldOps.STORE
         data['scatter_axis'] = FieldOps.STORE
@@ -136,7 +137,7 @@ def lg_block_fields(category: Categories, category_type: str, rmode: Reproducibi
     elif category_type == Categories.VARIABLES:
         pass
     elif category_type == Categories.BRANCH:
-        # TODO: Investigate branch fields
+        data['appclass'] = FieldOps.STORE
         pass
     elif category_type == Categories.PYTHON_APP:
         pass
