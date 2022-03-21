@@ -26,6 +26,7 @@ import numpy as np
 import logging
 import asyncio
 
+from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.drop import BarrierAppDROP, AppDROP
 from dlg.meta import dlg_string_param
 from dlg.ddap_protocol import AppDROPStates
