@@ -580,7 +580,7 @@ def init_pgt_partition_repro_data(pgt: list):
     reprodata = pgt.pop()
     for drop in pgt:
         init_pgt_partition_repro_drop_data(drop)
-    leaves, visited = [], [] # build_blockdag(pgt, 'pgt')
+    leaves, visited = build_blockdag(pgt, 'pgt')
     reprodata['signature'] = agglomerate_leaves(leaves)
     pgt.append(reprodata)
     logger.info("Reproducibility data finished at PGT partition level")
