@@ -648,6 +648,7 @@ def unroll_and_partition_with_params(lg, algo_params_source):
     init_pgt_partition_repro_data(pgt_spec)
     reprodata = pgt_spec.pop()
     pgt.reprodata = reprodata
+    logger.info(reprodata)
     return pgt
 
 
