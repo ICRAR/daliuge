@@ -53,7 +53,7 @@ from dlg.clients import CompositeManagerClient
 from dlg.common.reproducibility.constants import REPRO_DEFAULT
 from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data, \
     init_pgt_unroll_repro_data, init_pgt_partition_repro_data
-from dlg.dropmake.lg import GraphException
+from dlg.dropmake.lg import GraphException, load_lg
 from dlg.dropmake.pg_generator import unroll, partition
 from dlg.dropmake.pg_manager import PGManager
 from dlg.dropmake.scheduler import SchedulerException
@@ -491,6 +491,10 @@ def gen_pg_spec():
         return "Fail to generate pg_spec: {0}".format(ex)
 
 
+def prepare_lgt(filename, rmode: str):
+    return init_lg_repro_data(init_lgt_repro_data(load_lg(filename), rmode))
+
+
 @get("/gen_pgt")
 def gen_pgt():
     """
@@ -499,13 +503,16 @@ def gen_pgt():
 
     query = request.query
     lg_name = query.get("lg_name")
+    # Retrieve rmode value
+    rmode = query.get("rmode", str(REPRO_DEFAULT.value))
     if not lg_exists(lg_name):
         response.status = 404
         return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
 
     try:
+        lgt = prepare_lgt(lg_path(lg_name), rmode)
         # LG -> PGT
-        pgt = unroll_and_partition_with_params(lg_path(lg_name), query)
+        pgt = unroll_and_partition_with_params(lgt, query)
 
         num_partitions = 0  # pgt._num_parts;
 
@@ -546,6 +553,9 @@ def gen_pgt_post():
     reqform = request.forms
     lg_name = reqform.get("lg_name")
 
+    # Retrieve rmode value
+    rmode = reqform.get("rmode", str(REPRO_DEFAULT.value))
+
     # Retrieve json data.
     json_string = reqform.get("json_data")
     try:
@@ -560,7 +570,7 @@ def gen_pgt_post():
         # validate JSON (if schema was found)
         if lg_schema is not None:
             validate(logical_graph, lg_schema)
-
+        logical_graph = prepare_lgt(logical_graph, rmode)
         # LG -> PGT
         pgt = unroll_and_partition_with_params(logical_graph, reqform)
         par_algo = reqform.get("algo", "none")
@@ -593,7 +603,7 @@ def gen_pgt_post():
         # return "Graph partition exception {1}: {0}".format(trace_msg, lg_name)
 
 
-def unroll_and_partition_with_params(lg_path, algo_params_source):
+def unroll_and_partition_with_params(lg, algo_params_source):
     # Get the 'test' parameter
     # NB: the test parameter is a string, so convert to boolean
     test = algo_params_source.get("test", "false")
@@ -603,7 +613,7 @@ def unroll_and_partition_with_params(lg_path, algo_params_source):
     app = "dlg.apps.simple.SleepApp" if test else None
 
     # Unrolling LG to PGT.
-    pgt = init_pgt_unroll_repro_data(unroll(lg_path, app=app))
+    pgt = init_pgt_unroll_repro_data(unroll(lg, app=app))
     # Define partitioning parameters.
     algo = algo_params_source.get("algo", "none")
     num_partitions = algo_params_source.get("num_par", default=1, type=int)
@@ -634,6 +644,7 @@ def unroll_and_partition_with_params(lg_path, algo_params_source):
         num_islands=num_islands,
         tpl_nodes_len=num_partitions + num_islands,
     )
+    pgt_spec.append(reprodata)
     init_pgt_partition_repro_data(pgt_spec)
     reprodata = pgt_spec.pop()
     pgt.reprodata = reprodata
