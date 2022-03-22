@@ -31,7 +31,7 @@ arranged top-to-bottom as logical to physical to runtime.
 import collections
 import logging
 
-from dlg.common import Categories
+from dlg.common import Categories, STORAGE_TYPES
 from dlg.common.reproducibility.constants import ReproducibilityFlags, \
     REPRO_DEFAULT, PROTOCOL_VERSION, HASHING_ALG, \
     rmode_supported, rflag_caster
@@ -377,7 +377,8 @@ def lg_build_blockdag(logical_graph: dict):
             parenthash = {}
             if rmode != ReproducibilityFlags.NOTHING:
                 if rmode == ReproducibilityFlags.REPRODUCE.value:
-                    if dropset[did][0]['categoryType'] == Categories.DATA \
+                    print(dropset[did][0])
+                    if dropset[did][0]['category'] in STORAGE_TYPES \
                             and (dropset[did][1] == 0 or dropset[did][2] == 0):
                         # Add my new hash to the parent-hash list
                         if did not in parenthash.keys():
@@ -468,7 +469,7 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
             if rmode != ReproducibilityFlags.NOTHING:
                 if rmode == ReproducibilityFlags.REPRODUCE.value:
                     # WARNING: Hack! may break later, proceed with caution
-                    if dropset[did][0]['reprodata']['lgt_data']['categoryType'] == Categories.DATA \
+                    if dropset[did][0]['reprodata']['lgt_data']['category'] in STORAGE_TYPES \
                             and (dropset[did][1] == 0 or dropset[did][2] == 0):
                         # Add my new hash to the parent-hash list
                         if did not in parenthash.keys():
