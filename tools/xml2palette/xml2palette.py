@@ -755,8 +755,10 @@ def process_compounddef_default(compounddef):
                                     type = gggchild.text
                                 if gggchild.tag == "declname":
                                     name = gggchild.text
+                                if gggchild.tag == "defname":
+                                    name = gggchild.text
 
-                            print("found param:" + str(name) + " " + str(type))
+                            print("found param:" + str(name) + ":" + str(type))
                             member["params"].append({"key":"aparam/"+str(name), "direction":"in", "value":str(name) + "//" + str(type) + "/readwrite/False//False/"})
 
 
@@ -776,6 +778,7 @@ def setParamDescription(index, description, params):
     for p in params:
         if "aparam/" in p["key"]:
             if count == index:
+                print(p["key"])
                 p["value"] = p["value"] + description
                 break
             count = count + 1
