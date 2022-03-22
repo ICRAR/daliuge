@@ -84,8 +84,6 @@ def modify_doxygen_options(doxygen_filename, options):
     with open(doxygen_filename, "r") as dfile:
         contents = dfile.readlines()
 
-    # print(contents)
-
     with open(doxygen_filename, "w") as dfile:
         for index, line in enumerate(contents):
             if line[0] == "#":
@@ -200,7 +198,7 @@ def create_field(internal_name, name, value, description, access, type, precious
 
 def alert_if_missing(text, fields, internal_name):
     if find_field_by_name(fields, internal_name) is None:
-        #logging.warning(text + " component missing " + internal_name + " cparam")
+        logging.warning(text + " component missing " + internal_name + " cparam")
         pass
 
 
@@ -346,8 +344,6 @@ def parse_description(value):
 
 # NOTE: color, x, y, width, height are not specified in palette node, they will be set by the EAGLE importer
 def create_palette_node_from_params(params):
-    #print("create_palette_node_from_params:" + str(params))
-
     text = ""
     description = ""
     category = ""
@@ -385,7 +381,7 @@ def create_palette_node_from_params(params):
 
             # check that type is in the list of known types
             if type not in KNOWN_PARAM_DATA_TYPES:
-                #logging.warning(text + " cparam '" + name + "' has unknown type: " + type)
+                logging.warning(text + " cparam '" + name + "' has unknown type: " + type)
                 pass
 
             # check that a param of type "Select" has some options specified,
@@ -443,7 +439,7 @@ def create_palette_node_from_params(params):
 
             # check that type is in the list of known types
             if type not in KNOWN_PARAM_DATA_TYPES:
-                #logging.warning(text + " aparam '" + name + "' has unknown type: " + type)
+                logging.warning(text + " aparam '" + name + "' has unknown type: " + type)
                 pass
 
             # check that category if suitable for aparams
@@ -708,13 +704,10 @@ def process_compounddef_default(compounddef):
 
             for grandchild in child:
                 if grandchild.tag == "memberdef" and grandchild.get("kind") == "function":
-                    print("found memberdef kind: function")
-
                     member = {"params":[]}
 
                     for ggchild in grandchild:
                         if ggchild.tag == "name":
-                            print("found name:" + ggchild.text)
                             member["params"].append({"key": "text", "direction": None, "value": ggchild.text})
                         if ggchild.tag == "detaileddescription":
                             if len(ggchild) > 0:
@@ -740,7 +733,6 @@ def process_compounddef_default(compounddef):
                                 if not hasReturn:
                                     numParams = math.floor((len(dd.split(":")) - 1) / 2)
 
-                                print("numParams: " + str(numParams) + " : " + str(dd.split(":")) + " : " + str(len(dd.split(":"))))
                                 for i in range(0, numParams):
                                     pd = dd.split(":")[(i+1)*2].strip().replace('\n', '')
                                     setParamDescription(i, pd, member["params"])
@@ -758,12 +750,18 @@ def process_compounddef_default(compounddef):
                                 if gggchild.tag == "defname":
                                     name = gggchild.text
 
-                            print("found param:" + str(name) + ":" + str(type))
                             member["params"].append({"key":"aparam/"+str(name), "direction":"in", "value":str(name) + "//" + str(type) + "/readwrite/False//False/"})
 
+                    # TODO: determine the appclass
+                    appclass = "Unknown"
 
                     # some defaults
+                    # cparam format is (name, default_value, type, access, precious, options, positional, description)
                     member["params"].append({"key": "category", "direction": None, "value": "PythonApp"})
+                    member["params"].append({"key": "cparam/execution_time", "direction": None, "value": "Execution Time/5/Integer/readwrite/False//False/Estimate of execution time (in seconds) for this application."})
+                    member["params"].append({"key": "cparam/num_cpus", "direction": None, "value": "Num CPUs/1/Integer/readwrite/False//False/Number of CPUs used for this application."})
+                    member["params"].append({"key": "cparam/group_start", "direction": None, "value": "Group start/false/Boolean/readwrite/false//False/Is this node the start of a group?"})
+                    member["params"].append({"key": "cparam/appclass", "direction": None, "value": "Appclass/" + appclass + "/String/readwrite/False//False/The python class that implements this application"})
 
                     result.append(member)
 
@@ -771,23 +769,21 @@ def process_compounddef_default(compounddef):
 
 
 def setParamDescription(index, description, params):
-    print("setParamDescription(): " + str(index) + " : " + description + ", numParams : " + str(len(params)))
-
     # find the index'th aparam in params, and update the description
     count = 0
     for p in params:
         if "aparam/" in p["key"]:
             if count == index:
-                print(p["key"])
                 p["value"] = p["value"] + description
                 break
             count = count + 1
+
 
 def create_construct_node(type, node):
 
     # check that type is in the list of known types
     if type not in KNOWN_CONSTRUCT_TYPES:
-        #logging.warning(text + " construct for node'" + node["text"] + "' has unknown type: " + type)
+        logging.warning(text + " construct for node'" + node["text"] + "' has unknown type: " + type)
         pass
 
     construct_node = {
@@ -831,8 +827,6 @@ def params_to_nodes(params):
 
     # if no params were found, or only the name and description were found, then don't bother creating a node
     if len(params) > 2:
-        # print("params (" + str(len(params)) + "): " + str(params))
-
         # create a node
         data, node = create_palette_node_from_params(params)
 
@@ -944,7 +938,6 @@ if __name__ == "__main__":
             functions = process_compounddef_default(compounddef)
 
             for f in functions:
-                #print("f:" + str(f))
                 ns = params_to_nodes(f["params"])
                 nodes.extend(ns)
 
