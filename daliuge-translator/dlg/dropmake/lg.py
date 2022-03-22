@@ -870,6 +870,19 @@ class LGNode:
         return value
 
 
+def load_lg(f):
+    if isinstance(f, str):
+        if not os.path.exists(f):
+            raise GraphException("Logical graph {0} not found".format(f))
+        with open(f) as f:
+            lg = json.load(f)
+    elif hasattr(f, "read"):
+        lg = json.load(f)
+    else:
+        lg = f
+    return lg
+
+
 class LG:
     """
     An object representation of Logical Graph
@@ -880,15 +893,7 @@ class LG:
         parse JSON into LG object graph first
         """
         self._g_var = []
-        if isinstance(f, str):
-            if not os.path.exists(f):
-                raise GraphException("Logical graph {0} not found".format(f))
-            with open(f) as f:
-                lg = json.load(f)
-        elif hasattr(f, "read"):
-            lg = json.load(f)
-        else:
-            lg = f
+        lg = load_lg(f)
         if ssid is None:
             ts = time.time()
             ssid = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%dT%H:%M:%S")
