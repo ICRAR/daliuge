@@ -106,7 +106,9 @@ class PGManager(object):
             # overwrite file on disks
             with open(pgt_path, "w") as f:
                 # json.dump(pgt.to_gojs_json(string_rep=False, visual=True), f)
-                json.dump(pgt._gojs_json_obj, f)
+                json_data = pgt._gojs_json_obj.copy()
+                json_data['reprodata'] = pgt.reprodata
+                json.dump(json_data, f)
             self._pgt_dict[pgt_id] = pgt
         except Exception as exp:
             raise GraphException("Fail to save PGT {0}:{1}".format(pgt_path, str(exp)))
