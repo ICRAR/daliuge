@@ -31,7 +31,7 @@ import pickle
 import re
 import threading
 import traceback
-from typing import IO, Any, AsyncIterable, BinaryIO, Dict, Iterable, overload
+from typing import List, IO, Any, AsyncIterable, BinaryIO, Dict, Iterable, overload
 import numpy as np
 
 from dlg.ddap_protocol import DROPStates
@@ -83,8 +83,9 @@ class DROPWaiterCtx(object):
          a.write('a')
          a.setCompleted()
     """
+    _evts: List[threading.Event]
 
-    def __init__(self, test, drops, timeout=1, expected_states=[]):
+    def __init__(self, test, drops, timeout=1, expected_states=None):
         self._drops = listify(drops)
         self._expected_states = expected_states or (
             DROPStates.COMPLETED,
@@ -204,7 +205,7 @@ def getLeafNodes(drops):
     ]
 
 
-def depthFirstTraverse(node: AbstractDROP, visited=[]):
+def depthFirstTraverse(node: AbstractDROP, visited=None):
     """
     Depth-first iterator for a DROP graph.
 
@@ -215,7 +216,7 @@ def depthFirstTraverse(node: AbstractDROP, visited=[]):
 
     This implementation is recursive.
     """
-
+    if visited is None: visited = []
     dependencies = getDownstreamObjects(node)
     yield node, dependencies
     visited.append(node)
@@ -302,12 +303,12 @@ def save_npy(drop: DataDROP, ndarray: np.ndarray, allow_pickle=False):
     """
     Saves a numpy ndarray to a drop in npy format
     """
-    bio = io.BytesIO()
-    # np.save accepts a "file-like" object which basically just requires
-    # a .write() method. Try np.save(drop, array)
-    np.save(bio, ndarray, allow_pickle=allow_pickle)
     dropio = drop.getIO()
     dropio.open(OpenMode.OPEN_WRITE)
+    # np.save accepts a "file-like" object which basically just requires
+    # a .write() method. Try np.save(drop, array)
+    bio = io.BytesIO()
+    np.save(bio, ndarray, allow_pickle=allow_pickle)
     dropio.write(bio.getbuffer())
     dropio.close()
 
@@ -327,8 +328,30 @@ def load_npy(drop: DataDROP, allow_pickle=False) -> np.ndarray:
     return res
 
 
-def load_numpy(drop: DataDROP):
-    return load_npy(drop)
+async def save_npy_stream(drop: DataDROP, arrays: AsyncIterable[np.ndarray], allow_pickle=False):
+    """
+    Saves an async stream of numpy ndarrays to a data drop
+    """
+    dropio = drop.getIO()
+    dropio.open(OpenMode.OPEN_WRITE)
+    async for ndarray in arrays:
+        bio = io.BytesIO()
+        np.save(bio, ndarray, allow_pickle=allow_pickle)
+        dropio.write(bio.getbuffer())
+    dropio.close()
+
+
+async def load_npy_stream(drop: DataDROP, allow_pickle=False) -> AsyncIterable[np.ndarray]:
+    """
+    Loads an async stream of numpy ndarrays from a data drop
+    """
+    dropio = drop.getIO()
+    dropio.open(OpenMode.OPEN_READ)
+    # this requires dropio interface to contain read() and seek()
+    while dropio.peek(1):
+        # TODO: peek should also be awaitable, otherwise return regular iterable
+        yield np.load(dropio, allow_pickle=allow_pickle)
+    dropio.close()
 
 
 # def save_jsonp(drop: PathBasedDrop, data: Dict[str, object]):
