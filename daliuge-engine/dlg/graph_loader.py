@@ -228,6 +228,8 @@ def loadDropSpecs(dropSpecList):
     logger.debug("Found %d DROP definitions", len(dropSpecs))
 
     # Step #2: check relationships
+    # TODO: shouldn't this loop be done the other way around, going through all __TOMANY
+    # and __TOONE and directly address the respective dropSpec attribute?
     for dropSpec in dropSpecList:
 
         # 1-N relationships
@@ -276,12 +278,12 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
         oid = dropSpec["oid"]
         drop = drops[oid]
 
-        for rel in dropSpec:
+        for attr in dropSpec:
             # 1-N relationships
-            if rel in __TOMANY:
-                link = __TOMANY[rel]
-                for oid in dropSpec[rel]:
-                    oid = list(oid.keys())[0] if isinstance(oid,dict) else oid
+            if attr in __TOMANY:
+                link = __TOMANY[attr]
+                for rel in dropSpec[attr]:
+                    oid = list(rel.keys())[0] if isinstance(rel,dict) else rel
                     lhDrop = drops[oid]
                     relFuncName = LINKTYPE_1TON_APPEND_METHOD[link]
                     try:
@@ -297,11 +299,11 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
                     relFunc(lhDrop)
 
             # N-1 relationships
-            elif rel in __TOONE:
-                link = __TOONE[rel]
-                ds = dropSpec[rel]
-                ds = list(ds.keys())[0] if isinstance(ds,dict) else ds
-                lhDrop = drops[ds]
+            elif attr in __TOONE:
+                link = __TOONE[attr]
+                rel = dropSpec[attr]
+                rel = list(rel.keys())[0] if isinstance(rel,dict) else rel
+                lhDrop = drops[rel]
                 propName = LINKTYPE_NTO1_PROPERTY[link]
                 setattr(drop, propName, lhDrop)
 
