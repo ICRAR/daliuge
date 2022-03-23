@@ -24,7 +24,6 @@ case "$1" in
         echo "Build finished!"
         exit 0;;
     "devall")
-        export VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
         [[ ! -z $2 ]] && C_TAG=$2
         export VERSION=`git describe --tags --abbrev=0|sed s/v//`
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
@@ -33,12 +32,6 @@ case "$1" in
         git rev-parse --verify HEAD >> dlg/manager/web/VERSION
         cp ../LICENSE dlg/manager/web/.
         docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-engine:${VCS_TAG} -f docker/Dockerfile.devall .
-        echo "Build finished!"
-        exit 0;;
-    "casa")
-        export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
-        echo "Building daliuge-engine development version"
-        docker build --build-arg VCS_TAG=${VCS_TAG}-casa --no-cache -t icrar/daliuge-engine:${VCS_TAG}-casa -f docker/Dockerfile.casa .
         echo "Build finished!"
         exit 0;;
     "slim")
@@ -54,6 +47,6 @@ case "$1" in
             icrar/daliuge-engine.big:${VCS_TAG} \
 	    ;;
     *)
-        echo "Usage: build_engine.sh <dep|dev|devall|casa>|slim"
+        echo "Usage: build_engine.sh <dep|dev|devall|slim>"
         exit 0;;
 esac
