@@ -140,5 +140,7 @@ class TestGraphLoader(unittest.TestCase):
                 "test", "graphs/funcTestPG_namedPorts.graph"
             ) as f:  # @UndefinedVariable
             graphSpec = json.load(f)
-        dropSpecs = graph_loader.loadDropSpecs(graphSpec)
+        # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
+        a = graph_loader.createGraphFromDropSpecList(graphSpec)
+        dummy = a
         
