@@ -240,6 +240,10 @@ class DockerApp(BarrierAppDROP):
 
     # signals for stopping this drop must first wait
     # for the container to become available
+    # TODO: This provides basic multiprocessing safety, alternative approach may
+    # be to use a stopcontainer member variable flag. As soon as the container is
+    # created the running process checks to see if it should stop. Use lock for
+    # atomicity with _container and _stopflag.
     _containerLock = multiprocessing.synchronize.Lock
 
     @property
