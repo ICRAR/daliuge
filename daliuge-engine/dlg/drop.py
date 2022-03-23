@@ -57,9 +57,9 @@ from .ddap_protocol import (
     DROPStates,
     DROPRel,
 )
-from .event import EventFirer
-from .exceptions import InvalidDropException, InvalidRelationshipException
-from .io import (
+from dlg.event import EventFirer
+from dlg.exceptions import InvalidDropException, InvalidRelationshipException
+from dlg.io import (
     DataIO,
     OpenMode,
     FileIO,
@@ -108,10 +108,11 @@ class ListAsDict(list):
     """A list that adds drop UIDs to a set as they get appended to the list"""
 
     def __init__(self, my_set):
+        super().__init__()
         self.set = my_set
 
     def append(self, drop):
-        super(ListAsDict, self).append(drop)
+        super().append(drop)
         self.set.add(drop.uid)
 
 
@@ -1086,7 +1087,7 @@ class DataDROP(AbstractDROP):
                 self._wio.open(OpenMode.OPEN_WRITE)
             except:
                 self.status = DROPStates.ERROR
-                raise Exception("Problem opening drop for write!")
+                raise  # Exception("Problem opening drop for write!")
         nbytes = self._wio.write(data)
 
         dataLen = len(data)
@@ -1549,6 +1550,7 @@ class InMemoryDROP(DataDROP):
     """
     A DROP that points data stored in memory.
     """
+    _buf: io.BytesIO
 
     def initialize(self, **kwargs):
         args = []

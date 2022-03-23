@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 from abc import abstractmethod, ABCMeta
+from enum import IntEnum
 from http.client import HTTPConnection
 from multiprocessing.sharedctypes import Value
 from overrides import overrides
@@ -29,7 +30,7 @@ import os
 import sys
 import urllib.parse
 from abc import abstractmethod, ABCMeta
-from typing import Optional, Union
+from typing import BinaryIO, Optional, Union
 
 from . import ngaslite
 from .apps.plasmaflight import PlasmaFlightClient
@@ -42,15 +43,15 @@ if sys.version_info >= (3, 8):
 
 logger = logging.getLogger(__name__)
 
-
-class OpenMode:
+class OpenMode(IntEnum):
     """
     Open Mode for Data Drops
     """
-    OPEN_WRITE, OPEN_READ = range(2)
+    OPEN_WRITE = 0
+    OPEN_READ = 1
 
 
-class DataIO():
+class DataIO(io.BufferedIOBase, BinaryIO):
     """
     A class used to read/write data stored in a particular kind of storage in an
     abstract way. This base class simply declares a number of methods that
@@ -71,8 +72,10 @@ class DataIO():
 
     __metaclass__ = ABCMeta
     _mode: Optional[OpenMode]
+    #_desc: Any
 
     def __init__(self):
+        super().__init__()
         self._mode = None
 
     def open(self, mode: OpenMode, **kwargs):
@@ -94,7 +97,7 @@ class DataIO():
             raise ValueError("Writing operation attempted on write-only DataIO object")
         return self._write(data, **kwargs)
 
-    def read(self, count: int, **kwargs):
+    def read(self, count: int, **kwargs) -> bytes:
         """
         Reads `count` bytes from the underlying storage.
         """
@@ -103,6 +106,24 @@ class DataIO():
         if self._mode == OpenMode.OPEN_WRITE:
             raise ValueError("Reading operation attempted on write-only DataIO object")
         return self._read(count, **kwargs)
+
+    def peek(self, size: int, **kwargs):
+        """
+        Previews `count` bytes from the underlying storage without moving the read cursor
+        """
+        return self._peek(size, **kwargs)
+
+    def tell(self):
+        """
+        Returns the current read cursor position.
+        """
+        return self._tell()
+
+    def seek(self, offset, whence):
+        """
+        Sets the position of the read cursor
+        """
+        return self._seek(offset, whence)
 
     def close(self, **kwargs):
         """
@@ -149,10 +170,25 @@ class DataIO():
 
     @abstractmethod
     def _open(self, **kwargs):
+        """
+        Returns a reader or writer object depending on self._mode
+        """
         pass
 
     @abstractmethod
-    def _read(self, count, **kwargs):
+    def _read(self, count, **kwargs) -> bytes:
+        pass
+
+    #@abstractmethod
+    def _peek(self, count, **kwargs):
+        pass
+
+    #@abstractmethod
+    def _tell(self):
+        pass
+
+    #@abstractmethod
+    def _seek(self, offset, whence):
         pass
 
     @abstractmethod
@@ -160,7 +196,7 @@ class DataIO():
         pass
 
     @abstractmethod
-    def _close(self, **kwargs):
+    def _close(self, **kwargs) -> None:
         pass
 
     @abstractmethod
@@ -173,15 +209,19 @@ class NullIO(DataIO):
     A DataIO that stores no data
     """
 
+    @overrides
     def _open(self, **kwargs):
         return None
 
-    def _read(self, count=4096, **kwargs):
+    @overrides
+    def _read(self, count=4096, **kwargs) -> bytes:
         return None
 
+    @overrides
     def _write(self, data, **kwargs) -> int:
         return len(data)
 
+    @overrides
     def _close(self, **kwargs):
         pass
 
@@ -211,7 +251,7 @@ class ErrorIO(DataIO):
         raise NotImplementedError()
 
     @overrides
-    def _read(self, count=4096, **kwargs):
+    def _read(self, count=4096, **kwargs) -> bytes:
         raise NotImplementedError()
 
     @overrides
@@ -240,7 +280,9 @@ class MemoryIO(DataIO):
     A DataIO class that reads/write from/into the BytesIO object given at
     construction time
     """
-    _desc: io.BytesIO  # TODO: This might actually be a problem
+    # TODO: This might actually be a problem
+    _desc: io.BufferedReader
+    _buf: io.BytesIO
 
     def __init__(self, buf: io.BytesIO, **kwargs):
         super().__init__()
@@ -250,8 +292,12 @@ class MemoryIO(DataIO):
         if self._mode == OpenMode.OPEN_WRITE:
             return self._buf
         elif self._mode == OpenMode.OPEN_READ:
-            # TODO: potentially wasteful copy
-            return io.BytesIO(self._buf.getbuffer())
+            # NOTE: BytesIO extends BufferedIOBase instead of RawIOBase
+            # TODO: a new bytesIO object must be created as it is currently
+            # convention to close the write dataIO afte writing
+            br = io.BufferedReader(io.BytesIO(self._buf.getbuffer()))
+            br.seek(0)
+            return br
         else:
             raise ValueError()
 
@@ -261,8 +307,17 @@ class MemoryIO(DataIO):
         return len(data)
 
     @overrides
-    def _read(self, count=4096, **kwargs):
+    def _read(self, count=4096, **kwargs) -> bytes:
         return self._desc.read(count)
+
+    def _peek(self, count, **kwargs):
+        return self._desc.peek(count)
+
+    def _tell(self):
+        return self._desc.tell()
+
+    def _seek(self, offset, whence):
+        return self._desc.seek(offset, whence)
 
     @overrides
     def _close(self, **kwargs):
@@ -329,7 +384,7 @@ class SharedMemoryIO(DataIO):
         return len(data)
 
     @overrides
-    def _read(self, count=4096, **kwargs):
+    def _read(self, count=4096, **kwargs) -> bytes:
         if self._pos == self._buf.size:
             return None
         start = self._pos
@@ -374,7 +429,7 @@ class FileIO(DataIO):
         return open(self._fnm, flag)
 
     @overrides
-    def _read(self, count=4096, **kwargs):
+    def _read(self, count=4096, **kwargs) -> bytes:
         return self._desc.read(count)
 
     @overrides
@@ -486,9 +541,9 @@ class NgasIO(DataIO):
         del self._desc
 
     @overrides
-    def _read(self, count, **kwargs):
+    def _read(self, count, **kwargs) -> bytes:
         # Read data from NGAS and give it back to our reader
-        self._desc.retrieve2File(self._fileId, cmd="QRETRIEVE")
+        return self._desc.retrieve2File(self._fileId, cmd="QRETRIEVE")
 
     @overrides
     def _write(self, data, **kwargs) -> int:
@@ -710,7 +765,8 @@ class PlasmaIO(DataIO):
         if self._reader:
             self._reader.close()
 
-    def _read(self, count, **kwargs):
+    @overrides
+    def _read(self, count, **kwargs) -> bytes:
         if not self._reader:
             [data] = self._desc.get_buffers([self._object_id])
             self._reader = pyarrow.BufferReader(data)
@@ -789,9 +845,11 @@ class PlasmaFlightIO(DataIO):
         self._buffer_size = 0
         self._use_staging = use_staging
 
+    @overrides
     def _open(self, **kwargs):
         return PlasmaFlightClient(socket=self._plasma_path)
 
+    @overrides
     def _close(self, **kwargs):
         if self._writer:
             if self._use_staging:
@@ -804,12 +862,14 @@ class PlasmaFlightIO(DataIO):
         if self._reader:
             self._reader.close()
 
-    def _read(self, count, **kwargs):
+    @overrides
+    def _read(self, count, **kwargs) -> bytes:
         if not self._reader:
             data = self._desc.get_buffer(self._object_id, self._flight_path)
             self._reader = pyarrow.BufferReader(data)
         return self._reader.read1(count)
 
+    @overrides
     def _write(self, data, **kwargs) -> int:
 
         # NOTE: data must be a collection of bytes for len to represent the buffer bytesize
