@@ -30,7 +30,7 @@ Most of these tests will be asserting the obvious, with the exception of Reprodu
 import json
 import unittest
 
-from dlg.common.reproducibility.constants import ReproducibilityFlags
+from dlg.common.reproducibility.constants import ReproducibilityFlags, ALL_RMODES
 from dlg.common.reproducibility.reproducibility import \
     init_lgt_repro_data, init_lg_repro_data, lg_build_blockdag
 
@@ -39,11 +39,6 @@ def _init_graph(filename):
     file = open(filename)
     lgt = json.load(file)
     file.close()
-    for drop in lgt['nodeDataArray']:
-        drop['reprodata'] = {}
-        drop['reprodata']['lg_parenthashes'] = []
-        drop['reprodata']['lgt_data'] = {'merkleroot': "1"}
-        drop['reprodata']['lg_data'] = {}
     return lgt
 
 
@@ -831,7 +826,7 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
 
 class LogicalBlockdagNothingTests(unittest.TestCase):
     """
-    Tests the logical blockdag construction behaviour when rerunning.
+    Tests the logical blockdag construction behaviour when asserting nothing.
     """
 
     rmode = ReproducibilityFlags.NOTHING
@@ -937,3 +932,121 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
         parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+
+
+class LogicalBlockdagAllTests(unittest.TestCase):
+    """
+    Tests the logical blockdag construction behaviour when testing all standards.
+    """
+
+    rmode = ReproducibilityFlags.ALL
+
+    def test_single(self):
+        """
+        Tests a single drop
+        A
+        """
+        lgt = _init_graph("test/reproducibility/topoGraphs/testSingle.graph")
+        init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
+        init_lg_repro_data(lgt)
+        for rmode in ALL_RMODES:
+            leaves = lg_build_blockdag(lgt, rmode)[0]
+            self.assertTrue(len(leaves) == 1)
+
+    def test_twostart(self):
+        """
+        A graph with two starts
+        A -->
+             C
+        B -->
+        """
+        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoStart.graph")
+        init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
+        init_lg_repro_data(lgt)
+        for rmode in ALL_RMODES:
+            leaves = lg_build_blockdag(lgt, rmode)[0]
+            parenthashes = list(lgt['nodeDataArray'][1]['reprodata'][rmode.name]['lg_parenthashes'].values())
+            self.assertTrue(len(leaves) == 1 and
+                            len(parenthashes) == 2 and
+                            parenthashes[0] == parenthashes[1])
+
+    def test_twoend(self):
+        """
+        A graph with two ends
+          --> B
+        A
+          --> C
+        """
+        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoEnd.graph")
+        init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
+        init_lg_repro_data(lgt)
+        for rmode in ALL_RMODES:
+            leaves = lg_build_blockdag(lgt, rmode)[0]
+            self.assertTrue(leaves[0] == leaves[1])
+
+    def test_twolines(self):
+        """
+        A graph with two starts and two ends
+        A --> B
+        C --> D
+        """
+        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoLines.graph")
+        init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
+        init_lg_repro_data(lgt)
+        for rmode in ALL_RMODES:
+            leaves = lg_build_blockdag(lgt, rmode)[0]
+            self.assertTrue(leaves[0] == leaves[1])
+
+    def test_data_fan(self):
+        """
+        Tests that a single data source scatters its signature to downstream data drops.
+        """
+        lgt = _init_graph("test/reproducibility/topoGraphs/dataFan.graph")
+        init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
+        init_lg_repro_data(lgt)
+        for rmode in ALL_RMODES:
+            lg_build_blockdag(lgt, rmode)
+            sourcehash = lgt['nodeDataArray'][0]['reprodata'][rmode.name]['lg_blockhash']
+            parenthash1 = list(lgt['nodeDataArray'][2]['reprodata'][rmode.name]['lg_parenthashes'].values())
+            parenthash2 = list(lgt['nodeDataArray'][3]['reprodata'][rmode.name]['lg_parenthashes'].values())
+            self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
+
+    def test_data_funnel(self):
+        """
+        Tests that two data sources are collected in a single downstream data drop
+        """
+        lgt = _init_graph("test/reproducibility/topoGraphs/dataFunnel.graph")
+        init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
+        init_lg_repro_data(lgt)
+        for rmode in ALL_RMODES:
+            lg_build_blockdag(lgt, rmode)
+            sourcehash = lgt['nodeDataArray'][1]['reprodata'][rmode.name]['lg_blockhash']
+            parenthashes = list(lgt['nodeDataArray'][3]['reprodata'][rmode.name]['lg_parenthashes'].values())
+            self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+
+    def test_data_sandwich(self):
+        """
+        Tests two data drops with an interim computing drop
+        :return:
+        """
+        lgt = _init_graph("test/reproducibility/topoGraphs/dataSandwich.graph")
+        init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
+        init_lg_repro_data(lgt)
+        for rmode in ALL_RMODES:
+            lg_build_blockdag(lgt, rmode)
+            sourcehash = lgt['nodeDataArray'][0]['reprodata'][rmode.name]['lg_blockhash']
+            parenthashes = list(lgt['nodeDataArray'][2]['reprodata'][rmode.name]['lg_parenthashes'].values())
+            self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+
+    def test_computation_sandwich(self):
+        """
+        Tests that an internal data drop surrounded by computing drops is handled correctly.
+        """
+        lgt = _init_graph("test/reproducibility/topoGraphs/computationSandwich.graph")
+        init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
+        init_lg_repro_data(lgt)
+        for rmode in ALL_RMODES:
+            lg_build_blockdag(lgt, rmode)
+            sourcehash = lgt['nodeDataArray'][1]['reprodata'][rmode.name]['lg_blockhash']
+            parenthashes = list(lgt['nodeDataArray'][2]['reprodata'][rmode.name]['lg_parenthashes'].values())
+            self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
