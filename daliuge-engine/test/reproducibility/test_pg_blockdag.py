@@ -38,7 +38,7 @@ def _generate_dummy_compute(rmode: ReproducibilityFlags):
     return {'oid': 1,
             'reprodata': {
                 'rmode': str(rmode.value),
-                'lgt_data': {'categoryType': Categories.BASH_SHELL_APP},
+                'lgt_data': {'categoryType': 'Application', 'category': Categories.BASH_SHELL_APP},
                 'lg_blockhash': '1',
                 'pgt_data': {
                     'merkleroot': '2'
@@ -62,7 +62,7 @@ def _generate_dummy_data(rmode: ReproducibilityFlags):
     return {'oid': 1,
             'reprodata': {
                 'rmode': str(rmode.value),
-                'lgt_data': {'categoryType': Categories.DATA},
+                'lgt_data': {'categoryType': Categories.DATA, 'category': Categories.FILE},
                 'lg_blockhash': 'a',
                 'pgt_data': {
                     'merkleroot': 'b'
@@ -475,8 +475,7 @@ class PhysicalBlockdagReproduceTests(unittest.TestCase):
         pgr = _init_pgraph_twostart(self.rmode)
         leaves = build_blockdag(pgr, 'pg')[0]
         parenthashes = list(pgr[1]['reprodata']['pg_parenthashes'].values())
-        self.assertTrue(len(leaves) == 1 and
-                        len(parenthashes) == 0)
+        self.assertTrue(len(leaves) == 1 and len(parenthashes) == 0)
 
     def test_pg_blockdag_twoend(self):
         """
