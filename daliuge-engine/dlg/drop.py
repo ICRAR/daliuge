@@ -50,7 +50,8 @@ from typing import List, Union
 import numpy as np
 import pyarrow.plasma as plasma
 import six
-from dlg.common.reproducibility.constants import ReproducibilityFlags, REPRO_DEFAULT, rmode_supported
+from dlg.common.reproducibility.constants import ReproducibilityFlags, REPRO_DEFAULT, \
+    rmode_supported, ALL_RMODES
 from dlg.common.reproducibility.reproducibility import common_hash
 from merklelib import MerkleTree
 from six import BytesIO
@@ -499,7 +500,13 @@ class AbstractDROP(EventFirer):
             raise TypeError("new_flag must be a reproducibility flag enum.")
         elif rmode_supported(new_flag):  # TODO: Support custom checkers for repro-level
             self._reproducibility = new_flag
-            if self._committed:
+            if new_flag == ReproducibilityFlags.ALL:
+                self._committed = False
+                self._merkleRoot = {rmode.name: None for rmode in ALL_RMODES}
+                self._merkleTree = {rmode.name: None for rmode in ALL_RMODES}
+                self._merkleData = {rmode.name: [] for rmode in ALL_RMODES}
+                self.commit()
+            elif self._committed:
                 # Current behaviour, set to un-committed again after change
                 self._committed = False
                 self._merkleRoot = None
@@ -599,6 +606,16 @@ class AbstractDROP(EventFirer):
             return self.generate_replicate_comp_data()
         elif self._reproducibility is ReproducibilityFlags.REPLICATE_TOTAL:
             return self.generate_replicate_total_data()
+        elif self._reproducibility is ReproducibilityFlags.ALL:
+            return {
+                ReproducibilityFlags.RERUN.name: self.generate_rerun_data(),
+                ReproducibilityFlags.REPEAT.name: self.generate_repeat_data(),
+                ReproducibilityFlags.RECOMPUTE.name: self.generate_recompute_data(),
+                ReproducibilityFlags.REPRODUCE.name: self.generate_reproduce_data(),
+                ReproducibilityFlags.REPLICATE_SCI.name: self.generate_replicate_sci_data(),
+                ReproducibilityFlags.REPLICATE_COMP.name: self.generate_replicate_comp_data(),
+                ReproducibilityFlags.REPLICATE_TOTAL.name: self.generate_replicate_total_data()
+            }
         else:
             raise NotImplementedError("Currently other levels are not in development.")
 
@@ -610,10 +627,15 @@ class AbstractDROP(EventFirer):
         if not self._committed:
             #  Generate the MerkleData
             self._merkleData = self.generate_merkle_data()
-            # Fill MerkleTree, add data and set the MerkleRoot Value
-            self._merkleTree = MerkleTree(self._merkleData.items(), common_hash)
-            self._merkleRoot = self._merkleTree.merkle_root
-            # Set as committed
+            if self._reproducibility == ReproducibilityFlags.ALL:
+                for rmode in ALL_RMODES:
+                    self._merkleTree[rmode.name] = MerkleTree(self._merkleData[rmode.name].items(), common_hash)
+                    self._merkleRoot[rmode.name] = self._merkleTree[rmode.name].merkle_root
+            else:
+                # Fill MerkleTree, add data and set the MerkleRoot Value
+                self._merkleTree = MerkleTree(self._merkleData.items(), common_hash)
+                self._merkleRoot = self._merkleTree.merkle_root
+                # Set as committed
             self._committed = True
         else:
             raise Exception("Trying to re-commit DROP %s, cannot overwrite." % self)
