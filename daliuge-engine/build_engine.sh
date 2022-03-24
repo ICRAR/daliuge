@@ -16,7 +16,7 @@ case "$1" in
         [[ ! -z $2 ]] && C_TAG=$2
         export VERSION=`git describe --tags --abbrev=0|sed s/v//`
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
-        echo "Building daliuge-engine development version using daliuge-common:${C_TAG}"
+        echo "Building daliuge-engine development version using daliuge-common:${VCS_TAG}"
         echo "$VERSION:$VCS_TAG" > dlg/manager/web/VERSION
         git rev-parse --verify HEAD >> dlg/manager/web/VERSION
         cp ../LICENSE dlg/manager/web/.
@@ -27,7 +27,7 @@ case "$1" in
         [[ ! -z $2 ]] && C_TAG=$2
         export VERSION=`git describe --tags --abbrev=0|sed s/v//`
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
-        echo "Building daliuge-engine development version using daliuge-common:${C_TAG}"
+        echo "Building daliuge-engine development version using daliuge-common:${VCS_TAG}"
         echo "$VERSION:$VCS_TAG" > dlg/manager/web/VERSION
         git rev-parse --verify HEAD >> dlg/manager/web/VERSION
         cp ../LICENSE dlg/manager/web/.
