@@ -36,6 +36,7 @@ class AbstractDROPHashTests(unittest.TestCase):
     """
     Tests the reprodata generation methods of the AbstractDROP class
     """
+
     def test_null_merkleroot(self):
         """
         Sanity check that the default MerkleRoot of an abstract drop is Null
@@ -110,3 +111,24 @@ class AbstractDROPHashTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             drop_a.reproducibility_level = 'REPEAT'
+
+    def test_set_all(self):
+        """
+        Tests setting the reproducibility setting to ALL
+        """
+        drop_a = AbstractDROP('a', 'a')
+        self.assertIsNone(drop_a.merkleroot)
+        drop_a.reproducibility_level = ReproducibilityFlags.ALL
+        self.assertTrue(isinstance(drop_a.merkleroot, dict))
+
+    def test_set_all_set_rerun(self):
+        """
+        Tests taking a drop that was set to ALL to be set to RERUN and have data structures
+        reset correctly.
+        """
+        drop_a = AbstractDROP('a', 'a')
+        self.assertIsNone(drop_a.merkleroot)
+        drop_a.reproducibility_level = ReproducibilityFlags.ALL
+        self.assertTrue(isinstance(drop_a.merkleroot, dict))
+        drop_a.reproducibility_level = ReproducibilityFlags.RERUN
+        self.assertTrue(isinstance(drop_a.merkleroot, str))
