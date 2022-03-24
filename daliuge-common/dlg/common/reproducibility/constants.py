@@ -19,6 +19,7 @@ class ReproducibilityFlags(Enum):
     Enum for supported reproducibility modes.
     TODO: Link to more detail description
     """
+    ALL = -1  # Builds and maintains all standards (1-8)
     NOTHING = 0
     RERUN = 1
     REPEAT = 2
@@ -30,6 +31,15 @@ class ReproducibilityFlags(Enum):
     EXPERIMENTAL = 9
 
 
+ALL_RMODES = [
+    ReproducibilityFlags.RERUN,
+    ReproducibilityFlags.REPEAT,
+    ReproducibilityFlags.RECOMPUTE,
+    ReproducibilityFlags.REPRODUCE,
+    ReproducibilityFlags.REPLICATE_SCI,
+    ReproducibilityFlags.REPLICATE_COMP,
+    ReproducibilityFlags.REPLICATE_TOTAL
+]
 REPRO_DEFAULT = ReproducibilityFlags.NOTHING
 HASHING_ALG = hashlib.sha3_256
 
@@ -71,6 +81,7 @@ def rmode_supported(flag: ReproducibilityFlags):
     if not isinstance(flag, ReproducibilityFlags):
         raise TypeError("Need to be working with a ReproducibilityFlag enum")
     return flag in (
+        ReproducibilityFlags.ALL,
         ReproducibilityFlags.NOTHING,
         ReproducibilityFlags.RERUN,
         ReproducibilityFlags.REPEAT,

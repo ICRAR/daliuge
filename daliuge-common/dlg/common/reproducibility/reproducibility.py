@@ -31,10 +31,10 @@ arranged top-to-bottom as logical to physical to runtime.
 import collections
 import logging
 
-from dlg.common import Categories, STORAGE_TYPES
+from dlg.common import STORAGE_TYPES
 from dlg.common.reproducibility.constants import ReproducibilityFlags, \
     REPRO_DEFAULT, PROTOCOL_VERSION, HASHING_ALG, \
-    rmode_supported, rflag_caster
+    rmode_supported, rflag_caster, ALL_RMODES
 from dlg.common.reproducibility.reproducibility_fields import lgt_block_fields, lg_block_fields,\
     pgt_unroll_block_fields, pgt_partition_block_fields, pg_block_fields, extract_fields
 from merklelib import MerkleTree
@@ -96,19 +96,25 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
         drop['reprodata'] = {'rmode': str(REPRO_DEFAULT.value),
                              'lg_blockhash': None}
     if drop['reprodata'].get('rmode') is None:
-        rmode = REPRO_DEFAULT
-        drop['reprodata']['rmode'] = str(rmode.value)
+        level = REPRO_DEFAULT
+        drop['reprodata']['rmode'] = str(level.value)
     else:
-        rmode = rflag_caster(drop['reprodata']['rmode'])
-    if not rmode_supported(rmode):
-        logger.warning('Requested reproducibility mode %s not yet implemented', str(rmode))
-        rmode = REPRO_DEFAULT
-        drop['reprodata']['rmode'] = str(rmode.value)
+        level = rflag_caster(drop['reprodata']['rmode'])
+    if not rmode_supported(level):
+        logger.warning('Requested reproducibility mode %s not yet implemented', str(level))
+        level = REPRO_DEFAULT
+        drop['reprodata']['rmode'] = str(level.value)
     if drop.get('type') is None:
         return {}
     drop_type = drop['type']
-    pgt_fields = pgt_unroll_block_fields(drop_type, rmode)
-    data = extract_fields(drop, pgt_fields)
+    if level == ReproducibilityFlags.ALL:
+        data = {}
+        for rmode in ALL_RMODES:
+            pgt_fields = pgt_unroll_block_fields(drop_type, rmode)
+            data[rmode.name] = extract_fields(drop, pgt_fields)
+    else:
+        pgt_fields = pgt_unroll_block_fields(drop_type, level)
+        data = extract_fields(drop, pgt_fields)
     return data
 
 
@@ -122,23 +128,25 @@ def accumulate_pgt_partition_drop_data(drop: dict):
         drop['reprodata'] = {'rmode': str(REPRO_DEFAULT.value),
                              'lg_blockhash': None}
     if drop['reprodata'].get('rmode') is None:
-        rmode = REPRO_DEFAULT
-        drop['reprodata']['rmode'] = str(rmode.value)
+        level = REPRO_DEFAULT
+        drop['reprodata']['rmode'] = str(level.value)
     else:
-        rmode = rflag_caster(drop['reprodata']['rmode'])
-    if not rmode_supported(rmode):
-        logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
-        rmode = REPRO_DEFAULT
-        drop['reprodata']['rmode'] = str(rmode.value)
-    pgt_fields = pgt_partition_block_fields(rmode)
-    data = extract_fields(drop, pgt_fields)
-    data.update(accumulate_pgt_unroll_drop_data(drop))
-    # This is the only piece of new information added at the partition level
-    # It is only pertinent to Repetition and Computational replication
-    if rmode in (ReproducibilityFlags.REPLICATE_COMP, ReproducibilityFlags.RECOMPUTE):
-        data['node'] = drop['node'][1:]
-        data['island'] = drop['island'][1:]
-    return data
+        level = rflag_caster(drop['reprodata']['rmode'])
+    if not rmode_supported(level):
+        logger.warning("Requested reproducibility mode %s not yet implemented", str(level))
+        level = REPRO_DEFAULT
+        drop['reprodata']['rmode'] = str(level.value)
+    if level == ReproducibilityFlags.ALL:
+        data = {}
+        for rmode in ALL_RMODES:
+            pgt_fields = pgt_partition_block_fields(rmode)
+            data[rmode.name] = extract_fields(drop, pgt_fields)
+    else:
+        pgt_fields = pgt_partition_block_fields(level)
+        data = extract_fields(drop, pgt_fields)
+    return_data = accumulate_pgt_unroll_drop_data(drop)
+    return_data.update(data)
+    return return_data
 
 
 def accumulate_pg_drop_data(drop: dict):
@@ -147,13 +155,19 @@ def accumulate_pg_drop_data(drop: dict):
     :param drop:
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
-    rmode = rflag_caster(drop['reprodata']['rmode'])
-    if not rmode_supported(rmode):
-        logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
-        rmode = REPRO_DEFAULT
-        drop['reprodata']['rmode'] = str(rmode.value)
-    pg_fields = pg_block_fields(rmode)
-    data = extract_fields(drop, pg_fields)
+    level = rflag_caster(drop['reprodata']['rmode'])
+    if not rmode_supported(level):
+        logger.warning("Requested reproducibility mode %s not yet implemented", str(level))
+        level = REPRO_DEFAULT
+        drop['reprodata']['rmode'] = str(level.value)
+    if level == ReproducibilityFlags.ALL:
+        data = {}
+        for rmode in ALL_RMODES:
+            pg_fields = pg_block_fields(rmode)
+            data[rmode.name] = extract_fields(drop, pg_fields)
+    else:
+        pg_fields = pg_block_fields(level)
+        data = extract_fields(drop, pg_fields)
     return data
 
 
@@ -168,10 +182,19 @@ def init_lgt_repro_drop_data(drop: dict, level: ReproducibilityFlags):
     if 'reprodata' in drop.keys():
         if 'rmode' in drop['reprodata'].keys():
             level = rflag_caster(drop['reprodata']['rmode'])
-    data = accumulate_lgt_drop_data(drop, level)
-    merkletree = MerkleTree(data.items(), common_hash)
-    data['merkleroot'] = merkletree.merkle_root
-    drop['reprodata'] = {'rmode': str(level.value), 'lgt_data': data, 'lg_parenthashes': {}}
+    else:
+        drop['reprodata'] = {'rmode': str(level.value)}
+    if level == ReproducibilityFlags.ALL:
+        for rmode in ALL_RMODES:
+            data = accumulate_lgt_drop_data(drop, rmode)
+            merkletree = MerkleTree(data.items(), common_hash)
+            data['merkleroot'] = merkletree.merkle_root
+            drop['reprodata'][rmode.name] = {'rmode': str(rmode.value), 'lgt_data': data, 'lg_parenthashes': {}}
+    else:
+        data = accumulate_lgt_drop_data(drop, level)
+        merkletree = MerkleTree(data.items(), common_hash)
+        data['merkleroot'] = merkletree.merkle_root
+        drop['reprodata'] = {'rmode': str(level.value), 'lgt_data': data, 'lg_parenthashes': {}}
     return drop
 
 
@@ -181,16 +204,24 @@ def init_lg_repro_drop_data(drop: dict):
     :param drop:
     :return: The same drop with appended reproducibility information
     """
-    rmode = rflag_caster(drop['reprodata']['rmode'])
-    if not rmode_supported(rmode):
-        logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
-        rmode = REPRO_DEFAULT
-        drop['reprodata']['rmode'] = str(rmode.value)
-    data = accumulate_lg_drop_data(drop, rmode)
-    merkletree = MerkleTree(data.items(), common_hash)
-    data['merkleroot'] = merkletree.merkle_root
-    drop['reprodata']['lg_data'] = data
-    drop['reprodata']['lg_parenthashes'] = {}
+    level = rflag_caster(drop['reprodata']['rmode'])
+    if not rmode_supported(level):
+        logger.warning("Requested reproducibility mode %s not yet implemented", str(level))
+        level = REPRO_DEFAULT
+        drop['reprodata']['rmode'] = str(level.value)
+    if level == ReproducibilityFlags.ALL:
+        for rmode in ALL_RMODES:
+            data = accumulate_lg_drop_data(drop, rmode)
+            merkletree = MerkleTree(data.items(), common_hash)
+            data['merkleroot'] = merkletree.merkle_root
+            drop['reprodata'][rmode.name]['lg_data'] = data
+            drop['reprodata'][rmode.name]['lg_parenthashes'] = {}
+    else:
+        data = accumulate_lg_drop_data(drop, level)
+        merkletree = MerkleTree(data.items(), common_hash)
+        data['merkleroot'] = merkletree.merkle_root
+        drop['reprodata']['lg_data'] = data
+        drop['reprodata']['lg_parenthashes'] = {}
     return drop
 
 
@@ -201,11 +232,19 @@ def append_pgt_repro_data(drop: dict, data: dict):
     :param data: The data to be added - arbitrary dictionary
     :return:
     """
-    merkletree = MerkleTree(data.items(), common_hash)
-    data['merkleroot'] = merkletree.merkle_root
-    #  Separated so chaining can happen on independent elements (or both later)
-    drop['reprodata']['pgt_parenthashes'] = {}
-    drop['reprodata']['pgt_data'] = data
+    level = rflag_caster(drop['reprodata']['rmode'])
+    if level == ReproducibilityFlags.ALL:
+        for rmode in ALL_RMODES:
+            merkletree = MerkleTree(data[rmode.name].items(), common_hash)
+            data[rmode.name]['merkleroot'] = merkletree.merkle_root
+            drop['reprodata'][rmode.name]['pgt_parenthashes'] = {}
+            drop['reprodata'][rmode.name]['pgt_data'] = data[rmode.name]
+    else:
+        merkletree = MerkleTree(data.items(), common_hash)
+        data['merkleroot'] = merkletree.merkle_root
+        #  Separated so chaining can happen on independent elements (or both later)
+        drop['reprodata']['pgt_parenthashes'] = {}
+        drop['reprodata']['pgt_data'] = data
     return drop
 
 
@@ -239,12 +278,20 @@ def init_pg_repro_drop_data(drop: dict):
     :param drop: The drop description
     :return: The same drop with appended reproducibility information
     """
+    level = rflag_caster(drop['reprodata']['rmode'])
     data = accumulate_pg_drop_data(drop)
-    merkletree = MerkleTree(data.items(), common_hash)
-    data['merkleroot'] = merkletree.merkle_root
-    #  Separated so chaining can happen on independent elements (or both later)
-    drop['reprodata']['pg_parenthashes'] = {}
-    drop['reprodata']['pg_data'] = data
+    if level == ReproducibilityFlags.ALL:
+        for rmode in ALL_RMODES:
+            merkletree = MerkleTree(data[rmode.name].items(), common_hash)
+            data[rmode.name]['merkleroot'] = merkletree.merkle_root
+            drop['reprodata'][rmode.name]['pg_parenthashes'] = {}
+            drop['reprodata'][rmode.name]['pg_data'] = data[rmode.name]
+    else:
+        merkletree = MerkleTree(data.items(), common_hash)
+        data['merkleroot'] = merkletree.merkle_root
+        #  Separated so chaining can happen on independent elements (or both later)
+        drop['reprodata']['pg_parenthashes'] = {}
+        drop['reprodata']['pg_data'] = data
     return drop
 
 
@@ -254,7 +301,12 @@ def init_rg_repro_drop_data(drop: dict):
     :param drop:
     :return: The same drop with appended reproducibility information
     """
-    drop['reprodata']['rg_parenthashes'] = {}
+    level = rflag_caster(drop['reprodata']['rmode'])
+    if level == ReproducibilityFlags.ALL:
+        for rmode in ALL_RMODES:
+            drop['reprodata'][rmode.name]['rg_parenthashes'] = {}
+    else:
+        drop['reprodata']['rg_parenthashes'] = {}
     return drop
 
 
@@ -268,72 +320,113 @@ def accumulate_meta_data():
     return data
 
 
-def build_lg_block_data(drop: dict):
+def build_lg_block_data(drop: dict, rmode=None):
     """
     Builds the logical graph reprodata entry for a processed drop description
     :param drop: The drop description
     :return:
     """
-    block_data = [drop['reprodata']['lgt_data']['merkleroot']]
-    if 'merkleroot' in drop['reprodata']['lg_data']:
-        lg_hash = drop['reprodata']['lg_data']['merkleroot']
-        block_data.append(lg_hash)
-    for parenthash in sorted(drop['reprodata']['lg_parenthashes'].values()):
-        block_data.append(parenthash)
-    mtree = MerkleTree(block_data, common_hash)
-    drop['reprodata']['lg_blockhash'] = mtree.merkle_root
+    if rmode is None:
+        block_data = [drop['reprodata']['lgt_data']['merkleroot']]
+        if 'merkleroot' in drop['reprodata']['lg_data']:
+            lg_hash = drop['reprodata']['lg_data']['merkleroot']
+            block_data.append(lg_hash)
+        for parenthash in sorted(drop['reprodata']['lg_parenthashes'].values()):
+            block_data.append(parenthash)
+        mtree = MerkleTree(block_data, common_hash)
+        drop['reprodata']['lg_blockhash'] = mtree.merkle_root
+    else:
+        block_data = [drop['reprodata'][rmode.name]['lgt_data']['merkleroot']]
+        if 'merkleroot' in drop['reprodata'][rmode.name]['lg_data']:
+            lg_hash = drop['reprodata'][rmode.name]['lg_data']['merkleroot']
+            block_data.append(lg_hash)
+        for parenthash in sorted(drop['reprodata'][rmode.name]['lg_parenthashes'].values()):
+            block_data.append(parenthash)
+        mtree = MerkleTree(block_data, common_hash)
+        drop['reprodata'][rmode.name]['lg_blockhash'] = mtree.merkle_root
 
 
-def build_pgt_block_data(drop: dict):
+def build_pgt_block_data(drop: dict, rmode=None):
     """
     Builds the physical graph template reprodata entry for a processed drop description
     :param drop: The drop description
     :return:
     """
-    block_data = []
-    if 'pgt_data' in drop['reprodata']:
-        if 'merkleroot' in drop['reprodata']['pgt_data']:
-            block_data.append(drop['reprodata']['pgt_data']['merkleroot'])
-    if 'lg_blockhash' in drop['reprodata']:
-        block_data.append(drop['reprodata']['lg_blockhash'])
-    for parenthash in sorted(drop['reprodata']['pgt_parenthashes'].values()):
-        block_data.append(parenthash)
-    mtree = MerkleTree(block_data, common_hash)
-    drop['reprodata']['pgt_blockhash'] = mtree.merkle_root
+    if rmode is None:
+        block_data = []
+        if 'pgt_data' in drop['reprodata']:
+            if 'merkleroot' in drop['reprodata']['pgt_data']:
+                block_data.append(drop['reprodata']['pgt_data']['merkleroot'])
+        if 'lg_blockhash' in drop['reprodata']:
+            block_data.append(drop['reprodata']['lg_blockhash'])
+        for parenthash in sorted(drop['reprodata']['pgt_parenthashes'].values()):
+            block_data.append(parenthash)
+        mtree = MerkleTree(block_data, common_hash)
+        drop['reprodata']['pgt_blockhash'] = mtree.merkle_root
+    else:
+        block_data = []
+        if 'pgt_data' in drop['reprodata'][rmode.name]:
+            if 'merkleroot' in drop['reprodata'][rmode.name]['pgt_data']:
+                block_data.append(drop['reprodata'][rmode.name]['pgt_data']['merkleroot'])
+        if 'lg_blockhash' in drop['reprodata'][rmode.name]:
+            block_data.append(drop['reprodata'][rmode.name]['lg_blockhash'])
+        for parenthash in sorted(drop['reprodata'][rmode.name]['pgt_parenthashes'].values()):
+            block_data.append(parenthash)
+        mtree = MerkleTree(block_data, common_hash)
+        drop['reprodata'][rmode.name]['pgt_blockhash'] = mtree.merkle_root
 
 
-def build_pg_block_data(drop: dict):
+def build_pg_block_data(drop: dict, rmode=None):
     """
     Builds the physical graph reprodata entry for a processed drop description
     :param drop: The drop description
     :return:
     """
-    block_data = [drop['reprodata']['pg_data']['merkleroot'],
-                  drop['reprodata']['pgt_blockhash'],
-                  drop['reprodata']['lg_blockhash']]
-    for parenthash in sorted(drop['reprodata']['pg_parenthashes'].values()):
-        block_data.append(parenthash)
-    mtree = MerkleTree(block_data, common_hash)
-    drop['reprodata']['pg_blockhash'] = mtree.merkle_root
+    if rmode is None:
+        block_data = [drop['reprodata']['pg_data']['merkleroot'],
+                      drop['reprodata']['pgt_blockhash'],
+                      drop['reprodata']['lg_blockhash']]
+        for parenthash in sorted(drop['reprodata']['pg_parenthashes'].values()):
+            block_data.append(parenthash)
+        mtree = MerkleTree(block_data, common_hash)
+        drop['reprodata']['pg_blockhash'] = mtree.merkle_root
+    else:
+        block_data = [drop['reprodata'][rmode.name]['pg_data']['merkleroot'],
+                      drop['reprodata'][rmode.name]['pgt_blockhash'],
+                      drop['reprodata'][rmode.name]['lg_blockhash']]
+        for parenthash in sorted(drop['reprodata'][rmode.name]['pg_parenthashes'].values()):
+            block_data.append(parenthash)
+        mtree = MerkleTree(block_data, common_hash)
+        drop['reprodata'][rmode.name]['pg_blockhash'] = mtree.merkle_root
 
 
-def build_rg_block_data(drop: dict):
+def build_rg_block_data(drop: dict, rmode=None):
     """
     Builds the runtime graph reprodata entry for a processed drop description.
     :param drop: The drop description
     :return:
     """
-    block_data = [drop['reprodata']['rg_data']['merkleroot'],
-                  drop['reprodata']['pg_blockhash'],
-                  drop['reprodata']['pgt_blockhash'],
-                  drop['reprodata']['lg_blockhash']]
-    for parenthash in sorted(drop['reprodata']['rg_parenthashes'].values()):
-        block_data.append(parenthash)
-    mtree = MerkleTree(block_data, common_hash)
-    drop['reprodata']['rg_blockhash'] = mtree.merkle_root
+    if rmode is None:
+        block_data = [drop['reprodata']['rg_data']['merkleroot'],
+                      drop['reprodata']['pg_blockhash'],
+                      drop['reprodata']['pgt_blockhash'],
+                      drop['reprodata']['lg_blockhash']]
+        for parenthash in sorted(drop['reprodata']['rg_parenthashes'].values()):
+            block_data.append(parenthash)
+        mtree = MerkleTree(block_data, common_hash)
+        drop['reprodata']['rg_blockhash'] = mtree.merkle_root
+    else:
+        block_data = [drop['reprodata'][rmode.name]['rg_data']['merkleroot'],
+                      drop['reprodata'][rmode.name]['pg_blockhash'],
+                      drop['reprodata'][rmode.name]['pgt_blockhash'],
+                      drop['reprodata'][rmode.name]['lg_blockhash']]
+        for parenthash in sorted(drop['reprodata'][rmode.name]['rg_parenthashes'].values()):
+            block_data.append(parenthash)
+        mtree = MerkleTree(block_data, common_hash)
+        drop['reprodata'][rmode.name]['rg_blockhash'] = mtree.merkle_root
 
 
-def lg_build_blockdag(logical_graph: dict):
+def lg_build_blockdag(logical_graph: dict, level=None):
     """
     Uses Kahn's algorithm to topologically sort a logical graph dictionary.
     Exploits that a DAG contains at least one node with in-degree 0.
@@ -369,46 +462,62 @@ def lg_build_blockdag(logical_graph: dict):
     while queue:
         did = queue.pop()
         # Process
-        build_lg_block_data(dropset[did][0])
+        build_lg_block_data(dropset[did][0], level)
         visited.append(did)
         rmode = rflag_caster(dropset[did][0]['reprodata']['rmode']).value
+        if rmode == ReproducibilityFlags.ALL:
+            rmode = level  # Only building one layer at a time.
         for neighbour in neighbourset[did]:
             dropset[neighbour][1] -= 1
             parenthash = {}
             if rmode != ReproducibilityFlags.NOTHING:
                 if rmode == ReproducibilityFlags.REPRODUCE.value:
-                    print(dropset[did][0])
                     if dropset[did][0]['category'] in STORAGE_TYPES \
                             and (dropset[did][1] == 0 or dropset[did][2] == 0):
                         # Add my new hash to the parent-hash list
                         if did not in parenthash.keys():
-                            parenthash[did] = dropset[did][0]['reprodata']['lg_blockhash']
+                            if level is None:
+                                parenthash[did] = dropset[did][0]['reprodata']['lg_blockhash']
+                            else:
+                                parenthash[did] = dropset[did][0]['reprodata'][level.name]['lg_blockhash']
                         # parenthash.append(dropset[did][0]['reprodata']['lg_blockhash'])
                     else:
                         # Add my parenthashes to the parent-hash list
-                        parenthash.update(dropset[did][0]['reprodata']['lg_parenthashes'])
+                        if level is None:
+                            parenthash.update(dropset[did][0]['reprodata']['lg_parenthashes'])
+                        else:
+                            parenthash.update(dropset[did][0]['reprodata'][level.name]['lg_parenthashes'])
                         # parenthash.extend(dropset[did][0]['reprodata']['lg_parenthashes'])
                 if rmode != ReproducibilityFlags.REPRODUCE.value:  # Non-compressing behaviour
-                    parenthash[did] = dropset[did][0]['reprodata']['lg_blockhash']
+                    if level is None:
+                        parenthash[did] = dropset[did][0]['reprodata']['lg_blockhash']
+                    else:
+                        parenthash[did] = dropset[did][0]['reprodata'][level.name]['lg_blockhash']
                     # parenthash.append(dropset[did][0]['reprodata']['lg_blockhash'])
                 #  Add our new hash to the parent-hash list
                 # We deal with duplicates later
-                dropset[neighbour][0]['reprodata']['lg_parenthashes'].update(parenthash)
+                if level is None:
+                    dropset[neighbour][0]['reprodata']['lg_parenthashes'].update(parenthash)
+                else:
+                    dropset[neighbour][0]['reprodata'][level.name]['lg_parenthashes'].update(parenthash)
             if dropset[neighbour][1] == 0:  # Add drops at the DAG-frontier
                 queue.append(neighbour)
 
     if len(visited) != len(dropset):
-        raise Exception("Untraversed graph")
+        raise logger.warning("Untraversed graph")
 
     logger.info("BlockDAG Generated at LG/T level")
 
     for i in range(len(leaves)):
         leaf = leaves[i]
-        leaves[i] = dropset[leaf][0]['reprodata']['lg_blockhash']
+        if level is None:
+            leaves[i] = dropset[leaf][0]['reprodata']['lg_blockhash']
+        else:
+            leaves[i] = dropset[leaf][0]['reprodata'][level.name]['lg_blockhash']
     return leaves, visited
 
 
-def build_blockdag(drops: list, abstraction: str = 'pgt'):
+def build_blockdag(drops: list, abstraction: str = 'pgt', level=None):
     """
     Uses Kahn's algorithm to topologically sort a logical graph dictionary.
     Exploits that a DAG contains at least one node with in-degree 0.
@@ -460,35 +569,79 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
             leaves.append(did)
     while queue:
         did = queue.pop()
-        block_builder(dropset[did][0])
-        rmode = int(dropset[did][0]['reprodata']['rmode'])
+        block_builder(dropset[did][0], level)
+        rmode = rflag_caster(dropset[did][0]['reprodata']['rmode'])
         visited.append(did)
+        if rmode == ReproducibilityFlags.ALL:
+            rmode = level
         for neighbour in neighbourset[did]:
             dropset[neighbour][1] -= 1
             parenthash = {}
             if rmode != ReproducibilityFlags.NOTHING:
-                if rmode == ReproducibilityFlags.REPRODUCE.value:
-                    # WARNING: Hack! may break later, proceed with caution
-                    if dropset[did][0]['reprodata']['lgt_data']['category'] in STORAGE_TYPES \
-                            and (dropset[did][1] == 0 or dropset[did][2] == 0):
-                        # Add my new hash to the parent-hash list
-                        if did not in parenthash.keys():
-                            parenthash[did] = dropset[did][0]['reprodata'][blockstr + '_blockhash']
-                        # parenthash.append(dropset[did][0]['reprodata'][blockstr + "_blockhash"])
+                if rmode == ReproducibilityFlags.REPRODUCE:
+                    if level is None:
+                        # WARNING: Hack! may break later, proceed with caution
+                        if dropset[did][0]['reprodata']['lgt_data']['category'] in STORAGE_TYPES \
+                                and (dropset[did][1] == 0 or dropset[did][2] == 0):
+                            # Add my new hash to the parent-hash list
+                            if did not in parenthash.keys():
+                                if level is None:
+                                    parenthash[did] = dropset[did][0]['reprodata'][
+                                        blockstr + '_blockhash']
+                                else:
+                                    parenthash[did] = dropset[did][0]['reprodata'][level.name][
+                                        blockstr + '_blockhash']
+                            # parenthash.append(dropset[did][0]['reprodata'][blockstr + "_blockhash"])
+                        else:
+                            # Add my parenthashes to the parent-hash list
+                            if level is None:
+                                parenthash.update(dropset[did][0]['reprodata'][parentstr])
+                            else:
+                                parenthash.update(
+                                    dropset[did][0]['reprodata'][level.name][parentstr])
                     else:
-                        # Add my parenthashes to the parent-hash list
-                        parenthash.update(dropset[did][0]['reprodata'][parentstr])
-                if rmode != ReproducibilityFlags.REPRODUCE.value:
-                    parenthash[did] = dropset[did][0]['reprodata'][blockstr + "_blockhash"]
+                        # WARNING: Hack! may break later, proceed with caution
+                        if dropset[did][0]['reprodata'][level.name]['lgt_data']['category'] in STORAGE_TYPES \
+                                and (dropset[did][1] == 0 or dropset[did][2] == 0):
+                            # Add my new hash to the parent-hash list
+                            if did not in parenthash.keys():
+                                if level is None:
+                                    parenthash[did] = dropset[did][0]['reprodata'][
+                                        blockstr + '_blockhash']
+                                else:
+                                    parenthash[did] = dropset[did][0]['reprodata'][level.name][
+                                        blockstr + '_blockhash']
+                            # parenthash.append(dropset[did][0]['reprodata'][blockstr + "_blockhash"])
+                        else:
+                            # Add my parenthashes to the parent-hash list
+                            if level is None:
+                                parenthash.update(dropset[did][0]['reprodata'][parentstr])
+                            else:
+                                parenthash.update(
+                                    dropset[did][0]['reprodata'][level.name][parentstr])
+                if rmode != ReproducibilityFlags.REPRODUCE:
+                    if level is None:
+                        parenthash[did] = dropset[did][0]['reprodata'][blockstr + "_blockhash"]
+                    else:
+                        parenthash[did] = dropset[did][0]['reprodata'][level.name][blockstr + "_blockhash"]
                 # Add our new hash to the parent-hash list if on the critical path
-                if rmode == ReproducibilityFlags.RERUN.value:
+                if rmode == ReproducibilityFlags.RERUN:
                     if 'iid' in dropset[did][0].keys():
-                        if dropset[did][0]['iid'] == '0/0':
-                            dropset[neighbour][0]['reprodata'][parentstr].update(parenthash)
+                        if dropset[did][0]['iid'] == '0/0':  # TODO: This is probably wrong
+                            if level is None:
+                                dropset[neighbour][0]['reprodata'][parentstr].update(parenthash)
+                            else:
+                                dropset[neighbour][0]['reprodata'][level.name][parentstr].update(parenthash)
                     else:
+                        if level is None:
+                            dropset[neighbour][0]['reprodata'][parentstr].update(parenthash)
+                        else:
+                            dropset[neighbour][0]['reprodata'][level.name][parentstr].update(parenthash)
+                elif rmode != ReproducibilityFlags.RERUN:
+                    if level is None:
                         dropset[neighbour][0]['reprodata'][parentstr].update(parenthash)
-                elif rmode != ReproducibilityFlags.RERUN.value:
-                    dropset[neighbour][0]['reprodata'][parentstr].update(parenthash)
+                    else:
+                        dropset[neighbour][0]['reprodata'][level.name][parentstr].update(parenthash)
             if dropset[neighbour][1] == 0:
                 queue.append(neighbour)
 
@@ -497,7 +650,10 @@ def build_blockdag(drops: list, abstraction: str = 'pgt'):
 
     for i in range(len(leaves)):
         leaf = leaves[i]
-        leaves[i] = dropset[leaf][0]['reprodata'][blockstr + '_blockhash']
+        if level is None:
+            leaves[i] = dropset[leaf][0]['reprodata'][blockstr + '_blockhash']
+        else:
+            leaves[i] = dropset[leaf][0]['reprodata'][level.name][blockstr + '_blockhash']
     return leaves, visited
 
     # logger.info("BlockDAG Generated at" + abstraction + " level")
@@ -544,13 +700,24 @@ def init_lg_repro_data(lg: dict):
     """
     for drop in lg.get('nodeDataArray', []):
         init_lg_repro_drop_data(drop)
-    leaves, visited = lg_build_blockdag(lg)
     if 'reprodata' not in lg:
         reprodata = {'rmode': str(REPRO_DEFAULT), 'meta_data': accumulate_meta_data()}
         meta_tree = MerkleTree(reprodata.items(), common_hash)
         reprodata['merkleroot'] = meta_tree.merkle_root
         lg['reprodata'] = reprodata
-    lg['reprodata']['signature'] = agglomerate_leaves(leaves)
+    level = rflag_caster(lg['reprodata']['rmode'])
+    if not rmode_supported(level):
+        logger.warning("Requested reproducibility mode %s not yet implemented", str(level))
+        level = REPRO_DEFAULT
+    if level == ReproducibilityFlags.ALL:
+        for rmode in ALL_RMODES:
+            if rmode.name not in lg['reprodata']:
+                lg['reprodata'][rmode.name] = {}
+            leaves, visited = lg_build_blockdag(lg, rmode)
+            lg['reprodata'][rmode.name]['signature'] = agglomerate_leaves(leaves)
+    else:
+        leaves, visited = lg_build_blockdag(lg)
+        lg['reprodata']['signature'] = agglomerate_leaves(leaves)
     logger.info("Reproducibility data finished at LG level")
     return lg
 
@@ -562,10 +729,23 @@ def init_pgt_unroll_repro_data(pgt: list):
     :return: The same pgt object with new information appended
     """
     reprodata = pgt.pop()
+    if 'rmode' not in reprodata:
+        reprodata['rmode'] = REPRO_DEFAULT
+    level = rflag_caster(reprodata['rmode'])
+    if not rmode_supported(level):
+        logger.warning("Requested reproducibility mode %s not yet implemented", str(level))
+        level = REPRO_DEFAULT
     for drop in pgt:
         init_pgt_unroll_repro_drop_data(drop)
-    leaves, visited = build_blockdag(pgt, 'pgt')
-    reprodata['signature'] = agglomerate_leaves(leaves)
+    if level == ReproducibilityFlags.ALL:
+        for rmode in ALL_RMODES:
+            if rmode.name not in reprodata:
+                reprodata[rmode.name] = {}
+            leaves, visited = build_blockdag(pgt, 'pgt', rmode)
+            reprodata[rmode.name]['signature'] = agglomerate_leaves(leaves)
+    else:
+        leaves, visited = build_blockdag(pgt, 'pgt')
+        reprodata['signature'] = agglomerate_leaves(leaves)
     pgt.append(reprodata)
     logger.info("Reproducibility data finished at PGT unroll level")
     return pgt
@@ -579,10 +759,23 @@ def init_pgt_partition_repro_data(pgt: list):
     :return: The same pgt object with new information recorded
     """
     reprodata = pgt.pop()
+    if 'rmode' not in reprodata:
+        reprodata['rmode'] = REPRO_DEFAULT
+    level = rflag_caster(reprodata['rmode'])
+    if not rmode_supported(level):
+        logger.warning("Requested reproducibility mode %s not yet implemented", str(level))
+        level = REPRO_DEFAULT
     for drop in pgt:
         init_pgt_partition_repro_drop_data(drop)
-    leaves, visited = build_blockdag(pgt, 'pgt')
-    reprodata['signature'] = agglomerate_leaves(leaves)
+    if level == ReproducibilityFlags.ALL:
+        for rmode in ALL_RMODES:
+            if rmode.name not in reprodata:
+                reprodata[rmode.name] = {}
+            leaves, visited = build_blockdag(pgt, 'pgt', rmode)
+            reprodata[rmode.name]['signature'] = agglomerate_leaves(leaves)
+    else:
+        leaves, visited = build_blockdag(pgt, 'pgt')
+        reprodata['signature'] = agglomerate_leaves(leaves)
     pgt.append(reprodata)
     logger.info("Reproducibility data finished at PGT partition level")
     return pgt
@@ -595,10 +788,21 @@ def init_pg_repro_data(pg: list):
     :return: The same pg object with new information appended
     """
     reprodata = pg.pop()
+    if 'rmode' not in reprodata:
+        reprodata['rmode'] = REPRO_DEFAULT
+    level = rflag_caster(reprodata['rmode'])
+    if not rmode_supported(level):
+        logger.warning("Requested reproducibility mode %s not yet implemented", str(level))
+        level = REPRO_DEFAULT
     for drop in pg:
         init_pg_repro_drop_data(drop)
-    leaves, visited = build_blockdag(pg, 'pg')
-    reprodata['signature'] = agglomerate_leaves(leaves)
+    if level == ReproducibilityFlags.ALL:
+        for rmode in ALL_RMODES:
+            leaves, visited = build_blockdag(pg, 'pg', rmode)
+            reprodata[rmode.name]['signature'] = agglomerate_leaves(leaves)
+    else:
+        leaves, visited = build_blockdag(pg, 'pg')
+        reprodata['signature'] = agglomerate_leaves(leaves)
     pg.append(reprodata)
     logger.info("Reproducibility data finished at PG level")
     return pg
@@ -613,16 +817,21 @@ def init_runtime_repro_data(rg: dict, reprodata: dict):
     """
     if reprodata is None:
         return {'reprodata': {}}
-    rmode = rflag_caster(reprodata['rmode'])
-    if not rmode_supported(rmode):
+    level = rflag_caster(reprodata['rmode'])
+    if not rmode_supported(level):
         # TODO: Logging needs sessionID at this stage
         # logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
-        rmode = REPRO_DEFAULT
-        reprodata['rmode'] = str(rmode.value)
+        level = REPRO_DEFAULT
+        reprodata['rmode'] = str(level.value)
     for drop_id, drop in rg.items():
         init_rg_repro_drop_data(drop)
-    leaves, visited = build_blockdag(list(rg.values()), 'rg')
-    reprodata['signature'] = agglomerate_leaves(leaves)
+    if level == ReproducibilityFlags.ALL:
+        for rmode in ALL_RMODES:
+            leaves, visited = build_blockdag(list(rg.values()), 'rg', rmode)
+            reprodata[rmode.name]['signature'] = agglomerate_leaves(leaves)
+    else:
+        leaves, visited = build_blockdag(list(rg.values()), 'rg')
+        reprodata['signature'] = agglomerate_leaves(leaves)
     rg['reprodata'] = reprodata
     # logger.info("Reproducibility data finished at runtime level")
     return rg
