@@ -298,7 +298,7 @@ def listify(o):
 #             yield pickle.load(p)
 
 
-def save_numpy(drop, ndarray: np.ndarray, allow_pickle=False):
+def save_numpy(drop: DataDROP, ndarray: np.ndarray, allow_pickle=False):
     """
     Saves a numpy ndarray to a drop in npy format
     """
@@ -306,7 +306,10 @@ def save_numpy(drop, ndarray: np.ndarray, allow_pickle=False):
     # np.save accepts a "file-like" object which basically just requires
     # a .write() method. Try np.save(drop, array)
     np.save(bio, ndarray, allow_pickle=allow_pickle)
-    drop.write(bio.getbuffer())
+    dropio = drop.getIO()
+    dropio.open(OpenMode.OPEN_WRITE)
+    dropio.write(bio.getbuffer())
+    dropio.close()
 
 
 def load_numpy(drop: DataDROP, allow_pickle=False) -> np.ndarray:
