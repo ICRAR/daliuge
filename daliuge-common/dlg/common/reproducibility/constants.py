@@ -11,7 +11,7 @@ import GPUtil
 import psutil
 from merklelib import MerkleTree
 
-PROTOCOL_VERSION = 0.1  # TODO: Update upon release
+PROTOCOL_VERSION = 1.0
 
 
 class ReproducibilityFlags(Enum):
@@ -41,7 +41,7 @@ ALL_RMODES = [
     ReproducibilityFlags.REPLICATE_TOTAL
 ]
 REPRO_DEFAULT = ReproducibilityFlags.NOTHING
-HASHING_ALG = hashlib.sha3_256
+HashingAlg = hashlib.sha3_256
 
 
 def rflag_caster(val, default=REPRO_DEFAULT):
@@ -141,6 +141,6 @@ def system_summary():
             'memory': gpu.memoryTotal
         }
     system_info['modules'] = find_loaded_modules()
-    merkletree.append([system_info[item] for item in system_info])
+    merkletree.append(list(system_info.items()))
     system_info['signature'] = merkletree.merkle_root
     return system_info
