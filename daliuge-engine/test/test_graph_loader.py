@@ -132,6 +132,28 @@ class TestGraphLoader(unittest.TestCase):
         self.assertFalse("streamingConsumers" in c and \
             len(c["streamingConsumers"])>0)
 
+    def test_removeUnmetRelationships_named(self):
+
+        with pkg_resources.resource_stream(
+                "test", "graphs/HelloWorld_simplePG.graph"
+            ) as f:  # @UndefinedVariable
+            graphDesc = json.load(f)
+
+        unmetRelationships = graph_loader.removeUnmetRelationships(graphDesc)
+        self.assertEqual(0, len(unmetRelationships))
+
+    def test_unNamedPorts(self):
+        """
+        Use a graph with un-named ports and check whether it is loading
+        """
+        with pkg_resources.resource_stream(
+                "test", "graphs/funcTestPG.graph"
+            ) as f:  # @UndefinedVariable
+            graphSpec = json.load(f)
+        # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
+        a = graph_loader.createGraphFromDropSpecList(graphSpec)
+        dummy = a
+
     def test_namedPorts(self):
         """
         Use a graph with named ports and check whether it is loading
