@@ -371,7 +371,10 @@ class AverageArraysApp(BarrierAppDROP):
                 print(f"Input does not contain data!")
             else:
                 sarray = pickle.loads(sarray)
-                marray.extend(sarray)
+                if isinstance(sarray, (list, tuple, np.ndarray)):
+                    marray.extend(list(sarray))
+                else:
+                    marray.append(sarray)
         self.marray = marray
 
     def averageArray(self):
