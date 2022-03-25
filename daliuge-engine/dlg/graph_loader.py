@@ -158,7 +158,8 @@ def removeUnmetRelationships(dropSpecList):
                 # Find missing OIDs in this relationship and keep track of them,
                 # removing them from the current DROP spec
                 ds = dropSpec[rel]
-                ds = list(ds.keys())[0] if isinstance(ds,dict) else ds
+                if isinstance(ds[0], dict):
+                    ds = [list(d.keys())[0] for d in ds]
                 missingOids = [oid for oid in ds if oid not in oids]
                 for oid in missingOids:
                     unmetRelationships.append(DROPRel(oid, link, this_oid))
@@ -365,7 +366,6 @@ def _createSocket(dropSpec, dryRun=False, session=None):
 def _createApp(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
-    del kwargs["app"]
 
     appName = dropSpec[DropType.APP]
     parts = appName.split(".")
@@ -401,10 +401,15 @@ def _getIds(dropSpec):
 
 
 def _getKwargs(dropSpec):
+    REMOVE = [
+        "oid",
+        "uid",
+        "app",
+    ]
     kwargs = dict(dropSpec)
-    del kwargs["oid"]
-    if "uid" in kwargs:
-        del kwargs["uid"]
+    for kw in REMOVE:
+        if kw in kwargs:
+            del kwargs[kw]
     return kwargs
 
 
