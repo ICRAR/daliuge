@@ -86,7 +86,7 @@ class ParameterSetDROP(DataDROP):
             self.filter_parameters(self.parameters, self.mode), self.mode
         ).encode("utf-8")
 
-    def getIO(self):
+    def _getIO(self):
         return MemoryIO(io.BytesIO(self.config_data))
 
     @property

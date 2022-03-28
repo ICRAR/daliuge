@@ -81,8 +81,8 @@ class EnvironmentVarDROP(AbstractDROP, KeyValueDROP):
         self._variables = dict()
         self._variables.update(_filter_parameters(self.parameters))
 
-    def getIO(self):
-        return MemoryIO(io.BytesIO(json.dumps(self._variables).encode("utf-8")))
+    def _getIO(self):
+        return MemoryIO(io.BytesIO(json.dumps(self._variables).encode('utf-8')))
 
     def get(self, key):
         """
