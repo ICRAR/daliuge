@@ -27,6 +27,7 @@ import unittest
 from asyncio.log import logger
 import pkg_resources
 
+from dlg.drop import InMemoryDROP
 from dlg import runtime
 from dlg import droputils
 from dlg import utils
@@ -95,6 +96,7 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         """
         Use a graph with named ports and check whether it is runnning
         """
+        init_oid = "2022-03-20T04:33:27_-2_0" # first drop in graph
         sessionId = "lalo"
         with pkg_resources.resource_stream(
                 "test", "graphs/funcTestPG_namedPorts.graph"
@@ -106,7 +108,13 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         # Deploy now and get OIDs
         self.dim.deploySession(sessionId)
         fd = self.dm._sessions[sessionId].drops["2022-03-20T04:33:27_-1_0"]
+        init_drop = self.dm._sessions[sessionId].drops[init_oid]
+        a = InMemoryDROP("a", "a")
+        init_drop.addInput(a)
         logger.debug(f'PyfuncAPPDrop: {dir(fd)}')
         for i in fd.parameters["inputs"]:
             logger.debug(f'PyfuncAPPDrop input names:{i}')
+        
+        with droputils.DROPWaiterCtx(self, init_drop, 3):
+            a.setCompleted()
 
