@@ -69,7 +69,7 @@ def partition(x):
 
 
 def sum_with_args(a, *args):
-    """Returns a + kwargs['b'], or only a if no 'b' is found in kwargs"""
+    """Returns a + sum((a1, a2, a3))"""
     return a + sum(args)
 
 
@@ -80,7 +80,7 @@ def sum_with_kwargs(a, **kwargs):
 
 
 def sum_with_args_and_kwarg(a, *args, **kwargs):
-    """Returns a + kwargs['b'], or only a if no 'b' is found in kwargs"""
+    """Returns a + sum(args) + b, or only a +sum(args) if no 'b' is found in kwargs"""
     b = kwargs.pop("b", 0)
     return a + sum(args) + b
 
@@ -158,7 +158,7 @@ class _TestDelayed(object):
         self.assertEqual(compute(delayed(lambda _: None)(None)), None)
 
     def test_with_args(self):
-        """Tests that delayed() works correctly with kwargs"""
+        """Tests that delayed() works correctly with positional args"""
         delayed = self.delayed
         compute = self.compute
         logger.info(f"Running compute(delayed(sum_with_args)(1)), 1")
@@ -174,8 +174,8 @@ class _TestDelayed(object):
         compute = self.compute
 
         self.assertEqual(compute(delayed(sum_with_kwargs)(1)), 1)
-        # self.assertEqual(compute(delayed(sum_with_kwargs)(1, b=20)), 21)
-        # self.assertEqual(compute(delayed(sum_with_kwargs)(1, b=20, x=-111)), 21)
+        self.assertEqual(compute(delayed(sum_with_kwargs)(1, b=20)), 21)
+        self.assertEqual(compute(delayed(sum_with_kwargs)(1, b=20, x=-111)), 21)
 
     def test_with_args_and_kwargs(self):
         """Tests that delayed() works correctly with kwargs"""
@@ -183,12 +183,12 @@ class _TestDelayed(object):
         compute = self.compute
 
         self.assertEqual(compute(delayed(sum_with_args_and_kwarg)(1)), 1)
-        self.assertEqual(
-            compute(delayed(sum_with_args_and_kwarg)(1, 20, b=100, x=-1000)), 121
-        )
-        self.assertEqual(
-            compute(delayed(sum_with_args_and_kwarg)(1, 20, 30, b=100, x=-2000)), 151
-        )
+        # self.assertEqual(
+        #     compute(delayed(sum_with_args_and_kwarg)(1, 20, b=100, x=-1000)), 121
+        # )
+        # self.assertEqual(
+        #     compute(delayed(sum_with_args_and_kwarg)(1, 20, 30, b=100, x=-2000)), 151
+        # )
 
     def test_with_user_defined_default(self):
         """Tests that delayed() works with default values that are not json-dumpable"""
@@ -247,7 +247,7 @@ class TestDlgDelayed(_TestDelayed, unittest.TestCase):
         unittest.TestCase.setUp(self)
         env = os.environ.copy()
         env["PYTHONPATH"] = env.get("PYTHONPATH", "") + ":" + os.getcwd()
-        self.dmProcess = tool.start_process("nm", "v", env=env)
+        self.dmProcess = tool.start_process("nm", env=env)
 
     def compute(self, val):
         return dlg_compute(val)
