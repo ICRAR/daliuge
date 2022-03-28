@@ -59,6 +59,10 @@ def func_with_defaults(a, b=10, c=20, x=30, y=40, z=50):
     logger.info("%r - %r * %r + (%r - %r) * %r = %r", a, b, c, y, x, z, res)
     return res
 
+def sum_with_args_and_kwarg(a, *args, **kwargs):
+    """Returns a + kwargs['b'], or only a if no 'b' is found in kwargs"""
+    b = kwargs.pop("b", 0)
+    return a + sum(args) + b
 
 def _PyFuncApp(oid, uid, f, **kwargs):
 
@@ -269,6 +273,12 @@ class TestPyFuncApp(unittest.TestCase):
         self._test_defaults(0, 1, 1, x=40)
         self._test_defaults(249, 1, 2, x=35)
 
+    def test_mixed_explicit_and_variable_args(self):
+        args = [1, 20, 30]
+        kwargs = {'b':100}
+        self.assertEqual(sum_with_args_and_kwarg(1), 1)
+        self.assertEqual(sum_with_args_and_kwarg(*args, **kwargs), 151)
+        self.assertEqual(sum_with_args_and_kwarg(1, 20, 30, b=100), 151)
 
 class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
     def test_input_in_remote_nm(self):

@@ -343,7 +343,8 @@ class PyFuncApp(BarrierAppDROP):
         for uid, drop in self._inputs.items():
             inputs[uid] = all_contents(drop)
 
-        logger.debug(f"PyfuncAPPDrop parameters: {self.parameters['inputs']}")
+        if 'inputs' in self.parameters:
+            logger.debug(f"PyfuncAPPDrop parameters: {self.parameters['inputs']}")  
         # what the function requires has been captured in initialize above,
         # we'll use that as a baseline. Note that any positional arguments won't
         # have a default defined by the function, thus we set it to None and
@@ -364,15 +365,35 @@ class PyFuncApp(BarrierAppDROP):
         self.funcargs.update(kwargs)
 
         # The rest of the inputs are used to fill arguments in order of appearance
+        # First fill in the explicit arguments 
         # TODO: change to named ports
+
+        # don't map args to kwargs if varags are defined for function
+        if self.arguments.varargs:
+            __ = [self.funcargs.pop(x) for x in self.arguments.args]
+        nargs = min(len(inputs), len(self.arguments.args)) if not self.arguments.varargs else 0
         kwargs = {name: value 
             for name, value in ((self.arguments.args[x], list(inputs.values())[x])
-            for x in range(len(inputs)))
+            for x in range(nargs))
         }
         logger.debug(f"updating funcargs with {kwargs}")
         self.funcargs.update(kwargs)
-        
-        #self.funcargs["args"] = args
+
+        varargs = []
+        # Now fill in varargs, if defined and we still have inputs
+        start = nargs
+        nvargs = len(inputs) - start
+        if nvargs > 0 and self.arguments.varargs:
+            varargs = [list(inputs.values())[x] for x in range(start, start+nvargs, 1)]
+        else:
+            varargs = []
+
+        # Now fill in varkw, if defined
+        if self.arguments.varkw:
+            logger.debug(f"updating funcargs with {self.func_defaults['kwargs']}")
+            self.funcargs.update(self.funcargs['kwargs'])
+
+        # self.funcargs["args"] = args
 
         # update with values from ApplicationArgs
         kwargs = {name: value for name, value in self._applicationArgs.items()}
@@ -380,7 +401,7 @@ class PyFuncApp(BarrierAppDROP):
         self.funcargs.update(kwargs)
 
         logger.debug(f"Running '{self.func_name}' {self.funcargs}")
-        result = self.f(**self.funcargs)
+        result = self.f(*varargs, **self.funcargs)
 
         # Depending on how many outputs we have we treat our result
         # as an iterable or as a single object. Each result is pickled
