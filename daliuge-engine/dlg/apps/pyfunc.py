@@ -226,7 +226,7 @@ class PyFuncApp(BarrierAppDROP):
             self.fn_defaults = {name:None for name in self.arguments.args[:self.fn_npos]}
             kwargs = dict(
                 zip(self.arguments.args[self.fn_npos:], 
-                self.arguments.defaults))
+                self.arguments.defaults)) if self.arguments.defaults else {}
             self.fn_posargs = self.arguments.args[:self.fn_npos]
             logger.debug(f"initializing fn_defaults with {self.fn_defaults}")
             logger.debug(f"updating fn_defaults with {kwargs}")
@@ -288,8 +288,9 @@ class PyFuncApp(BarrierAppDROP):
             self.func_arg_mapping = ast.literal_eval(self.func_arg_mapping)
 
         self.arguments = inspect.getfullargspec(self.f)
+        logger.debug(f"Function inspection revealed {self.arguments}")
         self.fn_nargs = len(self.arguments.args)
-        self.fn_ndef = len(self.arguments.defaults)
+        self.fn_ndef = len(self.arguments.defaults) if self.arguments.defaults else 0
         self._init_func_defaults()
         logger.info(f"Args summary for '{self.func_name}':")
         logger.info(f"Args: {self.arguments.args}")
