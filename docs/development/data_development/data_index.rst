@@ -14,6 +14,20 @@ Different from most other frameworks |daliuge| makes data components first class
 * Abstraction of the I/O interface particularities of the underlying data storage mechanism.
 * Implementation of the DALiuGE data state engine, which is the |daliuge| mechansim to drive the execution of the workflow graphs.
 
+DataDROP Concepts
+=================
+
+DataDROP
+DropStates
+DROPPhases
+DropLink
+ChecksumTypes
+
+Streaming Data
+==============
+
+ExecutionMode
+
 Components
 ==========
 
