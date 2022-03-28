@@ -62,10 +62,13 @@ def lgt_block_fields(rmode: ReproducibilityFlags):
         return {}
     data = {'categoryType': FieldOps.STORE, 'category': FieldOps.STORE,
             'inputPorts': FieldOps.COUNT, 'outputPorts': FieldOps.COUNT,
+            'inputLocalPorts': FieldOps.COUNT, 'outputLocalPorts': FieldOps.COUNT,  # MKN Nodes
             'streaming': FieldOps.STORE}
     if rmode == ReproducibilityFlags.REPRODUCE:
         del data['inputPorts']
         del data['outputPorts']
+        del data['inputLocalPorts']
+        del data['outputLocalPorts']
         del data['streaming']
     return data
 
