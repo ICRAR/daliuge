@@ -242,6 +242,7 @@ def convert_mkn(lgo):
             "value": "%d" % (K),
         }
         node_kn["fields"].append(new_field_kn)
+        node_kn["reprodata"] = node.get("reprodata", {}).copy()
         lgo["nodeDataArray"].append(node_kn)
 
         # for all connections that point to the local input ports of the MKN construct
@@ -278,6 +279,7 @@ def convert_mkn(lgo):
             "value": "%d" % (N),
         }
         node_split_n["fields"].append(new_field_kn)
+        node_split_n["reprodata"] = node.get("reprodata", {}).copy()
         lgo["nodeDataArray"].append(node_split_n)
 
     need_to_change_n_products = dict()
@@ -378,6 +380,7 @@ def convert_mkn_all_share_m(lgo):
             "value": "%d" % (ratio_kn),
         }
         node_kn["fields"].append(new_field_kn)
+        node_kn["reprodata"] = node.get("reprodata", {}).copy()
         lgo["nodeDataArray"].append(node_kn)
 
         # for all connections that point to the local input ports of the MKN construct
@@ -543,6 +546,7 @@ def convert_construct(lgo):
                     link["to"] = k_new_new
                     if k_new_new not in node_index:
                         node_index[k_new_new] = dup_app_node
+                        dup_app_node["reprodata"] = node_index[k_new].get("reprodata", {}).copy()
                         lgo["nodeDataArray"].append(dup_app_node)
                         old_newnew_gather_map[k_old] = k_new_new
 
