@@ -69,7 +69,8 @@ class AccumulateLGTRerunData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.RERUN
-    expected = {'categoryType', 'category', 'inputPorts', 'outputPorts', 'streaming'}
+    expected = {'categoryType', 'category', 'inputPorts', 'inputLocalPorts', 'outputLocalPorts',
+                'outputPorts', 'streaming'}
 
     file = open('test/reproducibility/reproGraphs/apps.graph')
     lgt_node_data = json.load(file)['nodeDataArray']
@@ -355,7 +356,8 @@ class AccumulateLGTRepeatData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.REPEAT
-    expected = {'categoryType', 'category', 'inputPorts', 'outputPorts', 'streaming'}
+    expected = {'categoryType', 'category', 'inputPorts', 'inputLocalPorts', 'outputPorts',
+                'outputLocalPorts', 'streaming'}
 
     file = open('test/reproducibility/reproGraphs/apps.graph')
     lgt_node_data = json.load(file)['nodeDataArray']
@@ -701,7 +703,8 @@ class AccumulateLGTRecomputeData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.RECOMPUTE
-    expected = {'categoryType', 'category', 'inputPorts', 'outputPorts', 'streaming'}
+    expected = {'categoryType', 'category', 'inputPorts', 'inputLocalPorts', 'outputPorts',
+                'outputLocalPorts', 'streaming'}
 
     file = open('test/reproducibility/reproGraphs/apps.graph')
     lgt_node_data = json.load(file)['nodeDataArray']
@@ -1392,7 +1395,8 @@ class AccumulateLGTReplicateSciData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.REPLICATE_SCI
-    expected = {'categoryType', 'category', 'inputPorts', 'outputPorts', 'streaming'}
+    expected = {'categoryType', 'category', 'inputPorts', 'inputLocalPorts', 'outputPorts',
+                'outputLocalPorts', 'streaming'}
 
     file = open('test/reproducibility/reproGraphs/apps.graph')
     lgt_node_data = json.load(file)['nodeDataArray']
@@ -1678,7 +1682,8 @@ class AccumulateLGTReplicateCompData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.REPLICATE_COMP
-    expected = {'categoryType', 'category', 'inputPorts', 'outputPorts', 'streaming'}
+    expected = {'categoryType', 'category', 'inputPorts', 'inputLocalPorts', 'outputPorts',
+                'outputLocalPorts', 'streaming'}
 
     file = open('test/reproducibility/reproGraphs/apps.graph')
     lgt_node_data = json.load(file)['nodeDataArray']
@@ -2024,7 +2029,8 @@ class AccumulateLGTReplicateTotalData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.REPLICATE_TOTAL
-    expected = {'categoryType', 'category', 'inputPorts', 'outputPorts', 'streaming'}
+    expected = {'categoryType', 'category', 'inputPorts', 'inputLocalPorts', 'outputPorts',
+                'outputLocalPorts', 'streaming'}
 
     file = open('test/reproducibility/reproGraphs/apps.graph')
     lgt_node_data = json.load(file)['nodeDataArray']
