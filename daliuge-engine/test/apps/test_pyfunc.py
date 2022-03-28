@@ -25,9 +25,11 @@ import os
 import pickle
 import random
 import unittest
+import pkg_resources
+import json
 
 from ..manager import test_dm
-from dlg import droputils
+from dlg import droputils, graph_loader
 from dlg.apps import pyfunc
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.drop import InMemoryDROP
@@ -202,7 +204,9 @@ class TestPyFuncApp(unittest.TestCase):
 
             translate = lambda x: base64.b64encode(pickle.dumps(x))
             i = 0
+            logger.debug(f"args: {args}")
             for arg in args:
+                logger.debug(f"adding arg input: {arg}")
                 si = "uid_%d" % i
                 arg_inputs.append(InMemoryDROP(si, si, pydata=translate(arg)))
                 i += 1
@@ -220,8 +224,10 @@ class TestPyFuncApp(unittest.TestCase):
                 func,
                 func_arg_mapping={name: vals[0] for name, vals in kwarg_inputs.items()},
             )
+            logger.debug(f"adding input: {a}")
             app.addInput(a)
             app.addOutput(output)
+            logger.debug(f"adding inputs: {arg_inputs + [x[1] for x in kwarg_inputs.values()]}")
             for drop in arg_inputs + [x[1] for x in kwarg_inputs.values()]:
                 app.addInput(drop)
 
@@ -254,7 +260,6 @@ class TestPyFuncApp(unittest.TestCase):
         self._test_defaults(249, 1, 2, 35)
 
     def test_defaults_kwargs_only(self):
-        self._test_defaults(301)
         self._test_defaults(1, z=0, c=0)
         self._test_defaults(1, z=0, b=0)
         self._test_defaults(561, b=-1, y=300, z=2)
@@ -326,3 +331,4 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         a_data = os.urandom(32)
         c_data = self._test_runGraphInTwoNMs(g1, g2, rels, pickle.dumps(a_data), None)
         self.assertEqual(a_data, pickle.loads(c_data))
+
