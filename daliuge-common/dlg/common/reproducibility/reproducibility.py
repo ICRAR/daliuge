@@ -440,6 +440,7 @@ def lg_build_blockdag(logical_graph: dict, level=None):
     leaves = []
     visited = []
     queue = collections.deque()
+    # TODO: Deal with MKN/Scatter Input drops
     for drop in logical_graph.get('nodeDataArray', []):
         did = int(drop['key'])
         dropset[did] = [drop, 0, 0]
@@ -504,16 +505,17 @@ def lg_build_blockdag(logical_graph: dict, level=None):
                 queue.append(neighbour)
 
     if len(visited) != len(dropset):
-        raise logger.warning("Untraversed graph")
+        logger.warning("Untraversed graph")
 
     logger.info("BlockDAG Generated at LG/T level")
 
     for i in range(len(leaves)):
         leaf = leaves[i]
         if level is None:
-            leaves[i] = dropset[leaf][0]['reprodata']['lg_blockhash']
+            # WARNING: Remove once dealt with MKN Nodes
+            leaves[i] = dropset[leaf][0]['reprodata'].get('lg_blockhash', '')
         else:
-            leaves[i] = dropset[leaf][0]['reprodata'][level.name]['lg_blockhash']
+            leaves[i] = dropset[leaf][0]['reprodata'][level.name].get('lg_blockhash', '')
     return leaves, visited
 
 
