@@ -343,6 +343,7 @@ class PyFuncApp(BarrierAppDROP):
         for uid, drop in self._inputs.items():
             inputs[uid] = all_contents(drop)
 
+        logger.debug(f"PyfuncAPPDrop parameters: {self.parameters['inputs']}")
         # what the function requires has been captured in initialize above,
         # we'll use that as a baseline. Note that any positional arguments won't
         # have a default defined by the function, thus we set it to None and
