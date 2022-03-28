@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 import collections
+from enum import IntEnum
 
 
 class DROPLinkType:
@@ -47,24 +48,32 @@ class DROPLinkType:
     ) = range(8)
 
 
-class DROPStates:
+class DROPStates(IntEnum):
     """
     An enumeration of the different states a DROP can be found in. DROPs start
     in the INITIALIZED state, go optionally through WRITING and arrive to
     COMPLETED. Later, they transition through EXPIRED, eventually arriving to
     DELETED.
     """
+    INITIALIZED = 0
+    WRITING = 1
+    COMPLETED = 2
+    ERROR = 3
+    EXPIRED = 4
+    DELETED = 5
+    CANCELLED = 6
+    SKIPPED = 7
 
-    (
-        INITIALIZED,
-        WRITING,
-        COMPLETED,
-        ERROR,
-        EXPIRED,
-        DELETED,
-        CANCELLED,
-        SKIPPED,
-    ) = range(8)
+
+class DROPStreamingTypes(IntEnum):
+    """
+    An enumeration of the different types of streaming a data drop can be
+    configured to.
+    """
+    NONE = 0  # No data streaming. Single write, multiple reads.
+    SYNC_STREAM = 1  # Multiple reads using callback.
+    SINGLE_STREAM = 2  # Cold stream using AsyncIterable.
+    MULTI_STREAM = 3  # Hot stream using AsyncIterable.
 
 
 class AppDROPStates:

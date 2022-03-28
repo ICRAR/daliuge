@@ -106,7 +106,7 @@ class S3DROP(AbstractDROP):
 
         return -1
 
-    def getIO(self):
+    def _getIO(self):
         """
         This type of DROP cannot be accessed directly
         :return:
