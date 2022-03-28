@@ -46,6 +46,7 @@ import sys
 import inspect
 import binascii
 from typing import List, Optional, Union
+from overrides import overrides
 
 import numpy as np
 import pyarrow.plasma as plasma
@@ -61,6 +62,7 @@ from merklelib import MerkleTree
 from six import BytesIO
 
 from .ddap_protocol import (
+    DROPStreamingTypes,
     ExecutionMode,
     ChecksumTypes,
     AppDROPStates,
@@ -70,7 +72,7 @@ from .ddap_protocol import (
     DROPRel,
 )
 from dlg.event import EventFirer
-from dlg.exceptions import InvalidDropException, InvalidRelationshipException
+from dlg.exceptions import DaliugeException, InvalidDropException, InvalidRelationshipException
 from dlg.io import (
     DataIO,
     OpenMode,
@@ -1211,6 +1213,8 @@ class DataDROP(AbstractDROP):
     parsed by function `IOForURL`.
     """
 
+    streamingType = DROPStreamingTypes.NONE
+
     def incrRefCount(self):
         """
         Increments the reference count of this DROP by one atomically.
@@ -1236,13 +1240,18 @@ class DataDROP(AbstractDROP):
         invoked. Failing to do so will result in DROPs not expiring and
         getting deleted.
         """
-        if self.status != DROPStates.COMPLETED:
-            raise Exception(
+        valid = (self.isStreaming() and self.status != DROPStates.INITIALIZED) or\
+            self.status == DROPStates.COMPLETED
+        if not valid:
+            raise DaliugeException(
                 "%r is in state %s (!=COMPLETED), cannot be opened for reading"
-                % (self, self.status)
+                % (
+                    self,
+                    self.status,
+                )
             )
 
-        io = self.getIO()
+        io = self._getIO()
         logger.debug("Opening drop %s" % (self.oid))
         io.open(OpenMode.OPEN_READ, **kwargs)
 
@@ -1333,7 +1342,7 @@ class DataDROP(AbstractDROP):
         # We lazily initialize our writing IO instance because the data of this
         # DROP might not be written through this DROP
         if not self._wio:
-            self._wio = self.getIO()
+            self._wio = self._getIO()
             try:
                 self._wio.open(OpenMode.OPEN_WRITE)
             except:
@@ -1406,7 +1415,7 @@ class DataDROP(AbstractDROP):
         """
         if self.status == DROPStates.COMPLETED and self._checksum is None:
             # Generate on the fly
-            io = self.getIO()
+            io = self._getIO()
             io.open(OpenMode.OPEN_READ)
             data = io.read(4096)
             while data is not None and len(data) > 0:
@@ -1458,24 +1467,30 @@ class DataDROP(AbstractDROP):
         self._checksumType = value
 
     @abstractmethod
-    def getIO(self) -> DataIO:
+    def _getIO(self) -> DataIO:
         """
         Returns an instance of one of the `dlg.io.DataIO` instances that
         handles the data contents of this DROP.
         """
 
+    def isStreaming(self):
+        """
+        Returns true if the drop is a streaming drop.
+        """
+        return self.streamingType != DROPStreamingTypes.NONE
+
     def delete(self):
         """
         Deletes the data represented by this DROP.
         """
-        self.getIO().delete()
+        self._getIO().delete()
 
     def exists(self):
         """
         Returns `True` if the data represented by this DROP exists indeed
         in the underlying storage mechanism
         """
-        return self.getIO().exists()
+        return self._getIO().exists()
 
     @abstractproperty
     def dataURL(self) -> str:
@@ -1608,7 +1623,7 @@ class FileDROP(DataDROP, PathBasedDrop):
 
         self._wio = None
 
-    def getIO(self):
+    def _getIO(self):
         return FileIO(self._path)
 
     def delete(self):
@@ -1724,7 +1739,7 @@ class NgasDROP(DataDROP):
         else:
             self.fileId = self.uid
 
-    def getIO(self):
+    def _getIO(self):
         try:
             ngasIO = NgasIO(
                 self.ngasSrv,
@@ -1774,7 +1789,7 @@ class NgasDROP(DataDROP):
         # downstream don't fail to read
         logger.debug("Trying to set size of NGASDrop")
         try:
-            stat = self.getIO().fileStatus()
+            stat = self._getIO().fileStatus()
             logger.debug(
                 "Setting size of NGASDrop %s to %s" % (self.fileId, stat["FileSize"])
             )
@@ -1835,7 +1850,7 @@ class InMemoryDROP(DataDROP):
             args.append(base64.b64decode(pydata))
         self._buf = io.BytesIO(*args)
 
-    def getIO(self):
+    def _getIO(self):
         if (
             hasattr(self, "_tp")
             and hasattr(self, "_sessID")
@@ -1887,7 +1902,7 @@ class SharedMemoryDROP(DataDROP):
             args.append(base64.b64decode(pydata))
         self._buf = io.BytesIO(*args)
 
-    def getIO(self):
+    def _getIO(self):
         if sys.version_info >= (3, 8):
             if hasattr(self, "_sessID"):
                 return SharedMemoryIO(self.oid, self._sessID)
@@ -1924,7 +1939,7 @@ class NullDROP(DataDROP):
     A DROP that doesn't store any data.
     """
 
-    def getIO(self):
+    def _getIO(self):
         return NullIO()
 
     @property
@@ -1986,7 +2001,7 @@ class RDBMSDrop(DataDROP):
         # Data store for reproducibility
         self._querylog = []
 
-    def getIO(self):
+    def _getIO(self):
         # This Drop cannot be accessed directly
         return ErrorIO()
 
@@ -2077,7 +2092,7 @@ class ContainerDROP(DataDROP):
     # ===========================================================================
     # No data-related operations should actually be called in Container DROPs
     # ===========================================================================
-    def getIO(self):
+    def _getIO(self):
         return ErrorIO()
 
     @property
@@ -2205,7 +2220,7 @@ class PlasmaDROP(DataDROP):
         elif isinstance(self.object_id, str):
             self.object_id = self.object_id.encode("ascii")
 
-    def getIO(self):
+    def _getIO(self):
         return PlasmaIO(
             plasma.ObjectID(self.object_id),
             self.plasma_path,
@@ -2256,7 +2271,7 @@ class PlasmaFlightDROP(DataDROP):
         elif isinstance(self.object_id, str):
             self.object_id = self.object_id.encode("ascii")
 
-    def getIO(self):
+    def _getIO(self):
         return PlasmaFlightIO(
             plasma.ObjectID(self.object_id),
             self.plasma_path,
@@ -2538,12 +2553,14 @@ class InputFiredAppDROP(AppDROP):
                 self, "Invalid n_tries, must be a positive number"
             )
 
+    @overrides
     def addStreamingInput(self, streamingInputDrop, back=True):
         raise InvalidRelationshipException(
             DROPRel(streamingInputDrop, DROPLinkType.STREAMING_INPUT, self),
             "InputFiredAppDROPs don't accept streaming inputs",
         )
 
+    @overrides
     def dropCompleted(self, uid, drop_state):
         super(InputFiredAppDROP, self).dropCompleted(uid, drop_state)
 

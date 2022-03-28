@@ -23,6 +23,7 @@
 import contextlib
 import io
 import os, unittest
+from typing import Any, AsyncIterable, AsyncIterator, Iterable
 import random
 import shutil
 import sqlite3
@@ -31,10 +32,11 @@ import sys
 import tempfile
 import subprocess
 
-from dlg import droputils
+import dlg.droputils as droputils
 from dlg.common.reproducibility.constants import ReproducibilityFlags
-from dlg.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
+from dlg.ddap_protocol import DROPStates, DROPStreamingTypes, ExecutionMode, AppDROPStates
 from dlg.drop import (
+    DataDROP,
     FileDROP,
     AppDROP,
     InMemoryDROP,
@@ -137,9 +139,11 @@ class TestDROP(unittest.TestCase):
         """
         self._test_dynamic_write_withDropType(InMemoryDROP)
 
-    @unittest.skipIf(
-        sys.version_info < (3, 8), "Shared memory does nt work < python 3.8"
-    )
+    def test_stream_write_InMemoryDROP(self):
+        self._test_async_stream_npy_withDropType(InMemoryDROP, 0.025, 0.01)
+        self._test_async_stream_npy_withDropType(InMemoryDROP, 0.01, 0.025)
+
+    @unittest.skipIf(sys.version_info < (3, 8), "Shared memory does nt work < python 3.8")
     def test_write_SharedMemoryDROP(self):
         """
         Test a SharedMemoryDROP with simple AppDROP (for checksum calculation)
@@ -253,6 +257,37 @@ class TestDROP(unittest.TestCase):
         self.assertEqual(a.checksum, test_crc)
         self.assertEqual(cChecksum, test_crc)
 
+    def _test_async_stream_npy_withDropType(self, dropType, write_delay: float, read_delay: float):
+        a: DataDROP = dropType("oid:A", "uid:A",
+            expectedSize=-1, use_staging=True,
+            streamingType=DROPStreamingTypes.SINGLE_STREAM)
+        a.streamingType=DROPStreamingTypes.SINGLE_STREAM
+
+        import asyncio
+        import asyncstdlib
+        import numpy as np
+
+        async def delay_iterable(iterable, delay):
+            for i in iterable:
+                await asyncio.sleep(delay)
+                yield i
+
+        in_arrays = [np.random.rand(10,10,10) for _ in range(0,10)]
+
+        async def write_read_assert_stream():
+            # NOTE: typically these are performed in parallel on seperate subprocesses
+            _, out_arrays = await asyncio.gather(
+                asyncio.create_task(droputils.save_npy_stream(a, delay_iterable(in_arrays, write_delay))),
+                asyncio.create_task(asyncstdlib.list(droputils.load_npy_stream(a, backoff=read_delay)))
+            )
+            assert len(in_arrays) == len(out_arrays)
+            for in_array, out_array in zip(in_arrays, out_arrays):
+                np.testing.assert_array_equal(in_array, out_array)
+
+        with DROPWaiterCtx(self, a, 5):
+            asyncio.run(write_read_assert_stream())
+
+
     def test_no_write_to_file_drop(self):
         """Check that FileDrops can be *not* written"""
         a = FileDROP("a", "a")
@@ -330,13 +365,13 @@ class TestDROP(unittest.TestCase):
         eResExpected = b"and another one\nwe have an a here\n"
         gResExpected = b"dna rehtona eno\new evah na a ereh\n"
 
+        a.write(contents)
         with DROPWaiterCtx(self, g):
-            a.write(contents)
             a.setCompleted()
 
         # Get intermediate and final results and compare
         actualRes = []
-        for i in [c, e, g]:
+        for i in [c]:
             actualRes.append(droputils.allDropContents(i))
         map(
             lambda x, y: self.assertEqual(x, y),

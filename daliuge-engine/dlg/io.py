@@ -30,7 +30,7 @@ import os
 import sys
 import urllib.parse
 from abc import abstractmethod, ABCMeta
-from typing import BinaryIO, Optional, Union
+from typing import Any, AsyncIterable, AsyncIterator, BinaryIO, Optional, Union
 
 from . import ngaslite
 from .apps.plasmaflight import PlasmaFlightClient
@@ -52,7 +52,7 @@ class OpenMode(IntEnum):
     OPEN_READ = 1
 
 
-class DataIO(io.BufferedIOBase, BinaryIO):
+class DataIO(): # io.BufferedIOBase, BinaryIO
     """
     A class used to read/write data stored in a particular kind of storage in an
     abstract way. This base class simply declares a number of methods that
@@ -108,6 +108,27 @@ class DataIO(io.BufferedIOBase, BinaryIO):
             raise ValueError("Reading operation attempted on write-only DataIO object")
         return self._read(count, **kwargs)
 
+
+    # TODO: @abstractmethod
+    async def writeStream(self, stream: AsyncIterable):
+        """
+        Writes a stream of byte buffers to the drop buffer(s) that
+        can each be asynchronously read using readStream. When
+        the stream async iterator raises StopAsyncIteration
+        the drop will close for writing.
+        """
+        raise Exception # TODO: NotImplementedError
+
+    # TODO: @abstractmethod
+    async def readStream(self) -> AsyncIterable:
+        """
+        Returns a asynchronous stream typically processed using
+        `async for` that either yields when no data is available,
+        iterates when data is buffered, or raises StopAsyncIterator
+        when the stream is complete.
+        """
+        raise StopAsyncIteration
+
     def peek(self, size: int, **kwargs):
         """
         Previews `count` bytes from the underlying storage without moving the read cursor
@@ -120,7 +141,7 @@ class DataIO(io.BufferedIOBase, BinaryIO):
         """
         return self._tell()
 
-    def seek(self, offset, whence):
+    def seek(self, offset, whence=io.SEEK_SET):
         """
         Sets the position of the read cursor
         """
@@ -189,7 +210,7 @@ class DataIO(io.BufferedIOBase, BinaryIO):
         pass
 
     #@abstractmethod
-    def _seek(self, offset, whence):
+    def _seek(self, offset, whence=io.SEEK_SET):
         pass
 
     @abstractmethod
@@ -204,6 +225,26 @@ class DataIO(io.BufferedIOBase, BinaryIO):
     def _size(self, **kwargs) -> int:
         pass
 
+class AwaitOnce():
+    def __await__(self):
+        yield
+
+class DataIOAsyncIterator(AsyncIterator):
+    """
+    An async iterator for a drop using a dynamically
+    expanding buffer.
+    """
+    def __init__(self, memory_io: DataIO):
+        self._io = memory_io
+
+    async def __anext__(self):
+        while not self._io.closed and self._io.tell() != self._io.size():
+            if self._io.peek(1):
+                return self._io.read(4096)
+            else:
+                import asyncio
+                await asyncio.sleep(0.1)
+        raise StopAsyncIteration
 
 class NullIO(DataIO):
     """
@@ -294,9 +335,8 @@ class MemoryIO(DataIO):
             return self._buf
         elif self._mode == OpenMode.OPEN_READ:
             # NOTE: BytesIO extends BufferedIOBase instead of RawIOBase
-            # TODO: a new bytesIO object must be created as it is currently
-            # convention to close the write dataIO afte writing
-            br = io.BufferedReader(io.BytesIO(self._buf.getbuffer()))
+            br = io.BufferedReader(self._buf)   # type: ignore
+            #br = io.BufferedReader(io.BytesIO(self._buf.getbuffer()))
             br.seek(0)
             return br
         else:
@@ -308,8 +348,21 @@ class MemoryIO(DataIO):
         return len(data)
 
     @overrides
+    async def writeStream(self, stream: AsyncIterable):
+        async for data in stream:
+            assert self._desc.writable()
+            self._desc.write(data)
+
+    @overrides
     def _read(self, count=4096, **kwargs) -> bytes:
         return self._desc.read(count)
+
+    @overrides
+    async def readStream(self) -> AsyncIterable:
+        yield self.__aiter__()
+
+    def __aiter__(self) -> AsyncIterator:
+        return DataIOAsyncIterator(self)
 
     def _peek(self, count, **kwargs):
         return self._desc.peek(count)
@@ -324,6 +377,8 @@ class MemoryIO(DataIO):
     def _close(self, **kwargs):
         if self._mode == OpenMode.OPEN_READ:
             self._desc.close()
+        else:
+            logger.debug("closing")
         # If we're writing we don't close the descriptor because it's our
         # self._buf, which won't be readable afterwards
 
@@ -346,7 +401,6 @@ class MemoryIO(DataIO):
     def buffer(self) -> memoryview:
         # TODO: This may also be an issue
         return self._buf.getbuffer()
-
 
 class SharedMemoryIO(DataIO):
     """
