@@ -926,6 +926,8 @@ class LG:
         self._start_list = []
         all_list = []
         stream_output_ports = dict()  # key - port_id, value - construct key
+        input_ports = {}
+        output_ports = {}
         for jd in lg["nodeDataArray"]:
             if (
                     jd["category"] == Categories.COMMENT

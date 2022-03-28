@@ -45,7 +45,7 @@ import re
 import sys
 import inspect
 import binascii
-from typing import List, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import pyarrow.plasma as plasma
@@ -1109,9 +1109,6 @@ class PathBasedDrop(object):
     """
     _path: str = None
 
-    def initialize(self, **kwargs):
-        PathBasedDrop.initialize(self, **kwargs)
-
     def get_dir(self, dirname):
 
         if isabs(dirname):
@@ -2097,16 +2094,17 @@ class PlasmaDROP(DataDROP):
     A DROP that points to data stored in a Plasma Store
     """
 
-    plasma_path = dlg_string_param("plasma_path", "/tmp/plasma")
-    object_id = dlg_string_param("object_id", None)
-    use_staging = dlg_bool_param("use_staging", False)
+    object_id: bytes = dlg_string_param("object_id", None)
+    plasma_path: str = dlg_string_param("plasma_path", "/tmp/plasma")
+    use_staging: bool = dlg_bool_param("use_staging", False)
 
     def initialize(self, **kwargs):
-        object_id = self.uid
-        if len(self.uid) != 20:
-            object_id = np.random.bytes(20)
-        if not self.object_id:
-            self.object_id = object_id
+        super().initialize(**kwargs)
+        self.plasma_path = os.path.expandvars(self.plasma_path)
+        if self.object_id is None:
+            self.object_id = np.random.bytes(20) if len(self.uid) != 20 else self.uid.encode('ascii')
+        elif isinstance(self.object_id, str):
+            self.object_id = self.object_id.encode('ascii')
 
     def getIO(self):
         return PlasmaIO(plasma.ObjectID(self.object_id),
@@ -2142,17 +2140,18 @@ class PlasmaFlightDROP(DataDROP):
     A DROP that points to data stored in a Plasma Store
     """
 
-    object_id = dlg_string_param("object_id", None)
+    object_id: bytes = dlg_string_param("object_id", None)
     plasma_path: str = dlg_string_param("plasma_path", "/tmp/plasma")
     flight_path: str = dlg_string_param("flight_path", None)
     use_staging: bool = dlg_bool_param("use_staging", False)
 
     def initialize(self, **kwargs):
-        object_id = self.uid
-        if len(self.uid) != 20:
-            object_id = np.random.bytes(20)
+        super().initialize(**kwargs)
+        self.plasma_path = os.path.expandvars(self.plasma_path)
         if self.object_id is None:
-            self.object_id = object_id
+            self.object_id = np.random.bytes(20) if len(self.uid) != 20 else self.uid.encode('ascii')
+        elif isinstance(self.object_id, str):
+            self.object_id = self.object_id.encode('ascii')
 
     def getIO(self):
         return PlasmaFlightIO(

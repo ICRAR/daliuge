@@ -366,17 +366,13 @@ class FileIO(DataIO):
     """
     _desc: io.BufferedReader
     def __init__(self, filename, **kwargs):
-        super(FileIO, self).__init__()
+        super().__init__()
         self._fnm = filename
 
     def _open(self, **kwargs) -> io.BufferedReader:
         flag = 'r' if self._mode is OpenMode.OPEN_READ else 'w'
         flag += 'b'
-        try:
-            return open(self._fnm, flag)
-        except FileNotFoundError:
-            # let the higher layer deal with this.
-            pass
+        return open(self._fnm, flag)
 
     @overrides
     def _read(self, count=4096, **kwargs):

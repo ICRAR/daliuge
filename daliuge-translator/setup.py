@@ -102,7 +102,7 @@ install_requires = [
     "numpy",
     "psutil",
     "pyswarm",
-    "ruamel.yaml.clib<=0.2.2",
+    #"ruamel.yaml.clib<=0.2.2",
 ]
 
 setup(

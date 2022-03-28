@@ -235,11 +235,15 @@ class PyFuncApp(BarrierAppDROP):
             if not isinstance(self.func_code, bytes):
                 self.func_code = base64.b64decode(self.func_code.encode("utf8"))
             self.f = import_using_code(self.func_code)
+        # make sure defaults are dicts
+        if isinstance(self.func_defaults, str): 
+            self.func_defaults = ast.literal_eval(self.func_defaults)
+        if isinstance(self.func_arg_mapping, str): 
+            self.func_arg_mapping = ast.literal_eval(self.func_arg_mapping)
+
 
         if self.pickle:
             self.fdefaults = {name: deserialize_data(d) for name, d in self.func_defaults.items()}
-        elif isinstance(self.func_defaults, str):
-            self.func_defaults = ast.literal_eval(self.func_defaults)
         if isinstance(self.func_defaults, dict) and len(self.func_defaults) > 0 and \
             list(self.func_defaults.keys()) == ["kwargs", "args"]:
             pass
@@ -273,7 +277,7 @@ class PyFuncApp(BarrierAppDROP):
 
         self.funcargs = {"kwargs":{}, "args":[]}
 
-        # Keyword arguments are made up by the default values plus the inputs
+        # Keyword arguments are made up of the default values plus the inputs
         # that match one of the keyword argument names
         n_def = len(self.func_defaults)
         # if defaults dict has not been specified at all we'll go ahead anyway
