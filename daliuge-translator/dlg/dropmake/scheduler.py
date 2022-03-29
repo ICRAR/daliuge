@@ -51,9 +51,11 @@ class Schedule(object):
 
     def __init__(self, dag, max_dop):
         self._dag = dag
-        self._max_dop = max_dop if type(max_dop) == int else max_dop.get('num_cpus', 1)
+        self._max_dop = max_dop if type(max_dop) == int else max_dop.get("num_cpus", 1)
         DAGUtil.label_schedule(self._dag)
-        self._lpl = DAGUtil.get_longest_path(self._dag, default_weight=0, show_path=True)
+        self._lpl = DAGUtil.get_longest_path(
+            self._dag, default_weight=0, show_path=True
+        )
         self._wkl = None
         self._sma = None
 
@@ -71,14 +73,14 @@ class Schedule(object):
         Return: a self._lpl x self._max_dop matrix
                 (X - time, Y - resource unit / parallel lane)
         """
-        if (self._sma is None):
+        if self._sma is None:
             G = self._dag
             N = max(self.makespan, 1)
-            if (DEBUG):
+            if DEBUG:
                 lpl_str = []
                 lpl_c = 0
                 for lpn in self.longest_path:
-                    ww = G.nodes[lpn].get('num_cpus', 0)
+                    ww = G.nodes[lpn].get("num_cpus", 0)
                     lpl_str.append("{0}({1})".format(lpn, ww))
                     lpl_c += ww
                 logger.debug("lpl: %s", " -> ".join(lpl_str))
@@ -95,26 +97,28 @@ class Schedule(object):
             for n in topo_sort:
                 node = G.nodes[n]
                 try:
-                    stt = node['stt']
-                    edt = node['edt']
+                    stt = node["stt"]
+                    edt = node["edt"]
                 except KeyError as ke:
-                    raise SchedulerException("No schedule labels found: {0}".format(str(ke)))
-                if (edt == stt):
+                    raise SchedulerException(
+                        "No schedule labels found: {0}".format(str(ke))
+                    )
+                if edt == stt:
                     continue
-                if (prev_n in G.predecessors(n)):
+                if prev_n in G.predecessors(n):
                     curr_pid = last_pid
                 else:
                     found = None
                     for i in range(M):
-                        if (pr[i] <= stt):
+                        if pr[i] <= stt:
                             found = i
                             break
-                    if (found is None):
+                    if found is None:
                         raise SchedulerException(
-                            "Cannot find a idle PID, max_dop provided: {0}, actual max_dop: {1}\n Graph: {2}".format(M,
-                                                                                                                     'DAGUtil.get_max_dop(G)',
-                                                                                                                     G.nodes(
-                                                                                                                         data=True)))
+                            "Cannot find a idle PID, max_dop provided: {0}, actual max_dop: {1}\n Graph: {2}".format(
+                                M, "DAGUtil.get_max_dop(G)", G.nodes(data=True)
+                            )
+                        )
                         # DAGUtil.get_max_dop(G), G.nodes(data=True)))
                     curr_pid = found
                 ma[curr_pid, stt:edt] = n
@@ -131,7 +135,7 @@ class Schedule(object):
         Return: (integer)
             the mean # of resource units per time unit consumed by the graph/partition
         """
-        if (self._wkl is None):
+        if self._wkl is None:
             ma = self.schedule_matrix
             c = []
             for i in range(ma.shape[1]):
@@ -190,7 +194,7 @@ class Partition(object):
         """
         Get the schedule assocaited with this partition
         """
-        if (self._schedule is None):
+        if self._schedule is None:
             self._schedule = Schedule(self._dag, self._max_dop)
         return self._schedule
 
@@ -199,7 +203,7 @@ class Partition(object):
         return self.schedule
 
     def can_merge(self, that):
-        if (self._max_dop + that._max_dop <= self._ask_max_dop):
+        if self._max_dop + that._max_dop <= self._ask_max_dop:
             return True
         else:
             return False
@@ -209,7 +213,7 @@ class Partition(object):
         # return DAGUtil.get_max_dop(self._tmp_merge_dag) <= self._ask_max_dop
 
     def merge(self, that):
-        if (self._tmp_merge_dag is not None):
+        if self._tmp_merge_dag is not None:
             self._dag = self._tmp_merge_dag
             self._tmp_merge_dag = None
         else:
@@ -226,42 +230,48 @@ class Partition(object):
         A node may be rejected due to reasons such as: DoP overflow or
         completion time deadline overdue, etc.
         """
-        uw = gu['weight']
-        vw = gv['weight']
-        if (len(self._dag.nodes()) == 0):
+        uw = gu["weight"]
+        vw = gv["weight"]
+        if len(self._dag.nodes()) == 0:
             return (True, False, False)
 
         unew = u not in self._dag.node
         vnew = v not in self._dag.node
 
-        if (DEBUG):
+        if DEBUG:
             slow_max = DAGUtil.get_max_antichains(self._dag)
             fast_max = self._max_antichains
             info = "Before: {0} - slow max: {1}, fast max: {2}, u: {3}, v: {4}, unew:{5}, vnew:{6}".format(
-                self._dag.edges(),
-                slow_max, fast_max, u, v, unew, vnew)
+                self._dag.edges(), slow_max, fast_max, u, v, unew, vnew
+            )
             logger.debug(info)
-            if (len(slow_max) != len(fast_max)):
+            if len(slow_max) != len(fast_max):
                 raise SchedulerException("ERROR - {0}".format(info))
 
         self._dag.add_node(u, weight=uw)
         self._dag.add_node(v, weight=vw)
         self._dag.add_edge(u, v)
 
-        if (unew and vnew):
+        if unew and vnew:
             mydop = DAGUtil.get_max_dop(self._dag)
         else:
             mydop = self.probe_max_dop(u, v, unew, vnew)
             # TODO - put the following code in a unit test!
-            if (DEBUG):
+            if DEBUG:
                 mydop_slow = DAGUtil.get_max_dop(self._dag)  #
-                if (mydop_slow != mydop):
-                    err_msg = "u = {0}, v = {1}, unew = {2}, vnew = {3}".format(u, v, unew, vnew)
-                    raise SchedulerException("{2}: mydop = {0}, mydop_slow = {1}".format(mydop, mydop_slow, err_msg))
+                if mydop_slow != mydop:
+                    err_msg = "u = {0}, v = {1}, unew = {2}, vnew = {3}".format(
+                        u, v, unew, vnew
+                    )
+                    raise SchedulerException(
+                        "{2}: mydop = {0}, mydop_slow = {1}".format(
+                            mydop, mydop_slow, err_msg
+                        )
+                    )
         ret = False if mydop > self._ask_max_dop else True
-        if (unew):
+        if unew:
             self.remove(u)
-        if (vnew):
+        if vnew:
             self.remove(v)
         return (ret, unew, vnew)
 
@@ -272,43 +282,43 @@ class Partition(object):
         """
         # if (self.partition_id == 180):
         #     logger.debug("u = ", u, ", v = ", v, ", partition = ", self.partition_id)
-        uw = gu['weight']
-        vw = gv['weight']
+        uw = gu["weight"]
+        vw = gv["weight"]
         unew = u not in self._dag.node
         vnew = v not in self._dag.node
-        self._dag.add_node(u, weight=uw, num_cpus=gu['num_cpus'])
-        self._dag.add_node(v, weight=vw, num_cpus=gv['num_cpus'])
+        self._dag.add_node(u, weight=uw, num_cpus=gu["num_cpus"])
+        self._dag.add_node(v, weight=vw, num_cpus=gv["num_cpus"])
         self._dag.add_edge(u, v)
 
-        if (unew and vnew):  # we know this is fast
+        if unew and vnew:  # we know this is fast
             self._max_antichains = DAGUtil.get_max_antichains(self._dag)
             self._max_dop = 1
         else:
-            if (sequential and (global_dag is not None)):
+            if sequential and (global_dag is not None):
                 # break potential antichain to sequential chain
-                if (unew):
+                if unew:
                     v_ups = nx.ancestors(self._dag, v)
                     for vup in v_ups:
-                        if (u == vup):
+                        if u == vup:
                             continue
-                        if (len(list(self._dag.predecessors(vup))) == 0):
+                        if len(list(self._dag.predecessors(vup))) == 0:
                             # link u to "root" parent of v to break antichain
                             self._dag.add_edge(u, vup)
                             # change the original global graph
                             global_dag.add_edge(u, vup, weight=0)
-                            if (not nx.is_directed_acyclic_graph(global_dag)):
+                            if not nx.is_directed_acyclic_graph(global_dag):
                                 global_dag.remove_edge(u, vup)
                 else:
                     u_downs = nx.descendants(self._dag, u)
                     for udo in u_downs:
-                        if (udo == v):
+                        if udo == v:
                             continue
-                        if (len(list(self._dag.successors(udo))) == 0):
+                        if len(list(self._dag.successors(udo))) == 0:
                             # link "leaf" children of u to v to break antichain
                             self._dag.add_edge(udo, v)
                             # change the original global graph
                             global_dag.add_edge(udo, v, weight=0)
-                            if (not nx.is_directed_acyclic_graph(global_dag)):
+                            if not nx.is_directed_acyclic_graph(global_dag):
                                 global_dag.remove_edge(udo, v)
 
             self._max_dop = self.probe_max_dop(u, v, unew, vnew, update=True)
@@ -332,51 +342,55 @@ class Partition(object):
         An incremental antichain (which appears significantly more efficient than the networkx antichains)
         But only works for DoP, not for weighted width
         """
-        if (self._max_antichains is None):
+        if self._max_antichains is None:
             new_ac = DAGUtil.get_max_antichains(self._dag)
-            if (update):
+            if update:
                 self._max_antichains = new_ac
-            if (len(new_ac) == 0):
-                if (update):
+            if len(new_ac) == 0:
+                if update:
                     self._max_antichains = None
                 return 0
             else:
                 return len(new_ac[0])
         else:
-            if (update and self._tmp_new_ac is not None):
+            if update and self._tmp_new_ac is not None:
                 self._max_antichains, md = self._tmp_new_ac
                 self._tmp_new_ac = None
                 return md
 
-            if (unew):
+            if unew:
                 ups = nx.descendants(self._dag, u)
                 new_node = u
-            elif (vnew):
+            elif vnew:
                 ups = nx.ancestors(self._dag, v)
                 new_node = v
             else:
                 raise SchedulerException("u v are both new/old")
             new_ac = []
             md = 1
-            for ma in self._max_antichains:  # missing elements in the current max_antichains!
+            for (
+                ma
+            ) in (
+                self._max_antichains
+            ):  # missing elements in the current max_antichains!
                 # incremental updates
                 found = False
                 for n in ma:
-                    if (n in ups):
+                    if n in ups:
                         found = True
                         break
-                if (not found):
+                if not found:
                     mma = list(ma)
                     mma.append(new_node)
                     new_ac.append(mma)
-                    if (len(mma) > md):
+                    if len(mma) > md:
                         md = len(mma)
-                elif (len(ma) > md):
+                elif len(ma) > md:
                     md = len(ma)
                 new_ac.append(ma)  # carry over, then prune it
-            if (len(new_ac) > 0):
+            if len(new_ac) > 0:
                 self._tmp_new_ac = (new_ac, md)
-                if (update):
+                if update:
                     self._max_antichains = new_ac
                 return md
             else:
@@ -385,7 +399,6 @@ class Partition(object):
     @property
     def cardinality(self):
         return len(self._dag.nodes())
-
 
 
 class KFamilyPartition(Partition):
@@ -401,13 +414,13 @@ class KFamilyPartition(Partition):
                               value: resource_capacity (integer)
         """
         mtype = type(max_dop)
-        if (mtype == int):
+        if mtype == int:
             # backward compatible
-            max_dop = {'num_cpus': max_dop}
-        elif (mtype == dict):
+            max_dop = {"num_cpus": max_dop}
+        elif mtype == dict:
             pass
         else:
-            raise SchedulerException('Invalid max_dop type: %r' % mtype)
+            raise SchedulerException("Invalid max_dop type: %r" % mtype)
 
         super(KFamilyPartition, self).__init__(gid, max_dop)
         self._bpg = nx.DiGraph()
@@ -422,13 +435,13 @@ class KFamilyPartition(Partition):
         Add a single node u to the partition
         """
         kwargs = dict()
-        if (self._tmp_max_dop is None):
+        if self._tmp_max_dop is None:
             self._tmp_max_dop = dict()
         self_global_dag = self._global_dag
         for _w_attr in self._w_attr:
             u_aw = self_global_dag.nodes[u].get(_w_attr, 1)
             kwargs[_w_attr] = u_aw
-        kwargs['weight'] = self_global_dag.nodes[u].get('weight', 5)
+        kwargs["weight"] = self_global_dag.nodes[u].get("weight", 5)
         self._dag.add_node(u, **kwargs)
         for k in self._w_attr:
             self._tmp_max_dop[k] = get_max_weighted_antichain(self._dag, w_attr=k)[0]
@@ -438,7 +451,7 @@ class KFamilyPartition(Partition):
         """
         """
         dag = nx.compose(self._dag, that._dag)
-        if (u is not None):
+        if u is not None:
             dag.add_edge(u, v)
         tmp_max_dop = copy.deepcopy(self._tmp_max_dop)
 
@@ -446,10 +459,10 @@ class KFamilyPartition(Partition):
             mydop = get_max_weighted_antichain(dag, w_attr=_w_attr)[0]
             curr_max = max(self._max_dop[_w_attr], that._max_dop[_w_attr])
 
-            if (mydop <= curr_max):
+            if mydop <= curr_max:
                 # if you don't increase DoP, we accept that immediately
                 tmp_max_dop[_w_attr] = curr_max
-            elif (mydop > self._ask_max_dop[_w_attr]):
+            elif mydop > self._ask_max_dop[_w_attr]:
                 return False
             else:
                 tmp_max_dop[_w_attr] = mydop
@@ -459,9 +472,9 @@ class KFamilyPartition(Partition):
 
     def merge(self, that, u, v):
         self._dag = nx.compose(self._dag, that._dag)
-        if (u is not None):
+        if u is not None:
             self._dag.add_edge(u, v)
-        if (self._tmp_max_dop is not None):
+        if self._tmp_max_dop is not None:
             self._max_dop = self._tmp_max_dop
             # print("Gid %d just merged with DoP %d" % (self._gid, self._tmp_max_dop))
         else:
@@ -485,7 +498,7 @@ class Scheduler(object):
         turn drop_list into DAG, and check its validity
         """
         self._drop_list = drop_list
-        if (dag is None):
+        if dag is None:
             self._dag = DAGUtil.build_dag_from_drops(self._drop_list)
         else:
             self._dag = dag
@@ -510,40 +523,38 @@ class Scheduler(object):
         metis = DAGUtil.import_metis()
         G = nx.Graph()
         st_gid = len(self._drop_list) + len(self._parts) + 1
-        if (bal_cond == 0):
-            G.graph['node_weight_attr'] = ['wkl', 'eff']
+        if bal_cond == 0:
+            G.graph["node_weight_attr"] = ["wkl", "eff"]
             for part in self._parts:
                 sc = part.schedule
                 G.add_node(part.partition_id, wkl=sc.workload, eff=sc.efficiency)
         else:
-            G.graph['node_weight_attr'] = 'cc'
+            G.graph["node_weight_attr"] = "cc"
             for part in self._parts:
                 # sc = part.schedule
                 pdop = part._max_dop
                 # TODO add memory as one of the LB condition too
-                cc_eval = pdop if type(pdop) == int else pdop.get('num_cpus', 1)
+                cc_eval = pdop if type(pdop) == int else pdop.get("num_cpus", 1)
                 G.add_node(part.partition_id, cc=cc_eval)
 
         for e in self._part_edges:
             u = e[0]
             v = e[1]
-            ugid = self._dag.nodes[u].get('gid', None)
-            vgid = self._dag.nodes[v].get('gid', None)
+            ugid = self._dag.nodes[u].get("gid", None)
+            vgid = self._dag.nodes[v].get("gid", None)
             G.add_edge(ugid, vgid)  # repeating is fine
-            ew = self._dag.adj[u][v]['weight']
+            ew = self._dag.adj[u][v]["weight"]
             try:
-                G[ugid][vgid]['weight'] += ew
+                G[ugid][vgid]["weight"] += ew
             except KeyError:
-                G[ugid][vgid]['weight'] = ew
+                G[ugid][vgid]["weight"] = ew
         # DAGUtil.metis_part(G, 15)
         # since METIS does not allow zero edge weight, reset them to one
         for e in G.edges(data=True):
-            if (e[2]['weight'] == 0):
-                e[2]['weight'] = 1
+            if e[2]["weight"] == 0:
+                e[2]["weight"] = 1
         # logger.debug(G.nodes(data=True))
-        (edgecuts, metis_parts) = metis.part_graph(G,
-                                                   nparts=num_partitions,
-                                                   ufactor=1)
+        (edgecuts, metis_parts) = metis.part_graph(G, nparts=num_partitions, ufactor=1)
 
         for node, pt in zip(G.nodes(), metis_parts):  # note min(pt) == 0
             parent_id = pt + st_gid
@@ -600,8 +611,7 @@ class MySarkarScheduler(Scheduler):
         logger.debug("MySarkar time criticality called")
         return True
 
-    def _merge_two_parts(self, ugid, vgid,
-                         u, v, gu, gv, g_dict, parts, G):
+    def _merge_two_parts(self, ugid, vgid, u, v, gu, gv, g_dict, parts, G):
         """
         Merge two parts associated with u and v respectively
 
@@ -617,7 +627,7 @@ class MySarkarScheduler(Scheduler):
         part_new = g_dict[l_gid]
         part_removed = g_dict[r_gid]
 
-        if (not part_new.can_merge(part_removed, u, v)):
+        if not part_new.can_merge(part_removed, u, v):
             return None
 
         part_new.merge(part_removed, u, v)
@@ -625,24 +635,24 @@ class MySarkarScheduler(Scheduler):
         # Get hold of all gnodes that belong to "part_removed"
         # and re-assign them to the new partitions
         for n in part_removed._dag.nodes():
-            G.nodes[n]['gid'] = l_gid
+            G.nodes[n]["gid"] = l_gid
 
         index = None
         for i, part in enumerate(parts):
             p_gid = part._gid
-            if (p_gid > r_gid):
+            if p_gid > r_gid:
                 g_dict[p_gid - 1] = part
                 part._gid -= 1
                 for n in part._dag.nodes():
-                    G.nodes[n]['gid'] = part._gid
-            elif (p_gid == r_gid):
+                    G.nodes[n]["gid"] = part._gid
+            elif p_gid == r_gid:
                 # index = len(parts) - i - 1
                 index = i
                 del g_dict[p_gid]
 
-        if (index is None):
+        if index is None:
             raise SchedulerException("Failed to find r_gid")
-        parts[:] = parts[0:index] + parts[index + 1:]
+        parts[:] = parts[0:index] + parts[index + 1 :]
 
         return part_new
 
@@ -659,19 +669,20 @@ class MySarkarScheduler(Scheduler):
         done_reduction = False
         num_reductions = 0
         # TODO consider other w_attrs other than CPUs!
-        parts.sort(key=lambda x: x._max_dop['num_cpus'])
-        while (not done_reduction):
+        parts.sort(key=lambda x: x._max_dop["num_cpus"])
+        while not done_reduction:
             for i, partA in enumerate(parts):
-                if (i < len(parts) - 1):
+                if i < len(parts) - 1:
                     partB = parts[i + 1]
-                    new_part = self._merge_two_parts(partA._gid, partB._gid, None, None,
-                                                     None, None, g_dict, parts, G)
-                    if (new_part is not None):
+                    new_part = self._merge_two_parts(
+                        partA._gid, partB._gid, None, None, None, None, g_dict, parts, G
+                    )
+                    if new_part is not None:
                         num_reductions += 1
                         break  # force re-sorting
                 else:
                     done_reduction = True
-                    logger.info('Performed reductions %d times', num_reductions)
+                    logger.info("Performed reductions %d times", num_reductions)
                     break
 
     def partition_dag(self):
@@ -684,7 +695,7 @@ class MySarkarScheduler(Scheduler):
         G = self._dag
         st_gid = len(self._drop_list) + 1
         init_c = st_gid
-        el = sorted(G.edges(data=True), key=lambda ed: ed[2]['weight'] * -1)
+        el = sorted(G.edges(data=True), key=lambda ed: ed[2]["weight"] * -1)
         stt = time.time()
         topo_sorted = nx.topological_sort(G)
         g_dict = self._part_dict  # dict() #{gid : Partition}
@@ -694,7 +705,7 @@ class MySarkarScheduler(Scheduler):
         dump_progress = self._dump_progress
 
         for n in G.nodes(data=True):
-            n[1]['gid'] = st_gid
+            n[1]["gid"] = st_gid
             part = KFamilyPartition(st_gid, self._max_dop, global_dag=G)
             part.add_node(n[0])
             g_dict[st_gid] = part
@@ -706,33 +717,34 @@ class MySarkarScheduler(Scheduler):
             gu = G.nodes[u]
             v = e[1]
             gv = G.nodes[v]
-            ow = G.adj[u][v]['weight']
-            G.adj[u][v]['weight'] = 0  # edge zeroing
-            ugid = gu.get('gid', None)
-            vgid = gv.get('gid', None)
-            if (ugid != vgid):  # merge existing parts
-                part = self._merge_two_parts(ugid, vgid,
-                                             u, v, gu, gv, g_dict, parts, G)
-                if (part is not None):
+            ow = G.adj[u][v]["weight"]
+            G.adj[u][v]["weight"] = 0  # edge zeroing
+            ugid = gu.get("gid", None)
+            vgid = gv.get("gid", None)
+            if ugid != vgid:  # merge existing parts
+                part = self._merge_two_parts(ugid, vgid, u, v, gu, gv, g_dict, parts, G)
+                if part is not None:
                     st_gid -= 1
                     self._sspace[i] = 1
                 else:
-                    G.adj[u][v]['weight'] = ow
+                    G.adj[u][v]["weight"] = ow
                     self._part_edges.append(e)
-            if (dump_progress):
+            if dump_progress:
                 bb = np.median([pp._tmp_max_dop for pp in parts])
-                curr_lpl = DAGUtil.get_longest_path(G, show_path=False,
-                                                    topo_sort=topo_sorted)[1]
-                plots_data.append('%d,%d,%d' % (curr_lpl, len(parts), bb))
+                curr_lpl = DAGUtil.get_longest_path(
+                    G, show_path=False, topo_sort=topo_sorted
+                )[1]
+                plots_data.append("%d,%d,%d" % (curr_lpl, len(parts), bb))
         self.reduce_partitions(parts, g_dict, G)
         edt = time.time() - stt
         self._parts = parts
-        if (dump_progress):
-            with open('/tmp/%.3f_lpl_parts.csv' % time.time(), 'w') as of:
+        if dump_progress:
+            with open("/tmp/%.3f_lpl_parts.csv" % time.time(), "w") as of:
                 of.writelines(os.linesep.join(plots_data))
-        if (curr_lpl is None):
-            curr_lpl = DAGUtil.get_longest_path(G, show_path=False,
-                                                topo_sort=topo_sorted)[1]
+        if curr_lpl is None:
+            curr_lpl = DAGUtil.get_longest_path(
+                G, show_path=False, topo_sort=topo_sorted
+            )[1]
         return ((st_gid - init_c), curr_lpl, edt, parts)
 
 
@@ -769,17 +781,17 @@ class MinNumPartsScheduler(MySarkarScheduler):
         probility = (num of edges need to be zeroed to meet the deadline) /
         (num of remaining unzeroed edges)
         """
-        if (unew and vnew):
+        if unew and vnew:
             return True
         # compute time criticality probility
         ttlen = float(len(rem_el))
-        if (ttlen == 0):
+        if ttlen == 0:
             return False
         c = 0
         for i, e in enumerate(rem_el):
             c = i
-            edge_weight = self._dag.edge[e[0]][e[1]]['weight']
-            if ((curr_lpl - edge_weight) <= self._deadline):
+            edge_weight = self._dag.edge[e[0]][e[1]]["weight"]
+            if (curr_lpl - edge_weight) <= self._deadline:
                 break
         # probability that remaining edges will be zeroed in order to meet the deadline
         prob = (c + 1) / ttlen
@@ -827,7 +839,9 @@ class PSOScheduler(Scheduler):
             (2) returns makespan
     """
 
-    def __init__(self, drop_list, max_dop=8, dag=None, deadline=None, topk=30, swarm_size=40):
+    def __init__(
+        self, drop_list, max_dop=8, dag=None, deadline=None, topk=30, swarm_size=40
+    ):
         super(PSOScheduler, self).__init__(drop_list, max_dop=max_dop, dag=dag)
         self._deadline = deadline
         # search space: key - combination of X[i] (string),
@@ -854,10 +868,16 @@ class PSOScheduler(Scheduler):
         lb = [0.99] * self._leng
         ub = [3.01] * self._leng
         stt = time.time()
-        if (self._deadline is None):
+        if self._deadline is None:
             xopt, fopt = pso(self.objective_func, lb, ub, swarmsize=self._swarm_size)
         else:
-            xopt, fopt = pso(self.objective_func, lb, ub, ieqcons=[self.constrain_func], swarmsize=self._swarm_size)
+            xopt, fopt = pso(
+                self.objective_func,
+                lb,
+                ub,
+                ieqcons=[self.constrain_func],
+                swarmsize=self._swarm_size,
+            )
 
         curr_lpl, num_parts, parts, g_dict = self._partition_G(G, xopt)
         # curr_lpl, num_parts, parts, g_dict = self.objective_func(xopt)
@@ -866,10 +886,10 @@ class PSOScheduler(Scheduler):
         # print "PSO scheduler took {0} seconds".format(edt - stt)
         st_gid = len(self._drop_list) + 1 + num_parts
         for n in G.nodes(data=True):
-            if not 'gid' in n[1]:
-                n[1]['gid'] = st_gid
+            if not "gid" in n[1]:
+                n[1]["gid"] = st_gid
                 part = Partition(st_gid, self._max_dop)
-                part.add_node(n[0], n[1].get('weight', 1))
+                part.add_node(n[0], n[1].get("weight", 1))
                 g_dict[st_gid] = part
                 parts.append(part)  # will it get rejected?
                 num_parts += 1
@@ -885,18 +905,18 @@ class PSOScheduler(Scheduler):
         # print x
         st_gid = len(self._drop_list) + 1
         init_c = st_gid
-        el = sorted(G.edges(data=True), key=lambda ed: ed[2]['weight'] * -1)
+        el = sorted(G.edges(data=True), key=lambda ed: ed[2]["weight"] * -1)
         # topo_sorted = nx.topological_sort(G)
         # g_dict = self._part_dict#dict() #{gid : Partition}
         g_dict = dict()
         parts = []
         for i, e in enumerate(el):
             pos = int(round(x[i]))
-            if (pos == 3):  # 10 non_zero + 1
+            if pos == 3:  # 10 non_zero + 1
                 continue
-            elif (pos == 2):  # 01 zero with linearisation + 1
+            elif pos == 2:  # 01 zero with linearisation + 1
                 linear = True
-            elif (pos == 1):  # 00 zero without linearisation + 1
+            elif pos == 1:  # 00 zero without linearisation + 1
                 linear = False
             else:
                 raise SchedulerException("PSO position out of bound: {0}".format(pos))
@@ -905,17 +925,17 @@ class PSOScheduler(Scheduler):
             gu = G.nodes[u]
             v = e[1]
             gv = G.nodes[v]
-            ow = G.adj[u][v]['weight']
-            G.adj[u][v]['weight'] = 0  # edge zeroing
+            ow = G.adj[u][v]["weight"]
+            G.adj[u][v]["weight"] = 0  # edge zeroing
             recover_edge = False
 
-            ugid = gu.get('gid', None)
-            vgid = gv.get('gid', None)
-            if (ugid and (not vgid)):
+            ugid = gu.get("gid", None)
+            vgid = gv.get("gid", None)
+            if ugid and (not vgid):
                 part = g_dict[ugid]
-            elif ((not ugid) and vgid):
+            elif (not ugid) and vgid:
                 part = g_dict[vgid]
-            elif (not ugid and (not vgid)):
+            elif not ugid and (not vgid):
                 part = Partition(st_gid, self._max_dop)
                 g_dict[st_gid] = part
                 parts.append(part)  # will it get rejected?
@@ -926,39 +946,44 @@ class PSOScheduler(Scheduler):
             # uw = gu['weight']
             # vw = gv['weight']
 
-            if (part is None):
+            if part is None:
                 recover_edge = True
             else:
                 ca, unew, vnew = part.can_add(u, v, gu, gv)
-                if (ca):
+                if ca:
                     # ignore linear flag, add it anyway
                     part.add(u, v, gu, gv)
-                    gu['gid'] = part._gid
-                    gv['gid'] = part._gid
+                    gu["gid"] = part._gid
+                    gv["gid"] = part._gid
                 else:
-                    if (linear):
+                    if linear:
                         part.add(u, v, gu, gv, sequential=True, global_dag=G)
-                        gu['gid'] = part._gid
-                        gv['gid'] = part._gid
+                        gu["gid"] = part._gid
+                        gv["gid"] = part._gid
                     else:
                         recover_edge = True  # outright rejection
-            if (recover_edge):
-                G.adj[u][v]['weight'] = ow
+            if recover_edge:
+                G.adj[u][v]["weight"] = ow
                 self._part_edges.append(e)
         self._call_counts += 1
         # print "called {0} times, len parts = {1}".format(self._call_counts, len(parts))
-        return (DAGUtil.get_longest_path(G, show_path=False)[1], len(parts), parts, g_dict)
+        return (
+            DAGUtil.get_longest_path(G, show_path=False)[1],
+            len(parts),
+            parts,
+            g_dict,
+        )
 
     def constrain_func(self, x):
         """
         Deadline - critical_path >= 0
         """
-        if (self._deadline is None):
+        if self._deadline is None:
             raise SchedulerException("Deadline is None, cannot apply constraints!")
 
-        sk = ''.join([str(int(round(xi))) for xi in x[0:self._topk]])
+        sk = "".join([str(int(round(xi))) for xi in x[0 : self._topk]])
         stuff = self._sspace_dict.get(sk, None)
-        if (stuff is None):
+        if stuff is None:
             G = self._lite_dag.copy()
             stuff = self._partition_G(G, x)
             self._sspace_dict[sk] = stuff[0:2]
@@ -971,20 +996,19 @@ class PSOScheduler(Scheduler):
         indices of x is identical to the indices in G.edges().sort(key='weight')
         """
         # first check if the solution is already available in the search space
-        sk = ''.join([str(int(round(xi))) for xi in x[0:self._topk]])
+        sk = "".join([str(int(round(xi))) for xi in x[0 : self._topk]])
         stuff = self._sspace_dict.get(sk, None)  # TODO is this atomic operation?
-        if (stuff is None):
+        if stuff is None:
             # make a deep copy to avoid mix up multiple particles,
             # each of which has multiple iterations
             G = self._lite_dag.copy()
             stuff = self._partition_G(G, x)
             self._sspace_dict[sk] = stuff[0:2]
             del G
-        if (self._deadline is None):
+        if self._deadline is None:
             return stuff[0]
         else:
             return stuff[1]
-
 
 
 class DAGUtil(object):
@@ -993,7 +1017,9 @@ class DAGUtil(object):
     """
 
     @staticmethod
-    def get_longest_path(G, weight='weight', default_weight=1, show_path=True, topo_sort=None):
+    def get_longest_path(
+        G, weight="weight", default_weight=1, show_path=True, topo_sort=None
+    ):
         """
         Ported from:
         https://github.com/networkx/networkx/blob/master/networkx/algorithms/dag.py
@@ -1008,23 +1034,30 @@ class DAGUtil(object):
         `path_length` (float) the length of the longest path.
         """
         dist = {}  # stores {v : (length, u)}
-        if (topo_sort is None):
+        if topo_sort is None:
             topo_sort = nx.topological_sort(G)
         for v in topo_sort:
             us = [
-                (dist[u][0] +  # accumulate
-                 data.get(weight, default_weight) +  # edge weight
-                 G.nodes[u].get(weight, 0) +  # u node weight
-                 (G.nodes[v].get(weight, 0) if len(list(G.successors(v))) == 0 else 0),  # v node weight if no successor
-                 u)
-                for u, data in G.pred[v].items()]
+                (
+                    dist[u][0]
+                    + data.get(weight, default_weight)  # accumulate
+                    + G.nodes[u].get(weight, 0)  # edge weight
+                    + (  # u node weight
+                        G.nodes[v].get(weight, 0)
+                        if len(list(G.successors(v))) == 0
+                        else 0
+                    ),  # v node weight if no successor
+                    u,
+                )
+                for u, data in G.pred[v].items()
+            ]
             # Use the best predecessor if there is one and its distance is non-negative, otherwise terminate.
             maxu = max(us) if us else (0, v)
             dist[v] = maxu if maxu[0] >= 0 else (0, v)
         u = None
         v = max(dist, key=dist.get)
         lp = dist[v][0]
-        if (not show_path):
+        if not show_path:
             path = None
         else:
             path = []
@@ -1036,7 +1069,7 @@ class DAGUtil(object):
         return (path, lp)
 
     @staticmethod
-    def get_max_width(G, weight='weight', default_weight=1):
+    def get_max_width(G, weight="weight", default_weight=1):
         """
         Get the antichain with the maximum "weighted" width of this DAG
         weight: float (for example, it could be RAM consumption in GB)
@@ -1047,7 +1080,7 @@ class DAGUtil(object):
             t = 0
             for n in antichain:
                 t += G.nodes[n].get(weight, default_weight)
-            if (t > max_width):
+            if t > max_width:
                 max_width = t
         return max_width
 
@@ -1087,26 +1120,26 @@ class DAGUtil(object):
         return todo
 
     @staticmethod
-    def label_schedule(G, weight='weight', topo_sort=None):
+    def label_schedule(G, weight="weight", topo_sort=None):
         """
         for each node, label its start and end time
         """
-        if (topo_sort is None):
+        if topo_sort is None:
             topo_sort = nx.topological_sort(G)
         for v in topo_sort:
             gv = G.nodes[v]
             parents = list(G.predecessors(v))
-            if (len(parents) == 0):
-                gv['stt'] = 0
+            if len(parents) == 0:
+                gv["stt"] = 0
             else:
                 # get the latest end time of one of its parents
                 ledt = -1
                 for parent in parents:
-                    pedt = G.nodes[parent]['edt'] + G.adj[parent][v].get(weight, 0)
-                    if (pedt > ledt):
+                    pedt = G.nodes[parent]["edt"] + G.adj[parent][v].get(weight, 0)
+                    if pedt > ledt:
                         ledt = pedt
-                gv['stt'] = ledt
-            gv['edt'] = gv['stt'] + gv.get(weight, 0)
+                gv["stt"] = ledt
+            gv["edt"] = gv["stt"] + gv.get(weight, 0)
 
     @staticmethod
     def ganttchart_matrix(G, topo_sort=None):
@@ -1118,19 +1151,20 @@ class DAGUtil(object):
         N = lpl[1]
         M = G.number_of_nodes()
         ma = np.zeros((M, N), dtype=np.int)
-        if (topo_sort is None):
+        if topo_sort is None:
             topo_sort = nx.topological_sort(G)
         for i, n in enumerate(topo_sort):
             node = G.nodes[n]
             try:
-                stt = node['stt']
-                edt = node['edt']
+                stt = node["stt"]
+                edt = node["edt"]
             except KeyError as ke:
-                raise SchedulerException("No schedule labels found: {0}". \
-                                         format(str(ke)))
+                raise SchedulerException(
+                    "No schedule labels found: {0}".format(str(ke))
+                )
             # print i, n, stt, edt
             leng = edt - stt
-            if (edt == stt):
+            if edt == stt:
                 continue
             try:
                 ma[i, stt:edt] = np.ones((1, leng))
@@ -1147,21 +1181,24 @@ class DAGUtil(object):
             import metis as mt
         except:
             pl = platform.platform()
-            if (pl.startswith('Darwin')):  # a clumsy way
-                ext = 'dylib'
+            if pl.startswith("Darwin"):  # a clumsy way
+                ext = "dylib"
             else:
-                ext = 'so'  # what about Microsoft??!!
-            os.environ["METIS_DLL"] = pkg_resources.resource_filename('dlg.dropmake', 'lib/libmetis.{0}'.format(
-                ext))  # @UndefinedVariable
+                ext = "so"  # what about Microsoft??!!
+            os.environ["METIS_DLL"] = pkg_resources.resource_filename(
+                "dlg.dropmake", "lib/libmetis.{0}".format(ext)
+            )  # @UndefinedVariable
             import metis as mt
-        if not hasattr(mt, '_dlg_patched'):
+        if not hasattr(mt, "_dlg_patched"):
             mt._part_graph = mt.part_graph
 
             def logged_part_graph(*args, **kwargs):
-                logger.info('Starting metis partitioning')
+                logger.info("Starting metis partitioning")
                 start = time.time()
                 ret = mt._part_graph(*args, **kwargs)  # @UndefinedVariable
-                logger.info('Finished metis partitioning in %.3f [s]', time.time() - start)
+                logger.info(
+                    "Finished metis partitioning in %.3f [s]", time.time() - start
+                )
                 return ret
 
             mt.part_graph = logged_part_graph
@@ -1180,53 +1217,69 @@ class DAGUtil(object):
         # dw - data weight / volume
         key_dict = dict()  # {oid : node_id}
         drop_dict = dict()  # {oid : drop}
-        out_bound_keys = ['streamingConsumers', 'consumers', 'outputs']
+        out_bound_keys = ["streamingConsumers", "consumers", "outputs"]
         for i, drop in enumerate(drop_list):
-            oid = drop['oid']
+            oid = drop["oid"]
             key_dict[oid] = i + 1  # starting from 1
             drop_dict[oid] = drop
         G = nx.DiGraph()
         for i, drop in enumerate(drop_list):
-            oid = drop['oid']
+            oid = drop["oid"]
             myk = i + 1
             tt = drop["type"]
-            if (DropType.PLAIN == tt):
+            if DropType.PLAIN == tt:
                 # if (drop['nm'] == 'StreamNull'):
                 #     obk = 'streamingConsumers'
                 # else:
                 #     obk = 'consumers' # outbound keyword
                 tw = 0
                 dtp = 0
-            elif (DropType.APP == tt):
+            elif DropType.APP == tt:
                 # obk = 'outputs'
-                tw = int(drop['tw'])
+                tw = int(drop["tw"])
                 dtp = 1
             elif DropType.SERVICE_APP == tt:
-                tw = int(drop['tw'])
+                tw = int(drop["tw"])
                 dtp = 1
             else:
-                raise SchedulerException("Drop Type '{0}' not supported". \
-                                         format(tt))
-            num_cpus = drop.get('num_cpus', 1)
-            if (embed_drop):
-                G.add_node(myk, weight=tw, text=drop['nm'], dt=dtp,
-                           drop_spec=drop, num_cpus=num_cpus)
+                raise SchedulerException("Drop Type '{0}' not supported".format(tt))
+            num_cpus = drop.get("num_cpus", 1)
+            if embed_drop:
+                G.add_node(
+                    myk,
+                    weight=tw,
+                    text=drop["nm"],
+                    dt=dtp,
+                    drop_spec=drop,
+                    num_cpus=num_cpus,
+                )
             else:
-                G.add_node(myk, weight=tw, text=drop['nm'], dt=dtp,
-                           num_cpus=num_cpus)
+                G.add_node(myk, weight=tw, text=drop["nm"], dt=dtp, num_cpus=num_cpus)
             for obk in out_bound_keys:
                 if obk in drop:
                     for oup in drop[obk]:
-                        if (DropType.PLAIN == tt):
-                            G.add_weighted_edges_from([(myk, key_dict[oup], int(drop['dw']))])
-                        elif (DropType.APP == tt):
-                            G.add_weighted_edges_from([(myk, key_dict[oup], int(drop_dict[oup].get('dw', 5)))])
+                        if DropType.PLAIN == tt:
+                            G.add_weighted_edges_from(
+                                [(myk, key_dict[oup], int(drop["dw"]))]
+                            )
+                        elif DropType.APP == tt:
+                            G.add_weighted_edges_from(
+                                [(myk, key_dict[oup], int(drop_dict[oup].get("dw", 5)))]
+                            )
 
-        if (fake_super_root):
-            super_root = dropdict({'oid': '-92', "type": DropType.PLAIN, 'storage': 'null'})
+        if fake_super_root:
+            super_root = dropdict(
+                {"oid": "-92", "type": DropType.PLAIN, "storage": "null"}
+            )
             super_k = len(drop_list) + 1
-            G.add_node(super_k, weight=0, dtp=0, drop_spec=super_root,
-                       num_cpus=0, text='fake_super_root')
+            G.add_node(
+                super_k,
+                weight=0,
+                dtp=0,
+                drop_spec=super_root,
+                num_cpus=0,
+                text="fake_super_root",
+            )
 
             for oup in get_roots(drop_list):
                 G.add_weighted_edges_from([(super_k, key_dict[oup], 1)])
@@ -1239,7 +1292,7 @@ class DAGUtil(object):
         Use metis binary executable (instead of library)
         This is used only for testing when libmetis halts unexpectedly
         """
-        outf = '/tmp/mm'
+        outf = "/tmp/mm"
         lines = []
         part_id_line_dict = dict()  # {part_id: line_num}
         line_part_id_dict = dict()
@@ -1250,14 +1303,14 @@ class DAGUtil(object):
         for i, node in enumerate(G.nodes(data=True)):
             n = node[0]
             line = []
-            line.append(str(node[1]['wkl']))
-            line.append(str(node[1]['eff']))
+            line.append(str(node[1]["wkl"]))
+            line.append(str(node[1]["eff"]))
             for m in G.neighbors(n):
                 line.append(str(part_id_line_dict[m]))
-                a = G[m][n]['weight']
-                if (0 == a):
+                a = G[m][n]["weight"]
+                if 0 == a:
                     logger.debug("G[%d][%d]['weight'] = %f", m, n, a)
-                line.append(str(G[m][n]['weight']))
+                line.append(str(G[m][n]["weight"]))
             lines.append(" ".join(line))
 
         header = "{0} {1} 011 2".format(len(G.nodes()), len(G.edges()))
@@ -1271,7 +1324,7 @@ if __name__ == "__main__":
     G.add_weighted_edges_from([(4, 3, 1), (3, 2, 4), (2, 1, 2), (5, 3, 1)])
     G.add_weighted_edges_from([(3, 6, 5), (6, 7, 2)])
     G.add_weighted_edges_from([(9, 12, 2)])  # testing independent nodes
-    G.nodes[3]['weight'] = 65
+    G.nodes[3]["weight"] = 65
     print(G.pred[12].items())
     print(G.nodes[G.predecessors(12)[0]])
 
@@ -1293,7 +1346,11 @@ if __name__ == "__main__":
     print("The longest path is {0} with a length of {1}".format(lp[0], lp[1]))
     mw = DAGUtil.get_max_width(G)
     dop = DAGUtil.get_max_dop(G)
-    print("The max (weighted) width = {0}, and the max degree of parallelism = {1}".format(mw, dop))
+    print(
+        "The max (weighted) width = {0}, and the max degree of parallelism = {1}".format(
+            mw, dop
+        )
+    )
     DAGUtil.label_schedule(G)
     print(G.nodes(data=True))
     gantt_matrix = DAGUtil.ganttchart_matrix(G)

@@ -32,15 +32,23 @@ logger = logging.getLogger(__name__)
 hostname = "localhost"
 
 
-
-default_repro = {"rmode": "1", "lg_blockhash": "x", "pgt_blockhash": "y", "pg_blockhash": "z"}
-default_graph_repro = {"rmode": "1", "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
-                       "merkleroot": "a", "signature": "b"}
+default_repro = {
+    "rmode": "1",
+    "lg_blockhash": "x",
+    "pgt_blockhash": "y",
+    "pg_blockhash": "z",
+}
+default_graph_repro = {
+    "rmode": "1",
+    "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
+    "merkleroot": "a",
+    "signature": "b",
+}
 
 
 def add_test_reprodata(graph: list):
     for drop in graph:
-        drop['reprodata'] = default_repro.copy()
+        drop["reprodata"] = default_repro.copy()
     graph.append(default_graph_repro.copy())
     return graph
 
@@ -55,7 +63,6 @@ def memory_drop(uid):
             "storage": Categories.MEMORY,
         }
     )
-
 
 
 def create_graph(branches, drops_per_branch):
@@ -122,7 +129,7 @@ class TestBigGraph(unittest.TestCase):
         graph, completed_uids = create_graph(
             branches=branches, drops_per_branch=drops_per_branch
         )
-        self.assertEqual(n_drops, len(graph)-1)  # -1 for reprodata at end
+        self.assertEqual(n_drops, len(graph) - 1)  # -1 for reprodata at end
         self._run_graph(graph, completed_uids, timeout=5)
 
     def _run_graph(self, graph, completed_uids, timeout=5):

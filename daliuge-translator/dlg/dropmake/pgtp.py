@@ -27,7 +27,12 @@ import logging
 import networkx as nx
 
 from dlg.dropmake.pgt import PGT, GraphException
-from dlg.dropmake.scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
+from dlg.dropmake.scheduler import (
+    MySarkarScheduler,
+    DAGUtil,
+    MinNumPartsScheduler,
+    PSOScheduler,
+)
 from dlg.common import DropType
 
 logger = logging.getLogger(__name__)

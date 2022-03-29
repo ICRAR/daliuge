@@ -36,99 +36,87 @@ from dlg.common.reproducibility.reproducibility import build_blockdag
 
 def _generate_dummy_compute(rmode: ReproducibilityFlags):
     if rmode is not ReproducibilityFlags.ALL:
-        return {'oid': 1,
-                'reprodata': {
-                    'rmode': str(rmode.value),
-                    'lgt_data': {'categoryType': 'Application',
-                                 'category': Categories.BASH_SHELL_APP},
-                    'lg_blockhash': '1',
-                    'pgt_data': {
-                        'merkleroot': '2'
-                    },
-                    'pgt_parenthashes': {},
-                    'pgt_blockhash': '3',
-                    'pg_data': {
-                        'merkleroot': '4'
-                    },
-                    'pg_parenthashes': {},
-                    'pg_blockhash': '5',
-                    'rg_data': {
-                        'merkleroot': '6'
-                    },
-                    'rg_parenthashes': {},
-                }
-                }
-    else:
-        out_val = {
-            'oid': 1,
-            'reprodata': {}
+        return {
+            "oid": 1,
+            "reprodata": {
+                "rmode": str(rmode.value),
+                "lgt_data": {
+                    "categoryType": "Application",
+                    "category": Categories.BASH_SHELL_APP,
+                },
+                "lg_blockhash": "1",
+                "pgt_data": {"merkleroot": "2"},
+                "pgt_parenthashes": {},
+                "pgt_blockhash": "3",
+                "pg_data": {"merkleroot": "4"},
+                "pg_parenthashes": {},
+                "pg_blockhash": "5",
+                "rg_data": {"merkleroot": "6"},
+                "rg_parenthashes": {},
+            },
         }
-        out_val['reprodata']['rmode'] = str(rmode.value)
+    else:
+        out_val = {"oid": 1, "reprodata": {}}
+        out_val["reprodata"]["rmode"] = str(rmode.value)
         for level in ALL_RMODES:
-            out_val['reprodata'][level.name] = {'lgt_data': {'categoryType': 'Application',
-                                                             'category': Categories.BASH_SHELL_APP},
-                                                'lg_blockhash': '1',
-                                                'pgt_data': {
-                                                    'merkleroot': '2'
-                                                },
-                                                'pgt_parenthashes': {},
-                                                'pgt_blockhash': '3',
-                                                'pg_data': {
-                                                    'merkleroot': '4'
-                                                },
-                                                'pg_parenthashes': {},
-                                                'pg_blockhash': '5',
-                                                'rg_data': {
-                                                    'merkleroot': '6'
-                                                },
-                                                'rg_parenthashes': {}, }
+            out_val["reprodata"][level.name] = {
+                "lgt_data": {
+                    "categoryType": "Application",
+                    "category": Categories.BASH_SHELL_APP,
+                },
+                "lg_blockhash": "1",
+                "pgt_data": {"merkleroot": "2"},
+                "pgt_parenthashes": {},
+                "pgt_blockhash": "3",
+                "pg_data": {"merkleroot": "4"},
+                "pg_parenthashes": {},
+                "pg_blockhash": "5",
+                "rg_data": {"merkleroot": "6"},
+                "rg_parenthashes": {},
+            }
         return out_val
 
 
 def _generate_dummy_data(rmode: ReproducibilityFlags):
     if rmode is not ReproducibilityFlags.ALL:
-        return {'oid': 1,
-                'reprodata': {
-                    'rmode': str(rmode.value),
-                    'lgt_data': {'categoryType': Categories.DATA, 'category': Categories.FILE},
-                    'lg_blockhash': 'a',
-                    'pgt_data': {
-                        'merkleroot': 'b'
-                    },
-                    'pgt_parenthashes': {},
-                    'pgt_blockhash': 'c',
-                    'pg_data': {
-                        'merkleroot': 'd'
-                    },
-                    'pg_parenthashes': {},
-                    'pg_blockhash': 'e',
-                    'rg_data': {
-                        'merkleroot': 'f'
-                    },
-                    'rg_parenthashes': {},
-                }
-                }
+        return {
+            "oid": 1,
+            "reprodata": {
+                "rmode": str(rmode.value),
+                "lgt_data": {
+                    "categoryType": Categories.DATA,
+                    "category": Categories.FILE,
+                },
+                "lg_blockhash": "a",
+                "pgt_data": {"merkleroot": "b"},
+                "pgt_parenthashes": {},
+                "pgt_blockhash": "c",
+                "pg_data": {"merkleroot": "d"},
+                "pg_parenthashes": {},
+                "pg_blockhash": "e",
+                "rg_data": {"merkleroot": "f"},
+                "rg_parenthashes": {},
+            },
+        }
     else:
-        out_val = {'oid': 1, 'reprodata': {}}
-        out_val['reprodata']['rmode'] = str(rmode.value)
+        out_val = {"oid": 1, "reprodata": {}}
+        out_val["reprodata"]["rmode"] = str(rmode.value)
         for level in ALL_RMODES:
-            out_val['reprodata'][level.name] = {
-                'lgt_data': {'categoryType': Categories.DATA, 'category': Categories.FILE},
-                'lg_blockhash': 'a',
-                'pgt_data': {
-                    'merkleroot': 'b'
+            out_val["reprodata"][level.name] = {
+                "lgt_data": {
+                    "categoryType": Categories.DATA,
+                    "category": Categories.FILE,
                 },
-                'pgt_parenthashes': {},
-                'pgt_blockhash': 'c',
-                'pg_data': {
-                    'merkleroot': 'd'
-                },
-                'pg_parenthashes': {},
-                'pg_blockhash': 'e',
-                'rg_data': {
-                    'merkleroot': 'f'
-                },
-                'rg_parenthashes': {}}
+                "lg_blockhash": "a",
+                "pgt_data": {"merkleroot": "b"},
+                "pgt_parenthashes": {},
+                "pgt_blockhash": "c",
+                "pg_data": {"merkleroot": "d"},
+                "pg_parenthashes": {},
+                "pg_blockhash": "e",
+                "rg_data": {"merkleroot": "f"},
+                "rg_parenthashes": {},
+            }
         return out_val
 
 
@@ -138,81 +126,105 @@ def _init_pgraph_single(rmode: ReproducibilityFlags):
 
 
 def _init_pgraph_twostart(rmode: ReproducibilityFlags):
-    pgt = [_generate_dummy_compute(rmode), _generate_dummy_compute(rmode),
-           _generate_dummy_compute(rmode)]
-    pgt[1]['oid'] = 2
-    pgt[2]['oid'] = 3
-    pgt[0]['outputs'] = [2]
-    pgt[2]['outputs'] = [2]
+    pgt = [
+        _generate_dummy_compute(rmode),
+        _generate_dummy_compute(rmode),
+        _generate_dummy_compute(rmode),
+    ]
+    pgt[1]["oid"] = 2
+    pgt[2]["oid"] = 3
+    pgt[0]["outputs"] = [2]
+    pgt[2]["outputs"] = [2]
     return pgt
 
 
 def _init_pgraph_twoend(rmode: ReproducibilityFlags):
-    pgt = [_generate_dummy_compute(rmode), _generate_dummy_compute(rmode),
-           _generate_dummy_compute(rmode)]
-    pgt[1]['oid'] = 2
-    pgt[2]['oid'] = 3
-    pgt[0]['outputs'] = [2, 3]
+    pgt = [
+        _generate_dummy_compute(rmode),
+        _generate_dummy_compute(rmode),
+        _generate_dummy_compute(rmode),
+    ]
+    pgt[1]["oid"] = 2
+    pgt[2]["oid"] = 3
+    pgt[0]["outputs"] = [2, 3]
     for drop in pgt:
-        drop['reprodata']['rmode'] = str(rmode.value)
+        drop["reprodata"]["rmode"] = str(rmode.value)
     return pgt
 
 
 def _init_pgraph_twolines(rmode: ReproducibilityFlags):
-    pgt = [_generate_dummy_compute(rmode), _generate_dummy_compute(rmode),
-           _generate_dummy_compute(rmode),
-           _generate_dummy_compute(rmode)]
-    pgt[1]['oid'] = 2
-    pgt[2]['oid'] = 3
-    pgt[3]['oid'] = 4
-    pgt[0]['outputs'] = [2]
-    pgt[2]['outputs'] = [4]
+    pgt = [
+        _generate_dummy_compute(rmode),
+        _generate_dummy_compute(rmode),
+        _generate_dummy_compute(rmode),
+        _generate_dummy_compute(rmode),
+    ]
+    pgt[1]["oid"] = 2
+    pgt[2]["oid"] = 3
+    pgt[3]["oid"] = 4
+    pgt[0]["outputs"] = [2]
+    pgt[2]["outputs"] = [4]
     for drop in pgt:
-        drop['reprodata']['rmode'] = str(rmode.value)
+        drop["reprodata"]["rmode"] = str(rmode.value)
     return pgt
 
 
 def _init_pgraph_data_fan(rmode: ReproducibilityFlags):
-    pgt = [_generate_dummy_data(rmode), _generate_dummy_compute(rmode), _generate_dummy_data(rmode),
-           _generate_dummy_data(rmode)]
+    pgt = [
+        _generate_dummy_data(rmode),
+        _generate_dummy_compute(rmode),
+        _generate_dummy_data(rmode),
+        _generate_dummy_data(rmode),
+    ]
     for i, drop in enumerate(pgt):
-        pgt[i]['oid'] = i
-        pgt[i]['reprodata']['rmode'] = str(rmode.value)
-    pgt[0]['outputs'] = [1]
-    pgt[1]['outputs'] = [2, 3]
+        pgt[i]["oid"] = i
+        pgt[i]["reprodata"]["rmode"] = str(rmode.value)
+    pgt[0]["outputs"] = [1]
+    pgt[1]["outputs"] = [2, 3]
     return pgt
 
 
 def _init_pgraph_data_funnel(rmode: ReproducibilityFlags):
-    pgt = [_generate_dummy_data(rmode), _generate_dummy_data(rmode), _generate_dummy_compute(rmode),
-           _generate_dummy_data(rmode)]
+    pgt = [
+        _generate_dummy_data(rmode),
+        _generate_dummy_data(rmode),
+        _generate_dummy_compute(rmode),
+        _generate_dummy_data(rmode),
+    ]
     for i, drop in enumerate(pgt):
-        pgt[i]['oid'] = i
-        pgt[i]['reprodata']['rmode'] = str(rmode.value)
-    pgt[0]['outputs'] = [2]
-    pgt[1]['outputs'] = [2]
-    pgt[2]['outputs'] = [3]
+        pgt[i]["oid"] = i
+        pgt[i]["reprodata"]["rmode"] = str(rmode.value)
+    pgt[0]["outputs"] = [2]
+    pgt[1]["outputs"] = [2]
+    pgt[2]["outputs"] = [3]
     return pgt
 
 
 def _init_pgraph_data_sandwich(rmode: ReproducibilityFlags):
-    pgt = [_generate_dummy_data(rmode), _generate_dummy_compute(rmode), _generate_dummy_data(rmode)]
+    pgt = [
+        _generate_dummy_data(rmode),
+        _generate_dummy_compute(rmode),
+        _generate_dummy_data(rmode),
+    ]
     for i, drop in enumerate(pgt):
-        pgt[i]['oid'] = i
-        pgt[i]['reprodata']['rmode'] = str(rmode.value)
-    pgt[0]['outputs'] = [1]
-    pgt[1]['outputs'] = [2]
+        pgt[i]["oid"] = i
+        pgt[i]["reprodata"]["rmode"] = str(rmode.value)
+    pgt[0]["outputs"] = [1]
+    pgt[1]["outputs"] = [2]
     return pgt
 
 
 def _init_pgraph_computation_sandwich(rmode: ReproducibilityFlags):
-    pgt = [_generate_dummy_compute(rmode), _generate_dummy_data(rmode),
-           _generate_dummy_compute(rmode)]
+    pgt = [
+        _generate_dummy_compute(rmode),
+        _generate_dummy_data(rmode),
+        _generate_dummy_compute(rmode),
+    ]
     for i, drop in enumerate(pgt):
-        pgt[i]['oid'] = i
-        pgt[i]['reprodata']['rmode'] = str(rmode.value)
-    pgt[0]['outputs'] = [1]
-    pgt[1]['outputs'] = [2]
+        pgt[i]["oid"] = i
+        pgt[i]["reprodata"]["rmode"] = str(rmode.value)
+    pgt[0]["outputs"] = [1]
+    pgt[1]["outputs"] = [2]
     return pgt
 
 
@@ -230,7 +242,7 @@ class PhysicalBlockdagRerunTests(unittest.TestCase):
         Tests a single drop
         """
         pgr = _init_pgraph_single(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(len(leaves) == 1)
 
     def test_pg_blockdag_twostart(self):
@@ -241,11 +253,13 @@ class PhysicalBlockdagRerunTests(unittest.TestCase):
         2 -->
         """
         pgr = _init_pgraph_twostart(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
-        parenthashes = list(pgr[1]['reprodata']['pg_parenthashes'].values())
-        self.assertTrue(len(leaves) == 1 and
-                        len(parenthashes) == 2 and
-                        parenthashes[0] == parenthashes[1])
+        leaves = build_blockdag(pgr, "pg")[0]
+        parenthashes = list(pgr[1]["reprodata"]["pg_parenthashes"].values())
+        self.assertTrue(
+            len(leaves) == 1
+            and len(parenthashes) == 2
+            and parenthashes[0] == parenthashes[1]
+        )
 
     def test_pg_blockdag_twoend(self):
         """
@@ -255,7 +269,7 @@ class PhysicalBlockdagRerunTests(unittest.TestCase):
           --> 3
         """
         pgr = _init_pgraph_twoend(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_pg_blockdag_twolines(self):
@@ -265,7 +279,7 @@ class PhysicalBlockdagRerunTests(unittest.TestCase):
         3 --> 4
         """
         pgr = _init_pgraph_twolines(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_data_fan(self):
@@ -273,10 +287,10 @@ class PhysicalBlockdagRerunTests(unittest.TestCase):
         Tests that a single data source scatters its signature to downstream data drops.
         """
         pgr = _init_pgraph_data_fan(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthash1 = list(pgr[2]['reprodata']['pg_parenthashes'].values())
-        parenthash2 = list(pgr[3]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthash1 = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
+        parenthash2 = list(pgr[3]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
@@ -284,9 +298,9 @@ class PhysicalBlockdagRerunTests(unittest.TestCase):
         Tests that two data sources are collected in a single downstream data drop
         """
         pgr = _init_pgraph_data_funnel(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[2]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[3]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[2]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[3]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_data_sandwich(self):
@@ -295,9 +309,9 @@ class PhysicalBlockdagRerunTests(unittest.TestCase):
         :return:
         """
         pgr = _init_pgraph_data_sandwich(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[2]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_computation_sandwich(self):
@@ -305,9 +319,9 @@ class PhysicalBlockdagRerunTests(unittest.TestCase):
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
         pgr = _init_pgraph_computation_sandwich(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[2]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
 
@@ -324,7 +338,7 @@ class PhysicalBlockdagRepeatTests(unittest.TestCase):
         Tests a single drop
         """
         pgr = _init_pgraph_single(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(len(leaves) == 1)
 
     def test_pg_blockdag_twostart(self):
@@ -335,11 +349,13 @@ class PhysicalBlockdagRepeatTests(unittest.TestCase):
         2 -->
         """
         pgr = _init_pgraph_twostart(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
-        parenthashes = list(pgr[1]['reprodata']['pg_parenthashes'].values())
-        self.assertTrue(len(leaves) == 1 and
-                        len(parenthashes) == 2 and
-                        parenthashes[0] == parenthashes[1])
+        leaves = build_blockdag(pgr, "pg")[0]
+        parenthashes = list(pgr[1]["reprodata"]["pg_parenthashes"].values())
+        self.assertTrue(
+            len(leaves) == 1
+            and len(parenthashes) == 2
+            and parenthashes[0] == parenthashes[1]
+        )
 
     def test_pg_blockdag_twoend(self):
         """
@@ -349,7 +365,7 @@ class PhysicalBlockdagRepeatTests(unittest.TestCase):
           --> 3
         """
         pgr = _init_pgraph_twoend(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_pg_blockdag_twolines(self):
@@ -359,7 +375,7 @@ class PhysicalBlockdagRepeatTests(unittest.TestCase):
         3 --> 4
         """
         pgr = _init_pgraph_twolines(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_data_fan(self):
@@ -367,10 +383,10 @@ class PhysicalBlockdagRepeatTests(unittest.TestCase):
         Tests that a single data source scatters its signature to downstream data drops.
         """
         pgr = _init_pgraph_data_fan(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthash1 = list(pgr[2]['reprodata']['pg_parenthashes'].values())
-        parenthash2 = list(pgr[3]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthash1 = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
+        parenthash2 = list(pgr[3]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
@@ -378,9 +394,9 @@ class PhysicalBlockdagRepeatTests(unittest.TestCase):
         Tests that two data sources are collected in a single downstream data drop
         """
         pgr = _init_pgraph_data_funnel(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[2]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[3]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[2]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[3]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_data_sandwich(self):
@@ -389,9 +405,9 @@ class PhysicalBlockdagRepeatTests(unittest.TestCase):
         :return:
         """
         pgr = _init_pgraph_data_sandwich(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[2]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_computation_sandwich(self):
@@ -399,9 +415,9 @@ class PhysicalBlockdagRepeatTests(unittest.TestCase):
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
         pgr = _init_pgraph_computation_sandwich(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[2]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
 
@@ -418,7 +434,7 @@ class PhysicalBlockdagRecomputeTests(unittest.TestCase):
         Tests a single drop
         """
         pgr = _init_pgraph_single(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(len(leaves) == 1)
 
     def test_pg_blockdag_twostart(self):
@@ -429,11 +445,13 @@ class PhysicalBlockdagRecomputeTests(unittest.TestCase):
         2 -->
         """
         pgr = _init_pgraph_twostart(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
-        parenthashes = list(pgr[1]['reprodata']['pg_parenthashes'].values())
-        self.assertTrue(len(leaves) == 1 and
-                        len(parenthashes) == 2 and
-                        parenthashes[0] == parenthashes[1])
+        leaves = build_blockdag(pgr, "pg")[0]
+        parenthashes = list(pgr[1]["reprodata"]["pg_parenthashes"].values())
+        self.assertTrue(
+            len(leaves) == 1
+            and len(parenthashes) == 2
+            and parenthashes[0] == parenthashes[1]
+        )
 
     def test_pg_blockdag_twoend(self):
         """
@@ -443,7 +461,7 @@ class PhysicalBlockdagRecomputeTests(unittest.TestCase):
           --> 3
         """
         pgr = _init_pgraph_twoend(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_pg_blockdag_twolines(self):
@@ -453,7 +471,7 @@ class PhysicalBlockdagRecomputeTests(unittest.TestCase):
         3 --> 4
         """
         pgr = _init_pgraph_twolines(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_data_fan(self):
@@ -461,10 +479,10 @@ class PhysicalBlockdagRecomputeTests(unittest.TestCase):
         Tests that a single data source scatters its signature to downstream data drops.
         """
         pgr = _init_pgraph_data_fan(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthash1 = list(pgr[2]['reprodata']['pg_parenthashes'].values())
-        parenthash2 = list(pgr[3]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthash1 = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
+        parenthash2 = list(pgr[3]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
@@ -472,9 +490,9 @@ class PhysicalBlockdagRecomputeTests(unittest.TestCase):
         Tests that two data sources are collected in a single downstream data drop
         """
         pgr = _init_pgraph_data_funnel(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[2]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[3]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[2]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[3]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_data_sandwich(self):
@@ -483,9 +501,9 @@ class PhysicalBlockdagRecomputeTests(unittest.TestCase):
         :return:
         """
         pgr = _init_pgraph_data_sandwich(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[2]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_computation_sandwich(self):
@@ -493,9 +511,9 @@ class PhysicalBlockdagRecomputeTests(unittest.TestCase):
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
         pgr = _init_pgraph_computation_sandwich(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[2]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
 
@@ -512,7 +530,7 @@ class PhysicalBlockdagReproduceTests(unittest.TestCase):
         Tests a single drop
         """
         pgr = _init_pgraph_single(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(len(leaves) == 1)
 
     def test_pg_blockdag_twostart(self):
@@ -523,8 +541,8 @@ class PhysicalBlockdagReproduceTests(unittest.TestCase):
         2 -->
         """
         pgr = _init_pgraph_twostart(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
-        parenthashes = list(pgr[1]['reprodata']['pg_parenthashes'].values())
+        leaves = build_blockdag(pgr, "pg")[0]
+        parenthashes = list(pgr[1]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(len(leaves) == 1 and len(parenthashes) == 0)
 
     def test_pg_blockdag_twoend(self):
@@ -535,7 +553,7 @@ class PhysicalBlockdagReproduceTests(unittest.TestCase):
           --> 3
         """
         pgr = _init_pgraph_twoend(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_pg_blockdag_twolines(self):
@@ -545,7 +563,7 @@ class PhysicalBlockdagReproduceTests(unittest.TestCase):
         3 --> 4
         """
         pgr = _init_pgraph_twolines(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_data_fan(self):
@@ -553,10 +571,10 @@ class PhysicalBlockdagReproduceTests(unittest.TestCase):
         Tests that a single data source scatters its signature to downstream data drops.
         """
         pgr = _init_pgraph_data_fan(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[0]['reprodata']['pg_blockhash']
-        parenthash1 = list(pgr[2]['reprodata']['pg_parenthashes'].values())
-        parenthash2 = list(pgr[3]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[0]["reprodata"]["pg_blockhash"]
+        parenthash1 = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
+        parenthash2 = list(pgr[3]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
@@ -564,9 +582,9 @@ class PhysicalBlockdagReproduceTests(unittest.TestCase):
         Tests that two data sources are collected in a single downstream data drop
         """
         pgr = _init_pgraph_data_funnel(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[0]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[3]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[0]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[3]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 2)
 
     def test_data_sandwich(self):
@@ -575,9 +593,9 @@ class PhysicalBlockdagReproduceTests(unittest.TestCase):
         :return:
         """
         pgr = _init_pgraph_data_sandwich(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[0]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[2]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[0]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_computation_sandwich(self):
@@ -585,9 +603,9 @@ class PhysicalBlockdagReproduceTests(unittest.TestCase):
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
         pgr = _init_pgraph_computation_sandwich(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[2]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
 
@@ -604,7 +622,7 @@ class PhysicalBlockdagReplicateScientificTests(unittest.TestCase):
         Tests a single drop
         """
         pgr = _init_pgraph_single(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(len(leaves) == 1)
 
     def test_pg_blockdag_twostart(self):
@@ -615,11 +633,13 @@ class PhysicalBlockdagReplicateScientificTests(unittest.TestCase):
         2 -->
         """
         pgr = _init_pgraph_twostart(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
-        parenthashes = list(pgr[1]['reprodata']['pg_parenthashes'].values())
-        self.assertTrue(len(leaves) == 1 and
-                        len(parenthashes) == 2 and
-                        parenthashes[0] == parenthashes[1])
+        leaves = build_blockdag(pgr, "pg")[0]
+        parenthashes = list(pgr[1]["reprodata"]["pg_parenthashes"].values())
+        self.assertTrue(
+            len(leaves) == 1
+            and len(parenthashes) == 2
+            and parenthashes[0] == parenthashes[1]
+        )
 
     def test_pg_blockdag_twoend(self):
         """
@@ -629,7 +649,7 @@ class PhysicalBlockdagReplicateScientificTests(unittest.TestCase):
           --> 3
         """
         pgr = _init_pgraph_twoend(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_pg_blockdag_twolines(self):
@@ -639,7 +659,7 @@ class PhysicalBlockdagReplicateScientificTests(unittest.TestCase):
         3 --> 4
         """
         pgr = _init_pgraph_twolines(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_data_fan(self):
@@ -647,10 +667,10 @@ class PhysicalBlockdagReplicateScientificTests(unittest.TestCase):
         Tests that a single data source scatters its signature to downstream data drops.
         """
         pgr = _init_pgraph_data_fan(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthash1 = list(pgr[2]['reprodata']['pg_parenthashes'].values())
-        parenthash2 = list(pgr[3]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthash1 = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
+        parenthash2 = list(pgr[3]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
@@ -658,9 +678,9 @@ class PhysicalBlockdagReplicateScientificTests(unittest.TestCase):
         Tests that two data sources are collected in a single downstream data drop
         """
         pgr = _init_pgraph_data_funnel(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[2]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[3]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[2]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[3]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_data_sandwich(self):
@@ -669,9 +689,9 @@ class PhysicalBlockdagReplicateScientificTests(unittest.TestCase):
         :return:
         """
         pgr = _init_pgraph_data_sandwich(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[2]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_computation_sandwich(self):
@@ -679,9 +699,9 @@ class PhysicalBlockdagReplicateScientificTests(unittest.TestCase):
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
         pgr = _init_pgraph_computation_sandwich(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[2]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
 
@@ -698,7 +718,7 @@ class PhysicalBlockdagReplicateComputationTests(unittest.TestCase):
         Tests a single drop
         """
         pgr = _init_pgraph_single(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(len(leaves) == 1)
 
     def test_pg_blockdag_twostart(self):
@@ -709,11 +729,13 @@ class PhysicalBlockdagReplicateComputationTests(unittest.TestCase):
         2 -->
         """
         pgr = _init_pgraph_twostart(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
-        parenthashes = list(pgr[1]['reprodata']['pg_parenthashes'].values())
-        self.assertTrue(len(leaves) == 1 and
-                        len(parenthashes) == 2 and
-                        parenthashes[0] == parenthashes[1])
+        leaves = build_blockdag(pgr, "pg")[0]
+        parenthashes = list(pgr[1]["reprodata"]["pg_parenthashes"].values())
+        self.assertTrue(
+            len(leaves) == 1
+            and len(parenthashes) == 2
+            and parenthashes[0] == parenthashes[1]
+        )
 
     def test_pg_blockdag_twoend(self):
         """
@@ -723,7 +745,7 @@ class PhysicalBlockdagReplicateComputationTests(unittest.TestCase):
           --> 3
         """
         pgr = _init_pgraph_twoend(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_pg_blockdag_twolines(self):
@@ -733,7 +755,7 @@ class PhysicalBlockdagReplicateComputationTests(unittest.TestCase):
         3 --> 4
         """
         pgr = _init_pgraph_twolines(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_data_fan(self):
@@ -741,10 +763,10 @@ class PhysicalBlockdagReplicateComputationTests(unittest.TestCase):
         Tests that a single data source scatters its signature to downstream data drops.
         """
         pgr = _init_pgraph_data_fan(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthash1 = list(pgr[2]['reprodata']['pg_parenthashes'].values())
-        parenthash2 = list(pgr[3]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthash1 = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
+        parenthash2 = list(pgr[3]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
@@ -752,9 +774,9 @@ class PhysicalBlockdagReplicateComputationTests(unittest.TestCase):
         Tests that two data sources are collected in a single downstream data drop
         """
         pgr = _init_pgraph_data_funnel(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[2]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[3]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[2]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[3]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_data_sandwich(self):
@@ -763,9 +785,9 @@ class PhysicalBlockdagReplicateComputationTests(unittest.TestCase):
         :return:
         """
         pgr = _init_pgraph_data_sandwich(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[2]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_computation_sandwich(self):
@@ -773,9 +795,9 @@ class PhysicalBlockdagReplicateComputationTests(unittest.TestCase):
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
         pgr = _init_pgraph_computation_sandwich(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[2]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
 
@@ -792,7 +814,7 @@ class PhysicalBlockdagReplicateTotalTests(unittest.TestCase):
         Tests a single drop
         """
         pgr = _init_pgraph_single(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(len(leaves) == 1)
 
     def test_pg_blockdag_twostart(self):
@@ -803,11 +825,13 @@ class PhysicalBlockdagReplicateTotalTests(unittest.TestCase):
         2 -->
         """
         pgr = _init_pgraph_twostart(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
-        parenthashes = list(pgr[1]['reprodata']['pg_parenthashes'].values())
-        self.assertTrue(len(leaves) == 1 and
-                        len(parenthashes) == 2 and
-                        parenthashes[0] == parenthashes[1])
+        leaves = build_blockdag(pgr, "pg")[0]
+        parenthashes = list(pgr[1]["reprodata"]["pg_parenthashes"].values())
+        self.assertTrue(
+            len(leaves) == 1
+            and len(parenthashes) == 2
+            and parenthashes[0] == parenthashes[1]
+        )
 
     def test_pg_blockdag_twoend(self):
         """
@@ -817,7 +841,7 @@ class PhysicalBlockdagReplicateTotalTests(unittest.TestCase):
           --> 3
         """
         pgr = _init_pgraph_twoend(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_pg_blockdag_twolines(self):
@@ -827,7 +851,7 @@ class PhysicalBlockdagReplicateTotalTests(unittest.TestCase):
         3 --> 4
         """
         pgr = _init_pgraph_twolines(self.rmode)
-        leaves = build_blockdag(pgr, 'pg')[0]
+        leaves = build_blockdag(pgr, "pg")[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_data_fan(self):
@@ -835,10 +859,10 @@ class PhysicalBlockdagReplicateTotalTests(unittest.TestCase):
         Tests that a single data source scatters its signature to downstream data drops.
         """
         pgr = _init_pgraph_data_fan(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthash1 = list(pgr[2]['reprodata']['pg_parenthashes'].values())
-        parenthash2 = list(pgr[3]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthash1 = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
+        parenthash2 = list(pgr[3]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
@@ -846,9 +870,9 @@ class PhysicalBlockdagReplicateTotalTests(unittest.TestCase):
         Tests that two data sources are collected in a single downstream data drop
         """
         pgr = _init_pgraph_data_funnel(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[2]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[3]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[2]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[3]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_data_sandwich(self):
@@ -857,9 +881,9 @@ class PhysicalBlockdagReplicateTotalTests(unittest.TestCase):
         :return:
         """
         pgr = _init_pgraph_data_sandwich(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[2]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_computation_sandwich(self):
@@ -867,9 +891,9 @@ class PhysicalBlockdagReplicateTotalTests(unittest.TestCase):
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
         pgr = _init_pgraph_computation_sandwich(self.rmode)
-        build_blockdag(pgr, 'pg')
-        sourcehash = pgr[1]['reprodata']['pg_blockhash']
-        parenthashes = list(pgr[2]['reprodata']['pg_parenthashes'].values())
+        build_blockdag(pgr, "pg")
+        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        parenthashes = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
 
@@ -888,7 +912,7 @@ class PhysicalBlockdagAllTests(unittest.TestCase):
         """
         pgr = _init_pgraph_single(self.rmode)
         for rmode in ALL_RMODES:
-            leaves = build_blockdag(pgr, 'pg', rmode)[0]
+            leaves = build_blockdag(pgr, "pg", rmode)[0]
             self.assertTrue(len(leaves) == 1)
 
     def test_pg_blockdag_twostart(self):
@@ -900,12 +924,16 @@ class PhysicalBlockdagAllTests(unittest.TestCase):
         """
         pgr = _init_pgraph_twostart(self.rmode)
         for rmode in ALL_RMODES:
-            leaves = build_blockdag(pgr, 'pg', rmode)[0]
-            parenthashes = list(pgr[1]['reprodata'][rmode.name]['pg_parenthashes'].values())
+            leaves = build_blockdag(pgr, "pg", rmode)[0]
+            parenthashes = list(
+                pgr[1]["reprodata"][rmode.name]["pg_parenthashes"].values()
+            )
             if rmode is not ReproducibilityFlags.REPRODUCE:
-                self.assertTrue(len(leaves) == 1 and
-                                len(parenthashes) == 2 and
-                                parenthashes[0] == parenthashes[1])
+                self.assertTrue(
+                    len(leaves) == 1
+                    and len(parenthashes) == 2
+                    and parenthashes[0] == parenthashes[1]
+                )
             else:
                 self.assertTrue(len(leaves) == 1 and len(parenthashes) == 0)
 
@@ -918,7 +946,7 @@ class PhysicalBlockdagAllTests(unittest.TestCase):
         """
         pgr = _init_pgraph_twoend(self.rmode)
         for rmode in ALL_RMODES:
-            leaves = build_blockdag(pgr, 'pg', rmode)[0]
+            leaves = build_blockdag(pgr, "pg", rmode)[0]
             self.assertTrue(leaves[0] == leaves[1])
 
     def test_pg_blockdag_twolines(self):
@@ -929,7 +957,7 @@ class PhysicalBlockdagAllTests(unittest.TestCase):
         """
         pgr = _init_pgraph_twolines(self.rmode)
         for rmode in ALL_RMODES:
-            leaves = build_blockdag(pgr, 'pg', rmode)[0]
+            leaves = build_blockdag(pgr, "pg", rmode)[0]
             self.assertTrue(leaves[0] == leaves[1])
 
     def test_data_fan(self):
@@ -938,13 +966,17 @@ class PhysicalBlockdagAllTests(unittest.TestCase):
         """
         pgr = _init_pgraph_data_fan(self.rmode)
         for rmode in ALL_RMODES:
-            build_blockdag(pgr, 'pg', rmode)
+            build_blockdag(pgr, "pg", rmode)
             if rmode is ReproducibilityFlags.REPRODUCE:
-                sourcehash = pgr[0]['reprodata'][rmode.name]['pg_blockhash']
+                sourcehash = pgr[0]["reprodata"][rmode.name]["pg_blockhash"]
             else:
-                sourcehash = pgr[1]['reprodata'][rmode.name]['pg_blockhash']
-            parenthash1 = list(pgr[2]['reprodata'][rmode.name]['pg_parenthashes'].values())
-            parenthash2 = list(pgr[3]['reprodata'][rmode.name]['pg_parenthashes'].values())
+                sourcehash = pgr[1]["reprodata"][rmode.name]["pg_blockhash"]
+            parenthash1 = list(
+                pgr[2]["reprodata"][rmode.name]["pg_parenthashes"].values()
+            )
+            parenthash2 = list(
+                pgr[3]["reprodata"][rmode.name]["pg_parenthashes"].values()
+            )
             self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
@@ -953,15 +985,23 @@ class PhysicalBlockdagAllTests(unittest.TestCase):
         """
         pgr = _init_pgraph_data_funnel(self.rmode)
         for rmode in ALL_RMODES:
-            build_blockdag(pgr, 'pg', rmode)
+            build_blockdag(pgr, "pg", rmode)
             if rmode is ReproducibilityFlags.REPRODUCE:
-                sourcehash = pgr[0]['reprodata'][rmode.name]['pg_blockhash']
-                parenthashes = list(pgr[3]['reprodata'][rmode.name]['pg_parenthashes'].values())
-                self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 2)
+                sourcehash = pgr[0]["reprodata"][rmode.name]["pg_blockhash"]
+                parenthashes = list(
+                    pgr[3]["reprodata"][rmode.name]["pg_parenthashes"].values()
+                )
+                self.assertTrue(
+                    sourcehash == parenthashes[0] and len(parenthashes) == 2
+                )
             else:
-                sourcehash = pgr[2]['reprodata'][rmode.name]['pg_blockhash']
-                parenthashes = list(pgr[3]['reprodata'][rmode.name]['pg_parenthashes'].values())
-                self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+                sourcehash = pgr[2]["reprodata"][rmode.name]["pg_blockhash"]
+                parenthashes = list(
+                    pgr[3]["reprodata"][rmode.name]["pg_parenthashes"].values()
+                )
+                self.assertTrue(
+                    sourcehash == parenthashes[0] and len(parenthashes) == 1
+                )
 
     def test_data_sandwich(self):
         """
@@ -970,12 +1010,14 @@ class PhysicalBlockdagAllTests(unittest.TestCase):
         """
         pgr = _init_pgraph_data_sandwich(self.rmode)
         for rmode in ALL_RMODES:
-            build_blockdag(pgr, 'pg', rmode)
+            build_blockdag(pgr, "pg", rmode)
             if rmode is ReproducibilityFlags.REPRODUCE:
-                sourcehash = pgr[0]['reprodata'][rmode.name]['pg_blockhash']
+                sourcehash = pgr[0]["reprodata"][rmode.name]["pg_blockhash"]
             else:
-                sourcehash = pgr[1]['reprodata'][rmode.name]['pg_blockhash']
-            parenthashes = list(pgr[2]['reprodata'][rmode.name]['pg_parenthashes'].values())
+                sourcehash = pgr[1]["reprodata"][rmode.name]["pg_blockhash"]
+            parenthashes = list(
+                pgr[2]["reprodata"][rmode.name]["pg_parenthashes"].values()
+            )
             self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_computation_sandwich(self):
@@ -984,7 +1026,9 @@ class PhysicalBlockdagAllTests(unittest.TestCase):
         """
         pgr = _init_pgraph_computation_sandwich(self.rmode)
         for rmode in ALL_RMODES:
-            build_blockdag(pgr, 'pg', rmode)
-            sourcehash = pgr[1]['reprodata'][rmode.name]['pg_blockhash']
-            parenthashes = list(pgr[2]['reprodata'][rmode.name]['pg_parenthashes'].values())
+            build_blockdag(pgr, "pg", rmode)
+            sourcehash = pgr[1]["reprodata"][rmode.name]["pg_blockhash"]
+            parenthashes = list(
+                pgr[2]["reprodata"][rmode.name]["pg_parenthashes"].values()
+            )
             self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
