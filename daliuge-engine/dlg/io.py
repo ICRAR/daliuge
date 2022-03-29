@@ -330,13 +330,29 @@ class MemoryIO(DataIO):
         super().__init__()
         self._buf = buf
 
+    class BytesIOReader(io.BufferedReader):
+        """
+        An BinaryIO Reader that wraps a BytesIO object for concurrent
+        reading and writing. Closing this reader will not close other
+        readers observing the same BytesIO object.
+        """
+        _closed = False
+        def __init__(self, raw: io.BytesIO, buffer_size: int = 2048):
+            assert isinstance(raw, io.BytesIO)
+            # NOTE: BytesIO extends BufferedIOBase instead of RawIOBase. Read
+            # and peek operations may return more bytes than requested.
+            super().__init__(raw, buffer_size)  # type: ignore
+        def close(self) -> None:
+            self._closed = True
+        @property
+        def closed(self) -> bool:
+            return self.closed
+
     def _open(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
             return self._buf
         elif self._mode == OpenMode.OPEN_READ:
-            # NOTE: BytesIO extends BufferedIOBase instead of RawIOBase
-            br = io.BufferedReader(self._buf)   # type: ignore
-            #br = io.BufferedReader(io.BytesIO(self._buf.getbuffer()))
+            br = MemoryIO.BytesIOReader(self._buf)
             br.seek(0)
             return br
         else:
@@ -377,8 +393,6 @@ class MemoryIO(DataIO):
     def _close(self, **kwargs):
         if self._mode == OpenMode.OPEN_READ:
             self._desc.close()
-        else:
-            logger.debug("closing")
         # If we're writing we don't close the descriptor because it's our
         # self._buf, which won't be readable afterwards
 
