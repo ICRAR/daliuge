@@ -68,9 +68,9 @@ def partition(x):
     return x / 2, x - x / 2
 
 
-def sum_with_args(a, *args):
+def sum_with_args(a, a1=0, a2=0, a3=0):
     """Returns a + sum((a1, a2, a3))"""
-    return a + sum(args)
+    return a + sum([a1, a2, a3])
 
 
 def sum_with_kwargs(a, **kwargs):
@@ -125,6 +125,8 @@ class _TestDelayed(object):
         the_sub = delayed(subtract)(4.0, 3.0)
         division = delayed(divide)(the_sum, the_sub)
         parts = delayed(partition, nout=2)(division)
+        logger.debug(f"partitions: {type(parts)}")
+        result = 3.0
         result = compute(delayed(add)(*parts))
         self.assertEqual(3.0, result)
 
@@ -246,8 +248,8 @@ class TestDlgDelayed(_TestDelayed, unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
         env = os.environ.copy()
-        env["PYTHONPATH"] = env.get("PYTHONPATH", "") + ":" + os.getcwd()
-        self.dmProcess = tool.start_process("nm", env=env)
+        env["PYTHONPATH"] = env.get("PYTHONPATH", "") + ":" + os.getcwd() + '/daliuge-engine'
+        self.dmProcess = tool.start_process("nm", ["-vvv"], env=env)
 
     def compute(self, val):
         return dlg_compute(val)
