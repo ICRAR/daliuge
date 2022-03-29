@@ -48,7 +48,7 @@ from collections import namedtuple
 from functools import partial
 from itertools import chain
 
-Event = namedtuple('Event', 'task start end')
+Event = namedtuple("Event", "task start end")
 
 
 def reverse_dict(d):
@@ -82,8 +82,11 @@ def cbar(ni, nj, agents, commcost):
     if n == 1:
         return 0
     npairs = n * (n - 1)
-    return 1. * sum(commcost(ni, nj, a1, a2) for a1 in agents for a2 in agents
-                    if a1 != a2) / npairs
+    return (
+        1.0
+        * sum(commcost(ni, nj, a1, a2) for a1 in agents for a2 in agents if a1 != a2)
+        / npairs
+    )
 
 
 def ranku(ni, agents, succ, compcost, commcost):
@@ -94,8 +97,9 @@ def ranku(ni, agents, succ, compcost, commcost):
 
     [1]. http://en.wikipedia.org/wiki/Heterogeneous_Earliest_Finish_Time
     """
-    rank = partial(ranku, compcost=compcost, commcost=commcost,
-                   succ=succ, agents=agents)
+    rank = partial(
+        ranku, compcost=compcost, commcost=commcost, succ=succ, agents=agents
+    )
     w = partial(wbar, compcost=compcost, agents=agents)
     c = partial(cbar, agents=agents, commcost=commcost)
 
@@ -157,8 +161,12 @@ def start_time(task, orders, taskson, prec, commcost, compcost, agent):
     duration = compcost(task, agent)
 
     if task in prec:
-        comm_ready = max([endtime(p, orders[taskson[p]])
-                          + commcost(p, task, taskson[p], agent) for p in prec[task]])
+        comm_ready = max(
+            [
+                endtime(p, orders[taskson[p]]) + commcost(p, task, taskson[p], agent)
+                for p in prec[task]
+            ]
+        )
     else:
         comm_ready = 0
 
@@ -172,7 +180,8 @@ def allocate(task, orders, taskson, prec, compcost, commcost):
     """
     st = partial(start_time, task, orders, taskson, prec, commcost, compcost)
 
-    def ft(machine): return st(machine) + compcost(task, machine)
+    def ft(machine):
+        return st(machine) + compcost(task, machine)
 
     # 'min()' represents 'earliest' finished time (ft)
     # this is exactly why the allocation policy is considered greedy!
@@ -207,8 +216,9 @@ def schedule(succ, agents, compcost, commcost):
     compcost - function :: task, agent -> runtime
     commcost - function :: j1, j2, a1, a2 -> communication time
     """
-    rank = partial(ranku, agents=agents, succ=succ,
-                   compcost=compcost, commcost=commcost)
+    rank = partial(
+        ranku, agents=agents, succ=succ, compcost=compcost, commcost=commcost
+    )
     prec = reverse_dict(succ)
 
     tasks = set(succ.keys()) | set(x for xx in succ.values() for x in xx)

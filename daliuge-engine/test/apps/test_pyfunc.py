@@ -48,10 +48,8 @@ def func2(arg1):
     return arg1 * 2
 
 
-
 def func3():
     return ["b", "c", "d"]
-
 
 
 def func_with_defaults(a, b=10, c=20, x=30, y=40, z=50):
@@ -68,9 +66,14 @@ def _PyFuncApp(oid, uid, f, **kwargs):
 
     fcode, fdefaults = pyfunc.serialize_func(f)
     return pyfunc.PyFuncApp(
-        oid, uid, func_name=fname, func_code=fcode, func_defaults=fdefaults, pickle=True, **kwargs
+        oid,
+        uid,
+        func_name=fname,
+        func_code=fcode,
+        func_defaults=fdefaults,
+        pickle=True,
+        **kwargs
     )
-
 
 
 class TestPyFuncApp(unittest.TestCase):
@@ -270,9 +273,10 @@ class TestPyFuncApp(unittest.TestCase):
     def test_reproducibility(self):
         from dlg.common.reproducibility.constants import ReproducibilityFlags
         from dlg.drop import NullDROP
-        a = _PyFuncApp('a', 'a', 'func3')
+
+        a = _PyFuncApp("a", "a", "func3")
         a.run()
-        b = NullDROP('b', 'b')
+        b = NullDROP("b", "b")
         a.reproducibility_level = ReproducibilityFlags.RERUN
         b.reproducibility_level = ReproducibilityFlags.RERUN
         a.setCompleted()
@@ -284,7 +288,7 @@ class TestPyFuncApp(unittest.TestCase):
 
         a.reproducibility_level = ReproducibilityFlags.RECOMPUTE
         self.assertNotEqual(a.merkleroot, b.merkleroot)
-        self.assertEqual(a.generate_merkle_data(), {'args': [], 'kwargs': {}})
+        self.assertEqual(a.generate_merkle_data(), {"args": [], "kwargs": {}})
 
         a.reproducibility_level = ReproducibilityFlags.REPRODUCE
         self.assertNotEqual(a.merkleroot, b.merkleroot)

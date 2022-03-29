@@ -23,7 +23,13 @@
 This module tests the top-level reproducibility repro methods for missing entries.
 """
 import unittest
-from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data, init_pgt_unroll_repro_data, init_pgt_partition_repro_data, init_pg_repro_data
+from dlg.common.reproducibility.reproducibility import (
+    init_lgt_repro_data,
+    init_lg_repro_data,
+    init_pgt_unroll_repro_data,
+    init_pgt_partition_repro_data,
+    init_pg_repro_data,
+)
 
 
 class InitReproTest(unittest.TestCase):
@@ -33,26 +39,25 @@ class InitReproTest(unittest.TestCase):
 
     def test_lgt_init(self):
         _graph = {}
-        sig = init_lgt_repro_data(_graph, '0')
-        self.assertNotEqual({}, sig['reprodata'])
+        sig = init_lgt_repro_data(_graph, "0")
+        self.assertNotEqual({}, sig["reprodata"])
 
     def test_lg_init(self):
         _graph = {}
         sig = init_lg_repro_data(_graph)
-        self.assertNotEqual({}, sig['reprodata'])
+        self.assertNotEqual({}, sig["reprodata"])
 
     def test_pgt_unroll_init(self):
         _graph = [{}]
         sig = init_pgt_unroll_repro_data(_graph)
-        self.assertIsNone(sig[0]['signature'])
+        self.assertIsNone(sig[0]["signature"])
 
     def test_pgt_partition_init(self):
         _graph = [{}]
         sig = init_pgt_partition_repro_data(_graph)
-        self.assertIsNone(sig[0]['signature'])
+        self.assertIsNone(sig[0]["signature"])
 
     def test_pg_init(self):
         _graph = [{}]
         sig = init_pg_repro_data(_graph)
-        self.assertIsNone(sig[0]['signature'])
-
+        self.assertIsNone(sig[0]["signature"])

@@ -59,7 +59,7 @@ class DockerTests(unittest.TestCase):
 
         if cls._temp is None:
             cls._temp = "/tmp/daliuge_tfiles"
-        
+
         os.environ["DLG_ROOT"] = cls._temp
         logger.info(f"Preparing pwd and group files in {utils.getDlgDir()}")
         _dum = utils.prepareUser(DLG_ROOT=utils.getDlgDir())
