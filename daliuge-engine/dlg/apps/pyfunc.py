@@ -45,7 +45,6 @@ from dlg.meta import (
     dlg_batch_output,
     dlg_streaming_input,
 )
-from numpy import isin
 
 logger = logging.getLogger(__name__)
 
@@ -65,12 +64,13 @@ def serialize_func(f):
         f = getattr(importlib.import_module(".".join(parts[:-1])), parts[-1])
 
     fser = dill.dumps(f)
-    fdefaults = {}
+    fdefaults = {"args":[], "kwargs": {}}
     a = inspect.getfullargspec(f)
     if a.defaults:
-        fdefaults = dict(
+        fdefaults["kwargs"] = dict(
             zip(a.args[-len(a.defaults):], [serialize_data(d) for d in a.defaults])
         )
+    logger.debug(f"Introspection of function {f}: {a}")
     logger.debug("Defaults for function %r: %r", f, fdefaults)
     return fser, fdefaults
 
@@ -191,18 +191,14 @@ class PyFuncApp(BarrierAppDROP):
 
 
     f: Callable
-    func_defaults: dict
+    fdefaults: dict
 
     def _init_func_defaults(self):
         """
-        Inititalize self.func_defaults dictionary from value provided.
+        Inititalize self.func_defaults dictionary from values provided.
         Multiple options exist and some are here for compatibility.
         """
         logger.debug(f"Starting evaluation of func_defaults: {self.func_defaults}")
-        if self.pickle:
-            # only values are pickled, get them unpickled
-            for name, value in self.func_defaults.items():
-                self.func_defaults[name] = deserialize_data(value)
         if isinstance(self.func_defaults, dict) and len(self.func_defaults) > 0 and \
             list(self.func_defaults.keys()) == ["kwargs", "args"]:
             # we bring everything back to just kwargs, because positional args are messy
@@ -219,20 +215,22 @@ class PyFuncApp(BarrierAppDROP):
             logger.error(f"Wrong format or type for function defaults for "+\
                 "{self.f.__name__}: {self.func_defaults}, {type(self.func_defaults)}")
             raise ValueError
+        if self.pickle:
+            # only values are pickled, get them unpickled
+            for name, value in self.func_defaults.items():
+                self.func_defaults[name] = deserialize_data(value)
 
-        # set the function provided defaults
+        # set the function defaults from introspection
         if (self.arguments):
             self.fn_npos = len(self.arguments.args) - self.fn_ndef
             self.fn_defaults = {name:None for name in self.arguments.args[:self.fn_npos]}
+            logger.debug(f"initialized fn_defaults with {self.fn_defaults}")
             kwargs = dict(
                 zip(self.arguments.args[self.fn_npos:], 
                 self.arguments.defaults)) if self.arguments.defaults else {}
-            self.fn_posargs = self.arguments.args[:self.fn_npos]
-            logger.debug(f"initializing fn_defaults with {self.fn_defaults}")
-            logger.debug(f"updating fn_defaults with {kwargs}")
             self.fn_defaults.update(kwargs)
-
-
+            logger.debug(f"fn_defaults updated with {kwargs}")
+            self.fn_posargs = self.arguments.args[:self.fn_npos] # positional arg names
 
     def initialize(self, **kwargs):
         """
@@ -296,112 +294,70 @@ class PyFuncApp(BarrierAppDROP):
         logger.info(f"Args: {self.arguments.args}")
         logger.info(f"Args defaults:  {self.arguments.defaults}")
         logger.info(f"Args positional: {self.arguments.args[:self.fn_npos]}")
+        logger.info(f"Args keyword: {self.arguments.args[self.fn_npos:]}")
         logger.info(f"Args supplied:  {self.func_defaults}")
 
         # Mapping between argument name and input drop uids
         logger.debug(f"Input mapping: {self.func_arg_mapping}")
 
     def run(self):
-        """
-        Function positional and keyword argument treatment:
 
-        Function arguments can be provided in four different ways:
-        1) Through an input port
-        2) By specifying ApplicationArgs (one for each argument)
-        3) By specifying a func_defaults dictionary in the ComponentParameters
-        4) Through defaults at the time of function definition
-
-        The priority follows the list above with input ports overruling the others.
-
-        All function arguments are internally dealt with as keyword arguments, i.e. 
-        positional aruments will be referred to by name, not by position. This also
-        implies that positional ONLY arguments are not supported, but they are rarely
-        used. Positional arguments defined by the function ar mandatory and thus the
-        implementation is checking whether they are provided (by name).
-
-        Input ports will NOT be used by order (anymore), but by the IdText (name field
-        in EAGLE) of the port. Since each input port requires an associated data drop,
-        this provides a unique mapping. This also allows to pass values to any function
-        argument through a port.
-
-        Function argument values as well as the function code can be provided in 
-        serialised (pickle) form by setting the 'pickle' flag. Note that this flag
-        is valid for all arguments and the code (if specified) in a global way.
-        """
-
-        # Function arguments and keyword a
         # Inputs are un-pickled and treated as the arguments of the function
-        # Their order is preserved, so we use an OrderedDict
+        # Their order must be preserved, so we use an OrderedDict
         if self.pickle:
             all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
         else:
             all_contents = lambda x: ast.literal_eval(droputils.allDropContents(x).decode('utf-8'))
 
-        # TODO: change to named ports
         inputs = collections.OrderedDict()
-        logger.debug(f"Found inputs {self._inputs}")
         for uid, drop in self._inputs.items():
             inputs[uid] = all_contents(drop)
 
-        if 'inputs' in self.parameters:
-            logger.debug(f"PyfuncAPPDrop parameters: {self.parameters['inputs']}")  
-        # what the function requires has been captured in initialize above,
-        # we'll use that as a baseline. Note that any positional arguments won't
-        # have a default defined by the function, thus we set it to None and
-        # make sure that a proper value is provided with one of the other methods
 
-        # initialize final arguments dict with function defined defaults
-        logger.debug(f"initializing funcargs with {self.fn_defaults}")
-        self.funcargs = self.fn_defaults
+        self.funcargs = {}
 
-        # update with uids from func_arg_mapping 
-        # TODO: change test to named ports
+        # Keyword arguments are made up of the default values plus the inputs
+        # that match one of the keyword argument names
+        # if defaults dict has not been specified at all we'll go ahead anyway
+        n_args = len(self.func_defaults)
+        argnames = self.arguments.args
+        # if self.fn_nargs > n_args:
+        #     logger.warning(f"Function {self.f.__name__} expects {self.fn_nargs} argument defaults")
+        #     logger.warning(f"only {sum(n_args)} found!")
+        #     logger.warning("Please correct the function default specification")
+        #     #raise ValueError
+
+        # use explicit mapping of inputs to arguments first
+        # TODO: Required by dlg_delayed?? Else, we should reall not do this. 
         kwargs = {
             name: inputs.pop(uid)
             for name, uid in self.func_arg_mapping.items()
-            if name in self.func_defaults
+            if name in self.func_defaults or name not in argnames
         }
         logger.debug(f"updating funcargs with {kwargs}")
-        self.funcargs.update(kwargs)
+        self.funcargs = kwargs
 
-        # The rest of the inputs are used to fill arguments in order of appearance
-        # First fill in the explicit arguments 
-        # TODO: change to named ports
-
-        # don't map args to kwargs if varags are defined for function
-        if self.arguments.varargs:
-            __ = [self.funcargs.pop(x) for x in self.arguments.args]
-        nargs = min(len(inputs), len(self.arguments.args)) if not self.arguments.varargs else 0
-        kwargs = {name: value 
-            for name, value in ((self.arguments.args[x], list(inputs.values())[x])
-            for x in range(nargs))
-        }
+        # Fill arguments with rest of inputs
+        kwargs = {}
+        logger.debug(f"available inputs: {inputs}")
+        for i in range(min(len(inputs),self.fn_nargs)):
+            kwargs.update({self.arguments.args[i]: list(inputs.values())[i]})
         logger.debug(f"updating funcargs with {kwargs}")
         self.funcargs.update(kwargs)
 
-        varargs = []
-        # Now fill in varargs, if defined and we still have inputs
-        start = nargs
-        nvargs = len(inputs) - start
-        if nvargs > 0 and self.arguments.varargs:
-            varargs = [list(inputs.values())[x] for x in range(start, start+nvargs, 1)]
-        else:
-            varargs = []
-
-        # Now fill in varkw, if defined
-        if self.arguments.varkw:
-            logger.debug(f"updating funcargs with {self.func_defaults['kwargs']}")
-            self.funcargs.update(self.funcargs['kwargs'])
-
-        # self.funcargs["args"] = args
-
-        # update with values from ApplicationArgs
-        kwargs = {name: value for name, value in self._applicationArgs.items()}
+        # Fill rest with default arguments if there are any more
+        kwargs = {}
+        for kw in self.func_defaults.keys():
+            if kw not in self.funcargs:
+                kwargs.update({kw: self.func_defaults[kw]})
         logger.debug(f"updating funcargs with {kwargs}")
         self.funcargs.update(kwargs)
 
-        logger.debug(f"Running '{self.func_name}' {self.funcargs}")
-        result = self.f(*varargs, **self.funcargs)
+        if 'inputs' in self.parameters:
+            logger.debug(f"PyfuncAPPDrop parameters: {self.parameters['inputs']}")  
+
+        logger.debug(f"Running {self.func_name} with {self.funcargs}")
+        result = self.f(**self.funcargs)
 
         # Depending on how many outputs we have we treat our result
         # as an iterable or as a single object. Each result is pickled
@@ -414,4 +370,3 @@ class PyFuncApp(BarrierAppDROP):
                 o.write(pickle.dumps(r))  # @UndefinedVariable
             else:
                 o.write(repr(r).encode('utf-8'))
-
