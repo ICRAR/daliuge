@@ -300,7 +300,8 @@ def listify(o):
 #         while p.peek(1):
 #             yield pickle.load(p)
 
-
+def save_numpy(drop: DataDROP, ndarray: np.ndarray, allow_pickle=False):
+    save_npy(drop, ndarray, allow_pickle)
 def save_npy(drop: DataDROP, ndarray: np.ndarray, allow_pickle=False):
     """
     Saves a numpy ndarray to a drop in npy format
@@ -314,7 +315,8 @@ def save_npy(drop: DataDROP, ndarray: np.ndarray, allow_pickle=False):
     dropio.write(bio.getbuffer())
     dropio.close()
 
-
+def load_numpy(drop: DataDROP, allow_pickle=False) -> np.ndarray:
+    return load_npy(drop, allow_pickle)
 def load_npy(drop: DataDROP, allow_pickle=False) -> np.ndarray:
     """
     Loads a numpy ndarray from a drop in npy format
