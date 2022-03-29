@@ -24,14 +24,19 @@ import unittest
 from dlg import graph_loader
 from dlg.common import Categories
 from dlg.ddap_protocol import DROPLinkType, DROPRel
-from dlg.drop import InMemoryDROP, SharedMemoryDROP, ContainerDROP, AppDROP, DirectoryContainer
+from dlg.drop import (
+    InMemoryDROP,
+    SharedMemoryDROP,
+    ContainerDROP,
+    AppDROP,
+    DirectoryContainer,
+)
 from dlg.common import Categories
 
 
 # Used in the textual representation of the graphs in these tests
 class DummyApp(AppDROP):
     pass
-
 
 
 class TestGraphLoader(unittest.TestCase):

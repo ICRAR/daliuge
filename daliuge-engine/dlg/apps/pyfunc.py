@@ -57,7 +57,6 @@ def deserialize_data(d):
     return pickle.loads(base64.b64decode(d.encode("latin1")))
 
 
-
 def serialize_func(f):
 
     if isinstance(f, str):
@@ -69,7 +68,7 @@ def serialize_func(f):
     a = inspect.getfullargspec(f)
     if a.defaults:
         fdefaults = dict(
-            zip(a.args[-len(a.defaults):], [serialize_data(d) for d in a.defaults])
+            zip(a.args[-len(a.defaults) :], [serialize_data(d) for d in a.defaults])
         )
     logger.debug("Defaults for function %r: %r", f, fdefaults)
     return fser, fdefaults
@@ -92,7 +91,6 @@ def import_using_name(app, fname):
         )
     except AttributeError:
         raise InvalidDropException(app, "Module %s has no member %s" % (modname, fname))
-
 
 
 def import_using_code(code):
@@ -190,7 +188,6 @@ class PyFuncApp(BarrierAppDROP):
 
     func_defaults = dlg_dict_param("func_defaults", {})
 
-
     f: Callable
     fdefaults: dict
 
@@ -207,21 +204,23 @@ class PyFuncApp(BarrierAppDROP):
             "func_name",
             "func_arg_mapping",
             "pickle",
-            "func_defaults"
-            ]:
+            "func_defaults",
+        ]:
             dum_arg = new_arg = "gIbbERiSH:askldhgol"
-            if kw in self._applicationArgs: # these are the preferred ones now
-                if isinstance(self._applicationArgs[kw]["value"], bool): # always transfer booleans
-                    new_arg = self._applicationArgs[kw]['value']
-                elif self._applicationArgs[kw]["value"]: # only transfer if there is a value
+            if kw in self._applicationArgs:  # these are the preferred ones now
+                if isinstance(
+                    self._applicationArgs[kw]["value"], bool
+                ):  # always transfer booleans
+                    new_arg = self._applicationArgs[kw]["value"]
+                elif self._applicationArgs[kw][
+                    "value"
+                ]:  # only transfer if there is a value
                     # we allow python expressions as values, means that strings need to be quoted
-                    new_arg = self._applicationArgs[kw]['value']
+                    new_arg = self._applicationArgs[kw]["value"]
 
             if new_arg != dum_arg:
                 logger.debug(f"Setting {kw} to {new_arg}")
                 self.__setattr__(kw, new_arg)
-
-
 
         if not self.func_name and not self.func_code:
             raise InvalidDropException(
@@ -236,26 +235,36 @@ class PyFuncApp(BarrierAppDROP):
                 self.func_code = base64.b64decode(self.func_code.encode("utf8"))
             self.f = import_using_code(self.func_code)
         # make sure defaults are dicts
-        if isinstance(self.func_defaults, str): 
+        if isinstance(self.func_defaults, str):
             self.func_defaults = ast.literal_eval(self.func_defaults)
-        if isinstance(self.func_arg_mapping, str): 
+        if isinstance(self.func_arg_mapping, str):
             self.func_arg_mapping = ast.literal_eval(self.func_arg_mapping)
 
-
         if self.pickle:
-            self.fdefaults = {name: deserialize_data(d) for name, d in self.func_defaults.items()}
-        if isinstance(self.func_defaults, dict) and len(self.func_defaults) > 0 and \
-            list(self.func_defaults.keys()) == ["kwargs", "args"]:
+            self.fdefaults = {
+                name: deserialize_data(d) for name, d in self.func_defaults.items()
+            }
+        if (
+            isinstance(self.func_defaults, dict)
+            and len(self.func_defaults) > 0
+            and list(self.func_defaults.keys()) == ["kwargs", "args"]
+        ):
             pass
-        elif isinstance(self.func_defaults, (dict, str)) and len(self.func_defaults) == 0:
+        elif (
+            isinstance(self.func_defaults, (dict, str)) and len(self.func_defaults) == 0
+        ):
             pass
         elif isinstance(self.func_defaults, dict):
-            self.func_defaults = {"kwargs": self.func_defaults, "args":[]}
+            self.func_defaults = {"kwargs": self.func_defaults, "args": []}
         else:
-            logger.error(f"Wrong format or type for function defaults for {self.f.__name__}: {self.func_defaults}, {type(self.func_defaults)}")
+            logger.error(
+                f"Wrong format or type for function defaults for {self.f.__name__}: {self.func_defaults}, {type(self.func_defaults)}"
+            )
             raise ValueError
 
-        logger.debug(f"Default values for function {self.func_name}: {self.func_defaults}")
+        logger.debug(
+            f"Default values for function {self.func_name}: {self.func_defaults}"
+        )
 
         # Mapping between argument name and input drop uids
         logger.debug(f"Input mapping: {self.func_arg_mapping}")
@@ -268,27 +277,34 @@ class PyFuncApp(BarrierAppDROP):
         if self.pickle:
             all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
         else:
-            all_contents = lambda x: ast.literal_eval(droputils.allDropContents(x).decode('utf-8'))
+            all_contents = lambda x: ast.literal_eval(
+                droputils.allDropContents(x).decode("utf-8")
+            )
 
         inputs = collections.OrderedDict()
         for uid, drop in self._inputs.items():
             inputs[uid] = all_contents(drop)
 
-
-        self.funcargs = {"kwargs":{}, "args":[]}
+        self.funcargs = {"kwargs": {}, "args": []}
 
         # Keyword arguments are made up of the default values plus the inputs
         # that match one of the keyword argument names
         n_def = len(self.func_defaults)
         # if defaults dict has not been specified at all we'll go ahead anyway
-        n_args = (len(self.func_defaults["args"]), len(self.func_defaults["kwargs"])) if n_def else (0,0)
+        n_args = (
+            (len(self.func_defaults["args"]), len(self.func_defaults["kwargs"]))
+            if n_def
+            else (0, 0)
+        )
         argnames = inspect.getfullargspec(self.f).args
         n_args_req = len(argnames)
         if n_def and (n_args_req > (sum(n_args))):
-            logger.warning(f"Function {self.f.__name__} expects {n_args_req} argument defaults")
+            logger.warning(
+                f"Function {self.f.__name__} expects {n_args_req} argument defaults"
+            )
             logger.warning(f"only {sum(n_args)} found!")
             logger.warning("Please correct the function default specification")
-            #raise ValueError
+            # raise ValueError
 
         kwargs = {
             name: inputs.pop(uid)
@@ -300,28 +316,33 @@ class PyFuncApp(BarrierAppDROP):
         args = list(inputs.values())
         self.funcargs["args"] = args
 
-        if len(kwargs) + n_args[1] + len(args) < n_args_req: # There are kwargs missing fill with defaults
+        if (
+            len(kwargs) + n_args[1] + len(args) < n_args_req
+        ):  # There are kwargs missing fill with defaults
             def_kwargs = self.func_defaults["kwargs"]
             for kw in def_kwargs.keys():
                 if kw not in kwargs:
                     kwargs.update({kw: def_kwargs[kw]})
 
-
         # fill the rest with default args
         n_missing = n_args_req - len(kwargs) - len(args)
         if n_missing > 0:
-            logger.warning(f"Expected {n_args_req} inputs for {self.f.__name__} missing {n_missing}")
+            logger.warning(
+                f"Expected {n_args_req} inputs for {self.f.__name__} missing {n_missing}"
+            )
             logger.debug(f"Trying to fill with arg defaults")
             for a in range(n_missing):
                 try:
                     args.append(self.func_defaults["args"][a])
                 except IndexError:
-                    logger.warning("Insufficient number of function defaults?", exc_info=True)
+                    logger.warning(
+                        "Insufficient number of function defaults?", exc_info=True
+                    )
 
         logger.debug(f"Running {self.func_name} with args={args}, kwargs={kwargs}")
         result = self.f(*args, **kwargs)
-        self._recompute_data['args'] = args
-        self._recompute_data['kwargs'] = kwargs
+        self._recompute_data["args"] = args
+        self._recompute_data["kwargs"] = kwargs
         # Depending on how many outputs we have we treat our result
         # as an iterable or as a single object. Each result is pickled
         # and written to its corresponding output
@@ -332,7 +353,9 @@ class PyFuncApp(BarrierAppDROP):
         if len(outputs) == 1:
             result = [result]
         for r, o in zip(result, outputs):
-            self._recompute_data[o.dataURL] = str(r)  # TODO: Revise if this is not ideal
+            self._recompute_data[o.dataURL] = str(
+                r
+            )  # TODO: Revise if this is not ideal
             o.write(pickle.dumps(r))  # @UndefinedVariable
 
     def generate_recompute_data(self):

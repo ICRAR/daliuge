@@ -43,7 +43,6 @@ class Event(object):
         return "<Event %r>" % (self.__dict__)
 
 
-
 class EventFirer(object):
     """
     An object that fires events.

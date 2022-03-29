@@ -83,7 +83,7 @@ class BashAppTests(unittest.TestCase):
         assert_message_is_correct(msg, 'echo -n "{0}" > %o0'.format(msg))
         msg = 'This is a message with a double quotes: "'
         assert_message_is_correct(msg, "echo -n '{0}' > %o0".format(msg))
-    
+
     def test_envvars(self):
         """Checks that the DLG_* environment variables are available to bash programs"""
 
@@ -109,14 +109,14 @@ class BashAppTests(unittest.TestCase):
         assert_envvar_is_there("DLG_UID", app_uid)
         assert_envvar_is_there("DLG_SESSION_ID", session_id)
 
-
     def test_reproducibility(self):
         from dlg.common.reproducibility.constants import ReproducibilityFlags
         from dlg.drop import NullDROP
-        a = BashShellApp('a', 'a', command="echo 'Hello world'")
+
+        a = BashShellApp("a", "a", command="echo 'Hello world'")
         a.reproducibility_level = ReproducibilityFlags.RERUN
         a.setCompleted()
-        b = NullDROP('b', 'b')
+        b = NullDROP("b", "b")
         b.reproducibility_level = ReproducibilityFlags.RERUN
         b.setCompleted()
         self.assertEqual(a.merkleroot, b.merkleroot)
@@ -126,7 +126,7 @@ class BashAppTests(unittest.TestCase):
 
         a.reproducibility_level = ReproducibilityFlags.RECOMPUTE
         self.assertNotEqual(a.merkleroot, b.merkleroot)
-        self.assertEqual(a.generate_merkle_data(), {'command': "echo 'Hello world'"})
+        self.assertEqual(a.generate_merkle_data(), {"command": "echo 'Hello world'"})
 
         a.reproducibility_level = ReproducibilityFlags.REPRODUCE
         self.assertNotEqual(a.merkleroot, b.merkleroot)

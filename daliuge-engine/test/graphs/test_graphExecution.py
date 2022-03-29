@@ -70,9 +70,8 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         """
         sessionId = "lalo"
         ddGraph = "graphs/ddTest.graph"
-        with pkg_resources.resource_stream(
-            "test", ddGraph) as f:  # @UndefinedVariable
-            logger.debug(f'Loading graph: {f}')
+        with pkg_resources.resource_stream("test", ddGraph) as f:  # @UndefinedVariable
+            logger.debug(f"Loading graph: {f}")
             graphSpec = json.load(f)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
 
@@ -80,9 +79,12 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         bs = graphSpec[0]["applicationArgs"]["bs"]["value"]
         count = graphSpec[0]["applicationArgs"]["count"]["value"]
         self.dim.deploySession(sessionId)
-        a, c = [self.dm._sessions[sessionId].drops[x] for x in ("2022-02-11T08:05:47_-5_0", "2022-02-11T08:05:47_-3_0")]
+        a, c = [
+            self.dm._sessions[sessionId].drops[x]
+            for x in ("2022-02-11T08:05:47_-5_0", "2022-02-11T08:05:47_-3_0")
+        ]
 
-        data = os.urandom(bs*count)
+        data = os.urandom(bs * count)
         logger.debug(f"Length of data produced: {len(data)}")
         with droputils.DROPWaiterCtx(self, c, 3):
             a.write(data)

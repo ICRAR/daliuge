@@ -143,7 +143,6 @@ class Server(http.server.HTTPServer):
 sockandaddr = collections.namedtuple("sockandaddr", "sock addr")
 
 
-
 class Monitor:
     def __init__(
         self,

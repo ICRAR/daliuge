@@ -32,23 +32,26 @@ from dlg.common.reproducibility.constants import ReproducibilityFlags
 from dlg.translator.tool_commands import dlg_fill, dlg_unroll, dlg_partition, dlg_map
 
 
-def _run_full_workflow(rmode: ReproducibilityFlags, workflow: str, workflow_loc='./',
-                       scratch_loc='./'):
-    lgt = workflow_loc + '/' + workflow + ".graph"
-    lgr = scratch_loc + '/' + workflow + "_" + str(rmode.value) + "LG.graph"
-    pgs = scratch_loc + '/' + workflow + "_" + str(rmode.value) + "PGS.graph"
-    pgt = scratch_loc + '/' + workflow + "_" + str(rmode.value) + "PGT.graph"
-    pgr = scratch_loc + '/' + workflow + "_" + str(rmode.value) + "PG.graph"
+def _run_full_workflow(
+    rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
+):
+    lgt = workflow_loc + "/" + workflow + ".graph"
+    lgr = scratch_loc + "/" + workflow + "_" + str(rmode.value) + "LG.graph"
+    pgs = scratch_loc + "/" + workflow + "_" + str(rmode.value) + "PGS.graph"
+    pgt = scratch_loc + "/" + workflow + "_" + str(rmode.value) + "PGT.graph"
+    pgr = scratch_loc + "/" + workflow + "_" + str(rmode.value) + "PG.graph"
 
     rmodes = str(rmode.value)
     parser = optparse.OptionParser()
-    dlg_fill(parser, ['-L', lgt, '-R', rmodes, '-o', lgr, '-f', 'newline'])
+    dlg_fill(parser, ["-L", lgt, "-R", rmodes, "-o", lgr, "-f", "newline"])
     parser = optparse.OptionParser()
-    dlg_unroll(parser, ['-L', lgr, '-o', pgs, '-f', 'newline'])
+    dlg_unroll(parser, ["-L", lgr, "-o", pgs, "-f", "newline"])
     parser = optparse.OptionParser()
-    dlg_partition(parser, ['-P', pgs, '-o', pgt, '-f', 'newline'])
+    dlg_partition(parser, ["-P", pgs, "-o", pgt, "-f", "newline"])
     parser = optparse.OptionParser()
-    dlg_map(parser, ['-P', pgt, '-N', '127.0.0.1, 127.0.0.1', '-o', pgr, '-f', 'newline'])
+    dlg_map(
+        parser, ["-P", pgt, "-N", "127.0.0.1, 127.0.0.1", "-o", pgr, "-f", "newline"]
+    )
 
 
 def _read_graph(filename):
@@ -63,28 +66,35 @@ class IntegrationNothingTest(unittest.TestCase):
     Tests a simple graph up until submission for execution with the goal of asserting
     that running a graph with the NOTHING standard produces no reproducibility information.
     """
-    temp_out = tempfile.TemporaryDirectory('out')
+
+    temp_out = tempfile.TemporaryDirectory("out")
 
     def test_computation_sandwich(self):
         """
         Opens a simple computationSandwich graph in a temporary directory
         No data should be present at any level of abstraction, reflected by a null merkleroot.
         """
-        graph_name = 'HelloSPython'
-        graph_loc = 'test/reproducibility/reproGraphs/'
+        graph_name = "HelloSPython"
+        graph_loc = "test/reproducibility/reproGraphs/"
         rmode = ReproducibilityFlags.NOTHING
-        _run_full_workflow(rmode=rmode, workflow=graph_name,
-                           workflow_loc=graph_loc, scratch_loc=self.temp_out.name)
-        pgr = self.temp_out.name + '/' + graph_name + "_" + str(rmode.value) + "PG.graph"
+        _run_full_workflow(
+            rmode=rmode,
+            workflow=graph_name,
+            workflow_loc=graph_loc,
+            scratch_loc=self.temp_out.name,
+        )
+        pgr = (
+            self.temp_out.name + "/" + graph_name + "_" + str(rmode.value) + "PG.graph"
+        )
 
         graph = _read_graph(pgr)
         graph = graph[0:-1]
 
         for drop in graph:
-            self.assertIsNone(drop['reprodata']['lgt_data']['merkleroot'])
-            self.assertIsNone(drop['reprodata']['lg_data']['merkleroot'])
-            self.assertIsNone(drop['reprodata']['pgt_data']['merkleroot'])
-            self.assertIsNone(drop['reprodata']['pg_data']['merkleroot'])
+            self.assertIsNone(drop["reprodata"]["lgt_data"]["merkleroot"])
+            self.assertIsNone(drop["reprodata"]["lg_data"]["merkleroot"])
+            self.assertIsNone(drop["reprodata"]["pgt_data"]["merkleroot"])
+            self.assertIsNone(drop["reprodata"]["pg_data"]["merkleroot"])
 
 
 class IntegrationHelloWorldTest(unittest.TestCase):
@@ -102,18 +112,28 @@ class IntegrationHelloWorldTest(unittest.TestCase):
     HelloSPython and HelloSPython2 differ only in their input file arguments.
 
     """
-    temp_out = tempfile.TemporaryDirectory('out')
-    graph_loc = 'test/reproducibility/reproGraphs/'
-    graphs = {'HelloWorldBash': {}, 'HelloSBash': {}, 'HelloWorldFile': {}, 'HelloSPython': {},
-              'HelloSPython2': {}}
+
+    temp_out = tempfile.TemporaryDirectory("out")
+    graph_loc = "test/reproducibility/reproGraphs/"
+    graphs = {
+        "HelloWorldBash": {},
+        "HelloSBash": {},
+        "HelloWorldFile": {},
+        "HelloSPython": {},
+        "HelloSPython2": {},
+    }
 
     def _process_graphs(self, rmode: ReproducibilityFlags):
         for graph in list(self.graphs.keys()):
-            _run_full_workflow(rmode=rmode, workflow=graph,
-                               workflow_loc=self.graph_loc, scratch_loc=self.temp_out.name)
-            self.graphs[graph][rmode.value] = \
-                _read_graph(self.temp_out.name + '/' + graph + '_' + str(
-                    rmode.value) + 'PG.graph')[-1]['signature']
+            _run_full_workflow(
+                rmode=rmode,
+                workflow=graph,
+                workflow_loc=self.graph_loc,
+                scratch_loc=self.temp_out.name,
+            )
+            self.graphs[graph][rmode.value] = _read_graph(
+                self.temp_out.name + "/" + graph + "_" + str(rmode.value) + "PG.graph"
+            )[-1]["signature"]
 
     def test_integration_rerun(self):
         """
@@ -128,23 +148,37 @@ class IntegrationHelloWorldTest(unittest.TestCase):
         """
         rmode = ReproducibilityFlags.RERUN
         self._process_graphs(rmode)
-        self.assertEqual(self.graphs['HelloWorldBash'][rmode.value],
-                         self.graphs['HelloSBash'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
-                            self.graphs['HelloWorldFile'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloSBash"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloWorldFile"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
-                            self.graphs['HelloWorldFile'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloSBash"][rmode.value],
+            self.graphs["HelloWorldFile"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloSBash"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertNotEqual(self.graphs['HelloWorldFile'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloWorldFile"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertEqual(self.graphs['HelloSPython'][rmode.value],
-                         self.graphs['HelloSPython2'][rmode.value])
+        self.assertEqual(
+            self.graphs["HelloSPython"][rmode.value],
+            self.graphs["HelloSPython2"][rmode.value],
+        )
 
     def test_integration_repeat(self):
         """
@@ -159,23 +193,37 @@ class IntegrationHelloWorldTest(unittest.TestCase):
         """
         rmode = ReproducibilityFlags.REPEAT
         self._process_graphs(rmode)
-        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
-                            self.graphs['HelloSBash'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
-                            self.graphs['HelloWorldFile'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloSBash"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloWorldFile"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
-                            self.graphs['HelloWorldFile'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloSBash"][rmode.value],
+            self.graphs["HelloWorldFile"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloSBash"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertNotEqual(self.graphs['HelloWorldFile'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloWorldFile"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertEqual(self.graphs['HelloSPython'][rmode.value],
-                         self.graphs['HelloSPython2'][rmode.value])
+        self.assertEqual(
+            self.graphs["HelloSPython"][rmode.value],
+            self.graphs["HelloSPython2"][rmode.value],
+        )
 
     def test_integration_recompute(self):
         """
@@ -190,23 +238,37 @@ class IntegrationHelloWorldTest(unittest.TestCase):
         """
         rmode = ReproducibilityFlags.RECOMPUTE
         self._process_graphs(rmode)
-        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
-                            self.graphs['HelloSBash'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
-                            self.graphs['HelloWorldFile'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloSBash"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloWorldFile"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
-                            self.graphs['HelloWorldFile'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloSBash"][rmode.value],
+            self.graphs["HelloWorldFile"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloSBash"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertNotEqual(self.graphs['HelloWorldFile'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloWorldFile"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertNotEqual(self.graphs['HelloSPython'][rmode.value],
-                            self.graphs['HelloSPython2'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloSPython"][rmode.value],
+            self.graphs["HelloSPython2"][rmode.value],
+        )
 
     def test_integration_reproduce(self):
         """
@@ -225,24 +287,38 @@ class IntegrationHelloWorldTest(unittest.TestCase):
         """
         rmode = ReproducibilityFlags.REPRODUCE
         self._process_graphs(rmode)
-        self.assertEqual(self.graphs['HelloWorldBash'][rmode.value],
-                         self.graphs['HelloSBash'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
-                            self.graphs['HelloWorldFile'][rmode.value])
+        self.assertEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloSBash"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloWorldFile"][rmode.value],
+        )
 
-        self.assertEqual(self.graphs['HelloWorldBash'][rmode.value],
-                         self.graphs['HelloSPython'][rmode.value])
+        self.assertEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
-                            self.graphs['HelloWorldFile'][rmode.value])
-        self.assertEqual(self.graphs['HelloSBash'][rmode.value],
-                         self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloSBash"][rmode.value],
+            self.graphs["HelloWorldFile"][rmode.value],
+        )
+        self.assertEqual(
+            self.graphs["HelloSBash"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertNotEqual(self.graphs['HelloWorldFile'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloWorldFile"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertEqual(self.graphs['HelloSPython'][rmode.value],
-                         self.graphs['HelloSPython2'][rmode.value])
+        self.assertEqual(
+            self.graphs["HelloSPython"][rmode.value],
+            self.graphs["HelloSPython2"][rmode.value],
+        )
 
     def test_integration_replicate_sci(self):
         """
@@ -257,24 +333,38 @@ class IntegrationHelloWorldTest(unittest.TestCase):
         """
         rmode = ReproducibilityFlags.REPLICATE_SCI
         self._process_graphs(rmode)
-        self.assertEqual(self.graphs['HelloWorldBash'][rmode.value],
-                         self.graphs['HelloSBash'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
-                            self.graphs['HelloWorldFile'][rmode.value])
+        self.assertEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloSBash"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloWorldFile"][rmode.value],
+        )
 
-        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
-                            self.graphs['HelloWorldFile'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloSBash"][rmode.value],
+            self.graphs["HelloWorldFile"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloSBash"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertNotEqual(self.graphs['HelloWorldFile'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloWorldFile"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertEqual(self.graphs['HelloSPython'][rmode.value],
-                         self.graphs['HelloSPython2'][rmode.value])
+        self.assertEqual(
+            self.graphs["HelloSPython"][rmode.value],
+            self.graphs["HelloSPython2"][rmode.value],
+        )
 
     def test_integration_replicate_comp(self):
         """
@@ -289,23 +379,37 @@ class IntegrationHelloWorldTest(unittest.TestCase):
         """
         rmode = ReproducibilityFlags.REPLICATE_COMP
         self._process_graphs(rmode)
-        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
-                            self.graphs['HelloSBash'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
-                            self.graphs['HelloWorldFile'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloSBash"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloWorldFile"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
-                            self.graphs['HelloWorldFile'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloSBash"][rmode.value],
+            self.graphs["HelloWorldFile"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloSBash"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertNotEqual(self.graphs['HelloWorldFile'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloWorldFile"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertNotEqual(self.graphs['HelloSPython'][rmode.value],
-                            self.graphs['HelloSPython2'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloSPython"][rmode.value],
+            self.graphs["HelloSPython2"][rmode.value],
+        )
 
     def test_integration_replicate_total(self):
         """
@@ -320,23 +424,37 @@ class IntegrationHelloWorldTest(unittest.TestCase):
         """
         rmode = ReproducibilityFlags.REPLICATE_TOTAL
         self._process_graphs(rmode)
-        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
-                            self.graphs['HelloSBash'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
-                            self.graphs['HelloWorldFile'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloWorldBash'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloSBash"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloWorldFile"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloWorldBash"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
-                            self.graphs['HelloWorldFile'][rmode.value])
-        self.assertNotEqual(self.graphs['HelloSBash'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloSBash"][rmode.value],
+            self.graphs["HelloWorldFile"][rmode.value],
+        )
+        self.assertNotEqual(
+            self.graphs["HelloSBash"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertNotEqual(self.graphs['HelloWorldFile'][rmode.value],
-                            self.graphs['HelloSPython'][rmode.value])
+        self.assertNotEqual(
+            self.graphs["HelloWorldFile"][rmode.value],
+            self.graphs["HelloSPython"][rmode.value],
+        )
 
-        self.assertEqual(self.graphs['HelloSPython'][rmode.value],
-                         self.graphs['HelloSPython2'][rmode.value])
+        self.assertEqual(
+            self.graphs["HelloSPython"][rmode.value],
+            self.graphs["HelloSPython2"][rmode.value],
+        )
 
 
 class IntegrationSplitRmode(unittest.TestCase):
@@ -346,7 +464,7 @@ class IntegrationSplitRmode(unittest.TestCase):
     This test class tests this functionality.
     """
 
-    temp_out = tempfile.TemporaryDirectory('out')
+    temp_out = tempfile.TemporaryDirectory("out")
 
     def test_split_lgt(self):
         """
@@ -358,33 +476,52 @@ class IntegrationSplitRmode(unittest.TestCase):
             RERUN and NOTHING standards
           - The reprodata of the set component should contain values while the rest do not
         """
-        graph_name = 'HelloWorldBashSplit'
-        control_graph_name = 'HelloWorldBash'
-        graph_loc = 'test/reproducibility/reproGraphs/'
+        graph_name = "HelloWorldBashSplit"
+        control_graph_name = "HelloWorldBash"
+        graph_loc = "test/reproducibility/reproGraphs/"
         rmode = ReproducibilityFlags.NOTHING
-        _run_full_workflow(rmode=rmode, workflow=graph_name, workflow_loc=graph_loc,
-                           scratch_loc=self.temp_out.name)
-        pgr = self.temp_out.name + '/' + graph_name + "_" + str(rmode.value) + "PG.graph"
-        _run_full_workflow(rmode=rmode, workflow=control_graph_name, workflow_loc=graph_loc,
-                           scratch_loc=self.temp_out.name)
-        pgr_2 = self.temp_out.name + '/' + control_graph_name + "_" + str(rmode.value) + "PG.graph"
+        _run_full_workflow(
+            rmode=rmode,
+            workflow=graph_name,
+            workflow_loc=graph_loc,
+            scratch_loc=self.temp_out.name,
+        )
+        pgr = (
+            self.temp_out.name + "/" + graph_name + "_" + str(rmode.value) + "PG.graph"
+        )
+        _run_full_workflow(
+            rmode=rmode,
+            workflow=control_graph_name,
+            workflow_loc=graph_loc,
+            scratch_loc=self.temp_out.name,
+        )
+        pgr_2 = (
+            self.temp_out.name
+            + "/"
+            + control_graph_name
+            + "_"
+            + str(rmode.value)
+            + "PG.graph"
+        )
 
         graph = _read_graph(pgr)
         graph_reprodata = graph[-1]
         graph = graph[0:-1]
         control_graph = _read_graph(pgr_2)
-        control_signature = control_graph[-1]['signature']
-        self.assertEqual(ReproducibilityFlags.NOTHING.value, int(graph_reprodata['rmode']))
-        self.assertNotEqual(control_signature, graph_reprodata['signature'])
+        control_signature = control_graph[-1]["signature"]
+        self.assertEqual(
+            ReproducibilityFlags.NOTHING.value, int(graph_reprodata["rmode"])
+        )
+        self.assertNotEqual(control_signature, graph_reprodata["signature"])
 
         for drop in graph:
-            if drop['reprodata']['rmode'] == str(ReproducibilityFlags.NOTHING.value):
-                self.assertIsNone(drop['reprodata']['lgt_data']['merkleroot'])
-                self.assertIsNone(drop['reprodata']['lg_data']['merkleroot'])
-                self.assertIsNone(drop['reprodata']['pgt_data']['merkleroot'])
-                self.assertIsNone(drop['reprodata']['pg_data']['merkleroot'])
+            if drop["reprodata"]["rmode"] == str(ReproducibilityFlags.NOTHING.value):
+                self.assertIsNone(drop["reprodata"]["lgt_data"]["merkleroot"])
+                self.assertIsNone(drop["reprodata"]["lg_data"]["merkleroot"])
+                self.assertIsNone(drop["reprodata"]["pgt_data"]["merkleroot"])
+                self.assertIsNone(drop["reprodata"]["pg_data"]["merkleroot"])
             else:
-                self.assertIsNotNone(drop['reprodata']['lgt_data']['merkleroot'])
-                self.assertIsNotNone(drop['reprodata']['lg_data']['merkleroot'])
-                self.assertIsNotNone(drop['reprodata']['pgt_data']['merkleroot'])
-                self.assertIsNotNone(drop['reprodata']['pg_data']['merkleroot'])
+                self.assertIsNotNone(drop["reprodata"]["lgt_data"]["merkleroot"])
+                self.assertIsNotNone(drop["reprodata"]["lg_data"]["merkleroot"])
+                self.assertIsNotNone(drop["reprodata"]["pgt_data"]["merkleroot"])
+                self.assertIsNotNone(drop["reprodata"]["pg_data"]["merkleroot"])

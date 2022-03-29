@@ -30,7 +30,6 @@ from dlg.lifecycle.registry import RDBMSRegistry
 DBFILE = "testing_dlm.db"
 
 
-
 class TestRDBMSRegistry(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)

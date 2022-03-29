@@ -30,29 +30,35 @@ import tempfile
 import unittest
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags
-from dlg.common.reproducibility.reproducibility import \
-    init_lgt_repro_data, init_lg_repro_data, lg_build_blockdag
+from dlg.common.reproducibility.reproducibility import (
+    init_lgt_repro_data,
+    init_lg_repro_data,
+    lg_build_blockdag,
+)
 from dlg.translator.tool_commands import dlg_fill, dlg_partition, dlg_map, dlg_unroll
 
 
-def _run_full_workflow(rmode: ReproducibilityFlags, workflow: str, workflow_loc='./',
-                       scratch_loc='./'):
-    lgt = workflow_loc + '/' + workflow + ".graph"
-    lgr = scratch_loc + '/' + workflow + "LG.graph"
-    pgs = scratch_loc + '/' + workflow + "PGS.graph"
-    pgt = scratch_loc + '/' + workflow + "PGT.graph"
-    pgr = scratch_loc + '/' + workflow + "PG.graph"
+def _run_full_workflow(
+    rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
+):
+    lgt = workflow_loc + "/" + workflow + ".graph"
+    lgr = scratch_loc + "/" + workflow + "LG.graph"
+    pgs = scratch_loc + "/" + workflow + "PGS.graph"
+    pgt = scratch_loc + "/" + workflow + "PGT.graph"
+    pgr = scratch_loc + "/" + workflow + "PG.graph"
 
     rmodes = str(rmode.value)
 
     parser = optparse.OptionParser()
-    dlg_fill(parser, ['-L', lgt, '-R', rmodes, '-o', lgr, '-f', 'newline'])
+    dlg_fill(parser, ["-L", lgt, "-R", rmodes, "-o", lgr, "-f", "newline"])
     parser = optparse.OptionParser()
-    dlg_unroll(parser, ['-L', lgr, '-o', pgs, '-f', 'newline'])
+    dlg_unroll(parser, ["-L", lgr, "-o", pgs, "-f", "newline"])
     parser = optparse.OptionParser()
-    dlg_partition(parser, ['-P', pgs, '-o', pgt, '-f', 'newline'])
+    dlg_partition(parser, ["-P", pgs, "-o", pgt, "-f", "newline"])
     parser = optparse.OptionParser()
-    dlg_map(parser, ['-P', pgt, '-N', '127.0.0.1, 127.0.0.1', '-o', pgr, '-f', 'newline'])
+    dlg_map(
+        parser, ["-P", pgt, "-N", "127.0.0.1, 127.0.0.1", "-o", pgr, "-f", "newline"]
+    )
 
 
 def _read_graph(filename):
@@ -66,11 +72,11 @@ def _init_graph(filename):
     file = open(filename)
     lgt = json.load(file)
     file.close()
-    for drop in lgt['nodeDataArray']:
-        drop['reprodata'] = {}
-        drop['reprodata']['lg_parenthashes'] = []
-        drop['reprodata']['lgt_data'] = {'merkleroot': "1"}
-        drop['reprodata']['lg_data'] = {}
+    for drop in lgt["nodeDataArray"]:
+        drop["reprodata"] = {}
+        drop["reprodata"]["lg_parenthashes"] = []
+        drop["reprodata"]["lgt_data"] = {"merkleroot": "1"}
+        drop["reprodata"]["lg_data"] = {}
     return lgt
 
 
@@ -79,7 +85,8 @@ class ScatterTest(unittest.TestCase):
     Tests a very simple scattered and gathered graph full of dummy files and bash scripts.
     See test/reproducibility/topoGraphs/simpleScatter.graph
     """
-    temp_out = tempfile.TemporaryDirectory('out')
+
+    temp_out = tempfile.TemporaryDirectory("out")
 
     def test_lg_scatter_rerun(self):
         """
@@ -91,15 +98,19 @@ class ScatterTest(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=ReproducibilityFlags.RERUN.value)
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt)[1]
-        scatter_drop = lgt['nodeDataArray'][1]
-        app_drop = lgt['nodeDataArray'][2]
-        scatter_inter_drop = lgt['nodeDataArray'][3]
+        scatter_drop = lgt["nodeDataArray"][1]
+        app_drop = lgt["nodeDataArray"][2]
+        scatter_inter_drop = lgt["nodeDataArray"][3]
         # Checks that the input app drop is the parent of the main application
-        self.assertEqual(list(app_drop['reprodata']['lg_parenthashes'].values())[0],
-                         scatter_inter_drop['reprodata']['lg_blockhash'])
+        self.assertEqual(
+            list(app_drop["reprodata"]["lg_parenthashes"].values())[0],
+            scatter_inter_drop["reprodata"]["lg_blockhash"],
+        )
         # Checks that the scatter drop is the parent of the input drop
-        self.assertEqual(list(scatter_inter_drop['reprodata']['lg_parenthashes'].values())[0],
-                         scatter_drop['reprodata']['lg_blockhash'])
+        self.assertEqual(
+            list(scatter_inter_drop["reprodata"]["lg_parenthashes"].values())[0],
+            scatter_drop["reprodata"]["lg_blockhash"],
+        )
         self.assertEqual(visited, [-1, -2, -5, -3, -6, -7, -9])
 
     def test_pg_scatter_rerun(self):
@@ -108,15 +119,23 @@ class ScatterTest(unittest.TestCase):
         Expected behaviour is as if there was no scattering or gathering - only the 'critical'
         path contributes to the hash value
         """
-        scatter = 'simpleScatter'
-        noscatter = 'simpleNoScatter'
-        graph_loc = 'test/reproducibility/reproGraphs/'
-        _run_full_workflow(rmode=ReproducibilityFlags.RERUN, workflow=scatter,
-                           workflow_loc=graph_loc, scratch_loc=self.temp_out.name)
-        _run_full_workflow(rmode=ReproducibilityFlags.RERUN, workflow=noscatter,
-                           workflow_loc=graph_loc, scratch_loc=self.temp_out.name)
-        pgr_scatter = self.temp_out.name + '/' + scatter + "PG.graph"
-        pgr_noscatter = self.temp_out.name + '/' + noscatter + "PG.graph"
+        scatter = "simpleScatter"
+        noscatter = "simpleNoScatter"
+        graph_loc = "test/reproducibility/reproGraphs/"
+        _run_full_workflow(
+            rmode=ReproducibilityFlags.RERUN,
+            workflow=scatter,
+            workflow_loc=graph_loc,
+            scratch_loc=self.temp_out.name,
+        )
+        _run_full_workflow(
+            rmode=ReproducibilityFlags.RERUN,
+            workflow=noscatter,
+            workflow_loc=graph_loc,
+            scratch_loc=self.temp_out.name,
+        )
+        pgr_scatter = self.temp_out.name + "/" + scatter + "PG.graph"
+        pgr_noscatter = self.temp_out.name + "/" + noscatter + "PG.graph"
 
         scatter_graph = _read_graph(pgr_scatter)
         scatter_graph = scatter_graph[0:-1]
@@ -127,5 +146,7 @@ class ScatterTest(unittest.TestCase):
         # Correct number of drops unscattered
         self.assertEqual(len(no_scatter_graph), 7)
         # Their signatures should in principal be identicle
-        self.assertEqual(scatter_graph[-1]['reprodata']['pg_blockhash'],
-                         no_scatter_graph[-1]['reprodata']['pg_blockhash'])
+        self.assertEqual(
+            scatter_graph[-1]["reprodata"]["pg_blockhash"],
+            no_scatter_graph[-1]["reprodata"]["pg_blockhash"],
+        )

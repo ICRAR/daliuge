@@ -50,14 +50,12 @@ def add_list(numbers):
     return functools.reduce(add, numbers)
 
 
-
 def subtract(x, y):
     return x - y
 
 
 def subtract_list(numbers):
     return functools.reduce(subtract, numbers)
-
 
 
 def multiply(x, y):

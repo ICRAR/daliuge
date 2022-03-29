@@ -45,7 +45,7 @@ from .drop import (
     NullDROP,
     EndDROP,
     PlasmaDROP,
-    PlasmaFlightDROP
+    PlasmaFlightDROP,
 )
 from .environmentvar_drop import EnvironmentVarDROP
 from dlg.parset_drop import ParameterSetDROP
@@ -65,7 +65,7 @@ STORAGE_TYPES = {
     Categories.PLASMA: PlasmaDROP,
     Categories.PLASMAFLIGHT: PlasmaFlightDROP,
     Categories.PARSET: ParameterSetDROP,
-    Categories.ENVIRONMENTVARS: EnvironmentVarDROP
+    Categories.ENVIRONMENTVARS: EnvironmentVarDROP,
 }
 
 try:
@@ -195,7 +195,6 @@ def check_dropspec(n, dropSpec):
         )
 
 
-
 def loadDropSpecs(dropSpecList):
     """
     Loads the DROP definitions from `dropSpectList`, checks that
@@ -212,9 +211,9 @@ def loadDropSpecs(dropSpecList):
     reprodata = None
     if dropSpecList is None:
         raise InvalidGraphException("DropSpec is empty %r" % dropSpecList)
-    if dropSpecList[-1].get('merkleroot'):
-            reprodata = dropSpecList.pop()
-            logger.debug("Found reprodata in dropSpecList, rmode=%s", reprodata['rmode'])
+    if dropSpecList[-1].get("merkleroot"):
+        reprodata = dropSpecList.pop()
+        logger.debug("Found reprodata in dropSpecList, rmode=%s", reprodata["rmode"])
     for n, dropSpec in enumerate(dropSpecList):
 
         # "type" and 'oit' are mandatory
@@ -248,7 +247,6 @@ def loadDropSpecs(dropSpecList):
     return dropSpecs, reprodata
 
 
-
 def createGraphFromDropSpecList(dropSpecList, session=None):
     logger.debug("Found %d DROP definitions", len(dropSpecList))
 
@@ -265,7 +263,9 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
         drop = cf(dropSpec, session=session)
         if session is not None:
             # Now using per-drop reproducibility setting.
-            drop.reproducibility_level = ReproducibilityFlags(int(dropSpec.get('reprodata', {}).get('rmode', '0')))
+            drop.reproducibility_level = ReproducibilityFlags(
+                int(dropSpec.get("reprodata", {}).get("rmode", "0"))
+            )
             # session.reprodata['rmode']
         drops[drop.oid] = drop
 
@@ -375,11 +375,7 @@ def _createApp(dropSpec, dryRun=False, session=None):
         appType = getattr(module, parts[-1])
     except (ImportError, AttributeError):
         raise InvalidGraphException(
-            "drop %s specifies non-existent application: %s"
-            % (
-                oid,
-                appName,
-            )
+            "drop %s specifies non-existent application: %s" % (oid, appName)
         )
 
     if dryRun:
