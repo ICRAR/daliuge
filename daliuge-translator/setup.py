@@ -102,7 +102,7 @@ install_requires = [
     "numpy",
     "psutil",
     "pyswarm",
-    #"ruamel.yaml.clib<=0.2.2",
+    # "ruamel.yaml.clib<=0.2.2",
 ]
 
 setup(
@@ -116,9 +116,7 @@ setup(
     license="LGPLv2+",
     install_requires=install_requires,
     packages=find_packages(),
-    package_data={
-        "dlg": src_files,
-    },
+    package_data={"dlg": src_files},
     entry_points={"dlg.tool_commands": ["translator=dlg.translator.tool_commands"]},
     test_suite="test",
 )

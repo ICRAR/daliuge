@@ -42,25 +42,25 @@ class AbstractDROPHashTests(unittest.TestCase):
         Sanity check that the default MerkleRoot of an abstract drop is Null
         Consider it a cardinal sin to change this.
         """
-        drop_a = AbstractDROP('a', 'a')
+        drop_a = AbstractDROP("a", "a")
         self.assertIsNone(drop_a.merkleroot)
 
     def test_generate_rerun_data(self):
         """
         Tests that completed Rerun data contains the completed flag.
         """
-        drop_a = AbstractDROP('a', 'a')
+        drop_a = AbstractDROP("a", "a")
         drop_a.reproducibility_level = ReproducibilityFlags.RERUN
         drop_a.setCompleted()
-        self.assertEqual(drop_a.generate_rerun_data(), {'status': DROPStates.COMPLETED})
+        self.assertEqual(drop_a.generate_rerun_data(), {"status": DROPStates.COMPLETED})
 
     def test_commit_on_complete(self):
         """
         Tests that merkle_data is generated upon set_complete status and is correct (NOTHING, RERUN)
         """
 
-        drop_a = AbstractDROP('a', 'a')
-        drop_b = AbstractDROP('b', 'b')
+        drop_a = AbstractDROP("a", "a")
+        drop_b = AbstractDROP("b", "b")
         drop_a.reproducibility_level = ReproducibilityFlags.RERUN
         drop_b.reproducibility_level = ReproducibilityFlags.NOTHING
         self.assertIsNone(drop_a.merkleroot)
@@ -68,7 +68,7 @@ class AbstractDROPHashTests(unittest.TestCase):
 
         # Test RERUN
         drop_a.setCompleted()
-        test = MerkleTree({'status': DROPStates.COMPLETED}.items(), common_hash)
+        test = MerkleTree({"status": DROPStates.COMPLETED}.items(), common_hash)
         # 689fcf0d74c42200bef177db545adc43c135dfb0d7dc85b166db3af1dcded235
         self.assertTrue(test.merkle_root == drop_a.merkleroot)
 
@@ -82,7 +82,7 @@ class AbstractDROPHashTests(unittest.TestCase):
         """
         Should raise an exception preventing a straight-recommit.
         """
-        drop_a = AbstractDROP('a', 'a')
+        drop_a = AbstractDROP("a", "a")
         drop_a.reproducibility_level = ReproducibilityFlags.RERUN
         drop_a.setCompleted()
         with self.assertRaises(Exception):
@@ -94,8 +94,8 @@ class AbstractDROPHashTests(unittest.TestCase):
         If already committed. The drop should reset and re-commit all reproducibility data
         If not committed, the change can proceed simply.
         """
-        drop_a = AbstractDROP('a', 'a')
-        drop_b = AbstractDROP('b', 'b')
+        drop_a = AbstractDROP("a", "a")
+        drop_b = AbstractDROP("b", "b")
         drop_a.reproducibility_level = ReproducibilityFlags.NOTHING
         drop_b.reproducibility_level = ReproducibilityFlags.NOTHING
 
@@ -110,13 +110,13 @@ class AbstractDROPHashTests(unittest.TestCase):
         self.assertIsNotNone(drop_b.merkleroot)
 
         with self.assertRaises(TypeError):
-            drop_a.reproducibility_level = 'REPEAT'
+            drop_a.reproducibility_level = "REPEAT"
 
     def test_set_all(self):
         """
         Tests setting the reproducibility setting to ALL
         """
-        drop_a = AbstractDROP('a', 'a')
+        drop_a = AbstractDROP("a", "a")
         self.assertIsNone(drop_a.merkleroot)
         drop_a.reproducibility_level = ReproducibilityFlags.ALL
         self.assertTrue(isinstance(drop_a.merkleroot, dict))
@@ -126,7 +126,7 @@ class AbstractDROPHashTests(unittest.TestCase):
         Tests taking a drop that was set to ALL to be set to RERUN and have data structures
         reset correctly.
         """
-        drop_a = AbstractDROP('a', 'a')
+        drop_a = AbstractDROP("a", "a")
         self.assertIsNone(drop_a.merkleroot)
         drop_a.reproducibility_level = ReproducibilityFlags.ALL
         self.assertTrue(isinstance(drop_a.merkleroot, dict))

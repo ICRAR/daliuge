@@ -108,7 +108,6 @@ class Registry:
             raise Exception("DROP %s is not present in the registry" % (oid))
 
 
-
 class InMemoryRegistry(Registry):
     def __init__(self):
         super(InMemoryRegistry, self).__init__()

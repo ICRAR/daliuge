@@ -31,8 +31,11 @@ import json
 import unittest
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags, ALL_RMODES
-from dlg.common.reproducibility.reproducibility import \
-    init_lgt_repro_data, init_lg_repro_data, lg_build_blockdag
+from dlg.common.reproducibility.reproducibility import (
+    init_lgt_repro_data,
+    init_lg_repro_data,
+    lg_build_blockdag,
+)
 
 
 def _init_graph(filename):
@@ -72,10 +75,14 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
-        parenthashes = list(lgt['nodeDataArray'][1]['reprodata']['lg_parenthashes'].values())
-        self.assertTrue(len(leaves) == 1 and
-                        len(parenthashes) == 2 and
-                        parenthashes[0] == parenthashes[1])
+        parenthashes = list(
+            lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
+        )
+        self.assertTrue(
+            len(leaves) == 1
+            and len(parenthashes) == 2
+            and parenthashes[0] == parenthashes[1]
+        )
 
     def test_twoend(self):
         """
@@ -110,9 +117,13 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][0]['reprodata']['lg_blockhash']
-        parenthash1 = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
-        parenthash2 = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        parenthash1 = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
+        parenthash2 = list(
+            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
@@ -123,8 +134,10 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_data_sandwich(self):
@@ -136,8 +149,10 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][0]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_computation_sandwich(self):
@@ -148,8 +163,10 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
 
@@ -183,10 +200,14 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
-        parenthashes = list(lgt['nodeDataArray'][1]['reprodata']['lg_parenthashes'].values())
-        self.assertTrue(len(leaves) == 1 and
-                        len(parenthashes) == 2 and
-                        parenthashes[0] == parenthashes[1])
+        parenthashes = list(
+            lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
+        )
+        self.assertTrue(
+            len(leaves) == 1
+            and len(parenthashes) == 2
+            and parenthashes[0] == parenthashes[1]
+        )
 
     def test_twoend(self):
         """
@@ -221,9 +242,13 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][0]['reprodata']['lg_blockhash']
-        parenthash1 = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
-        parenthash2 = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        parenthash1 = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
+        parenthash2 = list(
+            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
@@ -234,8 +259,10 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_data_sandwich(self):
@@ -247,8 +274,10 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][0]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_computation_sandwich(self):
@@ -259,8 +288,10 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
 
@@ -294,10 +325,14 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
-        parenthashes = list(lgt['nodeDataArray'][1]['reprodata']['lg_parenthashes'].values())
-        self.assertTrue(len(leaves) == 1 and
-                        len(parenthashes) == 2 and
-                        parenthashes[0] == parenthashes[1])
+        parenthashes = list(
+            lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
+        )
+        self.assertTrue(
+            len(leaves) == 1
+            and len(parenthashes) == 2
+            and parenthashes[0] == parenthashes[1]
+        )
 
     def test_twoend(self):
         """
@@ -332,9 +367,13 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][0]['reprodata']['lg_blockhash']
-        parenthash1 = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
-        parenthash2 = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        parenthash1 = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
+        parenthash2 = list(
+            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
@@ -345,8 +384,10 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_data_sandwich(self):
@@ -358,8 +399,10 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][0]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_computation_sandwich(self):
@@ -370,8 +413,10 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
 
@@ -406,13 +451,18 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
-        parenthashes = list(lgt['nodeDataArray'][1]['reprodata']['lg_parenthashes'].values())
-        sig0 = lgt['nodeDataArray'][0]['reprodata']['lg_blockhash']
-        sig1 = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        sig2 = lgt['nodeDataArray'][2]['reprodata']['lg_blockhash']
-        self.assertTrue(len(leaves) == 1 and
-                        len(parenthashes) == 0 and
-                        sig0 == sig1 and sig1 == sig2)
+        parenthashes = list(
+            lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
+        )
+        sig0 = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        sig1 = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        sig2 = lgt["nodeDataArray"][2]["reprodata"]["lg_blockhash"]
+        self.assertTrue(
+            len(leaves) == 1
+            and len(parenthashes) == 0
+            and sig0 == sig1
+            and sig1 == sig2
+        )
 
     def test_twoend(self):
         """
@@ -447,9 +497,13 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        parenthash1 = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
-        parenthash2 = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        parenthash1 = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
+        parenthash2 = list(
+            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
@@ -460,9 +514,13 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehashes = [lgt['nodeDataArray'][0]['reprodata']['lg_blockhash'],
-                        lgt['nodeDataArray'][2]['reprodata']['lg_blockhash']]
-        parenthashes = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        sourcehashes = [
+            lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"],
+            lgt["nodeDataArray"][2]["reprodata"]["lg_blockhash"],
+        ]
+        parenthashes = list(
+            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehashes == parenthashes and len(parenthashes) == 2)
 
     def test_data_sandwich(self):
@@ -474,8 +532,10 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_computation_sandwich(self):
@@ -486,8 +546,10 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
 
@@ -521,10 +583,14 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
-        parenthashes = list(lgt['nodeDataArray'][1]['reprodata']['lg_parenthashes'].values())
-        self.assertTrue(len(leaves) == 1 and
-                        len(parenthashes) == 2 and
-                        parenthashes[0] == parenthashes[1])
+        parenthashes = list(
+            lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
+        )
+        self.assertTrue(
+            len(leaves) == 1
+            and len(parenthashes) == 2
+            and parenthashes[0] == parenthashes[1]
+        )
 
     def test_twoend(self):
         """
@@ -559,9 +625,13 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][0]['reprodata']['lg_blockhash']
-        parenthash1 = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
-        parenthash2 = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        parenthash1 = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
+        parenthash2 = list(
+            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
@@ -572,8 +642,10 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_data_sandwich(self):
@@ -585,8 +657,10 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][0]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_computation_sandwich(self):
@@ -597,8 +671,10 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
 
@@ -632,10 +708,14 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
-        parenthashes = list(lgt['nodeDataArray'][1]['reprodata']['lg_parenthashes'].values())
-        self.assertTrue(len(leaves) == 1 and
-                        len(parenthashes) == 2 and
-                        parenthashes[0] == parenthashes[1])
+        parenthashes = list(
+            lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
+        )
+        self.assertTrue(
+            len(leaves) == 1
+            and len(parenthashes) == 2
+            and parenthashes[0] == parenthashes[1]
+        )
 
     def test_twoend(self):
         """
@@ -670,9 +750,13 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][0]['reprodata']['lg_blockhash']
-        parenthash1 = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
-        parenthash2 = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        parenthash1 = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
+        parenthash2 = list(
+            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
@@ -683,8 +767,10 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_data_sandwich(self):
@@ -696,8 +782,10 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][0]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_computation_sandwich(self):
@@ -708,8 +796,10 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
 
@@ -743,10 +833,14 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
-        parenthashes = list(lgt['nodeDataArray'][1]['reprodata']['lg_parenthashes'].values())
-        self.assertTrue(len(leaves) == 1 and
-                        len(parenthashes) == 2 and
-                        parenthashes[0] == parenthashes[1])
+        parenthashes = list(
+            lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
+        )
+        self.assertTrue(
+            len(leaves) == 1
+            and len(parenthashes) == 2
+            and parenthashes[0] == parenthashes[1]
+        )
 
     def test_twoend(self):
         """
@@ -781,9 +875,13 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][0]['reprodata']['lg_blockhash']
-        parenthash1 = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
-        parenthash2 = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        parenthash1 = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
+        parenthash2 = list(
+            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
@@ -794,8 +892,10 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_data_sandwich(self):
@@ -807,8 +907,10 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][0]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_computation_sandwich(self):
@@ -819,8 +921,10 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
 
@@ -853,10 +957,14 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
-        parenthashes = list(lgt['nodeDataArray'][1]['reprodata']['lg_parenthashes'].values())
-        self.assertTrue(len(leaves) == 1 and
-                        len(parenthashes) == 2 and
-                        parenthashes[0] == parenthashes[1])
+        parenthashes = list(
+            lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
+        )
+        self.assertTrue(
+            len(leaves) == 1
+            and len(parenthashes) == 2
+            and parenthashes[0] == parenthashes[1]
+        )
 
     def test_twoend(self):
         """
@@ -891,9 +999,13 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][0]['reprodata']['lg_blockhash']
-        parenthash1 = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
-        parenthash2 = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        parenthash1 = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
+        parenthash2 = list(
+            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
@@ -904,8 +1016,10 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][3]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_data_sandwich(self):
@@ -917,8 +1031,10 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][0]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_computation_sandwich(self):
@@ -929,8 +1045,10 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt['nodeDataArray'][1]['reprodata']['lg_blockhash']
-        parenthashes = list(lgt['nodeDataArray'][2]['reprodata']['lg_parenthashes'].values())
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        parenthashes = list(
+            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+        )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
 
@@ -965,10 +1083,16 @@ class LogicalBlockdagAllTests(unittest.TestCase):
         init_lg_repro_data(lgt)
         for rmode in ALL_RMODES:
             leaves = lg_build_blockdag(lgt, rmode)[0]
-            parenthashes = list(lgt['nodeDataArray'][1]['reprodata'][rmode.name]['lg_parenthashes'].values())
-            self.assertTrue(len(leaves) == 1 and
-                            len(parenthashes) == 2 and
-                            parenthashes[0] == parenthashes[1])
+            parenthashes = list(
+                lgt["nodeDataArray"][1]["reprodata"][rmode.name][
+                    "lg_parenthashes"
+                ].values()
+            )
+            self.assertTrue(
+                len(leaves) == 1
+                and len(parenthashes) == 2
+                and parenthashes[0] == parenthashes[1]
+            )
 
     def test_twoend(self):
         """
@@ -1006,9 +1130,19 @@ class LogicalBlockdagAllTests(unittest.TestCase):
         init_lg_repro_data(lgt)
         for rmode in ALL_RMODES:
             lg_build_blockdag(lgt, rmode)
-            sourcehash = lgt['nodeDataArray'][0]['reprodata'][rmode.name]['lg_blockhash']
-            parenthash1 = list(lgt['nodeDataArray'][2]['reprodata'][rmode.name]['lg_parenthashes'].values())
-            parenthash2 = list(lgt['nodeDataArray'][3]['reprodata'][rmode.name]['lg_parenthashes'].values())
+            sourcehash = lgt["nodeDataArray"][0]["reprodata"][rmode.name][
+                "lg_blockhash"
+            ]
+            parenthash1 = list(
+                lgt["nodeDataArray"][2]["reprodata"][rmode.name][
+                    "lg_parenthashes"
+                ].values()
+            )
+            parenthash2 = list(
+                lgt["nodeDataArray"][3]["reprodata"][rmode.name][
+                    "lg_parenthashes"
+                ].values()
+            )
             self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
@@ -1020,8 +1154,14 @@ class LogicalBlockdagAllTests(unittest.TestCase):
         init_lg_repro_data(lgt)
         for rmode in ALL_RMODES:
             lg_build_blockdag(lgt, rmode)
-            sourcehash = lgt['nodeDataArray'][1]['reprodata'][rmode.name]['lg_blockhash']
-            parenthashes = list(lgt['nodeDataArray'][3]['reprodata'][rmode.name]['lg_parenthashes'].values())
+            sourcehash = lgt["nodeDataArray"][1]["reprodata"][rmode.name][
+                "lg_blockhash"
+            ]
+            parenthashes = list(
+                lgt["nodeDataArray"][3]["reprodata"][rmode.name][
+                    "lg_parenthashes"
+                ].values()
+            )
             self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_data_sandwich(self):
@@ -1034,8 +1174,14 @@ class LogicalBlockdagAllTests(unittest.TestCase):
         init_lg_repro_data(lgt)
         for rmode in ALL_RMODES:
             lg_build_blockdag(lgt, rmode)
-            sourcehash = lgt['nodeDataArray'][0]['reprodata'][rmode.name]['lg_blockhash']
-            parenthashes = list(lgt['nodeDataArray'][2]['reprodata'][rmode.name]['lg_parenthashes'].values())
+            sourcehash = lgt["nodeDataArray"][0]["reprodata"][rmode.name][
+                "lg_blockhash"
+            ]
+            parenthashes = list(
+                lgt["nodeDataArray"][2]["reprodata"][rmode.name][
+                    "lg_parenthashes"
+                ].values()
+            )
             self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_computation_sandwich(self):
@@ -1047,6 +1193,12 @@ class LogicalBlockdagAllTests(unittest.TestCase):
         init_lg_repro_data(lgt)
         for rmode in ALL_RMODES:
             lg_build_blockdag(lgt, rmode)
-            sourcehash = lgt['nodeDataArray'][1]['reprodata'][rmode.name]['lg_blockhash']
-            parenthashes = list(lgt['nodeDataArray'][2]['reprodata'][rmode.name]['lg_parenthashes'].values())
+            sourcehash = lgt["nodeDataArray"][1]["reprodata"][rmode.name][
+                "lg_blockhash"
+            ]
+            parenthashes = list(
+                lgt["nodeDataArray"][2]["reprodata"][rmode.name][
+                    "lg_parenthashes"
+                ].values()
+            )
             self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)

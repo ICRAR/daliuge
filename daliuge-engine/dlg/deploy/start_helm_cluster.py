@@ -43,13 +43,16 @@ def get_pg(opts, node_managers: list, data_island_managers: list):
 
     if opts.logical_graph:
         unrolled_graph = pg_generator.unroll(opts.logical_graph)
-        pgt = pg_generator.partition(unrolled_graph, algo='metis', num_partitons=num_nms,
-                                     num_islands=num_dims)
+        pgt = pg_generator.partition(
+            unrolled_graph, algo="metis", num_partitons=num_nms, num_islands=num_dims
+        )
         del unrolled_graph
     else:
-        with open(opts.physical_graph, 'rb', encoding='utf-8') as pg_file:
+        with open(opts.physical_graph, "rb", encoding="utf-8") as pg_file:
             pgt = json.load(pg_file)
-    physical_graph = pg_generator.resource_map(pgt, node_managers + data_island_managers)
+    physical_graph = pg_generator.resource_map(
+        pgt, node_managers + data_island_managers
+    )
     # TODO: Add dumping to log-dir
     return physical_graph
 
@@ -59,13 +62,15 @@ def start_helm(physical_graph_template, num_nodes: int, deploy_dir: str):
     # TODO: Multiple node deployments
     available_ips = ["127.0.0.1"]
     pgt = json.loads(physical_graph_template)
-    pgt = pg_generator.partition(pgt, algo='metis', num_partitons=len(available_ips),
-                                 num_islands=len(available_ips))
+    pgt = pg_generator.partition(
+        pgt,
+        algo="metis",
+        num_partitons=len(available_ips),
+        num_islands=len(available_ips),
+    )
     pg = pg_generator.resource_map(pgt, available_ips + available_ips)
     helm_client = HelmClient(
-        deploy_name='daliuge-daemon',
-        chart_name='daliuge-daemon',
-        deploy_dir=deploy_dir
+        deploy_name="daliuge-daemon", chart_name="daliuge-daemon", deploy_dir=deploy_dir
     )
     try:
         helm_client.create_helm_chart(json.dumps(pg))
@@ -79,13 +84,13 @@ def start_helm(physical_graph_template, num_nodes: int, deploy_dir: str):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-L',
-        '--logical-graph',
+        "-L",
+        "--logical-graph",
         action="store",
         type=str,
         dest="logical_graph",
         help="The filename of the logical graph to deploy",
-        default=None
+        default=None,
     )
     parser.add_argument(
         "-P",
@@ -110,9 +115,9 @@ def main():
     physical_graph = get_pg(options, available_ips, available_ips)
 
     helm_client = HelmClient(
-        deploy_name='daliuge-daemon',
-        chart_name='daliuge-daemon',
-        deploy_dir='/home/nicholas/dlg_temp/demo'
+        deploy_name="daliuge-daemon",
+        chart_name="daliuge-daemon",
+        deploy_dir="/home/nicholas/dlg_temp/demo",
     )
     helm_client.create_helm_chart(json.dumps(physical_graph))
     helm_client.launch_helm()

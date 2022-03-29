@@ -143,13 +143,13 @@ def known_algorithms():
 
 
 def partition(
-        pgt,
-        algo,
-        num_partitions=1,
-        num_islands=1,
-        partition_label="partition",
-        show_gojs=False,
-        **algo_params
+    pgt,
+    algo,
+    num_partitions=1,
+    num_islands=1,
+    partition_label="partition",
+    show_gojs=False,
+    **algo_params,
 ):
     """Partitions a Physical Graph Template"""
 
@@ -255,7 +255,8 @@ def resource_map(pgt, nodes, num_islands=1, co_host_dim=True):
     """Maps a Physical Graph Template `pgt` to `nodes`"""
 
     logger.info(
-        f"Resource mapping called with nodes: {nodes}, islands: {num_islands} and co_host_dim: {co_host_dim}")
+        f"Resource mapping called with nodes: {nodes}, islands: {num_islands} and co_host_dim: {co_host_dim}"
+    )
     if not nodes:
         err_info = "Empty node_list, cannot map the PG template"
         raise ValueError(err_info)

@@ -44,7 +44,6 @@ def uid_for_drop(dropSpec):
     return dropSpec["oid"]
 
 
-
 def sanitize_relations(interDMRelations, graph):
     # TODO: Big change required to remove this hack here
     #
@@ -339,10 +338,12 @@ class CompositeManager(DROPManager):
         logger.info(f"Separating graph using partition attribute {self._partitionAttr}")
         perPartition = collections.defaultdict(list)
         try:
-            if graphSpec[-1]['merkleroot'] is not None:
-                self._graph['reprodata'] = graphSpec.pop()
-                logger.debug("Composite manager found reprodata in dropspecList, rmode=%s",
-                             self._graph['reprodata']['rmode'])
+            if graphSpec[-1]["merkleroot"] is not None:
+                self._graph["reprodata"] = graphSpec.pop()
+                logger.debug(
+                    "Composite manager found reprodata in dropspecList, rmode=%s",
+                    self._graph["reprodata"]["rmode"],
+                )
         except KeyError:
             pass
         for dropSpec in graphSpec:
@@ -536,7 +537,6 @@ class DataIslandManager(CompositeManager):
         # In the case of the Data Island the dmHosts are the final nodes as well
         self._nodes = dmHosts
         logger.info("Created DataIslandManager for hosts: %r", self._dmHosts)
-
 
 
 class MasterManager(CompositeManager):

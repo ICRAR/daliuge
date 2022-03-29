@@ -19,6 +19,7 @@ class ReproducibilityFlags(Enum):
     Enum for supported reproducibility modes.
     TODO: Link to more detail description
     """
+
     ALL = -1  # Builds and maintains all standards (1-8)
     NOTHING = 0
     RERUN = 1
@@ -38,7 +39,7 @@ ALL_RMODES = [
     ReproducibilityFlags.REPRODUCE,
     ReproducibilityFlags.REPLICATE_SCI,
     ReproducibilityFlags.REPLICATE_COMP,
-    ReproducibilityFlags.REPLICATE_TOTAL
+    ReproducibilityFlags.REPLICATE_TOTAL,
 ]
 REPRO_DEFAULT = ReproducibilityFlags.NOTHING
 HashingAlg = hashlib.sha3_256
@@ -57,12 +58,12 @@ def rflag_caster(val, default=REPRO_DEFAULT):
     if isinstance(val, str):
         try:
             return ReproducibilityFlags(int(val))
-        except(ValueError, TypeError):
+        except (ValueError, TypeError):
             return default
     elif isinstance(val, int):
         try:
             return ReproducibilityFlags(val)
-        except(ValueError, TypeError):
+        except (ValueError, TypeError):
             return default
     elif val is None:
         return default
@@ -90,7 +91,7 @@ def rmode_supported(flag: ReproducibilityFlags):
         ReproducibilityFlags.REPLICATE_SCI,
         ReproducibilityFlags.REPLICATE_COMP,
         ReproducibilityFlags.REPLICATE_TOTAL,
-        ReproducibilityFlags.EXPERIMENTAL
+        ReproducibilityFlags.EXPERIMENTAL,
     )
 
 
@@ -100,7 +101,7 @@ def find_loaded_modules():
     """
     loaded_mods = []
     for name, module in sorted(sys.modules.items()):
-        if hasattr(module, '__version__'):
+        if hasattr(module, "__version__"):
             loaded_mods.append(name + " " + str(module.__version__))
         else:
             loaded_mods.append(name)
@@ -116,31 +117,26 @@ def system_summary():
     merkletree = MerkleTree()
     system_info = {}
     uname = platform.uname()
-    system_info['system'] = {
-        'system': uname.system,
-        'release': uname.release,
-        'machine': uname.machine,
-        'processor': uname.processor
+    system_info["system"] = {
+        "system": uname.system,
+        "release": uname.release,
+        "machine": uname.machine,
+        "processor": uname.processor,
     }
     cpu_freq = psutil.cpu_freq()
-    system_info['cpu'] = {
-        'cores_phys': psutil.cpu_count(logical=False),
-        'cores_logic': psutil.cpu_count(logical=True),
-        'max_frequency': cpu_freq.max,
-        'min_frequency': cpu_freq.min
+    system_info["cpu"] = {
+        "cores_phys": psutil.cpu_count(logical=False),
+        "cores_logic": psutil.cpu_count(logical=True),
+        "max_frequency": cpu_freq.max,
+        "min_frequency": cpu_freq.min,
     }
     sys_mem = psutil.virtual_memory()
-    system_info['memory'] = {
-        'total': sys_mem.total
-    }
+    system_info["memory"] = {"total": sys_mem.total}
     gpus = GPUtil.getGPUs()
-    system_info['gpu'] = {}
+    system_info["gpu"] = {}
     for gpu in gpus:
-        system_info['gpu'][gpu.id] = {
-            'name': gpu.name,
-            'memory': gpu.memoryTotal
-        }
-    system_info['modules'] = find_loaded_modules()
+        system_info["gpu"][gpu.id] = {"name": gpu.name, "memory": gpu.memoryTotal}
+    system_info["modules"] = find_loaded_modules()
     merkletree.append(list(system_info.items()))
-    system_info['signature'] = merkletree.merkle_root
+    system_info["signature"] = merkletree.merkle_root
     return system_info

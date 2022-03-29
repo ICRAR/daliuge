@@ -233,5 +233,5 @@ class TestPGGen(unittest.TestCase):
             lg = LG(fp)
             out = lg.unroll_to_tpl()
             for drop in out:
-                if drop['type'] == 'plain':
-                    self.assertEqual("SharedMemory", drop['storage'])
+                if drop["type"] == "plain":
+                    self.assertEqual("SharedMemory", drop["storage"])

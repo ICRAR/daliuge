@@ -124,9 +124,14 @@ def monitor_sessions(
             time.sleep(poll_interval)
 
 
-def monitor_sessions_repro(session_id=None, poll_interval=10, host='127.0.0.1',
-                           port=constants.ISLAND_DEFAULT_REST_PORT, timeout=60,
-                           status_dump_path=None):
+def monitor_sessions_repro(
+    session_id=None,
+    poll_interval=10,
+    host="127.0.0.1",
+    port=constants.ISLAND_DEFAULT_REST_PORT,
+    timeout=60,
+    status_dump_path=None,
+):
     """
     Very similar to monitoring execution status of all (or one) session specified by `session_id`
     by polling `host`:`port`, and returns when they all have finalized their reproducibility data.
@@ -142,12 +147,17 @@ def monitor_sessions_repro(session_id=None, poll_interval=10, host='127.0.0.1',
         while True:
             sessions = client.sessions()
             if all(client.session_repro_status(s) for s in sessions):
-                return {s['sessionId']: s['repro'] for s in sessions}
+                return {s["sessionId"]: s["repro"] for s in sessions}
             time.sleep(poll_interval)
 
 
-def fetch_reproducibility(session_id=None, poll_interval=10, host='127.0.0.1',
-                          port=constants.ISLAND_DEFAULT_REST_PORT, timeout=60):
+def fetch_reproducibility(
+    session_id=None,
+    poll_interval=10,
+    host="127.0.0.1",
+    port=constants.ISLAND_DEFAULT_REST_PORT,
+    timeout=60,
+):
     """
     Fetches the final graph and associated reproducibility information for `session_id`.
     """
@@ -159,7 +169,6 @@ def fetch_reproducibility(session_id=None, poll_interval=10, host='127.0.0.1',
         if repro_data is not None:
             return repro_data
         time.sleep(poll_interval)
-
 
 
 def submit(

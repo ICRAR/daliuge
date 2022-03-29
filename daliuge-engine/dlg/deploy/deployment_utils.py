@@ -119,10 +119,10 @@ def find_numislands(physical_graph_template_file):
         (pgt_name, pgt) = pgt_data
     except:
         raise ValueError(type(pgt_data))
-    nodes = list(map(lambda x: x['node'], pgt))
-    islands = list(map(lambda x: x['island'], pgt))
-    num_islands = len(dict(zip(islands,range(len(islands)))))
-    num_nodes = len(dict(zip(nodes,range(len(nodes)))))
+    nodes = list(map(lambda x: x["node"], pgt))
+    islands = list(map(lambda x: x["island"], pgt))
+    num_islands = len(dict(zip(islands, range(len(islands)))))
+    num_nodes = len(dict(zip(nodes, range(len(nodes)))))
     pip_name = pgt_name
     return num_islands, num_nodes, pip_name
 
@@ -146,7 +146,5 @@ def num_daliuge_nodes(num_nodes: int, run_proxy: bool):
     else:
         ret = num_nodes - 0  # exclude the data island node?
     if ret <= 0:
-        raise Exception(
-            "Not enough nodes {0} to run DALiuGE.".format(num_nodes)
-        )
+        raise Exception("Not enough nodes {0} to run DALiuGE.".format(num_nodes))
     return ret

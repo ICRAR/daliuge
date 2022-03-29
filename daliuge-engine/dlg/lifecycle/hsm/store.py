@@ -160,7 +160,6 @@ class MemoryStore(AbstractStore):
         return "Memory"
 
 
-
 class NgasStore(AbstractStore):
     """
     A store that a given NGAS server as its storage mechanism. It creates

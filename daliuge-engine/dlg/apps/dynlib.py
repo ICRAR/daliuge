@@ -353,7 +353,7 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
         self._c_app.n_streaming_inputs += 1
 
     def generate_recompute_data(self):
-        out = {'status': self.status}
+        out = {"status": self.status}
         return out.update(self._c_app.pack_python())
 
 
@@ -390,7 +390,7 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
         run(self.lib, self._c_app, input_closers)
 
     def generate_recompute_data(self):
-        out = {'status': self.status}
+        out = {"status": self.status}
         return out.update(self._c_app.pack_python())
 
 

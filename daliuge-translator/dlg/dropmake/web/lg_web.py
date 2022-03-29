@@ -51,8 +51,12 @@ from bottle import (
 from dlg import common, restutils
 from dlg.clients import CompositeManagerClient
 from dlg.common.reproducibility.constants import REPRO_DEFAULT
-from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data, \
-    init_pgt_unroll_repro_data, init_pgt_partition_repro_data
+from dlg.common.reproducibility.reproducibility import (
+    init_lgt_repro_data,
+    init_lg_repro_data,
+    init_pgt_unroll_repro_data,
+    init_pgt_partition_repro_data,
+)
 from dlg.dropmake.lg import GraphException, load_lg
 from dlg.dropmake.pg_generator import unroll, partition
 from dlg.dropmake.pg_manager import PGManager
@@ -152,7 +156,7 @@ def jsonbody_post():
     # see the table in http://bottlepy.org/docs/dev/tutorial.html#html-form-handling
     lg_name = request.forms["lg_name"]
     if lg_exists(lg_name):
-        rmode = request.forms.get('rmode', str(REPRO_DEFAULT.value))
+        rmode = request.forms.get("rmode", str(REPRO_DEFAULT.value))
         lg_content = request.forms["lg_content"]
         try:
             lg_content = json.loads(lg_content)
@@ -312,6 +316,7 @@ def gen_pg_helm():
     """
     # Get pgt_data
     from ...deploy.start_helm_cluster import start_helm
+
     pgt_id = request.query.get("pgt_id")
     pgtp = pg_mgr.get_pgt(pgt_id)
     if pgtp is None:
@@ -322,7 +327,7 @@ def gen_pg_helm():
 
     pgtpj = pgtp._gojs_json_obj
     logger.info("PGTP: %s" % pgtpj)
-    num_partitions = len(list(filter(lambda n: 'isGroup' in n, pgtpj['nodeDataArray'])))
+    num_partitions = len(list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"])))
     # Send pgt_data to helm_start
     try:
         start_helm(pgtp, num_partitions, pgt_dir)
@@ -355,7 +360,7 @@ def gen_pg():
     pgtpj = pgtp._gojs_json_obj
     logger.info("PGTP: %s" % pgtpj)
     num_partitions = 0
-    num_partitions = len(list(filter(lambda n: 'isGroup' in n, pgtpj['nodeDataArray'])))
+    num_partitions = len(list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"])))
     surl = urlparse(request.url)
 
     mhost = ""
@@ -527,7 +532,7 @@ def gen_pgt():
             pgt_view_json_name=pgt_id,
             partition_info=part_info,
             title="Physical Graph Template%s"
-                  % ("" if num_partitions == 0 else "Partitioning"),
+            % ("" if num_partitions == 0 else "Partitioning"),
         )
     except GraphException as ge:
         response.status = 500
@@ -634,9 +639,8 @@ def unroll_and_partition_with_params(lg, algo_params_source):
         num_islands=num_islands,
         partition_label=par_label,
         show_gojs=True,
-        **algo_params
+        **algo_params,
     )
-
 
     pgt_spec = pgt.to_pg_spec(
         [],

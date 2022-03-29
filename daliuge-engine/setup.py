@@ -116,7 +116,7 @@ class lib64_path(install):
 # Core requirements of DALiuGE
 # Keep alpha-sorted PLEASE!
 install_requires = [
-    "wheel", # need to get wheel first...
+    "wheel",  # need to get wheel first...
     "bottle",
     "configobj",
     "crc32c",
@@ -195,9 +195,7 @@ setup(
         "test.dropmake": ["logical_graphs/*.json"],
         "test.apps": ["dynlib_example.c", "dynlib_example2.c"],
     },
-    entry_points={
-        'dlg.tool_commands': ['runtime=dlg.runtime.tool_commands']
-    },
+    entry_points={"dlg.tool_commands": ["runtime=dlg.runtime.tool_commands"]},
     install_requires=install_requires,
     extras_require=extra_requires,
     test_suite="test",

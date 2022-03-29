@@ -232,7 +232,6 @@ class _Listifier(BarrierAppDROP):
         )
 
 
-
 class _DelayedDrops(_DelayedDrop):
     """One or more _DelayedDrops treated as a single item"""
 

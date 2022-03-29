@@ -90,7 +90,7 @@ class TestLGWeb(unittest.TestCase):
         form_data = {
             "lg_name": "new.graph",
             "lg_content": '{"id": 1, "name": "example"}',
-            "rmode": "1"
+            "rmode": "1",
         }
         self.assertRaises(RestClientException, c._post_form, "/jsonbody", form_data)
 
@@ -109,7 +109,7 @@ class TestLGWeb(unittest.TestCase):
             self.assertIn("name", new)
             self.assertEqual(1, new["id"])
             self.assertEqual("example", new["name"])
-            self.assertEqual("1", new['reprodata']['rmode'])
+            self.assertEqual("1", new["reprodata"]["rmode"])
         finally:
             shutil.move(copy_fname, original_fname)
 
@@ -118,12 +118,16 @@ class TestLGWeb(unittest.TestCase):
         c = RestClient("127.0.0.1", lgweb_port, timeout=10)
 
         # doesn't exist!
-        self.assertRaises(RestClientException, c._GET,
-                          "/gen_pgt?lg_name=doesnt_exist.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100",
+        self.assertRaises(
+            RestClientException,
+            c._GET,
+            "/gen_pgt?lg_name=doesnt_exist.json&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100",
         )
         # unknown algorithm
-        self.assertRaises(RestClientException, c._GET,
-                          "/gen_pgt?lg_name=logical_graphs/chiles_simple.graph&num_par=5&algo=noidea",
+        self.assertRaises(
+            RestClientException,
+            c._GET,
+            "/gen_pgt?lg_name=logical_graphs/chiles_simple.graph&num_par=5&algo=noidea",
         )
         # this should work now
         self._generate_pgt(c)
@@ -255,6 +259,7 @@ class TestLGWeb(unittest.TestCase):
         c._GET("/pg_viewer")
         # also fine, PGT exists
         c._GET("/pg_viewer?pgt_view_name=logical_graphs/chiles_simple1_pgt.graph")
+
     def _test_pgt_action(self, path, unknown_fails):
 
         c = RestClient("localhost", lgweb_port, timeout=10)

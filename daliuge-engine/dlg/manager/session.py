@@ -96,7 +96,9 @@ class ReproFinishedListener(object):
     def handleEvent(self, evt):
         self._completed += 1
         self._session.append_reprodata(evt.oid, evt.reprodata)
-        logger.debug("%d/%d drops filed reproducibility", self._completed, self._nexpected)
+        logger.debug(
+            "%d/%d drops filed reproducibility", self._completed, self._nexpected
+        )
         if self._completed == self._nexpected:
             logger.debug("Building Reproducibility BlockDAG")
             init_runtime_repro_data(self._session._graph, self._session._graphreprodata)
@@ -224,10 +226,9 @@ class Session(object):
         parts = [utils.getDlgLogsDir(), self._sessionId]
         the_dir = os.path.abspath(os.path.normpath(os.path.join(*parts)))
         createDirIfMissing(the_dir)
-        the_path = os.path.join(the_dir, 'reprodata.out')
-        with open(the_path, 'w+') as file:
-            json.dump(self._graphreprodata, open(the_path, 'w+'), indent=4)
-
+        the_path = os.path.join(the_dir, "reprodata.out")
+        with open(the_path, "w+") as file:
+            json.dump(self._graphreprodata, open(the_path, "w+"), indent=4)
 
     @track_current_session
     def addGraphSpec(self, graphSpec):
@@ -365,7 +366,7 @@ class Session(object):
             for l in event_listeners:
                 drop.subscribe(l)
             #  Register each drop for reproducibility listening
-            drop.subscribe(repro_listener, 'reproducibility')
+            drop.subscribe(repro_listener, "reproducibility")
 
         logger.info("Stored all drops, proceeding with further customization")
 
@@ -457,8 +458,12 @@ class Session(object):
         evt_consumer = (
             DROPLinkType.CONSUMER,
             DROPLinkType.STREAMING_CONSUMER,
-            DROPLinkType.OUTPUT,)
-        evt_producer = (DROPLinkType.INPUT, DROPLinkType.STREAMING_INPUT, DROPLinkType.PRODUCER,
+            DROPLinkType.OUTPUT,
+        )
+        evt_producer = (
+            DROPLinkType.INPUT,
+            DROPLinkType.STREAMING_INPUT,
+            DROPLinkType.PRODUCER,
         )
 
         for host, droprels in relationships.items():
@@ -507,10 +512,12 @@ class Session(object):
 
     def append_reprodata(self, oid, reprodata):
         if oid in self._graph:
-            if self._graph[oid].get('reprodata') is None:
+            if self._graph[oid].get("reprodata") is None:
                 return
-            self._graph[oid]['reprodata']['rg_data'] = reprodata.get('data', {})
-            self._graph[oid]['reprodata']['rg_data']['merkleroot'] = reprodata.get('merkleroot', b'')
+            self._graph[oid]["reprodata"]["rg_data"] = reprodata.get("data", {})
+            self._graph[oid]["reprodata"]["rg_data"]["merkleroot"] = reprodata.get(
+                "merkleroot", b""
+            )
 
     @track_current_session
     def finish(self):

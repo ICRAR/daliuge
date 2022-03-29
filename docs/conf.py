@@ -11,7 +11,6 @@ from datetime import datetime
 read_the_docs_build = os.environ.get("READTHEDOCS", None) == "True"
 
 
-
 def prepare_for_docs(path):
     # Run "python setup.py build" to generate the version.py files, and make
     # packages available for documenting their APIs
@@ -126,7 +125,7 @@ latex_elements = {}
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "daliuge.tex", u"daliuge Documentation", u"ICRAR", "manual"),
+    (master_doc, "daliuge.tex", u"daliuge Documentation", u"ICRAR", "manual")
 ]
 
 # -- Options for manual page output ---------------------------------------
@@ -144,5 +143,5 @@ texinfo_documents = [
         "daliuge",
         "One line description of project.",
         "Miscellaneous",
-    ),
+    )
 ]

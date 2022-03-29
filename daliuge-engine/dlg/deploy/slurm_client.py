@@ -50,26 +50,26 @@ class SlurmClient:
     """
 
     def __init__(
-            self,
-            log_root=None,
-            acc=None,
-            physical_graph_template_data=None,  # JSON formatted physical graph template
-            logical_graph=None,
-            job_dur=30,
-            num_nodes=None,
-            run_proxy=False,
-            mon_host=DEFAULT_AWS_MON_HOST,
-            mon_port=DEFAULT_AWS_MON_PORT,
-            logv=1,
-            facility=None,
-            zerorun=False,
-            max_threads=0,
-            sleepncopy=False,
-            num_islands=None,
-            all_nics=False,
-            check_with_session=False,
-            submit=True,
-            pip_name=None,
+        self,
+        log_root=None,
+        acc=None,
+        physical_graph_template_data=None,  # JSON formatted physical graph template
+        logical_graph=None,
+        job_dur=30,
+        num_nodes=None,
+        run_proxy=False,
+        mon_host=DEFAULT_AWS_MON_HOST,
+        mon_port=DEFAULT_AWS_MON_PORT,
+        logv=1,
+        facility=None,
+        zerorun=False,
+        max_threads=0,
+        sleepncopy=False,
+        num_islands=None,
+        all_nics=False,
+        check_with_session=False,
+        submit=True,
+        pip_name=None,
     ):
         self._config = ConfigFactory.create_config(facility=facility)
         self._acc = self._config.getpar("acc") if (acc is None) else acc
@@ -97,7 +97,8 @@ class SlurmClient:
         self._submit = submit
         self._dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
         self._num_islands, self._num_nodes, self._pip_name = find_numislands(
-            self._physical_graph_template_data)
+            self._physical_graph_template_data
+        )
 
     def get_log_dirname(self):
         """
@@ -106,7 +107,7 @@ class SlurmClient:
         # Moved setting of dtstr to init
         # to ensure it doesn't change for this instance of SlurmClient()
         # dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
-        graph_name = self._pip_name.split('_')[0]  # use only the part of the graph name
+        graph_name = self._pip_name.split("_")[0]  # use only the part of the graph name
         return "{0}_{1}".format(graph_name, self._dtstr)
 
     def create_job_desc(self, physical_graph_file):
@@ -121,7 +122,7 @@ class SlurmClient:
         pardict["SESSION_ID"] = os.path.split(log_dir)[-1]
         pardict["JOB_DURATION"] = label_job_dur(self._job_dur)
         pardict["ACCOUNT"] = self._acc
-        pardict["PY_BIN"] = 'python3' if pardict["VENV"] else sys.executable
+        pardict["PY_BIN"] = "python3" if pardict["VENV"] else sys.executable
         pardict["LOG_DIR"] = log_dir
         pardict["GRAPH_PAR"] = (
             '-L "{0}"'.format(self._logical_graph)
@@ -155,7 +156,7 @@ class SlurmClient:
             os.makedirs(log_dir)
 
         physical_graph_file_name = "{0}/{1}".format(log_dir, self._pip_name)
-        with open(physical_graph_file_name, 'w') as physical_graph_file:
+        with open(physical_graph_file_name, "w") as physical_graph_file:
             physical_graph_file.write(self._physical_graph_template_data)
             physical_graph_file.close()
 

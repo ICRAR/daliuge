@@ -188,7 +188,6 @@ def getDlgDir():
     return path
 
 
-
 def getDlgPidDir():
     """
     Returns the location of the directory used by the DALiuGE framework to store
@@ -196,7 +195,6 @@ def getDlgPidDir():
     currently doesn't exist
     """
     return os.path.join(getDlgDir(), "pid")
-
 
 
 def getDlgLogsDir():
@@ -262,12 +260,12 @@ def fname_to_pipname(fname):
     name (the basename without the extension).
     """
     fname = os.path.split(fname)[-1]
-    m = re.compile(r'.json$|.graph$')
+    m = re.compile(r".json$|.graph$")
     res = m.search(fname)
     logger.info("regex result %s", res)
 
     if res:
-        fname = fname[:res.start()]
+        fname = fname[: res.start()]
     return fname
 
 
@@ -511,10 +509,12 @@ def prepareUser(DLG_ROOT=getDlgDir()):
     # get current user info
     pw = pwd.getpwuid(os.getuid())
     gr = grp.getgrgid(pw.pw_gid)
-    dgr = grp.getgrnam('docker')
+    dgr = grp.getgrnam("docker")
     with open(os.path.join(workdir, "passwd"), "wt") as file:
         file.write(open(os.path.join(template_dir, "passwd.template"), "rt").read())
-        file.write(f"{pw.pw_name}:x:{pw.pw_uid}:{pw.pw_gid}:{pw.pw_gecos}:{DLG_ROOT}:/bin/bash\n")
+        file.write(
+            f"{pw.pw_name}:x:{pw.pw_uid}:{pw.pw_gid}:{pw.pw_gecos}:{DLG_ROOT}:/bin/bash\n"
+        )
         logger.debug(f"passwd file written {file.name}")
     with open(os.path.join(workdir, "group"), "wt") as file:
         file.write(open(os.path.join(template_dir, "group.template"), "rt").read())

@@ -50,10 +50,10 @@ from ..runtime import version
 
 _terminating = False
 
-class DlgFormatter(logging.Formatter):
 
+class DlgFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
-        arg_pattern = re.compile(r'%\((\w+)\)')
+        arg_pattern = re.compile(r"%\((\w+)\)")
         arg_names = [x.group(1) for x in arg_pattern.finditer(self._fmt)]
         for field in arg_names:
             if field not in record.__dict__:
@@ -263,7 +263,7 @@ def start(options, parser):
     else:
         working_dir = options.work_dir or "."
         tree = "/settings"
-        utils.createDirIfMissing(working_dir+tree)
+        utils.createDirIfMissing(working_dir + tree)
         os.chdir(working_dir)
         launchServer(options)
 

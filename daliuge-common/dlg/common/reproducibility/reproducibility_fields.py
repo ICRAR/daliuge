@@ -35,6 +35,7 @@ class FieldOps(Enum):
     """
     Defines the operations possible on drop data for provenance collection.
     """
+
     STORE = 0
     COUNT = 1
     REMOVE_FIRST = 2  # Removes the first char of an assumed string
@@ -66,20 +67,27 @@ def lgt_block_fields(rmode: ReproducibilityFlags):
     """
     if rmode == ReproducibilityFlags.NOTHING:
         return {}
-    data = {'categoryType': FieldOps.STORE, 'category': FieldOps.STORE,
-            'inputPorts': FieldOps.COUNT, 'outputPorts': FieldOps.COUNT,
-            'inputLocalPorts': FieldOps.COUNT, 'outputLocalPorts': FieldOps.COUNT,  # MKN Nodes
-            'streaming': FieldOps.STORE}
+    data = {
+        "categoryType": FieldOps.STORE,
+        "category": FieldOps.STORE,
+        "inputPorts": FieldOps.COUNT,
+        "outputPorts": FieldOps.COUNT,
+        "inputLocalPorts": FieldOps.COUNT,
+        "outputLocalPorts": FieldOps.COUNT,  # MKN Nodes
+        "streaming": FieldOps.STORE,
+    }
     if rmode == ReproducibilityFlags.REPRODUCE:
-        del data['inputPorts']
-        del data['outputPorts']
-        del data['inputLocalPorts']
-        del data['outputLocalPorts']
-        del data['streaming']
+        del data["inputPorts"]
+        del data["outputPorts"]
+        del data["inputLocalPorts"]
+        del data["outputLocalPorts"]
+        del data["streaming"]
     return data
 
 
-def lg_block_fields(category: Categories, category_type: str, rmode: ReproducibilityFlags):
+def lg_block_fields(
+    category: Categories, category_type: str, rmode: ReproducibilityFlags
+):
     """
     Collects dict of fields and operations for all drop types at the lg layer for
     the supplied reproducibility standard.
@@ -90,18 +98,21 @@ def lg_block_fields(category: Categories, category_type: str, rmode: Reproducibi
     """
     data = {}
     if rmode in (
-            ReproducibilityFlags.NOTHING, ReproducibilityFlags.RERUN,
-            ReproducibilityFlags.REPRODUCE, ReproducibilityFlags.REPLICATE_SCI):
+        ReproducibilityFlags.NOTHING,
+        ReproducibilityFlags.RERUN,
+        ReproducibilityFlags.REPRODUCE,
+        ReproducibilityFlags.REPLICATE_SCI,
+    ):
         return data
     # Drop category considerations
     if category == "Application":
-        data['execution_time'] = FieldOps.STORE
-        data['num_cpus'] = FieldOps.STORE
+        data["execution_time"] = FieldOps.STORE
+        data["num_cpus"] = FieldOps.STORE
     elif category == "Group":
-        data['inputApplicationName'] = FieldOps.STORE
-        data['inputApplicationType'] = FieldOps.STORE
+        data["inputApplicationName"] = FieldOps.STORE
+        data["inputApplicationType"] = FieldOps.STORE
     elif category == Categories.DATA:  # An anomaly, I know
-        data['data_volume'] = FieldOps.STORE
+        data["data_volume"] = FieldOps.STORE
 
     # Drop type considerations
     if category_type == Categories.START:
@@ -113,10 +124,13 @@ def lg_block_fields(category: Categories, category_type: str, rmode: Reproducibi
     elif category_type == Categories.SHMEM:
         pass
     elif category_type == Categories.FILE:
-        data['check_filepath_exists'] = FieldOps.STORE
-        if rmode in (ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
-            data['filepath'] = FieldOps.STORE
-            data['dirname'] = FieldOps.STORE
+        data["check_filepath_exists"] = FieldOps.STORE
+        if rmode in (
+            ReproducibilityFlags.RECOMPUTE,
+            ReproducibilityFlags.REPLICATE_COMP,
+        ):
+            data["filepath"] = FieldOps.STORE
+            data["dirname"] = FieldOps.STORE
     elif category_type == Categories.NULL:
         pass
     elif category_type == Categories.JSON:
@@ -126,54 +140,54 @@ def lg_block_fields(category: Categories, category_type: str, rmode: Reproducibi
     elif category_type == Categories.S3:
         pass
     elif category_type == Categories.PLASMA:
-        data['plasma_path'] = FieldOps.STORE
-        data['object_id'] = FieldOps.STORE
+        data["plasma_path"] = FieldOps.STORE
+        data["object_id"] = FieldOps.STORE
     elif category_type == Categories.PLASMAFLIGHT:
-        data['plasma_path'] = FieldOps.STORE
-        data['object_id'] = FieldOps.STORE
-        data['flight_path'] = FieldOps.STORE
+        data["plasma_path"] = FieldOps.STORE
+        data["object_id"] = FieldOps.STORE
+        data["flight_path"] = FieldOps.STORE
     elif category_type == Categories.PARSET:
         pass
     elif category_type == Categories.ENVIRONMENTVARS:
         pass
     elif category_type == Categories.MKN:
-        data['m'] = FieldOps.STORE
-        data['k'] = FieldOps.STORE
-        data['n'] = FieldOps.STORE
+        data["m"] = FieldOps.STORE
+        data["k"] = FieldOps.STORE
+        data["n"] = FieldOps.STORE
     elif category_type == Categories.SCATTER:
-        data['num_of_copies'] = FieldOps.STORE
-        data['scatter_axis'] = FieldOps.STORE
+        data["num_of_copies"] = FieldOps.STORE
+        data["scatter_axis"] = FieldOps.STORE
     elif category_type == Categories.GATHER:
-        data['num_of_inputs'] = FieldOps.STORE
-        data['gather_axis'] = FieldOps.STORE
+        data["num_of_inputs"] = FieldOps.STORE
+        data["gather_axis"] = FieldOps.STORE
     elif category_type == Categories.LOOP:
-        data['num_of_iter'] = FieldOps.STORE
+        data["num_of_iter"] = FieldOps.STORE
     elif category_type == Categories.GROUP_BY:
-        data['group_key'] = FieldOps.STORE
-        data['group_axis'] = FieldOps.STORE
+        data["group_key"] = FieldOps.STORE
+        data["group_axis"] = FieldOps.STORE
     elif category_type == Categories.VARIABLES:
         pass
     elif category_type == Categories.BRANCH:
-        data['appclass'] = FieldOps.STORE
+        data["appclass"] = FieldOps.STORE
     elif category_type == Categories.PYTHON_APP:
         pass
     elif category_type == Categories.COMPONENT:
-        data['appclass'] = FieldOps.STORE
+        data["appclass"] = FieldOps.STORE
     elif category_type == Categories.BASH_SHELL_APP:
-        data['Arg01'] = FieldOps.STORE
+        data["Arg01"] = FieldOps.STORE
     elif category_type == Categories.MPI:
-        data['num_of_procs'] = FieldOps.STORE
+        data["num_of_procs"] = FieldOps.STORE
     elif category_type == Categories.DOCKER:
-        data['image'] = FieldOps.STORE
-        data['command'] = FieldOps.STORE
-        data['user'] = FieldOps.STORE
-        data['ensureUserAndSwitch'] = FieldOps.STORE
-        data['removeContainer'] = FieldOps.STORE
-        data['additionalBindings'] = FieldOps.STORE
+        data["image"] = FieldOps.STORE
+        data["command"] = FieldOps.STORE
+        data["user"] = FieldOps.STORE
+        data["ensureUserAndSwitch"] = FieldOps.STORE
+        data["removeContainer"] = FieldOps.STORE
+        data["additionalBindings"] = FieldOps.STORE
     elif category_type == Categories.DYNLIB_APP:
-        data['libpath'] = FieldOps.STORE
+        data["libpath"] = FieldOps.STORE
     elif category_type == Categories.DYNLIB_PROC_APP:
-        data['libpath'] = FieldOps.STORE
+        data["libpath"] = FieldOps.STORE
     return data
 
 
@@ -189,14 +203,14 @@ def pgt_unroll_block_fields(category_type, rmode: ReproducibilityFlags):
     if rmode == ReproducibilityFlags.NOTHING:
         return data
     if rmode != ReproducibilityFlags.NOTHING:
-        data['type'] = FieldOps.STORE
+        data["type"] = FieldOps.STORE
     if rmode != ReproducibilityFlags.REPRODUCE:
-        if category_type != 'plain':
-            data['dt'] = FieldOps.STORE
-    if category_type == 'plain':
-        data['storage'] = FieldOps.STORE
+        if category_type != "plain":
+            data["dt"] = FieldOps.STORE
+    if category_type == "plain":
+        data["storage"] = FieldOps.STORE
     if rmode in (ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
-        data['rank'] = FieldOps.STORE
+        data["rank"] = FieldOps.STORE
 
     return data
 
@@ -210,8 +224,8 @@ def pgt_partition_block_fields(rmode: ReproducibilityFlags):
     """
     data = {}
     if rmode in (ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
-        data['node'] = FieldOps.REMOVE_FIRST
-        data['island'] = FieldOps.REMOVE_FIRST
+        data["node"] = FieldOps.REMOVE_FIRST
+        data["island"] = FieldOps.REMOVE_FIRST
     return data
 
 
@@ -225,6 +239,6 @@ def pg_block_fields(rmode: ReproducibilityFlags):
     # These two happen to have the same data.
     data = {}
     if rmode in (ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
-        data['node'] = FieldOps.STORE
-        data['island'] = FieldOps.STORE
+        data["node"] = FieldOps.STORE
+        data["island"] = FieldOps.STORE
     return data

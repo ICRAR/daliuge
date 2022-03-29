@@ -42,29 +42,48 @@ except:
 random.seed(42)
 
 hostname = "localhost"
-default_repro = {"rmode": "1", "lg_blockhash": "x", "pgt_blockhash": "y", "pg_blockhash": "z"}
-default_graph_repro = {"rmode": "1", "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
-                       "merkleroot": "a", "signature": "b"}
+default_repro = {
+    "rmode": "1",
+    "lg_blockhash": "x",
+    "pgt_blockhash": "y",
+    "pg_blockhash": "z",
+}
+default_graph_repro = {
+    "rmode": "1",
+    "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
+    "merkleroot": "a",
+    "signature": "b",
+}
 
 
 def add_test_reprodata(graph: list):
     for drop in graph:
-        drop['reprodata'] = default_repro.copy()
+        drop["reprodata"] = default_repro.copy()
     graph.append(default_graph_repro.copy())
     return graph
 
 
 def memory(uid, **kwargs):
-    dropSpec = dropdict({"oid": uid, "type": "plain", "storage": Categories.MEMORY,
-                         "reprodata": default_repro.copy()})
+    dropSpec = dropdict(
+        {
+            "oid": uid,
+            "type": "plain",
+            "storage": Categories.MEMORY,
+            "reprodata": default_repro.copy(),
+        }
+    )
     dropSpec.update(kwargs)
     return dropSpec
 
 
 def sleepAndCopy(uid, **kwargs):
     dropSpec = dropdict(
-        {"oid": uid, "type": "app", "app": "dlg.apps.simple.SleepAndCopyApp",
-         "reprodata": default_repro.copy()}
+        {
+            "oid": uid,
+            "type": "app",
+            "app": "dlg.apps.simple.SleepAndCopyApp",
+            "reprodata": default_repro.copy(),
+        }
     )
     dropSpec.update(kwargs)
     return dropSpec
@@ -99,7 +118,7 @@ class NMTestsMixIn(object):
             events_port=events_port,
             rpc_port=rpc_port,
             max_threads=threads,
-            **kwargs
+            **kwargs,
         )
         self._dms.append(nm)
         return nm
@@ -121,7 +140,7 @@ class NMTestsMixIn(object):
         expected_failures=[],
         sessionId=f"s{random.randint(0, 1000)}",
         node_managers=None,
-        threads=0
+        threads=0,
     ):
         """Utility to run a graph in two Node Managers"""
 
@@ -161,7 +180,7 @@ class NMTestsMixIn(object):
                 self.assertEqual(len(leaf_data), len(leaf_drop_data))
                 self.assertEqual(leaf_data, leaf_drop_data)
 
-        sleep(0.1) # just make sure all events have been processed.
+        sleep(0.1)  # just make sure all events have been processed.
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
         return leaf_drop_data
@@ -244,9 +263,15 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
                 choice = random.randint(0, 1000)
             ids[n] = choice
             sessionId = f"s{choice}"
-            self._test_runGraphInTwoNMs(copy.deepcopy(g1), copy.deepcopy(g2), rels, a_data, c_data,
-                                        sessionId=sessionId,
-                                        node_managers=node_managers)
+            self._test_runGraphInTwoNMs(
+                copy.deepcopy(g1),
+                copy.deepcopy(g2),
+                rels,
+                a_data,
+                c_data,
+                sessionId=sessionId,
+                node_managers=node_managers,
+            )
 
     def test_runGraphOneDOPerDOM(self):
         """
@@ -518,14 +543,24 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
 
         sessionId = f"s{random.randint(0, 1000)}"
         g1 = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["C"]},
+            {
+                "oid": "A",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "consumers": ["C"],
+            },
             {
                 "oid": "C",
                 "type": "app",
                 "app": "dlg.apps.crc.CRCApp",
                 "consumers": ["D"],
             },
-            {"oid": "D", "type": "plain", "storage": Categories.MEMORY, "producers": ["C"]},
+            {
+                "oid": "D",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["C"],
+            },
         ]
         g2 = [
             {
@@ -597,7 +632,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("C", DROPLinkType.STREAMING_INPUT, "D")]
         a_data = os.urandom(32)
-        e_data = str(crc32c(a_data, 0)).encode('utf8')
+        e_data = str(crc32c(a_data, 0)).encode("utf8")
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
 
     def test_run_streaming_consumer_remotely2(self):
@@ -627,7 +662,7 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("C", DROPLinkType.OUTPUT, "B")]
         a_data = os.urandom(32)
-        e_data = str(crc32c(a_data, 0)).encode('utf8')
+        e_data = str(crc32c(a_data, 0)).encode("utf8")
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
 
     def test_run_invalid_shmem_graph(self):
@@ -649,7 +684,9 @@ class TestDM(NMTestsMixIn, unittest.TestCase):
             dm.destroySession(sessionID)
 
 
-@unittest.skipIf(multiprocessing.cpu_count() < 4, "Not enough threads to test multiprocessing")
+@unittest.skipIf(
+    multiprocessing.cpu_count() < 4, "Not enough threads to test multiprocessing"
+)
 class TestDMParallel(NMTestsMixIn, unittest.TestCase):
     def _deploy_error_graph(self, **kwargs):
         sessionId = f"s{random.randint(0, 1000)}"
@@ -661,7 +698,12 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
                 "app": "test.manager.test_dm.ErroneousApp",
                 "inputs": ["A"],
             },
-            {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
+            {
+                "oid": "C",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["B"],
+            },
         ]
         add_test_reprodata(g)
         dm = self._start_dm(threads=multiprocessing.cpu_count(), **kwargs)
@@ -704,12 +746,19 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         g1 = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
         g2 = [
             {"oid": "B", "type": "app", "app": "dlg.apps.crc.CRCApp"},
-            {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "producers": ["B"]},
+            {
+                "oid": "C",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["B"],
+            },
         ]
         rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
         a_data = os.urandom(32)
-        c_data = str(crc32c(a_data, 0)).encode('utf8')
-        node_managers = [self._start_dm(threads=multiprocessing.cpu_count()) for _ in range(2)]
+        c_data = str(crc32c(a_data, 0)).encode("utf8")
+        node_managers = [
+            self._start_dm(threads=multiprocessing.cpu_count()) for _ in range(2)
+        ]
 
         ids = [0] * repeats
         for n in range(repeats):
@@ -718,9 +767,15 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
                 choice = random.randint(0, 1000)
             ids[n] = choice
             sessionId = f"s{choice}"
-            self._test_runGraphInTwoNMs(copy.deepcopy(g1), copy.deepcopy(g2), rels, a_data, c_data,
-                                        sessionId=sessionId,
-                                        node_managers=node_managers)
+            self._test_runGraphInTwoNMs(
+                copy.deepcopy(g1),
+                copy.deepcopy(g2),
+                rels,
+                a_data,
+                c_data,
+                sessionId=sessionId,
+                node_managers=node_managers,
+            )
 
     def test_runGraphOneDOPerDOM(self):
         """
@@ -754,18 +809,35 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
 
         :see: `self.test_runGraphSingleDOPerDOM`
         """
-        dm1, dm2 = [self._start_dm(threads=multiprocessing.cpu_count()) for _ in range(2)]
+        dm1, dm2 = [
+            self._start_dm(threads=multiprocessing.cpu_count()) for _ in range(2)
+        ]
 
         sessionId = f"s{random.randint(0, 1000)}"
         g1 = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["C"]},
+            {
+                "oid": "A",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "consumers": ["C"],
+            },
             {"oid": "B", "type": "plain", "storage": Categories.MEMORY},
             {"oid": "C", "type": "app", "app": "dlg.apps.crc.CRCApp"},
-            {"oid": "D", "type": "plain", "storage": Categories.MEMORY, "producers": ["C"]},
+            {
+                "oid": "D",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["C"],
+            },
         ]
         g2 = [
             {"oid": "E", "type": "app", "app": "test.test_drop.SumupContainerChecksum"},
-            {"oid": "F", "type": "plain", "storage": Categories.MEMORY, "producers": ["E"]},
+            {
+                "oid": "F",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["E"],
+            },
         ]
 
         rels = [
@@ -827,7 +899,9 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         B, F, G, K and N are AppDOs; the rest are plain in-memory DROPs
         """
 
-        dm1, dm2, dm3, dm4 = [self._start_dm(threads=multiprocessing.cpu_count()) for _ in range(4)]
+        dm1, dm2, dm3, dm4 = [
+            self._start_dm(threads=multiprocessing.cpu_count()) for _ in range(4)
+        ]
 
         sessionId = f"s{random.randint(0, 1000)}"
         g1 = [memory("A", expectedSize=1)]
@@ -974,7 +1048,9 @@ class TestDMParallel(NMTestsMixIn, unittest.TestCase):
         ip_addr_1 = "8.8.8.8"
         ip_addr_2 = "8.8.8.9"
 
-        dm1, dm2 = [self._start_dm(threads=multiprocessing.cpu_count()//2) for _ in range(2)]
+        dm1, dm2 = [
+            self._start_dm(threads=multiprocessing.cpu_count() // 2) for _ in range(2)
+        ]
 
         sessionId = f"s{random.randint(0, 1000)}"
         g1 = [

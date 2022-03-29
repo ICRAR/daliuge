@@ -49,7 +49,7 @@ class HelloWorldPythonIn(PyFuncApp):
     """
 
     def initialize(self, **kwargs):
-        fname = 'dlg.common.reproducibility.apps.write_in'
+        fname = "dlg.common.reproducibility.apps.write_in"
         super().initialize(func_name=fname)
 
 
@@ -59,7 +59,7 @@ class HelloWorldPythonOut(PyFuncApp):
     """
 
     def initialize(self, **kwargs):
-        fname = 'dlg.common.reproducibility.apps.write_out'
+        fname = "dlg.common.reproducibility.apps.write_out"
         super().initialize(func_name=fname)
 
 
@@ -69,7 +69,7 @@ class NumpyAverage(PyFuncApp):
     """
 
     def initialize(self, **kwargs):
-        fname = 'dlg.common.reproducibility.apps.numpy_av'
+        fname = "dlg.common.reproducibility.apps.numpy_av"
         super().initialize(func_name=fname)
 
 
@@ -79,5 +79,5 @@ class MyAverage(PyFuncApp):
     """
 
     def initialize(self, **kwargs):
-        fname = 'dlg.common.reproducibility.apps.my_av'
+        fname = "dlg.common.reproducibility.apps.my_av"
         super().initialize(func_name=fname)

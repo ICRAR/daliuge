@@ -100,23 +100,10 @@ env.pkgs = {
         "gcc",
         "python36-devel",  # this is the latest available with AWS Linux
     ],
-    "APT_PACKAGES": [
-        "tar",
-        "wget",
-        "gcc",
-    ],
-    "SLES_PACKAGES": [
-        "wget",
-        "gcc",
-    ],
-    "BREW_PACKAGES": [
-        "wget",
-        "gcc",
-    ],
-    "PORT_PACKAGES": [
-        "wget",
-        "gcc",
-    ],
+    "APT_PACKAGES": ["tar", "wget", "gcc"],
+    "SLES_PACKAGES": ["wget", "gcc"],
+    "BREW_PACKAGES": ["wget", "gcc"],
+    "PORT_PACKAGES": ["wget", "gcc"],
     "APP_EXTRA_PYTHON_PACKAGES": [],
 }
 
@@ -153,7 +140,6 @@ def start_APP_and_check_status():
     success("dlg help is working...")
 
 
-
 def sysinitstart_APP_and_check_status():
     """
     Starts the APP daemon process and checks that the server is up and running
@@ -175,7 +161,6 @@ def APP_build_cmd():
     build_cmd.append("pip install .")
 
     return " ".join(build_cmd)
-
 
 
 def prepare_APP_data_dir():
@@ -247,7 +232,6 @@ def cleanup():
     run("rm -rf daliuge_*")
     run("rm -rf DALIUGE")
     run("if [ -f .bash_profile.orig ]; then mv .bash_profile.orig .bash_profile; fi")
-
 
 
 def install_docker_compose():

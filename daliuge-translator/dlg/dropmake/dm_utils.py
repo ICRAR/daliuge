@@ -455,7 +455,7 @@ def convert_construct(lgo):
             continue
         # step 1
         app_node = dict()
-        app_node['reprodata'] = node.get('reprodata', {}).copy()
+        app_node["reprodata"] = node.get("reprodata", {}).copy()
         app_node["key"] = node["key"]
         app_node["category"] = node[has_app]  # node['application']
         if has_app[0] == "i":
@@ -477,7 +477,7 @@ def convert_construct(lgo):
             app_node["fields"] += node["fields"]
             # TODO: remove, use fields list
             for afd in node[INPUT_APP_FIELDS]:
-                    app_node[afd["name"]] = afd["value"]
+                app_node[afd["name"]] = afd["value"]
 
         if node["category"] == Categories.GATHER:
             app_node["group_start"] = 1
@@ -546,7 +546,9 @@ def convert_construct(lgo):
                     link["to"] = k_new_new
                     if k_new_new not in node_index:
                         node_index[k_new_new] = dup_app_node
-                        dup_app_node["reprodata"] = node_index[k_new].get("reprodata", {}).copy()
+                        dup_app_node["reprodata"] = (
+                            node_index[k_new].get("reprodata", {}).copy()
+                        )
                         lgo["nodeDataArray"].append(dup_app_node)
                         old_newnew_gather_map[k_old] = k_new_new
 
@@ -562,9 +564,9 @@ def convert_construct(lgo):
                 if "group" not in to_node and "group" not in gather_construct:
                     cond1 = True
                 elif (
-                        "group" in to_node
-                        and "group" in gather_construct
-                        and to_node["group"] == gather_construct["group"]
+                    "group" in to_node
+                    and "group" in gather_construct
+                    and to_node["group"] == gather_construct["group"]
                 ):
                     cond1 = True
                 else:

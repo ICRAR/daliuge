@@ -34,18 +34,19 @@ import numpy as np
 from dlg import droputils, utils
 from dlg.drop import BarrierAppDROP, BranchAppDrop, ContainerDROP
 from dlg.meta import (
-    dlg_float_param, 
+    dlg_float_param,
     dlg_string_param,
-    dlg_bool_param, 
+    dlg_bool_param,
     dlg_int_param,
     dlg_list_param,
     dlg_component,
     dlg_batch_input,
-    dlg_batch_output, 
-    dlg_streaming_input
+    dlg_batch_output,
+    dlg_streaming_input,
 )
 from dlg.exceptions import DaliugeException
 from dlg.apps.pyfunc import serialize_data, deserialize_data
+
 
 class NullBarrierApp(BarrierAppDROP):
     component_meta = dlg_component(
@@ -413,6 +414,7 @@ class GenericNpyGatherApp(BarrierAppDROP):
     function:  string <['sum']|'prod'|'min'|'max'|'add'|'multiply'|'maximum'|'minimum'>.
 
     """
+
     component_meta = dlg_component(
         "GenericNpyGatherApp",
         "Generic Npy Gather App.",
@@ -424,18 +426,15 @@ class GenericNpyGatherApp(BarrierAppDROP):
     # reduce and combine operation pair names
     functions = {
         # reduce and gather e.g. output dimension is reduces
-
-        "sum": "add",        # sum reduction of inputs along an axis first then reduces across drops
+        "sum": "add",  # sum reduction of inputs along an axis first then reduces across drops
         "prod": "multiply",  # prod reduction of inputs along an axis first then reduces across drops
-        "max": "maximum",    # max reduction of input along an axis first then reduces across drops
-        "min": "minimum",    # min reduction of input along an axis first then reduces across drops
-
+        "max": "maximum",  # max reduction of input along an axis first then reduces across drops
+        "min": "minimum",  # min reduction of input along an axis first then reduces across drops
         # gather only
-        "add": None,         # elementwise addition of inputs, ndarrays must be of same shape
-        "multiply": None,    # elementwise multiplication of inputs, ndarrays must be of same shape
-        "maximum": None,     # elementwise maximums of inputs, ndarrays must be of same shape
-        "minimum": None      # elementwise minimums of inputs, ndarrays must be of same shape
-
+        "add": None,  # elementwise addition of inputs, ndarrays must be of same shape
+        "multiply": None,  # elementwise multiplication of inputs, ndarrays must be of same shape
+        "maximum": None,  # elementwise maximums of inputs, ndarrays must be of same shape
+        "minimum": None,  # elementwise minimums of inputs, ndarrays must be of same shape
     }
     function: str = dlg_string_param("function", "sum")
     reduce_axes: list = dlg_list_param("reduce_axes", "None")
@@ -454,7 +453,11 @@ class GenericNpyGatherApp(BarrierAppDROP):
         if self.function not in self.functions:
             raise Exception(f"Function {self.function} not supported by {self}")
 
-        result = self.reduce_combine_inputs() if self.functions[self.function] is not None else self.combine_inputs()
+        result = (
+            self.reduce_combine_inputs()
+            if self.functions[self.function] is not None
+            else self.combine_inputs()
+        )
         for o in self.outputs:
             droputils.save_numpy(o, result)
 
@@ -464,9 +467,11 @@ class GenericNpyGatherApp(BarrierAppDROP):
         combine = getattr(np, f"{self.functions[self.function]}")
         for input in self.inputs:
             data = droputils.load_numpy(input)
-            result = reduce(data, axis=self.reduce_axes)\
-                if result is None\
+            result = (
+                reduce(data, axis=self.reduce_axes)
+                if result is None
                 else combine(result, reduce(data, axis=self.reduce_axes))
+            )
         return result
 
     def combine_inputs(self):
@@ -725,13 +730,15 @@ class GenericNpyScatterApp(BarrierAppDROP):
 
     def run(self):
         if len(self.inputs) * self.num_of_copies != len(self.outputs):
-            raise DaliugeException(\
+            raise DaliugeException(
                 f"expected {len(self.inputs) * self.num_of_copies} outputs,\
-                 got {len(self.outputs)}")
+                 got {len(self.outputs)}"
+            )
         if len(self.inputs) != len(self.scatter_axes):
-            raise DaliugeException(\
+            raise DaliugeException(
                 f"expected {len(self.inputs)} axes,\
-                 got {len(self.scatter_axes)}, {self.scatter_axes}")
+                 got {len(self.scatter_axes)}, {self.scatter_axes}"
+            )
 
         # split it as many times as we have outputs
         self.num_of_copies = self.num_of_copies
@@ -739,7 +746,9 @@ class GenericNpyScatterApp(BarrierAppDROP):
         for in_index in range(len(self.inputs)):
             nObj = droputils.load_numpy(self.inputs[in_index])
             try:
-                result = np.array_split(nObj, self.num_of_copies, axis=self.scatter_axes[in_index])
+                result = np.array_split(
+                    nObj, self.num_of_copies, axis=self.scatter_axes[in_index]
+                )
             except IndexError as err:
                 raise err
             for split_index in range(self.num_of_copies):
@@ -797,13 +806,17 @@ class ListAppendThrashingApp(BarrierAppDROP):
 
     size:     int, number of array elements
     """
-    compontent_meta = dlg_component('ListAppendThrashingApp', 'List Append Thrashing',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+
+    compontent_meta = dlg_component(
+        "ListAppendThrashingApp",
+        "List Append Thrashing",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
     def initialize(self, **kwargs):
-        self.size = self._getArg(kwargs, 'size', 100)
+        self.size = self._getArg(kwargs, "size", 100)
         self.marray = []
         super(ListAppendThrashingApp, self).initialize(**kwargs)
 
@@ -811,8 +824,7 @@ class ListAppendThrashingApp(BarrierAppDROP):
         # At least one output should have been added
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                'At least one output should have been added to %r' % self)
+            raise Exception("At least one output should have been added to %r" % self)
         self.marray = self.generateArray()
         for o in outs:
             d = pickle.dumps(self.marray)
