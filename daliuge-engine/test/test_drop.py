@@ -52,7 +52,7 @@ from dlg.drop import (
 )
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
-from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp
+from dlg.apps.simple import CopyApp, NullBarrierApp, SimpleBranch, SleepAndCopyApp
 
 try:
     from crc32c import crc32c
@@ -364,20 +364,19 @@ class TestDROP(unittest.TestCase):
         cResExpected = b"we have an a here\nand another one\n"
         eResExpected = b"and another one\nwe have an a here\n"
         gResExpected = b"dna rehtona eno\new evah na a ereh\n"
+        resExpected = [cResExpected, eResExpected, gResExpected]
 
         a.write(contents)
-        with DROPWaiterCtx(self, g):
+        with DROPWaiterCtx(self, [c, e, g]):
             a.setCompleted()
 
         # Get intermediate and final results and compare
         actualRes = []
-        for i in [c]:
-            actualRes.append(droputils.allDropContents(i))
-        map(
-            lambda x, y: self.assertEqual(x, y),
-            [cResExpected, eResExpected, gResExpected],
-            actualRes,
-        )
+        for drop in [c, e, g]:
+            actualRes.append(droputils.allDropContents(drop))
+
+        # Assert
+        map(self.assertEqual, resExpected, actualRes)
 
     def test_errorState(self):
         a = InMemoryDROP("a", "a")
