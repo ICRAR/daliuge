@@ -28,8 +28,13 @@ import os
 import sys
 
 from dlg.common import tool
-from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data, \
-    init_pgt_unroll_repro_data, init_pgt_partition_repro_data, init_pg_repro_data
+from dlg.common.reproducibility.reproducibility import (
+    init_lgt_repro_data,
+    init_lg_repro_data,
+    init_pgt_unroll_repro_data,
+    init_pgt_partition_repro_data,
+    init_pg_repro_data,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -88,10 +93,16 @@ def parse_partition_algo_params(algo_params):
 
 def partition(pgt, opts):
     from ..dropmake import pg_generator
+
     algo_params = parse_partition_algo_params(opts.algo_params or [])
-    pg = pg_generator.partition(pgt, algo=opts.algo, num_partitions=opts.partitions,
-                                num_islands=opts.islands, partition_label="partition",
-                                **algo_params)
+    pg = pg_generator.partition(
+        pgt,
+        algo=opts.algo,
+        num_partitions=opts.partitions,
+        num_islands=opts.islands,
+        partition_label="partition",
+        **algo_params
+    )
     logger.info("PG spec is calculated!")
     return pg
 
@@ -113,11 +124,13 @@ def submit(pg, opts):
 
     if opts.reproducibility:
         dump = _setup_output(opts)
-        common.monitor_sessions_repro(session_id, host=opts.host, port=opts.port,
-                                      poll_interval=opts.poll_interval)
-        repro_data = common.fetch_reproducibility(session_id, host=opts.host, port=opts.port,
-                                                  poll_interval=opts.poll_interval)
-        dump(repro_data['graph'])
+        common.monitor_sessions_repro(
+            session_id, host=opts.host, port=opts.port, poll_interval=opts.poll_interval
+        )
+        repro_data = common.fetch_reproducibility(
+            session_id, host=opts.host, port=opts.port, poll_interval=opts.poll_interval
+        )
+        dump(repro_data["graph"])
 
 
 def _add_output_options(parser):
@@ -161,10 +174,14 @@ def dlg_fill(parser, args):
         "--parameter",
         action="append",
         help="Parameter specification (either 'name=value' or a JSON string)",
-        default=[])
+        default=[],
+    )
     parser.add_option(
-        '-R', '--reproducibility', default='0',
-        help="Level of reproducibility. Default 0 (NOTHING). Accepts '0'-'5'")
+        "-R",
+        "--reproducibility",
+        default="0",
+        help="Level of reproducibility. Default 0 (NOTHING). Accepts '0'-'5'",
+    )
 
     (opts, args) = parser.parse_args(args)
     tool.setup_logging(opts)
@@ -185,7 +202,7 @@ def dlg_fill(parser, args):
     params = [p.split("=") for p in opts.parameter if param_spec_type(p) == "kv"]
     params = dict(params)
     for json_param in (
-            json.loads(p) for p in opts.parameter if param_spec_type(p) == "json"
+        json.loads(p) for p in opts.parameter if param_spec_type(p) == "json"
     ):
         params.update(json_param)
 
@@ -212,7 +229,6 @@ def _add_unroll_options(parser):
         dest="oid_prefix",
         type="string",
         help="Prefix to use for generated OIDs",
-
         default="1",
     )
     parser.add_option(
@@ -243,7 +259,9 @@ def dlg_unroll(parser, args):
     (opts, args) = parser.parse_args(args)
     tool.setup_logging(opts)
     dump = _setup_output(opts)
-    pgt = unroll(opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app])
+    pgt = unroll(
+        opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app]
+    )
     dump(init_pgt_unroll_repro_data(pgt))
 
 
@@ -362,11 +380,14 @@ def dlg_map(parser, args):
         help="Path to the Physical Graph to submit (default: stdin)",
         default="-",
     )
-    parser.add_option("-N", "--nodes", action="store",
-                      dest="nodes",
-                      help="The nodes where the Physical Graph will be distributed, comma-separated",
-                      default=None,
-                      )
+    parser.add_option(
+        "-N",
+        "--nodes",
+        action="store",
+        dest="nodes",
+        help="The nodes where the Physical Graph will be distributed, comma-separated",
+        default=None,
+    )
     parser.add_option(
         "-i",
         "--islands",
@@ -407,14 +428,16 @@ def dlg_map(parser, args):
         pgt = json.load(f)
 
     repro = pgt.pop()  # TODO: Re-include
-    pg = pg_generator.resource_map(pgt, nodes, opts.islands,
-                                   co_host_dim=opts.co_host_dim)
+    pg = pg_generator.resource_map(
+        pgt, nodes, opts.islands, co_host_dim=opts.co_host_dim
+    )
     pg.append(repro)
     dump(init_pg_repro_data(pg))
 
 
 def dlg_submit(parser, args):
     import dlg.constants as con
+
     # Submit Physical Graph
     _add_output_options(parser)
     tool.add_logging_options(parser)
@@ -473,9 +496,15 @@ def dlg_submit(parser, args):
         "--poll-interval",
         type="float",
         help="Polling interval used for monitoring the execution (default: 10)",
-        default=10, )
-    parser.add_option('-R', '--reproducibility', action='store_true', dest='reproducibility',
-                      help='Fetch (and output) reproducibility data for the final execution graph (default: False)')
+        default=10,
+    )
+    parser.add_option(
+        "-R",
+        "--reproducibility",
+        action="store_true",
+        dest="reproducibility",
+        help="Fetch (and output) reproducibility data for the final execution graph (default: False)",
+    )
     (opts, args) = parser.parse_args(args)
 
     with _open_i(opts.pg_path) as f:

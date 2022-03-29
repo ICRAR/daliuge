@@ -31,36 +31,45 @@ import tempfile
 import unittest
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags
-from dlg.common.reproducibility.reproducibility import accumulate_lgt_drop_data, \
-    accumulate_lg_drop_data, accumulate_pgt_unroll_drop_data, accumulate_pgt_partition_drop_data, \
-    accumulate_pg_drop_data
+from dlg.common.reproducibility.reproducibility import (
+    accumulate_lgt_drop_data,
+    accumulate_lg_drop_data,
+    accumulate_pgt_unroll_drop_data,
+    accumulate_pgt_partition_drop_data,
+    accumulate_pg_drop_data,
+)
 from dlg.translator.tool_commands import dlg_fill, dlg_unroll, dlg_partition, dlg_map
 
 
-def _fill_workflow(rmode: ReproducibilityFlags, workflow: str, workflow_loc='./', scratch_loc='./'):
+def _fill_workflow(
+    rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
+):
     lgt = workflow_loc + workflow + ".graph"
-    lgr = scratch_loc + '/' + workflow + "LG.graph"
+    lgr = scratch_loc + "/" + workflow + "LG.graph"
 
     rmodes = str(rmode.value)
 
     parser = optparse.OptionParser()
-    dlg_fill(parser, ['-L', lgt, '-R', rmodes, '-o', lgr, '-f', 'newline'])
+    dlg_fill(parser, ["-L", lgt, "-R", rmodes, "-o", lgr, "-f", "newline"])
 
 
-def _run_full_workflow(rmode: ReproducibilityFlags, workflow: str, workflow_loc='./',
-                       scratch_loc='./'):
-    lgr = scratch_loc + '/' + workflow + "LG.graph"
-    pgs = scratch_loc + '/' + workflow + "PGS.graph"
-    pgt = scratch_loc + '/' + workflow + "PGT.graph"
-    pgr = scratch_loc + '/' + workflow + "PG.graph"
+def _run_full_workflow(
+    rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
+):
+    lgr = scratch_loc + "/" + workflow + "LG.graph"
+    pgs = scratch_loc + "/" + workflow + "PGS.graph"
+    pgt = scratch_loc + "/" + workflow + "PGT.graph"
+    pgr = scratch_loc + "/" + workflow + "PG.graph"
 
     _fill_workflow(rmode, workflow, workflow_loc, scratch_loc)
     parser = optparse.OptionParser()
-    dlg_unroll(parser, ['-L', lgr, '-o', pgs, '-f', 'newline'])
+    dlg_unroll(parser, ["-L", lgr, "-o", pgs, "-f", "newline"])
     parser = optparse.OptionParser()
-    dlg_partition(parser, ['-P', pgs, '-o', pgt, '-f', 'newline'])
+    dlg_partition(parser, ["-P", pgs, "-o", pgt, "-f", "newline"])
     parser = optparse.OptionParser()
-    dlg_map(parser, ['-P', pgt, '-N', '127.0.0.1, 127.0.0.1', '-o', pgr, '-f', 'newline'])
+    dlg_map(
+        parser, ["-P", pgt, "-N", "127.0.0.1, 127.0.0.1", "-o", pgr, "-f", "newline"]
+    )
 
 
 class AccumulateLGTRerunData(unittest.TestCase):
@@ -69,20 +78,27 @@ class AccumulateLGTRerunData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.RERUN
-    expected = {'categoryType', 'category', 'inputPorts', 'inputLocalPorts', 'outputLocalPorts',
-                'outputPorts', 'streaming'}
+    expected = {
+        "categoryType",
+        "category",
+        "inputPorts",
+        "inputLocalPorts",
+        "outputLocalPorts",
+        "outputPorts",
+        "streaming",
+    }
 
-    file = open('test/reproducibility/reproGraphs/apps.graph')
-    lgt_node_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/apps.graph")
+    lgt_node_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/files.graph')
-    lgt_files_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/files.graph")
+    lgt_files_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/groups.graph')
-    lgt_groups_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/groups.graph")
+    lgt_groups_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/misc.graph')
-    lgt_misc_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/misc.graph")
+    lgt_misc_data = json.load(file)["nodeDataArray"]
     file.close()
 
     def test_app_accumulate(self):
@@ -132,22 +148,33 @@ class AccumulateLGRerunData(unittest.TestCase):
     lg_misc_data = None
 
     def _setup(self):
-        _fill_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'groups', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'misc', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _fill_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _fill_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _fill_workflow(
+            self.rmode,
+            "groups",
+            "test/reproducibility/reproGraphs/",
+            self.temp_out.name,
+        )
+        _fill_workflow(
+            self.rmode, "misc", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'LG.graph')
-        self.lg_node_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "apps" + "LG.graph")
+        self.lg_node_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'LG.graph')
-        self.lg_files_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "files" + "LG.graph")
+        self.lg_files_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'groups' + 'LG.graph')
-        self.lg_group_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "groups" + "LG.graph")
+        self.lg_group_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'misc' + 'LG.graph')
-        self.lg_misc_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "misc" + "LG.graph")
+        self.lg_misc_data = json.load(file)["nodeDataArray"]
         file.close()
 
     def test_all_accumulate(self):
@@ -156,7 +183,11 @@ class AccumulateLGRerunData(unittest.TestCase):
         """
         self._setup()
         for drop in enumerate(
-                self.lg_node_data + self.lg_files_data + self.lg_group_data + self.lg_misc_data):
+            self.lg_node_data
+            + self.lg_files_data
+            + self.lg_group_data
+            + self.lg_misc_data
+        ):
             hash_data = accumulate_lg_drop_data(drop[1], self.rmode)
             self.assertEqual(self.expected, dict(hash_data.keys()))
 
@@ -174,13 +205,17 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
     pgs_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGS.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGS.graph")
         self.pgs_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGS.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGS.graph")
         self.pgs_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -188,7 +223,7 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
         """
         The the application type matters for rerunning
         """
-        expected = {'type', 'dt'}
+        expected = {"type", "dt"}
         self._setup()
         for drop in enumerate(self.pgs_node_data):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -198,7 +233,7 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
         """
         Only the storage type matters for rerunning
         """
-        expected = {'type', 'storage'}
+        expected = {"type", "storage"}
         self._setup()
         for drop in enumerate(self.pgs_file_data):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -230,19 +265,24 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
     """
     Tests the rerun standard at the physical graph template level.
     """
+
     rmode = ReproducibilityFlags.RERUN
     temp_out = tempfile.TemporaryDirectory()
     pgt_node_data = None
     pgt_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
         self.pgt_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
         self.pgt_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -250,7 +290,7 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
         """
         Only application type matters for rerunning.
         """
-        expected = {'type', 'dt'}
+        expected = {"type", "dt"}
         self._setup()
         for drop in enumerate(self.pgt_node_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -260,7 +300,7 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
         """
         Only storage type matters for rerunning.
         """
-        expected = {'type', 'storage'}
+        expected = {"type", "storage"}
         self._setup()
         for drop in enumerate(self.pgt_file_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -292,19 +332,24 @@ class AccumulatePGRerunData(unittest.TestCase):
     """
     Tests the rerun standard at the physical graph level
     """
+
     rmode = ReproducibilityFlags.RERUN
     temp_out = tempfile.TemporaryDirectory()
     pg_node_data = None
     pg_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PG.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PG.graph")
         self.pg_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PG.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PG.graph")
         self.pg_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -356,20 +401,27 @@ class AccumulateLGTRepeatData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.REPEAT
-    expected = {'categoryType', 'category', 'inputPorts', 'inputLocalPorts', 'outputPorts',
-                'outputLocalPorts', 'streaming'}
+    expected = {
+        "categoryType",
+        "category",
+        "inputPorts",
+        "inputLocalPorts",
+        "outputPorts",
+        "outputLocalPorts",
+        "streaming",
+    }
 
-    file = open('test/reproducibility/reproGraphs/apps.graph')
-    lgt_node_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/apps.graph")
+    lgt_node_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/files.graph')
-    lgt_files_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/files.graph")
+    lgt_files_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/groups.graph')
-    lgt_groups_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/groups.graph")
+    lgt_groups_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/misc.graph')
-    lgt_misc_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/misc.graph")
+    lgt_misc_data = json.load(file)["nodeDataArray"]
     file.close()
 
     def test_app_accumulate(self):
@@ -419,77 +471,106 @@ class AccumulateLGRepeatData(unittest.TestCase):
     lg_misc_data = None
 
     def _setup(self):
-        _fill_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'groups', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'misc', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _fill_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _fill_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _fill_workflow(
+            self.rmode,
+            "groups",
+            "test/reproducibility/reproGraphs/",
+            self.temp_out.name,
+        )
+        _fill_workflow(
+            self.rmode, "misc", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'LG.graph')
-        self.lg_node_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "apps" + "LG.graph")
+        self.lg_node_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'LG.graph')
-        self.lg_files_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "files" + "LG.graph")
+        self.lg_files_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'groups' + 'LG.graph')
-        self.lg_group_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "groups" + "LG.graph")
+        self.lg_group_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'misc' + 'LG.graph')
-        self.lg_misc_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "misc" + "LG.graph")
+        self.lg_misc_data = json.load(file)["nodeDataArray"]
         file.close()
 
     def _bash(self, drop):
-        expected = {'execution_time', 'num_cpus', 'Arg01'}
+        expected = {"execution_time", "num_cpus", "Arg01"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _dynlib(self, drop):
-        expected = {'execution_time', 'num_cpus', 'libpath'}
+        expected = {"execution_time", "num_cpus", "libpath"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _mpi(self, drop):
-        expected = {'execution_time', 'num_cpus', 'num_of_procs'}
+        expected = {"execution_time", "num_cpus", "num_of_procs"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _docker(self, drop):
-        expected = {'execution_time', 'num_cpus', 'image', 'command', 'user', 'ensureUserAndSwitch',
-                    'removeContainer', 'additionalBindings'}
+        expected = {
+            "execution_time",
+            "num_cpus",
+            "image",
+            "command",
+            "user",
+            "ensureUserAndSwitch",
+            "removeContainer",
+            "additionalBindings",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _component(self, drop):
-        expected = {'execution_time', 'num_cpus', 'appclass'}
+        expected = {"execution_time", "num_cpus", "appclass"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _memory(self, drop):
-        expected = {'data_volume'}
+        expected = {"data_volume"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _file(self, drop):
-        expected = {'data_volume', 'check_filepath_exists'}
+        expected = {"data_volume", "check_filepath_exists"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _ngas(self, drop):
-        expected = {'data_volume'}
+        expected = {"data_volume"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _groupby(self, drop):
-        expected = {'inputApplicationName', 'inputApplicationType', 'group_key', 'group_axis'}
+        expected = {
+            "inputApplicationName",
+            "inputApplicationType",
+            "group_key",
+            "group_axis",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data)
 
     def _scatter(self, drop):
-        expected = {'inputApplicationName', 'inputApplicationType', 'num_of_copies', 'scatter_axis'}
+        expected = {
+            "inputApplicationName",
+            "inputApplicationType",
+            "num_of_copies",
+            "scatter_axis",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data)
 
     def _loop(self, drop):
-        expected = {'inputApplicationName', 'inputApplicationType', 'num_of_iter'}
+        expected = {"inputApplicationName", "inputApplicationType", "num_of_iter"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data)
 
@@ -521,13 +602,17 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
     pgs_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGS.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGS.graph")
         self.pgs_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGS.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGS.graph")
         self.pgs_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -535,7 +620,7 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {'type', 'dt'}
+        expected = {"type", "dt"}
         self._setup()
         for drop in enumerate(self.pgs_node_data):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -545,7 +630,7 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {'type', 'storage'}
+        expected = {"type", "storage"}
         self._setup()
         for drop in enumerate(self.pgs_file_data):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -577,19 +662,24 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
     """
     Tests the repeat standard at the physical graph template level.
     """
+
     rmode = ReproducibilityFlags.REPEAT
     temp_out = tempfile.TemporaryDirectory()
     pgt_node_data = None
     pgt_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
         self.pgt_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
         self.pgt_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -597,7 +687,7 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
         """
         Only type matters when repeating.
         """
-        expected = {'type', 'dt'}
+        expected = {"type", "dt"}
         self._setup()
         for drop in enumerate(self.pgt_node_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -607,7 +697,7 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
         """
         Only type matters when repeating.
         """
-        expected = {'type', 'storage'}
+        expected = {"type", "storage"}
         self._setup()
         for drop in enumerate(self.pgt_file_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -639,19 +729,24 @@ class AccumulatePGRepeatData(unittest.TestCase):
     """
     Tests the repeat standard  at the physical graph level
     """
+
     rmode = ReproducibilityFlags.REPEAT
     temp_out = tempfile.TemporaryDirectory()
     pg_node_data = None
     pg_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
         self.pg_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
         self.pg_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -703,20 +798,27 @@ class AccumulateLGTRecomputeData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.RECOMPUTE
-    expected = {'categoryType', 'category', 'inputPorts', 'inputLocalPorts', 'outputPorts',
-                'outputLocalPorts', 'streaming'}
+    expected = {
+        "categoryType",
+        "category",
+        "inputPorts",
+        "inputLocalPorts",
+        "outputPorts",
+        "outputLocalPorts",
+        "streaming",
+    }
 
-    file = open('test/reproducibility/reproGraphs/apps.graph')
-    lgt_node_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/apps.graph")
+    lgt_node_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/files.graph')
-    lgt_files_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/files.graph")
+    lgt_files_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/groups.graph')
-    lgt_groups_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/groups.graph")
+    lgt_groups_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/misc.graph')
-    lgt_misc_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/misc.graph")
+    lgt_misc_data = json.load(file)["nodeDataArray"]
     file.close()
 
     def test_app_accumulate(self):
@@ -766,77 +868,106 @@ class AccumulateLGRecomputeData(unittest.TestCase):
     lg_misc_data = None
 
     def _setup(self):
-        _fill_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'groups', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'misc', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _fill_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _fill_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _fill_workflow(
+            self.rmode,
+            "groups",
+            "test/reproducibility/reproGraphs/",
+            self.temp_out.name,
+        )
+        _fill_workflow(
+            self.rmode, "misc", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'LG.graph')
-        self.lg_node_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "apps" + "LG.graph")
+        self.lg_node_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'LG.graph')
-        self.lg_files_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "files" + "LG.graph")
+        self.lg_files_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'groups' + 'LG.graph')
-        self.lg_group_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "groups" + "LG.graph")
+        self.lg_group_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'misc' + 'LG.graph')
-        self.lg_misc_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "misc" + "LG.graph")
+        self.lg_misc_data = json.load(file)["nodeDataArray"]
         file.close()
 
     def _bash(self, drop):
-        expected = {'execution_time', 'num_cpus', 'Arg01'}
+        expected = {"execution_time", "num_cpus", "Arg01"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _dynlib(self, drop):
-        expected = {'execution_time', 'num_cpus', 'libpath'}
+        expected = {"execution_time", "num_cpus", "libpath"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _mpi(self, drop):
-        expected = {'execution_time', 'num_cpus', 'num_of_procs'}
+        expected = {"execution_time", "num_cpus", "num_of_procs"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _docker(self, drop):
-        expected = {'execution_time', 'num_cpus', 'image', 'command', 'user', 'ensureUserAndSwitch',
-                    'removeContainer', 'additionalBindings'}
+        expected = {
+            "execution_time",
+            "num_cpus",
+            "image",
+            "command",
+            "user",
+            "ensureUserAndSwitch",
+            "removeContainer",
+            "additionalBindings",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _component(self, drop):
-        expected = {'execution_time', 'num_cpus', 'appclass'}
+        expected = {"execution_time", "num_cpus", "appclass"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _memory(self, drop):
-        expected = {'data_volume'}
+        expected = {"data_volume"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _file(self, drop):
-        expected = {'data_volume', 'check_filepath_exists', 'filepath', 'dirname'}
+        expected = {"data_volume", "check_filepath_exists", "filepath", "dirname"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _ngas(self, drop):
-        expected = {'data_volume'}
+        expected = {"data_volume"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _groupby(self, drop):
-        expected = {'inputApplicationName', 'inputApplicationType', 'group_key', 'group_axis'}
+        expected = {
+            "inputApplicationName",
+            "inputApplicationType",
+            "group_key",
+            "group_axis",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data)
 
     def _scatter(self, drop):
-        expected = {'inputApplicationName', 'inputApplicationType', 'num_of_copies', 'scatter_axis'}
+        expected = {
+            "inputApplicationName",
+            "inputApplicationType",
+            "num_of_copies",
+            "scatter_axis",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data)
 
     def _loop(self, drop):
-        expected = {'inputApplicationName', 'inputApplicationType', 'num_of_iter'}
+        expected = {"inputApplicationName", "inputApplicationType", "num_of_iter"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data)
 
@@ -868,13 +999,17 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
     pgs_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGS.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGS.graph")
         self.pgs_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGS.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGS.graph")
         self.pgs_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -882,7 +1017,7 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
         """
         Type and rank matters.
         """
-        expected = {'type', 'dt', 'rank'}
+        expected = {"type", "dt", "rank"}
         self._setup()
         for drop in enumerate(self.pgs_node_data):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -892,7 +1027,7 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
         """
         Type and rank matters.
         """
-        expected = {'type', 'storage', 'rank'}
+        expected = {"type", "storage", "rank"}
         self._setup()
         for drop in enumerate(self.pgs_file_data):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -924,19 +1059,24 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
     """
     Tests the recompute standard at the physical graph template level.
     """
+
     rmode = ReproducibilityFlags.RECOMPUTE
     temp_out = tempfile.TemporaryDirectory()
     pgt_node_data = None
     pgt_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
         self.pgt_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
         self.pgt_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -944,7 +1084,7 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         """
         Type, rank and machine information matters
         """
-        expected = ['type', 'dt', 'rank', 'node', 'island']
+        expected = ["type", "dt", "rank", "node", "island"]
         self._setup()
         for drop in enumerate(self.pgt_node_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -954,7 +1094,7 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         """
         Type, rank and machine information matters
         """
-        expected = ['type', 'storage', 'rank', 'node', 'island']
+        expected = ["type", "storage", "rank", "node", "island"]
         self._setup()
         for drop in enumerate(self.pgt_file_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -986,19 +1126,24 @@ class AccumulatePGRecomputeData(unittest.TestCase):
     """
     Tests the recompute standard at the physical graph level
     """
+
     rmode = ReproducibilityFlags.RECOMPUTE
     temp_out = tempfile.TemporaryDirectory()
     pg_node_data = None
     pg_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
         self.pg_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
         self.pg_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -1006,7 +1151,7 @@ class AccumulatePGRecomputeData(unittest.TestCase):
         """
         Machine information matters when recomputing
         """
-        expected = {'node', 'island'}
+        expected = {"node", "island"}
         self._setup()
         for drop in enumerate(self.pg_node_data):
             hash_data = accumulate_pg_drop_data(drop[1])
@@ -1016,7 +1161,7 @@ class AccumulatePGRecomputeData(unittest.TestCase):
         """
         Machine information matters when recomputing
         """
-        expected = {'node', 'island'}
+        expected = {"node", "island"}
         self._setup()
         for drop in enumerate(self.pg_file_data):
             hash_data = accumulate_pg_drop_data(drop[1])
@@ -1050,19 +1195,19 @@ class AccumulateLGTReproduceData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.REPRODUCE
-    expected = {'categoryType', 'category'}
+    expected = {"categoryType", "category"}
 
-    file = open('test/reproducibility/reproGraphs/apps.graph')
-    lgt_node_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/apps.graph")
+    lgt_node_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/files.graph')
-    lgt_files_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/files.graph")
+    lgt_files_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/groups.graph')
-    lgt_groups_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/groups.graph")
+    lgt_groups_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/misc.graph')
-    lgt_misc_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/misc.graph")
+    lgt_misc_data = json.load(file)["nodeDataArray"]
     file.close()
 
     def test_app_accumulate(self):
@@ -1112,22 +1257,33 @@ class AccumulateLGReproduceData(unittest.TestCase):
     lg_misc_data = None
 
     def _setup(self):
-        _fill_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'groups', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'misc', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _fill_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _fill_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _fill_workflow(
+            self.rmode,
+            "groups",
+            "test/reproducibility/reproGraphs/",
+            self.temp_out.name,
+        )
+        _fill_workflow(
+            self.rmode, "misc", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'LG.graph')
-        self.lg_node_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "apps" + "LG.graph")
+        self.lg_node_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'LG.graph')
-        self.lg_files_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "files" + "LG.graph")
+        self.lg_files_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'groups' + 'LG.graph')
-        self.lg_group_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "groups" + "LG.graph")
+        self.lg_group_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'misc' + 'LG.graph')
-        self.lg_misc_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "misc" + "LG.graph")
+        self.lg_misc_data = json.load(file)["nodeDataArray"]
         file.close()
 
     def _bash(self, drop):
@@ -1213,13 +1369,17 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
     pgs_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGS.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGS.graph")
         self.pgs_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGS.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGS.graph")
         self.pgs_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -1227,7 +1387,7 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {'type'}
+        expected = {"type"}
         self._setup()
         for drop in enumerate(self.pgs_node_data):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1237,7 +1397,7 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {'type', 'storage'}
+        expected = {"type", "storage"}
         self._setup()
         for drop in enumerate(self.pgs_file_data):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1269,19 +1429,24 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
     """
     Tests the reproduce standard at the physical graph template level.
     """
+
     rmode = ReproducibilityFlags.REPRODUCE
     temp_out = tempfile.TemporaryDirectory()
     pgt_node_data = None
     pgt_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
         self.pgt_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
         self.pgt_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -1289,7 +1454,7 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = ['type']
+        expected = ["type"]
         self._setup()
         for drop in enumerate(self.pgt_node_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -1299,7 +1464,7 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = ['type', 'storage']
+        expected = ["type", "storage"]
         self._setup()
         for drop in enumerate(self.pgt_file_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -1331,19 +1496,24 @@ class AccumulatePGReproduceData(unittest.TestCase):
     """
     Tests the reproduce standard at the physical graph level
     """
+
     rmode = ReproducibilityFlags.REPRODUCE
     temp_out = tempfile.TemporaryDirectory()
     pg_node_data = None
     pg_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
         self.pg_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
         self.pg_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -1395,20 +1565,27 @@ class AccumulateLGTReplicateSciData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.REPLICATE_SCI
-    expected = {'categoryType', 'category', 'inputPorts', 'inputLocalPorts', 'outputPorts',
-                'outputLocalPorts', 'streaming'}
+    expected = {
+        "categoryType",
+        "category",
+        "inputPorts",
+        "inputLocalPorts",
+        "outputPorts",
+        "outputLocalPorts",
+        "streaming",
+    }
 
-    file = open('test/reproducibility/reproGraphs/apps.graph')
-    lgt_node_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/apps.graph")
+    lgt_node_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/files.graph')
-    lgt_files_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/files.graph")
+    lgt_files_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/groups.graph')
-    lgt_groups_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/groups.graph")
+    lgt_groups_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/misc.graph')
-    lgt_misc_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/misc.graph")
+    lgt_misc_data = json.load(file)["nodeDataArray"]
     file.close()
 
     def test_app_accumulate(self):
@@ -1458,22 +1635,33 @@ class AccumulateLGReplicateSciData(unittest.TestCase):
     lg_misc_data = None
 
     def _setup(self):
-        _fill_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'groups', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'misc', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _fill_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _fill_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _fill_workflow(
+            self.rmode,
+            "groups",
+            "test/reproducibility/reproGraphs/",
+            self.temp_out.name,
+        )
+        _fill_workflow(
+            self.rmode, "misc", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'LG.graph')
-        self.lg_node_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "apps" + "LG.graph")
+        self.lg_node_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'LG.graph')
-        self.lg_files_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "files" + "LG.graph")
+        self.lg_files_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'groups' + 'LG.graph')
-        self.lg_group_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "groups" + "LG.graph")
+        self.lg_group_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'misc' + 'LG.graph')
-        self.lg_misc_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "misc" + "LG.graph")
+        self.lg_misc_data = json.load(file)["nodeDataArray"]
         file.close()
 
     def test_all_accumulate(self):
@@ -1482,7 +1670,11 @@ class AccumulateLGReplicateSciData(unittest.TestCase):
         """
         self._setup()
         for drop in enumerate(
-                self.lg_node_data + self.lg_files_data + self.lg_group_data + self.lg_misc_data):
+            self.lg_node_data
+            + self.lg_files_data
+            + self.lg_group_data
+            + self.lg_misc_data
+        ):
             hash_data = accumulate_lg_drop_data(drop[1], self.rmode)
             self.assertEqual(self.expected, dict(hash_data.keys()))
 
@@ -1500,13 +1692,17 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
     pgs_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGS.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGS.graph")
         self.pgs_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGS.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGS.graph")
         self.pgs_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -1514,7 +1710,7 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {'type', 'dt'}
+        expected = {"type", "dt"}
         self._setup()
         for drop in enumerate(self.pgs_node_data):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1524,7 +1720,7 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {'type', 'storage'}
+        expected = {"type", "storage"}
         self._setup()
         for drop in enumerate(self.pgs_file_data):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1556,19 +1752,24 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
     """
     Tests the replicate-sci standard at the physical graph template level.
     """
+
     rmode = ReproducibilityFlags.REPLICATE_SCI
     temp_out = tempfile.TemporaryDirectory()
     pgt_node_data = None
     pgt_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
         self.pgt_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
         self.pgt_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -1576,7 +1777,7 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {'type', 'dt'}
+        expected = {"type", "dt"}
         self._setup()
         for drop in enumerate(self.pgt_node_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -1586,7 +1787,7 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {'type', 'storage'}
+        expected = {"type", "storage"}
         self._setup()
         for drop in enumerate(self.pgt_file_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -1618,19 +1819,24 @@ class AccumulatePGReplicateSciData(unittest.TestCase):
     """
     Tests the replicate-sci standard at the physical graph level
     """
+
     rmode = ReproducibilityFlags.REPLICATE_SCI
     temp_out = tempfile.TemporaryDirectory()
     pg_node_data = None
     pg_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
         self.pg_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
         self.pg_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -1682,20 +1888,27 @@ class AccumulateLGTReplicateCompData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.REPLICATE_COMP
-    expected = {'categoryType', 'category', 'inputPorts', 'inputLocalPorts', 'outputPorts',
-                'outputLocalPorts', 'streaming'}
+    expected = {
+        "categoryType",
+        "category",
+        "inputPorts",
+        "inputLocalPorts",
+        "outputPorts",
+        "outputLocalPorts",
+        "streaming",
+    }
 
-    file = open('test/reproducibility/reproGraphs/apps.graph')
-    lgt_node_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/apps.graph")
+    lgt_node_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/files.graph')
-    lgt_files_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/files.graph")
+    lgt_files_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/groups.graph')
-    lgt_groups_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/groups.graph")
+    lgt_groups_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/misc.graph')
-    lgt_misc_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/misc.graph")
+    lgt_misc_data = json.load(file)["nodeDataArray"]
     file.close()
 
     def test_app_accumulate(self):
@@ -1745,77 +1958,106 @@ class AccumulateLGReplicateCompData(unittest.TestCase):
     lg_misc_data = None
 
     def _setup(self):
-        _fill_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'groups', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'misc', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _fill_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _fill_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _fill_workflow(
+            self.rmode,
+            "groups",
+            "test/reproducibility/reproGraphs/",
+            self.temp_out.name,
+        )
+        _fill_workflow(
+            self.rmode, "misc", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'LG.graph')
-        self.lg_node_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "apps" + "LG.graph")
+        self.lg_node_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'LG.graph')
-        self.lg_files_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "files" + "LG.graph")
+        self.lg_files_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'groups' + 'LG.graph')
-        self.lg_group_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "groups" + "LG.graph")
+        self.lg_group_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'misc' + 'LG.graph')
-        self.lg_misc_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "misc" + "LG.graph")
+        self.lg_misc_data = json.load(file)["nodeDataArray"]
         file.close()
 
     def _bash(self, drop):
-        expected = {'execution_time', 'num_cpus', 'Arg01'}
+        expected = {"execution_time", "num_cpus", "Arg01"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _dynlib(self, drop):
-        expected = {'execution_time', 'num_cpus', 'libpath'}
+        expected = {"execution_time", "num_cpus", "libpath"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _mpi(self, drop):
-        expected = {'execution_time', 'num_cpus', 'num_of_procs'}
+        expected = {"execution_time", "num_cpus", "num_of_procs"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _docker(self, drop):
-        expected = {'execution_time', 'num_cpus', 'image', 'command', 'user', 'ensureUserAndSwitch',
-                    'removeContainer', 'additionalBindings'}
+        expected = {
+            "execution_time",
+            "num_cpus",
+            "image",
+            "command",
+            "user",
+            "ensureUserAndSwitch",
+            "removeContainer",
+            "additionalBindings",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _component(self, drop):
-        expected = {'execution_time', 'num_cpus', 'appclass'}
+        expected = {"execution_time", "num_cpus", "appclass"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _memory(self, drop):
-        expected = {'data_volume'}
+        expected = {"data_volume"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _file(self, drop):
-        expected = {'data_volume', 'check_filepath_exists', 'filepath', 'dirname'}
+        expected = {"data_volume", "check_filepath_exists", "filepath", "dirname"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _ngas(self, drop):
-        expected = {'data_volume'}
+        expected = {"data_volume"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _groupby(self, drop):
-        expected = {'inputApplicationName', 'inputApplicationType', 'group_key', 'group_axis'}
+        expected = {
+            "inputApplicationName",
+            "inputApplicationType",
+            "group_key",
+            "group_axis",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data)
 
     def _scatter(self, drop):
-        expected = {'inputApplicationName', 'inputApplicationType', 'num_of_copies', 'scatter_axis'}
+        expected = {
+            "inputApplicationName",
+            "inputApplicationType",
+            "num_of_copies",
+            "scatter_axis",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data)
 
     def _loop(self, drop):
-        expected = {'inputApplicationName', 'inputApplicationType', 'num_of_iter'}
+        expected = {"inputApplicationName", "inputApplicationType", "num_of_iter"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data)
 
@@ -1847,13 +2089,17 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
     pgs_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGS.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGS.graph")
         self.pgs_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGS.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGS.graph")
         self.pgs_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -1861,7 +2107,7 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
         """
         Type and rank matter
         """
-        expected = {'type', 'dt', 'rank'}
+        expected = {"type", "dt", "rank"}
         self._setup()
         for drop in enumerate(self.pgs_node_data):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1871,7 +2117,7 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
         """
         Type and rank matter
         """
-        expected = {'type', 'storage', 'rank'}
+        expected = {"type", "storage", "rank"}
         self._setup()
         for drop in enumerate(self.pgs_file_data):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1903,19 +2149,24 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
     """
     Tests the replicate-comp standard at the physical graph template level.
     """
+
     rmode = ReproducibilityFlags.REPLICATE_COMP
     temp_out = tempfile.TemporaryDirectory()
     pgt_node_data = None
     pgt_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
         self.pgt_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
         self.pgt_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -1923,7 +2174,7 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
         """
         Type, rank and machine information matters.
         """
-        expected = {'type', 'dt', 'rank', 'node', 'island'}
+        expected = {"type", "dt", "rank", "node", "island"}
         self._setup()
         for drop in enumerate(self.pgt_node_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -1933,7 +2184,7 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
         """
         Type, rank and machine information matters.
         """
-        expected = {'type', 'storage', 'rank', 'node', 'island'}
+        expected = {"type", "storage", "rank", "node", "island"}
         self._setup()
         for drop in enumerate(self.pgt_file_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -1965,19 +2216,24 @@ class AccumulatePGReplicateCompData(unittest.TestCase):
     """
     Tests the replicate-comp standard at the physical graph level
     """
+
     rmode = ReproducibilityFlags.REPLICATE_COMP
     temp_out = tempfile.TemporaryDirectory()
     pg_node_data = None
     pg_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PG.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PG.graph")
         self.pg_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PG.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PG.graph")
         self.pg_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -1985,7 +2241,7 @@ class AccumulatePGReplicateCompData(unittest.TestCase):
         """
         Machine information matters.
         """
-        expected = {'node', 'island'}
+        expected = {"node", "island"}
         self._setup()
         for drop in enumerate(self.pg_node_data):
             hash_data = accumulate_pg_drop_data(drop[1])
@@ -1995,7 +2251,7 @@ class AccumulatePGReplicateCompData(unittest.TestCase):
         """
         Machine information matters.
         """
-        expected = {'node', 'island'}
+        expected = {"node", "island"}
         self._setup()
         for drop in enumerate(self.pg_node_data):
             hash_data = accumulate_pg_drop_data(drop[1])
@@ -2029,20 +2285,27 @@ class AccumulateLGTReplicateTotalData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.REPLICATE_TOTAL
-    expected = {'categoryType', 'category', 'inputPorts', 'inputLocalPorts', 'outputPorts',
-                'outputLocalPorts', 'streaming'}
+    expected = {
+        "categoryType",
+        "category",
+        "inputPorts",
+        "inputLocalPorts",
+        "outputPorts",
+        "outputLocalPorts",
+        "streaming",
+    }
 
-    file = open('test/reproducibility/reproGraphs/apps.graph')
-    lgt_node_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/apps.graph")
+    lgt_node_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/files.graph')
-    lgt_files_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/files.graph")
+    lgt_files_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/groups.graph')
-    lgt_groups_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/groups.graph")
+    lgt_groups_data = json.load(file)["nodeDataArray"]
     file.close()
-    file = open('test/reproducibility/reproGraphs/misc.graph')
-    lgt_misc_data = json.load(file)['nodeDataArray']
+    file = open("test/reproducibility/reproGraphs/misc.graph")
+    lgt_misc_data = json.load(file)["nodeDataArray"]
     file.close()
 
     def test_app_accumulate(self):
@@ -2092,77 +2355,106 @@ class AccumulateLGReplicateTotalData(unittest.TestCase):
     lg_misc_data = None
 
     def _setup(self):
-        _fill_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'groups', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _fill_workflow(self.rmode, 'misc', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _fill_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _fill_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _fill_workflow(
+            self.rmode,
+            "groups",
+            "test/reproducibility/reproGraphs/",
+            self.temp_out.name,
+        )
+        _fill_workflow(
+            self.rmode, "misc", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'LG.graph')
-        self.lg_node_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "apps" + "LG.graph")
+        self.lg_node_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'LG.graph')
-        self.lg_files_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "files" + "LG.graph")
+        self.lg_files_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'groups' + 'LG.graph')
-        self.lg_group_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "groups" + "LG.graph")
+        self.lg_group_data = json.load(file)["nodeDataArray"]
         file.close()
-        file = open(self.temp_out.name + '/' + 'misc' + 'LG.graph')
-        self.lg_misc_data = json.load(file)['nodeDataArray']
+        file = open(self.temp_out.name + "/" + "misc" + "LG.graph")
+        self.lg_misc_data = json.load(file)["nodeDataArray"]
         file.close()
 
     def _bash(self, drop):
-        expected = {'execution_time', 'num_cpus', 'Arg01'}
+        expected = {"execution_time", "num_cpus", "Arg01"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _dynlib(self, drop):
-        expected = {'execution_time', 'num_cpus', 'libpath'}
+        expected = {"execution_time", "num_cpus", "libpath"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _mpi(self, drop):
-        expected = {'execution_time', 'num_cpus', 'num_of_procs'}
+        expected = {"execution_time", "num_cpus", "num_of_procs"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _docker(self, drop):
-        expected = {'execution_time', 'num_cpus', 'image', 'command', 'user', 'ensureUserAndSwitch',
-                    'removeContainer', 'additionalBindings'}
+        expected = {
+            "execution_time",
+            "num_cpus",
+            "image",
+            "command",
+            "user",
+            "ensureUserAndSwitch",
+            "removeContainer",
+            "additionalBindings",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _component(self, drop):
-        expected = {'execution_time', 'num_cpus', 'appclass'}
+        expected = {"execution_time", "num_cpus", "appclass"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _memory(self, drop):
-        expected = {'data_volume'}
+        expected = {"data_volume"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _file(self, drop):
-        expected = {'data_volume', 'check_filepath_exists'}
+        expected = {"data_volume", "check_filepath_exists"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _ngas(self, drop):
-        expected = {'data_volume'}
+        expected = {"data_volume"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
     def _groupby(self, drop):
-        expected = {'inputApplicationName', 'inputApplicationType', 'group_key', 'group_axis'}
+        expected = {
+            "inputApplicationName",
+            "inputApplicationType",
+            "group_key",
+            "group_axis",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data)
 
     def _scatter(self, drop):
-        expected = {'inputApplicationName', 'inputApplicationType', 'num_of_copies', 'scatter_axis'}
+        expected = {
+            "inputApplicationName",
+            "inputApplicationType",
+            "num_of_copies",
+            "scatter_axis",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data)
 
     def _loop(self, drop):
-        expected = {'inputApplicationName', 'inputApplicationType', 'num_of_iter'}
+        expected = {"inputApplicationName", "inputApplicationType", "num_of_iter"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data)
 
@@ -2194,13 +2486,17 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
     pgs_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGS.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGS.graph")
         self.pgs_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGS.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGS.graph")
         self.pgs_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -2208,7 +2504,7 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
         """
         Type matters
         """
-        expected = {'type', 'dt'}
+        expected = {"type", "dt"}
         self._setup()
         for drop in enumerate(self.pgs_node_data):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -2218,7 +2514,7 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
         """
         Type matters
         """
-        expected = {'type', 'storage'}
+        expected = {"type", "storage"}
         self._setup()
         for drop in enumerate(self.pgs_file_data):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -2250,19 +2546,24 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
     """
     Tests the replicate-total standard at the physical graph template level.
     """
+
     rmode = ReproducibilityFlags.REPLICATE_TOTAL
     temp_out = tempfile.TemporaryDirectory()
     pgt_node_data = None
     pgt_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
         self.pgt_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
         self.pgt_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -2270,7 +2571,7 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {'type', 'dt'}
+        expected = {"type", "dt"}
         self._setup()
         for drop in enumerate(self.pgt_node_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -2280,7 +2581,7 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {'type', 'storage'}
+        expected = {"type", "storage"}
         self._setup()
         for drop in enumerate(self.pgt_file_data):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -2312,19 +2613,24 @@ class AccumulatePGReplicateTotalData(unittest.TestCase):
     """
     Tests the replicate-total standard at the physical graph level
     """
+
     rmode = ReproducibilityFlags.REPLICATE_TOTAL
     temp_out = tempfile.TemporaryDirectory()
     pg_node_data = None
     pg_file_data = None
 
     def _setup(self):
-        _run_full_workflow(self.rmode, 'apps', 'test/reproducibility/reproGraphs/', self.temp_out.name)
-        _run_full_workflow(self.rmode, 'files', 'test/reproducibility/reproGraphs/', self.temp_out.name)
+        _run_full_workflow(
+            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
+        _run_full_workflow(
+            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
+        )
 
-        file = open(self.temp_out.name + '/' + 'apps' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
         self.pg_node_data = json.load(file)[0:-1]
         file.close()
-        file = open(self.temp_out.name + '/' + 'files' + 'PGT.graph')
+        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
         self.pg_file_data = json.load(file)[0:-1]
         file.close()
 
@@ -2368,4 +2674,3 @@ class AccumulatePGReplicateTotalData(unittest.TestCase):
         Does not matter
         """
         self.assertEqual(True, False)
-

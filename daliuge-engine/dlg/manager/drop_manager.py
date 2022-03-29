@@ -89,7 +89,6 @@ class DROPManager(object):
         Returns the status of the graph being executed in session `sessionId`.
         """
 
-
     @abc.abstractmethod
     def getGraph(self, sessionId):
         """

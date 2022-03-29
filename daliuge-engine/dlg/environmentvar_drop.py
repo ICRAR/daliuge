@@ -27,8 +27,8 @@ import json
 from dlg.drop import AbstractDROP, DEFAULT_INTERNAL_PARAMETERS
 from dlg.io import MemoryIO
 
-class KeyValueDROP:
 
+class KeyValueDROP:
     @abc.abstractmethod
     def get(self, key):
         """
@@ -53,8 +53,11 @@ class KeyValueDROP:
 
 
 def _filter_parameters(parameters: dict):
-    return {key: val for key, val in parameters.items() if
-            key not in DEFAULT_INTERNAL_PARAMETERS}
+    return {
+        key: val
+        for key, val in parameters.items()
+        if key not in DEFAULT_INTERNAL_PARAMETERS
+    }
 
 
 ##
@@ -78,7 +81,7 @@ class EnvironmentVarDROP(AbstractDROP, KeyValueDROP):
         self._variables.update(_filter_parameters(self.parameters))
 
     def getIO(self):
-        return MemoryIO(io.BytesIO(json.dumps(self._variables).encode('utf-8')))
+        return MemoryIO(io.BytesIO(json.dumps(self._variables).encode("utf-8")))
 
     def get(self, key):
         """
@@ -98,7 +101,8 @@ class EnvironmentVarDROP(AbstractDROP, KeyValueDROP):
 
     def set(self, key, value):
         raise NotImplementedError(
-            'Setting EnvironmentVariables mid-execution is not currently implemented')
+            "Setting EnvironmentVariables mid-execution is not currently implemented"
+        )
 
     @property
     def dataURL(self) -> str:

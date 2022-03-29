@@ -196,8 +196,9 @@ class PGT(object):
     ):
         raise Exception("Not implemented. Call sub-class")
 
-    def to_pg_spec(self, node_list, ret_str=True, num_islands=1, tpl_nodes_len=0,
-        co_host_dim=True):
+    def to_pg_spec(
+        self, node_list, ret_str=True, num_islands=1, tpl_nodes_len=0, co_host_dim=True
+    ):
         """
         convert pgt to pg specification, and map that to the hardware resources
 
@@ -232,29 +233,35 @@ class PGT(object):
         except:
             raise GPGTException("Invalid num_islands spec: {0}".format(num_islands))
         if num_islands < 1:
-            num_islands = 1 # need at least one island manager
+            num_islands = 1  # need at least one island manager
         if num_islands > nodes_len:
-            raise GPGTException("Number of islands must be <= number of specified nodes!")
+            raise GPGTException(
+                "Number of islands must be <= number of specified nodes!"
+            )
         form_island = num_islands > 1
         if nodes_len < 1:  # we allow to run everything on a single node now!
             raise GPGTException("Too few nodes: {0}".format(nodes_len))
 
         num_parts = self._num_parts_done
         drop_list = self._drop_list + self._extra_drops
-        
+
         # deal with the co-hosting of DIMs
         if not co_host_dim:
             if form_island and num_parts > nodes_len:
-                raise GPGTException("Insufficient number of nodes: {0}".format(nodes_len))
+                raise GPGTException(
+                    "Insufficient number of nodes: {0}".format(nodes_len)
+                )
             is_list = node_list[0:num_islands]
-            nm_list = node_list[num_islands:] 
+            nm_list = node_list[num_islands:]
         else:
             if form_island and num_islands + num_parts > nodes_len:
-                raise GPGTException("Insufficient number of nodes: {0}".format(nodes_len))
+                raise GPGTException(
+                    "Insufficient number of nodes: {0}".format(nodes_len)
+                )
             is_list = node_list
             nm_list = node_list
         nm_len = len(nm_list)
-        logger.info(    
+        logger.info(
             "Drops count: {0}, partitions count: {1}, nodes count: {2}, island count: {3}".format(
                 len(drop_list), num_parts, nodes_len, len(is_list)
             )
@@ -285,7 +292,9 @@ class PGT(object):
                 "#%s" % x for x in range(len(is_list))
             ]  # so that is_list[i] == '#i'
 
-        logger.info("nm_list: %s, is_list: %s, lm: %s, lm2: %s" % (nm_list, is_list, lm, lm2))
+        logger.info(
+            "nm_list: %s, is_list: %s, lm: %s, lm2: %s" % (nm_list, is_list, lm, lm2)
+        )
         for drop in drop_list:
             oid = drop["oid"]
             # For now, simply round robin, but need to consider

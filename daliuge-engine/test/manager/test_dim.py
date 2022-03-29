@@ -42,15 +42,23 @@ from test.manager import testutils
 hostname = "localhost"
 
 
-
-default_repro = {"rmode": "1", "lg_blockhash": "x", "pgt_blockhash": "y", "pg_blockhash": "z"}
-default_graph_repro = {"rmode": "1", "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
-                       "merkleroot": "a", "signature": "b"}
+default_repro = {
+    "rmode": "1",
+    "lg_blockhash": "x",
+    "pgt_blockhash": "y",
+    "pg_blockhash": "z",
+}
+default_graph_repro = {
+    "rmode": "1",
+    "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
+    "merkleroot": "a",
+    "signature": "b",
+}
 
 
 def add_test_reprodata(graph: list):
     for drop in graph:
-        drop['reprodata'] = default_repro.copy()
+        drop["reprodata"] = default_repro.copy()
     graph.append(default_graph_repro.copy())
     return graph
 
@@ -312,7 +320,7 @@ class TestREST(LocalDimStarter, unittest.TestCase):
                 "test", "graphs/complex.js"
             ) as f:  # @UndefinedVariable
                 complexGraphSpec = json.load(codecs.getreader("utf-8")(f))
-                logger.debug(f'Loaded graph: {f}')
+                logger.debug(f"Loaded graph: {f}")
             for dropSpec in complexGraphSpec:
                 dropSpec["node"] = hostname
             testutils.post(
