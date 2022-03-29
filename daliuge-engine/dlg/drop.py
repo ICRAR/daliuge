@@ -44,7 +44,7 @@ import re
 import sys
 import inspect
 import binascii
-from typing import List, Optional, Union
+from typing import AsyncIterable, Dict, List, Optional, Union
 from overrides import overrides
 
 import numpy as np
@@ -278,7 +278,7 @@ class AbstractDROP(EventFirer):
         # The DataIO instance we use in our write method. It's initialized to
         # None because it's lazily initialized in the write method, since data
         # might be written externally and not through this DROP
-        self._wio = None
+        self._wio: Optional[DataIO] = None
 
         # DataIO objects used for reading.
         # Instead of passing file objects or more complex data types in our
@@ -286,7 +286,7 @@ class AbstractDROP(EventFirer):
         # handle file types and other classes (like StringIO) well, but also
         # because it requires less transport.
         # TODO: Make these threadsafe, no lock around them yet
-        self._rios = {}
+        self._rios: Dict[int, DataIO] = {}
 
         # The execution mode.
         # When set to DROP (the default) the graph execution will be driven by
@@ -993,8 +993,8 @@ class DataDROP(AbstractDROP):
                 )
             )
 
-        io = self._getIO()
         logger.debug("Opening drop %s" % (self.oid))
+        io = self._getIO()
         io.open(OpenMode.OPEN_READ, **kwargs)
 
         # Save the IO object in the dictionary and return its descriptor instead
@@ -1021,8 +1021,8 @@ class DataDROP(AbstractDROP):
 
         # Decrement counter and then actually close
         self.decrRefCount()
-        io = self._rios.pop(descriptor)
-        io.close(**kwargs)
+        bio = self._rios.pop(descriptor)
+        bio.close(**kwargs)
 
     def _closeWriters(self):
         """
@@ -1044,6 +1044,11 @@ class DataDROP(AbstractDROP):
         self._checkStateAndDescriptor(descriptor)
         io = self._rios[descriptor]
         return io.read(count, **kwargs)
+
+    async def readStream(self, descriptor, **kwargs) -> AsyncIterable:
+        self._checkStateAndDescriptor(descriptor)
+        io = self._rios[descriptor]
+        return await io.readStream()
 
     def _checkStateAndDescriptor(self, descriptor):
         if self.status != DROPStates.COMPLETED:
@@ -1139,6 +1144,9 @@ class DataDROP(AbstractDROP):
             self.status = DROPStates.WRITING
 
         return nbytes
+
+    async def writeStream(self, stream: AsyncIterable, **kwargs):
+        raise NotImplementedError
 
     def _updateChecksum(self, chunk):
         # see __init__ for the initialization to None
