@@ -705,6 +705,8 @@ def process_compounddef_default(compounddef):
             for grandchild in child:
                 if grandchild.tag == "memberdef" and grandchild.get("kind") == "function":
                     member = {"params":[]}
+                    appclass = "Unknown"
+                    returnType = "Unknown"
 
                     for ggchild in grandchild:
                         if ggchild.tag == "name":
@@ -716,18 +718,19 @@ def process_compounddef_default(compounddef):
                                 dd = ggchild[0][0].text
 
                                 # check if a return type exists in the detailed description
-                                hasReturn = dd.rfind(":return:") != -1
+                                hasReturn = dd.rfind(":return:") != -1 or dd.rfind(":returns:") != -1
 
                                 # get return type, if it exists
                                 if hasReturn:
                                     return_part = dd[dd.rfind(":return:")+8:].strip().replace('\n', ' ')
-                                    output_port_name = "output" # TODO
-                                    member["params"].append({"key": "port/"+str(output_port_name), "direction": "out", "value": str(output_port_name) + "/String/" + str(return_part) })
+                                    output_port_name = "output"
+                                    #print("Add output port:" + str(output_port_name) + "/" + str(returnType) + "/" + str(return_part))
+                                    member["params"].append({"key": "port/"+str(output_port_name), "direction": "out", "value": str(output_port_name) + "/" + str(returnType) + "/" + str(return_part) })
 
                                 # get first part of description, up until when the param are mentioned
                                 description = dd[:dd.find(":param")].strip()
 
-                                # TODO: look through the rest of the description to get description of params
+                                # look through the rest of the description to get description of params
                                 numParams = math.floor((len(dd.split(":")) - 3) / 2)
 
                                 if not hasReturn:
@@ -741,6 +744,7 @@ def process_compounddef_default(compounddef):
                         if ggchild.tag == "param":
                             type = ""
                             name = ""
+                            defaultValue = ""
 
                             for gggchild in ggchild:
                                 if gggchild.tag == "type":
@@ -754,11 +758,36 @@ def process_compounddef_default(compounddef):
                                     name = gggchild.text
                                 if gggchild.tag == "defname":
                                     name = gggchild.text
+                                if gggchild.tag == "defval":
+                                    defaultValue = gggchild.text
 
-                            member["params"].append({"key":"aparam/"+str(name), "direction":"in", "value":str(name) + "//" + str(type) + "/readwrite/False//False/"})
+                            # fix some types
+                            if type == "bool":
+                                type = "Boolean"
+                                if defaultValue == "":
+                                    defaultValue = "False"
+                                isParam = True
+                            if type == "int":
+                                type = "Integer"
+                                if defaultValue == "":
+                                    defaultValue = "0"
+                                isParam = True
+                            if type == "string" or type == "*" or type == "**":
+                                type = "String"
+                                isParam = True
 
-                    # TODO: determine the appclass
-                    appclass = "Unknown"
+                            # add the param
+                            member["params"].append({"key":"aparam/"+str(name), "direction":"in", "value":str(name) + "/" + str(defaultValue) + "/" + str(type) + "/readwrite/False//False/"})
+
+                        if ggchild.tag == "definition":
+                            returnType = ggchild.text.strip().split(" ")[0]
+                            appclass = ggchild.text.strip().split(" ")[-1]
+
+                            if returnType == "def":
+                                returnType = "None"
+
+                            #print("returnType:" + str(returnType) + ", appclass:" + str(appclass))
+
 
                     # some defaults
                     # cparam format is (name, default_value, type, access, precious, options, positional, description)
