@@ -391,6 +391,7 @@ function drawGraphForDrops(g, drawGraph, oids, doSpecs) {
 	console.log('Took %d [ms] to create the nodes', (time1 - time0))
 
 	// #2: establish missing relationships
+	console.log(doSpecs)
 	for(var idx in oids) {
 		var doSpec = doSpecs[oids[idx]];
 		var lhOid = doSpec.oid;
@@ -400,6 +401,9 @@ function drawGraphForDrops(g, drawGraph, oids, doSpecs) {
 			var rel = TO_MANY_LTR_RELS[relIdx];
 			if( rel in doSpec ) {
 				for(var rhOid in doSpec[rel]) {
+					if(rhOid.constructor == Object) {
+						rhOid = Object.keys(rhOid)[0]
+					}
 					modified |= _addEdge(g, lhOid, doSpec[rel][rhOid]);
 				}
 			}
@@ -556,6 +560,12 @@ function _addNode(g, doSpec) {
 }
 
 function _addEdge(g, fromOid, toOid) {
+	if(fromOid.constructor == Object) {
+		fromOid = Object.keys(fromOid)[0]
+	}
+	if(toOid.constructor == Object) {
+		toOid = Object.keys(toOid)[0]
+	}
 	if( g.hasEdge(fromOid, toOid) ) {
 		return false;
 	}
