@@ -232,10 +232,11 @@ class PyFuncApp(BarrierAppDROP):
             self.fn_defaults.update(kwargs)
             logger.debug(f"fn_defaults updated with {kwargs}")
             # deal with kwonlyargs
-            kwonlyargs = dict(
-                zip(self.arguments.kwonlyargs, self.arguments.kwonlydefaults))
-            self.fn_defaults.update(kwonlyargs)
-            logger.debug(f"fn_defaults updated with {kwonlyargs}")
+            if self.arguments.kwonlydefaults:
+                kwonlyargs = dict(
+                    zip(self.arguments.kwonlyargs, self.arguments.kwonlydefaults))
+                self.fn_defaults.update(kwonlyargs)
+                logger.debug(f"fn_defaults updated with {kwonlyargs}")
             
             self.fn_posargs = self.arguments.args[:self.fn_npos] # positional arg names
 
