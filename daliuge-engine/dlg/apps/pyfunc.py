@@ -225,11 +225,18 @@ class PyFuncApp(BarrierAppDROP):
             self.fn_npos = len(self.arguments.args) - self.fn_ndef
             self.fn_defaults = {name:None for name in self.arguments.args[:self.fn_npos]}
             logger.debug(f"initialized fn_defaults with {self.fn_defaults}")
+            # deal with args and kwargs
             kwargs = dict(
                 zip(self.arguments.args[self.fn_npos:], 
                 self.arguments.defaults)) if self.arguments.defaults else {}
             self.fn_defaults.update(kwargs)
             logger.debug(f"fn_defaults updated with {kwargs}")
+            # deal with kwonlyargs
+            kwonlyargs = dict(
+                zip(self.arguments.kwonlyargs, self.arguments.kwonlydefaults))
+            self.fn_defaults.update(kwonlyargs)
+            logger.debug(f"fn_defaults updated with {kwonlyargs}")
+            
             self.fn_posargs = self.arguments.args[:self.fn_npos] # positional arg names
 
     def initialize(self, **kwargs):
@@ -372,7 +379,7 @@ class PyFuncApp(BarrierAppDROP):
         # the correct UIDs
         logger.debug(f"Parameters found: {self.parameters}")
         kwargs = {}
-        if ('inputs' in self.parameters and isinstance(self.parameters['inputs'], dict)):
+        if ('inputs' in self.parameters and isinstance(self.parameters['inputs'][0], dict)):
             logger.debug(f"Using named ports to identify inputs: "+\
                     f"{self.parameters['inputs']}")            
             for i in range(min(len(inputs),self.fn_nargs)):
