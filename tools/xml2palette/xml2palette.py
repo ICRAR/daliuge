@@ -745,6 +745,11 @@ def process_compounddef_default(compounddef):
                             for gggchild in ggchild:
                                 if gggchild.tag == "type":
                                     type = gggchild.text
+
+                                    # also look at children with ref tag
+                                    for ggggchild in gggchild:
+                                        if ggggchild.tag == "ref":
+                                            type = ggggchild.text
                                 if gggchild.tag == "declname":
                                     name = gggchild.text
                                 if gggchild.tag == "defname":
