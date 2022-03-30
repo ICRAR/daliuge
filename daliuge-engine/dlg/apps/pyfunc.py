@@ -383,7 +383,8 @@ class PyFuncApp(BarrierAppDROP):
         if ('inputs' in self.parameters and isinstance(self.parameters['inputs'][0], dict)):
             logger.debug(f"Using named ports to identify inputs: "+\
                     f"{self.parameters['inputs']}")            
-            for i in range(min(len(inputs),self.fn_nargs)):
+            for i in range(min(len(inputs),self.fn_nargs +\
+                len(self.arguments.kwonlyargs))):
                 # key for final dict is value in named ports dict
                 key = list(self.parameters['inputs'][i].values())[0]
                 # value for final dict is value in inputs dict
