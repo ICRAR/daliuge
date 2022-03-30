@@ -27,6 +27,7 @@ import unittest
 from asyncio.log import logger
 import pkg_resources
 
+from dlg.drop import InMemoryDROP
 from dlg import runtime
 from dlg import droputils
 from dlg import utils
@@ -80,7 +81,8 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         bs = graphSpec[0]["applicationArgs"]["bs"]["value"]
         count = graphSpec[0]["applicationArgs"]["count"]["value"]
         self.dim.deploySession(sessionId)
-        a, c = [self.dm._sessions[sessionId].drops[x] for x in ("2022-02-11T08:05:47_-5_0", "2022-02-11T08:05:47_-3_0")]
+        a, c = [self.dm._sessions[sessionId].drops[x]\
+            for x in ("2022-02-11T08:05:47_-5_0", "2022-02-11T08:05:47_-3_0")]
 
         data = os.urandom(bs*count)
         logger.debug(f"Length of data produced: {len(data)}")
@@ -89,3 +91,60 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
             a.setCompleted()
 
         self.assertEqual(data, droputils.allDropContents(c))
+
+    def test_namedPorts(self):
+        """
+        Use a graph with named ports and check whether it is runnning
+        """
+        init_oid = "2022-03-20T04:33:27_-2_0" # first drop in graph
+        sessionId = "lalo"
+        with pkg_resources.resource_stream(
+                "test", "graphs/funcTestPG_namedPorts.graph"
+            ) as f:  # @UndefinedVariable
+            graphSpec = json.load(f)
+        # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
+        self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
+
+        # Deploy now and get OIDs
+        self.dim.deploySession(sessionId)
+        fd = self.dm._sessions[sessionId].drops["2022-03-20T04:33:27_-1_0"]
+        init_drop = self.dm._sessions[sessionId].drops[init_oid]
+        a = InMemoryDROP("a", "a")
+        init_drop.addInput(a)
+        logger.debug(f'PyfuncAPPDrop: {dir(fd)}')
+        for i in fd.parameters["inputs"]:
+            logger.debug(f'PyfuncAPPDrop input names:{i}')
+        
+        with droputils.DROPWaiterCtx(self, init_drop, 3):
+            a.setCompleted()
+
+    def test_namedPorts_with_kwonlyargs(self):
+        """
+        Use a graph with named ports and check whether it is runnning
+        """
+        init_oids = ["2022-03-30T03:46:01_-2_0", "2022-03-30T03:46:01_-6_0"] # first drops in graph
+        sessionId = "lalo"
+        with pkg_resources.resource_stream(
+                "test", "graphs/pyfunc_glob_testPG.graph"
+            ) as f:  # @UndefinedVariable
+            graphSpec = json.load(f)
+        # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
+        self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
+
+        # Deploy now and get OIDs
+        self.dim.deploySession(sessionId)
+        fd = self.dm._sessions[sessionId].drops["2022-03-30T03:46:01_-1_0"]
+        i = 0
+        start_drops = [InMemoryDROP(x, x) for x in ("a", "b")]
+        for oid in init_oids:
+            init_drop = self.dm._sessions[sessionId].drops[oid]
+            init_drop.addInput(start_drops[i])
+            i += 1
+        logger.debug(f'PyfuncAPPDrop: {dir(fd)}')
+        for i in fd.parameters["inputs"]:
+            logger.debug(f'PyfuncAPPDrop input names:{i}')
+            
+        
+        with droputils.DROPWaiterCtx(self, init_drop, 3):
+            [a.setCompleted() for a in start_drops]
+

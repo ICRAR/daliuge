@@ -1,0 +1,215 @@
+{
+    "modelData": {
+        "fileType": "graph",
+        "repoService": "GitHub",
+        "repoBranch": "master",
+        "repo": "ICRAR/EAGLE_test_repo",
+        "filePath": "HelloWorld_simple.graph",
+        "sha": "",
+        "git_url": "",
+        "eagleVersion": "v3.0.5",
+        "eagleCommitHash": "4b29bb5d2c8de0b6f98e66204c24dde59a611022",
+        "schemaVersion": "OJS",
+        "readonly": true
+    },
+    "nodeDataArray": [
+        {
+            "category": "PythonApp",
+            "categoryType": "Application",
+            "isData": false,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#3498DB",
+            "drawOrderHint": 0,
+            "key": -1,
+            "text": "HelloWorldApp",
+            "description": "A simple APP that implements the standard Hello World in DALiuGE. It allows to change 'World' with some other string and it also permits to connect the single output port to multiple sinks, which will all receive the same message. App does not require any input.",
+            "x": 79.15975327762027,
+            "y": 157.58665007965354,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": true,
+            "flipPorts": false,
+            "streaming": false,
+            "precious": false,
+            "subject": null,
+            "selected": true,
+            "expanded": false,
+            "readonly": false,
+            "inputPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "09b9f140-837d-40eb-99b9-060a5559ce15",
+                    "IdText": "hello",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "fields": [
+                {
+                    "text": "greet",
+                    "name": "greet",
+                    "value": "Everybody",
+                    "description": "What appears after 'Hello '",
+                    "readonly": false,
+                    "type": "String"
+                },
+                {
+                    "text": "appclass",
+                    "name": "appclass",
+                    "value": "dlg.apps.simple.HelloWorldApp",
+                    "description": "Application class",
+                    "readonly": true,
+                    "type": "String"
+                },
+                {
+                    "text": "Execution time",
+                    "name": "execution_time",
+                    "value": 1,
+                    "description": "Estimated execution time",
+                    "readonly": false,
+                    "type": "Float"
+                },
+                {
+                    "text": "Num CPUs",
+                    "name": "num_cpus",
+                    "value": 1,
+                    "description": "Number of cores used",
+                    "readonly": false,
+                    "type": "Integer"
+                },
+                {
+                    "text": "Group start",
+                    "name": "group_start",
+                    "value": false,
+                    "description": "Component is start of a group",
+                    "readonly": false,
+                    "type": "Boolean"
+                }
+            ],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "exitAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "exitApplicationKey": null
+        },
+        {
+            "category": "File",
+            "categoryType": "Data",
+            "isData": true,
+            "isGroup": false,
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "color": "#394BB2",
+            "drawOrderHint": 0,
+            "key": -2,
+            "text": "hello",
+            "description": "",
+            "x": 343.61809816257795,
+            "y": 163.98988923310688,
+            "width": 200,
+            "height": 200,
+            "collapsed": false,
+            "showPorts": false,
+            "flipPorts": false,
+            "streaming": false,
+            "precious": false,
+            "subject": null,
+            "selected": false,
+            "expanded": false,
+            "readonly": false,
+            "inputPorts": [
+                {
+                    "Id": "9bf94db3-c563-4141-8dde-20b843e3d82d",
+                    "IdText": "hello",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "641de2d1-7d01-4335-acfb-6797d3a06009",
+                    "IdText": "hello",
+                    "event": false,
+                    "type": "Unknown"
+                }
+            ],
+            "inputLocalPorts": [],
+            "outputLocalPorts": [],
+            "fields": [
+                {
+                    "text": "Data volume",
+                    "name": "data_volume",
+                    "value": "5",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown"
+                },
+                {
+                    "text": "Group end",
+                    "name": "group_end",
+                    "value": "0",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown"
+                },
+                {
+                    "text": "Check file path exists",
+                    "name": "check_filepath_exists",
+                    "value": "1",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown"
+                },
+                {
+                    "text": "File path",
+                    "name": "filepath",
+                    "value": "hello.txt",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown"
+                },
+                {
+                    "text": "Directory name",
+                    "name": "dirname",
+                    "value": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Unknown"
+                }
+            ],
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "exitAppFields": [],
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputApplicationKey": null,
+            "exitApplicationName": "",
+            "exitApplicationType": "None",
+            "exitApplicationKey": null
+        }
+    ],
+    "linkDataArray": [
+        {
+            "from": -1,
+            "fromPort": "09b9f140-837d-40eb-99b9-060a5559ce15",
+            "to": -2,
+            "toPort": "9bf94db3-c563-4141-8dde-20b843e3d82d",
+            "loop_aware": "0"
+        }
+    ]
+}
