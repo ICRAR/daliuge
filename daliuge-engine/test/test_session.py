@@ -20,8 +20,10 @@
 #    MA 02111-1307  USA
 #
 import unittest
+import json
+import pkg_resources
 
-from dlg import runtime
+from dlg import runtime, graph_loader
 from dlg.ddap_protocol import DROPLinkType, DROPStates, AppDROPStates
 from dlg.manager.session import Session, SessionStates
 from dlg.exceptions import InvalidGraphException
@@ -91,6 +93,17 @@ class TestSession(unittest.TestCase):
                     }
                 ],
             )  # missing X DROP
+
+    def test_addGraphSpec_namedPorts(self):
+        with pkg_resources.resource_stream(
+            "test", "graphs/funcTestPG_namedPorts.graph"
+            ) as f:  # @UndefinedVariable
+            graphSpec = json.load(f)
+        # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
+        with Session("1") as s:
+            s.addGraphSpec(graphSpec)
+            s.deploy()
+
 
     def test_linking(self):
         with Session("1") as s:
