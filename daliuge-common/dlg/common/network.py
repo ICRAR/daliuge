@@ -162,7 +162,7 @@ def connect_to(host, port, timeout=None):
     return s
 
 
-def write_to(host, port, data, timeout=None):
+def write_to(host, port, data, timeout=5):
     """
     Connects to ``host``:``port`` within the given timeout and write the given
     piece of ``data`` into the connected socket.

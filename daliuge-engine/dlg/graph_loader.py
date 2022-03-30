@@ -28,6 +28,8 @@ import collections
 import importlib
 import logging
 
+from numpy import isin
+
 from . import droputils
 from .apps.socket_listener import SocketListenerApp
 from .ddap_protocol import DROPRel, DROPLinkType
@@ -132,13 +134,18 @@ def removeUnmetRelationships(dropSpecList):
     unmetRelationships = []
 
     # Step #1: Get all OIDs
-    oids = {dropSpec["oid"] for dropSpec in dropSpecList}
+    oids = []
+    for dropSpec in dropSpecList:
+        oid = dropSpec["oid"]
+        oid = list(oid.keys())[0] if isinstance(oid,dict) else oid
+        oids.append(oid)
 
     # Step #2: find unmet relationships and remove them from the original
     # DROP spec, keeping track of them
     for dropSpec in dropSpecList:
 
         this_oid = dropSpec["oid"]
+        this_oid = list(this_oid.keys())[0] if isinstance(this_oid,dict) else this_oid
         to_delete = []
 
         for rel in dropSpec:
@@ -150,13 +157,16 @@ def removeUnmetRelationships(dropSpecList):
 
                 # Find missing OIDs in this relationship and keep track of them,
                 # removing them from the current DROP spec
-                missingOids = [oid for oid in dropSpec[rel] if oid not in oids]
+                ds = dropSpec[rel]
+                if isinstance(ds[0], dict):
+                    ds = [list(d.keys())[0] for d in ds]
+                missingOids = [oid for oid in ds if oid not in oids]
                 for oid in missingOids:
                     unmetRelationships.append(DROPRel(oid, link, this_oid))
-                    dropSpec[rel].remove(oid)
+                    ds.remove(oid)
 
                 # Remove the relationship list entirely if it has no elements
-                if not dropSpec[rel]:
+                if not ds:
                     to_delete.append(rel)
 
             # N-1 relationships
@@ -166,6 +176,7 @@ def removeUnmetRelationships(dropSpecList):
 
                 # Check if OID is missing
                 oid = dropSpec[rel]
+                oid = list(oid.keys())[0] if isinstance(oid,dict) else oid
                 if oid in oids:
                     continue
 
@@ -176,7 +187,9 @@ def removeUnmetRelationships(dropSpecList):
                 to_delete.append(rel)
 
         for rel in to_delete:
-            del dropSpec[rel]
+            ds = dropSpec[rel]
+            ds = list(ds.keys())[0] if isinstance(ds,dict) else ds
+            del ds
 
     return unmetRelationships
 
@@ -216,6 +229,8 @@ def loadDropSpecs(dropSpecList):
     logger.debug("Found %d DROP definitions", len(dropSpecs))
 
     # Step #2: check relationships
+    # TODO: shouldn't this loop be done the other way around, going through all __TOMANY
+    # and __TOONE and directly address the respective dropSpec attribute?
     for dropSpec in dropSpecList:
 
         # 1-N relationships
@@ -225,12 +240,15 @@ def loadDropSpecs(dropSpecList):
                 # A KeyError will be raised if a oid has been specified in the
                 # relationship list but doesn't exist in the list of DROPs
                 for oid in dropSpec[rel]:
+                    oid = list(oid.keys())[0] if isinstance(oid,dict) else oid
                     dropSpecs[oid]
 
             # N-1 relationships
             elif rel in __TOONE:
+                port = list(dropSpecs[rel].keys()) if isinstance(dropSpecs[rel],dict) else\
+                    dropSpecs[rel]
                 # See comment above
-                dropSpecs[dropSpec[rel]]
+                dropSpecs[port]
 
     # Done!
     return dropSpecs
@@ -261,11 +279,12 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
         oid = dropSpec["oid"]
         drop = drops[oid]
 
-        for rel in dropSpec:
+        for attr in dropSpec:
             # 1-N relationships
-            if rel in __TOMANY:
-                link = __TOMANY[rel]
-                for oid in dropSpec[rel]:
+            if attr in __TOMANY:
+                link = __TOMANY[attr]
+                for rel in dropSpec[attr]:
+                    oid = list(rel.keys())[0] if isinstance(rel,dict) else rel
                     lhDrop = drops[oid]
                     relFuncName = LINKTYPE_1TON_APPEND_METHOD[link]
                     try:
@@ -281,9 +300,11 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
                     relFunc(lhDrop)
 
             # N-1 relationships
-            elif rel in __TOONE:
-                link = __TOONE[rel]
-                lhDrop = drops[dropSpec[rel]]
+            elif attr in __TOONE:
+                link = __TOONE[attr]
+                rel = dropSpec[attr]
+                rel = list(rel.keys())[0] if isinstance(rel,dict) else rel
+                lhDrop = drops[rel]
                 propName = LINKTYPE_NTO1_PROPERTY[link]
                 setattr(drop, propName, lhDrop)
 
@@ -345,7 +366,6 @@ def _createSocket(dropSpec, dryRun=False, session=None):
 def _createApp(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
-    del kwargs["app"]
 
     appName = dropSpec[DropType.APP]
     parts = appName.split(".")
@@ -381,10 +401,15 @@ def _getIds(dropSpec):
 
 
 def _getKwargs(dropSpec):
+    REMOVE = [
+        "oid",
+        "uid",
+        "app",
+    ]
     kwargs = dict(dropSpec)
-    del kwargs["oid"]
-    if "uid" in kwargs:
-        del kwargs["uid"]
+    for kw in REMOVE:
+        if kw in kwargs:
+            del kwargs[kw]
     return kwargs
 
 

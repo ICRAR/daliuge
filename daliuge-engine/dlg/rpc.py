@@ -243,6 +243,7 @@ class ZeroRPCServer(RPCServerBase):
             utils.zmq_safe(host),
             port,
         )
+        logger.debug("Trying to bind ZeroRPC to %s", endpoint)
         self._zrpcserver.bind(endpoint)
         logger.info("Listening for RPC requests via ZeroRPC on %s", endpoint)
         server_started.set()
