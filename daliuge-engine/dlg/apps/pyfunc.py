@@ -340,8 +340,25 @@ class PyFuncApp(BarrierAppDROP):
         # Fill arguments with rest of inputs
         kwargs = {}
         logger.debug(f"available inputs: {inputs}")
-        for i in range(min(len(inputs),self.fn_nargs)):
-            kwargs.update({self.arguments.args[i]: list(inputs.values())[i]})
+    
+        # if we have named ports use the inputs with
+        # the correct UIDs
+        kwargs = {}
+        if ('inputs' in self.parameters):
+            logger.debug(f"Using named ports to identify inputs: "+\
+                    f"{self.parameters['inputs']}")            
+            for i in range(min(len(inputs),self.fn_nargs)):
+                # key for final dict is value in named ports dict
+                key = list(self.parameters['inputs'][i].values())[0]
+                # value for final dict is value in inputs dict
+                value = inputs[list(self.parameters['inputs'][i].keys())[0]]
+                kwargs.update({key:value})
+        else:
+            for i in range(min(len(inputs),self.fn_nargs)):
+                key = self.arguments.args[i]
+                value = inputs[key]
+                kwargs.update({key:value})
+
         logger.debug(f"updating funcargs with {kwargs}")
         self.funcargs.update(kwargs)
 
@@ -352,9 +369,6 @@ class PyFuncApp(BarrierAppDROP):
                 kwargs.update({kw: self.func_defaults[kw]})
         logger.debug(f"updating funcargs with {kwargs}")
         self.funcargs.update(kwargs)
-
-        if 'inputs' in self.parameters:
-            logger.debug(f"PyfuncAPPDrop parameters: {self.parameters['inputs']}")  
 
         logger.debug(f"Running {self.func_name} with {self.funcargs}")
         result = self.f(**self.funcargs)

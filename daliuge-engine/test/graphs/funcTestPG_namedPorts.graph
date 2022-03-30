@@ -77,12 +77,12 @@
         "nm": "os.path.abspath",
         "inputs": [
             {
-                "2022-03-20T04:33:27_-3_0": "content"
+                "2022-03-20T04:33:27_-3_0": "path"
             }
         ],
         "outputs": [
             {
-                "2022-03-20T04:33:27_-5_0": "content"
+                "2022-03-20T04:33:27_-5_0": "path"
             }
         ],
         "node": "localhost",
@@ -97,7 +97,7 @@
         ],
         "loop_cxt": null,
         "tw": 5,
-        "command": "echo \"'.'\" > %o0",
+        "command": "echo \"'$HOME'\" > %o0",
         "input_redirection": "",
         "output_redirection": "",
         "command_line_arguments": "",
@@ -115,7 +115,7 @@
         "nm": "generate",
         "outputs": [
             {
-                "2022-03-20T04:33:27_-3_0": "content"
+                "2022-03-20T04:33:27_-3_0": "path"
             }
         ],
         "node": "localhost",
@@ -171,15 +171,15 @@
         "iid": "0",
         "lg_key": -3,
         "dt": "File",
-        "nm": "content",
+        "nm": "path",
         "producers": [
             {
-                "2022-03-20T04:33:27_-2_0": "content"
+                "2022-03-20T04:33:27_-2_0": "path"
             }
         ],
         "consumers": [
             {
-                "2022-03-20T04:33:27_-1_0": "content"
+                "2022-03-20T04:33:27_-1_0": "path"
             }
         ],
         "node": "localhost",
@@ -212,7 +212,7 @@
         "nm": "output",
         "inputs": [
             {
-                "2022-03-20T04:33:27_-5_0": "content"
+                "2022-03-20T04:33:27_-5_0": "path"
             }
         ],
         "node": "localhost",
@@ -271,12 +271,12 @@
         "nm": "result",
         "producers": [
             {
-                "2022-03-20T04:33:27_-1_0": "content"
+                "2022-03-20T04:33:27_-1_0": "path"
             }
         ],
         "consumers": [
             {
-                "2022-03-20T04:33:27_-4_0": "content"
+                "2022-03-20T04:33:27_-4_0": "path"
             }
         ],
         "node": "localhost",
