@@ -300,7 +300,34 @@ class PyFuncApp(BarrierAppDROP):
         # Mapping between argument name and input drop uids
         logger.debug(f"Input mapping: {self.func_arg_mapping}")
 
+
     def run(self):
+        """
+        Function positional and keyword argument treatment:
+
+        Function arguments can be provided in four different ways:
+        1) Through an input port
+        2) By specifying ApplicationArgs (one for each argument)
+        3) By specifying a func_defaults dictionary in the ComponentParameters
+        4) Through defaults at the time of function definition
+
+        The priority follows the list above with input ports overruling the others.
+
+        All function arguments are internally dealt with as keyword arguments, i.e. 
+        positional aruments will be referred to by name, not by position. This also
+        implies that positional ONLY arguments are not supported, but they are rarely
+        used. Positional arguments defined by the function ar mandatory and thus the
+        implementation is checking whether they are provided (by name).
+
+        Input ports will NOT be used by order (anymore), but by the IdText (name field
+        in EAGLE) of the port. Since each input port requires an associated data drop,
+        this provides a unique mapping. This also allows to pass values to any function
+        argument through a port.
+
+        Function argument values as well as the function code can be provided in 
+        serialised (pickle) form by setting the 'pickle' flag. Note that this flag
+        is valid for all arguments and the code (if specified) in a global way.
+        """
 
         # Inputs are un-pickled and treated as the arguments of the function
         # Their order must be preserved, so we use an OrderedDict
@@ -343,8 +370,9 @@ class PyFuncApp(BarrierAppDROP):
     
         # if we have named ports use the inputs with
         # the correct UIDs
+        logger.debug(f"Parameters found: {self.parameters}")
         kwargs = {}
-        if ('inputs' in self.parameters):
+        if ('inputs' in self.parameters and isinstance(self.parameters['inputs'], dict)):
             logger.debug(f"Using named ports to identify inputs: "+\
                     f"{self.parameters['inputs']}")            
             for i in range(min(len(inputs),self.fn_nargs)):
@@ -355,9 +383,7 @@ class PyFuncApp(BarrierAppDROP):
                 kwargs.update({key:value})
         else:
             for i in range(min(len(inputs),self.fn_nargs)):
-                key = self.arguments.args[i]
-                value = inputs[key]
-                kwargs.update({key:value})
+                kwargs.update({self.arguments.args[i]: list(inputs.values())[i]})
 
         logger.debug(f"updating funcargs with {kwargs}")
         self.funcargs.update(kwargs)
