@@ -154,6 +154,9 @@ Help output::
      -p PARAMETER, --parameter=PARAMETER
                            Parameter specification (either 'name=value' or a JSON
                            string)
+     -R, --reproducibility
+                           Level of reproducibility. Default 0 (NOTHING). Accepts '-1'-'8'"
+                           Refer to dlg.common.reproducibility.constants for more explanation.
    
 
 Command: dlg include_dir
