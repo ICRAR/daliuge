@@ -1,7 +1,7 @@
 .. _reproducibility_adding_drops:
 
 Creating New Drop Types
------------------------
+=======================
 
 Drops must supply provenance data on demand as part of our scientific reproducibility efforts.
 When implementing entirely new drop types,
