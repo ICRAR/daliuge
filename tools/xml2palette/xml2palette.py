@@ -705,14 +705,22 @@ def process_compounddef_default(compounddef):
             for grandchild in child:
                 if grandchild.tag == "memberdef" and grandchild.get("kind") == "function":
                     member = {"params":[]}
-                    appclass = "Unknown"
+                    funcName = "Unknown"
                     returnType = "Unknown"
+
+                    # some defaults
+                    # cparam format is (name, default_value, type, access, precious, options, positional, description)
+                    member["params"].append({"key": "category", "direction": None, "value": "PythonApp"})
+                    member["params"].append({"key": "cparam/appclass", "direction": None, "value": "Application Class/dlg.apps.pyfunc.PyFuncApp/String/readwrite/False//False/The python class that implements this application"})
+                    member["params"].append({"key": "cparam/execution_time", "direction": None, "value": "Execution Time/5/Integer/readwrite/False//False/Estimate of execution time (in seconds) for this application."})
+                    member["params"].append({"key": "cparam/num_cpus", "direction": None, "value": "No. of CPUs/1/Integer/readwrite/False//False/Number of CPUs used for this application."})
+                    member["params"].append({"key": "cparam/group_start", "direction": None, "value": "Group start/false/Boolean/readwrite/False//False/Is this node the start of a group?"})
 
                     for ggchild in grandchild:
                         if ggchild.tag == "name":
                             member["params"].append({"key": "text", "direction": None, "value": ggchild.text})
                         if ggchild.tag == "detaileddescription":
-                            if len(ggchild) > 0:
+                            if len(ggchild) > 0 and len(ggchild[0]) > 0 and ggchild[0][0].text != None:
 
                                 # get detailed description text
                                 dd = ggchild[0][0].text
@@ -738,7 +746,7 @@ def process_compounddef_default(compounddef):
 
                                 for i in range(0, numParams):
                                     pd = dd.split(":")[(i+1)*2].strip().replace('\n', '')
-                                    setParamDescription(i, pd, member["params"])
+                                    setParamDescription(i+2, pd, member["params"])
 
                                 member["params"].append({"key": "description", "direction": None, "value": description})
                         if ggchild.tag == "param":
@@ -772,6 +780,11 @@ def process_compounddef_default(compounddef):
                                 if defaultValue == "":
                                     defaultValue = "0"
                                 isParam = True
+                            if type == "float":
+                                type = "Float"
+                                if defaultValue == "":
+                                    defaultValue = "0"
+                                isParam = True
                             if type == "string" or type == "*" or type == "**":
                                 type = "String"
                                 isParam = True
@@ -781,21 +794,14 @@ def process_compounddef_default(compounddef):
 
                         if ggchild.tag == "definition":
                             returnType = ggchild.text.strip().split(" ")[0]
-                            appclass = ggchild.text.strip().split(" ")[-1]
+                            funcName = ggchild.text.strip().split(" ")[-1]
+
+                            # aparams
+                            member["params"].append({"key": "aparam/func_name", "direction": None, "value": "Function Name/" + funcName + "/String/readonly/False//True/Python function name"})
+                            member["params"].append({"key": "aparam/pickle", "direction": None, "value": "Pickle/false/Boolean/readwrite/False//True/Whether the python arguments are pickled."})
 
                             if returnType == "def":
                                 returnType = "None"
-
-                            #print("returnType:" + str(returnType) + ", appclass:" + str(appclass))
-
-
-                    # some defaults
-                    # cparam format is (name, default_value, type, access, precious, options, positional, description)
-                    member["params"].append({"key": "category", "direction": None, "value": "PythonApp"})
-                    member["params"].append({"key": "cparam/execution_time", "direction": None, "value": "Execution Time/5/Integer/readwrite/False//False/Estimate of execution time (in seconds) for this application."})
-                    member["params"].append({"key": "cparam/num_cpus", "direction": None, "value": "Num CPUs/1/Integer/readwrite/False//False/Number of CPUs used for this application."})
-                    member["params"].append({"key": "cparam/group_start", "direction": None, "value": "Group start/false/Boolean/readwrite/false//False/Is this node the start of a group?"})
-                    member["params"].append({"key": "cparam/appclass", "direction": None, "value": "Appclass/" + appclass + "/String/readwrite/False//False/The python class that implements this application"})
 
                     result.append(member)
 
