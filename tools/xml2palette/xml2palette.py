@@ -802,20 +802,20 @@ def process_compounddef_default(compounddef):
                                 try:
                                     val = int(defaultValue)
                                     type = "Integer"
-                                    print("Use Integer")
+                                    #print("Use Integer")
                                 except:
                                     try:
                                         val = float(defaultValue)
                                         type = "Float"
-                                        print("Use Float")
+                                        #print("Use Float")
                                     except:
                                         if defaultValue.lower() == "true" or defaultValue.lower() == "false" or defaultValue.lower() == "t" or defaultValue.lower() == "f":
                                             type = "Boolean"
                                             defaultValue = defaultValue.lower()
-                                            print("Use Boolean")
+                                            #print("Use Boolean")
                                         else:
                                             type = "String"
-                                            print("Use String")
+                                            #print("Use String")
 
 
                             # add the param
