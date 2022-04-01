@@ -32,4 +32,5 @@ We refer a motivated reader to the
 
  rmodes
  blockdags
+ helloWorldExample
  adding_drops
