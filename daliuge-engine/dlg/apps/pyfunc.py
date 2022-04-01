@@ -129,7 +129,7 @@ def import_using_code(code):
 #     \~English Python function name
 # @param[in] aparam/func_code Function Code//String/readwrite/False//False/
 #     \~English Python function code, e.g. 'def function_name(args): return args'
-# @param[in] aparam/pickle Pickle//Boolean/readwrite/False//False/
+# @param[in] aparam/pickle Pickle/false/Boolean/readwrite/False//False/
 #     \~English Whether the python arguments are pickled.
 # @param[in] aparam/func_defaults Function Defaults//String/readwrite/False//False/
 #     \~English Mapping from argname to default value. Should match only the last part of the argnames list.
