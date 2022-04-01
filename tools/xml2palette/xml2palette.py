@@ -705,6 +705,7 @@ def process_compounddef_default(compounddef):
             for grandchild in child:
                 if grandchild.tag == "memberdef" and grandchild.get("kind") == "function":
                     member = {"params":[]}
+                    funcPath = "Unknown"
                     funcName = "Unknown"
                     returnType = "Unknown"
 
@@ -719,6 +720,7 @@ def process_compounddef_default(compounddef):
                     for ggchild in grandchild:
                         if ggchild.tag == "name":
                             member["params"].append({"key": "text", "direction": None, "value": ggchild.text})
+                            funcName = ggchild.text
                         if ggchild.tag == "detaileddescription":
                             if len(ggchild) > 0 and len(ggchild[0]) > 0 and ggchild[0][0].text != None:
 
@@ -769,41 +771,71 @@ def process_compounddef_default(compounddef):
                                 if gggchild.tag == "defval":
                                     defaultValue = gggchild.text
 
+                            # type recognised?
+                            typeRecognised = False
+
                             # fix some types
                             if type == "bool":
                                 type = "Boolean"
                                 if defaultValue == "":
                                     defaultValue = "False"
-                                isParam = True
+                                typeRecognised = True
                             if type == "int":
                                 type = "Integer"
                                 if defaultValue == "":
                                     defaultValue = "0"
-                                isParam = True
+                                typeRecognised = True
                             if type == "float":
                                 type = "Float"
                                 if defaultValue == "":
                                     defaultValue = "0"
-                                isParam = True
+                                typeRecognised = True
                             if type == "string" or type == "*" or type == "**":
                                 type = "String"
-                                isParam = True
+                                typeRecognised = True
+
+                            # try to guess the type based on the default value
+                            # TODO: try to parse defaultValue as JSON to detect JSON types
+                            if not typeRecognised and defaultValue != "" and defaultValue is not None and defaultValue != "None":
+                                #print("name:" + str(name) + " defaultValue:" + str(defaultValue))
+
+                                try:
+                                    val = int(defaultValue)
+                                    type = "Integer"
+                                    print("Use Integer")
+                                except:
+                                    try:
+                                        val = float(defaultValue)
+                                        type = "Float"
+                                        print("Use Float")
+                                    except:
+                                        if defaultValue.lower() == "true" or defaultValue.lower() == "false" or defaultValue.lower() == "t" or defaultValue.lower() == "f":
+                                            type = "Boolean"
+                                            defaultValue = defaultValue.lower()
+                                            print("Use Boolean")
+                                        else:
+                                            type = "String"
+                                            print("Use String")
+
 
                             # add the param
                             member["params"].append({"key":"aparam/"+str(name), "direction":"in", "value":str(name) + "/" + str(defaultValue) + "/" + str(type) + "/readwrite/False//False/"})
 
                         if ggchild.tag == "definition":
                             returnType = ggchild.text.strip().split(" ")[0]
-                            funcName = ggchild.text.strip().split(" ")[-1]
+                            funcPath = ggchild.text.strip().split(" ")[-1]
 
                             # aparams
-                            member["params"].append({"key": "aparam/func_name", "direction": None, "value": "Function Name/" + funcName + "/String/readonly/False//True/Python function name"})
+                            member["params"].append({"key": "aparam/func_name", "direction": None, "value": "Function Name/" + funcPath + "/String/readonly/False//True/Python function name"})
                             member["params"].append({"key": "aparam/pickle", "direction": None, "value": "Pickle/false/Boolean/readwrite/False//True/Whether the python arguments are pickled."})
 
                             if returnType == "def":
                                 returnType = "None"
 
-                    result.append(member)
+                    # check whether this function should be added to the palette
+                    #print("funcName:" + str(funcName))
+                    if funcName[0] != "_":
+                        result.append(member)
 
     return result
 
