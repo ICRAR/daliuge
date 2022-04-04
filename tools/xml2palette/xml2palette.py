@@ -42,8 +42,9 @@ def get_options_from_command_line(argv):
     tag = ""
     outputfile = ""
     allow_missing_eagle_start = False
+    module_path = ""
     try:
-        opts, args = getopt.getopt(argv, "hi:t:o:s", ["idir=", "tag=", "ofile="])
+        opts, args = getopt.getopt(argv, "hi:t:o:sm:", ["idir=", "tag=", "ofile="])
     except getopt.GetoptError:
         print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
         sys.exit(2)
@@ -64,7 +65,9 @@ def get_options_from_command_line(argv):
             outputfile = arg
         elif opt in ("-s"):
             allow_missing_eagle_start = True
-    return inputdir, tag, outputfile, allow_missing_eagle_start
+        elif opt in ("-m", "--module"):
+            module_path = arg
+    return inputdir, tag, outputfile, allow_missing_eagle_start, module_path
 
 
 def check_environment_variables():
@@ -705,8 +708,8 @@ def process_compounddef_default(compounddef):
             for grandchild in child:
                 if grandchild.tag == "memberdef" and grandchild.get("kind") == "function":
                     member = {"params":[]}
-                    funcPath = "Unknown"
-                    funcName = "Unknown"
+                    func_path = "Unknown"
+                    func_name = "Unknown"
                     returnType = "Unknown"
 
                     # some defaults
@@ -720,7 +723,7 @@ def process_compounddef_default(compounddef):
                     for ggchild in grandchild:
                         if ggchild.tag == "name":
                             member["params"].append({"key": "text", "direction": None, "value": ggchild.text})
-                            funcName = ggchild.text
+                            func_name = ggchild.text
                         if ggchild.tag == "detaileddescription":
                             if len(ggchild) > 0 and len(ggchild[0]) > 0 and ggchild[0][0].text != None:
 
@@ -740,15 +743,12 @@ def process_compounddef_default(compounddef):
                                 # get first part of description, up until when the param are mentioned
                                 description = dd[:dd.find(":param")].strip()
 
-                                # look through the rest of the description to get description of params
-                                numParams = math.floor((len(dd.split(":")) - 3) / 2)
+                                # find the list of param names and descriptions in the <detaileddescription> tag
+                                params = parse_params(dd)
 
-                                if not hasReturn:
-                                    numParams = math.floor((len(dd.split(":")) - 1) / 2)
-
-                                for i in range(0, numParams):
-                                    pd = dd.split(":")[(i+1)*2].strip().replace('\n', '')
-                                    setParamDescription(i+2, pd, member["params"])
+                                # use the params above
+                                for p in params:
+                                    set_param_description(p[0], p[1], member["params"])
 
                                 member["params"].append({"key": "description", "direction": None, "value": description})
                         if ggchild.tag == "param":
@@ -809,7 +809,7 @@ def process_compounddef_default(compounddef):
                                         type = "Float"
                                         #print("Use Float")
                                     except:
-                                        if defaultValue.lower() == "true" or defaultValue.lower() == "false" or defaultValue.lower() == "t" or defaultValue.lower() == "f":
+                                        if defaultValue.lower() == "true" or defaultValue.lower() == "false":
                                             type = "Boolean"
                                             defaultValue = defaultValue.lower()
                                             #print("Use Boolean")
@@ -823,32 +823,60 @@ def process_compounddef_default(compounddef):
 
                         if ggchild.tag == "definition":
                             returnType = ggchild.text.strip().split(" ")[0]
-                            funcPath = ggchild.text.strip().split(" ")[-1]
+                            func_path = ggchild.text.strip().split(" ")[-1]
 
                             # aparams
-                            member["params"].append({"key": "aparam/func_name", "direction": None, "value": "Function Name/" + funcPath + "/String/readonly/False//True/Python function name"})
+                            member["params"].append({"key": "aparam/func_name", "direction": None, "value": "Function Name/" + func_path + "/String/readonly/False//True/Python function name"})
                             member["params"].append({"key": "aparam/pickle", "direction": None, "value": "Pickle/false/Boolean/readwrite/False//True/Whether the python arguments are pickled."})
 
                             if returnType == "def":
                                 returnType = "None"
 
-                    # check whether this function should be added to the palette
-                    #print("funcName:" + str(funcName))
-                    if funcName[0] != "_":
-                        result.append(member)
+                    # skip function if it begins with an underscore
+                    if func_name[0] == "_":
+                        continue
+
+                    # skip component if a module_path was specified, and this component is not within it
+                    if module_path != "" and not module_path in func_path:
+                        logging.info("Skip " + func_path + ". Doesn't match module path: " + module_path)
+                        continue
+
+                    result.append(member)
 
     return result
 
 
-def setParamDescription(index, description, params):
-    # find the index'th aparam in params, and update the description
-    count = 0
+# find the list of param names and descriptions in the <detaileddescription> tag
+def parse_params(detailed_description):
+    result = []
+
+    lines = detailed_description.split("\n")
+    param_lines = [line.strip() for line in lines if ":param" in line]
+
+    for p_line in param_lines:
+        #print("p_line:" + p_line)
+
+        try:
+            index_of_second_colon = p_line.index(':', 1)
+        except:
+            # didnt find second colon, skip
+            continue
+
+        param_name = p_line[7:index_of_second_colon]
+        param_description = p_line[index_of_second_colon+2:]
+
+        result.append((param_name, param_description))
+
+    return result
+
+
+# find the named aparam in params, and update the description
+def set_param_description(name, description, params):
+    #print("set_param_description():" + str(name) + ":" + str(description))
     for p in params:
-        if "aparam/" in p["key"]:
-            if count == index:
-                p["value"] = p["value"] + description
-                break
-            count = count + 1
+        if p["key"] == "aparam/"+name:
+            p["value"] = p["value"] + description
+            break
 
 
 def create_construct_node(type, node):
@@ -925,10 +953,17 @@ def params_to_nodes(params):
 
     return result
 
+
 if __name__ == "__main__":
+
     logging.basicConfig(format="%(asctime)s - %(message)s", datefmt="%d-%b-%y %H:%M:%S", level = logging.INFO)
 
-    (inputdir, tag, outputfile, allow_missing_eagle_start) = get_options_from_command_line(sys.argv[1:])
+    (inputdir, tag, outputfile, allow_missing_eagle_start, module_path) = get_options_from_command_line(sys.argv[1:])
+    logging.info("Input Directory:" + inputdir)
+    logging.info("Tag:" + tag)
+    logging.info("Output File:" + outputfile)
+    logging.info("Allow missing EAGLE_START:" + str(allow_missing_eagle_start))
+    logging.info("Module Path:" + module_path)
 
     # create a temp directory for the output of doxygen
     output_directory = tempfile.TemporaryDirectory()
