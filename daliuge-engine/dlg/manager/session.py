@@ -40,6 +40,7 @@ from .. import droputils
 from .. import graph_loader
 from .. import rpc
 from .. import utils
+from ..common.reproducibility.constants import ReproducibilityFlags, ALL_RMODES
 from ..ddap_protocol import DROPLinkType, DROPRel, DROPStates
 from ..drop import (
     AbstractDROP,
@@ -227,8 +228,8 @@ class Session(object):
         the_dir = os.path.abspath(os.path.normpath(os.path.join(*parts)))
         createDirIfMissing(the_dir)
         the_path = os.path.join(the_dir, "reprodata.out")
-        with open(the_path, "w+") as file:
-            json.dump(self._graphreprodata, open(the_path, "w+"), indent=4)
+        with open(the_path, "w+", encoding='utf-8') as file:
+            json.dump(self._graphreprodata, file, indent=4)
 
     @track_current_session
     def addGraphSpec(self, graphSpec):
@@ -264,7 +265,6 @@ class Session(object):
 
         # This will check the consistency of each dropSpec
         graphSpecDict, self._graphreprodata = graph_loader.loadDropSpecs(graphSpec)
-
         # Check for duplicates
         duplicates = set(graphSpecDict) & set(self._graph)
         if duplicates:
@@ -322,7 +322,7 @@ class Session(object):
         # in reality this particular session is managing nothing
         status = self.status
         if (self._graph and status != SessionStates.BUILDING) or (
-            not self._graph and status != SessionStates.PRISTINE
+                not self._graph and status != SessionStates.PRISTINE
         ):
             raise InvalidSessionState(
                 "Can't deploy this session in its current status: %d" % (status)
@@ -492,7 +492,7 @@ class Session(object):
 
                 # We are in the event receiver side
                 if (rel.rel in evt_consumer and rel.lhs is local_uid) or (
-                    rel.rel in evt_producer and rel.rhs is local_uid
+                        rel.rel in evt_producer and rel.rhs is local_uid
                 ):
                     dropsubs[remote_uid].add(local_uid)
 
@@ -514,10 +514,20 @@ class Session(object):
         if oid in self._graph:
             if self._graph[oid].get("reprodata") is None:
                 return
-            self._graph[oid]["reprodata"]["rg_data"] = reprodata.get("data", {})
-            self._graph[oid]["reprodata"]["rg_data"]["merkleroot"] = reprodata.get(
-                "merkleroot", b""
-            )
+            if self._graph[oid]['reprodata']['rmode'] == str(ReproducibilityFlags.ALL.value):
+                drop_reprodata = reprodata.get("data", {})
+                drop_hashes = reprodata.get('merkleroot', {})
+                for rmode in ALL_RMODES:
+                    self._graph[oid]['reprodata'][rmode.name]['rg_data'] = drop_reprodata[
+                        rmode.name]
+                    self._graph[oid]['reprodata'][rmode.name]['rg_data']['merkleroot'] = \
+                    drop_hashes.get(rmode.name, b"")
+
+            else:
+                self._graph[oid]["reprodata"]["rg_data"] = reprodata.get("data", {})
+                self._graph[oid]["reprodata"]["rg_data"]["merkleroot"] = reprodata.get(
+                    "merkleroot", b""
+                )
 
     @track_current_session
     def finish(self):
@@ -543,9 +553,9 @@ class Session(object):
 
     def getGraphStatus(self):
         if self.status not in (
-            SessionStates.RUNNING,
-            SessionStates.FINISHED,
-            SessionStates.CANCELLED,
+                SessionStates.RUNNING,
+                SessionStates.FINISHED,
+                SessionStates.CANCELLED,
         ):
             raise InvalidSessionState(
                 "The session is currently not running, cannot get graph status"
@@ -580,9 +590,9 @@ class Session(object):
                 dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
             ]
             if drop.status not in (
-                DROPStates.ERROR,
-                DROPStates.COMPLETED,
-                DROPStates.CANCELLED,
+                    DROPStates.ERROR,
+                    DROPStates.COMPLETED,
+                    DROPStates.CANCELLED,
             ):
                 drop.cancel()
         self.status = SessionStates.CANCELLED
