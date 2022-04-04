@@ -31,6 +31,7 @@ from .client import NodeManagerClient
 from .constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from .drop_manager import DROPManager
 from .. import graph_loader
+from ..common.reproducibility.reproducibility import init_pg_repro_data
 from ..ddap_protocol import DROPRel
 from ..exceptions import InvalidGraphException, DaliugeException, SubManagerException
 from ..utils import portIsOpen
@@ -338,7 +339,8 @@ class CompositeManager(DROPManager):
         logger.info(f"Separating graph using partition attribute {self._partitionAttr}")
         perPartition = collections.defaultdict(list)
         try:
-            if graphSpec[-1]["merkleroot"] is not None:
+            if graphSpec[-1]["rmode"] is not None:
+                init_pg_repro_data(graphSpec)
                 self._graph["reprodata"] = graphSpec.pop()
                 logger.debug(
                     "Composite manager found reprodata in dropspecList, rmode=%s",
@@ -397,6 +399,9 @@ class CompositeManager(DROPManager):
         # Create the individual graphs on each DM now that they are correctly
         # separated.
         logger.info("Adding individual graphSpec of session %s to each DM", sessionId)
+        for partition in perPartition:
+            if self._graph.get("reprodata") is not None:
+                perPartition[partition].append(self._graph["reprodata"])
         self.replicate(
             sessionId,
             self._addGraphSpec,
