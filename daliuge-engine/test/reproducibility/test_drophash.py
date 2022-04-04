@@ -102,6 +102,7 @@ class AbstractDROPHashTests(unittest.TestCase):
         drop_a.setCompleted()
         self.assertIsNone(drop_a.merkleroot)
         drop_a.reproducibility_level = ReproducibilityFlags.RERUN
+        drop_a.commit()
         self.assertIsNotNone(drop_a.merkleroot)
 
         self.assertIsNone(drop_b.merkleroot)
@@ -129,6 +130,8 @@ class AbstractDROPHashTests(unittest.TestCase):
         drop_a = AbstractDROP("a", "a")
         self.assertIsNone(drop_a.merkleroot)
         drop_a.reproducibility_level = ReproducibilityFlags.ALL
+        drop_a.commit()
         self.assertTrue(isinstance(drop_a.merkleroot, dict))
         drop_a.reproducibility_level = ReproducibilityFlags.RERUN
+        drop_a.commit()
         self.assertTrue(isinstance(drop_a.merkleroot, str))
