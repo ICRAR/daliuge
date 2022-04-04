@@ -1028,16 +1028,20 @@ class TestDROPReproducibility(unittest.TestCase):
         self.assertEqual(a.merkleroot, b.merkleroot)
 
         a.reproducibility_level = ReproducibilityFlags.REPEAT
+        a.commit()
         self.assertEqual(a.merkleroot, b.merkleroot)
 
         a.reproducibility_level = ReproducibilityFlags.RECOMPUTE
+        a.commit()
         self.assertEqual(a.merkleroot, b.merkleroot)
 
         a.reproducibility_level = ReproducibilityFlags.REPRODUCE
+        a.commit()
         self.assertNotEqual(a.merkleroot, b.merkleroot)
         self.assertEqual(a.generate_merkle_data(), {"data_hash": data_hash})
 
         a.reproducibility_level = ReproducibilityFlags.REPLICATE_SCI
+        a.commit()
         self.assertNotEqual(a.merkleroot, b.merkleroot)
         self.assertEqual(
             a.generate_merkle_data(),
@@ -1045,6 +1049,7 @@ class TestDROPReproducibility(unittest.TestCase):
         )
 
         a.reproducibility_level = ReproducibilityFlags.REPLICATE_COMP
+        a.commit()
         self.assertNotEqual(a.merkleroot, b.merkleroot)
         self.assertEqual(
             a.generate_merkle_data(),
@@ -1052,6 +1057,7 @@ class TestDROPReproducibility(unittest.TestCase):
         )
 
         a.reproducibility_level = ReproducibilityFlags.REPLICATE_TOTAL
+        a.commit()
         self.assertNotEqual(a.merkleroot, b.merkleroot)
         self.assertEqual(
             a.generate_merkle_data(),
@@ -1073,16 +1079,20 @@ class TestDROPReproducibility(unittest.TestCase):
         self.assertEqual(a.merkleroot, b.merkleroot)
 
         a.reproducibility_level = ReproducibilityFlags.REPEAT
+        a.commit()
         self.assertEqual(a.merkleroot, b.merkleroot)
 
         a.reproducibility_level = ReproducibilityFlags.RECOMPUTE
+        a.commit()
         self.assertEqual(a.merkleroot, b.merkleroot)
 
         a.reproducibility_level = ReproducibilityFlags.REPRODUCE
+        a.commit()
         self.assertNotEqual(a.merkleroot, b.merkleroot)
         self.assertEqual(a.generate_merkle_data(), {"data_hash": data_hash})
 
         a.reproducibility_level = ReproducibilityFlags.REPLICATE_SCI
+        a.commit()
         self.assertNotEqual(a.merkleroot, b.merkleroot)
         self.assertEqual(
             a.generate_merkle_data(),
@@ -1090,6 +1100,7 @@ class TestDROPReproducibility(unittest.TestCase):
         )
 
         a.reproducibility_level = ReproducibilityFlags.REPLICATE_COMP
+        a.commit()
         self.assertNotEqual(a.merkleroot, b.merkleroot)
         self.assertEqual(
             a.generate_merkle_data(),
@@ -1097,6 +1108,7 @@ class TestDROPReproducibility(unittest.TestCase):
         )
 
         a.reproducibility_level = ReproducibilityFlags.REPLICATE_TOTAL
+        a.commit()
         self.assertNotEqual(a.merkleroot, b.merkleroot)
         self.assertEqual(
             a.generate_merkle_data(),
@@ -1133,16 +1145,20 @@ class TestDROPReproducibility(unittest.TestCase):
             self.assertEqual(a.merkleroot, b.merkleroot)
 
             a.reproducibility_level = ReproducibilityFlags.REPEAT
+            a.commit()
             self.assertEqual(a.merkleroot, b.merkleroot)
 
             a.reproducibility_level = ReproducibilityFlags.RECOMPUTE
+            a.commit()
             self.assertEqual(a.merkleroot, b.merkleroot)
 
             a.reproducibility_level = ReproducibilityFlags.REPRODUCE
+            a.commit()
             self.assertEqual(a.generate_merkle_data(), {"query_log": a._querylog})
             self.assertNotEqual(a.merkleroot, b.merkleroot)
 
             a.reproducibility_level = ReproducibilityFlags.REPLICATE_SCI
+            a.commit()
             self.assertNotEqual(a.merkleroot, b.merkleroot)
             self.assertEqual(
                 a.generate_merkle_data(),
@@ -1150,6 +1166,7 @@ class TestDROPReproducibility(unittest.TestCase):
             )
 
             a.reproducibility_level = ReproducibilityFlags.REPLICATE_COMP
+            a.commit()
             self.assertNotEqual(a.merkleroot, b.merkleroot)
             self.assertEqual(
                 a.generate_merkle_data(),
@@ -1157,6 +1174,7 @@ class TestDROPReproducibility(unittest.TestCase):
             )
 
             a.reproducibility_level = ReproducibilityFlags.REPLICATE_TOTAL
+            a.commit()
             self.assertNotEqual(a.merkleroot, b.merkleroot)
             self.assertEqual(
                 a.generate_merkle_data(),
