@@ -349,7 +349,7 @@ def accumulate_meta_data():
     """
     WARNING: Relies on naming convention in hashlib.
     """
-    data = {"repro_protocol": PROTOCOL_VERSION, "HashingAlg": str(HashingAlg)[8:-2]}
+    data = {"repro_protocol": PROTOCOL_VERSION, "HashingAlg": str(HashingAlg)}
     return data
 
 
