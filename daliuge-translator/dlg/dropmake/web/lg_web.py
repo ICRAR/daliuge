@@ -358,6 +358,7 @@ def gen_pg():
         )
 
     pgtpj = pgtp._gojs_json_obj
+    reprodata = pgtp.reprodata
     logger.info("PGTP: %s" % pgtpj)
     num_partitions = 0
     num_partitions = len(list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"])))
@@ -400,6 +401,7 @@ def gen_pg():
             return "Must specify DALiUGE manager host or tpl_nodes_len"
 
         pg_spec = pgtp.to_pg_spec([], ret_str=False, tpl_nodes_len=nnodes)
+        pg_spec.append(reprodata)
         response.content_type = "application/json"
         response.set_header(
             "Content-Disposition", 'attachment; filename="%s"' % (pgt_id)
@@ -421,9 +423,10 @@ def gen_pg():
             )
             mgr_client.create_session(ssid)
             # print "session created"
+            completed_uids = common.get_roots(pg_spec)
+            pg_spec.append(reprodata)
             mgr_client.append_graph(ssid, pg_spec)
             # print "graph appended"
-            completed_uids = common.get_roots(pg_spec)
             mgr_client.deploy_session(ssid, completed_uids=completed_uids)
             # mgr_client.deploy_session(ssid, completed_uids=[])
             # print "session deployed"
