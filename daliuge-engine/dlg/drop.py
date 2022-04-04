@@ -527,14 +527,12 @@ class AbstractDROP(EventFirer):
                 self._merkleRoot = {rmode.name: None for rmode in ALL_RMODES}
                 self._merkleTree = {rmode.name: None for rmode in ALL_RMODES}
                 self._merkleData = {rmode.name: [] for rmode in ALL_RMODES}
-                self.commit()
             elif self._committed:
                 # Current behaviour, set to un-committed again after change
                 self._committed = False
                 self._merkleRoot = None
                 self._merkleTree = None
                 self._merkleData = []
-                self.commit()
         else:
             raise NotImplementedError("new_flag %d is not supported", new_flag.value)
 
