@@ -211,7 +211,7 @@ def loadDropSpecs(dropSpecList):
     reprodata = None
     if dropSpecList is None:
         raise InvalidGraphException("DropSpec is empty %r" % dropSpecList)
-    if dropSpecList[-1].get("merkleroot"):
+    if dropSpecList[-1].get("rmode"):
         reprodata = dropSpecList.pop()
         logger.debug("Found reprodata in dropSpecList, rmode=%s", reprodata["rmode"])
     for n, dropSpec in enumerate(dropSpecList):
