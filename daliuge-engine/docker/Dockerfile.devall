@@ -29,7 +29,10 @@ RUN apt install -y git python3-dev
 #RUN pip install 'git+https://github.com/ICRAR/dlg-casacore-components.git'
 
 RUN pip install --extra-index-url=https://artefact.skao.int/repository/pypi-internal/simple 'ska-sdp-cbf-emulator[plasma]>=1.6.11'
+
+RUN pip install git+https://gitlab.com/ska-telescope/sdp/ska-gridder-nifty-cuda.git@yan-937-threadsafe
 RUN pip install dlg-nifty-components
+
 RUN pip install dlg-casacore-components
 
 CMD ["dlg", "daemon", "-vv"]
