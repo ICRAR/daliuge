@@ -14,7 +14,6 @@ case "$1" in
         echo "Build finished!"
         exit 0 ;;
     "dev")
-        C_TAG="master"
         [[ ! -z "$2" ]] && C_TAG=$2
         export VERSION=`git describe --tags --abbrev=0|sed s/v//`
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
@@ -24,7 +23,7 @@ case "$1" in
         cp ../LICENSE dlg/dropmake/web/.
         # The complete casa and arrow installation is only required for the Plasma streaming
         # and should not go much further.
-        docker build --build-arg VCS_TAG=${C_TAG} --no-cache -t icrar/daliuge-translator:${VCS_TAG} -f docker/Dockerfile.dev .
+        docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-translator:${VCS_TAG} -f docker/Dockerfile.dev .
         echo "Build finished!"
         exit 0;;
     "casa")
