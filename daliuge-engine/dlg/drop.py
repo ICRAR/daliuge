@@ -2357,7 +2357,7 @@ class BarrierAppDROP(InputFiredAppDROP):
     def initialize(self, **kwargs):
         # Blindly override existing value if any
         kwargs["n_effective_inputs"] = -1
-        super(BarrierAppDROP, self).initialize(**kwargs)
+        super().initialize(**kwargs)
 
 ##
 # @brief Branch
