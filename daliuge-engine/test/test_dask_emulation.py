@@ -267,4 +267,5 @@ class TestDaskDelayed(_TestDelayed, unittest.TestCase):
         return dask_delayed(f, *args, **kwargs)
 
     def compute(self, val):
+        logger.info(f"Running compute...")
         return dask_compute(val)[0]

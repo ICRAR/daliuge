@@ -65,13 +65,17 @@ def serialize_func(f):
 
     fser = dill.dumps(f)
     fdefaults = {"args":[], "kwargs": {}}
+    adefaults = {"args":[], "kwargs": {}}
     a = inspect.getfullargspec(f)
     if a.defaults:
         fdefaults["kwargs"] = dict(
             zip(a.args[-len(a.defaults):], [serialize_data(d) for d in a.defaults])
         )
+        adefaults["kwargs"] = dict(
+            zip(a.args[-len(a.defaults):], [d for d in a.defaults])
+        )
     logger.debug(f"Introspection of function {f}: {a}")
-    logger.debug("Defaults for function %r: %r", f, fdefaults)
+    logger.debug("Defaults for function %r: %r", f, adefaults)
     return fser, fdefaults
 
 
@@ -397,49 +401,50 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(f"updating funcargs with {kwargs}")
         self.funcargs.update(kwargs)
 
-        # Try to get values for still missing positional arguments from parameters
-        kwargs = {}
-        posargs = self.arguments.args[:self.fn_npos]
-        for pa in posargs:
-            if pa not in self.funcargs:
-                if pa in self.parameters["applicationArgs"]:
-                    value = self.parameters["applicationArgs"][pa]['value']
-                    ptype = self.parameters["applicationArgs"][pa]['type']
-                    if ptype in ["Complex", "Json"]:
-                        try:
-                            value = ast.literal_eval(value)
-                        except:
-                            pass
-                    kwargs.update({
-                        pa:
-                        value
-                    })
-                else:
-                    logger.warning(f"Required positional argument '{pa}' not found!")
-        logger.debug(f"updating funcargs with {kwargs}")
-        self.funcargs.update(kwargs)
+        # Try to get values for still missing positional arguments from Application Args
+        if "applicationArgs" in self.parameters:
+            kwargs = {}
+            posargs = self.arguments.args[:self.fn_npos]
+            for pa in posargs:
+                if pa not in self.funcargs:
+                    if pa in self.parameters["applicationArgs"]:
+                        value = self.parameters["applicationArgs"][pa]['value']
+                        ptype = self.parameters["applicationArgs"][pa]['type']
+                        if ptype in ["Complex", "Json"]:
+                            try:
+                                value = ast.literal_eval(value)
+                            except:
+                                pass
+                        kwargs.update({
+                            pa:
+                            value
+                        })
+                    else:
+                        logger.warning(f"Required positional argument '{pa}' not found!")
+            logger.debug(f"updating funcargs with {kwargs}")
+            self.funcargs.update(kwargs)
 
-        # Try to get values for still missing kwargs arguments from parameters
-        kwargs = {}
-        kws = self.arguments.args[self.fn_npos:]
-        for ka in kws:
-            if ka not in self.funcargs:
-                if ka in self.parameters["applicationArgs"]:
-                    value = self.parameters["applicationArgs"][ka]['value']
-                    ptype = self.parameters["applicationArgs"][ka]['type']
-                    if ptype in ["Complex", "Json"]:
-                        try:
-                            value = ast.literal_eval(value)
-                        except:
-                            pass
-                    kwargs.update({
-                        ka:
-                        value
-                    })
-                else:
-                    logger.warning(f"Keyword argument '{ka}' not found!")
-        logger.debug(f"updating funcargs with {kwargs}")
-        self.funcargs.update(kwargs)
+            # Try to get values for still missing kwargs arguments from parameters
+            kwargs = {}
+            kws = self.arguments.args[self.fn_npos:]
+            for ka in kws:
+                if ka not in self.funcargs:
+                    if ka in self.parameters["applicationArgs"]:
+                        value = self.parameters["applicationArgs"][ka]['value']
+                        ptype = self.parameters["applicationArgs"][ka]['type']
+                        if ptype in ["Complex", "Json"]:
+                            try:
+                                value = ast.literal_eval(value)
+                            except:
+                                pass
+                        kwargs.update({
+                            ka:
+                            value
+                        })
+                    else:
+                        logger.warning(f"Keyword argument '{ka}' not found!")
+            logger.debug(f"updating funcargs with {kwargs}")
+            self.funcargs.update(kwargs)
 
         # Fill rest with default arguments if there are any more
         kwargs = {}
