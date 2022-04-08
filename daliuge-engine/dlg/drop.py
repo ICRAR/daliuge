@@ -1265,7 +1265,7 @@ class FileDROP(DataDROP, PathBasedDrop):
     name, placed within the currently working directory of the Node Manager
     hosting that session). If ``dirname`` is absolute, it is used as-is.
 
-    In some cases drops are created **outside** the context of a session, most
+    In some cases drops are created outside the context of a session, most
     notably during unit tests. In these cases the base directory is a fixed
     location under ``/tmp``.
 
@@ -1277,9 +1277,9 @@ class FileDROP(DataDROP, PathBasedDrop):
     ------------ ------------------------------------------------------
     dirname      empty                 relative              absolute
     ============ ===================== ===================== ==========
-    **empty**    /``$B``/``$u``        /``$B``/``$f``        /``$f``
-    **relative** /``$B``/``$d``/``$u`` /``$B``/``$d``/``$f`` **ERROR**
-    **absolute** /``$d``/``$u``        /``$d``/``$f``        **ERROR**
+    empty    /``$B``/``$u``        /``$B``/``$f``        /``$f``
+    relative /``$B``/``$d``/``$u`` /``$B``/``$d``/``$f`` ERROR
+    absolute /``$d``/``$u``        /``$d``/``$f``        ERROR
     ============ ===================== ===================== ==========
 
     In the table, ``$f`` is the value of ``filepath``, ``$d`` is the value of
@@ -1616,7 +1616,17 @@ class SharedMemoryDROP(DataDROP):
         hostname = os.uname()[1]
         return f"shmem://{hostname}/{os.getpid()}/{id(self._buf)}"
 
-
+##
+# @brief NULL
+# @details A Drop not storing any data (useful for just passing on events)
+# @par EAGLE_START
+# @param category NULL
+# @param tag template
+# @param[in] cparam/data_volume Data volume/0/Float/readonly/False//False/
+#     \~English This never stores any data
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
+#     \~English Is this node the end of a group?
+# @par EAGLE_END
 class NullDROP(DataDROP):
     """
     A DROP that doesn't store any data.
@@ -1635,7 +1645,27 @@ class EndDROP(NullDROP):
     A DROP that ends the session when reached
     """
 
-
+##
+# @brief RDBMS
+# @details A Drop allowing storage and retrieval from a SQL DB.
+# @par EAGLE_START
+# @param category RDBMS
+# @param tag template
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
+#     \~English Estimated size of the data contained in this node
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
+#     \~English Is this node the end of a group?
+# @param[in] cparam/dbmodule Python DB module//String/readwrite/False//False/
+#     \~English Load path for python DB module
+# @param[in] cparam/dbtable DB table name//String/readwrite/False//False/
+#     \~English The name of the table to use
+# @param[in] aparam/vals Values dictionary//Json/readwrite/False//False/
+#     \~English Json encoded values dictionary used for INSERT. The keys of ``vals`` are used as the column names.
+# @param[in] aparam/condition Whats used after WHERE//String/readwrite/False//False/
+#     \~English Condition for SELECT. For this the WHERE statement must be written using the "{X}" or "{}" placeholders
+# @param[in] aparam/selectVals values for WHERE//Json/readwrite/False//False/
+#     \~English Values for the WHERE statement
+# @par EAGLE_END
 class RDBMSDrop(DataDROP):
     """
     A Drop that stores data in a table of a relational database
