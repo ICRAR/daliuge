@@ -1265,7 +1265,7 @@ class FileDROP(DataDROP, PathBasedDrop):
     name, placed within the currently working directory of the Node Manager
     hosting that session). If ``dirname`` is absolute, it is used as-is.
 
-    In some cases drops are created outside the context of a session, most
+    In some cases drops are created **outside** the context of a session, most
     notably during unit tests. In these cases the base directory is a fixed
     location under ``/tmp``.
 
@@ -1277,9 +1277,9 @@ class FileDROP(DataDROP, PathBasedDrop):
     ------------ ------------------------------------------------------
     dirname      empty                 relative              absolute
     ============ ===================== ===================== ==========
-    empty    /``$B``/``$u``        /``$B``/``$f``        /``$f``
-    relative /``$B``/``$d``/``$u`` /``$B``/``$d``/``$f`` ERROR
-    absolute /``$d``/``$u``        /``$d``/``$f``        ERROR
+    **empty**    /``$B``/``$u``        /``$B``/``$f``        /``$f``
+    **relative** /``$B``/``$d``/``$u`` /``$B``/``$d``/``$f`` **ERROR**
+    **absolute** /``$d``/``$u``        /``$d``/``$f``        **ERROR**
     ============ ===================== ===================== ==========
 
     In the table, ``$f`` is the value of ``filepath``, ``$d`` is the value of
@@ -1620,7 +1620,7 @@ class SharedMemoryDROP(DataDROP):
 # @brief NULL
 # @details A Drop not storing any data (useful for just passing on events)
 # @par EAGLE_START
-# @param category NULL
+# @param category Memory
 # @param tag template
 # @param[in] cparam/data_volume Data volume/0/Float/readonly/False//False/
 #     \~English This never stores any data
@@ -1649,7 +1649,7 @@ class EndDROP(NullDROP):
 # @brief RDBMS
 # @details A Drop allowing storage and retrieval from a SQL DB.
 # @par EAGLE_START
-# @param category RDBMS
+# @param category File
 # @param tag template
 # @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
