@@ -57,9 +57,9 @@ from .ddap_protocol import (
     DROPStates,
     DROPRel,
 )
-from .event import EventFirer
-from .exceptions import InvalidDropException, InvalidRelationshipException
-from .io import (
+from dlg.event import EventFirer
+from dlg.exceptions import InvalidDropException, InvalidRelationshipException
+from dlg.io import (
     DataIO,
     OpenMode,
     FileIO,
@@ -76,10 +76,10 @@ DEFAULT_INTERNAL_PARAMETERS = {'storage', 'rank', 'loop_cxt', 'dw', 'iid', 'dt',
                                'config_data', 'mode'}
 
 if sys.version_info >= (3, 8):
-    from .io import SharedMemoryIO
-from .utils import prepare_sql, createDirIfMissing, isabs, object_tracking, getDlgVariable
+    from dlg.io import SharedMemoryIO
+from dlg.utils import prepare_sql, createDirIfMissing, isabs, object_tracking, getDlgVariable
 from dlg.process import DlgProcess
-from .meta import (
+from dlg.meta import (
     dlg_float_param,
     dlg_int_param,
     dlg_list_param,
@@ -2327,7 +2327,7 @@ class BarrierAppDROP(InputFiredAppDROP):
     def initialize(self, **kwargs):
         # Blindly override existing value if any
         kwargs["n_effective_inputs"] = -1
-        super(BarrierAppDROP, self).initialize(**kwargs)
+        super().initialize(**kwargs)
 
 ##
 # @brief Branch

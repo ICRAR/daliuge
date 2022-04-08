@@ -19,7 +19,7 @@ case "$1" in
     "devcuda")
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
         echo "Building daliuge-common development version using tag ${VCS_TAG}"
-        docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-common:${VCS_TAG} -f docker/Dockerfile.cuda .
+        docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-common:${VCS_TAG} -f docker/Dockerfile.devcuda .
         echo "Build finished!"
         exit 0;;
     "casa")
