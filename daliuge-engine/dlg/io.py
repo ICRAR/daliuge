@@ -22,18 +22,18 @@
 from abc import abstractmethod, ABCMeta
 from enum import IntEnum
 from http.client import HTTPConnection
-from multiprocessing.sharedctypes import Value
 from overrides import overrides
+import asyncio
 import io
 import logging
 import os
 import sys
 import urllib.parse
 from abc import abstractmethod, ABCMeta
-from typing import Any, AsyncIterable, AsyncIterator, BinaryIO, Optional, Union
+from typing import Any, AsyncIterable, AsyncIterator, Awaitable, BinaryIO, Optional, Union
 
-from . import ngaslite
-from .apps.plasmaflight import PlasmaFlightClient
+import dlg.ngaslite as ngaslite
+from dlg.apps.plasmaflight import PlasmaFlightClient
 
 import pyarrow
 import pyarrow.plasma as plasma
@@ -50,6 +50,20 @@ class OpenMode(IntEnum):
     """
     OPEN_WRITE = 0
     OPEN_READ = 1
+
+
+class EmptyIterator(AsyncIterator):
+    def __init__(self):
+        pass
+    async def __anext__(self) -> Awaitable:
+        raise StopAsyncIteration
+
+class EmptyAsyncIterable(AsyncIterable):
+    def __init__(self):
+        pass
+
+    def __aiter__(self) -> AsyncIterator:
+        return EmptyIterator()
 
 
 class DataIO(): # io.BufferedIOBase, BinaryIO
@@ -108,8 +122,7 @@ class DataIO(): # io.BufferedIOBase, BinaryIO
             raise ValueError("Reading operation attempted on write-only DataIO object")
         return self._read(count, **kwargs)
 
-
-    # TODO: @abstractmethod
+    @abstractmethod
     async def writeStream(self, stream: AsyncIterable):
         """
         Writes a stream of byte buffers to the drop buffer(s) that
@@ -119,7 +132,7 @@ class DataIO(): # io.BufferedIOBase, BinaryIO
         """
         raise Exception # TODO: NotImplementedError
 
-    # TODO: @abstractmethod
+    @abstractmethod
     async def readStream(self) -> AsyncIterable:
         """
         Returns a asynchronous stream typically processed using
@@ -127,7 +140,9 @@ class DataIO(): # io.BufferedIOBase, BinaryIO
         iterates when data is buffered, or raises StopAsyncIterator
         when the stream is complete.
         """
-        raise StopAsyncIteration
+        # NOTE: yield is required for typing system to detect
+        # asynciterable instead of coroutine.
+        return EmptyAsyncIterable()
 
     def peek(self, size: int, **kwargs):
         """
@@ -225,9 +240,11 @@ class DataIO(): # io.BufferedIOBase, BinaryIO
     def _size(self, **kwargs) -> int:
         pass
 
+
 class AwaitOnce():
     def __await__(self):
         yield
+
 
 class DataIOAsyncIterator(AsyncIterator):
     """
@@ -238,13 +255,14 @@ class DataIOAsyncIterator(AsyncIterator):
         self._io = memory_io
 
     async def __anext__(self):
-        while not self._io.closed and self._io.tell() != self._io.size():
+        #while not self._io.closed and self._io.tell() != self._io.size():
+        while self._io.tell() != self._io.size():
             if self._io.peek(1):
                 return self._io.read(4096)
             else:
-                import asyncio
                 await asyncio.sleep(0.1)
         raise StopAsyncIteration
+
 
 class NullIO(DataIO):
     """
