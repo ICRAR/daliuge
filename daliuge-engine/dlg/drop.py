@@ -22,6 +22,8 @@
 """
 Module containing the core DROP classes.
 """
+from asyncio import subprocess
+import multiprocessing
 from sqlite3 import OperationalError
 import string
 from abc import ABCMeta, abstractmethod, abstractproperty
@@ -44,7 +46,7 @@ import re
 import sys
 import inspect
 import binascii
-from typing import AsyncIterable, Dict, List, Optional, Union
+from typing import AsyncIterable, Dict, List, Optional, TypeVar, Union
 from overrides import overrides
 
 import numpy as np
@@ -1048,7 +1050,7 @@ class DataDROP(AbstractDROP):
     async def readStream(self, descriptor, **kwargs) -> AsyncIterable:
         self._checkStateAndDescriptor(descriptor)
         io = self._rios[descriptor]
-        return await io.readStream()
+        return io.readStream()
 
     def _checkStateAndDescriptor(self, descriptor):
         if self.status != DROPStates.COMPLETED:
@@ -1146,7 +1148,9 @@ class DataDROP(AbstractDROP):
         return nbytes
 
     async def writeStream(self, stream: AsyncIterable, **kwargs):
-        raise NotImplementedError
+        async for iterator in stream:
+            async for item in iterator:
+                self.write(item)
 
     def _updateChecksum(self, chunk):
         # see __init__ for the initialization to None
