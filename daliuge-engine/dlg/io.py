@@ -133,16 +133,13 @@ class DataIO(): # io.BufferedIOBase, BinaryIO
         raise Exception # TODO: NotImplementedError
 
     @abstractmethod
-    async def readStream(self) -> AsyncIterable:
+    def readStream(self) -> AsyncIterable:
         """
         Returns a asynchronous stream typically processed using
         `async for` that either yields when no data is available,
         iterates when data is buffered, or raises StopAsyncIterator
         when the stream is complete.
         """
-        # NOTE: yield is required for typing system to detect
-        # asynciterable instead of coroutine.
-        return EmptyAsyncIterable()
 
     def peek(self, size: int, **kwargs):
         """
@@ -300,6 +297,14 @@ class NullIO(DataIO):
     def delete(self):
         pass
 
+    @overrides
+    def readStream(self) -> AsyncIterable:
+        return EmptyAsyncIterable()
+    
+    @overrides
+    async def writeStream(self, stream: AsyncIterable):
+        pass
+
 
 class ErrorIO(DataIO):
     """
@@ -392,8 +397,8 @@ class MemoryIO(DataIO):
         return self._desc.read(count)
 
     @overrides
-    async def readStream(self) -> AsyncIterable:
-        yield self.__aiter__()
+    def readStream(self) -> AsyncIterable:
+        return DataIOAsyncIterator(self)
 
     def __aiter__(self) -> AsyncIterator:
         return DataIOAsyncIterator(self)

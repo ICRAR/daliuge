@@ -32,9 +32,12 @@ from overrides import overrides
 import time
 import ast
 import numpy as np
+import logging
 
-from dlg import droputils, utils
-from dlg.drop import DataDROP, InputFiredAppDROP, BranchAppDrop, ContainerDROP, NullDROP
+import dlg.droputils as droputils
+import dlg.utils as utils
+from dlg.drop import DataDROP, InMemoryDROP, InputFiredAppDROP, BranchAppDrop, ContainerDROP, NullDROP
+from dlg.io import MemoryIO
 from dlg.meta import (
     dlg_float_param, 
     dlg_string_param,
@@ -49,10 +52,11 @@ from dlg.meta import (
 from dlg.exceptions import DaliugeException
 from dlg.apps.pyfunc import serialize_data, deserialize_data
 
+logger = logging.getLogger(__name__)
 
 ##
-# @brief CopyApp
-# @details A simple APP that copies its inputs into its outputs.
+# @brief StreamCopyApp
+# @details An App that copies streaming inputs to streaming outputs.
 # All inputs are copied into all outputs in the order they were declared in
 # the graph. If an input is a container (e.g. a directory) it copies the
 # content recursively.
@@ -74,7 +78,7 @@ from dlg.apps.pyfunc import serialize_data, deserialize_data
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @par EAGLE_END
-class AsyncCopyApp(InputFiredAppDROP):
+class StreamCopyApp(InputFiredAppDROP):
     """
     A streaming app drop that copies its inputs into its outputs.
     All inputs are copied into all outputs in the order they were declared in
@@ -89,37 +93,68 @@ class AsyncCopyApp(InputFiredAppDROP):
         [dlg_streaming_input("binary/*")],
     )
 
-    _bufsize = dlg_int_param("bufsize", 65536)
+    _bufsize: int = dlg_int_param("bufsize", 65536)  # type: ignore
 
+    @overrides
     def run(self):
         assert len(self.inputs) == len(self.outputs)
-        
-        # synchronous
-        #for inputDrop, outputDrop in zip(self.inputs, self.outputs):
-        #    droputils.copyDropContents(inputDrop, outputDrop, bufsize=self._bufsize)
-
-        # asynchronous
         asyncio.run(self.copyAll())
 
     async def copyAll(self):
         tasks = []
         for inputDrop, outputDrop in zip(self.inputs, self.outputs):
-            tasks.append(asyncio.create_task(AsyncCopyApp.asyncCopyDropContents(inputDrop, outputDrop)))
+            tasks.append(asyncio.create_task(StreamCopyApp.asyncCopyDropContents(inputDrop, outputDrop)))
         await asyncio.gather(*tasks)
-
-    @staticmethod
-    async def sync_to_async(a) -> AsyncIterable:
-        for i in a:
-            yield i
 
     @staticmethod
     async def asyncCopyDropContents(inputDrop: DataDROP, outputDrop: DataDROP):
         desc = inputDrop.open()
-        s: AsyncIterable = await inputDrop.readStream(desc)
-        await outputDrop.writeStream(s)
-    
+        await outputDrop.writeStream(inputDrop.readStream(desc))
+        inputDrop.close(desc)
+
     @overrides
-    async def readStream(self, descriptor, **kwargs) -> AsyncIterable:
+    def readStream(self, descriptor, **kwargs) -> AsyncIterable:
+        raise NotImplementedError()
+
+    @overrides
+    async def writeStream(self, stream: AsyncIterable, **kwargs):
+        raise NotImplementedError()
+
+
+##
+# @brief StreamAccumulateApp
+# @details An app that copies and accumulates a stream into a non-streaming drop
+#
+class StreamAccumulateApp(InputFiredAppDROP):
+    component_meta = dlg_component(
+        "StreamAccumulateApp",
+        "Stream Accumulate App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    _bufsize: int = dlg_int_param("bufsize", 65536)  # type: ignore
+
+    @overrides
+    def run(self):
+        assert len(self.inputs) == len(self.outputs)
+        asyncio.run(self.copyAll())
+
+    async def copyAll(self):
+        tasks = []
+        for inputDrop, outputDrop in zip(self.inputs, self.outputs):
+            tasks.append(asyncio.create_task(StreamCopyApp.asyncCopyDropContents(inputDrop, outputDrop)))
+        await asyncio.gather(*tasks)
+
+    @staticmethod
+    async def asyncCopyDropContents(inputDrop: DataDROP, outputDrop: DataDROP):
+        desc = inputDrop.open()
+        await outputDrop.writeStream(inputDrop.readStream(desc))
+        inputDrop.close(desc)
+
+    @overrides
+    def readStream(self, descriptor, **kwargs) -> AsyncIterable:
         raise NotImplementedError()
 
     @overrides
