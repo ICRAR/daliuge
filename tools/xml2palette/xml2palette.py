@@ -279,7 +279,7 @@ def parse_param_value(text, prefix, value):
             + value
         )
     if len(parts) > 7:
-        positional = parts[6].lower()
+        positional = parts[6].lower() == "true"
     else:
         logging.warning(
             text + " " +
