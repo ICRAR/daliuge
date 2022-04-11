@@ -28,6 +28,7 @@ import io
 import json
 import logging
 import pickle
+import asyncio
 import re
 import threading
 import traceback
@@ -347,8 +348,6 @@ async def load_npy_stream(drop: DataDROP, allow_pickle=False, backoff=0.01) -> A
     """
     Loads an async stream of numpy ndarrays from a data drop
     """
-    import asyncio
-
     desc = None
     while desc is None:
         try:

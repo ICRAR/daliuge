@@ -32,11 +32,13 @@ import sys
 import tempfile
 import subprocess
 import asyncio
+import aiostream.stream as stream
+import aiostream.pipe as pipe
 import asyncstdlib
 import concurrent.futures
 
 import numpy as np
-from dlg.apps.async_apps import AsyncCopyApp
+from dlg.apps.stream_apps import StreamCopyApp
 
 import dlg.droputils as droputils
 from dlg.common.reproducibility.constants import ReproducibilityFlags
@@ -145,6 +147,10 @@ class TestDROP(unittest.TestCase):
         """
         self._test_dynamic_write_withDropType(InMemoryDROP)
 
+    def test_manual_stream_write_InMemoryDROP(self):
+        self._test_manual_async_stream_npy_withDropType(InMemoryDROP, 0.025, 0.01)
+        self._test_manual_async_stream_npy_withDropType(InMemoryDROP, 0.01, 0.025)
+
     def test_stream_write_InMemoryDROP(self):
         self._test_async_stream_npy_withDropType(InMemoryDROP, 0.025, 0.01)
         self._test_async_stream_npy_withDropType(InMemoryDROP, 0.01, 0.025)
@@ -153,6 +159,7 @@ class TestDROP(unittest.TestCase):
         self._test_threaded_stream_npy_withDropType(InMemoryDROP, 0.025, 0.01)
         self._test_threaded_stream_npy_withDropType(InMemoryDROP, 0.01, 0.025)
     
+    @unittest.skip("pickling abstract drop not supported")
     def test_process_stream_write_InMemoryDROP(self):
         self._test_process_stream_npy_withDropType(InMemoryDROP, 0.025, 0.01)
         self._test_process_stream_npy_withDropType(InMemoryDROP, 0.01, 0.025)
@@ -294,7 +301,7 @@ class TestDROP(unittest.TestCase):
 
     def _test_async_stream_npy_withDropType(self, dropType, write_delay: float, read_delay: float):
         a: DataDROP = InMemoryDROP("oid:A", "oid:A")
-        b = AsyncCopyApp("oid:B", "uid:B", n_effective_inputs=1)
+        b = StreamCopyApp("oid:B", "uid:B", n_effective_inputs=1)
         c: DataDROP = dropType("oid:C", "uid:C",
             expectedSize=-1, use_staging=True,
             streamingType=DROPStreamingTypes.SINGLE_STREAM)
@@ -308,18 +315,19 @@ class TestDROP(unittest.TestCase):
         async def write_read_assert_stream():
             # NOTE: typically these are performed in parallel on seperate subprocesses
             await droputils.save_npy_stream(a, TestDROP.delay_iterable(in_arrays, write_delay))
-            #asyncio.create_task(asyncstdlib.list(droputils.load_npy_stream(c, backoff=read_delay)))
 
         with DROPWaiterCtx(self, (a,b,c), 5):
             res = asyncio.run(write_read_assert_stream())
-
+        assert a.status != DROPStates.ERROR
         assert b.status != DROPStates.ERROR
+        assert c.status != DROPStates.ERROR
 
-        #assert b.status == DROPStates.ERROR
-        #out_arrays = asyncio.run(asyncstdlib.list(droputils.load_npy_stream(c, backoff=read_delay)))
-        #assert len(in_arrays) == len(out_arrays)
-        #for in_array, out_array in zip(in_arrays, out_arrays):
-        #   np.testing.assert_array_equal(in_array, out_array)
+        # NOTE: memoryio stream performs full buffering to allow a deferred read
+        out_arrays = asyncio.run(asyncstdlib.list(droputils.load_npy_stream(c, backoff=read_delay)))
+
+        assert len(in_arrays) == len(out_arrays)
+        for in_array, out_array in zip(in_arrays, out_arrays):
+           np.testing.assert_array_equal(in_array, out_array)
 
     def _test_threaded_stream_npy_withDropType(self, dropType, write_delay: float, read_delay: float):
         a: DataDROP = dropType("oid:A", "uid:A",
@@ -332,10 +340,14 @@ class TestDROP(unittest.TestCase):
         # see https://idolstarastronomer.com/two-futures.html
         with concurrent.futures.ThreadPoolExecutor() as executor:
             cfutures = []
-            cfutures.append(executor.submit(asyncio.run,
-                droputils.save_npy_stream(a, TestDROP.delay_iterable(in_arrays, write_delay))))
-            cfutures.append(executor.submit(asyncio.run,
-                asyncstdlib.list(droputils.load_npy_stream(a, backoff=read_delay))))
+            in_stream = droputils.save_npy_stream(a,
+                stream.iterate(in_arrays)
+                | pipe.delay(write_delay)  # type: ignore
+                | pipe.spaceout(write_delay)  # type: ignore
+            )
+            out_stream = asyncstdlib.list(droputils.load_npy_stream(a, backoff=read_delay))
+            cfutures.append(executor.submit(asyncio.run, in_stream))
+            cfutures.append(executor.submit(asyncio.run, out_stream))
             out_arrays = cfutures[1].result()
         assert len(in_arrays) == len(out_arrays)
         for in_array, out_array in zip(in_arrays, out_arrays):
