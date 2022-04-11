@@ -284,7 +284,7 @@
                                     "type": "boolean"
                                 },
                                 "options": {
-                                    "type": "object"
+                                    "type": "array"
                                 },
                                 "positional": {
                                     "type": "boolean",
@@ -329,7 +329,7 @@
                                     "type": "boolean"
                                 },
                                 "options": {
-                                    "type": "object"
+                                    "type": "array"
                                 },
                                 "positional": {
                                     "type": "boolean",
