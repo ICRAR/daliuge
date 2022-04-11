@@ -1,4 +1,6 @@
 # The PIP requirements for daliuge - taken from setup.py
+aiostream
+asyncstdlib
 boto3
 bottle
 configobj
