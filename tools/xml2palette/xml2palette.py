@@ -710,7 +710,7 @@ def process_compounddef_default(compounddef):
                     member = {"params":[]}
                     func_path = "Unknown"
                     func_name = "Unknown"
-                    returnType = "Unknown"
+                    return_type = "Unknown"
 
                     # some defaults
                     # cparam format is (name, default_value, type, access, precious, options, positional, description)
@@ -737,8 +737,8 @@ def process_compounddef_default(compounddef):
                                 if hasReturn:
                                     return_part = dd[dd.rfind(":return:")+8:].strip().replace('\n', ' ')
                                     output_port_name = "output"
-                                    #print("Add output port:" + str(output_port_name) + "/" + str(returnType) + "/" + str(return_part))
-                                    member["params"].append({"key": "port/"+str(output_port_name), "direction": "out", "value": str(output_port_name) + "/" + str(returnType) + "/" + str(return_part) })
+                                    #print("Add output port:" + str(output_port_name) + "/" + str(return_type) + "/" + str(return_part))
+                                    member["params"].append({"key": "port/"+str(output_port_name), "direction": "out", "value": str(output_port_name) + "/" + str(return_type) + "/" + str(return_part) })
 
                                 # get first part of description, up until when the param are mentioned
                                 description = dd[:dd.find(":param")].strip()
@@ -754,7 +754,7 @@ def process_compounddef_default(compounddef):
                         if ggchild.tag == "param":
                             type = ""
                             name = ""
-                            defaultValue = ""
+                            default_value = ""
 
                             for gggchild in ggchild:
                                 if gggchild.tag == "type":
@@ -769,49 +769,49 @@ def process_compounddef_default(compounddef):
                                 if gggchild.tag == "defname":
                                     name = gggchild.text
                                 if gggchild.tag == "defval":
-                                    defaultValue = gggchild.text
+                                    default_value = gggchild.text
 
                             # type recognised?
-                            typeRecognised = False
+                            type_recognised = False
 
                             # fix some types
                             if type == "bool":
                                 type = "Boolean"
-                                if defaultValue == "":
-                                    defaultValue = "False"
-                                typeRecognised = True
+                                if default_value == "":
+                                    default_value = "False"
+                                type_recognised = True
                             if type == "int":
                                 type = "Integer"
-                                if defaultValue == "":
-                                    defaultValue = "0"
-                                typeRecognised = True
+                                if default_value == "":
+                                    default_value = "0"
+                                type_recognised = True
                             if type == "float":
                                 type = "Float"
-                                if defaultValue == "":
-                                    defaultValue = "0"
-                                typeRecognised = True
+                                if default_value == "":
+                                    default_value = "0"
+                                type_recognised = True
                             if type == "string" or type == "*" or type == "**":
                                 type = "String"
-                                typeRecognised = True
+                                type_recognised = True
 
                             # try to guess the type based on the default value
-                            # TODO: try to parse defaultValue as JSON to detect JSON types
-                            if not typeRecognised and defaultValue != "" and defaultValue is not None and defaultValue != "None":
-                                #print("name:" + str(name) + " defaultValue:" + str(defaultValue))
+                            # TODO: try to parse default_value as JSON to detect JSON types
+                            if not type_recognised and default_value != "" and default_value is not None and default_value != "None":
+                                #print("name:" + str(name) + " default_value:" + str(default_value))
 
                                 try:
-                                    val = int(defaultValue)
+                                    val = int(default_value)
                                     type = "Integer"
                                     #print("Use Integer")
                                 except:
                                     try:
-                                        val = float(defaultValue)
+                                        val = float(default_value)
                                         type = "Float"
                                         #print("Use Float")
                                     except:
-                                        if defaultValue.lower() == "true" or defaultValue.lower() == "false":
+                                        if default_value.lower() == "true" or default_value.lower() == "false":
                                             type = "Boolean"
-                                            defaultValue = defaultValue.lower()
+                                            default_value = default_value.lower()
                                             #print("Use Boolean")
                                         else:
                                             type = "String"
@@ -819,18 +819,18 @@ def process_compounddef_default(compounddef):
 
 
                             # add the param
-                            member["params"].append({"key":"aparam/"+str(name), "direction":"in", "value":str(name) + "/" + str(defaultValue) + "/" + str(type) + "/readwrite/False//False/"})
+                            member["params"].append({"key":"aparam/"+str(name), "direction":"in", "value":str(name) + "/" + str(default_value) + "/" + str(type) + "/readwrite/False//False/"})
 
                         if ggchild.tag == "definition":
-                            returnType = ggchild.text.strip().split(" ")[0]
+                            return_type = ggchild.text.strip().split(" ")[0]
                             func_path = ggchild.text.strip().split(" ")[-1]
 
                             # aparams
                             member["params"].append({"key": "aparam/func_name", "direction": None, "value": "Function Name/" + func_path + "/String/readonly/False//True/Python function name"})
                             member["params"].append({"key": "aparam/pickle", "direction": None, "value": "Pickle/false/Boolean/readwrite/False//True/Whether the python arguments are pickled."})
 
-                            if returnType == "def":
-                                returnType = "None"
+                            if return_type == "def":
+                                return_type = "None"
 
                     # skip function if it begins with an underscore
                     if func_name[0] == "_":
