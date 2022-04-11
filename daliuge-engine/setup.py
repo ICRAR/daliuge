@@ -116,6 +116,8 @@ class lib64_path(install):
 # Keep alpha-sorted PLEASE!
 install_requires = [
     "wheel", # need to get wheel first...
+    "aiostream",
+    "asyncstdlib",
     "bottle",
     "configobj",
     "crc32c",
