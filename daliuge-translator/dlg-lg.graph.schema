@@ -287,7 +287,8 @@
                                     "type": "object"
                                 },
                                 "positional": {
-                                    "type": "boolean"
+                                    "type": "boolean",
+                                    "default": false
                                 }
                             },
                             "required": [
@@ -331,7 +332,8 @@
                                     "type": "object"
                                 },
                                 "positional": {
-                                    "type": "boolean"
+                                    "type": "boolean",
+                                    "default": false
                                 }
                             },
                             "required": [
