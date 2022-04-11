@@ -2,6 +2,7 @@
 DOCKER_OPTS="\
 --shm-size=2g --ipc=shareable \
 --rm \
+--gpus=all \
 --name daliuge-engine \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -p 5555:5555 -p 6666:6666 \
