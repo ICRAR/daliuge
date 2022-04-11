@@ -150,6 +150,8 @@ class CopyApp(BarrierAppDROP):
         self.copyAll()
 
     def copyAll(self):
+        # for inputDrop, outputDrop in zip(self.inputs, self.outputs):
+        #     droputils.copyDropContents(inputDrop, outputDrop, bufsize=self._bufsize)
         for inputDrop in self.inputs:
             self.copyRecursive(inputDrop)
 

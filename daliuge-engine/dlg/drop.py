@@ -1047,10 +1047,14 @@ class DataDROP(AbstractDROP):
         io = self._rios[descriptor]
         return io.read(count, **kwargs)
 
-    async def readStream(self, descriptor, **kwargs) -> AsyncIterable:
+    def readStream(self, descriptor, **kwargs) -> AsyncIterable:
+        """
+        Retreives the async read stream from this drop with behaviour
+        depending on the streamingType.
+        """
         self._checkStateAndDescriptor(descriptor)
-        io = self._rios[descriptor]
-        return io.readStream()
+        rio = self._rios[descriptor]
+        return rio.readStream()
 
     def _checkStateAndDescriptor(self, descriptor):
         if self.status != DROPStates.COMPLETED:
@@ -1148,9 +1152,8 @@ class DataDROP(AbstractDROP):
         return nbytes
 
     async def writeStream(self, stream: AsyncIterable, **kwargs):
-        async for iterator in stream:
-            async for item in iterator:
-                self.write(item)
+        async for item in stream:
+            self.write(item)
 
     def _updateChecksum(self, chunk):
         # see __init__ for the initialization to None
