@@ -587,7 +587,9 @@ class AbstractDROP(EventFirer):
         :return: A dictionary containing runtime exclusive computational replication data.
         """
         res = {}
-        res.update(self.generate_recompute_data())
+        recomp_data = self.generate_recompute_data()
+        if recomp_data is not None:
+            res.update(self.generate_recompute_data())
         res.update(self.generate_reproduce_data())
         return res
 
@@ -662,7 +664,7 @@ class AbstractDROP(EventFirer):
                 # Set as committed
             self._committed = True
         else:
-            raise Exception("Trying to re-commit DROP %s, cannot overwrite." % self)
+            logger.debug("Trying to re-commit DROP %s, cannot overwrite." % self)
 
     @property
     def oid(self):
@@ -1637,8 +1639,10 @@ class FileDROP(DataDROP, PathBasedDrop):
     # Override
     def generate_reproduce_data(self):
         from .droputils import allDropContents
-
-        data = allDropContents(self, self.size)
+        try:
+            data = allDropContents(self, self.size)
+        except Exception:
+            data = b''
         return {"data_hash": common_hash(data)}
 
 
@@ -1757,6 +1761,7 @@ class NgasDROP(DataDROP):
         logger.debug("Moving %r to COMPLETED", self)
         self.status = DROPStates.COMPLETED
         self._fire("dropCompleted", status=DROPStates.COMPLETED)
+        self.completedrop()
 
     @property
     def dataURL(self) -> str:
