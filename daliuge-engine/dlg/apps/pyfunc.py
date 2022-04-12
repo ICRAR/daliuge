@@ -118,14 +118,14 @@ def import_using_code(code):
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
 #     \~English Is this node the start of a group?
 # @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
-#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+#     \~English The allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] aparam/func_name Function Name//String/readwrite/False//False/
-#     \~English Python fuction name
+#     \~English Python function name
 # @param[in] aparam/func_code Function Code//String/readwrite/False//False/
-#     \~English Python fuction code, e.g. 'def fuction_name(args): return args'
-# @param[in] aparam/pickle Pickle//Boolean/readwrite/False//False/
+#     \~English Python function code, e.g. 'def function_name(args): return args'
+# @param[in] aparam/pickle Pickle/false/Boolean/readwrite/False//False/
 #     \~English Whether the python arguments are pickled.
 # @param[in] aparam/func_defaults Function Defaults//String/readwrite/False//False/
 #     \~English Mapping from argname to default value. Should match only the last part of the argnames list.
