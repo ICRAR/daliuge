@@ -59,7 +59,13 @@ def rflag_caster(val, default=REPRO_DEFAULT):
         try:
             return ReproducibilityFlags(int(val))
         except (ValueError, TypeError):
-            return default
+            try:
+                for rmode in ALL_RMODES:
+                    if rmode.name == val:
+                        return rmode
+            except(ValueError, TypeError):
+                return default
+        return default
     elif isinstance(val, int):
         try:
             return ReproducibilityFlags(val)
