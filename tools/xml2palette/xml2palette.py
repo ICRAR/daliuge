@@ -384,7 +384,7 @@ def create_palette_node_from_params(params):
 
             # check that type is in the list of known types
             if type not in KNOWN_PARAM_DATA_TYPES:
-                logging.warning(text + " cparam '" + name + "' has unknown type: " + type)
+                #logging.warning(text + " cparam '" + name + "' has unknown type: " + type)
                 pass
 
             # check that a param of type "Select" has some options specified,
@@ -442,7 +442,7 @@ def create_palette_node_from_params(params):
 
             # check that type is in the list of known types
             if type not in KNOWN_PARAM_DATA_TYPES:
-                logging.warning(text + " aparam '" + name + "' has unknown type: " + type)
+                #logging.warning(text + " aparam '" + name + "' has unknown type: " + type)
                 pass
 
             # check that category if suitable for aparams
@@ -838,7 +838,7 @@ def process_compounddef_default(compounddef):
 
                     # skip component if a module_path was specified, and this component is not within it
                     if module_path != "" and not module_path in func_path:
-                        logging.info("Skip " + func_path + ". Doesn't match module path: " + module_path)
+                        #logging.info("Skip " + func_path + ". Doesn't match module path: " + module_path)
                         continue
 
                     result.append(member)
@@ -957,6 +957,10 @@ def params_to_nodes(params):
 if __name__ == "__main__":
 
     logging.basicConfig(format="%(asctime)s - %(message)s", datefmt="%d-%b-%y %H:%M:%S", level = logging.INFO)
+
+    logging.info("PROJECT_NAME:" + os.environ.get("PROJECT_NAME"))
+    logging.info("PROJECT_VERSION:" + os.environ.get("PROJECT_VERSION"))
+    logging.info("GIT_REPO:" + os.environ.get("GIT_REPO"))
 
     (inputdir, tag, outputfile, allow_missing_eagle_start, module_path) = get_options_from_command_line(sys.argv[1:])
     logging.info("Input Directory:" + inputdir)
