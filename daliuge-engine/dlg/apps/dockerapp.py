@@ -93,7 +93,7 @@ class ContainerIpWaiter(object):
 # @param[in] cparam/command_line_arguments Command Line Arguments//String/readwrite/False//False/
 #     \~English Additional command line arguments to be added to the command line to be executed
 # @param[in] cparam/paramValueSeparator Param value separator/ /String/readwrite/False//False/
-#     \~English Separator character(s) between parameters on the command line
+#     \~English Separator character(s) between parameters and their respective values on the command line
 # @param[in] cparam/argumentPrefix Argument prefix/"--"/String/readwrite/False//False/
 #     \~English Prefix to each keyed argument on the command line
 # @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
