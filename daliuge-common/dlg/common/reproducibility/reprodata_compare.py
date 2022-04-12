@@ -103,7 +103,10 @@ def process_directory(dirname: pathlib.Path):
     """
     out_data = {}
     for file in dirname.glob('*.out'):
-        out_data.update(process_file(file))
+        new_data = process_file(file)
+        for rmode, sig in new_data.items():
+            if sig is not None:
+                out_data[rmode] = sig
     return out_data
 
 
@@ -138,8 +141,6 @@ def write_outfile(data, outfilepath, outfilesuffix="summary", verbose=False):
     Writes a dictionary to csv file.
     """
     fieldnames = ['workflow'] + [rmode.name for rmode in ALL_RMODES]
-    if verbose:
-        print(fieldnames)
     with open(outfilepath + f'-{outfilesuffix}.csv', 'w+', newline='',
               encoding='utf-8') as ofile:
         writer = csv.writer(ofile, delimiter=',')
