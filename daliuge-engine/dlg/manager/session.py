@@ -229,7 +229,7 @@ class Session(object):
         createDirIfMissing(the_dir)
         the_path = os.path.join(the_dir, "reprodata.out")
         with open(the_path, "w+", encoding='utf-8') as file:
-            json.dump(self._graphreprodata, file, indent=4)
+            json.dump([self._graph, self._graphreprodata], file, indent=4)
 
     @track_current_session
     def addGraphSpec(self, graphSpec):
