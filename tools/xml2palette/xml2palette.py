@@ -11,6 +11,7 @@ import sys
 import tempfile
 import uuid
 import xml.etree.ElementTree as ET
+import math
 
 next_key = -1
 
@@ -40,8 +41,10 @@ def get_options_from_command_line(argv):
     inputdir = ""
     tag = ""
     outputfile = ""
+    allow_missing_eagle_start = False
+    module_path = ""
     try:
-        opts, args = getopt.getopt(argv, "hi:t:o:", ["idir=", "tag=", "ofile="])
+        opts, args = getopt.getopt(argv, "hi:t:o:sm:", ["idir=", "tag=", "ofile="])
     except getopt.GetoptError:
         print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
         sys.exit(2)
@@ -60,7 +63,11 @@ def get_options_from_command_line(argv):
             tag = arg
         elif opt in ("-o", "--ofile"):
             outputfile = arg
-    return inputdir, tag, outputfile
+        elif opt in ("-s"):
+            allow_missing_eagle_start = True
+        elif opt in ("-m", "--module"):
+            module_path = arg
+    return inputdir, tag, outputfile, allow_missing_eagle_start, module_path
 
 
 def check_environment_variables():
@@ -79,8 +86,6 @@ def check_environment_variables():
 def modify_doxygen_options(doxygen_filename, options):
     with open(doxygen_filename, "r") as dfile:
         contents = dfile.readlines()
-
-    # print(contents)
 
     with open(doxygen_filename, "w") as dfile:
         for index, line in enumerate(contents):
@@ -197,6 +202,7 @@ def create_field(internal_name, name, value, description, access, type, precious
 def alert_if_missing(text, fields, internal_name):
     if find_field_by_name(fields, internal_name) is None:
         logging.warning(text + " component missing " + internal_name + " cparam")
+        pass
 
 
 def parse_key(key):
@@ -378,9 +384,8 @@ def create_palette_node_from_params(params):
 
             # check that type is in the list of known types
             if type not in KNOWN_PARAM_DATA_TYPES:
-                logging.warning(
-                    text + " cparam '" + name + "' has unknown type: " + type
-                )
+                #logging.warning(text + " cparam '" + name + "' has unknown type: " + type)
+                pass
 
             # check that a param of type "Select" has some options specified,
             # and check that every param with some options specified is of type "Select"
@@ -437,9 +442,8 @@ def create_palette_node_from_params(params):
 
             # check that type is in the list of known types
             if type not in KNOWN_PARAM_DATA_TYPES:
-                logging.warning(
-                    text + " aparam '" + name + "' has unknown type: " + type
-                )
+                #logging.warning(text + " aparam '" + name + "' has unknown type: " + type)
+                pass
 
             # check that category if suitable for aparams
             if category in KNOWN_DATA_CATEGORIES:
@@ -620,30 +624,29 @@ def process_compounddef(compounddef):
             break
 
     # check that detailed description was found
-    if detaileddescription is None:
-        return result
+    if detaileddescription is not None:
 
-    # search children of detaileddescription node for a para node with "simplesect" children, who have "title" children with text "EAGLE_START" and "EAGLE_END"
-    para = None
-    description = ""
-    for ddchild in detaileddescription:
-        if ddchild.tag == "para":
-            if ddchild.text is not None:
-                description += ddchild.text + "\n"
-            for pchild in ddchild:
-                if pchild.tag == "simplesect":
-                    for sschild in pchild:
-                        if sschild.tag == "title":
-                            if sschild.text.strip() == "EAGLE_START":
-                                found_eagle_start = True
+        # search children of detaileddescription node for a para node with "simplesect" children, who have "title" children with text "EAGLE_START" and "EAGLE_END"
+        para = None
+        description = ""
+        for ddchild in detaileddescription:
+            if ddchild.tag == "para":
+                if ddchild.text is not None:
+                    description += ddchild.text + "\n"
+                for pchild in ddchild:
+                    if pchild.tag == "simplesect":
+                        for sschild in pchild:
+                            if sschild.tag == "title":
+                                if sschild.text.strip() == "EAGLE_START":
+                                    found_eagle_start = True
 
-                    para = ddchild
+                        para = ddchild
 
-    # add description
-    if description != "":
-        result.append(
-            {"key": "description", "direction": None, "value": description.strip()}
-        )
+        # add description
+        if description != "":
+            result.append(
+                {"key": "description", "direction": None, "value": description.strip()}
+            )
 
     # check that we found an EAGLE_START, otherwise this is just regular doxygen, skip it
     if not found_eagle_start:
@@ -695,13 +698,193 @@ def process_compounddef(compounddef):
     return result
 
 
+def process_compounddef_default(compounddef):
+    result = []
+
+    # check memberdefs
+    for child in compounddef:
+        if child.tag == "sectiondef" and child.get("kind") == "func":
+
+            for grandchild in child:
+                if grandchild.tag == "memberdef" and grandchild.get("kind") == "function":
+                    member = {"params":[]}
+                    func_path = "Unknown"
+                    func_name = "Unknown"
+                    return_type = "Unknown"
+
+                    # some defaults
+                    # cparam format is (name, default_value, type, access, precious, options, positional, description)
+                    member["params"].append({"key": "category", "direction": None, "value": "PythonApp"})
+                    member["params"].append({"key": "cparam/appclass", "direction": None, "value": "Application Class/dlg.apps.pyfunc.PyFuncApp/String/readwrite/False//False/The python class that implements this application"})
+                    member["params"].append({"key": "cparam/execution_time", "direction": None, "value": "Execution Time/5/Integer/readwrite/False//False/Estimate of execution time (in seconds) for this application."})
+                    member["params"].append({"key": "cparam/num_cpus", "direction": None, "value": "No. of CPUs/1/Integer/readwrite/False//False/Number of CPUs used for this application."})
+                    member["params"].append({"key": "cparam/group_start", "direction": None, "value": "Group start/false/Boolean/readwrite/False//False/Is this node the start of a group?"})
+
+                    for ggchild in grandchild:
+                        if ggchild.tag == "name":
+                            member["params"].append({"key": "text", "direction": None, "value": ggchild.text})
+                            func_name = ggchild.text
+                        if ggchild.tag == "detaileddescription":
+                            if len(ggchild) > 0 and len(ggchild[0]) > 0 and ggchild[0][0].text != None:
+
+                                # get detailed description text
+                                dd = ggchild[0][0].text
+
+                                # check if a return type exists in the detailed description
+                                hasReturn = dd.rfind(":return:") != -1 or dd.rfind(":returns:") != -1
+
+                                # get return type, if it exists
+                                if hasReturn:
+                                    return_part = dd[dd.rfind(":return:")+8:].strip().replace('\n', ' ')
+                                    output_port_name = "output"
+                                    #print("Add output port:" + str(output_port_name) + "/" + str(return_type) + "/" + str(return_part))
+                                    member["params"].append({"key": "port/"+str(output_port_name), "direction": "out", "value": str(output_port_name) + "/" + str(return_type) + "/" + str(return_part) })
+
+                                # get first part of description, up until when the param are mentioned
+                                description = dd[:dd.find(":param")].strip()
+
+                                # find the list of param names and descriptions in the <detaileddescription> tag
+                                params = parse_params(dd)
+
+                                # use the params above
+                                for p in params:
+                                    set_param_description(p[0], p[1], member["params"])
+
+                                member["params"].append({"key": "description", "direction": None, "value": description})
+                        if ggchild.tag == "param":
+                            type = ""
+                            name = ""
+                            default_value = ""
+
+                            for gggchild in ggchild:
+                                if gggchild.tag == "type":
+                                    type = gggchild.text
+
+                                    # also look at children with ref tag
+                                    for ggggchild in gggchild:
+                                        if ggggchild.tag == "ref":
+                                            type = ggggchild.text
+                                if gggchild.tag == "declname":
+                                    name = gggchild.text
+                                if gggchild.tag == "defname":
+                                    name = gggchild.text
+                                if gggchild.tag == "defval":
+                                    default_value = gggchild.text
+
+                            # type recognised?
+                            type_recognised = False
+
+                            # fix some types
+                            if type == "bool":
+                                type = "Boolean"
+                                if default_value == "":
+                                    default_value = "False"
+                                type_recognised = True
+                            if type == "int":
+                                type = "Integer"
+                                if default_value == "":
+                                    default_value = "0"
+                                type_recognised = True
+                            if type == "float":
+                                type = "Float"
+                                if default_value == "":
+                                    default_value = "0"
+                                type_recognised = True
+                            if type == "string" or type == "*" or type == "**":
+                                type = "String"
+                                type_recognised = True
+
+                            # try to guess the type based on the default value
+                            # TODO: try to parse default_value as JSON to detect JSON types
+                            if not type_recognised and default_value != "" and default_value is not None and default_value != "None":
+                                #print("name:" + str(name) + " default_value:" + str(default_value))
+
+                                try:
+                                    val = int(default_value)
+                                    type = "Integer"
+                                    #print("Use Integer")
+                                except:
+                                    try:
+                                        val = float(default_value)
+                                        type = "Float"
+                                        #print("Use Float")
+                                    except:
+                                        if default_value.lower() == "true" or default_value.lower() == "false":
+                                            type = "Boolean"
+                                            default_value = default_value.lower()
+                                            #print("Use Boolean")
+                                        else:
+                                            type = "String"
+                                            #print("Use String")
+
+
+                            # add the param
+                            member["params"].append({"key":"aparam/"+str(name), "direction":"in", "value":str(name) + "/" + str(default_value) + "/" + str(type) + "/readwrite/False//False/"})
+
+                        if ggchild.tag == "definition":
+                            return_type = ggchild.text.strip().split(" ")[0]
+                            func_path = ggchild.text.strip().split(" ")[-1]
+
+                            # aparams
+                            member["params"].append({"key": "aparam/func_name", "direction": None, "value": "Function Name/" + func_path + "/String/readonly/False//True/Python function name"})
+                            member["params"].append({"key": "aparam/pickle", "direction": None, "value": "Pickle/false/Boolean/readwrite/False//True/Whether the python arguments are pickled."})
+
+                            if return_type == "def":
+                                return_type = "None"
+
+                    # skip function if it begins with an underscore
+                    if func_name[0] == "_":
+                        continue
+
+                    # skip component if a module_path was specified, and this component is not within it
+                    if module_path != "" and not module_path in func_path:
+                        #logging.info("Skip " + func_path + ". Doesn't match module path: " + module_path)
+                        continue
+
+                    result.append(member)
+
+    return result
+
+
+# find the list of param names and descriptions in the <detaileddescription> tag
+def parse_params(detailed_description):
+    result = []
+
+    lines = detailed_description.split("\n")
+    param_lines = [line.strip() for line in lines if ":param" in line]
+
+    for p_line in param_lines:
+        #print("p_line:" + p_line)
+
+        try:
+            index_of_second_colon = p_line.index(':', 1)
+        except:
+            # didnt find second colon, skip
+            continue
+
+        param_name = p_line[7:index_of_second_colon]
+        param_description = p_line[index_of_second_colon+2:]
+
+        result.append((param_name, param_description))
+
+    return result
+
+
+# find the named aparam in params, and update the description
+def set_param_description(name, description, params):
+    #print("set_param_description():" + str(name) + ":" + str(description))
+    for p in params:
+        if p["key"] == "aparam/"+name:
+            p["value"] = p["value"] + description
+            break
+
+
 def create_construct_node(type, node):
 
     # check that type is in the list of known types
     if type not in KNOWN_CONSTRUCT_TYPES:
-        logging.warning(
-            text + " construct for node'" + node["text"] + "' has unknown type: " + type
-        )
+        logging.warning(text + " construct for node'" + node["text"] + "' has unknown type: " + type)
+        pass
 
     construct_node = {
         "category": type,
@@ -739,11 +922,52 @@ def create_construct_node(type, node):
     return construct_node
 
 
+def params_to_nodes(params):
+    result = []
+
+    # if no params were found, or only the name and description were found, then don't bother creating a node
+    if len(params) > 2:
+        # create a node
+        data, node = create_palette_node_from_params(params)
+
+        # if the node tag matches the command line tag, or no tag was specified on the command line, add the node to the list to output
+        if data["tag"] == tag or tag == "":
+            logging.info("Adding component: " + node["text"])
+            result.append(node)
+
+            # if a construct is found, add to nodes
+            if data["construct"] != "":
+                logging.info("Adding component: " + data["construct"] + "/" + node["text"])
+                construct_node = create_construct_node(data["construct"], node)
+                result.append(construct_node)
+
+    # check if gitrepo and version params were found and cache the values
+    for param in params:
+        key = param["key"]
+        value = param["value"]
+
+        if key == "gitrepo":
+            gitrepo = value
+        elif key == "version":
+            version = value
+
+    return result
+
 
 if __name__ == "__main__":
+
     logging.basicConfig(format="%(asctime)s - %(message)s", datefmt="%d-%b-%y %H:%M:%S", level = logging.INFO)
 
-    (inputdir, tag, outputfile) = get_options_from_command_line(sys.argv[1:])
+    logging.info("PROJECT_NAME:" + os.environ.get("PROJECT_NAME"))
+    logging.info("PROJECT_VERSION:" + os.environ.get("PROJECT_VERSION"))
+    logging.info("GIT_REPO:" + os.environ.get("GIT_REPO"))
+
+    (inputdir, tag, outputfile, allow_missing_eagle_start, module_path) = get_options_from_command_line(sys.argv[1:])
+    logging.info("Input Directory:" + inputdir)
+    logging.info("Tag:" + tag)
+    logging.info("Output File:" + outputfile)
+    logging.info("Allow missing EAGLE_START:" + str(allow_missing_eagle_start))
+    logging.info("Module Path:" + module_path)
 
     # create a temp directory for the output of doxygen
     output_directory = tempfile.TemporaryDirectory()
@@ -795,6 +1019,10 @@ if __name__ == "__main__":
             stderr=subprocess.DEVNULL,
         )
 
+    # debug - copy output xml to local dir
+    os.system('cp ' + output_xml_filename + ' output.xml')
+    logging.info("Wrote doxygen XML to output.xml")
+
     # get environment variables
     gitrepo = os.environ.get("GIT_REPO")
     version = os.environ.get("PROJECT_VERSION")
@@ -807,35 +1035,23 @@ if __name__ == "__main__":
     xml_root = tree.getroot()
 
     for compounddef in xml_root:
-        params = process_compounddef(compounddef)
 
-        # if no params were found, or only the name and description were found, then don't bother creating a node
-        if len(params) > 2:
-            # print("params (" + str(len(params)) + "): " + str(params))
+        # debug - we need to determine this correctly
+        is_eagle_node = False
 
-            # create a node
-            data, node = create_palette_node_from_params(params)
+        if is_eagle_node or not allow_missing_eagle_start:
+            params = process_compounddef(compounddef)
 
-            # if the node tag matches the command line tag, or no tag was specified on the command line, add the node to the list to output
-            if data["tag"] == tag or tag == "":
-                logging.info("Adding component: " + node["text"])
-                nodes.append(node)
+            ns = params_to_nodes(params)
+            nodes.extend(ns)
 
-                # if a construct is found, add to nodes
-                if data["construct"] != "":
-                    logging.info("Adding component: " + data["construct"] + "/" + node["text"])
-                    construct_node = create_construct_node(data["construct"], node)
-                    nodes.append(construct_node)
+        else: # not eagle node
+            functions = process_compounddef_default(compounddef)
 
-        # check if gitrepo and version params were found and cache the values
-        for param in params:
-            key = param["key"]
-            value = param["value"]
+            for f in functions:
+                ns = params_to_nodes(f["params"])
+                nodes.extend(ns)
 
-            if key == "gitrepo":
-                gitrepo = value
-            elif key == "version":
-                version = value
 
     # write the output json file
     write_palette_json(outputfile, nodes, gitrepo, version)
