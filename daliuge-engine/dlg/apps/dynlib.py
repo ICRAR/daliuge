@@ -26,6 +26,7 @@ import logging
 import multiprocessing
 import queue
 import threading
+import six
 
 from .. import rpc, utils
 from ..ddap_protocol import AppDROPStates
@@ -94,7 +95,7 @@ class CDlgApp(ctypes.Structure):
 
     def pack_python(self):
         out = {}
-        for key, val in self._fields_.items():
+        for key, val in self._fields_:
             out[key] = six.b(str(val))
         return out
 
@@ -354,7 +355,10 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
 
     def generate_recompute_data(self):
         out = {"status": self.status}
-        return out.update(self._c_app.pack_python())
+        data = self._c_app.pack_python()
+        if data is not None:
+            out.update(data)
+        return out
 
 
 ##
@@ -391,7 +395,11 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
 
     def generate_recompute_data(self):
         out = {"status": self.status}
-        return out.update(self._c_app.pack_python())
+        if self._c_app is None:
+            return out
+        else:
+            out.update(self._c_app.pack_python())
+            return out
 
 
 class FinishSubprocess(Exception):
