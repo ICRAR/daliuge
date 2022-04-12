@@ -213,7 +213,6 @@ def loadDropSpecs(dropSpecList):
         raise InvalidGraphException("DropSpec is empty %r" % dropSpecList)
     if dropSpecList[-1].get("rmode"):
         reprodata = dropSpecList.pop()
-        logger.debug("Found reprodata in dropSpecList, rmode=%s", reprodata["rmode"])
     for n, dropSpec in enumerate(dropSpecList):
 
         # "type" and 'oit' are mandatory
