@@ -291,7 +291,7 @@ class IntegrationHelloWorldTest(unittest.TestCase):
             self.graphs["HelloWorldBash"][rmode.value],
             self.graphs["HelloSBash"][rmode.value],
         )
-        self.assertNotEqual(
+        self.assertEqual(
             self.graphs["HelloWorldBash"][rmode.value],
             self.graphs["HelloWorldFile"][rmode.value],
         )
@@ -301,7 +301,7 @@ class IntegrationHelloWorldTest(unittest.TestCase):
             self.graphs["HelloSPython"][rmode.value],
         )
 
-        self.assertNotEqual(
+        self.assertEqual(
             self.graphs["HelloSBash"][rmode.value],
             self.graphs["HelloWorldFile"][rmode.value],
         )
@@ -310,7 +310,7 @@ class IntegrationHelloWorldTest(unittest.TestCase):
             self.graphs["HelloSPython"][rmode.value],
         )
 
-        self.assertNotEqual(
+        self.assertEqual(
             self.graphs["HelloWorldFile"][rmode.value],
             self.graphs["HelloSPython"][rmode.value],
         )
