@@ -546,11 +546,11 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
         parenthashes = list(
             lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
         )
-        self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+        # Not going to get anything out of this, since reproduce only cares about terminal data.
+        self.assertEqual(0, len(parenthashes))
 
 
 class LogicalBlockdagReplicateSciTests(unittest.TestCase):
