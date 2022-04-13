@@ -78,16 +78,6 @@ class AbstractDROPHashTests(unittest.TestCase):
         self.assertIsNone(drop_b.merkleroot)
         self.assertTrue(drop_b._committed)
 
-    def test_recommit(self):
-        """
-        Should raise an exception preventing a straight-recommit.
-        """
-        drop_a = AbstractDROP("a", "a")
-        drop_a.reproducibility_level = ReproducibilityFlags.RERUN
-        drop_a.setCompleted()
-        with self.assertRaises(Exception):
-            drop_a.commit()
-
     def test_set_reproducibility_level(self):
         """
         Tests functionality for changing a DROP's reproducibility flag
