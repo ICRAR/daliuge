@@ -27,6 +27,7 @@ from dlg import graph_loader
 from dlg.ddap_protocol import DROPLinkType, DROPRel
 from dlg.drop import InMemoryDROP, SharedMemoryDROP, ContainerDROP, AppDROP, DirectoryContainer
 from dlg.common import Categories
+from dlg.apps.simple import RandomArrayApp
 
 
 # Used in the textual representation of the graphs in these tests
@@ -165,4 +166,21 @@ class TestGraphLoader(unittest.TestCase):
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         a = graph_loader.createGraphFromDropSpecList(graphSpec)
         dummy = a
-        
+
+    def test_applicationArgs(self):
+        """
+        Use a graph with applicationArgs and make sure applications see their
+        arguments
+        """
+        with pkg_resources.resource_stream(
+                "test", "graphs/application_args.graph"
+            ) as f:  # @UndefinedVariable
+            graphSpec = json.load(f)
+        graph = graph_loader.createGraphFromDropSpecList(graphSpec)
+        app = graph[0]
+        self.assertEqual(app.__class__, RandomArrayApp)
+        self.assertEqual(app.size, 50)
+        self.assertEqual(app.integer, True)
+        self.assertEqual(app.low, 34)
+        self.assertEqual(app.high, 3456)
+
