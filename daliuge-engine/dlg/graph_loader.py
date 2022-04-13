@@ -410,6 +410,8 @@ def _getKwargs(dropSpec):
     for kw in REMOVE:
         if kw in kwargs:
             del kwargs[kw]
+    for name, spec in dropSpec.get('applicationArgs', dict()).items():
+        kwargs[name] = spec['value']
     return kwargs
 
 
