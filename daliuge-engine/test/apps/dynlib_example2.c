@@ -162,6 +162,7 @@ PyObject* init2(dlg_app_info *app, PyObject* pyObject)
                     return error;
                 }
             }
+            Py_DECREF(s);
         }
         else {
             error = build_error(PyExc_TypeError, "One of the keys was not a string");
