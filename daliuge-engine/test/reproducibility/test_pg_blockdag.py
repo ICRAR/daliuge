@@ -604,9 +604,9 @@ class PhysicalBlockdagReproduceTests(unittest.TestCase):
         """
         pgr = _init_pgraph_computation_sandwich(self.rmode)
         build_blockdag(pgr, "pg")
-        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
         parenthashes = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
-        self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+        # Not going to get anything out of this, since reproduce only cares about terminal data.
+        self.assertEqual(0, len(parenthashes))
 
 
 class PhysicalBlockdagReplicateScientificTests(unittest.TestCase):
