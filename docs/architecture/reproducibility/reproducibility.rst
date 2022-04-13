@@ -33,4 +33,5 @@ We refer a motivated reader to the
  rmodes
  blockdags
  helloWorldExample
+ graphcertification
  adding_drops
