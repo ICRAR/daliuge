@@ -57,11 +57,7 @@ unsigned long usecs(struct timeval *start, struct timeval *end)
 
 PyObject* build_error(PyObject* exception_type, const char* message)
 {
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
-    PyObject *exception = PyObject_CallFunctionObjArgs(exception_type, PyUnicode_FromString(message), NULL);
-    PyGILState_Release(gstate);
-    return exception;
+    return PyObject_CallFunctionObjArgs(exception_type, PyUnicode_FromString(message), NULL);
 }
 
 PyObject* init2(dlg_app_info *app, PyObject* pyObject)
@@ -71,10 +67,16 @@ PyObject* init2(dlg_app_info *app, PyObject* pyObject)
 	unsigned int sleep_seconds = 0;
     PyObject *key;
     PyObject *value;
+    PyObject *error;
     Py_ssize_t pos = 0;
 
+    PyGILState_STATE gstate;
+    gstate = PyGILState_Ensure();
+
     if (!PyDict_Check(pyObject)) {
-        return build_error(PyExc_TypeError, "pyObject should be dictionary");
+        error = build_error(PyExc_TypeError, "pyObject should be dictionary");
+        PyGILState_Release(gstate);
+        return error;
     }
 
 	while (PyDict_Next(pyObject, &pos, &key, &value)) {
@@ -104,7 +106,9 @@ PyObject* init2(dlg_app_info *app, PyObject* pyObject)
                 }
 #endif
                 else {
-                    return build_error(PyExc_TypeError, "print_stats should be a Boolean or Int");
+                    error = build_error(PyExc_TypeError, "print_stats should be a Boolean or Int");
+                    PyGILState_Release(gstate);
+                    return error;
                 }
             }
 
@@ -121,7 +125,9 @@ PyObject* init2(dlg_app_info *app, PyObject* pyObject)
                 }
 #endif
                 else {
-                    return build_error(PyExc_TypeError, "crash_and_burn should be a Boolean or Int");
+                    error = build_error(PyExc_TypeError, "crash_and_burn should be a Boolean or Int");
+                    PyGILState_Release(gstate);
+                    return error;
                 }
             }
 
@@ -135,7 +141,9 @@ PyObject* init2(dlg_app_info *app, PyObject* pyObject)
                 }
 #endif
                 else {
-                    return build_error(PyExc_TypeError, "bufsize should be an Int");
+                    error = build_error(PyExc_TypeError, "bufsize should be an Int");
+                    PyGILState_Release(gstate);
+                    return error;
                 }
             }
 
@@ -149,18 +157,24 @@ PyObject* init2(dlg_app_info *app, PyObject* pyObject)
                 }
 #endif
                 else {
-                    return build_error(PyExc_TypeError, "sleep_seconds should be an Int");
+                    error = build_error(PyExc_TypeError, "sleep_seconds should be an Int");
+                    PyGILState_Release(gstate);
+                    return error;
                 }
             }
         }
         else {
-            return build_error(PyExc_TypeError, "One of the keys was not a string");
+            error = build_error(PyExc_TypeError, "One of the keys was not a string");
+            PyGILState_Release(gstate);
+            return error;
         }
 	}
 
 	app->data = malloc(sizeof(struct app_data));
 	if (!app->data) {
-		return build_error(PyExc_MemoryError, "Allocating space for the app_data");
+		error = build_error(PyExc_MemoryError, "Allocating space for the app_data");
+		PyGILState_Release(gstate);
+		return error;
 	}
 	to_app_data(app)->print_stats = print_stats;
 	to_app_data(app)->crash_and_burn = crash_and_burn;
@@ -168,7 +182,9 @@ PyObject* init2(dlg_app_info *app, PyObject* pyObject)
 	to_app_data(app)->total = 0;
 	to_app_data(app)->write_duration = 0;
 	to_app_data(app)->bufsize = bufsize;
-	return PyLong_FromLong(0);
+	PyObject *result = PyLong_FromLong(0);
+	PyGILState_Release(gstate);
+	return result;
 }
 
 void data_written(dlg_app_info *app, const char *uid, const char *data, size_t n)
@@ -225,7 +241,11 @@ PyObject* run2(dlg_app_info *app)
 	buf = (char *)malloc(bufsize);
 	if (!buf) {
 		fprintf(stderr, "Couldn't allocate memory for read/write buffer\n");
-		return build_error(PyExc_MemoryError, "Couldn't allocate memory for read/write buffer");
+		PyGILState_STATE gstate;
+		gstate = PyGILState_Ensure();
+		PyObject *error = build_error(PyExc_MemoryError, "Couldn't allocate memory for read/write buffer");
+		PyGILState_Release(gstate);
+		return error;
 	}
 
 	for (i = 0; i < app->n_inputs; i++) {
@@ -261,5 +281,9 @@ PyObject* run2(dlg_app_info *app)
 		printf("Copied %.3f [MB] of data at %.3f [MB/s]\n", total_mb, total_mb / duration);
 	}
 
-	return PyLong_FromLong(0);
+	PyGILState_STATE gstate;
+	gstate = PyGILState_Ensure();
+	PyObject *result = PyLong_FromLong(0);
+	PyGILState_Release(gstate);
+	return result;
 }
