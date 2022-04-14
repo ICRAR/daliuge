@@ -158,6 +158,8 @@ class ManagerRestServer(RestServer):
         app.get("/api/sessions/<sessionId>/graph/size", callback=self.getGraphSize)
         app.get("/api/sessions/<sessionId>/graph/status", callback=self.getGraphStatus)
         app.post("/api/sessions/<sessionId>/graph/append", callback=self.addGraphParts)
+        app.get("/api/sessions/<sessionId>/repro/data", callback=self.getSessionReproData)
+        app.get("/api/sessions/<sessionId>/repro/status", callback=self.getSessionReproStatus)
 
         app.route("/api/sessions", method="OPTIONS", callback=self.acceptPreflight)
         app.route(
