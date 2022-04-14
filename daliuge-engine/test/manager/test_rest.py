@@ -199,3 +199,72 @@ class TestRest(unittest.TestCase):
         ex = cm.exception
         self.assertTrue(hostname in ex.args[0])
         self.assertTrue(isinstance(ex.args[0][hostname], InvalidGraphException))
+
+    def test_reprodata_get(self):
+        """
+        Tests deploying an incredibly basic graph with and without reprodata
+        Then querying the manager for that reprodata.
+        """
+        sid = '1234'
+        c = NodeManagerClient(hostname)
+        graph_spec = [
+            {
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "oid": "a",
+                "reprodata": default_repro.copy(),
+            },
+            default_graph_repro.copy(),
+        ]
+        # Test with reprodata
+        c.createSession(sid)
+        c.addGraphSpec(
+            sid,
+            graph_spec
+        )
+        c.deploySession(sid, completed_uids=['a'])
+        response = c.session_repro_data(sid)
+        self.assertIsNotNone(response['graph']['a']['reprodata']['rg_blockhash'])
+        self.assertIsNotNone(response['reprodata'])
+        c.destroySession(sid)
+        # Test without reprodata
+        graph_spec = graph_spec[0:1]
+        graph_spec[0].pop('reprodata')
+        c.createSession(sid)
+        c.addGraphSpec(sid, graph_spec)
+        c.deploySession(sid, completed_uids=['a'])
+        response = c.session_repro_data(sid)
+        self.assertEqual({'a': {'oid': 'a',
+                                'storage': 'Memory',
+                                'type': 'plain'}},
+                         response['graph'])
+        self.assertIsNone(response['reprodata'])
+
+    def test_reprostatus_get(self):
+        # Test with reprodata
+        sid = '1234'
+        c = NodeManagerClient(hostname)
+        graph_spec = [
+            {
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "oid": "a",
+                "reprodata": default_repro.copy(),
+            },
+            default_graph_repro.copy(),
+        ]
+        c.createSession(sid)
+        c.addGraphSpec(sid, graph_spec)
+        c.deploySession(sid, completed_uids=['a'])
+        response = c.session_repro_status(sid)
+        self.assertTrue(response)
+        c.destroySession(sid)
+        # Test without reprodata
+        graph_spec = graph_spec[0:1]
+        graph_spec[0].pop('reprodata')
+        c.createSession(sid)
+        c.addGraphSpec(sid, graph_spec)
+        c.deploySession(sid, completed_uids=['a'])
+        response = c.session_repro_status(sid)
+        self.assertTrue(response)
+        c.destroySession(sid)
