@@ -245,6 +245,9 @@ class NodeManagerBase(DROPManager):
     def getSessionReproStatus(self, sessionId):
         return self._sessions[sessionId].reprostatus
 
+    def getGraphReproData(self, sessionId):
+        return self._sessions[sessionId].reprodata
+
     def linkGraphParts(self, sessionId, lhOID, rhOID, linkType):
         self._check_session_id(sessionId)
         self._sessions[sessionId].linkGraphParts(lhOID, rhOID, linkType)
