@@ -28,12 +28,12 @@ import optparse
 import tempfile
 import unittest
 
-from dlg.common.reproducibility.constants import ReproducibilityFlags
+from dlg.common.reproducibility.constants import ReproducibilityFlags, ALL_RMODES
 from dlg.translator.tool_commands import dlg_fill, dlg_unroll, dlg_partition, dlg_map
 
 
 def _run_full_workflow(
-    rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
+        rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
 ):
     lgt = workflow_loc + "/" + workflow + ".graph"
     lgr = scratch_loc + "/" + workflow + "_" + str(rmode.value) + "LG.graph"
@@ -84,7 +84,7 @@ class IntegrationNothingTest(unittest.TestCase):
             scratch_loc=self.temp_out.name,
         )
         pgr = (
-            self.temp_out.name + "/" + graph_name + "_" + str(rmode.value) + "PG.graph"
+                self.temp_out.name + "/" + graph_name + "_" + str(rmode.value) + "PG.graph"
         )
 
         graph = _read_graph(pgr)
@@ -131,9 +131,14 @@ class IntegrationHelloWorldTest(unittest.TestCase):
                 workflow_loc=self.graph_loc,
                 scratch_loc=self.temp_out.name,
             )
-            self.graphs[graph][rmode.value] = _read_graph(
-                self.temp_out.name + "/" + graph + "_" + str(rmode.value) + "PG.graph"
-            )[-1]["signature"]
+            if rmode == ReproducibilityFlags.ALL:
+                self.graphs[graph][rmode.value] = _read_graph(
+                    self.temp_out.name + "/" + graph + "_" + str(rmode.value) + "PG.graph"
+                )[-1]
+            else:
+                self.graphs[graph][rmode.value] = _read_graph(
+                    self.temp_out.name + "/" + graph + "_" + str(rmode.value) + "PG.graph"
+                )[-1]["signature"]
 
     def test_integration_rerun(self):
         """
@@ -456,6 +461,18 @@ class IntegrationHelloWorldTest(unittest.TestCase):
             self.graphs["HelloSPython2"][rmode.value],
         )
 
+    def test_integration_all(self):
+        rmode = ReproducibilityFlags.ALL
+        self._process_graphs(rmode)
+        for rmode in ALL_RMODES:
+            self._process_graphs(rmode)
+        for graph in self.graphs:
+            for rmode in ALL_RMODES:
+                self.assertEqual(self.graphs[graph][rmode.value],
+                                 self.graphs[graph][ReproducibilityFlags.ALL.value][rmode.name][
+                                     'signature']
+                                 )
+
 
 class IntegrationSplitRmode(unittest.TestCase):
     """
@@ -487,7 +504,7 @@ class IntegrationSplitRmode(unittest.TestCase):
             scratch_loc=self.temp_out.name,
         )
         pgr = (
-            self.temp_out.name + "/" + graph_name + "_" + str(rmode.value) + "PG.graph"
+                self.temp_out.name + "/" + graph_name + "_" + str(rmode.value) + "PG.graph"
         )
         _run_full_workflow(
             rmode=rmode,
@@ -496,12 +513,12 @@ class IntegrationSplitRmode(unittest.TestCase):
             scratch_loc=self.temp_out.name,
         )
         pgr_2 = (
-            self.temp_out.name
-            + "/"
-            + control_graph_name
-            + "_"
-            + str(rmode.value)
-            + "PG.graph"
+                self.temp_out.name
+                + "/"
+                + control_graph_name
+                + "_"
+                + str(rmode.value)
+                + "PG.graph"
         )
 
         graph = _read_graph(pgr)
