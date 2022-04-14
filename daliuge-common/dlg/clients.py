@@ -170,7 +170,7 @@ class BaseDROPManagerClient(RestClient):
         Returns the reproducibility status of session `sessionId`.
         """
         status = self._get_json(
-            "/sessions/%s/repro/status" % (urllib.quote(sessionId),)
+            "/sessions/%s/repro/status" % (quote(sessionId),)
         )
         logger.debug(
             "Successfully read session %s reproducibility status (%s) from %s:%s",
@@ -185,7 +185,7 @@ class BaseDROPManagerClient(RestClient):
         """
         Returns the graph-wide reproducibility information of session `sessionId`.
         """
-        data = self._get_json("/sessions/%s/repro/data" % (urllib.quote(sessionId),))
+        data = self._get_json("/sessions/%s/repro/data" % (quote(sessionId),))
         logger.debug(
             "Successfully read session %s reproducibility data from %s:%s",
             sessionId,
