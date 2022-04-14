@@ -158,15 +158,18 @@ def accumulate_pgt_partition_drop_data(drop: dict):
         drop["reprodata"]["rmode"] = str(level.value)
     if level == ReproducibilityFlags.ALL:
         data = {}
+        unroll_data = accumulate_pgt_unroll_drop_data(drop)
         for rmode in ALL_RMODES:
             pgt_fields = pgt_partition_block_fields(rmode)
             data[rmode.name] = extract_fields(drop, pgt_fields)
+            unroll_data[rmode.name].update(data[rmode.name])
+        return unroll_data
     else:
         pgt_fields = pgt_partition_block_fields(level)
         data = extract_fields(drop, pgt_fields)
-    return_data = accumulate_pgt_unroll_drop_data(drop)
-    return_data.update(data)
-    return return_data
+        return_data = accumulate_pgt_unroll_drop_data(drop)
+        return_data.update(data)
+        return return_data
 
 
 def accumulate_pg_drop_data(drop: dict):
@@ -518,14 +521,14 @@ def lg_build_blockdag(logical_graph: dict, level=None):
         # Process
         build_lg_block_data(dropset[did][0], level)
         visited.append(did)
-        rmode = rflag_caster(dropset[did][0]["reprodata"]["rmode"]).value
+        rmode = rflag_caster(dropset[did][0]["reprodata"]["rmode"])
         if rmode == ReproducibilityFlags.ALL:
             rmode = level  # Only building one layer at a time.
         for neighbour in neighbourset[did]:
             dropset[neighbour][1] -= 1
             parenthash = {}
             if rmode != ReproducibilityFlags.NOTHING:
-                if rmode == ReproducibilityFlags.REPRODUCE.value:
+                if rmode == ReproducibilityFlags.REPRODUCE:
                     if dropset[did][0]["category"] in STORAGE_TYPES and (
                             dropset[did][1] == 0 or dropset[did][2] == 0
                     ) and (did in roots or did in leaves):
@@ -554,7 +557,7 @@ def lg_build_blockdag(logical_graph: dict, level=None):
                             )
                         # parenthash.extend(dropset[did][0]['reprodata']['lg_parenthashes'])
                 if (
-                        rmode != ReproducibilityFlags.REPRODUCE.value
+                        rmode != ReproducibilityFlags.REPRODUCE
                 ):  # Non-compressing behaviour
                     if level is None:
                         parenthash[did] = dropset[did][0]["reprodata"]["lg_blockhash"]
@@ -651,8 +654,8 @@ def build_blockdag(drops: list, abstraction: str = "pgt", level=None):
     while queue:
         did = queue.pop()
         block_builder(dropset[did][0], level)
-        rmode = rflag_caster(dropset[did][0]["reprodata"]["rmode"])
         visited.append(did)
+        rmode = rflag_caster(dropset[did][0]["reprodata"]["rmode"])
         if rmode == ReproducibilityFlags.ALL:
             rmode = level
         for neighbour in neighbourset[did]:
@@ -660,63 +663,38 @@ def build_blockdag(drops: list, abstraction: str = "pgt", level=None):
             parenthash = {}
             if rmode != ReproducibilityFlags.NOTHING:
                 if rmode == ReproducibilityFlags.REPRODUCE:
+                    # WARNING: Hack! may break later, proceed with caution
                     if level is None:
-                        # WARNING: Hack! may break later, proceed with caution
-                        if dropset[did][0]["reprodata"]["lgt_data"][
-                            "category"] in STORAGE_TYPES and (
-                                dropset[did][1] == 0 or dropset[did][2] == 0) and (
-                                did in roots or did in leaves):
-                            # Add my new hash to the parent-hash list
-                            if did not in parenthash:
-                                if level is None:
-                                    parenthash[did] = dropset[did][0]["reprodata"][
-                                        blockstr + "_blockhash"
-                                        ]
-                                else:
-                                    parenthash[did] = dropset[did][0]["reprodata"][
-                                        level.name
-                                    ][blockstr + "_blockhash"]
-                            # parenthash.append(dropset[did][0]['reprodata'] \
-                            # [blockstr + "_blockhash"])
-                        else:
-                            # Add my parenthashes to the parent-hash list
-                            if level is None:
-                                parenthash.update(
-                                    dropset[did][0]["reprodata"][parentstr]
-                                )
-                            else:
-                                parenthash.update(
-                                    dropset[did][0]["reprodata"][level.name][parentstr]
-                                )
+                        category = dropset[did][0]["reprodata"]["lgt_data"][
+                        "category"]
                     else:
-                        # WARNING: Hack! may break later, proceed with caution
-                        if dropset[did][0]["reprodata"][level.name]["lgt_data"][
-                            "category"
-                        ] in STORAGE_TYPES and (
-                                dropset[did][1] == 0 or dropset[did][2] == 0
-                        ):
-                            # Add my new hash to the parent-hash list
-                            if did not in parenthash:
-                                if level is None:
-                                    parenthash[did] = dropset[did][0]["reprodata"][
-                                        blockstr + "_blockhash"
-                                        ]
-                                else:
-                                    parenthash[did] = dropset[did][0]["reprodata"][
-                                        level.name
-                                    ][blockstr + "_blockhash"]
-                            # parenthash.append(dropset[did][0]['reprodata']\
-                            # [blockstr + "_blockhash"])
-                        else:
-                            # Add my parenthashes to the parent-hash list
+                        category = dropset[did][0]["reprodata"][rmode.name]["lgt_data"][
+                            "category"]
+                    if category in STORAGE_TYPES and (
+                            dropset[did][1] == 0 or dropset[did][2] == 0) and (
+                            did in roots or did in leaves):
+                        # Add my new hash to the parent-hash list
+                        if did not in parenthash:
                             if level is None:
-                                parenthash.update(
-                                    dropset[did][0]["reprodata"][parentstr]
-                                )
+                                parenthash[did] = dropset[did][0]["reprodata"][
+                                    blockstr + "_blockhash"
+                                    ]
                             else:
-                                parenthash.update(
-                                    dropset[did][0]["reprodata"][level.name][parentstr]
-                                )
+                                parenthash[did] = dropset[did][0]["reprodata"][
+                                    level.name
+                                ][blockstr + "_blockhash"]
+                        # parenthash.append(dropset[did][0]['reprodata'] \
+                        # [blockstr + "_blockhash"])
+                    else:
+                        # Add my parenthashes to the parent-hash list
+                        if level is None:
+                            parenthash.update(
+                                dropset[did][0]["reprodata"][parentstr]
+                            )
+                        else:
+                            parenthash.update(
+                                dropset[did][0]["reprodata"][level.name][parentstr]
+                            )
                 if rmode != ReproducibilityFlags.REPRODUCE:
                     if level is None:
                         parenthash[did] = dropset[did][0]["reprodata"][

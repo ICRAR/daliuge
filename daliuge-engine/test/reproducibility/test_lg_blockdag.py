@@ -960,11 +960,12 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         parenthashes = list(
             lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
         )
-        self.assertTrue(
-            len(leaves) == 1
-            and len(parenthashes) == 2
-            and parenthashes[0] == parenthashes[1]
-        )
+        self.assertTrue(len(leaves) == 1)
+        if self.rmode not in [ReproducibilityFlags.REPRODUCE, ReproducibilityFlags.NOTHING]:
+            self.assertTrue(len(parenthashes) == 2)
+            self.assertTrue(parenthashes[0] == parenthashes[1])
+        else:
+            self.assertTrue(len(parenthashes) == 0)
 
     def test_twoend(self):
         """
@@ -1006,7 +1007,9 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         parenthash2 = list(
             lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
         )
-        self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
+        self.assertTrue(parenthash1 == parenthash2)
+        if self.rmode not in [ReproducibilityFlags.REPRODUCE, ReproducibilityFlags.NOTHING]:
+            self.assertTrue(parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
         """
@@ -1020,7 +1023,12 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         parenthashes = list(
             lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
         )
-        self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+        if self.rmode == ReproducibilityFlags.REPRODUCE:
+            self.assertTrue(len(parenthashes) == 2)
+        elif self.rmode == ReproducibilityFlags.NOTHING:
+            self.assertTrue(len(parenthashes) == 0)
+        else:
+            self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_data_sandwich(self):
         """
@@ -1035,7 +1043,14 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         parenthashes = list(
             lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
         )
-        self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+        if self.rmode == ReproducibilityFlags.NOTHING:
+            self.assertTrue(len(parenthashes) == 0)
+        else:
+            self.assertTrue(len(parenthashes) == 1)
+            if self.rmode != ReproducibilityFlags.REPRODUCE:
+                self.assertTrue(sourcehash == parenthashes[0])
+            else:
+                self.assertTrue(sourcehash != parenthashes[0])
 
     def test_computation_sandwich(self):
         """
@@ -1049,7 +1064,10 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         parenthashes = list(
             lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
         )
-        self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+        if self.rmode not in [ReproducibilityFlags.REPRODUCE, ReproducibilityFlags.NOTHING]:
+            self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+        else:
+            self.assertTrue(len(parenthashes) == 0)
 
 
 class LogicalBlockdagAllTests(unittest.TestCase):
@@ -1088,11 +1106,12 @@ class LogicalBlockdagAllTests(unittest.TestCase):
                     "lg_parenthashes"
                 ].values()
             )
-            self.assertTrue(
-                len(leaves) == 1
-                and len(parenthashes) == 2
-                and parenthashes[0] == parenthashes[1]
-            )
+            self.assertTrue(len(leaves) == 1)
+            if rmode != ReproducibilityFlags.REPRODUCE:
+                self.assertTrue(len(parenthashes) == 2)
+                self.assertTrue(parenthashes[0] == parenthashes[1])
+            else:
+                self.assertTrue(len(parenthashes) == 0)
 
     def test_twoend(self):
         """
@@ -1143,7 +1162,9 @@ class LogicalBlockdagAllTests(unittest.TestCase):
                     "lg_parenthashes"
                 ].values()
             )
-            self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
+            self.assertTrue(parenthash1 == parenthash2)
+            if rmode != ReproducibilityFlags.REPRODUCE:
+                self.assertTrue(parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
         """
@@ -1162,7 +1183,10 @@ class LogicalBlockdagAllTests(unittest.TestCase):
                     "lg_parenthashes"
                 ].values()
             )
-            self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+            if rmode != ReproducibilityFlags.REPRODUCE:
+                self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+            else:
+                self.assertTrue(len(parenthashes) == 2)
 
     def test_data_sandwich(self):
         """
@@ -1182,7 +1206,11 @@ class LogicalBlockdagAllTests(unittest.TestCase):
                     "lg_parenthashes"
                 ].values()
             )
-            self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+            self.assertTrue(len(parenthashes) == 1)
+            if rmode != ReproducibilityFlags.REPRODUCE:
+                self.assertTrue(sourcehash == parenthashes[0])
+            else:
+                self.assertTrue(sourcehash != parenthashes[0])
 
     def test_computation_sandwich(self):
         """
@@ -1201,4 +1229,7 @@ class LogicalBlockdagAllTests(unittest.TestCase):
                     "lg_parenthashes"
                 ].values()
             )
-            self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+            if rmode != ReproducibilityFlags.REPRODUCE:
+                self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+            else:
+                self.assertTrue(len(parenthashes) == 0)

@@ -1031,4 +1031,7 @@ class PhysicalBlockdagAllTests(unittest.TestCase):
             parenthashes = list(
                 pgr[2]["reprodata"][rmode.name]["pg_parenthashes"].values()
             )
-            self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+            if rmode != ReproducibilityFlags.REPRODUCE:
+                self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+            else:
+                self.assertTrue(len(parenthashes) == 0)
