@@ -180,7 +180,7 @@ def dlg_fill(parser, args):
         "-R",
         "--reproducibility",
         default="0",
-        help="Level of reproducibility. Default 0 (NOTHING). Accepts '0'-'5'",
+        help="Level of reproducibility. Default 0 (NOTHING). Accepts '0,1,2,4,5,6,7,8'",
     )
 
     (opts, args) = parser.parse_args(args)
@@ -503,7 +503,8 @@ def dlg_submit(parser, args):
         "--reproducibility",
         action="store_true",
         dest="reproducibility",
-        help="Fetch (and output) reproducibility data for the final execution graph (default: False)",
+        help="Fetch (and output) reproducibility data for the final execution graph "
+             "(default: False)",
     )
     (opts, args) = parser.parse_args(args)
 
