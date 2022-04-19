@@ -96,7 +96,7 @@ class CDlgApp(ctypes.Structure):
     def pack_python(self):
         out = {}
         for key, val in self._fields_:
-            out[key] = six.b(str(val))
+            out[key] = repr(getattr(self, key))
         return out
 
 
