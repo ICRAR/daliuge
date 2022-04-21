@@ -387,7 +387,10 @@ class AbstractDROP(EventFirer):
             elif isinstance(obj, dlg_dict_param):
                 value = kwargs.get(attr_name, obj.default_value)
                 if isinstance(value, str):
-                    value = ast.literal_eval(value)
+                    if value == "":
+                        value = {}
+                    else:
+                        value = ast.literal_eval(value)
                 if value is not None and not isinstance(value, dict):
                     raise Exception(
                         "dlg_dict_param {} is not a dict. It is a {}".format(
