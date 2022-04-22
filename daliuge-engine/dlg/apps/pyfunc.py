@@ -65,13 +65,17 @@ def serialize_func(f):
 
     fser = dill.dumps(f)
     fdefaults = {"args":[], "kwargs": {}}
+    adefaults = {"args":[], "kwargs": {}}
     a = inspect.getfullargspec(f)
     if a.defaults:
         fdefaults["kwargs"] = dict(
             zip(a.args[-len(a.defaults):], [serialize_data(d) for d in a.defaults])
         )
+        adefaults["kwargs"] = dict(
+            zip(a.args[-len(a.defaults):], [d for d in a.defaults])
+        )
     logger.debug(f"Introspection of function {f}: {a}")
-    logger.debug("Defaults for function %r: %r", f, fdefaults)
+    logger.debug("Defaults for function %r: %r", f, adefaults)
     return fser, fdefaults
 
 
@@ -363,7 +367,7 @@ class PyFuncApp(BarrierAppDROP):
         #     #raise ValueError
 
         # use explicit mapping of inputs to arguments first
-        # TODO: Required by dlg_delayed?? Else, we should reall not do this. 
+        # TODO: Required by dlg_delayed?? Else, we should really not do this. 
         kwargs = {
             name: inputs.pop(uid)
             for name, uid in self.func_arg_mapping.items()
@@ -382,7 +386,7 @@ class PyFuncApp(BarrierAppDROP):
         kwargs = {}
         if ('inputs' in self.parameters and isinstance(self.parameters['inputs'][0], dict)):
             logger.debug(f"Using named ports to identify inputs: "+\
-                    f"{self.parameters['inputs']}")            
+                    f"{self.parameters['inputs']}")
             for i in range(min(len(inputs),self.fn_nargs +\
                 len(self.arguments.kwonlyargs))):
                 # key for final dict is value in named ports dict
@@ -397,25 +401,75 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(f"updating funcargs with {kwargs}")
         self.funcargs.update(kwargs)
 
+        # Try to get values for still missing positional arguments from Application Args
+        if "applicationArgs" in self.parameters:
+            kwargs = {}
+            posargs = self.arguments.args[:self.fn_npos]
+            for pa in posargs:
+                if pa not in self.funcargs:
+                    if pa in self.parameters["applicationArgs"]:
+                        value = self.parameters["applicationArgs"][pa]['value']
+                        ptype = self.parameters["applicationArgs"][pa]['type']
+                        if ptype in ["Complex", "Json"]:
+                            try:
+                                value = ast.literal_eval(value)
+                            except:
+                                pass
+                        kwargs.update({
+                            pa:
+                            value
+                        })
+                    else:
+                        logger.warning(f"Required positional argument '{pa}' not found!")
+            logger.debug(f"updating funcargs with {kwargs}")
+            self.funcargs.update(kwargs)
+
+            # Try to get values for still missing kwargs arguments from parameters
+            kwargs = {}
+            kws = self.arguments.args[self.fn_npos:]
+            for ka in kws:
+                if ka not in self.funcargs:
+                    if ka in self.parameters["applicationArgs"]:
+                        value = self.parameters["applicationArgs"][ka]['value']
+                        ptype = self.parameters["applicationArgs"][ka]['type']
+                        if ptype in ["Complex", "Json"]:
+                            try:
+                                value = ast.literal_eval(value)
+                            except:
+                                pass
+                        kwargs.update({
+                            ka:
+                            value
+                        })
+                    else:
+                        logger.warning(f"Keyword argument '{ka}' not found!")
+            logger.debug(f"updating funcargs with {kwargs}")
+            self.funcargs.update(kwargs)
+
         # Fill rest with default arguments if there are any more
         kwargs = {}
         for kw in self.func_defaults.keys():
+            value = self.func_defaults[kw]
             if kw not in self.funcargs:
-                kwargs.update({kw: self.func_defaults[kw]})
+                kwargs.update({kw: value})
         logger.debug(f"updating funcargs with {kwargs}")
         self.funcargs.update(kwargs)
 
         logger.debug(f"Running {self.func_name} with {self.funcargs}")
         result = self.f(**self.funcargs)
+        logger.debug(f"Finished execution of {self.func_name}.")
 
         # Depending on how many outputs we have we treat our result
         # as an iterable or as a single object. Each result is pickled
         # and written to its corresponding output
         outputs = self.outputs
-        if len(outputs) == 1:
-            result = [result]
-        for r, o in zip(result, outputs):
-            if self.pickle:
-                o.write(pickle.dumps(r))  # @UndefinedVariable
-            else:
-                o.write(repr(r).encode('utf-8'))
+        if len(outputs) > 0:
+            if len(outputs) == 1:
+                result = [result]
+            for r, o in zip(result, outputs):
+                p = pickle.dumps(r)
+                if self.pickle:
+                    logger.debug(f"Writing pickeled result {type(r)} to {o}")
+                    o.write(pickle.dumps(r))  # @UndefinedVariable
+                else:
+                    o.write(repr(r).encode('utf-8'))
