@@ -550,6 +550,17 @@ class LGNode:
                         else:
                             kwargs[k_v[0]] = k_v[1]
 
+    def _getIdText(self, port="inputPorts", index=0):
+        """
+        Return IdText of port if it exists
+        """
+        idText = None
+        if port in self.jd and len(self.jd[port]) > index and \
+            "IdText" in self.jd[port][index]:
+            idText = self.jd[port][index]["IdText"]
+        return idText
+
+
     def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
         """
         TODO
@@ -563,6 +574,8 @@ class LGNode:
                 kwargs["dw"] = int(self.jd["data_volume"])  # dw -- data weight
             else:
                 kwargs["dw"] = 1
+            iIdText = self._getIdText(port="inputPorts")
+            oIdText = self._getIdText(port="outputPorts")
             if self.is_start_listener():
                 # create socket listener DROP first
                 drop_spec = dropdict(
@@ -587,7 +600,7 @@ class LGNode:
                 # tw -- task weight
                 dropSpec_socket["autostart"] = 1
                 kwargs["listener_drop"] = dropSpec_socket
-                dropSpec_socket.addOutput(drop_spec)
+                dropSpec_socket.addOutput(drop_spec, IdText=oIdText)
             else:
                 drop_spec = dropdict(
                     {
@@ -758,7 +771,7 @@ class LGNode:
             sij = self.inputs[0].jd
             if not "data_volume" in sij:
                 raise GInvalidNode(
-                    "GroupBy construct follows a DataDrop, not '%s'" % sij["category"]
+                    "GroupBy should be connected to a DataDrop, not '%s'" % sij["category"]
                 )
             dw = int(sij["data_volume"]) * self.groupby_width
             dropSpec_grp = dropdict(
@@ -772,10 +785,10 @@ class LGNode:
                 }
             )
             kwargs["grp-data_drop"] = dropSpec_grp
-            kwargs["tw"] = 1  # barriar literarlly takes no time for its own computation
+            kwargs["tw"] = 1  # barrier literarlly takes no time for its own computation
             kwargs["sleepTime"] = 1
-            drop_spec.addOutput(dropSpec_grp)
-            dropSpec_grp.addProducer(drop_spec)
+            drop_spec.addOutput(dropSpec_grp, IdText="grpdata")
+            dropSpec_grp.addProducer(drop_spec, IdText="grpdata")
         elif drop_type == Categories.GATHER:
             drop_spec = dropdict(
                 {
@@ -804,8 +817,8 @@ class LGNode:
             kwargs["gather-data_drop"] = dropSpec_gather
             kwargs["tw"] = 1
             kwargs["sleepTime"] = 1
-            drop_spec.addOutput(dropSpec_gather)
-            dropSpec_gather.addProducer(drop_spec)
+            drop_spec.addOutput(dropSpec_gather, IdText="gthrdata")
+            dropSpec_gather.addProducer(drop_spec, IdText="gthrdata")
         elif drop_type == Categories.SERVICE:
             raise GraphException(
                 f"DROP type: {drop_type} should not appear in physical graph"
@@ -1286,14 +1299,16 @@ class LG:
                     "dw": 0,
                 }
             )
-            sdrop.addOutput(dropSpec_null)
-            dropSpec_null.addProducer(sdrop)
-            dropSpec_null.addStreamingConsumer(tdrop)
-            tdrop.addStreamingInput(dropSpec_null)
+            sdrop.addOutput(dropSpec_null, IdText="stream")
+            dropSpec_null.addProducer(sdrop, IdText="stream")
+            dropSpec_null.addStreamingConsumer(tdrop, IdText="stream")
+            tdrop.addStreamingInput(dropSpec_null, IdText="stream")
             self._drop_dict["new_added"].append(dropSpec_null)
         elif s_type in APP_DROP_TYPES:
-            sdrop.addOutput(tdrop)
-            tdrop.addProducer(sdrop)
+            # target is data drop; get name of input port
+            tIdText = tlgn._getIdText("inputPorts")
+            sdrop.addOutput(tdrop, IdText=tIdText)
+            tdrop.addProducer(sdrop, IdText=tIdText)
             if Categories.BASH_SHELL_APP == s_type:
                 bc = src_drop["command"]
                 bc.add_output_param(tlgn.id, tgt_drop["oid"])
@@ -1306,16 +1321,18 @@ class LG:
                 tup = self._gather_cache[gather_oid]
                 tup[2].append(tgt_drop)
             else:  # sdrop is a data drop
+                # there should be only one port, get the name
+                sIdText = slgn._getIdText("outputPorts")
                 if llink.get("is_stream", False):
                     logger.debug(
                         "link stream connection %s to %s" % (sdrop["oid"], tdrop["oid"])
                     )
-                    sdrop.addStreamingConsumer(tdrop)
-                    tdrop.addStreamingInput(sdrop)
+                    sdrop.addStreamingConsumer(tdrop, IdText=sIdText)
+                    tdrop.addStreamingInput(sdrop, IdText=sIdText)
                 else:
                     # print("not a stream from %s to %s" % (llink['from'], llink['to']))
-                    sdrop.addConsumer(tdrop)
-                    tdrop.addInput(sdrop)
+                    sdrop.addConsumer(tdrop, IdText=sIdText)
+                    tdrop.addInput(sdrop, IdText=sIdText)
             if Categories.BASH_SHELL_APP == t_type:
                 bc = tgt_drop["command"]
                 bc.add_input_param(slgn.id, src_drop["oid"])
@@ -1349,7 +1366,7 @@ class LG:
             if slgn.is_group() and not tlgn.is_group():
                 # this link must be artifically added (within group link)
                 # since
-                # 1. GroupBy's "natual" output must be a Scatter (i.e. group)
+                # 1. GroupBy's "natural" output must be a Scatter (i.e. group)
                 # 2. Scatter "naturally" does not have output
                 if (
                     slgn.is_gather() and tlgn.gid != sid
@@ -1372,9 +1389,10 @@ class LG:
                             gather_input_list = self._gather_cache[ga_drop["oid"]][1]
                             # TODO merge this code into the function
                             # def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink)
+                            tIdText = tlgn._getIdText("inputPorts")
                             for gddrop in gather_input_list:
-                                gddrop.addConsumer(tdrops[j])
-                                tdrops[j].addInput(gddrop)
+                                gddrop.addConsumer(tdrops[j], IdText=tIdText)
+                                tdrops[j].addInput(gddrop, IdText=tIdText)
                                 j += 1
 
                             # if 'gather-data_drop' in ga_drop:
@@ -1560,16 +1578,17 @@ class LG:
             for data_drop in input_list:
                 # TODO merge this code into the function
                 # def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink)
+                sIdText = slgn._getIdText("outputPorts")
                 if llink.get("is_stream", False):
                     logger.debug(
                         "link stream connection %s to %s"
                         % (data_drop["oid"], output_drop["oid"])
                     )
-                    data_drop.addStreamingConsumer(output_drop)
-                    output_drop.addStreamingInput(data_drop)
+                    data_drop.addStreamingConsumer(output_drop, IdText=sIdText)
+                    output_drop.addStreamingInput(data_drop, IdText=sIdText)
                 else:
-                    data_drop.addConsumer(output_drop)
-                    output_drop.addInput(data_drop)
+                    data_drop.addConsumer(output_drop, IdText=sIdText)
+                    output_drop.addInput(data_drop, IdText=sIdText)
                 # print(data_drop['nm'], data_drop['oid'], '-->', output_drop['nm'], output_drop['oid'])
 
         logger.info(
