@@ -633,6 +633,8 @@ def build_blockdag(drops: list, abstraction: str = "pgt", level=None):
             # Assumes the model where all edges are defined from source to destination.
             # This may not always be the case.
             for dest in drop["outputs"]:
+                if isinstance(dest, dict):
+                    dest = next(iter(dest))
                 dropset[dest][1] += 1
                 dropset[did][2] += 1
                 neighbourset[did].append(dest)
@@ -640,6 +642,8 @@ def build_blockdag(drops: list, abstraction: str = "pgt", level=None):
                 "consumers" in drop
         ):  # There may be some bizarre scenario when a drop has both
             for dest in drop["consumers"]:
+                if isinstance(dest, dict):
+                    dest = next(iter(dest))
                 dropset[dest][1] += 1
                 dropset[did][2] += 1
                 neighbourset[did].append(
