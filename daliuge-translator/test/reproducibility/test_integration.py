@@ -529,7 +529,6 @@ class IntegrationSplitRmode(unittest.TestCase):
         self.assertEqual(
             ReproducibilityFlags.NOTHING.value, int(graph_reprodata["rmode"])
         )
-        self.assertNotEqual(control_signature, graph_reprodata["signature"])
 
         for drop in graph:
             if drop["reprodata"]["rmode"] == str(ReproducibilityFlags.NOTHING.value):
