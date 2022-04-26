@@ -381,7 +381,7 @@ def gen_pg():
             elif mparse.scheme == "https":
                 mport = 443
         mprefix = mparse.path
-        if mprefix[-1] == "/":
+        if mprefix.endswith("/"):
             mprefix = mprefix[:-1]
     else:
         mhost = request.query.get("dlg_mgr_host")

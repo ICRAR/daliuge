@@ -59,14 +59,17 @@ class TestPGGen(unittest.TestCase):
         # pprint.pprint(dict(lg._drop_dict))
 
     def test_pgt_to_json(self):
-        fp = get_lg_fname("cont_img.graph")
+        fp = get_lg_fname("HelloWorld_simple.graph")
         lg = LG(fp)
         drop_list = lg.unroll_to_tpl()
         pgt = PGT(drop_list)
-        # print pgt.to_gojs_json()
+        pg_json = pgt.to_gojs_json()
+        _dum = pg_json
+        # we should really check the output here
 
     def test_metis_pgtp(self):
         lgnames = [
+            "HelloWorld_simple.graph",
             "simpleMKN.graph",
             "testLoop.graph",
             "cont_img.graph",
@@ -83,6 +86,7 @@ class TestPGGen(unittest.TestCase):
 
     def test_metis_pgtp_gen_pg(self):
         lgnames = [
+            "HelloWorld_simple.graph",
             "testLoop.graph",
             "cont_img.graph",
             "test_grpby_gather.graph",

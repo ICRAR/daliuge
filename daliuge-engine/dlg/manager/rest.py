@@ -365,10 +365,12 @@ class NMRestServer(ManagerRestServer):
     def getNMStatus(self):
         # we currently return the sessionIds, more things might be added in the
         # future
+        logger.debug("NM REST call: status")
         return {"sessions": self.sessions()}
 
     @daliuge_aware
     def getLogFile(self, sessionId):
+        logger.debug("NM REST call: logfile")
         logdir = self.dm.getLogDir()
         logfile = generateLogFileName(logdir, sessionId)
         if not os.path.isfile(logfile):
@@ -379,6 +381,7 @@ class NMRestServer(ManagerRestServer):
 
     @daliuge_aware
     def linkGraphParts(self, sessionId):
+        logger.debug("NM REST call: graph/link")
         params = bottle.request.params
         lhOID = params["lhOID"]
         rhOID = params["rhOID"]
@@ -387,6 +390,7 @@ class NMRestServer(ManagerRestServer):
 
     @daliuge_aware
     def add_node_subscriptions(self, sessionId):
+        logger.debug(f"NM REST call: add_subscriptions {bottle.request.json}")
         if bottle.request.content_type != "application/json":
             bottle.response.status = 415
             return

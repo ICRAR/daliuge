@@ -13,14 +13,15 @@ case "$1" in
         echo "Build finished!"
         exit 0 ;;
     "dev")
+        C_TAG="master"
         [[ ! -z $2 ]] && C_TAG=$2
         export VERSION=`git describe --tags --abbrev=0|sed s/v//`
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
-        echo "Building daliuge-engine development version using daliuge-common:${VCS_TAG}"
+        echo "Building daliuge-engine development version using daliuge-common:${C_TAG}"
         echo "$VERSION:$VCS_TAG" > dlg/manager/web/VERSION
         git rev-parse --verify HEAD >> dlg/manager/web/VERSION
         cp ../LICENSE dlg/manager/web/.
-        docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-engine:${VCS_TAG} -f docker/Dockerfile.dev .
+        docker build --build-arg VCS_TAG=${C_TAG} --no-cache -t icrar/daliuge-engine:${VCS_TAG} -f docker/Dockerfile.dev .
         echo "Build finished!"
         exit 0;;
     "devall")

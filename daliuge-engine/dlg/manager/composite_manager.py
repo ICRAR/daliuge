@@ -44,6 +44,12 @@ def uid_for_drop(dropSpec):
         return dropSpec["uid"]
     return dropSpec["oid"]
 
+def sanitize_link(link):
+    """
+    Links can now be dictionaries, but we only need
+    the key.
+    """
+    return list(link.keys())[0] if isinstance(link,dict) else link
 
 def sanitize_relations(interDMRelations, graph):
     # TODO: Big change required to remove this hack here
@@ -78,8 +84,11 @@ def sanitize_relations(interDMRelations, graph):
     # know about the OIDs.
     newDMRelations = []
     for rel in interDMRelations:
-        lhs = uid_for_drop(graph[rel.lhs])
-        rhs = uid_for_drop(graph[rel.rhs])
+        lhs = rel.lhs
+        lhs = sanitize_link(rel.lhs)
+        lhs = uid_for_drop(graph[lhs])
+        rhs = sanitize_link(rel.rhs)
+        rhs = uid_for_drop(graph[rhs])
         new_rel = DROPRel(lhs, rel.rel, rhs)
         newDMRelations.append(new_rel)
     interDMRelations[:] = newDMRelations

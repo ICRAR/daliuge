@@ -26,7 +26,7 @@ import random
 from typing import List, Optional
 import urllib.error
 import urllib.request
-
+import logging
 import time
 import ast
 import numpy as np
@@ -46,6 +46,9 @@ from dlg.meta import (
 )
 from dlg.exceptions import DaliugeException
 from dlg.apps.pyfunc import serialize_data, deserialize_data
+
+
+logger = logging.getLogger(__name__)
 
 
 class NullBarrierApp(BarrierAppDROP):
@@ -341,7 +344,7 @@ class AverageArraysApp(BarrierAppDROP):
         self.marray = []
 
     def initialize(self, **kwargs):
-        super(AverageArraysApp, self).initialize(**kwargs)
+        super().initialize(**kwargs)
 
     def run(self):
         # At least one output should have been added
@@ -372,7 +375,10 @@ class AverageArraysApp(BarrierAppDROP):
                 print(f"Input does not contain data!")
             else:
                 sarray = pickle.loads(sarray)
-                marray.extend(sarray)
+                if isinstance(sarray, (list, tuple, np.ndarray)):
+                    marray.extend(list(sarray))
+                else:
+                    marray.append(sarray)
         self.marray = marray
 
     def averageArray(self):
@@ -401,7 +407,7 @@ class AverageArraysApp(BarrierAppDROP):
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @param[in] cparam/function Function/sum/Select/readwrite/False/sum,prod,min,max,add,multiply,maximum,minimum/False/
 #     \~English The function used for gathering
-# @param[in] cparam/function reduce_axes/None/String/readonly/False//False/
+# @param[in] cparam/reduce_axes "Reduce Axes"/None/String/readonly/False//False/
 #     \~English The ndarray axes to reduce, None reduces all axes for sum, prod, max, min functions
 # @param[in] port/array Array/npy/
 #     \~English Port for the input array(s)
@@ -411,7 +417,7 @@ class AverageArraysApp(BarrierAppDROP):
 class GenericNpyGatherApp(BarrierAppDROP):
     """
     A BarrierAppDrop that reduces then gathers one or more inputs using cummulative operations.
-    function:  string <['sum']|'prod'|'min'|'max'|'add'|'multiply'|'maximum'|'minimum'>.
+    function:  string <'sum'|'prod'|'min'|'max'|'add'|'multiply'|'maximum'|'minimum'>.
 
     """
 
@@ -424,26 +430,22 @@ class GenericNpyGatherApp(BarrierAppDROP):
     )
 
     # reduce and combine operation pair names
+    # reduce operation reduces the dimensionality of a ndarray
+    # gather operation combines ndarrays and retains dimensionality
     functions = {
-        # reduce and gather e.g. output dimension is reduces
-        "sum": "add",  # sum reduction of inputs along an axis first then reduces across drops
-        "prod": "multiply",  # prod reduction of inputs along an axis first then reduces across drops
-        "max": "maximum",  # max reduction of input along an axis first then reduces across drops
-        "min": "minimum",  # min reduction of input along an axis first then reduces across drops
+        # reduce and gather (output dimension is reduced)
+        "sum": "add",  # sum reduction of inputs along an axis first then gathers across drops
+        "prod": "multiply",  # prod reduction of inputs along an axis first then gathers across drops
+        "max": "maximum",  # max reduction of input along an axis first then gathers across drops
+        "min": "minimum",  # min reduction of input along an axis first then gathers across drops
         # gather only
         "add": None,  # elementwise addition of inputs, ndarrays must be of same shape
         "multiply": None,  # elementwise multiplication of inputs, ndarrays must be of same shape
         "maximum": None,  # elementwise maximums of inputs, ndarrays must be of same shape
         "minimum": None,  # elementwise minimums of inputs, ndarrays must be of same shape
     }
-    function: str = dlg_string_param("function", "sum")
-    reduce_axes: list = dlg_list_param("reduce_axes", "None")
-
-    def __init__(self, oid, uid, **kwargs):
-        super().__init__(oid, kwargs)
-
-    def initialize(self, **kwargs):
-        super().initialize(**kwargs)
+    function: str = dlg_string_param("function", "sum")  # type: ignore
+    reduce_axes: list = dlg_list_param("reduce_axes", "None")  # type: ignore
 
     def run(self):
         if len(self.inputs) < 1:
@@ -453,33 +455,34 @@ class GenericNpyGatherApp(BarrierAppDROP):
         if self.function not in self.functions:
             raise Exception(f"Function {self.function} not supported by {self}")
 
-        result = (
-            self.reduce_combine_inputs()
-            if self.functions[self.function] is not None
-            else self.combine_inputs()
-        )
+        result = self.reduce_gather_inputs()\
+            if self.functions[self.function] is not None\
+            else self.gather_inputs()
+
         for o in self.outputs:
             droputils.save_numpy(o, result)
 
-    def reduce_combine_inputs(self):
+    def reduce_gather_inputs(self):
+        """reduces then gathers each input drop interpreted as an npy drop"""
         result: Optional[Number] = None
         reduce = getattr(np, f"{self.function}")
-        combine = getattr(np, f"{self.functions[self.function]}")
+        gather = getattr(np, f"{self.functions[self.function]}")
         for input in self.inputs:
             data = droputils.load_numpy(input)
-            result = (
-                reduce(data, axis=self.reduce_axes)
-                if result is None
-                else combine(result, reduce(data, axis=self.reduce_axes))
-            )
+            # skip gather for the first input
+            result = reduce(data, axis=self.reduce_axes)\
+                if result is None\
+                else gather(result, reduce(data, axis=self.reduce_axes))
         return result
 
-    def combine_inputs(self):
+    def gather_inputs(self):
+        """gathers each input drop interpreted as an npy drop"""
         result: Optional[Number] = None
-        combine = getattr(np, f"{self.functions[self.function]}")
+        gather = getattr(np, f"{self.function}")
         for input in self.inputs:
             data = droputils.load_numpy(input)
-            result = data if result is None else combine(result, data)
+            # assign instead of gather for the first input
+            result = data if result is None else gather(result, data)
         return result
 
 
@@ -722,11 +725,7 @@ class GenericNpyScatterApp(BarrierAppDROP):
 
     # automatically populated by scatter node
     num_of_copies: int = dlg_int_param("num_of_copies", 1)
-    scatter_axes: List[int] = dlg_string_param("scatter_axes", "[0]")
-
-    def initialize(self, **kwargs):
-        super(GenericNpyScatterApp, self).initialize(**kwargs)
-        self.scatter_axes = ast.literal_eval(self.scatter_axes)
+    scatter_axes: List[int] = dlg_list_param("scatter_axes", "[0]")
 
     def run(self):
         if len(self.inputs) * self.num_of_copies != len(self.outputs):

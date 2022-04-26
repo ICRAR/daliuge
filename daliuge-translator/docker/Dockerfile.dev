@@ -4,7 +4,7 @@
 # First stage build based on daliuge-common and cleanup
 ARG VCS_TAG
 ARG BUILD_ID
-FROM icrar/daliuge-common:${VCS_TAG}
+FROM icrar/daliuge-common:${VCS_TAG:-latest}
 LABEL stage=builder
 LABEL build=$BUILD_ID
 # all dependencies are already installed in daliuge-common
@@ -13,7 +13,6 @@ LABEL build=$BUILD_ID
 #     apt install -y gcc python3-venv python3-distutils
 
 COPY / /daliuge
-
 RUN . /dlg/bin/activate && \
     cd /daliuge && \
     pip3 install wheel && \

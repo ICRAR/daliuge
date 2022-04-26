@@ -69,9 +69,9 @@ from .ddap_protocol import (
     DROPStates,
     DROPRel,
 )
-from .event import EventFirer
-from .exceptions import InvalidDropException, InvalidRelationshipException
-from .io import (
+from dlg.event import EventFirer
+from dlg.exceptions import InvalidDropException, InvalidRelationshipException
+from dlg.io import (
     DataIO,
     OpenMode,
     FileIO,
@@ -97,16 +97,10 @@ DEFAULT_INTERNAL_PARAMETERS = {
 }
 
 if sys.version_info >= (3, 8):
-    from .io import SharedMemoryIO
-from .utils import (
-    prepare_sql,
-    createDirIfMissing,
-    isabs,
-    object_tracking,
-    getDlgVariable,
-)
+    from dlg.io import SharedMemoryIO
+from dlg.utils import prepare_sql, createDirIfMissing, isabs, object_tracking, getDlgVariable
 from dlg.process import DlgProcess
-from .meta import (
+from dlg.meta import (
     dlg_float_param,
     dlg_int_param,
     dlg_list_param,
@@ -422,7 +416,10 @@ class AbstractDROP(EventFirer):
             elif isinstance(obj, dlg_dict_param):
                 value = kwargs.get(attr_name, obj.default_value)
                 if isinstance(value, str):
-                    value = ast.literal_eval(value)
+                    if value == "":
+                        value = {}
+                    else:
+                        value = ast.literal_eval(value)
                 if value is not None and not isinstance(value, dict):
                     raise Exception(
                         "dlg_dict_param {} is not a dict. It is a {}".format(
@@ -1873,7 +1870,17 @@ class SharedMemoryDROP(DataDROP):
         hostname = os.uname()[1]
         return f"shmem://{hostname}/{os.getpid()}/{id(self._buf)}"
 
-
+##
+# @brief NULL
+# @details A Drop not storing any data (useful for just passing on events)
+# @par EAGLE_START
+# @param category Memory
+# @param tag template
+# @param[in] cparam/data_volume Data volume/0/Float/readonly/False//False/
+#     \~English This never stores any data
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
+#     \~English Is this node the end of a group?
+# @par EAGLE_END
 class NullDROP(DataDROP):
     """
     A DROP that doesn't store any data.
@@ -1892,7 +1899,27 @@ class EndDROP(NullDROP):
     A DROP that ends the session when reached
     """
 
-
+##
+# @brief RDBMS
+# @details A Drop allowing storage and retrieval from a SQL DB.
+# @par EAGLE_START
+# @param category File
+# @param tag template
+# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
+#     \~English Estimated size of the data contained in this node
+# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
+#     \~English Is this node the end of a group?
+# @param[in] cparam/dbmodule Python DB module//String/readwrite/False//False/
+#     \~English Load path for python DB module
+# @param[in] cparam/dbtable DB table name//String/readwrite/False//False/
+#     \~English The name of the table to use
+# @param[in] cparam/vals Values dictionary//Json/readwrite/False//False/
+#     \~English Json encoded values dictionary used for INSERT. The keys of ``vals`` are used as the column names.
+# @param[in] cparam/condition Whats used after WHERE//String/readwrite/False//False/
+#     \~English Condition for SELECT. For this the WHERE statement must be written using the "{X}" or "{}" placeholders
+# @param[in] cparam/selectVals values for WHERE//Json/readwrite/False//False/
+#     \~English Values for the WHERE statement
+# @par EAGLE_END
 class RDBMSDrop(DataDROP):
     """
     A Drop that stores data in a table of a relational database
@@ -2595,7 +2622,7 @@ class BarrierAppDROP(InputFiredAppDROP):
     def initialize(self, **kwargs):
         # Blindly override existing value if any
         kwargs["n_effective_inputs"] = -1
-        super(BarrierAppDROP, self).initialize(**kwargs)
+        super().initialize(**kwargs)
 
 
 ##

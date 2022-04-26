@@ -1,6 +1,6 @@
 #!/bin/bash
 DOCKER_OPTS="\
---shm-size=1g --ipc=shareable \
+--shm-size=2g --ipc=shareable \
 --rm \
 --name daliuge-engine \
 -v /var/run/docker.sock:/var/run/docker.sock \
