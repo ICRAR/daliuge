@@ -239,6 +239,7 @@ class ZeroRPCServer(RPCServerBase):
         self._zrpcserver = zerorpc.Server(self, context=self._context)
         # zmq needs an address, not a hostname
         endpoint = "tcp://%s:%d" % (utils.zmq_safe(host), port)
+        logger.debug("Trying to bind ZeroRPC to %s", endpoint)
         self._zrpcserver.bind(endpoint)
         logger.info("Listening for RPC requests via ZeroRPC on %s", endpoint)
         server_started.set()
