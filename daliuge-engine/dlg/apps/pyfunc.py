@@ -378,7 +378,6 @@ class PyFuncApp(BarrierAppDROP):
         self.funcargs = kwargs
 
         # Fill arguments with rest of inputs
-        kwargs = {}
         logger.debug(f"available inputs: {inputs}")
 
         # if we have named ports use the inputs with
@@ -455,7 +454,7 @@ class PyFuncApp(BarrierAppDROP):
                 kwargs.update({kw: value})
         logger.debug(f"updating funcargs with {kwargs}")
         self.funcargs.update(kwargs)
-        self._recompute_data["kwargs"] = kwargs
+        self._recompute_data["args"] = self.funcargs.copy()
         logger.debug(f"Running {self.func_name} with {self.funcargs}")
         result = self.f(**self.funcargs)
         logger.debug(f"Finished execution of {self.func_name}.")
