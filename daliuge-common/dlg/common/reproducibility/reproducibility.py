@@ -466,8 +466,9 @@ def build_rg_block_data(drop: dict, rmode=None):
         mtree = MerkleTree(block_data, common_hash)
         drop["reprodata"]["rg_blockhash"] = mtree.merkle_root
     else:
+        import json
         block_data = [
-            drop["reprodata"][rmode.name]["rg_data"]["merkleroot"],
+            drop["reprodata"][rmode.name].get("rg_data", {"merkleroot": b''})["merkleroot"],
             drop["reprodata"][rmode.name]["pg_blockhash"],
             drop["reprodata"][rmode.name]["pgt_blockhash"],
             drop["reprodata"][rmode.name]["lg_blockhash"],
