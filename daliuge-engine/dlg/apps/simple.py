@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 """Applications used as examples, for testing, or in simple situations"""
+import _pickle
 from numbers import Number
 import pickle
 import random
@@ -539,9 +540,11 @@ class HelloWorldApp(BarrierAppDROP):
         elif len(ins) != 1:
             raise Exception("Only one input expected for %r" % self)
         else:  # the input is expected to be a vector. We'll use the first element
-            self.greeting = "Hello %s" % str(
-                pickle.loads(droputils.allDropContents(ins[0]))[0]
-            )
+            try:
+                phrase = str(pickle.loads(droputils.allDropContents(ins[0]))[0])
+            except _pickle.UnpicklingError:
+                phrase = str(droputils.allDropContents(ins[0]), encoding='utf-8')
+            self.greeting = f"Hello {phrase}"
 
         outs = self.outputs
         if len(outs) < 1:
