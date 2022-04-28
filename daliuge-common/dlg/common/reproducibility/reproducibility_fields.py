@@ -170,7 +170,7 @@ def lg_block_fields(
     elif category_type == Categories.BRANCH:
         data["appclass"] = FieldOps.STORE
     elif category_type == Categories.PYTHON_APP:
-        pass
+        data["appclass"] = FieldOps.STORE
     elif category_type == Categories.COMPONENT:
         data["appclass"] = FieldOps.STORE
     elif category_type == Categories.BASH_SHELL_APP:
