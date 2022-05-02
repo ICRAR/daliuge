@@ -257,13 +257,14 @@ class PyFuncApp(BarrierAppDROP):
         self.func_code = self._getArg(kwargs, "func_code", None)
 
         # check for function definition arguments in applicationArgs
-        for kw in [
+        self.func_def_keywords = [
             "func_code",
             "func_name",
             "func_arg_mapping",
             "pickle",
             "func_defaults"
-            ]:
+            ]
+        for kw in self.func_def_keywords:
             dum_arg = new_arg = "gIbbERiSH:askldhgol"
             if kw in self._applicationArgs: # these are the preferred ones now
                 if isinstance(self._applicationArgs[kw]["value"], bool): # always transfer booleans
@@ -404,14 +405,18 @@ class PyFuncApp(BarrierAppDROP):
         self.funcargs.update(kwargs)
 
         # Try to get values for still missing positional arguments from Application Args
+
         if "applicationArgs" in self.parameters:
+            appArgs = self.parameters["applicationArgs"]  # we'll pop them
+            _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
             kwargs = {}
             posargs = self.arguments.args[:self.fn_npos]
             for pa in posargs:
                 if pa not in self.funcargs:
-                    if pa in self.parameters["applicationArgs"]:
-                        value = self.parameters["applicationArgs"][pa]['value']
-                        ptype = self.parameters["applicationArgs"][pa]['type']
+                    if pa in appArgs:
+                        arg = appArgs.pop(pa)
+                        value = arg['value']
+                        ptype = arg['type']
                         if ptype in ["Complex", "Json"]:
                             try:
                                 value = ast.literal_eval(value)
@@ -421,7 +426,7 @@ class PyFuncApp(BarrierAppDROP):
                             pa:
                             value
                         })
-                    else:
+                    elif pa != 'self':
                         logger.warning(f"Required positional argument '{pa}' not found!")
             logger.debug(f"updating funcargs with {kwargs}")
             self.funcargs.update(kwargs)
@@ -431,9 +436,10 @@ class PyFuncApp(BarrierAppDROP):
             kws = self.arguments.args[self.fn_npos:]
             for ka in kws:
                 if ka not in self.funcargs:
-                    if ka in self.parameters["applicationArgs"]:
-                        value = self.parameters["applicationArgs"][ka]['value']
-                        ptype = self.parameters["applicationArgs"][ka]['type']
+                    if ka in appArgs:
+                        arg = appArgs.pop(ka)
+                        value = arg['value']
+                        ptype = arg['type']
                         if ptype in ["Complex", "Json"]:
                             try:
                                 value = ast.literal_eval(value)
@@ -457,8 +463,28 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(f"updating funcargs with {kwargs}")
         self.funcargs.update(kwargs)
 
-        logger.debug(f"Running {self.func_name} with {self.funcargs}")
-        result = self.f(**self.funcargs)
+        parg = []
+        karg = {}
+        logger.debug(f"Remaining AppArguments {appArgs}")
+        for arg in appArgs:
+            if appArgs[arg]['type'] in ['Json', 'Complex']:
+                value = ast.literal_eval(appArgs[arg]['value'])
+            else:
+                value = appArgs[arg]['value']
+            if appArgs[arg]['positional']:
+                parg.append(value)
+            else:
+                karg.update({arg:value})
+
+        # any remaining application arguments will be used for vargs and vkwargs
+        if self.arguments.varargs:
+            args = parg
+        if self.arguments.varkw:
+            self.funcargs.update(karg)
+
+
+        logger.debug(f"Running {self.func_name} with *{args} **{self.funcargs}")
+        result = self.f(*args, **self.funcargs)
         logger.debug(f"Finished execution of {self.func_name}.")
 
         # Depending on how many outputs we have we treat our result
