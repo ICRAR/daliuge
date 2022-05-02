@@ -308,6 +308,8 @@ class PyFuncApp(BarrierAppDROP):
         logger.info(f"Args positional: {self.arguments.args[:self.fn_npos]}")
         logger.info(f"Args keyword: {self.arguments.args[self.fn_npos:]}")
         logger.info(f"Args supplied:  {self.func_defaults}")
+        logger.info(f"VarArgs allowed:  {self.arguments.varargs}")
+        logger.info(f"VarKwds allowed:  {self.arguments.varkw}")
 
         # Mapping between argument name and input drop uids
         logger.debug(f"Input mapping: {self.func_arg_mapping}")
@@ -424,7 +426,7 @@ class PyFuncApp(BarrierAppDROP):
             logger.debug(f"updating funcargs with {kwargs}")
             self.funcargs.update(kwargs)
 
-            # Try to get values for still missing kwargs arguments from parameters
+            # Try to get values for still missing kwargs arguments from Application kws
             kwargs = {}
             kws = self.arguments.args[self.fn_npos:]
             for ka in kws:
