@@ -41,12 +41,12 @@ case "$1" in
         C_TAG="master"
         [[ ! -z $2 ]] && C_TAG=$2
         echo "Building daliuge-engine slim version ${VCS_TAG} using daliuge-common:${C_TAG}"
-        docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-engine:${DEV_TAG} -f docker/Dockerfile .
+        docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-engine:${DEV_TAG} -f docker/Dockerfile.dev .
         echo "Build finished! Slimming the image now"
         echo ">>>>> docker-slim output <<<<<<<<<"
         docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock dslim/docker-slim build --include-shell \
-            --include-path /usr/local/lib --include-path /usr/local/bin --include-path /usr/lib/python3.8/multiprocessing \
-            --include-path /usr/lib/python3.8/distutils --include-path /dlg --include-path /daliuge --publish-exposed-ports=true \
+            --include-path /etc --include-path /usr/local/lib --include-path /usr/local/bin --include-path /usr/lib/python3.8 \
+            --include-path /usr/lib/python3 --include-path /dlg --include-path /daliuge --publish-exposed-ports=true \
             --http-probe-exec start_local_managers.sh --http-probe=true --tag=icrar/daliuge-engine.slim:${DEV_TAG}\
             icrar/daliuge-engine:${DEV_TAG} \
 	    ;;
