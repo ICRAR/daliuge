@@ -589,6 +589,16 @@
     background-color:#001d3b;
 }
 
+#settingsModal .modal-dialog{
+    width: 50vw;  
+    max-width: none;
+}
+
+#SettingsModal #DeployMethodManagerTitle{
+    color: white;
+    margin-bottom: 5px;
+}
+
 #settingsModal .modal-body span{
     color: white;
     display: block;

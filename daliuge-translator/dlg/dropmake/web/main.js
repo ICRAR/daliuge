@@ -84,6 +84,25 @@ function fillOutSettings() {
     } else {
         $("#managerUrlInput").val(manager_url);
     }
+
+    //setting up initial default deploy method
+    if(!localStorage.getItem("deployMethods")){
+        console.log("setting up default")
+        var deployMethodsArray = [
+            {
+                name : "default deployment",
+                url : "http://localhost:8001/",
+                deployMethod : "deploy"
+            }
+        ]
+        localStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray))
+    }else{
+        console.log("getting array")
+
+        var deployMethodsArray = JSON.parse(localStorage.getItem("deployMethods"))
+    }
+   
+    console.log(deployMethodsArray)
 }
 
 function makeJSON() {
@@ -177,8 +196,7 @@ async function restDeploy() {
             fillOutSettings()
             murl = window.localStorage.getItem("manager_url");
         })
-    }
-    ;
+    };
     var manager_url = new URL(murl);
     console.log("In REST Deploy")
 
@@ -254,6 +272,7 @@ async function restDeploy() {
         .catch(function (error) {
             alert(error + "\nSending PGT to backend unsuccessfull!");
         });
+
 
 
 // All the rest here is when the managers are actually running

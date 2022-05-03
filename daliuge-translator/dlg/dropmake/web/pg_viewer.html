@@ -140,11 +140,23 @@
                         </div>
                         <input type="checkbox" id="dlg_mgr_deploy" style="visibility:hidden;" name="dlg_mgr_deploy" value="deploy" checked>
                         <input type="hidden" name="pgt_id" value="{{pgt_view_json_name}}">
-                      </form>
+                    </form>
                     <form action="/gen_pg_helm" method="get" id="pg_helm_form" target="_blank" name="deploy_helm_target">
                         <input type="checkbox" id="dlg_helm_deploy" style="visibility:hidden;" name="dlg_helm_deploy" value="helm_deploy" checked>
                         <input type="hidden" name="pgt_id" value="{{pgt_view_json_name}}">
                     </form>
+                    <span id="DeployMethodManagerTitle">Deploy Method Manager</span>
+                    <div id="DeployMethodManager">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="default deploy name">
+                            <input type="text" class="form-control" value="http://130.95.218.221:8001/">
+                            <select class="form-control" name="Deploy Method">
+                                <option value="">deploy</option>
+                                <option value="">Helm</option>
+                                <option value="">Rest</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button onClick="" type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
