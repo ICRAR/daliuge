@@ -103,7 +103,7 @@ function fillOutSettings() {
     }
 
     var deployMethodManagerDiv = $("#DeployMethodManager")
-
+    deployMethodManagerDiv.empty()
     deployMethodsArray.forEach(element => {
 
         var nativeOption =  '<option value="native">Native</option>'
