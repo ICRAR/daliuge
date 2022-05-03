@@ -80,22 +80,29 @@ def serialize_func(f):
 
 
 def import_using_name(app, fname):
-    # The name has the form pack1.pack2.mod.func
+    # If only one part check if builtin
     parts = fname.split(".")
     if len(parts) < 2:
-        msg = "%s does not contain a module name" % fname
-        raise InvalidDropException(app, msg)
-
-    modname, fname = ".".join(parts[:-1]), parts[-1]
-    try:
-        mod = importlib.import_module(modname, __name__)
-        return getattr(mod, fname)
-    except ImportError as e:
-        raise InvalidDropException(
-            app, "Error when loading module %s: %s" % (modname, str(e))
-        )
-    except AttributeError:
-        raise InvalidDropException(app, "Module %s has no member %s" % (modname, fname))
+        b = globals()['__builtins__']
+        logger.debug(f"Builtins: {type(b)}")
+        logger.debug(f"Function {fname}: {hasattr(b, fname)}")
+        if fname in b:
+            return b[fname]
+        else:
+            msg = "%s is not builtin and does not contain a module name" % fname
+            raise InvalidDropException(app, msg)
+    else:
+        modname, fname = ".".join(parts[:-1]), parts[-1]
+        try:
+            mod = importlib.import_module(modname, __name__)
+            return getattr(mod, fname)
+        except ImportError as e:
+            raise InvalidDropException(
+                app, "Error when loading module %s: %s" % (modname, str(e))
+            )
+        except AttributeError:
+            raise InvalidDropException(app, "Module %s has no member %s" % (modname, fname))
+    
 
 
 def import_using_code(code):
@@ -477,6 +484,7 @@ class PyFuncApp(BarrierAppDROP):
                 karg.update({arg:value})
 
         # any remaining application arguments will be used for vargs and vkwargs
+        args = []
         if self.arguments.varargs:
             args = parg
         if self.arguments.varkw:
