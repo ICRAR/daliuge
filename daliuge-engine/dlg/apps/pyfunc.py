@@ -412,7 +412,7 @@ class PyFuncApp(BarrierAppDROP):
         self.funcargs.update(kwargs)
 
         # Try to get values for still missing positional arguments from Application Args
-
+        self.pargs = []
         if "applicationArgs" in self.parameters:
             appArgs = self.parameters["applicationArgs"]  # we'll pop them
             _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
@@ -435,8 +435,8 @@ class PyFuncApp(BarrierAppDROP):
                         })
                     elif pa != 'self':
                         logger.warning(f"Required positional argument '{pa}' not found!")
-            logger.debug(f"updating funcargs with {kwargs}")
-            self.funcargs.update(kwargs)
+            logger.debug(f"updating posargs with {list(kwargs.values())}")
+            self.pargs.extend(list(kwargs.values()))
 
             # Try to get values for still missing kwargs arguments from Application kws
             kwargs = {}
@@ -470,8 +470,8 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(f"updating funcargs with {kwargs}")
         self.funcargs.update(kwargs)
 
-        parg = []
-        karg = {}
+        vparg = []
+        vkarg = {}
         logger.debug(f"Remaining AppArguments {appArgs}")
         for arg in appArgs:
             if appArgs[arg]['type'] in ['Json', 'Complex']:
@@ -479,20 +479,19 @@ class PyFuncApp(BarrierAppDROP):
             else:
                 value = appArgs[arg]['value']
             if appArgs[arg]['positional']:
-                parg.append(value)
+                vparg.append(value)
             else:
-                karg.update({arg:value})
+                vkarg.update({arg:value})
 
         # any remaining application arguments will be used for vargs and vkwargs
-        args = []
         if self.arguments.varargs:
-            args = parg
+            self.pargs.extend(vparg)
         if self.arguments.varkw:
-            self.funcargs.update(karg)
+            self.funcargs.update(vkarg)
 
 
-        logger.debug(f"Running {self.func_name} with *{args} **{self.funcargs}")
-        result = self.f(*args, **self.funcargs)
+        logger.debug(f"Running {self.func_name} with *{self.pargs} **{self.funcargs}")
+        result = self.f(*self.pargs, **self.funcargs)
         logger.debug(f"Finished execution of {self.func_name}.")
 
         # Depending on how many outputs we have we treat our result
