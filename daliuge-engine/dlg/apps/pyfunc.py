@@ -460,6 +460,24 @@ class PyFuncApp(BarrierAppDROP):
                         logger.warning(f"Keyword argument '{ka}' not found!")
             logger.debug(f"updating funcargs with {kwargs}")
             self.funcargs.update(kwargs)
+            vparg = []
+            vkarg = {}
+            logger.debug(f"Remaining AppArguments {appArgs}")
+            for arg in appArgs:
+                if appArgs[arg]['type'] in ['Json', 'Complex']:
+                    value = ast.literal_eval(appArgs[arg]['value'])
+                else:
+                    value = appArgs[arg]['value']
+                if appArgs[arg]['positional']:
+                    vparg.append(value)
+                else:
+                    vkarg.update({arg:value})
+
+            # any remaining application arguments will be used for vargs and vkwargs
+            if self.arguments.varargs:
+                self.pargs.extend(vparg)
+            if self.arguments.varkw:
+                self.funcargs.update(vkarg)
 
         # Fill rest with default arguments if there are any more
         kwargs = {}
@@ -469,26 +487,6 @@ class PyFuncApp(BarrierAppDROP):
                 kwargs.update({kw: value})
         logger.debug(f"updating funcargs with {kwargs}")
         self.funcargs.update(kwargs)
-
-        vparg = []
-        vkarg = {}
-        logger.debug(f"Remaining AppArguments {appArgs}")
-        for arg in appArgs:
-            if appArgs[arg]['type'] in ['Json', 'Complex']:
-                value = ast.literal_eval(appArgs[arg]['value'])
-            else:
-                value = appArgs[arg]['value']
-            if appArgs[arg]['positional']:
-                vparg.append(value)
-            else:
-                vkarg.update({arg:value})
-
-        # any remaining application arguments will be used for vargs and vkwargs
-        if self.arguments.varargs:
-            self.pargs.extend(vparg)
-        if self.arguments.varkw:
-            self.funcargs.update(vkarg)
-
 
         logger.debug(f"Running {self.func_name} with *{self.pargs} **{self.funcargs}")
         result = self.f(*self.pargs, **self.funcargs)
