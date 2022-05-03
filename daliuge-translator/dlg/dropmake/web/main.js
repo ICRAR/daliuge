@@ -92,7 +92,7 @@ function fillOutSettings() {
             {
                 name : "default deployment",
                 url : "http://localhost:8001/",
-                deployMethod : "deploy"
+                deployMethod : "native"
             }
         ]
         localStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray))
@@ -101,7 +101,35 @@ function fillOutSettings() {
 
         var deployMethodsArray = JSON.parse(localStorage.getItem("deployMethods"))
     }
-   
+
+    var deployMethodManagerDiv = $("#DeployMethodManager")
+
+    deployMethodsArray.forEach(element => {
+
+        var nativeOption =  '<option value="native">Native</option>'
+        var helmOption =  '<option value="helm">Helm</option>'
+        var restOption =  '<option value="rest">Rest</option>'
+
+        if(element.deployMethod === "native"){
+            nativeOption =  '<option value="native" selected="true">Native</option>'
+        }else if(element.deployMethod === "helm"){
+            helmOption =  '<option value="helm" selected="true">Helm</option>'
+        }else if(element.deployMethod === "rest"){
+            restOption = '<option value="rest" selected="true">Rest</option>'
+        }
+
+        var deplpoyMethodRow = '<div class="input-group">'+
+        '<input type="text" class="form-control" value="'+element.name+'">'+
+        '<input type="text" class="form-control" value="'+element.url+'">'+
+        '<select class="form-control" name="Deploy Method">'+
+            nativeOption+
+            helmOption+
+            restOption+
+        '</select>'+
+    '</div>'
+        deployMethodManagerDiv.append(deplpoyMethodRow)
+    });
+
     console.log(deployMethodsArray)
 }
 
