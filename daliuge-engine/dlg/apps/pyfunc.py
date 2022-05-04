@@ -119,7 +119,7 @@ def import_using_code(code):
 # being written to its corresponding output.
 # @par EAGLE_START
 # @param category PythonApp
-# @param tag daliuge
+# @param tag template
 # @param[in] cparam/appclass Application Class/dlg.apps.pyfunc.PyFuncApp/String/readonly/False//False/
 #     \~English Application class
 # @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
