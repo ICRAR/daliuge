@@ -221,7 +221,7 @@ async function helmDeploy() {
         .then(handleFetchErrors)
         .then(response => response.json())
         .catch(function (error) {
-            alert(error + "\nGetting PGT unsuccessful: Unable to contiune!");
+            showMessageModal("Error", error + "\nGetting PGT unsuccessful: Unable to continue!");
         });
     // fetch the nodelist from engine
     console.log("sending request to ", node_list_url);
@@ -237,7 +237,7 @@ async function helmDeploy() {
         .then(handleFetchErrors)
         .then(response => response.json())
         .catch(function (error) {
-            alert(error + "\nGetting node_list unsuccessful: Unable to contiune!");
+            showMessageModal('Error', error + "\nGetting node_list unsuccessful: Unable to continue!");
         });
     console.log("node_list", node_list);
     // build object containing manager data
@@ -260,7 +260,7 @@ async function helmDeploy() {
         .then(handleFetchErrors)
         .then(response => response.json())
         .catch(function (error) {
-            alert(error + "\nGetting pg_spec unsuccessful: Unable to contiune!");
+            showMessageModal('Error', error + "\nGetting pg_spec unsuccessful: Unable to continue!");
         });
 
     console.log("pg_spec response", pg_spec_response);
@@ -280,7 +280,7 @@ async function helmDeploy() {
         .then(handleFetchErrors)
         .then(response => response.json())
         .catch(function (error) {
-            alert(error + "\nCreating session unsuccessful: Unable to contiune!");
+            showMessageModal('Error', error + "\nCreating session unsuccessful: Unable to continue!");
         });
     console.log("create session response", create_session);
     // gzip the pg_spec
@@ -306,7 +306,7 @@ async function helmDeploy() {
         .then(handleFetchErrors)
         .then(response => response.json())
         .catch(function (error) {
-            alert(error + "\nUnable to contiune!");
+            showMessageModal('Error', error + "\nUnable to continue!");
         });
     console.log("append graph response", append_graph);
     // deploy graph
@@ -322,9 +322,9 @@ async function helmDeploy() {
         .then(handleFetchErrors)
         .then(response => response.json())
         .catch(function (error) {
-            alert(error + "\nUnable to contiune!");
+            showMessageModal('Error', error + "\nUnable to continue!");
         });
-    //alert("Chart deployed, check the dashboard of your k8s cluster for status updates.")
+    //showMessageModal("Chart deployed" , "Check the dashboard of your k8s cluster for status updates.");
     console.log("deploy graph response", deploy_graph);
     // Open DIM session page in new tab
     // Until we have somewhere else to re-direct helm deployments. This is probably for the best.
@@ -389,7 +389,7 @@ async function restDeploy() {
         .then(handleFetchErrors)
         .then(response => response.json())
         .catch(function (error) {
-            alert(error + "\nGetting PGT unsuccessful: Unable to contiune!");
+            showMessageModal('Error', error + "\nGetting PGT unsuccessful: Unable to continue!");
         });
 
     // This is for a deferred start of daliuge, e.g. on SLURM
@@ -416,7 +416,7 @@ async function restDeploy() {
             }
         })
         .catch(function (error) {
-            alert(error + "\nSending PGT to backend unsuccessfull!");
+            showMessageModal('Error', error + "\nSending PGT to backend unsuccessful!");
         });
 
 
@@ -428,7 +428,7 @@ async function restDeploy() {
 //   const node_list = await fetch(node_list_url, {
 //     method: 'GET',
 //     // mode: request_mode,
-//     // credentials: 'include', 
+//     // credentials: 'include',
 //     headers: {
 //       'Content-Type': 'application/x-www-form-urlencoded',
 //       'Origin': 'http://localhost:8084'
@@ -437,7 +437,7 @@ async function restDeploy() {
 //   .then(handleFetchErrors)
 //   .then(response => response.json())
 //   .catch(function(error){
-//     alert(error + "\nGetting node_list unsuccessful: Unable to contiune!");
+//     showMessageModal('Error', error + "\nGetting node_list unsuccessful: Unable to continue!");
 //   });
 
 //   console.log("node_list", node_list);
@@ -461,7 +461,7 @@ async function restDeploy() {
 //   .then(handleFetchErrors)
 //   .then(response => response.json())
 //   .catch(function(error){
-//     alert(error + "\nGetting pg_spec unsuccessful: Unable to contiune!");
+//     showMessageModal('Error', error + "\nGetting pg_spec unsuccessful: Unable to continue!");
 //   });
 
 //   console.log("pg_spec response", pg_spec_response);
@@ -482,7 +482,7 @@ async function restDeploy() {
 //   .then(handleFetchErrors)
 //   .then(response => response.json())
 //   .catch(function(error){
-//     alert(error + "\nCreating session unsuccessful: Unable to contiune!");
+//     showMessageModal('Error', error + "\nCreating session unsuccessful: Unable to continue!");
 //   });
 
 //   console.log("create session response", create_session);
@@ -494,7 +494,7 @@ async function restDeploy() {
 
 //   // append graph to session on engine
 //   const append_graph = await fetch(append_graph_url, {
-//     credentials: 'include', 
+//     credentials: 'include',
 //     method: 'POST',
 //     mode: request_mode,
 //     headers: {
@@ -507,14 +507,14 @@ async function restDeploy() {
 //   .then(handleFetchErrors)
 //   .then(response => response.json())
 //   .catch(function(error){
-//     alert(error + "\nUnable to contiune!");
+//     showMessageModal('Error', error + "\nUnable to continue!");
 //   });
 //   console.log("append graph response", append_graph);
 
 //   // deploy graph
 //   // NOTE: URLSearchParams here turns the object into a x-www-form-urlencoded form
 //   const deploy_graph = await fetch(deploy_graph_url, {
-//     credentials: 'include', 
+//     credentials: 'include',
 //     method: 'POST',
 //     mode: request_mode,
 //     body: new URLSearchParams({
@@ -524,7 +524,7 @@ async function restDeploy() {
 //   .then(handleFetchErrors)
 //   .then(response => response.json())
 //   .catch(function(error){
-//     alert(error + "\nUnable to contiune!");
+//     showMessageModal('Error', error + "\nUnable to continue!");
 //   });
 
 //   console.log("deploy graph response", deploy_graph);
