@@ -3,6 +3,11 @@ require([
     "/static/main.js",
 ]);
 
+function showMessageModal(title, content){
+    $("#messageModalTitle").text(title);
+    $("#messageModalContent").text(content);
+    $('#messageModal').modal('show');
+}
 
 function graphInit(graphType){
 
@@ -13,9 +18,9 @@ function graphInit(graphType){
         type: 'get',
         error: function(XMLHttpRequest, textStatus, errorThrown) {
             if (404 == XMLHttpRequest.status) {
-              alert('Server cannot locate physical graph file ' + pgtName.toString())
+              showMessageModal('Error', 'Server cannot locate physical graph file: ' + pgtName.toString());
             } else {
-              alert('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
+              showMessageModal('Error', 'status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
             }
         },
         success: function(data) {
@@ -34,7 +39,7 @@ function graphInit(graphType){
                     graphType = "sankey"
                 }
             }
-            
+
             //reset graph divs
             $("#main").empty()
 
@@ -44,7 +49,7 @@ function graphInit(graphType){
             }else if(graphType === "dag"){
                 dagGraphInit(data)
             }
-            
+
             //set correct graph button to active
             $(".graphChanger").removeClass("active")
             $("#" + graphType + "Button").addClass("active")
@@ -62,7 +67,7 @@ function graphInit(graphType){
 // dag graph setup
 
 function dagGraphInit(data) {
-        
+
   const heightValue = 300;
   const widthValue = 600;
 
@@ -154,7 +159,7 @@ function zoomFit() {
 }
 
 function drawGraphForDrops(g, drawGraph, data) {
-  
+
 	// Keep track of modifications to see if we need to re-draw
 	var modified = false;
 
