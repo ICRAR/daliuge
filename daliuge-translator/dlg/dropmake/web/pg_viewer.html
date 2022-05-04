@@ -24,7 +24,10 @@
 
 <!-- Global Variables -->
 <script>
-    var pgtName = "{{pgt_view_json_name}}"
+    var pgtName = "{{pgt_view_json_name}}";
+
+    // NOTE: error can be multi-line, so use back-ticks to contain the multi-line string
+    var error = `{{error}}`;
 </script>
 </head>
 
@@ -155,7 +158,7 @@
     </div>
 
     <div class="modal fade" id="messageModal" tabindex="-1" role="dialog" aria-labelledby="messageModalTitle" aria-hidden="true">
-       <div class="modal-dialog modal-dialog-centered" role="document">
+       <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="messageModalTitle">Title</h5>
@@ -164,7 +167,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <span id="messageModalContent">Message</span>
+                    <pre id="messageModalContent">Message</pre>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>

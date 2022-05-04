@@ -234,6 +234,7 @@ def load_pg_viewer():
             pgt_view_json_name=pgt_name,
             title="Physical Graph Template",
             partition_info="",
+            error=None
         )
     else:
         response.status = 404
@@ -482,6 +483,7 @@ def gen_pgt():
             partition_info=part_info,
             title="Physical Graph Template%s"
                   % ("" if num_partitions == 0 else "Partitioning"),
+            error=None
         )
     except GraphException as ge:
         response.status = 500
@@ -511,6 +513,7 @@ def gen_pgt_post():
     json_string = reqform.get("json_data")
     try:
         logical_graph = json.loads(json_string)
+        error = None
 
         # load LG schema
         lg_schema = None
@@ -520,7 +523,10 @@ def gen_pgt_post():
 
         # validate JSON (if schema was found)
         if lg_schema is not None:
-            validate(logical_graph, lg_schema)
+            try:
+                validate(logical_graph, lg_schema)
+            except ValidationError as ve:
+                error = "Validation Error {1}: {0}".format(str(ve), lg_name)
 
         # LG -> PGT
         pgt = unroll_and_partition_with_params(logical_graph, reqform)
@@ -538,9 +544,8 @@ def gen_pgt_post():
             title="Physical Graph Template {}".format(
                 "" if par_algo == "none" else "Partitioning"
             ),
+            error=error
         )
-    except ValidationError as ve:
-        return "Validation Error {1}: {0}".format(str(ve), lg_name)
     except GraphException as ge:
         trace_msg = traceback.format_exc()
         print(trace_msg)
@@ -621,6 +626,7 @@ def root():
         pgt_view_json_name=None,
         partition_info=None,
         title="Physical Graph Template",
+        error=None
     )
 
 

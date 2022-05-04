@@ -4,8 +4,8 @@ require([
 ]);
 
 function showMessageModal(title, content){
-    $("#messageModalTitle").text(title);
-    $("#messageModalContent").text(content);
+    $("#messageModalTitle").html(title);
+    $("#messageModalContent").html(content);
     $('#messageModal').modal('show');
 }
 
@@ -59,6 +59,11 @@ function graphInit(graphType){
                 $("#view-mode-buttons").hide();
             } else {
                 $("#view-mode-buttons").show();
+            }
+
+            // display any errors that were generated during translation
+            if (error !== "None"){
+                showMessageModal("Error", error);
             }
         }
     })
