@@ -63,6 +63,36 @@ class NullBarrierApp(BarrierAppDROP):
     def run(self):
         pass
 
+##
+# @brief PythonApp
+# @details A placeholder APP to aid construction of new applications.
+# This is mainly useful (and used) when starting a new workflow from scratch.
+# @par EAGLE_START
+# @param category PythonApp
+# @param tag template
+# @param[in] cparam/appclass Application Class//String/readonly/False//False/
+#     \~English Application class
+# @param[in] cparam/execution_time Execution Time/0.1/Float/readonly/False//False/
+#     \~English Estimated execution time
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
+#     \~English Is this node the start of a group?
+# @par EAGLE_END
+class PythonApp(BarrierAppDROP):
+    """A placeholder BarrierAppDrop that sleeps for 0.1s"""
+    component_meta = dlg_component(
+        "PythonApp",
+        "Python App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    def initialize(self, **kwargs):
+        super(PythonApp, self).initialize(**kwargs)
+
+    def run(self):
+        time.sleep(0.1) 
+
 
 ##
 # @brief SleepApp
@@ -71,21 +101,15 @@ class NullBarrierApp(BarrierAppDROP):
 # without executing real algorithms. Very useful for debugging.
 # @par EAGLE_START
 # @param category PythonApp
-# @param tag daliuge
+# @param tag template
 # @param[in] aparam/sleepTime Sleep Time/5/Integer/readwrite/False//False/
 #     \~English The number of seconds to sleep
 # @param[in] cparam/appclass Application Class/dlg.apps.simple.SleepApp/String/readonly/False//False/
 #     \~English Application class
 # @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
 #     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
-#     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
-#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
-#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @par EAGLE_END
 class SleepApp(BarrierAppDROP):
     """A BarrierAppDrop that sleeps the specified amount of time (0 by default)"""
