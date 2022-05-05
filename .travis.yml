@@ -41,30 +41,6 @@ matrix:
     # NOTE: commenting 3.7 for now.
     # travis early build stage fails non-reproducible
     # - python: "3.7"
-    - name: doxygen
-      include:
-        - dist: focal
-      before_install:
-      install:
-        - sudo apt-get update && sudo apt-get install -y doxygen xsltproc
-      before_script:
-        - export PROJECT_NAME=daliuge
-        - export PROJECT_VERSION=$(git rev-parse --short HEAD)
-        - export GIT_REPO=$(git config --get remote.origin.url)
-        - git config --global user.name $GITHUB_USERNAME
-        - git config --global user.email "$GITHUB_USERNAME@gmail.com"
-      script:
-        - python3 tools/xml2palette/xml2palette.py -i ./ -t daliuge -o $PROJECT_NAME-$TRAVIS_BRANCH.palette
-        - python3 tools/xml2palette/xml2palette.py -i ./ -t template -o $PROJECT_NAME-$TRAVIS_BRANCH-template.palette
-      after_success:
-        - git clone https://$GITHUB_TOKEN@github.com/ICRAR/EAGLE_test_repo
-        - mkdir -p EAGLE_test_repo/$PROJECT_NAME
-        - mv $PROJECT_NAME-$TRAVIS_BRANCH.palette EAGLE_test_repo/$PROJECT_NAME/
-        - mv $PROJECT_NAME-$TRAVIS_BRANCH-template.palette EAGLE_test_repo/$PROJECT_NAME/
-        - cd EAGLE_test_repo
-        - git add *
-        - git diff-index --quiet HEAD || git commit -m "Automatically generated DALiuGE palette (branch $TRAVIS_BRANCH, commit $PROJECT_VERSION)"
-        - git push
 
     # Build documentation similarly to how RTD does
     - name: documentation
@@ -74,6 +50,33 @@ matrix:
         - pip install sphinx sphinx-rtd-theme
       script:
         - READTHEDOCS=True make -C docs html SPHINXOPTS="-W --keep-going"
+jobs:
+    include:
+      - name: doxygen-focal
+        dist: focal
+        before_install:
+        install:
+          - sudo apt-get update && sudo apt-get install -y doxygen xsltproc
+        before_script:
+          - export PROJECT_NAME=daliuge
+          - export PROJECT_VERSION=$(git rev-parse --short HEAD)
+          - export GIT_REPO=$(git config --get remote.origin.url)
+          - git config --global user.name $GITHUB_USERNAME
+          - git config --global user.email "$GITHUB_USERNAME@gmail.com"
+        script:
+          - python3 tools/xml2palette/xml2palette.py -i ./ -t daliuge -o $PROJECT_NAME-$TRAVIS_BRANCH.palette
+          - python3 tools/xml2palette/xml2palette.py -i ./ -t template -o $PROJECT_NAME-$TRAVIS_BRANCH-template.palette
+        after_success:
+          - git clone https://$GITHUB_TOKEN@github.com/ICRAR/EAGLE_test_repo
+          - mkdir -p EAGLE_test_repo/$PROJECT_NAME
+          - mv $PROJECT_NAME-$TRAVIS_BRANCH.palette EAGLE_test_repo/$PROJECT_NAME/
+          - mv $PROJECT_NAME-$TRAVIS_BRANCH-template.palette EAGLE_test_repo/$PROJECT_NAME/
+          - cd EAGLE_test_repo
+          - git add *
+          - git diff-index --quiet HEAD || git commit -m "Automatically generated DALiuGE palette (branch $TRAVIS_BRANCH, commit $PROJECT_VERSION)"
+          - git push
+
+
 
 
 # We want to use docker during the tests
