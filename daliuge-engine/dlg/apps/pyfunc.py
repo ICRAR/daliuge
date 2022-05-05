@@ -338,11 +338,11 @@ class PyFuncApp(BarrierAppDROP):
         The priority follows the list above with input ports overruling the others.
 
         Function arguments in Python can be passed as positional, kw-value, positional
-        only, kw-value only, and catch-all *args and **kwargs, which don't provide any
+        only, kw-value only, and catch-all args and kwargs, which don't provide any
         hint about the names of accepted parameters. All of them are now supported. If
         positional arguments or kw-value arguments are provided by the user, but are 
-        not explicitely defined in the function signiture AND *args and/or **kwargs are
-        allowed then these arguments are passed to the function. For *args this is
+        not explicitely defined in the function signiture AND args and/or kwargs are
+        allowed then these arguments are passed to the function. For args this is
         somewhat risky, since the order is relevant and in this code derived from the
         order defined in the graph (same order as defined in the component description).
 
