@@ -31,6 +31,8 @@ import pickle
 
 from typing import Callable
 import dill
+from io import StringIO
+from contextlib import redirect_stdout
 
 from dlg import droputils, utils
 from dlg.drop import BarrierAppDROP
@@ -179,7 +181,7 @@ class PyFuncApp(BarrierAppDROP):
 
     ``{"kwargs":{"kw1_name":kw1_value, "kw2_name":kw2_value}, "args":[arg1, arg2]}``
 
-    The positional args will be used in order of appearance.
+    The positional onlyargs will be used in order of appearance.
     """
 
     component_meta = dlg_component(
@@ -487,7 +489,12 @@ class PyFuncApp(BarrierAppDROP):
         self.funcargs.update(kwargs)
 
         logger.debug(f"Running {self.func_name} with *{self.pargs} **{self.funcargs}")
-        result = self.f(*self.pargs, **self.funcargs)
+
+        # we capture and log whatever is produced on STDOUT
+        capture = StringIO()
+        with redirect_stdout(capture):
+            result = self.f(*self.pargs, **self.funcargs)
+        logger.info(f"Captured output from function app '{self.func_name}': {capture.getvalue()}")
         logger.debug(f"Finished execution of {self.func_name}.")
 
         # Depending on how many outputs we have we treat our result
