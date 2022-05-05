@@ -335,11 +335,14 @@ class PyFuncApp(BarrierAppDROP):
 
         The priority follows the list above with input ports overruling the others.
 
-        All function arguments are internally dealt with as keyword arguments, i.e. 
-        positional aruments will be referred to by name, not by position. This also
-        implies that positional ONLY arguments are not supported, but they are rarely
-        used. Positional arguments defined by the function ar mandatory and thus the
-        implementation is checking whether they are provided (by name).
+        Function arguments in Python can be passed as positional, kw-value, positional
+        only, kw-value only, and catch-all *args and **kwargs, which don't provide any
+        hint about the names of accepted parameters. All of them are now supported. If
+        positional arguments or kw-value arguments are provided by the user, but are 
+        not explicitely defined in the function signiture AND *args and/or **kwargs are
+        allowed then these arguments are passed to the function. For *args this is
+        somewhat risky, since the order is relevant and in this code derived from the
+        order defined in the graph (same order as defined in the component description).
 
         Input ports will NOT be used by order (anymore), but by the IdText (name field
         in EAGLE) of the port. Since each input port requires an associated data drop,
@@ -370,11 +373,6 @@ class PyFuncApp(BarrierAppDROP):
         # if defaults dict has not been specified at all we'll go ahead anyway
         n_args = len(self.func_defaults)
         argnames = self.arguments.args
-        # if self.fn_nargs > n_args:
-        #     logger.warning(f"Function {self.f.__name__} expects {self.fn_nargs} argument defaults")
-        #     logger.warning(f"only {sum(n_args)} found!")
-        #     logger.warning("Please correct the function default specification")
-        #     #raise ValueError
 
         # use explicit mapping of inputs to arguments first
         # TODO: Required by dlg_delayed?? Else, we should really not do this. 
