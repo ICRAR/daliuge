@@ -234,6 +234,7 @@ def load_pg_viewer():
             pgt_view_json_name=pgt_name,
             title="Physical Graph Template",
             partition_info="",
+            error=None
         )
     else:
         response.status = 404
@@ -292,36 +293,6 @@ def get_schedule_mat():
     except Exception as ex:
         response.status = "500 {0}".format(ex)
         return "Failed to get schedule matrices for {0}: {1}".format(pgt_id, ex)
-
-
-@get("/gen_pg_helm")
-def gen_pg_helm():
-    """
-    RESTful interface to deploy a PGT as a K8s helm chart.
-    """
-    # Get pgt_data
-    from ...deploy.start_helm_cluster import start_helm
-    pgt_id = request.query.get("pgt_id")
-    pgtp = pg_mgr.get_pgt(pgt_id)
-    if pgtp is None:
-        response.status = 404
-        return "PGT(P) with id {0} not found in the Physical Graph Manager".format(
-            pgt_id
-        )
-
-    pgtpj = pgtp._gojs_json_obj
-    logger.info("PGTP: %s" % pgtpj)
-    num_partitions = len(list(filter(lambda n: 'isGroup' in n, pgtpj['nodeDataArray'])))
-    # Send pgt_data to helm_start
-    try:
-        start_helm(pgtp, num_partitions, pgt_dir)
-    except restutils.RestClientException as ex:
-        response.status = 500
-        print(traceback.format_exc())
-        return "Fail to deploy physical graph: {0}".format(ex)
-    # TODO: Not sure what to redirect to yet
-    response.status = 200
-    return "Inspect your k8s dashboard for deployment status"
 
 
 @get("/gen_pg")
@@ -440,6 +411,8 @@ def gen_pg_spec():
         pgt_id = request.json.get("pgt_id")
         node_list = request.json.get("node_list")
         manager_host = request.json.get("manager_host")
+        if manager_host == 'localhost':
+            manager_host = '127.0.0.1'
         # try:
         #     manager_port   = int(request.json.get("manager_port"));
         # except:
@@ -510,6 +483,7 @@ def gen_pgt():
             partition_info=part_info,
             title="Physical Graph Template%s"
                   % ("" if num_partitions == 0 else "Partitioning"),
+            error=None
         )
     except GraphException as ge:
         response.status = 500
@@ -539,6 +513,7 @@ def gen_pgt_post():
     json_string = reqform.get("json_data")
     try:
         logical_graph = json.loads(json_string)
+        error = None
 
         # load LG schema
         lg_schema = None
@@ -548,7 +523,10 @@ def gen_pgt_post():
 
         # validate JSON (if schema was found)
         if lg_schema is not None:
-            validate(logical_graph, lg_schema)
+            try:
+                validate(logical_graph, lg_schema)
+            except ValidationError as ve:
+                error = "Validation Error {1}: {0}".format(str(ve), lg_name)
 
         # LG -> PGT
         pgt = unroll_and_partition_with_params(logical_graph, reqform)
@@ -566,9 +544,8 @@ def gen_pgt_post():
             title="Physical Graph Template {}".format(
                 "" if par_algo == "none" else "Partitioning"
             ),
+            error=error
         )
-    except ValidationError as ve:
-        return "Validation Error {1}: {0}".format(str(ve), lg_name)
     except GraphException as ge:
         trace_msg = traceback.format_exc()
         print(trace_msg)
@@ -649,6 +626,7 @@ def root():
         pgt_view_json_name=None,
         partition_info=None,
         title="Physical Graph Template",
+        error=None
     )
 
 

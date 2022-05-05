@@ -998,7 +998,7 @@ class LG:
             from_port = lk.get("fromPort", "__None__")
             if stream_output_ports.get(from_port, None) == lk["from"]:
                 lk["is_stream"] = True
-                logger.debug("Found stream from %s to %s" % (lk["from"], lk["to"]))
+                logger.debug("Found stream from %s to %s", lk["from"], lk["to"])
             else:
                 lk["is_stream"] = False
             if "1" == lk.get("loop_aware", "0"):
@@ -1277,7 +1277,7 @@ class LG:
             tup = self._gather_cache[gather_oid]
             tup[1].append(sdrop)
             logger.debug(
-                "Hit gather, link is from %s to %s" % (llink["from"], llink["to"])
+                "Hit gather, link is from %s to %s", llink["from"], llink["to"]
             )
             return
 
@@ -1328,7 +1328,7 @@ class LG:
                 sIdText = slgn._getIdText("outputPorts")
                 if llink.get("is_stream", False):
                     logger.debug(
-                        "link stream connection %s to %s" % (sdrop["oid"], tdrop["oid"])
+                        "link stream connection %s to %s", sdrop["oid"], tdrop["oid"]
                     )
                     sdrop.addStreamingConsumer(tdrop, IdText=sIdText)
                     tdrop.addStreamingInput(sdrop, IdText=sIdText)
@@ -1353,9 +1353,8 @@ class LG:
             self.lgn_to_pgn(lgn)
 
         logger.info(
-            "Unroll progress - lgn_to_pgn done {0} for session {1}".format(
+            "Unroll progress - lgn_to_pgn done %d for session %s",
                 len(self._start_list), self._session_id
-            )
         )
         self_loop_aware_set = self._loop_aware_set
         for lk in self._lg_links:
@@ -1584,8 +1583,8 @@ class LG:
                 sIdText = slgn._getIdText("outputPorts")
                 if llink.get("is_stream", False):
                     logger.debug(
-                        "link stream connection %s to %s"
-                        % (data_drop["oid"], output_drop["oid"])
+                        "link stream connection %s to %s",
+                        data_drop["oid"], output_drop["oid"]
                     )
                     data_drop.addStreamingConsumer(output_drop, IdText=sIdText)
                     output_drop.addStreamingInput(data_drop, IdText=sIdText)
@@ -1595,9 +1594,8 @@ class LG:
                 # print(data_drop['nm'], data_drop['oid'], '-->', output_drop['nm'], output_drop['oid'])
 
         logger.info(
-            "Unroll progress - links done {0} for session {1}".format(
+            "Unroll progress - links done %d for session %s",
                 len(self._lg_links), self._session_id
-            )
         )
 
         # clean up extra drops
@@ -1620,9 +1618,8 @@ class LG:
                 #         del sl_drop['gather-data_drop']
 
         logger.info(
-            "Unroll progress - extra drops done for session {0}".format(
+            "Unroll progress - extra drops done for session %s",
                 self._session_id
-            )
         )
         ret = []
         for drop_list in self._drop_dict.values():
