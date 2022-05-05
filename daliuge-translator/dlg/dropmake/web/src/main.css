@@ -599,13 +599,30 @@
     margin-bottom: 5px;
 }
 
+#settingsModal #DeployMethodManager .input-group{
+  margin-bottom: 10px;
+}
+
+#settingsModal #DeployMethodManager input{
+    padding: 0px 12px;
+}
+
+#settingsModal #DeployMethodManager select{
+    padding: 0px 12px;
+}
+
+#settingsModal #addDeployMethodBtn{ 
+    margin-top: 10px;
+    padding: 5px 10px;
+}
+
 #settingsModal .modal-body span{
     color: white;
     display: block;
 }
 
 #settingsModal .modal-footer{
-   background-color:#001d3b;
+    background-color:#001d3b;
 }
 
 #settingsModal .modal-footer .btn-primary{

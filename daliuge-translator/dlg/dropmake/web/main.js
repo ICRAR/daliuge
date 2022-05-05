@@ -71,7 +71,25 @@ function saveSettings() {
     window.localStorage.setItem("manager_host", newHost);
     window.localStorage.setItem("manager_port", newPort);
     window.localStorage.setItem("manager_prefix", newPrefix);
-    $('#settingsModal').modal('hide')
+    $('#settingsModal').modal('hide');
+
+    var settingsDeployMethods = $("#DeployMethodManager .input-group")
+    var deployMethodsArray = []
+    
+    settingsDeployMethods.each(function(){
+        console.log($(this).find(".deployMethodMethod option:selected").val())
+        deployMethod = 
+            {
+                name : $(this).find(".deployMethodName").val(),
+                url : $(this).find(".deployMethodUrl").val(),
+                deployMethod : $(this).find(".deployMethodMethod option:selected").val()
+            }
+        
+        console.log(deployMethod)
+        deployMethodsArray.push(deployMethod)
+    })
+    console.log(deployMethodsArray)
+    localStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray))
 }
 
 function fillOutSettings() {
@@ -92,7 +110,7 @@ function fillOutSettings() {
             {
                 name : "default deployment",
                 url : "http://localhost:8001/",
-                deployMethod : "native"
+                deployMethod : "direct"
             }
         ]
         localStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray))
@@ -106,12 +124,12 @@ function fillOutSettings() {
     deployMethodManagerDiv.empty()
     deployMethodsArray.forEach(element => {
 
-        var nativeOption =  '<option value="native">Native</option>'
+        var directOption =  '<option value="direct">Direct</option>'
         var helmOption =  '<option value="helm">Helm</option>'
         var restOption =  '<option value="rest">Rest</option>'
 
-        if(element.deployMethod === "native"){
-            nativeOption =  '<option value="native" selected="true">Native</option>'
+        if(element.deployMethod === "direct"){
+            directOption =  '<option value="direct" selected="true">Direct</option>'
         }else if(element.deployMethod === "helm"){
             helmOption =  '<option value="helm" selected="true">Helm</option>'
         }else if(element.deployMethod === "rest"){
@@ -119,18 +137,37 @@ function fillOutSettings() {
         }
 
         var deplpoyMethodRow = '<div class="input-group">'+
-        '<input type="text" class="form-control" value="'+element.name+'">'+
-        '<input type="text" class="form-control" value="'+element.url+'">'+
-        '<select class="form-control" name="Deploy Method">'+
-            nativeOption+
+        '<input type="text" placeholder="Deployment Name" class="form-control deployMethodName" value="'+element.name+'">'+
+        '<input type="text" placeholder="Destination Url" class="form-control deployMethodUrl" value="'+element.url+'">'+
+        '<select class="form-control deployMethodMethod" name="Deploy Method">'+
+            directOption+
             helmOption+
             restOption+
         '</select>'+
-    '</div>'
+        '</div>'
         deployMethodManagerDiv.append(deplpoyMethodRow)
     });
 
     console.log(deployMethodsArray)
+}
+
+function addDeployMethod(){
+    var deployMethodManagerDiv = $("#DeployMethodManager")
+
+    var directOption =  '<option value="direct" selected="true">Direct</option>'
+    var helmOption =  '<option value="helm">Helm</option>'
+    var restOption =  '<option value="rest">Rest</option>'
+
+    var deplpoyMethodRow = '<div class="input-group">'+
+    '<input type="text" placeholder="Deployment Name" class="form-control deployMethodName" value="">'+
+    '<input type="text" placeholder="Destination Url" class="form-control deployMethodUrl" value="">'+
+    '<select class="form-control deployMethodMethod" name="Deploy Method">'+
+        directOption+
+        helmOption+
+        restOption+
+    '</select>'+
+    '</div>'
+    deployMethodManagerDiv.append(deplpoyMethodRow)
 }
 
 function makeJSON() {
