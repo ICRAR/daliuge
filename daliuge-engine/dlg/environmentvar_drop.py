@@ -62,7 +62,7 @@ def _filter_parameters(parameters: dict):
 # @details A set of environment variables, wholly specified in EAGLE and accessible to all drops.
 # @par EAGLE_START
 # @param category EnvironmentVariables
-# @param tag daliuge
+# @param tag template
 # @par EAGLE_END
 class EnvironmentVarDROP(AbstractDROP, KeyValueDROP):
     """
