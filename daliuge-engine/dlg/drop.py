@@ -45,7 +45,7 @@ import re
 import sys
 import inspect
 import binascii
-from typing import List, Optional, Union
+from typing import List, Union
 
 import numpy as np
 import pyarrow.plasma as plasma
