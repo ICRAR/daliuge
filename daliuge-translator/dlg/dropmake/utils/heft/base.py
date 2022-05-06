@@ -52,7 +52,7 @@ Event = namedtuple("Event", "task start end")
 
 
 def reverse_dict(d):
-    """ Reverses direction of dependence dict
+    """Reverses direction of dependence dict
 
     >>> d = {'a': (1, 2), 'b': (2, 3), 'c':()}
     >>> reverse_dict(d)
@@ -90,7 +90,7 @@ def cbar(ni, nj, agents, commcost):
 
 
 def ranku(ni, agents, succ, compcost, commcost):
-    """ Rank of task
+    """Rank of task
 
     This code is designed to mirror the wikipedia entry.
     Please see that for details
@@ -174,7 +174,7 @@ def start_time(task, orders, taskson, prec, commcost, compcost, agent):
 
 
 def allocate(task, orders, taskson, prec, compcost, commcost):
-    """ Allocate task to the machine with earliest finish time
+    """Allocate task to the machine with earliest finish time
 
     Operates in place
     """
@@ -207,7 +207,7 @@ def makespan(orders):
 
 
 def schedule(succ, agents, compcost, commcost):
-    """ Schedule computation dag onto worker agents
+    """Schedule computation dag onto worker agents
 
     inputs:
 

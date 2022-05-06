@@ -126,13 +126,12 @@ class TestSession(unittest.TestCase):
     def test_addGraphSpec_namedPorts(self):
         with pkg_resources.resource_stream(
             "test", "graphs/funcTestPG_namedPorts.graph"
-            ) as f:  # @UndefinedVariable
+        ) as f:  # @UndefinedVariable
             graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         with Session("1") as s:
             s.addGraphSpec(graphSpec)
             s.deploy()
-
 
     def test_linking(self):
         with Session("1") as s:

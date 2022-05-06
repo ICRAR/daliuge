@@ -44,12 +44,14 @@ def uid_for_drop(dropSpec):
         return dropSpec["uid"]
     return dropSpec["oid"]
 
+
 def sanitize_link(link):
     """
     Links can now be dictionaries, but we only need
     the key.
     """
-    return list(link.keys())[0] if isinstance(link,dict) else link
+    return list(link.keys())[0] if isinstance(link, dict) else link
+
 
 def sanitize_relations(interDMRelations, graph):
     # TODO: Big change required to remove this hack here
