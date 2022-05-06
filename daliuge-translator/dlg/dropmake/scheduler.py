@@ -448,8 +448,7 @@ class KFamilyPartition(Partition):
         self._max_dop = self._tmp_max_dop
 
     def can_merge(self, that, u, v):
-        """
-        """
+        """"""
         dag = nx.compose(self._dag, that._dag)
         if u is not None:
             dag.add_edge(u, v)
@@ -516,7 +515,7 @@ class Scheduler(object):
             implemented using METIS for now
 
         bal_cond:  load balance condition (integer):
-                    0 - workload, 
+                    0 - workload,
                     1 - CPU count (faster to evaluate than workload)
         """
         # 1. build the bi-directional graph (each partition is a node)
@@ -1259,10 +1258,14 @@ class DAGUtil(object):
                 if obk in drop:
                     for oup in drop[obk]:
                         key = list(oup.keys())[0] if isinstance(oup, dict) else oup
-                        if (DropType.PLAIN == tt):
-                            G.add_weighted_edges_from([(myk, key_dict[key], int(drop['dw']))])
-                        elif (DropType.APP == tt):
-                            G.add_weighted_edges_from([(myk, key_dict[key], int(drop_dict[key].get('dw', 5)))])
+                        if DropType.PLAIN == tt:
+                            G.add_weighted_edges_from(
+                                [(myk, key_dict[key], int(drop["dw"]))]
+                            )
+                        elif DropType.APP == tt:
+                            G.add_weighted_edges_from(
+                                [(myk, key_dict[key], int(drop_dict[key].get("dw", 5)))]
+                            )
 
         if fake_super_root:
             super_root = dropdict(

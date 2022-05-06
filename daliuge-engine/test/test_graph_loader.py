@@ -135,15 +135,14 @@ class TestGraphLoader(unittest.TestCase):
 
         self.assertEqual(1, len(a["consumers"]))
         self.assertEqual("B", a["consumers"][0])
-        self.assertFalse("producers" in a and len(a["producers"])>0)
-        self.assertFalse("streamingConsumers" in c and \
-            len(c["streamingConsumers"])>0)
+        self.assertFalse("producers" in a and len(a["producers"]) > 0)
+        self.assertFalse("streamingConsumers" in c and len(c["streamingConsumers"]) > 0)
 
     def test_removeUnmetRelationships_named(self):
 
         with pkg_resources.resource_stream(
-                "test", "graphs/HelloWorld_simplePG.graph"
-            ) as f:  # @UndefinedVariable
+            "test", "graphs/HelloWorld_simplePG.graph"
+        ) as f:  # @UndefinedVariable
             graphDesc = json.load(f)
 
         unmetRelationships = graph_loader.removeUnmetRelationships(graphDesc)
@@ -154,8 +153,8 @@ class TestGraphLoader(unittest.TestCase):
         Use a graph with un-named ports and check whether it is loading
         """
         with pkg_resources.resource_stream(
-                "test", "graphs/funcTestPG.graph"
-            ) as f:  # @UndefinedVariable
+            "test", "graphs/funcTestPG.graph"
+        ) as f:  # @UndefinedVariable
             graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         a = graph_loader.createGraphFromDropSpecList(graphSpec)
@@ -166,8 +165,8 @@ class TestGraphLoader(unittest.TestCase):
         Use a graph with named ports and check whether it is loading
         """
         with pkg_resources.resource_stream(
-                "test", "graphs/funcTestPG_namedPorts.graph"
-            ) as f:  # @UndefinedVariable
+            "test", "graphs/funcTestPG_namedPorts.graph"
+        ) as f:  # @UndefinedVariable
             graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         a = graph_loader.createGraphFromDropSpecList(graphSpec)
@@ -179,8 +178,8 @@ class TestGraphLoader(unittest.TestCase):
         arguments
         """
         with pkg_resources.resource_stream(
-                "test", "graphs/application_args.graph"
-            ) as f:  # @UndefinedVariable
+            "test", "graphs/application_args.graph"
+        ) as f:  # @UndefinedVariable
             graphSpec = json.load(f)
         graph = graph_loader.createGraphFromDropSpecList(graphSpec)
         app = graph[0]
@@ -189,4 +188,3 @@ class TestGraphLoader(unittest.TestCase):
         self.assertEqual(app.integer, True)
         self.assertEqual(app.low, 34)
         self.assertEqual(app.high, 3456)
-
