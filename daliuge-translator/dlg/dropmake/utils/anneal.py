@@ -104,13 +104,11 @@ class Annealer(object):
         return True
 
     def set_user_exit(self, signum, frame):
-        """Raises the user_exit flag, further iterations are stopped
-        """
+        """Raises the user_exit flag, further iterations are stopped"""
         self.user_exit = True
 
     def set_schedule(self, schedule):
-        """Takes the output from `auto` and sets the attributes
-        """
+        """Takes the output from `auto` and sets the attributes"""
         self.Tmax = schedule["tmax"]
         self.Tmin = schedule["tmin"]
         self.steps = int(schedule["steps"])

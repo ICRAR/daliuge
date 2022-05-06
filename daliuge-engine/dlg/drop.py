@@ -98,7 +98,13 @@ DEFAULT_INTERNAL_PARAMETERS = {
 
 if sys.version_info >= (3, 8):
     from dlg.io import SharedMemoryIO
-from dlg.utils import prepare_sql, createDirIfMissing, isabs, object_tracking, getDlgVariable
+from dlg.utils import (
+    prepare_sql,
+    createDirIfMissing,
+    isabs,
+    object_tracking,
+    getDlgVariable,
+)
 from dlg.process import DlgProcess
 from dlg.meta import (
     dlg_float_param,
@@ -1639,10 +1645,11 @@ class FileDROP(DataDROP, PathBasedDrop):
     # Override
     def generate_reproduce_data(self):
         from .droputils import allDropContents
+
         try:
             data = allDropContents(self, self.size)
         except Exception:
-            data = b''
+            data = b""
         return {"data_hash": common_hash(data)}
 
 
@@ -1873,6 +1880,7 @@ class SharedMemoryDROP(DataDROP):
         hostname = os.uname()[1]
         return f"shmem://{hostname}/{os.getpid()}/{id(self._buf)}"
 
+
 ##
 # @brief NULL
 # @details A Drop not storing any data (useful for just passing on events)
@@ -1901,6 +1909,7 @@ class EndDROP(NullDROP):
     """
     A DROP that ends the session when reached
     """
+
 
 ##
 # @brief RDBMS

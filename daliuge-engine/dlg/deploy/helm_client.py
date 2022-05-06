@@ -37,8 +37,13 @@ import yaml
 from dlg.common.version import version as dlg_version
 from dlg.constants import NODE_DEFAULT_REST_PORT
 from dlg.deploy.common import submit
-from dlg.deploy.deployment_utils import find_node_ips, find_service_ips, find_pod_ips, \
-    wait_for_pods, check_k8s_env
+from dlg.deploy.deployment_utils import (
+    find_node_ips,
+    find_service_ips,
+    find_pod_ips,
+    wait_for_pods,
+    check_k8s_env,
+)
 from dlg.dropmake import pg_generator
 from dlg.restutils import RestClient
 
@@ -82,9 +87,11 @@ def _write_chart(
 
 
 def _write_values(chart_dir, config):
-    with open(f"{chart_dir}{os.sep}custom-values.yaml", 'w+', encoding='utf-8') as value_file:
+    with open(
+        f"{chart_dir}{os.sep}custom-values.yaml", "w+", encoding="utf-8"
+    ) as value_file:
         yaml.dump(config, value_file)
-    logger.info('Written custom-values file.')
+    logger.info("Written custom-values file.")
 
 
 def _read_values(chart_dir):
@@ -93,14 +100,14 @@ def _read_values(chart_dir):
     with open(f"{chart_dir}{os.sep}values.yaml", "r", encoding="utf-8") as custom_file:
         new_data = yaml.safe_load(custom_file)
     data.update(new_data)
-    logger.info('Read yaml values file')
+    logger.info("Read yaml values file")
     return data
 
 
 def _find_resources(pgt_data):
     pgt = json.loads(pgt_data)
-    nodes = list(map(lambda x: x['node'], pgt))
-    islands = list(map(lambda x: x['island'], pgt))
+    nodes = list(map(lambda x: x["node"], pgt))
+    islands = list(map(lambda x: x["island"], pgt))
     islands = list(set(islands))
     nodes = list(set(nodes))
     return islands, nodes
@@ -152,7 +159,7 @@ class HelmClient:
 
         # Copy in template files.
         library_root = pathlib.Path(os.path.dirname(dlg.__file__)).parent.parent
-        logger.debug(f'Helm chart copied to: {library_root}')
+        logger.debug(f"Helm chart copied to: {library_root}")
         if sys.version_info >= (3, 8):
             shutil.copytree(
                 os.path.join(library_root, "daliuge-k8s", "helm"),
@@ -166,10 +173,10 @@ class HelmClient:
 
     def _set_physical_graph(self, physical_graph_content, co_host=True):
         self._physical_graph_file = physical_graph_content
-        self._islands, self._nodes = _find_resources(
-            self._physical_graph_file)
-        self._num_machines = _num_deployments_required(self._islands,
-                                                       self._nodes) - (1 if co_host else 0)
+        self._islands, self._nodes = _find_resources(self._physical_graph_file)
+        self._num_machines = _num_deployments_required(self._islands, self._nodes) - (
+            1 if co_host else 0
+        )
 
     def _find_pod_details(self):
         # NOTE: +1 for the master.
@@ -177,10 +184,9 @@ class HelmClient:
         pod_ips = find_pod_ips(self._num_machines + 1)
         labels = sorted([str(x) for x in range(self._num_machines)])
         for i in range(len(labels)):
-            self._pod_details[labels[i]] = {'ip': pod_ips[i], 'svc': service_ips[i]}
-        self._pod_details['master'] = {'ip': pod_ips[-1],
-                                       'svc': service_ips[-1]}
-        logger.debug(f'Pod details: {self._pod_details}')
+            self._pod_details[labels[i]] = {"ip": pod_ips[i], "svc": service_ips[i]}
+        self._pod_details["master"] = {"ip": pod_ips[-1], "svc": service_ips[-1]}
+        logger.debug(f"Pod details: {self._pod_details}")
 
     def create_helm_chart(self, physical_graph_content, co_host=True):
         """
@@ -211,38 +217,42 @@ class HelmClient:
     def start_manager(self, manager_node):
         if not self._k8s_access:
             raise RuntimeError("Cannot access k8s")
-        self._submission_endpoint = self._pod_details[manager_node]['svc']
-        client = RestClient(self._submission_endpoint,
-                            self._value_data['service']['daemon']['port'], timeout=30)
-        node_ips = [x['ip'] for x in self._pod_details.values()]
+        self._submission_endpoint = self._pod_details[manager_node]["svc"]
+        client = RestClient(
+            self._submission_endpoint,
+            self._value_data["service"]["daemon"]["port"],
+            timeout=30,
+        )
+        node_ips = [x["ip"] for x in self._pod_details.values()]
         print(node_ips)
-        data = json.dumps({'nodes': node_ips}).encode('utf-8')
+        data = json.dumps({"nodes": node_ips}).encode("utf-8")
         time.sleep(5)
         logger.debug(f"Starting manager on {self._submission_endpoint}")
-        client._POST('/managers/island/start', content=data,
-                     content_type='application/json').read()
-        client._POST('/managers/master/start', content=data,
-                     content_type='application/json').read()
+        client._POST(
+            "/managers/island/start", content=data, content_type="application/json"
+        ).read()
+        client._POST(
+            "/managers/master/start", content=data, content_type="application/json"
+        ).read()
 
     def start_nodes(self):
         if not self._k8s_access:
             raise RuntimeError("Cannot access k8s")
-        ips = [x['svc'] for x in self._pod_details.values()]
-        ips.remove(self._pod_details['master']['svc'])
+        ips = [x["svc"] for x in self._pod_details.values()]
+        ips.remove(self._pod_details["master"]["svc"])
         for ip in ips:
             client = RestClient(
-                ip,
-                self._value_data['service']['daemon']['port'],
-                timeout=30
+                ip, self._value_data["service"]["daemon"]["port"], timeout=30
             )
             time.sleep(5)
             logger.debug(f"Starting node on {ip}")
             # node_ips = ['127.0.0.1'] + [x['ip'] for x in self._pod_details.values()]
-            node_ips = [x['ip'] for x in self._pod_details.values()]
+            node_ips = [x["ip"] for x in self._pod_details.values()]
             # data = json.dumps({'nodes': ['127.0.0.1']}).encode('utf-8')
-            data = json.dumps({'nodes': node_ips}).encode('utf-8')
-            client._POST('/managers/master/start', content=data,
-                         content_type='application/json').read()
+            data = json.dumps({"nodes": node_ips}).encode("utf-8")
+            client._POST(
+                "/managers/master/start", content=data, content_type="application/json"
+            ).read()
 
     def launch_helm(self, co_host=False):
         """
@@ -253,19 +263,29 @@ class HelmClient:
             raise RuntimeError("Cannot access k8s")
         if self._submit:
             os.chdir(self._deploy_dir)
-            _write_values(self._chart_dir,
-                          {'deploy_id': 'master', 'name': f'{self._chart_name}-master'})
-            instruction = f'helm install {self._deploy_name}-master {self._chart_name}/  ' \
-                          f'--values {self._chart_name}{os.sep}custom-values.yaml'
-            process_return_string = subprocess.check_output([instruction],
-                                                            shell=True).decode('utf-8')
+            _write_values(
+                self._chart_dir,
+                {"deploy_id": "master", "name": f"{self._chart_name}-master"},
+            )
+            instruction = (
+                f"helm install {self._deploy_name}-master {self._chart_name}/  "
+                f"--values {self._chart_name}{os.sep}custom-values.yaml"
+            )
+            process_return_string = subprocess.check_output(
+                [instruction], shell=True
+            ).decode("utf-8")
             logger.info(f"{process_return_string}")
             for i in range(self._num_machines):
-                _write_values(self._chart_dir, {'deploy_id': i, 'name': f'{self._chart_name}-{i}'})
-                instruction = f'helm install {self._deploy_name}-{i} {self._chart_name}/  ' \
-                              f'--values {self._chart_name}{os.sep}custom-values.yaml'
-                process_return_string = subprocess.check_output([instruction],
-                                                                shell=True).decode('utf-8')
+                _write_values(
+                    self._chart_dir, {"deploy_id": i, "name": f"{self._chart_name}-{i}"}
+                )
+                instruction = (
+                    f"helm install {self._deploy_name}-{i} {self._chart_name}/  "
+                    f"--values {self._chart_name}{os.sep}custom-values.yaml"
+                )
+                process_return_string = subprocess.check_output(
+                    [instruction], shell=True
+                ).decode("utf-8")
                 logger.info(f"{process_return_string}")
                 # TODO: Check running nodes before launching another
             self._find_pod_details()
@@ -283,17 +303,17 @@ class HelmClient:
         if not self._k8s_access:
             raise RuntimeError("Cannot access k8s")
         for i in range(self._num_machines - 1, -1, -1):
-            subprocess.check_output([f'helm uninstall daliuge-daemon-{i}'], shell=True)
-        subprocess.check_output([f'helm uninstall daliuge-daemon-master'], shell=True)
+            subprocess.check_output([f"helm uninstall daliuge-daemon-{i}"], shell=True)
+        subprocess.check_output([f"helm uninstall daliuge-daemon-master"], shell=True)
 
     def _monitor(self, session_id=None):
-
         def _task():
             while True:
                 try:
                     dlg.deploy.common.monitor_sessions(
-                        session_id=session_id, host=self._submission_endpoint,
-                        port=NODE_DEFAULT_REST_PORT
+                        session_id=session_id,
+                        host=self._submission_endpoint,
+                        port=NODE_DEFAULT_REST_PORT,
                     )
                     break
                 except:
@@ -312,14 +332,18 @@ class HelmClient:
             raise RuntimeError("Cannot access k8s")
         # TODO: Check all nodes are operational first.
         pgt_data = json.loads(self._physical_graph_file)
-        node_ips = [x['ip'] for x in self._pod_details.values()]
-        node_ips.remove(self._pod_details['master']['ip'])
-        node_ips = [self._pod_details['master']['ip']] + node_ips
+        node_ips = [x["ip"] for x in self._pod_details.values()]
+        node_ips.remove(self._pod_details["master"]["ip"])
+        node_ips = [self._pod_details["master"]["ip"]] + node_ips
         # node_ips = ['127.0.0.1']
         physical_graph = pg_generator.resource_map(pgt_data, node_ips, co_host_dim=True)
         # TODO: Add dumping to log-dir
-        submit(physical_graph, self._submission_endpoint, port=NODE_DEFAULT_REST_PORT,
-               skip_deploy=False)
+        submit(
+            physical_graph,
+            self._submission_endpoint,
+            port=NODE_DEFAULT_REST_PORT,
+            skip_deploy=False,
+        )
 
     def submit_and_monitor_pgt(self):
         """
@@ -339,7 +363,12 @@ class HelmClient:
         # TODO: Check all nodes are operational first.
         pg_data = json.loads(self._physical_graph_file)
         # TODO: Add dumping to log-dir
-        submit(pg_data, self._submission_endpoint, port=NODE_DEFAULT_REST_PORT, skip_deploy=False)
+        submit(
+            pg_data,
+            self._submission_endpoint,
+            port=NODE_DEFAULT_REST_PORT,
+            skip_deploy=False,
+        )
 
     def submit_and_monitor_pg(self):
         """

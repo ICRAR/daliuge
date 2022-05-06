@@ -115,10 +115,11 @@ def check_k8s_env():
     Makes sure kubectl can be called and is accessible.
     """
     try:
-        output = subprocess.run(['kubectl version'], capture_output=True,
-                                shell=True).stdout
-        pattern = re.compile(r'^Client Version:.*\nServer Version:.*')
-        return re.match(pattern, output.decode(encoding='utf-8'))
+        output = subprocess.run(
+            ["kubectl version"], capture_output=True, shell=True
+        ).stdout
+        pattern = re.compile(r"^Client Version:.*\nServer Version:.*")
+        return re.match(pattern, output.decode(encoding="utf-8"))
     except subprocess.SubprocessError:
         return False
 
@@ -170,10 +171,13 @@ def num_daliuge_nodes(num_nodes: int, run_proxy: bool):
 
 
 def find_node_ips():
-    query = subprocess.check_output([
-        r'kubectl get nodes --selector=kubernetes.io/role!=master -o jsonpath={.items[*].status.addresses[?\(@.type==\"InternalIP\"\)].address}'],
-        shell=True)
-    node_ips = query.decode(encoding='utf-8').split(' ')
+    query = subprocess.check_output(
+        [
+            r"kubectl get nodes --selector=kubernetes.io/role!=master -o jsonpath={.items[*].status.addresses[?\(@.type==\"InternalIP\"\)].address}"
+        ],
+        shell=True,
+    )
+    node_ips = query.decode(encoding="utf-8").split(" ")
     return node_ips
 
 
@@ -184,9 +188,9 @@ def find_service_ips(num_expected, retries=3, timeout=10):
     attempts = 0
     while len(ips) < num_expected and attempts < retries:
         ips = []
-        query = subprocess.check_output([
-            r'kubectl get svc -o wide'],
-            shell=True).decode(encoding='utf-8')
+        query = subprocess.check_output(
+            [r"kubectl get svc -o wide"], shell=True
+        ).decode(encoding="utf-8")
         outcome = re.findall(pattern, query, re.M)
         for service in outcome:
             ip = re.search(ip_pattern, service)
@@ -202,9 +206,11 @@ def find_pod_ips(num_expected, retries=3, timeout=10):
     attempts = 0
     while len(ips) < num_expected and attempts < retries:
         ips = []
-        query = str(subprocess.check_output([
-            r'kubectl get pods -o wide'],
-            shell=True).decode(encoding='utf-8'))
+        query = str(
+            subprocess.check_output([r"kubectl get pods -o wide"], shell=True).decode(
+                encoding="utf-8"
+            )
+        )
         pattern = r"^daliuge-daemon.*"
         ip_pattern = r"\d+\.\d+\.\d+\.\d+"
         outcome = re.findall(pattern, query, re.M)
@@ -230,9 +236,11 @@ def wait_for_pods(num_expected, retries=18, timeout=10):
     all_running = False
     attempts = 0
     while not all_running and attempts < retries:
-        query = str(subprocess.check_output([
-            r'kubectl get pods -o wide'],
-            shell=True).decode(encoding='utf-8'))
+        query = str(
+            subprocess.check_output([r"kubectl get pods -o wide"], shell=True).decode(
+                encoding="utf-8"
+            )
+        )
         logger.info(query)
         pattern = r"^daliuge-daemon.*"
         outcome = re.findall(pattern, query, re.M)

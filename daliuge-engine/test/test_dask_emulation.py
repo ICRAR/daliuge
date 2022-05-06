@@ -251,7 +251,9 @@ class TestDlgDelayed(_TestDelayed, unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
         env = os.environ.copy()
-        env["PYTHONPATH"] = env.get("PYTHONPATH", "") + ":" + os.getcwd() + '/daliuge-engine'
+        env["PYTHONPATH"] = (
+            env.get("PYTHONPATH", "") + ":" + os.getcwd() + "/daliuge-engine"
+        )
         self.dmProcess = tool.start_process("nm", ["-vvv"], env=env)
 
     def compute(self, val):
