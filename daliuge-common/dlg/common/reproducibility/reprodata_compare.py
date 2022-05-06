@@ -157,7 +157,7 @@ def write_comparison(data, outfilepath, verbose=False):
     """
     Writes comparison dictionary to csv file.
     """
-    if len(data) > 1:
+    if len(data) > 0:
         write_outfile(data, outfilepath, 'comparison', verbose)
 
 
