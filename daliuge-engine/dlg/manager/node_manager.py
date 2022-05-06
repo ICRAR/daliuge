@@ -35,7 +35,6 @@ import sys
 import threading
 import time
 
-from glob import glob
 from . import constants
 from .drop_manager import DROPManager
 from .session import Session
