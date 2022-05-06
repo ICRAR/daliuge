@@ -217,7 +217,7 @@ class PGT(object):
             The pg_spec template is what needs to be send to a deferred deployemnt
             where the daliuge system is started up afer submission (e.g. SLURM)
         """
-        logger.debug("tpl_nodes_len: %s, node_list: %s" % (tpl_nodes_len, node_list))
+        logger.debug("tpl_nodes_len: %s, node_list: %s", tpl_nodes_len, node_list)
         if tpl_nodes_len > 0:  # generate pg_spec template
             node_list = range(tpl_nodes_len)  # create a fake list for now
 
