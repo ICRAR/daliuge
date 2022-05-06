@@ -25,7 +25,8 @@ __path__ = __import__("pkgutil").extend_path(__path__, __name__)  # @ReservedAss
 # set the version
 try:
     from dlg.common import version
+
     __version__ = version.full_version
 except:
     # This can happen when running from source
-    __version__ = 'unknown'
+    __version__ = "unknown"

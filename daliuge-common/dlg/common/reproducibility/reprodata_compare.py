@@ -33,7 +33,11 @@ import csv
 import logging
 import itertools
 
-from dlg.common.reproducibility.constants import ALL_RMODES, rflag_caster, ReproducibilityFlags
+from dlg.common.reproducibility.constants import (
+    ALL_RMODES,
+    rflag_caster,
+    ReproducibilityFlags,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +51,7 @@ def open_file(path: pathlib.Path):
     """
     Opens the passed filepath, returns a dictionary of the contained rmode signatures
     """
-    with path.open('r', encoding='utf-8') as infile:
+    with path.open("r", encoding="utf-8") as infile:
         data = json.load(infile)
     if isinstance(data, list):
         return data[-1]
@@ -58,7 +62,7 @@ def is_single(data):
     """
     Determines if the passed reprodata contains several signatures, or a single signature.
     """
-    if data.get('rmode') == str(ReproducibilityFlags.ALL.value):
+    if data.get("rmode") == str(ReproducibilityFlags.ALL.value):
         return False
     return True
 
@@ -68,7 +72,7 @@ def process_single(data):
     Processes reprodata containing a single signature.
     Builds a small dictionary mapping the 'rmode' to the signature
     """
-    return {rflag_caster(data.get('rmode')).value: data.get('signature')}
+    return {rflag_caster(data.get("rmode")).value: data.get("signature")}
 
 
 def process_multi(data):
@@ -79,7 +83,7 @@ def process_multi(data):
     """
     out_data = {rmode.value: None for rmode in ALL_RMODES}
     for rmode in ALL_RMODES:
-        out_data[rmode.value] = data.get(rmode.name, {}).get('signature')
+        out_data[rmode.value] = data.get(rmode.name, {}).get("signature")
     return out_data
 
 
@@ -102,7 +106,7 @@ def process_directory(dirname: pathlib.Path):
     Processes a directory assuming to contain reprodata.out file(s) referring to the same workflow.
     """
     out_data = {}
-    for file in dirname.glob('*.out'):
+    for file in dirname.glob("*.out"):
         new_data = process_file(file)
         for rmode, sig in new_data.items():
             if sig is not None:
@@ -119,8 +123,9 @@ def generate_comparison(data):
     """
     outdata = {}
     for combination in itertools.combinations(data.keys(), 2):
-        outdata[combination[0] + ':' + combination[1]] = compare_signatures(data[combination[0]],
-                                                                            data[combination[1]])
+        outdata[combination[0] + ":" + combination[1]] = compare_signatures(
+            data[combination[0]], data[combination[1]]
+        )
     return outdata
 
 
@@ -140,10 +145,11 @@ def write_outfile(data, outfilepath, outfilesuffix="summary", verbose=False):
     """
     Writes a dictionary to csv file.
     """
-    fieldnames = ['workflow'] + [rmode.name for rmode in ALL_RMODES]
-    with open(outfilepath + f'-{outfilesuffix}.csv', 'w+', newline='',
-              encoding='utf-8') as ofile:
-        writer = csv.writer(ofile, delimiter=',')
+    fieldnames = ["workflow"] + [rmode.name for rmode in ALL_RMODES]
+    with open(
+        outfilepath + f"-{outfilesuffix}.csv", "w+", newline="", encoding="utf-8"
+    ) as ofile:
+        writer = csv.writer(ofile, delimiter=",")
         writer.writerow(fieldnames)
 
         for filepath, signature_data in data.items():
@@ -158,10 +164,10 @@ def write_comparison(data, outfilepath, verbose=False):
     Writes comparison dictionary to csv file.
     """
     if len(data) > 0:
-        write_outfile(data, outfilepath, 'comparison', verbose)
+        write_outfile(data, outfilepath, "comparison", verbose)
 
 
-def write_outputs(data, comparisons, outfile_root='.', verbose=False):
+def write_outputs(data, comparisons, outfile_root=".", verbose=False):
     """
     Writes reprodata signatures for all workflows to a summary csv and comparison of these
     signatures to a separate comparison csv.
@@ -169,7 +175,7 @@ def write_outputs(data, comparisons, outfile_root='.', verbose=False):
     if verbose:
         print(json.dumps(data, indent=4))
     try:
-        write_outfile(data, outfile_root, outfilesuffix='summary', verbose=verbose)
+        write_outfile(data, outfile_root, outfilesuffix="summary", verbose=verbose)
     except IOError:
         logger.debug("Could not write summary csv")
     try:
@@ -207,27 +213,27 @@ def _main(pathnames: list, outfilepath: str, verbose=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        'filename',
+        "filename",
         action="store",
         default=None,
-        nargs='+',
+        nargs="+",
         type=str,
-        help='The first filename or directory to access'
+        help="The first filename or directory to access",
     )
     parser.add_argument(
-        '-o',
-        '--outfile',
+        "-o",
+        "--outfile",
         action="store",
         default=".",
         type=str,
-        help="Directory to write output files to"
+        help="Directory to write output files to",
     )
     parser.add_argument(
-        '-v',
-        '--verbose',
+        "-v",
+        "--verbose",
         default=False,
         action="store_true",
-        help="If set, will write output to standard out"
+        help="If set, will write output to standard out",
     )
     args = parser.parse_args()
     _main(list(args.filename), args.outfile, args.verbose)

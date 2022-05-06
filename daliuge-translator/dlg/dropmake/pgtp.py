@@ -139,7 +139,7 @@ class MetisPGTP(PGT):
                 adj_drops += drop[ust]
 
             for inp in adj_drops:
-                key = list(inp.keys())[0] if isinstance(inp,dict) else inp
+                key = list(inp.keys())[0] if isinstance(inp, dict) else inp
                 if DropType.PLAIN == tt:
                     lw = drop["dw"]
                 elif DropType.APP == tt:

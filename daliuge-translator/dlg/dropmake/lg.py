@@ -555,11 +555,13 @@ class LGNode:
         Return IdText of port if it exists
         """
         idText = None
-        if port in self.jd and len(self.jd[port]) > index and \
-            "IdText" in self.jd[port][index]:
+        if (
+            port in self.jd
+            and len(self.jd[port]) > index
+            and "IdText" in self.jd[port][index]
+        ):
             idText = self.jd[port][index]["IdText"]
         return idText
-
 
     def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
         """
@@ -771,7 +773,8 @@ class LGNode:
             sij = self.inputs[0].jd
             if not "data_volume" in sij:
                 raise GInvalidNode(
-                    "GroupBy should be connected to a DataDrop, not '%s'" % sij["category"]
+                    "GroupBy should be connected to a DataDrop, not '%s'"
+                    % sij["category"]
                 )
             dw = int(sij["data_volume"]) * self.groupby_width
             dropSpec_grp = dropdict(

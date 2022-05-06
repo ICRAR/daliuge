@@ -504,7 +504,7 @@ def dlg_submit(parser, args):
         action="store_true",
         dest="reproducibility",
         help="Fetch (and output) reproducibility data for the final execution graph "
-             "(default: False)",
+        "(default: False)",
     )
     (opts, args) = parser.parse_args(args)
 

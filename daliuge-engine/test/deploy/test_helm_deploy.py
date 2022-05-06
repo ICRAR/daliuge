@@ -42,13 +42,13 @@ if check_k8s_env():
 class TestHelmClient(unittest.TestCase):
     def test_create_default_helm_chart(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
-            helm_client = HelmClient(deploy_dir=tmp_dir, deploy_name='my_fun_name')
-            helm_client.create_helm_chart('[]')
+            helm_client = HelmClient(deploy_dir=tmp_dir, deploy_name="my_fun_name")
+            helm_client.create_helm_chart("[]")
             chart_file_name = os.path.join(helm_client._chart_dir, "Chart.yaml")
-            with open(chart_file_name, 'r', encoding='utf-8') as chart_file:
+            with open(chart_file_name, "r", encoding="utf-8") as chart_file:
                 chart_data = yaml.safe_load(chart_file)
-                self.assertEqual(helm_client._chart_name, chart_data['name'])
-                self.assertEqual(dlg_version, chart_data['appVersion'])
+                self.assertEqual(helm_client._chart_name, chart_data["name"])
+                self.assertEqual(dlg_version, chart_data["appVersion"])
 
     @unittest.skip
     def test_custom_ports(self):
@@ -70,15 +70,20 @@ class TestHelmClient(unittest.TestCase):
             drop["node"] = "127.0.0.1"
             drop["island"] = "127.0.0.1"
         with tempfile.TemporaryDirectory() as tmp_dir:
-            helm_client = HelmClient(deploy_dir=tmp_dir, deploy_name='dlg-test')
+            helm_client = HelmClient(deploy_dir=tmp_dir, deploy_name="dlg-test")
             helm_client.create_helm_chart(json.dumps(pg), co_host=False)
             self.assertEqual(pg, json.loads(helm_client._physical_graph_file))
             self.assertEqual(1, helm_client._num_machines)
 
     def test_create_multi_node_helm_chart(self):
         pg = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "node": "127.0.0.1",
-             "island": "127.0.0.1"},
+            {
+                "oid": "A",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "node": "127.0.0.1",
+                "island": "127.0.0.1",
+            },
             {
                 "oid": "B",
                 "type": "app",
@@ -86,7 +91,7 @@ class TestHelmClient(unittest.TestCase):
                 "inputs": ["A"],
                 "outputs": ["C"],
                 "node": "127.0.0.1",
-                "island": "127.0.0.1"
+                "island": "127.0.0.1",
             },
             {
                 "oid": "D",
@@ -95,15 +100,25 @@ class TestHelmClient(unittest.TestCase):
                 "inputs": ["A"],
                 "outputs": ["E"],
                 "node": "127.0.0.2",
-                "island": "127.0.0.2"
+                "island": "127.0.0.2",
             },
-            {"oid": "C", "type": "plain", "storage": Categories.MEMORY, "node": "127.0.0.1",
-             "island": "127.0.0.1"},
-            {"oid": "E", "type": "plain", "storage": Categories.MEMORY, "node": "127.0.0.2",
-             "island": "127.0.0.2"}
+            {
+                "oid": "C",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "node": "127.0.0.1",
+                "island": "127.0.0.1",
+            },
+            {
+                "oid": "E",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "node": "127.0.0.2",
+                "island": "127.0.0.2",
+            },
         ]
         with tempfile.TemporaryDirectory() as tmp_dir:
-            helm_client = HelmClient(deploy_dir=tmp_dir, deploy_name='dlg_test')
+            helm_client = HelmClient(deploy_dir=tmp_dir, deploy_name="dlg_test")
             helm_client.create_helm_chart(json.dumps(pg), co_host=False)
             # TODO: Assert translation works
             self.assertEqual(2, helm_client._num_machines)

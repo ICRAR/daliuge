@@ -456,9 +456,11 @@ class GenericNpyGatherApp(BarrierAppDROP):
         if self.function not in self.functions:
             raise Exception(f"Function {self.function} not supported by {self}")
 
-        result = self.reduce_gather_inputs()\
-            if self.functions[self.function] is not None\
+        result = (
+            self.reduce_gather_inputs()
+            if self.functions[self.function] is not None
             else self.gather_inputs()
+        )
 
         for o in self.outputs:
             droputils.save_numpy(o, result)
@@ -471,9 +473,11 @@ class GenericNpyGatherApp(BarrierAppDROP):
         for input in self.inputs:
             data = droputils.load_numpy(input)
             # skip gather for the first input
-            result = reduce(data, axis=self.reduce_axes)\
-                if result is None\
+            result = (
+                reduce(data, axis=self.reduce_axes)
+                if result is None
                 else gather(result, reduce(data, axis=self.reduce_axes))
+            )
         return result
 
     def gather_inputs(self):
@@ -543,7 +547,7 @@ class HelloWorldApp(BarrierAppDROP):
             try:
                 phrase = str(pickle.loads(droputils.allDropContents(ins[0]))[0])
             except _pickle.UnpicklingError:
-                phrase = str(droputils.allDropContents(ins[0]), encoding='utf-8')
+                phrase = str(droputils.allDropContents(ins[0]), encoding="utf-8")
             self.greeting = f"Hello {phrase}"
 
         outs = self.outputs

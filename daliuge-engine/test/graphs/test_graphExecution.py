@@ -53,7 +53,7 @@ class LocalDimStarter(ManagerStarter):
 
 class TestGraphs(LocalDimStarter, unittest.TestCase):
     """
-    Class to test the execution of actual physical graphs, 
+    Class to test the execution of actual physical graphs,
     rather than python constructions. Add additional graphs
     and associated tests as required.
     """
@@ -97,11 +97,11 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         """
         Use a graph with named ports and check whether it is runnning
         """
-        init_oid = "2022-03-20T04:33:27_-2_0" # first drop in graph
+        init_oid = "2022-03-20T04:33:27_-2_0"  # first drop in graph
         sessionId = "lalo"
         with pkg_resources.resource_stream(
-                "test", "graphs/funcTestPG_namedPorts.graph"
-            ) as f:  # @UndefinedVariable
+            "test", "graphs/funcTestPG_namedPorts.graph"
+        ) as f:  # @UndefinedVariable
             graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
@@ -112,9 +112,9 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         init_drop = self.dm._sessions[sessionId].drops[init_oid]
         a = InMemoryDROP("a", "a")
         init_drop.addInput(a)
-        logger.debug(f'PyfuncAPPDrop: {dir(fd)}')
+        logger.debug(f"PyfuncAPPDrop: {dir(fd)}")
         for i in fd.parameters["inputs"]:
-            logger.debug(f'PyfuncAPPDrop input names:{i}')
+            logger.debug(f"PyfuncAPPDrop input names:{i}")
 
         with droputils.DROPWaiterCtx(self, init_drop, 3):
             a.setCompleted()
@@ -123,11 +123,14 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         """
         Use a graph with named ports and check whether it is runnning
         """
-        init_oids = ["2022-03-30T03:46:01_-2_0", "2022-03-30T03:46:01_-6_0"] # first drops in graph
+        init_oids = [
+            "2022-03-30T03:46:01_-2_0",
+            "2022-03-30T03:46:01_-6_0",
+        ]  # first drops in graph
         sessionId = "lalo"
         with pkg_resources.resource_stream(
-                "test", "graphs/pyfunc_glob_testPG.graph"
-            ) as f:  # @UndefinedVariable
+            "test", "graphs/pyfunc_glob_testPG.graph"
+        ) as f:  # @UndefinedVariable
             graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
@@ -141,11 +144,9 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
             init_drop = self.dm._sessions[sessionId].drops[oid]
             init_drop.addInput(start_drops[i])
             i += 1
-        logger.debug(f'PyfuncAPPDrop: {dir(fd)}')
+        logger.debug(f"PyfuncAPPDrop: {dir(fd)}")
         for i in fd.parameters["inputs"]:
-            logger.debug(f'PyfuncAPPDrop input names:{i}')
-
+            logger.debug(f"PyfuncAPPDrop input names:{i}")
 
         with droputils.DROPWaiterCtx(self, init_drop, 3):
             [a.setCompleted() for a in start_drops]
-

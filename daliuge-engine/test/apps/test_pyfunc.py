@@ -60,10 +60,12 @@ def func_with_defaults(a, b=10, c=20, x=30, y=40, z=50):
     logger.info("%r - %r * %r + (%r - %r) * %r = %r", a, b, c, y, x, z, res)
     return res
 
+
 def sum_with_args_and_kwarg(a, *args, **kwargs):
     """Returns a + kwargs['b'], or only a if no 'b' is found in kwargs"""
     b = kwargs.pop("b", 0)
     return a + sum(args) + b
+
 
 def _PyFuncApp(oid, uid, f, **kwargs):
     fname = None
@@ -78,7 +80,7 @@ def _PyFuncApp(oid, uid, f, **kwargs):
         func_code=fcode,
         func_defaults=fdefaults,
         pickle=True,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -217,11 +219,11 @@ class TestPyFuncApp(unittest.TestCase):
             logger.debug(f"args: {args}")
             for i in range(n_args):
                 logger.debug(f"adding arg input: {args[i]}")
-                si = chr(98+i) # need to start from b
+                si = chr(98 + i)  # need to start from b
                 arg_inputs.append(InMemoryDROP(si, si, pydata=translate(args[i])))
             i = n_args
             for name, value in kwargs.items():
-                si = chr(98+i)
+                si = chr(98 + i)
                 kwarg_inputs[name] = (si, InMemoryDROP(si, si, pydata=translate(value)))
                 i += 1
 
@@ -237,7 +239,9 @@ class TestPyFuncApp(unittest.TestCase):
             logger.debug(f"adding input: {a}")
             app.addInput(a)
             app.addOutput(output)
-            logger.debug(f"adding inputs: {arg_inputs + [x[1] for x in kwarg_inputs.values()]}")
+            logger.debug(
+                f"adding inputs: {arg_inputs + [x[1] for x in kwarg_inputs.values()]}"
+            )
             for drop in arg_inputs + [x[1] for x in kwarg_inputs.values()]:
                 app.addInput(drop)
 
@@ -281,7 +285,7 @@ class TestPyFuncApp(unittest.TestCase):
 
     def test_mixed_explicit_and_variable_args(self):
         args = [1, 20, 30]
-        kwargs = {'b':100}
+        kwargs = {"b": 100}
         self.assertEqual(sum_with_args_and_kwarg(1), 1)
         self.assertEqual(sum_with_args_and_kwarg(*args, **kwargs), 151)
         self.assertEqual(sum_with_args_and_kwarg(1, 20, 30, b=100), 151)
@@ -390,4 +394,3 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         a_data = os.urandom(32)
         c_data = self._test_runGraphInTwoNMs(g1, g2, rels, pickle.dumps(a_data), None)
         self.assertEqual(a_data, pickle.loads(c_data))
-

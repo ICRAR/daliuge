@@ -158,8 +158,13 @@ class ManagerRestServer(RestServer):
         app.get("/api/sessions/<sessionId>/graph/size", callback=self.getGraphSize)
         app.get("/api/sessions/<sessionId>/graph/status", callback=self.getGraphStatus)
         app.post("/api/sessions/<sessionId>/graph/append", callback=self.addGraphParts)
-        app.get("/api/sessions/<sessionId>/repro/data", callback=self.getSessionReproData)
-        app.get("/api/sessions/<sessionId>/repro/status", callback=self.getSessionReproStatus)
+        app.get(
+            "/api/sessions/<sessionId>/repro/data", callback=self.getSessionReproData
+        )
+        app.get(
+            "/api/sessions/<sessionId>/repro/status",
+            callback=self.getSessionReproStatus,
+        )
 
         app.route("/api/sessions", method="OPTIONS", callback=self.acceptPreflight)
         app.route(
@@ -297,7 +302,10 @@ class ManagerRestServer(RestServer):
     def addGraphParts(self, sessionId):
         # WARNING: TODO: Somehow, the content_type can be overwritten to 'text/plain'
         logger.debug(bottle.request.content_type)
-        if "application/json" not in bottle.request.content_type and "text/plain" not in bottle.request.content_type:
+        if (
+            "application/json" not in bottle.request.content_type
+            and "text/plain" not in bottle.request.content_type
+        ):
             bottle.response.status = 415
             return
 

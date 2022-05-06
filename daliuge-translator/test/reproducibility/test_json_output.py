@@ -34,7 +34,7 @@ class TestJSONSerialize(unittest.TestCase):
     """
 
     def test_json_dump(self):
-        test_dict = {'rmode': ReproducibilityFlags.RERUN}
+        test_dict = {"rmode": ReproducibilityFlags.RERUN}
         try:
             json.dumps(test_dict)
         except TypeError:
