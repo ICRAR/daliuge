@@ -141,12 +141,12 @@ class TestDaemon(unittest.TestCase):
     def test_nothing_starts(self):
         # Nothing should start now
         self.create_daemon(master=False, noNM=True, disable_zeroconf=True)
-        self.assertFalse(
-            utils.portIsOpen("localhost", constants.NODE_DEFAULT_REST_PORT, 0),
+        self.assertTrue(
+            utils.portIsClosed("localhost", constants.NODE_DEFAULT_REST_PORT, 0),
             "NM started but it should not have",
         )
-        self.assertFalse(
-            utils.portIsOpen("localhost", constants.MASTER_DEFAULT_REST_PORT, 0),
+        self.assertTrue(
+            utils.portIsClosed("localhost", constants.MASTER_DEFAULT_REST_PORT, 0),
             "NM started but it should not have",
         )
 
@@ -297,8 +297,8 @@ class TestDaemon(unittest.TestCase):
 
         # Check that the DataIsland stopped
         self._stop("island", http.HTTPStatus.OK, "")
-        self.assertFalse(
-            utils.portIsOpen("localhost", constants.ISLAND_DEFAULT_REST_PORT, _TIMEOUT),
+        self.assertTrue(
+            utils.portIsClosed("localhost", constants.ISLAND_DEFAULT_REST_PORT, _TIMEOUT),
             "The DIM did not stop successfully",
         )
 
@@ -321,14 +321,15 @@ class TestDaemon(unittest.TestCase):
 
         # Check that the NM stops
         self._stop("node", http.HTTPStatus.OK, "")
-        self.assertFalse(
-            utils.portIsOpen("localhost", constants.NODE_DEFAULT_REST_PORT, _TIMEOUT),
+        self.assertTrue(
+            utils.portIsClosed('localhost', constants.NODE_DEFAULT_REST_PORT, _TIMEOUT),
             "The node did not stop successfully",
         )
+
         # Check that the NM starts
         self._start("node", http.HTTPStatus.OK, {"pid": nodes})
         self.assertTrue(
-            utils.portIsOpen("localhost", constants.NODE_DEFAULT_REST_PORT, _TIMEOUT),
+            utils.portIsOpen('localhost', constants.NODE_DEFAULT_REST_PORT, _TIMEOUT),
             "The node did not start successfully",
         )
 
@@ -345,8 +346,8 @@ class TestDaemon(unittest.TestCase):
 
         # Check that the MM stops
         self._stop("master", http.HTTPStatus.OK, "")
-        self.assertFalse(
-            utils.portIsOpen("localhost", constants.MASTER_DEFAULT_REST_PORT, _TIMEOUT),
+        self.assertTrue(
+            utils.portIsClosed("localhost", constants.MASTER_DEFAULT_REST_PORT, _TIMEOUT),
             "The MM did not stop successfully",
         )
 
