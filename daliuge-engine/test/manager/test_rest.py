@@ -205,7 +205,7 @@ class TestRest(unittest.TestCase):
         Tests deploying an incredibly basic graph with and without reprodata
         Then querying the manager for that reprodata.
         """
-        sid = '1234'
+        sid = "1234"
         c = NodeManagerClient(hostname)
         graph_spec = [
             {
@@ -218,31 +218,27 @@ class TestRest(unittest.TestCase):
         ]
         # Test with reprodata
         c.createSession(sid)
-        c.addGraphSpec(
-            sid,
-            graph_spec
-        )
-        c.deploySession(sid, completed_uids=['a'])
+        c.addGraphSpec(sid, graph_spec)
+        c.deploySession(sid, completed_uids=["a"])
         response = c.session_repro_data(sid)
-        self.assertIsNotNone(response['graph']['a']['reprodata']['rg_blockhash'])
-        self.assertIsNotNone(response['reprodata'])
+        self.assertIsNotNone(response["graph"]["a"]["reprodata"]["rg_blockhash"])
+        self.assertIsNotNone(response["reprodata"])
         c.destroySession(sid)
         # Test without reprodata
         graph_spec = graph_spec[0:1]
-        graph_spec[0].pop('reprodata')
+        graph_spec[0].pop("reprodata")
         c.createSession(sid)
         c.addGraphSpec(sid, graph_spec)
-        c.deploySession(sid, completed_uids=['a'])
+        c.deploySession(sid, completed_uids=["a"])
         response = c.session_repro_data(sid)
-        self.assertEqual({'a': {'oid': 'a',
-                                'storage': 'Memory',
-                                'type': 'plain'}},
-                         response['graph'])
-        self.assertIsNone(response['reprodata'])
+        self.assertEqual(
+            {"a": {"oid": "a", "storage": "Memory", "type": "plain"}}, response["graph"]
+        )
+        self.assertIsNone(response["reprodata"])
 
     def test_reprostatus_get(self):
         # Test with reprodata
-        sid = '1234'
+        sid = "1234"
         c = NodeManagerClient(hostname)
         graph_spec = [
             {
@@ -255,16 +251,16 @@ class TestRest(unittest.TestCase):
         ]
         c.createSession(sid)
         c.addGraphSpec(sid, graph_spec)
-        c.deploySession(sid, completed_uids=['a'])
+        c.deploySession(sid, completed_uids=["a"])
         response = c.session_repro_status(sid)
         self.assertTrue(response)
         c.destroySession(sid)
         # Test without reprodata
         graph_spec = graph_spec[0:1]
-        graph_spec[0].pop('reprodata')
+        graph_spec[0].pop("reprodata")
         c.createSession(sid)
         c.addGraphSpec(sid, graph_spec)
-        c.deploySession(sid, completed_uids=['a'])
+        c.deploySession(sid, completed_uids=["a"])
         response = c.session_repro_status(sid)
         self.assertTrue(response)
         c.destroySession(sid)
