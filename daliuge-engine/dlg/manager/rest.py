@@ -295,7 +295,9 @@ class ManagerRestServer(RestServer):
     # TODO: addGraphParts v/s addGraphSpec
     @daliuge_aware
     def addGraphParts(self, sessionId):
-        if bottle.request.content_type != "application/json":
+        # WARNING: TODO: Somehow, the content_type can be overwritten to 'text/plain'
+        logger.debug(bottle.request.content_type)
+        if "application/json" not in bottle.request.content_type and "text/plain" not in bottle.request.content_type:
             bottle.response.status = 415
             return
 
