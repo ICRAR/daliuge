@@ -72,27 +72,16 @@ class NullBarrierApp(BarrierAppDROP):
 # @param tag template
 # @param[in] cparam/appclass Application Class//String/readonly/False//False/
 #     \~English Application class
-# @param[in] cparam/execution_time Execution Time/0.1/Float/readonly/False//False/
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
+#     \~English Number of cores used
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
 #     \~English Estimated execution time
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
 #     \~English Is this node the start of a group?
 # @par EAGLE_END
 class PythonApp(BarrierAppDROP):
-    """A placeholder BarrierAppDrop that sleeps for 0.1s"""
-    component_meta = dlg_component(
-        "PythonApp",
-        "Python App.",
-        [dlg_batch_input("binary/*", [])],
-        [dlg_batch_output("binary/*", [])],
-        [dlg_streaming_input("binary/*")],
-    )
-
-    def initialize(self, **kwargs):
-        super(PythonApp, self).initialize(**kwargs)
-
-    def run(self):
-        time.sleep(0.1) 
-
+    """A placeholder BarrierAppDrop that just aids the generation of the palette component"""
+    pass
 
 ##
 # @brief SleepApp
