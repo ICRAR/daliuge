@@ -393,7 +393,10 @@ class PyFuncApp(BarrierAppDROP):
         # if we have named ports use the inputs with
         # the correct UIDs
         logger.debug(f"Parameters found: {self.parameters}")
+        posargs = self.arguments.args[:self.fn_npos]
         kwargs = {}
+        self.pargs = []
+        pargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))  # Initialize pargs dictionary
         if ('inputs' in self.parameters and isinstance(self.parameters['inputs'][0], dict)):
             logger.debug(f"Using named ports to identify inputs: "+\
                     f"{self.parameters['inputs']}")
@@ -403,21 +406,21 @@ class PyFuncApp(BarrierAppDROP):
                 key = list(self.parameters['inputs'][i].values())[0]
                 # value for final dict is value in inputs dict
                 value = inputs[list(self.parameters['inputs'][i].keys())[0]]
-                kwargs.update({key:value})
+                if key in posargs:
+                    pargsDict.update({key:value})
+                else:
+                    kwargs.update({key:value})
         else:
             for i in range(min(len(inputs),self.fn_nargs)):
                 kwargs.update({self.arguments.args[i]: list(inputs.values())[i]})
 
-        logger.debug(f"updating funcargs with {kwargs}")
+        logger.debug(f"updating funcargs with input ports {kwargs}")
         self.funcargs.update(kwargs)
 
         # Try to get values for still missing positional arguments from Application Args
-        self.pargs = []
         if "applicationArgs" in self.parameters:
             appArgs = self.parameters["applicationArgs"]  # we'll pop them
             _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
-            kwargs = {}
-            posargs = self.arguments.args[:self.fn_npos]
             for pa in posargs:
                 if pa not in self.funcargs:
                     if pa in appArgs:
@@ -429,14 +432,14 @@ class PyFuncApp(BarrierAppDROP):
                                 value = ast.literal_eval(value)
                             except:
                                 pass
-                        kwargs.update({
+                        pargsDict.update({
                             pa:
                             value
                         })
                     elif pa != 'self':
                         logger.warning(f"Required positional argument '{pa}' not found!")
             logger.debug(f"updating posargs with {list(kwargs.values())}")
-            self.pargs.extend(list(kwargs.values()))
+            self.pargs.extend(list(pargsDict.values()))
 
             # Try to get values for still missing kwargs arguments from Application kws
             kwargs = {}
