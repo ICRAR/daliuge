@@ -40,10 +40,12 @@ class DlgProcess(multiprocessing.Process):
         except Exception as e:
             tb = traceback.format_exc()
             self._childConn.send((e, tb))
-            raise e
 
     @property
     def exception(self):
         if self._parentConn.poll():
-            self._exception = self._parentConn.recv()
+            e = self._parentConn.recv()
+            if e:
+                e = type(e[0])(e[1])
+            self._exception = e
         return self._exception
