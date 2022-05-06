@@ -14,7 +14,7 @@ from merklelib import MerkleTree
 PROTOCOL_VERSION = 1.0
 
 
-class ReproducibilityFlags(Enum):
+class ReproducibilityFlags(int, Enum):
     """
     Enum for supported reproducibility modes.
     TODO: Link to more detail description
@@ -55,24 +55,18 @@ def rflag_caster(val, default=REPRO_DEFAULT):
     :param default: The default value to be returned upon failure
     :return: Appropriate ReproducibilityFlag
     """
-    if isinstance(val, str):
+    if val is not None:
+        out = default
         try:
-            return ReproducibilityFlags(int(val))
-        except (ValueError, TypeError):
+            out = ReproducibilityFlags(val)
+        except ValueError:
             try:
+                out = ReproducibilityFlags(int(val))
+            except ValueError:
                 for rmode in ALL_RMODES:
-                    if rmode.name == val:
-                        return rmode
-            except(ValueError, TypeError):
-                return default
-        return default
-    elif isinstance(val, int):
-        try:
-            return ReproducibilityFlags(val)
-        except (ValueError, TypeError):
-            return default
-    elif val is None:
-        return default
+                    if val == rmode.name or val == 'Reproducibility.'+rmode.name:
+                        out = rmode
+        return out
     return default
 
 
