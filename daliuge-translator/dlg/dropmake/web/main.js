@@ -35,7 +35,15 @@ $(document).ready(function () {
    
     $('#settingsModal').on('hidden.bs.modal', function () {
         fillOutSettings()
-  });
+    });
+
+    //keyboard shortcuts
+    $(document).keydown(function(e){
+        if (e.which == 79) //open settings modal on o
+        {
+            $('#settingsModal').modal('toggle')
+        };
+    })
 });
 
 function deployAction(){
@@ -55,6 +63,8 @@ function restDeployAction(){
 }
 
 function saveSettings() {
+    //need a check function to confirm settings have been filled out correctly
+
     var newUrl = new URL($("#managerUrlInput").val());
     var newPort = newUrl.port;
     var newHost = newUrl.hostname;
@@ -73,22 +83,18 @@ function saveSettings() {
     window.localStorage.setItem("manager_prefix", newPrefix);
     $('#settingsModal').modal('hide');
 
-    var settingsDeployMethods = $("#DeployMethodManager .input-group")
-    var deployMethodsArray = []
+    var settingsDeployMethods = $("#DeployMethodManager .input-group")//deploy method rows selector
+    var deployMethodsArray = []//temp array of deploy method rows values
     
     settingsDeployMethods.each(function(){
-        console.log($(this).find(".deployMethodMethod option:selected").val())
         deployMethod = 
             {
                 name : $(this).find(".deployMethodName").val(),
                 url : $(this).find(".deployMethodUrl").val(),
                 deployMethod : $(this).find(".deployMethodMethod option:selected").val()
             }
-        
-        console.log(deployMethod)
         deployMethodsArray.push(deployMethod)
     })
-    console.log(deployMethodsArray)
     localStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray))
 }
 
@@ -144,11 +150,10 @@ function fillOutSettings() {
             helmOption+
             restOption+
         '</select>'+
+        '<button class="btn btn-secondary btn-sm" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>'+
         '</div>'
         deployMethodManagerDiv.append(deplpoyMethodRow)
     });
-
-    console.log(deployMethodsArray)
 }
 
 function addDeployMethod(){
@@ -168,6 +173,10 @@ function addDeployMethod(){
     '</select>'+
     '</div>'
     deployMethodManagerDiv.append(deplpoyMethodRow)
+}
+
+function removeDeployMethod (e){
+    $(e.target).parent().remove()
 }
 
 function makeJSON() {
