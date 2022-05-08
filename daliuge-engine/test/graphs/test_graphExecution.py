@@ -170,3 +170,4 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
 
         #logger.debug(f'PyfuncAPPDrop signature: {dir(fd)}')
         logger.debug(f'PyfuncAPPDrop status: {fd.status}')
+        self.assertEqual(2, fd.status)
