@@ -83,18 +83,15 @@ class IntegrationNothingTest(unittest.TestCase):
             workflow_loc=graph_loc,
             scratch_loc=self.temp_out.name,
         )
-        pgr = (
-            self.temp_out.name + "/" + graph_name + "_" + str(rmode.value) + "PG.graph"
-        )
 
-        graph = _read_graph(pgr)
-        graph = graph[0:-1]
-
-        for drop in graph:
-            self.assertIsNone(drop["reprodata"]["lgt_data"]["merkleroot"])
-            self.assertIsNone(drop["reprodata"]["lg_data"]["merkleroot"])
-            self.assertIsNone(drop["reprodata"]["pgt_data"]["merkleroot"])
-            self.assertIsNone(drop["reprodata"]["pg_data"]["merkleroot"])
+        for filename in ['LG', 'PGS', 'PGT', 'PG']:
+            pgr = (
+                self.temp_out.name + "/" + graph_name + "_" + str(rmode.value) + f"{filename}.graph"
+            )
+            graph = _read_graph(pgr)
+            self.assertNotIn("reprodata", graph)
+            for drop in graph:
+                self.assertNotIn("reprodata", drop)
 
 
 class IntegrationHelloWorldTest(unittest.TestCase):
@@ -508,7 +505,7 @@ class IntegrationSplitRmode(unittest.TestCase):
         graph_name = "HelloWorldBashSplit"
         control_graph_name = "HelloWorldBash"
         graph_loc = "test/reproducibility/reproGraphs/"
-        rmode = ReproducibilityFlags.NOTHING
+        rmode = ReproducibilityFlags.RERUN
         _run_full_workflow(
             rmode=rmode,
             workflow=graph_name,
@@ -539,14 +536,14 @@ class IntegrationSplitRmode(unittest.TestCase):
         control_graph = _read_graph(pgr_2)
         control_signature = control_graph[-1]["signature"]
         self.assertEqual(
-            ReproducibilityFlags.NOTHING.value, int(graph_reprodata["rmode"])
+            ReproducibilityFlags.RERUN.value, int(graph_reprodata["rmode"])
         )
 
         for drop in graph:
-            if drop["reprodata"]["rmode"] == str(ReproducibilityFlags.NOTHING.value):
-                self.assertIsNone(drop["reprodata"]["lgt_data"]["merkleroot"])
+            if drop["reprodata"]["rmode"] == str(ReproducibilityFlags.RERUN.value):
+                self.assertIsNotNone(drop["reprodata"]["lgt_data"]["merkleroot"])
                 self.assertIsNone(drop["reprodata"]["lg_data"]["merkleroot"])
-                self.assertIsNone(drop["reprodata"]["pgt_data"]["merkleroot"])
+                self.assertIsNotNone(drop["reprodata"]["pgt_data"]["merkleroot"])
                 self.assertIsNone(drop["reprodata"]["pg_data"]["merkleroot"])
             else:
                 self.assertIsNotNone(drop["reprodata"]["lgt_data"]["merkleroot"])
