@@ -340,7 +340,7 @@ def init_rg_repro_drop_data(drop: dict):
     if level == ReproducibilityFlags.ALL:
         for rmode in ALL_RMODES:
             drop["reprodata"][rmode.name]["rg_parenthashes"] = {}
-    else:
+    elif level != ReproducibilityFlags.NOTHING:
         drop["reprodata"]["rg_parenthashes"] = {}
     return drop
 
@@ -785,6 +785,8 @@ def init_lgt_repro_data(logical_graph_template: dict, rmode: str):
             "Requested reproducibility mode %s not yet implemented", str(rmode)
         )
         rmode = REPRO_DEFAULT
+    if rmode == ReproducibilityFlags.NOTHING:
+        return logical_graph_template
     reprodata = {"rmode": str(rmode.value), "meta_data": accumulate_meta_data()}
     meta_tree = MerkleTree(reprodata.items(), common_hash)
     reprodata["merkleroot"] = meta_tree.merkle_root
@@ -802,19 +804,18 @@ def init_lg_repro_data(logical_graph: dict):
     :param logical_graph: The logical graph data structure (a JSON object (a dict))
     :return: The same lgt object with new information appended
     """
-    for drop in logical_graph.get("nodeDataArray", []):
-        init_lg_repro_drop_data(drop)
     if "reprodata" not in logical_graph:
-        reprodata = {"rmode": str(REPRO_DEFAULT), "meta_data": accumulate_meta_data()}
-        meta_tree = MerkleTree(reprodata.items(), common_hash)
-        reprodata["merkleroot"] = meta_tree.merkle_root
-        logical_graph["reprodata"] = reprodata
+        return logical_graph
     level = rflag_caster(logical_graph["reprodata"]["rmode"])
     if not rmode_supported(level):
         logger.warning(
             "Requested reproducibility mode %s not yet implemented", str(level)
         )
         level = REPRO_DEFAULT
+    if level == ReproducibilityFlags.NOTHING:
+        return logical_graph
+    for drop in logical_graph.get("nodeDataArray", []):
+        init_lg_repro_drop_data(drop)
     if level == ReproducibilityFlags.ALL:
         for rmode in ALL_RMODES:
             if rmode.name not in logical_graph["reprodata"]:
@@ -839,13 +840,21 @@ def init_pgt_unroll_repro_data(physical_graph_template: list):
     """
     reprodata = physical_graph_template.pop()
     if "rmode" not in reprodata:
-        reprodata["rmode"] = REPRO_DEFAULT
+        for drop in physical_graph_template:
+            drop.pop("reprodata")
+        physical_graph_template.append(reprodata)
+        return physical_graph_template
     level = rflag_caster(reprodata["rmode"])
     if not rmode_supported(level):
         logger.warning(
             "Requested reproducibility mode %s not yet implemented", str(level)
         )
         level = REPRO_DEFAULT
+    if level == ReproducibilityFlags.NOTHING:
+        physical_graph_template.append(reprodata)
+        for drop in physical_graph_template:
+            drop.pop("reprodata")
+        return physical_graph_template
     for drop in physical_graph_template:
         init_pgt_unroll_repro_drop_data(drop)
     if level == ReproducibilityFlags.ALL:
@@ -872,13 +881,17 @@ def init_pgt_partition_repro_data(physical_graph_template: list):
     """
     reprodata = physical_graph_template.pop()
     if "rmode" not in reprodata:
-        reprodata["rmode"] = REPRO_DEFAULT
+        physical_graph_template.append(reprodata)
+        return physical_graph_template
     level = rflag_caster(reprodata["rmode"])
     if not rmode_supported(level):
         logger.warning(
             "Requested reproducibility mode %s not yet implemented", str(level)
         )
         level = REPRO_DEFAULT
+    if level == ReproducibilityFlags.NOTHING:
+        physical_graph_template.append(reprodata)
+        return physical_graph_template
     for drop in physical_graph_template:
         init_pgt_partition_repro_drop_data(drop)
     if level == ReproducibilityFlags.ALL:
@@ -903,13 +916,17 @@ def init_pg_repro_data(physical_graph: list):
     """
     reprodata = physical_graph.pop()
     if "rmode" not in reprodata:
-        reprodata["rmode"] = REPRO_DEFAULT
+        physical_graph.append(reprodata)
+        return physical_graph
     level = rflag_caster(reprodata["rmode"])
     if not rmode_supported(level):
         logger.warning(
             "Requested reproducibility mode %s not yet implemented", str(level)
         )
         level = REPRO_DEFAULT
+    if level == ReproducibilityFlags.NOTHING:
+        physical_graph.append(reprodata)
+        return physical_graph
     for drop in physical_graph:
         init_pg_repro_drop_data(drop)
     if level == ReproducibilityFlags.ALL:
@@ -932,7 +949,7 @@ def init_runtime_repro_data(runtime_graph: dict, reprodata: dict):
     :return:
     """
     if reprodata is None:
-        return {"reprodata": {}}
+        return runtime_graph
     level = rflag_caster(reprodata["rmode"])
     if not rmode_supported(level):
         # TODO: Logging needs sessionID at this stage
