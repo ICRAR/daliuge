@@ -37,6 +37,18 @@ $(document).ready(function () {
         fillOutSettings()
     });
 
+    JSON.parse(localStorage.getItem("deployMethods")).forEach(element => {
+        if(element.active === "false"){
+            $("#deployDropdowns .dropdown-menu").append(
+                '<a href="javascript:void(0)" onclick="initiateDeploy("'+element.deployMethod+'", false)" class="dropdown-item tooltip tooltipLeft" data-text="Deploy Physical Graph via '+element.deployMethod+'" value="Deploy Physical Graph via '+element.deployMethod+' ">'+element.name+'</a>'
+            )
+        }else {
+            $("#deployDropdowns").prepend(
+                '<a href="javascript:void(0)" onclick="initiateDeploy('+element.deployMethod+', true)" class="dropdown-item tooltip tooltipLeft" data-text="Deploy Physical Graph via '+element.deployMethod+'" value="Deploy Physical Graph via '+element.deployMethod+' ">Deploy: '+element.name+'</a>'
+            )
+        }
+    })
+
     //keyboard shortcuts
     $(document).keydown(function(e){
         if (e.which == 79) //open settings modal on o
@@ -46,20 +58,21 @@ $(document).ready(function () {
     })
 });
 
-function deployAction(){
-    $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
-    $("#dlg_mgr_deploy").prop("checked", true)
-    $("#pg_form").submit();
-}
-
-function helmDeployAction(){
-    $("#gen_helm_button").val("Generate &amp; Deploy Physical Graph")
-    $("#dlg_helm_deploy").prop("checked", true)
-    $("#pg_helm_form").submit()
-}
-
-function restDeployAction(){
-    restDeploy()
+function initiateDeploy(method, selected){
+    if (selected === false){
+        event.target
+    }
+    if(method === "direct"){   
+        $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
+        $("#dlg_mgr_deploy").prop("checked", true)
+        $("#pg_form").submit();
+    }else if(method === "helm"){
+        $("#gen_helm_button").val("Generate &amp; Deploy Physical Graph")
+        $("#dlg_helm_deploy").prop("checked", true)
+        $("#pg_helm_form").submit()
+    }else if(method === "rest"){
+        restDeploy()
+    }
 }
 
 function saveSettings() {
@@ -91,7 +104,8 @@ function saveSettings() {
             {
                 name : $(this).find(".deployMethodName").val(),
                 url : $(this).find(".deployMethodUrl").val(),
-                deployMethod : $(this).find(".deployMethodMethod option:selected").val()
+                deployMethod : $(this).find(".deployMethodMethod option:selected").val(),
+                active : $(this).find(".deployMethodActive").val()
             }
         deployMethodsArray.push(deployMethod)
     })
@@ -111,21 +125,21 @@ function fillOutSettings() {
 
     //setting up initial default deploy method
     if(!localStorage.getItem("deployMethods")){
-        console.log("setting up default")
         var deployMethodsArray = [
             {
                 name : "default deployment",
                 url : "http://localhost:8001/",
-                deployMethod : "direct"
+                deployMethod : "direct",
+                active : true
             }
         ]
         localStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray))
     }else{
-        console.log("getting array")
-
+        //get deploy methods from local storage 
         var deployMethodsArray = JSON.parse(localStorage.getItem("deployMethods"))
     }
 
+    //fill out settings list rom deploy methods array
     var deployMethodManagerDiv = $("#DeployMethodManager")
     deployMethodManagerDiv.empty()
     deployMethodsArray.forEach(element => {
@@ -150,6 +164,7 @@ function fillOutSettings() {
             helmOption+
             restOption+
         '</select>'+
+        '<input type="text" class="form-control deployMethodActive" value="'+element.active+'">'+
         '<button class="btn btn-secondary btn-sm" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>'+
         '</div>'
         deployMethodManagerDiv.append(deplpoyMethodRow)
@@ -171,6 +186,8 @@ function addDeployMethod(){
         helmOption+
         restOption+
     '</select>'+
+    '<input type="text" class="form-control deployMethodActive" value="false">'+
+    '<button class="btn btn-secondary btn-sm" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>'+
     '</div>'
     deployMethodManagerDiv.append(deplpoyMethodRow)
 }
