@@ -42,18 +42,18 @@
 .material-icons.md-48 { font-size: 48px; }
 
 .navbar{
-    background: rgb(0,64,133);
-    background: linear-gradient(90deg, rgba(0,64,133,1) 0%, rgba(0,52,107,1) 20%, rgba(0,35,73,1) 100%);
+  background: rgb(0,64,133);
+  background: linear-gradient(90deg, rgba(0,64,133,1) 0%, rgba(0,52,107,1) 20%, rgba(0,35,73,1) 100%);
 }
 
 .navbar-brand span{
-    margin-left: 10px;
+  margin-left: 10px;
 }
 
 .navbar-nav.navbar-center {
-    position: absolute;
-    left: 50%;
-    transform: translatex(-50%);
+  position: absolute;
+  left: 50%;
+  transform: translatex(-50%);
 }
 
 
@@ -321,59 +321,59 @@
 }
 
 .tooltipBottomLeft:before {
-    content: attr(data-text); /* here's the magic */
-    position:absolute;
-    font-size: 14px;
+  content: attr(data-text); /* here's the magic */
+  position:absolute;
+  font-size: 14px;
 
-    /* center */
-    Left:50%;
-    transform:translateX(-90%);
+  /* center */
+  Left:50%;
+  transform:translateX(-90%);
 
-    /* move to bottom */
-    top:100%;
-    margin-top:15px; /* and add a small top margin */
+  /* move to bottom */
+  top:100%;
+  margin-top:15px; /* and add a small top margin */
 
-    /* basic styles */
-    width:200px;
-    padding:10px;
-    border-radius:10px;
-    background:rgba(0,0,0,0.94);
-    color: #fff;
-    text-align:center;
+  /* basic styles */
+  width:200px;
+  padding:10px;
+  border-radius:10px;
+  background:rgba(0,0,0,0.94);
+  color: #fff;
+  text-align:center;
 
-    visibility:hidden;
-    transition: 0s visibility;
+  visibility:hidden;
+  transition: 0s visibility;
 }
 
 .tooltipBottomLeft:hover:before {
-    visibility: visible;
-    transition-delay: 1s;
+  visibility: visible;
+  transition-delay: 1s;
 }
 
 .tooltipBottomLeft:after {
-    content: "";
-    position:absolute;
+  content: "";
+  position:absolute;
 
-    /* position tooltip correctly */
-    top:100%;
-    margin-top:-4px;
+  /* position tooltip correctly */
+  top:100%;
+  margin-top:-4px;
 
-    /* vertically center */
-    left: 50%;
-    top:100%;
-    transform:translateX(-50%);
+  /* vertically center */
+  left: 50%;
+  top:100%;
+  transform:translateX(-50%);
 
-    /* the arrow */
-    border:10px solid rgba(0,0,0,0.94);
-    border-color: transparent transparent rgba(0,0,0,0.94) transparent;
+  /* the arrow */
+  border:10px solid rgba(0,0,0,0.94);
+  border-color: transparent transparent rgba(0,0,0,0.94) transparent;
 
-    visibility:hidden;
-    transition: 0s visibility;
+  visibility:hidden;
+  transition: 0s visibility;
 }
 
 .tooltipBottomLeft:hover:before, .tooltipBottomLeft:hover:after {
-    visibility: visible;
-    transition-delay: 1s;
+  visibility: visible;
+  transition-delay: 1s;
 }
 
 
@@ -471,39 +471,39 @@
 }
 
 #graphNameWrapper{
-    position: absolute;
-    top: 56px;
-    display: block;
-    width: 100%;
-    background-color: #002349;
-    padding: 0px 16px;
-    position: fixed;
-    z-index: 101;
+  position: absolute;
+  top: 56px;
+  display: block;
+  width: 100%;
+  background-color: #002349;
+  padding: 0px 16px;
+  position: fixed;
+  z-index: 101;
 }
 
 #graphNameWrapper span{
-    color: rgb(219, 219, 219);
+  color: rgb(219, 219, 219);
 }
 
 #runinfoWrapper{
-    bottom:0px;
-    display: block;
-    width: 100%;
-    background-color: #a7a7a7;
-    border-top:solid 1px black;
-    padding: 0px 16px;
-    position: fixed;
-    z-index: 101;
+  bottom:0px;
+  display: block;
+  width: 100%;
+  background-color: #a7a7a7;
+  border-top:solid 1px black;
+  padding: 0px 16px;
+  position: fixed;
+  z-index: 101;
 }
 
 #main{
-    width:auto;
-    height:auto;
-    position: absolute;
-    top: 80px;
-    bottom: 25px;
-    left:0px;
-    right:0px;
+  width:auto;
+  height:auto;
+  position: absolute;
+  top: 80px;
+  bottom: 25px;
+  left:0px;
+  right:0px;
 }
 
 #graph{
@@ -517,24 +517,24 @@
 }
 
 .dropdown-menu{
-    border:solid 1px #000c1a;
-    border-radius: 6px;
-     position: absolute;
-     z-index: 1;
-     background-color: #0059a5;
+  border:solid 1px #000c1a;
+  border-radius: 6px;
+  position: absolute;
+  z-index: 1;
+  background-color: #0059a5;
 }
 
 .dropdown-item{
-    color: white;
+  color: white;
 }
 
 .dropdown-item:hover{
-    background-color: #001d3b;
-    color: white;
+  background-color: #001d3b;
+  color: white;
 }
 
 .nav-link{
-    color:white;
+  color:white;
 }
 
 
@@ -542,10 +542,20 @@
   padding: 0.35rem 1rem;
 }
 
+#deploy_button span{
+  font-size: 16px;
+  font-weight: 600;
+}
+
+#deploy_button #currentDeploymentType{
+  font-size: 14px;
+  font-weight: 400;
+}
+
 #deployDropdowns button:focus{
-    color: #001d3b;
-    background-color: white !important;
-    border-color: white;
+  color: #001d3b;
+  background-color: white !important;
+  border-color: white;
 }
 
 #deployDropdowns button:active{
@@ -580,66 +590,66 @@
 }
 
 #exportJsonBtn{
-    display: inline-block;
+  display: inline-block;
 }
 
 #exportJsonIcon{
-    position: absolute;
-    right:2px;
+  position: absolute;
+  right:2px;
 }
 
 .dropDropDown{
-    visibility: hidden;
-    background-color: #0059a5;
-    color: #fff;
-    text-align: center;
-    padding: 5px 0;
-    border:solid 1px #000c1a;
-    border-radius: 6px;
-    position: absolute;
-    z-index: 1;
-    width: auto;
-    height:auto;
-    font-size: 12px;
-    top: 0px;
-    transform: translateX(-110%);
+  visibility: hidden;
+  background-color: #0059a5;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border:solid 1px #000c1a;
+  border-radius: 6px;
+  position: absolute;
+  z-index: 1;
+  width: auto;
+  height:auto;
+  font-size: 12px;
+  top: 0px;
+  transform: translateX(-110%);
 }
 
 .dropDropDownParent:hover .dropDropDown {
-    visibility: visible;
+  visibility: visible;
 }
 
 .dropDropDown .dropdown-item{
-    font-weight: 400;
-    font-size: 1rem;
-    text-align: left;
+  font-weight: 400;
+  font-size: 1rem;
+  text-align: left;
 }
 
 #navbarExportDropdown{
-    color:white;
+  color:white;
 }
 
 #settingsModal .modal-header{
-    background: rgb(0,64,133);
-    background: linear-gradient(90deg, rgba(0,64,133,1) 0%, rgba(0,52,107,1) 20%, rgba(0,35,73,1) 100%);
+  background: rgb(0,64,133);
+  background: linear-gradient(90deg, rgba(0,64,133,1) 0%, rgba(0,52,107,1) 20%, rgba(0,35,73,1) 100%);
 }
 
 #settingsModal .modal-header h5,#settingsModal .modal-header span,#settingsModal .modal-header button{
-    color:white;
+  color:white;
 }
 
 #settingsModal .modal-body{
-    background-color:#001d3b;
+  background-color:#001d3b;
 }
 
 #settingsModal .modal-dialog{
-    width: 50vw;  
-    max-width: none;
+  width: 50vw;  
+  max-width: none;
 }
 
 #SettingsModal #DeployMethodManagerTitle{
-    color: white;
-    margin-bottom: 5px;
+  color: white;
+  margin-bottom: 5px;
 }
 
 #settingsModal #DeployMethodManager .input-group{
@@ -663,45 +673,49 @@
 }
 
 #settingsModal #DeployMethodManager input{
-    padding: 0px 12px;
+  padding: 0px 12px;
 }
 
 #settingsModal #DeployMethodManager select{
-    padding: 0px 12px;
+  padding: 0px 12px;
 }
 
 #settingsModal #addDeployMethodBtn{ 
-    margin-top: 10px;
-    padding: 5px 10px;
+  margin-top: 10px;
+  padding: 5px 10px;
+}
+
+#settingsModal .deployMethodActive{
+  /* display: none; */
 }
 
 #settingsModal .modal-body span{
-    color: white;
-    display: block;
+  color: white;
+  display: block;
 }
 
 #settingsModal .modal-footer{
-    background-color:#001d3b;
+  background-color:#001d3b;
 }
 
 #settingsModal .modal-footer .btn-primary{
-    background-color: #0059a5;
-    border:solid 1px white;
+  background-color: #0059a5;
+  border:solid 1px white;
 }
 
 .settingsSection{
-    padding-bottom:  20px;
+  padding-bottom:  20px;
 }
 
 #oriantationDropdown .orientationOptionContainer a{
-    display: inline-block;
-    color: white;
+  display: inline-block;
+  color: white;
 }
 
 .orientationOptionContainer {
-    display: block;
+  display: block;
 }
 
 #oriantationDropdown{
-    padding: 2px 10px;
+  padding: 2px 10px;
 }
