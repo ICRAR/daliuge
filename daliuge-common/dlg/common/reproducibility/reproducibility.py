@@ -523,6 +523,8 @@ def lg_build_blockdag(logical_graph: dict, level=None):
     while queue:
         did = queue.pop()
         # Process
+        if "reprodata" not in dropset[did][0]:
+            continue
         build_lg_block_data(dropset[did][0], level)
         visited.append(did)
         rmode = rflag_caster(dropset[did][0]["reprodata"]["rmode"])
@@ -591,11 +593,13 @@ def lg_build_blockdag(logical_graph: dict, level=None):
     for i, leaf in enumerate(leaves):
         if level is None:
             # WARNING: Remove once dealt with MKN Nodes
-            leaves[i] = dropset[leaf][0]["reprodata"].get("lg_blockhash", "")
+            if "reprodata" in dropset[leaf][0]:
+                leaves[i] = dropset[leaf][0]["reprodata"].get("lg_blockhash", "")
         else:
-            leaves[i] = dropset[leaf][0]["reprodata"][level.name].get(
-                "lg_blockhash", ""
-            )
+            if "reprodata" in dropset[leaf][0]:
+                leaves[i] = dropset[leaf][0]["reprodata"][level.name].get(
+                    "lg_blockhash", ""
+                )
     return leaves, visited
 
 
