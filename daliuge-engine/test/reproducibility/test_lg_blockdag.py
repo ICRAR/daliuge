@@ -957,18 +957,18 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
-        parenthashes = list(
-            lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
-        )
-        self.assertTrue(len(leaves) == 1)
-        if self.rmode not in [
-            ReproducibilityFlags.REPRODUCE,
-            ReproducibilityFlags.NOTHING,
-        ]:
-            self.assertTrue(len(parenthashes) == 2)
-            self.assertTrue(parenthashes[0] == parenthashes[1])
+        if self.rmode != ReproducibilityFlags.NOTHING:
+            parenthashes = list(
+                lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
+            )
+            self.assertTrue(len(leaves) == 1)
+            if self.rmode != ReproducibilityFlags.REPRODUCE:
+                self.assertTrue(len(parenthashes) == 2)
+                self.assertTrue(parenthashes[0] == parenthashes[1])
+            else:
+                self.assertTrue(len(parenthashes) == 0)
         else:
-            self.assertTrue(len(parenthashes) == 0)
+            self.assertNotIn("reprodata", lgt["nodeDataArray"][1])
 
     def test_twoend(self):
         """
@@ -981,7 +981,7 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
-        self.assertTrue(leaves[0] == leaves[1])
+        self.assertFalse(leaves[0] == leaves[1])
 
     def test_twolines(self):
         """
@@ -993,7 +993,7 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
-        self.assertTrue(leaves[0] == leaves[1])
+        self.assertTrue(leaves[0] != leaves[1])
 
     def test_data_fan(self):
         """
@@ -1003,19 +1003,20 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
-        parenthash1 = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
-        )
-        parenthash2 = list(
-            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
-        )
-        self.assertTrue(parenthash1 == parenthash2)
-        if self.rmode not in [
-            ReproducibilityFlags.REPRODUCE,
-            ReproducibilityFlags.NOTHING,
-        ]:
-            self.assertTrue(parenthash1[0] == sourcehash)
+        if self.rmode == ReproducibilityFlags.NOTHING:
+            for drop in lgt["nodeDataArray"]:
+                self.assertNotIn("reprodata", drop)
+        else:
+            sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+            parenthash1 = list(
+                lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            )
+            parenthash2 = list(
+                lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+            )
+            self.assertTrue(parenthash1 == parenthash2)
+            if self.rmode != ReproducibilityFlags.REPRODUCE:
+                self.assertTrue(parenthash1[0] == sourcehash)
 
     def test_data_funnel(self):
         """
@@ -1025,16 +1026,18 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
-        parenthashes = list(
-            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
-        )
-        if self.rmode == ReproducibilityFlags.REPRODUCE:
-            self.assertTrue(len(parenthashes) == 2)
-        elif self.rmode == ReproducibilityFlags.NOTHING:
-            self.assertTrue(len(parenthashes) == 0)
+        if self.rmode == ReproducibilityFlags.NOTHING:
+            for drop in lgt["nodeDataArray"]:
+                self.assertNotIn("reprodata", drop)
         else:
-            self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+            sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+            parenthashes = list(
+                lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+            )
+            if self.rmode == ReproducibilityFlags.REPRODUCE:
+                self.assertTrue(len(parenthashes) == 2)
+            else:
+                self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
     def test_data_sandwich(self):
         """
@@ -1045,13 +1048,14 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
-        parenthashes = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
-        )
         if self.rmode == ReproducibilityFlags.NOTHING:
-            self.assertTrue(len(parenthashes) == 0)
+            for drop in lgt["nodeDataArray"]:
+                self.assertNotIn("reprodata", drop)
         else:
+            sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+            parenthashes = list(
+                lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            )
             self.assertTrue(len(parenthashes) == 1)
             if self.rmode != ReproducibilityFlags.REPRODUCE:
                 self.assertTrue(sourcehash == parenthashes[0])
@@ -1066,17 +1070,18 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
-        parenthashes = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
-        )
-        if self.rmode not in [
-            ReproducibilityFlags.REPRODUCE,
-            ReproducibilityFlags.NOTHING,
-        ]:
-            self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+        if self.rmode == ReproducibilityFlags.NOTHING:
+            for drop in lgt["nodeDataArray"]:
+                self.assertNotIn("reprodata", drop)
         else:
-            self.assertTrue(len(parenthashes) == 0)
+            sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+            parenthashes = list(
+                lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            )
+            if self.rmode != ReproducibilityFlags.REPRODUCE:
+                self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
+            else:
+                self.assertTrue(len(parenthashes) == 0)
 
 
 class LogicalBlockdagAllTests(unittest.TestCase):
