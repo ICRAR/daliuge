@@ -841,7 +841,8 @@ def init_pgt_unroll_repro_data(physical_graph_template: list):
     reprodata = physical_graph_template.pop()
     if "rmode" not in reprodata:
         for drop in physical_graph_template:
-            drop.pop("reprodata")
+            if "reprodata" in drop:
+                drop.pop("reprodata")
         physical_graph_template.append(reprodata)
         return physical_graph_template
     level = rflag_caster(reprodata["rmode"])
