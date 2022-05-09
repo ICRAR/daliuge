@@ -40,24 +40,24 @@ class InitReproTest(unittest.TestCase):
     def test_lgt_init(self):
         _graph = {}
         sig = init_lgt_repro_data(_graph, "0")
-        self.assertNotEqual({}, sig["reprodata"])
+        self.assertNotIn("reprodata", sig)
 
     def test_lg_init(self):
         _graph = {}
         sig = init_lg_repro_data(_graph)
-        self.assertNotEqual({}, sig["reprodata"])
+        self.assertNotIn("reprodata", sig)
 
     def test_pgt_unroll_init(self):
         _graph = [{}]
         sig = init_pgt_unroll_repro_data(_graph)
-        self.assertIsNone(sig[0]["signature"])
+        self.assertNotIn("signature", sig[0])
 
     def test_pgt_partition_init(self):
         _graph = [{}]
         sig = init_pgt_partition_repro_data(_graph)
-        self.assertIsNone(sig[0]["signature"])
+        self.assertNotIn("signature", sig[0])
 
     def test_pg_init(self):
         _graph = [{}]
         sig = init_pg_repro_data(_graph)
-        self.assertIsNone(sig[0]["signature"])
+        self.assertNotIn("signature", sig[0])
