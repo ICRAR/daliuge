@@ -686,7 +686,11 @@
 }
 
 #settingsModal .deployMethodActive{
-  /* display: none; */
+  display: none;
+}
+
+#settingsModal #settingsModalErrorMessage{
+  color: red;
 }
 
 #settingsModal .modal-body span{
