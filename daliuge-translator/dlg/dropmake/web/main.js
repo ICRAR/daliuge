@@ -37,20 +37,13 @@ $(document).ready(function () {
         fillOutSettings()
     });
 
-    JSON.parse(localStorage.getItem("deployMethods")).forEach(element => {
-        if(element.active === "false"){
-            $("#deployDropdowns .dropdown-menu").append(
-                '<a href="javascript:void(0)" onclick="initiateDeploy("'+element.deployMethod+'", false)" class="dropdown-item tooltip tooltipLeft" data-text="Deploy Physical Graph via '+element.deployMethod+'" value="Deploy Physical Graph via '+element.deployMethod+' ">'+element.name+'</a>'
-            )
-        }else {
-            $("#deployDropdowns").prepend(
-                '<a href="javascript:void(0)" onclick="initiateDeploy('+element.deployMethod+', true)" class="dropdown-item tooltip tooltipLeft" data-text="Deploy Physical Graph via '+element.deployMethod+'" value="Deploy Physical Graph via '+element.deployMethod+' ">Deploy: '+element.name+'</a>'
-            )
-        }
-    })
+    updateDeployOptionsDropdown()
 
     //keyboard shortcuts
     $(document).keydown(function(e){
+        if($("input").is(":focus")){
+            return
+        }
         if (e.which == 79) //open settings modal on o
         {
             $('#settingsModal').modal('toggle')
@@ -58,9 +51,9 @@ $(document).ready(function () {
     })
 });
 
-function initiateDeploy(method, selected){
+function initiateDeploy(method, selected, name){
     if (selected === false){
-        event.target
+        changeSelectedDeployMethod(name)
     }
     if(method === "direct"){   
         $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
@@ -75,10 +68,40 @@ function initiateDeploy(method, selected){
     }
 }
 
-function saveSettings() {
-    //need a check function to confirm settings have been filled out correctly
+function changeSelectedDeployMethod(name) {
+    var deployMethodsArray = JSON.parse(localStorage.getItem("deployMethods"))
+    deployMethodsArray.forEach(element => {
+        element.active = "false"
+        if(element.name === name){
+            element.active = "true"
+        }
+    })
+    localStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray))
+    updateDeployOptionsDropdown()
+}
 
-    var newUrl = new URL($("#managerUrlInput").val());
+function updateDeployOptionsDropdown() {
+    //remove old options
+    $(".deployMethodMenuItem").remove()
+    var selectedUrl
+
+    //add deployment options
+    JSON.parse(localStorage.getItem("deployMethods")).forEach(element => {
+        if(element.active === "false"){
+            //dropdown options
+            $("#deployDropdowns .dropdown-menu").append(
+                `<a href='javascript:void(0)' onclick='initiateDeploy("`+element.deployMethod+`",false,"`+element.name+`")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph via `+element.deployMethod+`' value='Deploy Physical Graph via `+element.deployMethod+`'>`+element.name+`</a>`
+            )
+        }else {
+            selectedUrl=element.url
+            //active option
+            $("#deployDropdowns").prepend(
+                `<a href='javascript:void(0)' onclick='initiateDeploy("`+element.deployMethod+`",true,"`+element.name+`")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph via `+element.deployMethod+`' value='Deploy Physical Graph via `+element.deployMethod+`'>Deploy: `+element.name+`</a>`
+            )
+        }
+    })
+
+    var newUrl = new URL(selectedUrl);
     var newPort = newUrl.port;
     var newHost = newUrl.hostname;
     var newPrefix = newUrl.pathname;
@@ -94,27 +117,77 @@ function saveSettings() {
     window.localStorage.setItem("manager_host", newHost);
     window.localStorage.setItem("manager_port", newPort);
     window.localStorage.setItem("manager_prefix", newPrefix);
-    $('#settingsModal').modal('hide');
+
+}
+
+function saveSettings() {
+    //need a check function to confirm settings have been filled out correctly
 
     var settingsDeployMethods = $("#DeployMethodManager .input-group")//deploy method rows selector
     var deployMethodsArray = []//temp array of deploy method rows values
     
+    //errors
+    var errorFillingOut = false
+    var duplicateName = false
+    var emptyName = false
+
     settingsDeployMethods.each(function(){
-        deployMethod = 
+
+        //error detection
+        if($(this).find(".deployMethodName").val().trim() === ""){
+            emptyName = true
+        }
+
+        //duplicate name check, the name is used as an id of sorts
+        deployMethodsArray.forEach(element => {
+            if ($(this).find(".deployMethodName").val() === element.name){
+                duplicateName = true
+                return
+            }
+        })
+
+        //error Handling
+        if(duplicateName){
+            errorFillingOut = true;
+            $("#settingsModalErrorMessage").html('Please ensure there are no duplicate deploy method names')
+        }
+        if(emptyName){
+            errorFillingOut = true;
+            $("#settingsModalErrorMessage").html('Please ensure deploy methods are named')
+        }
+
+        if(!errorFillingOut){
+            deployMethod = 
             {
                 name : $(this).find(".deployMethodName").val(),
                 url : $(this).find(".deployMethodUrl").val(),
                 deployMethod : $(this).find(".deployMethodMethod option:selected").val(),
                 active : $(this).find(".deployMethodActive").val()
             }
-        deployMethodsArray.push(deployMethod)
+            deployMethodsArray.push(deployMethod)
+        } 
     })
+
+    //if errors in previous step abort saving
+    if(errorFillingOut){
+        return;
+    }else{
+        $("#settingsModalErrorMessage").html('')
+    }
+    //save to local storage
     localStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray))
+
+    $('#settingsModal').modal('hide');
+
+    //update the deploy options dropdown menu
+    updateDeployOptionsDropdown()
 }
 
 function fillOutSettings() {
     //get setting values from local storage
     var manager_url = window.localStorage.getItem("manager_url");
+    $("#settingsModalErrorMessage").html('')
+
 
     //fill settings with saved or default values
     if (!manager_url) {
