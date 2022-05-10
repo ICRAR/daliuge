@@ -640,6 +640,11 @@
 
 #settingsModal .modal-body{
   background-color:#001d3b;
+  padding: 50px 16px;
+}
+
+#settingsModal #neccessaryHiddenItems, #settingsModal form{
+  display: none;
 }
 
 #settingsModal .modal-dialog{
@@ -705,10 +710,6 @@
 #settingsModal .modal-footer .btn-primary{
   background-color: #0059a5;
   border:solid 1px white;
-}
-
-.settingsSection{
-  padding-bottom:  20px;
 }
 
 #oriantationDropdown .orientationOptionContainer a{
