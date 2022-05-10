@@ -5,24 +5,6 @@ $(document).ready(function () {
         $(".dropdown-menu").dropdown('hide')
     })
 
-    //handles switching of the dynamic deploy split button
-    $("#deployDropdowns .dropdown-menu .dropdown-item").click(function(){
-        //take note of previous main button and the one that was just pressed
-
-        var oldActive = $("#deployDropdowns").children()[0];
-        var oldActiveId = $(oldActive).attr("id")
-        var newActive = event.target
-        var newActiveId = $(newActive).attr("id")
-
-        //replaces main button
-        $("#deployDropdowns").children()[0].remove()
-        $(newActive).clone().prependTo($("#deployDropdowns"))
-        
-        //toggles dropdown options
-        $("#deployDropdowns .dropdown-menu #"+newActiveId).hide()
-        $("#deployDropdowns .dropdown-menu #"+oldActiveId).show()
-    })
-
     //export physical graph button listener
     $("#Pysical_graph").click(function () {
         $("#gen_pg_button").val("Generate Physical Graph")
@@ -55,7 +37,7 @@ function initiateDeploy(method, selected, name){
     if (selected === false){
         changeSelectedDeployMethod(name)
     }
-    if(method === "direct"){   
+    if(method === "direct"){
         $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
         $("#dlg_mgr_deploy").prop("checked", true)
         $("#pg_form").submit();
@@ -89,7 +71,7 @@ function updateDeployOptionsDropdown() {
     JSON.parse(localStorage.getItem("deployMethods")).forEach(element => {
         if(element.active === "false"){
             //dropdown options
-            $("#deployDropdowns .dropdown-menu").append(
+            $("#deployDropdowns .dropdown-menu").prepend(
                 `<a href='javascript:void(0)' onclick='initiateDeploy("`+element.deployMethod+`",false,"`+element.name+`")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph via method: `+element.deployMethod+`' value='Deploy Physical Graph via `+element.deployMethod+`'>`+element.name+`</a>`
             )
         }else {
@@ -106,7 +88,7 @@ function updateDeployOptionsDropdown() {
     var newHost = newUrl.hostname;
     var newPrefix = newUrl.pathname;
     var newProtocol = newUrl.protocol;
-    console.log("URL set to:'" + newUrl + "'");
+    console.log("URL set to:'" + newUrl + "'"); 
     console.log("Protocol set to:'" + newProtocol + "'");
     console.log("Host set to:'" + newHost + "'");
     console.log("Port set to:'" + newPort + "'");
