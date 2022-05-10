@@ -90,13 +90,13 @@ function updateDeployOptionsDropdown() {
         if(element.active === "false"){
             //dropdown options
             $("#deployDropdowns .dropdown-menu").append(
-                `<a href='javascript:void(0)' onclick='initiateDeploy("`+element.deployMethod+`",false,"`+element.name+`")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph via `+element.deployMethod+`' value='Deploy Physical Graph via `+element.deployMethod+`'>`+element.name+`</a>`
+                `<a href='javascript:void(0)' onclick='initiateDeploy("`+element.deployMethod+`",false,"`+element.name+`")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph via method: `+element.deployMethod+`' value='Deploy Physical Graph via `+element.deployMethod+`'>`+element.name+`</a>`
             )
         }else {
             selectedUrl=element.url
             //active option
             $("#deployDropdowns").prepend(
-                `<a href='javascript:void(0)' onclick='initiateDeploy("`+element.deployMethod+`",true,"`+element.name+`")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph via `+element.deployMethod+`' value='Deploy Physical Graph via `+element.deployMethod+`'>Deploy: `+element.name+`</a>`
+                `<a href='javascript:void(0)' onclick='initiateDeploy("`+element.deployMethod+`",true,"`+element.name+`")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph vi method: `+element.deployMethod+`' value='Deploy Physical Graph via `+element.deployMethod+`'>Deploy: `+element.name+`</a>`
             )
         }
     })
@@ -130,6 +130,7 @@ function saveSettings() {
     var errorFillingOut = false
     var duplicateName = false
     var emptyName = false
+    var badUrl = false
 
     settingsDeployMethods.each(function(){
 
@@ -137,6 +138,14 @@ function saveSettings() {
         if($(this).find(".deployMethodName").val().trim() === ""){
             emptyName = true
         }
+
+        try {
+            new URL($(this).find(".deployMethodUrl").val());
+          } catch (error) {
+                console.log("faulty Url: ",$(this).find(".deployMethodUrl").val())
+              console.log(error)
+              badUrl = true
+          }
 
         //duplicate name check, the name is used as an id of sorts
         deployMethodsArray.forEach(element => {
@@ -154,6 +163,10 @@ function saveSettings() {
         if(emptyName){
             errorFillingOut = true;
             $("#settingsModalErrorMessage").html('Please ensure deploy methods are named')
+        }
+        if(badUrl){
+            errorFillingOut = true;
+            $("#settingsModalErrorMessage").html('Please ensure deploy methods URLs are valid')
         }
 
         if(!errorFillingOut){
