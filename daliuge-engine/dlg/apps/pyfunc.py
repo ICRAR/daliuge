@@ -356,7 +356,7 @@ class PyFuncApp(BarrierAppDROP):
         is valid for all arguments and the code (if specified) in a global way.
         """
 
-        # Inputs are un-pickled and treated as the arguments of the function
+        # Inputs are un-pickled and treated as arguments for the function
         # Their order must be preserved, so we use an OrderedDict
         if self.pickle:
             all_contents = lambda x: pickle.loads(x)
@@ -366,7 +366,7 @@ class PyFuncApp(BarrierAppDROP):
         inputs = collections.OrderedDict()
         for uid, drop in self._inputs.items():
             contents = droputils.allDropContents(drop)
-            # allow for empty drops to pass events around
+            # allow for empty drops to pass events in
             inputs[uid] = all_contents(contents) if contents else None
 
         self.funcargs = {}

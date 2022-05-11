@@ -116,7 +116,7 @@ class DROPWaiterCtx(object):
                 )
 
 
-def allDropContents(drop, bufsize=4096):
+def allDropContents(drop, bufsize=10240):
     """
     Returns all the data contained in a given DROP
     """
@@ -132,7 +132,7 @@ def allDropContents(drop, bufsize=4096):
     return buf.getvalue()
 
 
-def copyDropContents(source: DataDROP, target: DataDROP, bufsize=4096):
+def copyDropContents(source: DataDROP, target: DataDROP, bufsize=10240):
     """
     Manually copies data from one DROP into another, in bufsize steps
     """
