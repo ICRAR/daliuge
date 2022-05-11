@@ -359,14 +359,15 @@ class PyFuncApp(BarrierAppDROP):
         # Inputs are un-pickled and treated as the arguments of the function
         # Their order must be preserved, so we use an OrderedDict
         if self.pickle:
-            all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
+            all_contents = lambda x: pickle.loads(x)
         else:
-            all_contents = lambda x: ast.literal_eval(droputils.allDropContents(x).decode('utf-8'))
-
+            all_contents = lambda x: ast.literal_eval(x.decode('utf-8'))
+        logger.debug(f"Input ports found: {self._inputs}")
         inputs = collections.OrderedDict()
         for uid, drop in self._inputs.items():
-            inputs[uid] = all_contents(drop)
-
+            contents = droputils.allDropContents(drop)
+            # allow for empty drops to pass events around
+            inputs[uid] = all_contents(contents) if contents else None
 
         self.funcargs = {}
 
@@ -440,7 +441,10 @@ class PyFuncApp(BarrierAppDROP):
                     elif pa != 'self':
                         logger.warning(f"Required positional argument '{pa}' not found!")
             logger.debug(f"updating posargs with {list(kwargs.values())}")
-            self.pargs.extend(list(pargsDict.values()))
+            #  need to maintain the order
+            for pa in posargs:
+                if pa != 'self':
+                    self.pargs.append(pargsDict[pa])
 
             # Try to get values for still missing kwargs arguments from Application kws
             kwargs = {}
