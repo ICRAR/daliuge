@@ -31,13 +31,13 @@ LOGGER = logging.getLogger(__name__)
 
 
 def _cleanup_block(session_id, name):
-    mem = DlgSharedMemory(f'{session_id}_{name}')
+    mem = DlgSharedMemory(f"{session_id}_{name}")
     mem.close()
     mem.unlink()  # It is unlinking that is critical to freeing resources from the OS
 
 
 def _close_block(session_id, name):
-    mem = DlgSharedMemory(f'{session_id}_{name}')
+    mem = DlgSharedMemory(f"{session_id}_{name}")
     mem.close()
 
 

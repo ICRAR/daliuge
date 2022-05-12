@@ -36,11 +36,13 @@ from dlg.apps.simple import (
     SleepApp,
     CopyApp,
     SleepAndCopyApp,
-    ListAppendThrashingApp
+    ListAppendThrashingApp,
 )
 from dlg.apps.simple import RandomArrayApp, AverageArraysApp, HelloWorldApp
+from dlg.apps.simple import SleepApp, CopyApp, SleepAndCopyApp
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import NullDROP, InMemoryDROP, FileDROP, NgasDROP
+
 if sys.version_info >= (3, 8):
     from dlg.manager.shared_memory_manager import DlgSharedMemoryManager
 
@@ -243,7 +245,9 @@ class TestSimpleApps(unittest.TestCase):
         o4 = InMemoryDROP("o4", "o4")
         for x in o1, o2, o3, o4:
             s.addOutput(x)
-        self._test_graph_runs((b, s, o1, o2, o3, o4), (b, c), (o1, o2, o3, o4), timeout=4)
+        self._test_graph_runs(
+            (b, s, o1, o2, o3, o4), (b, c), (o1, o2, o3, o4), timeout=4
+        )
 
         data11 = droputils.load_numpy(o1)
         data12 = droputils.load_numpy(o2)
@@ -257,17 +261,19 @@ class TestSimpleApps(unittest.TestCase):
         testing.assert_array_equal(data2_out, data2_in)
 
     def test_listappendthrashing(self, size=1000):
-        a = InMemoryDROP('a', 'a')
-        b = ListAppendThrashingApp('b', 'b', size=size)
+        a = InMemoryDROP("a", "a")
+        b = ListAppendThrashingApp("b", "b", size=size)
         self.assertEqual(b.size, size)
-        c = InMemoryDROP('c', 'c')
+        c = InMemoryDROP("c", "c")
         b.addInput(a)
         b.addOutput(c)
         self._test_graph_runs((a, b, c), a, c, timeout=4)
         data_out = pickle.loads(droputils.allDropContents(c))
         self.assertEqual(b.marray, data_out)
 
-    @unittest.skipIf(sys.version_info < (3, 8), "Multiprocessing not compatible with Python < 3.8")
+    @unittest.skipIf(
+        sys.version_info < (3, 8), "Multiprocessing not compatible with Python < 3.8"
+    )
     def test_multi_listappendthrashing(self, size=1000, parallel=True):
         max_threads = cpu_count(logical=False)
         drop_ids = [chr(97 + x) for x in range(max_threads)]
@@ -275,20 +281,20 @@ class TestSimpleApps(unittest.TestCase):
         memory_manager = DlgSharedMemoryManager()
         session_id = 1
         memory_manager.register_session(session_id)
-        S = InMemoryDROP('S', 'S')
-        X = AverageArraysApp('X', 'X')
-        Z = InMemoryDROP('Z', 'Z')
+        S = InMemoryDROP("S", "S")
+        X = AverageArraysApp("X", "X")
+        Z = InMemoryDROP("Z", "Z")
         drops = [ListAppendThrashingApp(x, x, size=size) for x in drop_ids]
         mdrops = [InMemoryDROP(chr(65 + x), chr(65 + x)) for x in range(max_threads)]
         if parallel:
             # a bit of magic to get the app drops using the processes
-            _ = [drop.__setattr__('_tp', threadpool) for drop in drops]
-            _ = [drop.__setattr__('_tp', threadpool) for drop in mdrops]
-            _ = [drop.__setattr__('_sessID', session_id) for drop in mdrops]
+            _ = [drop.__setattr__("_tp", threadpool) for drop in drops]
+            _ = [drop.__setattr__("_tp", threadpool) for drop in mdrops]
+            _ = [drop.__setattr__("_sessID", session_id) for drop in mdrops]
             _ = [memory_manager.register_drop(drop.uid, session_id) for drop in mdrops]
-            X.__setattr__('_tp', threadpool)
-            Z.__setattr__('_tp', threadpool)
-            Z.__setattr__('_sessID', session_id)
+            X.__setattr__("_tp", threadpool)
+            Z.__setattr__("_tp", threadpool)
+            Z.__setattr__("_sessID", session_id)
             memory_manager.register_drop(Z.uid, session_id)
 
         _ = [d.addInput(S) for d in drops]
@@ -311,7 +317,9 @@ class TestSimpleApps(unittest.TestCase):
         # Must be called to unlink all shared memory
         memory_manager.shutdown_all()
 
-    @unittest.skipIf(sys.version_info < (3, 8), "Multiprocessing not compatible with Python < 3.8")
+    @unittest.skipIf(
+        sys.version_info < (3, 8), "Multiprocessing not compatible with Python < 3.8"
+    )
     def test_speedup(self):
         """
         Run serial and parallel test and report speedup.

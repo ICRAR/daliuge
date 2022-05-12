@@ -1,8 +1,8 @@
 Data Activated 流 Graph Engine
 ==============================
 
-.. image:: https://travis-ci.org/ICRAR/daliuge.svg?branch=master
-    :target: https://travis-ci.org/ICRAR/daliuge
+.. image:: https://travis-ci.com/ICRAR/daliuge.svg?branch=master
+    :target: https://travis-ci.com/github/ICRAR/daliuge
 
 .. image:: https://coveralls.io/repos/github/ICRAR/daliuge/badge.svg?branch=master
     :target: https://coveralls.io/github/ICRAR/daliuge?branch=master
