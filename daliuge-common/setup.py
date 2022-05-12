@@ -47,6 +47,8 @@ def do_versioning():
     return _globals["write_version_info"](VERSION, VERSION_FILE, RELEASE)
 
 
+install_requires = ["gputil>=1.4.0", "merklelib>=1.0"]
+
 setup(
     name="daliuge-common",
     version=do_versioning(),
@@ -61,4 +63,5 @@ setup(
     entry_points={
         "console_scripts": ["dlg=dlg.common.tool:run"]
     },  # One tool to rule them all
+    install_requires=install_requires,
 )

@@ -26,12 +26,12 @@ import logging
 import multiprocessing
 import queue
 import threading
+import six
 
 from .. import rpc, utils
 from ..ddap_protocol import AppDROPStates
 from ..drop import AppDROP, BarrierAppDROP
 from ..exceptions import InvalidDropException
-
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +92,12 @@ class CDlgApp(ctypes.Structure):
         ("done", _app_done_cb_type),
         ("data", ctypes.c_void_p),
     ]
+
+    def pack_python(self):
+        out = {}
+        for key, val in self._fields_:
+            out[key] = repr(getattr(self, key))
+        return out
 
 
 def _to_c_input(i):
@@ -347,6 +353,13 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
         super(DynlibStreamApp, self).addStreamingInput(streamingInputDrop, back)
         self._c_app.n_streaming_inputs += 1
 
+    def generate_recompute_data(self):
+        out = {"status": self.status}
+        data = self._c_app.pack_python()
+        if data is not None:
+            out.update(data)
+        return out
+
 
 ##
 # @brief DynlibApp
@@ -379,6 +392,14 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
         prepare_c_ranks(self._c_app, self.ranks)
         self._ensure_c_outputs_are_set()
         run(self.lib, self._c_app, input_closers)
+
+    def generate_recompute_data(self):
+        out = {"status": self.status}
+        if self._c_app is None:
+            return out
+        else:
+            out.update(self._c_app.pack_python())
+            return out
 
 
 class FinishSubprocess(Exception):
