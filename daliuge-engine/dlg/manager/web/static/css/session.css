@@ -1,55 +1,55 @@
 body {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  margin: 0;
-  padding: 0;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
-  background: #fff;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 0;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+    background: #fff;
 }
 
 @-webkit-keyframes flash {
-  0%, 50%, 100% {
-    opacity: 1;
-  }
+    0%, 50%, 100% {
+        opacity: 1;
+    }
 
-  25%, 75% {
-    opacity: 0.2;
-  }
+    25%, 75% {
+        opacity: 0.2;
+    }
 }
 
 @keyframes flash {
-  0%, 50%, 100% {
-    opacity: 1;
-  }
+    0%, 50%, 100% {
+        opacity: 1;
+    }
 
-  25%, 75% {
-    opacity: 0.2;
-  }
+    25%, 75% {
+        opacity: 0.2;
+    }
 }
 
 .warn {
-  -webkit-animation-duration: 5s;
-  -webkit-animation-fill-mode: both;
-  -webkit-animation-iteration-count: 1;
-  -webkit-animation-name: flash;
-  animation-duration: 5s;
-  animation-fill-mode: both;
-  animation-iteration-count: 1;
-  animation-name: flash;
+    -webkit-animation-duration: 5s;
+    -webkit-animation-fill-mode: both;
+    -webkit-animation-iteration-count: 1;
+    -webkit-animation-name: flash;
+    animation-duration: 5s;
+    animation-fill-mode: both;
+    animation-iteration-count: 1;
+    animation-name: flash;
 }
 
 div.graph, div.progress {
-  width: 100%;
-  height: 100%;
+    width: 100%;
+    height: 100%;
 }
 
 svg {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
 }
 
 .node g div {
@@ -63,19 +63,19 @@ svg {
 }
 
 
-.node rect+g div div {
-	padding-left: 2%
+.node rect + g div div {
+    padding-left: 2%
 }
 
 .edgeLabel text {
-  width: 50px;
-  fill: #fff;
+    width: 50px;
+    fill: #fff;
 }
 
 .edgePath path {
-  stroke: #999;
-  stroke-width: 1.5px;
-  fill: #999;
+    stroke: #999;
+    stroke-width: 1.5px;
+    fill: #999;
 }
 
 .notes {
@@ -88,7 +88,7 @@ svg {
 }
 
 .drop-label span {
-  display: block;
+    display: block;
 }
 
 .bootbox-close-button{
@@ -185,15 +185,15 @@ svg {
   content: attr(data-text); /* here's the magic */
   position:absolute;
   font-size: 14px;
-  
+
   /* vertically center */
   top:50%;
   transform:translateY(-50%);
-  
+
   /* move to left */
   left:100%;
   margin-left:15px; /* and add a small right margin */
-  
+
   /* basic styles */
   width:200px;
   padding:10px;
@@ -214,19 +214,19 @@ svg {
 .tooltipRight:after {
   content: "";
   position:absolute;
-  
+
   /* position tooltip correctly */
   left:100%;
   margin-left:-4px;
- 
+
   /* vertically center */
   top:50%;
   transform:translateY(-50%);
- 
+
   /* the arrow */
   border:10px solid rgba(0,0,0,0.94);
   border-color: transparent rgba(0,0,0,0.94) transparent transparent;
-  
+
   visibility:hidden;
   transition: 0s visibility;
 }
@@ -234,22 +234,22 @@ svg {
 .tooltipRight:hover:before, .tooltipRight:hover:after {
   visibility: visible;
   transition-delay: 1s;
-  
+
 }
 
 .tooltipTop:before {
   content: attr(data-text); /* here's the magic */
   position:absolute;
   font-size: 14px;
-  
+
   /* center */
   Left:50%;
   transform:translateX(-50%);
-  
+
   /* move to top */
   bottom:100%;
   margin-bottom:15px; /* and add a small bottom margin */
-  
+
   /* basic styles */
   width:200px;
   padding:10px;
@@ -270,42 +270,42 @@ svg {
 .tooltipTop:after {
   content: "";
   position:absolute;
-  
+
   /* position tooltip correctly */
   bottom:100%;
   margin-bottom:-4px;
- 
+
   /* vertically center */
   left: 50%;
   bottom:100%;
   transform:translateX(-50%);
- 
+
   /* the arrow */
   border:10px solid rgba(0,0,0,0.94);
   border-color: rgba(0,0,0,0.94) transparent transparent transparent;
-  
+
   visibility:hidden;
   transition: 0s visibility;
 }
 
 .tooltipTop:hover:before, .tooltipTop:hover:after {
   visibility: visible;
-  transition-delay: 1s; 
+  transition-delay: 1s;
 }
 
 .tooltipLeft:before {
   content: attr(data-text); /* here's the magic */
   position:absolute;
   font-size: 14px;
-  
+
   /* vertically center */
   top:50%;
   transform:translateY(-50%);
-  
+
   /* move to left */
   right:100%;
   margin-right:15px; /* and add a small right margin */
-  
+
   /* basic styles */
   width:200px;
   padding:10px;
@@ -326,19 +326,19 @@ svg {
 .tooltipLeft:after {
   content: "";
   position:absolute;
-  
+
   /* position tooltip correctly */
   right:100%;
   margin-right:-4px;
- 
+
   /* vertically center */
   top:50%;
   transform:translateY(-50%);
- 
+
   /* the arrow */
   border:10px solid rgba(0,0,0,0.94);
   border-color: transparent transparent transparent rgba(0,0,0,0.94);
-  
+
   visibility:hidden;
   transition: 0s visibility;
 }
@@ -352,15 +352,15 @@ svg {
   content: attr(data-text); /* here's the magic */
   position:absolute;
   font-size: 14px;
-  
+
   /* center */
   Left:50%;
   transform:translateX(-50%);
-  
+
   /* move to bottom */
   top:100%;
   margin-top:15px; /* and add a small top margin */
-  
+
   /* basic styles */
   width:200px;
   padding:10px;
@@ -381,20 +381,20 @@ svg {
 .tooltipBottom:after {
   content: "";
   position:absolute;
-  
+
   /* position tooltip correctly */
   top:100%;
   margin-top:-4px;
- 
+
   /* vertically center */
   left: 50%;
   top:100%;
   transform:translateX(-50%);
- 
+
   /* the arrow */
   border:10px solid rgba(0,0,0,0.94);
   border-color: transparent transparent rgba(0,0,0,0.94) transparent;
-  
+
   visibility:hidden;
   transition: 0s visibility;
 }
@@ -408,15 +408,15 @@ svg {
   content: attr(data-text); /* here's the magic */
   position:absolute;
   font-size: 14px;
-  
+
   /* center */
   Left:50%;
   transform:translateX(-90%);
-  
+
   /* move to bottom */
   top:100%;
   margin-top:15px; /* and add a small top margin */
-  
+
   /* basic styles */
   width:200px;
   padding:10px;
@@ -437,7 +437,7 @@ svg {
 .tooltipBottomLeft:after {
   content: "";
   position:absolute;
-  
+
   /* position tooltip correctly */
   top:100%;
   margin-top:-4px;
@@ -450,7 +450,7 @@ svg {
   /* the arrow */
   border:10px solid rgba(0,0,0,0.94);
   border-color: transparent transparent rgba(0,0,0,0.94) transparent;
-  
+
   visibility:hidden;
   transition: 0s visibility;
 }
@@ -458,7 +458,7 @@ svg {
 .tooltipBottomLeft:hover:before, .tooltipBottomLeft:hover:after {
   visibility: visible;
   transition-delay: 1s;
-} 
+}
 
 #graphName li{
   list-style-type: none;
@@ -472,30 +472,30 @@ svg {
 
 #listContainer{
   position: absolute;
-  top:80px; 
-  bottom:0px; 
-  right:0px; 
+  top:80px;
+  bottom:0px;
+  right:0px;
   left:0px;
 }
 
 #listContainer div{
-  overflow: auto; 
+  overflow: auto;
   height: 100%;
 }
 
 #pg-graph{
   position: absolute;
-  top:80px; 
-  bottom:0px; 
-  right:0px; 
+  top:80px;
+  bottom:0px;
+  right:0px;
   left:0px;
 }
 
 #pg-progress-bar{
   position: absolute;
-  top:80px; 
-  bottom:0px; 
-  right:0px; 
+  top:80px;
+  bottom:0px;
+  right:0px;
   left:0px;
   padding-right:20px;
 }

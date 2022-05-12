@@ -1,4 +1,3 @@
-
 .. _drop.managers:
 
 Drop Managers
