@@ -27,7 +27,12 @@ import logging
 import networkx as nx
 
 from dlg.dropmake.pgt import PGT, GraphException
-from dlg.dropmake.scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
+from dlg.dropmake.scheduler import (
+    MySarkarScheduler,
+    DAGUtil,
+    MinNumPartsScheduler,
+    PSOScheduler,
+)
 from dlg.common import DropType
 
 logger = logging.getLogger(__name__)
@@ -134,14 +139,15 @@ class MetisPGTP(PGT):
                 adj_drops += drop[ust]
 
             for inp in adj_drops:
+                key = list(inp.keys())[0] if isinstance(inp, dict) else inp
                 if DropType.PLAIN == tt:
                     lw = drop["dw"]
                 elif DropType.APP == tt:
                     # lw = drop_dict[inp].get('dw', 1)
-                    lw = droplist[key_dict[inp] - 1].get("dw", 1)
+                    lw = droplist[key_dict[key] - 1].get("dw", 1)
                 if lw <= 0:
                     lw = 1
-                G.add_edge(myk, key_dict[inp], weight=lw)
+                G.add_edge(myk, key_dict[key], weight=lw)
         # for e in G.edges(data=True):
         #     if (e[2]['weight'] == 0):
         #         e[2]['weight'] = 1

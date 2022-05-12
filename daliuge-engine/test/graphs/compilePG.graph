@@ -1,0 +1,154 @@
+[
+    {
+        "oid": "2022-05-06T08:43:26_-1_0",
+        "type": "app",
+        "app": "dlg.apps.pyfunc.PyFuncApp",
+        "rank": [
+            0
+        ],
+        "loop_cxt": null,
+        "tw": 5,
+        "num_cpus": 1,
+        "appclass": "dlg.apps.pyfunc.PyFuncApp",
+        "execution_time": 5,
+        "group_start": false,
+        "input_error_threshold": 0,
+        "n_tries": 1,
+        "applicationArgs": {
+            "func_name": {
+                "text": "Function Name",
+                "value": "compile",
+                "defaultValue": "",
+                "description": "Python function name",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false
+            },
+            "func_code": {
+                "text": "Function Code",
+                "value": "",
+                "defaultValue": "",
+                "description": "Python function code, e.g. 'def function_name(args): return args'",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false
+            },
+            "pickle": {
+                "text": "Pickle",
+                "value": false,
+                "defaultValue": "false",
+                "description": "Whether the python arguments are pickled.",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false
+            },
+            "func_defaults": {
+                "text": "Function Defaults",
+                "value": "",
+                "defaultValue": "",
+                "description": "Mapping from argname to default value. Should match only the last part of the argnames list. Values are interpreted as Python code literals and that means string values need to be quoted.",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false
+            },
+            "func_arg_mapping": {
+                "text": "Function Arguments Mapping",
+                "value": "",
+                "defaultValue": "",
+                "description": "Mapping between argument name and input drop uids",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false
+            },
+            "source": {
+                "text": "source",
+                "value": "print('Hello')",
+                "defaultValue": "",
+                "description": "",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false
+            },
+            "filename": {
+                "text": "filename",
+                "value": "",
+                "defaultValue": "",
+                "description": "",
+                "readonly": false,
+                "type": "String",
+                "precious": true,
+                "options": [],
+                "positional": false
+            },
+            "mode": {
+                "text": "mode",
+                "value": "exec",
+                "defaultValue": "",
+                "description": "",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false
+            },
+            "optimize": {
+                "text": "optimize",
+                "value": true,
+                "defaultValue": "",
+                "description": "",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false
+            }
+        },
+        "iid": "0",
+        "lg_key": -1,
+        "dt": "PythonApp",
+        "nm": "compile",
+        "inputs": [
+            {
+                "2022-05-06T08:43:26_-2_0": "filename"
+            }
+        ],
+        "node": "localhost",
+        "island": "localhost"
+    },
+    {
+        "oid": "2022-05-06T08:43:26_-2_0",
+        "type": "plain",
+        "storage": "Memory",
+        "rank": [
+            0
+        ],
+        "loop_cxt": null,
+        "dw": 0,
+        "data_volume": 0,
+        "group_end": false,
+        "applicationArgs": {},
+        "iid": "0",
+        "lg_key": -2,
+        "dt": "Memory",
+        "nm": "NULL",
+        "consumers": [
+            {
+                "2022-05-06T08:43:26_-1_0": "filename"
+            }
+        ],
+        "node": "localhost",
+        "island": "localhost"
+    }
+]

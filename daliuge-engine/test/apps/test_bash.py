@@ -83,7 +83,7 @@ class BashAppTests(unittest.TestCase):
         assert_message_is_correct(msg, 'echo -n "{0}" > %o0'.format(msg))
         msg = 'This is a message with a double quotes: "'
         assert_message_is_correct(msg, "echo -n '{0}' > %o0".format(msg))
-    
+
     def test_envvars(self):
         """Checks that the DLG_* environment variables are available to bash programs"""
 
@@ -108,6 +108,47 @@ class BashAppTests(unittest.TestCase):
 
         assert_envvar_is_there("DLG_UID", app_uid)
         assert_envvar_is_there("DLG_SESSION_ID", session_id)
+
+    def test_reproducibility(self):
+        from dlg.common.reproducibility.constants import ReproducibilityFlags
+        from dlg.drop import NullDROP
+
+        a = BashShellApp("a", "a", command="echo 'Hello world'")
+        a.reproducibility_level = ReproducibilityFlags.RERUN
+        a.setCompleted()
+        b = NullDROP("b", "b")
+        b.reproducibility_level = ReproducibilityFlags.RERUN
+        b.setCompleted()
+        self.assertEqual(a.merkleroot, b.merkleroot)
+
+        a.reproducibility_level = ReproducibilityFlags.REPEAT
+        a.commit()
+        self.assertEqual(a.merkleroot, b.merkleroot)
+
+        a.reproducibility_level = ReproducibilityFlags.RECOMPUTE
+        a.commit()
+        self.assertNotEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(a.generate_merkle_data(), {"command": "echo 'Hello world'"})
+
+        a.reproducibility_level = ReproducibilityFlags.REPRODUCE
+        a.commit()
+        self.assertNotEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(a.generate_merkle_data(), {})
+
+        a.reproducibility_level = ReproducibilityFlags.REPLICATE_SCI
+        a.commit()
+        self.assertEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(a.generate_merkle_data(), a.generate_rerun_data())
+
+        a.reproducibility_level = ReproducibilityFlags.REPLICATE_COMP
+        a.commit()
+        self.assertNotEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(a.generate_merkle_data(), a.generate_recompute_data())
+
+        a.reproducibility_level = ReproducibilityFlags.REPLICATE_TOTAL
+        a.commit()
+        self.assertEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(a.generate_merkle_data(), a.generate_repeat_data())
 
 
 class StreamingBashAppTests(unittest.TestCase):

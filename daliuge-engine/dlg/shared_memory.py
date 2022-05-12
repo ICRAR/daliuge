@@ -42,17 +42,17 @@ _MAXNAMELENGTH = 14  # Apparently FreeBSD has this limitation
 def _make_filename(name):
     if isinstance(name, str):
         name = str(name)
-    if name[0] != '/':
-        name = '/' + name
+    if name[0] != "/":
+        name = "/" + name
     if len(name) > _MAXNAMELENGTH:
         return name[:_MAXNAMELENGTH]
     return name
 
 
 def _make_random_filename():
-    nbytes = (_MAXNAMELENGTH - len('/')) // 2
-    assert nbytes >= 2, '_SHM_NAME_PREFIX too long'
-    name = '/' + secrets.token_hex(nbytes)
+    nbytes = (_MAXNAMELENGTH - len("/")) // 2
+    assert nbytes >= 2, "_SHM_NAME_PREFIX too long"
+    name = "/" + secrets.token_hex(nbytes)
     assert len(name) <= _MAXNAMELENGTH
     return name
 
@@ -66,6 +66,7 @@ class DlgSharedMemory:
     Based heavily on Python's own shared memory implementation
     (https://github.com/python/cpython/blob/3.9/Lib/multiprocessing/shared_memory.py)
     """
+
     _name = None
     _fd = -1
     _mmap = None
@@ -86,9 +87,7 @@ class DlgSharedMemory:
                 name = _make_random_filename()
                 try:
                     self._fd = _posixshmem.shm_open(
-                        name,
-                        self._flags | _O_CREX,
-                        mode=self._mode
+                        name, self._flags | _O_CREX, mode=self._mode
                     )
                 except FileExistsError:  # Collision with other name
                     continue
@@ -99,20 +98,12 @@ class DlgSharedMemory:
             name = _make_filename(name)
             self._flags = _O_CREX | os.O_RDWR
             try:
-                self._fd = _posixshmem.shm_open(
-                    name,
-                    self._flags,
-                    mode=self._mode
-                )
+                self._fd = _posixshmem.shm_open(name, self._flags, mode=self._mode)
             except FileExistsError:
                 # File already exists, attempt to open in read/write mode
                 self._flags = os.O_RDWR
                 try:
-                    self._fd = _posixshmem.shm_open(
-                        name,
-                        self._flags,
-                        mode=self._mode
-                    )
+                    self._fd = _posixshmem.shm_open(name, self._flags, mode=self._mode)
                 except FileNotFoundError:
                     self.__init__(name, size)
                 # Find the size of the written file
@@ -140,7 +131,7 @@ class DlgSharedMemory:
             pass
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self._name!r}, size={self._size})'
+        return f"{self.__class__.__name__}({self._name!r}, size={self._size})"
 
     @property
     def buf(self):
@@ -201,4 +192,4 @@ class DlgSharedMemory:
             warnings.warn("Shrinking shared block, may lose data", BytesWarning)
             self._buf[:] = old_data[0:new_size]
         else:
-            self._buf[0:len(old_data)] = old_data
+            self._buf[0 : len(old_data)] = old_data

@@ -47,9 +47,9 @@ class ParameterSetDROP(DataDROP):
     appends any additional specified parameters to it, finally serving it as a data object.
     """
 
-    config_data = b''
+    config_data = b""
 
-    mode = dlg_string_param('mode', None)
+    mode = dlg_string_param("mode", None)
 
     @abstractmethod
     def serialize_parameters(self, parameters: dict, mode):
@@ -67,12 +67,15 @@ class ParameterSetDROP(DataDROP):
         """
         Returns a dictionary of parameters, with daliuge-internal or other parameters filtered out
         """
-        if mode == 'YANDA':
+        if mode == "YANDA":
             forbidden_params = list(DEFAULT_INTERNAL_PARAMETERS)
-            if parameters['config_data'] == "":
-                forbidden_params.append('configData')
-            return {key: val for key, val in parameters.items() if
-                    key not in DEFAULT_INTERNAL_PARAMETERS}
+            if parameters["config_data"] == "":
+                forbidden_params.append("configData")
+            return {
+                key: val
+                for key, val in parameters.items()
+                if key not in DEFAULT_INTERNAL_PARAMETERS
+            }
         return parameters
 
     def initialize(self, **kwargs):
@@ -80,7 +83,8 @@ class ParameterSetDROP(DataDROP):
         TODO: Open input file
         """
         self.config_data = self.serialize_parameters(
-            self.filter_parameters(self.parameters, self.mode), self.mode).encode('utf-8')
+            self.filter_parameters(self.parameters, self.mode), self.mode
+        ).encode("utf-8")
 
     def getIO(self):
         return MemoryIO(io.BytesIO(self.config_data))

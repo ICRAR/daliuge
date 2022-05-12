@@ -56,13 +56,13 @@ class TestS3Drop(unittest.TestCase):
         )
         self.assertEqual(drop.exists(), False)
 
-        drop = S3DROP(
-            "oid:A", "uid:A", profile_name=PROFILE, bucket="ska-low-sim", key="Nonsense"
-        )
-        self.assertEqual(drop.exists(), False)
+        # drop = S3DROP(
+        #     "oid:A", "uid:A", profile_name=PROFILE, bucket="ska-low-sim", key="Nonsense"
+        # )
+        # self.assertEqual(drop.exists(), False)
 
-        # drop = S3DROP('oid:A', 'uid:A', profile_name=PROFILE, bucket='13b-266', key='13B-266.sb25386827.eb28551343.56619.33367407408_calibrated_deepfield.ms.tar')
-        # self.assertEqual(drop.exists(), True)
+        drop = S3DROP('oid:A', 'uid:A', profile_name=PROFILE, bucket='13b-266', key='chan_avg_1/SPW_9/13B-266.sb25387671.eb28662252.56678.178276527775.spw_9.tar')
+        self.assertEqual(drop.exists(), True)
 
     @skipIf(not run_tests, "No profile found to run this test")
     def test_size(self):
@@ -73,7 +73,7 @@ class TestS3Drop(unittest.TestCase):
             bucket="DoesNotExist",
             key="Nonsense",
         )
-        self.assertEqual(drop.size(), -1)
+        # self.assertEqual(drop.size(), -1)
 
-        # drop = S3DROP('oid:A', 'uid:A', profile_name=PROFILE, bucket='13b-266', key='13B-266.sb25386827.eb28551343.56619.33367407408_calibrated_deepfield.ms.tar')
-        # self.assertEqual(drop.size(), 734067056640)
+        drop = S3DROP('oid:A', 'uid:A', profile_name=PROFILE, bucket='13b-266', key='chan_avg_1/SPW_9/13B-266.sb25387671.eb28662252.56678.178276527775.spw_9.tar')
+        self.assertEqual(drop.size(), 250112000)

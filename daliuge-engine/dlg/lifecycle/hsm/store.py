@@ -27,15 +27,14 @@ DROPs that use that layer as its storage mechanism.
 @author: rtobar
 """
 
-from abc import ABCMeta, abstractmethod
 import json
 import logging
 import os
+from abc import ABCMeta, abstractmethod
 
 import psutil
 
 from ...drop import FileDROP, InMemoryDROP, NgasDROP
-
 
 logger = logging.getLogger(__name__)
 

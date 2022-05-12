@@ -25,8 +25,8 @@ DROP types. It was initially developed to address PRO-234.
 """
 
 import importlib
-from optparse import OptionParser
 import sys
+from optparse import OptionParser
 
 import psutil
 
