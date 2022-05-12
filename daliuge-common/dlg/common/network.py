@@ -19,12 +19,11 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import contextlib
 import errno
 import logging
 import socket
 import time
-import contextlib
-
 
 logger = logging.getLogger(__name__)
 
@@ -162,7 +161,7 @@ def connect_to(host, port, timeout=None):
     return s
 
 
-def write_to(host, port, data, timeout=None):
+def write_to(host, port, data, timeout=5):
     """
     Connects to ``host``:``port`` within the given timeout and write the given
     piece of ``data`` into the connected socket.
