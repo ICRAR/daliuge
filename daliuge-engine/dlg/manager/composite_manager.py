@@ -30,11 +30,11 @@ from . import constants
 from .client import NodeManagerClient
 from .constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from .drop_manager import DROPManager
-from .. import remote, graph_loader
+from .. import graph_loader
+from ..common.reproducibility.reproducibility import init_pg_repro_data
 from ..ddap_protocol import DROPRel
 from ..exceptions import InvalidGraphException, DaliugeException, SubManagerException
 from ..utils import portIsOpen
-
 
 logger = logging.getLogger(__name__)
 
@@ -44,15 +44,16 @@ def uid_for_drop(dropSpec):
         return dropSpec["uid"]
     return dropSpec["oid"]
 
+
 def sanitize_link(link):
     """
     Links can now be dictionaries, but we only need
     the key.
     """
-    return list(link.keys())[0] if isinstance(link,dict) else link
+    return list(link.keys())[0] if isinstance(link, dict) else link
+
 
 def sanitize_relations(interDMRelations, graph):
-
     # TODO: Big change required to remove this hack here
     #
     # Values in the interDMRelations array use OIDs to identify drops.
@@ -348,6 +349,16 @@ class CompositeManager(DROPManager):
         # attribute set
         logger.info(f"Separating graph using partition attribute {self._partitionAttr}")
         perPartition = collections.defaultdict(list)
+        try:
+            if graphSpec[-1]["rmode"] is not None:
+                init_pg_repro_data(graphSpec)
+                self._graph["reprodata"] = graphSpec.pop()
+                logger.debug(
+                    "Composite manager found reprodata in dropspecList, rmode=%s",
+                    self._graph["reprodata"]["rmode"],
+                )
+        except KeyError:
+            pass
         for dropSpec in graphSpec:
             if self._partitionAttr not in dropSpec:
                 msg = "Drop %s doesn't specify a %s attribute" % (
@@ -369,7 +380,6 @@ class CompositeManager(DROPManager):
 
             # Add the drop specs to our graph
             self._graph[uid_for_drop(dropSpec)] = dropSpec
-
         # At each partition the relationships between DROPs should be local at the
         # moment of submitting the graph; thus we record the inter-partition
         # relationships separately and remove them from the original graph spec
@@ -400,6 +410,9 @@ class CompositeManager(DROPManager):
         # Create the individual graphs on each DM now that they are correctly
         # separated.
         logger.info("Adding individual graphSpec of session %s to each DM", sessionId)
+        for partition in perPartition:
+            if self._graph.get("reprodata") is not None:
+                perPartition[partition].append(self._graph["reprodata"])
         self.replicate(
             sessionId,
             self._addGraphSpec,

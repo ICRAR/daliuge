@@ -157,7 +157,8 @@ class BashShellBase(object):
     Common class for BashShell apps. It simply requires a command to be
     specified.
     """
-    #TODO: use the shlex module for most of the construction of the
+
+    # TODO: use the shlex module for most of the construction of the
     # command line to get a proper and safe shell syntax
     command = dlg_string_param("Bash command", None)
 
@@ -170,8 +171,7 @@ class BashShellBase(object):
         self._cmdLineArgs = self._getArg(kwargs, "command_line_arguments", "")
         self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
         self._argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
-        self._paramValueSeparator = self._getArg(kwargs, \
-            "paramValueSeparator", " ")
+        self._paramValueSeparator = self._getArg(kwargs, "paramValueSeparator", " ")
 
         if not self.command:
             self.command = self._getArg(kwargs, "command", None)
@@ -179,6 +179,8 @@ class BashShellBase(object):
                 raise InvalidDropException(
                     self, "No command specified, cannot create BashShellApp"
                 )
+
+        self._recompute_data = {}
 
     def _run_bash(self, inputs, outputs, stdin=None, stdout=subprocess.PIPE):
         """
@@ -197,8 +199,9 @@ class BashShellBase(object):
         session_id = (
             self._dlg_session.sessionId if self._dlg_session is not None else ""
         )
-        argumentString = droputils.serialize_applicationArgs(self._applicationArgs, \
-            self._argumentPrefix, self._paramValueSeparator)
+        argumentString = droputils.serialize_applicationArgs(
+            self._applicationArgs, self._argumentPrefix, self._paramValueSeparator
+        )
         # complete command including all additional parameters and optional redirects
         cmd = f"{self.command} {argumentString} {self._cmdLineArgs} "
         if self._outputRedirect:
@@ -252,10 +255,13 @@ class BashShellBase(object):
         if stdout != subprocess.PIPE:
             pstdout = b"<piped-out>"
         pcode = process.returncode
-
         end = time.time()
         logger.info("Finished in %.3f [s] with exit code %d", (end - start), pcode)
 
+        logger.info("Finished in %.3f [s] with exit code %d", (end - start), pcode)
+        self._recompute_data["stdout"] = str(pstdout)
+        self._recompute_data["stderr"] = str(pstderr)
+        self._recompute_data["status"] = str(pcode)
         if pcode == 0 and logger.isEnabledFor(logging.DEBUG):
             logger.debug(
                 mesage_stdouts("Command finished successfully", pstdout, pstderr)
@@ -274,6 +280,10 @@ class BashShellBase(object):
             os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
         except:
             logger.exception("Error while terminating process %r", self.proc)
+
+    def generate_recompute_data(self):
+        self._recompute_data["command"] = self.command
+        return self._recompute_data
 
 
 class StreamingInputBashAppBase(BashShellBase, AppDROP):

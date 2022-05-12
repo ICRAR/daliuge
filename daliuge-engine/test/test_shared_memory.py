@@ -40,10 +40,10 @@ class TestSharedMemory(unittest.TestCase):
         """
         The size should grow when requested
         """
-        block_a = DlgSharedMemory('A')
+        block_a = DlgSharedMemory("A")
         old_size = block_a.size
-        block_a.resize(block_a.size*2)
-        self.assertEqual(block_a.size, old_size*2)
+        block_a.resize(block_a.size * 2)
+        self.assertEqual(block_a.size, old_size * 2)
         block_a.close()
         block_a.unlink()
 
@@ -51,10 +51,10 @@ class TestSharedMemory(unittest.TestCase):
         """
         Size should shrink when requested
         """
-        block_a = DlgSharedMemory('A')
+        block_a = DlgSharedMemory("A")
         old_size = block_a.size
-        block_a.resize(old_size//2)
-        self.assertEqual(block_a.size, old_size//2)
+        block_a.resize(old_size // 2)
+        self.assertEqual(block_a.size, old_size // 2)
         block_a.close()
         block_a.unlink()
 
@@ -62,8 +62,8 @@ class TestSharedMemory(unittest.TestCase):
         """
         When opening a new block by name, that name should be respected
         """
-        block_a = DlgSharedMemory('A')
-        self.assertEqual(block_a.name, '/A')
+        block_a = DlgSharedMemory("A")
+        self.assertEqual(block_a.name, "/A")
         block_a.close()
         block_a.unlink()
 
@@ -71,15 +71,15 @@ class TestSharedMemory(unittest.TestCase):
         """
         When opening an existing but still linked block, data should persist
         """
-        block_a = DlgSharedMemory('A')
+        block_a = DlgSharedMemory("A")
         data = pickle.dumps(3)
-        block_a.buf[0:len(data)] = data
+        block_a.buf[0 : len(data)] = data
         block_a.resize(len(data))
         old_size = block_a.size
         block_a.close()
-        block_b = DlgSharedMemory('A')
+        block_b = DlgSharedMemory("A")
         self.assertEqual(block_b.size, old_size)
-        self.assertEqual(block_b.name, '/A')
+        self.assertEqual(block_b.name, "/A")
         self.assertEqual(block_b.buf[:], data)
         block_b.close()
         block_b.unlink()
@@ -99,8 +99,8 @@ class TestSharedMemory(unittest.TestCase):
         view into the same memory buffer.
         This does bring to light that this primitive is not thread-safe by default.
         """
-        block_a = DlgSharedMemory('A')
-        block_b = DlgSharedMemory('A')
+        block_a = DlgSharedMemory("A")
+        block_b = DlgSharedMemory("A")
         self.assertEqual(block_a.buf, block_b.buf)
         block_a.close()
         block_b.close()
@@ -110,8 +110,8 @@ class TestSharedMemory(unittest.TestCase):
         """
         It should not be possible to unlink a block twice.
         """
-        block_a = DlgSharedMemory('A')
-        block_b = DlgSharedMemory('A')
+        block_a = DlgSharedMemory("A")
+        block_b = DlgSharedMemory("A")
         block_a.close()
         block_b.close()
         block_a.unlink()
@@ -122,9 +122,9 @@ class TestSharedMemory(unittest.TestCase):
         """
         There is a maximum name size which should be respected
         """
-        filename = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        filename = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         block_a = DlgSharedMemory(filename)
-        self.assertEqual(block_a.name, '/'+filename[:_MAXNAMELENGTH-1])
+        self.assertEqual(block_a.name, "/" + filename[: _MAXNAMELENGTH - 1])
         block_a.close()
         block_a.unlink()
 
@@ -133,7 +133,7 @@ class TestSharedMemory(unittest.TestCase):
         If a user attempts to make a block with a name beginning with /, it should be ignored
         (rather than having // as a name)
         """
-        filename = '/memory'
+        filename = "/memory"
         block_a = DlgSharedMemory(filename)
         self.assertEqual(block_a.name, filename)
         block_a.close()

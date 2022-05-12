@@ -91,13 +91,27 @@ class ScpApp(BarrierAppDROP):
         [
             dlg_batch_input(
                 "binary/*",
-                [NgasDROP, InMemoryDROP, SharedMemoryDROP, NullDROP, RDBMSDrop, ContainerDROP]
+                [
+                    NgasDROP,
+                    InMemoryDROP,
+                    SharedMemoryDROP,
+                    NullDROP,
+                    RDBMSDrop,
+                    ContainerDROP,
+                ],
             )
         ],
         [
             dlg_batch_output(
                 "binary/*",
-                [NgasDROP, InMemoryDROP, SharedMemoryDROP, NullDROP, RDBMSDrop, ContainerDROP]
+                [
+                    NgasDROP,
+                    InMemoryDROP,
+                    SharedMemoryDROP,
+                    NullDROP,
+                    RDBMSDrop,
+                    ContainerDROP,
+                ],
             )
         ],
         [dlg_streaming_input("binary/*")],

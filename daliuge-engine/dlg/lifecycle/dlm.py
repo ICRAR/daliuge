@@ -130,7 +130,6 @@ from .. import droputils
 from ..ddap_protocol import DROPStates, DROPPhases, AppDROPStates
 from ..drop import ContainerDROP
 
-
 logger = logging.getLogger(__name__)
 
 

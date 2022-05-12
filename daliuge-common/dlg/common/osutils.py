@@ -24,7 +24,6 @@ import logging
 import math
 import time
 
-
 logger = logging.getLogger(__name__)
 
 
