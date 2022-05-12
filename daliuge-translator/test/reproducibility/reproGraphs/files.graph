@@ -1,0 +1,160 @@
+{
+    "linkDataArray": [],
+    "modelData": {
+        "filePath": "files.graph",
+        "fileType": "graph",
+        "git_url": "",
+        "repo": "",
+        "repoService": "Unknown",
+        "sha": ""
+    },
+    "nodeDataArray": [
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "Memory",
+            "categoryType": "Data",
+            "collapsed": false,
+            "colour": "#394BB2",
+            "description": "",
+            "exitAppName": "",
+            "fields": [
+                {
+                    "name": "data_volume",
+                    "text": "Data volume",
+                    "value": "5"
+                },
+                {
+                    "name": "group_end",
+                    "text": "Group end",
+                    "value": "0"
+                }
+            ],
+            "inputAppFields": [],
+            "inputAppName": "",
+            "inputApplication": "Unknown",
+            "inputLocalPorts": [],
+            "inputPorts": [],
+            "isData": true,
+            "isGroup": false,
+            "key": -1,
+            "loc": "345 76",
+            "outputAppFields": [],
+            "outputAppName": "",
+            "outputApplication": "Unknown",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "796c37c8-3272-468e-99ac-0e8dfbf6374c",
+                    "IdText": "event"
+                }
+            ],
+            "streaming": false,
+            "subject": null,
+            "text": "Memory"
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "File",
+            "categoryType": "Data",
+            "collapsed": false,
+            "colour": "#394BB2",
+            "description": "",
+            "exitAppName": "",
+            "fields": [
+                {
+                    "name": "data_volume",
+                    "text": "Data volume",
+                    "value": "5"
+                },
+                {
+                    "name": "group_end",
+                    "text": "Group end",
+                    "value": "0"
+                },
+                {
+                    "name": "check_filepath_exists",
+                    "text": "Check file path exists",
+                    "value": "1"
+                },
+                {
+                    "name": "filepath",
+                    "text": "File path",
+                    "value": ""
+                },
+                {
+                    "name": "dirname",
+                    "text": "Directory name",
+                    "value": ""
+                }
+            ],
+            "inputAppFields": [],
+            "inputAppName": "",
+            "inputApplication": "Unknown",
+            "inputLocalPorts": [],
+            "inputPorts": [],
+            "isData": true,
+            "isGroup": false,
+            "key": -2,
+            "loc": "300 100",
+            "outputAppFields": [],
+            "outputAppName": "",
+            "outputApplication": "Unknown",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "c14575f4-17cc-470b-b2a4-4237e06196d3",
+                    "IdText": "event"
+                }
+            ],
+            "streaming": false,
+            "subject": null,
+            "text": "File"
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "NGAS",
+            "categoryType": "Data",
+            "collapsed": false,
+            "colour": "#394BB2",
+            "description": "",
+            "exitAppName": "",
+            "fields": [
+                {
+                    "name": "data_volume",
+                    "text": "Data volume",
+                    "value": "5"
+                },
+                {
+                    "name": "group_end",
+                    "text": "Group end",
+                    "value": "0"
+                }
+            ],
+            "inputAppFields": [],
+            "inputAppName": "",
+            "inputApplication": "Unknown",
+            "inputLocalPorts": [],
+            "inputPorts": [],
+            "isData": true,
+            "isGroup": false,
+            "key": -4,
+            "loc": "323 255",
+            "outputAppFields": [],
+            "outputAppName": "",
+            "outputApplication": "Unknown",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "3ca32524-e658-47ea-8419-28efeabb826c",
+                    "IdText": "event"
+                }
+            ],
+            "streaming": false,
+            "subject": null,
+            "text": "NGAS"
+        }
+    ]
+}
