@@ -26,10 +26,17 @@ ENV DLG_ROOT="/tmp/dlg"
 
 RUN apt install -y git python3-dev
 
+# Nifty
 RUN pip install git+https://gitlab.com/ska-telescope/sdp/ska-gridder-nifty-cuda.git
 RUN pip install dlg-nifty-components
 
-RUN pip install --extra-index-url=https://artefact.skao.int/repository/pypi-internal/simple 'ska-sdp-cbf-emulator[plasma]==1.6.11'
+# Casacore + SDP
 RUN pip install dlg-casacore-components
+
+# RASCIL
+RUN mkdir -p /tmp/rascil_data && cd /tmp/rascil_data
+RUN curl https://ska-telescope.gitlab.io/external/rascil/rascil_data.tgz -o rascil_data.tgz
+RUN tar zxf rascil_data.tgz -C /dlg/lib/python3.8/site-packages
+RUN pip install --index-url=https://artefact.skao.int/repository/pypi-all/simple rascil
 
 CMD ["dlg", "daemon", "-vv"]
