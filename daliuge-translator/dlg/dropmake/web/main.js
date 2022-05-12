@@ -5,24 +5,6 @@ $(document).ready(function () {
         $(".dropdown-menu").dropdown('hide')
     })
 
-    //handles switching of the dynamic deploy split button
-    $("#deployDropdowns .dropdown-menu .dropdown-item").click(function(){
-        //take note of previous main button and the one that was just pressed
-
-        var oldActive = $("#deployDropdowns").children()[0];
-        var oldActiveId = $(oldActive).attr("id")
-        var newActive = event.target
-        var newActiveId = $(newActive).attr("id")
-
-        //replaces main button
-        $("#deployDropdowns").children()[0].remove()
-        $(newActive).clone().prependTo($("#deployDropdowns"))
-
-        //toggles dropdown options
-        $("#deployDropdowns .dropdown-menu #"+newActiveId).hide()
-        $("#deployDropdowns .dropdown-menu #"+oldActiveId).show()
-    })
-
     //export physical graph button listener
     $("#Pysical_graph").click(function () {
         $("#gen_pg_button").val("Generate Physical Graph")
@@ -35,30 +17,83 @@ $(document).ready(function () {
 
     $('#settingsModal').on('hidden.bs.modal', function () {
         fillOutSettings()
-  });
+    });
+
+    updateDeployOptionsDropdown()
+
+    //keyboard shortcuts
+    $(document).keydown(function(e){
+        if($("input").is(":focus")){
+            return
+        }
+        if (e.which == 79) //open settings modal on o
+        {
+            $('#settingsModal').modal('toggle')
+        };
+    })
 });
 
-function deployAction(){
-    $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
-    $("#dlg_mgr_deploy").prop("checked", true)
-    $("#pg_form").submit();
+function openSettingsModal(){
+    //needed for the dropdown option to open the settings modal, the pure bootstrap method used on the settings gear button proved inconsistent
+    $('#settingsModal').modal("show")
 }
 
-function helmDeployAction(){
-    helmDeploy()
+function initiateDeploy(method, selected, name){
+    if (selected === false){
+        changeSelectedDeployMethod(name)
+    }
+    if(method === "direct"){
+        $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
+        $("#dlg_mgr_deploy").prop("checked", true)
+        $("#pg_form").submit();
+    }else if(method === "helm"){
+        $("#gen_helm_button").val("Generate &amp; Deploy Physical Graph")
+        $("#dlg_helm_deploy").prop("checked", true)
+        $("#pg_helm_form").submit()
+    }else if(method === "rest"){
+        restDeploy()
+    }
 }
 
-function restDeployAction(){
-    restDeploy()
+function changeSelectedDeployMethod(name) {
+    var deployMethodsArray = JSON.parse(localStorage.getItem("deployMethods"))
+    deployMethodsArray.forEach(element => {
+        element.active = "false"
+        if(element.name === name){
+            element.active = "true"
+        }
+    })
+    localStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray))
+    updateDeployOptionsDropdown()
 }
 
-function saveSettings() {
-    var newUrl = new URL($("#managerUrlInput").val());
+function updateDeployOptionsDropdown() {
+    //remove old options
+    $(".deployMethodMenuItem").remove()
+    var selectedUrl
+
+    //add deployment options
+    JSON.parse(localStorage.getItem("deployMethods")).forEach(element => {
+        if(element.active === "false"){
+            //dropdown options
+            $("#deployDropdowns .dropdown-menu").prepend(
+                `<a href='javascript:void(0)' onclick='initiateDeploy("`+element.deployMethod+`",false,"`+element.name+`")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph via method: `+element.deployMethod+`' value='Deploy Physical Graph via `+element.deployMethod+`'>`+element.name+`</a>`
+            )
+        }else {
+            selectedUrl=element.url
+            //active option
+            $("#deployDropdowns").prepend(
+                `<a href='javascript:void(0)' onclick='initiateDeploy("`+element.deployMethod+`",true,"`+element.name+`")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph vi method: `+element.deployMethod+`' value='Deploy Physical Graph via `+element.deployMethod+`'>Deploy: `+element.name+`</a>`
+            )
+        }
+    })
+
+    var newUrl = new URL(selectedUrl);
     var newPort = newUrl.port;
     var newHost = newUrl.hostname;
     var newPrefix = newUrl.pathname;
     var newProtocol = newUrl.protocol;
-    console.log("URL set to:'" + newUrl + "'");
+    console.log("URL set to:'" + newUrl + "'"); 
     console.log("Protocol set to:'" + newProtocol + "'");
     console.log("Host set to:'" + newHost + "'");
     console.log("Port set to:'" + newPort + "'");
@@ -69,12 +104,90 @@ function saveSettings() {
     window.localStorage.setItem("manager_host", newHost);
     window.localStorage.setItem("manager_port", newPort);
     window.localStorage.setItem("manager_prefix", newPrefix);
-    $('#settingsModal').modal('hide')
+
+}
+
+function saveSettings() {
+    //need a check function to confirm settings have been filled out correctly
+
+    var settingsDeployMethods = $("#DeployMethodManager .input-group")//deploy method rows selector
+    var deployMethodsArray = []//temp array of deploy method rows values
+    
+    //errors
+    var errorFillingOut = false
+    var duplicateName = false
+    var emptyName = false
+    var badUrl = false
+
+    settingsDeployMethods.each(function(){
+
+        //error detection
+        if($(this).find(".deployMethodName").val().trim() === ""){
+            emptyName = true
+        }
+
+        try {
+            new URL($(this).find(".deployMethodUrl").val());
+          } catch (error) {
+                console.log("faulty Url: ",$(this).find(".deployMethodUrl").val())
+              console.log(error)
+              badUrl = true
+          }
+
+        //duplicate name check, the name is used as an id of sorts
+        deployMethodsArray.forEach(element => {
+            if ($(this).find(".deployMethodName").val() === element.name){
+                duplicateName = true
+                return
+            }
+        })
+
+        //error Handling
+        if(duplicateName){
+            errorFillingOut = true;
+            $("#settingsModalErrorMessage").html('Please ensure there are no duplicate deploy method names')
+        }
+        if(emptyName){
+            errorFillingOut = true;
+            $("#settingsModalErrorMessage").html('Please ensure deploy methods are named')
+        }
+        if(badUrl){
+            errorFillingOut = true;
+            $("#settingsModalErrorMessage").html('Please ensure deploy methods URLs are valid')
+        }
+
+        if(!errorFillingOut){
+            deployMethod = 
+            {
+                name : $(this).find(".deployMethodName").val(),
+                url : $(this).find(".deployMethodUrl").val(),
+                deployMethod : $(this).find(".deployMethodMethod option:selected").val(),
+                active : $(this).find(".deployMethodActive").val()
+            }
+            deployMethodsArray.push(deployMethod)
+        } 
+    })
+
+    //if errors in previous step abort saving
+    if(errorFillingOut){
+        return;
+    }else{
+        $("#settingsModalErrorMessage").html('')
+    }
+    //save to local storage
+    localStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray))
+
+    $('#settingsModal').modal('hide');
+
+    //update the deploy options dropdown menu
+    updateDeployOptionsDropdown()
 }
 
 function fillOutSettings() {
     //get setting values from local storage
     var manager_url = window.localStorage.getItem("manager_url");
+    $("#settingsModalErrorMessage").html('')
+
 
     //fill settings with saved or default values
     if (!manager_url) {
@@ -82,6 +195,78 @@ function fillOutSettings() {
     } else {
         $("#managerUrlInput").val(manager_url);
     }
+
+    //setting up initial default deploy method
+    if(!localStorage.getItem("deployMethods")){
+        var deployMethodsArray = [
+            {
+                name : "default deployment",
+                url : "http://localhost:8001/",
+                deployMethod : "direct",
+                active : true
+            }
+        ]
+        localStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray))
+    }else{
+        //get deploy methods from local storage 
+        var deployMethodsArray = JSON.parse(localStorage.getItem("deployMethods"))
+    }
+
+    //fill out settings list rom deploy methods array
+    var deployMethodManagerDiv = $("#DeployMethodManager")
+    deployMethodManagerDiv.empty()
+    deployMethodsArray.forEach(element => {
+
+        var directOption =  '<option value="direct">Direct</option>'
+        var helmOption =  '<option value="helm">Helm</option>'
+        var restOption =  '<option value="rest">Rest</option>'
+
+        if(element.deployMethod === "direct"){
+            directOption =  '<option value="direct" selected="true">Direct</option>'
+        }else if(element.deployMethod === "helm"){
+            helmOption =  '<option value="helm" selected="true">Helm</option>'
+        }else if(element.deployMethod === "rest"){
+            restOption = '<option value="rest" selected="true">Rest</option>'
+        }
+
+        var deplpoyMethodRow = '<div class="input-group">'+
+        '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class="deployMethodName" value="'+element.name+'"></div>'+
+        '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" placeholder="Destination Url" class="deployMethodUrl" value="'+element.url+'"></div>'+
+        '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod">'+
+            directOption+
+            helmOption+
+            restOption+
+        '</select></div>'+
+        '<input type="text" class="form-control deployMethodActive" value="'+element.active+'">'+
+        '<button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>'+
+        '</div>'
+        deployMethodManagerDiv.append(deplpoyMethodRow)
+    });
+}
+
+function addDeployMethod(){
+    var deployMethodManagerDiv = $("#DeployMethodManager")
+
+    var directOption =  '<option value="direct" selected="true">Direct</option>'
+    var helmOption =  '<option value="helm">Helm</option>'
+    var restOption =  '<option value="rest">Rest</option>'
+
+    var deplpoyMethodRow = '<div class="input-group">'+
+    '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class=" deployMethodName" value=""></div>'+
+    '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" placeholder="Destination Url" class="deployMethodUrl"value=""></div>'+
+    '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod" name="Deploy Method">'+
+        directOption+
+        helmOption+
+        restOption+
+    '</select></div>'+
+    '<input type="text" class="form-control deployMethodActive" value="false">'+
+    '<button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>'+
+    '</div>'
+    deployMethodManagerDiv.append(deplpoyMethodRow)
+}
+
+function removeDeployMethod (e){
+    $(e.target).parent().remove()
 }
 
 function makeJSON() {
@@ -342,7 +527,7 @@ async function restDeploy() {
             fillOutSettings()
             murl = window.localStorage.getItem("manager_url");
         })
-    }
+    };
     var manager_url = new URL(murl);
     console.log("In REST Deploy")
 
@@ -418,6 +603,7 @@ async function restDeploy() {
         .catch(function (error) {
             showMessageModal('Error', error + "\nSending PGT to backend unsuccessful!");
         });
+
 
 
 // All the rest here is when the managers are actually running

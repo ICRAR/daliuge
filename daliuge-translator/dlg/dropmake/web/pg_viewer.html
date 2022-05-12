@@ -36,87 +36,86 @@
 
     <!-- custom bootstrap navbar -->
     <nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #004085;">
-            <!-- Navbar content -->
-            <a href="javascript:void(0)" class="navbar-brand inactiveLink" href="#" disabled>
-                <object data="/static/src/icons/liu.svg" type="image/svg+xml" width="30" height="30" class="d-inline-block align-top" alt="LiuIcon"></object>
-			    <img src="/static/src/icons/translate_green.png" width="30" height="30" class="d-inline-block align-top" alt="">
-                <span> Translator </span>
-            </a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="nav navbar-nav navbar-center">
-                    <!--    zoom not supported for this type of echart, buttons removed for now
-                        <li class="nav-item">
-                        <a href="javascript:void(0)" href="javascript:void(0)" class="nav-link tooltip" id="zoom_button" onclick="zoomToFit()"><img src="/static/src/icons/zoom_out_map_white_24dp.svg" alt="Zoom To Fit">
-                            <span class="tooltiptext">Zoom To Fit</span>
-                        </a>
-                    </li>
+        <!-- Navbar content -->
+        <a href="javascript:void(0)" class="navbar-brand inactiveLink" href="#" disabled>
+            <object data="/static/src/icons/liu.svg" type="image/svg+xml" width="30" height="30" class="d-inline-block align-top" alt="LiuIcon"></object>
+            <img src="/static/src/icons/translate_green.png" width="30" height="30" class="d-inline-block align-top" alt="">
+            <span> Translator </span>
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="nav navbar-nav navbar-center">
+                <!--    zoom not supported for this type of echart, buttons removed for now
                     <li class="nav-item">
-                        <a href="javascript:void(0)" onclick="zoomOut()" class="nav-link tooltip"><img src="/static/src/icons/zoom_out_white_24dp.svg" alt="Zoom Out">
-                            <span class="tooltiptext">Zoom Out</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="javascript:void(0)" onclick="zoomIn()" class="nav-link tooltip"><img src="/static/src/icons/zoom_in_white_24dp.svg" alt="Zoom In">
-                            <span class="tooltiptext">Zoom In</span>
-                        </a>
-                    </li> -->
+                    <a href="javascript:void(0)" href="javascript:void(0)" class="nav-link tooltip" id="zoom_button" onclick="zoomToFit()"><img src="/static/src/icons/zoom_out_map_white_24dp.svg" alt="Zoom To Fit">
+                        <span class="tooltiptext">Zoom To Fit</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="javascript:void(0)" onclick="zoomOut()" class="nav-link tooltip"><img src="/static/src/icons/zoom_out_white_24dp.svg" alt="Zoom Out">
+                        <span class="tooltiptext">Zoom Out</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="javascript:void(0)" onclick="zoomIn()" class="nav-link tooltip"><img src="/static/src/icons/zoom_in_white_24dp.svg" alt="Zoom In">
+                        <span class="tooltiptext">Zoom In</span>
+                    </a>
+                </li> -->
 
-                    <!-- unfinished, not needed until we change graph renderer -->
-                    <!-- <li class="nav-item dropdown">
-                        <a href="javascript:void(0)" class="nav-link tooltip" id="GraphOrientationDropdownBtn" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <img src="/static/src/icons/explore_white_24dp.svg" alt="Graph Orientation">
-                            <span class="tooltiptext">Graph Orientation</span>
-                        </a>
-                        <div id="oriantationDropdown" class="dropdown-menu dropdown-menu-right" aria-labelledby="GraphOrientationDropdown">
-                            <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="0" checked="checked" /><a href="javascript:void(0)" class="inactiveLink nav-link">Right (0)</a></div>
-                            <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="90" /><a href="javascript:void(0)" class="inactiveLink nav-link">Down (90)</a></div>
-                            <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="180" /><a href="javascript:void(0)" class="inactiveLink nav-link">Left (180)</a></div>
-                            <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="270" /><a href="javascript:void(0)" class="inactiveLink nav-link">Up (270)</a></div>
-                        </div>
-                    </li> -->
-                    <div class="btn-group" role="group" id="view-mode-buttons">
-                        <button type="button" id="dagButton" onclick="graphInit('dag')" class="btn btn-secondary tooltip tooltipBottom graphChanger" data-text="Better For Small Graphs" >Dag</button>
-                        <button type="button" id="sankeyButton" onclick="graphInit('sankey')" class="btn btn-secondary tooltip tooltipBottom graphChanger" data-text="Better For Big Graph" >Sankey</button>
-                   </div>
-                </ul>
-                <ul class="nav navbar-nav  ml-auto">
-                    <li class="nav-item dropdown">
-                        <div class="btn-group" id="deployDropdowns">
-                                <a href="javascript:void(0)" onclick="deployAction()" class="dropdown-item tooltip tooltipBottom" data-text="Generate and deploy physical graph" id="deploy_button" value="Generate &amp; Deploy Physical Graph">Deploy</a>
-                            <button type="button" class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                              <span class="sr-only">Toggle Dropdown</span>
-                            </button>
-                            <div class="dropdown-menu">
-                                <a href="javascript:void(0)" onclick="deployAction()" class="dropdown-item tooltip tooltipLeft" style="display: none;" data-text="Generate and deploy physical graph" id="deploy_button" value="Generate &amp; Deploy Physical Graph">Deploy</a>
-                                <a href="javascript:void(0)" onclick="helmDeployAction()" class="dropdown-item tooltip tooltipLeft" data-text="Deploy Physical Graph via HELM" id="helm_deploy_button" value="Deploy Physical Graph via HELM">HELM Deploy</a>
-                                <a href="javascript:void(0)" onclick="restDeployAction()" class="dropdown-item tooltip tooltipLeft" data-text="Deploy Physical Graph via REST" id="rest_deploy_button" value="Deploy Physical Graph via REST">REST Deploy</a>
-                            </div>
-                          </div>
-                    </li>
-
-                    <li class="nav-item dropdown">
-                        <a href="javascript:void(0)" class="nav-link dropdown-toggle" id="navbarExportDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Export
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarExportDropdown">
-                            <span id="exportJsonBtn" class="dropdown-item dropDropDownParent" href="#">JSON <img id="exportJsonIcon" src="/static/src/icons/arrow_right_white_24dp.svg" alt="">
-                                <div class="dropDropDown">
-                                    <a id="json_button" class="dropdown-item" onclick="makeJSON()">Physical Graph Template</a>
-                                    <a id="Pysical_graph" class="dropdown-item" href="#">Physical Graph</a>
-                                </div>
-                            </span>
+                <!-- unfinished, not needed until we change graph renderer -->
+                <!-- <li class="nav-item dropdown">
+                    <a href="javascript:void(0)" class="nav-link tooltip" id="GraphOrientationDropdownBtn" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <img src="/static/src/icons/explore_white_24dp.svg" alt="Graph Orientation">
+                        <span class="tooltiptext">Graph Orientation</span>
+                    </a>
+                    <div id="oriantationDropdown" class="dropdown-menu dropdown-menu-right" aria-labelledby="GraphOrientationDropdown">
+                        <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="0" checked="checked" /><a href="javascript:void(0)" class="inactiveLink nav-link">Right (0)</a></div>
+                        <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="90" /><a href="javascript:void(0)" class="inactiveLink nav-link">Down (90)</a></div>
+                        <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="180" /><a href="javascript:void(0)" class="inactiveLink nav-link">Left (180)</a></div>
+                        <div class="orientationOptionContainer"><input type="radio" name="direction" onclick="layout()" value="270" /><a href="javascript:void(0)" class="inactiveLink nav-link">Up (270)</a></div>
+                    </div>
+                </li> -->
+                <div class="btn-group" role="group" id="view-mode-buttons">
+                    <button type="button" id="dagButton" onclick="graphInit('dag')" class="btn btn-secondary tooltip tooltipBottom graphChanger" data-text="Better For Small Graphs" >Dag</button>
+                    <button type="button" id="sankeyButton" onclick="graphInit('sankey')" class="btn btn-secondary tooltip tooltipBottom graphChanger" data-text="Better For Big Graph" >Sankey</button>
+                </div>
+            </ul>
+            <ul class="nav navbar-nav  ml-auto">
+                <li class="nav-item dropdown">
+                    <div class="btn-group" id="deployDropdowns">
+                        <button type="button" class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="sr-only">Toggle Dropdown</span>
+                        </button>
+                        <div class="dropdown-menu">
+                            <!-- dynamically filled out from custom deploy methods -->
                             <div class="dropdown-divider"></div>
-                            <a href="javascript:void(0)" id="png_button" class="dropdown-item" onclick="makePNG()">Screenshot</a>
+                            <a href="javascript:void(0)" class="dropdown-item" onclick="openSettingsModal()" >Add Deployment Options</a>
                         </div>
-                    </li>
-                    <li class="nav-item">
-                        <a href="javascript:void(0)" class="nav-link tooltip tooltipBottomLeft" data-text="Settings" data-toggle="modal" data-target="#settingsModal"><img src="/static/src/icons/settings_white_24dp.svg" alt="Settings"></a>
-                    </li>
-                </ul>
-            </div>
+                    </div>
+                </li>
+                
+                <li class="nav-item dropdown">
+                    <a href="javascript:void(0)" class="nav-link dropdown-toggle" id="navbarExportDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Export
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarExportDropdown">
+                        <span id="exportJsonBtn" class="dropdown-item dropDropDownParent" href="#">JSON <img id="exportJsonIcon" src="/static/src/icons/arrow_right_white_24dp.svg" alt="">
+                            <div class="dropDropDown">
+                                <a id="json_button" class="dropdown-item" onclick="makeJSON()">Physical Graph Template</a>
+                                <a id="Pysical_graph" class="dropdown-item" href="#">Physical Graph</a>
+                            </div>
+                        </span>
+                        <div class="dropdown-divider"></div>
+                        <a href="javascript:void(0)" id="png_button" class="dropdown-item" onclick="makePNG()">Screenshot</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a href="javascript:void(0)" class="nav-link tooltip tooltipBottomLeft" data-text="Settings" data-toggle="modal" data-target="#settingsModal"><img src="/static/src/icons/settings_white_24dp.svg" alt="Settings"></a>
+                </li>
+            </ul>
+        </div>
     </nav>
     <div id="graphNameWrapper">
             <span id="graphName">{{pgt_view_json_name}}</span>
@@ -137,17 +136,23 @@
                 </div>
                 <div class="modal-body">
                     <form action="/gen_pg" method="get" target="blank" name="deploy_target" id="pg_form" >
-                        <div class="settingsSection">
-                            <span>DALiuGE Manager URL:</span>
+                        <div id="neccessaryHiddenItems">
                             <input id="managerUrlInput" type="text" name="dlg_mgr_url" value="http://localhost:8001" size="40" style="font-size:16px;">
+                            <input type="checkbox" id="dlg_mgr_deploy" name="dlg_mgr_deploy" value="deploy" checked>
+                            <input name="pgt_id" value="{{pgt_view_json_name}}">
                         </div>
-                        <input type="checkbox" id="dlg_mgr_deploy" style="visibility:hidden;" name="dlg_mgr_deploy" value="deploy" checked>
-                        <input type="hidden" name="pgt_id" value="{{pgt_view_json_name}}">
-                      </form>
+                        
+                    </form>
                     <form action="/gen_pg_helm" method="get" id="pg_helm_form" target="_blank" name="deploy_helm_target">
                         <input type="checkbox" id="dlg_helm_deploy" style="visibility:hidden;" name="dlg_helm_deploy" value="helm_deploy" checked>
                         <input type="hidden" name="pgt_id" value="{{pgt_view_json_name}}">
                     </form>
+                    <span id="DeployMethodManagerTitle">Deploy Method Manager</span>
+                    <div id="DeployMethodManager">
+                        <!-- filled out programmatically from local storage -->
+                    </div>
+                    <span id="settingsModalErrorMessage"></span>
+                    <button class="btn btn-primary tooltip tooltipBottom" data-text="Add new deploy option" id="addDeployMethodBtn" onclick="addDeployMethod()">Add</button>
                 </div>
                 <div class="modal-footer">
                     <button onClick="" type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
