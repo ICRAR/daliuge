@@ -24,10 +24,10 @@
 Dropmake utils
 """
 
+import copy
 import json
 import os
 import os.path as osp
-import copy
 
 from ..common import Categories
 
@@ -242,6 +242,7 @@ def convert_mkn(lgo):
             "value": "%d" % (K),
         }
         node_kn["fields"].append(new_field_kn)
+        node_kn["reprodata"] = node.get("reprodata", {}).copy()
         lgo["nodeDataArray"].append(node_kn)
 
         # for all connections that point to the local input ports of the MKN construct
@@ -278,6 +279,7 @@ def convert_mkn(lgo):
             "value": "%d" % (N),
         }
         node_split_n["fields"].append(new_field_kn)
+        node_split_n["reprodata"] = node.get("reprodata", {}).copy()
         lgo["nodeDataArray"].append(node_split_n)
 
     need_to_change_n_products = dict()
@@ -378,6 +380,7 @@ def convert_mkn_all_share_m(lgo):
             "value": "%d" % (ratio_kn),
         }
         node_kn["fields"].append(new_field_kn)
+        node_kn["reprodata"] = node.get("reprodata", {}).copy()
         lgo["nodeDataArray"].append(node_kn)
 
         # for all connections that point to the local input ports of the MKN construct
@@ -452,7 +455,7 @@ def convert_construct(lgo):
             continue
         # step 1
         app_node = dict()
-        app_node[has_app] = node[has_app]
+        app_node["reprodata"] = node.get("reprodata", {}).copy()
         app_node["key"] = node["key"]
         app_node["category"] = node[has_app]  # node['application']
         if has_app[0] == "i":
@@ -474,7 +477,7 @@ def convert_construct(lgo):
             app_node["fields"] += node["fields"]
             # TODO: remove, use fields list
             for afd in node[INPUT_APP_FIELDS]:
-                    app_node[afd["name"]] = afd["value"]
+                app_node[afd["name"]] = afd["value"]
 
         if node["category"] == Categories.GATHER:
             app_node["group_start"] = 1
@@ -543,6 +546,9 @@ def convert_construct(lgo):
                     link["to"] = k_new_new
                     if k_new_new not in node_index:
                         node_index[k_new_new] = dup_app_node
+                        dup_app_node["reprodata"] = (
+                            node_index[k_new].get("reprodata", {}).copy()
+                        )
                         lgo["nodeDataArray"].append(dup_app_node)
                         old_newnew_gather_map[k_old] = k_new_new
 

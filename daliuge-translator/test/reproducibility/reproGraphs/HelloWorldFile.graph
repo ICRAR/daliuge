@@ -1,0 +1,73 @@
+{
+    "linkDataArray": [],
+    "modelData": {
+        "filePath": "HelloWorldFile.graph",
+        "fileType": "graph",
+        "git_url": "",
+        "repo": "",
+        "repoService": "Unknown",
+        "sha": ""
+    },
+    "nodeDataArray": [
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "File",
+            "categoryType": "Data",
+            "collapsed": false,
+            "colour": "#394BB2",
+            "description": "",
+            "drawOrderHint": 0,
+            "exitAppName": "",
+            "fields": [
+                {
+                    "name": "data_volume",
+                    "text": "Data volume",
+                    "value": "5"
+                },
+                {
+                    "name": "group_end",
+                    "text": "Group end",
+                    "value": "0"
+                },
+                {
+                    "name": "check_filepath_exists",
+                    "text": "Check file path exists",
+                    "value": "1"
+                },
+                {
+                    "name": "filepath",
+                    "text": "File path",
+                    "value": "result.out"
+                },
+                {
+                    "name": "dirname",
+                    "text": "Directory name",
+                    "value": ""
+                }
+            ],
+            "inputAppFields": [],
+            "inputAppName": "",
+            "inputApplication": "Unknown",
+            "inputLocalPorts": [],
+            "inputPorts": [],
+            "isData": true,
+            "isGroup": false,
+            "key": -1,
+            "loc": "658 195",
+            "outputAppFields": [],
+            "outputAppName": "",
+            "outputApplication": "Unknown",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "ad058285-1989-4e76-8133-9e1d1c830251",
+                    "IdText": "event"
+                }
+            ],
+            "streaming": false,
+            "subject": null,
+            "text": "File"
+        }
+    ]
+}
