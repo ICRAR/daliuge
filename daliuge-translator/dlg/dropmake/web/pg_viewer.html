@@ -87,7 +87,7 @@
                         </button>
                         <div class="dropdown-menu">
                             <!-- dynamically filled out from custom deploy methods -->
-                            <a href="javascript:void(0)" class="dropdown-item" onclick="" data-text="Settings" data-toggle="modal" data-target="#settingsModal">Add Deployment Options</a>
+                            <a href="javascript:void(0)" class="dropdown-item" onclick="openSettingsModal()" >Add Deployment Options</a>
                         </div>
                     </div>
                 </li>
@@ -148,7 +148,7 @@
                         <!-- filled out programmatically from local storage -->
                     </div>
                     <span id="settingsModalErrorMessage"></span>
-                    <button class="btn btn-primary" id="addDeployMethodBtn" onclick="addDeployMethod()">Add</button>
+                    <button class="btn btn-primary tooltip tooltipBottom" data-text="Add new deploy option" id="addDeployMethodBtn" onclick="addDeployMethod()">Add</button>
                 </div>
                 <div class="modal-footer">
                     <button onClick="" type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
