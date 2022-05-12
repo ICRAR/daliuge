@@ -158,6 +158,13 @@ class ManagerRestServer(RestServer):
         app.get("/api/sessions/<sessionId>/graph/size", callback=self.getGraphSize)
         app.get("/api/sessions/<sessionId>/graph/status", callback=self.getGraphStatus)
         app.post("/api/sessions/<sessionId>/graph/append", callback=self.addGraphParts)
+        app.get(
+            "/api/sessions/<sessionId>/repro/data", callback=self.getSessionReproData
+        )
+        app.get(
+            "/api/sessions/<sessionId>/repro/status",
+            callback=self.getSessionReproStatus,
+        )
 
         app.route("/api/sessions", method="OPTIONS", callback=self.acceptPreflight)
         app.route(
@@ -234,6 +241,31 @@ class ManagerRestServer(RestServer):
         return {"status": status, "graph": graphDict}
 
     @daliuge_aware
+    def getSessionReproStatus(self, sessionId):
+        return self.dm.getSessionReproStatus(sessionId)
+
+    @daliuge_aware
+    def getSessionsReproStatus(self):
+        sessions = []
+        for sessionId in self.dm.getSessionIds():
+            sessions.append(
+                {
+                    "sessionId": sessionId,
+                    "status": self.dm.getSessionStatus(sessionId),
+                    "size": self.dm.getGraphSize(sessionId),
+                    "repro": self.dm.getSessionReproStatus(sessionId),
+                }
+            )
+        return sessions
+
+    @daliuge_aware
+    def getSessionReproData(self, sessionId):
+        #  For now, we only have information on a per-graph basis.
+        graphDict = self.dm.getGraph(sessionId)
+        reprodata = self.dm.getGraphReproData(sessionId)
+        return {"graph": graphDict, "reprodata": reprodata}
+
+    @daliuge_aware
     def destroySession(self, sessionId):
         self.dm.destroySession(sessionId)
 
@@ -268,7 +300,12 @@ class ManagerRestServer(RestServer):
     # TODO: addGraphParts v/s addGraphSpec
     @daliuge_aware
     def addGraphParts(self, sessionId):
-        if bottle.request.content_type != "application/json":
+        # WARNING: TODO: Somehow, the content_type can be overwritten to 'text/plain'
+        logger.debug(bottle.request.content_type)
+        if (
+            "application/json" not in bottle.request.content_type
+            and "text/plain" not in bottle.request.content_type
+        ):
             bottle.response.status = 415
             return
 

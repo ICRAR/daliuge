@@ -236,6 +236,7 @@ class DockerApp(BarrierAppDROP):
     running in a container must quit themselves after successfully performing
     their task.
     """
+
     _container: Optional[Container] = None
 
     # signals for stopping this drop must first wait
@@ -259,8 +260,7 @@ class DockerApp(BarrierAppDROP):
         self._cmdLineArgs = self._getArg(kwargs, "command_line_arguments", "")
         self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
         self._argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
-        self._paramValueSeparator = self._getArg(kwargs, \
-            "paramValueSeparator", " ")
+        self._paramValueSeparator = self._getArg(kwargs, "paramValueSeparator", " ")
         if not self._image:
             raise InvalidDropException(
                 self, "No docker image specified, cannot create DockerApp"
@@ -277,9 +277,7 @@ class DockerApp(BarrierAppDROP):
 
         self._noBash = False
         if not self._command or self._command[:2].strip() == "%%":
-            logger.warning(
-                "Assume a default command is executed in the container"
-            )
+            logger.warning("Assume a default command is executed in the container")
             self._command = self._command.strip()[2:].strip() if self._command else ""
             self._noBash = True
             # This makes sure that we can retain any command defined in the image, but still be
@@ -287,8 +285,9 @@ class DockerApp(BarrierAppDROP):
             # "%%" at the start of the command, else it is interpreted as a normal command.
 
         # construct the actual command line from all application parameters
-        argumentString = droputils.serialize_applicationArgs(self._applicationArgs, \
-            self._argumentPrefix, self._paramValueSeparator)
+        argumentString = droputils.serialize_applicationArgs(
+            self._applicationArgs, self._argumentPrefix, self._paramValueSeparator
+        )
         # complete command including all additional parameters and optional redirects
         cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
         cmd = cmd.strip()
@@ -300,10 +299,12 @@ class DockerApp(BarrierAppDROP):
         # container running as a component.
 
         pw = pwd.getpwuid(os.getuid())
-        self._user = pw.pw_name # use current user by default
+        self._user = pw.pw_name  # use current user by default
         self._userid = pw.pw_uid
         self._groupid = pw.pw_gid
-        logger.debug(f"User for docker container: {self._user} {self._userid}:{self._groupid}")
+        logger.debug(
+            f"User for docker container: {self._user} {self._userid}:{self._groupid}"
+        )
 
         # By default containers are removed from the filesystem, but people
         # might want to preserve them.
@@ -323,13 +324,17 @@ class DockerApp(BarrierAppDROP):
         # on the host system. They are given either as a list or as a
         # comma-separated string
         self._additionalBindings = {}
-        bindings = [f"{utils.getDlgDir()}:{utils.getDlgDir()}",
-                    f"{utils.getDlgDir()}/workspace/settings/passwd:/etc/passwd",
-                    f"{utils.getDlgDir()}/workspace/settings/group:/etc/group"
+        bindings = [
+            f"{utils.getDlgDir()}:{utils.getDlgDir()}",
+            f"{utils.getDlgDir()}/workspace/settings/passwd:/etc/passwd",
+            f"{utils.getDlgDir()}/workspace/settings/group:/etc/group",
         ]
         additionalBindings = self._getArg(kwargs, "additionalBindings", [])
-        additionalBindings = additionalBindings.split(",") if isinstance(additionalBindings, str) \
+        additionalBindings = (
+            additionalBindings.split(",")
+            if isinstance(additionalBindings, str)
             else additionalBindings
+        )
         bindings += additionalBindings
         for binding in bindings:
             if len(binding) == 0:
@@ -371,7 +376,7 @@ class DockerApp(BarrierAppDROP):
         logger.debug("Docker Image inspection: %r", inspection)
         self.workdir = inspection.get("ContainerConfig", {}).get("WorkingDir", None)
         # self.workdir = None
-        self._sessionId = (self._dlg_session.sessionId if self._dlg_session else "")
+        self._sessionId = self._dlg_session.sessionId if self._dlg_session else ""
         if not self.workdir:
             default_workingdir = os.path.join(utils.getDlgWorkDir(), self._sessionId)
             self.workdir = self._getArg(kwargs, "workingDir", default_workingdir)
@@ -381,6 +386,11 @@ class DockerApp(BarrierAppDROP):
         self._containerIp = None
         self._containerId = None
         self._waiters = []
+        self._recompute_data = {
+            "image": self._image,
+            "user": self._user,
+            "command": self._command,
+        }
 
     @property
     def containerIp(self):
@@ -418,12 +428,14 @@ class DockerApp(BarrierAppDROP):
             fsInputs = {uid: i for uid, i in iitems if droputils.has_path(i)}
             fsOutputs = {uid: o for uid, o in oitems if droputils.has_path(o)}
             dockerInputs = {
-    #            uid: DockerPath(utils.getDlgDir() + i.path) for uid, i in fsInputs.items()
-                uid: DockerPath(i.path) for uid, i in fsInputs.items()
+                #            uid: DockerPath(utils.getDlgDir() + i.path) for uid, i in fsInputs.items()
+                uid: DockerPath(i.path)
+                for uid, i in fsInputs.items()
             }
             dockerOutputs = {
-    #            uid: DockerPath(utils.getDlgDir() + o.path) for uid, o in fsOutputs.items()
-                uid: DockerPath(o.path) for uid, o in fsOutputs.items()
+                #            uid: DockerPath(utils.getDlgDir() + o.path) for uid, o in fsOutputs.items()
+                uid: DockerPath(o.path)
+                for uid, o in fsOutputs.items()
             }
             dataURLInputs = {uid: i for uid, i in iitems if not droputils.has_path(i)}
             dataURLOutputs = {uid: o for uid, o in oitems if not droputils.has_path(o)}
@@ -442,7 +454,9 @@ class DockerApp(BarrierAppDROP):
             # directory, maintaining the rest of their original paths.
             # Outputs are bound only up to their dirname (see class doc for details)
             # Volume bindings are setup for FileDROPs and DirectoryContainers only
-            binds = [i.path + ":" + dockerInputs[uid].path for uid, i in fsInputs.items()]
+            binds = [
+                i.path + ":" + dockerInputs[uid].path for uid, i in fsInputs.items()
+            ]
             binds += [
                 os.path.dirname(o.path) + ":" + os.path.dirname(dockerOutputs[uid].path)
                 for uid, o in fsOutputs.items()
@@ -458,7 +472,7 @@ class DockerApp(BarrierAppDROP):
                 ]
             binds = list(set(binds))  # make this a unique list else docker complains
             try:
-                binds.remove(':')
+                binds.remove(":")
             except:
                 pass
             logger.debug("Volume bindings: %r", binds)
@@ -488,27 +502,26 @@ class DockerApp(BarrierAppDROP):
 
             # deal with environment variables
             env = {}
-            env.update({
-                "DLG_UID": self._uid},
-            )
+            env.update({"DLG_UID": self._uid})
             if self._dlg_session:
-                env.update({"DLG_SESSION_ID":self._dlg_session.sessionId})
+                env.update({"DLG_SESSION_ID": self._dlg_session.sessionId})
             if self._user is not None:
-                env.update({
-                    "USER": self._user,
-                    "DLG_ROOT": utils.getDlgDir()
-                    })
+                env.update({"USER": self._user, "DLG_ROOT": utils.getDlgDir()})
             if self._env is not None:
                 logger.debug(f"Found environment variable setting: {self._env}")
-                if self._env.lower() == "all": # pass on all environment variables from host
+                if (
+                    self._env.lower() == "all"
+                ):  # pass on all environment variables from host
                     env.update(os.environ)
                 elif self._env[0] in ["{", "["]:
                     try:
                         addEnv = json.loads(self._env)
                     except json.JSONDecodeError:
-                        logger.warning("Ignoring provided environment variables: Format wrong? Check documentation")
+                        logger.warning(
+                            "Ignoring provided environment variables: Format wrong? Check documentation"
+                        )
                     addEnv = {}
-                    if isinstance(addEnv, dict): # if it is a dict populate directly
+                    if isinstance(addEnv, dict):  # if it is a dict populate directly
                         # but replace placeholders first
                         for key in addEnv:
                             value = droputils.replace_path_placeholders(
@@ -519,27 +532,34 @@ class DockerApp(BarrierAppDROP):
                             )
                             addEnv[key] = value
                         env.update(addEnv)
-                    elif isinstance(addEnv, list): # if it is a list populate from host environment
+                    elif isinstance(
+                        addEnv, list
+                    ):  # if it is a list populate from host environment
                         for e in addEnv:
                             env.update(os.environ[e])
                 else:
-                    logger.warning("Ignoring provided environment variables: Format wrong! Check documentation")
+                    logger.warning(
+                        "Ignoring provided environment variables: Format wrong! Check documentation"
+                    )
             logger.debug(f"Adding environment variables: {env}")
-
 
             # Wrap everything inside bash
             if len(cmd) > 0 and not self._noBash:
-                cmd = '/bin/bash -c "%s"' % (utils.escapeQuotes(cmd, singleQuotes=False))
+                cmd = '/bin/bash -c "%s"' % (
+                    utils.escapeQuotes(cmd, singleQuotes=False)
+                )
                 logger.debug("Command after user creation and wrapping is: %s", cmd)
             else:
-                logger.debug("executing container with default cmd and wrapped arguments")
+                logger.debug(
+                    "executing container with default cmd and wrapped arguments"
+                )
                 cmd = f"{utils.escapeQuotes(cmd, singleQuotes=False)}"
 
             c = DockerApp._get_client()
             logger.debug(f"Final user for container: {self._user}:{self._userid}")
-            
+
             # Create container
-            self._container = c.containers.create( # type: ignore
+            self._container = c.containers.create(  # type: ignore
                 self._image,
                 cmd,
                 volumes=binds,
@@ -565,7 +585,6 @@ class DockerApp(BarrierAppDROP):
             start = time.time()
             self.container.start()
             logger.info("Started container %s", cId)
-
 
             # Figure out the container's IP and save it
             # Setting self.containerIp will trigger an event being sent to the
@@ -609,7 +628,11 @@ class DockerApp(BarrierAppDROP):
                 )
             elif self._exitCode != 0:
                 msg = f"Container {cId} didn't finish successfully (exit code {self._exitCode})"
-                if self._exitCode == 137 or self._exitCode == 139 or self._exitCode == 143:
+                if (
+                    self._exitCode == 137
+                    or self._exitCode == 139
+                    or self._exitCode == 143
+                ):
                     # termination via SIGKILL, SIGSEGV, and SIGTERM is expected for some services
                     logger.warning(
                         f"{msg}, output follows.\n==STDOUT==\n%s==STDERR==\n%s",
@@ -680,3 +703,6 @@ class DockerApp(BarrierAppDROP):
         if os.path.exists(config_file_name):
             return ConfigObj(config_file_name)
         return {}
+
+    def generate_recompute_data(self):
+        return self._recompute_data

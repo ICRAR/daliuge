@@ -14,7 +14,7 @@ $(document).ready(function () {
 
     //get saved settings from local storage or set a default value
     fillOutSettings()
-   
+
     $('#settingsModal').on('hidden.bs.modal', function () {
         fillOutSettings()
     });
@@ -349,6 +349,173 @@ function handleFetchErrors(response) {
     return response;
 }
 
+async function helmDeploy() {
+    // Here as a placeholder until a single rest-deployment is worked out
+    // This code will largely be a copy form restDeploy, but slightly different
+    murl = window.localStorage.getItem("manager_url");
+    if (!murl) {
+        saveSettings();
+        $('#settingsModal').modal('show');
+        $('#settingsModal').on('hidden.bs.modal', function () {
+            fillOutSettings()
+            murl = window.localStorage.getItem("manager_url");
+        })
+    }
+    var manager_url = new URL(murl);
+    console.log("In Helm Deploy")
+
+    const manager_host = manager_url.hostname;
+    const manager_port = manager_url.port;
+    var manager_prefix = manager_url.pathname;
+    var request_mode = "cors";
+    const pgt_id = $("#pg_form input[name='pgt_id']").val();
+    manager_url = manager_url.toString();
+    if (manager_url.endsWith('/')) {
+        manager_url = manager_url.substring(0, manager_url.length - 1);
+    }
+    if (manager_prefix.endsWith('/')) {
+        manager_prefix = manager_prefix.substring(0, manager_prefix.length - 1);
+    }
+    console.log("Manager URL:'" + manager_url + "'");
+    console.log("Manager host:'" + manager_host + "'");
+    console.log("Manager port:'" + manager_port + "'");
+    console.log("Manager prefix:'" + manager_prefix + "'");
+    console.log("Request mode:'" + request_mode + "'");
+
+    // sessionId must be unique or the request will fail
+    const lgName = pgtName.substring(0, pgtName.lastIndexOf("_pgt.graph"));
+    const sessionId = lgName + "-" + Date.now();
+    console.log("sessionId:'" + sessionId + "'");
+
+    // build urls
+    // the manager_url in this case has to point to daliuge_ood
+    const create_helm_url = manager_url + "/api/helm/start";
+    const pgt_url = "/gen_pg?tpl_nodes_len=1&pgt_id=" + pgtName; // TODO: tpl_nodes_len >= nodes in LG
+    const node_list_url = manager_url + "/api/nodes";
+    const pg_spec_url = "/gen_pg_spec";
+    const create_session_url = manager_url + "/api/sessions";
+    const append_graph_url = manager_url + "/api/sessions/" + sessionId + "/graph/append";
+    const deploy_graph_url = manager_url + "/api/sessions/" + sessionId + "/deploy";
+    const mgr_url = manager_url + "/session?sessionId=" + sessionId;
+    // fetch the PGT from this server
+    console.log("sending request to ", pgt_url);
+    console.log("graph name:", pgtName);
+    const pgt = await fetch(pgt_url, {
+        method: 'GET',
+    })
+        .then(handleFetchErrors)
+        .then(response => response.json())
+        .catch(function (error) {
+            showMessageModal("Error", error + "\nGetting PGT unsuccessful: Unable to continue!");
+        });
+    // fetch the nodelist from engine
+    console.log("sending request to ", node_list_url);
+    const node_list = await fetch(node_list_url, {
+        method: 'GET',
+        // mode: request_mode,
+        // credentials: 'include',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Origin': 'http://localhost:8084'
+        },
+    })
+        .then(handleFetchErrors)
+        .then(response => response.json())
+        .catch(function (error) {
+            showMessageModal('Error', error + "\nGetting node_list unsuccessful: Unable to continue!");
+        });
+    console.log("node_list", node_list);
+    // build object containing manager data
+    const pg_spec_request_data = {
+        manager_host: manager_host,
+        node_list: node_list,
+        pgt_id: pgt_id
+    }
+
+    console.log(pg_spec_request_data);
+    // request pg_spec from translator
+    const pg_spec_response = await fetch(pg_spec_url, {
+        method: 'POST',
+        mode: request_mode,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(pg_spec_request_data)
+    })
+        .then(handleFetchErrors)
+        .then(response => response.json())
+        .catch(function (error) {
+            showMessageModal('Error', error + "\nGetting pg_spec unsuccessful: Unable to continue!");
+        });
+
+    console.log("pg_spec response", pg_spec_response);
+    // create session on engine
+    const session_data = {"sessionId": sessionId};
+    const create_session = await fetch(create_session_url, {
+        credentials: 'include',
+        cache: 'no-cache',
+        method: 'POST',
+        mode: request_mode,
+        referrerPolicy: 'no-referrer',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(session_data)
+    })
+        .then(handleFetchErrors)
+        .then(response => response.json())
+        .catch(function (error) {
+            showMessageModal('Error', error + "\nCreating session unsuccessful: Unable to continue!");
+        });
+    console.log("create session response", create_session);
+    // gzip the pg_spec
+    console.log(pg_spec_response.pg_spec);
+    const buf = fflate.strToU8(JSON.stringify(pg_spec_response.pg_spec));
+    const compressed_pg_spec = fflate.zlibSync(buf);
+    console.log("compressed_pg_spec", compressed_pg_spec);
+
+    // append graph to session on engine
+    const append_graph = await fetch(append_graph_url, {
+        credentials: 'include',
+        method: 'POST',
+        mode: request_mode,
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Encoding': 'gzip'
+        },
+        referrerPolicy: 'origin',
+        //body: JSON.stringify(pg_spec_response.pg_spec)
+        body: new Blob([compressed_pg_spec], {type: 'application/json'})
+        // body: new Blob([buf])
+    })
+        .then(handleFetchErrors)
+        .then(response => response.json())
+        .catch(function (error) {
+            showMessageModal('Error', error + "\nUnable to continue!");
+        });
+    console.log("append graph response", append_graph);
+    // deploy graph
+    // NOTE: URLSearchParams here turns the object into a x-www-form-urlencoded form
+    const deploy_graph = await fetch(deploy_graph_url, {
+        credentials: 'include',
+        method: 'POST',
+        mode: request_mode,
+        body: new URLSearchParams({
+            'completed': pg_spec_response.root_uids,
+        })
+    })
+        .then(handleFetchErrors)
+        .then(response => response.json())
+        .catch(function (error) {
+            showMessageModal('Error', error + "\nUnable to continue!");
+        });
+    //showMessageModal("Chart deployed" , "Check the dashboard of your k8s cluster for status updates.");
+    console.log("deploy graph response", deploy_graph);
+    // Open DIM session page in new tab
+    // Until we have somewhere else to re-direct helm deployments. This is probably for the best.
+    //window.open(mgr_url, '_blank').focus();
+}
+
 
 async function restDeploy() {
     // fetch manager host and port from local storage
@@ -407,7 +574,7 @@ async function restDeploy() {
         .then(handleFetchErrors)
         .then(response => response.json())
         .catch(function (error) {
-            alert(error + "\nGetting PGT unsuccessful: Unable to contiune!");
+            showMessageModal('Error', error + "\nGetting PGT unsuccessful: Unable to continue!");
         });
 
     // This is for a deferred start of daliuge, e.g. on SLURM
@@ -434,7 +601,7 @@ async function restDeploy() {
             }
         })
         .catch(function (error) {
-            alert(error + "\nSending PGT to backend unsuccessfull!");
+            showMessageModal('Error', error + "\nSending PGT to backend unsuccessful!");
         });
 
 
@@ -447,7 +614,7 @@ async function restDeploy() {
 //   const node_list = await fetch(node_list_url, {
 //     method: 'GET',
 //     // mode: request_mode,
-//     // credentials: 'include', 
+//     // credentials: 'include',
 //     headers: {
 //       'Content-Type': 'application/x-www-form-urlencoded',
 //       'Origin': 'http://localhost:8084'
@@ -456,7 +623,7 @@ async function restDeploy() {
 //   .then(handleFetchErrors)
 //   .then(response => response.json())
 //   .catch(function(error){
-//     alert(error + "\nGetting node_list unsuccessful: Unable to contiune!");
+//     showMessageModal('Error', error + "\nGetting node_list unsuccessful: Unable to continue!");
 //   });
 
 //   console.log("node_list", node_list);
@@ -480,7 +647,7 @@ async function restDeploy() {
 //   .then(handleFetchErrors)
 //   .then(response => response.json())
 //   .catch(function(error){
-//     alert(error + "\nGetting pg_spec unsuccessful: Unable to contiune!");
+//     showMessageModal('Error', error + "\nGetting pg_spec unsuccessful: Unable to continue!");
 //   });
 
 //   console.log("pg_spec response", pg_spec_response);
@@ -501,7 +668,7 @@ async function restDeploy() {
 //   .then(handleFetchErrors)
 //   .then(response => response.json())
 //   .catch(function(error){
-//     alert(error + "\nCreating session unsuccessful: Unable to contiune!");
+//     showMessageModal('Error', error + "\nCreating session unsuccessful: Unable to continue!");
 //   });
 
 //   console.log("create session response", create_session);
@@ -513,7 +680,7 @@ async function restDeploy() {
 
 //   // append graph to session on engine
 //   const append_graph = await fetch(append_graph_url, {
-//     credentials: 'include', 
+//     credentials: 'include',
 //     method: 'POST',
 //     mode: request_mode,
 //     headers: {
@@ -526,14 +693,14 @@ async function restDeploy() {
 //   .then(handleFetchErrors)
 //   .then(response => response.json())
 //   .catch(function(error){
-//     alert(error + "\nUnable to contiune!");
+//     showMessageModal('Error', error + "\nUnable to continue!");
 //   });
 //   console.log("append graph response", append_graph);
 
 //   // deploy graph
 //   // NOTE: URLSearchParams here turns the object into a x-www-form-urlencoded form
 //   const deploy_graph = await fetch(deploy_graph_url, {
-//     credentials: 'include', 
+//     credentials: 'include',
 //     method: 'POST',
 //     mode: request_mode,
 //     body: new URLSearchParams({
@@ -543,7 +710,7 @@ async function restDeploy() {
 //   .then(handleFetchErrors)
 //   .then(response => response.json())
 //   .catch(function(error){
-//     alert(error + "\nUnable to contiune!");
+//     showMessageModal('Error', error + "\nUnable to continue!");
 //   });
 
 //   console.log("deploy graph response", deploy_graph);

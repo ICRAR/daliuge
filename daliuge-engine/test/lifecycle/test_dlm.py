@@ -76,7 +76,6 @@ class TestDataLifecycleManager(unittest.TestCase):
             self.assertEqual(1, len(manager.getDropUids(drop)))
 
     def test_expiringNormalDrop(self):
-
         with dlm.DataLifecycleManager(checkPeriod=0.5) as manager:
             drop = FileDROP("oid:A", "uid:A1", expectedSize=1, lifespan=0.5)
             manager.addDrop(drop)

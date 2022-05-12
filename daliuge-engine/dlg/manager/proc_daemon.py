@@ -38,7 +38,6 @@ from . import constants, client
 from .. import utils
 from ..restserver import RestServer
 
-
 logger = logging.getLogger(__name__)
 
 

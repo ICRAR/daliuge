@@ -29,91 +29,98 @@ var TYPE_SHAPES        = {app:'rect', container:'parallelogram', socket:'paralle
 var TO_MANY_LTR_RELS = ['consumers', 'streamingConsumers', 'outputs']
 var TO_MANY_RTL_RELS = ['inputs', 'streamingInputs', 'producers']
 
-function get_status_name(s)
-{
-	if (typeof s.execStatus != 'undefined') {
-		return EXECSTATUS_CLASSES[s.execStatus];
-	}
-	else {
-		return STATUS_CLASSES[s.status];
-	}
+function get_status_name(s) {
+    if (typeof s.execStatus != 'undefined') {
+        return EXECSTATUS_CLASSES[s.execStatus];
+    } else {
+        return STATUS_CLASSES[s.status];
+    }
 }
 
 function uniqueSessionStatus(status) {
 
-	// If we are querying one of the Composite Managers (like the DIM or the MM)
-	// we need to reduce the individual session status to a single one for display
-	if( status != null && typeof status === 'object' ) {
+    // If we are querying one of the Composite Managers (like the DIM or the MM)
+    // we need to reduce the individual session status to a single one for display
+    if (status != null && typeof status === 'object') {
 
-		// Reduce, reduce, reduce
-		while( true ) {
+        // Reduce, reduce, reduce
+        while (true) {
 
-			// Get the values from the status object
-			status = Object.keys(status).map(function(k){return status[k]});
+            // Get the values from the status object
+            status = Object.keys(status).map(function (k) {
+                return status[k]
+            });
 
-			// If the values in the resulting array are not objects then
-			// we already hit the bottom level and we have simply numbers
-			// in the array
-			if ( typeof status[0] !== 'object' ) {
-				break;
-			}
+            // If the values in the resulting array are not objects then
+            // we already hit the bottom level and we have simply numbers
+            // in the array
+            if (typeof status[0] !== 'object') {
+                break;
+            }
 
-			// Otherwise, we create an object which consists on the merged
-			// objects contained in the array
-			// e.g., [{a:'b'}, {b:'c'}] -> {a:'b', b:'c'}
-			// After that we're OK for the next iteration
-			status = status.reduce(
-				function(prev, v, idx, array) {
-					if( idx == 0 ) { return v; }
-					for (var attrname in prev) {
-						v[attrname] = prev[attrname];
-					}
-					return v;
-				}
-			)
-		}
+            // Otherwise, we create an object which consists on the merged
+            // objects contained in the array
+            // e.g., [{a:'b'}, {b:'c'}] -> {a:'b', b:'c'}
+            // After that we're OK for the next iteration
+            status = status.reduce(
+                function (prev, v, idx, array) {
+                    if (idx == 0) {
+                        return v;
+                    }
+                    for (var attrname in prev) {
+                        v[attrname] = prev[attrname];
+                    }
+                    return v;
+                }
+            )
+        }
 
-		// Reduce to single common value if possible
-		// "Finished" and "Running" reduce to "Running"
-		// Otherwise we reduce to -1, which we interpret as "Indeterminate"
-		return status.reduce(
-			function(prev, v, idx, array) {
-				if( prev == -1 ) { return -1; }
-				else if( prev == 3 && v == 4 || prev == 4 && v == 3 ) { return 3; }
-				return (prev == v) ? v : -1;
-			}
-		);
-	}
+        // Reduce to single common value if possible
+        // "Finished" and "Running" reduce to "Running"
+        // Otherwise we reduce to -1, which we interpret as "Indeterminate"
+        return status.reduce(
+            function (prev, v, idx, array) {
+                if (prev == -1) {
+                    return -1;
+                } else if (prev == 3 && v == 4 || prev == 4 && v == 3) {
+                    return 3;
+                }
+                return (prev == v) ? v : -1;
+            }
+        );
+    }
 
-	// otherwise we simply return the status, which should be an integer
-	return status;
+    // otherwise we simply return the status, which should be an integer
+    return status;
 }
 
 function sessionStatusToString(status) {
-	return (status == -1) ? 'Indeterminate' : SESSION_STATUS[status];
+    return (status == -1) ? 'Indeterminate' : SESSION_STATUS[status];
 }
 
 function getRender() {
 
-	var render = new dagreD3.render();
+    var render = new dagreD3.render();
 
-	// Add our custom shape (parallelogram, similar to the PIP PDR document)
-	render.shapes().parallelogram = function(parent, bbox, node) {
-		var w = bbox.width,
-		h = bbox.height,
-		points = [
-		    { x: 0,     y: 0},
-		    { x: w*0.8, y: 0},
-		    { x: w,     y: -h},
-		    { x: w*0.2, y: -h},
-		];
-		var shapeSvg = parent.insert("polygon", ":first-child")
-		.attr("points", points.map(function(d) { return d.x + "," + d.y; }).join(" "))
-		.attr("transform", "translate(" + (-w/2) + "," + (h/2) + ")");
+    // Add our custom shape (parallelogram, similar to the PIP PDR document)
+    render.shapes().parallelogram = function (parent, bbox, node) {
+        var w = bbox.width,
+            h = bbox.height,
+            points = [
+                {x: 0, y: 0},
+                {x: w * 0.8, y: 0},
+                {x: w, y: -h},
+                {x: w * 0.2, y: -h},
+            ];
+        var shapeSvg = parent.insert("polygon", ":first-child")
+            .attr("points", points.map(function (d) {
+                return d.x + "," + d.y;
+            }).join(" "))
+            .attr("transform", "translate(" + (-w / 2) + "," + (h / 2) + ")");
 
-		node.intersect = function(point) {
-			return dagreD3.intersect.polygon(node, points, point);
-		};
+        node.intersect = function (point) {
+            return dagreD3.intersect.polygon(node, points, point);
+        };
 
 		return shapeSvg;
 	};
@@ -162,7 +169,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 	}
 
 	d3.json(url).then( function(response,error) {
-	
+
 		if( error ) {
 			console.error(error)
 			refreshBtn.attr('disabled', null);
@@ -182,10 +189,10 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		//progressbars in dim
 
 		const width = $('#sessionsTable').find('.status').innerWidth();
-        
+
 
 		var graph_update_handler = function(oids, dropSpecs) {};
-		
+
 		var status_update_handler = function(statuses){
 			var states = ['completed', 'finished',
 		              'running', 'writing',
@@ -211,7 +218,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 			cumsum[i + 1] = cumsum[i] + status_counts[i];
 
 		status_counts = status_counts.map(function(x, i) {
-			
+
 			return [scale(cumsum[i]), scale(x)];
 		});
 			var rects = d3.select('#sessionsTable .status svg').selectAll('rect').data(status_counts);
@@ -227,7 +234,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 			rects.exit().remove();
 		};
 
-		
+
 		//update status colours and hide cancel button if finished or cancelled
 		$(".status").each(function(){
 			var currentStatus = $(this).html()
@@ -276,7 +283,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 				$(this).parent().removeClass("progressRunning")
 			}
 		})
-		
+
 		refreshBtn.attr('disabled', null);
 
 		if( !(typeof delay === 'undefined') ) {
@@ -376,19 +383,19 @@ function promptNewSession(serverUrl, tbodyEl, refreshBtn) {
 
 function drawGraphForDrops(g, drawGraph, oids, doSpecs) {
 
-	// Keep track of modifications to see if we need to re-draw
-	var modified = false;
+    // Keep track of modifications to see if we need to re-draw
+    var modified = false;
 
-	// #1: create missing nodes in the graph
-	// Because oids is sorted, they will be created in oid order
-	var time0 = new Date().getTime();
-	for(var idx in oids) {
-		var doSpec = doSpecs[oids[idx]];
-		modified |= _addNode(g, doSpec);
-	}
+    // #1: create missing nodes in the graph
+    // Because oids is sorted, they will be created in oid order
+    var time0 = new Date().getTime();
+    for (var idx in oids) {
+        var doSpec = doSpecs[oids[idx]];
+        modified |= _addNode(g, doSpec);
+    }
 
-	var time1 = new Date().getTime();
-	console.log('Took %d [ms] to create the nodes', (time1 - time0))
+    var time1 = new Date().getTime();
+    console.log('Took %d [ms] to create the nodes', (time1 - time0))
 
 	// #2: establish missing relationships
 	console.log(doSpecs)
@@ -396,40 +403,39 @@ function drawGraphForDrops(g, drawGraph, oids, doSpecs) {
 		var doSpec = doSpecs[oids[idx]];
 		var lhOid = doSpec.oid;
 
-		// x-to-many relationships producing lh->rh edges
-		for(var relIdx in TO_MANY_LTR_RELS) {
-			var rel = TO_MANY_LTR_RELS[relIdx];
-			if( rel in doSpec ) {
-				for(var rhOid in doSpec[rel]) {
-					if(rhOid.constructor == Object) {
+        // x-to-many relationships producing lh->rh edges
+        for (var relIdx in TO_MANY_LTR_RELS) {
+            var rel = TO_MANY_LTR_RELS[relIdx];
+            if (rel in doSpec) {
+                for (var rhOid in doSpec[rel]) {
+                    if(rhOid.constructor == Object) {
 						rhOid = Object.keys(rhOid)[0]
-					}
-					modified |= _addEdge(g, lhOid, doSpec[rel][rhOid]);
-				}
-			}
-		}
-		// x-to-many relationships producing rh->lh edges
-		for(var relIdx in TO_MANY_RTL_RELS) {
-			var rel = TO_MANY_RTL_RELS[relIdx];
-			if( rel in doSpec ) {
-				for(var rhOid in doSpec[rel]) {
-					modified |= _addEdge(g, doSpec[rel][rhOid], lhOid);
-				}
-			}
-		}
-		// there currently are no x-to-one relationships producing rh->lh edges
-		// there currently are no x-to-one relationships producing lh->rh edges
-	}
+					}modified |= _addEdge(g, lhOid, doSpec[rel][rhOid]);
+                }
+            }
+        }
+        // x-to-many relationships producing rh->lh edges
+        for (var relIdx in TO_MANY_RTL_RELS) {
+            var rel = TO_MANY_RTL_RELS[relIdx];
+            if (rel in doSpec) {
+                for (var rhOid in doSpec[rel]) {
+                    modified |= _addEdge(g, doSpec[rel][rhOid], lhOid);
+                }
+            }
+        }
+        // there currently are no x-to-one relationships producing rh->lh edges
+        // there currently are no x-to-one relationships producing lh->rh edges
+    }
 
-	var time2 = new Date().getTime();
-	console.log('Took %d [ms] to create the edges', (time2 - time1))
+    var time2 = new Date().getTime();
+    console.log('Took %d [ms] to create the edges', (time2 - time1))
 
-	if( modified ) {
-		drawGraph();
-	}
+    if (modified) {
+        drawGraph();
+    }
 
-	var time3 = new Date().getTime();
-	console.log('Took %d [ms] to draw the hole thing', (time3 - time2))
+    var time3 = new Date().getTime();
+    console.log('Took %d [ms] to draw the hole thing', (time3 - time2))
 
     zoomFit()
 }
@@ -477,18 +483,18 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 				console.error(error);
 				return;
 			}
-            
+
 			var doSpecs = sessionInfo['graph'];
 			var status  = uniqueSessionStatus(sessionInfo['status']);
 			d3.select('#session-status').text(sessionStatusToString(status));
 			setStatusColor(sessionStatusToString(status));
 
-			var oids = Object.keys(doSpecs);
-			if( oids.length > 0 ) {
-				// Get sorted oids
-				oids.sort();
-				graph_update_handler(oids, doSpecs);
-			}
+            var oids = Object.keys(doSpecs);
+            if (oids.length > 0) {
+                // Get sorted oids
+                oids.sort();
+                graph_update_handler(oids, doSpecs);
+            }
 
 			// During PRISITINE and BUILDING we need to update the graph structure
 			// During DEPLOYING we call ourselves again anyway, because we need
@@ -520,9 +526,9 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 
 function _addNode(g, doSpec) {
 
-	if( g.hasNode(g) ) {
-		return false;
-	}
+    if (g.hasNode(g)) {
+        return false;
+    }
 
 	var typeClass = doSpec.type;
 	var typeShape = TYPE_SHAPES[doSpec.type];
@@ -560,25 +566,24 @@ function _addNode(g, doSpec) {
 }
 
 function _addEdge(g, fromOid, toOid) {
-	if(fromOid.constructor == Object) {
+    if(fromOid.constructor == Object) {
 		fromOid = Object.keys(fromOid)[0]
 	}
 	if(toOid.constructor == Object) {
 		toOid = Object.keys(toOid)[0]
-	}
-	if( g.hasEdge(fromOid, toOid) ) {
-		return false;
-	}
-	if( !g.hasNode(fromOid) ) {
-		console.error('No DROP found with oid ' + fromOid);
-		return false;
-	}
-	if( !g.hasNode(toOid) ) {
-		console.error('No DROP found with oid ' + toOid);
-		return false;
-	}
-	g.setEdge(fromOid, toOid, {width: 40});
-	return true;
+	}if (g.hasEdge(fromOid, toOid)) {
+        return false;
+    }
+    if (!g.hasNode(fromOid)) {
+        console.error('No DROP found with oid ' + fromOid);
+        return false;
+    }
+    if (!g.hasNode(toOid)) {
+        console.error('No DROP found with oid ' + toOid);
+        return false;
+    }
+    g.setEdge(fromOid, toOid, {width: 40});
+    return true;
 }
 
 
@@ -636,7 +641,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 				});
 			}
 		})
-        
+
         if(updateStatesDelayTimerActive === true){
             updateStatesDelayTimer.stop();
             updateStatesDelayTimerActive = false;
@@ -689,7 +694,7 @@ function cancel_session(serverUrl,sessionId, buttonId) {
 	}else{
 		cancelSessionBtn = buttonId
 	}
-	
+
     var url = serverUrl + '/api';
     url += '/sessions/' + sessionId;
 
@@ -713,13 +718,13 @@ function cancel_session(serverUrl,sessionId, buttonId) {
 				},
 				body: JSON.stringify(function (response, error) {
 					// We don't expect a response so ignoring it.
-	
+
 					if( error ) {
 						console.log(response)
 						console.error(error)
 						return
 					}
-	
+
 					cancelSessionBtn.attr('disabled', null);
 				})
 			});
@@ -750,7 +755,7 @@ function delete_session(serverUrl,sessionId, buttonId) {
 	}else{
 		deleteSessionBtn = buttonId
 	}
-	
+
     var url = serverUrl + '/api';
     url += '/sessions/' + sessionId;
 
@@ -763,7 +768,7 @@ function delete_session(serverUrl,sessionId, buttonId) {
         }
 
         if (!does_status_allow_cancel(sessionInfo['status'])) {
-			bootbox.confirm("Do you really want to delete this session?", function(result){ 
+			bootbox.confirm("Do you really want to delete this session?", function(result){
 				if (result){
 
 					deleteSessionBtn.attr('disabled', null);
@@ -775,12 +780,12 @@ function delete_session(serverUrl,sessionId, buttonId) {
 						},
 						body: JSON.stringify(function (response, error) {
 							// We don't expect a response so ignoring it.
-			
+
 							if( error ) {
 								console.log(response)
 								console.error(error)
 								return
-							}	
+							}
 						})
 					});
 				}

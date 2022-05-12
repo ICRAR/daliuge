@@ -32,9 +32,27 @@ DOXYGEN_SETTINGS = [
     ("CLASS_DIAGRAMS", "NO"),
 ]
 
-KNOWN_PARAM_DATA_TYPES = ["String", "Integer", "Float", "Complex", "Boolean", "Select", "Password", "Json"]
+KNOWN_PARAM_DATA_TYPES = [
+    "String",
+    "Integer",
+    "Float",
+    "Complex",
+    "Boolean",
+    "Select",
+    "Password",
+    "Json",
+]
 KNOWN_CONSTRUCT_TYPES = ["Scatter", "Gather"]
-KNOWN_DATA_CATEGORIES = ["File", "Memory", "SharedMemory", "NGAS", "ParameterSet", "S3", "Plasma", "PlasmaFlight"]
+KNOWN_DATA_CATEGORIES = [
+    "File",
+    "Memory",
+    "SharedMemory",
+    "NGAS",
+    "ParameterSet",
+    "S3",
+    "Plasma",
+    "PlasmaFlight",
+]
 
 
 def get_options_from_command_line(argv):
@@ -157,7 +175,14 @@ def find_field_by_name(fields, name):
 
 
 def check_required_fields_for_category(text, fields, category):
-    if category in ["DynlibApp", "PythonApp", "Branch", "BashShellApp", "Mpi", "Docker"]:
+    if category in [
+        "DynlibApp",
+        "PythonApp",
+        "Branch",
+        "BashShellApp",
+        "Mpi",
+        "Docker",
+    ]:
         alert_if_missing(text, fields, "execution_time")
         alert_if_missing(text, fields, "num_cpus")
 
@@ -170,10 +195,27 @@ def check_required_fields_for_category(text, fields, category):
     if category in ["PythonApp", "Branch"]:
         alert_if_missing(text, fields, "appclass")
 
-    if category in ["File", "Memory", "NGAS", "ParameterSet", "Plasma", "PlasmaFlight", "S3"]:
+    if category in [
+        "File",
+        "Memory",
+        "NGAS",
+        "ParameterSet",
+        "Plasma",
+        "PlasmaFlight",
+        "S3",
+    ]:
         alert_if_missing(text, fields, "data_volume")
 
-    if category in ["File", "Memory", "NGAS", "ParameterSet", "Plasma", "PlasmaFlight", "S3", "Mpi"]:
+    if category in [
+        "File",
+        "Memory",
+        "NGAS",
+        "ParameterSet",
+        "Plasma",
+        "PlasmaFlight",
+        "S3",
+        "Mpi",
+    ]:
         alert_if_missing(text, fields, "group_end")
 
     if category in ["BashShellApp", "Mpi", "Docker", "Singularity"]:
@@ -184,7 +226,9 @@ def check_required_fields_for_category(text, fields, category):
         alert_if_missing(text, fields, "argumentPrefix")
 
 
-def create_field(internal_name, name, value, description, access, type, precious, options, positional):
+def create_field(
+    internal_name, name, value, description, access, type, precious, options, positional
+):
     return {
         "text": name,
         "name": internal_name,
@@ -195,7 +239,7 @@ def create_field(internal_name, name, value, description, access, type, precious
         "type": type,
         "precious": precious,
         "options": options,
-        "positional": positional
+        "positional": positional,
     }
 
 
@@ -248,12 +292,15 @@ def parse_param_value(text, prefix, value):
         default_value = parts[1]
     if len(parts) > 2:
         type = parts[2]
-    if len(parts) > 4:  # NOTE: correct that we start looking for >4, but access element 3
+    if (
+        len(parts) > 4
+    ):  # NOTE: correct that we start looking for >4, but access element 3
         access = parts[3]
     else:
         logging.warning(
-            text + " " +
-            prefix
+            text
+            + " "
+            + prefix
             + "param ("
             + external_name
             + ") has no 'access' descriptor, using default (readwrite) : "
@@ -263,8 +310,9 @@ def parse_param_value(text, prefix, value):
         precious = parts[4].lower() == "true"
     else:
         logging.warning(
-            text + " " +
-            prefix
+            text
+            + " "
+            + prefix
             + "param ("
             + external_name
             + ") has no 'precious' descriptor, using default (False) : "
@@ -274,11 +322,12 @@ def parse_param_value(text, prefix, value):
         if parts[5].strip() == "":
             options = []
         else:
-            options = parts[5].strip().split(',')
+            options = parts[5].strip().split(",")
     else:
         logging.warning(
-            text + " " +
-            prefix
+            text
+            + " "
+            + prefix
             + "param ("
             + external_name
             + ") has no 'options', using default ([]) : "
@@ -288,8 +337,9 @@ def parse_param_value(text, prefix, value):
         positional = parts[6].lower() == "true"
     else:
         logging.warning(
-            text + " " +
-            prefix
+            text
+            + " "
+            + prefix
             + "param ("
             + external_name
             + ") has no 'positional', using default (False) : "
@@ -380,7 +430,15 @@ def create_palette_node_from_params(params):
         elif key.startswith("cparam/"):
             # parse the param key into name, type etc
             (param, internal_name) = parse_key(key)
-            (name, default_value, type, access, precious, options, positional) = parse_param_value(text, "c", value)
+            (
+                name,
+                default_value,
+                type,
+                access,
+                precious,
+                options,
+                positional,
+            ) = parse_param_value(text, "c", value)
 
             # check that type is in the list of known types
             if type not in KNOWN_PARAM_DATA_TYPES:
@@ -391,18 +449,27 @@ def create_palette_node_from_params(params):
             # and check that every param with some options specified is of type "Select"
             if type == "Select" and len(options) == 0:
                 logging.warning(
-                    text + " cparam '" + name + "' is of type 'Select' but has no options specified: " + str(options)
+                    text
+                    + " cparam '"
+                    + name
+                    + "' is of type 'Select' but has no options specified: "
+                    + str(options)
                 )
             if len(options) > 0 and type != "Select":
                 logging.warning(
-                    text + " cparam '" + name + "' has at least one option specified but is not of type 'Select': " + type
+                    text
+                    + " cparam '"
+                    + name
+                    + "' has at least one option specified but is not of type 'Select': "
+                    + type
                 )
 
             # parse description
             if "\n" in value:
                 logging.info(
-                    text + " " +
-                    "cparam description ("
+                    text
+                    + " "
+                    + "cparam description ("
                     + value
                     + ") contains a newline character, removing."
                 )
@@ -412,7 +479,11 @@ def create_palette_node_from_params(params):
             # check that access is a known value
             if access != "readonly" and access != "readwrite":
                 logging.warning(
-                    text + " cparam '" + name + "' has unknown 'access' descriptor: " + access
+                    text
+                    + " cparam '"
+                    + name
+                    + "' has unknown 'access' descriptor: "
+                    + access
                 )
 
             # add a field
@@ -432,12 +503,23 @@ def create_palette_node_from_params(params):
         elif key.startswith("aparam/") or key.startswith("param/"):
             # parse the param key into name, type etc
             (param, internal_name) = parse_key(key)
-            (name, default_value, type, access, precious, options, positional) = parse_param_value(text, "a", value)
+            (
+                name,
+                default_value,
+                type,
+                access,
+                precious,
+                options,
+                positional,
+            ) = parse_param_value(text, "a", value)
 
             # warn if doc string is still using param instead of aparam
             if key.startswith("param/"):
                 logging.warning(
-                    text + " param (" + internal_name + ") using obsolete 'param' description, defaulting to 'aparam'"
+                    text
+                    + " param ("
+                    + internal_name
+                    + ") using obsolete 'param' description, defaulting to 'aparam'"
                 )
 
             # check that type is in the list of known types
@@ -448,25 +530,37 @@ def create_palette_node_from_params(params):
             # check that category if suitable for aparams
             if category in KNOWN_DATA_CATEGORIES:
                 logging.warning(
-                    text + " has aparam, which is not suitable for a " + category + " node"
+                    text
+                    + " has aparam, which is not suitable for a "
+                    + category
+                    + " node"
                 )
 
             # check that a param of type "Select" has some options specified,
             # and check that every param with some options specified is of type "Select"
             if type == "Select" and len(options) == 0:
                 logging.warning(
-                    text + " aparam '" + name + "' is of type 'Select' but has no options specified: " + str(options)
+                    text
+                    + " aparam '"
+                    + name
+                    + "' is of type 'Select' but has no options specified: "
+                    + str(options)
                 )
             if len(options) > 0 and type != "Select":
                 logging.warning(
-                    text + " aparam '" + name + "' has at least one option specified but is not of type 'Select': " + type
+                    text
+                    + " aparam '"
+                    + name
+                    + "' has at least one option specified but is not of type 'Select': "
+                    + type
                 )
 
             # parse description
             if "\n" in value:
                 logging.info(
-                    text + " " +
-                    "aparam description ("
+                    text
+                    + " "
+                    + "aparam description ("
                     + value
                     + ") contains a newline character, removing."
                 )
@@ -476,7 +570,11 @@ def create_palette_node_from_params(params):
             # check that access is a known value
             if access != "readonly" and access != "readwrite":
                 logging.warning(
-                    text + " aparam '" + name + "' has unknown 'access' descriptor: " + access
+                    text
+                    + " aparam '"
+                    + name
+                    + "' has unknown 'access' descriptor: "
+                    + access
                 )
 
             # add a field
@@ -539,36 +637,36 @@ def create_palette_node_from_params(params):
     check_required_fields_for_category(text, fields, category)
 
     # create and return the node
-    return ({
-        "tag": tag, "construct": construct
-    },
-    {
-        "category": category,
-        "drawOrderHint": 0,
-        "key": get_next_key(),
-        "text": text,
-        "description": description,
-        "collapsed": False,
-        "showPorts": False,
-        "streaming": False,
-        "subject": None,
-        "selected": False,
-        "expanded": False,
-        "inputApplicationName": "",
-        "outputApplicationName": "",
-        "inputApplicationType": "None",
-        "outputApplicationType": "None",
-        "inputPorts": inputPorts,
-        "outputPorts": outputPorts,
-        "inputLocalPorts": inputLocalPorts,
-        "outputLocalPorts": outputLocalPorts,
-        "inputAppFields": [],
-        "outputAppFields": [],
-        "fields": fields,
-        "applicationArgs": applicationArgs,
-        "git_url": gitrepo,
-        "sha": version,
-    })
+    return (
+        {"tag": tag, "construct": construct},
+        {
+            "category": category,
+            "drawOrderHint": 0,
+            "key": get_next_key(),
+            "text": text,
+            "description": description,
+            "collapsed": False,
+            "showPorts": False,
+            "streaming": False,
+            "subject": None,
+            "selected": False,
+            "expanded": False,
+            "inputApplicationName": "",
+            "outputApplicationName": "",
+            "inputApplicationType": "None",
+            "outputApplicationType": "None",
+            "inputPorts": inputPorts,
+            "outputPorts": outputPorts,
+            "inputLocalPorts": inputLocalPorts,
+            "outputLocalPorts": outputLocalPorts,
+            "inputAppFields": [],
+            "outputAppFields": [],
+            "fields": fields,
+            "applicationArgs": applicationArgs,
+            "git_url": gitrepo,
+            "sha": version,
+        },
+    )
 
 
 def write_palette_json(outputfile, nodes, gitrepo, version):
@@ -888,7 +986,11 @@ def create_construct_node(type, node):
 
     construct_node = {
         "category": type,
-        "description": "A default " + type + " construct for the " + node["text"] + " component.",
+        "description": "A default "
+        + type
+        + " construct for the "
+        + node["text"]
+        + " component.",
         "fields": [],
         "applicationArgs": [],
         "git_url": gitrepo,
@@ -896,7 +998,7 @@ def create_construct_node(type, node):
         "precious": False,
         "sha": version,
         "streaming": False,
-        "text": type + "/" + node["text"]
+        "text": type + "/" + node["text"],
     }
 
     if type == "Scatter" or type == "Gather":
@@ -917,7 +1019,7 @@ def create_construct_node(type, node):
         construct_node["outputLocalPorts"] = []
         construct_node["outputPorts"] = []
     else:
-        pass # not sure what to do for other types like MKN yet
+        pass  # not sure what to do for other types like MKN yet
 
     return construct_node
 
@@ -955,8 +1057,11 @@ def params_to_nodes(params):
 
 
 if __name__ == "__main__":
-
-    logging.basicConfig(format="%(asctime)s - %(message)s", datefmt="%d-%b-%y %H:%M:%S", level = logging.INFO)
+    logging.basicConfig(
+        format="%(asctime)s - %(message)s",
+        datefmt="%d-%b-%y %H:%M:%S",
+        level=logging.INFO,
+    )
 
     logging.info("PROJECT_NAME:" + os.environ.get("PROJECT_NAME"))
     logging.info("PROJECT_VERSION:" + os.environ.get("PROJECT_VERSION"))

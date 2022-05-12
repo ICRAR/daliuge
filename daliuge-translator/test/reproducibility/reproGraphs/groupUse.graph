@@ -1,0 +1,135 @@
+{
+    "linkDataArray": [],
+    "modelData": {
+        "filePath": "groupUse.graph",
+        "fileType": "graph",
+        "git_url": "",
+        "repo": "",
+        "repoService": "Unknown",
+        "sha": ""
+    },
+    "nodeDataArray": [
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "GroupBy",
+            "categoryType": "Group",
+            "collapsed": false,
+            "colour": "#7F8C8D",
+            "description": "Placeholder 'group by' description",
+            "desiredSize": {
+                "height": 200,
+                "width": 200
+            },
+            "exitAppName": "",
+            "fields": [
+                {
+                    "name": "group_key",
+                    "text": "Group key",
+                    "value": "None"
+                },
+                {
+                    "name": "group_axis",
+                    "text": "Group axis",
+                    "value": "frequency"
+                }
+            ],
+            "inputAppFields": [],
+            "inputAppName": "",
+            "inputApplication": "",
+            "inputLocalPorts": [
+                {
+                    "Id": "f21dd6fd-08ae-4955-bb05-6466dfa884f6",
+                    "IdText": "event"
+                }
+            ],
+            "inputPorts": [
+                {
+                    "Id": "c4f1785d-2427-42ef-ad3e-b4ed2428c5b4",
+                    "IdText": "event"
+                }
+            ],
+            "isData": false,
+            "isGroup": true,
+            "key": -1,
+            "loc": "300 100",
+            "outputAppFields": [],
+            "outputAppName": "",
+            "outputApplication": "",
+            "outputLocalPorts": [
+                {
+                    "Id": "ff77c691-624b-471e-ac7e-c0f25cf86559",
+                    "IdText": "event"
+                }
+            ],
+            "outputPorts": [
+                {
+                    "Id": "8ac46084-6e76-4223-8ff7-a352488368d4",
+                    "IdText": "event"
+                }
+            ],
+            "streaming": false,
+            "subject": null,
+            "text": "Group By"
+        },
+        {
+            "canHaveInputs": true,
+            "canHaveOutputs": true,
+            "category": "BashShellApp",
+            "categoryType": "Application",
+            "collapsed": false,
+            "colour": "#1C2833",
+            "description": "An application component run within the Bash Shell",
+            "exitAppName": "",
+            "fields": [
+                {
+                    "name": "execution_time",
+                    "text": "Execution time",
+                    "value": "5"
+                },
+                {
+                    "name": "num_cpus",
+                    "text": "Num CPUs",
+                    "value": "1"
+                },
+                {
+                    "name": "group_start",
+                    "text": "Group start",
+                    "value": "0"
+                },
+                {
+                    "name": "Arg01",
+                    "text": "Arg01",
+                    "value": ""
+                }
+            ],
+            "inputAppFields": [],
+            "inputAppName": "",
+            "inputApplication": "Unknown",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "4e9ba4ed-1f51-45ed-9320-ad7978701970",
+                    "IdText": "event"
+                }
+            ],
+            "isData": false,
+            "isGroup": false,
+            "key": -2,
+            "loc": "386 444",
+            "outputAppFields": [],
+            "outputAppName": "",
+            "outputApplication": "Unknown",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "260b62fe-1624-4fd2-b638-3e64f6293453",
+                    "IdText": "event"
+                }
+            ],
+            "streaming": false,
+            "subject": null,
+            "text": "Bash Shell App"
+        }
+    ]
+}

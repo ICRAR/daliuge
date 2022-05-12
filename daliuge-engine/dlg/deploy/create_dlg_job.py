@@ -60,7 +60,9 @@ class LogEntryPair:
 
     def __init__(self, name, gstart, gend):
         self._name = name
-        self._gstart = (gstart + 2)  # group 0 is the whole matching line, group 1 is the catchall
+        self._gstart = (
+            gstart + 2
+        )  # group 0 is the whole matching line, group 1 is the catchall
         self._gend = gend + 2
         self._start_time = None
         self._end_time = None
@@ -274,8 +276,12 @@ class LogParser:
             if not os.path.isdir(os.path.join(self._log_dir, log_directory_file_name)):
                 continue
             nm_logf = os.path.join(self._log_dir, log_directory_file_name, "dlgNM.log")
-            nm_dim_logf = os.path.join(self._log_dir, log_directory_file_name, "dlgDIM.log")
-            nm_mm_logf = os.path.join(self._log_dir, log_directory_file_name, "dlgMM.log")
+            nm_dim_logf = os.path.join(
+                self._log_dir, log_directory_file_name, "dlgDIM.log"
+            )
+            nm_mm_logf = os.path.join(
+                self._log_dir, log_directory_file_name, "dlgMM.log"
+            )
             if not os.path.exists(nm_logf):
                 if os.path.exists(nm_dim_logf) or os.path.exists(nm_mm_logf):
                     num_dims += 1
@@ -338,9 +344,10 @@ class LogParser:
             deploy_time = indexed_leps["node_deploy_time"].get_duration()
             if deploy_time is None:  # since some node managers failed to start
                 continue
-            exec_time = (indexed_leps["completion_time"].get_duration()
-                         or indexed_leps["completion_time_old"].get_duration()
-                         )
+            exec_time = (
+                indexed_leps["completion_time"].get_duration()
+                or indexed_leps["completion_time_old"].get_duration()
+            )
             if exec_time is None:
                 continue
             real_exec_time = exec_time - (max_node_deploy_time - deploy_time)
@@ -386,7 +393,8 @@ class LogParser:
 
 def main():
     parser = optparse.OptionParser(
-        usage='\n%prog -a [1|2] -f <facility> [options]\n\n%prog -h for further help')
+        usage="\n%prog -a [1|2] -f <facility> [options]\n\n%prog -h for further help"
+    )
 
     parser.add_option(
         "-a",
@@ -613,7 +621,9 @@ def main():
             )
         for path_to_graph_file in (opts.logical_graph, opts.physical_graph):
             if path_to_graph_file and not os.path.exists(path_to_graph_file):
-                parser.error("Cannot locate graph file at '{0}'".format(path_to_graph_file))
+                parser.error(
+                    "Cannot locate graph file at '{0}'".format(path_to_graph_file)
+                )
 
         client = SlurmClient(
             facility=opts.facility,
@@ -630,7 +640,7 @@ def main():
             check_with_session=opts.check_with_session,
             logical_graph=opts.logical_graph,
             physical_graph=opts.physical_graph,
-            submit=opts.submit in ['True', 'true'],
+            submit=opts.submit in ["True", "true"],
         )
         client._visualise_graph = opts.visualise_graph
         client.submit_job()

@@ -32,6 +32,7 @@ import contextlib
 import errno
 import heapq
 import importlib
+import inspect
 import io
 import logging
 import math
@@ -47,6 +48,17 @@ import binascii
 from typing import List, Optional, Union
 
 import numpy as np
+import pyarrow.plasma as plasma
+import six
+from dlg.common.reproducibility.constants import (
+    ReproducibilityFlags,
+    REPRO_DEFAULT,
+    rmode_supported,
+    ALL_RMODES,
+)
+from dlg.common.reproducibility.reproducibility import common_hash
+from merklelib import MerkleTree
+from six import BytesIO
 
 from .ddap_protocol import (
     ExecutionMode,
@@ -72,12 +84,27 @@ from dlg.io import (
     PlasmaFlightIO,
 )
 
-DEFAULT_INTERNAL_PARAMETERS = {'storage', 'rank', 'loop_cxt', 'dw', 'iid', 'dt', 'consumers',
-                               'config_data', 'mode'}
+DEFAULT_INTERNAL_PARAMETERS = {
+    "storage",
+    "rank",
+    "loop_cxt",
+    "dw",
+    "iid",
+    "dt",
+    "consumers",
+    "config_data",
+    "mode",
+}
 
 if sys.version_info >= (3, 8):
     from dlg.io import SharedMemoryIO
-from dlg.utils import prepare_sql, createDirIfMissing, isabs, object_tracking, getDlgVariable
+from dlg.utils import (
+    prepare_sql,
+    createDirIfMissing,
+    isabs,
+    object_tracking,
+    getDlgVariable,
+)
 from dlg.process import DlgProcess
 from dlg.meta import (
     dlg_float_param,
@@ -272,6 +299,14 @@ class AbstractDROP(EventFirer):
         self._checksumType = None
         self._size = None
 
+        # Recording runtime reproducibility information is handled via MerkleTrees
+        # Switching on the reproducibility level will determine what information is recorded.
+        self._committed = False
+        self._merkleRoot = None
+        self._merkleTree = None
+        self._merkleData = []
+        self._reproducibility = REPRO_DEFAULT
+
         # The DataIO instance we use in our write method. It's initialized to
         # None because it's lazily initialized in the write method, since data
         # might be written externally and not through this DROP
@@ -356,7 +391,7 @@ class AbstractDROP(EventFirer):
 
         # Take a class dlg defined parameter class attribute and create an instanced attribute on object
         for attr_name, obj in getmembers(
-                self, lambda a: not (inspect.isfunction(a) or isinstance(a, property))
+            self, lambda a: not (inspect.isfunction(a) or isinstance(a, property))
         ):
             if isinstance(obj, dlg_float_param):
                 value = kwargs.get(attr_name, obj.default_value)
@@ -377,7 +412,10 @@ class AbstractDROP(EventFirer):
             elif isinstance(obj, dlg_list_param):
                 value = kwargs.get(attr_name, obj.default_value)
                 if isinstance(value, str):
-                    value = ast.literal_eval(value)
+                    if value == "":
+                        value = []
+                    else:
+                        value = ast.literal_eval(value)
                 if value is not None and not isinstance(value, list):
                     raise Exception(
                         "dlg_list_param {} is not a list. It is a {}".format(
@@ -446,11 +484,14 @@ class AbstractDROP(EventFirer):
         """
         if self._dlg_var_matcher.fullmatch(key):
             return getDlgVariable(key)
-        if len(key) < 2 or key[0] != '$':
+        if len(key) < 2 or key[0] != "$":
             # Reject malformed entries
             return key
         key_edit = key[1:]
-        env_var_ref, env_var_key = key_edit.split('.')[0], '.'.join(key_edit.split('.')[1:])
+        env_var_ref, env_var_key = (
+            key_edit.split(".")[0],
+            ".".join(key_edit.split(".")[1:]),
+        )
         env_var_drop = None
         for producer in self._producers:
             if producer.name == env_var_ref:
@@ -472,6 +513,164 @@ class AbstractDROP(EventFirer):
             # TODO: Accumulate calls to the same env_var_store to save communication
             return_values.append(self.get_environment_variable(key))
         return return_values
+
+    @property
+    def merkleroot(self):
+        return self._merkleRoot
+
+    @property
+    def reproducibility_level(self):
+        return self._reproducibility
+
+    @reproducibility_level.setter
+    def reproducibility_level(self, new_flag):
+        if type(new_flag) != ReproducibilityFlags:
+            raise TypeError("new_flag must be a reproducibility flag enum.")
+        elif rmode_supported(new_flag):  # TODO: Support custom checkers for repro-level
+            self._reproducibility = new_flag
+            if new_flag == ReproducibilityFlags.ALL:
+                self._committed = False
+                self._merkleRoot = {rmode.name: None for rmode in ALL_RMODES}
+                self._merkleTree = {rmode.name: None for rmode in ALL_RMODES}
+                self._merkleData = {rmode.name: [] for rmode in ALL_RMODES}
+            elif self._committed:
+                # Current behaviour, set to un-committed again after change
+                self._committed = False
+                self._merkleRoot = None
+                self._merkleTree = None
+                self._merkleData = []
+        else:
+            raise NotImplementedError("new_flag %d is not supported", new_flag.value)
+
+    def generate_rerun_data(self):
+        """
+        Provides a serailized list of Rerun data.
+        At runtime, Rerunning only requires execution success or failure.
+        :return: A dictionary containing rerun values
+        """
+        return {"status": self._status}
+
+    def generate_repeat_data(self):
+        """
+        Provides a list of Repeat data.
+        At runtime, repeating, like rerunning only requires execution success or failure.
+        :return: A dictionary containing runtime exclusive repetition values.
+        """
+        return {"status": self._status}
+
+    def generate_recompute_data(self):
+        """
+        Provides a dictionary containing recompute data.
+        At runtime, recomputing, like repeating and rerunning, by default, only shows success or failure.
+        We anticipate that any further implemented behaviour be done at a lower class.
+        :return: A dictionary containing runtime exclusive recompute values.
+        """
+        return {"status": self._status}
+
+    def generate_reproduce_data(self):
+        """
+        Provides a list of Reproducibility data (specifically).
+        The default behaviour is to return nothing. Per-class behaviour is to be achieved by overriding this method.
+        :return: A dictionary containing runtime exclusive reproducibility data.
+        """
+        return {}
+
+    def generate_replicate_sci_data(self):
+        """
+        Provides a list of scientific replication data.
+        This is by definition a merging of both reproduction and rerun data
+        :return: A dictionary containing runtime exclusive scientific replication data.
+        """
+        res = {}
+        res.update(self.generate_rerun_data())
+        res.update(self.generate_reproduce_data())
+        return res
+
+    def generate_replicate_comp_data(self):
+        """
+        Provides a list of computational replication data.
+        This is by definition a merging of both reproduction and recompute data
+        :return: A dictionary containing runtime exclusive computational replication data.
+        """
+        res = {}
+        recomp_data = self.generate_recompute_data()
+        if recomp_data is not None:
+            res.update(self.generate_recompute_data())
+        res.update(self.generate_reproduce_data())
+        return res
+
+    def generate_replicate_total_data(self):
+        """
+        Provides a list of total replication data.
+        This is by definition a merging of reproduction and repetition data
+        :return: A dictionary containing runtime exclusive total replication data.
+        """
+        res = {}
+        res.update(self.generate_repeat_data())
+        res.update(self.generate_reproduce_data())
+        return res
+
+    def generate_merkle_data(self):
+        """
+        Provides a serialized summary of data as a list.
+        Fields constitute a single entry in this list.
+        Wraps several methods dependent on this DROPs reproducibility level
+        Some of these are abstract.
+        :return: A dictionary of elements constituting a summary of this drop
+        """
+        if self._reproducibility is ReproducibilityFlags.NOTHING:
+            return {}
+        elif self._reproducibility is ReproducibilityFlags.RERUN:
+            return self.generate_rerun_data()
+        elif self._reproducibility is ReproducibilityFlags.REPEAT:
+            return self.generate_repeat_data()
+        elif self._reproducibility is ReproducibilityFlags.RECOMPUTE:
+            return self.generate_recompute_data()
+        elif self._reproducibility is ReproducibilityFlags.REPRODUCE:
+            return self.generate_reproduce_data()
+        elif self._reproducibility is ReproducibilityFlags.REPLICATE_SCI:
+            return self.generate_replicate_sci_data()
+        elif self._reproducibility is ReproducibilityFlags.REPLICATE_COMP:
+            return self.generate_replicate_comp_data()
+        elif self._reproducibility is ReproducibilityFlags.REPLICATE_TOTAL:
+            return self.generate_replicate_total_data()
+        elif self._reproducibility is ReproducibilityFlags.ALL:
+            return {
+                ReproducibilityFlags.RERUN.name: self.generate_rerun_data(),
+                ReproducibilityFlags.REPEAT.name: self.generate_repeat_data(),
+                ReproducibilityFlags.RECOMPUTE.name: self.generate_recompute_data(),
+                ReproducibilityFlags.REPRODUCE.name: self.generate_reproduce_data(),
+                ReproducibilityFlags.REPLICATE_SCI.name: self.generate_replicate_sci_data(),
+                ReproducibilityFlags.REPLICATE_COMP.name: self.generate_replicate_comp_data(),
+                ReproducibilityFlags.REPLICATE_TOTAL.name: self.generate_replicate_total_data(),
+            }
+        else:
+            raise NotImplementedError("Currently other levels are not in development.")
+
+    def commit(self):
+        """
+        Generates the MerkleRoot of this DROP
+        Should only be called once this DROP is completed.
+        """
+        if not self._committed:
+            #  Generate the MerkleData
+            self._merkleData = self.generate_merkle_data()
+            if self._reproducibility == ReproducibilityFlags.ALL:
+                for rmode in ALL_RMODES:
+                    self._merkleTree[rmode.name] = MerkleTree(
+                        self._merkleData[rmode.name].items(), common_hash
+                    )
+                    self._merkleRoot[rmode.name] = self._merkleTree[
+                        rmode.name
+                    ].merkle_root
+            else:
+                # Fill MerkleTree, add data and set the MerkleRoot Value
+                self._merkleTree = MerkleTree(self._merkleData.items(), common_hash)
+                self._merkleRoot = self._merkleTree.merkle_root
+                # Set as committed
+            self._committed = True
+        else:
+            logger.debug("Trying to re-commit DROP %s, cannot overwrite." % self)
 
     @property
     def oid(self):
@@ -702,6 +901,9 @@ class AbstractDROP(EventFirer):
             logger.debug("Adding back %r as input of %r", self, consumer)
             consumer.addInput(self, False)
 
+        # Add reproducibility subscription
+        self.subscribe(consumer, "reproducibility")
+
     @property
     def producers(self):
         """
@@ -742,6 +944,8 @@ class AbstractDROP(EventFirer):
         """
         if e.type == "producerFinished":
             self.producerFinished(e.uid, e.status)
+        elif e.type == "reproducibility":
+            self.dropReproComplete(e.uid, e.reprodata)
 
     @track_current_drop
     def producerFinished(self, uid, drop_state):
@@ -779,6 +983,13 @@ class AbstractDROP(EventFirer):
                 self.setError()
             else:
                 self.setCompleted()
+
+    def dropReproComplete(self, uid, reprodata):
+        """
+        Callback invoved when a DROP with UID `uid` has finishing processing its reproducibility information.
+        Importantly, this is independent of that drop being completed.
+        """
+        #  TODO: Perform some action
 
     @property
     def streamingConsumers(self):
@@ -830,6 +1041,19 @@ class AbstractDROP(EventFirer):
         if self.executionMode == ExecutionMode.DROP:
             self.subscribe(streamingConsumer, "dropCompleted")
 
+        # Add reproducibility subscription
+        self.subscribe(streamingConsumer, "reproducibility")
+
+    def completedrop(self):
+        """
+        Builds final reproducibility data for this drop and fires a 'dropComplete' event.
+        This should be called once a drop is finished in success or error
+        :return:
+        """
+        self.commit()
+        reprodata = {"data": self._merkleData, "merkleroot": self.merkleroot}
+        self._fire(eventType="reproducibility", reprodata=reprodata)
+
     @track_current_drop
     def setError(self):
         """
@@ -845,7 +1069,8 @@ class AbstractDROP(EventFirer):
         self.status = DROPStates.ERROR
 
         # Signal our subscribers that the show is over
-        self._fire("dropCompleted", status=DROPStates.ERROR)
+        self._fire(eventType="dropCompleted", status=DROPStates.ERROR)
+        self.completedrop()
 
     @track_current_drop
     def setCompleted(self):
@@ -866,14 +1091,16 @@ class AbstractDROP(EventFirer):
                 "%r not in INITIALIZED or WRITING state (%s), cannot setComplete()"
                 % (self, self.status)
             )
-
-        self._closeWriters()
+        try:
+            self._closeWriters()
+        except AttributeError as exp:
+            logger.debug(exp)
 
         logger.debug("Moving %r to COMPLETED", self)
         self.status = DROPStates.COMPLETED
-
         # Signal our subscribers that the show is over
-        self._fire("dropCompleted", status=DROPStates.COMPLETED)
+        self._fire(eventType="dropCompleted", status=DROPStates.COMPLETED)
+        self.completedrop()
 
     def isCompleted(self):
         """
@@ -909,7 +1136,10 @@ class AbstractDROP(EventFirer):
 
 
 class PathBasedDrop(object):
-    """Base class for data drops that handle paths (i.e., file and directory drops)"""
+    """
+    Base class for data drops that handle paths (i.e., file and directory drops)
+    """
+
     _path: str = None
 
     def get_dir(self, dirname):
@@ -983,10 +1213,7 @@ class DataDROP(AbstractDROP):
         if self.status != DROPStates.COMPLETED:
             raise Exception(
                 "%r is in state %s (!=COMPLETED), cannot be opened for reading"
-                % (
-                    self,
-                    self.status,
-                )
+                % (self, self.status)
             )
 
         io = self.getIO()
@@ -1044,11 +1271,7 @@ class DataDROP(AbstractDROP):
     def _checkStateAndDescriptor(self, descriptor):
         if self.status != DROPStates.COMPLETED:
             raise Exception(
-                "%r is in state %s (!=COMPLETED), cannot be read"
-                % (
-                    self,
-                    self.status,
-                )
+                "%r is in state %s (!=COMPLETED), cannot be read" % (self, self.status)
             )
         if descriptor is None:
             raise ValueError("Illegal empty descriptor given")
@@ -1241,7 +1464,7 @@ class DataDROP(AbstractDROP):
 # @details A standard file on a filesystem mounted to the deployment machine
 # @par EAGLE_START
 # @param category File
-# @param tag template
+# @param tag daliuge
 # @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
@@ -1289,6 +1512,7 @@ class FileDROP(DataDROP, PathBasedDrop):
     ``dirname``, ``$u`` is the drop's UID and ``$B`` is the base directory for
     this drop's session, namely ``/the/cwd/$session_id``.
     """
+
     # filepath = dlg_string_param("filepath", None)
     # dirname = dlg_string_param("dirname", None)
     delete_parent_directory = dlg_bool_param("delete_parent_directory", False)
@@ -1297,8 +1521,10 @@ class FileDROP(DataDROP, PathBasedDrop):
     def sanitize_paths(self, filepath, dirname):
 
         # first replace any ENV_VARS on the names
-        if filepath: filepath = os.path.expandvars(filepath)
-        if dirname: dirname = os.path.expandvars(dirname)
+        if filepath:
+            filepath = os.path.expandvars(filepath)
+        if dirname:
+            dirname = os.path.expandvars(dirname)
         # No filepath has been given, there's nothing to sanitize
         if not filepath:
             return filepath, dirname
@@ -1322,8 +1548,8 @@ class FileDROP(DataDROP, PathBasedDrop):
         """
         # filepath, dirpath the two pieces of information we offer users to tweak
         # These are very intermingled but are not exactly the same, see below
-        self.filepath = self.parameters.get('filepath', None)
-        self.dirname = self.parameters.get('dirname', None)
+        self.filepath = self.parameters.get("filepath", None)
+        self.dirname = self.parameters.get("dirname", None)
         # Duh!
         if isabs(self.filepath) and self.dirname:
             raise InvalidDropException(
@@ -1409,11 +1635,22 @@ class FileDROP(DataDROP, PathBasedDrop):
             self._size = 0
         # Signal our subscribers that the show is over
         self._fire("dropCompleted", status=DROPStates.COMPLETED)
+        self.completedrop()
 
     @property
     def dataURL(self) -> str:
         hostname = os.uname()[1]  # TODO: change when necessary
         return "file://" + hostname + self._path
+
+    # Override
+    def generate_reproduce_data(self):
+        from .droputils import allDropContents
+
+        try:
+            data = allDropContents(self, self.size)
+        except Exception:
+            data = b""
+        return {"data_hash": common_hash(data)}
 
 
 ##
@@ -1421,7 +1658,7 @@ class FileDROP(DataDROP, PathBasedDrop):
 # @details An archive on the Next Generation Archive System (NGAS).
 # @par EAGLE_START
 # @param category NGAS
-# @param tag template
+# @param tag daliuge
 # @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
@@ -1531,10 +1768,19 @@ class NgasDROP(DataDROP):
         logger.debug("Moving %r to COMPLETED", self)
         self.status = DROPStates.COMPLETED
         self._fire("dropCompleted", status=DROPStates.COMPLETED)
+        self.completedrop()
 
     @property
     def dataURL(self) -> str:
         return "ngas://%s:%d/%s" % (self.ngasSrv, self.ngasPort, self.fileId)
+
+    # Override
+    def generate_reproduce_data(self):
+        # TODO: This is a bad implementation. Will need to sort something better out
+        from .droputils import allDropContents
+
+        data = allDropContents(self, self.size)
+        return {"data_hash": common_hash(data)}
 
 
 ##
@@ -1542,7 +1788,7 @@ class NgasDROP(DataDROP):
 # @details In-memory storage of intermediate data products
 # @par EAGLE_START
 # @param category Memory
-# @param tag template
+# @param tag daliuge
 # @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
@@ -1563,7 +1809,11 @@ class InMemoryDROP(DataDROP):
         self._buf = io.BytesIO(*args)
 
     def getIO(self):
-        if hasattr(self, '_tp') and hasattr(self, '_sessID') and sys.version_info >= (3, 8):
+        if (
+            hasattr(self, "_tp")
+            and hasattr(self, "_sessID")
+            and sys.version_info >= (3, 8)
+        ):
             return SharedMemoryIO(self.oid, self._sessID)
         else:
             return MemoryIO(self._buf)
@@ -1572,6 +1822,13 @@ class InMemoryDROP(DataDROP):
     def dataURL(self) -> str:
         hostname = os.uname()[1]
         return "mem://%s/%d/%d" % (hostname, os.getpid(), id(self._buf))
+
+    # Override
+    def generate_reproduce_data(self):
+        from .droputils import allDropContents
+
+        data = allDropContents(self, self.size)
+        return {"data_hash": common_hash(data)}
 
 
 ##
@@ -1605,26 +1862,31 @@ class SharedMemoryDROP(DataDROP):
 
     def getIO(self):
         if sys.version_info >= (3, 8):
-            if hasattr(self, '_sessID'):
+            if hasattr(self, "_sessID"):
                 return SharedMemoryIO(self.oid, self._sessID)
             else:
                 # Using Drop without manager, just generate a random name.
-                sess_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+                sess_id = "".join(
+                    random.choices(string.ascii_uppercase + string.digits, k=10)
+                )
                 return SharedMemoryIO(self.oid, sess_id)
         else:
-            raise NotImplementedError("Shared memory is only available with Python >= 3.8")
+            raise NotImplementedError(
+                "Shared memory is only available with Python >= 3.8"
+            )
 
     @property
     def dataURL(self) -> str:
         hostname = os.uname()[1]
         return f"shmem://{hostname}/{os.getpid()}/{id(self._buf)}"
 
+
 ##
 # @brief NULL
 # @details A Drop not storing any data (useful for just passing on events)
 # @par EAGLE_START
 # @param category Memory
-# @param tag template
+# @param tag daliuge
 # @param[in] cparam/data_volume Data volume/0/Float/readonly/False//False/
 #     \~English This never stores any data
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
@@ -1647,6 +1909,7 @@ class EndDROP(NullDROP):
     """
     A DROP that ends the session when reached
     """
+
 
 ##
 # @brief RDBMS
@@ -1693,6 +1956,9 @@ class RDBMSDrop(DataDROP):
         # The table this Drop points at
         self._db_table = kwargs.pop("dbtable")
 
+        # Data store for reproducibility
+        self._querylog = []
+
     def getIO(self):
         # This Drop cannot be accessed directly
         return ErrorIO()
@@ -1737,13 +2003,7 @@ class RDBMSDrop(DataDROP):
 
                 # Build up SQL with optional columns and conditions
                 columns = columns or ("*",)
-                sql = [
-                    "SELECT %s FROM %s"
-                    % (
-                        ",".join(columns),
-                        self._db_table,
-                    )
-                ]
+                sql = ["SELECT %s FROM %s" % (",".join(columns), self._db_table)]
                 if condition:
                     sql.append(" WHERE ")
                     sql.append(condition)
@@ -1753,8 +2013,11 @@ class RDBMSDrop(DataDROP):
                 logger.debug("Executing SQL with parameters: %s / %r", sql, vals)
                 cur.execute(sql, vals)
                 if cur.description:
-                    return cur.fetchall()
-                return []
+                    ret = cur.fetchall()
+                else:
+                    ret = []
+                self._querylog.append((sql, vals, ret))
+                return ret
 
     @property
     def dataURL(self) -> str:
@@ -1763,6 +2026,10 @@ class RDBMSDrop(DataDROP):
             self._db_table,
             self._db_params,
         )
+
+    # Override
+    def generate_reproduce_data(self):
+        return {"query_log": self._querylog}
 
 
 class ContainerDROP(DataDROP):
@@ -1880,7 +2147,7 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
 # @details An object in a Apache Arrow Plasma in-memory object store
 # @par EAGLE_START
 # @param category Plasma
-# @param tag template
+# @param tag daliuge
 # @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
@@ -1905,15 +2172,19 @@ class PlasmaDROP(DataDROP):
         super().initialize(**kwargs)
         self.plasma_path = os.path.expandvars(self.plasma_path)
         if self.object_id is None:
-            self.object_id = np.random.bytes(20) if len(self.uid) != 20 else self.uid.encode('ascii')
+            self.object_id = (
+                np.random.bytes(20) if len(self.uid) != 20 else self.uid.encode("ascii")
+            )
         elif isinstance(self.object_id, str):
-            self.object_id = self.object_id.encode('ascii')
+            self.object_id = self.object_id.encode("ascii")
 
     def getIO(self):
-        return PlasmaIO(plasma.ObjectID(self.object_id),
-                                        self.plasma_path,
-                                        expected_size=self._expectedSize,
-                                        use_staging=self.use_staging)
+        return PlasmaIO(
+            plasma.ObjectID(self.object_id),
+            self.plasma_path,
+            expected_size=self._expectedSize,
+            use_staging=self.use_staging,
+        )
 
     @property
     def dataURL(self) -> str:
@@ -1926,7 +2197,7 @@ class PlasmaDROP(DataDROP):
 # to a Plasma in-memory object store
 # @par EAGLE_START
 # @param category PlasmaFlight
-# @param tag template
+# @param tag daliuge
 # @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
@@ -1952,9 +2223,11 @@ class PlasmaFlightDROP(DataDROP):
         super().initialize(**kwargs)
         self.plasma_path = os.path.expandvars(self.plasma_path)
         if self.object_id is None:
-            self.object_id = np.random.bytes(20) if len(self.uid) != 20 else self.uid.encode('ascii')
+            self.object_id = (
+                np.random.bytes(20) if len(self.uid) != 20 else self.uid.encode("ascii")
+            )
         elif isinstance(self.object_id, str):
-            self.object_id = self.object_id.encode('ascii')
+            self.object_id = self.object_id.encode("ascii")
 
     def getIO(self):
         return PlasmaFlightIO(
@@ -1962,7 +2235,7 @@ class PlasmaFlightDROP(DataDROP):
             self.plasma_path,
             flight_path=self.flight_path,
             expected_size=self._expectedSize,
-            use_staging=self.use_staging
+            use_staging=self.use_staging,
         )
 
     @property
@@ -2127,6 +2400,7 @@ class AppDROP(ContainerDROP):
             self.status = DROPStates.COMPLETED
         logger.debug("Moving %r to %s", self, "FINISHED" if not is_error else "ERROR")
         self._fire("producerFinished", status=self.status, execStatus=self.execStatus)
+        self.completedrop()
 
     def cancel(self):
         """Moves this application drop to its CANCELLED state"""
@@ -2311,7 +2585,7 @@ class InputFiredAppDROP(AppDROP):
         self.execStatus = AppDROPStates.RUNNING
         while tries < self.n_tries:
             try:
-                if hasattr(self, '_tp'):
+                if hasattr(self, "_tp"):
                     proc = DlgProcess(target=self.run, daemon=True)
                     proc.start()
                     proc.join()
@@ -2361,6 +2635,7 @@ class BarrierAppDROP(InputFiredAppDROP):
         # Blindly override existing value if any
         kwargs["n_effective_inputs"] = -1
         super().initialize(**kwargs)
+
 
 ##
 # @brief Branch
