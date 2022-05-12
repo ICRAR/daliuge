@@ -20,7 +20,6 @@
 #    MA 02111-1307  USA
 #
 """Common utilities used by daliuge packages"""
-from numpy import isin
 from .osutils import terminate_or_kill, wait_or_kill
 from .network import check_port, connect_to, portIsClosed, portIsOpen, write_to
 from .streams import ZlibCompressedStream, JSONStream
@@ -40,7 +39,7 @@ class Categories:
     PLASMA = "Plasma"
     PLASMAFLIGHT = "PlasmaFlight"
     PARSET = "ParameterSet"
-    ENVIRONMENTVARS = "EnvironmentVars"
+    ENVIRONMENTVARS = "EnvironmentVariables"
 
     MKN = "MKN"
     SCATTER = "Scatter"
@@ -75,7 +74,7 @@ STORAGE_TYPES = {
     Categories.PLASMA,
     Categories.PLASMAFLIGHT,
     Categories.PARSET,
-    Categories.ENVIRONMENTVARS
+    Categories.ENVIRONMENTVARS,
 }
 APP_DROP_TYPES = [
     Categories.COMPONENT,
@@ -130,7 +129,7 @@ class dropdict(dict):
         if key not in self:
             self[key] = []
         if other["oid"] not in self[key]:
-            append = {other["oid"]:IdText} if IdText else other["oid"]
+            append = {other["oid"]: IdText} if IdText else other["oid"]
             self[key].append(append)
 
     def addConsumer(self, other, IdText=None):
@@ -151,21 +150,22 @@ class dropdict(dict):
     def addProducer(self, other, IdText=None):
         self._addSomething(other, "producers", IdText=IdText)
 
+
 def _sanitize_links(links):
     """
     Links can now be dictionaries, but we only need
     the key.
     """
-    if isinstance(links,list):
+    if isinstance(links, list):
         nlinks = []
         for l in links:
-            if isinstance(l,dict): # could be a list of dicts
+            if isinstance(l, dict):  # could be a list of dicts
                 nlinks.extend(list(l.keys()))
             else:
-                nlinks.extend(l) if isinstance(l,list) else nlinks.append(l)
+                nlinks.extend(l) if isinstance(l, list) else nlinks.append(l)
         return nlinks
     elif isinstance(links, dict):
-        return list(links.keys()) if isinstance(links,dict) else links
+        return list(links.keys()) if isinstance(links, dict) else links
 
 
 def get_roots(pg_spec):

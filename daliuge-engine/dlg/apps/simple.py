@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 """Applications used as examples, for testing, or in simple situations"""
+import _pickle
 from numbers import Number
 import pickle
 import random
@@ -42,12 +43,14 @@ from dlg.meta import (
     dlg_component,
     dlg_batch_input,
     dlg_batch_output,
-    dlg_streaming_input
+    dlg_streaming_input,
 )
 from dlg.exceptions import DaliugeException
 from dlg.apps.pyfunc import serialize_data, deserialize_data
 
+
 logger = logging.getLogger(__name__)
+
 
 class NullBarrierApp(BarrierAppDROP):
     component_meta = dlg_component(
@@ -63,6 +66,25 @@ class NullBarrierApp(BarrierAppDROP):
     def run(self):
         pass
 
+##
+# @brief PythonApp
+# @details A placeholder APP to aid construction of new applications.
+# This is mainly useful (and used) when starting a new workflow from scratch.
+# @par EAGLE_START
+# @param category PythonApp
+# @param tag template
+# @param[in] cparam/appclass Application Class//String/readonly/False//False/
+#     \~English Application class
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
+#     \~English Number of cores used
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
+#     \~English Estimated execution time
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
+#     \~English Is this node the start of a group?
+# @par EAGLE_END
+class PythonApp(BarrierAppDROP):
+    """A placeholder BarrierAppDrop that just aids the generation of the palette component"""
+    pass
 
 ##
 # @brief SleepApp
@@ -71,21 +93,15 @@ class NullBarrierApp(BarrierAppDROP):
 # without executing real algorithms. Very useful for debugging.
 # @par EAGLE_START
 # @param category PythonApp
-# @param tag daliuge
+# @param tag template
 # @param[in] aparam/sleepTime Sleep Time/5/Integer/readwrite/False//False/
 #     \~English The number of seconds to sleep
 # @param[in] cparam/appclass Application Class/dlg.apps.simple.SleepApp/String/readonly/False//False/
 #     \~English Application class
 # @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
 #     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
-#     \~English Number of cores used
 # @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
 #     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
-#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
-#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
 # @par EAGLE_END
 class SleepApp(BarrierAppDROP):
     """A BarrierAppDrop that sleeps the specified amount of time (0 by default)"""
@@ -418,6 +434,7 @@ class GenericNpyGatherApp(BarrierAppDROP):
     function:  string <'sum'|'prod'|'min'|'max'|'add'|'multiply'|'maximum'|'minimum'>.
 
     """
+
     component_meta = dlg_component(
         "GenericNpyGatherApp",
         "Generic Npy Gather App.",
@@ -431,16 +448,15 @@ class GenericNpyGatherApp(BarrierAppDROP):
     # gather operation combines ndarrays and retains dimensionality
     functions = {
         # reduce and gather (output dimension is reduced)
-        "sum": "add",        # sum reduction of inputs along an axis first then gathers across drops
+        "sum": "add",  # sum reduction of inputs along an axis first then gathers across drops
         "prod": "multiply",  # prod reduction of inputs along an axis first then gathers across drops
-        "max": "maximum",    # max reduction of input along an axis first then gathers across drops
-        "min": "minimum",    # min reduction of input along an axis first then gathers across drops
-
+        "max": "maximum",  # max reduction of input along an axis first then gathers across drops
+        "min": "minimum",  # min reduction of input along an axis first then gathers across drops
         # gather only
-        "add": None,         # elementwise addition of inputs, ndarrays must be of same shape
-        "multiply": None,    # elementwise multiplication of inputs, ndarrays must be of same shape
-        "maximum": None,     # elementwise maximums of inputs, ndarrays must be of same shape
-        "minimum": None      # elementwise minimums of inputs, ndarrays must be of same shape
+        "add": None,  # elementwise addition of inputs, ndarrays must be of same shape
+        "multiply": None,  # elementwise multiplication of inputs, ndarrays must be of same shape
+        "maximum": None,  # elementwise maximums of inputs, ndarrays must be of same shape
+        "minimum": None,  # elementwise minimums of inputs, ndarrays must be of same shape
     }
     function: str = dlg_string_param("function", "sum")  # type: ignore
     reduce_axes: list = dlg_list_param("reduce_axes", "None")  # type: ignore
@@ -453,9 +469,11 @@ class GenericNpyGatherApp(BarrierAppDROP):
         if self.function not in self.functions:
             raise Exception(f"Function {self.function} not supported by {self}")
 
-        result = self.reduce_gather_inputs()\
-            if self.functions[self.function] is not None\
+        result = (
+            self.reduce_gather_inputs()
+            if self.functions[self.function] is not None
             else self.gather_inputs()
+        )
 
         for o in self.outputs:
             droputils.save_numpy(o, result)
@@ -468,9 +486,11 @@ class GenericNpyGatherApp(BarrierAppDROP):
         for input in self.inputs:
             data = droputils.load_numpy(input)
             # skip gather for the first input
-            result = reduce(data, axis=self.reduce_axes)\
-                if result is None\
+            result = (
+                reduce(data, axis=self.reduce_axes)
+                if result is None
                 else gather(result, reduce(data, axis=self.reduce_axes))
+            )
         return result
 
     def gather_inputs(self):
@@ -537,9 +557,11 @@ class HelloWorldApp(BarrierAppDROP):
         elif len(ins) != 1:
             raise Exception("Only one input expected for %r" % self)
         else:  # the input is expected to be a vector. We'll use the first element
-            self.greeting = "Hello %s" % str(
-                pickle.loads(droputils.allDropContents(ins[0]))[0]
-            )
+            try:
+                phrase = str(pickle.loads(droputils.allDropContents(ins[0]))[0])
+            except _pickle.UnpicklingError:
+                phrase = str(droputils.allDropContents(ins[0]), encoding="utf-8")
+            self.greeting = f"Hello {phrase}"
 
         outs = self.outputs
         if len(outs) < 1:
@@ -727,13 +749,15 @@ class GenericNpyScatterApp(BarrierAppDROP):
 
     def run(self):
         if len(self.inputs) * self.num_of_copies != len(self.outputs):
-            raise DaliugeException(\
+            raise DaliugeException(
                 f"expected {len(self.inputs) * self.num_of_copies} outputs,\
-                 got {len(self.outputs)}")
+                 got {len(self.outputs)}"
+            )
         if len(self.inputs) != len(self.scatter_axes):
-            raise DaliugeException(\
+            raise DaliugeException(
                 f"expected {len(self.inputs)} axes,\
-                 got {len(self.scatter_axes)}, {self.scatter_axes}")
+                 got {len(self.scatter_axes)}, {self.scatter_axes}"
+            )
 
         # split it as many times as we have outputs
         self.num_of_copies = self.num_of_copies
@@ -741,7 +765,9 @@ class GenericNpyScatterApp(BarrierAppDROP):
         for in_index in range(len(self.inputs)):
             nObj = droputils.load_numpy(self.inputs[in_index])
             try:
-                result = np.array_split(nObj, self.num_of_copies, axis=self.scatter_axes[in_index])
+                result = np.array_split(
+                    nObj, self.num_of_copies, axis=self.scatter_axes[in_index]
+                )
             except IndexError as err:
                 raise err
             for split_index in range(self.num_of_copies):
@@ -799,13 +825,17 @@ class ListAppendThrashingApp(BarrierAppDROP):
 
     size:     int, number of array elements
     """
-    compontent_meta = dlg_component('ListAppendThrashingApp', 'List Append Thrashing',
-                                    [dlg_batch_input('binary/*', [])],
-                                    [dlg_batch_output('binary/*', [])],
-                                    [dlg_streaming_input('binary/*')])
+
+    compontent_meta = dlg_component(
+        "ListAppendThrashingApp",
+        "List Append Thrashing",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
     def initialize(self, **kwargs):
-        self.size = self._getArg(kwargs, 'size', 100)
+        self.size = self._getArg(kwargs, "size", 100)
         self.marray = []
         super(ListAppendThrashingApp, self).initialize(**kwargs)
 
@@ -813,8 +843,7 @@ class ListAppendThrashingApp(BarrierAppDROP):
         # At least one output should have been added
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                'At least one output should have been added to %r' % self)
+            raise Exception("At least one output should have been added to %r" % self)
         self.marray = self.generateArray()
         for o in outs:
             d = pickle.dumps(self.marray)
