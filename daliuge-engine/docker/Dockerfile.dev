@@ -6,7 +6,7 @@ FROM icrar/daliuge-common:${VCS_TAG:-latest}
 #     gcc g++ gdb casacore-dev clang-tidy-10 clang-tidy libboost1.71-all-dev libgsl-dev
 
 COPY / /daliuge
-RUN . /dlg/bin/activate && pip install wheel && cd /daliuge && \
+RUN . /dlg/bin/activate && pip install --upgrade pip && pip install wheel && cd /daliuge && \
     pip install . 
 
 EXPOSE 9000

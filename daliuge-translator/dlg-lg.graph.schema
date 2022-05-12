@@ -268,8 +268,27 @@
                                 "value": {
                                     "type": ["string","boolean","number", "null"]
                                 },
+                                "defaultValue": {
+                                    "type": ["string","boolean","number", "null"]
+                                },
                                 "description": {
                                     "type": "string"
+                                },
+                                "readonly": {
+                                    "type": "boolean"
+                                },
+                                "type": {
+                                    "type": "string"
+                                },
+                                "precious": {
+                                    "type": "boolean"
+                                },
+                                "options": {
+                                    "type": "array"
+                                },
+                                "positional": {
+                                    "type": "boolean",
+                                    "default": false
                                 }
                             },
                             "required": [
@@ -294,8 +313,27 @@
                                 "value": {
                                     "type": ["string","boolean","number", "null"]
                                 },
+                                "defaultValue": {
+                                    "type": ["string","boolean","number", "null"]
+                                },
                                 "description": {
                                     "type": "string"
+                                },
+                                "readonly": {
+                                    "type": "boolean"
+                                },
+                                "type": {
+                                    "type": "string"
+                                },
+                                "precious": {
+                                    "type": "boolean"
+                                },
+                                "options": {
+                                    "type": "array"
+                                },
+                                "positional": {
+                                    "type": "boolean",
+                                    "default": false
                                 }
                             },
                             "required": [

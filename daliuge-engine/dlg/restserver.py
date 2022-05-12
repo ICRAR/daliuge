@@ -23,7 +23,6 @@ import logging
 
 import bottle
 
-
 from .restutils import RestServerWSGIServer
 
 logger = logging.getLogger(__name__)

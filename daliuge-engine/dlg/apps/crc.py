@@ -25,6 +25,8 @@ Module containing an example application that calculates a CRC value
 
 from ..drop import BarrierAppDROP, AppDROP
 from dlg.ddap_protocol import AppDROPStates
+
+from ..drop import BarrierAppDROP, AppDROP
 from ..meta import dlg_component, dlg_batch_input, dlg_batch_output, dlg_streaming_input
 
 try:
