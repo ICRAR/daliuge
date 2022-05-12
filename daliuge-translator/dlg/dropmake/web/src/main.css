@@ -77,13 +77,6 @@
   box-shadow: none !important;
 }
 
-.tooltip {
-    position: relative;
-    display: inline-block;
-    font-size: 16px;
-    opacity: 100%;
-}
-
 .inactiveLink {
     pointer-events: none;
     cursor: default;
@@ -94,7 +87,7 @@
   display: inline-block;
   font-size: 16px;
   opacity: 100%;
-  z-index: 10000 !important;
+  z-index: auto;
 }
 
 .tooltipRight:before {
@@ -117,6 +110,7 @@
   background:rgba(0,0,0,0.94);
   color: #fff;
   text-align:center;
+  z-index: 1000 !important;
 
   visibility:hidden;
   transition: 0s visibility;
@@ -145,6 +139,9 @@
 
   visibility:hidden;
   transition: 0s visibility;
+  width: 20px;
+  z-index: 100;
+  height: 20px;
 }
 
 .tooltipRight:hover:before, .tooltipRight:hover:after {
@@ -173,6 +170,7 @@
   background:rgba(0,0,0,0.94);
   color: #fff;
   text-align:center;
+  z-index: 1000 !important;
 
   visibility:hidden;
   transition: 0s visibility;
@@ -202,6 +200,9 @@
 
   visibility:hidden;
   transition: 0s visibility;
+  width: 20px;
+  z-index: 100;
+  height: 20px;
 }
 
 .tooltipTop:hover:before, .tooltipTop:hover:after {
@@ -229,6 +230,7 @@
   background:rgba(0,0,0,0.94);
   color: #fff;
   text-align:center;
+  z-index: 1000 !important;
 
   visibility:hidden;
   transition: 0s visibility;
@@ -257,6 +259,9 @@
 
   visibility:hidden;
   transition: 0s visibility;
+  width: 20px;
+  z-index: 100;
+  height: 20px;
 }
 
 .tooltipLeft:hover:before, .tooltipLeft:hover:after {
@@ -275,7 +280,7 @@
 
   /* move to bottom */
   top:100%;
-  margin-top:15px; /* and add a small top margin */
+  margin-top:11px; /* and add a small top margin */
 
   /* basic styles */
   width:200px;
@@ -284,6 +289,7 @@
   background:rgba(0,0,0,0.94);
   color: #fff;
   text-align:center;
+  z-index: 1000 !important;
 
   visibility:hidden;
   transition: 0s visibility;
@@ -300,7 +306,7 @@
 
   /* position tooltip correctly */
   top:100%;
-  margin-top:-4px;
+  margin-top:-8px;
 
   /* vertically center */
   left: 50%;
@@ -313,6 +319,9 @@
 
   visibility:hidden;
   transition: 0s visibility;
+  width: 20px;
+  z-index: 100;
+  height: 20px;
 }
 
 .tooltipBottom:hover:before, .tooltipBottom:hover:after {
@@ -331,7 +340,7 @@
 
   /* move to bottom */
   top:100%;
-  margin-top:15px; /* and add a small top margin */
+  margin-top:11px; /* and add a small top margin */
 
   /* basic styles */
   width:200px;
@@ -340,6 +349,7 @@
   background:rgba(0,0,0,0.94);
   color: #fff;
   text-align:center;
+  z-index: 1000 !important;
 
   visibility:hidden;
   transition: 0s visibility;
@@ -356,7 +366,7 @@
 
   /* position tooltip correctly */
   top:100%;
-  margin-top:-4px;
+  margin-top:-8px;
 
   /* vertically center */
   left: 50%;
@@ -369,6 +379,9 @@
 
   visibility:hidden;
   transition: 0s visibility;
+  width: 20px;
+  z-index: 100;
+  height: 20px;
 }
 
 .tooltipBottomLeft:hover:before, .tooltipBottomLeft:hover:after {
@@ -627,6 +640,18 @@
 
 #navbarExportDropdown{
   color:white;
+}
+
+#settingsModal .settingsInputTooltip{
+  display: flex;
+  padding: 0px;
+}
+
+#settingsModal .settingsInputTooltip input, #settingsModal .settingsInputTooltip select{
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
 }
 
 #settingsModal .modal-header{
