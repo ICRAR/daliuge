@@ -33,6 +33,11 @@ $(document).ready(function () {
     })
 });
 
+function openSettingsModal(){
+    //needed for the dropdown option to open the settings modal, the pure bootstrap method used on the settings gear button proved inconsistent
+    $('#settingsModal').modal("show")
+}
+
 function initiateDeploy(method, selected, name){
     if (selected === false){
         changeSelectedDeployMethod(name)
@@ -225,15 +230,15 @@ function fillOutSettings() {
         }
 
         var deplpoyMethodRow = '<div class="input-group">'+
-        '<input type="text" placeholder="Deployment Name" class="form-control deployMethodName" value="'+element.name+'">'+
-        '<input type="text" placeholder="Destination Url" class="form-control deployMethodUrl" value="'+element.url+'">'+
-        '<select class="form-control deployMethodMethod" name="Deploy Method">'+
+        '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class="deployMethodName" value="'+element.name+'"></div>'+
+        '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" placeholder="Destination Url" class="deployMethodUrl" value="'+element.url+'"></div>'+
+        '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod">'+
             directOption+
             helmOption+
             restOption+
-        '</select>'+
+        '</select></div>'+
         '<input type="text" class="form-control deployMethodActive" value="'+element.active+'">'+
-        '<button class="btn btn-secondary btn-sm" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>'+
+        '<button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>'+
         '</div>'
         deployMethodManagerDiv.append(deplpoyMethodRow)
     });
@@ -247,15 +252,15 @@ function addDeployMethod(){
     var restOption =  '<option value="rest">Rest</option>'
 
     var deplpoyMethodRow = '<div class="input-group">'+
-    '<input type="text" placeholder="Deployment Name" class="form-control deployMethodName" value="">'+
-    '<input type="text" placeholder="Destination Url" class="form-control deployMethodUrl" value="">'+
-    '<select class="form-control deployMethodMethod" name="Deploy Method">'+
+    '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class=" deployMethodName" value=""></div>'+
+    '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" placeholder="Destination Url" class="deployMethodUrl"value=""></div>'+
+    '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod" name="Deploy Method">'+
         directOption+
         helmOption+
         restOption+
-    '</select>'+
+    '</select></div>'+
     '<input type="text" class="form-control deployMethodActive" value="false">'+
-    '<button class="btn btn-secondary btn-sm" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>'+
+    '<button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>'+
     '</div>'
     deployMethodManagerDiv.append(deplpoyMethodRow)
 }
