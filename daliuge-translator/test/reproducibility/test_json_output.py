@@ -1,6 +1,6 @@
 #
 #    ICRAR - International Centre for Radio Astronomy Research
-#    (c) UWA - The University of Western Australia, 2016
+#    (c) UWA - The University of Western Australia, 2017
 #    Copyright by UWA (in the framework of the ICRAR)
 #    All rights reserved
 #
@@ -20,17 +20,22 @@
 #    MA 02111-1307  USA
 #
 """
-Fabric scripts for NGAS deployment and related activities.
-
-For a detailed description of a task run "fab -d <task>"
-
-End users will likely use the hl.operations_deploy or hl.user_deploy tasks,
-Other tasks, including lower-level tasks, can also be invoked.
+Tests the ability to serialize translator outputs with JSON, including reproducibility data.
 """
-from . import APPspecific
-from fabfileTemplate import APPcommon
-from fabfileTemplate import aws
-from fabfileTemplate import hl
-from fabfileTemplate import pkgmgr
-from fabfileTemplate import system
-from fabfileTemplate import utils
+
+import json
+import unittest
+from dlg.common.reproducibility.constants import ReproducibilityFlags
+
+
+class TestJSONSerialize(unittest.TestCase):
+    """
+    Attempts to unroll a graph then serialise it with json
+    """
+
+    def test_json_dump(self):
+        test_dict = {"rmode": ReproducibilityFlags.RERUN}
+        try:
+            json.dumps(test_dict)
+        except TypeError:
+            self.fail()

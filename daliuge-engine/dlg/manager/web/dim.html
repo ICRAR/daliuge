@@ -31,78 +31,91 @@
 		</button>
 		<div class="collapse navbar-collapse" id="navbarNav">
 			<ul class="nav navbar-nav navbar-center">
-				
-			</ul>
+
+    </ul>
 			<ul class="nav navbar-nav  ml-auto">
 			</ul>
 		</div>
 	</nav>
 	<div id="graphNameWrapper">
-		<li id="islandDisplay"></li>
-		<li id="nodeDisplay"></li>
-	</div>
+        <liid="islandDisplay"></li>
+        <li id="nodeDisplay"></li>
+    </div>
 	<div id="dimContentWrapper" class="container">
-		<div id="sessions">
-			<h4>Sessions</h4>
-			<table id="sessionsTable" class="table table-striped">
-				<thead>
-					<tr>
-						<th>Session ID</th>
-						<th>State</th>
-						<th># Drops</th>
-						<th>Details</th>
-						<th></th>
+    <div id="sessions">
+        <h4>Sessions</h4>
+        <table class="table table-striped" id="sessionsTable">
+            <thead>
+            <tr>
+                <th>Session ID</th>
+                <th>State</th>
+                <th># Drops</th>
+                <th>Details</th>
+            <th></th>
 					</tr>
-				</thead>
-				<tbody>
-				</tbody>
-			</table>
-			<button id="addSessionBtn"  type="button" class="btn btn-secondary"><span class="fa fa-plus"></span> Add Session</button>
-			<button id="refreshSessionListBtn" type="button" class="btn btn-secondary"><span class="fa fa-refresh"></span> Refresh</button>
-		</div>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <button class="btn btn-secondary" id="addSessionBtn" type="button"><span class="fa fa-plus"></span>
+            Add Session
+        </button>
+        <button class="btn btn-secondary" id="refreshSessionListBtn" type="button"><span
+                class="fa fa-refresh"></span> Refresh
+        </button>
+    </div>
 
-		<div id="nodes">
-			<h4>Nodes</h4>
-				<table id="nodesTable" class="table table-striped">
-					<thead>
-						<tr>
-							<th>Node</th>
-							<th>Details</th>
-						</tr>
-					</thead>
-					<tbody></tbody>
-				</table>
-			<button id="refreshNodeListBtn" type="button" class="btn btn-secondary"><span class="fa fa-refresh"></span> Refresh</button>
-		</div>
-	</div>
+    <div id="nodes">
+        <h4>Nodes</h4>
+        <table class="table table-striped" id="nodesTable">
+            <thead>
+            <tr>
+                <th>Node</th>
+                <th>Details</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <button class="btn btn-secondary" id="refreshNodeListBtn" type="button"><span
+                class="fa fa-refresh"></span> Refresh
+        </button>
+    </div>
+
+</div>
 
 	<script type="text/javascript">
 
-	var selectedNode = '{{selectedNode}}';
-	if( selectedNode == '' ) {
-		selectedNode = null;
-	}
-	var serverUrl = '{{serverUrl}}';
-	var dmPort = {{dmPort}};
-	var nodes = {{!nodes}};
-	var refreshSessionListBtn = d3.select('#refreshSessionListBtn');
-	var addSessionBtn = d3.select('#addSessionBtn');
-	var sessionsTbodyEl = d3.select('#sessionsTable tbody');
+    var selectedNode = '{{selectedNode}}';
+    if (selectedNode == '') {
+        selectedNode = null;
+    }
+    var serverUrl = '{{serverUrl}}';
+    var dmPort = {
+    {
+        dmPort
+    }
+    }
 
-	var serverIP = serverUrl.split("//").pop().split(":").shift();
+    var nodes = {
+    {
+        !nodes
+    }
+    }
 
+    var refreshSessionListBtn = d3.select('#refreshSessionListBtn');
+    var addSessionBtn = d3.select('#addSessionBtn');
+    var sessionsTbodyEl = d3.select('#sessionsTable tbody');
 
-	// Show/hide parts of the UI depending on whether we're zooming in or not
-	// into a specific node
-	if( selectedNode ) {
-		d3.select('#nodes').remove();
-		d3.select('#islandDisplay').html("<a href="+serverUrl+">DIM: " + serverIP+"</a>");
-		d3.select('#nodeDisplay').text("/ Node: " + selectedNode);
-	}
-	else {
-		d3.select('#zoom-notice').remove();
-		d3.select('#nodeDisplay').remove();
-		d3.select('#islandDisplay').text("DIM: " + serverIP);
+    var serverIP = serverUrl.split("//").pop().split(":").shift();// Show/hide parts of the UI depending on whether we're zooming in or not
+    // into a specific node
+    if (selectedNode) {
+        d3.select('#nodes').remove();
+        d3.select('#islandDisplay').html("<a href="+serverUrl+">DIM: " + serverIP+"</a>");
+		d3.select('#nodeDisplay').text("/Node: " + selectedNode);
+    } else {
+        d3.select('#zoom-notice').remove();
+        d3.select('#nodeDisplay').remove();
+    d3.select('#islandDisplay').text("DIM: " + serverIP);
 	}
 
 	// Animated filling of DropManagers and Nodes table
@@ -123,21 +136,24 @@
 		fillTable('#nodesTable tbody', nodes, function(n) { return '?node=' + n; }, function(n){return "http://"+n+":8000"+"?dim_url="+serverUrl});
 	}
 
-	// Listeners for the two session-related buttons
-	if( !selectedNode ) {
-		addSessionBtn.on('click', function(){ promptNewSession(serverUrl, sessionsTbodyEl, refreshSessionListBtn); } );
-	}
-	else {
-		addSessionBtn.remove()
-	}
-	refreshSessionListBtn.on('click', function(){ loadSessions(serverUrl, sessionsTbodyEl, refreshSessionListBtn, selectedNode); } );
+    // Listeners for the two session-related buttons
+    if (!selectedNode) {
+        addSessionBtn.on('click', function () {
+            promptNewSession(serverUrl, sessionsTbodyEl, refreshSessionListBtn);
+        });
+    } else {
+        addSessionBtn.remove()
+    }
+    refreshSessionListBtn.on('click', function () {
+        loadSessions(serverUrl, sessionsTbodyEl, refreshSessionListBtn, selectedNode);
+    });
 
-	//Start loading the list of sessions periodically
-	var loadSessionTimer = d3.timer(function(){
-		loadSessions(serverUrl, sessionsTbodyEl, refreshSessionListBtn, selectedNode, 5000);
-		loadSessionTimer.stop()
+    //Start loading the list of sessions periodically
+    var loadSessionTimer =d3.timer(function () {
+        loadSessions(serverUrl, sessionsTbodyEl, refreshSessionListBtn, selectedNode, 5000);
+        loadSessionTimer.stop()
 		return;
-	});
+    });
 
 	</script>
 </body>

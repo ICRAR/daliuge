@@ -25,10 +25,8 @@ import shutil
 import tempfile
 import urllib.parse
 import unittest
-import json
 
 import pkg_resources
-
 from dlg import common
 from dlg.common import tool
 from dlg.restutils import RestClient, RestClientException
@@ -92,6 +90,7 @@ class TestLGWeb(unittest.TestCase):
         form_data = {
             "lg_name": "new.graph",
             "lg_content": '{"id": 1, "name": "example"}',
+            "rmode": "1",
         }
         self.assertRaises(RestClientException, c._post_form, "/jsonbody", form_data)
 
@@ -110,6 +109,7 @@ class TestLGWeb(unittest.TestCase):
             self.assertIn("name", new)
             self.assertEqual(1, new["id"])
             self.assertEqual("example", new["name"])
+            self.assertEqual("1", new["reprodata"]["rmode"])
         finally:
             shutil.move(copy_fname, original_fname)
 

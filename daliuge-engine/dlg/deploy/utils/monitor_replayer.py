@@ -32,14 +32,21 @@ with Daliuge. To run this module, please
 this module also depends on networkx (included in Daliuge), which produces the
 edge list that becomes input for gephi vis tool.
 """
-import pygraphviz as pgv
-import networkx as nx
-import json, os, logging, optparse, sys, commands, filecmp
+import filecmp
+import json
+import logging
+import optparse
+import os
+import sqlite3 as dbdrv
+import sys
 from collections import defaultdict
 from datetime import datetime as dt
 from xml.etree.ElementTree import ElementTree
-import sqlite3 as dbdrv
+
+import commands
+import networkx as nx
 import numpy as np
+import pygraphviz as pgv
 
 logger = logging.getLogger(__name__)
 
