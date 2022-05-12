@@ -44,12 +44,15 @@ def get_pg(opts, num_node_managers, num_data_island_managers):
 
     if opts.logical_graph:
         unrolled_graph = pg_generator.unroll(opts.logical_graph)
-        pgt = pg_generator.partition(unrolled_graph, algo='metis',
-                                     num_partitions=num_node_managers,
-                                     num_islands=num_data_island_managers)
+        pgt = pg_generator.partition(
+            unrolled_graph,
+            algo="metis",
+            num_partitions=num_node_managers,
+            num_islands=num_data_island_managers,
+        )
         del unrolled_graph
     else:
-        with open(opts.physical_graph, 'r', encoding='utf-8') as pg_file:
+        with open(opts.physical_graph, "r", encoding="utf-8") as pg_file:
             pgt = json.load(pg_file)
     return pgt
 
@@ -57,12 +60,9 @@ def get_pg(opts, num_node_managers, num_data_island_managers):
 def start_helm(physical_graph_template, num_nodes: int, deploy_dir: str):
     # TODO: Dynamic helm chart logging dir
     pgt = json.loads(physical_graph_template)
-    pgt = pg_generator.partition(pgt, algo='metis', num_partitons=1,
-                                 num_islands=1)
+    pgt = pg_generator.partition(pgt, algo="metis", num_partitons=1, num_islands=1)
     helm_client = HelmClient(
-        deploy_name='daliuge-daemon',
-        chart_name='daliuge-daemon',
-        deploy_dir=deploy_dir
+        deploy_name="daliuge-daemon", chart_name="daliuge-daemon", deploy_dir=deploy_dir
     )
     helm_client.create_helm_chart(json.dumps(pgt), co_host=True)
     try:
@@ -80,13 +80,13 @@ def start_helm(physical_graph_template, num_nodes: int, deploy_dir: str):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-L',
-        '--logical-graph',
+        "-L",
+        "--logical-graph",
         action="store",
         type=str,
         dest="logical_graph",
         help="The filename of the logical graph to deploy",
-        default=None
+        default=None,
     )
     parser.add_argument(
         "-P",
@@ -104,7 +104,7 @@ def main():
         type=int,
         dest="num_nodes",
         help="The number of compute nodes you would like to try and deploy",
-        default=1
+        default=1,
     )
 
     options = parser.parse_args()
@@ -123,8 +123,8 @@ def main():
     # TODO: dynamic deployment directory.
     with tempfile.TemporaryDirectory() as tdir:
         helm_client = HelmClient(
-            deploy_name='daliuge-daemon',
-            chart_name='daliuge-daemon',
+            deploy_name="daliuge-daemon",
+            chart_name="daliuge-daemon",
             deploy_dir=tdir,
         )
         helm_client.create_helm_chart(json.dumps(physical_graph))
