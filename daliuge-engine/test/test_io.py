@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 import unittest
+
 from dlg.io import NullIO, OpenMode
 
 

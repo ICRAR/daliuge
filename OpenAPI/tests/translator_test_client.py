@@ -2,7 +2,6 @@ import sys
 
 import translator_client as tc
 
-
 translator_config = tc.Configuration()
 translator_config.host = "127.0.0.1:8084"
 

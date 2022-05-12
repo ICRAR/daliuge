@@ -41,7 +41,7 @@ class TestSharedMemoryManager(unittest.TestCase):
         SMM should successfully register a session with no drops
         """
         manager = DlgSharedMemoryManager()
-        manager.register_session('session1')
+        manager.register_session("session1")
         self.assertTrue(len(manager.drop_names), 1)
         manager.shutdown_all()
 
@@ -50,9 +50,9 @@ class TestSharedMemoryManager(unittest.TestCase):
         SMM should register a drop with a pre-existing session
         """
         manager = DlgSharedMemoryManager()
-        manager.register_session('session1')
-        manager.register_drop('A', 'session1')
-        self.assertTrue(len(manager.drop_names['session1']), 1)
+        manager.register_session("session1")
+        manager.register_drop("A", "session1")
+        self.assertTrue(len(manager.drop_names["session1"]), 1)
         manager.shutdown_all()
 
     def test_register_drop_nonsession(self):
@@ -60,8 +60,8 @@ class TestSharedMemoryManager(unittest.TestCase):
         SMM should register the session for a drop if it did not already exist
         """
         manager = DlgSharedMemoryManager()
-        manager.register_drop('A', 'session1')
-        self.assertTrue((len(manager.drop_names['session1']), 1))
+        manager.register_drop("A", "session1")
+        self.assertTrue((len(manager.drop_names["session1"]), 1))
         manager.shutdown_all()
 
     def test_shutdown_session_existing(self):
@@ -69,10 +69,10 @@ class TestSharedMemoryManager(unittest.TestCase):
         SMM should successfully remove a session when requested
         """
         manager = DlgSharedMemoryManager()
-        manager.register_session('session1')
-        manager.register_session('session2')
+        manager.register_session("session1")
+        manager.register_session("session2")
         self.assertTrue(len(manager.drop_names.keys()), 2)
-        manager.shutdown_session('session1')
+        manager.shutdown_session("session1")
         self.assertTrue(len(manager.drop_names.keys()), 1)
         manager.shutdown_all()
 
@@ -82,17 +82,17 @@ class TestSharedMemoryManager(unittest.TestCase):
         """
         manager = DlgSharedMemoryManager()
         try:
-            manager.shutdown_session('session1')
+            manager.shutdown_session("session1")
         except KeyError:
-            self.fail('Manager errored when shutting down nonexistent session')
+            self.fail("Manager errored when shutting down nonexistent session")
 
     def test_shutdown_all(self):
         """
         SMM should be able to remove all sessions and drop references when shutdown
         """
         manager = DlgSharedMemoryManager()
-        manager.register_session('session1')
-        manager.register_session('session2')
+        manager.register_session("session1")
+        manager.register_session("session2")
         self.assertEqual(len(manager.drop_names.keys()), 2)
         manager.shutdown_all()
         self.assertEqual(len(manager.drop_names.keys()), 0)
@@ -105,4 +105,4 @@ class TestSharedMemoryManager(unittest.TestCase):
         try:
             manager.shutdown_all()
         except KeyError:
-            self.fail('Manager errored when shutting down empty')
+            self.fail("Manager errored when shutting down empty")

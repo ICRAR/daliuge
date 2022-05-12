@@ -1,6 +1,6 @@
 #!/bin/bash
 DOCKER_OPTS="\
---shm-size=1g --ipc=shareable \
+--shm-size=2g --ipc=shareable \
 --rm \
 --name daliuge-engine \
 -v /var/run/docker.sock:/var/run/docker.sock \
@@ -22,6 +22,8 @@ common_prep ()
     DOCKER_OPTS=${DOCKER_OPTS}" -v ${DLG_ROOT}:${DLG_ROOT} --env DLG_ROOT=${DLG_ROOT}"
 }
 
+export VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
+export C_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
 case "$1" in
     "dep")
         DLG_ROOT="/var/dlg_home"
@@ -30,7 +32,6 @@ case "$1" in
             echo "Deployment version requires access to a directory /var/dlg_home, but that does not exist!"
             echo "Please either create and grant access to $USER or build and run the development version."
         else
-            VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
             common_prep
             echo "Running Engine deployment version in background..."
             echo "docker run -td "${DOCKER_OPTS}"  icrar/daliuge-engine:${VCS_TAG}"
@@ -39,11 +40,10 @@ case "$1" in
         fi;;
     "dev")
         export DLG_ROOT="$HOME/dlg"
-        export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
         common_prep
         echo "Running Engine development version in background..."
-        echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}"
-        docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
+        echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${C_TAG}"
+        docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${C_TAG}
         sleep 3
         ./start_local_managers.sh
         exit 0;;
@@ -59,12 +59,12 @@ case "$1" in
         ./start_local_managers.sh
         exit 0;;
     "slim")
-        export DLG_ROOT="/tmp/dlg"
+        export DLG_ROOT="$HOME/dlg"
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
         common_prep
         echo "Running Engine development version in background..."
-        echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine.slim"
-        docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine.slim
+        echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine.slim:${C_TAG}"
+        docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine.slim:${C_TAG}
         sleep 3
         ./start_local_managers.sh
         exit 0;;

@@ -42,6 +42,27 @@ from test.manager import testutils
 hostname = "localhost"
 
 
+default_repro = {
+    "rmode": "1",
+    "lg_blockhash": "x",
+    "pgt_blockhash": "y",
+    "pg_blockhash": "z",
+}
+default_graph_repro = {
+    "rmode": "1",
+    "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
+    "merkleroot": "a",
+    "signature": "b",
+}
+
+
+def add_test_reprodata(graph: list):
+    for drop in graph:
+        drop["reprodata"] = default_repro.copy()
+    graph.append(default_graph_repro.copy())
+    return graph
+
+
 class LocalDimStarter(ManagerStarter):
     def setUp(self):
         super(LocalDimStarter, self).setUp()
@@ -80,6 +101,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
                 "node": hostname,
             },
         ]
+        graphSpec = add_test_reprodata(graphSpec)
         self.dim.createSession(sessionId)
         self.assertEqual(0, self.dim.getGraphSize(sessionId))
         self.dim.addGraphSpec(sessionId, graphSpec)
@@ -108,6 +130,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
                 "node": "unknown_host",
             }
         ]
+        graphSpec = add_test_reprodata(graphSpec)
         self.assertRaises(Exception, self.dim.addGraphSpec, sessionId, graphSpec)
 
         # OK
@@ -119,6 +142,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
                 "node": hostname,
             }
         ]
+        graphSpec = add_test_reprodata(graphSpec)
         self.dim.createSession(sessionId)
         self.assertEqual(0, self.dim.getGraphSize(sessionId))
         self.dim.addGraphSpec(sessionId, graphSpec)
@@ -296,7 +320,7 @@ class TestREST(LocalDimStarter, unittest.TestCase):
                 "test", "graphs/complex.js"
             ) as f:  # @UndefinedVariable
                 complexGraphSpec = json.load(codecs.getreader("utf-8")(f))
-                logger.debug(f'Loaded graph: {f}')
+                logger.debug(f"Loaded graph: {f}")
             for dropSpec in complexGraphSpec:
                 dropSpec["node"] = hostname
             testutils.post(

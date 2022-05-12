@@ -127,13 +127,13 @@ class NodeManagerBase(DROPManager):
     __metaclass__ = abc.ABCMeta
 
     def __init__(
-            self,
-            useDLM=False,
-            dlgPath=None,
-            error_listener=None,
-            event_listeners=[],
-            max_threads=0,
-            logdir=utils.getDlgLogsDir(),
+        self,
+        useDLM=False,
+        dlgPath=None,
+        error_listener=None,
+        event_listeners=[],
+        max_threads=0,
+        logdir=utils.getDlgLogsDir(),
     ):
 
         self._dlm = DataLifecycleManager() if useDLM else None
@@ -149,8 +149,8 @@ class NodeManagerBase(DROPManager):
                 sys.path.append(dlgPath)
                 # we also add underlying site-packages dir to support
                 # the --prefix installation of code
-                pyVer = f'{sys.version_info.major}.{sys.version_info.minor}'
-                extraPath = f'{dlgPath}/lib/python{pyVer}/site-packages'
+                pyVer = f"{sys.version_info.major}.{sys.version_info.minor}"
+                extraPath = f"{dlgPath}/lib/python{pyVer}/site-packages"
                 logger.info("Adding %s to the system path", extraPath)
                 sys.path.append(extraPath)
 
@@ -173,7 +173,9 @@ class NodeManagerBase(DROPManager):
             self._memoryManager = DlgSharedMemoryManager()
             if max_threads > 1:
                 logger.info("Initializing thread pool with %d threads", max_threads)
-                self._threadpool = multiprocessing.pool.ThreadPool(processes=max_threads)
+                self._threadpool = multiprocessing.pool.ThreadPool(
+                    processes=max_threads
+                )
 
         # Event handler that only logs status changes
         debugging = logger.isEnabledFor(logging.DEBUG)
@@ -220,7 +222,8 @@ class NodeManagerBase(DROPManager):
         """
         if not evt.session_id in self._sessions:
             logger.warning(
-                "No session %s found, event (%s) will be dropped" % (evt.session_id, evt.type)
+                "No session %s found, event (%s) will be dropped"
+                % (evt.session_id, evt.type)
             )
             return
         self._sessions[evt.session_id].deliver_event(evt)
@@ -239,6 +242,12 @@ class NodeManagerBase(DROPManager):
         self._check_session_id(sessionId)
         return self._sessions[sessionId].status
 
+    def getSessionReproStatus(self, sessionId):
+        return self._sessions[sessionId].reprostatus
+
+    def getGraphReproData(self, sessionId):
+        return self._sessions[sessionId].reprodata
+
     def linkGraphParts(self, sessionId, lhOID, rhOID, linkType):
         self._check_session_id(sessionId)
         self._sessions[sessionId].linkGraphParts(lhOID, rhOID, linkType)
@@ -253,6 +262,7 @@ class NodeManagerBase(DROPManager):
 
     def getGraph(self, sessionId):
         self._check_session_id(sessionId)
+        #  TODO: Ensure returns reproducibility data.
         return self._sessions[sessionId].getGraph()
 
     def getLogDir(self):
@@ -261,7 +271,7 @@ class NodeManagerBase(DROPManager):
     def deploySession(self, sessionId, completedDrops=[]):
         self._check_session_id(sessionId)
         session = self._sessions[sessionId]
-        if hasattr(self, '_memoryManager'):
+        if hasattr(self, "_memoryManager"):
             self._memoryManager.register_session(sessionId)
 
         def foreach(drop):
@@ -274,7 +284,8 @@ class NodeManagerBase(DROPManager):
             elif isinstance(drop, SharedMemoryDROP):
                 if sys.version_info < (3, 8):
                     raise NotImplementedError(
-                        "Shared memory is not implemented when using Python < 3.8")
+                        "Shared memory is not implemented when using Python < 3.8"
+                    )
                 drop._sessID = sessionId
                 self._memoryManager.register_drop(drop.uid, sessionId)
             if self._dlm:
@@ -291,6 +302,7 @@ class NodeManagerBase(DROPManager):
             log_evt_listener = self._logging_event_listener
             if log_evt_listener:
                 drop.subscribe(log_evt_listener, "status")
+                drop.subscribe(log_evt_listener, "reproducibility")
                 if isinstance(drop, AppDROP):
                     drop.subscribe(log_evt_listener, "execStatus")
 
@@ -312,7 +324,7 @@ class NodeManagerBase(DROPManager):
         logger.info("Destroying session: %s", sessionId)
         self._check_session_id(sessionId)
         session = self._sessions.pop(sessionId)
-        if hasattr(self, '_memoryManager'):
+        if hasattr(self, "_memoryManager"):
             self._memoryManager.shutdown_session(sessionId)
         session.destroy()
 
@@ -363,7 +375,7 @@ class NodeManagerBase(DROPManager):
         return self._sessions[sessionId].call_drop(uid, method, *args)
 
     def shutdown(self):
-        if hasattr(self, '_threadpool') and self._threadpool is not None:
+        if hasattr(self, "_threadpool") and self._threadpool is not None:
             self._threadpool.close()
             self._threadpool.join()
 
@@ -558,16 +570,16 @@ class RpcMixIn(rpc.RPCClient, rpc.RPCServer):
 # Final NodeManager class
 class NodeManager(EventMixIn, RpcMixIn, NodeManagerBase):
     def __init__(
-            self,
-            useDLM=True,
-            dlgPath=utils.getDlgPath(),
-            error_listener=None,
-            event_listeners=[],
-            max_threads=0,
-            logdir=utils.getDlgLogsDir(),
-            host=None,
-            rpc_port=constants.NODE_DEFAULT_RPC_PORT,
-            events_port=constants.NODE_DEFAULT_EVENTS_PORT,
+        self,
+        useDLM=True,
+        dlgPath=utils.getDlgPath(),
+        error_listener=None,
+        event_listeners=[],
+        max_threads=0,
+        logdir=utils.getDlgLogsDir(),
+        host=None,
+        rpc_port=constants.NODE_DEFAULT_RPC_PORT,
+        events_port=constants.NODE_DEFAULT_EVENTS_PORT,
     ):
         # We "just know" that our RpcMixIn will have a create_context static
         # method, which in reality means we are using the ZeroRPCServer class
