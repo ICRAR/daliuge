@@ -35,7 +35,7 @@ from .meta import dlg_string_param, dlg_list_param
 # @details A 'bucket' object available on Amazon's Simple Storage Service (S3)
 # @par EAGLE_START
 # @param category S3
-# @param tag template
+# @param tag daliuge
 # @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/

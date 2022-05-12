@@ -150,3 +150,27 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
 
         with droputils.DROPWaiterCtx(self, init_drop, 3):
             [a.setCompleted() for a in start_drops]
+
+    def test_pos_only_args(self):
+        """
+        Use a graph with compile function to test positional only arguments
+        """
+        sessionId = "lalo"
+        with pkg_resources.resource_stream(
+                "test", "graphs/compilePG.graph"
+            ) as f:  # @UndefinedVariable
+            graphSpec = json.load(f)
+        # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
+        self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
+
+        # Deploy now and get OIDs
+        self.dim.deploySession(sessionId)
+        sd = self.dm._sessions[sessionId].drops["2022-05-06T08:43:26_-2_0"]
+        fd = self.dm._sessions[sessionId].drops["2022-05-06T08:43:26_-1_0"]
+        with droputils.DROPWaiterCtx(self, fd, 3):
+            sd.write("''".encode())
+            sd.setCompleted()
+
+        #logger.debug(f'PyfuncAPPDrop signature: {dir(fd)}')
+        logger.debug(f'PyfuncAPPDrop status: {fd.status}')
+        self.assertEqual(2, fd.status)
