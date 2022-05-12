@@ -104,7 +104,7 @@ def import_using_name(app, fname):
             )
         except AttributeError:
             raise InvalidDropException(app, "Module %s has no member %s" % (modname, fname))
-    
+
 
 
 def import_using_code(code):
@@ -138,8 +138,10 @@ def import_using_code(code):
 #     \~English Python function name
 # @param[in] aparam/func_code Function Code//String/readwrite/False//False/
 #     \~English Python function code, e.g. 'def function_name(args): return args'
-# @param[in] aparam/pickle Pickle/false/Boolean/readwrite/False//False/
-#     \~English Whether the python arguments are pickled.
+# @param[in] aparam/pickle_inputs Pickle Inputs/true/Boolean/readwrite/False//False/
+#     \~English Whether the python input arguments are pickled.
+# @param[in] aparam/pickle_outputs Pickle Inputs/true/Boolean/readwrite/False//False/
+#     \~English Whether the python output arguments are pickled.
 # @param[in] aparam/func_defaults Function Defaults//String/readwrite/False//False/
 #     \~English Mapping from argname to default value. Should match only the last part of the argnames list.
 #               Values are interpreted as Python code literals and that means string values need to be quoted.
@@ -193,16 +195,11 @@ class PyFuncApp(BarrierAppDROP):
     )
 
     func_name = dlg_string_param("func_name", None)
-
     # func_code = dlg_bytes_param("func_code", None) # bytes or base64 string
-
-    pickle = dlg_bool_param("pickle", True)
-
+    pickle_inputs: bool = dlg_bool_param("pickle_inputs", True)
+    pickle_outputs: bool = dlg_bool_param("pickle_outputs", True)
     func_arg_mapping = dlg_dict_param("func_arg_mapping", {})
-
     func_defaults = dlg_dict_param("func_defaults", {})
-
-
     f: Callable
     fdefaults: dict
 
@@ -228,19 +225,19 @@ class PyFuncApp(BarrierAppDROP):
             logger.error(f"Wrong format or type for function defaults for "+\
                 "{self.f.__name__}: {self.func_defaults}, {type(self.func_defaults)}")
             raise ValueError
-        if self.pickle:
+        if self.pickle_inputs:
             # only values are pickled, get them unpickled
             for name, value in self.func_defaults.items():
                 self.func_defaults[name] = deserialize_data(value)
 
         # set the function defaults from introspection
-        if (self.arguments):
+        if self.arguments:
             self.fn_npos = len(self.arguments.args) - self.fn_ndef
             self.fn_defaults = {name:None for name in self.arguments.args[:self.fn_npos]}
             logger.debug(f"initialized fn_defaults with {self.fn_defaults}")
             # deal with args and kwargs
             kwargs = dict(
-                zip(self.arguments.args[self.fn_npos:], 
+                zip(self.arguments.args[self.fn_npos:],
                 self.arguments.defaults)) if self.arguments.defaults else {}
             self.fn_defaults.update(kwargs)
             logger.debug(f"fn_defaults updated with {kwargs}")
@@ -250,13 +247,13 @@ class PyFuncApp(BarrierAppDROP):
                     zip(self.arguments.kwonlyargs, self.arguments.kwonlydefaults))
                 self.fn_defaults.update(kwonlyargs)
                 logger.debug(f"fn_defaults updated with {kwonlyargs}")
-            
+
             self.fn_posargs = self.arguments.args[:self.fn_npos] # positional arg names
 
     def initialize(self, **kwargs):
         """
-        The initialization of a function component is mainly dealing with mapping 
-        inputs and provided applicationArgs to the function arguments. All of this 
+        The initialization of a function component is mainly dealing with mapping
+        inputs and provided applicationArgs to the function arguments. All of this
         should be driven by matching names, but currently that is not being done.
         """
         BarrierAppDROP.initialize(self, **kwargs)
@@ -270,7 +267,8 @@ class PyFuncApp(BarrierAppDROP):
             "func_code",
             "func_name",
             "func_arg_mapping",
-            "pickle",
+            "pickle_inputs",
+            "pickle_outputs",
             "func_defaults"
             ]
         for kw in self.func_def_keywords:
@@ -278,7 +276,7 @@ class PyFuncApp(BarrierAppDROP):
             if kw in self._applicationArgs: # these are the preferred ones now
                 if isinstance(self._applicationArgs[kw]["value"], bool): # always transfer booleans
                     new_arg = self._applicationArgs.pop(kw)
-                elif self._applicationArgs[kw]["value"] or self._applicationArgs[kw]["precious"]: 
+                elif self._applicationArgs[kw]["value"] or self._applicationArgs[kw]["precious"]:
                     # only transfer if there is a value or precious is True
                     new_arg = self._applicationArgs.pop(kw)
 
@@ -302,9 +300,9 @@ class PyFuncApp(BarrierAppDROP):
                 self.func_code = base64.b64decode(self.func_code.encode("utf8"))
             self.f = import_using_code(self.func_code)
         # make sure defaults are dicts
-        if isinstance(self.func_defaults, str): 
+        if isinstance(self.func_defaults, str):
             self.func_defaults = ast.literal_eval(self.func_defaults)
-        if isinstance(self.func_arg_mapping, str): 
+        if isinstance(self.func_arg_mapping, str):
             self.func_arg_mapping = ast.literal_eval(self.func_arg_mapping)
 
         self.arguments = inspect.getfullargspec(self.f)
@@ -340,7 +338,7 @@ class PyFuncApp(BarrierAppDROP):
         Function arguments in Python can be passed as positional, kw-value, positional
         only, kw-value only, and catch-all args and kwargs, which don't provide any
         hint about the names of accepted parameters. All of them are now supported. If
-        positional arguments or kw-value arguments are provided by the user, but are 
+        positional arguments or kw-value arguments are provided by the user, but are
         not explicitely defined in the function signiture AND args and/or kwargs are
         allowed then these arguments are passed to the function. For args this is
         somewhat risky, since the order is relevant and in this code derived from the
@@ -351,14 +349,14 @@ class PyFuncApp(BarrierAppDROP):
         this provides a unique mapping. This also allows to pass values to any function
         argument through a port.
 
-        Function argument values as well as the function code can be provided in 
+        Function argument values as well as the function code can be provided in
         serialised (pickle) form by setting the 'pickle' flag. Note that this flag
         is valid for all arguments and the code (if specified) in a global way.
         """
 
         # Inputs are un-pickled and treated as the arguments of the function
         # Their order must be preserved, so we use an OrderedDict
-        if self.pickle:
+        if self.pickle_inputs:
             all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
         else:
             all_contents = lambda x: ast.literal_eval(droputils.allDropContents(x).decode('utf-8'))
@@ -377,7 +375,7 @@ class PyFuncApp(BarrierAppDROP):
         argnames = self.arguments.args
 
         # use explicit mapping of inputs to arguments first
-        # TODO: Required by dlg_delayed?? Else, we should really not do this. 
+        # TODO: Required by dlg_delayed?? Else, we should really not do this.
         kwargs = {
             name: inputs.pop(uid)
             for name, uid in self.func_arg_mapping.items()
@@ -389,7 +387,7 @@ class PyFuncApp(BarrierAppDROP):
         # Fill arguments with rest of inputs
         kwargs = {}
         logger.debug(f"available inputs: {inputs}")
-    
+
         # if we have named ports use the inputs with
         # the correct UIDs
         logger.debug(f"Parameters found: {self.parameters}")
@@ -509,8 +507,7 @@ class PyFuncApp(BarrierAppDROP):
             if len(outputs) == 1:
                 result = [result]
             for r, o in zip(result, outputs):
-                p = pickle.dumps(r)
-                if self.pickle:
+                if self.pickle_outputs:
                     logger.debug(f"Writing pickeled result {type(r)} to {o}")
                     o.write(pickle.dumps(r))  # @UndefinedVariable
                 else:
