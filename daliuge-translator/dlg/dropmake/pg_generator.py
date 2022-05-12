@@ -28,10 +28,38 @@ which will then be deployed and monitored by the Physical Graph Manager
 if __name__ == "__main__":
     __package__ = "dlg.dropmake"
 
+import collections
+import datetime
 import json
 import logging
 import string
 import time
+from collections import defaultdict
+from itertools import product
+from typing import ValuesView
+
+import networkx as nx
+import numpy as np
+
+from .scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
+from .utils.bash_parameter import BashCommand
+from ..common import dropdict
+from ..common import Categories, DropType
+from .dm_utils import (
+    LG_APPREF,
+    getNodesKeyDict,
+    get_lg_ver_type,
+    convert_construct,
+    convert_fields,
+    convert_mkn,
+    getAppRefInputs,
+    LG_VER_EAGLE,
+    LG_VER_EAGLE_CONVERTED,
+)
+from .utils.bash_parameter import BashCommand
+from ..common import Categories
+from ..common import STORAGE_TYPES, APP_DROP_TYPES
+from ..common import dropdict
 from dlg.dropmake.lg import LG, GraphException
 from dlg.dropmake.pgt import PGT
 from dlg.dropmake.pgtp import MetisPGTP, MySarkarPGTP, MinNumPartsPGTP, PSOPGTP
@@ -40,7 +68,7 @@ logger = logging.getLogger(__name__)
 
 
 class _LGTemplate(string.Template):
-    delimiter = "%"
+    delimiter = "~"
     idpattern = r"[_a-z][_a-z0-9\.]*"
 
 
@@ -86,6 +114,7 @@ def unroll(lg, oid_prefix=None, zerorun=False, app=None):
         for dropspec in drop_list:
             if "app" in dropspec:
                 dropspec["app"] = app
+    drop_list.append(lg.reprodata)
     return drop_list
 
 
@@ -120,7 +149,7 @@ def partition(
     num_islands=1,
     partition_label="partition",
     show_gojs=False,
-    **algo_params
+    **algo_params,
 ):
     """Partitions a Physical Graph Template"""
 
@@ -219,14 +248,15 @@ def partition(
             num_islands=num_islands,
             tpl_nodes_len=num_partitions + num_islands,
         )
-
     return pgt
 
 
 def resource_map(pgt, nodes, num_islands=1, co_host_dim=True):
     """Maps a Physical Graph Template `pgt` to `nodes`"""
 
-    logger.info(f"Resource mapping called with nodes: {nodes}, islands: {num_islands} and co_host_dim: {co_host_dim}")
+    logger.info(
+        f"Resource mapping called with nodes: {nodes}, islands: {num_islands} and co_host_dim: {co_host_dim}"
+    )
     if not nodes:
         err_info = "Empty node_list, cannot map the PG template"
         raise ValueError(err_info)
