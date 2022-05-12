@@ -24,6 +24,7 @@
 
 # To use docker later...
 sudo: required
+dist: focal
 
 # let's go!
 language: python

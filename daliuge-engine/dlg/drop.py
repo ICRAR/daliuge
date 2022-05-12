@@ -1464,7 +1464,7 @@ class DataDROP(AbstractDROP):
 # @details A standard file on a filesystem mounted to the deployment machine
 # @par EAGLE_START
 # @param category File
-# @param tag template
+# @param tag daliuge
 # @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
@@ -1658,7 +1658,7 @@ class FileDROP(DataDROP, PathBasedDrop):
 # @details An archive on the Next Generation Archive System (NGAS).
 # @par EAGLE_START
 # @param category NGAS
-# @param tag template
+# @param tag daliuge
 # @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
@@ -1788,7 +1788,7 @@ class NgasDROP(DataDROP):
 # @details In-memory storage of intermediate data products
 # @par EAGLE_START
 # @param category Memory
-# @param tag template
+# @param tag daliuge
 # @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
@@ -1886,7 +1886,7 @@ class SharedMemoryDROP(DataDROP):
 # @details A Drop not storing any data (useful for just passing on events)
 # @par EAGLE_START
 # @param category Memory
-# @param tag template
+# @param tag daliuge
 # @param[in] cparam/data_volume Data volume/0/Float/readonly/False//False/
 #     \~English This never stores any data
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
@@ -2147,7 +2147,7 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
 # @details An object in a Apache Arrow Plasma in-memory object store
 # @par EAGLE_START
 # @param category Plasma
-# @param tag template
+# @param tag daliuge
 # @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
@@ -2197,7 +2197,7 @@ class PlasmaDROP(DataDROP):
 # to a Plasma in-memory object store
 # @par EAGLE_START
 # @param category PlasmaFlight
-# @param tag template
+# @param tag daliuge
 # @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
 #     \~English Estimated size of the data contained in this node
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
