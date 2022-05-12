@@ -154,6 +154,9 @@ Help output::
      -p PARAMETER, --parameter=PARAMETER
                            Parameter specification (either 'name=value' or a JSON
                            string)
+     -R REPRODUCIBILITY, --reproducibility=REPRODUCIBILITY
+                           Level of reproducibility. Defaults to 0 (NOTHING).
+                           Accepts '0,1,2,4,5,6,7,8'
    
 
 Command: dlg include_dir
@@ -429,6 +432,9 @@ Help output::
      -i POLL_INTERVAL, --poll-interval=POLL_INTERVAL
                            Polling interval used for monitoring the execution
                            (default: 10)
+     -R REPRODUCIBILITY, --reproducibility=REPRODUCIBILITY
+                           Fetch (and output) reproducibility data for final execution graph.
+                           (default: False)
    
 
 Command: dlg unroll

@@ -31,7 +31,10 @@ import numpy as np
 from dlg.dask_emulation import delayed as dlg_delayed
 from dlg.dask_emulation import compute as dlg_compute
 from dlg.common import tool
+from dlg.dask_emulation import compute as dlg_compute
+from dlg.dask_emulation import delayed as dlg_delayed
 from dlg.utils import terminate_or_kill
+from six.moves import reduce  # @UnresolvedImport
 
 try:
     from dask import delayed as dask_delayed
@@ -248,7 +251,9 @@ class TestDlgDelayed(_TestDelayed, unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
         env = os.environ.copy()
-        env["PYTHONPATH"] = env.get("PYTHONPATH", "") + ":" + os.getcwd() + '/daliuge-engine'
+        env["PYTHONPATH"] = (
+            env.get("PYTHONPATH", "") + ":" + os.getcwd() + "/daliuge-engine"
+        )
         self.dmProcess = tool.start_process("nm", ["-vvv"], env=env)
 
     def compute(self, val):

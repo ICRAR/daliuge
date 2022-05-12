@@ -62,11 +62,7 @@ GRAPH_SUBMIT_WAIT_TIME = 10
 GRAPH_MONITOR_INTERVAL = 5
 VERBOSITY = "5"
 LOGGER = logging.getLogger("deploy.dlg.cluster")
-APPS = (
-    None,
-    "test.graphsRepository.SleepApp",
-    "test.graphsRepository.SleepAndCopyApp",
-)
+APPS = (None, "test.graphsRepository.SleepApp", "test.graphsRepository.SleepAndCopyApp")
 
 
 def check_host(host, port, timeout=5, check_with_session=False):
@@ -99,7 +95,7 @@ def check_hosts(ips, port, timeout=None, check_with_session=False, retry=1):
         ntries = retry
         while ntries:
             if check_host(
-                    ip_addr, port, timeout=timeout, check_with_session=check_with_session
+                ip_addr, port, timeout=timeout, check_with_session=check_with_session
             ):
                 LOGGER.info("Host %s:%d is running", ip_addr, port)
                 return ip_addr
@@ -139,8 +135,7 @@ def get_workspace_dir(log_dir):
 
 
 def start_node_mgr(
-        log_dir, my_ip, logv=1, max_threads=0, host=None, event_listeners="",
-        use_tool=True
+    log_dir, my_ip, logv=1, max_threads=0, host=None, event_listeners="", use_tool=True
 ):
     """
     Start node manager
@@ -162,9 +157,10 @@ def start_node_mgr(
         str(max_threads),
         "--no-dlm",
     ]
-    if event_listeners: args += ["--event-listeners", event_listeners]
+    if event_listeners:
+        args += ["--event-listeners", event_listeners]
 
-    if use_tool: 
+    if use_tool:
         # This returns immediately
         proc = tool.start_process("nm", args)
         LOGGER.info("Node manager process started with pid %d", proc.pid)
@@ -224,11 +220,14 @@ def start_mm(node_list, log_dir, logv=1):
     proc = tool.start_process("mm", args)
     LOGGER.info("Master manager process started with pid %d", proc.pid)
     return proc
+
+
 #    cmdline.dlgMM(parser, args)
 
 
 def _stop(endpoints):
     LOGGER.info(f"Stopping ThreadPool")
+
     def _the_stop(endpoint):
         common.BaseDROPManagerClient(endpoint[0], endpoint[1]).stop()
 
@@ -258,9 +257,10 @@ def submit_and_monitor(physical_graph, opts, host, port, submit=True):
         dump_path = None
         if opts.dump:
             dump_path = os.path.join(opts.log_dir, "status-monitoring.json")
-        if submit: 
-            session_id = common.submit(physical_graph, host=host, port=port,
-                                   session_id=opts.ssid)
+        if submit:
+            session_id = common.submit(
+                physical_graph, host=host, port=port, session_id=opts.ssid
+            )
         else:
             session_id = opts.ssid
 
@@ -324,7 +324,7 @@ def get_pg(opts, nms, dims):
             opts.part_algo,
             num_partitions=num_nms,
             num_islands=num_dims,
-            **algo_params
+            **algo_params,
         )
         del unrolled  # quickly dispose of potentially big object
     else:
@@ -345,8 +345,9 @@ def get_pg(opts, nms, dims):
         retry=3,
     )
     LOGGER.info(f"Mapping graph to available resources: nms {nms}, dims {dims}")
-    physical_graph = pg_generator.resource_map(pgt, dims + nms, num_islands=num_dims,
-                                               co_host_dim=opts.co_host_dim)
+    physical_graph = pg_generator.resource_map(
+        pgt, dims + nms, num_islands=num_dims, co_host_dim=opts.co_host_dim
+    )
     graph_name = os.path.basename(opts.log_dir)
     graph_name = f"{graph_name.split('_')[0]}.json"  # get just the graph name
     with open(os.path.join(opts.log_dir, graph_name), "wt") as pg_file:
@@ -622,8 +623,10 @@ def main():
     log_dir = "{0}/{1}".format(options.log_dir, remote.my_ip)
     os.makedirs(log_dir)
     logfile = log_dir + "/start_dlg_cluster.log"
-    log_format = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] " \
-                 "%(name)s#%(funcName)s:%(lineno)s %(message)s"
+    log_format = (
+        "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] "
+        "%(name)s#%(funcName)s:%(lineno)s %(message)s"
+    )
     logging.basicConfig(filename=logfile, level=logging.DEBUG, format=log_format)
 
     LOGGER.info("This node has IP address: %s", remote.my_ip)
@@ -651,7 +654,7 @@ def main():
 
         # need to check for NM first and go on of co-hosted
         if remote.is_nm:
-            co_hosted = (remote.my_ip in remote.dim_ips)
+            co_hosted = remote.my_ip in remote.dim_ips
             nm_proc = start_node_mgr(
                 log_dir,
                 remote.my_ip,
@@ -659,8 +662,8 @@ def main():
                 max_threads=options.max_threads,
                 host=None if options.all_nics else remote.my_ip,
                 event_listeners=options.event_listeners,
-                use_tool = co_hosted
-                    )
+                use_tool=co_hosted,
+            )
 
         if remote.is_proxy:
             # Wait until the Island Manager is open
@@ -676,21 +679,21 @@ def main():
                     "Couldn't connect to the main drop manager, proxy not started"
                 )
         elif remote.my_ip in remote.dim_ips:
-                LOGGER.info(f"Starting island managers on nodes: {remote.dim_ips}")
-                dim_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
-                # whichever way we came from, now we have to wait until session is finished
-                # we always monitor the island, else we will have race conditions
-                physical_graph = get_pg(options, remote.nm_ips, remote.dim_ips)
-                monitoring_thread = submit_and_monitor(
-                    physical_graph, options, remote.dim_ips[0], REST_PORT, submit=co_hosted
-                )
-                monitoring_thread.join()
-                # now the session is finished
+            LOGGER.info(f"Starting island managers on nodes: {remote.dim_ips}")
+            dim_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
+            # whichever way we came from, now we have to wait until session is finished
+            # we always monitor the island, else we will have race conditions
+            physical_graph = get_pg(options, remote.nm_ips, remote.dim_ips)
+            monitoring_thread = submit_and_monitor(
+                physical_graph, options, remote.dim_ips[0], REST_PORT, submit=co_hosted
+            )
+            monitoring_thread.join()
+            # now the session is finished
 
-                # still shutting DIM down first to avoid monitoring conflicts
-                stop_dims(remote.dim_ips)
-                # now stop all the NMs
-                stop_nms(remote.nm_ips)
+            # still shutting DIM down first to avoid monitoring conflicts
+            stop_dims(remote.dim_ips)
+            # now stop all the NMs
+            stop_nms(remote.nm_ips)
 
         # shouldn't need this in addition
         # if dim_proc is not None:
@@ -720,7 +723,9 @@ def main():
         )
         mm_proc = start_mm(remote.dim_ips, log_dir, logv=logv)
         monitoring_thread.join()
-        stop_mm(remote.my_ip) # TODO: I don't think we need this and least not in the single island case
+        stop_mm(
+            remote.my_ip
+        )  # TODO: I don't think we need this and least not in the single island case
         stop_dims(remote.dim_ips)
     else:
         nm_ips = remote.recv_dim_nodes()

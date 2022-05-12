@@ -24,12 +24,13 @@ function graphInit(graphType){
             }
         },
         success: function(data) {
-
             // get node count
             var nodeCount = 0;
             data.nodeDataArray.forEach(element => {
                 nodeCount++
             });
+
+            console.log(data['reprodata'])
 
             //set initially shown graph based on node count
             if(graphType === "default"){
@@ -42,7 +43,6 @@ function graphInit(graphType){
 
             //reset graph divs
             $("#main").empty()
-
             //initiate the correct function
             if(graphType === "sankey"){
                 echartsGraphInit("sankey", data)

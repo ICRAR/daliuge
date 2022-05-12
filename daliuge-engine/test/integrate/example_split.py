@@ -5,8 +5,9 @@ frequency ranges and widths
 To run it standalone, change the directories, which are now hardcoded
 """
 
-from sys import argv
-import sys, os, datetime, time
+import datetime
+import os
+import time
 
 if __name__ == "__main__":
 

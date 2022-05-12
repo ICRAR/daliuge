@@ -31,6 +31,7 @@ import pwd
 import grp
 import platform
 
+
 def prepareUser(DLG_ROOT="."):
     workdir = f"{DLG_ROOT}/workspace/settings"
     try:
@@ -41,14 +42,16 @@ def prepareUser(DLG_ROOT="."):
     # get current user info
     pw = pwd.getpwuid(os.getuid())
     gr = grp.getgrgid(pw.pw_gid)
-    if platform.system() == 'Darwin':
-        grpnam = 'staff'
+    if platform.system() == "Darwin":
+        grpnam = "staff"
     else:
-        grpnam = 'docker'
+        grpnam = "docker"
     dgr = grp.getgrnam(grpnam)
     with open(os.path.join(workdir, "passwd"), "wt") as file:
         file.write(open(os.path.join(template_dir, "passwd.template"), "rt").read())
-        file.write(f"{pw.pw_name}:x:{pw.pw_uid}:{pw.pw_gid}:{pw.pw_gecos}:{DLG_ROOT}:/bin/bash\n")
+        file.write(
+            f"{pw.pw_name}:x:{pw.pw_uid}:{pw.pw_gid}:{pw.pw_gecos}:{DLG_ROOT}:/bin/bash\n"
+        )
     with open(os.path.join(workdir, "group"), "wt") as file:
         file.write(open(os.path.join(template_dir, "group.template"), "rt").read())
         file.write(f"{gr.gr_name}:x:{gr.gr_gid}:\n")

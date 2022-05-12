@@ -36,6 +36,7 @@ from .apps.plasmaflight import PlasmaFlightClient
 
 import pyarrow
 import pyarrow.plasma as plasma
+
 if sys.version_info >= (3, 8):
     from dlg.shared_memory import DlgSharedMemory
 
@@ -47,10 +48,11 @@ class OpenMode:
     """
     Open Mode for Data Drops
     """
+
     OPEN_WRITE, OPEN_READ = range(2)
 
 
-class DataIO():
+class DataIO:
     """
     A class used to read/write data stored in a particular kind of storage in an
     abstract way. This base class simply declares a number of methods that
@@ -240,6 +242,7 @@ class MemoryIO(DataIO):
     A DataIO class that reads/write from/into the BytesIO object given at
     construction time
     """
+
     _desc: io.BytesIO  # TODO: This might actually be a problem
 
     def __init__(self, buf: io.BytesIO, **kwargs):
@@ -299,7 +302,7 @@ class SharedMemoryIO(DataIO):
 
     def __init__(self, uid, session_id, **kwargs):
         super().__init__()
-        self._name = f'{session_id}_{uid}'
+        self._name = f"{session_id}_{uid}"
         self._written = 0
         self._pos = 0
         self._buf = None
@@ -318,10 +321,10 @@ class SharedMemoryIO(DataIO):
         total_size = len(data) + self._written
         if total_size > self._buf.size:
             self._buf.resize(total_size)
-            self._buf.buf[self._written:total_size] = data
+            self._buf.buf[self._written : total_size] = data
             self._written = total_size
         else:
-            self._buf.buf[self._written:total_size] = data
+            self._buf.buf[self._written : total_size] = data
             self._written = total_size
             self._buf.resize(total_size)
             # It may be inefficient to resize many times, but assuming data is written 'once' this is
@@ -363,14 +366,16 @@ class FileIO(DataIO):
     """
     A file-based implementation of DataIO
     """
+
     _desc: io.BufferedReader
+
     def __init__(self, filename, **kwargs):
         super().__init__()
         self._fnm = filename
 
     def _open(self, **kwargs) -> io.BufferedReader:
-        flag = 'r' if self._mode is OpenMode.OPEN_READ else 'w'
-        flag += 'b'
+        flag = "r" if self._mode is OpenMode.OPEN_READ else "w"
+        flag += "b"
         return open(self._fnm, flag)
 
     @overrides
@@ -476,11 +481,11 @@ class NgasIO(DataIO):
                 dataSize=self._writtenDataSize,
             )
             self._buf = None
-            if reply != 200:
+            if reply.http_status != 200:
                 # Probably msg is not enough, we need to unpack the status XML doc
                 # from the returning data and extract the real error message from
                 # there
-                raise Exception(msg)
+                raise Exception(reply.message)
 
         # Release the reference to _desc so the client object gets destroyed
         del self._desc
@@ -492,7 +497,10 @@ class NgasIO(DataIO):
 
     @overrides
     def _write(self, data, **kwargs) -> int:
-        self._buf += data
+        if type(data) == bytes:
+            self._buf += str(data)
+        else:
+            self._buf += data
         self._writtenDataSize += len(data)
         return len(data)
 
@@ -535,6 +543,7 @@ class NgasLiteIO(DataIO):
     The `ngaslite` module doesn't support the STATUS command yet, and because of
     that this class will throw an error if its `exists` method is invoked.
     """
+
     _desc: HTTPConnection
 
     def __init__(
@@ -668,14 +677,15 @@ class PlasmaIO(DataIO):
     memory buffers. Note: not compatible with PlasmaClient put()/get()
     which performs data pickling before writing.
     """
+
     _desc: plasma.PlasmaClient
 
     def __init__(
         self,
         object_id: plasma.ObjectID,
         plasma_path="/tmp/plasma",
-        expected_size: Optional[int]=None,
-        use_staging=False
+        expected_size: Optional[int] = None,
+        use_staging=False,
     ):
         """Initializer
         Args:
@@ -690,7 +700,9 @@ class PlasmaIO(DataIO):
         self._reader = None
         self._writer = None
         # treat sizes <1 as None
-        self._expected_size = expected_size if expected_size and expected_size > 0 else None
+        self._expected_size = (
+            expected_size if expected_size and expected_size > 0 else None
+        )
         self._buffer_size = 0
         self._use_staging = use_staging
 
@@ -725,7 +737,9 @@ class PlasmaIO(DataIO):
         If use_staging is True, any number of writes may occur with a small performance penalty.
         """
         # NOTE: data must be a collection of bytes for len to represent the buffer bytesize
-        assert isinstance(data, Union[memoryview, bytes, bytearray, pyarrow.Buffer].__args__)
+        assert isinstance(
+            data, Union[memoryview, bytes, bytearray, pyarrow.Buffer].__args__
+        )
         databytes = data.nbytes if isinstance(data, memoryview) else len(data)
 
         if self._use_staging:
@@ -735,13 +749,23 @@ class PlasmaIO(DataIO):
         else:
             if not self._writer:
                 # write directly into fixed size plasma buffer
-                self._buffer_size = self._expected_size if self._expected_size is not None else databytes
+                self._buffer_size = (
+                    self._expected_size
+                    if self._expected_size is not None
+                    else databytes
+                )
                 plasma_buffer = self._desc.create(self._object_id, self._buffer_size)
                 self._writer = pyarrow.FixedSizeBufferWriter(plasma_buffer)
             if self._writer.tell() + databytes > self._buffer_size:
-                raise IOError("".join([f"attempted to write {self._writer.tell() + databytes} ",
-                                f"bytes to plasma buffer of size {self._buffer_size}, ",
-                                "consider using staging or expected_size argument"]))
+                raise IOError(
+                    "".join(
+                        [
+                            f"attempted to write {self._writer.tell() + databytes} ",
+                            f"bytes to plasma buffer of size {self._buffer_size}, ",
+                            "consider using staging or expected_size argument",
+                        ]
+                    )
+                )
 
         self._writer.write(data)
         return len(data)
@@ -768,6 +792,7 @@ class PlasmaFlightIO(DataIO):
     """
     A plasma drop managed by an arrow flight network protocol
     """
+
     _desc: PlasmaFlightClient
 
     def __init__(
@@ -776,7 +801,7 @@ class PlasmaFlightIO(DataIO):
         plasma_path="/tmp/plasma",
         flight_path: Optional[str] = None,
         expected_size: Optional[int] = None,
-        use_staging = False
+        use_staging=False,
     ):
         super().__init__()
         self._object_id = object_id
@@ -785,7 +810,9 @@ class PlasmaFlightIO(DataIO):
         self._reader = None
         self._writer = None
         # treat sizes <1 as None
-        self._expected_size = expected_size if expected_size and expected_size > 0 else None
+        self._expected_size = (
+            expected_size if expected_size and expected_size > 0 else None
+        )
         self._buffer_size = 0
         self._use_staging = use_staging
 
@@ -799,7 +826,9 @@ class PlasmaFlightIO(DataIO):
                 self._writer.close()
             else:
                 if self._expected_size != self._writer.tell():
-                    logger.debug(f"written {self._writer.tell()} but expected {self._expected_size} bytes")
+                    logger.debug(
+                        f"written {self._writer.tell()} but expected {self._expected_size} bytes"
+                    )
                 self._desc.seal(self._object_id)
         if self._reader:
             self._reader.close()
@@ -813,16 +842,24 @@ class PlasmaFlightIO(DataIO):
     def _write(self, data, **kwargs) -> int:
 
         # NOTE: data must be a collection of bytes for len to represent the buffer bytesize
-        assert isinstance(data, Union[memoryview, bytes, bytearray, pyarrow.Buffer].__args__)
+        assert isinstance(
+            data, Union[memoryview, bytes, bytearray, pyarrow.Buffer].__args__
+        )
         databytes = data.nbytes if isinstance(data, memoryview) else len(data)
         if not self._writer:
             if self._use_staging:
                 # stream into resizeable buffer
-                logger.warning("Using dynamically sized Plasma buffer. Performance may be reduced.")
+                logger.warning(
+                    "Using dynamically sized Plasma buffer. Performance may be reduced."
+                )
                 self._writer = io.BytesIO()
             else:
                 # write directly to fixed size plasma buffer
-                self._buffer_size = self._expected_size if self._expected_size is not None else databytes
+                self._buffer_size = (
+                    self._expected_size
+                    if self._expected_size is not None
+                    else databytes
+                )
                 plasma_buffer = self._desc.create(self._object_id, self._buffer_size)
                 self._writer = pyarrow.FixedSizeBufferWriter(plasma_buffer)
         self._writer.write(data)

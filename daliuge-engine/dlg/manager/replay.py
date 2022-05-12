@@ -30,7 +30,6 @@ from .rest import ManagerRestServer
 from .session import SessionStates
 from ..exceptions import NoSessionException, InvalidSessionState
 
-
 logger = logging.getLogger(__name__)
 
 build_step = 3

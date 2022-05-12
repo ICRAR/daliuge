@@ -39,13 +39,14 @@ init_tpl = string.Template(__sub_tpl_str)
 class DefaultConfig(object):
     MODULES = ""
     VENV = ""
+
     def __init__(self):
         self._dict = dict()
         l = self.init_list()
         self.setpar("acc", l[0])
         self.setpar("log_root", l[1])
-        self.setpar("modules",l[2].strip())
-        self.setpar("venv",l[3].strip())
+        self.setpar("modules", l[2].strip())
+        self.setpar("venv", l[3].strip())
 
     def init_list(self):
         pass
@@ -56,7 +57,9 @@ class DefaultConfig(object):
     def getpar(self, k):
         return self._dict.get(k)
 
+
 #############################
+
 
 class ICRARoodConfig(DefaultConfig):
     MODULES = """
@@ -64,8 +67,8 @@ class ICRARoodConfig(DefaultConfig):
     """
     # The following is more a workaround than a solution
     # requires the user to have a venv exectly in that place
-    ACCOUNT = os.environ['USER']
-    HOME_DIR = os.environ['HOME']
+    ACCOUNT = os.environ["USER"]
+    HOME_DIR = os.environ["HOME"]
     LOG_DIR = f"{HOME_DIR}/dlg/runs"
     VENV = f"source {HOME_DIR}/dlg/venv/bin/activate"
 
@@ -73,9 +76,8 @@ class ICRARoodConfig(DefaultConfig):
         super(ICRARoodConfig, self).__init__()
 
     def init_list(self):  # TODO please fill in
-        return [self.ACCOUNT, self.LOG_DIR, 
-        self.MODULES,
-        self.VENV]
+        return [self.ACCOUNT, self.LOG_DIR, self.MODULES, self.VENV]
+
 
 class GalaxyMWAConfig(DefaultConfig):
     def __init__(self):
@@ -92,6 +94,7 @@ module load python/2.7.10
 module load mpi4py
 """
     VENV = ""
+
     def __init__(self):
         super(GalaxyASKAPConfig, self).__init__()
 
@@ -106,6 +109,7 @@ class MagnusConfig(DefaultConfig):
     def init_list(self):
         return ["pawsey0129", "/group/pawsey0129/daliuge_logs"]
 
+
 class TianHe2Config(DefaultConfig):
     def __init__(self):
         super(TianHe2Config, self).__init__()
@@ -114,8 +118,8 @@ class TianHe2Config(DefaultConfig):
         return ["SHAO", "/group/shao/daliuge_logs"]
 
 
-
 ##########################################
+
 
 class ConfigFactory:
     mapping = {
