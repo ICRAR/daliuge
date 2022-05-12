@@ -36,10 +36,11 @@ DALiuGE proxy that runs inside a firewall
 --------------------------------------------------------------------------------
 """
 
+import logging
 import select
 import socket
 import struct
-import sys, logging
+import sys
 import time
 
 from ..utils import b2s

@@ -27,7 +27,6 @@ import time
 import unittest
 
 import pkg_resources
-
 from dlg import droputils
 from dlg import utils
 from dlg.common import tool, Categories
@@ -38,8 +37,27 @@ from dlg.testutils import ManagerStarter
 from dlg.exceptions import NoSessionException
 from test.manager import testutils
 
-
 hostname = "127.0.0.1"
+
+default_repro = {
+    "rmode": "1",
+    "lg_blockhash": "x",
+    "pgt_blockhash": "y",
+    "pg_blockhash": "z",
+}
+default_graph_repro = {
+    "rmode": "1",
+    "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
+    "merkleroot": "a",
+    "signature": "b",
+}
+
+
+def add_test_reprodata(graph: list):
+    for drop in graph:
+        drop["reprodata"] = default_repro.copy()
+    graph.append(default_graph_repro.copy())
+    return graph
 
 
 class DimAndNMStarter(ManagerStarter):
@@ -85,6 +103,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
                 "node": hostname,
             },
         ]
+        add_test_reprodata(graphSpec)
         self.mm.createSession(sessionId)
         self.mm.addGraphSpec(sessionId, graphSpec)
 

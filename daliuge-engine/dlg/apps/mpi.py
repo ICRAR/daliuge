@@ -29,7 +29,6 @@ import sys
 from ..drop import BarrierAppDROP
 from ..exceptions import InvalidDropException
 
-
 logger = logging.getLogger(__name__)
 
 ##
@@ -134,6 +133,7 @@ class MPIApp(BarrierAppDROP):
 
             any_failed = False
             for rank, (stdout, stderr, code) in enumerate(children_data):
+                self._recompute_data[str(rank)] = [code, str(stdout), str(stderr)]
                 if code == 0:
                     continue
                 any_failed = True
@@ -149,10 +149,12 @@ class MPIApp(BarrierAppDROP):
         else:
             comm_children.barrier()
 
+    def generate_recompute_data(self):
+        return self._recompute_data
+
 
 # When we are called by the MPIApp
 def module_as_main():
-
     # Get the parent communicator before anything else happens
     # This way we ensure the communicator is valid
     from mpi4py import MPI
