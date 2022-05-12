@@ -4,7 +4,6 @@
 # sphinx-quickstart on Mon Feb  8 16:19:47 2016.
 
 import os
-import shlex
 import subprocess
 import sys
 from datetime import datetime
@@ -126,7 +125,7 @@ latex_elements = {}
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "daliuge.tex", u"daliuge Documentation", u"ICRAR", "manual"),
+    (master_doc, "daliuge.tex", u"daliuge Documentation", u"ICRAR", "manual")
 ]
 
 # -- Options for manual page output ---------------------------------------
@@ -144,5 +143,5 @@ texinfo_documents = [
         "daliuge",
         "One line description of project.",
         "Miscellaneous",
-    ),
+    )
 ]

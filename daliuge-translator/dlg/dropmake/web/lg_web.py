@@ -26,14 +26,17 @@ import json
 import logging
 import optparse
 import os
-import traceback
 import signal
 import sys
 import threading
 import time
+import traceback
 import warnings
-from jsonschema import validate, ValidationError
+from json import JSONDecodeError
+from urllib.parse import parse_qs, urlparse
 
+import bottle
+import pkg_resources
 from bottle import (
     route,
     request,
@@ -45,17 +48,20 @@ from bottle import (
     response,
     HTTPResponse,
 )
-import bottle
-import pkg_resources
-
-from urllib.parse import parse_qs, urlparse
-
 from dlg import common, restutils
 from dlg.clients import CompositeManagerClient
+from dlg.common.reproducibility.constants import REPRO_DEFAULT
+from dlg.common.reproducibility.reproducibility import (
+    init_lgt_repro_data,
+    init_lg_repro_data,
+    init_pgt_unroll_repro_data,
+    init_pgt_partition_repro_data,
+)
+from dlg.dropmake.lg import GraphException, load_lg
 from dlg.dropmake.pg_generator import unroll, partition
-from dlg.dropmake.lg import GraphException
 from dlg.dropmake.pg_manager import PGManager
 from dlg.dropmake.scheduler import SchedulerException
+from jsonschema import validate, ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +95,7 @@ ALGO_PARAMS = [
 ]  # max_mem is only relevant for the old editor, not used in EAGLE
 
 LG_SCHEMA_PATH = "/daliuge/dlg-lg.graph.schema"
+
 
 def lg_path(lg_name):
     return "{0}/{1}".format(lg_dir, lg_name)
@@ -149,13 +156,21 @@ def jsonbody_post():
     # see the table in http://bottlepy.org/docs/dev/tutorial.html#html-form-handling
     lg_name = request.forms["lg_name"]
     if lg_exists(lg_name):
+        rmode = request.forms.get("rmode", str(REPRO_DEFAULT.value))
         lg_content = request.forms["lg_content"]
+        try:
+            lg_content = json.loads(lg_content)
+        except JSONDecodeError:
+            logger.warning(f"Could not decode lgt {lg_content}")
+        lg_content = init_lg_repro_data(init_lgt_repro_data(lg_content, rmode))
         lg_path = "{0}/{1}".format(lg_dir, lg_name)
         post_sem.acquire()
         try:
             # overwrite file on disks
             # print "writing to {0}".format(lg_path)
             with open(lg_path, "w") as f:
+                if isinstance(lg_content, dict):
+                    lg_content = json.dumps(lg_content)
                 f.write(lg_content)
         except Exception as excmd2:
             response.status = 500
@@ -295,6 +310,37 @@ def get_schedule_mat():
         return "Failed to get schedule matrices for {0}: {1}".format(pgt_id, ex)
 
 
+@get("/gen_pg_helm")
+def gen_pg_helm():
+    """
+    RESTful interface to deploy a PGT as a K8s helm chart.
+    """
+    # Get pgt_data
+    from ...deploy.start_helm_cluster import start_helm
+
+    pgt_id = request.query.get("pgt_id")
+    pgtp = pg_mgr.get_pgt(pgt_id)
+    if pgtp is None:
+        response.status = 404
+        return "PGT(P) with id {0} not found in the Physical Graph Manager".format(
+            pgt_id
+        )
+
+    pgtpj = pgtp._gojs_json_obj
+    logger.info("PGTP: %s" % pgtpj)
+    num_partitions = len(list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"])))
+    # Send pgt_data to helm_start
+    try:
+        start_helm(pgtp, num_partitions, pgt_dir)
+    except restutils.RestClientException as ex:
+        response.status = 500
+        print(traceback.format_exc())
+        return "Fail to deploy physical graph: {0}".format(ex)
+    # TODO: Not sure what to redirect to yet
+    response.status = 200
+    return "Inspect your k8s dashboard for deployment status"
+
+
 @get("/gen_pg")
 def gen_pg():
     """
@@ -313,9 +359,10 @@ def gen_pg():
         )
 
     pgtpj = pgtp._gojs_json_obj
+    reprodata = pgtp.reprodata
     logger.info("PGTP: %s" % pgtpj)
     num_partitions = 0
-    num_partitions = len(list(filter(lambda n: 'isGroup' in n, pgtpj['nodeDataArray'])))
+    num_partitions = len(list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"])))
     surl = urlparse(request.url)
 
     mhost = ""
@@ -355,6 +402,7 @@ def gen_pg():
             return "Must specify DALiUGE manager host or tpl_nodes_len"
 
         pg_spec = pgtp.to_pg_spec([], ret_str=False, tpl_nodes_len=nnodes)
+        pg_spec.append(reprodata)
         response.content_type = "application/json"
         response.set_header(
             "Content-Disposition", 'attachment; filename="%s"' % (pgt_id)
@@ -376,9 +424,10 @@ def gen_pg():
             )
             mgr_client.create_session(ssid)
             # print "session created"
+            completed_uids = common.get_roots(pg_spec)
+            pg_spec.append(reprodata)
             mgr_client.append_graph(ssid, pg_spec)
             # print "graph appended"
-            completed_uids = common.get_roots(pg_spec)
             mgr_client.deploy_session(ssid, completed_uids=completed_uids)
             # mgr_client.deploy_session(ssid, completed_uids=[])
             # print "session deployed"
@@ -411,8 +460,8 @@ def gen_pg_spec():
         pgt_id = request.json.get("pgt_id")
         node_list = request.json.get("node_list")
         manager_host = request.json.get("manager_host")
-        if manager_host == 'localhost':
-            manager_host = '127.0.0.1'
+        if manager_host == "localhost":
+            manager_host = "127.0.0.1"
         # try:
         #     manager_port   = int(request.json.get("manager_port"));
         # except:
@@ -453,6 +502,10 @@ def gen_pg_spec():
         return "Fail to generate pg_spec: {0}".format(ex)
 
 
+def prepare_lgt(filename, rmode: str):
+    return init_lg_repro_data(init_lgt_repro_data(load_lg(filename), rmode))
+
+
 @get("/gen_pgt")
 def gen_pgt():
     """
@@ -461,13 +514,16 @@ def gen_pgt():
 
     query = request.query
     lg_name = query.get("lg_name")
+    # Retrieve rmode value
+    rmode = query.get("rmode", str(REPRO_DEFAULT.value))
     if not lg_exists(lg_name):
         response.status = 404
         return "{0}: logical graph {1} not found\n".format(err_prefix, lg_name)
 
     try:
+        lgt = prepare_lgt(lg_path(lg_name), rmode)
         # LG -> PGT
-        pgt = unroll_and_partition_with_params(lg_path(lg_name), query)
+        pgt = unroll_and_partition_with_params(lgt, query)
 
         num_partitions = 0  # pgt._num_parts;
 
@@ -482,7 +538,7 @@ def gen_pgt():
             pgt_view_json_name=pgt_id,
             partition_info=part_info,
             title="Physical Graph Template%s"
-                  % ("" if num_partitions == 0 else "Partitioning"),
+            % ("" if num_partitions == 0 else "Partitioning"),
             error=None
         )
     except GraphException as ge:
@@ -509,6 +565,9 @@ def gen_pgt_post():
     reqform = request.forms
     lg_name = reqform.get("lg_name")
 
+    # Retrieve rmode value
+    rmode = reqform.get("rmode", str(REPRO_DEFAULT.value))
+
     # Retrieve json data.
     json_string = reqform.get("json_data")
     try:
@@ -527,7 +586,6 @@ def gen_pgt_post():
                 validate(logical_graph, lg_schema)
             except ValidationError as ve:
                 error = "Validation Error {1}: {0}".format(str(ve), lg_name)
-
         # LG -> PGT
         pgt = unroll_and_partition_with_params(logical_graph, reqform)
         par_algo = reqform.get("algo", "none")
@@ -559,7 +617,7 @@ def gen_pgt_post():
         # return "Graph partition exception {1}: {0}".format(trace_msg, lg_name)
 
 
-def unroll_and_partition_with_params(lg_path, algo_params_source):
+def unroll_and_partition_with_params(lg, algo_params_source):
     # Get the 'test' parameter
     # NB: the test parameter is a string, so convert to boolean
     test = algo_params_source.get("test", "false")
@@ -569,8 +627,7 @@ def unroll_and_partition_with_params(lg_path, algo_params_source):
     app = "dlg.apps.simple.SleepApp" if test else None
 
     # Unrolling LG to PGT.
-    pgt = unroll(lg_path, app=app)
-
+    pgt = init_pgt_unroll_repro_data(unroll(lg, app=app))
     # Define partitioning parameters.
     algo = algo_params_source.get("algo", "none")
     num_partitions = algo_params_source.get("num_par", default=1, type=int)
@@ -582,7 +639,7 @@ def unroll_and_partition_with_params(lg_path, algo_params_source):
     for name, typ in ALGO_PARAMS:
         if name in algo_params_source:
             algo_params[name] = algo_params_source.get(name, type=typ)
-
+    reprodata = pgt.pop()
     # Partition the PGT
     pgt = partition(
         pgt,
@@ -591,9 +648,20 @@ def unroll_and_partition_with_params(lg_path, algo_params_source):
         num_islands=num_islands,
         partition_label=par_label,
         show_gojs=True,
-        **algo_params
+        **algo_params,
     )
 
+    pgt_spec = pgt.to_pg_spec(
+        [],
+        ret_str=False,
+        num_islands=num_islands,
+        tpl_nodes_len=num_partitions + num_islands,
+    )
+    pgt_spec.append(reprodata)
+    init_pgt_partition_repro_data(pgt_spec)
+    reprodata = pgt_spec.pop()
+    pgt.reprodata = reprodata
+    logger.info(reprodata)
     return pgt
 
 

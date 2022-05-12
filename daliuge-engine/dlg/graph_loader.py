@@ -28,10 +28,13 @@ import collections
 import importlib
 import logging
 
+from dlg.common.reproducibility.constants import ReproducibilityFlags
+
 from numpy import isin
 
 from . import droputils
 from .apps.socket_listener import SocketListenerApp
+from .common import Categories
 from .ddap_protocol import DROPRel, DROPLinkType
 from .drop import (
     ContainerDROP,
@@ -44,7 +47,7 @@ from .drop import (
     NullDROP,
     EndDROP,
     PlasmaDROP,
-    PlasmaFlightDROP
+    PlasmaFlightDROP,
 )
 from .environmentvar_drop import EnvironmentVarDROP
 from dlg.parset_drop import ParameterSetDROP
@@ -64,7 +67,7 @@ STORAGE_TYPES = {
     Categories.PLASMA: PlasmaDROP,
     Categories.PLASMAFLIGHT: PlasmaFlightDROP,
     Categories.PARSET: ParameterSetDROP,
-    Categories.ENVIRONMENTVARS: EnvironmentVarDROP
+    Categories.ENVIRONMENTVARS: EnvironmentVarDROP,
 }
 
 try:
@@ -137,7 +140,7 @@ def removeUnmetRelationships(dropSpecList):
     oids = []
     for dropSpec in dropSpecList:
         oid = dropSpec["oid"]
-        oid = list(oid.keys())[0] if isinstance(oid,dict) else oid
+        oid = list(oid.keys())[0] if isinstance(oid, dict) else oid
         oids.append(oid)
 
     # Step #2: find unmet relationships and remove them from the original
@@ -145,7 +148,7 @@ def removeUnmetRelationships(dropSpecList):
     for dropSpec in dropSpecList:
 
         this_oid = dropSpec["oid"]
-        this_oid = list(this_oid.keys())[0] if isinstance(this_oid,dict) else this_oid
+        this_oid = list(this_oid.keys())[0] if isinstance(this_oid, dict) else this_oid
         to_delete = []
 
         for rel in dropSpec:
@@ -176,7 +179,7 @@ def removeUnmetRelationships(dropSpecList):
 
                 # Check if OID is missing
                 oid = dropSpec[rel]
-                oid = list(oid.keys())[0] if isinstance(oid,dict) else oid
+                oid = list(oid.keys())[0] if isinstance(oid, dict) else oid
                 if oid in oids:
                     continue
 
@@ -188,7 +191,7 @@ def removeUnmetRelationships(dropSpecList):
 
         for rel in to_delete:
             ds = dropSpec[rel]
-            ds = list(ds.keys())[0] if isinstance(ds,dict) else ds
+            ds = list(ds.keys())[0] if isinstance(ds, dict) else ds
             del ds
 
     return unmetRelationships
@@ -212,10 +215,17 @@ def loadDropSpecs(dropSpecList):
     all DROP specifications (i.e., a dictionary of dictionaries) keyed on
     the OID of each DROP. Unlike `readObjectGraph` and `readObjectGraphS`,
     this method doesn't actually create the DROPs themselves.
+
+    Slices off graph-wise reproducibility data for later use
     """
 
     # Step #1: Check the DROP specs and collect them
     dropSpecs = {}
+    reprodata = None
+    if dropSpecList is None:
+        raise InvalidGraphException("DropSpec is empty %r" % dropSpecList)
+    if dropSpecList[-1].get("rmode"):
+        reprodata = dropSpecList.pop()
     for n, dropSpec in enumerate(dropSpecList):
 
         # "type" and 'oit' are mandatory
@@ -240,22 +250,24 @@ def loadDropSpecs(dropSpecList):
                 # A KeyError will be raised if a oid has been specified in the
                 # relationship list but doesn't exist in the list of DROPs
                 for oid in dropSpec[rel]:
-                    oid = list(oid.keys())[0] if isinstance(oid,dict) else oid
+                    oid = list(oid.keys())[0] if isinstance(oid, dict) else oid
                     dropSpecs[oid]
 
             # N-1 relationships
             elif rel in __TOONE:
-                port = list(dropSpecs[rel].keys()) if isinstance(dropSpecs[rel],dict) else\
-                    dropSpecs[rel]
+                port = (
+                    list(dropSpecs[rel].keys())
+                    if isinstance(dropSpecs[rel], dict)
+                    else dropSpecs[rel]
+                )
                 # See comment above
                 dropSpecs[port]
 
     # Done!
-    return dropSpecs
+    return dropSpecs, reprodata
 
 
 def createGraphFromDropSpecList(dropSpecList, session=None):
-
     logger.debug("Found %d DROP definitions", len(dropSpecList))
 
     # Step #1: create the actual DROPs
@@ -269,6 +281,12 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
 
         cf = __CREATION_FUNCTIONS[dropType]
         drop = cf(dropSpec, session=session)
+        if session is not None:
+            # Now using per-drop reproducibility setting.
+            drop.reproducibility_level = ReproducibilityFlags(
+                int(dropSpec.get("reprodata", {}).get("rmode", "0"))
+            )
+            # session.reprodata['rmode']
         drops[drop.oid] = drop
 
     # Step #2: establish relationships
@@ -284,7 +302,7 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
             if attr in __TOMANY:
                 link = __TOMANY[attr]
                 for rel in dropSpec[attr]:
-                    oid = list(rel.keys())[0] if isinstance(rel,dict) else rel
+                    oid = list(rel.keys())[0] if isinstance(rel, dict) else rel
                     lhDrop = drops[oid]
                     relFuncName = LINKTYPE_1TON_APPEND_METHOD[link]
                     try:
@@ -303,7 +321,7 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
             elif attr in __TOONE:
                 link = __TOONE[attr]
                 rel = dropSpec[attr]
-                rel = list(rel.keys())[0] if isinstance(rel,dict) else rel
+                rel = list(rel.keys())[0] if isinstance(rel, dict) else rel
                 lhDrop = drops[rel]
                 propName = LINKTYPE_NTO1_PROPERTY[link]
                 setattr(drop, propName, lhDrop)
@@ -379,11 +397,7 @@ def _createApp(dropSpec, dryRun=False, session=None):
         appType = getattr(module, parts[-1])
     except (ImportError, AttributeError):
         raise InvalidGraphException(
-            "drop %s specifies non-existent application: %s"
-            % (
-                oid,
-                appName,
-            )
+            "drop %s specifies non-existent application: %s" % (oid, appName)
         )
 
     if dryRun:
@@ -410,8 +424,8 @@ def _getKwargs(dropSpec):
     for kw in REMOVE:
         if kw in kwargs:
             del kwargs[kw]
-    for name, spec in dropSpec.get('applicationArgs', dict()).items():
-        kwargs[name] = spec['value']
+    for name, spec in dropSpec.get("applicationArgs", dict()).items():
+        kwargs[name] = spec["value"]
     return kwargs
 
 
