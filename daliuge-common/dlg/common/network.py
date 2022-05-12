@@ -19,12 +19,11 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import contextlib
 import errno
 import logging
 import socket
 import time
-import contextlib
-
 
 logger = logging.getLogger(__name__)
 

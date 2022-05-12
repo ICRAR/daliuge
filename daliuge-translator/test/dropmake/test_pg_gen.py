@@ -19,8 +19,9 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 
-import unittest, pkg_resources
+import unittest
 
+import pkg_resources
 from dlg.dropmake.lg import LG
 from dlg.dropmake.pgt import PGT, GPGTNoNeedMergeException
 from dlg.dropmake.pgtp import MetisPGTP, MySarkarPGTP, MinNumPartsPGTP
@@ -236,5 +237,5 @@ class TestPGGen(unittest.TestCase):
             lg = LG(fp)
             out = lg.unroll_to_tpl()
             for drop in out:
-                if drop['type'] == 'plain':
-                    self.assertEqual("SharedMemory", drop['storage'])
+                if drop["type"] == "plain":
+                    self.assertEqual("SharedMemory", drop["storage"])

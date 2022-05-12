@@ -69,6 +69,13 @@ class DROPManager(object):
         """
 
     @abc.abstractmethod
+    def getSessionReproStatus(self, sessionId):
+        """
+        Returns the reproducibility status of the session `sessionId`.
+        Not guaranteed to be identical to the usual SessionStatus.
+        """
+
+    @abc.abstractmethod
     def addGraphSpec(self, sessionId, graphSpec):
         """
         Adds a graph specification `graphSpec` (i.e., a description of the DROPs
@@ -87,6 +94,12 @@ class DROPManager(object):
         """
         Returns a specification of the graph currently held by session
         `sessionId`.
+        """
+
+    @abc.abstractmethod
+    def getGraphReproData(self, sessionId):
+        """
+        Returns the graph-wide reproducibility data for session `sessionId`
         """
 
     @abc.abstractmethod
