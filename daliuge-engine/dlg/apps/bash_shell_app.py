@@ -45,6 +45,7 @@ from ..drop import BarrierAppDROP, AppDROP
 from ..exceptions import InvalidDropException
 from ..meta import (
     dlg_string_param,
+    dlg_dict_param,
     dlg_component,
     dlg_batch_input,
     dlg_batch_output,
