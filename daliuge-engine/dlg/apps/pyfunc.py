@@ -379,7 +379,7 @@ class PyFuncApp(BarrierAppDROP):
         # Inputs are un-pickled and treated as the arguments of the function
         # Their order must be preserved, so we use an OrderedDict
         if self.pickle:
-            all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
+            all_contents = lambda x: pickle.loads(x)
         else:
             all_contents = lambda x: ast.literal_eval(
                 droputils.allDropContents(x).decode("utf-8")
@@ -387,7 +387,9 @@ class PyFuncApp(BarrierAppDROP):
 
         inputs = collections.OrderedDict()
         for uid, drop in self._inputs.items():
-            inputs[uid] = all_contents(drop)
+            contents = droputils.allDropContents(drop)
+            # allow for Null DROPs to be passed around
+            inputs[uid] = all_contents(contents) if contents else None
 
         self.funcargs = {}
 
