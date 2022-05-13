@@ -513,6 +513,8 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     """
     if not isinstance(applicationArgs, dict):
         logger.info("applicationArgs are not passed as a dict. Ignored!")
+    else:
+        logger.info("ApplicationArgs found %s", applicationArgs)
     # construct the actual command line from all application parameters
     args = []
     pargs = []
@@ -538,7 +540,7 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
             else:
                 arg = [f"{prefix}{name}{separator}{value}".strip()]
             args += arg
-
+    logger.info('Arguments of bash command: %s %s', args, pargs)
     return f"{' '.join(args + pargs)}"  # add positional arguments to end of args
 
 
