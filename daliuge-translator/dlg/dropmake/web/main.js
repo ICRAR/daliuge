@@ -107,6 +107,25 @@ function updateDeployOptionsDropdown() {
 
 }
 
+async function checkUrlStatus (url) {
+    return new Promise((resolve, reject) => {
+        $.ajax({url: url,
+            type: 'GET',
+            dataType: 'jsonp',
+            complete: function(jqXHR, textStatus){
+                if(jqXHR.status === 200){
+                    console.log("success",url, jqXHR.status);  // '200' = url reachable;
+                    resolve(true) 
+                }else{
+                    console.log("error", url, jqXHR.status);  // '200' = url reachable
+                    resolve(false) 
+                }
+        },
+            timeout: 2000
+        });
+    })
+}
+
 function saveSettings() {
     //need a check function to confirm settings have been filled out correctly
 
@@ -215,7 +234,18 @@ function fillOutSettings() {
     //fill out settings list rom deploy methods array
     var deployMethodManagerDiv = $("#DeployMethodManager")
     deployMethodManagerDiv.empty()
-    deployMethodsArray.forEach(element => {
+    deployMethodsArray.forEach(async element => {
+
+        var urlReachable = await checkUrlStatus(element.url)
+        var ReachableIcon = ""
+        
+        if(urlReachable){
+        ReachableIcon = '<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusReachable" data-text="Destination URL Is Reachable"><i class="material-icons md-24">done</i></div>'
+        }else{
+            ReachableIcon = '<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusNotReachable" data-text="Destination URL Is Not Reachable"><i class="material-icons md-24">close</i></div>'
+        }
+        console.log("reachable", checkUrlStatus(element.url))
+        console.log("icon", ReachableIcon)
 
         var directOption =  '<option value="direct">Direct</option>'
         var helmOption =  '<option value="helm">Helm</option>'
@@ -231,7 +261,8 @@ function fillOutSettings() {
 
         var deplpoyMethodRow = '<div class="input-group">'+
         '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class="deployMethodName" value="'+element.name+'"></div>'+
-        '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" placeholder="Destination Url" class="deployMethodUrl" value="'+element.url+'"></div>'+
+        '<div class="settingsInputTooltip tooltip tooltipBottom form-control urlInputField" data-text="Deploy Option Destination URL"><input type="text" placeholder="Destination Url" class="deployMethodUrl" value="'+element.url+'"></div>'+
+        ReachableIcon+
         '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod">'+
             directOption+
             helmOption+
@@ -254,6 +285,7 @@ function addDeployMethod(){
     var deplpoyMethodRow = '<div class="input-group">'+
     '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class=" deployMethodName" value=""></div>'+
     '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" placeholder="Destination Url" class="deployMethodUrl"value=""></div>'+
+    '<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusUnknown" data-text="Destination URL Is Not Reachable"><i class="material-icons md-24">question_mark</i></div>'+
     '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod" name="Deploy Method">'+
         directOption+
         helmOption+
