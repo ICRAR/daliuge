@@ -330,6 +330,9 @@ class PyFuncApp(BarrierAppDROP):
 
         self.arguments = inspect.getfullargspec(self.f)
         logger.debug(f"Function inspection revealed {self.arguments}")
+        # we don't want to mess with the 'self' argument
+        if self.arguments.args.count('self'): 
+            self.arguments.args.remove('self')
         self.fn_nargs = len(self.arguments.args)
         self.fn_ndef = len(self.arguments.defaults) if self.arguments.defaults else 0
         self._init_func_defaults()
@@ -418,14 +421,14 @@ class PyFuncApp(BarrierAppDROP):
         posargs = self.arguments.args[:self.fn_npos]
         kwargs = {}
         self.pargs = []
-        pargsDict = {}  # Initialize pargs dictionary
+        pargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))  # Initialize pargs dictionary
         if ('inputs' in self.parameters and isinstance(self.parameters['inputs'][0], dict)):
             logger.debug(f"Using named ports to identify inputs: "+\
                     f"{self.parameters['inputs']}")
             for i in range(min(len(inputs),self.fn_nargs +\
                 len(self.arguments.kwonlyargs))):
                 # key for final dict is value in named ports dict
-                key = list(self.parameters["inputs"][i].values())[0]
+                key = list(self.parameters['inputs'][i].values())[0]
                 # value for final dict is value in inputs dict
                 value = inputs[list(self.parameters['inputs'][i].keys())[0]]
                 if key in posargs:
@@ -433,11 +436,10 @@ class PyFuncApp(BarrierAppDROP):
                 else:
                     kwargs.update({key:value})
         else:
-            for i in range(min(len(inputs), self.fn_nargs)):
+            for i in range(min(len(inputs),self.fn_nargs)):
                 kwargs.update({self.arguments.args[i]: list(inputs.values())[i]})
 
-        logger.debug(f"updated pos-args with input ports {pargsDict}")
-        logger.debug(f"updating kw-args with input ports {kwargs}")
+        logger.debug(f"updating funcargs with input ports {kwargs}")
         self.funcargs.update(kwargs)
 
         # Try to get values for still missing positional arguments from Application Args
@@ -445,8 +447,8 @@ class PyFuncApp(BarrierAppDROP):
             appArgs = self.parameters["applicationArgs"]  # we'll pop them
             _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
             for pa in posargs:
-                if pa not in self.funcargs and pa not in pargsDict:
-                    if pa in appArgs:
+                if pa not in self.funcargs:
+                    if pa in appArgs and pa != 'self':
                         arg = appArgs.pop(pa)
                         value = arg['value']
                         ptype = arg['type']
@@ -466,9 +468,9 @@ class PyFuncApp(BarrierAppDROP):
 
             # Try to get values for still missing kwargs arguments from Application kws
             kwargs = {}
-            kws = self.arguments.args[self.fn_npos :]
+            kws = self.arguments.args[self.fn_npos:]
             for ka in kws:
-                if ka not in self.funcargs and ka not in pargsDict:
+                if ka not in self.funcargs:
                     if ka in appArgs:
                         arg = appArgs.pop(ka)
                         value = arg['value']
@@ -478,7 +480,10 @@ class PyFuncApp(BarrierAppDROP):
                                 value = ast.literal_eval(value)
                             except:
                                 pass
-                        kwargs.update({ka: value})
+                        kwargs.update({
+                            ka:
+                            value
+                        })
                     else:
                         logger.warning(f"Keyword argument '{ka}' not found!")
             logger.debug(f"updating funcargs with {kwargs}")
@@ -506,7 +511,7 @@ class PyFuncApp(BarrierAppDROP):
         kwargs = {}
         for kw in self.func_defaults.keys():
             value = self.func_defaults[kw]
-            if kw not in self.funcargs and kw not in pargsDict:
+            if kw not in self.funcargs:
                 kwargs.update({kw: value})
         logger.debug(f"updating funcargs with {kwargs}")
         self.funcargs.update(kwargs)
