@@ -55,7 +55,7 @@ from dlg.common.reproducibility.reproducibility import (
     init_lgt_repro_data,
     init_lg_repro_data,
     init_pgt_unroll_repro_data,
-    init_pgt_partition_repro_data,
+    init_pgt_partition_repro_data, init_pg_repro_data,
 )
 from dlg.dropmake.lg import GraphException, load_lg
 from dlg.dropmake.pg_generator import unroll, partition
@@ -426,6 +426,7 @@ def gen_pg():
             # print "session created"
             completed_uids = common.get_roots(pg_spec)
             pg_spec.append(reprodata)
+            init_pg_repro_data(pg_spec)
             mgr_client.append_graph(ssid, pg_spec)
             # print "graph appended"
             mgr_client.deploy_session(ssid, completed_uids=completed_uids)
