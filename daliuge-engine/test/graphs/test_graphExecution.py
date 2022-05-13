@@ -168,7 +168,6 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         sd = self.dm._sessions[sessionId].drops["2022-05-06T08:43:26_-2_0"]
         fd = self.dm._sessions[sessionId].drops["2022-05-06T08:43:26_-1_0"]
         with droputils.DROPWaiterCtx(self, fd, 3):
-            sd.write("''".encode())
             sd.setCompleted()
 
         #logger.debug(f'PyfuncAPPDrop signature: {dir(fd)}')
