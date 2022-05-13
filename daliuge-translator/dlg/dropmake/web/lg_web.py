@@ -567,7 +567,6 @@ def gen_pgt_post():
 
     # Retrieve rmode value
     rmode = reqform.get("rmode", str(REPRO_DEFAULT.value))
-
     # Retrieve json data.
     json_string = reqform.get("json_data")
     try:
@@ -586,6 +585,7 @@ def gen_pgt_post():
                 validate(logical_graph, lg_schema)
             except ValidationError as ve:
                 error = "Validation Error {1}: {0}".format(str(ve), lg_name)
+        logical_graph = prepare_lgt(logical_graph, rmode)
         # LG -> PGT
         pgt = unroll_and_partition_with_params(logical_graph, reqform)
         par_algo = reqform.get("algo", "none")
