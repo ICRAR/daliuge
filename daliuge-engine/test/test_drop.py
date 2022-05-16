@@ -55,6 +55,7 @@ from dlg.meta import (
     dlg_bool_param,
     dlg_int_param,
     dlg_list_param,
+    dlg_dict_param
 )
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
@@ -117,15 +118,23 @@ class TestAppDROP(unittest.TestCase):
             ONE = "one"
 
         class AssertAppDROP(BarrierAppDROP):
-            i: int = dlg_int_param("i", 1)
-            s: str = dlg_string_param("s", "default")
-            e: MyEnum = dlg_enum_param(MyEnum, "e", "default")
-            l: list = dlg_list_param("l", [])
-            l2: list = dlg_list_param("l2", "[]")
+            b: bool =dlg_bool_param("b", True) # type: ignore
+            i: int = dlg_int_param("i", 1)  # type: ignore
+            f: float = dlg_float_param("f", 2.0)  # type: ignore
+            s: str = dlg_string_param("s", "default")  # type: ignore
+            e: MyEnum = dlg_enum_param(MyEnum, "e", "default")  # type: ignore
+            l: list = dlg_list_param("l", [])  # type: ignore
+            l2: list = dlg_list_param("l2", "[]")  # type: ignore
+            d: dict = dlg_dict_param("d", {})  # type: ignore
+            d2: dict = dlg_dict_param("d2", "{}")  # type: ignore
 
             def run(self):
+                assert isinstance(self.b, bool)
+                assert self.b is True
                 assert isinstance(self.i, int)
-                assert self.s is 1
+                assert self.i == 1
+                assert isinstance(self.f, float)
+                assert self.f == 2.0
                 assert isinstance(self.s, str)
                 assert self.s is "default"
                 assert isinstance(self.e, MyEnum)
@@ -134,6 +143,10 @@ class TestAppDROP(unittest.TestCase):
                 assert self.l == []
                 assert isinstance(self.l2, list)
                 assert self.l2 == []
+                assert isinstance(self.d, dict)
+                assert self.d == {}
+                assert isinstance(self.d2, dict)
+                assert self.d2 == {}
 
         # Nothing fancy, just run it and be done with it
         a = NullDROP("a", "a")
