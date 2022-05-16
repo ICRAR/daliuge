@@ -66,7 +66,7 @@ class TestSimpleApps(unittest.TestCase):
         b.addInput(a)
         b.addOutput(c)
 
-        a = NullDROP("a", "a")
+        self._test_graph_runs((a, b, c), a, c)
 
     def _test_copyapp_simple(self, app):
 

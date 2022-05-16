@@ -21,6 +21,7 @@
 #
 
 import contextlib
+from enum import Enum
 import io
 import os, unittest
 import random
@@ -47,9 +48,17 @@ from dlg.drop import (
     InputFiredAppDROP,
     RDBMSDrop,
 )
+from dlg.meta import (
+    dlg_float_param,
+    dlg_string_param,
+    dlg_enum_param,
+    dlg_bool_param,
+    dlg_int_param,
+    dlg_list_param,
+)
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
-from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp
+from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp, SleepApp
 
 
 try:
@@ -92,7 +101,51 @@ class SumupContainerChecksum(BarrierAppDROP):
         outputDrop.write(str(crcSum).encode("utf8"))
 
 
-class TestDROP(unittest.TestCase):
+class TestAppDROP(unittest.TestCase):
+    def _test_graph_runs(self, drops, first, last, timeout=1):
+        first = droputils.listify(first)
+        with droputils.DROPWaiterCtx(self, last, timeout):
+            for f in first:
+                f.setCompleted()
+
+        for x in drops:
+            self.assertEqual(DROPStates.COMPLETED, x.status)
+
+    def test_app_param_defaults(self):
+        class MyEnum(Enum):
+            DEFAULT = "default"
+            ONE = "one"
+
+        class AssertAppDROP(BarrierAppDROP):
+            i: int = dlg_int_param("i", 1)
+            s: str = dlg_string_param("s", "default")
+            e: MyEnum = dlg_enum_param(MyEnum, "e", "default")
+            l: list = dlg_list_param("l", [])
+            l2: list = dlg_list_param("l2", "[]")
+
+            def run(self):
+                assert isinstance(self.i, int)
+                assert self.s is 1
+                assert isinstance(self.s, str)
+                assert self.s is "default"
+                assert isinstance(self.e, MyEnum)
+                assert self.e is MyEnum("default")
+                assert isinstance(self.l, list)
+                assert self.l == []
+                assert isinstance(self.l2, list)
+                assert self.l2 == []
+
+        # Nothing fancy, just run it and be done with it
+        a = NullDROP("a", "a")
+        b = AssertAppDROP("b", "b")
+        c = NullDROP("c", "c")
+        b.addInput(a)
+        b.addOutput(c)
+
+        self._test_graph_runs((a, b, c), a, c)
+
+
+class TestDataDROP(unittest.TestCase):
     """
     DataDROP related unit tests
     """

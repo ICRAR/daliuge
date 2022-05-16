@@ -24,6 +24,7 @@
 import ast
 import base64
 import collections
+from enum import Enum
 import importlib
 import inspect
 import logging
@@ -40,6 +41,7 @@ from dlg.exceptions import InvalidDropException
 from dlg.meta import (
     dlg_bool_param,
     dlg_string_param,
+    dlg_enum_param,
     dlg_float_param,
     dlg_dict_param,
     dlg_component,
@@ -111,6 +113,14 @@ def import_using_code(code):
     return dill.loads(code)
 
 
+class DropParser(Enum):
+    PICKLE = 'pickle'
+    AST = 'ast'
+    PATH = 'path'
+    DATAURL = 'dataurl'
+    NPY = 'npy'
+    #JSON = "json"
+
 ##
 # @brief PyFuncApp
 # @details An application that wraps a simple python function.
@@ -138,10 +148,10 @@ def import_using_code(code):
 #     \~English Python function name
 # @param[in] aparam/func_code Function Code//String/readwrite/False//False/
 #     \~English Python function code, e.g. 'def function_name(args): return args'
-# @param[in] aparam/pickle_inputs Pickle Inputs/true/Boolean/readwrite/False//False/
-#     \~English Whether the python input arguments are pickled.
-# @param[in] aparam/pickle_outputs Pickle Inputs/true/Boolean/readwrite/False//False/
-#     \~English Whether the python output arguments are pickled.
+# @param[in] aparam/input_parser Input Parser/pickle/Select/readwrite/False/pickle,ast,path,dataurl,npy/False/
+#     \~English Input port parsing technique
+# @param[in] aparam/output_parser Output Parser/pickle/Select/readwrite/False/pickle,ast,path,dataurl,npy/False/
+#     \~English output port parsing technique
 # @param[in] aparam/func_defaults Function Defaults//String/readwrite/False//False/
 #     \~English Mapping from argname to default value. Should match only the last part of the argnames list.
 #               Values are interpreted as Python code literals and that means string values need to be quoted.
@@ -196,8 +206,8 @@ class PyFuncApp(BarrierAppDROP):
 
     func_name = dlg_string_param("func_name", None)
     # func_code = dlg_bytes_param("func_code", None) # bytes or base64 string
-    pickle_inputs: bool = dlg_bool_param("pickle_inputs", True)
-    pickle_outputs: bool = dlg_bool_param("pickle_outputs", True)
+    input_parser: DropParser = dlg_enum_param(DropParser, "input_parser", DropParser.PICKLE)  # type: ignore
+    output_parser: DropParser = dlg_enum_param(DropParser, "output_parser", DropParser.PICKLE)  # type: ignore
     func_arg_mapping = dlg_dict_param("func_arg_mapping", {})
     func_defaults = dlg_dict_param("func_defaults", {})
     f: Callable
@@ -225,7 +235,7 @@ class PyFuncApp(BarrierAppDROP):
             logger.error(f"Wrong format or type for function defaults for "+\
                 "{self.f.__name__}: {self.func_defaults}, {type(self.func_defaults)}")
             raise ValueError
-        if self.pickle_inputs:
+        if self.input_parser is DropParser.PICKLE:
             # only values are pickled, get them unpickled
             for name, value in self.func_defaults.items():
                 self.func_defaults[name] = deserialize_data(value)
@@ -258,6 +268,10 @@ class PyFuncApp(BarrierAppDROP):
         """
         BarrierAppDROP.initialize(self, **kwargs)
 
+        # TODO: for some reason the literal is never cast?
+        self.input_parser = DropParser(self.input_parser)
+        self.output_parser = DropParser(self.output_parser)
+
         self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
 
         self.func_code = self._getArg(kwargs, "func_code", None)
@@ -267,8 +281,8 @@ class PyFuncApp(BarrierAppDROP):
             "func_code",
             "func_name",
             "func_arg_mapping",
-            "pickle_inputs",
-            "pickle_outputs",
+            "input_parser",
+            "output_parser",
             "func_defaults"
             ]
         for kw in self.func_def_keywords:
@@ -356,10 +370,16 @@ class PyFuncApp(BarrierAppDROP):
 
         # Inputs are un-pickled and treated as the arguments of the function
         # Their order must be preserved, so we use an OrderedDict
-        if self.pickle_inputs:
+        if DropParser(self.input_parser) is DropParser.PICKLE:
             all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
-        else:
+        elif DropParser(self.input_parser) is DropParser.AST:
             all_contents = lambda x: ast.literal_eval(droputils.allDropContents(x).decode('utf-8'))
+        elif DropParser(self.input_parser) is DropParser.PATH:
+            all_contents = lambda x: x.path
+        elif DropParser(self.input_parser) is DropParser.DATAURL:
+            all_contents = lambda x: x.dataurl
+        else:
+            raise ValueError(self.input_parser.__repr__())
 
         inputs = collections.OrderedDict()
         for uid, drop in self._inputs.items():
@@ -429,6 +449,11 @@ class PyFuncApp(BarrierAppDROP):
                         if ptype in ["Complex", "Json"]:
                             try:
                                 value = ast.literal_eval(value)
+                            except ValueError:
+                                pass
+                        elif ptype in ["Python"]:
+                            try:
+                                value = eval(value)
                             except:
                                 pass
                         pargsDict.update({
@@ -507,8 +532,10 @@ class PyFuncApp(BarrierAppDROP):
             if len(outputs) == 1:
                 result = [result]
             for r, o in zip(result, outputs):
-                if self.pickle_outputs:
+                if DropParser(self.output_parser) is DropParser.PICKLE:
                     logger.debug(f"Writing pickeled result {type(r)} to {o}")
-                    o.write(pickle.dumps(r))  # @UndefinedVariable
-                else:
+                    o.write(pickle.dumps(r))
+                elif DropParser(self.output_parser) is DropParser.AST:
                     o.write(repr(r).encode('utf-8'))
+                else:
+                    ValueError(self.output_parser.__repr__())
