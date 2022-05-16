@@ -124,6 +124,41 @@ async function checkUrlStatus (url) {
     })
 }
 
+async function manualCheckUrlStatus (clickPos) {
+    var badUrl = false
+    //if the event is triggered by click the check icon manually
+    if(clickPos === "icon"){
+        var url = $(event.target).parent().find($('.deployMethodUrl')).val()
+        var target = $(event.target)
+    }else{
+        //if the event is triggered by focus leave on the input
+        var url = $(event.target).parent().parent().find($('.deployMethodUrl')).val()
+        var target = $(event.target).parent().parent().find($('.urlStatusIcon'))
+    }
+   
+
+    //check if jquery deems the url constructed properly
+    try {
+        new URL(url);
+    } catch (error) {
+        badUrl = true
+    }
+
+    if(badUrl){
+        $("#settingsModalErrorMessage").html('Please ensure deploy methods URLs are valid')
+        return
+    }else{
+        //if the url is deemed contructed well, here we use an ajax call to see if the url is reachable
+        var urlStatus = await checkUrlStatus(url)
+        $("#settingsModalErrorMessage").html('')
+        if(urlStatus){
+            target.replaceWith('<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusReachable" data-text="Destination URL Is Reachable"><i class="material-icons md-24">done</i></div>')
+        }else{
+            target.replaceWith('<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusNotReachable" data-text="Destination URL Is Not Reachable"><i class="material-icons md-24">close</i></div>')
+        }   
+    }
+}
+
 function saveSettings() {
     //need a check function to confirm settings have been filled out correctly
 
@@ -238,7 +273,7 @@ function fillOutSettings() {
         var ReachableIcon = ""
         
         if(urlReachable){
-        ReachableIcon = '<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusReachable" data-text="Destination URL Is Reachable"><i class="material-icons md-24">done</i></div>'
+            ReachableIcon = '<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusReachable" data-text="Destination URL Is Reachable"><i class="material-icons md-24">done</i></div>'
         }else{
             ReachableIcon = '<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusNotReachable" data-text="Destination URL Is Not Reachable"><i class="material-icons md-24">close</i></div>'
         }
@@ -257,7 +292,7 @@ function fillOutSettings() {
 
         var deplpoyMethodRow = '<div class="input-group">'+
         '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class="deployMethodName" value="'+element.name+'"></div>'+
-        '<div class="settingsInputTooltip tooltip tooltipBottom form-control urlInputField" data-text="Deploy Option Destination URL"><input type="text" placeholder="Destination Url" class="deployMethodUrl" value="'+element.url+'"></div>'+
+        `<div class="settingsInputTooltip tooltip tooltipBottom form-control urlInputField" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut')" placeholder="Destination Url" class="deployMethodUrl" value="`+element.url+`"></div>`+
         ReachableIcon+
         '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod">'+
             directOption+
@@ -280,8 +315,8 @@ function addDeployMethod(){
 
     var deplpoyMethodRow = '<div class="input-group">'+
     '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class=" deployMethodName" value=""></div>'+
-    '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" placeholder="Destination Url" class="deployMethodUrl"value=""></div>'+
-    '<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusUnknown" data-text="Destination URL Is Not Reachable"><i class="material-icons md-24">question_mark</i></div>'+
+    `<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut')" placeholder="Destination Url" class="deployMethodUrl"value=""></div>`+
+    '<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusUnknown" data-text="Destination URL status Unknown, click to check" onclick="manualCheckUrlStatus(icon)"><a class="urlStatusUnknownIcon">?</a></div>'+
     '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod" name="Deploy Method">'+
         directOption+
         helmOption+

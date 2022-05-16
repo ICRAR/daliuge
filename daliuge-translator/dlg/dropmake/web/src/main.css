@@ -781,3 +781,11 @@
 #oriantationDropdown{
   padding: 2px 10px;
 }
+
+#settingsModal .modal-body .urlStatusUnknownIcon{
+  color: black;
+  font-size: 24;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
