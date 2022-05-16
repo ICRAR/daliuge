@@ -235,7 +235,7 @@ class PyFuncApp(BarrierAppDROP):
             logger.error(f"Wrong format or type for function defaults for "+\
                 "{self.f.__name__}: {self.func_defaults}, {type(self.func_defaults)}")
             raise ValueError
-        if self.input_parser is DropParser.PICKLE:
+        if DropParser(self.input_parser) is DropParser.PICKLE:
             # only values are pickled, get them unpickled
             for name, value in self.func_defaults.items():
                 self.func_defaults[name] = deserialize_data(value)

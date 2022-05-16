@@ -136,7 +136,7 @@ class TestAppDROP(unittest.TestCase):
                 assert isinstance(self.f, float)
                 assert self.f == 2.0
                 assert isinstance(self.s, str)
-                assert self.s is "default"
+                assert self.s == "default"
                 assert isinstance(self.e, MyEnum)
                 assert self.e is MyEnum("default")
                 assert isinstance(self.l, list)
