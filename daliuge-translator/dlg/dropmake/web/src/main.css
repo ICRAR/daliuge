@@ -677,6 +677,7 @@
   margin-top: 60%;
   margin-left: 50%;
   transform: translate(-50%,-50%);
+  pointer-events: none;
 }
 
 #settingsModal .settingsInputTooltip input, #settingsModal .settingsInputTooltip select{
