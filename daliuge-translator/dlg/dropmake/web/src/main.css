@@ -647,6 +647,39 @@
   padding: 0px;
 }
 
+#settingsModal .urlInputField{
+  border-right:none;
+}
+
+#settingsModal .urlStatusIcon{
+  width: 30px;
+  color: black;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-width:1px 0px 1px 0px;
+}
+
+#settingsModal .urlStatusReachable{
+  background-color: rgb(113, 190, 71);
+}
+
+#settingsModal .urlStatusNotReachable{
+  background-color: rgb(190, 79, 71);
+}
+
+#settingsModal .urlStatusUnknown{
+  background-color: rgb(109, 109, 109);
+}
+
+#settingsModal .urlStatusIcon i{
+  position: absolute;
+  margin-top: 60%;
+  margin-left: 50%;
+  transform: translate(-50%,-50%);
+  pointer-events: none;
+}
+
 #settingsModal .settingsInputTooltip input, #settingsModal .settingsInputTooltip select{
   display: block;
   width: 100%;
@@ -748,4 +781,12 @@
 
 #oriantationDropdown{
   padding: 2px 10px;
+}
+
+#settingsModal .modal-body .urlStatusUnknownIcon{
+  color: black;
+  font-size: 24;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
 }
