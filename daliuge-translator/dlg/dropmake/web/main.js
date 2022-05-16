@@ -110,14 +110,12 @@ function updateDeployOptionsDropdown() {
 async function checkUrlStatus (url) {
     return new Promise((resolve, reject) => {
         $.ajax({url: url,
-            type: 'GET',
+            type: 'HEAD',
             dataType: 'jsonp',
             complete: function(jqXHR, textStatus){
                 if(jqXHR.status === 200){
-                    console.log("success",url, jqXHR.status);  // '200' = url reachable;
                     resolve(true) 
                 }else{
-                    console.log("error", url, jqXHR.status);  // '200' = url reachable
                     resolve(false) 
                 }
         },
@@ -149,7 +147,6 @@ function saveSettings() {
             new URL($(this).find(".deployMethodUrl").val());
           } catch (error) {
                 console.log("faulty Url: ",$(this).find(".deployMethodUrl").val())
-              console.log(error)
               badUrl = true
           }
 
@@ -234,6 +231,7 @@ function fillOutSettings() {
     //fill out settings list rom deploy methods array
     var deployMethodManagerDiv = $("#DeployMethodManager")
     deployMethodManagerDiv.empty()
+    console.log("filling out settings, GET Errors and Cors warning from Url check")
     deployMethodsArray.forEach(async element => {
 
         var urlReachable = await checkUrlStatus(element.url)
@@ -244,8 +242,6 @@ function fillOutSettings() {
         }else{
             ReachableIcon = '<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusNotReachable" data-text="Destination URL Is Not Reachable"><i class="material-icons md-24">close</i></div>'
         }
-        console.log("reachable", checkUrlStatus(element.url))
-        console.log("icon", ReachableIcon)
 
         var directOption =  '<option value="direct">Direct</option>'
         var helmOption =  '<option value="helm">Helm</option>'
