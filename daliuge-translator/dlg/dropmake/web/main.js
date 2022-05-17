@@ -127,7 +127,7 @@ async function checkUrlStatus (url) {
                 }else{
                     resolve(false) 
                 }
-        },
+            },
             timeout: 2000
         });
     })
