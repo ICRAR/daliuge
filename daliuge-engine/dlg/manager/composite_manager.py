@@ -349,16 +349,15 @@ class CompositeManager(DROPManager):
         # attribute set
         logger.info(f"Separating graph using partition attribute {self._partitionAttr}")
         perPartition = collections.defaultdict(list)
-        try:
-            if graphSpec[-1]["rmode"] is not None:
-                init_pg_repro_data(graphSpec)
-                self._graph["reprodata"] = graphSpec.pop()
-                logger.debug(
-                    "Composite manager found reprodata in dropspecList, rmode=%s",
-                    self._graph["reprodata"]["rmode"],
-                )
-        except KeyError:
-            pass
+        if "rmode" in graphSpec[-1]:
+            init_pg_repro_data(graphSpec)
+            self._graph["reprodata"] = graphSpec.pop()
+            logger.debug(
+                "Composite manager found reprodata in dropspecList, rmode=%s",
+                self._graph["reprodata"]["rmode"],
+            )
+        if graphSpec[-1] == {}:
+            graphSpec.pop()
         for dropSpec in graphSpec:
             if self._partitionAttr not in dropSpec:
                 msg = "Drop %s doesn't specify a %s attribute" % (

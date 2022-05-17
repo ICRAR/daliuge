@@ -271,6 +271,73 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         #    a.setCompleted()
         assertGraphStatus(sessionId, DROPStates.CANCELLED)
 
+    def test_submit_unreprodata(self):
+        """
+        Need to ensure that the DIM can handle a graph with empty reprodata
+        (the default if nothing is provided at translation time)
+        """
+        graphSpec = [
+            {
+                "oid": "A",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "node": hostname,
+                "consumers": ["B"],
+            },
+            {
+                "oid": "B",
+                "type": "app",
+                "app": "dlg.apps.simple.SleepAndCopyApp",
+                "sleepTime": 1,
+                "outputs": ["C"],
+                "node": hostname,
+            },
+            {
+                "oid": "C",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "node": hostname,
+            },
+            {}  # A dummy empty reprodata (the default if absolutely nothing is specified)
+        ]
+        self.dim.createSession('a')
+        self.assertEqual(0, self.dim.getGraphSize('a'))
+        self.dim.addGraphSpec('a', graphSpec)
+        self.assertEqual(len(graphSpec), self.dim.getGraphSize('a'))
+
+    def test_submit_noreprodata(self):
+        """
+        Need to ensure that the DIM can handle a graph with no reprodata
+        (the default if nothing is provided at translation time)
+        """
+        graphSpec = [
+            {
+                "oid": "A",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "node": hostname,
+                "consumers": ["B"],
+            },
+            {
+                "oid": "B",
+                "type": "app",
+                "app": "dlg.apps.simple.SleepAndCopyApp",
+                "sleepTime": 1,
+                "outputs": ["C"],
+                "node": hostname,
+            },
+            {
+                "oid": "C",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "node": hostname,
+            },
+        ]
+        self.dim.createSession('a')
+        self.assertEqual(0, self.dim.getGraphSize('a'))
+        self.dim.addGraphSpec('a', graphSpec)
+        self.assertEqual(len(graphSpec), self.dim.getGraphSize('a'))
+
 
 class TestREST(LocalDimStarter, unittest.TestCase):
     def test_fullRound(self):
