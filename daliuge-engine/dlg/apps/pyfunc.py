@@ -461,9 +461,9 @@ class PyFuncApp(BarrierAppDROP):
                             pa:
                             value
                         })
-                    elif pa != 'self':
+                    elif pa != 'self' and pa not in pargsDict:
                         logger.warning(f"Required positional argument '{pa}' not found!")
-            logger.debug(f"updating posargs with {list(kwargs.values())}")
+            logger.debug(f"updating posargs with {list(pargsDict.values())}")
             self.pargs.extend(list(pargsDict.values()))
 
             # Try to get values for still missing kwargs arguments from Application kws
