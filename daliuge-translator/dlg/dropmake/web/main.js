@@ -38,9 +38,17 @@ function openSettingsModal(){
     $('#settingsModal').modal("show")
 }
 
-function initiateDeploy(method, selected, name){
+async function initiateDeploy(method, selected, name){
     if (selected === false){
         changeSelectedDeployMethod(name)
+    }
+    var activeUrlReachable = await checkUrlStatus(window.localStorage.getItem("manager_url"))
+
+    if(!activeUrlReachable){
+        $("#warning-alert").fadeTo(2000, 1000).slideUp(200, function() {
+            $("#warning-alert").slideUp(200);
+        });
+        return
     }
     if(method === "direct"){
         $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
@@ -83,8 +91,9 @@ function updateDeployOptionsDropdown() {
             selectedUrl=element.url
             //active option
             $("#deployDropdowns").prepend(
-                `<a href='javascript:void(0)' onclick='initiateDeploy("`+element.deployMethod+`",true,"`+element.name+`")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph vi method: `+element.deployMethod+`' value='Deploy Physical Graph via `+element.deployMethod+`'>Deploy: `+element.name+`</a>`
+                `<a href='javascript:void(0)' id='activeDeployMethodButton'  onclick='initiateDeploy("`+element.deployMethod+`",true,"`+element.name+`")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph vi method: `+element.deployMethod+`' value='Deploy Physical Graph via `+element.deployMethod+`'>Deploy: `+element.name+`</a>`
             )
+            checkActiveDeployMethod(selectedUrl)
         }
     })
 
@@ -118,7 +127,7 @@ async function checkUrlStatus (url) {
                 }else{
                     resolve(false) 
                 }
-        },
+            },
             timeout: 2000
         });
     })
@@ -157,6 +166,17 @@ async function manualCheckUrlStatus (clickPos) {
             target.replaceWith(`<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusNotReachable" data-text="Destination URL Is Not Reachable, click to re-check" onclick="manualCheckUrlStatus('icon')"><i class="material-icons md-24">close</i></div>`)
         }   
     }
+}
+
+async function checkActiveDeployMethod(url){
+    $("#activeDeployMethodButton").removeClass("activeDeployMethodButtonOnline")
+    $("#activeDeployMethodButton").removeClass("activeDeployMethodButtonOffline")
+    var urlStatus = await checkUrlStatus(url)
+    if(urlStatus){
+        $("#activeDeployMethodButton").addClass("activeDeployMethodButtonOnline")
+    }else{
+        $("#activeDeployMethodButton").addClass("activeDeployMethodButtonOffline")
+    }   
 }
 
 function saveSettings() {

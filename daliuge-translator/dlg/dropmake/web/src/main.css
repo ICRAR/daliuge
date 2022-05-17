@@ -642,6 +642,14 @@
   color:white;
 }
 
+#deployDropdowns .activeDeployMethodButtonOnline{
+  border-left: 6px solid green !important;
+}
+
+#deployDropdowns .activeDeployMethodButtonOffline{
+  border-left: 6px solid red !important;
+}
+
 #settingsModal .settingsInputTooltip{
   display: flex;
   padding: 0px;
@@ -789,4 +797,13 @@
   margin-left: 50%;
   transform: translateX(-50%);
   pointer-events: none;
+}
+
+#warning-alert{
+  position: absolute;
+  z-index: 100;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
 }
