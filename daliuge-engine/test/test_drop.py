@@ -33,6 +33,7 @@ import tempfile
 import subprocess
 
 from dlg import droputils
+from dlg.common.reproducibility.constants import ReproducibilityFlags
 from dlg.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
 from dlg.drop import (
     FileDROP,
@@ -60,7 +61,6 @@ from dlg.meta import (
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
 from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp, SleepApp
-
 
 try:
     from crc32c import crc32c
@@ -203,14 +203,18 @@ class TestDataDROP(unittest.TestCase):
         """
         self._test_dynamic_write_withDropType(InMemoryDROP)
 
-    @unittest.skipIf(sys.version_info < (3, 8), "Shared memory does nt work < python 3.8")
+    @unittest.skipIf(
+        sys.version_info < (3, 8), "Shared memory does nt work < python 3.8"
+    )
     def test_write_SharedMemoryDROP(self):
         """
         Test a SharedMemoryDROP with simple AppDROP (for checksum calculation)
         """
         self._test_write_withDropType(SharedMemoryDROP)
 
-    @unittest.skipIf(sys.version_info < (3, 8), "Shared memory does nt work < python 3.8")
+    @unittest.skipIf(
+        sys.version_info < (3, 8), "Shared memory does nt work < python 3.8"
+    )
     def test_dynamic_write_SharedMemoryDROP(self):
         """
         Test a SharedMemoryDROP with simple AppDROP (for checksum calculation)
@@ -1019,6 +1023,233 @@ class TestDataDROP(unittest.TestCase):
             os.unlink(dbfile)
 
 
+class TestDROPReproducibility(unittest.TestCase):
+    def test_drop_rerun(self):
+        a = NullDROP("a", "a")
+        a.reproducibility_level = ReproducibilityFlags.RERUN
+        a.setCompleted()
+        self.assertEqual(a.generate_merkle_data(), {"status": DROPStates.COMPLETED})
+        self.assertIsNotNone(a.merkleroot)
+
+    def test_drop_repeat(self):
+        a = NullDROP("a", "a")
+        a.reproducibility_level = ReproducibilityFlags.REPEAT
+        a.setCompleted()
+        self.assertEqual(a.generate_merkle_data(), {"status": DROPStates.COMPLETED})
+        self.assertIsNotNone(a.merkleroot)
+        pass
+
+    def test_drop_recompute(self):
+        a = NullDROP("a", "a")
+        a.reproducibility_level = ReproducibilityFlags.RECOMPUTE
+        a.setCompleted()
+        self.assertEqual(a.generate_merkle_data(), {"status": DROPStates.COMPLETED})
+        self.assertIsNotNone(a.merkleroot)
+        pass
+
+    def test_drop_reproduce(self):
+        a = NullDROP("a", "a")
+        a.reproducibility_level = ReproducibilityFlags.REPRODUCE
+        a.setCompleted()
+        self.assertEqual(a.generate_merkle_data(), {})
+        self.assertIsNone(a.merkleroot)
+        pass
+
+    def test_drop_replicate_sci(self):
+        a = NullDROP("a", "a")
+        a.reproducibility_level = ReproducibilityFlags.REPLICATE_SCI
+        a.setCompleted()
+        self.assertEqual(a.generate_rerun_data(), {"status": DROPStates.COMPLETED})
+        self.assertIsNotNone(a.merkleroot)
+        pass
+
+    def test_drop_replicate_comp(self):
+        a = NullDROP("a", "a")
+        a.reproducibility_level = ReproducibilityFlags.REPLICATE_COMP
+        a.setCompleted()
+        self.assertEqual(a.generate_rerun_data(), {"status": DROPStates.COMPLETED})
+        self.assertIsNotNone(a.merkleroot)
+        pass
+
+    def test_drop_replicate_total(self):
+        a = NullDROP("a", "a")
+        a.reproducibility_level = ReproducibilityFlags.REPLICATE_TOTAL
+        a.setCompleted()
+        self.assertEqual(a.generate_rerun_data(), {"status": DROPStates.COMPLETED})
+        self.assertIsNotNone(a.merkleroot)
+        pass
+
+    def test_file_reproducibility(self):
+        from dlg.common.reproducibility.reproducibility import common_hash
+
+        data = b"Helloworld"
+        data_hash = common_hash(data)
+        a = FileDROP("a", "a")
+        a.write(data)
+        a.reproducibility_level = ReproducibilityFlags.RERUN
+        a.setCompleted()
+        b = NullDROP("b", "b")
+        b.reproducibility_level = ReproducibilityFlags.RERUN
+        b.setCompleted()
+        self.assertEqual(a.merkleroot, b.merkleroot)
+
+        a.reproducibility_level = ReproducibilityFlags.REPEAT
+        a.commit()
+        self.assertEqual(a.merkleroot, b.merkleroot)
+
+        a.reproducibility_level = ReproducibilityFlags.RECOMPUTE
+        a.commit()
+        self.assertEqual(a.merkleroot, b.merkleroot)
+
+        a.reproducibility_level = ReproducibilityFlags.REPRODUCE
+        a.commit()
+        self.assertNotEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(a.generate_merkle_data(), {"data_hash": data_hash})
+
+        a.reproducibility_level = ReproducibilityFlags.REPLICATE_SCI
+        a.commit()
+        self.assertNotEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(
+            a.generate_merkle_data(),
+            {"data_hash": data_hash, "status": DROPStates.COMPLETED},
+        )
+
+        a.reproducibility_level = ReproducibilityFlags.REPLICATE_COMP
+        a.commit()
+        self.assertNotEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(
+            a.generate_merkle_data(),
+            {"data_hash": data_hash, "status": DROPStates.COMPLETED},
+        )
+
+        a.reproducibility_level = ReproducibilityFlags.REPLICATE_TOTAL
+        a.commit()
+        self.assertNotEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(
+            a.generate_merkle_data(),
+            {"data_hash": data_hash, "status": DROPStates.COMPLETED},
+        )
+
+    def test_memory_reproducibility(self):
+        from dlg.common.reproducibility.reproducibility import common_hash
+
+        data = b"Helloworld"
+        data_hash = common_hash(data)
+        a = InMemoryDROP("a", "a")
+        a.write(data)
+        a.reproducibility_level = ReproducibilityFlags.RERUN
+        a.setCompleted()
+        b = NullDROP("b", "b")
+        b.reproducibility_level = ReproducibilityFlags.RERUN
+        b.setCompleted()
+        self.assertEqual(a.merkleroot, b.merkleroot)
+
+        a.reproducibility_level = ReproducibilityFlags.REPEAT
+        a.commit()
+        self.assertEqual(a.merkleroot, b.merkleroot)
+
+        a.reproducibility_level = ReproducibilityFlags.RECOMPUTE
+        a.commit()
+        self.assertEqual(a.merkleroot, b.merkleroot)
+
+        a.reproducibility_level = ReproducibilityFlags.REPRODUCE
+        a.commit()
+        self.assertNotEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(a.generate_merkle_data(), {"data_hash": data_hash})
+
+        a.reproducibility_level = ReproducibilityFlags.REPLICATE_SCI
+        a.commit()
+        self.assertNotEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(
+            a.generate_merkle_data(),
+            {"data_hash": data_hash, "status": DROPStates.COMPLETED},
+        )
+
+        a.reproducibility_level = ReproducibilityFlags.REPLICATE_COMP
+        a.commit()
+        self.assertNotEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(
+            a.generate_merkle_data(),
+            {"data_hash": data_hash, "status": DROPStates.COMPLETED},
+        )
+
+        a.reproducibility_level = ReproducibilityFlags.REPLICATE_TOTAL
+        a.commit()
+        self.assertNotEqual(a.merkleroot, b.merkleroot)
+        self.assertEqual(
+            a.generate_merkle_data(),
+            {"data_hash": data_hash, "status": DROPStates.COMPLETED},
+        )
+
+    def test_rdbms_reproducibility(self):
+        dbfile = "test_rdbms_drop.db"
+        if os.path.isfile(dbfile):
+            os.unlink(dbfile)
+
+        b = NullDROP("b", "b")
+        b.reproducibility_level = ReproducibilityFlags.RERUN
+        b.setCompleted()
+
+        with contextlib.closing(sqlite3.connect(dbfile)) as conn:  # @UndefinedVariable
+            with contextlib.closing(conn.cursor()) as cur:
+                cur.execute(
+                    "CREATE TABLE super_mega_table(a_string varchar(64) PRIMARY KEY, an_integer integer)"
+                )
+
+        try:
+            a = RDBMSDrop(
+                "a",
+                "a",
+                dbmodule="sqlite3",
+                dbtable="super_mega_table",
+                dbparams={"database": dbfile},
+            )
+            a.insert({"a_string": "hello", "an_integer": 0})
+            a.insert({"a_string": "hello1", "an_integer": 1})
+            a.reproducibility_level = ReproducibilityFlags.RERUN
+            a.setCompleted()
+            self.assertEqual(a.merkleroot, b.merkleroot)
+
+            a.reproducibility_level = ReproducibilityFlags.REPEAT
+            a.commit()
+            self.assertEqual(a.merkleroot, b.merkleroot)
+
+            a.reproducibility_level = ReproducibilityFlags.RECOMPUTE
+            a.commit()
+            self.assertEqual(a.merkleroot, b.merkleroot)
+
+            a.reproducibility_level = ReproducibilityFlags.REPRODUCE
+            a.commit()
+            self.assertEqual(a.generate_merkle_data(), {"query_log": a._querylog})
+            self.assertNotEqual(a.merkleroot, b.merkleroot)
+
+            a.reproducibility_level = ReproducibilityFlags.REPLICATE_SCI
+            a.commit()
+            self.assertNotEqual(a.merkleroot, b.merkleroot)
+            self.assertEqual(
+                a.generate_merkle_data(),
+                {"query_log": a._querylog, "status": DROPStates.COMPLETED},
+            )
+
+            a.reproducibility_level = ReproducibilityFlags.REPLICATE_COMP
+            a.commit()
+            self.assertNotEqual(a.merkleroot, b.merkleroot)
+            self.assertEqual(
+                a.generate_merkle_data(),
+                {"query_log": a._querylog, "status": DROPStates.COMPLETED},
+            )
+
+            a.reproducibility_level = ReproducibilityFlags.REPLICATE_TOTAL
+            a.commit()
+            self.assertNotEqual(a.merkleroot, b.merkleroot)
+            self.assertEqual(
+                a.generate_merkle_data(),
+                {"query_log": a._querylog, "status": DROPStates.COMPLETED},
+            )
+        finally:
+            os.unlink(dbfile)
+
+
 class BranchAppDropTestsBase(object):
     """Tests for the BranchAppDrop class"""
 
@@ -1165,3 +1396,7 @@ class BranchAppDropTestsWithMemoryDrop(BranchAppDropTestsBase, unittest.TestCase
 
 class BranchAppDropTestsWithFileDrop(BranchAppDropTestsBase, unittest.TestCase):
     DataDropType = FileDROP
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -112,7 +112,8 @@ class DROPWaiterCtx(object):
         if self._test:
             for evt in self._evts:
                 self._test.assertTrue(
-                    evt.wait(to), "Waiting for DROP failed with timeout %d %s" % (to, evt)
+                    evt.wait(to),
+                    "Waiting for DROP failed with timeout %d %s" % (to, evt),
                 )
 
 
@@ -242,7 +243,6 @@ def breadFirstTraverse(toVisit):
 
     # See how many arguments we should used when calling func
     while toVisit:
-
         # Pay the node a visit
         node = toVisit.popleft()
         dependencies = getDownstreamObjects(node)
@@ -505,13 +505,16 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
 
     return cmd
 
-def serialize_applicationArgs(applicationArgs, prefix='--', separator=' '):
+
+def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     """
     Unpacks the applicationArgs dictionary and returns a string
     that can be used as command line parameters.
     """
     if not isinstance(applicationArgs, dict):
         logger.info("applicationArgs are not passed as a dict. Ignored!")
+    else:
+        logger.info("ApplicationArgs found %s", applicationArgs)
     # construct the actual command line from all application parameters
     args = []
     pargs = []
@@ -520,8 +523,8 @@ def serialize_applicationArgs(applicationArgs, prefix='--', separator=' '):
     for (name, vdict) in applicationArgs.items():
         if vdict in [None, False, ""]:
             continue
-        elif isinstance(vdict,bool):
-            value = ''
+        elif isinstance(vdict, bool):
+            value = ""
         elif isinstance(vdict, dict):
             precious = vdict["precious"]
             value = vdict["value"]
@@ -533,12 +536,12 @@ def serialize_applicationArgs(applicationArgs, prefix='--', separator=' '):
             pargs.append(str(value).strip())
         else:
             if prefix == "--" and len(name) == 1:
-                arg = [f'-{name} {value}']
+                arg = [f"-{name} {value}"]
             else:
-                arg = [f'{prefix}{name}{separator}{value}'.strip()]
+                arg = [f"{prefix}{name}{separator}{value}".strip()]
             args += arg
-        
-    return f"{' '.join(args + pargs)}" # add positional arguments to end of args
+    logger.info('Arguments of bash command: %s %s', args, pargs)
+    return f"{' '.join(args + pargs)}"  # add positional arguments to end of args
 
 
 # Easing the transition from single- to multi-package

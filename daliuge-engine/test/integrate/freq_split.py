@@ -5,10 +5,14 @@ Used as a template to be wrapped by the DROP framework
 chen.wu@icrar.org
 """
 
-import sys, os, datetime, subprocess, re, logging
-from string import Template
+import datetime
+import logging
+import os
+import re
+import subprocess
+import sys
 from optparse import OptionParser
-
+from string import Template
 
 logger = logging.getLogger(__name__)
 

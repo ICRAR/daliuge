@@ -35,7 +35,13 @@ class PlasmaFlightClient:
     """
     Client for accessing plasma-backed arrow flight data server.
     """
-    def __init__(self, socket: str, scheme: str = "grpc+tcp", connection_args: Optional[dict] = None):
+
+    def __init__(
+        self,
+        socket: str,
+        scheme: str = "grpc+tcp",
+        connection_args: Optional[dict] = None,
+    ):
         """
         Args:
             socket (str): The socket of the local plasma store
@@ -91,9 +97,7 @@ class PlasmaFlightClient:
         self.plasma_client.put_raw_buffer(data, object_id)
 
     def get_buffer(
-        self,
-        object_id: plasma.ObjectID,
-        owner: Optional[str] = None
+        self, object_id: plasma.ObjectID, owner: Optional[str] = None
     ) -> memoryview:
         """
         Gets the plasma object from the local store if it's available,

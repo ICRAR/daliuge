@@ -22,7 +22,6 @@
 
 
 def __setupTestLogging():
-
     import os
     import logging
 

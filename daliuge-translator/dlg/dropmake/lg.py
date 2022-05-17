@@ -39,11 +39,9 @@ import time
 from itertools import product
 
 import numpy as np
-
-from dlg.dropmake.utils.bash_parameter import BashCommand
-from dlg.common import dropdict
 from dlg.common import Categories, DropType
 from dlg.common import STORAGE_TYPES, APP_DROP_TYPES
+from dlg.common import dropdict
 from dlg.dropmake.dm_utils import (
     LG_APPREF,
     getNodesKeyDict,
@@ -51,11 +49,10 @@ from dlg.dropmake.dm_utils import (
     convert_construct,
     convert_fields,
     convert_mkn,
-    getAppRefInputs,
     LG_VER_EAGLE,
-    LG_VER_OLD,
     LG_VER_EAGLE_CONVERTED,
 )
+from dlg.dropmake.utils.bash_parameter import BashCommand
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +91,7 @@ class LGNode:
         self._dop = None
         self._gaw = None
         self._grpw = None
+        self._reprodata = jd.get("reprodata", {}).copy()
         if "isGroup" in jd and jd["isGroup"] is True:
             self._isgrp = True
             for wn in group_q[self.id]:
@@ -529,8 +527,6 @@ class LGNode:
         return "{0}_{1}_{2}".format(self._ssid, self.id, iid), rank
 
     def _update_key_value_attributes(self, kwargs):
-        # NOTE: We should really just pass all of these on un-altered and finally drop
-        #       support for the Arg%02d arguments.
         # get the arguments from new fields dictionary in a backwards compatible way
         if "fields" in self.jd:
             for je in self.jd["fields"]:
@@ -565,11 +561,13 @@ class LGNode:
         Return IdText of port if it exists
         """
         idText = None
-        if port in self.jd and len(self.jd[port]) > index and \
-            "IdText" in self.jd[port][index]:
+        if (
+            port in self.jd
+            and len(self.jd[port]) > index
+            and "IdText" in self.jd[port][index]
+        ):
             idText = self.jd[port][index]["IdText"]
         return idText
-
 
     def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
         """
@@ -632,43 +630,17 @@ class LGNode:
                     kwargs["filepath"] = fp
             self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
-        elif drop_type in [Categories.COMPONENT, Categories.PYTHON_APP, Categories.BRANCH, Categories.DOCKER]:
+        elif drop_type in [
+            Categories.COMPONENT,
+            Categories.PYTHON_APP,
+            Categories.BRANCH,
+        ]:
             # default generic component becomes "sleep and copy"
-            if drop_type not in [Categories.DOCKER]:
-                if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
-                    app_class = "dlg.apps.simple.SleepApp"
-                else:
-                    app_class = self.jd["appclass"]
+            if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
+                app_class = "dlg.apps.simple.SleepApp"
             else:
-                # deal with the Docker specific component params
-                app_class = "dlg.apps.dockerapp.DockerApp"
-                typ = DropType.APP
-                image = str(self.jd.get("image"))
-                if image == "":
-                    raise GraphException("Missing image for Docker component '%s'" % self.text)
+                app_class = self.jd["appclass"]
 
-                command = str(self.jd.get("command"))
-                # There ARE containers which don't need/want a command
-                # if command == "":
-                #     raise GraphException("Missing command for Construct '%s'" % self.text)
-
-                kwargs["image"] = image
-                kwargs["command"] = command
-                # TODO: User inside docker should follow user of engine.
-                kwargs["user"] = str(self.jd.get("user", ""))
-                kwargs["ensureUserAndSwitch"] = self.str_to_bool(
-                    str(self.jd.get("ensureUserAndSwitch", "0"))
-                )
-                kwargs["removeContainer"] = self.str_to_bool(
-                    str(self.jd.get("removeContainer", "1"))
-                )
-                kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
-                if kwargs["additionalBindings"]:
-                    kwargs["additionalBindings"] += ","
-                # always mount DLG_ROOT directory. ENV variable is only known in engine
-                kwargs["additionalBindings"] += "${DLG_ROOT}:${DLG_ROOT}"
-                kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
-                kwargs["shmSize"] = str(self.jd.get("shmSize",""))
             if "execution_time" in self.jd:
                 execTime = int(self.jd["execution_time"])
                 if execTime < 0:
@@ -694,7 +666,7 @@ class LGNode:
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             if "mkn" in self.jd:
                 kwargs["mkn"] = self.jd["mkn"]
-            self._update_key_value_attributes(kwargs) # pass on all other kw-value pairs
+            self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
 
         elif drop_type in [Categories.DYNLIB_APP, Categories.DYNLIB_PROC_APP]:
@@ -734,44 +706,66 @@ class LGNode:
                 )
             # add more arguments
             cmds = []
-            if "command" in self.jd:
-                cmds = [self.jd["command"]]
-            self._update_key_value_attributes(kwargs) # get all the other params
-            kwargs["command"] = BashCommand(cmds) # NOTE: Not really required anymore?
+            for i in range(10):
+                k = "Arg%02d" % (i + 1,)
+                if k not in self.jd:
+                    k = "arg%02d" % (i + 1,)
+                    if k not in self.jd:
+                        continue
+                v = self.jd[k]
+                if v is not None and len(str(v)) > 0:
+                    cmds.append(str(v))
+            # add more arguments - this is the new method of adding arguments in EAGLE
+            # the method above (Arg**) is retained for compatibility, but eventually should be removed
+            for k in [
+                "command",
+                "input_redirection",
+                "output_redirection",
+                "command_line_arguments",
+            ]:
+                if k in self.jd:
+                    cmds.append(self.jd[k])
+            # kwargs['command'] = ' '.join(cmds)
+            if drop_type == Categories.MPI:
+                kwargs["command"] = BashCommand(cmds).to_real_command()
+            else:
+                kwargs["command"] = BashCommand(
+                    cmds
+                )  # TODO: Check if this actually solves a problem.
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
             drop_spec.update(kwargs)
 
-        # elif drop_type == Categories.DOCKER:
-        #     # Docker application.
-        #     app_class = "dlg.apps.dockerapp.DockerApp"
-        #     typ = DropType.APP
-        #     drop_spec = dropdict(
-        #         {"oid": oid, "type": typ, "app": app_class, "rank": rank}
-        #     )
+        elif drop_type == Categories.DOCKER:
+            # Docker application.
+            app_class = "dlg.apps.dockerapp.DockerApp"
+            typ = DropType.APP
+            drop_spec = dropdict(
+                {"oid": oid, "type": typ, "app": app_class, "rank": rank}
+            )
 
-        #     image = str(self.jd.get("image"))
-        #     if image == "":
-        #         raise GraphException("Missing image for Construct '%s'" % self.text)
+            image = str(self.jd.get("image"))
+            if image == "":
+                raise GraphException("Missing image for Construct '%s'" % self.text)
 
-        #     command = str(self.jd.get("command"))
-        #     # There ARE containers which don't need/want a command
-        #     # if command == "":
-        #     #     raise GraphException("Missing command for Construct '%s'" % self.text)
+            command = str(self.jd.get("command"))
+            # There ARE containers which don't need/want a command
+            # if command == "":
+            #     raise GraphException("Missing command for Construct '%s'" % self.text)
 
-        #     kwargs["tw"] = int(self.jd.get("execution_time", "5"))
-        #     kwargs["image"] = image
-        #     kwargs["command"] = command
-        #     kwargs["user"] = str(self.jd.get("user", ""))
-        #     kwargs["ensureUserAndSwitch"] = self.str_to_bool(
-        #         str(self.jd.get("ensureUserAndSwitch", "0"))
-        #     )
-        #     kwargs["removeContainer"] = self.str_to_bool(
-        #         str(self.jd.get("removeContainer", "1"))
-        #     )
-        #     kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
-        #     kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
-        #     kwargs["shmSize"] = str(self.jd.get("shmSize",""))
-        #     drop_spec.update(kwargs)
+            kwargs["tw"] = int(self.jd.get("execution_time", "5"))
+            kwargs["image"] = image
+            kwargs["command"] = command
+            kwargs["user"] = str(self.jd.get("user", ""))
+            kwargs["ensureUserAndSwitch"] = self.str_to_bool(
+                str(self.jd.get("ensureUserAndSwitch", "0"))
+            )
+            kwargs["removeContainer"] = self.str_to_bool(
+                str(self.jd.get("removeContainer", "1"))
+            )
+            kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
+            kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
+            kwargs["shmSize"] = str(self.jd.get("shmSize", ""))
+            drop_spec.update(kwargs)
 
         elif drop_type == Categories.GROUP_BY:
             drop_spec = dropdict(
@@ -785,7 +779,8 @@ class LGNode:
             sij = self.inputs[0].jd
             if not "data_volume" in sij:
                 raise GInvalidNode(
-                    "GroupBy should be connected to a DataDrop, not '%s'" % sij["category"]
+                    "GroupBy should be connected to a DataDrop, not '%s'"
+                    % sij["category"]
                 )
             dw = int(sij["data_volume"]) * self.groupby_width
             dropSpec_grp = dropdict(
@@ -834,7 +829,9 @@ class LGNode:
             drop_spec.addOutput(dropSpec_gather, IdText="gthrdata")
             dropSpec_gather.addProducer(drop_spec, IdText="gthrdata")
         elif drop_type == Categories.SERVICE:
-            raise GraphException(f"DROP type: {drop_type} should not appear in physical graph")
+            raise GraphException(
+                f"DROP type: {drop_type} should not appear in physical graph"
+            )
             # drop_spec = dropdict(
             #     {
             #         "oid": oid,
@@ -877,6 +874,9 @@ class LGNode:
         kwargs["lg_key"] = self.id
         kwargs["dt"] = self.jd["category"]
         kwargs["nm"] = self.text
+        # Behaviour is that child-nodes inherit reproducibility data from their parents.
+        if self._reprodata is not None:
+            kwargs["reprodata"] = self._reprodata.copy()
         if "isService" in self.jd and self.jd["isService"]:
             kwargs["type"] = DropType.SERVICE_APP
         dropSpec.update(kwargs)
@@ -899,6 +899,19 @@ class LGNode:
         return value
 
 
+def load_lg(f):
+    if isinstance(f, str):
+        if not os.path.exists(f):
+            raise GraphException("Logical graph {0} not found".format(f))
+        with open(f) as f:
+            lg = json.load(f)
+    elif hasattr(f, "read"):
+        lg = json.load(f)
+    else:
+        lg = f
+    return lg
+
+
 class LG:
     """
     An object representation of Logical Graph
@@ -909,15 +922,7 @@ class LG:
         parse JSON into LG object graph first
         """
         self._g_var = []
-        if isinstance(f, str):
-            if not os.path.exists(f):
-                raise GraphException("Logical graph {0} not found".format(f))
-            with open(f) as f:
-                lg = json.load(f)
-        elif hasattr(f, "read"):
-            lg = json.load(f)
-        else:
-            lg = f
+        lg = load_lg(f)
         if ssid is None:
             ts = time.time()
             ssid = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%dT%H:%M:%S")
@@ -1007,6 +1012,7 @@ class LG:
         # key - lgn id, val - a list of pgns associated with this lgn
         self._drop_dict = collections.defaultdict(list)
         self._lgn_list = all_list
+        self._reprodata = lg.get("reprodata", {})
 
     def validate_link(self, src, tgt):
         # print("validate_link()", src.id, src.is_scatter(), tgt.id, tgt.is_scatter())
@@ -1633,3 +1639,7 @@ class LG:
                 drop["command"] = bc.to_real_command()
 
         return ret
+
+    @property
+    def reprodata(self):
+        return self._reprodata

@@ -29,8 +29,8 @@ import multiprocessing
 import random
 
 from dlg import droputils
-from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.common import dropdict, Categories
+from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.drop import BarrierAppDROP
 from dlg.manager.node_manager import NodeManager
 
@@ -42,17 +42,48 @@ except:
 random.seed(42)
 
 hostname = "localhost"
+default_repro = {
+    "rmode": "1",
+    "lg_blockhash": "x",
+    "pgt_blockhash": "y",
+    "pg_blockhash": "z",
+}
+default_graph_repro = {
+    "rmode": "1",
+    "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
+    "merkleroot": "a",
+    "signature": "b",
+}
+
+
+def add_test_reprodata(graph: list):
+    for drop in graph:
+        drop["reprodata"] = default_repro.copy()
+    graph.append(default_graph_repro.copy())
+    return graph
 
 
 def memory(uid, **kwargs):
-    dropSpec = dropdict({"oid": uid, "type": "plain", "storage": Categories.MEMORY})
+    dropSpec = dropdict(
+        {
+            "oid": uid,
+            "type": "plain",
+            "storage": Categories.MEMORY,
+            "reprodata": default_repro.copy(),
+        }
+    )
     dropSpec.update(kwargs)
     return dropSpec
 
 
 def sleepAndCopy(uid, **kwargs):
     dropSpec = dropdict(
-        {"oid": uid, "type": "app", "app": "dlg.apps.simple.SleepAndCopyApp"}
+        {
+            "oid": uid,
+            "type": "app",
+            "app": "dlg.apps.simple.SleepAndCopyApp",
+            "reprodata": default_repro.copy(),
+        }
     )
     dropSpec.update(kwargs)
     return dropSpec
@@ -87,7 +118,7 @@ class NMTestsMixIn(object):
             events_port=events_port,
             rpc_port=rpc_port,
             max_threads=threads,
-            **kwargs
+            **kwargs,
         )
         self._dms.append(nm)
         return nm
@@ -109,12 +140,13 @@ class NMTestsMixIn(object):
         expected_failures=[],
         sessionId=f"s{random.randint(0, 1000)}",
         node_managers=None,
-        threads=0
+        threads=0,
     ):
         """Utility to run a graph in two Node Managers"""
 
         dm1, dm2 = node_managers or [self._start_dm(threads=threads) for _ in range(2)]
-
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
         quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
         self.assertEqual(len(g1), len(dm1._sessions[sessionId].drops))
@@ -148,7 +180,7 @@ class NMTestsMixIn(object):
                 self.assertEqual(len(leaf_data), len(leaf_drop_data))
                 self.assertEqual(leaf_data, leaf_drop_data)
 
-        sleep(0.1) # just make sure all events have been processed.
+        sleep(0.1)  # just make sure all events have been processed.
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
         return leaf_drop_data
@@ -173,6 +205,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
                 "producers": ["B"],
             },
         ]
+        add_test_reprodata(g)
         dm = self._start_dm(threads=self.nm_threads, **kwargs)
         dm.createSession(sessionId)
         dm.addGraphSpec(sessionId, g)
@@ -231,9 +264,15 @@ class NodeManagerTestsBase(NMTestsMixIn):
                 choice = random.randint(0, 1000)
             ids[n] = choice
             sessionId = f"s{choice}"
-            self._test_runGraphInTwoNMs(copy.deepcopy(g1), copy.deepcopy(g2), rels, a_data, c_data,
-                                        sessionId=sessionId,
-                                        node_managers=node_managers)
+            self._test_runGraphInTwoNMs(
+                copy.deepcopy(g1),
+                copy.deepcopy(g2),
+                rels,
+                a_data,
+                c_data,
+                sessionId=sessionId,
+                node_managers=node_managers,
+            )
 
     def test_runGraphOneDOPerDOM(self):
         """
@@ -295,7 +334,8 @@ class NodeManagerTestsBase(NMTestsMixIn):
                 "producers": ["E"],
             },
         ]
-
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         rels = [
             DROPRel("D", DROPLinkType.INPUT, "E"),
             DROPRel("B", DROPLinkType.INPUT, "E"),
@@ -378,7 +418,8 @@ class NodeManagerTestsBase(NMTestsMixIn):
             sleepAndCopy("N", inputs=["L", "M"], outputs=["O"], sleepTime=0),
             memory("O"),
         ]
-
+        for g in [g1, g2, g3, g4]:
+            add_test_reprodata(g)
         rels_12 = [DROPRel("A", DROPLinkType.INPUT, "B")]
         rels_13 = [DROPRel("A", DROPLinkType.INPUT, "G")]
         rels_24 = [DROPRel("F", DROPLinkType.PRODUCER, "L")]
@@ -460,7 +501,8 @@ class NodeManagerTestsBase(NMTestsMixIn):
                 }
             )
             rels.append(DROPRel("A", DROPLinkType.INPUT, b_oid))
-
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
         quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
         self.assertEqual(1, len(dm1._sessions[sessionId].drops))
@@ -502,14 +544,24 @@ class NodeManagerTestsBase(NMTestsMixIn):
 
         sessionId = f"s{random.randint(0, 1000)}"
         g1 = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY, "consumers": ["C"]},
+            {
+                "oid": "A",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "consumers": ["C"],
+            },
             {
                 "oid": "C",
                 "type": "app",
                 "app": "dlg.apps.crc.CRCApp",
                 "consumers": ["D"],
             },
-            {"oid": "D", "type": "plain", "storage": Categories.MEMORY, "producers": ["C"]},
+            {
+                "oid": "D",
+                "type": "plain",
+                "storage": Categories.MEMORY,
+                "producers": ["C"],
+            },
         ]
         g2 = [
             {
@@ -525,7 +577,8 @@ class NodeManagerTestsBase(NMTestsMixIn):
                 "node": ip_addr_2,
             },
         ]
-
+        add_test_reprodata(g1)
+        add_test_reprodata(g2)
         rels = [
             DROPRel("D", DROPLinkType.INPUT, "E"),
             DROPRel("D", DROPLinkType.INPUT, "F"),
@@ -580,7 +633,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
         ]
         rels = [DROPRel("C", DROPLinkType.STREAMING_INPUT, "D")]
         a_data = os.urandom(32)
-        e_data = str(crc32c(a_data, 0)).encode('utf8')
+        e_data = str(crc32c(a_data, 0)).encode("utf8")
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
 
     def test_run_streaming_consumer_remotely2(self):
@@ -610,7 +663,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
         ]
         rels = [DROPRel("C", DROPLinkType.OUTPUT, "B")]
         a_data = os.urandom(32)
-        e_data = str(crc32c(a_data, 0)).encode('utf8')
+        e_data = str(crc32c(a_data, 0)).encode("utf8")
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
 
 
@@ -626,6 +679,7 @@ class TestDM(NodeManagerTestsBase, unittest.TestCase):
         """
 
         graph = [{"oid": "A", "type": "plain", "storage": Categories.SHMEM}]
+        graph = add_test_reprodata(graph)
         dm = self._start_dm()
         sessionID = "s1"
         if sys.version_info < (3, 8):
@@ -636,7 +690,7 @@ class TestDM(NodeManagerTestsBase, unittest.TestCase):
             dm.destroySession(sessionID)
 
 
+
 @unittest.skipIf(multiprocessing.cpu_count() < 4, "Not enough threads to test multiprocessing")
 class TestDMParallel(NodeManagerTestsBase, unittest.TestCase):
-
     nm_threads = multiprocessing.cpu_count()
