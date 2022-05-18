@@ -79,8 +79,9 @@ def _PyFuncApp(oid, uid, f, **kwargs):
         func_name=fname,
         func_code=fcode,
         func_defaults=fdefaults,
-        pickle=True,
-        **kwargs,
+        input_parser=pyfunc.DropParser.PICKLE,
+        output_parser=pyfunc.DropParser.PICKLE,
+        **kwargs
     )
 
 
