@@ -393,7 +393,7 @@ class PyFuncApp(BarrierAppDROP):
         # Inputs are un-pickled and treated as the arguments of the function
         # Their order must be preserved, so we use an OrderedDict
         if DropParser(self.input_parser) is DropParser.PICKLE:
-            all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
+            all_contents = lambda x: pickle.loads(x)
         elif DropParser(self.input_parser) is DropParser.AST:
             all_contents = lambda x: ast.literal_eval(droputils.allDropContents(x).decode('utf-8'))
         elif DropParser(self.input_parser) is DropParser.PATH:
