@@ -119,7 +119,6 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         with droputils.DROPWaiterCtx(self, init_drop, 3):
             a.setCompleted()
 
-    @unittest.skip("pyfunc ran out of input")
     def test_namedPorts_with_kwonlyargs(self):
         """
         Use a graph with named ports and check whether it is runnning
