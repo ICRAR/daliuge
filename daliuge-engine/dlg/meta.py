@@ -28,6 +28,7 @@ dlg_float_param = collections.namedtuple("dlg_float_param", "description default
 dlg_string_param = collections.namedtuple(
     "dlg_string_param", "description default_value"
 )
+dlg_enum_param = collections.namedtuple("dlg_enum_param", "cls description default_value")
 dlg_list_param = collections.namedtuple("dlg_list_param", "description default_value")
 dlg_dict_param = collections.namedtuple("dlg_dict_param", "description default_value")
 
