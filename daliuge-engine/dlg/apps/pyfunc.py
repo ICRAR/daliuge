@@ -238,8 +238,10 @@ class PyFuncApp(BarrierAppDROP):
             self.func_defaults = self.func_defaults["kwargs"]
         # we came all this way, now assume that any resulting dict is correct
         if not isinstance(self.func_defaults, dict):
-            logger.error(f"Wrong format or type for function defaults for "+\
-                "{self.f.__name__}: {self.func_defaults}, {type(self.func_defaults)}")
+            logger.error(
+                f"Wrong format or type for function defaults for "
+                + "{self.f.__name__}: {self.func_defaults}, {type(self.func_defaults)}"
+            )
             raise ValueError
         if DropParser(self.input_parser) is DropParser.PICKLE:
             # only values are pickled, get them unpickled
@@ -397,9 +399,8 @@ class PyFuncApp(BarrierAppDROP):
         elif DropParser(self.input_parser) is DropParser.DATAURL:
             all_contents = lambda x: x.dataurl
         else:
-            all_contents = lambda x: ast.literal_eval(
-                droputils.allDropContents(x).decode("utf-8")
-            )
+            # TODO raise ValueError(self.input_parser.__repr__())
+            all_contents = lambda x: pickle.loads(x)
 
         inputs = collections.OrderedDict()
         for uid, drop in self._inputs.items():
@@ -557,8 +558,11 @@ class PyFuncApp(BarrierAppDROP):
                 if DropParser(self.output_parser) is DropParser.PICKLE:
                     logger.debug(f"Writing pickeled result {type(r)} to {o}")
                     o.write(pickle.dumps(r))
+                # TODO: elif DropParser(self.output_parser) is DropParser.AST:
                 else:
                     o.write(repr(r).encode('utf-8'))
+                # else:
+                #     ValueError(self.output_parser.__repr__())
 
     def generate_recompute_data(self):
         return self._recompute_data
