@@ -281,10 +281,6 @@ class PyFuncApp(BarrierAppDROP):
         """
         BarrierAppDROP.initialize(self, **kwargs)
 
-        # TODO: for some reason the literal is never cast?
-        self.input_parser = DropParser(self.input_parser)
-        self.output_parser = DropParser(self.output_parser)
-
         self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
 
         self.func_code = self._getArg(kwargs, "func_code", None)
@@ -401,7 +397,9 @@ class PyFuncApp(BarrierAppDROP):
         elif DropParser(self.input_parser) is DropParser.DATAURL:
             all_contents = lambda x: x.dataurl
         else:
-            raise ValueError(self.input_parser.__repr__())
+            all_contents = lambda x: ast.literal_eval(
+                droputils.allDropContents(x).decode("utf-8")
+            )
 
         inputs = collections.OrderedDict()
         for uid, drop in self._inputs.items():
@@ -559,10 +557,8 @@ class PyFuncApp(BarrierAppDROP):
                 if DropParser(self.output_parser) is DropParser.PICKLE:
                     logger.debug(f"Writing pickeled result {type(r)} to {o}")
                     o.write(pickle.dumps(r))
-                elif DropParser(self.output_parser) is DropParser.AST:
-                    o.write(repr(r).encode('utf-8'))
                 else:
-                    ValueError(self.output_parser.__repr__())
+                    o.write(repr(r).encode('utf-8'))
 
     def generate_recompute_data(self):
         return self._recompute_data
