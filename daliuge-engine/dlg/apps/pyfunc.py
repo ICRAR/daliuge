@@ -115,7 +115,7 @@ def import_using_code(code):
 
 class DropParser(Enum):
     PICKLE = 'pickle'
-    EVAL = 'evel'
+    EVAL = 'eval'
     PATH = 'path'
     DATAURL = 'dataurl'
     NPY = 'npy'
