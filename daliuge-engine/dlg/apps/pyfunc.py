@@ -115,7 +115,7 @@ def import_using_code(code):
 
 class DropParser(Enum):
     PICKLE = 'pickle'
-    AST = 'ast'
+    EVAL = 'evel'
     PATH = 'path'
     DATAURL = 'dataurl'
     NPY = 'npy'
@@ -148,9 +148,9 @@ class DropParser(Enum):
 #     \~English Python function name
 # @param[in] aparam/func_code Function Code//String/readwrite/False//False/
 #     \~English Python function code, e.g. 'def function_name(args): return args'
-# @param[in] aparam/input_parser Input Parser/pickle/Select/readwrite/False/pickle,ast,path,dataurl,npy/False/
+# @param[in] aparam/input_parser Input Parser/pickle/Select/readwrite/False/pickle,eval,path,dataurl,npy/False/
 #     \~English Input port parsing technique
-# @param[in] aparam/output_parser Output Parser/pickle/Select/readwrite/False/pickle,ast,path,dataurl,npy/False/
+# @param[in] aparam/output_parser Output Parser/pickle/Select/readwrite/False/pickle,eval,path,dataurl,npy/False/
 #     \~English output port parsing technique
 # @param[in] aparam/func_defaults Function Defaults//String/readwrite/False//False/
 #     \~English Mapping from argname to default value. Should match only the last part of the argnames list.
@@ -392,17 +392,14 @@ class PyFuncApp(BarrierAppDROP):
         # Their order must be preserved, so we use an OrderedDict
         if DropParser(self.input_parser) is DropParser.PICKLE:
             all_contents = lambda x: pickle.loads(x)
-        elif DropParser(self.input_parser) is DropParser.AST:
+        elif DropParser(self.input_parser) is DropParser.EVAL:
             all_contents = lambda x: ast.literal_eval(droputils.allDropContents(x).decode('utf-8'))
         elif DropParser(self.input_parser) is DropParser.PATH:
             all_contents = lambda x: x.path
         elif DropParser(self.input_parser) is DropParser.DATAURL:
             all_contents = lambda x: x.dataurl
         else:
-            # TODO: raise ValueError(self.input_parser.__repr__())
-            all_contents = lambda x: ast.literal_eval(
-                droputils.allDropContents(x).decode("utf-8")
-            )
+            raise ValueError(self.input_parser.__repr__())
 
         inputs = collections.OrderedDict()
         for uid, drop in self._inputs.items():
@@ -560,9 +557,10 @@ class PyFuncApp(BarrierAppDROP):
                 if DropParser(self.output_parser) is DropParser.PICKLE:
                     logger.debug(f"Writing pickeled result {type(r)} to {o}")
                     o.write(pickle.dumps(r))
-                else:
-                    # TODO: ValueError(self.output_parser.__repr__())
+                elif DropParser(self.output_parser) is DropParser.EVAL:
                     o.write(repr(r).encode('utf-8'))
+                else:
+                    ValueError(self.output_parser.__repr__())
 
     def generate_recompute_data(self):
         return self._recompute_data
