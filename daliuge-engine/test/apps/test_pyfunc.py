@@ -79,9 +79,8 @@
 #         func_name=fname,
 #         func_code=fcode,
 #         func_defaults=fdefaults,
-#         input_parser=pyfunc.DropParser.PICKLE,
-#         output_parser=pyfunc.DropParser.PICKLE,
-#         **kwargs
+#         pickle=True,
+#         **kwargs,
 #     )
 
 
