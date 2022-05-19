@@ -132,13 +132,13 @@ install_requires = [
     "psutil",
     "pyarrow",
     "python-daemon",
-    "pyzmq",
+    "pyzmq ~= 22.3.0",
     "scp",
     "pyyaml",
     # 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
     "zeroconf >= 0.19.1",
     # 0.6 brings python3 support plus other fixes
-    "zerorpc >= 0.6",
+    "zerorpc ~= 0.6.3",
 ]
 # Keep alpha-sorted PLEASE!
 
