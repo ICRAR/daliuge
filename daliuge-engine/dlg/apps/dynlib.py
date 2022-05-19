@@ -459,6 +459,25 @@ def get_from_subprocess(proc, q):
     raise RuntimeError("Subprocess died unexpectedly")
 
 
+##
+# @brief DynlibProcApp
+# @details An application component run from a dynamic library in a different process
+# @par EAGLE_START
+# @param category DynlibProcApp
+# @param tag template
+# @param[in] cparam/libpath Library Path//String/readwrite/False//False/
+#     \~English The location of the shared object/DLL that implements this application
+# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
+#     \~English Estimated execution time
+# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
+#     \~English Number of cores used
+# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
+#     \~English Is this node the start of a group?
+# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
+#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
+#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @par EAGLE_END
 class DynlibProcApp(BarrierAppDROP):
     """Loads a dynamic library in a different process and runs it"""
 
