@@ -472,13 +472,11 @@ class PyFuncApp(BarrierAppDROP):
                                 pass
                         elif ptype in ["Python"]:
                             try:
-                                value = eval(value)
+                                import numpy
+                                value = eval(value, {"numpy": numpy}, {})
                             except:
                                 pass
-                        pargsDict.update({
-                            pa:
-                            value
-                        })
+                        pargsDict.update({pa: value})
                     elif pa != 'self':
                         logger.warning(f"Required positional argument '{pa}' not found!")
             logger.debug(f"updating posargs with {list(kwargs.values())}")
