@@ -26,10 +26,20 @@ ENV DLG_ROOT="/tmp/dlg"
 
 RUN apt install -y git python3-dev
 
-RUN pip install git+https://gitlab.com/ska-telescope/sdp/ska-gridder-nifty-cuda.git
-RUN pip install dlg-nifty-components>=1.1.0
+# Nifty
+#RUN pip install --prefix=$PYTHON_PREFIX git+https://gitlab.com/ska-telescope/sdp/ska-gridder-nifty-cuda.git
+#RUN pip install --prefix=$PYTHON_PREFIX dlg-nifty-components
 
-RUN pip install 'ska-sdp-realtime-receive-modules[plasma]==2.0.1' 'ska-sdp-cbf-emulator==2.0.1' --extra-index-url=https://artefact.skao.int/repository/pypi-internal/simple
-RUN pip install dlg-casacore-components>=0.3.0
+# Casacore + SDP
+#RUN pip install --index-url=https://artefact.skao.int/repository/pypi-all/simple --prefix=$PYTHON_PREFIX ska-sdp-dal-schemas
+#RUN pip install --index-url=https://artefact.skao.int/repository/pypi-all/simple --prefix=$PYTHON_PREFIX ska-sdp-realtime-receive-core[plasma]
+#RUN pip install --index-url=https://artefact.skao.int/repository/pypi-all/simple --prefix=$PYTHON_PREFIX ska-sdp-realtime-receive-modules[plasma]
+#RUN pip install dlg-casacore-components
+
+# RASCIL
+# RUN mkdir -p /tmp/rascil_data && cd /tmp/rascil_data &&\
+#     curl https://ska-telescope.gitlab.io/external/rascil/rascil_data.tgz -o rascil_data.tgz
+# RUN tar zxf rascil_data.tgz -C /dlg/lib/python3.8/site-packages
+# RUN pip install --index-url=https://artefact.skao.int/repository/pypi-all/simple rascil
 
 CMD ["dlg", "daemon", "-vv"]
