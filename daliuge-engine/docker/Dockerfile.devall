@@ -27,9 +27,9 @@ ENV DLG_ROOT="/tmp/dlg"
 RUN apt install -y git python3-dev
 
 RUN pip install git+https://gitlab.com/ska-telescope/sdp/ska-gridder-nifty-cuda.git
-RUN pip install dlg-nifty-components
+RUN pip install dlg-nifty-components>=1.1.0
 
-RUN pip install --extra-index-url=https://artefact.skao.int/repository/pypi-internal/simple 'ska-sdp-cbf-emulator[plasma]==1.6.11'
-RUN pip install dlg-casacore-components
+RUN pip install 'ska-sdp-realtime-receive-modules[plasma]==2.0.1' 'ska-sdp-cbf-emulator==2.0.1' --extra-index-url=https://artefact.skao.int/repository/pypi-internal/simple
+RUN pip install dlg-casacore-components>=0.3.0
 
 CMD ["dlg", "daemon", "-vv"]
