@@ -27,7 +27,7 @@ import unittest
 
 from dlg import utils, restutils
 from dlg.manager import constants
-from dlg.manager.client import MasterManagerClient
+from dlg.manager.client import MasterManagerClient, DataIslandManagerClient
 from dlg.manager.proc_daemon import DlgDaemon
 from six.moves import http_client as httplib  # @UnresolvedImport
 
@@ -128,6 +128,79 @@ class TestDaemon(unittest.TestCase):
             "MasterManager didn't find the NodeManager running on the same node",
         )
 
+    def _test_zeroconf_dim_mm(self, disable_zeroconf=False):
+        # Start daemon with no master and no NM
+        self.create_daemon(master=False, noNM=True, disable_zeroconf=disable_zeroconf)
+        # Start DIM - now, on it's own
+        self._start("island", http.HTTPStatus.OK, {"nodes": []})
+        # Start daemon with master but no NM
+        self._start("master", http.HTTPStatus.OK)
+        # Check that dim registers to MM
+        timeout_time = time.time() + _TIMEOUT
+        dims = None
+        while time.time() < timeout_time:
+            dims = self._get_dims_from_master(_TIMEOUT)
+            if dims is not None and len(dims["islands"]) > 0:
+                break
+            time.sleep(0.1)
+        self.assertIsNotNone(dims)
+        return dims
+
+    def test_zeroconf_dim_mm(self):
+        dims = self._test_zeroconf_dim_mm(disable_zeroconf=False)
+        self.assertEqual(
+            1,
+            len(dims["islands"]),
+            "MasterManager didn't find the DataIslandManager with zeroconf",
+        )
+
+    def test_without_zeroconf_dim_mm(self):
+        dims = self._test_zeroconf_dim_mm(disable_zeroconf=True)
+        self.assertEqual(
+            0,
+            len(dims["islands"]),
+            "MasterManager found the DataIslandManager without zeroconf!?",
+        )
+
+    def _add_zeroconf_nm(self):
+        self._start("node", http.HTTPStatus.OK)
+        timeout_time = time.time() + _TIMEOUT
+        nodes = None
+        while time.time() < timeout_time:
+            nodes = self._get_nodes_from_dim(_TIMEOUT)
+            if nodes is not None and len(nodes) > 0:
+                break
+            time.sleep(0.1)
+        return nodes
+
+    def test_zeroconf_dim_nm_setup(self):
+        """
+        Sets up a mm with a node manager
+        Sets up a DIM with zeroconf discovery
+        Asserts that the mm attaches the nm to the discovered dim
+        """
+        self._test_zeroconf_dim_mm(disable_zeroconf=False)
+        nodes = self._add_zeroconf_nm()
+        self.assertIsNotNone(nodes)
+
+    def test_without_zeroconf_dim_nm_setup(self):
+        self._test_zeroconf_dim_mm(disable_zeroconf=True)
+        nodes = self._add_zeroconf_nm()
+        self.assertIsNone(nodes)
+
+    def test_zeroconf_nm_down(self):
+        self._test_zeroconf_dim_mm(disable_zeroconf=False)
+        nodes = self._add_zeroconf_nm()
+        self.assertIsNotNone(nodes)
+        self._stop("node", http.HTTPStatus.OK)
+        timeout_time = time.time() + _TIMEOUT
+        while time.time() < timeout_time:
+            nodes = self._get_nodes_from_dim(_TIMEOUT)
+            if nodes is None:
+                break
+            time.sleep(0.1)
+        self.assertIsNone(nodes)
+
     def test_start_dataisland_via_rest(self):
 
         self.create_daemon(master=True, noNM=False, disable_zeroconf=False)
@@ -222,6 +295,17 @@ class TestDaemon(unittest.TestCase):
             "The MM did not stop successfully",
         )
 
+    def test_get_dims(self):
+        self.create_daemon(master=True, noNM=True, disable_zeroconf=False)
+        # Check that the DataIsland starts with the given nodes
+        dims = self._get_dims_from_master(_TIMEOUT)
+        self.assertIsNotNone(dims)
+        self.assertEqual(
+            0,
+            len(dims["islands"]),
+            "MasterManager didn't find the DataIslandManager running on the same node",
+        )
+
     def _start(self, manager_name, expected_code, payload=None):
         conn = http.client.HTTPConnection("localhost", 9000)
         headers = {}
@@ -253,11 +337,27 @@ class TestDaemon(unittest.TestCase):
         response.close()
         conn.close()
 
+    def _get_nodes_from_client(self, timeout, client):
+        timeout_time = time.time() + timeout
+        while time.time() < timeout_time:
+            nodes = client.nodes()
+            if nodes:
+                return nodes
+            time.sleep(0.1)
+
     def _get_nodes_from_master(self, timeout):
+        mc = MasterManagerClient()
+        return self._get_nodes_from_client(timeout, mc)
+
+    def _get_nodes_from_dim(self, timeout):
+        dimc = DataIslandManagerClient()
+        return self._get_nodes_from_client(timeout, dimc)
+
+    def _get_dims_from_master(self, timeout):
         mc = MasterManagerClient()
         timeout_time = time.time() + timeout
         while time.time() < timeout_time:
-            nodes = mc.nodes()
-            if nodes:
-                return nodes
+            dims = mc.dims()
+            if dims:
+                return dims
             time.sleep(0.1)
