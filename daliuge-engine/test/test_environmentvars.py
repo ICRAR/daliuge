@@ -66,7 +66,7 @@ class TestEnvironmentVarDROP(unittest.TestCase):
         Tests that an empty environment drop contains no environment variables.
         """
         env_drop = create_empty_env_vars()
-        self.assertEqual(dict(), env_drop._variables)
+        self.assertEqual({'nm': 'env_vars'}, env_drop._variables)
 
     def test_get_multiple(self):
         """
