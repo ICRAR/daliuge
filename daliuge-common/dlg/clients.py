@@ -280,3 +280,37 @@ class MasterManagerClient(CompositeManagerClient):
         self._post_json(
             "/managers/%s/dataisland" % (quote(island_host)), {"nodes": nodes}
         )
+
+    def dims(self):
+        return self._get_json("/islands")
+
+    def add_dim(self, dim):
+        self._POST("/islands/%s" % (dim,), content=None)
+
+    def remove_dim(self, dim):
+        self._DELETE("/islands/%s" % (dim,))
+
+    def add_node_to_dim(self, dim, nm):
+        """
+        Adds a nm to a dim
+        """
+        self._POST(
+            "managers/%s/nodes/%s"
+            % (
+                dim,
+                nm,
+            ),
+            content=None,
+        )
+
+    def remove_node_from_dim(self, dim, nm):
+        """
+        Removes a nm from a dim
+        """
+        self._DELETE(
+            "managers/%s/nodes/%s"
+            % (
+                dim,
+                nm,
+            )
+        )

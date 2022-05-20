@@ -576,12 +576,15 @@ class CompositeManagerRestServer(ManagerRestServer):
 class MasterManagerRestServer(CompositeManagerRestServer):
     def initializeSpecifics(self, app):
         CompositeManagerRestServer.initializeSpecifics(self, app)
-
+        # DIM manamagement
+        app.post("/api/islands/<dim>", callback=self.addDIM)
+        app.delete("/api/islands/<dim>", callback=self.removeDIM)
         # Query forwarding to daemons
-
         app.post("/api/managers/<host>/dataisland", callback=self.createDataIsland)
         app.post("/api/managers/<host>/node/start", callback=self.startNM)
         app.post("/api/managers/<host>/node/stop", callback=self.stopNM)
+        app.post("/api/managers/<host>/nodes/<node>", callback=self.addNM)
+        app.delete("/api/managers/<host>/nodes/<node>", callback=self.removeNM)
         # Querying about managers
         app.get("/api/islands", callback=self.getDIMs)
         app.get("/api/nodes", callback=self.getNMs)
@@ -602,6 +605,16 @@ class MasterManagerRestServer(CompositeManagerRestServer):
         return {"islands": self.dm.dmHosts}
 
     @daliuge_aware
+    def addDIM(self, dim):
+        logger.debug("Adding DIM %s" % dim)
+        self.dm.addDmHost(dim)
+
+    @daliuge_aware
+    def removeDIM(self, dim):
+        logger.debug("Removing dim %s" % dim)
+        self.dm.removeDmHost(dim)
+
+    @daliuge_aware
     def getNMs(self):
         return {"nodes": self.dm.nodes}
 
@@ -618,6 +631,24 @@ class MasterManagerRestServer(CompositeManagerRestServer):
         logger.debug("Sending NM stop request to %s:%s" % (host, port))
         with RestClient(host=host, port=port, timeout=10) as c:
             return json.loads(c._POST("/managers/node/stop").read())
+
+    @daliuge_aware
+    def addNM(self, host, node):
+        port = constants.ISLAND_DEFAULT_REST_PORT
+        logger.debug("Adding NM %s to DIM %s" % (node, host))
+        with RestClient(host=host, port=port, timeout=10, url_prefix="/api") as c:
+            return json.loads(
+                c._POST(
+                    "/nodes/%s" % (node,),
+                ).read()
+            )
+
+    @daliuge_aware
+    def removeNM(self, host, node):
+        port = constants.ISLAND_DEFAULT_REST_PORT
+        logger.debug("Removing NM %s from DIM %s" % (node, host))
+        with RestClient(host=host, port=port, timeout=10, url_prefix="/api") as c:
+            return json.loads(c._DELETE("/nodes/%s" % (node,)).read())
 
     @daliuge_aware
     def getNMInfo(self, host):
