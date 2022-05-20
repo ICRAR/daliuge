@@ -430,10 +430,10 @@ class AbstractDROP(EventFirer):
                 value = get_param_value(attr_name, member.default_value)
                 if value is not None and value != "":
                     value = str(value)
-            elif isinstance(obj, dlg_enum_param):
+            elif isinstance(member, dlg_enum_param):
                 value = get_param_value(attr_name, member.default_value)
                 if value is not None and value != "":
-                    value = obj.cls(value)
+                    value = member.cls(value)
             elif isinstance(member, dlg_list_param):
                 value = get_param_value(attr_name, member.default_value)
                 if isinstance(value, str):
