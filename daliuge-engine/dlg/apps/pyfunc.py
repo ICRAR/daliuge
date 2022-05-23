@@ -387,8 +387,9 @@ class PyFuncApp(BarrierAppDROP):
             all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
         elif DropParser(self.input_parser) is DropParser.EVAL:
             def astparse(x):
-                content = droputils.allDropContents(x)
-                return ast.literal_eval(content.decode('utf-8')) if content is not None else None
+                content: bytes = droputils.allDropContents(x)
+                print(content)
+                return ast.literal_eval(content.decode('utf-8')) if content else None
             all_contents = astparse
         elif DropParser(self.input_parser) is DropParser.PATH:
             all_contents = lambda x: x.path
