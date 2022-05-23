@@ -395,8 +395,8 @@ class PyFuncApp(BarrierAppDROP):
 
         inputs = collections.OrderedDict()
         for uid, drop in self._inputs.items():
-            # allow for Null DROPs to be passed around
-            inputs[uid] = all_contents(drop) if all_contents is not None else None
+            # TODO: allow for Null DROPs to be passed around
+            inputs[uid] = all_contents(drop)
 
         self.funcargs = {}
 
