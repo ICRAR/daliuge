@@ -39,7 +39,7 @@
             },
             "input_parser": {
                 "text": "Input Parser",
-                "value": "pickle",
+                "value": "eval",
                 "defaultValue": "pickle",
                 "description": "Input port parsing technique",
                 "readonly": false,
@@ -56,7 +56,7 @@
             },
             "output_parser": {
                 "text": "Output Parser",
-                "value": "pickle",
+                "value": "eval",
                 "defaultValue": "pickle",
                 "description": "Output port parsing technique",
                 "readonly": false,
