@@ -297,23 +297,15 @@ class PyFuncApp(BarrierAppDROP):
             "func_defaults"
             ]
         for kw in self.func_def_keywords:
-            dum_arg = new_arg = "gIbbERiSH:askldhgol"
             if kw in self._applicationArgs:  # these are the preferred ones now
                 if isinstance(
                     self._applicationArgs[kw]["value"], bool
-                ):  # always transfer booleans
-                    new_arg = self._applicationArgs.pop(kw)
-                elif (
-                    self._applicationArgs[kw]["value"]
+                    or self._applicationArgs[kw]["value"]
                     or self._applicationArgs[kw]["precious"]
                 ):
                     # only transfer if there is a value or precious is True
-                    new_arg = self._applicationArgs.pop(kw)
+                    self._applicationArgs.pop(kw)
 
-            if new_arg != dum_arg:
-                logger.debug(f"Setting {kw} to {new_arg['value']}")
-                # we allow python expressions as values, means that strings need to be quoted
-                self.__setattr__(kw, new_arg["value"])
 
         self.num_args = len(
             self._applicationArgs
