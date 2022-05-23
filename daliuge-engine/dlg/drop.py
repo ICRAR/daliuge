@@ -111,6 +111,7 @@ from dlg.meta import (
     dlg_int_param,
     dlg_list_param,
     dlg_string_param,
+    dlg_enum_param,
     dlg_bool_param,
     dlg_dict_param,
 )
@@ -409,6 +410,10 @@ class AbstractDROP(EventFirer):
                 value = kwargs.get(attr_name, obj.default_value)
                 if value is not None and value != "":
                     value = str(value)
+            elif isinstance(obj, dlg_enum_param):
+                value = kwargs.get(attr_name, obj.default_value)
+                if value is not None and value != "":
+                    value = obj.cls(value)
             elif isinstance(obj, dlg_list_param):
                 value = kwargs.get(attr_name, obj.default_value)
                 if isinstance(value, str):
@@ -418,9 +423,7 @@ class AbstractDROP(EventFirer):
                         value = ast.literal_eval(value)
                 if value is not None and not isinstance(value, list):
                     raise Exception(
-                        "dlg_list_param {} is not a list. It is a {}".format(
-                            attr_name, type(value)
-                        )
+                        f"dlg_list_param {attr_name} is not a list. Type is {type(value)}"
                     )
             elif isinstance(obj, dlg_dict_param):
                 value = kwargs.get(attr_name, obj.default_value)

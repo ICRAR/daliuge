@@ -37,15 +37,38 @@
                 "options": [],
                 "positional": false
             },
-            "pickle": {
-                "text": "Pickle",
-                "value": false,
-                "defaultValue": "",
-                "description": "Whether the python arguments are pickled.",
+            "input_parser": {
+                "text": "Input Parser",
+                "value": "eval",
+                "defaultValue": "pickle",
+                "description": "Input port parsing technique",
                 "readonly": false,
-                "type": "Boolean",
+                "type": "Select",
                 "precious": false,
-                "options": [],
+                "options": [
+                    "pickle",
+                    "eval",
+                    "path",
+                    "dataurl",
+                    "npy"
+                ],
+                "positional": false
+            },
+            "output_parser": {
+                "text": "Output Parser",
+                "value": "eval",
+                "defaultValue": "pickle",
+                "description": "Output port parsing technique",
+                "readonly": false,
+                "type": "Select",
+                "precious": false,
+                "options": [
+                    "pickle",
+                    "eval",
+                    "path",
+                    "dataurl",
+                    "npy"
+                ],
                 "positional": false
             },
             "func_defaults": {

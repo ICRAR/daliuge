@@ -24,6 +24,7 @@
 import ast
 import base64
 import collections
+from enum import Enum
 import importlib
 import inspect
 import logging
@@ -40,6 +41,7 @@ from dlg.exceptions import InvalidDropException
 from dlg.meta import (
     dlg_bool_param,
     dlg_string_param,
+    dlg_enum_param,
     dlg_float_param,
     dlg_dict_param,
     dlg_component,
@@ -104,12 +106,20 @@ def import_using_name(app, fname):
             )
         except AttributeError:
             raise InvalidDropException(app, "Module %s has no member %s" % (modname, fname))
-    
+
 
 
 def import_using_code(code):
     return dill.loads(code)
 
+
+class DropParser(Enum):
+    PICKLE = 'pickle'
+    EVAL = 'eval'
+    PATH = 'path'
+    DATAURL = 'dataurl'
+    NPY = 'npy'
+    #JSON = "json"
 
 ##
 # @brief PyFuncApp
@@ -138,8 +148,10 @@ def import_using_code(code):
 #     \~English Python function name
 # @param[in] aparam/func_code Function Code//String/readwrite/False//False/
 #     \~English Python function code, e.g. 'def function_name(args): return args'
-# @param[in] aparam/pickle Pickle/false/Boolean/readwrite/False//False/
-#     \~English Whether the python arguments are pickled.
+# @param[in] aparam/input_parser Input Parser/pickle/Select/readwrite/False/pickle,eval,path,dataurl,npy/False/
+#     \~English Input port parsing technique
+# @param[in] aparam/output_parser Output Parser/pickle/Select/readwrite/False/pickle,eval,path,dataurl,npy/False/
+#     \~English output port parsing technique
 # @param[in] aparam/func_defaults Function Defaults//String/readwrite/False//False/
 #     \~English Mapping from argname to default value. Should match only the last part of the argnames list.
 #               Values are interpreted as Python code literals and that means string values need to be quoted.
@@ -193,15 +205,11 @@ class PyFuncApp(BarrierAppDROP):
     )
 
     func_name = dlg_string_param("func_name", None)
-
     # func_code = dlg_bytes_param("func_code", None) # bytes or base64 string
-
-    pickle = dlg_bool_param("pickle", True)
-
+    input_parser: DropParser = dlg_enum_param(DropParser, "input_parser", DropParser.PICKLE)  # type: ignore
+    output_parser: DropParser = dlg_enum_param(DropParser, "output_parser", DropParser.PICKLE)  # type: ignore
     func_arg_mapping = dlg_dict_param("func_arg_mapping", {})
-
     func_defaults = dlg_dict_param("func_defaults", {})
-
     f: Callable
     fdefaults: dict
 
@@ -235,7 +243,7 @@ class PyFuncApp(BarrierAppDROP):
                 + "{self.f.__name__}: {self.func_defaults}, {type(self.func_defaults)}"
             )
             raise ValueError
-        if self.pickle:
+        if DropParser(self.input_parser) is DropParser.PICKLE:
             # only values are pickled, get them unpickled
             for name, value in self.func_defaults.items():
                 self.func_defaults[name] = deserialize_data(value)
@@ -284,7 +292,8 @@ class PyFuncApp(BarrierAppDROP):
             "func_code",
             "func_name",
             "func_arg_mapping",
-            "pickle",
+            "input_parser",
+            "output_parser",
             "func_defaults"
             ]
         for kw in self.func_def_keywords:
@@ -363,7 +372,7 @@ class PyFuncApp(BarrierAppDROP):
         Function arguments in Python can be passed as positional, kw-value, positional
         only, kw-value only, and catch-all args and kwargs, which don't provide any
         hint about the names of accepted parameters. All of them are now supported. If
-        positional arguments or kw-value arguments are provided by the user, but are 
+        positional arguments or kw-value arguments are provided by the user, but are
         not explicitely defined in the function signiture AND args and/or kwargs are
         allowed then these arguments are passed to the function. For args this is
         somewhat risky, since the order is relevant and in this code derived from the
@@ -381,12 +390,16 @@ class PyFuncApp(BarrierAppDROP):
 
         # Inputs are un-pickled and treated as the arguments of the function
         # Their order must be preserved, so we use an OrderedDict
-        if self.pickle:
+        if DropParser(self.input_parser) is DropParser.PICKLE:
             all_contents = lambda x: pickle.loads(x)
+        elif DropParser(self.input_parser) is DropParser.EVAL:
+            all_contents = lambda x: ast.literal_eval(droputils.allDropContents(x).decode('utf-8'))
+        elif DropParser(self.input_parser) is DropParser.PATH:
+            all_contents = lambda x: x.path
+        elif DropParser(self.input_parser) is DropParser.DATAURL:
+            all_contents = lambda x: x.dataurl
         else:
-            all_contents = lambda x: ast.literal_eval(
-                droputils.allDropContents(x).decode("utf-8")
-            )
+            raise ValueError(self.input_parser.__repr__())
 
         inputs = collections.OrderedDict()
         for uid, drop in self._inputs.items():
@@ -455,15 +468,18 @@ class PyFuncApp(BarrierAppDROP):
                         if ptype in ["Complex", "Json"]:
                             try:
                                 value = ast.literal_eval(value)
+                            except ValueError:
+                                pass
+                        elif ptype in ["Python"]:
+                            try:
+                                import numpy
+                                value = eval(value, {"numpy": numpy}, {})
                             except:
                                 pass
-                        pargsDict.update({
-                            pa:
-                            value
-                        })
-                    elif pa != 'self' and pa not in pargsDict:
+                        pargsDict.update({pa: value})
+                    elif pa != 'self':
                         logger.warning(f"Required positional argument '{pa}' not found!")
-            logger.debug(f"updating posargs with {list(pargsDict.values())}")
+            logger.debug(f"updating posargs with {list(kwargs.values())}")
             self.pargs.extend(list(pargsDict.values()))
 
             # Try to get values for still missing kwargs arguments from Application kws
@@ -536,12 +552,13 @@ class PyFuncApp(BarrierAppDROP):
             if len(outputs) == 1:
                 result = [result]
             for r, o in zip(result, outputs):
-                p = pickle.dumps(r)
-                if self.pickle:
+                if DropParser(self.output_parser) is DropParser.PICKLE:
                     logger.debug(f"Writing pickeled result {type(r)} to {o}")
-                    o.write(pickle.dumps(r))  # @UndefinedVariable
+                    o.write(pickle.dumps(r))
+                elif DropParser(self.output_parser) is DropParser.EVAL:
+                    o.write(repr(r).encode('utf-8'))
                 else:
-                    o.write(repr(r).encode("utf-8"))
+                    ValueError(self.output_parser.__repr__())
 
     def generate_recompute_data(self):
         return self._recompute_data
