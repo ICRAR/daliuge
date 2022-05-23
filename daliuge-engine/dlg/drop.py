@@ -1118,12 +1118,14 @@ class AbstractDROP(EventFirer):
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             self._closeWriters()
             self.status = DROPStates.CANCELLED
+        self.completedrop()
 
     def skip(self):
         """Moves this drop to the SKIPPED state closing any writers we opened"""
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             self._closeWriters()
             self.status = DROPStates.SKIPPED
+        self.completedrop()
 
     @property
     def node(self):
@@ -1830,7 +1832,11 @@ class InMemoryDROP(DataDROP):
     def generate_reproduce_data(self):
         from .droputils import allDropContents
 
-        data = allDropContents(self, self.size)
+        data = b""
+        try:
+            data = allDropContents(self, self.size)
+        except Exception:
+            logger.debug("Could not read drop reproduce data")
         return {"data_hash": common_hash(data)}
 
 
