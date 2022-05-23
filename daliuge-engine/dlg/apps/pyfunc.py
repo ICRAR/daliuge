@@ -23,7 +23,6 @@
 
 import ast
 import base64
-from calendar import c
 import collections
 from enum import Enum
 import importlib
@@ -37,7 +36,7 @@ from io import StringIO
 from contextlib import redirect_stdout
 
 from dlg import droputils, utils
-from dlg.drop import BarrierAppDROP, NullDROP
+from dlg.drop import BarrierAppDROP
 from dlg.exceptions import InvalidDropException
 from dlg.meta import (
     dlg_bool_param,
@@ -388,7 +387,6 @@ class PyFuncApp(BarrierAppDROP):
         elif DropParser(self.input_parser) is DropParser.EVAL:
             def astparse(x):
                 content: bytes = droputils.allDropContents(x)
-                print(content)
                 return ast.literal_eval(content.decode('utf-8')) if content else None
             all_contents = astparse
         elif DropParser(self.input_parser) is DropParser.PATH:
@@ -401,7 +399,7 @@ class PyFuncApp(BarrierAppDROP):
         inputs = collections.OrderedDict()
         for uid, drop in self._inputs.items():
             # TODO: allow for Null DROPs to be passed around
-            inputs[uid] = all_contents(drop) if not isinstance(drop, NullDROP) else None
+            inputs[uid] = all_contents(drop)
 
         self.funcargs = {}
 
