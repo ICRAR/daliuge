@@ -35,8 +35,8 @@ class SourceFlux(BarrierAppDROP):
 
         super(SourceFlux, self).initialize(**kwargs)
 
-        self.casapy_path = self._getArg(kwargs, "casapy_path", None)
-        self.timeout = self._getArg(kwargs, "timeout", 180)
+        self.casapy_path = self._popArg(kwargs, "casapy_path", None)
+        self.timeout = self._popArg(kwargs, "timeout", 180)
 
     def run(self):
         inp = self.inputs[0]
@@ -65,22 +65,22 @@ class Clean(BarrierAppDROP):
 
         super(Clean, self).initialize(**kwargs)
 
-        self.timeout = self._getArg(kwargs, "timeout", 3600)
-        self.casapy_path = self._getArg(kwargs, "casapy_path", None)
+        self.timeout = self._popArg(kwargs, "timeout", 3600)
+        self.casapy_path = self._popArg(kwargs, "casapy_path", None)
 
         self.clean_args = {
-            "field": str(self._getArg(kwargs, "field", None)),
-            "mode": str(self._getArg(kwargs, "mode", None)),
-            "restfreq": str(self._getArg(kwargs, "restfreq", None)),
-            "nchan": self._getArg(kwargs, "nchan", None),
-            "start": str(self._getArg(kwargs, "start", None)),
-            "width": str(self._getArg(kwargs, "width", None)),
-            "interpolation": str(self._getArg(kwargs, "interpolation", None)),
-            "gain": self._getArg(kwargs, "gain", None),
-            "imsize": self._getArg(kwargs, "imsize", None),
-            "cell": [str(x) for x in self._getArg(kwargs, "cell", [])],
-            "phasecenter": str(self._getArg(kwargs, "phasecenter", None)),
-            "weighting": str(self._getArg(kwargs, "weighting", None)),
+            "field": str(self._popArg(kwargs, "field", None)),
+            "mode": str(self._popArg(kwargs, "mode", None)),
+            "restfreq": str(self._popArg(kwargs, "restfreq", None)),
+            "nchan": self._popArg(kwargs, "nchan", None),
+            "start": str(self._popArg(kwargs, "start", None)),
+            "width": str(self._popArg(kwargs, "width", None)),
+            "interpolation": str(self._popArg(kwargs, "interpolation", None)),
+            "gain": self._popArg(kwargs, "gain", None),
+            "imsize": self._popArg(kwargs, "imsize", None),
+            "cell": [str(x) for x in self._popArg(kwargs, "cell", [])],
+            "phasecenter": str(self._popArg(kwargs, "phasecenter", None)),
+            "weighting": str(self._popArg(kwargs, "weighting", None)),
             "usescratch": False,
         }
 
@@ -132,19 +132,19 @@ class Split(BarrierAppDROP):
 
         super(Split, self).initialize(**kwargs)
 
-        self.timeout = self._getArg(kwargs, "timeout", 3600)
-        self.casapy_path = self._getArg(kwargs, "casapy_path", False)
+        self.timeout = self._popArg(kwargs, "timeout", 3600)
+        self.casapy_path = self._popArg(kwargs, "casapy_path", False)
 
         self.transform_args = {
-            "regridms": self._getArg(kwargs, "regridms", None),
-            "restfreq": str(self._getArg(kwargs, "restfreq", None)),
-            "mode": str(self._getArg(kwargs, "mode", None)),
-            "nchan": self._getArg(kwargs, "nchan", None),
-            "outframe": str(self._getArg(kwargs, "outframe", None)),
-            "interpolation": str(self._getArg(kwargs, "interpolation", None)),
+            "regridms": self._popArg(kwargs, "regridms", None),
+            "restfreq": str(self._popArg(kwargs, "restfreq", None)),
+            "mode": str(self._popArg(kwargs, "mode", None)),
+            "nchan": self._popArg(kwargs, "nchan", None),
+            "outframe": str(self._popArg(kwargs, "outframe", None)),
+            "interpolation": str(self._popArg(kwargs, "interpolation", None)),
             "veltype": "radio",
-            "start": str(self._getArg(kwargs, "start", None)),
-            "width": str(self._getArg(kwargs, "width", None)),
+            "start": str(self._popArg(kwargs, "start", None)),
+            "width": str(self._popArg(kwargs, "width", None)),
             "spw": "",
             "combinespws": True,
             "nspw": 1,

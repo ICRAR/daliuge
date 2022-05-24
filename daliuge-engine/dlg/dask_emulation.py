@@ -45,8 +45,8 @@ class ResultTransmitter(BarrierAppDROP):
 
     def initialize(self, **kwargs):
         BarrierAppDROP.initialize(self, input_error_threshold=100, **kwargs)
-        self.host = self._getArg(kwargs, "host", "127.0.0.1")
-        self.port = self._getArg(kwargs, "port", None)
+        self.host = self._popArg(kwargs, "host", "127.0.0.1")
+        self.port = self._popArg(kwargs, "port", None)
         if self.port is None:
             raise InvalidDropException(self, "Missing port parameter")
 

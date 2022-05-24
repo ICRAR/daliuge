@@ -220,24 +220,24 @@ class AbstractDROP(EventFirer):
 
         # The physical graph drop type. This is determined
         # by the drop category when generating the drop spec
-        self._type = self._getArg(kwargs, "type", None)
+        self._type = self._popArg(kwargs, "type", None)
 
         # The Session owning this drop, if any
         # In most real-world situations this attribute will be set, but in
         # general it cannot be assumed it will (e.g., unit tests create drops
         # directly outside the context of a session).
-        self._dlg_session = self._getArg(kwargs, "dlg_session", None)
+        self._dlg_session = self._popArg(kwargs, "dlg_session", None)
 
         # A simple name that the Drop might receive
         # This is usually set in the Logical Graph Editor,
         # but is not necessarily always there
-        self.name = self._getArg(kwargs, "nm", "")
+        self.name = self._popArg(kwargs, "nm", "")
 
         # The key of this drop in the original Logical Graph
         # This information might or might not be present depending on how the
         # physical graph was generated (or if this drop is being created as part
         # of a graph, to begin with), so we default it to an empty value
-        self.lg_key = self._getArg(kwargs, "lg_key", "")
+        self.lg_key = self._popArg(kwargs, "lg_key", "")
 
         # 1-to-N relationship: one DROP may have many consumers and producers.
         # The potential consumers and producers are always AppDROPs instances
@@ -285,7 +285,7 @@ class AbstractDROP(EventFirer):
         # support. A target phase is also set to hint the Data Lifecycle Manager
         # about the level of resilience that this DROP should achieve.
         self._phase = DROPPhases.PLASMA
-        self._targetPhase = self._getArg(kwargs, "targetPhase", DROPPhases.GAS)
+        self._targetPhase = self._popArg(kwargs, "targetPhase", DROPPhases.GAS)
 
         # Calculating the checksum and maintaining the data size internally
         # implies that the data represented by this DROP is written
@@ -329,21 +329,21 @@ class AbstractDROP(EventFirer):
         # in the state they currently are. In this case an external entity must
         # listen to the events and decide when to trigger the execution of the
         # applications.
-        self._executionMode = self._getArg(kwargs, "executionMode", ExecutionMode.DROP)
+        self._executionMode = self._popArg(kwargs, "executionMode", ExecutionMode.DROP)
 
         # The physical node where this DROP resides.
         # This piece of information is mandatory when submitting the physical
         # graph via the DataIslandManager, but in simpler scenarios such as
         # tests or graph submissions via the NodeManager it might be
         # missing.
-        self._node = self._getArg(kwargs, "node", None)
+        self._node = self._popArg(kwargs, "node", None)
 
         # The host representing the Data Island where this DROP resides
         # This piece of information is mandatory when submitting the physical
         # graph via the MasterManager, but in simpler scenarios such as tests or
         # graphs submissions via the DataIslandManager or NodeManager it might
         # missing.
-        self._dataIsland = self._getArg(kwargs, "island", None)
+        self._dataIsland = self._popArg(kwargs, "island", None)
 
         # DROP expiration.
         # Expiration can be time-driven or usage-driven, which are mutually
@@ -357,10 +357,10 @@ class AbstractDROP(EventFirer):
                 "but they are mutually exclusive" % (self,),
             )
 
-        self._expireAfterUse = self._getArg(kwargs, "expireAfterUse", False)
+        self._expireAfterUse = self._popArg(kwargs, "expireAfterUse", False)
         self._expirationDate = -1
         if not self._expireAfterUse:
-            lifespan = float(self._getArg(kwargs, "lifespan", -1))
+            lifespan = float(self._popArg(kwargs, "lifespan", -1))
             if lifespan != -1:
                 self._expirationDate = time.time() + lifespan
 
@@ -371,7 +371,7 @@ class AbstractDROP(EventFirer):
             self._expectedSize = int(kwargs.pop("expectedSize"))
 
         # All DROPs are precious unless stated otherwise; used for replication
-        self._precious = self._getArg(kwargs, "precious", True)
+        self._precious = self._popArg(kwargs, "precious", True)
 
         # Useful to have access to all EAGLE parameters without a prior knowledge
         self._parameters = dict(kwargs)
@@ -461,16 +461,13 @@ class AbstractDROP(EventFirer):
                 continue
             setattr(self, attr_name, value)
 
-    def _getArg(self, kwargs, key, default):
+    def _popArg(self, kwargs, key, default):
         """
         Pops the specified key arg from kwargs else returns the default
         """
-        val = default
-        if key in kwargs:
-            val = kwargs.pop(key)
-        elif logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Defaulting %s to %s in %r" % (key, str(val), self))
-        return val
+        if key not in kwargs:
+            logger.debug("Defaulting %s to %s in %r" % (key, str(default), self))
+        return kwargs.pop(key, default)
 
     def __hash__(self):
         return hash(self._uid)
