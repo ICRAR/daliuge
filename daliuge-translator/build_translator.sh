@@ -16,6 +16,7 @@ case "$1" in
         echo "Build finished!"
         exit 0 ;;
     "dev")
+        C_TAG="master"
         [[ ! -z "$2" ]] && C_TAG=$2
         export VCS_TAG=$DEV_TAG
         echo "Building daliuge-translator development version using daliuge-common:${C_TAG}"
