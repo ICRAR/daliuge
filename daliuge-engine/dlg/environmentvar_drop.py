@@ -23,10 +23,12 @@ import abc
 import io
 import os
 import json
+import logging
 
 from dlg.drop import AbstractDROP, DEFAULT_INTERNAL_PARAMETERS
 from dlg.io import MemoryIO
 
+logger = logging.getLogger(__name__)
 
 class KeyValueDROP:
     @abc.abstractmethod
@@ -77,6 +79,7 @@ class EnvironmentVarDROP(AbstractDROP, KeyValueDROP):
         """
         Runs through all parameters, putting each into this drop's variable dict
         """
+        logger.warning(f"params {self.parameters}")
         super(EnvironmentVarDROP, self).initialize(**kwargs)
         self._variables = dict()
         self._variables.update(_filter_parameters(self.parameters))
