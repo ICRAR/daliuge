@@ -210,8 +210,6 @@ class AbstractDROP(EventFirer):
 
         super(AbstractDROP, self).__init__()
 
-        # Useful to have access to all EAGLE parameters without a priori knowledge
-        self._parameters = dict(kwargs)
         self._extract_attributes(**kwargs)
 
         # Copy it since we're going to modify it
@@ -375,6 +373,8 @@ class AbstractDROP(EventFirer):
         # All DROPs are precious unless stated otherwise; used for replication
         self._precious = self._getArg(kwargs, "precious", True)
 
+        # Useful to have access to all EAGLE parameters without a prior knowledge
+        self._parameters = dict(kwargs)
         self.autofill_environment_variables()
         kwargs.update(self._parameters)
         # Sub-class initialization; mark ourselves as INITIALIZED after that
@@ -396,16 +396,15 @@ class AbstractDROP(EventFirer):
 
         def get_param_value(attr_name, default_value):
             has_component_param = attr_name in kwargs
-            has_app_param = hasattr(self, 'parameters') \
-                and 'applicationArgs' in self.parameters \
-                and attr_name in self.parameters['applicationArgs']
+            has_app_param = 'applicationArgs' in kwargs \
+                and attr_name in kwargs['applicationArgs']
 
             if has_component_param and has_app_param:
                 logger.warning(f"Drop has both component and app param {attr_name}. Using component param.")
             if has_component_param:
                 param = kwargs.get(attr_name)
             elif has_app_param:
-                param = self.parameters['applicationArgs'].get(attr_name).value
+                param = kwargs['applicationArgs'].get(attr_name).value
             else:
                 param = default_value
             return param
@@ -463,6 +462,9 @@ class AbstractDROP(EventFirer):
             setattr(self, attr_name, value)
 
     def _getArg(self, kwargs, key, default):
+        """
+        Pops the specified key arg from kwargs else returns the default
+        """
         val = default
         if key in kwargs:
             val = kwargs.pop(key)
