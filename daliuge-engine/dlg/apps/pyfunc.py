@@ -386,6 +386,8 @@ class PyFuncApp(BarrierAppDROP):
             all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
         elif DropParser(self.input_parser) is DropParser.EVAL:
             def astparse(x):
+                # Null and Empty Drops will return an empty byte string
+                # which should propogate back to None
                 content: bytes = droputils.allDropContents(x)
                 return ast.literal_eval(content.decode('utf-8')) if content else None
             all_contents = astparse
@@ -398,7 +400,6 @@ class PyFuncApp(BarrierAppDROP):
 
         inputs = collections.OrderedDict()
         for uid, drop in self._inputs.items():
-            # TODO: allow for Null DROPs to be passed around
             inputs[uid] = all_contents(drop)
 
         self.funcargs = {}
