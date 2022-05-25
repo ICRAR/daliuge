@@ -55,8 +55,8 @@ class NMAssigner:
             logger.info("We have no DIMs")
         elif len(self.DIMs.keys()) == 1:
             dim_ip = list(self.DIMs.values())[0][0]  # IP of the first (only) DIM
-            for nm in self.NMs:
-                nm_ip = self.NMs[nm][0]
+            for nm, endpoint in self.NMs.items():
+                nm_ip = endpoint[0]
                 if nm not in self.assignments:
                     logger.info("Adding NM %s to DIM %s", nm_ip, dim_ip)
                     self.mm_client.add_node_to_dim(dim_ip, nm_ip)
