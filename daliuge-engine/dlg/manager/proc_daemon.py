@@ -180,15 +180,15 @@ class DlgDaemon(RestServer):
         tool = get_tool()
         args = ["--host", "0.0.0.0"]
         args += self._verbosity_as_cmdline()
-        logger.info("Starting Node Drop Manager with args: %s" % (" ".join(args)))
+        logger.info("Starting Node Drop Manager with args: %s", (" ".join(args)))
         self._nm_proc = tool.start_process("nm", args)
-        logger.info("Started Node Drop Manager with PID %d" % (self._nm_proc.pid))
+        logger.info("Started Node Drop Manager with PID %d", self._nm_proc.pid)
 
         # Registering the new NodeManager via zeroconf so it gets discovered
         # by the Master Manager
         if self._zeroconf:
             addrs = utils.get_local_ip_addr()
-            logger.info("Registering this NM with zeroconf: %s" % addrs)
+            logger.info("Registering this NM with zeroconf: %s", addrs)
             self._nm_info = utils.register_service(
                 self._zeroconf,
                 "NodeManager",
@@ -205,11 +205,11 @@ class DlgDaemon(RestServer):
         if nodes:
             args += ["--nodes", ",".join(nodes)]
         logger.info(
-            "Starting Data Island Drop Manager with args: %s" % (" ".join(args))
+            "Starting Data Island Drop Manager with args: %s", (" ".join(args))
         )
         self._dim_proc = tool.start_process("dim", args)
         logger.info(
-            "Started Data Island Drop Manager with PID %d" % (self._dim_proc.pid)
+            "Started Data Island Drop Manager with PID %d", self._dim_proc.pid
         )
 
         # Registering the new DIM via zeroconf so it gets discovered
@@ -230,9 +230,9 @@ class DlgDaemon(RestServer):
         tool = get_tool()
         args = ["--host", "0.0.0.0"]
         args += self._verbosity_as_cmdline()
-        logger.info("Starting Master Drop Manager with args: %s" % (" ".join(args)))
+        logger.info("Starting Master Drop Manager with args: %s", (" ".join(args)))
         self._mm_proc = tool.start_process("mm", args)
-        logger.info("Started Master Drop Manager with PID %d" % (self._mm_proc.pid))
+        logger.info("Started Master Drop Manager with PID %d", self._mm_proc.pid)
 
         # Also subscribe to zeroconf events coming from NodeManagers and feed
         # the Master Manager with the new hosts we find
@@ -246,14 +246,14 @@ class DlgDaemon(RestServer):
                     port = info.port
                     nm_assigner.add_nm(name, server, port)
                     logger.info(
-                        "Found a new Node Manager on %s:%d, will add it to the MM"
-                        % (server, port)
+                        "Found a new Node Manager on %s:%d, will add it to the MM",
+                        (server, port)
                     )
                 elif state_change is zc.ServiceStateChange.Removed:
                     server, port = nm_assigner.NMs[name]
                     logger.info(
-                        "Node Manager on %s:%d disappeared, removing it from the MM"
-                        % (server, port)
+                        "Node Manager on %s:%d disappeared, removing it from the MM",
+                        (server, port)
                     )
 
                     # Don't bother to remove it if we're shutting down. This way
@@ -269,14 +269,14 @@ class DlgDaemon(RestServer):
                     port = info.port
                     nm_assigner.add_dim(name, server, port)
                     logger.info(
-                        "Found a new Data Island Manager on %s:%d, will add it to the MM"
-                        % (server, port)
+                        "Found a new Data Island Manager on %s:%d, will add it to the MM",
+                        (server, port)
                     )
                 elif state_change is zc.ServiceStateChange.Removed:
                     server, port = nm_assigner.DIMs[name]
                     logger.info(
-                        "Data Island Manager on %s:%d disappeared, removing it from the MM"
-                        % (server, port)
+                        "Data Island Manager on %s:%d disappeared, removing it from the MM",
+                        (server, port)
                     )
 
                     # Don't bother to remove it if we're shutting down. This way
@@ -319,7 +319,7 @@ class DlgDaemon(RestServer):
     def _rest_get_manager_info(self, proc):
         if proc:
             bottle.response.content_type = "application/json"
-            logger.info("Sending response: %s" % json.dumps({"pid": proc.pid}))
+            logger.info("Sending response: %s", json.dumps({"pid": proc.pid}))
             return json.dumps({"pid": proc.pid})
         else:
             return json.dumps({"pid": None})
@@ -337,7 +337,7 @@ class DlgDaemon(RestServer):
         if mgrs["node"]:
             mgrs["node"] = self._nm_proc.pid
 
-        logger.info("Sending response: %s" % json.dumps(mgrs))
+        logger.info("Sending response: %s", json.dumps(mgrs))
         return json.dumps(mgrs)
 
     def rest_startNM(self):
@@ -437,7 +437,7 @@ def run_with_cmdline(parser, args):
         global terminating
         if terminating:
             return
-        logger.info("Received signal %d, will stop the daemon now" % (signalNo,))
+        logger.info("Received signal %d, will stop the daemon now", signalNo)
         terminating = True
         daemon.stop(10)
 

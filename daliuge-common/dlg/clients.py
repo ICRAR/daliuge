@@ -26,7 +26,6 @@ import urllib.parse
 from . import constants
 from .restutils import RestClient
 
-
 logger = logging.getLogger(__name__)
 compress = os.environ.get("DALIUGE_COMPRESSED_JSON", True)
 
@@ -137,7 +136,7 @@ class BaseDROPManagerClient(RestClient):
             "Successfully read %d sessions from %s:%s",
             len(sessions),
             self.host,
-            self.port,
+            self.port
         )
         return sessions
 
@@ -223,7 +222,7 @@ class NodeManagerClient(BaseDROPManagerClient):
     """
 
     def __init__(
-        self, host="localhost", port=constants.NODE_DEFAULT_REST_PORT, timeout=10
+            self, host="localhost", port=constants.NODE_DEFAULT_REST_PORT, timeout=10
     ):
         super(NodeManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
@@ -259,7 +258,7 @@ class DataIslandManagerClient(CompositeManagerClient):
     """
 
     def __init__(
-        self, host="localhost", port=constants.ISLAND_DEFAULT_REST_PORT, timeout=10
+            self, host="localhost", port=constants.ISLAND_DEFAULT_REST_PORT, timeout=10
     ):
         super(DataIslandManagerClient, self).__init__(
             host=host, port=port, timeout=timeout
@@ -272,7 +271,7 @@ class MasterManagerClient(CompositeManagerClient):
     """
 
     def __init__(
-        self, host="localhost", port=constants.MASTER_DEFAULT_REST_PORT, timeout=10
+            self, host="localhost", port=constants.MASTER_DEFAULT_REST_PORT, timeout=10
     ):
         super(MasterManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
