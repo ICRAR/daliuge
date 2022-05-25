@@ -430,6 +430,17 @@ class PyFuncApp(BarrierAppDROP):
         kwargs = {}
         self.pargs = []
         pargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))  # Initialize pargs dictionary
+        if "applicationArgs" in self.parameters:
+            appArgs = self.parameters["applicationArgs"]  # we'll pop the identified ones
+        if ('outputs' in self.parameters and isinstance(self.parameters['outputs'][0], dict)):
+            out_names = [list(i.values())[0] for i in self.parameters['outputs']]
+            logger.debug(f"Using named ports to remove outputs from arguments: "+\
+                    f"{out_names}")
+            _dum = [appArgs.pop(k) for k in out_names if k in appArgs]
+            if len(_dum) > 0: 
+                logger.debug("Application arguments used as outputs removed : %s",
+                    [i['text'] for i in _dum])
+
         if ('inputs' in self.parameters and isinstance(self.parameters['inputs'][0], dict)):
             logger.debug(f"Using named ports to identify inputs: "+\
                     f"{self.parameters['inputs']}")
@@ -447,24 +458,34 @@ class PyFuncApp(BarrierAppDROP):
             for i in range(min(len(inputs),self.fn_nargs)):
                 kwargs.update({self.arguments.args[i]: list(inputs.values())[i]})
 
-        logger.debug(f"updating funcargs with input ports {kwargs}")
+        logger.debug(f"Updating funcargs with input ports {kwargs}")
         self.funcargs.update(kwargs)
+        _dum = [appArgs.pop(k) for k in kwargs if k in appArgs]
+        logger.debug("Application arguments used as inputs removed: %s", 
+            [i['text'] for i in _dum])
+
+        logger.debug("Found input ports matching posargs: %s", list(pargsDict.keys()))
 
         # Try to get values for still missing positional arguments from Application Args
         if "applicationArgs" in self.parameters:
-            appArgs = self.parameters["applicationArgs"]  # we'll pop them
             _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
+            logger.debug("Identified keyword arguments removed: %s",
+                [i['text'] for i in _dum])
+            _dum = [appArgs.pop(k) for k in pargsDict if k in appArgs]
+            logger.debug("Identified positional arguments removed: %s", 
+                [i['text'] for i in _dum])
             for pa in posargs:
-                if pa not in self.funcargs:
-                    if pa in appArgs and pa != 'self':
+                if pa != 'self' and pa not in self.funcargs:
+                    if pa in appArgs:
                         arg = appArgs.pop(pa)
                         value = arg['value']
                         ptype = arg['type']
                         if ptype in ["Complex", "Json"]:
                             try:
                                 value = ast.literal_eval(value)
-                            except ValueError:
-                                pass
+                            except Exception as e:
+                                # just go on if this did not work
+                                logger.warning("Eval raised an error: %s",e)
                         elif ptype in ["Python"]:
                             try:
                                 import numpy
@@ -472,9 +493,9 @@ class PyFuncApp(BarrierAppDROP):
                             except:
                                 pass
                         pargsDict.update({pa: value})
-                    elif pa != 'self':
+                    elif pa != 'self' and pa not in pargsDict:
                         logger.warning(f"Required positional argument '{pa}' not found!")
-            logger.debug(f"updating posargs with {list(kwargs.values())}")
+            logger.debug(f"updating posargs with {list(pargsDict.keys())}")
             self.pargs.extend(list(pargsDict.values()))
 
             # Try to get values for still missing kwargs arguments from Application kws
