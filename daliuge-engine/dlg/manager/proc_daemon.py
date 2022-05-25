@@ -249,14 +249,14 @@ class DlgDaemon(RestServer):
                     port = info.port
                     adder(name, server, port)
                     logger.info(
-                        "Found a new Node Manager on %s:%d, will add it to the MM",
-                        (server, port)
+                        "Found a new %s on %s:%d, will add it to the MM",
+                        (service_type, server, port)
                     )
                 elif state_change is zc.ServiceStateChange.Removed:
                     server, port = accessor(name)
                     logger.info(
-                        "Node Manager on %s:%d disappeared, removing it from the MM",
-                        (server, port)
+                        "%s on %s:%d disappeared, removing it from the MM",
+                        (service_type, server, port)
                     )
 
                     # Don't bother to remove it if we're shutting down. This way
