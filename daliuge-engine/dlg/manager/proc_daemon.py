@@ -83,6 +83,7 @@ class DlgDaemon(RestServer):
         # Zeroconf for NM and MM
         self._zeroconf = None if disable_zeroconf else zc.Zeroconf()
         self._nm_info = None
+        self._dim_info = None
         self._mm_nm_browser = None
         self._mm_dim_browser = None
 
@@ -170,6 +171,8 @@ class DlgDaemon(RestServer):
         return self._stop_manager("_nm_proc", timeout)
 
     def stopDIM(self, timeout=10):
+        if self._dim_info:
+            utils.deregister_service(self._zeroconf, self._dim_info)
         self._stop_manager("_dim_proc", timeout)
 
     def stopMM(self, timeout=10):
@@ -217,7 +220,7 @@ class DlgDaemon(RestServer):
         if self._zeroconf:
             addrs = utils.get_local_ip_addr()
             logger.info("Registering this DIM with zeroconf: %s", addrs)
-            self._nm_info = utils.register_service(
+            self._dim_info = utils.register_service(
                 self._zeroconf,
                 "DIM",
                 socket.gethostname(),
