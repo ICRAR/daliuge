@@ -34,6 +34,43 @@ from six.moves import http_client as httplib  # @UnresolvedImport
 _TIMEOUT = 10
 
 
+def _wait_until(update_condition, test_condition, timeout, interval=0.1, *args):
+    timeout_time = time.time() + timeout
+    output = None
+    while not test_condition(output) and time.time() < timeout_time:
+        output = update_condition(*args)
+        time.sleep(interval)
+    return output
+
+
+def _get_dims_from_client(timeout, client):
+    def _update_nodes(*args):
+        return args[0].dims()
+
+    def _test_dims(_dims):
+        return _dims
+
+    dims = _wait_until(_update_nodes, _test_dims, timeout, 0.1, client)
+    return dims
+
+
+def _get_nodes_from_client(timeout, client):
+    def _update_nodes(*args):
+        return args[0].nodes()
+
+    def _test_nodes(_nodes):
+        if not _nodes or len(_nodes) == 0:
+            return False
+        return _nodes
+
+    nodes = _wait_until(_update_nodes, _test_nodes, timeout, 0.1, client)
+    return nodes
+
+
+def _update_nodes_with_timeout(*args):
+    return _get_nodes_from_client(_TIMEOUT, args[0])
+
+
 class TestDaemon(unittest.TestCase):
     def create_daemon(self, *args, **kwargs):
         self._daemon_t = None
@@ -120,7 +157,8 @@ class TestDaemon(unittest.TestCase):
         # Both managers started fine. If they zeroconf themselves correctly then
         # if we query the MM it should know about its nodes, which should have
         # one element
-        nodes = self._get_nodes_from_master(_TIMEOUT)
+        mc = MasterManagerClient()
+        nodes = _get_nodes_from_client(_TIMEOUT, mc)
         self.assertIsNotNone(nodes)
         self.assertEqual(
             1,
@@ -138,11 +176,19 @@ class TestDaemon(unittest.TestCase):
         # Check that dim registers to MM
         timeout_time = time.time() + _TIMEOUT
         dims = None
-        while time.time() < timeout_time:
-            dims = self._get_dims_from_master(_TIMEOUT)
+        mc = MasterManagerClient()
+
+        def _update_dims(*args):
+            _dims = _get_dims_from_client(_TIMEOUT, args[0])
+            return _dims
+
+        def _test_dims(_dims):
             if dims is not None and len(dims["islands"]) > 0:
-                break
-            time.sleep(0.1)
+                return dims
+            else:
+                return False
+
+        dims = _wait_until(_update_dims, _test_dims, _TIMEOUT, 0.1, mc)
         self.assertIsNotNone(dims)
         return dims
 
@@ -164,13 +210,15 @@ class TestDaemon(unittest.TestCase):
 
     def _add_zeroconf_nm(self):
         self._start("node", http.HTTPStatus.OK)
-        timeout_time = time.time() + _TIMEOUT
-        nodes = None
-        while time.time() < timeout_time:
-            nodes = self._get_nodes_from_dim(_TIMEOUT)
-            if nodes is not None and len(nodes) > 0:
-                break
-            time.sleep(0.1)
+        mc = MasterManagerClient()
+
+        def _test_nodes(_nodes):
+            if _nodes is not None and len(_nodes) > 0:
+                return _nodes
+            else:
+                return False
+
+        nodes = _wait_until(_update_nodes_with_timeout, _test_nodes, _TIMEOUT, 0.1, mc)
         return nodes
 
     def test_zeroconf_dim_nm_setup(self):
@@ -185,21 +233,23 @@ class TestDaemon(unittest.TestCase):
 
     def test_without_zeroconf_dim_nm_setup(self):
         self._test_zeroconf_dim_mm(disable_zeroconf=True)
-        nodes = self._add_zeroconf_nm()
-        self.assertIsNone(nodes)
+        nodes = self._add_zeroconf_nm()['nodes']
+        self.assertEqual(0, len(nodes))
 
     def test_zeroconf_nm_down(self):
         self._test_zeroconf_dim_mm(disable_zeroconf=False)
         nodes = self._add_zeroconf_nm()
         self.assertIsNotNone(nodes)
         self._stop("node", http.HTTPStatus.OK)
-        timeout_time = time.time() + _TIMEOUT
-        while time.time() < timeout_time:
-            nodes = self._get_nodes_from_dim(_TIMEOUT)
-            if nodes is None:
-                break
-            time.sleep(0.1)
-        self.assertIsNone(nodes)
+        mc = MasterManagerClient()
+
+        def _test_nodes(_nodes):
+            if not nodes['nodes']:
+                return nodes['nodes']
+            return False
+
+        nodes = _wait_until(_update_nodes_with_timeout, _test_nodes, _TIMEOUT, 0.1, mc)['nodes']
+        self.assertEqual(0, len(nodes))
 
     def test_start_dataisland_via_rest(self):
 
@@ -208,7 +258,8 @@ class TestDaemon(unittest.TestCase):
         # Both managers started fine. If they zeroconf themselves correctly then
         # if we query the MM it should know about its nodes, which should have
         # one element
-        nodes = self._get_nodes_from_master(_TIMEOUT)
+        mc = MasterManagerClient()
+        nodes = _get_nodes_from_client(_TIMEOUT, mc)
         self.assertIsNotNone(nodes)
         self.assertEqual(
             1,
@@ -227,13 +278,15 @@ class TestDaemon(unittest.TestCase):
 
         # start master and island manager
         self.create_daemon(master=True, noNM=False, disable_zeroconf=False)
-        nodes = self._get_nodes_from_master(_TIMEOUT)
+        mc = MasterManagerClient()
+        nodes = _get_nodes_from_client(_TIMEOUT, mc)
         self._start("island", http.HTTPStatus.OK, {"nodes": nodes})
 
         # Both managers started fine. If they zeroconf themselves correctly then
         # if we query the MM it should know about its nodes, which should have
         # one element
-        nodes = self._get_nodes_from_master(_TIMEOUT)
+        mc = MasterManagerClient()
+        nodes = _get_nodes_from_client(_TIMEOUT, mc)
         self.assertIsNotNone(nodes)
         self.assertEqual(
             1,
@@ -256,7 +309,8 @@ class TestDaemon(unittest.TestCase):
         # Both managers started fine. If they zeroconf themselves correctly then
         # if we query the MM it should know about its nodes, which should have
         # one element
-        nodes = self._get_nodes_from_master(_TIMEOUT)
+        mc = MasterManagerClient()
+        nodes = _get_nodes_from_client(_TIMEOUT, mc)
         self.assertIsNotNone(nodes)
         self.assertEqual(
             1,
@@ -298,7 +352,8 @@ class TestDaemon(unittest.TestCase):
     def test_get_dims(self):
         self.create_daemon(master=True, noNM=True, disable_zeroconf=False)
         # Check that the DataIsland starts with the given nodes
-        dims = self._get_dims_from_master(_TIMEOUT)
+        mc = MasterManagerClient()
+        dims = _get_dims_from_client(_TIMEOUT, mc)
         self.assertIsNotNone(dims)
         self.assertEqual(
             0,
@@ -314,7 +369,7 @@ class TestDaemon(unittest.TestCase):
             headers["Content-Type"] = "application/json"
         conn.request(
             "POST",
-            "/managers/%s/start" % (manager_name,),
+            f"/managers/{manager_name}/start",
             body=payload,
             headers=headers,
         )
@@ -330,34 +385,9 @@ class TestDaemon(unittest.TestCase):
             payload = json.dumps(payload)
             headers["Content-Type"] = "application/json"
         conn.request(
-            "POST", "/managers/%s/stop" % (manager_name,), body=payload, headers=headers
+            "POST", f"/managers/{manager_name}/stop", body=payload, headers=headers
         )
         response = conn.getresponse()
         self.assertEqual(expected_code, response.status, response.read())
         response.close()
         conn.close()
-
-    def _get_nodes_from_client(self, timeout, client):
-        timeout_time = time.time() + timeout
-        while time.time() < timeout_time:
-            nodes = client.nodes()
-            if nodes:
-                return nodes
-            time.sleep(0.1)
-
-    def _get_nodes_from_master(self, timeout):
-        mc = MasterManagerClient()
-        return self._get_nodes_from_client(timeout, mc)
-
-    def _get_nodes_from_dim(self, timeout):
-        dimc = DataIslandManagerClient()
-        return self._get_nodes_from_client(timeout, dimc)
-
-    def _get_dims_from_master(self, timeout):
-        mc = MasterManagerClient()
-        timeout_time = time.time() + timeout
-        while time.time() < timeout_time:
-            dims = mc.dims()
-            if dims:
-                return dims
-            time.sleep(0.1)
