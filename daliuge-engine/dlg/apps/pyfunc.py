@@ -297,23 +297,15 @@ class PyFuncApp(BarrierAppDROP):
             "func_defaults"
             ]
         for kw in self.func_def_keywords:
-            dum_arg = new_arg = "gIbbERiSH:askldhgol"
             if kw in self._applicationArgs:  # these are the preferred ones now
                 if isinstance(
                     self._applicationArgs[kw]["value"], bool
-                ):  # always transfer booleans
-                    new_arg = self._applicationArgs.pop(kw)
-                elif (
-                    self._applicationArgs[kw]["value"]
+                    or self._applicationArgs[kw]["value"]
                     or self._applicationArgs[kw]["precious"]
                 ):
                     # only transfer if there is a value or precious is True
-                    new_arg = self._applicationArgs.pop(kw)
+                    self._applicationArgs.pop(kw)
 
-            if new_arg != dum_arg:
-                logger.debug(f"Setting {kw} to {new_arg['value']}")
-                # we allow python expressions as values, means that strings need to be quoted
-                self.__setattr__(kw, new_arg["value"])
 
         self.num_args = len(
             self._applicationArgs
@@ -391,9 +383,14 @@ class PyFuncApp(BarrierAppDROP):
         # Inputs are un-pickled and treated as the arguments of the function
         # Their order must be preserved, so we use an OrderedDict
         if DropParser(self.input_parser) is DropParser.PICKLE:
-            all_contents = lambda x: pickle.loads(x)
+            all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
         elif DropParser(self.input_parser) is DropParser.EVAL:
-            all_contents = lambda x: ast.literal_eval(droputils.allDropContents(x).decode('utf-8'))
+            def astparse(x):
+                # Null and Empty Drops will return an empty byte string
+                # which should propogate back to None
+                content: bytes = droputils.allDropContents(x)
+                return ast.literal_eval(content.decode('utf-8')) if content else None
+            all_contents = astparse
         elif DropParser(self.input_parser) is DropParser.PATH:
             all_contents = lambda x: x.path
         elif DropParser(self.input_parser) is DropParser.DATAURL:
@@ -403,9 +400,7 @@ class PyFuncApp(BarrierAppDROP):
 
         inputs = collections.OrderedDict()
         for uid, drop in self._inputs.items():
-            contents = droputils.allDropContents(drop)
-            # allow for Null DROPs to be passed around
-            inputs[uid] = all_contents(contents) if contents else None
+            inputs[uid] = all_contents(drop)
 
         self.funcargs = {}
 
