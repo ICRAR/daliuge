@@ -621,21 +621,21 @@ class MasterManagerRestServer(CompositeManagerRestServer):
     @daliuge_aware
     def startNM(self, host):
         port = constants.DAEMON_DEFAULT_REST_PORT
-        logger.debug("Sending NM start request to %s:%s", (host, port))
+        logger.debug("Sending NM start request to %s:%s", host, port)
         with RestClient(host=host, port=port, timeout=10) as c:
             return json.loads(c._POST("/managers/node/start").read())
 
     @daliuge_aware
     def stopNM(self, host):
         port = constants.DAEMON_DEFAULT_REST_PORT
-        logger.debug("Sending NM stop request to %s:%s", (host, port))
+        logger.debug("Sending NM stop request to %s:%s", host, port)
         with RestClient(host=host, port=port, timeout=10) as c:
             return json.loads(c._POST("/managers/node/stop").read())
 
     @daliuge_aware
     def addNM(self, host, node):
         port = constants.ISLAND_DEFAULT_REST_PORT
-        logger.debug("Adding NM %s to DIM %s", (node, host))
+        logger.debug("Adding NM %s to DIM %s", node, host)
         with RestClient(host=host, port=port, timeout=10, url_prefix="/api") as c:
             return json.loads(
                 c._POST(
@@ -646,14 +646,14 @@ class MasterManagerRestServer(CompositeManagerRestServer):
     @daliuge_aware
     def removeNM(self, host, node):
         port = constants.ISLAND_DEFAULT_REST_PORT
-        logger.debug("Removing NM %s from DIM %s", (node, host))
+        logger.debug("Removing NM %s from DIM %s", node, host)
         with RestClient(host=host, port=port, timeout=10, url_prefix="/api") as c:
             return json.loads(c._DELETE(f"/nodes/{node}").read())
 
     @daliuge_aware
     def getNMInfo(self, host):
         port = constants.DAEMON_DEFAULT_REST_PORT
-        logger.debug("Sending request %s:%s/managers/node", (host, port))
+        logger.debug("Sending request %s:%s/managers/node", host, port)
         with RestClient(host=host, port=port, timeout=10) as c:
             return json.loads(c._GET("/managers/node").read())
 
