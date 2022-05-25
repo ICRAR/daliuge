@@ -285,7 +285,7 @@ class MasterManagerClient(CompositeManagerClient):
         return self._get_json("/islands")
 
     def add_dim(self, dim):
-        self._POST("/islands/%s" % (dim,), content=None)
+        self._POST(f"/islands/{dim}", content=None)
 
     def remove_dim(self, dim):
         self._DELETE("/islands/%s" % (dim,))
