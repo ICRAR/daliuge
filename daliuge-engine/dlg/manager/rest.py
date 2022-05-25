@@ -482,7 +482,7 @@ class CompositeManagerRestServer(ManagerRestServer):
     @daliuge_aware
     def getNodeSessions(self, node):
         if node not in self.dm.nodes:
-            raise Exception("%s not in current list of nodes" % (node,))
+            raise Exception(f"{node} not in current list of nodes")
         with NodeManagerClient(host=node) as dm:
             return dm.sessions()
 
@@ -527,28 +527,28 @@ class CompositeManagerRestServer(ManagerRestServer):
     @daliuge_aware
     def getNodeSessionInformation(self, node, sessionId):
         if node not in self.dm.nodes:
-            raise Exception("%s not in current list of nodes" % (node,))
+            raise Exception(f"{node} not in current list of nodes")
         with NodeManagerClient(host=node) as dm:
             return dm.session(sessionId)
 
     @daliuge_aware
     def getNodeSessionStatus(self, node, sessionId):
         if node not in self.dm.nodes:
-            raise Exception("%s not in current list of nodes" % (node,))
+            raise Exception(f"{node} not in current list of nodes")
         with NodeManagerClient(host=node) as dm:
             return dm.session_status(sessionId)
 
     @daliuge_aware
     def getNodeGraph(self, node, sessionId):
         if node not in self.dm.nodes:
-            raise Exception("%s not in current list of nodes" % (node,))
+            raise Exception(f"{node} not in current list of nodes")
         with NodeManagerClient(host=node) as dm:
             return dm.graph(sessionId)
 
     @daliuge_aware
     def getNodeGraphStatus(self, node, sessionId):
         if node not in self.dm.nodes:
-            raise Exception("%s not in current list of nodes" % (node,))
+            raise Exception(f"{node} not in current list of nodes")
         with NodeManagerClient(host=node) as dm:
             return dm.graph_status(sessionId)
 
@@ -639,7 +639,7 @@ class MasterManagerRestServer(CompositeManagerRestServer):
         with RestClient(host=host, port=port, timeout=10, url_prefix="/api") as c:
             return json.loads(
                 c._POST(
-                    "/nodes/%s" % (node,),
+                    f"/nodes/{node}",
                 ).read()
             )
 
@@ -648,7 +648,7 @@ class MasterManagerRestServer(CompositeManagerRestServer):
         port = constants.ISLAND_DEFAULT_REST_PORT
         logger.debug("Removing NM %s from DIM %s", (node, host))
         with RestClient(host=host, port=port, timeout=10, url_prefix="/api") as c:
-            return json.loads(c._DELETE("/nodes/%s" % (node,)).read())
+            return json.loads(c._DELETE(f"/nodes/{node}").read())
 
     @daliuge_aware
     def getNMInfo(self, host):

@@ -127,13 +127,13 @@ class CompositeManager(DROPManager):
     __metaclass__ = abc.ABCMeta
 
     def __init__(
-        self,
-        dmPort,
-        partitionAttr,
-        subDmId,
-        dmHosts=[],
-        pkeyPath=None,
-        dmCheckTimeout=10,
+            self,
+            dmPort,
+            partitionAttr,
+            subDmId,
+            dmHosts=[],
+            pkeyPath=None,
+            dmCheckTimeout=10,
     ):
         """
         Creates a new CompositeManager. The sub-DMs it manages are to be located
@@ -239,7 +239,7 @@ class CompositeManager(DROPManager):
 
         if not self.check_dm(host, port):
             raise SubManagerException(
-                "Manager expected but not running in %s:%d" % (host, port)
+                f"Manager expected but not running in {host}:{port}"
             )
 
         port = port or self._dmPort
@@ -288,10 +288,7 @@ class CompositeManager(DROPManager):
             iterable,
         )
         if thrExs:
-            msg = "More than one error occurred while %s on session %s" % (
-                action,
-                sessionId,
-            )
+            msg = f"More than one error occurred while {action} on session {sessionId}"
             raise SubManagerException(msg, thrExs)
 
     #
@@ -364,19 +361,14 @@ class CompositeManager(DROPManager):
             graphSpec.pop()
         for dropSpec in graphSpec:
             if self._partitionAttr not in dropSpec:
-                msg = "Drop %s doesn't specify a %s attribute" % (
-                    dropSpec["oid"],
-                    self._partitionAttr,
-                )
+                msg = f"Drop {dropSpec.get('oid', None)} doesn't specify a {self._partitionAttr} " \
+                      f"attribute"
                 raise InvalidGraphException(msg)
 
             partition = dropSpec[self._partitionAttr]
             if partition not in self._dmHosts:
-                msg = "Drop %s's %s %s does not belong to this DM" % (
-                    dropSpec["oid"],
-                    self._partitionAttr,
-                    partition,
-                )
+                msg = f"Drop {dropSpec.get('oid', None)}'s {self._partitionAttr} {partition} " \
+                      f"does not belong to this DM"
                 raise InvalidGraphException(msg)
 
             perPartition[partition].append(dropSpec)
