@@ -7,7 +7,17 @@ The fundamental primitive powering workflow signatures are Merkle trees and Bloc
 acyclic graphs (BlockDAGs).
 These data structures cryptographically compress provenance and structural information.
 We describe the primitives of our approach and then their combination.
-The most relevant code directory is found under ``dlg.common.reproducibility``
+The most relevant code directory is found under ``dlg.common.reproducibility``.
+
+Provenance data is stored internally within the graph data-structure throughout translation and execution. 
+
+In the logical graph structure (dictionary) this information is keyed under 'reprodata'.
+In the physical graph (template) structure this information is appended to the end of the droplist.
+
+Following graph execution, the reprodata is written to a log file, alongside the associated execution logs ($DLG_ROOT/logs).
+
+If the specified rmode is 'NOTHING', no reprodata is appended at any stage in translation and execution.
+
 
 Merkle Trees
 ------------
