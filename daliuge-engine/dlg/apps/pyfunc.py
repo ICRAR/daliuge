@@ -30,7 +30,7 @@ import inspect
 import logging
 import pickle
 
-from typing import Callable
+from typing import Callable, Optional
 import dill
 from io import StringIO
 from contextlib import redirect_stdout
@@ -116,10 +116,10 @@ def import_using_code(code):
 class DropParser(Enum):
     PICKLE = 'pickle'
     EVAL = 'eval'
-    PATH = 'path'
-    DATAURL = 'dataurl'
     NPY = 'npy'
     #JSON = "json"
+    PATH = 'path'  # input only
+    DATAURL = 'dataurl'  # input only
 
 ##
 # @brief PyFuncApp
@@ -148,9 +148,9 @@ class DropParser(Enum):
 #     \~English Python function name
 # @param[in] aparam/func_code Function Code//String/readwrite/False//False/
 #     \~English Python function code, e.g. 'def function_name(args): return args'
-# @param[in] aparam/input_parser Input Parser/pickle/Select/readwrite/False/pickle,eval,path,dataurl,npy/False/
+# @param[in] aparam/input_parser Input Parser/pickle/Select/readwrite/False/pickle,npy,eval,path,dataurl/False/
 #     \~English Input port parsing technique
-# @param[in] aparam/output_parser Output Parser/pickle/Select/readwrite/False/pickle,eval,path,dataurl,npy/False/
+# @param[in] aparam/output_parser Output Parser/pickle/Select/readwrite/False/pickle,eval,npy/False/
 #     \~English output port parsing technique
 # @param[in] aparam/func_defaults Function Defaults//String/readwrite/False//False/
 #     \~English Mapping from argname to default value. Should match only the last part of the argnames list.
@@ -243,7 +243,7 @@ class PyFuncApp(BarrierAppDROP):
                 + "{self.f.__name__}: {self.func_defaults}, {type(self.func_defaults)}"
             )
             raise ValueError
-        if DropParser(self.input_parser) is DropParser.PICKLE:
+        if self.input_parser is DropParser.PICKLE:
             # only values are pickled, get them unpickled
             for name, value in self.func_defaults.items():
                 self.func_defaults[name] = deserialize_data(value)
@@ -382,18 +382,21 @@ class PyFuncApp(BarrierAppDROP):
 
         # Inputs are un-pickled and treated as the arguments of the function
         # Their order must be preserved, so we use an OrderedDict
-        if DropParser(self.input_parser) is DropParser.PICKLE:
-            all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
-        elif DropParser(self.input_parser) is DropParser.EVAL:
-            def astparse(x):
+        if self.input_parser is DropParser.PICKLE:
+            #all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
+            all_contents = droputils.load_pickle
+        elif self.input_parser is DropParser.EVAL:
+            def optionalEval(x):
                 # Null and Empty Drops will return an empty byte string
                 # which should propogate back to None
-                content: bytes = droputils.allDropContents(x)
-                return ast.literal_eval(content.decode('utf-8')) if content else None
-            all_contents = astparse
-        elif DropParser(self.input_parser) is DropParser.PATH:
+                content: str = droputils.allDropContents(x).decode('utf-8')
+                return ast.literal_eval(content) if len(content) > 0 else None
+            all_contents = optionalEval
+        elif self.input_parser is DropParser.NPY:
+            all_contents = droputils.load_npy
+        elif self.input_parser is DropParser.PATH:
             all_contents = lambda x: x.path
-        elif DropParser(self.input_parser) is DropParser.DATAURL:
+        elif self.input_parser is DropParser.DATAURL:
             all_contents = lambda x: x.dataurl
         else:
             raise ValueError(self.input_parser.__repr__())
@@ -547,11 +550,13 @@ class PyFuncApp(BarrierAppDROP):
             if len(outputs) == 1:
                 result = [result]
             for r, o in zip(result, outputs):
-                if DropParser(self.output_parser) is DropParser.PICKLE:
+                if self.output_parser is DropParser.PICKLE:
                     logger.debug(f"Writing pickeled result {type(r)} to {o}")
                     o.write(pickle.dumps(r))
-                elif DropParser(self.output_parser) is DropParser.EVAL:
+                elif self.output_parser is DropParser.EVAL:
                     o.write(repr(r).encode('utf-8'))
+                elif self.output_parser is DropParser.NPY:
+                    droputils.save_npy(o, r)
                 else:
                     ValueError(self.output_parser.__repr__())
 
