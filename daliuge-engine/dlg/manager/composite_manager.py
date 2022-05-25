@@ -351,7 +351,7 @@ class CompositeManager(DROPManager):
         # belong to the same host, so we can submit that graph into the individual
         # DMs. For this we need to make sure that our graph has a the correct
         # attribute set
-        logger.info(f"Separating graph using partition attribute {self._partitionAttr}")
+        logger.info("Separating graph using partition attribute %s", self._partitionAttr)
         perPartition = collections.defaultdict(list)
         if "rmode" in graphSpec[-1]:
             init_pg_repro_data(graphSpec)
@@ -386,7 +386,7 @@ class CompositeManager(DROPManager):
         # At each partition the relationships between DROPs should be local at the
         # moment of submitting the graph; thus we record the inter-partition
         # relationships separately and remove them from the original graph spec
-        logger.info(f"Graph splitted into {perPartition.keys()}")
+        logger.info("Graph split into %r", perPartition.keys())
         inter_partition_rels = []
         for dropSpecs in perPartition.values():
             inter_partition_rels += graph_loader.removeUnmetRelationships(dropSpecs)
@@ -452,7 +452,7 @@ class CompositeManager(DROPManager):
             )
             logger.info("Delivered node subscription list to node managers")
             logger.debug(
-                "Number of subscriptions: %s" % len(self._drop_rels[sessionId].items())
+                "Number of subscriptions: %s", len(self._drop_rels[sessionId].items())
             )
 
         logger.info("Deploying Session %s in all hosts", sessionId)
