@@ -83,7 +83,7 @@ class DlgDaemon(RestServer):
         # Zeroconf for NM and MM
         self._zeroconf = None if disable_zeroconf else zc.Zeroconf()
         self._nm_info = None
-        self._mm_browser = None
+        self._mm_nm_browser = None
         self._mm_dim_browser = None
 
         # Starting managers
@@ -126,9 +126,9 @@ class DlgDaemon(RestServer):
             return
 
         # Stop the MM service browser, the NM registration, and ZC itself
-        if self._mm_browser:
-            self._mm_browser.cancel()
-            self._mm_browser.join()
+        if self._mm_nm_browser:
+            self._mm_nm_browser.cancel()
+            self._mm_nm_browser.join()
         if self._mm_dim_browser:
             self._mm_dim_browser.cancel()
             self._mm_dim_browser.join()
@@ -285,7 +285,7 @@ class DlgDaemon(RestServer):
                     if not self._shutting_down:
                         nm_assigner.remove_dim(name)
 
-            self._mm_browser = utils.browse_service(
+            self._mm_nm_browser = utils.browse_service(
                 self._zeroconf, "NodeManager", "tcp", nm_callback
             )
             self._mm_dim_browser = utils.browse_service(
