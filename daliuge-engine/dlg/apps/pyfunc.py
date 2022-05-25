@@ -429,9 +429,18 @@ class PyFuncApp(BarrierAppDROP):
         posargs = self.arguments.args[:self.fn_npos]
         kwargs = {}
         self.pargs = []
-        pargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))  # Initialize pargs dictionary
+        # Initialize pargs dictionary and update with provided argument values
+        pargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
         if "applicationArgs" in self.parameters:
             appArgs = self.parameters["applicationArgs"]  # we'll pop the identified ones
+            pargsDict.update({k:self.parameters[k] for k in pargsDict if k in 
+                self.parameters})
+            # if defined in both we use AppArgs values
+            pargsDict.update({k:appArgs[k]['value'] for k in pargsDict if k 
+                in appArgs})
+            logger.debug("Initial posargs dictionary: %s", pargsDict)
+        else:
+            appArgs = {}
         if ('outputs' in self.parameters and isinstance(self.parameters['outputs'][0], dict)):
             out_names = [list(i.values())[0] for i in self.parameters['outputs']]
             logger.debug(f"Using named ports to remove outputs from arguments: "+\
@@ -450,21 +459,20 @@ class PyFuncApp(BarrierAppDROP):
                 key = list(self.parameters['inputs'][i].values())[0]
                 # value for final dict is value in inputs dict
                 value = inputs[list(self.parameters['inputs'][i].keys())[0]]
+                if not value: value = '' # make sure we are passing NULL drop events
                 if key in posargs:
                     pargsDict.update({key:value})
                 else:
                     kwargs.update({key:value})
+                _dum = appArgs.pop(key)
+                logger.debug("Using input %s for argument %s", value, key)
+                logger.debug("Argument used as input removed: %s", _dum)
         else:
             for i in range(min(len(inputs),self.fn_nargs)):
                 kwargs.update({self.arguments.args[i]: list(inputs.values())[i]})
 
         logger.debug(f"Updating funcargs with input ports {kwargs}")
         self.funcargs.update(kwargs)
-        _dum = [appArgs.pop(k) for k in kwargs if k in appArgs]
-        logger.debug("Application arguments used as inputs removed: %s", 
-            [i['text'] for i in _dum])
-
-        logger.debug("Found input ports matching posargs: %s", list(pargsDict.keys()))
 
         # Try to get values for still missing positional arguments from Application Args
         if "applicationArgs" in self.parameters:
