@@ -216,7 +216,7 @@ class DlgDaemon(RestServer):
         # by the Master Manager
         if self._zeroconf:
             addrs = utils.get_local_ip_addr()
-            logger.info("Registering this DIM with zeroconf: %s" % addrs)
+            logger.info("Registering this DIM with zeroconf: %s", addrs)
             self._nm_info = utils.register_service(
                 self._zeroconf,
                 "DIM",
