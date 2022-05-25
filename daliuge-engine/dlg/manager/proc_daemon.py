@@ -242,18 +242,18 @@ class DlgDaemon(RestServer):
         if self._zeroconf:
             nm_assigner = NMAssigner()
 
-            def nm_callback(zeroconf, service_type, name, state_change):
+            def _callback(zeroconf, service_type, name, state_change, adder, remover, accessor):
                 info = zeroconf.get_service_info(service_type, name)
                 if state_change is zc.ServiceStateChange.Added:
                     server = socket.inet_ntoa(_get_address(info))
                     port = info.port
-                    nm_assigner.add_nm(name, server, port)
+                    adder(name, server, port)
                     logger.info(
                         "Found a new Node Manager on %s:%d, will add it to the MM",
                         (server, port)
                     )
                 elif state_change is zc.ServiceStateChange.Removed:
-                    server, port = nm_assigner.NMs[name]
+                    server, port = accessor(name)
                     logger.info(
                         "Node Manager on %s:%d disappeared, removing it from the MM",
                         (server, port)
@@ -263,30 +263,15 @@ class DlgDaemon(RestServer):
                     # we avoid hanging in here if the MM is down already but
                     # we are trying to remove our NM who has just disappeared
                     if not self._shutting_down:
-                        nm_assigner.remove_nm(name)
+                        remover(name)
 
-            def dim_callback(zeroconf, service_type, name, state_change):
-                info = zeroconf.get_service_info(service_type, name)
-                if state_change is zc.ServiceStateChange.Added:
-                    server = socket.inet_ntoa(_get_address(info))
-                    port = info.port
-                    nm_assigner.add_dim(name, server, port)
-                    logger.info(
-                        "Found a new Data Island Manager on %s:%d, will add it to the MM",
-                        (server, port)
-                    )
-                elif state_change is zc.ServiceStateChange.Removed:
-                    server, port = nm_assigner.DIMs[name]
-                    logger.info(
-                        "Data Island Manager on %s:%d disappeared, removing it from the MM",
-                        (server, port)
-                    )
+            nm_callback = functools.partial(_callback, adder=nm_assigner.add_nm,
+                                            remover=nm_assigner.remove_nm,
+                                            accessor=nm_assigner.get_nm)
 
-                    # Don't bother to remove it if we're shutting down. This way
-                    # we avoid hanging in here if the MM is down already but
-                    # we are trying to remove our NM who has just disappeared
-                    if not self._shutting_down:
-                        nm_assigner.remove_dim(name)
+            dim_callback = functools.partial(_callback, adder=nm_assigner.add_dim,
+                                             remover=nm_assigner.remove_dim,
+                                             accessor=nm_assigner.get_dim)
 
             self._mm_nm_browser = utils.browse_service(
                 self._zeroconf, "NodeManager", "tcp", nm_callback

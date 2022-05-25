@@ -28,6 +28,12 @@ class NMAssigner:
         self.mm_client.add_node(server)
         self.allocate_nms()
 
+    def get_dim(self, name):
+        return self.DIMs[name]
+
+    def get_nm(self, name):
+        return self.NMs[name]
+
     def remove_dim(self, name):
         server, port = self.DIMs[name]
         try:
