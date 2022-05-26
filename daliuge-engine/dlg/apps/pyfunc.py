@@ -148,7 +148,7 @@ class DropParser(Enum):
 #     \~English Python function name
 # @param[in] aparam/func_code Function Code//String/readwrite/False//False/
 #     \~English Python function code, e.g. 'def function_name(args): return args'
-# @param[in] aparam/input_parser Input Parser/pickle/Select/readwrite/False/pickle,npy,eval,path,dataurl/False/
+# @param[in] aparam/input_parser Input Parser/pickle/Select/readwrite/False/pickle,eval,npy,path,dataurl/False/
 #     \~English Input port parsing technique
 # @param[in] aparam/output_parser Output Parser/pickle/Select/readwrite/False/pickle,eval,npy/False/
 #     \~English output port parsing technique
