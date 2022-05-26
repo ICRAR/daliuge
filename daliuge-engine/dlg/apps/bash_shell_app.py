@@ -169,8 +169,8 @@ class BashShellBase(object):
         self.proc = None
         self._inputRedirect = self._getArg(kwargs, "input_redirection", "")
         self._outputRedirect = self._getArg(kwargs, "output_redirection", "")
-        self._cmdLineArgs = self._getArg(kwargs, "command_line_arguments", "")
         self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
+        self._cmdLineArgs = self._getArg(kwargs, "command_line_arguments", "")
         self._argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
         self._paramValueSeparator = self._getArg(kwargs, "paramValueSeparator", " ")
 
@@ -342,17 +342,17 @@ class StreamingInputBashAppBase(BashShellBase, AppDROP):
 # @par EAGLE_START
 # @param category BashShellApp
 # @param tag template
-# @param[in] cparam/command Command//String/readwrite/False//False/
+# @param[in] aparam/command Command//String/readwrite/False//False/
 #     \~English The command to be executed
 # @param[in] cparam/input_redirection Input Redirection//String/readwrite/False//False/
 #     \~English The command line argument that specifies the input into this application
 # @param[in] cparam/output_redirection Output Redirection//String/readwrite/False//False/
 #     \~English The command line argument that specifies the output from this application
-# @param[in] cparam/command_line_arguments Command Line Arguments//String/readwrite/False//False/
+# @param[in] aparam/command_line_arguments Command Line Arguments//String/readwrite/False//False/
 #     \~English Additional command line arguments to be added to the command line to be executed
-# @param[in] cparam/paramValueSeparator Param value separator/ /String/readwrite/False//False/
+# @param[in] aparam/paramValueSeparator Param value separator/ /String/readwrite/False//False/
 #     \~English Separator character(s) between parameters on the command line
-# @param[in] cparam/argumentPrefix Argument prefix/"--"/String/readwrite/False//False/
+# @param[in] aparam/argumentPrefix Argument prefix/"--"/String/readwrite/False//False/
 #     \~English Prefix to each keyed argument on the command line
 # @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
 #     \~English Estimated execution time
@@ -381,6 +381,7 @@ class BashShellApp(BashShellBase, BarrierAppDROP):
     )
 
     def run(self):
+        logger.debug("Parameters found: %s",self.parameters)
         self._run_bash(self._inputs, self._outputs)
 
 
