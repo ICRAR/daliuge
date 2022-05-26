@@ -11,16 +11,14 @@ Port Parsers
 
 Pyfunc components when interfacing with data drops may utilize one of several builtin port parsing formats.
 
-* Pickle
-* Eval
-* Path
-* Url
-* Npy
+* Pickle - Reads and writes data to pickle format
+* Eval - Reads data using eval() function and writes using repr() function
+* Npy - Reads and writes to .npy format
+* Path - Reads the drop path rather than data
+* Url - Reads the drop url rather than data
 
-Basic setup
------------
 
 Note
-----
+""""
 
-Only a single parser and 
+Only a single port parser can currently be used for all input ports of a Pyfunc. This is subject to change in future.
