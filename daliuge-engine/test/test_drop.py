@@ -23,7 +23,6 @@
 import contextlib
 import io
 import os, unittest
-from typing import Any, AsyncIterable, AsyncIterator, Iterable, List
 import random
 import shutil
 import sqlite3
@@ -138,31 +137,39 @@ class TestDROP(unittest.TestCase):
     def test_write_InMemoryDROP(self):
         """
         Test an InMemoryDROP and a simple AppDROP (for checksum calculation)
+        using multiple writes to an InMemoryDROP of known size.
         """
         self._test_write_withDropType(InMemoryDROP)
 
     def test_dynamic_write_InMemoryDROP(self):
         """
         Test an InMemoryDROP and a simple AppDROP (for checksum calculation)
+        using multiple writes to a dynamically resizing InMemoryDROP.
         """
         self._test_dynamic_write_withDropType(InMemoryDROP)
 
-    def test_manual_stream_write_InMemoryDROP(self):
-        self._test_manual_async_stream_npy_withDropType(InMemoryDROP, 0.025, 0.01)
-        self._test_manual_async_stream_npy_withDropType(InMemoryDROP, 0.01, 0.025)
-
     def test_stream_write_InMemoryDROP(self):
-        self._test_async_stream_npy_withDropType(InMemoryDROP, 0.025, 0.01)
-        self._test_async_stream_npy_withDropType(InMemoryDROP, 0.01, 0.025)
+        """
+        Tests stream writing and reading on a single data drop.
+        """
+        self._test_async_stream_npy_withDropType(InMemoryDROP, write_delay=0.025, read_delay=0.01)
+        self._test_async_stream_npy_withDropType(InMemoryDROP, write_delay=0.01, read_delay=0.025)
+
+    def test_stream_copy_InMemoryDROP(self):
+        """
+        Tests stream writing and reading through multiple data drops in a graph.
+        """
+        self._test_stream_copy_npy_withDropType(InMemoryDROP, write_delay=0.025, read_delay=0.01)
+        self._test_stream_copy_npy_withDropType(InMemoryDROP, write_delay=0.01, read_delay=0.025)
 
     def test_threaded_stream_write_InMemoryDROP(self):
-        self._test_threaded_stream_npy_withDropType(InMemoryDROP, 0.025, 0.01)
-        self._test_threaded_stream_npy_withDropType(InMemoryDROP, 0.01, 0.025)
+        self._test_threaded_stream_npy_withDropType(InMemoryDROP, write_delay=0.025, read_delay=0.01)
+        self._test_threaded_stream_npy_withDropType(InMemoryDROP, write_delay=0.01, read_delay=0.025)
     
     @unittest.skip("pickling abstract drop not supported")
     def test_process_stream_write_InMemoryDROP(self):
-        self._test_process_stream_npy_withDropType(InMemoryDROP, 0.025, 0.01)
-        self._test_process_stream_npy_withDropType(InMemoryDROP, 0.01, 0.025)
+        self._test_process_stream_npy_withDropType(InMemoryDROP, write_delay=0.025, read_delay=0.01)
+        self._test_process_stream_npy_withDropType(InMemoryDROP, write_delay=0.01, read_delay=0.025)
 
     @unittest.skipIf(sys.version_info < (3, 8), "Shared memory does nt work < python 3.8")
     def test_write_SharedMemoryDROP(self):
@@ -184,49 +191,57 @@ class TestDROP(unittest.TestCase):
         """
         Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
         """
+        store = None
         try:
             store = subprocess.Popen(
                 ["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"]
             )
             self._test_write_withDropType(PlasmaDROP)
         finally:
-            store.terminate()
+            if store:
+                store.terminate()
 
     def test_dynamic_write_plasmaDROP(self):
         """
         Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
         """
+        store = None
         try:
             store = subprocess.Popen(
                 ["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"]
             )
             self._test_dynamic_write_withDropType(PlasmaDROP)
         finally:
-            store.terminate()
+            if store:
+                store.terminate()
 
     def test_write_plasmaFlightDROP(self):
         """
         Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
         """
+        store = None
         try:
             store = subprocess.Popen(
                 ["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"]
             )
             self._test_write_withDropType(PlasmaFlightDROP)
         finally:
-            store.terminate()
+            if store:
+                store.terminate()
 
     def test_dynamic_write_plasmaFlightDROP(self):
         """
         Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
         """
+        store = None
         try:
             store = subprocess.Popen(
                 ["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"]
             )
             self._test_dynamic_write_withDropType(PlasmaFlightDROP)
         finally:
-            store.terminate()
+            if store:
+                store.terminate()
 
     def _test_write_withDropType(self, dropType):
         """
@@ -278,7 +293,10 @@ class TestDROP(unittest.TestCase):
         self.assertEqual(a.checksum, test_crc)
         self.assertEqual(cChecksum, test_crc)
 
-    def _test_manual_async_stream_npy_withDropType(self, dropType, write_delay: float, read_delay: float):
+    def _test_async_stream_npy_withDropType(self, dropType, write_delay: float, read_delay: float):
+        """
+        Tests only a droptype for async saving and loading to npy stream format.
+        """
         a: DataDROP = dropType("oid:A", "uid:A",
             expectedSize=-1, use_staging=True,
             streamingType=DROPStreamingTypes.SINGLE_STREAM)
@@ -289,7 +307,11 @@ class TestDROP(unittest.TestCase):
         async def write_read_assert_stream():
             # NOTE: typically these are performed in parallel on seperate subprocesses
             _, out_arrays = await asyncio.gather(
-                asyncio.create_task(droputils.save_npy_stream(a, delay_iterable(in_arrays, write_delay))),
+                asyncio.create_task(droputils.save_npy_stream(a,
+                    stream.iterate(in_arrays)
+                    | pipe.delay(write_delay)
+                    | pipe.spaceout(write_delay)
+                )),
                 asyncio.create_task(asyncstdlib.list(droputils.load_npy_stream(a, backoff=read_delay)))
             )
             assert len(in_arrays) == len(out_arrays)
@@ -299,7 +321,10 @@ class TestDROP(unittest.TestCase):
         with DROPWaiterCtx(self, a, 5):
             asyncio.run(write_read_assert_stream())
 
-    def _test_async_stream_npy_withDropType(self, dropType, write_delay: float, read_delay: float):
+    def _test_stream_copy_npy_withDropType(self, dropType, write_delay: float, read_delay: float):
+        """
+        Tests stream copy app with a fully deferred stream read after completion.
+        """
         a: DataDROP = InMemoryDROP("oid:A", "oid:A")
         b = StreamCopyApp("oid:B", "uid:B", n_effective_inputs=1)
         c: DataDROP = dropType("oid:C", "uid:C",
@@ -312,12 +337,13 @@ class TestDROP(unittest.TestCase):
 
         in_arrays = [np.random.rand(10,10,10) for _ in range(0,10)]
 
-        async def write_read_assert_stream():
-            # NOTE: typically these are performed in parallel on seperate subprocesses
-            await droputils.save_npy_stream(a, TestDROP.delay_iterable(in_arrays, write_delay))
-
         with DROPWaiterCtx(self, (a,b,c), 5):
-            res = asyncio.run(write_read_assert_stream())
+            # NOTE: typically these are performed in parallel on seperate subprocesses
+            asyncio.run(droputils.save_npy_stream(a,
+                stream.iterate(in_arrays)
+                | pipe.delay(write_delay)
+                | pipe.spaceout(write_delay)
+            ))
         assert a.status != DROPStates.ERROR
         assert b.status != DROPStates.ERROR
         assert c.status != DROPStates.ERROR
@@ -370,12 +396,6 @@ class TestDROP(unittest.TestCase):
         assert len(in_arrays) == len(out_arrays)
         for in_array, out_array in zip(in_arrays, out_arrays):
             np.testing.assert_array_equal(in_array, out_array)
-
-    @staticmethod
-    async def delay_iterable(iterable, delay):
-        for i in iterable:
-            await asyncio.sleep(delay)
-            yield i
 
     @staticmethod
     def save(drop: DataDROP, input, delay):
