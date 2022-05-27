@@ -355,9 +355,9 @@ class MemoryIO(DataIO):
 
     class BytesIOReader(io.BufferedReader):
         """
-        An BinaryIO Reader that wraps a BytesIO object for concurrent
-        reading and writing. Closing this reader will not close other
-        readers observing the same BytesIO object.
+        A BinaryIO Reader that wraps a BytesIO object for concurrent
+        reading and writing. Closing this reader will not close the BytesIO
+        object and avoid preventing readers observing the same BytesIO object.
         """
         _closed = False
         def __init__(self, raw: io.BytesIO, buffer_size: int = 2048):
@@ -365,11 +365,13 @@ class MemoryIO(DataIO):
             # NOTE: BytesIO extends BufferedIOBase instead of RawIOBase. Read
             # and peek operations may return more bytes than requested.
             super().__init__(raw, buffer_size)  # type: ignore
-        def close(self) -> None:
-            self._closed = True
+
         @property
         def closed(self) -> bool:
             return self.closed
+
+        def close(self) -> None:
+            self._closed = True
 
     def _open(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
@@ -438,6 +440,7 @@ class MemoryIO(DataIO):
     def buffer(self) -> memoryview:
         # TODO: This may also be an issue
         return self._buf.getbuffer()
+
 
 class SharedMemoryIO(DataIO):
     """

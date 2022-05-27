@@ -30,7 +30,7 @@ import inspect
 import logging
 import pickle
 
-from typing import Callable, Optional
+from typing import Callable
 import dill
 from io import StringIO
 from contextlib import redirect_stdout
