@@ -30,7 +30,7 @@ import inspect
 import logging
 import pickle
 
-from typing import Callable, Optional
+from typing import Callable
 import dill
 from io import StringIO
 from contextlib import redirect_stdout
@@ -39,10 +39,8 @@ from dlg import droputils, utils
 from dlg.drop import BarrierAppDROP
 from dlg.exceptions import InvalidDropException
 from dlg.meta import (
-    dlg_bool_param,
     dlg_string_param,
     dlg_enum_param,
-    dlg_float_param,
     dlg_dict_param,
     dlg_component,
     dlg_batch_input,
