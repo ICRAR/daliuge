@@ -330,6 +330,10 @@ def load_npy(drop: DataDROP, allow_pickle=False) -> np.ndarray:
     return res
 
 
+def load_numpy(drop: DataDROP) -> np.ndarray:
+    return load_npy(drop)
+
+
 async def save_npy_stream(drop: DataDROP, arrays: AsyncIterable[np.ndarray], allow_pickle=False):
     """
     Saves an async stream of numpy ndarrays to a data drop
