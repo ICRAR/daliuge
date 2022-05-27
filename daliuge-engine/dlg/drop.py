@@ -695,8 +695,8 @@ class AbstractDROP(EventFirer):
                     ].merkle_root
             else:
                 # Fill MerkleTree, add data and set the MerkleRoot Value
-                self._merkleTree = []  # MerkleTree(self._merkleData.items(), common_hash)
-                self._merkleRoot = []  # self._merkleTree.merkle_root
+                self._merkleTree = MerkleTree(self._merkleData.items(), common_hash)
+                self._merkleRoot = self._merkleTree.merkle_root
                 # Set as committed
             self._committed = True
         else:
