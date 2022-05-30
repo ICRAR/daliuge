@@ -788,6 +788,19 @@
   left: 60px;
 }
 
+.modal-header a{
+  opacity: 100% !important;
+}
+
+#aboutModal .modal-body span{
+  font-weight: 600;
+}
+
+.aboutDivider{
+  display: block;
+  border-bottom: solid 1px black;
+}
+
 #oriantationDropdown .orientationOptionContainer a{
   display: inline-block;
   color: white;
