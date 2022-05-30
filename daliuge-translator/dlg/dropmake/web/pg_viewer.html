@@ -139,9 +139,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <a type="button" class="close material-icons" data-dismiss="modal">close</a>
                 </div>
                 <div class="modal-body">
                     <form action="/gen_pg" method="get" target="blank" name="deploy_target" id="pg_form" >
@@ -171,15 +169,13 @@
         </div>
     </div>
 
-    <!-- alert modal -->
+    <!-- message modal -->
     <div class="modal fade" id="messageModal" tabindex="-1" role="dialog" aria-labelledby="messageModalTitle" aria-hidden="true">
        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="messageModalTitle">Title</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <a type="button" class="close material-icons" data-dismiss="modal">close</a>
                 </div>
                 <div class="modal-body">
                     <pre id="messageModalContent">Message</pre>
@@ -197,6 +193,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="shortcutsModalTitle">Keyboard Shortcuts</h5>
+                    <a type="button" class="close material-icons" data-dismiss="modal">close</a>
                 </div>
                 <div class="modal-body">
                     <div class="row">
@@ -219,12 +216,15 @@
                     <img src="/static/src/icons/translate_green.png" class="rounded float-left" alt="Translator logo">
                     <span>&nbsp;&nbsp;</span>
                     <h5 class="modal-title" id="aboutModalTitle">About The Translator</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <a type="button" class="close material-icons" data-dismiss="modal">close</a>
                 </div>
                 <div class="modal-body">
-                    <h5>Editor for the Advanced Graph Language Environment</h5>
-                    <span>Description</span>
-                    
+                    <h5>The Translator service for the DALiuGE system</h5>
+                    <div class="aboutDivider"></div>
+                    <a href="https://daliuge.readthedocs.io/en/latest/basics.html#translator-service%22%3EDALiuGE">Documentation</a>
+                    <div class="aboutDivider"></div>
+                    <span>License:</span>
+                    <div id="aboutLicense"></div>
                 </div>
             </div>
         </div>

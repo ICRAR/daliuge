@@ -21,6 +21,8 @@ $(document).ready(function () {
 
     updateDeployOptionsDropdown()
 
+    $("#aboutModal #aboutLicense").load("/static/license.html")
+
     //keyboard shortcuts
     var keyboardShortcuts = []
     keyboardShortcuts.push({name:"Open Settings", shortcut:"O", code:79, action: "$('#settingsModal').modal('toggle')"})
