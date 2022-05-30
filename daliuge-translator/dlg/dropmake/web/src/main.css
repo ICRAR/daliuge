@@ -707,6 +707,7 @@
 #settingsModal .modal-body{
   background-color:#001d3b;
   padding: 50px 16px;
+  overflow: unset;
 }
 
 #settingsModal #neccessaryHiddenItems, #settingsModal form{
@@ -778,6 +779,15 @@
   border:solid 1px white;
 }
 
+#aboutModal .modal-header img{
+  height: 30px;
+}
+
+#aboutModal .modal-header h5{
+  position: absolute;
+  left: 60px;
+}
+
 #oriantationDropdown .orientationOptionContainer a{
   display: inline-block;
   color: white;
@@ -806,4 +816,67 @@
   left: 50%;
   transform: translateX(-50%);
   display: none;
+}
+
+::-webkit-scrollbar-thumb {
+  margin-top: 4px;
+  background: rgb(212, 212, 212);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+.modal-body {
+  background-color: aliceblue;
+  max-height: 70vh;
+  overflow-y: scroll;
+}
+
+
+.modal-header {
+  background-color: #002e5f;
+  color: white !important;
+}
+.modal-footer {
+  background-color: aliceblue;
+}
+.modal-footer .btn-primary {
+  background-color: #002e5f;
+  border-color: #002e5f;
+}
+
+#shortcutsModal .modal-dialog{
+  transform:none!important;
+}
+
+#shortcutsModal .modal-content{
+  width: 1000px;
+  position: absolute;
+  margin-left: 50%;
+  transform: translateX(-50%);
+}
+
+.shortCutsModalItem{
+  padding: 10px 20px;
+  background-color: rgb(216, 221, 240);
+  border: solid 1px #001225;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.shortCutsModalItem span{
+  font-weight: 400;
+}
+
+.shortCutsModalItem .shortCutsModalItemRight{
+  font-weight: 700;
+  position: absolute;
+  right: 20px;
 }

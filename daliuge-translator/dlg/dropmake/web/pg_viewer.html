@@ -111,6 +111,15 @@
                         <a href="javascript:void(0)" id="png_button" class="dropdown-item" onclick="makePNG()">Screenshot</a>
                     </div>
                 </li>
+                <li class="nav-item dropdown">
+                    <a href="javascript:void(0)" class="nav-link dropdown-toggle" id="navbarExportDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Help
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarExportDropdown">
+                        <a href="javascript:void(0)" id="png_button" class="dropdown-item" onclick="$('#aboutModal').modal('toggle')">About</a>
+                        <a href="javascript:void(0)" id="png_button" class="dropdown-item" onclick="$('#shortcutsModal').modal('toggle')">Keyboard Shortcuts</a>
+                    </div>
+                </li>
                 <li class="nav-item">
                     <a href="javascript:void(0)" class="nav-link tooltip tooltipBottomLeft" data-text="Settings" data-toggle="modal" data-target="#settingsModal"><img src="/static/src/icons/settings_white_24dp.svg" alt="Settings"></a>
                 </li>
@@ -162,6 +171,7 @@
         </div>
     </div>
 
+    <!-- alert modal -->
     <div class="modal fade" id="messageModal" tabindex="-1" role="dialog" aria-labelledby="messageModalTitle" aria-hidden="true">
        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
             <div class="modal-content">
@@ -176,6 +186,45 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shortcuts Modal -->
+    <div class="modal fade" id="shortcutsModal" tabindex="-1" role="dialog" aria-labelledby="shortcutsModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="shortcutsModalTitle">Keyboard Shortcuts</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- filled automatically from keyboard shortcuts array -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="shortcutsModalAffirmativeButton" data-bs-dismiss="modal"><span id="shortcutsModalAffirmativeAnswer">OK</span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- About Modal -->
+    <div class="modal fade" id="aboutModal" tabindex="-1" role="dialog" aria-labelledby="aboutModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <img src="/static/src/icons/translate_green.png" class="rounded float-left" alt="Translator logo">
+                    <span>&nbsp;&nbsp;</span>
+                    <h5 class="modal-title" id="aboutModalTitle">About The Translator</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h5>Editor for the Advanced Graph Language Environment</h5>
+                    <span>Description</span>
+                    
                 </div>
             </div>
         </div>

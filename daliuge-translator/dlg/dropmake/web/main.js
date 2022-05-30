@@ -22,14 +22,34 @@ $(document).ready(function () {
     updateDeployOptionsDropdown()
 
     //keyboard shortcuts
+    var keyboardShortcuts = []
+    keyboardShortcuts.push({name:"Open Settings", shortcut:"O", code:79, action: "$('#settingsModal').modal('toggle')"})
+    keyboardShortcuts.push({name:"Deploy", shortcut:"D", code:75, action: "$('#shortcutsModal').modal('toggle')"})
+    keyboardShortcuts.push({name:"Open Keyboardshortcuts Modal", shortcut:"K", code:68, action: "$('#activeDeployMethodButton').click()"})
+
+    //fill out keyboard shortcuts modal
+    keyboardShortcuts.forEach(element => { 
+        var shortCutItem =   '<div class="col-lg-6">'+
+                            '<div class="shortCutsModalItem">'+
+                                '<span>'+element.name+'</span>'+
+                                '<span class="shortCutsModalItemRight">'+element.shortcut+'</span>'+
+                            '</div>'+
+                        '</div>'
+        $("#shortcutsModal .modal-body .row").append(shortCutItem)
+    })
+
+    //keyboard shortcuts execution
     $(document).keydown(function(e){
         if($("input").is(":focus")){
             return
         }
-        if (e.which == 79) //open settings modal on o
-        {
-            $('#settingsModal').modal('toggle')
-        };
+        keyboardShortcuts.forEach(element => { 
+            
+            if (e.which == element.code) //open settings modal on o
+            {
+                eval(element.action)
+            }
+        })
     })
 });
 
