@@ -265,11 +265,11 @@ class DlgDaemon(RestServer):
                     if not self._shutting_down:
                         remover(name)
 
-            nm_callback = functools.partial(_callback, service_type='NodeManager', adder=nm_assigner.add_nm,
+            nm_callback = functools.partial(_callback, adder=nm_assigner.add_nm,
                                             remover=nm_assigner.remove_nm,
                                             accessor=nm_assigner.get_nm)
 
-            dim_callback = functools.partial(_callback, service_type="DIM", adder=nm_assigner.add_dim,
+            dim_callback = functools.partial(_callback, adder=nm_assigner.add_dim,
                                              remover=nm_assigner.remove_dim,
                                              accessor=nm_assigner.get_dim)
 
