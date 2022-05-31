@@ -442,14 +442,6 @@ class PyFuncApp(BarrierAppDROP):
             logger.debug("Initial posargs dictionary: %s", pargsDict)
         else:
             appArgs = {}
-        if ('outputs' in self.parameters and isinstance(self.parameters['outputs'][0], dict)):
-            out_names = [list(i.values())[0] for i in self.parameters['outputs']]
-            logger.debug(f"Using named ports to remove outputs from arguments: "+\
-                    f"{out_names}")
-            _dum = [appArgs.pop(k) for k in out_names if k in appArgs]
-            if len(_dum) > 0: 
-                logger.debug("Application arguments used as outputs removed : %s",
-                    [i['text'] for i in _dum])
 
         if ('inputs' in self.parameters and isinstance(self.parameters['inputs'][0], dict)):
             logger.debug(f"Using named ports to identify inputs: "+\
@@ -474,6 +466,15 @@ class PyFuncApp(BarrierAppDROP):
 
         logger.debug(f"Updating funcargs with input ports {kwargs}")
         self.funcargs.update(kwargs)
+
+        if ('outputs' in self.parameters and isinstance(self.parameters['outputs'][0], dict)):
+            out_names = [list(i.values())[0] for i in self.parameters['outputs']]
+            logger.debug(f"Using named ports to remove outputs from arguments: "+\
+                    f"{out_names}")
+            _dum = [appArgs.pop(k) for k in out_names if k in appArgs]
+            if len(_dum) > 0: 
+                logger.debug("Application arguments used as outputs removed : %s",
+                    [i['text'] for i in _dum])
 
         # Try to get values for still missing positional arguments from Application Args
         if "applicationArgs" in self.parameters:
