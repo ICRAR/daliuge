@@ -174,7 +174,6 @@ class TestDaemon(unittest.TestCase):
         # Start daemon with master but no NM
         self._start("master", http.HTTPStatus.OK)
         # Check that dim registers to MM
-        timeout_time = time.time() + _TIMEOUT
         dims = None
         mc = MasterManagerClient()
 
@@ -244,12 +243,14 @@ class TestDaemon(unittest.TestCase):
         mc = MasterManagerClient()
 
         def _test_nodes(_nodes):
-            if not nodes['nodes']:
-                return nodes['nodes']
+            if not _nodes:
+                return False
+            if not _nodes['nodes']:
+                return _nodes['nodes']
             return False
 
-        nodes = _wait_until(_update_nodes_with_timeout, _test_nodes, _TIMEOUT, 0.1, mc)['nodes']
-        self.assertEqual(0, len(nodes))
+        new_nodes = _wait_until(_update_nodes_with_timeout, _test_nodes, _TIMEOUT, 0.1, mc)['nodes']
+        self.assertEqual(0, len(new_nodes))
 
     def test_start_dataisland_via_rest(self):
 
