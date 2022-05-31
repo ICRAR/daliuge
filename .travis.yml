@@ -70,7 +70,7 @@ matrix:
       python: "3.8"
       before_install:
       install:
-        - pip install sphinx sphinx-rtd-theme gputil merklelib
+        - pip install sphinx-rtd-theme sphinx gputil merklelib
       script:
         - READTHEDOCS=True make -C docs html SPHINXOPTS="-W --keep-going"
 
