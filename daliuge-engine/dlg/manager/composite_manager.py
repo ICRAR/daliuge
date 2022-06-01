@@ -127,13 +127,13 @@ class CompositeManager(DROPManager):
     __metaclass__ = abc.ABCMeta
 
     def __init__(
-        self,
-        dmPort,
-        partitionAttr,
-        subDmId,
-        dmHosts=[],
-        pkeyPath=None,
-        dmCheckTimeout=10,
+            self,
+            dmPort,
+            partitionAttr,
+            subDmId,
+            dmHosts=[],
+            pkeyPath=None,
+            dmCheckTimeout=10,
     ):
         """
         Creates a new CompositeManager. The sub-DMs it manages are to be located
@@ -211,6 +211,10 @@ class CompositeManager(DROPManager):
     def addDmHost(self, host):
         self._dmHosts.append(host)
 
+    def removeDmHost(self, host):
+        if host in self._dmHosts:
+            self._dmHosts.remove(host)
+
     @property
     def nodes(self):
         return self._nodes[:]
@@ -235,7 +239,7 @@ class CompositeManager(DROPManager):
 
         if not self.check_dm(host, port):
             raise SubManagerException(
-                "Manager expected but not running in %s:%d" % (host, port)
+                f"Manager expected but not running in {host}:{port}"
             )
 
         port = port or self._dmPort
@@ -284,10 +288,7 @@ class CompositeManager(DROPManager):
             iterable,
         )
         if thrExs:
-            msg = "More than one error occurred while %s on session %s" % (
-                action,
-                sessionId,
-            )
+            msg = f"More than one error occurred while {action} on session {sessionId}"
             raise SubManagerException(msg, thrExs)
 
     #
@@ -347,7 +348,7 @@ class CompositeManager(DROPManager):
         # belong to the same host, so we can submit that graph into the individual
         # DMs. For this we need to make sure that our graph has a the correct
         # attribute set
-        logger.info(f"Separating graph using partition attribute {self._partitionAttr}")
+        logger.info("Separating graph using partition attribute %s", self._partitionAttr)
         perPartition = collections.defaultdict(list)
         if "rmode" in graphSpec[-1]:
             init_pg_repro_data(graphSpec)
@@ -360,19 +361,14 @@ class CompositeManager(DROPManager):
             graphSpec.pop()
         for dropSpec in graphSpec:
             if self._partitionAttr not in dropSpec:
-                msg = "Drop %s doesn't specify a %s attribute" % (
-                    dropSpec["oid"],
-                    self._partitionAttr,
-                )
+                msg = f"Drop {dropSpec.get('oid', None)} doesn't specify a {self._partitionAttr} " \
+                      f"attribute"
                 raise InvalidGraphException(msg)
 
             partition = dropSpec[self._partitionAttr]
             if partition not in self._dmHosts:
-                msg = "Drop %s's %s %s does not belong to this DM" % (
-                    dropSpec["oid"],
-                    self._partitionAttr,
-                    partition,
-                )
+                msg = f"Drop {dropSpec.get('oid', None)}'s {self._partitionAttr} {partition} " \
+                      f"does not belong to this DM"
                 raise InvalidGraphException(msg)
 
             perPartition[partition].append(dropSpec)
@@ -382,7 +378,7 @@ class CompositeManager(DROPManager):
         # At each partition the relationships between DROPs should be local at the
         # moment of submitting the graph; thus we record the inter-partition
         # relationships separately and remove them from the original graph spec
-        logger.info(f"Graph splitted into {perPartition.keys()}")
+        logger.info("Graph split into %r", perPartition.keys())
         inter_partition_rels = []
         for dropSpecs in perPartition.values():
             inter_partition_rels += graph_loader.removeUnmetRelationships(dropSpecs)
@@ -448,7 +444,7 @@ class CompositeManager(DROPManager):
             )
             logger.info("Delivered node subscription list to node managers")
             logger.debug(
-                "Number of subscriptions: %s" % len(self._drop_rels[sessionId].items())
+                "Number of subscriptions: %s", len(self._drop_rels[sessionId].items())
             )
 
         logger.info("Deploying Session %s in all hosts", sessionId)

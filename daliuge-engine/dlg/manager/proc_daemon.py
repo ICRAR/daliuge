@@ -37,6 +37,7 @@ import zeroconf as zc
 from . import constants, client
 from .. import utils
 from ..restserver import RestServer
+from dlg.nm_dim_assigner import NMAssigner
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +75,6 @@ class DlgDaemon(RestServer):
 
         self._shutting_down = False
         self._verbosity = verbosity
-
         # The three processes we run
         self._nm_proc = None
         self._dim_proc = None
@@ -83,7 +83,9 @@ class DlgDaemon(RestServer):
         # Zeroconf for NM and MM
         self._zeroconf = None if disable_zeroconf else zc.Zeroconf()
         self._nm_info = None
-        self._mm_browser = None
+        self._dim_info = None
+        self._mm_nm_browser = None
+        self._mm_dim_browser = None
 
         # Starting managers
         app = self.app
@@ -125,9 +127,12 @@ class DlgDaemon(RestServer):
             return
 
         # Stop the MM service browser, the NM registration, and ZC itself
-        if self._mm_browser:
-            self._mm_browser.cancel()
-            self._mm_browser.join()
+        if self._mm_nm_browser:
+            self._mm_nm_browser.cancel()
+            self._mm_nm_browser.join()
+        if self._mm_dim_browser:
+            self._mm_dim_browser.cancel()
+            self._mm_dim_browser.join()
         self._zeroconf.close()
         logger.info("Zeroconf stopped")
 
@@ -166,6 +171,8 @@ class DlgDaemon(RestServer):
         return self._stop_manager("_nm_proc", timeout)
 
     def stopDIM(self, timeout=10):
+        if self._dim_info:
+            utils.deregister_service(self._zeroconf, self._dim_info)
         self._stop_manager("_dim_proc", timeout)
 
     def stopMM(self, timeout=10):
@@ -176,15 +183,15 @@ class DlgDaemon(RestServer):
         tool = get_tool()
         args = ["--host", "0.0.0.0"]
         args += self._verbosity_as_cmdline()
-        logger.info("Starting Node Drop Manager with args: %s" % (" ".join(args)))
+        logger.info("Starting Node Drop Manager with args: %s", (" ".join(args)))
         self._nm_proc = tool.start_process("nm", args)
-        logger.info("Started Node Drop Manager with PID %d" % (self._nm_proc.pid))
+        logger.info("Started Node Drop Manager with PID %d", self._nm_proc.pid)
 
         # Registering the new NodeManager via zeroconf so it gets discovered
         # by the Master Manager
         if self._zeroconf:
             addrs = utils.get_local_ip_addr()
-            logger.info("Registering this NM with zeroconf: %s" % addrs)
+            logger.info("Registering this NM with zeroconf: %s", addrs)
             self._nm_info = utils.register_service(
                 self._zeroconf,
                 "NodeManager",
@@ -201,57 +208,79 @@ class DlgDaemon(RestServer):
         if nodes:
             args += ["--nodes", ",".join(nodes)]
         logger.info(
-            "Starting Data Island Drop Manager with args: %s" % (" ".join(args))
+            "Starting Data Island Drop Manager with args: %s", (" ".join(args))
         )
         self._dim_proc = tool.start_process("dim", args)
         logger.info(
-            "Started Data Island Drop Manager with PID %d" % (self._dim_proc.pid)
+            "Started Data Island Drop Manager with PID %d", self._dim_proc.pid
         )
+
+        # Registering the new DIM via zeroconf so it gets discovered
+        # by the Master Manager
+        if self._zeroconf:
+            addrs = utils.get_local_ip_addr()
+            logger.info("Registering this DIM with zeroconf: %s", addrs)
+            self._dim_info = utils.register_service(
+                self._zeroconf,
+                "DIM",
+                socket.gethostname(),
+                addrs[0][0],
+                constants.ISLAND_DEFAULT_REST_PORT,
+            )
         return
 
     def startMM(self):
         tool = get_tool()
         args = ["--host", "0.0.0.0"]
         args += self._verbosity_as_cmdline()
-        logger.info("Starting Master Drop Manager with args: %s" % (" ".join(args)))
+        logger.info("Starting Master Drop Manager with args: %s", (" ".join(args)))
         self._mm_proc = tool.start_process("mm", args)
-        logger.info("Started Master Drop Manager with PID %d" % (self._mm_proc.pid))
+        logger.info("Started Master Drop Manager with PID %d", self._mm_proc.pid)
 
         # Also subscribe to zeroconf events coming from NodeManagers and feed
         # the Master Manager with the new hosts we find
         if self._zeroconf:
-            mm_client = client.MasterManagerClient()
-            node_managers = {}
+            nm_assigner = NMAssigner()
 
-            def nm_callback(zeroconf, service_type, name, state_change):
+            def _callback(zeroconf, service_type, name, state_change, adder, remover, accessor):
                 info = zeroconf.get_service_info(service_type, name)
                 if state_change is zc.ServiceStateChange.Added:
                     server = socket.inet_ntoa(_get_address(info))
                     port = info.port
-                    node_managers[name] = (server, port)
+                    adder(name, server, port)
                     logger.info(
-                        "Found a new Node Manager on %s:%d, will add it to the MM"
-                        % (server, port)
+                        "Found a new %s on %s:%d, will add it to the MM",
+                        service_type, server, port
                     )
-                    mm_client.add_node(server)
                 elif state_change is zc.ServiceStateChange.Removed:
-                    server, port = node_managers[name]
+                    server, port = accessor(name)
                     logger.info(
-                        "Node Manager on %s:%d disappeared, removing it from the MM"
-                        % (server, port)
+                        "%s on %s:%d disappeared, removing it from the MM",
+                        service_type, server, port
                     )
 
                     # Don't bother to remove it if we're shutting down. This way
                     # we avoid hanging in here if the MM is down already but
                     # we are trying to remove our NM who has just disappeared
                     if not self._shutting_down:
-                        try:
-                            mm_client.remove_node(server)
-                        finally:
-                            del node_managers[name]
+                        remover(name)
 
-            self._mm_browser = utils.browse_service(
+            nm_callback = functools.partial(_callback, adder=nm_assigner.add_nm,
+                                            remover=nm_assigner.remove_nm,
+                                            accessor=nm_assigner.get_nm)
+
+            dim_callback = functools.partial(_callback, adder=nm_assigner.add_dim,
+                                             remover=nm_assigner.remove_dim,
+                                             accessor=nm_assigner.get_dim)
+
+            self._mm_nm_browser = utils.browse_service(
                 self._zeroconf, "NodeManager", "tcp", nm_callback
+            )
+            self._mm_dim_browser = utils.browse_service(
+                self._zeroconf,
+                "DIM",
+                "tcp",
+                dim_callback,  # DIM since name must be < 15 bytes
             )
             logger.info("Zeroconf started")
             return
@@ -278,7 +307,7 @@ class DlgDaemon(RestServer):
     def _rest_get_manager_info(self, proc):
         if proc:
             bottle.response.content_type = "application/json"
-            logger.info("Sending response: %s" % json.dumps({"pid": proc.pid}))
+            logger.info("Sending response: %s", json.dumps({"pid": proc.pid}))
             return json.dumps({"pid": proc.pid})
         else:
             return json.dumps({"pid": None})
@@ -296,7 +325,7 @@ class DlgDaemon(RestServer):
         if mgrs["node"]:
             mgrs["node"] = self._nm_proc.pid
 
-        logger.info("Sending response: %s" % json.dumps(mgrs))
+        logger.info("Sending response: %s", json.dumps(mgrs))
         return json.dumps(mgrs)
 
     def rest_startNM(self):
@@ -396,7 +425,7 @@ def run_with_cmdline(parser, args):
         global terminating
         if terminating:
             return
-        logger.info("Received signal %d, will stop the daemon now" % (signalNo,))
+        logger.info("Received signal %d, will stop the daemon now", signalNo)
         terminating = True
         daemon.stop(10)
 
