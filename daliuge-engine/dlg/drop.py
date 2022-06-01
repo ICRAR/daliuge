@@ -2297,6 +2297,7 @@ class AppDROP(ContainerDROP):
     after all its inputs have moved to COMPLETED (implying that none of them is
     an streaming input); for these cases see the `BarrierAppDROP`.
     """
+    n_tries = dlg_int_param("Number of tries", 1)
 
     def initialize(self, **kwargs):
 
@@ -2470,6 +2471,70 @@ class AppDROP(ContainerDROP):
             self._fire(
                 "producerFinished", status=self.status, execStatus=self.execStatus
             )
+    
+    def async_execute(self):
+        # Return immediately, but schedule the execution of this app
+        # If we have been given a thread pool use that
+        if hasattr(self, "_tp"):
+            self._tp.apply_async(self.execute)
+        else:
+            t = threading.Thread(target=self.execute)
+            t.daemon = 1
+            t.start()
+
+    @track_current_drop
+    def execute(self, _send_notifications=True):
+        """
+        Manually trigger the execution of this application.
+
+        This method is normally invoked internally when the application detects
+        all its inputs are COMPLETED.
+        """
+
+        # TODO: We need to be defined more clearly how the state is set in
+        #       applications, for the time being they follow their execState.
+
+        # Run at most self._n_tries if there are errors during the execution
+        logger.debug("Executing %r", self)
+        tries = 0
+        drop_state = DROPStates.COMPLETED
+        self.execStatus = AppDROPStates.RUNNING
+        while tries < self.n_tries:
+            try:
+                if hasattr(self, "_tp"):
+                    proc = DlgProcess(target=self.run, daemon=True)
+                    proc.start()
+                    proc.join()
+                    if proc.exception:
+                        raise proc.exception
+                else:
+                    self.run()
+                if self.execStatus == AppDROPStates.CANCELLED:
+                    return
+                self.execStatus = AppDROPStates.FINISHED
+                break
+            except:
+                if self.execStatus == AppDROPStates.CANCELLED:
+                    return
+                tries += 1
+                logger.exception(
+                    "Error while executing %r (try %d/%d)" % (self, tries, self.n_tries)
+                )
+
+        # We gave up running the application, go to error
+        if tries == self.n_tries:
+            self.execStatus = AppDROPStates.ERROR
+            drop_state = DROPStates.ERROR
+
+        self.status = drop_state
+        if _send_notifications:
+            self._notifyAppIsFinished()
+
+    def run(self):
+        """
+        Run this application. It can be safely assumed that at this point all
+        the required inputs are COMPLETED.
+        """
 
 
 class InputFiredAppDROP(AppDROP):
@@ -2505,7 +2570,6 @@ class InputFiredAppDROP(AppDROP):
 
     input_error_threshold = dlg_int_param("Input error threshold (0 and 100)", 0)
     n_effective_inputs = dlg_int_param("Number of effective inputs", -1)
-    n_tries = dlg_int_param("Number of tries", 1)
 
     def initialize(self, **kwargs):
         super(InputFiredAppDROP, self).initialize(**kwargs)
@@ -2598,70 +2662,6 @@ class InputFiredAppDROP(AppDROP):
                 self.skip()
             else:
                 self.async_execute()
-
-    def async_execute(self):
-        # Return immediately, but schedule the execution of this app
-        # If we have been given a thread pool use that
-        if hasattr(self, "_tp"):
-            self._tp.apply_async(self.execute)
-        else:
-            t = threading.Thread(target=self.execute)
-            t.daemon = 1
-            t.start()
-
-    @track_current_drop
-    def execute(self, _send_notifications=True):
-        """
-        Manually trigger the execution of this application.
-
-        This method is normally invoked internally when the application detects
-        all its inputs are COMPLETED.
-        """
-
-        # TODO: We need to be defined more clearly how the state is set in
-        #       applications, for the time being they follow their execState.
-
-        # Run at most self._n_tries if there are errors during the execution
-        logger.debug("Executing %r", self)
-        tries = 0
-        drop_state = DROPStates.COMPLETED
-        self.execStatus = AppDROPStates.RUNNING
-        while tries < self.n_tries:
-            try:
-                if hasattr(self, "_tp"):
-                    proc = DlgProcess(target=self.run, daemon=True)
-                    proc.start()
-                    proc.join()
-                    if proc.exception:
-                        raise proc.exception
-                else:
-                    self.run()
-                if self.execStatus == AppDROPStates.CANCELLED:
-                    return
-                self.execStatus = AppDROPStates.FINISHED
-                break
-            except:
-                if self.execStatus == AppDROPStates.CANCELLED:
-                    return
-                tries += 1
-                logger.exception(
-                    "Error while executing %r (try %d/%d)" % (self, tries, self.n_tries)
-                )
-
-        # We gave up running the application, go to error
-        if tries == self.n_tries:
-            self.execStatus = AppDROPStates.ERROR
-            drop_state = DROPStates.ERROR
-
-        self.status = drop_state
-        if _send_notifications:
-            self._notifyAppIsFinished()
-
-    def run(self):
-        """
-        Run this application. It can be safely assumed that at this point all
-        the required inputs are COMPLETED.
-        """
 
     # TODO: another thing we need to check
     def exists(self):
