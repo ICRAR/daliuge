@@ -687,10 +687,10 @@ class TestDROP(unittest.TestCase):
             # b is already done
             self.assertEqual(c.status, DROPStates.COMPLETED)
 
-    def test_objectAsNormalAndStreamingInput(self):
+    def test_objectAsNormalAndAsyncStreamingInput(self):
         """
-        A test that checks that a DROP can act as normal and streaming input of
-        different AppDROPs at the same time. We use the following graph:
+        A test that checks that a DROP can act as normal and async streaming input
+        of different AppDROPs at the same time. We use the following graph:
 
         A --|--> B --> D
             |--> C --> E
@@ -718,7 +718,7 @@ class TestDROP(unittest.TestCase):
             def end(self):
                 self._end = True
 
-        class LastCharWriterApp(InputFiredAppDROP):
+        class LastCharWriterApp(AppDROP):
             _lastByte = None
             _stream = DropAsyncStream()
 
@@ -788,7 +788,6 @@ class TestDROP(unittest.TestCase):
         )
         self.assertEqual(b"ejk", droputils.allDropContents(d))
         self.assertEqual(b"1325211590", droputils.allDropContents(e))
-        self.assertTrue(False)
 
     def test_fileDROP_delete_parent_dir(self):
         """
