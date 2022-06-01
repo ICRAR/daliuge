@@ -292,7 +292,8 @@ class PyFuncApp(BarrierAppDROP):
             "func_arg_mapping",
             "input_parser",
             "output_parser",
-            "func_defaults"
+            "func_defaults",
+            "pickle",
             ]
         for kw in self.func_def_keywords:
             if kw in self._applicationArgs:  # these are the preferred ones now
@@ -457,7 +458,7 @@ class PyFuncApp(BarrierAppDROP):
                     pargsDict.update({key:value})
                 else:
                     kwargs.update({key:value})
-                _dum = appArgs.pop(key)
+                _dum = appArgs.pop(key) if key in appArgs else None
                 logger.debug("Using input %s for argument %s", value, key)
                 logger.debug("Argument used as input removed: %s", _dum)
         else:
@@ -481,9 +482,6 @@ class PyFuncApp(BarrierAppDROP):
             _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
             logger.debug("Identified keyword arguments removed: %s",
                 [i['text'] for i in _dum])
-            _dum = [appArgs.pop(k) for k in pargsDict if k in appArgs]
-            logger.debug("Identified positional arguments removed: %s", 
-                [i['text'] for i in _dum])
             for pa in posargs:
                 if pa != 'self' and pa not in self.funcargs:
                     if pa in appArgs:
@@ -505,6 +503,9 @@ class PyFuncApp(BarrierAppDROP):
                         pargsDict.update({pa: value})
                     elif pa != 'self' and pa not in pargsDict:
                         logger.warning(f"Required positional argument '{pa}' not found!")
+            _dum = [appArgs.pop(k) for k in pargsDict if k in appArgs]
+            logger.debug("Identified positional arguments removed: %s", 
+                [i['text'] for i in _dum])
             logger.debug(f"updating posargs with {list(pargsDict.keys())}")
             self.pargs.extend(list(pargsDict.values()))
 
