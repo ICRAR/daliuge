@@ -2536,12 +2536,6 @@ class InputFiredAppDROP(AppDROP):
                 self, "Invalid n_tries, must be a positive number"
             )
 
-    def addStreamingInput(self, streamingInputDrop, back=True):
-        raise InvalidRelationshipException(
-            DROPRel(streamingInputDrop, DROPLinkType.STREAMING_INPUT, self),
-            "InputFiredAppDROPs don't accept streaming inputs",
-        )
-
     def dropCompleted(self, uid, drop_state):
         super(InputFiredAppDROP, self).dropCompleted(uid, drop_state)
 

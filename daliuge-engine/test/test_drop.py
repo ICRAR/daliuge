@@ -20,9 +20,12 @@
 #    MA 02111-1307  USA
 #
 
+import asyncio
 import contextlib
 import io
 import os, unittest
+from typing import AsyncIterable, AsyncIterator, Deque
+import time
 import random
 import shutil
 import sqlite3
@@ -51,6 +54,9 @@ from dlg.drop import (
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
 from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp
+
+import logging
+logger = logging.getLogger(__name__)
 
 try:
     from crc32c import crc32c
@@ -693,23 +699,49 @@ class TestDROP(unittest.TestCase):
         input
         """
 
-        class LastCharWriterApp(AppDROP):
+        class DropAsyncStream(AsyncIterator):
+            _d = Deque()
+            _end = False
+            async def __anext__(self):
+                while True:
+                    if len(self._d) > 0:
+                        data = self._d.popleft()
+                        return data
+                    elif self._end:
+                        raise StopAsyncIteration
+                    else:
+                        await asyncio.sleep(0)
+
+            def append(self, data):
+                self._d.append(data)
+
+            def end(self):
+                self._end = True
+
+        class LastCharWriterApp(InputFiredAppDROP):
+            _lastByte = None
+            _stream = DropAsyncStream()
+
             def initialize(self, **kwargs):
                 super(LastCharWriterApp, self).initialize(**kwargs)
-                self._lastByte = None
+
+            def run(self):
+                asyncio.run(self.arun())
+
+            async def arun(self):
+                async for data in self._stream:
+                    outputDrop = self.outputs[0]
+                    self._lastByte = data[-1:]
+                    outputDrop.write(self._lastByte)
 
             def dataWritten(self, uid, data):
-                self.execStatus = AppDROPStates.RUNNING
-                outputDrop = self.outputs[0]
-                self._lastByte = data[-1:]
-                outputDrop.write(self._lastByte)
+                self._stream.append(data)
 
-            def dropCompleted(self, uid, status):
-                self.execStatus = AppDROPStates.FINISHED
-                self._notifyAppIsFinished()
+            def dropCompleted(self, uid, drop_state):
+                self._stream.end()
 
         a = InMemoryDROP("a", "a")
-        b = LastCharWriterApp("b", "b")
+        b = LastCharWriterApp("b", "b", n_effective_inputs=0)
         c = SumupContainerChecksum("c", "c")
         d = InMemoryDROP("d", "d")
         e = InMemoryDROP("e", "e")
@@ -730,25 +762,33 @@ class TestDROP(unittest.TestCase):
             if lastByte is not None:
                 self.assertEqual(lastByte, b._lastByte)
 
-        checkDropStates(
-            DROPStates.INITIALIZED, DROPStates.INITIALIZED, DROPStates.INITIALIZED, None
-        )
-        a.write(b"abcde")
-        checkDropStates(
-            DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, b"e"
-        )
-        a.write(b"fghij")
-        checkDropStates(
-            DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, b"j"
-        )
-        a.write(b"k")
         with DROPWaiterCtx(self, [d, e]):
+            b.async_execute()
+            checkDropStates(
+                DROPStates.INITIALIZED, DROPStates.INITIALIZED, DROPStates.INITIALIZED, None
+            )
+            a.write(b"abcde")
+            time.sleep(0.1)
+
+            checkDropStates(
+                 DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, b"e"
+            )
+
+            a.write(b"fghij")
+            time.sleep(0.1)
+
+            checkDropStates(
+                DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, b"j"
+            )
+            a.write(b"k")
             a.setCompleted()
+
         checkDropStates(
             DROPStates.COMPLETED, DROPStates.COMPLETED, DROPStates.COMPLETED, b"k"
         )
-
         self.assertEqual(b"ejk", droputils.allDropContents(d))
+        self.assertEqual(b"1325211590", droputils.allDropContents(e))
+        self.assertTrue(False)
 
     def test_fileDROP_delete_parent_dir(self):
         """
