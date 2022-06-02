@@ -27,6 +27,7 @@ import random
 import unittest
 import pkg_resources
 import json
+import numpy
 
 from ..manager import test_dm
 from dlg import droputils, graph_loader
@@ -79,8 +80,6 @@ def _PyFuncApp(oid, uid, f, **kwargs):
         func_name=fname,
         func_code=fcode,
         func_defaults=fdefaults,
-        input_parser=pyfunc.DropParser.PICKLE,
-        output_parser=pyfunc.DropParser.PICKLE,
         **kwargs
     )
 
@@ -124,22 +123,84 @@ class TestPyFuncApp(unittest.TestCase):
 
         _PyFuncApp("a", "a", inner_function)
 
-    def _test_simple_functions(self, f, input_data, output_data):
+    def test_pickle_func(self, f = lambda x: x, input_data="hello", output_data="hello"):
+        a = InMemoryDROP("a", "a")
+        b = _PyFuncApp("b", "b", f)
+        c = InMemoryDROP("c", "c")
 
+        b.addInput(a)
+        b.addOutput(c)
+
+        with DROPWaiterCtx(self, c, 5):
+            droputils.save_pickle(a, input_data)
+            a.setCompleted()
+        for drop in a, b, c:
+            self.assertEqual(DROPStates.COMPLETED, drop.status)
+        self.assertEqual(
+            output_data, droputils.load_pickle(c)
+        )
+
+    def test_eval_func(self, f = lambda x: x, input_data=None, output_data=None):
+        input_data = [2,2] if input_data is None else input_data
+        output_data = [2,2] if output_data is None else output_data
+
+        a = InMemoryDROP("a", "a")
+        b = _PyFuncApp("b", "b", f,
+            input_parser=pyfunc.DropParser.EVAL,
+            output_parser=pyfunc.DropParser.EVAL
+        )
+        c = InMemoryDROP("c", "c")
+
+        b.addInput(a)
+        b.addOutput(c)
+
+        with DROPWaiterCtx(self, c, 5):
+            a.write(repr(input_data).encode('utf-8'))
+            a.setCompleted()
+        for drop in a, b, c:
+            self.assertEqual(DROPStates.COMPLETED, drop.status)
+        self.assertEqual(
+            output_data, eval(droputils.allDropContents(c).decode('utf-8'), {}, {})
+        )
+
+    def test_npy_func(self, f = lambda x: x, input_data=None, output_data=None):
+        input_data = numpy.ones([2,2]) if input_data is None else input_data
+        output_data = numpy.ones([2,2]) if output_data is None else output_data
+
+        a = InMemoryDROP("a", "a")
+        b = _PyFuncApp("b", "b", f,
+            input_parser=pyfunc.DropParser.NPY,
+            output_parser=pyfunc.DropParser.NPY
+        )
+        c = InMemoryDROP("c", "c")
+
+        b.addInput(a)
+        b.addOutput(c)
+
+        with DROPWaiterCtx(self, c, 5):
+            droputils.save_npy(a, input_data)
+            a.setCompleted()
+        for drop in a, b, c:
+            self.assertEqual(DROPStates.COMPLETED, drop.status)
+        numpy.testing.assert_equal(
+            output_data, droputils.load_npy(c)
+        )
+
+    def _test_simple_functions(self, f, input_data, output_data):
         a, c = [InMemoryDROP(x, x) for x in ("a", "c")]
         b = _PyFuncApp("b", "b", f)
         b.addInput(a)
         b.addOutput(c)
 
         with DROPWaiterCtx(self, c, 5):
-            a.write(pickle.dumps(input_data))  # @UndefinedVariable
+            a.write(pickle.dumps(input_data))
             a.setCompleted()
 
         for drop in a, b, c:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
         self.assertEqual(
             output_data, pickle.loads(droputils.allDropContents(c))
-        )  # @UndefinedVariable
+        ) 
 
     def test_func1(self):
         """Checks that func1 in this module works when wrapped"""
