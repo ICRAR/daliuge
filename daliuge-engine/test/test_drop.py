@@ -790,9 +790,6 @@ class TestDROP(unittest.TestCase):
             _lastByte = None
             _stream = DropAsyncStream()
 
-            def initialize(self, **kwargs):
-                super(LastCharWriterApp, self).initialize(**kwargs)
-
             def run(self):
                 asyncio.run(self.arun())
 
@@ -809,7 +806,7 @@ class TestDROP(unittest.TestCase):
                 self._stream.end()
 
         a = InMemoryDROP("a", "a")
-        b = LastCharWriterApp("b", "b", n_effective_inputs=0)
+        b = LastCharWriterApp("b", "b")
         c = SumupContainerChecksum("c", "c")
         d = InMemoryDROP("d", "d")
         e = InMemoryDROP("e", "e")
