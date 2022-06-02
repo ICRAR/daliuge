@@ -45,7 +45,7 @@ import re
 import sys
 import inspect
 import binascii
-from typing import List, Optional, Union
+from typing import List, Union
 
 import numpy as np
 import pyarrow.plasma as plasma
@@ -2482,6 +2482,8 @@ class AppDROP(ContainerDROP):
             t.daemon = 1
             t.start()
 
+    _dlg_proc_lock = threading.Lock()
+
     @track_current_drop
     def execute(self, _send_notifications=True):
         """
@@ -2503,8 +2505,13 @@ class AppDROP(ContainerDROP):
             try:
                 if hasattr(self, "_tp"):
                     proc = DlgProcess(target=self.run, daemon=True)
-                    proc.start()
-                    proc.join()
+                    # see YAN-975 for why this is happening
+                    lock = InputFiredAppDROP._dlg_proc_lock
+                    with lock:
+                        proc.start()
+                    with lock:
+                        proc.join()
+                    proc.close()
                     if proc.exception:
                         raise proc.exception
                 else:

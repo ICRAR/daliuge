@@ -35,7 +35,6 @@ import sys
 import threading
 import time
 
-from glob import glob
 from . import constants
 from .drop_manager import DROPManager
 from .session import Session
@@ -190,11 +189,10 @@ class NodeManagerBase(DROPManager):
         Starts any background task required by this Node Manager
         """
 
-    @abc.abstractmethod
     def shutdown(self):
-        """
-        Stops any pending background task run by this Node Manager
-        """
+        if self._threadpool:
+            self._threadpool.close()
+            self._threadpool.join()
 
     @abc.abstractmethod
     def subscribe(self, host, port):
@@ -373,11 +371,6 @@ class NodeManagerBase(DROPManager):
     def call_drop(self, sessionId, uid, method, *args):
         self._check_session_id(sessionId)
         return self._sessions[sessionId].call_drop(uid, method, *args)
-
-    def shutdown(self):
-        if hasattr(self, "_threadpool") and self._threadpool is not None:
-            self._threadpool.close()
-            self._threadpool.join()
 
 
 class ZMQPubSubMixIn(object):
