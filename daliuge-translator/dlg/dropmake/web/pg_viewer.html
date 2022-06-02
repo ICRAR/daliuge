@@ -111,6 +111,16 @@
                         <a href="javascript:void(0)" id="png_button" class="dropdown-item" onclick="makePNG()">Screenshot</a>
                     </div>
                 </li>
+                <li class="nav-item dropdown">
+                    <a href="javascript:void(0)" class="nav-link dropdown-toggle" id="navbarExportDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Help
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarExportDropdown">
+                        <a href="javascript:void(0)" class="dropdown-item" onclick="$('#aboutModal').modal('toggle')">About</a>
+                        <a href="https://daliuge.readthedocs.io/en/latest/basics.html#translator-service%22%3EDALiuGE" target="_blank" class="dropdown-item">Online Docs</a>
+                        <a href="javascript:void(0)" class="dropdown-item" onclick="$('#shortcutsModal').modal('toggle')">Keyboard Shortcuts</a>
+                    </div>
+                </li>
                 <li class="nav-item">
                     <a href="javascript:void(0)" class="nav-link tooltip tooltipBottomLeft" data-text="Settings" data-toggle="modal" data-target="#settingsModal"><img src="/static/src/icons/settings_white_24dp.svg" alt="Settings"></a>
                 </li>
@@ -130,9 +140,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <a type="button" class="close material-icons" data-dismiss="modal">close</a>
                 </div>
                 <div class="modal-body">
                     <form action="/gen_pg" method="get" target="blank" name="deploy_target" id="pg_form" >
@@ -162,20 +170,62 @@
         </div>
     </div>
 
+    <!-- message modal -->
     <div class="modal fade" id="messageModal" tabindex="-1" role="dialog" aria-labelledby="messageModalTitle" aria-hidden="true">
        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="messageModalTitle">Title</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <a type="button" class="close material-icons" data-dismiss="modal">close</a>
                 </div>
                 <div class="modal-body">
                     <pre id="messageModalContent">Message</pre>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shortcuts Modal -->
+    <div class="modal fade" id="shortcutsModal" tabindex="-1" role="dialog" aria-labelledby="shortcutsModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="shortcutsModalTitle">Keyboard Shortcuts</h5>
+                    <a type="button" class="close material-icons" data-dismiss="modal">close</a>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- filled automatically from keyboard shortcuts array -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="shortcutsModalAffirmativeButton" data-bs-dismiss="modal"><span id="shortcutsModalAffirmativeAnswer">OK</span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- About Modal -->
+    <div class="modal fade" id="aboutModal" tabindex="-1" role="dialog" aria-labelledby="aboutModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <img src="/static/src/icons/translate_green.png" class="rounded float-left" alt="Translator logo">
+                    <span>&nbsp;&nbsp;</span>
+                    <h5 class="modal-title" id="aboutModalTitle">About The Translator</h5>
+                    <a type="button" class="close material-icons" data-dismiss="modal">close</a>
+                </div>
+                <div class="modal-body">
+                    <h5>The Translator service for the DALiuGE system</h5>
+                    <div class="aboutDivider"></div>
+                    <a href="https://daliuge.readthedocs.io/en/latest/basics.html#translator-service%22%3EDALiuGE">Documentation</a>
+                    <div class="aboutDivider"></div>
+                    <span>License:</span>
+                    <div id="aboutLicense"></div>
                 </div>
             </div>
         </div>

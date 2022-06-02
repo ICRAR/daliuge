@@ -191,8 +191,8 @@ class ManagerRestServer(RestServer):
         self.dm.shutdown()
         self.stop()
         logger.info(
-            "Thanks for using our %s, come back again :-)"
-            % (self.dm.__class__.__name__)
+            "Thanks for using our %s, come back again :-)",
+            self.dm.__class__.__name__
         )
 
     @daliuge_aware
@@ -400,7 +400,7 @@ class NMRestServer(ManagerRestServer):
 
     @daliuge_aware
     def add_node_subscriptions(self, sessionId):
-        logger.debug(f"NM REST call: add_subscriptions {bottle.request.json}")
+        logger.debug("NM REST call: add_subscriptions %s", bottle.request.json)
         if bottle.request.content_type != "application/json":
             bottle.response.status = 415
             return
@@ -471,18 +471,18 @@ class CompositeManagerRestServer(ManagerRestServer):
 
     @daliuge_aware
     def addCMNode(self, node):
-        logger.debug("Adding node %s" % node)
+        logger.debug("Adding node %s", node)
         self.dm.add_node(node)
 
     @daliuge_aware
     def removeCMNode(self, node):
-        logger.debug("Removing node %s" % node)
+        logger.debug("Removing node %s", node)
         self.dm.remove_node(node)
 
     @daliuge_aware
     def getNodeSessions(self, node):
         if node not in self.dm.nodes:
-            raise Exception("%s not in current list of nodes" % (node,))
+            raise Exception(f"{node} not in current list of nodes")
         with NodeManagerClient(host=node) as dm:
             return dm.sessions()
 
@@ -527,28 +527,28 @@ class CompositeManagerRestServer(ManagerRestServer):
     @daliuge_aware
     def getNodeSessionInformation(self, node, sessionId):
         if node not in self.dm.nodes:
-            raise Exception("%s not in current list of nodes" % (node,))
+            raise Exception(f"{node} not in current list of nodes")
         with NodeManagerClient(host=node) as dm:
             return dm.session(sessionId)
 
     @daliuge_aware
     def getNodeSessionStatus(self, node, sessionId):
         if node not in self.dm.nodes:
-            raise Exception("%s not in current list of nodes" % (node,))
+            raise Exception(f"{node} not in current list of nodes")
         with NodeManagerClient(host=node) as dm:
             return dm.session_status(sessionId)
 
     @daliuge_aware
     def getNodeGraph(self, node, sessionId):
         if node not in self.dm.nodes:
-            raise Exception("%s not in current list of nodes" % (node,))
+            raise Exception(f"{node} not in current list of nodes")
         with NodeManagerClient(host=node) as dm:
             return dm.graph(sessionId)
 
     @daliuge_aware
     def getNodeGraphStatus(self, node, sessionId):
         if node not in self.dm.nodes:
-            raise Exception("%s not in current list of nodes" % (node,))
+            raise Exception(f"{node} not in current list of nodes")
         with NodeManagerClient(host=node) as dm:
             return dm.graph_status(sessionId)
 
@@ -576,12 +576,15 @@ class CompositeManagerRestServer(ManagerRestServer):
 class MasterManagerRestServer(CompositeManagerRestServer):
     def initializeSpecifics(self, app):
         CompositeManagerRestServer.initializeSpecifics(self, app)
-
+        # DIM manamagement
+        app.post("/api/islands/<dim>", callback=self.addDIM)
+        app.delete("/api/islands/<dim>", callback=self.removeDIM)
         # Query forwarding to daemons
-
         app.post("/api/managers/<host>/dataisland", callback=self.createDataIsland)
         app.post("/api/managers/<host>/node/start", callback=self.startNM)
         app.post("/api/managers/<host>/node/stop", callback=self.stopNM)
+        app.post("/api/managers/<host>/nodes/<node>", callback=self.addNM)
+        app.delete("/api/managers/<host>/nodes/<node>", callback=self.removeNM)
         # Querying about managers
         app.get("/api/islands", callback=self.getDIMs)
         app.get("/api/nodes", callback=self.getNMs)
@@ -602,27 +605,55 @@ class MasterManagerRestServer(CompositeManagerRestServer):
         return {"islands": self.dm.dmHosts}
 
     @daliuge_aware
+    def addDIM(self, dim):
+        logger.debug("Adding DIM %s", dim)
+        self.dm.addDmHost(dim)
+
+    @daliuge_aware
+    def removeDIM(self, dim):
+        logger.debug("Removing dim %s", dim)
+        self.dm.removeDmHost(dim)
+
+    @daliuge_aware
     def getNMs(self):
         return {"nodes": self.dm.nodes}
 
     @daliuge_aware
     def startNM(self, host):
         port = constants.DAEMON_DEFAULT_REST_PORT
-        logger.debug("Sending NM start request to %s:%s" % (host, port))
+        logger.debug("Sending NM start request to %s:%s", host, port)
         with RestClient(host=host, port=port, timeout=10) as c:
             return json.loads(c._POST("/managers/node/start").read())
 
     @daliuge_aware
     def stopNM(self, host):
         port = constants.DAEMON_DEFAULT_REST_PORT
-        logger.debug("Sending NM stop request to %s:%s" % (host, port))
+        logger.debug("Sending NM stop request to %s:%s", host, port)
         with RestClient(host=host, port=port, timeout=10) as c:
             return json.loads(c._POST("/managers/node/stop").read())
 
     @daliuge_aware
+    def addNM(self, host, node):
+        port = constants.ISLAND_DEFAULT_REST_PORT
+        logger.debug("Adding NM %s to DIM %s", node, host)
+        with RestClient(host=host, port=port, timeout=10, url_prefix="/api") as c:
+            return json.loads(
+                c._POST(
+                    f"/nodes/{node}",
+                ).read()
+            )
+
+    @daliuge_aware
+    def removeNM(self, host, node):
+        port = constants.ISLAND_DEFAULT_REST_PORT
+        logger.debug("Removing NM %s from DIM %s", node, host)
+        with RestClient(host=host, port=port, timeout=10, url_prefix="/api") as c:
+            return json.loads(c._DELETE(f"/nodes/{node}").read())
+
+    @daliuge_aware
     def getNMInfo(self, host):
         port = constants.DAEMON_DEFAULT_REST_PORT
-        logger.debug("Sending request %s:%s/managers/node" % (host, port))
+        logger.debug("Sending request %s:%s/managers/node", host, port)
         with RestClient(host=host, port=port, timeout=10) as c:
             return json.loads(c._GET("/managers/node").read())
 
