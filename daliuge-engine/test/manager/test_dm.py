@@ -191,19 +191,14 @@ class NodeManagerTestsBase(NMTestsMixIn):
     def _deploy_error_graph(self, **kwargs):
         sessionId = f"s{random.randint(0, 1000)}"
         g = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
+            memory("A"),
             {
                 "oid": "B",
                 "type": "app",
                 "app": "test.manager.test_dm.ErroneousApp",
                 "inputs": ["A"],
             },
-            {
-                "oid": "C",
-                "type": "plain",
-                "storage": Categories.MEMORY,
-                "producers": ["B"],
-            },
+            memory("C", producers=["B"]),
         ]
         add_test_reprodata(g)
         dm = self._start_dm(threads=self.nm_threads, **kwargs)
@@ -243,15 +238,10 @@ class NodeManagerTestsBase(NMTestsMixIn):
         self.assertTrue(evt.wait(10), "Didn't receive events on time")
 
     def _test_runGraphOneDOPerDOM(self, repeats=1):
-        g1 = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
+        g1 = [memory("A")]
         g2 = [
             {"oid": "B", "type": "app", "app": "dlg.apps.crc.CRCApp"},
-            {
-                "oid": "C",
-                "type": "plain",
-                "storage": Categories.MEMORY,
-                "producers": ["B"],
-            },
+            memory("C", producers=["B"]),
         ]
         rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
         a_data = os.urandom(32)
@@ -310,29 +300,14 @@ class NodeManagerTestsBase(NMTestsMixIn):
 
         sessionId = "s1"
         g1 = [
-            {
-                "oid": "A",
-                "type": "plain",
-                "storage": Categories.MEMORY,
-                "consumers": ["C"],
-            },
-            {"oid": "B", "type": "plain", "storage": Categories.MEMORY},
+            memory("A", consumers=["C"]),
+            memory("B"),
             {"oid": "C", "type": "app", "app": "dlg.apps.crc.CRCApp"},
-            {
-                "oid": "D",
-                "type": "plain",
-                "storage": Categories.MEMORY,
-                "producers": ["C"],
-            },
+            memory("D", producers=["C"]),
         ]
         g2 = [
             {"oid": "E", "type": "app", "app": "test.test_drop.SumupContainerChecksum"},
-            {
-                "oid": "F",
-                "type": "plain",
-                "storage": Categories.MEMORY,
-                "producers": ["E"],
-            },
+            memory("F", producers=["E"]),
         ]
         add_test_reprodata(g1)
         add_test_reprodata(g2)
@@ -485,21 +460,13 @@ class NodeManagerTestsBase(NMTestsMixIn):
 
         sessionId = f"s{random.randint(0, 1000)}"
         N = 100
-        g1 = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
-        g2 = [{"oid": "C", "type": "plain", "storage": Categories.MEMORY}]
+        g1 = [memory("A")]
+        g2 = [memory("C")]
         rels = []
         for i in range(N):
             b_oid = "B%d" % (i,)
             # SleepAndCopyApp effectively opens the input drop
-            g2.append(
-                {
-                    "oid": b_oid,
-                    "type": "app",
-                    "app": "dlg.apps.simple.SleepAndCopyApp",
-                    "outputs": ["C"],
-                    "sleepTime": 0,
-                }
-            )
+            g2.append(sleepAndCopy(b_oid, outputs=["C"], sleepTime=0))
             rels.append(DROPRel("A", DROPLinkType.INPUT, b_oid))
         add_test_reprodata(g1)
         add_test_reprodata(g2)
@@ -544,24 +511,14 @@ class NodeManagerTestsBase(NMTestsMixIn):
 
         sessionId = f"s{random.randint(0, 1000)}"
         g1 = [
-            {
-                "oid": "A",
-                "type": "plain",
-                "storage": Categories.MEMORY,
-                "consumers": ["C"],
-            },
+            memory("A", consumers=["C"]),
             {
                 "oid": "C",
                 "type": "app",
                 "app": "dlg.apps.crc.CRCApp",
                 "consumers": ["D"],
             },
-            {
-                "oid": "D",
-                "type": "plain",
-                "storage": Categories.MEMORY,
-                "producers": ["C"],
-            },
+            memory("D", producers=["C"]),
         ]
         g2 = [
             {
@@ -612,7 +569,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
         """
 
         g1 = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
+            memory("A"),
             {
                 "oid": "B",
                 "type": "app",
@@ -620,7 +577,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
                 "inputs": ["A"],
                 "outputs": ["C"],
             },
-            {"oid": "C", "type": "plain", "storage": Categories.MEMORY},
+            memory("C"),
         ]
         g2 = [
             {
@@ -629,7 +586,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
                 "app": "dlg.apps.crc.CRCStreamApp",
                 "outputs": ["E"],
             },
-            {"oid": "E", "type": "plain", "storage": Categories.MEMORY},
+            memory("E"),
         ]
         rels = [DROPRel("C", DROPLinkType.STREAMING_INPUT, "D")]
         a_data = os.urandom(32)
@@ -642,7 +599,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
         """
 
         g1 = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
+            memory("A"),
             {
                 "oid": "B",
                 "type": "app",
@@ -651,7 +608,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
             },
         ]
         g2 = [
-            {"oid": "C", "type": "plain", "storage": Categories.MEMORY},
+            memory("C"),
             {
                 "oid": "D",
                 "type": "app",
@@ -659,7 +616,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
                 "streamingInputs": ["C"],
                 "outputs": ["E"],
             },
-            {"oid": "E", "type": "plain", "storage": Categories.MEMORY},
+            memory("E"),
         ]
         rels = [DROPRel("C", DROPLinkType.OUTPUT, "B")]
         a_data = os.urandom(32)

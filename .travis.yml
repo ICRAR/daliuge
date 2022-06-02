@@ -23,12 +23,12 @@
 #
 
 # To use docker later...
-sudo: required
+os: linux
 dist: focal
 
 # let's go!
 language: python
-matrix:
+jobs:
   include:
     # - python: "3.10"
     - python: "3.8"
@@ -70,7 +70,7 @@ matrix:
       python: "3.8"
       before_install:
       install:
-        - pip install sphinx sphinx-rtd-theme gputil merklelib
+        - pip install sphinx-rtd-theme sphinx gputil merklelib
       script:
         - READTHEDOCS=True make -C docs html SPHINXOPTS="-W --keep-going"
 

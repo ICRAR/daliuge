@@ -1,3 +1,5 @@
+.. _datadrop_io:
+
 DataDROP I/O
 ============
 
@@ -24,15 +26,18 @@ Writing data into an output drop is similar but simpler. Application authors nee
 one or more times the :attr:`write <dlg.drop.DataDROP.write>` method
 with the data that needs to be written.
 
-String Serialization
---------------------
+Serialization
+-------------
 
-Many data drops are capable of storing data in different formats managed by the app drop.
+Many data components are capable of storing data in multiple formats determined by the drop component. The common data io interface allows app components to be compatible with many data component types, however different app components connected to the same data component must use compatible serialization and deserialization types and utilities.
+
+String Serialization
+^^^^^^^^^^^^^^^^^^^^
 
 Raw String
 """"""""""
 
-The simplest serialization format supported directly by `DataDrop.write` and `DataDrop.read`.
+The simplest deserialization format supported directly by `DataDrop.write` and `DataDrop.read`.
 
 JSON (.json)
 """"""""""""
@@ -59,26 +64,34 @@ XML (.xml)
 """"""""""
 
 Markup format with similar features to YAML but with the addition of attributes. Serialization can be performed 
-using `dicttoxml` or both serialization and deserialiation using `xml.etree.ElementTree`.
+using `dicttoxml` or both serialization and deserialization using `xml.etree.ElementTree`.
 
+
+Python Eval (.py)
+"""""""""""""""""
+
+Python expressions and literals are valid string serialization formats whereby the string data is iterpreted as python code. Serialization is typically performed using the `__repr__` instance method and deserialization using `eval` or `ast.eval_literal`.
 
 Binary Serialization
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 Data drops may also store binary formats that are typically more efficient than string formats
 and may utilize the python buffer protocol.
 
+Raw Bytes
+"""""""""
+
+Data drops can always be read as raw bytes using `droputils.allDropContents` and written to using `DataDROP.write`. Reading as a bytes object creates a readonly in-memory data copy that may not be as performant as other drop utilities.
+
 Pickle (.pkl)
 """""""""""""
 
-Default serialazation format. Use `save_pickle` for serialization to this format and 
-`allDropContents` or `load_pickle` for deserialization.
-
+Default serialazation format capable of serializing any python object. Use `save_pickle` for serialization to this format and `load_pickle` for deserialization.
 
 Numpy (.npy)
 """"""""""""
 
-Portable numpy serialization format. Use `save_numpy`
+Portable numpy serialization format. Use `save_numpy` for serialization and `load_numpy` for deserialization.
 
 Numpy Zipped (.npz)
 """""""""""""""""""
@@ -87,15 +100,15 @@ Portable zipped numpy serialization format. Consists of a .zip directory holding
 files.
 
 Table Serialization
--------------------
+^^^^^^^^^^^^^^^^^^^
 
-parquet  (.parquet)
+parquet (.parquet)
 """""""""""""""""""
 
 Open source column-based relational data format from Apache.
 
-Drop Specialized Serialization
-------------------------------
+Specialized Serialization
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Data drops such as RDBMSDrop drops manage their own record format and are
 interfaced using relational data objects such `dict`, `pyarrow.RecordBatch` or `pandas.DataFrame`.

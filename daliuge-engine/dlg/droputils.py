@@ -117,7 +117,7 @@ class DROPWaiterCtx(object):
                 )
 
 
-def allDropContents(drop, bufsize=4096):
+def allDropContents(drop, bufsize=4096) -> bytes:
     """
     Returns all the data contained in a given DROP
     """
@@ -267,24 +267,24 @@ def listify(o):
     return [o]
 
 
-# def save_pickle(drop: DataDROP, data: Any):
-#     """Saves a python object in pkl format"""
-#     pickle.dump(data, drop)
+def save_pickle(drop: DataDROP, data: Any):
+    """Saves a python object in pkl format"""
+    pickle.dump(data, drop)
 
 
-# def load_pickle(drop: DataDROP) -> Any:
-#     """Loads a pkl formatted data object stored in a DataDROP.
-#     Note: does not support streaming mode.
-#     """
-#     buf = io.BytesIO()
-#     desc = drop.open()
-#     while True:
-#         data = drop.read(desc)
-#         if not data:
-#             break
-#         buf.write(data)
-#     drop.close(desc)
-#     return pickle.loads(buf.getbuffer())
+def load_pickle(drop: DataDROP) -> Any:
+    """Loads a pkl formatted data object stored in a DataDROP.
+    Note: does not support streaming mode.
+    """
+    buf = io.BytesIO()
+    desc = drop.open()
+    while True:
+        data = drop.read(desc)
+        if not data:
+            break
+        buf.write(data)
+    drop.close(desc)
+    return pickle.loads(buf.getbuffer())
 
 
 # async def save_pickle_iter(drop: DataDROP, data: Iterable[Any]):
@@ -298,7 +298,7 @@ def listify(o):
 #             yield pickle.load(p)
 
 
-def save_numpy(drop: DataDROP, ndarray: np.ndarray, allow_pickle=False):
+def save_npy(drop: DataDROP, ndarray: np.ndarray, allow_pickle=False):
     """
     Saves a numpy ndarray to a drop in npy format
     """
@@ -312,7 +312,11 @@ def save_numpy(drop: DataDROP, ndarray: np.ndarray, allow_pickle=False):
     dropio.close()
 
 
-def load_numpy(drop: DataDROP, allow_pickle=False) -> np.ndarray:
+def save_numpy(drop: DataDROP, ndarray: np.ndarray):
+    save_npy(drop, ndarray)
+
+
+def load_npy(drop: DataDROP, allow_pickle=False) -> np.ndarray:
     """
     Loads a numpy ndarray from a drop in npy format
     """
@@ -321,6 +325,10 @@ def load_numpy(drop: DataDROP, allow_pickle=False) -> np.ndarray:
     res = np.load(io.BytesIO(dropio.buffer()), allow_pickle=allow_pickle)
     dropio.close()
     return res
+
+
+def load_numpy(drop: DataDROP):
+    return load_npy(drop)
 
 
 # def save_jsonp(drop: PathBasedDrop, data: Dict[str, object]):
