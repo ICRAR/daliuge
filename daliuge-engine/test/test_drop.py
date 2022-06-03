@@ -22,8 +22,12 @@
 
 import asyncio
 import contextlib
+import ctypes
 import io
+import multiprocessing
+from multiprocessing.pool import ThreadPool
 import os, unittest
+import queue
 from typing import AsyncIterable, AsyncIterator, Deque
 import time
 import random
@@ -56,6 +60,8 @@ from dlg.exceptions import InvalidDropException
 from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp
 
 import logging
+
+from dlg.manager.shared_memory_manager import DlgSharedMemoryManager
 logger = logging.getLogger(__name__)
 
 try:
@@ -767,14 +773,13 @@ class TestDROP(unittest.TestCase):
         input
         """
 
-        class DropAsyncStream(AsyncIterator):
+        class DequeAsyncStream(AsyncIterator):
             _d = Deque()
             _end = False
             async def __anext__(self):
                 while True:
                     if len(self._d) > 0:
-                        data = self._d.popleft()
-                        return data
+                        return self._d.popleft()
                     elif self._end:
                         raise StopAsyncIteration
                     else:
@@ -786,18 +791,43 @@ class TestDROP(unittest.TestCase):
             def end(self):
                 self._end = True
 
+        class QueueAsyncStream(AsyncIterator):
+            _q = multiprocessing.Queue()
+            _end = multiprocessing.Event()
+            async def __anext__(self):
+                while True:
+                    if self._q.qsize() > 0:
+                        return self._q.get()
+                    elif self._end.is_set():
+                        raise StopAsyncIteration
+                    else:
+                        await asyncio.sleep(0)
+
+            def append(self, data):
+                while not self._q.full():
+                    try:
+                        self._q.put(data, block=True, timeout=1)
+                        break
+                    except queue.Full:
+                        pass
+
+            def end(self):
+                self._end.set()
+
         class LastCharWriterApp(AppDROP):
-            _lastByte = None
-            _stream = DropAsyncStream()
+            #_lastByte = None # Note: cannot share with daliuge thread
+            _lastByte = multiprocessing.Value(ctypes.c_char, b" ")
+            _stream = QueueAsyncStream()
 
             def run(self):
                 asyncio.run(self.arun())
 
             async def arun(self):
+                outputDrop = self.outputs[0]
                 async for data in self._stream:
-                    outputDrop = self.outputs[0]
-                    self._lastByte = data[-1:]
-                    outputDrop.write(self._lastByte)
+                    self._lastByte.value = data[-1:]
+                    #outputDrop.status = DROPStates.WRITING
+                    outputDrop.write(self._lastByte.value)
 
             def dataWritten(self, uid, data):
                 self._stream.append(data)
@@ -815,6 +845,25 @@ class TestDROP(unittest.TestCase):
         b.addOutput(d)
         c.addOutput(e)
 
+        use_multiprocess = True
+        if use_multiprocess:
+            from psutil import cpu_count
+            session_id = 1
+            max_threads = cpu_count(logical=False)
+            threadpool = ThreadPool(processes=max_threads)
+            memory_manager = DlgSharedMemoryManager()
+            a.__setattr__("_tp", threadpool)
+            b.__setattr__("_tp", threadpool)
+            c.__setattr__("_tp", threadpool)
+            d.__setattr__("_tp", threadpool)
+            e.__setattr__("_tp", threadpool)
+            a.__setattr__("_sessID", session_id)
+            d.__setattr__("_sessID", session_id)
+            e.__setattr__("_sessID", session_id)
+            memory_manager.register_drop(a.uid, session_id)
+            memory_manager.register_drop(d.uid, session_id)
+            memory_manager.register_drop(e.uid, session_id)
+
         # Consumer cannot be normal and streaming at the same time
         self.assertRaises(Exception, a.addConsumer, b)
         self.assertRaises(Exception, a.addStreamingConsumer, c)
@@ -825,27 +874,29 @@ class TestDROP(unittest.TestCase):
             self.assertEqual(dStatus, d.status)
             self.assertEqual(eStatus, e.status)
             if lastByte is not None:
-                self.assertEqual(lastByte, b._lastByte)
+                self.assertEqual(lastByte, b._lastByte.value)
 
-        with DROPWaiterCtx(self, [d, e]):
+        with DROPWaiterCtx(self, [d, e], timeout = 5):
             b.async_execute()
+            time.sleep(0.1)
+
             checkDropStates(
-                DROPStates.INITIALIZED, DROPStates.INITIALIZED, DROPStates.INITIALIZED, None
+                DROPStates.INITIALIZED, DROPStates.INITIALIZED, DROPStates.INITIALIZED, b" "
             )
             a.write(b"abcde")
             time.sleep(0.1)
 
             checkDropStates(
-                 DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, b"e"
+                DROPStates.WRITING, DROPStates.INITIALIZED, DROPStates.INITIALIZED, b"e"
             )
-
             a.write(b"fghij")
             time.sleep(0.1)
 
             checkDropStates(
-                DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, b"j"
+                DROPStates.WRITING, DROPStates.INITIALIZED, DROPStates.INITIALIZED, b"j"
             )
             a.write(b"k")
+            time.sleep(0.1)
             a.setCompleted()
 
         checkDropStates(
