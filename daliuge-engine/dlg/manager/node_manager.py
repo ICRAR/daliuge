@@ -571,15 +571,11 @@ class RpcMixIn(rpc.RPCClient, rpc.RPCServer):
 class NodeManager(EventMixIn, RpcMixIn, NodeManagerBase):
     def __init__(
         self,
-        useDLM=True,
-        dlgPath=utils.getDlgPath(),
-        error_listener=None,
-        event_listeners=[],
-        max_threads=0,
-        logdir=utils.getDlgLogsDir(),
         host=None,
         rpc_port=constants.NODE_DEFAULT_RPC_PORT,
         events_port=constants.NODE_DEFAULT_EVENTS_PORT,
+        *args,
+        **kwargs
     ):
         # We "just know" that our RpcMixIn will have a create_context static
         # method, which in reality means we are using the ZeroRPCServer class
@@ -587,9 +583,7 @@ class NodeManager(EventMixIn, RpcMixIn, NodeManagerBase):
         host = host or "127.0.0.1"
         EventMixIn.__init__(self, host, events_port)
         RpcMixIn.__init__(self, host, rpc_port)
-        NodeManagerBase.__init__(
-            self, useDLM, dlgPath, error_listener, event_listeners, max_threads, logdir
-        )
+        NodeManagerBase.__init__(self, *args, **kwargs)
 
     def shutdown(self):
         super(NodeManager, self).shutdown()
