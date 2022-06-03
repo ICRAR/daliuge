@@ -76,7 +76,7 @@ class TestDataLifecycleManager(unittest.TestCase):
             self.assertEqual(1, len(manager.getDropUids(drop)))
 
     def test_expiringNormalDrop(self):
-        with dlm.DataLifecycleManager(checkPeriod=0.5) as manager:
+        with dlm.DataLifecycleManager(check_period=0.5) as manager:
             drop = FileDROP("oid:A", "uid:A1", expectedSize=1, lifespan=0.5)
             manager.addDrop(drop)
 
@@ -89,7 +89,7 @@ class TestDataLifecycleManager(unittest.TestCase):
             self.assertEqual(DROPStates.EXPIRED, drop.status)
 
     def test_lostDrop(self):
-        with dlm.DataLifecycleManager(checkPeriod=0.5) as manager:
+        with dlm.DataLifecycleManager(check_period=0.5) as manager:
             drop = FileDROP(
                 "oid:A", "uid:A1", expectedSize=1, lifespan=10, precious=False
             )
@@ -106,7 +106,7 @@ class TestDataLifecycleManager(unittest.TestCase):
             self.assertEqual(DROPPhases.LOST, drop.phase)
 
     def test_cleanupExpiredDrops(self):
-        with dlm.DataLifecycleManager(checkPeriod=0.5, cleanupPeriod=2) as manager:
+        with dlm.DataLifecycleManager(check_period=0.5, cleanup_period=2) as manager:
             drop = FileDROP(
                 "oid:A", "uid:A1", expectedSize=1, lifespan=1, precious=False
             )
@@ -134,7 +134,7 @@ class TestDataLifecycleManager(unittest.TestCase):
         different values, and after they are used we check whether their data
         is still there or not
         """
-        with dlm.DataLifecycleManager(checkPeriod=0.5, cleanupPeriod=2) as manager:
+        with dlm.DataLifecycleManager(check_period=0.5, cleanup_period=2) as manager:
             a = DirectoryContainer(
                 "a",
                 "a",
@@ -171,7 +171,3 @@ class TestDataLifecycleManager(unittest.TestCase):
             self.assertFalse(a.exists())
             self.assertTrue(b.exists())
             b.delete()
-
-
-if __name__ == "__main__":
-    unittest.main()
