@@ -288,10 +288,10 @@ class TestSimpleApps(unittest.TestCase):
         mdrops = [InMemoryDROP(chr(65 + x), chr(65 + x)) for x in range(max_threads)]
         if parallel:
             # a bit of magic to get the app drops using the processes
-            _ = [drop.__setattr__("_tp", threadpool) for drop in drops]
-            _ = [drop.__setattr__("_tp", threadpool) for drop in mdrops]
-            _ = [drop.__setattr__("_sessID", session_id) for drop in mdrops]
-            _ = [memory_manager.register_drop(drop.uid, session_id) for drop in mdrops]
+            for drop in drops: drop.__setattr__("_tp", threadpool)
+            for drop in mdrops: drop.__setattr__("_tp", threadpool)
+            for drop in mdrops: drop.__setattr__("_sessID", session_id)
+            for drop in mdrops: memory_manager.register_drop(drop.uid, session_id)
             X.__setattr__("_tp", threadpool)
             Z.__setattr__("_tp", threadpool)
             Z.__setattr__("_sessID", session_id)

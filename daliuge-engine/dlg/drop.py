@@ -22,6 +22,7 @@
 """
 Module containing the core DROP classes.
 """
+import multiprocessing
 from sqlite3 import OperationalError
 import string
 from abc import ABCMeta, abstractmethod, abstractproperty
@@ -2482,7 +2483,7 @@ class AppDROP(ContainerDROP):
             t.daemon = 1
             t.start()
 
-    _dlg_proc_lock = threading.Lock()
+    _dlg_proc_lock = multiprocessing.Lock()
 
     @track_current_drop
     def execute(self, _send_notifications=True):
@@ -2506,11 +2507,15 @@ class AppDROP(ContainerDROP):
                 if hasattr(self, "_tp"):
                     proc = DlgProcess(target=self.run, daemon=True)
                     # see YAN-975 for why this is happening
-                    lock = InputFiredAppDROP._dlg_proc_lock
-                    with lock:
-                        proc.start()
-                    with lock:
-                        proc.join()
+                    lock = self._dlg_proc_lock
+                    logger.debug("aquiring lock..")
+                    #with lock:
+                    logger.debug("got lock")
+                    proc.start()
+                    #with lock:
+                    logger.debug("joining...")
+                    proc.join()
+                    logger.debug("proc done!")
                     proc.close()
                     if proc.exception:
                         raise proc.exception
