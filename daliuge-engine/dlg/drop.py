@@ -1819,6 +1819,14 @@ class InMemoryDROP(DataDROP):
     A DROP that points data stored in memory.
     """
 
+    # Allow in-memory drops to be automatically removed by default
+    def __init__(self, *args, **kwargs):
+        if 'precious' not in kwargs:
+            kwargs['precious'] = False
+        if 'expireAfterUse' not in kwargs:
+            kwargs['expireAfterUse'] = True
+        super().__init__(*args, **kwargs)
+
     def initialize(self, **kwargs):
         args = []
         if "pydata" in kwargs:
