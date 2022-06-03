@@ -208,7 +208,7 @@ class DataLifecycleManager:
     An object that deals with automatic data drop replication and deletion.
     """
 
-    def __init__(self, check_period=10, cleanup_period=100, enable_drop_replication=True):
+    def __init__(self, check_period=0, cleanup_period=0, enable_drop_replication=False):
         self._reg = registry.InMemoryRegistry()
         self._listener = DropEventListener(self)
         self._enable_drop_replication = enable_drop_replication
