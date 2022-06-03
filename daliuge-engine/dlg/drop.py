@@ -2508,14 +2508,10 @@ class AppDROP(ContainerDROP):
                     proc = DlgProcess(target=self.run, daemon=True)
                     # see YAN-975 for why this is happening
                     lock = self._dlg_proc_lock
-                    logger.debug("aquiring lock..")
-                    #with lock:
-                    logger.debug("got lock")
-                    proc.start()
-                    #with lock:
-                    logger.debug("joining...")
-                    proc.join()
-                    logger.debug("proc done!")
+                    with lock:
+                        proc.start()
+                    with lock:
+                        proc.join()
                     proc.close()
                     if proc.exception:
                         raise proc.exception
