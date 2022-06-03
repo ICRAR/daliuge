@@ -113,7 +113,6 @@ class NMTestsMixIn(object):
     def _start_dm(self, threads=0, **kwargs):
         host, events_port, rpc_port = nm_conninfo(len(self._dms))
         nm = NodeManager(
-            useDLM=False,
             host=host,
             events_port=events_port,
             rpc_port=rpc_port,

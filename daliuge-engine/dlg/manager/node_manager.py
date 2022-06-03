@@ -127,7 +127,9 @@ class NodeManagerBase(DROPManager):
 
     def __init__(
         self,
-        useDLM=False,
+        dlm_check_period=0,
+        dlm_cleanup_period=0,
+        dlm_enable_replication=False,
         dlgPath=None,
         error_listener=None,
         event_listeners=[],
@@ -135,14 +137,11 @@ class NodeManagerBase(DROPManager):
         logdir=utils.getDlgLogsDir(),
     ):
 
-        dlm_params = {}
-        if useDLM:
-            dlm_params = {
-                'check_period': 10,
-                'cleanup_period': 100,
-                'enable_drop_replication': True
-            }
-        self._dlm = DataLifecycleManager(**dlm_params)
+        self._dlm = DataLifecycleManager(
+            check_period=dlm_check_period,
+            cleanup_period=dlm_cleanup_period,
+            enable_drop_replication=dlm_enable_replication
+        )
         self._sessions = {}
         self.logdir = logdir
 
@@ -271,8 +270,7 @@ class NodeManagerBase(DROPManager):
                     )
                 drop._sessID = sessionId
                 self._memoryManager.register_drop(drop.uid, sessionId)
-            if self._dlm:
-                self._dlm.addDrop(drop)
+            self._dlm.addDrop(drop)
 
             # Remote event forwarding
             evt_listener = NMDropEventListener(self, sessionId)
