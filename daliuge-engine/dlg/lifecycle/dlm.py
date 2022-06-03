@@ -203,11 +203,19 @@ class DropEventListener(object):
                 self._dlm.handleCompletedDrop(event.uid)
 
 
-class DataLifecycleManager(object):
-    def __init__(self, **kwargs):
-        self._hsm = manager.HierarchicalStorageManager()
+class DataLifecycleManager:
+    """
+    An object that deals with automatic data drop replication and deletion.
+    """
+
+    def __init__(self, check_period=10, cleanup_period=100, enable_drop_replication=True):
         self._reg = registry.InMemoryRegistry()
         self._listener = DropEventListener(self)
+        self._enable_drop_replication = enable_drop_replication
+        if enable_drop_replication:
+            self._hsm = manager.HierarchicalStorageManager()
+        else:
+            self._hsm = None
 
         # TODO: When iteration over the values of _drops we always do _drops.values()
         # instead of _drops.itervalues() to get a full, thread-safe copy of the
@@ -215,34 +223,32 @@ class DataLifecycleManager(object):
         # here
         self._drops = {}
 
-        self._checkPeriod = 10
-        if "checkPeriod" in kwargs:
-            self._checkPeriod = float(kwargs["checkPeriod"])
-
-        self._cleanupPeriod = 10 * self._checkPeriod
-        if "cleanupPeriod" in kwargs:
-            self._cleanupPeriod = float(kwargs["cleanupPeriod"])
+        self._check_period = check_period
+        self._cleanup_period = cleanup_period
+        self._drop_checker = None
+        self._drop_garbage_collector = None
+        self._finishedEvent = threading.Event()
 
     def startup(self):
         # Spawn the background threads
-        self._finishedEvent = threading.Event()
-        dropChecker = DROPChecker(self, self._checkPeriod)
-        dropChecker.start()
-        dropGarbageCollector = DROPGarbageCollector(
-            self, self._cleanupPeriod
-        )
-        dropGarbageCollector.start()
-
-        self._dropChecker = dropChecker
-        self._dropGarbageCollector = dropGarbageCollector
+        if self._check_period:
+            self._drop_checker = DROPChecker(self, self._check_period)
+            self._drop_checker.start()
+        if self._cleanup_period:
+            self._drop_garbage_collector = DROPGarbageCollector(
+                self, self._cleanup_period
+            )
+            self._drop_garbage_collector.start()
 
     def cleanup(self):
         logger.info("Cleaning up the DLM")
 
         # Join the background threads
         self._finishedEvent.set()
-        self._dropChecker.join()
-        self._dropGarbageCollector.join()
+        if self._drop_checker:
+            self._drop_checker.join()
+        if self._drop_garbage_collector:
+            self._drop_garbage_collector.join()
 
         # Unsubscribe to all events coming from the DROPs
         for drop in self._drops.values():
@@ -456,6 +462,9 @@ class DataLifecycleManager(object):
         """
         # Check the kind of storage used by this DROP. If it's already persisted
         # in a persistent storage media we don't need to save it again
+
+        if not self._enable_drop_replication:
+            return
 
         drop = self._drops[uid]
         if drop.precious and self.isReplicable(drop):
