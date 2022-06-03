@@ -139,10 +139,11 @@ class DataLifecycleManagerBackgroundTask(threading.Thread):
     signaled to stop
     """
 
-    def __init__(self, dlm, period):
+    def __init__(self, name, dlm, period):
         threading.Thread.__init__(self, name="DLMBackgroundTask")
         self._dlm = dlm
         self._period = period
+        logger.info("Starting %s running every %.3f [s]", name, self._period)
 
     def run(self):
         ev = self._dlm._finishedEvent
@@ -232,11 +233,17 @@ class DataLifecycleManager:
     def startup(self):
         # Spawn the background threads
         if self._check_period:
-            self._drop_checker = DROPChecker(self, self._check_period)
+            self._drop_checker = DROPChecker(
+                "DropChecker",
+                self,
+                self._check_period
+            )
             self._drop_checker.start()
         if self._cleanup_period:
             self._drop_garbage_collector = DROPGarbageCollector(
-                self, self._cleanup_period
+                "DropGarbageCollector",
+                self,
+                self._cleanup_period
             )
             self._drop_garbage_collector.start()
 
