@@ -58,7 +58,7 @@ class TestDataLifecycleManager(unittest.TestCase):
             manager.addDrop(drop)
 
     def test_dropCompleteTriggersReplication(self):
-        with dlm.DataLifecycleManager() as manager:
+        with dlm.DataLifecycleManager(enable_drop_replication=True) as manager:
             drop = FileDROP("oid:A", "uid:A1", expectedSize=1)
             manager.addDrop(drop)
             self._writeAndClose(drop)

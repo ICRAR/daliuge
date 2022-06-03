@@ -135,7 +135,14 @@ class NodeManagerBase(DROPManager):
         logdir=utils.getDlgLogsDir(),
     ):
 
-        self._dlm = DataLifecycleManager() if useDLM else None
+        dlm_params = {}
+        if useDLM:
+            dlm_params = {
+                'check_period': 10,
+                'cleanup_period': 100,
+                'enable_drop_replication': True
+            }
+        self._dlm = DataLifecycleManager(**dlm_params)
         self._sessions = {}
         self.logdir = logdir
 
