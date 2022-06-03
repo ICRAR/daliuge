@@ -292,10 +292,8 @@ class DataLifecycleManager:
             # are finished using this DROP
             if drop.expireAfterUse:
                 allDone = all(
-                    [
-                        c.execStatus in [AppDROPStates.FINISHED, AppDROPStates.ERROR]
-                        for c in drop.consumers
-                    ]
+                    c.execStatus in [AppDROPStates.FINISHED, AppDROPStates.ERROR]
+                    for c in drop.consumers
                 )
                 if not allDone:
                     continue
