@@ -187,7 +187,12 @@ class NodeManagerBase(DROPManager):
         debugging = logger.isEnabledFor(logging.DEBUG)
         self._logging_event_listener = LogEvtListener() if debugging else None
 
+    def start(self):
+        super().start()
+        self._dlm.startup()
+
     def shutdown(self):
+        self._dlm.cleanup()
         if self._threadpool:
             self._threadpool.close()
             self._threadpool.join()
