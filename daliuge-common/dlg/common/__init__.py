@@ -179,7 +179,8 @@ def get_roots(pg_spec):
     all_oids = set()
     nonroots = set()
     for dropspec in pg_spec:
-
+        if "oid" not in dropspec:  # Assumed to be reprodata / other non-drop elements
+            continue
         oid = dropspec["oid"]
         all_oids.add(oid)
 
