@@ -185,7 +185,7 @@ def submit(
     """
     client = _get_client(host, port, timeout)
     session_id = session_id or "%f" % (time.time())
-    completed_uids = droputils.get_roots(pg[:-1])
+    completed_uids = droputils.get_roots(pg)
     with client:
         client.create_session(session_id)
         logger.info("Session %s created", session_id)
