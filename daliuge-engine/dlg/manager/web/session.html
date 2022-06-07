@@ -216,7 +216,8 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 		g.graph().rankdir = direction;
 		drawGraph();
 		orientButtons.attr("disabled", null);
-		status_update_handler()
+		startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handler,
+	                 status_update_handler, 1000);
 	});
 
         // This works assuming that the status list comes in the same order
