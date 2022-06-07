@@ -54,8 +54,16 @@ svg {
 
 .node g div {
   color: #000;
-  padding: 4px 30px;
+  padding: 4px 25px 4px 25px;
   overflow: hidden;
+}
+
+#pg-graph .drop-label.rect{
+  padding: 4px 0px 4px 0px;
+}
+
+#pg-graph .drop-label.parallelogram{
+  padding: 4px 28px 4px 28px;
 }
 
 .node polygon+g div div {
