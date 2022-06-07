@@ -393,6 +393,7 @@
 .node rect, .node polygon {
   stroke-width: 2.0px;
   stroke: #bbb;
+  height:60px;
   padding: 4px 8px;
 }
 
@@ -400,8 +401,6 @@
 
 #main #dagGraphArea .node :first-child, #main #dagGraphArea rect {
   fill: #9ab4d0;
-  width:300px;
-  height:85px;
   stroke: black;
 }
 
@@ -414,8 +413,18 @@
   font-weight: 700;
 }
 
-#main #dagGraphArea .drop-label{
-  padding: 5% 18%;
+.node g div {
+  color: #000;
+  padding: 4px 28px 4px 28px;
+  overflow: hidden;
+}
+
+#main #dagGraphArea .drop-label.rect{
+  padding: 4px 0px 4px 0px;
+}
+
+#main #dagGraphArea .drop-label.parallelogram{
+  padding: 4px 28px 4px 28px;
 }
 
 #main #dagGraphArea path.path {

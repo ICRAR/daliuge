@@ -547,9 +547,9 @@ function _addNode(g, doSpec) {
 	else if( doSpec.type == 'plain' ) {
 		notes += 'storage: ' + doSpec.storage;
 	}
-
+	
 	var oid = doSpec.oid;
-	var html = '<div class="drop-label" id="id_' + oid + '">';
+	var html = '<div class="drop-label '+typeShape+'" id="id_' + oid + '">';
 	html += '<span class="notes">' + notes + '</span>';
 	html += '<span style="font-size: 13px;">' + oid + '</span>';
 	html += "</div>";
