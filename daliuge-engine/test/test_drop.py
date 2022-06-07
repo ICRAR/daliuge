@@ -20,9 +20,16 @@
 #    MA 02111-1307  USA
 #
 
+import asyncio
 import contextlib
+import ctypes
 import io
+import multiprocessing
+from multiprocessing.pool import ThreadPool
 import os, unittest
+import queue
+from typing import AsyncIterable, AsyncIterator, Deque
+import time
 import random
 import shutil
 import sqlite3
@@ -52,6 +59,11 @@ from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
 from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp
 
+import logging
+
+from dlg.manager.shared_memory_manager import DlgSharedMemoryManager
+logger = logging.getLogger(__name__)
+
 try:
     from crc32c import crc32c
 except:
@@ -73,6 +85,20 @@ def isContainer(drop):
         return True
     except AttributeError:
         return False
+
+
+def enabled_multiprocessing(apps, dataDrops):
+        from psutil import cpu_count
+        session_id = 1
+        max_threads = cpu_count(logical=False)
+        threadpool = ThreadPool(processes=max_threads)
+        memory_manager = DlgSharedMemoryManager()
+        for app in apps:
+            app.__setattr__("_tp", threadpool)
+        for dataDrop in dataDrops:
+            dataDrop.__setattr__("_tp", threadpool)
+            dataDrop.__setattr__("_sessID", session_id)
+            memory_manager.register_drop(dataDrop.uid, session_id)
 
 
 class SumupContainerChecksum(BarrierAppDROP):
@@ -747,8 +773,125 @@ class TestDROP(unittest.TestCase):
         checkDropStates(
             DROPStates.COMPLETED, DROPStates.COMPLETED, DROPStates.COMPLETED, b"k"
         )
-
         self.assertEqual(b"ejk", droputils.allDropContents(d))
+
+    def test_objectAsNormalAndThreadedAsyncStreamingInput(self):
+        self._test_objectAsNormalAndAsyncStreamingInput(False)
+
+    def test_objectAsNormalAndMPAsyncStreamingInput(self):
+        self._test_objectAsNormalAndAsyncStreamingInput(True)
+
+    def _test_objectAsNormalAndAsyncStreamingInput(self, use_multiprocessing):
+        """
+        A test that checks that a DROP can act as normal and async streaming input
+        of different AppDROPs at the same time. We use the following graph:
+
+        A --|--> B --> D
+            |--> C --> E
+
+        Here B uses A as a streaming input, while C uses it as a normal
+        input
+        """
+
+        class QueueAsyncStream(AsyncIterator):
+            _q = multiprocessing.Queue()
+            _end = multiprocessing.Event()
+            async def __anext__(self):
+                while True:
+                    if self._q.qsize() > 0:
+                        return self._q.get()
+                    elif self._end.is_set():
+                        raise StopAsyncIteration
+                    else:
+                        await asyncio.sleep(0)
+
+            def append(self, data):
+                while not self._q.full():
+                    try:
+                        self._q.put(data, block=True, timeout=1)
+                        break
+                    except queue.Full:
+                        pass
+
+            def end(self):
+                self._end.set()
+
+        class LastCharWriterApp(AppDROP):
+            # Note: cannot share string member with test thread
+            _lastByte = multiprocessing.Value(ctypes.c_char, b" ")
+            _stream = QueueAsyncStream()
+
+            def run(self):
+                asyncio.run(self.arun())
+
+            async def arun(self):
+                outputDrop = self.outputs[0]
+                async for data in self._stream:
+                    self._lastByte.value = data[-1:]
+                    outputDrop.write(self._lastByte.value)
+
+            def dataWritten(self, uid, data):
+                self._stream.append(data)
+
+            def dropCompleted(self, uid, drop_state):
+                self._stream.end()
+
+        a = InMemoryDROP("a", "a")
+        b = LastCharWriterApp("b", "b")
+        c = SumupContainerChecksum("c", "c")
+        d = InMemoryDROP("d", "d")
+        e = InMemoryDROP("e", "e")
+        a.addStreamingConsumer(b)
+        a.addConsumer(c)
+        b.addOutput(d)
+        c.addOutput(e)
+
+        if use_multiprocessing:
+            enabled_multiprocessing([b,c], [a,d,e])
+
+        # Consumer cannot be normal and streaming at the same time
+        self.assertRaises(Exception, a.addConsumer, b)
+        self.assertRaises(Exception, a.addStreamingConsumer, c)
+
+        # Write a little, then check the consumers
+        def checkDropStates(aStatus, dStatus, eStatus, lastByte):
+            self.assertEqual(aStatus, a.status)
+            self.assertEqual(dStatus, d.status)
+            self.assertEqual(eStatus, e.status)
+            if lastByte is not None:
+                self.assertEqual(lastByte, b._lastByte.value)
+
+        with DROPWaiterCtx(self, [d, e]):
+            b.async_execute()
+            time.sleep(0.1)
+
+            # TODO: data state doesn't update to writing with multiprocessing
+            data_state = DROPStates.INITIALIZED if use_multiprocessing else DROPStates.WRITING
+
+            checkDropStates(
+                DROPStates.INITIALIZED, DROPStates.INITIALIZED, DROPStates.INITIALIZED, b" "
+            )
+            a.write(b"abcde")
+            time.sleep(0.1)
+
+            checkDropStates(
+                DROPStates.WRITING, data_state, DROPStates.INITIALIZED, b"e"
+            )
+            a.write(b"fghij")
+            time.sleep(0.1)
+
+            checkDropStates(
+                DROPStates.WRITING, data_state, DROPStates.INITIALIZED, b"j"
+            )
+            a.write(b"k")
+            time.sleep(0.1)
+            a.setCompleted()
+
+        checkDropStates(
+            DROPStates.COMPLETED, DROPStates.COMPLETED, DROPStates.COMPLETED, b"k"
+        )
+        self.assertEqual(b"ejk", droputils.allDropContents(d))
+        self.assertEqual(b"1325211590", droputils.allDropContents(e))
 
     def test_fileDROP_delete_parent_dir(self):
         """
