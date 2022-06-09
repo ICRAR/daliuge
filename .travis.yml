@@ -74,6 +74,15 @@ jobs:
       script:
         - READTHEDOCS=True make -C docs html SPHINXOPTS="-W --keep-going"
 
+    # Run pylint to enforce our (few) rules
+    - name: pylint
+      python: "3.9"
+      before_install:
+      install:
+        - pip install pylint
+      script:
+        - pylint daliuge-common daliuge-translator daliuge-engine
+
 
 # We want to use docker during the tests
 services:
