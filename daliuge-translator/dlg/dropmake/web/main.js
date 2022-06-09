@@ -113,7 +113,7 @@ function updateDeployOptionsDropdown() {
             selectedUrl=element.url
             //active option
             $("#deployDropdowns").prepend(
-                `<a href='javascript:void(0)' id='activeDeployMethodButton'  onclick='initiateDeploy("`+element.deployMethod+`",true,"`+element.name+`")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph vi method: `+element.deployMethod+`' value='Deploy Physical Graph via `+element.deployMethod+`'>Deploy: `+element.name+`</a>`
+                `<a href='javascript:void(0)' id='activeDeployMethodButton'  onclick='initiateDeploy("`+element.deployMethod+`",true,"`+element.name+`")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph vi method: `+element.deployMethod+` [D]' value='Deploy Physical Graph via `+element.deployMethod+`'>Deploy: `+element.name+`</a>`
             )
             checkActiveDeployMethod(selectedUrl)
         }
