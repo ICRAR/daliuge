@@ -128,6 +128,7 @@
 
 			return [scale(cumsum[i]), scale(x)];
 		});
+
 		var rects = d3.select('#pg-progress-bar svg').selectAll('rect').data(status_counts);
 
 		rects.enter().append('rect')
@@ -196,7 +197,6 @@ function view_as_graph(sessionId, selectedNode, serverUrl) {
 	var render = getRender();
 	function drawGraph() {
 		inner.call(render, g);
-		// render(inner,g)
 	}
 
 

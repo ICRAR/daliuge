@@ -221,6 +221,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 
 			return [scale(cumsum[i]), scale(x)];
 		});
+
 			var rects = d3.select('#sessionsTable .status svg').selectAll('rect').data(status_counts);
 			rects.enter().append('rect')
 				.style('height', 20).style('width', 0).style('x', 0).style('y', 0)
