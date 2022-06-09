@@ -1398,8 +1398,8 @@ class LG:
                     for i, ga_drop in enumerate(sdrops):
                         if ga_drop["oid"] not in self._gather_cache:
                             logger.warning(
-                                "Gather %s Drop not yet in cache, sequentialisation may fail!"
-                                % slgn.text
+                                "Gather %s Drop not yet in cache, sequentialisation may fail!",
+                                slgn.text
                             )
                             continue
                         j = (i + 1) * slgn.gather_width
