@@ -188,9 +188,7 @@ def removeUnmetRelationships(dropSpecList):
                 to_delete.append(rel)
 
         for rel in to_delete:
-            ds = dropSpec[rel]
-            ds = list(ds.keys())[0] if isinstance(ds, dict) else ds
-            del ds
+            del dropSpec[rel]
 
     return unmetRelationships
 
