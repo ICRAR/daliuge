@@ -30,8 +30,6 @@ import logging
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 
-from numpy import isin
-
 from . import droputils
 from .apps.socket_listener import SocketListenerApp
 from .common import Categories
@@ -53,7 +51,7 @@ from .environmentvar_drop import EnvironmentVarDROP
 from dlg.parset_drop import ParameterSetDROP
 from .exceptions import InvalidGraphException
 from .json_drop import JsonDROP
-from .common import Categories, DropType
+from .common import DropType
 
 
 STORAGE_TYPES = {
