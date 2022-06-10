@@ -704,6 +704,7 @@ class LGNode:
             drop_spec = dropdict(
                 {"oid": oid, "type": DropType.APP, "app": app_str, "rank": rank}
             )
+            self._update_key_value_attributes(kwargs)
             if "execution_time" in self.jd:
                 kwargs["tw"] = int(self.jd["execution_time"])
             else:
@@ -772,6 +773,7 @@ class LGNode:
             kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
             kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
             kwargs["shmSize"] = str(self.jd.get("shmSize", ""))
+            self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
 
         elif drop_type == Categories.GROUP_BY:
