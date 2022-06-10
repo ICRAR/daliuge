@@ -137,10 +137,10 @@ def removeUnmetRelationships(dropSpecList):
     normalise_oid = lambda oid: next(iter(oid)) if isinstance(oid, dict) else oid
 
     # Step #1: Get all OIDs
-    oids = []
+    oids = set()
     for dropSpec in dropSpecList:
         oid = normalise_oid(dropSpec["oid"])
-        oids.append(oid)
+        oids.add(oid)
 
     # Step #2: find unmet relationships and remove them from the original
     # DROP spec, keeping track of them
