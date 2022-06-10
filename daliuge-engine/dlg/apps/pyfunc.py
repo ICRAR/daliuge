@@ -531,6 +531,31 @@ class PyFuncApp(BarrierAppDROP):
                         logger.warning(f"Keyword argument '{ka}' not found!")
             logger.debug(f"updating funcargs with {kwargs}")
             self.funcargs.update(kwargs)
+
+            # deal with kwonlyargs
+            kwargs = {}
+            kws = self.arguments.kwonlyargs
+            for ka in kws:
+                if ka not in self.funcargs:
+                    if ka in appArgs:
+                        arg = appArgs.pop(ka)
+                        value = arg['value']
+                        ptype = arg['type']
+                        if ptype in ["Complex", "Json"]:
+                            try:
+                                value = ast.literal_eval(value)
+                            except:
+                                pass
+                        kwargs.update({
+                            ka:
+                            value
+                        })
+                    else:
+                        logger.warning(f"Keyword only argument '{ka}' not found!")
+            logger.debug(f"updating funcargs with kwonlyargs: {kwargs}")
+            self.funcargs.update(kwargs)
+
+            # any remaining application arguments will be used for vargs and vkwargs
             vparg = []
             vkarg = {}
             logger.debug(f"Remaining AppArguments {appArgs}")
@@ -544,7 +569,6 @@ class PyFuncApp(BarrierAppDROP):
                 else:
                     vkarg.update({arg:value})
 
-            # any remaining application arguments will be used for vargs and vkwargs
             if self.arguments.varargs:
                 self.pargs.extend(vparg)
             if self.arguments.varkw:
