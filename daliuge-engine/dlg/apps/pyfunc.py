@@ -295,6 +295,17 @@ class PyFuncApp(BarrierAppDROP):
             "func_defaults",
             "pickle",
             ]
+
+        # backwards compatibility
+        if "pickle" in self._applicationArgs:
+            if self._applicationArgs["pickle"]["value"] == True:
+                self.input_parser = DropParser.PICKLE
+                self.output_parser = DropParser.PICKLE
+            else:
+                self.input_parser = DropParser.EVAL
+                self.output_parser = DropParser.EVAL
+            self._applicationArgs.pop("pickle")
+
         for kw in self.func_def_keywords:
             if kw in self._applicationArgs:  # these are the preferred ones now
                 if isinstance(
@@ -304,7 +315,6 @@ class PyFuncApp(BarrierAppDROP):
                 ):
                     # only transfer if there is a value or precious is True
                     self._applicationArgs.pop(kw)
-
 
         self.num_args = len(
             self._applicationArgs
