@@ -69,8 +69,8 @@ logger = logging.getLogger(__name__)
 bottle.BaseRequest.MEMFILE_MAX = 1024 * 512
 
 
-def file_as_string(fname, enc="utf8"):
-    b = pkg_resources.resource_string(__name__, fname)  # @UndefinedVariable
+def file_as_string(fname, package=__name__, enc="utf8"):
+    b = pkg_resources.resource_string(package, fname)  # @UndefinedVariable
     return common.b2s(b, enc)
 
 
@@ -94,7 +94,8 @@ ALGO_PARAMS = [
     ("max_mem", int),
 ]  # max_mem is only relevant for the old editor, not used in EAGLE
 
-LG_SCHEMA_PATH = "/daliuge/dlg-lg.graph.schema"
+
+LG_SCHEMA = json.loads(file_as_string("lg.graph.schema", package="dlg.dropmake"))
 
 
 def lg_path(lg_name):
@@ -573,18 +574,12 @@ def gen_pgt_post():
         logical_graph = json.loads(json_string)
         error = None
 
-        # load LG schema
-        lg_schema = None
-        if os.path.exists(LG_SCHEMA_PATH):
-            with open(LG_SCHEMA_PATH, "r") as schema_file:
-                lg_schema = json.load(schema_file)
+        # validate LG against schema
+        try:
+            validate(logical_graph, LG_SCHEMA)
+        except ValidationError as ve:
+            error = "Validation Error {1}: {0}".format(str(ve), lg_name)
 
-        # validate JSON (if schema was found)
-        if lg_schema is not None:
-            try:
-                validate(logical_graph, lg_schema)
-            except ValidationError as ve:
-                error = "Validation Error {1}: {0}".format(str(ve), lg_name)
         logical_graph = prepare_lgt(logical_graph, rmode)
         # LG -> PGT
         pgt = unroll_and_partition_with_params(logical_graph, reqform)
