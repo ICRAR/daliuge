@@ -648,6 +648,7 @@ class TestDM(NodeManagerTestsBase, unittest.TestCase):
 
 
 
-@unittest.skipIf(multiprocessing.cpu_count() < 4, "Not enough threads to test multiprocessing")
+@unittest.skipUnless(os.environ.get('DALIUGE_RUN_MP_TESTS', '0') == '1',
+                     "Unstable multiprocessing tests not run by default")
 class TestDMParallel(NodeManagerTestsBase, unittest.TestCase):
     nm_threads = multiprocessing.cpu_count()
