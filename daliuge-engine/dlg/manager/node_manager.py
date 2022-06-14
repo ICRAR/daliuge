@@ -187,38 +187,11 @@ class NodeManagerBase(DROPManager):
         debugging = logger.isEnabledFor(logging.DEBUG)
         self._logging_event_listener = LogEvtListener() if debugging else None
 
-        # Start the mix-ins
-        self.start()
-
-    @abc.abstractmethod
-    def start(self):
-        """
-        Starts any background task required by this Node Manager
-        """
-
     def shutdown(self):
         if self._threadpool:
             self._threadpool.close()
             self._threadpool.join()
-
-    @abc.abstractmethod
-    def subscribe(self, host, port):
-        """
-        Subscribes this Node Manager to events published in from ``host``:``port``
-        """
-
-    @abc.abstractmethod
-    def publish_event(self, evt):
-        """
-        Publishes the event ``evt`` for other Node Managers to receive it
-        """
-
-    @abc.abstractmethod
-    def get_rpc_client(self, hostname, port):
-        """
-        Creates an RPC client connected to the node manager running in
-        ``host``:``port``, and its closing method, as a 2-tuple.
-        """
+        super().shutdown()
 
     def deliver_event(self, evt):
         """
@@ -568,7 +541,7 @@ class RpcMixIn(rpc.RPCClient, rpc.RPCServer):
 
 
 # Final NodeManager class
-class NodeManager(EventMixIn, RpcMixIn, NodeManagerBase):
+class NodeManager(NodeManagerBase, EventMixIn, RpcMixIn):
     def __init__(
         self,
         host=None,
@@ -577,13 +550,17 @@ class NodeManager(EventMixIn, RpcMixIn, NodeManagerBase):
         *args,
         **kwargs
     ):
+        host = host or "127.0.0.1"
+        NodeManagerBase.__init__(self, *args, **kwargs)
+        EventMixIn.__init__(self, host, events_port)
+        RpcMixIn.__init__(self, host, rpc_port)
+        self.start()
+
+    def start(self):
         # We "just know" that our RpcMixIn will have a create_context static
         # method, which in reality means we are using the ZeroRPCServer class
         self._context = RpcMixIn.create_context()
-        host = host or "127.0.0.1"
-        EventMixIn.__init__(self, host, events_port)
-        RpcMixIn.__init__(self, host, rpc_port)
-        NodeManagerBase.__init__(self, *args, **kwargs)
+        super().start()
 
     def shutdown(self):
         super(NodeManager, self).shutdown()
