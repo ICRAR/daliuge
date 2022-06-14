@@ -179,8 +179,18 @@ def get_roots(pg_spec):
     all_oids = set()
     nonroots = set()
     for dropspec in pg_spec:
-        if "oid" not in dropspec:  # Assumed to be reprodata / other non-drop elements
+
+        # Assumed to be reprodata / other non-drop elements
+        #
+        # TODO (rtobar): Note that this should be a temporary measure.
+        # In principle the pg_spec given here should be a graph, which (until
+        # recently) consisted on drop specifications only. The fact that repro
+        # data is now appended at the end of some graphs highlights the need for
+        # a more formal specification of graphs and other pieces of data that we
+        # move through the system.
+        if "oid" not in dropspec:
             continue
+
         oid = dropspec["oid"]
         all_oids.add(oid)
 
