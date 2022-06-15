@@ -213,7 +213,7 @@ def load_and_init(libname, oid, uid, params):
     libname = find_library(libname) or libname
 
     lib = ctypes.cdll.LoadLibrary(libname)
-    logger.info("Loaded {} as {!r}".format(libname, lib))
+    logger.info("Loaded %s as %r", libname, lib)
 
     one_of_functions = [["run", "run2"], ["init", "init2"]]
     for functions in one_of_functions:
@@ -251,7 +251,7 @@ def load_and_init(libname, oid, uid, params):
 
     if hasattr(lib, "init2"):
         # With init2 we pass the params as a PyObject*
-        logger.info("Extra parameters passed to application: {}".format(params))
+        logger.info("Extra parameters passed to application: %r", params)
         init2 = lib.init2
         init2.restype = ctypes.py_object
         result = init2(ctypes.pointer(c_app), ctypes.py_object(params))
@@ -527,7 +527,7 @@ class DynlibProcApp(BarrierAppDROP):
                 logger.info("Subprocess %s", step)
                 error = get_from_subprocess(self.proc, queue)
                 if error is not None:
-                    logger.error("Error in sub-process when " + step)
+                    logger.error("Error in sub-process when %s", step)
                     raise error
         finally:
             self.proc.join(self.timeout)

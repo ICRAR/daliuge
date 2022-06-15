@@ -328,7 +328,7 @@ def gen_pg_helm():
         )
 
     pgtpj = pgtp._gojs_json_obj
-    logger.info("PGTP: %s" % pgtpj)
+    logger.info("PGTP: %s", pgtpj)
     num_partitions = len(list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"])))
     # Send pgt_data to helm_start
     try:
@@ -361,7 +361,7 @@ def gen_pg():
 
     pgtpj = pgtp._gojs_json_obj
     reprodata = pgtp.reprodata
-    logger.info("PGTP: %s" % pgtpj)
+    logger.info("PGTP: %s", pgtpj)
     num_partitions = 0
     num_partitions = len(list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"])))
     surl = urlparse(request.url)
@@ -390,9 +390,9 @@ def gen_pg():
         if request.query.get("dlg_mgr_port"):
             mport = int(request.query.get("dlg_mgr_port"))
 
-    logger.debug("Manager host: %s" % mhost)
-    logger.debug("Manager port: %s" % mport)
-    logger.debug("Manager prefix: %s" % mprefix)
+    logger.debug("Manager host: %s", mhost)
+    logger.debug("Manager port: %s", mport)
+    logger.debug("Manager prefix: %s", mprefix)
 
     if mhost is None:
         if request.query.get("tpl_nodes_len"):

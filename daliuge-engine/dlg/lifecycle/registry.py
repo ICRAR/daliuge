@@ -162,7 +162,7 @@ class RDBMSRegistry(Registry):
             self._connArgs = connArgs
         except:
             logger.error(
-                "Cannot import module %s, RDBMSRegistry cannot start" % (dbModuleName)
+                "Cannot import module %s, RDBMSRegistry cannot start", dbModuleName
             )
             raise
 
