@@ -43,7 +43,7 @@ class HierarchicalStorageManager(object):
         """
         @param newStore store.AbstractStore
         """
-        logger.debug("Adding store to HSM: " + str(newStore))
+        logger.debug("Adding store to HSM: %s", str(newStore))
         self._stores.append(newStore)
 
     def getSlowestStore(self):

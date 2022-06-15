@@ -1,0 +1,3 @@
+[Main]
+disable=all
+enable=logging-not-lazy,logging-format-interpolation

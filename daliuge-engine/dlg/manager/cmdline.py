@@ -69,7 +69,7 @@ def launchServer(opts):
     dmName = opts.dmType.__name__
 
     logger.info("DALiuGE version %s running at %s", version.full_version, os.getcwd())
-    logger.info("Creating %s" % (dmName))
+    logger.info("Creating %s", dmName)
     try:
         dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
     except:
@@ -86,7 +86,7 @@ def launchServer(opts):
         if _terminating:
             return
         _terminating = True
-        logger.info("Exiting from %s" % (dmName))
+        logger.info("Exiting from %s", dmName)
 
         server.stop_manager()
 

@@ -220,8 +220,8 @@ class NodeManagerBase(DROPManager):
         """
         if not evt.session_id in self._sessions:
             logger.warning(
-                "No session %s found, event (%s) will be dropped"
-                % (evt.session_id, evt.type)
+                "No session %s found, event (%s) will be dropped",
+                evt.session_id, evt.type
             )
             return
         self._sessions[evt.session_id].deliver_event(evt)
