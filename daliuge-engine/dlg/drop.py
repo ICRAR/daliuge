@@ -383,17 +383,25 @@ class AbstractDROP(EventFirer):
             DROPStates.INITIALIZED
         )  # no need to use synchronised self.status here
 
+    _members_cache = {}
+
+    def _get_members(self):
+        cls = self.__class__
+        if cls not in AbstractDROP._members_cache:
+            members = [
+                (name, val)
+                for c in cls.__mro__[:-1]
+                for name, val in vars(c).items()
+                if not (inspect.isfunction(val) or isinstance(val, property))
+            ]
+            AbstractDROP._members_cache[cls] = members
+        return AbstractDROP._members_cache[cls]
+
     def _extract_attributes(self, **kwargs):
         """
         Extracts component and app params then assigns them to class instance attributes.
         Component params take pro
         """
-        def getmembers(object, predicate=None):
-            for cls in object.__class__.__mro__[:-1]:
-                for k, v in vars(cls).items():
-                    if not predicate or predicate(v):
-                        yield k, v
-
         def get_param_value(attr_name, default_value):
             has_component_param = attr_name in kwargs
             has_app_param = 'applicationArgs' in kwargs \
@@ -410,9 +418,7 @@ class AbstractDROP(EventFirer):
             return param
 
         # Take a class dlg defined parameter class attribute and create an instanced attribute on object
-        for attr_name, member in getmembers(
-            self, lambda a: not (inspect.isfunction(a) or isinstance(a, property))
-        ):
+        for attr_name, member in self._get_members():
             if isinstance(member, dlg_float_param):
                 value = get_param_value(attr_name, member.default_value)
                 if value is not None and value != "":
