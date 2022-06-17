@@ -534,7 +534,8 @@ def lg_build_blockdag(logical_graph: dict, level=None):
             dropset[neighbour][1] -= 1
             parenthash = {}
             if rmode != ReproducibilityFlags.NOTHING:
-                if rmode == ReproducibilityFlags.REPRODUCE:
+                if rmode in [ReproducibilityFlags.REPRODUCE, ReproducibilityFlags.REPLICATE_SCI,
+                             ReproducibilityFlags.REPLICATE_TOTAL]:
                     if (
                             dropset[did][0]["category"] in STORAGE_TYPES
                             and (dropset[did][1] == 0 or dropset[did][2] == 0)
@@ -564,8 +565,7 @@ def lg_build_blockdag(logical_graph: dict, level=None):
                                 ]
                             )
                         # parenthash.extend(dropset[did][0]['reprodata']['lg_parenthashes'])
-                if rmode not in [ReproducibilityFlags.REPRODUCE, ReproducibilityFlags.REPLICATE_SCI,
-                                 ReproducibilityFlags.REPLICATE_TOTAL]:  # Non-compressing behaviour
+                if rmode not in [ReproducibilityFlags.REPRODUCE]:  # Non-compressing behaviour
                     if level is None:
                         parenthash[did] = dropset[did][0]["reprodata"]["lg_blockhash"]
                     else:
@@ -675,7 +675,8 @@ def build_blockdag(drops: list, abstraction: str = "pgt", level=None):
             dropset[neighbour][1] -= 1
             parenthash = {}
             if rmode != ReproducibilityFlags.NOTHING:
-                if rmode == ReproducibilityFlags.REPRODUCE:
+                if rmode in [ReproducibilityFlags.REPRODUCE, ReproducibilityFlags.REPLICATE_SCI,
+                             ReproducibilityFlags.REPLICATE_TOTAL]:
                     # WARNING: Hack! may break later, proceed with caution
                     if level is None:
                         category = dropset[did][0]["reprodata"]["lgt_data"]["category"]
@@ -708,8 +709,7 @@ def build_blockdag(drops: list, abstraction: str = "pgt", level=None):
                             parenthash.update(
                                 dropset[did][0]["reprodata"][level.name][parentstr]
                             )
-                if rmode not in [ReproducibilityFlags.REPRODUCE, ReproducibilityFlags.REPLICATE_SCI,
-                                 ReproducibilityFlags.REPLICATE_TOTAL]:
+                if rmode not in [ReproducibilityFlags.REPRODUCE]:
                     if level is None:
                         parenthash[did] = dropset[did][0]["reprodata"][
                             blockstr + "_blockhash"
