@@ -635,11 +635,9 @@ class PhysicalBlockdagReplicateScientificTests(unittest.TestCase):
         pgr = _init_pgraph_twostart(self.rmode)
         leaves = build_blockdag(pgr, "pg")[0]
         parenthashes = list(pgr[1]["reprodata"]["pg_parenthashes"].values())
-        self.assertTrue(
-            len(leaves) == 1
-            and len(parenthashes) == 2
-            and parenthashes[0] == parenthashes[1]
-        )
+        self.assertTrue(len(leaves) == 1)
+        self.assertTrue(len(parenthashes) == 2)
+        self.assertTrue(parenthashes[0] == parenthashes[1])
 
     def test_pg_blockdag_twoend(self):
         """
@@ -691,10 +689,9 @@ class PhysicalBlockdagReplicateScientificTests(unittest.TestCase):
         """
         pgr = _init_pgraph_data_sandwich(self.rmode)
         build_blockdag(pgr, "pg")
-        sourcehash = pgr[1]["reprodata"]["pg_blockhash"]
+        sourcehash = pgr[0]["reprodata"]["pg_blockhash"]
         parenthashes = list(pgr[2]["reprodata"]["pg_parenthashes"].values())
         self.assertTrue(sourcehash in parenthashes)
-        print(parenthashes)
         self.assertTrue(len(parenthashes) > 0)
 
 
@@ -952,7 +949,7 @@ class PhysicalBlockdagAllTests(unittest.TestCase):
         for rmode in ALL_RMODES:
             build_blockdag(pgr, "pg", rmode)
             if rmode in [ReproducibilityFlags.REPRODUCE, ReproducibilityFlags.REPLICATE_SCI,
-                            ReproducibilityFlags.REPLICATE_TOTAL]:
+                         ReproducibilityFlags.REPLICATE_TOTAL]:
                 sourcehash = pgr[0]["reprodata"][rmode.name]["pg_blockhash"]
             else:
                 sourcehash = pgr[1]["reprodata"][rmode.name]["pg_blockhash"]
@@ -1017,9 +1014,12 @@ class PhysicalBlockdagAllTests(unittest.TestCase):
             parenthashes = list(
                 pgr[2]["reprodata"][rmode.name]["pg_parenthashes"].values()
             )
-            if rmode != ReproducibilityFlags.REPRODUCE:
+            if rmode not in [ReproducibilityFlags.REPRODUCE, ReproducibilityFlags.REPLICATE_SCI,
+                             ReproducibilityFlags.REPLICATE_TOTAL]:
                 self.assertTrue(
                     sourcehash in parenthashes)
                 self.assertTrue(len(parenthashes) > 0)
-            else:
+            if rmode in [ReproducibilityFlags.REPLICATE_SCI, ReproducibilityFlags.REPLICATE_TOTAL]:
+                self.assertTrue(len(parenthashes) > 0)
+            elif rmode == ReproducibilityFlags.REPRODUCE:
                 self.assertTrue(len(parenthashes) == 0)

@@ -41,6 +41,7 @@ _dummydrop = {
     "reprodata": {
         "rmode": "1",
         "lg_blockhash": "123",
+        "lgt_data": {"category": "Component"},
         "pgt_data": {"merkleroot": "456"},
         "pgt_parenthashes": {},
         "pgt_blockhash": "135",

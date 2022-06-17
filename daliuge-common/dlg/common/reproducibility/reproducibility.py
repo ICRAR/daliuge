@@ -674,16 +674,16 @@ def build_blockdag(drops: list, abstraction: str = "pgt", level=None):
         for neighbour in neighbourset[did]:
             dropset[neighbour][1] -= 1
             parenthash = {}
+            # WARNING: Hack! may break later, proceed with caution
+            if level is None:
+                category = dropset[did][0]["reprodata"]["lgt_data"]["category"]
+            else:
+                category = dropset[did][0]["reprodata"][rmode.name]["lgt_data"][
+                    "category"
+                ]
             if rmode != ReproducibilityFlags.NOTHING:
                 if rmode in [ReproducibilityFlags.REPRODUCE, ReproducibilityFlags.REPLICATE_SCI,
                              ReproducibilityFlags.REPLICATE_TOTAL]:
-                    # WARNING: Hack! may break later, proceed with caution
-                    if level is None:
-                        category = dropset[did][0]["reprodata"]["lgt_data"]["category"]
-                    else:
-                        category = dropset[did][0]["reprodata"][rmode.name]["lgt_data"][
-                            "category"
-                        ]
                     if (
                             category in STORAGE_TYPES
                             and (dropset[did][1] == 0 or dropset[did][2] == 0)
@@ -709,7 +709,8 @@ def build_blockdag(drops: list, abstraction: str = "pgt", level=None):
                             parenthash.update(
                                 dropset[did][0]["reprodata"][level.name][parentstr]
                             )
-                if rmode not in [ReproducibilityFlags.REPRODUCE]:
+                if rmode not in [ReproducibilityFlags.REPRODUCE, ReproducibilityFlags.REPLICATE_SCI,
+                                 ReproducibilityFlags.REPLICATE_TOTAL]:
                     if level is None:
                         parenthash[did] = dropset[did][0]["reprodata"][
                             blockstr + "_blockhash"
@@ -719,6 +720,17 @@ def build_blockdag(drops: list, abstraction: str = "pgt", level=None):
                             blockstr + "_blockhash"
                             ]
                 # Add our new hash to the parent-hash list if on the critical path
+                if rmode in [ReproducibilityFlags.REPLICATE_SCI,
+                             ReproducibilityFlags.REPLICATE_TOTAL]:
+                    if category not in STORAGE_TYPES:
+                        if level is None:
+                            parenthash[did] = dropset[did][0]["reprodata"][
+                                blockstr + "_blockhash"
+                                ]
+                        else:
+                            parenthash[did] = dropset[did][0]["reprodata"][level.name][
+                                blockstr + "_blockhash"
+                                ]
                 if rmode == ReproducibilityFlags.RERUN:
                     if "iid" in dropset[did][0].keys():
                         if (
