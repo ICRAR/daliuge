@@ -200,9 +200,10 @@ class BashShellBase(object):
         session_id = (
             self._dlg_session.sessionId if self._dlg_session is not None else ""
         )
-        argumentString = droputils.serialize_applicationArgs(
+        pargs, keyargs = droputils.serialize_applicationArgs(
             self._applicationArgs, self._argumentPrefix, self._paramValueSeparator
         )
+        argumentString = f"{' '.join(pargs + keyargs)}"  # add kwargs to end of pargs
         # complete command including all additional parameters and optional redirects
         cmd = f"{self.command} {argumentString} {self._cmdLineArgs} "
         if self._outputRedirect:

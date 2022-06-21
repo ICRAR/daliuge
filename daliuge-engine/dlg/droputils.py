@@ -524,7 +524,7 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     else:
         logger.info("ApplicationArgs found %s", applicationArgs)
     # construct the actual command line from all application parameters
-    args = []
+    kwargs = []
     pargs = []
     positional = False
     precious = False
@@ -544,12 +544,13 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
             pargs.append(str(value).strip())
         else:
             if prefix == "--" and len(name) == 1:
-                arg = [f"-{name} {value}"]
+                kwarg = [f"-{name} {value}"]
             else:
-                arg = [f"{prefix}{name}{separator}{value}".strip()]
-            args += arg
-    logger.info('Arguments of bash command: %s %s', args, pargs)
-    return f"{' '.join(args + pargs)}"  # add positional arguments to end of args
+                kwarg = [f"{prefix}{name}{separator}{value}".strip()]
+            kwargs += kwarg
+    logger.info('Constructed command line arguments: %s %s', pargs, kwargs)
+    # return f"{' '.join(pargs + kwargs)}"  # add kwargs to end of pargs
+    return (pargs, kwargs)
 
 
 # Easing the transition from single- to multi-package
