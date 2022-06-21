@@ -1,0 +1,51 @@
+name: Generate component palettes
+
+on: [push, pull_request]
+
+jobs:
+
+  run_tests:
+    name: Generate component palettes
+    runs-on: ubuntu-20.04
+    env:
+      PROJECT_NAME: daliuge
+      GIT_REPO: https://github.com/ICRAR/daliuge
+      GITHUB_USERNAME: eagle.updater
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        name: Install Python
+        with:
+          python-version: '3.9'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y doxygen xsltproc
+
+      - name: Configure git
+        run: |
+          git config --global user.name $GITHUB_USERNAME
+          git config --global user.email $GITHUB_USERNAME@gmail.com
+          OUTPUT_FILENAME=$PROJECT_NAME-${GITHUB_REF_NAME/\//_}
+          echo "PROJECT_VERSION=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "OUTPUT_FILENAME=$OUTPUT_FILENAME" >> $GITHUB_ENV
+
+      - name: Create palettes
+        run: |
+          python3 tools/xml2palette/xml2palette.py -i ./ -t daliuge -o $OUTPUT_FILENAME.palette
+          python3 tools/xml2palette/xml2palette.py -i ./ -t template -o $OUTPUT_FILENAME-template.palette
+
+      - name: Commit palettes to EAGLE
+        env:
+          EAGLE_UPDATER_TOKEN: ${{ secrets.EAGLE_UPDATER_TOKEN }}
+        run: |
+          git clone https://$EAGLE_UPDATER_TOKEN@github.com/ICRAR/EAGLE_test_repo
+          mkdir -p EAGLE_test_repo/$PROJECT_NAME
+          mv $OUTPUT_FILENAME.palette EAGLE_test_repo/$PROJECT_NAME/
+          mv $OUTPUT_FILENAME-template.palette EAGLE_test_repo/$PROJECT_NAME/
+          cd EAGLE_test_repo
+          git add *
+          git diff-index --quiet HEAD || git commit -m "Automatically generated DALiuGE palette (branch $GITHUB_REF_NAME, commit $PROJECT_VERSION)"
+          git push
