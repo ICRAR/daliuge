@@ -43,13 +43,10 @@ import threading
 import time
 import re
 import sys
-import inspect
 import binascii
 from typing import List, Union
 
 import numpy as np
-import pyarrow.plasma as plasma
-import six
 from dlg.common.reproducibility.constants import (
     ReproducibilityFlags,
     REPRO_DEFAULT,
@@ -58,7 +55,6 @@ from dlg.common.reproducibility.constants import (
 )
 from dlg.common.reproducibility.reproducibility import common_hash
 from merklelib import MerkleTree
-from six import BytesIO
 
 from .ddap_protocol import (
     ExecutionMode,
@@ -1828,6 +1824,14 @@ class InMemoryDROP(DataDROP):
     """
     A DROP that points data stored in memory.
     """
+
+    # Allow in-memory drops to be automatically removed by default
+    def __init__(self, *args, **kwargs):
+        if 'precious' not in kwargs:
+            kwargs['precious'] = False
+        if 'expireAfterUse' not in kwargs:
+            kwargs['expireAfterUse'] = True
+        super().__init__(*args, **kwargs)
 
     def initialize(self, **kwargs):
         args = []
