@@ -104,18 +104,20 @@ class ZeroRPCClient(RPCClientBase):
 
     def __init__(self, *args, **kwargs):
         super(ZeroRPCClient, self).__init__(*args, **kwargs)
-        if not hasattr(self, "_context"):
-            self._context = zerorpc.Context()
         self._zrpcclients = {}
         self._zrpcclientthreads = []
+        self._own_context = False
         logger.debug("RPC Client created")
 
     def __del__(self):
-        if self._context:
+        if self._own_context and self._context:
             self._context.term()
 
     def start(self):
         super(ZeroRPCClient, self).start()
+        if not hasattr(self, "_context"):
+            self._context = zerorpc.Context()
+            self._own_context = True
 
         # One per remote host
         self._zrpcclient_acquisition_lock = threading.Lock()
@@ -128,6 +130,9 @@ class ZeroRPCClient(RPCClientBase):
             t.join(10)
             if t.is_alive():
                 logger.warning("ZeroRPC client thread %s is still alive", t.name)
+        if self._own_context:
+            self._context.term()
+            self._context = None
 
     def get_client_for_endpoint(self, host, port):
 
