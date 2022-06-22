@@ -46,7 +46,7 @@ def open(
     length=-1,
 ):
     logger.debug(
-        "Opening NGAS drop %s with mode %d and length %s" % (fileId, mode, length)
+        "Opening NGAS drop %s with mode %d and length %s", fileId, mode, length
     )
     if mode == 1:
         return retrieve(host, fileId, port=port, timeout=timeout)
@@ -68,7 +68,7 @@ def retrieve(host, fileId, port=7777, timeout=None):
     and over which `close` must be invoked once no more data is read from it.
     """
     url = "http://%s:%d/RETRIEVE?file_id=%s" % (host, port, fileId)
-    logger.debug("Issuing RETRIEVE request: %s" % (url))
+    logger.debug("Issuing RETRIEVE request: %s", url)
     conn = urllib.request.urlopen(url)
     if conn.getcode() != http.HTTPStatus.OK:
         raise Exception(
@@ -91,7 +91,7 @@ def beginArchive(
     should be invoked to check that all went well with the archiving.
     """
     logger.debug(
-        "Issuing ARCHIVE for file %s request to: http://%s:%d" % (fileId, host, port)
+        "Issuing ARCHIVE for file %s request to: http://%s:%d", fileId, host, port
     )
     conn = http.client.HTTPConnection(host, port, timeout=timeout)
     conn.putrequest("POST", "/QARCHIVE?filename=" + fileId)
@@ -101,7 +101,7 @@ def beginArchive(
         # defer endheaders NGAS requires Content-Length
         conn.endheaders()
     else:
-        logger.warning("Data size for %s unkown. Caching it first" % (fileId))
+        logger.warning("Data size for %s unkown. Caching it first", fileId)
     return conn
 
 
@@ -124,7 +124,7 @@ def fileStatus(host, port, fileId, timeout=10):
     return a value for a previous version.
     """
     url = "http://%s:%d/STATUS?file_id=%s" % (host, port, fileId)
-    logger.debug("Issuing STATUS request: %s" % (url))
+    logger.debug("Issuing STATUS request: %s", url)
     try:
         conn = urllib.request.urlopen(url, timeout=timeout)
     except urllib.error.HTTPError:
@@ -141,5 +141,5 @@ def fileStatus(host, port, fileId, timeout=10):
         .getElementsByTagName("FileStatus")[0]
         .attributes.items()
     )
-    logger.debug("Returning status: %s" % (stat))
+    logger.debug("Returning status: %s", stat)
     return stat

@@ -113,7 +113,6 @@ class NMTestsMixIn(object):
     def _start_dm(self, threads=0, **kwargs):
         host, events_port, rpc_port = nm_conninfo(len(self._dms))
         nm = NodeManager(
-            useDLM=False,
             host=host,
             events_port=events_port,
             rpc_port=rpc_port,
@@ -648,6 +647,7 @@ class TestDM(NodeManagerTestsBase, unittest.TestCase):
 
 
 
-@unittest.skipIf(multiprocessing.cpu_count() < 4, "Not enough threads to test multiprocessing")
+@unittest.skipUnless(os.environ.get('DALIUGE_RUN_MP_TESTS', '0') == '1',
+                     "Unstable multiprocessing tests not run by default")
 class TestDMParallel(NodeManagerTestsBase, unittest.TestCase):
     nm_threads = multiprocessing.cpu_count()

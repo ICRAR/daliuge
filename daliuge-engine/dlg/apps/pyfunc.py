@@ -237,8 +237,8 @@ class PyFuncApp(BarrierAppDROP):
         # we came all this way, now assume that any resulting dict is correct
         if not isinstance(self.func_defaults, dict):
             logger.error(
-                f"Wrong format or type for function defaults for "
-                + "{self.f.__name__}: {self.func_defaults}, {type(self.func_defaults)}"
+                "Wrong format or type for function defaults for %s: %r, %r",
+                self.f.__name__, self.func_defaults, type(self.func_defaults)
             )
             raise ValueError
         if self.input_parser is DropParser.PICKLE:
