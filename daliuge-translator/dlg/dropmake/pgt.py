@@ -262,9 +262,8 @@ class PGT(object):
             nm_list = node_list
         nm_len = len(nm_list)
         logger.info(
-            "Drops count: {0}, partitions count: {1}, nodes count: {2}, island count: {3}".format(
-                len(drop_list), num_parts, nodes_len, len(is_list)
-            )
+            "Drops count: %d, partitions count: %d, nodes count: %d, island count: %d",
+            len(drop_list), num_parts, nodes_len, len(is_list)
         )
 
         if form_island:
@@ -293,7 +292,7 @@ class PGT(object):
             ]  # so that is_list[i] == '#i'
 
         logger.info(
-            "nm_list: %s, is_list: %s, lm: %s, lm2: %s" % (nm_list, is_list, lm, lm2)
+            "nm_list: %s, is_list: %s, lm: %s, lm2: %s", nm_list, is_list, lm, lm2
         )
         for drop in drop_list:
             oid = drop["oid"]

@@ -42,7 +42,7 @@ class RestServer(object):
         host = host or "localhost"
         port = port or 8080
 
-        logger.info("Starting REST server on %s:%d" % (host, port))
+        logger.info("Starting REST server on %s:%d", host, port)
 
         self._server = RestServerWSGIServer(self.app, host, port)
         self._server.serve_forever()

@@ -110,7 +110,7 @@ class ProxyServer:
             try:
                 the_socket = socket.create_connection((server, port))
                 the_socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
-                logger.info("Connected to %s on port %d" % (server, port))
+                logger.info("Connected to %s on port %d", server, port)
                 return the_socket
             except Exception:
                 logger.exception("Failed to connect to %s:%d", server, port)
@@ -173,7 +173,7 @@ class ProxyServer:
                         continue
                     else:
                         tag = data[0:at]
-                    logger.debug("Received {0} from Monitor".format(tag))
+                    logger.debug("Received %s from Monitor", b2s(tag))
                     dlg_sock = self._dlg_sock_dict.get(tag, None)
                     to_send = data[at + dl :]
                     if dlg_sock is None:
@@ -191,21 +191,21 @@ class ProxyServer:
                     if send_to_dlg:
                         try:
                             dlg_sock.sendall(to_send)
-                            logger.debug("Sent {0} to DALiuGE manager".format(tag))
+                            logger.debug("Sent %s to DALiuGE manager", b2s(tag))
                         except socket.error:
                             self.close_dlg_socket(dlg_sock, tag)
                 else:
                     # from one of the DALiuGE sockets
                     data = the_socket.recv(BUFF_SIZE)
                     tag = self._dlg_sock_tag_dict.get(the_socket, None)
-                    logger.debug("Received {0} from DALiuGE manager".format(b2s(tag)))
+                    logger.debug("Received %s from DALiuGE manager", b2s(tag))
                     if tag is None:
                         logger.error(
-                            "Tag for DALiuGE socket {0} is gone".format(the_socket)
+                            "Tag for DALiuGE socket %r is gone", the_socket
                         )
                     else:
                         send_to_monitor(self.monitor_socket, delimit.join([tag, data]))
-                        logger.debug("Sent {0} to Monitor".format(b2s(tag)))
+                        logger.debug("Sent %s to Monitor", b2s(tag))
                         if len(data) == 0:
                             self.close_dlg_socket(the_socket, tag)
 

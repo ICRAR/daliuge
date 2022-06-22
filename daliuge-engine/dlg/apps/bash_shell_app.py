@@ -320,7 +320,7 @@ class StreamingInputBashAppBase(BashShellBase, AppDROP):
             drop_state = DROPStates.COMPLETED
             execStatus = AppDROPStates.FINISHED
         except:
-            logger.exception("Error while executing %r" % (self,))
+            logger.exception("Error while executing %r", self)
             drop_state = DROPStates.ERROR
             execStatus = AppDROPStates.ERROR
         finally:
