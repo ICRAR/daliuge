@@ -1501,6 +1501,8 @@ class DataDROP(AbstractDROP):
 #     \~English Path to the file for this node
 # @param[in] cparam/dirname Directory name//String/readwrite/False//False/
 #     \~English Path to the file for this node
+# @param[in] port/dummy dummy/Complex/Dummy input port
+# @param[out] port/dummy dummy/Complex/Dummy output port
 # @par EAGLE_END
 class FileDROP(DataDROP, PathBasedDrop):
     """
@@ -1701,10 +1703,8 @@ class FileDROP(DataDROP, PathBasedDrop):
 #     \~English Mime-type to be used for archiving
 # @param[in] cparam/ngasTimeout NGAS timeout/2/Integer/readwrite/False//False/
 #     \~English Timeout for receiving responses for NGAS
-# @param[in] port/dummy dummy/Complex/
-#     \~English Dummy input port
-# @param[out] port/dummy dummy/Complex/
-#     \~English Dummy output port
+# @param[in] port/dummy dummy/Complex/Dummy input port
+# @param[out] port/dummy dummy/Complex/Dummy output port
 # @par EAGLE_END
 class NgasDROP(DataDROP):
     """
@@ -1823,6 +1823,8 @@ class NgasDROP(DataDROP):
 #     \~English Estimated size of the data contained in this node
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
 #     \~English Is this node the end of a group?
+# @param[in] port/dummy dummy/Complex/Dummy input port
+# @param[out] port/dummy dummy/Complex/Dummy output port
 # @par EAGLE_END
 class InMemoryDROP(DataDROP):
     """
@@ -1879,6 +1881,8 @@ class InMemoryDROP(DataDROP):
 #     \~English Estimated size of the data contained in this node
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
 #     \~English Is this node the end of a group?
+# @param[in] port/dummy dummy/Complex/Dummy input port
+# @param[out] port/dummy dummy/Complex/Dummy output port
 # @par EAGLE_END
 class SharedMemoryDROP(DataDROP):
     """
@@ -1929,6 +1933,8 @@ class SharedMemoryDROP(DataDROP):
 #     \~English This never stores any data
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
 #     \~English Is this node the end of a group?
+# @param[in] port/dummy dummy/Complex/Dummy input port
+# @param[out] port/dummy dummy/Complex/Dummy output port
 # @par EAGLE_END
 class NullDROP(DataDROP):
     """
@@ -1969,6 +1975,8 @@ class EndDROP(NullDROP):
 #     \~English Condition for SELECT. For this the WHERE statement must be written using the "{X}" or "{}" placeholders
 # @param[in] cparam/selectVals values for WHERE//Json/readwrite/False//False/
 #     \~English Values for the WHERE statement
+# @param[in] port/dummy dummy/Complex/Dummy input port
+# @param[out] port/dummy dummy/Complex/Dummy output port
 # @par EAGLE_END
 class RDBMSDrop(DataDROP):
     """
@@ -2196,6 +2204,8 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
 #     \~English PlasmaId of the object for all compute nodes
 # @param[in] cparam/use_staging Use Staging/False/Boolean/readwrite/False//False/
 #     \~English Enables writing to a dynamically resizeable staging buffer
+# @param[in] port/dummy dummy/Complex/Dummy input port
+# @param[out] port/dummy dummy/Complex/Dummy output port
 # @par EAGLE_END
 class PlasmaDROP(DataDROP):
     """
@@ -2246,6 +2256,8 @@ class PlasmaDROP(DataDROP):
 #     \~English PlasmaId of the object for all compute nodes
 # @param[in] cparam/flight_path Flight Path//String/readwrite/False//False/
 #     \~English IP and flight port of the drop owner
+# @param[in] port/dummy dummy/Complex/Dummy input port
+# @param[out] port/dummy dummy/Complex/Dummy output port
 # @par EAGLE_END
 class PlasmaFlightDROP(DataDROP):
     """
