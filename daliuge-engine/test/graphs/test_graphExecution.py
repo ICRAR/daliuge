@@ -173,3 +173,26 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         #logger.debug(f'PyfuncAPPDrop signature: {dir(fd)}')
         logger.debug(f'PyfuncAPPDrop status: {fd.status}')
         self.assertEqual(2, fd.status)
+
+    def test_ArrayLoop(self):
+        """
+        Use a graph with compile function to test positional only arguments
+        """
+        sessionId = "lalo"
+        with pkg_resources.resource_stream(
+                "test", "graphs/ArrayLoopPG.graph"
+            ) as f:  # @UndefinedVariable
+            graphSpec = json.load(f)
+        # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
+        self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
+
+        # Deploy now and get OIDs
+        self.dim.deploySession(sessionId)
+        fd = self.dm._sessions[sessionId].drops["2022-06-22T09:13:53_-1_0"]
+        sd = self.dm._sessions[sessionId].drops["2022-06-22T09:13:53_-4_0/0/0"]
+        with droputils.DROPWaiterCtx(self, fd, 3):
+            sd.setCompleted()
+
+        #logger.debug(f'PyfuncAPPDrop signature: {dir(fd)}')
+        logger.debug(f'PyfuncAPPDrop status: {fd.status}')
+        self.assertEqual(2, fd.status)
