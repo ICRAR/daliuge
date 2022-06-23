@@ -416,7 +416,7 @@ class PyFuncApp(BarrierAppDROP):
 
         outputs = collections.OrderedDict()
         for uid, drop in self._outputs.items():
-            outputs[uid] = all_contents(drop)
+            outputs[uid] = all_contents(drop) if self.output_parser is DropParser.PATH else None
 
 
         self.funcargs = {}
