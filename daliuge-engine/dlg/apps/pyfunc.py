@@ -419,8 +419,6 @@ class PyFuncApp(BarrierAppDROP):
             outputs[uid] = all_contents(drop) if self.output_parser is DropParser.PATH else None
 
 
-        self.funcargs = {}
-
         # Keyword arguments are made up of the default values plus the inputs
         # that match one of the keyword argument names
         # if defaults dict has not been specified at all we'll go ahead anyway
@@ -435,7 +433,7 @@ class PyFuncApp(BarrierAppDROP):
             if name in self.func_defaults or name not in argnames
         }
         logger.debug(f"updating funcargs with {kwargs}")
-        self.funcargs = kwargs
+        funcargs = kwargs
 
         # Fill arguments with rest of inputs
         logger.debug(f"available inputs: {inputs}")
@@ -445,7 +443,7 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(f"Parameters found: {self.parameters}")
         posargs = self.arguments.args[:self.fn_npos]
         kwargs = {}
-        self.pargs = []
+        pargs = []
         # Initialize pargs dictionary and update with provided argument values
         pargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
         if "applicationArgs" in self.parameters:
@@ -481,7 +479,7 @@ class PyFuncApp(BarrierAppDROP):
                 kwargs.update({self.arguments.args[i]: list(inputs.values())[i]})
 
         logger.debug(f"Updating funcargs with input ports {kwargs}")
-        self.funcargs.update(kwargs)
+        funcargs.update(kwargs)
 
         if ('outputs' in self.parameters and isinstance(self.parameters['outputs'][0], dict)):
             out_names = [list(i.values())[0] for i in self.parameters['outputs']]
@@ -512,7 +510,7 @@ class PyFuncApp(BarrierAppDROP):
             logger.debug("Identified keyword arguments removed: %s",
                 [i['text'] for i in _dum])
             for pa in posargs:
-                if pa != 'self' and pa not in self.funcargs:
+                if pa != 'self' and pa not in funcargs:
                     if pa in appArgs:
                         arg = appArgs.pop(pa)
                         value = arg['value']
@@ -536,13 +534,13 @@ class PyFuncApp(BarrierAppDROP):
             logger.debug("Identified positional arguments removed: %s", 
                 [i['text'] for i in _dum])
             logger.debug(f"updating posargs with {list(pargsDict.keys())}")
-            self.pargs.extend(list(pargsDict.values()))
+            pargs.extend(list(pargsDict.values()))
 
             # Try to get values for still missing kwargs arguments from Application kws
             kwargs = {}
             kws = self.arguments.args[self.fn_npos:]
             for ka in kws:
-                if ka not in self.funcargs:
+                if ka not in funcargs:
                     if ka in appArgs:
                         arg = appArgs.pop(ka)
                         value = arg['value']
@@ -559,13 +557,13 @@ class PyFuncApp(BarrierAppDROP):
                     else:
                         logger.warning(f"Keyword argument '{ka}' not found!")
             logger.debug(f"updating funcargs with {kwargs}")
-            self.funcargs.update(kwargs)
+            funcargs.update(kwargs)
 
             # deal with kwonlyargs
             kwargs = {}
             kws = self.arguments.kwonlyargs
             for ka in kws:
-                if ka not in self.funcargs:
+                if ka not in funcargs:
                     if ka in appArgs:
                         arg = appArgs.pop(ka)
                         value = arg['value']
@@ -582,7 +580,7 @@ class PyFuncApp(BarrierAppDROP):
                     else:
                         logger.warning(f"Keyword only argument '{ka}' not found!")
             logger.debug(f"updating funcargs with kwonlyargs: {kwargs}")
-            self.funcargs.update(kwargs)
+            funcargs.update(kwargs)
 
             # any remaining application arguments will be used for vargs and vkwargs
             vparg = []
@@ -599,25 +597,25 @@ class PyFuncApp(BarrierAppDROP):
                     vkarg.update({arg:value})
 
             if self.arguments.varargs:
-                self.pargs.extend(vparg)
+                pargs.extend(vparg)
             if self.arguments.varkw:
-                self.funcargs.update(vkarg)
+                funcargs.update(vkarg)
 
         # Fill rest with default arguments if there are any more
         kwargs = {}
         for kw in self.func_defaults.keys():
             value = self.func_defaults[kw]
-            if kw not in self.funcargs:
+            if kw not in funcargs:
                 kwargs.update({kw: value})
         logger.debug(f"updating funcargs with {kwargs}")
-        self.funcargs.update(kwargs)
-        self._recompute_data["args"] = self.funcargs.copy()
-        logger.debug(f"Running {self.func_name} with *{self.pargs} **{self.funcargs}")
+        funcargs.update(kwargs)
+        self._recompute_data["args"] = funcargs.copy()
+        logger.debug(f"Running {self.func_name} with *{pargs} **{funcargs}")
 
         # we capture and log whatever is produced on STDOUT
         capture = StringIO()
         with redirect_stdout(capture):
-            result = self.f(*self.pargs, **self.funcargs)
+            result = self.f(*pargs, **funcargs)
         logger.info(f"Captured output from function app '{self.func_name}': {capture.getvalue()}")
         logger.debug(f"Finished execution of {self.func_name}.")
 
