@@ -1701,6 +1701,10 @@ class FileDROP(DataDROP, PathBasedDrop):
 #     \~English Mime-type to be used for archiving
 # @param[in] cparam/ngasTimeout NGAS timeout/2/Integer/readwrite/False//False/
 #     \~English Timeout for receiving responses for NGAS
+# @param[in] port/dummy dummy/Complex/
+#     \~English Dummy input port
+# @param[out] port/dummy dummy/Complex/
+#     \~English Dummy output port
 # @par EAGLE_END
 class NgasDROP(DataDROP):
     """
