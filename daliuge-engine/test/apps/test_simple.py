@@ -113,7 +113,7 @@ class TestSimpleApps(unittest.TestCase):
 
     def test_randomarrayapp(self):
         i = NullDROP("i", "i")
-        c = RandomArrayApp("c", "c")
+        c = RandomArrayApp("c", "c", keep_array=True)
         o = InMemoryDROP("o", "o")
         c.addInput(i)
         c.addOutput(o)
