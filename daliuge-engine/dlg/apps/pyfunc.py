@@ -414,6 +414,11 @@ class PyFuncApp(BarrierAppDROP):
         for uid, drop in self._inputs.items():
             inputs[uid] = all_contents(drop)
 
+        outputs = collections.OrderedDict()
+        for uid, drop in self._outputs.items():
+            outputs[uid] = all_contents(drop) if self.output_parser is DropParser.PATH else None
+
+
         self.funcargs = {}
 
         # Keyword arguments are made up of the default values plus the inputs
@@ -482,10 +487,24 @@ class PyFuncApp(BarrierAppDROP):
             out_names = [list(i.values())[0] for i in self.parameters['outputs']]
             logger.debug(f"Using named ports to remove outputs from arguments: "+\
                     f"{out_names}")
-            _dum = [appArgs.pop(k) for k in out_names if k in appArgs]
-            if len(_dum) > 0: 
-                logger.debug("Application arguments used as outputs removed : %s",
-                    [i['text'] for i in _dum])
+            for i in range(min(len(out_names),self.fn_nargs +\
+                len(self.arguments.kwonlyargs))):
+                # key for final dict is value in named ports dict
+                key = list(self.parameters['outputs'][i].values())[0]
+                # value for final dict is value in inputs dict
+                value = outputs[list(self.parameters['outputs'][i].keys())[0]]
+                if not value: value = '' # make sure we are passing NULL drop events
+                if key in posargs:
+                    pargsDict.update({key:value})
+                else:
+                    kwargs.update({key:value})
+                _dum = appArgs.pop(key) if key in appArgs else None
+                logger.debug("Using output %s for argument %s", value, key)
+                logger.debug("Argument used as output removed: %s", _dum)
+            # _dum = [appArgs.pop(k) for k in out_names if k in appArgs]
+            # if len(_dum) > 0: 
+            #     logger.debug("Application arguments used as outputs removed : %s",
+            #         [i['text'] for i in _dum])
 
         # Try to get values for still missing positional arguments from Application Args
         if "applicationArgs" in self.parameters:

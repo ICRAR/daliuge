@@ -161,6 +161,7 @@ def removeUnmetRelationships(dropSpecList):
                 ds = dropSpec[rel]
                 if isinstance(ds[0], dict):
                     ds = [next(iter(d)) for d in ds]
+#                ds = [normalise_oid(d) for d in ds]
                 missingOids = [oid for oid in ds if oid not in oids]
                 for oid in missingOids:
                     unmetRelationships.append(DROPRel(oid, link, this_oid))
