@@ -513,6 +513,15 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
 
     return cmd
 
+def serialize_kwargs(keyargs, prefix="--", separator=" "):
+    kwargs = []
+    for (name, value) in iter(keyargs.items()):
+        if prefix == "--" and len(name) == 1:
+            kwargs += [f"-{name} {value}"]
+        else:
+            kwargs += [f"{prefix}{name}{separator}{value}".strip()]
+    return kwargs
+
 
 def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     """
@@ -524,7 +533,7 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     else:
         logger.info("ApplicationArgs found %s", applicationArgs)
     # construct the actual command line from all application parameters
-    kwargs = []
+    kwargs = {}
     pargs = []
     positional = False
     precious = False
@@ -539,18 +548,38 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
             if value in [None, False, ""] and not precious:
                 continue
             positional = vdict["positional"]
-        # short and long version of keywords
         if positional:
             pargs.append(str(value).strip())
         else:
-            if prefix == "--" and len(name) == 1:
-                kwarg = [f"-{name} {value}"]
-            else:
-                kwarg = [f"{prefix}{name}{separator}{value}".strip()]
-            kwargs += kwarg
+            kwargs.update({name:value})
+    kwargs = serialize_kwargs(kwargs, prefix=prefix, separator=separator)
     logger.info('Constructed command line arguments: %s %s', pargs, kwargs)
     # return f"{' '.join(pargs + kwargs)}"  # add kwargs to end of pargs
     return (pargs, kwargs)
+
+def identify_named_ports(ports, port_dict, posargs, pargsDict, appArgs, check_len=0, mode="inputs"):
+    """
+    """
+    logger.debug("Using named ports to remove %s from arguments: %s %d", mode, 
+        port_dict, check_len)
+    # pargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
+    kwargs = {}
+    for i in range(check_len):
+        # key for final dict is value in named ports dict
+        key = list(port_dict[i].values())[0]
+        # value for final dict is value in inputs dict
+        value = ports[list(port_dict[i].keys())[0]]
+        if not value: value = '' # make sure we are passing NULL drop events
+        if key in posargs:
+            pargsDict.update({key:value})
+            logger.debug("Using %s '%s' for parg %s", mode, value, key)
+        else:
+            kwargs.update({key:value})
+            logger.debug("Using %s '%s' for kwarg %s", mode, value, key)
+        _dum = appArgs.pop(key) if key in appArgs else None
+        logger.debug("Argument used as %s removed: %s", mode, _dum)
+    logger.debug("Returning mapped ports: %s", kwargs)
+    return kwargs
 
 
 # Easing the transition from single- to multi-package
