@@ -96,10 +96,10 @@ def lg_block_fields(category_type: str, rmode: ReproducibilityFlags, custom_fiel
     """
     data = {}
     if rmode in (
-        ReproducibilityFlags.NOTHING,
-        ReproducibilityFlags.RERUN,
-        ReproducibilityFlags.REPRODUCE,
-        ReproducibilityFlags.REPLICATE_SCI,
+            ReproducibilityFlags.NOTHING,
+            ReproducibilityFlags.RERUN,
+            ReproducibilityFlags.REPRODUCE,
+            ReproducibilityFlags.REPLICATE_SCI,
     ):
         return data
     # Drop category considerations - Just try to get everything we can, will be filtered later
@@ -121,8 +121,8 @@ def lg_block_fields(category_type: str, rmode: ReproducibilityFlags, custom_fiel
     elif category_type == Categories.FILE:
         data["check_filepath_exists"] = FieldOps.STORE
         if rmode in (
-            ReproducibilityFlags.RECOMPUTE,
-            ReproducibilityFlags.REPLICATE_COMP,
+                ReproducibilityFlags.RECOMPUTE,
+                ReproducibilityFlags.REPLICATE_COMP,
         ):
             data["filepath"] = FieldOps.STORE
             data["dirname"] = FieldOps.STORE
@@ -183,7 +183,8 @@ def lg_block_fields(category_type: str, rmode: ReproducibilityFlags, custom_fiel
         data["libpath"] = FieldOps.STORE
     elif category_type == Categories.DYNLIB_PROC_APP:
         data["libpath"] = FieldOps.STORE
-    if custom_fields is not None:
+    if custom_fields is not None and rmode in (
+            ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
         for name in custom_fields:
             data[name] = FieldOps.STORE
     return data
