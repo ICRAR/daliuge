@@ -573,6 +573,7 @@ def identify_named_ports(ports, port_dict, posargs, pargsDict, appArgs, check_le
         if key in posargs:
             pargsDict.update({key:value})
             logger.debug("Using %s '%s' for parg %s", mode, value, key)
+            posargs.pop(posargs.index(key))
         else:
             kwargs.update({key:value})
             logger.debug("Using %s '%s' for kwarg %s", mode, value, key)
