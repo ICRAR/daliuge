@@ -103,8 +103,8 @@ class ReproFinishedListener(object):
         if self._completed == self._nexpected:
             logger.debug("Building Reproducibility BlockDAG")
             self._session.graphreprodata = \
-            init_runtime_repro_data(self._session._graph, self._session._graphreprodata)[
-                "reprodata"]
+                init_runtime_repro_data(self._session._graph, self._session._graphreprodata).get(
+                    "reprodata", {})
             self._session.reprostatus = True
             self._session.write_reprodata()
 
