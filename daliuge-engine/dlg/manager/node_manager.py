@@ -307,6 +307,7 @@ class NodeManagerBase(DROPManager):
         session = self._sessions.pop(sessionId)
         if hasattr(self, "_memoryManager"):
             self._memoryManager.shutdown_session(sessionId)
+        self._dlm.remove_drops(session.drops)
         session.destroy()
 
     def getSessionIds(self):

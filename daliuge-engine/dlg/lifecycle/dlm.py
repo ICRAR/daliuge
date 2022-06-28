@@ -456,6 +456,16 @@ class DataLifecycleManager:
         #       perform this task, like using threading.Timers (probably not) or
         #       any other that doesn't mean looping over all DROPs
 
+    def remove_drops(self, drop_oids):
+        """
+        Remove drops from DLM's monitoring
+        """
+        self._drops = {
+            oid: drop
+            for oid, drop in self._drops.items()
+            if oid not in drop_oids
+        }
+
     def handleOpenedDrop(self, oid, uid):
         drop = self._drops[uid]
         if drop.status == DROPStates.COMPLETED:
