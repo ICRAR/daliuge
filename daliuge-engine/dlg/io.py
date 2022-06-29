@@ -597,7 +597,7 @@ class NgasLiteIO(DataIO):
                 # If length wasn't known up-front we first send Content-Length and then the buffer here.
                 conn.putheader("Content-Length", len(self._buf))
                 conn.endheaders()
-                logger.debug("Sending data for file %s to NGAS" % (self._fileId))
+                logger.debug("Sending data for file %s to NGAS", self._fileId)
                 conn.send(self._buf)
                 self._buf = None
             else:
@@ -618,7 +618,7 @@ class NgasLiteIO(DataIO):
             self._buf += data
         else:
             self._desc.send(data)
-        logger.debug("Wrote %s bytes" % len(data))
+        logger.debug("Wrote %s bytes", len(data))
         return len(data)
 
     def exists(self) -> bool:

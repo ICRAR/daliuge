@@ -2,4 +2,5 @@ include dlg/dropmake/web/img/*
 include dlg/dropmake/web/*.css
 include dlg/dropmake/web/*.js
 include dlg/dropmake/web/*.html
+include dlg/dropmake/*.schema
 include dlg/dropmake/lib/*

@@ -113,8 +113,8 @@ class MetisPGTP(PGT):
             import resource
 
             logger.info(
-                "self._drop_list, max RSS: %.2f GB"
-                % (resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0 ** 2)
+                "self._drop_list, max RSS: %.2f GB",
+                resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0 ** 2
             )
 
         for i, drop in enumerate(droplist):
@@ -155,8 +155,8 @@ class MetisPGTP(PGT):
             import resource
 
             logger.info(
-                "Max RSS after creating the Graph: %.2f GB"
-                % (resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0 ** 2)
+                "Max RSS after creating the Graph: %.2f GB",
+                resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0 ** 2
             )
         return G
 
@@ -252,8 +252,8 @@ class MetisPGTP(PGT):
                 import resource
 
                 logger.info(
-                    "RSS before METIS partitioning: %.2f GB"
-                    % (resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0 ** 2)
+                    "RSS before METIS partitioning: %.2f GB",
+                    resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0 ** 2
                 )
 
             # Call METIS C-lib

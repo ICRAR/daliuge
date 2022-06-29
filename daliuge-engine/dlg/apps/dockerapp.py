@@ -520,7 +520,7 @@ class DockerApp(BarrierAppDROP):
                         logger.warning(
                             "Ignoring provided environment variables: Format wrong? Check documentation"
                         )
-                    addEnv = {}
+                        addEnv = {}
                     if isinstance(addEnv, dict):  # if it is a dict populate directly
                         # but replace placeholders first
                         for key in addEnv:
