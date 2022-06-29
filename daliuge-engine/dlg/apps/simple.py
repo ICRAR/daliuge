@@ -269,19 +269,22 @@ class RandomArrayApp(BarrierAppDROP):
     size = dlg_int_param("size", 100)
     marray = []
 
-    def initialize(self, **kwargs):
+    def initialize(self, keep_array=False, **kwargs):
         super(RandomArrayApp, self).initialize(**kwargs)
+        self._keep_array = keep_array
 
     def run(self):
         # At least one output should have been added
         outs = self.outputs
         if len(outs) < 1:
             raise Exception("At least one output should have been added to %r" % self)
-        self.generateRandomArray()
+        marray = self.generateRandomArray()
+        if self._keep_array:
+            self.marray = marray
         for o in outs:
-            d = pickle.dumps(self.marray)
+            d = pickle.dumps(marray)
             o.len = len(d)
-            o.write(pickle.dumps(self.marray))
+            o.write(d)
 
     def generateRandomArray(self):
         if self.integer:
@@ -292,7 +295,7 @@ class RandomArrayApp(BarrierAppDROP):
             # generate an array of self.size floats with numbers between
             # self.low and self.high
             marray = (np.random.random(size=self.size) + self.low) * self.high
-        self.marray = marray
+        return marray
 
     def _getArray(self):
         return self.marray
