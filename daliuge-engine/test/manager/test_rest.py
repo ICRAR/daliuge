@@ -234,7 +234,7 @@ class TestRest(unittest.TestCase):
         self.assertEqual(
             {"a": {"oid": "a", "storage": "Memory", "type": "plain"}}, response["graph"]
         )
-        self.assertIsNone(response["reprodata"])
+        self.assertEqual({}, response["reprodata"])
 
     def test_reprostatus_get(self):
         # Test with reprodata
