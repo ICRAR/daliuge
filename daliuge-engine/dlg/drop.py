@@ -45,7 +45,7 @@ import re
 import sys
 import inspect
 import binascii
-from typing import List, Optional, Union
+from typing import List, Union
 
 import numpy as np
 import pyarrow.plasma as plasma
@@ -468,8 +468,7 @@ class AbstractDROP(EventFirer):
         val = default
         if key in kwargs:
             val = kwargs.pop(key)
-        elif logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Defaulting %s to %s in %r" % (key, str(val), self))
+        logger.debug("Defaulting %s to %s in %r", key, str(val), self)
         return val
 
     def __hash__(self):
@@ -695,7 +694,7 @@ class AbstractDROP(EventFirer):
                 # Set as committed
             self._committed = True
         else:
-            logger.debug("Trying to re-commit DROP %s, cannot overwrite." % self)
+            logger.debug("Trying to re-commit DROP %s, cannot overwrite.", self)
 
     @property
     def oid(self):
@@ -852,7 +851,7 @@ class AbstractDROP(EventFirer):
     def parent(self, parent):
         if self._parent and parent:
             logger.warning(
-                "A parent is already set in %r, overwriting with new value" % (self,)
+                "A parent is already set in %r, overwriting with new value", self
             )
         if parent:
             prevParent = self._parent
@@ -1048,8 +1047,8 @@ class AbstractDROP(EventFirer):
         if scuid in self._streamingConsumers_uids:
             return
         logger.debug(
-            "Adding new streaming streaming consumer for %r: %s"
-            % (self, streamingConsumer)
+            "Adding new streaming streaming consumer for %r: %s",
+            self, streamingConsumer
         )
         self._streamingConsumers.append(streamingConsumer)
 
@@ -1244,7 +1243,7 @@ class DataDROP(AbstractDROP):
             )
 
         io = self.getIO()
-        logger.debug("Opening drop %s" % (self.oid))
+        logger.debug("Opening drop %s", self.oid)
         io.open(OpenMode.OPEN_READ, **kwargs)
 
         # Save the IO object in the dictionary and return its descriptor instead
@@ -1346,8 +1345,8 @@ class DataDROP(AbstractDROP):
         if nbytes != dataLen:
             # TODO: Maybe this should be an actual error?
             logger.warning(
-                "Not all data was correctly written by %s (%d/%d bytes written)"
-                % (self, nbytes, dataLen)
+                "Not all data was correctly written by %s (%d/%d bytes written)",
+                self, nbytes, dataLen
             )
 
         # see __init__ for the initialization to None
@@ -1373,12 +1372,12 @@ class DataDROP(AbstractDROP):
             else:
                 if remaining < 0:
                     logger.warning(
-                        "Received and wrote more bytes than expected: "
-                        + str(-remaining)
+                        "Received and wrote more bytes than expected: %d",
+                        -remaining
                     )
                 logger.debug(
-                    "Automatically moving %r to COMPLETED, all expected data arrived"
-                    % (self,)
+                    "Automatically moving %r to COMPLETED, all expected data arrived",
+                    self
                 )
                 self.setCompleted()
         else:
@@ -1658,7 +1657,7 @@ class FileDROP(DataDROP, PathBasedDrop):
                     pass
             except:
                 self.status = DROPStates.ERROR
-                logger.error("Path not accessible: %s" % self.path)
+                logger.error("Path not accessible: %s", self.path)
             self._size = 0
         # Signal our subscribers that the show is over
         self._fire("dropCompleted", status=DROPStates.COMPLETED)
@@ -1777,7 +1776,7 @@ class NgasDROP(DataDROP):
         try:
             stat = self.getIO().fileStatus()
             logger.debug(
-                "Setting size of NGASDrop %s to %s" % (self.fileId, stat["FileSize"])
+                "Setting size of NGASDrop %s to %s", self.fileId, stat["FileSize"]
             )
             self._size = int(stat["FileSize"])
         except:
@@ -2621,6 +2620,8 @@ class InputFiredAppDROP(AppDROP):
             t.daemon = 1
             t.start()
 
+    _dlg_proc_lock = threading.Lock()
+
     @track_current_drop
     def execute(self, _send_notifications=True):
         """
@@ -2642,8 +2643,13 @@ class InputFiredAppDROP(AppDROP):
             try:
                 if hasattr(self, "_tp"):
                     proc = DlgProcess(target=self.run, daemon=True)
-                    proc.start()
-                    proc.join()
+                    # see YAN-975 for why this is happening
+                    lock = InputFiredAppDROP._dlg_proc_lock
+                    with lock:
+                        proc.start()
+                    with lock:
+                        proc.join()
+                    proc.close()
                     if proc.exception:
                         raise proc.exception
                 else:
@@ -2657,7 +2663,7 @@ class InputFiredAppDROP(AppDROP):
                     return
                 tries += 1
                 logger.exception(
-                    "Error while executing %r (try %d/%d)" % (self, tries, self.n_tries)
+                    "Error while executing %r (try %d/%d)", self, tries, self.n_tries
                 )
 
         # We gave up running the application, go to error

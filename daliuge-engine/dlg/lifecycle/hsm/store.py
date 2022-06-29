@@ -60,8 +60,8 @@ class AbstractStore(object):
             total = self.getTotalSpace()
             perc = avail * 100.0 / total
             logger.debug(
-                "Available/Total space on %s: %d/%d (%.2f %%)"
-                % (self, avail, total, perc)
+                "Available/Total space on %s: %d/%d (%.2f %%)",
+                self, avail, total, perc
             )
         pass
 

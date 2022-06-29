@@ -138,7 +138,7 @@ class TestBigGraph(unittest.TestCase):
         restPort = 8989
         args = ["--port", str(restPort), "-N", hostname, "-qq"]
 
-        logger.debug("Starting NM on port %d" % restPort)
+        logger.debug("Starting NM on port %d", restPort)
         c = client.NodeManagerClient(port=restPort)
         dimProcess = tool.start_process("dim", args)
 

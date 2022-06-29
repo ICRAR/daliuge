@@ -237,8 +237,8 @@ class PyFuncApp(BarrierAppDROP):
         # we came all this way, now assume that any resulting dict is correct
         if not isinstance(self.func_defaults, dict):
             logger.error(
-                f"Wrong format or type for function defaults for "
-                + "{self.f.__name__}: {self.func_defaults}, {type(self.func_defaults)}"
+                "Wrong format or type for function defaults for %s: %r, %r",
+                self.f.__name__, self.func_defaults, type(self.func_defaults)
             )
             raise ValueError
         if self.input_parser is DropParser.PICKLE:
@@ -292,8 +292,20 @@ class PyFuncApp(BarrierAppDROP):
             "func_arg_mapping",
             "input_parser",
             "output_parser",
-            "func_defaults"
+            "func_defaults",
+            "pickle",
             ]
+
+        # backwards compatibility
+        if "pickle" in self._applicationArgs:
+            if self._applicationArgs["pickle"]["value"] == True:
+                self.input_parser = DropParser.PICKLE
+                self.output_parser = DropParser.PICKLE
+            else:
+                self.input_parser = DropParser.EVAL
+                self.output_parser = DropParser.EVAL
+            self._applicationArgs.pop("pickle")
+
         for kw in self.func_def_keywords:
             if kw in self._applicationArgs:  # these are the preferred ones now
                 if isinstance(
@@ -303,7 +315,6 @@ class PyFuncApp(BarrierAppDROP):
                 ):
                     # only transfer if there is a value or precious is True
                     self._applicationArgs.pop(kw)
-
 
         self.num_args = len(
             self._applicationArgs
@@ -457,7 +468,7 @@ class PyFuncApp(BarrierAppDROP):
                     pargsDict.update({key:value})
                 else:
                     kwargs.update({key:value})
-                _dum = appArgs.pop(key)
+                _dum = appArgs.pop(key) if key in appArgs else None
                 logger.debug("Using input %s for argument %s", value, key)
                 logger.debug("Argument used as input removed: %s", _dum)
         else:
@@ -481,9 +492,6 @@ class PyFuncApp(BarrierAppDROP):
             _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
             logger.debug("Identified keyword arguments removed: %s",
                 [i['text'] for i in _dum])
-            _dum = [appArgs.pop(k) for k in pargsDict if k in appArgs]
-            logger.debug("Identified positional arguments removed: %s", 
-                [i['text'] for i in _dum])
             for pa in posargs:
                 if pa != 'self' and pa not in self.funcargs:
                     if pa in appArgs:
@@ -505,6 +513,9 @@ class PyFuncApp(BarrierAppDROP):
                         pargsDict.update({pa: value})
                     elif pa != 'self' and pa not in pargsDict:
                         logger.warning(f"Required positional argument '{pa}' not found!")
+            _dum = [appArgs.pop(k) for k in pargsDict if k in appArgs]
+            logger.debug("Identified positional arguments removed: %s", 
+                [i['text'] for i in _dum])
             logger.debug(f"updating posargs with {list(pargsDict.keys())}")
             self.pargs.extend(list(pargsDict.values()))
 
@@ -530,6 +541,31 @@ class PyFuncApp(BarrierAppDROP):
                         logger.warning(f"Keyword argument '{ka}' not found!")
             logger.debug(f"updating funcargs with {kwargs}")
             self.funcargs.update(kwargs)
+
+            # deal with kwonlyargs
+            kwargs = {}
+            kws = self.arguments.kwonlyargs
+            for ka in kws:
+                if ka not in self.funcargs:
+                    if ka in appArgs:
+                        arg = appArgs.pop(ka)
+                        value = arg['value']
+                        ptype = arg['type']
+                        if ptype in ["Complex", "Json"]:
+                            try:
+                                value = ast.literal_eval(value)
+                            except:
+                                pass
+                        kwargs.update({
+                            ka:
+                            value
+                        })
+                    else:
+                        logger.warning(f"Keyword only argument '{ka}' not found!")
+            logger.debug(f"updating funcargs with kwonlyargs: {kwargs}")
+            self.funcargs.update(kwargs)
+
+            # any remaining application arguments will be used for vargs and vkwargs
             vparg = []
             vkarg = {}
             logger.debug(f"Remaining AppArguments {appArgs}")
@@ -543,7 +579,6 @@ class PyFuncApp(BarrierAppDROP):
                 else:
                     vkarg.update({arg:value})
 
-            # any remaining application arguments will be used for vargs and vkwargs
             if self.arguments.varargs:
                 self.pargs.extend(vparg)
             if self.arguments.varkw:

@@ -48,7 +48,7 @@ class TestSocketListener(unittest.TestCase):
         A --> B --> C --> D
         """
 
-        host = "localhost"
+        host = "127.0.0.1"
         port = 9933
         data = os.urandom(1025)
 
@@ -85,11 +85,11 @@ class TestSocketListener(unittest.TestCase):
     def test_invalid(self):
 
         # Shouldn't allow inputs
-        a = SocketListenerApp("a", "a", port=1)
+        a = SocketListenerApp("a", "a", port=64 * 1024)
         a.addOutput(InMemoryDROP("c", "c"))
         self.assertRaises(Exception, a.addInput, InMemoryDROP("b", "b"))
         self.assertRaises(Exception, a.addStreamingInput, InMemoryDROP("b", "b"))
 
-        # Shouldn't be able to open ports <= 1024
+        # Shouldn't be able to open ports > 64k - 1
         a.execute()
         self.assertEqual(a.status, DROPStates.ERROR)
