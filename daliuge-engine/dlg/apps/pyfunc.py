@@ -468,22 +468,6 @@ class PyFuncApp(BarrierAppDROP):
                 appArgs,
                 check_len=check_len,
                 mode="inputs"))
-            # logger.debug(f"Using named ports to identify inputs: "+\
-            #         f"{self.parameters['inputs']}")
-            # for i in range(min(len(inputs),self.fn_nargs +\
-            #     len(self.arguments.kwonlyargs))):
-            #     # key for final dict is value in named ports dict
-            #     key = list(self.parameters['inputs'][i].values())[0]
-            #     # value for final dict is value in inputs dict
-            #     value = inputs[list(self.parameters['inputs'][i].keys())[0]]
-            #     if not value: value = '' # make sure we are passing NULL drop events
-            #     if key in posargs:
-            #         pargsDict.update({key:value})
-            #     else:
-            #         kwargs.update({key:value})
-            #     _dum = appArgs.pop(key) if key in appArgs else None
-            #     logger.debug("Using input %s for argument %s", value, key)
-            #     logger.debug("Argument used as input removed: %s", _dum)
         else:
             for i in range(min(len(inputs),self.fn_nargs)):
                 kwargs.update({self.arguments.args[i]: list(inputs.values())[i]})
@@ -502,22 +486,6 @@ class PyFuncApp(BarrierAppDROP):
                 appArgs,
                 check_len=check_len,
                 mode="outputs"))
-        #     logger.debug(f"Using named ports to remove outputs from arguments: "+\
-        #             f"{outputs}")
-        #     for i in range(min(len(outputs),self.fn_nargs +\
-        #         len(self.arguments.kwonlyargs))):
-        #         # key for final dict is value in named ports dict
-        #         key = list(self.parameters['outputs'][i].values())[0]
-        #         # value for final dict is value in inputs dict
-        #         value = outputs[list(self.parameters['outputs'][i].keys())[0]]
-        #         if not value: value = '' # make sure we are passing NULL drop events
-        #         if key in posargs:
-        #             pargsDict.update({key:value})
-        #         else:
-        #             kwargs.update({key:value})
-        #         _dum = appArgs.pop(key) if key in appArgs else None
-        #         logger.debug("Using output %s for argument %s", value, key)
-        #         logger.debug("Argument used as output removed: %s", _dum)
 
         # Try to get values for still missing positional arguments from Application Args
         if "applicationArgs" in self.parameters:
