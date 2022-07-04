@@ -25,7 +25,7 @@ Utility methods and classes to be used when interacting with DROPs
 
 import collections
 import io
-import json
+import time
 import logging
 import pickle
 import re
@@ -137,16 +137,32 @@ def copyDropContents(source: DataDROP, target: DataDROP, bufsize=4096):
     """
     Manually copies data from one DROP into another, in bufsize steps
     """
-    logger.debug(f"Copying from {repr(source)} to {repr(target)}")
+    logger.debug(
+        "Copying from %s to %s", repr(source), repr(target))
     desc = source.open()
     buf = source.read(desc, bufsize)
-    logger.debug(f"Read {len(buf)} bytes from {repr(source)}")
+    logger.debug("Read %d bytes from %s", len(buf), 
+    repr(source))
+    st = time.time()
+    tot_w = len(buf)
+    ofl = True
     while buf:
         target.write(buf)
-        logger.debug(f"Wrote {len(buf)} bytes to {repr(target)}")
+        tot_w += len(buf)
+        dur = time.time() - st
+        if int(dur) % 5 == 0 and ofl:
+            logger.debug("Wrote %.1f MB to %s; rate %.2f MB/s",
+                tot_w/1024**2, repr(target), tot_w/(1024**2*dur))
+            ofl = False
+        elif int(dur) % 5 == 4:
+            ofl = True
         buf = source.read(desc, bufsize)
-        if buf is not None:
-            logger.debug(f"Read {len(buf)} bytes from {repr(source)}")
+        # if buf is not None:
+        #     logger.debug(f"Read {len(buf)} bytes from {repr(source)}")
+    dur = time.time() - st
+    logger.debug("Wrote %.1f MB to %s; rate %.2f MB/s",
+        tot_w/1024**2, repr(target), tot_w/(1024**2*dur))
+
     source.close(desc)
 
 

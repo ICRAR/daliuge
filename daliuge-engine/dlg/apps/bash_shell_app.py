@@ -264,8 +264,10 @@ class BashShellBase(object):
 
         # Pass down daliuge-specific information to the subprocesses as environment variables
         env = os.environ.copy()
-        env["DLG_UID"] = app_uid
-        env["DLG_SESSION_ID"] = session_id
+        if self._dlg_session:
+            env.update({"DLG_SESSION_ID": self._dlg_session.sessionId})
+
+        env.update({"DLG_ROOT": utils.getDlgDir()})
         # # try to change to session directory, else just stay in current
         # work_dir = utils.getDlgWorkDir()
         # session_dir = f"{work_dir}/{session_id}"
