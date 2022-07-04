@@ -25,7 +25,7 @@ Utility methods and classes to be used when interacting with DROPs
 
 import collections
 import io
-import json
+import time
 import logging
 import pickle
 import re
@@ -137,16 +137,32 @@ def copyDropContents(source: DataDROP, target: DataDROP, bufsize=4096):
     """
     Manually copies data from one DROP into another, in bufsize steps
     """
-    logger.debug(f"Copying from {repr(source)} to {repr(target)}")
+    logger.debug(
+        "Copying from %s to %s", repr(source), repr(target))
     desc = source.open()
     buf = source.read(desc, bufsize)
-    logger.debug(f"Read {len(buf)} bytes from {repr(source)}")
+    logger.debug("Read %d bytes from %s", len(buf), 
+    repr(source))
+    st = time.time()
+    tot_w = len(buf)
+    ofl = True
     while buf:
         target.write(buf)
-        logger.debug(f"Wrote {len(buf)} bytes to {repr(target)}")
+        tot_w += len(buf)
+        dur = time.time() - st
+        if int(dur) % 5 == 0 and ofl:
+            logger.debug("Wrote %.1f MB to %s; rate %.2f MB/s",
+                tot_w/1024**2, repr(target), tot_w/(1024**2*dur))
+            ofl = False
+        elif int(dur) % 5 == 4:
+            ofl = True
         buf = source.read(desc, bufsize)
-        if buf is not None:
-            logger.debug(f"Read {len(buf)} bytes from {repr(source)}")
+        # if buf is not None:
+        #     logger.debug(f"Read {len(buf)} bytes from {repr(source)}")
+    dur = time.time() - st
+    logger.debug("Wrote %.1f MB to %s; rate %.2f MB/s",
+        tot_w/1024**2, repr(target), tot_w/(1024**2*dur))
+
     source.close(desc)
 
 
@@ -513,6 +529,15 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
 
     return cmd
 
+def serialize_kwargs(keyargs, prefix="--", separator=" "):
+    kwargs = []
+    for (name, value) in iter(keyargs.items()):
+        if prefix == "--" and len(name) == 1:
+            kwargs += [f"-{name} {value}"]
+        else:
+            kwargs += [f"{prefix}{name}{separator}{value}".strip()]
+    return kwargs
+
 
 def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     """
@@ -524,7 +549,7 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     else:
         logger.info("ApplicationArgs found %s", applicationArgs)
     # construct the actual command line from all application parameters
-    args = []
+    kwargs = {}
     pargs = []
     positional = False
     precious = False
@@ -539,17 +564,39 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
             if value in [None, False, ""] and not precious:
                 continue
             positional = vdict["positional"]
-        # short and long version of keywords
         if positional:
             pargs.append(str(value).strip())
         else:
-            if prefix == "--" and len(name) == 1:
-                arg = [f"-{name} {value}"]
-            else:
-                arg = [f"{prefix}{name}{separator}{value}".strip()]
-            args += arg
-    logger.info('Arguments of bash command: %s %s', args, pargs)
-    return f"{' '.join(args + pargs)}"  # add positional arguments to end of args
+            kwargs.update({name:value})
+    kwargs = serialize_kwargs(kwargs, prefix=prefix, separator=separator)
+    logger.info('Constructed command line arguments: %s %s', pargs, kwargs)
+    # return f"{' '.join(pargs + kwargs)}"  # add kwargs to end of pargs
+    return (pargs, kwargs)
+
+def identify_named_ports(ports, port_dict, posargs, pargsDict, appArgs, check_len=0, mode="inputs"):
+    """
+    """
+    logger.debug("Using named ports to remove %s from arguments: %s %d", mode, 
+        port_dict, check_len)
+    # pargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
+    kwargs = {}
+    for i in range(check_len):
+        # key for final dict is value in named ports dict
+        key = list(port_dict[i].values())[0]
+        # value for final dict is value in inputs dict
+        value = ports[list(port_dict[i].keys())[0]]
+        if not value: value = '' # make sure we are passing NULL drop events
+        if key in posargs:
+            pargsDict.update({key:value})
+            logger.debug("Using %s '%s' for parg %s", mode, value, key)
+            posargs.pop(posargs.index(key))
+        else:
+            kwargs.update({key:value})
+            logger.debug("Using %s '%s' for kwarg %s", mode, value, key)
+        _dum = appArgs.pop(key) if key in appArgs else None
+        logger.debug("Argument used as %s removed: %s", mode, _dum)
+    logger.debug("Returning mapped ports: %s", kwargs)
+    return kwargs
 
 
 # Easing the transition from single- to multi-package
