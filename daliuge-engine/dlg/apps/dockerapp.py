@@ -276,22 +276,24 @@ class DockerApp(BarrierAppDROP):
         self._command = self._getArg(kwargs, "command", None)
 
         self._noBash = False
-        if not self._command or self._command[:2].strip() == "%%":
+        if not self._command or self._command.strip()[:2] == "%%":
             logger.warning("Assume a default command is executed in the container")
-            self._command = self._command.strip()[2:].strip() if self._command else ""
+            self._command = self._command.strip().strip()[:2] if self._command else ""
             self._noBash = True
             # This makes sure that we can retain any command defined in the image, but still be
             # able to add any arguments straight after. This requires to use the placeholder string
             # "%%" at the start of the command, else it is interpreted as a normal command.
 
         # construct the actual command line from all application parameters
-        argumentString = droputils.serialize_applicationArgs(
-            self._applicationArgs, self._argumentPrefix, self._paramValueSeparator
+        self.pargs, self.keyargs = droputils.serialize_applicationArgs(
+            self._applicationArgs, self._argumentPrefix, 
+            self._paramValueSeparator
         )
-        # complete command including all additional parameters and optional redirects
-        cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
-        cmd = cmd.strip()
-        self._command = cmd
+        # defer construction of complete command to run method
+        # cmd = f"{self._command} {self._cmdLineArgs} {' '.join(self.pargs)} "+\
+        #     f"{' '.join(self.keyargs)}"
+        # cmd = cmd.strip()
+        # self._command = cmd
 
         # The user used to run the process in the docker container is now always the user
         # who originally started the DALiuGE process as well. The information is passed through
@@ -433,13 +435,15 @@ class DockerApp(BarrierAppDROP):
                 for uid, i in fsInputs.items()
             }
             dockerOutputs = {
-                #            uid: DockerPath(utils.getDlgDir() + o.path) for uid, o in fsOutputs.items()
+                # uid: DockerPath(utils.getDlgDir() + o.path) for uid, o in fsOutputs.items()
                 uid: DockerPath(o.path)
                 for uid, o in fsOutputs.items()
             }
             dataURLInputs = {uid: i for uid, i in iitems if not droputils.has_path(i)}
             dataURLOutputs = {uid: o for uid, o in oitems if not droputils.has_path(o)}
-
+            self._command = f"{self._command} {' '.join(self.pargs)} "+\
+                f"{' '.join(self.keyargs)}"
+            # TODO: Deal with named inputs
             if self._command:
                 cmd = droputils.replace_path_placeholders(
                     self._command, dockerInputs, dockerOutputs

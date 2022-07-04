@@ -38,6 +38,7 @@ import tempfile
 import threading
 import time
 import types
+import collections
 
 from .. import droputils, utils
 from ..ddap_protocol import AppDROPStates, DROPStates
@@ -196,13 +197,47 @@ class BashShellBase(object):
         output of the process is piped to. If not given it is consumed by this
         method and potentially logged.
         """
+        # we currently only support passing a path for bash apps
+        inputs_dict = collections.OrderedDict()
+        for uid, drop in inputs.items():
+            inputs_dict[uid] = drop.path
+
+        outputs_dict = collections.OrderedDict()
+        for uid, drop in outputs.items():
+            outputs_dict[uid] = drop.path
 
         session_id = (
             self._dlg_session.sessionId if self._dlg_session is not None else ""
         )
-        argumentString = droputils.serialize_applicationArgs(
-            self._applicationArgs, self._argumentPrefix, self._paramValueSeparator
-        )
+        logger.debug(f"Parameters found: {self.parameters}")
+        # pargs, keyargs = droputils.serialize_applicationArgs(
+        #     self._applicationArgs, self._argumentPrefix, self._paramValueSeparator
+        # )
+        if "applicationArgs" in self.parameters:
+            appArgs = self.parameters["applicationArgs"]
+        else:
+            appArgs ={}
+        pargs = [arg for arg in appArgs if appArgs[arg]["positional"]]
+        pargsDict = collections.OrderedDict(zip(pargs,[None]*len(pargs)))
+        keyargs = {arg:appArgs[arg]["value"] for arg in appArgs if not appArgs[arg]["positional"]}
+        logger.debug("pargs: %s; keyargs: %s, appArgs: %s",pargs, keyargs, appArgs)
+        if "inputs" in self.parameters and isinstance(self.parameters['inputs'][0], dict):
+            keyargs = droputils.identify_named_ports(
+                            inputs_dict,
+                            self.parameters["inputs"],
+                            pargs,
+                            pargsDict,
+                            appArgs,
+                            check_len=len(inputs),
+                            mode="inputs")
+        else:
+            for i in range(min(len(inputs), len(pargs))):
+                keyargs.update({pargs[i]: list(inputs.values())[i]})
+        keyargs = droputils.serialize_kwargs(keyargs, 
+            prefix=self._argumentPrefix,
+            separator=self._paramValueSeparator)
+        pargs = list(pargsDict.values())
+        argumentString = f"{' '.join(pargs + keyargs)}"  # add kwargs to end of pargs
         # complete command including all additional parameters and optional redirects
         cmd = f"{self.command} {argumentString} {self._cmdLineArgs} "
         if self._outputRedirect:
@@ -229,8 +264,19 @@ class BashShellBase(object):
 
         # Pass down daliuge-specific information to the subprocesses as environment variables
         env = os.environ.copy()
-        env["DLG_UID"] = app_uid
-        env["DLG_SESSION_ID"] = session_id
+        env.update({"DLG_UID": self._uid})
+        if self._dlg_session:
+            env.update({"DLG_SESSION_ID": self._dlg_session.sessionId})
+
+        env.update({"DLG_ROOT": utils.getDlgDir()})
+        # # try to change to session directory, else just stay in current
+        # work_dir = utils.getDlgWorkDir()
+        # session_dir = f"{work_dir}/{session_id}"
+        # try:
+        #     os.chdir(session_dir)
+        #     logger.info("Changed to session directory: %s" % session_dir)
+        # except:
+        #     logger.warning("Changing to session directory %s unsuccessful!" % session_dir)
 
         # Wrap everything inside bash
         cmd = ("/bin/bash", "-c", cmd)

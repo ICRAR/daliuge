@@ -458,22 +458,16 @@ class PyFuncApp(BarrierAppDROP):
             appArgs = {}
 
         if ('inputs' in self.parameters and isinstance(self.parameters['inputs'][0], dict)):
-            logger.debug(f"Using named ports to identify inputs: "+\
-                    f"{self.parameters['inputs']}")
-            for i in range(min(len(inputs),self.fn_nargs +\
-                len(self.arguments.kwonlyargs))):
-                # key for final dict is value in named ports dict
-                key = list(self.parameters['inputs'][i].values())[0]
-                # value for final dict is value in inputs dict
-                value = inputs[list(self.parameters['inputs'][i].keys())[0]]
-                if not value: value = '' # make sure we are passing NULL drop events
-                if key in posargs:
-                    pargsDict.update({key:value})
-                else:
-                    kwargs.update({key:value})
-                _dum = appArgs.pop(key) if key in appArgs else None
-                logger.debug("Using input %s for argument %s", value, key)
-                logger.debug("Argument used as input removed: %s", _dum)
+            check_len = min(len(inputs),self.fn_nargs+
+                len(self.arguments.kwonlyargs))
+            kwargs.update(droputils.identify_named_ports(
+                inputs,
+                self.parameters['inputs'],
+                posargs,
+                pargsDict,
+                appArgs,
+                check_len=check_len,
+                mode="inputs"))
         else:
             for i in range(min(len(inputs),self.fn_nargs)):
                 kwargs.update({self.arguments.args[i]: list(inputs.values())[i]})
@@ -482,27 +476,16 @@ class PyFuncApp(BarrierAppDROP):
         funcargs.update(kwargs)
 
         if ('outputs' in self.parameters and isinstance(self.parameters['outputs'][0], dict)):
-            out_names = [list(i.values())[0] for i in self.parameters['outputs']]
-            logger.debug(f"Using named ports to remove outputs from arguments: "+\
-                    f"{out_names}")
-            for i in range(min(len(out_names),self.fn_nargs +\
-                len(self.arguments.kwonlyargs))):
-                # key for final dict is value in named ports dict
-                key = list(self.parameters['outputs'][i].values())[0]
-                # value for final dict is value in inputs dict
-                value = outputs[list(self.parameters['outputs'][i].keys())[0]]
-                if not value: value = '' # make sure we are passing NULL drop events
-                if key in posargs:
-                    pargsDict.update({key:value})
-                else:
-                    kwargs.update({key:value})
-                _dum = appArgs.pop(key) if key in appArgs else None
-                logger.debug("Using output %s for argument %s", value, key)
-                logger.debug("Argument used as output removed: %s", _dum)
-            # _dum = [appArgs.pop(k) for k in out_names if k in appArgs]
-            # if len(_dum) > 0: 
-            #     logger.debug("Application arguments used as outputs removed : %s",
-            #         [i['text'] for i in _dum])
+            check_len = min(len(outputs),self.fn_nargs+
+                len(self.arguments.kwonlyargs))
+            kwargs.update(droputils.identify_named_ports(
+                outputs,
+                self.parameters['outputs'],
+                posargs,
+                pargsDict,
+                appArgs,
+                check_len=check_len,
+                mode="outputs"))
 
         # Try to get values for still missing positional arguments from Application Args
         if "applicationArgs" in self.parameters:
