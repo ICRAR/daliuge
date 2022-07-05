@@ -535,7 +535,8 @@ def serialize_kwargs(keyargs, prefix="--", separator=" "):
         if prefix == "--" and len(name) == 1:
             kwargs += [f"-{name} {value}"]
         else:
-            kwargs += [f"{prefix}{name}{separator}{value}".strip()]
+            kwargs += [f"{prefix.strip()}{name.strip()}{separator.strip()}{str(value).strip()}"]
+    logger.debug("kwargs after serialization: %s",kwargs)
     return kwargs
 
 
@@ -549,7 +550,9 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     else:
         logger.info("ApplicationArgs found %s", applicationArgs)
     # construct the actual command line from all application parameters
-    kwargs = {}
+    kwargs = {arg:applicationArgs[arg]["value"] for arg in applicationArgs 
+        if not applicationArgs[arg]["positional"]}
+    # kwargs = {}
     pargs = []
     positional = False
     precious = False
@@ -579,7 +582,9 @@ def identify_named_ports(ports, port_dict, posargs, pargsDict, appArgs, check_le
     logger.debug("Using named ports to remove %s from arguments: %s %d", mode, 
         port_dict, check_len)
     # pargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
-    kwargs = {}
+    # kwargs = {arg:appArgs[arg]["value"] for arg in appArgs 
+    #     if not appArgs[arg]["positional"]}
+    portargs = {}
     for i in range(check_len):
         # key for final dict is value in named ports dict
         key = list(port_dict[i].values())[0]
@@ -591,12 +596,12 @@ def identify_named_ports(ports, port_dict, posargs, pargsDict, appArgs, check_le
             logger.debug("Using %s '%s' for parg %s", mode, value, key)
             posargs.pop(posargs.index(key))
         else:
-            kwargs.update({key:value})
+            portargs.update({key:value})
             logger.debug("Using %s '%s' for kwarg %s", mode, value, key)
         _dum = appArgs.pop(key) if key in appArgs else None
         logger.debug("Argument used as %s removed: %s", mode, _dum)
-    logger.debug("Returning mapped ports: %s", kwargs)
-    return kwargs
+    logger.debug("Returning mapped ports: %s", portargs)
+    return portargs
 
 
 # Easing the transition from single- to multi-package
