@@ -448,6 +448,9 @@ class PyFuncApp(BarrierAppDROP):
         pargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
         if "applicationArgs" in self.parameters:
             appArgs = self.parameters["applicationArgs"]  # we'll pop the identified ones
+            _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
+            logger.debug("Identified keyword arguments removed: %s",
+                [i['text'] for i in _dum])
             pargsDict.update({k:self.parameters[k] for k in pargsDict if k in 
                 self.parameters})
             # if defined in both we use AppArgs values
@@ -489,9 +492,6 @@ class PyFuncApp(BarrierAppDROP):
 
         # Try to get values for still missing positional arguments from Application Args
         if "applicationArgs" in self.parameters:
-            _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
-            logger.debug("Identified keyword arguments removed: %s",
-                [i['text'] for i in _dum])
             for pa in posargs:
                 if pa != 'self' and pa not in funcargs:
                     if pa in appArgs:

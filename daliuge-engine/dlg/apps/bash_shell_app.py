@@ -219,10 +219,12 @@ class BashShellBase(object):
             appArgs ={}
         pargs = [arg for arg in appArgs if appArgs[arg]["positional"]]
         pargsDict = collections.OrderedDict(zip(pargs,[None]*len(pargs)))
+        for arg in pargs:
+            pargsDict.update({arg:appArgs[arg]})
         keyargs = {arg:appArgs[arg]["value"] for arg in appArgs if not appArgs[arg]["positional"]}
-        logger.debug("pargs: %s; keyargs: %s, appArgs: %s",pargs, keyargs, appArgs)
+        logger.debug("pargs: %s; keyargs: %s, appArgs: %s",pargsDict, keyargs, appArgs)
         if "inputs" in self.parameters and isinstance(self.parameters['inputs'][0], dict):
-            keyargs = droputils.identify_named_ports(
+            portargs = droputils.identify_named_ports(
                             inputs_dict,
                             self.parameters["inputs"],
                             pargs,
@@ -230,13 +232,14 @@ class BashShellBase(object):
                             appArgs,
                             check_len=len(inputs),
                             mode="inputs")
+            keyargs.update(portargs)
         else:
             for i in range(min(len(inputs), len(pargs))):
                 keyargs.update({pargs[i]: list(inputs.values())[i]})
         keyargs = droputils.serialize_kwargs(keyargs, 
             prefix=self._argumentPrefix,
             separator=self._paramValueSeparator)
-        pargs = list(pargsDict.values())
+        pargs = [pargsDict[arg]['value'] for arg in pargsDict]
         argumentString = f"{' '.join(pargs + keyargs)}"  # add kwargs to end of pargs
         # complete command including all additional parameters and optional redirects
         cmd = f"{self.command} {argumentString} {self._cmdLineArgs} "
