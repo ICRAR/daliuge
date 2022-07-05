@@ -217,29 +217,30 @@ class BashShellBase(object):
             appArgs = self.parameters["applicationArgs"]
         else:
             appArgs ={}
-        pargs = [arg for arg in appArgs if appArgs[arg]["positional"]]
-        pargsDict = collections.OrderedDict(zip(pargs,[None]*len(pargs)))
-        for arg in pargs:
+        pargNames = [arg for arg in appArgs if appArgs[arg]["positional"]]
+        pargsDict = collections.OrderedDict(zip(pargNames,[None]*len(pargNames)))
+        for arg in pargNames:
             pargsDict.update({arg:appArgs[arg]})
+        # pargNames = [arg for arg in pargsDict]
         keyargs = {arg:appArgs[arg]["value"] for arg in appArgs if not appArgs[arg]["positional"]}
-        logger.debug("pargs: %s; keyargs: %s, appArgs: %s",pargsDict, keyargs, appArgs)
         if "inputs" in self.parameters and isinstance(self.parameters['inputs'][0], dict):
             portargs = droputils.identify_named_ports(
                             inputs_dict,
                             self.parameters["inputs"],
-                            pargs,
+                            pargNames,
                             pargsDict,
                             appArgs,
                             check_len=len(inputs),
                             mode="inputs")
             keyargs.update(portargs)
         else:
-            for i in range(min(len(inputs), len(pargs))):
-                keyargs.update({pargs[i]: list(inputs.values())[i]})
+            for i in range(min(len(inputs), len(pargNames))):
+                keyargs.update({pargNames[i]: list(inputs.values())[i]})
         keyargs = droputils.serialize_kwargs(keyargs, 
             prefix=self._argumentPrefix,
             separator=self._paramValueSeparator)
-        pargs = [pargsDict[arg]['value'] for arg in pargsDict]
+        logger.debug("pargNames: %s; pargsDict: %s; keyargs: %s, appArgs: %s", pargNames, pargsDict, keyargs, appArgs)
+        pargs = [pargsDict[arg] for arg in pargsDict]
         argumentString = f"{' '.join(pargs + keyargs)}"  # add kwargs to end of pargs
         # complete command including all additional parameters and optional redirects
         cmd = f"{self.command} {argumentString} {self._cmdLineArgs} "
