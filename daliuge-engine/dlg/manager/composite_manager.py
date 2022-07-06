@@ -352,10 +352,10 @@ class CompositeManager(DROPManager):
         perPartition = collections.defaultdict(list)
         if "rmode" in graphSpec[-1]:
             init_pg_repro_data(graphSpec)
-            self._graph["reprodata"] = graphSpec.pop()
+            self._graphreprodata = graphSpec.pop()
             logger.debug(
                 "Composite manager found reprodata in dropspecList, rmode=%s",
-                self._graph["reprodata"]["rmode"],
+                self._graphreprodata["rmode"],
             )
         if graphSpec[-1] == {}:
             graphSpec.pop()
