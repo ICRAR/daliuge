@@ -361,8 +361,8 @@ def dlgNM(parser, args):
     parser.add_option(
         "--dlm-cleanup-period",
         type="float",
-        help="Time in seconds between background DLM drop automatic cleanups (defaults to 100)",
-        default=100
+        help="Time in seconds between background DLM drop automatic cleanups (defaults to 30)",
+        default=30
     )
     parser.add_option(
         "--dlm-enable-replication",
