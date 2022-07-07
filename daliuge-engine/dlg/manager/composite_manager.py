@@ -155,6 +155,7 @@ class CompositeManager(DROPManager):
         self._subDmId = subDmId
         self._dmHosts = dmHosts
         self._graph = {}
+        self._graphreprodata = None
         self._drop_rels = {}
         self._sessionIds = (
             []
@@ -169,7 +170,6 @@ class CompositeManager(DROPManager):
         # are directly managed by this manager (which in turn could manage more
         # machines)
         self._nodes = []
-
         self.startDMChecker()
 
     def startDMChecker(self):

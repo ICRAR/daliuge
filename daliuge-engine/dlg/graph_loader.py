@@ -224,7 +224,7 @@ def loadDropSpecs(dropSpecList):
     reprodata = None
     if dropSpecList is None:
         raise InvalidGraphException("DropSpec is empty %r" % dropSpecList)
-    if dropSpecList[-1].get("rmode"):
+    if "rmode" in dropSpecList[-1] and "oid" not in dropSpecList[-1]:
         reprodata = dropSpecList.pop()
     for n, dropSpec in enumerate(dropSpecList):
 
