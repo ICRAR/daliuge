@@ -68,7 +68,7 @@ async function initiateDeploy(method, selected, name){
     console.log("new option set")
 
     var activeUrlReachable = await checkUrlStatus(window.localStorage.getItem("manager_url"))
-    console.log("new option verified")
+    console.log(window.localStorage.getItem("manager_url"),"new option verified")
 
     if(!activeUrlReachable){
         $("#warning-alert").fadeTo(2000, 1000).slideUp(200, function() {
@@ -76,6 +76,8 @@ async function initiateDeploy(method, selected, name){
         });
         return
     }
+    var manager_url = asyncLocalStorage.getItem("manager_url");
+    $("#managerUrlInput").val(manager_url);
     if(method === "direct"){
         $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
         $("#dlg_mgr_deploy").prop("checked", true)
