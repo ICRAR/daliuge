@@ -62,9 +62,13 @@ function openSettingsModal(){
 
 async function initiateDeploy(method, selected, name){
     if (selected === false){
-        changeSelectedDeployMethod(name)
+        console.log("new option deploying")
+        await changeSelectedDeployMethod(name)
     }
+    console.log("new option set")
+
     var activeUrlReachable = await checkUrlStatus(window.localStorage.getItem("manager_url"))
+    console.log("new option verified")
 
     if(!activeUrlReachable){
         $("#warning-alert").fadeTo(2000, 1000).slideUp(200, function() {
@@ -85,17 +89,34 @@ async function initiateDeploy(method, selected, name){
     }
 }
 
-function changeSelectedDeployMethod(name) {
-    var deployMethodsArray = JSON.parse(localStorage.getItem("deployMethods"))
-    deployMethodsArray.forEach(element => {
-        element.active = "false"
-        if(element.name === name){
-            element.active = "true"
-        }
+async function changeSelectedDeployMethod(name) {
+    return new Promise((resolve, reject) => {
+        var deployMethodsArray = JSON.parse(localStorage.getItem("deployMethods"))
+        deployMethodsArray.forEach(element => {
+            element.active = "false"
+            if(element.name === name){
+                element.active = "true"
+            }
+        })
+        asyncLocalStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray)).then(function(){
+            updateDeployOptionsDropdown()
+            console.log("changing deploymethod")
+            resolve(true)
+        })
+        
     })
-    localStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray))
-    updateDeployOptionsDropdown()
 }
+
+const asyncLocalStorage = {
+    setItem: async function (key, value) {
+        await null;
+        return localStorage.setItem(key, value);
+    },
+    getItem: async function (key) {
+        await null;
+        return localStorage.getItem(key);
+    }
+};
 
 function updateDeployOptionsDropdown() {
     //remove old options
