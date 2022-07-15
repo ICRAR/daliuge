@@ -60,11 +60,19 @@ function openSettingsModal(){
     $('#settingsModal').modal("show")
 }
 
-async function initiateDeploy(method, selected, name){
+async function initiateDeploy(method, selected, clickedName){
+    var clickedUrl
+    JSON.parse(window.localStorage.getItem("deployMethods")).forEach(element => {
+        if(element.name === clickedName){
+            clickedUrl = element.url
+        }
+    })
+
     if (selected === false){
-        changeSelectedDeployMethod(name)
+        await changeSelectedDeployMethod(clickedName, clickedUrl)
     }
-    var activeUrlReachable = await checkUrlStatus(window.localStorage.getItem("manager_url"))
+
+    var activeUrlReachable = await checkUrlStatus(clickedUrl)
 
     if(!activeUrlReachable){
         $("#warning-alert").fadeTo(2000, 1000).slideUp(200, function() {
@@ -85,16 +93,20 @@ async function initiateDeploy(method, selected, name){
     }
 }
 
-function changeSelectedDeployMethod(name) {
-    var deployMethodsArray = JSON.parse(localStorage.getItem("deployMethods"))
-    deployMethodsArray.forEach(element => {
-        element.active = "false"
-        if(element.name === name){
-            element.active = "true"
-        }
+async function changeSelectedDeployMethod(name,manager_url) {
+    return new Promise((resolve, reject) => {
+        var deployMethodsArray = JSON.parse(localStorage.getItem("deployMethods"))
+        $("#managerUrlInput").val(manager_url);
+        deployMethodsArray.forEach(element => {
+            element.active = "false"
+            if(element.name === name){
+                element.active = "true"
+            }
+        })
+        window.localStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray))
+        updateDeployOptionsDropdown()
+        resolve(true)
     })
-    localStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray))
-    updateDeployOptionsDropdown()
 }
 
 function updateDeployOptionsDropdown() {
