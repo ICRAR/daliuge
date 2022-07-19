@@ -75,6 +75,21 @@ def _run_full_workflow(
     )
 
 
+def _run_workflows(rmode: ReproducibilityFlags, root_file: str, names: list,
+                   temp_out: tempfile.TemporaryDirectory):
+    for wflow_name in names:
+        _run_full_workflow(rmode, wflow_name, root_file, temp_out.name)
+
+
+def _extract_reprodata(temp_out: tempfile.TemporaryDirectory, names: list, suffix: str):
+    output = {}
+    for wflow_name in names:
+        file = open(f"{temp_out.name}{os.sep}{wflow_name}{suffix}")
+        output[wflow_name] = json.load(file)[0:-1]
+        file.close()
+    return output
+
+
 class AccumulateLGTRerunData(unittest.TestCase):
     """
     Tests the rerun standard at the logical graph template level.
@@ -193,21 +208,6 @@ class AccumulateLGRerunData(unittest.TestCase):
         ):
             hash_data = accumulate_lg_drop_data(drop[1], self.rmode)
             self.assertEqual(self.expected, dict(hash_data.keys()))
-
-
-def _run_workflows(rmode: ReproducibilityFlags, root_file: str, names: list,
-                   temp_out: tempfile.TemporaryDirectory):
-    for wflow_name in names:
-        _run_full_workflow(rmode, wflow_name, root_file, temp_out.name)
-
-
-def _extract_reprodata(temp_out: tempfile.TemporaryDirectory, names: list, suffix: str):
-    output = {}
-    for wflow_name in names:
-        file = open(f"{temp_out.name}{os.sep}{wflow_name}{suffix}")
-        output[wflow_name] = json.load(file)[0:-1]
-        file.close()
-    return output
 
 
 class AccumulatePGTUnrollRerunData(unittest.TestCase):
