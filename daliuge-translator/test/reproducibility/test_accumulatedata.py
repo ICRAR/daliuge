@@ -263,12 +263,12 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Nothing should matter for rerunning
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulatePGTPartitionRerunData(unittest.TestCase):
@@ -2039,9 +2039,10 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
 
     def test_other_accumulate(self):
         """
-        Does not matter
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
