@@ -5,14 +5,6 @@
             "from": -7,
             "fromPort": "01c127af-3de3-4ba0-8d4d-d86872703639",
             "loop_aware": "0",
-            "to": -4,
-            "toPort": "51e5c594-2fbc-4d00-bc14-60676915c767"
-        },
-        {
-            "closesLoop": false,
-            "from": -7,
-            "fromPort": "01c127af-3de3-4ba0-8d4d-d86872703639",
-            "loop_aware": "0",
             "to": -3,
             "toPort": "1ec44218-a879-40dc-8575-8d306c726b5b"
         },
@@ -23,6 +15,22 @@
             "loop_aware": "0",
             "to": -2,
             "toPort": "8e5233f4-76ff-482b-8115-d18e16605ba0"
+        },
+        {
+            "closesLoop": false,
+            "from": -1,
+            "fromPort": "b2f574bd-934f-4d90-ae54-bd5f37265320",
+            "loop_aware": "0",
+            "to": -5,
+            "toPort": "b2488e77-7ea4-4c99-bd78-5a6ab21bc1ca"
+        },
+        {
+            "closesLoop": false,
+            "from": -5,
+            "fromPort": "70f32d75-be8b-43c3-9b4e-b5412d25d682",
+            "loop_aware": "1",
+            "to": -8,
+            "toPort": "88a973f2-d378-4bcf-a306-3bfe83a0615d"
         }
     ],
     "modelData": {
@@ -34,7 +42,7 @@
         "lastModifiedDatetime": 0,
         "lastModifiedEmail": "",
         "lastModifiedName": "",
-        "numLGNodes": 4,
+        "numLGNodes": 7,
         "readonly": true,
         "repo": "",
         "repoBranch": "",
@@ -128,6 +136,18 @@
                     "text": "Sleep Time",
                     "type": "Integer",
                     "value": 5
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "name": "in",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "in",
+                    "type": "String",
+                    "value": ""
                 },
                 {
                     "defaultValue": "",
@@ -272,6 +292,18 @@
                     "text": "in",
                     "type": "String",
                     "value": ""
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "name": "in",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "in",
+                    "type": "String",
+                    "value": ""
                 }
             ],
             "inputApplicationDescription": "A simple APP that sleeps the specified amount of time (0 by default). This is mainly useful (and used) to test graph translation and structure without executing real algorithms. Very useful for debugging.",
@@ -331,84 +363,14 @@
             ],
             "flipPorts": false,
             "git_url": "",
-            "height": 200,
-            "inputAppFields": [
-                {
-                    "defaultValue": "",
-                    "description": "Application class",
-                    "name": "appclass",
-                    "options": [],
-                    "positional": false,
-                    "precious": false,
-                    "readonly": true,
-                    "text": "Application Class",
-                    "type": "String",
-                    "value": "dlg.apps.simple.SleepApp"
-                },
-                {
-                    "defaultValue": "",
-                    "description": "Estimated execution time",
-                    "name": "execution_time",
-                    "options": [],
-                    "positional": false,
-                    "precious": false,
-                    "readonly": true,
-                    "text": "Execution Time",
-                    "type": "Float",
-                    "value": 5
-                },
-                {
-                    "defaultValue": "",
-                    "description": "Is this node the start of a group?",
-                    "name": "group_start",
-                    "options": [],
-                    "positional": false,
-                    "precious": false,
-                    "readonly": false,
-                    "text": "Group start",
-                    "type": "Boolean",
-                    "value": false
-                },
-                {
-                    "defaultValue": "",
-                    "description": "The number of seconds to sleep",
-                    "name": "sleepTime",
-                    "options": [],
-                    "positional": false,
-                    "precious": false,
-                    "readonly": false,
-                    "text": "Sleep Time",
-                    "type": "Integer",
-                    "value": 5
-                },
-                {
-                    "defaultValue": "",
-                    "description": "",
-                    "name": "in",
-                    "options": [],
-                    "positional": false,
-                    "precious": false,
-                    "readonly": false,
-                    "text": "in",
-                    "type": "String",
-                    "value": ""
-                }
-            ],
-            "inputApplicationDescription": "A simple APP that sleeps the specified amount of time (0 by default). This is mainly useful (and used) to test graph translation and structure without executing real algorithms. Very useful for debugging.",
-            "inputApplicationKey": -8,
-            "inputApplicationName": "SleepApp",
-            "inputApplicationType": "PythonApp",
+            "height": 273.3278599501599,
+            "inputAppFields": [],
+            "inputApplicationDescription": "",
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
             "inputLocalPorts": [],
-            "inputPorts": [
-                {
-                    "Id": "51e5c594-2fbc-4d00-bc14-60676915c767",
-                    "IdText": "in",
-                    "description": "",
-                    "event": false,
-                    "text": "in",
-                    "type": "String"
-                }
-            ],
+            "inputPorts": [],
             "isGroup": true,
             "key": -4,
             "outputAppFields": [],
@@ -423,9 +385,9 @@
             "streaming": false,
             "subject": null,
             "text": "Loop",
-            "width": 200,
-            "x": 91.65452023975249,
-            "y": 362.63974070386473
+            "width": 493.31143980063956,
+            "x": 78.71430966031251,
+            "y": 361.2019395283714
         },
         {
             "applicationArgs": [],
@@ -497,6 +459,280 @@
             "width": 200,
             "x": -259.78701560776597,
             "y": 127.99555475268865
+        },
+        {
+            "applicationArgs": [
+                {
+                    "defaultValue": "",
+                    "description": "The number of seconds to sleep",
+                    "name": "sleepTime",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Sleep Time",
+                    "type": "Integer",
+                    "value": 5
+                }
+            ],
+            "category": "PythonApp",
+            "collapsed": false,
+            "color": "#0059a5",
+            "description": "A simple APP that sleeps the specified amount of time (0 by default). This is mainly useful (and used) to test graph translation and structure without executing real algorithms. Very useful for debugging.",
+            "drawOrderHint": 0,
+            "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Application class",
+                    "name": "appclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "Application Class",
+                    "type": "String",
+                    "value": "dlg.apps.simple.SleepApp"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "Estimated execution time",
+                    "name": "execution_time",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "Execution Time",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "defaultValue": "",
+                    "description": "Is this node the start of a group?",
+                    "name": "group_start",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Boolean",
+                    "value": true
+                }
+            ],
+            "flipPorts": false,
+            "git_url": "https://github.com/ICRAR/daliuge",
+            "group": -4,
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationDescription": "",
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [],
+            "isGroup": false,
+            "key": -1,
+            "outputAppFields": [],
+            "outputApplicationDescription": "",
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "b2f574bd-934f-4d90-ae54-bd5f37265320",
+                    "IdText": "dummy",
+                    "description": "",
+                    "event": false,
+                    "text": "dummy",
+                    "type": "Complex"
+                }
+            ],
+            "precious": false,
+            "sha": "a7abe4c",
+            "streaming": false,
+            "subject": null,
+            "text": "SleepApp",
+            "width": 200,
+            "x": 140.0328945466387,
+            "y": 459.3870456229409
+        },
+        {
+            "applicationArgs": [],
+            "category": "Memory",
+            "collapsed": false,
+            "color": "#2c2c2c",
+            "description": "In-memory storage of intermediate data products",
+            "drawOrderHint": 0,
+            "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Estimated size of the data contained in this node",
+                    "name": "data_volume",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Data volume",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "defaultValue": "",
+                    "description": "Is this node the end of a group?",
+                    "name": "group_end",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group end",
+                    "type": "Boolean",
+                    "value": true
+                }
+            ],
+            "flipPorts": false,
+            "git_url": "https://github.com/ICRAR/daliuge",
+            "group": -4,
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationDescription": "",
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "b2488e77-7ea4-4c99-bd78-5a6ab21bc1ca",
+                    "IdText": "dummy",
+                    "description": "Dummy input port",
+                    "event": false,
+                    "text": "dummy",
+                    "type": "Complex"
+                }
+            ],
+            "isGroup": false,
+            "key": -5,
+            "outputAppFields": [],
+            "outputApplicationDescription": "",
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "70f32d75-be8b-43c3-9b4e-b5412d25d682",
+                    "IdText": "dummy",
+                    "description": "Dummy output port",
+                    "event": false,
+                    "text": "dummy",
+                    "type": "Complex"
+                }
+            ],
+            "precious": false,
+            "sha": "a7abe4c",
+            "streaming": false,
+            "subject": null,
+            "text": "Memory",
+            "width": 200,
+            "x": 324.0714450097852,
+            "y": 478.0784609043544
+        },
+        {
+            "applicationArgs": [
+                {
+                    "defaultValue": "",
+                    "description": "The number of seconds to sleep",
+                    "name": "sleepTime",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Sleep Time",
+                    "type": "Integer",
+                    "value": 5
+                }
+            ],
+            "category": "PythonApp",
+            "collapsed": false,
+            "color": "#0059a5",
+            "description": "A simple APP that sleeps the specified amount of time (0 by default). This is mainly useful (and used) to test graph translation and structure without executing real algorithms. Very useful for debugging.",
+            "drawOrderHint": 0,
+            "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Application class",
+                    "name": "appclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "Application Class",
+                    "type": "String",
+                    "value": "dlg.apps.simple.SleepApp"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "Estimated execution time",
+                    "name": "execution_time",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "Execution Time",
+                    "type": "Float",
+                    "value": 5
+                },
+                {
+                    "defaultValue": "",
+                    "description": "Is this node the start of a group?",
+                    "name": "group_start",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Boolean",
+                    "value": false
+                }
+            ],
+            "flipPorts": false,
+            "git_url": "https://github.com/ICRAR/daliuge",
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationDescription": "",
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "88a973f2-d378-4bcf-a306-3bfe83a0615d",
+                    "IdText": "dummy",
+                    "description": "",
+                    "event": false,
+                    "text": "dummy",
+                    "type": "Complex"
+                }
+            ],
+            "isGroup": false,
+            "key": -8,
+            "outputAppFields": [],
+            "outputApplicationDescription": "",
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [],
+            "precious": false,
+            "sha": "a7abe4c",
+            "streaming": false,
+            "subject": null,
+            "text": "SleepApp",
+            "width": 200,
+            "x": 776.9788152901838,
+            "y": 488.1430691328078
         }
     ]
 }
