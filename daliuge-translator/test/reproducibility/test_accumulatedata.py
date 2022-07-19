@@ -41,7 +41,7 @@ from dlg.common.reproducibility.reproducibility import (
 )
 from dlg.translator.tool_commands import dlg_fill, dlg_unroll, dlg_partition, dlg_map
 
-SUPPORTED_WORKFLOWS = ["apps", "files", "misc"]
+SUPPORTED_WORKFLOWS = ["apps", "files", "misc", "groups"]
 
 
 def _fill_workflow(
@@ -249,12 +249,19 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only the drop type and input app type matters for rerunning
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -308,12 +315,19 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only drop type matters for rerunning.
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -368,12 +382,19 @@ class AccumulatePGRerunData(unittest.TestCase):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, dict(hash_data.keys()))
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Nothing matters for rerunning.
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -623,12 +644,19 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only type matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -683,12 +711,19 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only type matters when repeating.
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -743,12 +778,19 @@ class AccumulatePGRepeatData(unittest.TestCase):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, dict(hash_data.keys()))
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Nothing matters for repeating.
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -998,12 +1040,19 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Type and rank matters.
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt", "rank"}
+        expected_file = {"type", "storage", "rank"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -1058,12 +1107,19 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(sorted(expected), sorted(list(hash_data.keys())))
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Type, rank and machine information matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt", "rank"}
+        expected_file = {"type", "storage", "rank"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -1118,12 +1174,19 @@ class AccumulatePGRecomputeData(unittest.TestCase):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Machine information matters when recomputing
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt", "rank"}
+        expected_file = {"type", "storage", "rank"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -1347,12 +1410,19 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only type matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -1407,12 +1477,19 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, list(hash_data.keys()))
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only type matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -1467,12 +1544,19 @@ class AccumulatePGReproduceData(unittest.TestCase):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, dict(hash_data.keys()))
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Group information does not matter when reproducing
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -1648,12 +1732,19 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only type matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -1708,12 +1799,19 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only type matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -1768,12 +1866,19 @@ class AccumulatePGReplicateSciData(unittest.TestCase):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, dict(hash_data.keys()))
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Nothing matters.
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -2023,12 +2128,19 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Type and rank matter
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt", "rank"}
+        expected_file = {"type", "storage", "rank"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -2082,12 +2194,19 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Type, rank and machine information matters.
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt", "rank"}
+        expected_file = {"type", "storage", "rank"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -2142,12 +2261,19 @@ class AccumulatePGReplicateCompData(unittest.TestCase):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Machine information matters.
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt", "rank"}
+        expected_file = {"type", "storage", "rank"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -2397,12 +2523,19 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Type matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -2457,12 +2590,19 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only type matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -2517,12 +2657,19 @@ class AccumulatePGReplicateTotalData(unittest.TestCase):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, dict(hash_data.keys()))
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Nothing matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
