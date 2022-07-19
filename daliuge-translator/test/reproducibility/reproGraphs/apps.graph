@@ -1,333 +1,592 @@
 {
     "linkDataArray": [],
     "modelData": {
+        "eagleCommitHash": "fc70a7587a6223322914cb82bf199ffb4be301de",
+        "eagleVersion": "v4.5.2",
         "filePath": "apps.graph",
-        "fileType": "graph",
-        "git_url": "",
+        "fileType": "Graph",
+        "gitUrl": "",
+        "lastModifiedDatetime": 0,
+        "lastModifiedEmail": "",
+        "lastModifiedName": "",
+        "numLGNodes": 5,
+        "readonly": true,
         "repo": "",
+        "repoBranch": "",
         "repoService": "Unknown",
+        "schemaVersion": "OJS",
         "sha": ""
     },
     "nodeDataArray": [
         {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
+            "applicationArgs": [],
             "category": "BashShellApp",
-            "categoryType": "Application",
             "collapsed": false,
-            "colour": "#1C2833",
+            "color": "#0059a5",
             "description": "An application component run within the Bash Shell",
-            "exitAppName": "",
+            "drawOrderHint": 0,
+            "expanded": false,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "execution_time",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Execution time",
+                    "type": "Unknown",
                     "value": "5"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "num_cpus",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Num CPUs",
+                    "type": "Unknown",
                     "value": "1"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "group_start",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Group start",
+                    "type": "Unknown",
                     "value": "0"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "Arg01",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Arg01",
+                    "type": "Unknown",
                     "value": ""
                 }
             ],
+            "flipPorts": false,
+            "git_url": "",
+            "height": 72,
             "inputAppFields": [],
-            "inputAppName": "",
-            "inputApplication": "Unknown",
+            "inputApplicationDescription": "",
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
             "inputLocalPorts": [],
             "inputPorts": [
                 {
                     "Id": "4e9ba4ed-1f51-45ed-9320-ad7978701970",
-                    "IdText": "event"
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "event"
                 }
             ],
-            "isData": false,
             "isGroup": false,
             "key": -1,
-            "loc": "300 100",
             "outputAppFields": [],
-            "outputAppName": "",
-            "outputApplication": "Unknown",
+            "outputApplicationDescription": "",
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [
                 {
                     "Id": "260b62fe-1624-4fd2-b638-3e64f6293453",
-                    "IdText": "event"
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "event"
                 }
             ],
+            "precious": false,
+            "sha": "",
             "streaming": false,
             "subject": null,
-            "text": "Bash Shell App"
+            "text": "Bash Shell App",
+            "width": 200,
+            "x": 300,
+            "y": 100
         },
         {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
+            "applicationArgs": [],
             "category": "DynlibApp",
-            "categoryType": "Application",
             "collapsed": false,
-            "colour": "#3470AA",
+            "color": "#0059a5",
             "description": "An application component run from a dynamic library",
-            "exitAppName": "",
+            "drawOrderHint": 0,
+            "expanded": false,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "execution_time",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Execution time",
+                    "type": "Unknown",
                     "value": "5"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "num_cpus",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Num CPUs",
+                    "type": "Unknown",
                     "value": "1"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "group_start",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Group start",
+                    "type": "Unknown",
                     "value": "0"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "libpath",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Library path",
+                    "type": "Unknown",
                     "value": "/usr/bin/example"
                 }
             ],
+            "flipPorts": false,
+            "git_url": "",
+            "height": 72,
             "inputAppFields": [],
-            "inputAppName": "",
-            "inputApplication": "Unknown",
+            "inputApplicationDescription": "",
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
             "inputLocalPorts": [],
             "inputPorts": [
                 {
                     "Id": "73474b3f-d6ea-4455-8aab-ad88a9ccfa1b",
-                    "IdText": "event"
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "event"
                 }
             ],
-            "isData": false,
             "isGroup": false,
             "key": -2,
-            "loc": "300 100",
             "outputAppFields": [],
-            "outputAppName": "",
-            "outputApplication": "Unknown",
+            "outputApplicationDescription": "",
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [
                 {
                     "Id": "e4d3d5fa-57b2-455c-8478-3ba65339c8dd",
-                    "IdText": "event"
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "event"
                 }
             ],
+            "precious": false,
+            "sha": "",
             "streaming": false,
             "subject": null,
-            "text": "Dynlib App"
+            "text": "Dynlib App",
+            "width": 200,
+            "x": 300,
+            "y": 100
         },
         {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
+            "applicationArgs": [],
             "category": "Mpi",
-            "categoryType": "Application",
             "collapsed": false,
-            "colour": "#1E90FF",
+            "color": "#0059a5",
             "description": "An application component using the Message Passing Interface (MPI)",
-            "exitAppName": "",
+            "drawOrderHint": 0,
+            "expanded": false,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "group_end",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Group end",
+                    "type": "Unknown",
                     "value": "0"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "execution_time",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Execution time",
+                    "type": "Unknown",
                     "value": "5"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "num_cpus",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Num CPUs",
+                    "type": "Unknown",
                     "value": "1"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "num_of_procs",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Num procs",
+                    "type": "Unknown",
                     "value": "4"
                 }
             ],
+            "flipPorts": false,
+            "git_url": "",
+            "height": 72,
             "inputAppFields": [],
-            "inputAppName": "",
-            "inputApplication": "Unknown",
+            "inputApplicationDescription": "",
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
             "inputLocalPorts": [],
             "inputPorts": [
                 {
                     "Id": "4f355f3f-ef01-47a3-b2d7-83ce335f5e77",
-                    "IdText": "event"
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "event"
                 }
             ],
-            "isData": false,
             "isGroup": false,
             "key": -3,
-            "loc": "300 100",
             "outputAppFields": [],
-            "outputAppName": "",
-            "outputApplication": "Unknown",
+            "outputApplicationDescription": "",
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [
                 {
                     "Id": "a4fe5623-4b95-4a10-b5ef-9e07a7a14688",
-                    "IdText": "event"
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "event"
                 }
             ],
+            "precious": false,
+            "sha": "",
             "streaming": false,
             "subject": null,
-            "text": "MPI"
+            "text": "MPI",
+            "width": 200,
+            "x": 300,
+            "y": 100
         },
         {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
+            "applicationArgs": [],
             "category": "Docker",
-            "categoryType": "Application",
             "collapsed": false,
-            "colour": "#331C54",
+            "color": "#0059a5",
             "description": "An application component run from a Docker image",
-            "exitAppName": "",
+            "drawOrderHint": 0,
+            "expanded": false,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "execution_time",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Execution time",
+                    "type": "Unknown",
                     "value": "5"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "num_cpus",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Num CPUs",
+                    "type": "Unknown",
                     "value": "1"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "group_start",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Group start",
+                    "type": "Unknown",
                     "value": "0"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "image",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Image",
+                    "type": "Unknown",
                     "value": "dockerimage"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "command",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Command",
+                    "type": "Unknown",
                     "value": "docker up"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "user",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "User",
+                    "type": "Unknown",
                     "value": ""
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "ensureUserAndSwitch",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Ensure User And Switch",
+                    "type": "Unknown",
                     "value": "0"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "removeContainer",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Remove Container",
+                    "type": "Unknown",
                     "value": "1"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "additionalBindings",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Additional Bindings",
+                    "type": "Unknown",
                     "value": ""
                 }
             ],
+            "flipPorts": false,
+            "git_url": "",
+            "height": 72,
             "inputAppFields": [],
-            "inputAppName": "",
-            "inputApplication": "Unknown",
+            "inputApplicationDescription": "",
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
             "inputLocalPorts": [],
             "inputPorts": [
                 {
                     "Id": "8da67f95-5665-42f3-a0ec-a6213b4fae8f",
-                    "IdText": "event"
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "event"
                 }
             ],
-            "isData": false,
             "isGroup": false,
             "key": -4,
-            "loc": "300 100",
             "outputAppFields": [],
-            "outputAppName": "",
-            "outputApplication": "Unknown",
+            "outputApplicationDescription": "",
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [
                 {
                     "Id": "a33fa1c9-fc24-4975-9f5e-ba1d73b5d050",
-                    "IdText": "event"
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "event"
                 }
             ],
+            "precious": false,
+            "sha": "",
             "streaming": false,
             "subject": null,
-            "text": "Docker"
+            "text": "Docker",
+            "width": 200,
+            "x": 300,
+            "y": 100
         },
         {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "category": "Component",
-            "categoryType": "Application",
+            "applicationArgs": [],
+            "category": "PythonApp",
             "collapsed": false,
-            "colour": "#3498DB",
+            "color": "#0059a5",
             "description": "An application component in the form of a Python app",
-            "exitAppName": "",
+            "drawOrderHint": 0,
+            "expanded": false,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "execution_time",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Execution time",
+                    "type": "Unknown",
                     "value": "5"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "num_cpus",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Num CPUs",
+                    "type": "Unknown",
                     "value": "1"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "group_start",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Group start",
+                    "type": "Unknown",
                     "value": "0"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
                     "name": "appclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Appclass",
+                    "type": "Unknown",
                     "value": "test.graphsRepository"
                 }
             ],
+            "flipPorts": false,
+            "git_url": "",
+            "height": 72,
             "inputAppFields": [],
-            "inputAppName": "",
-            "inputApplication": "Unknown",
+            "inputApplicationDescription": "",
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
             "inputLocalPorts": [],
             "inputPorts": [
                 {
                     "Id": "821057f0-3b7f-4483-93a6-993120068566",
-                    "IdText": "event"
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "event"
                 }
             ],
-            "isData": false,
             "isGroup": false,
             "key": -5,
-            "loc": "300 100",
             "outputAppFields": [],
-            "outputAppName": "",
-            "outputApplication": "Unknown",
+            "outputApplicationDescription": "",
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [
                 {
                     "Id": "2028e36a-f9a3-418e-99b0-8bd8f6129f26",
-                    "IdText": "event"
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "text": "event"
                 }
             ],
+            "precious": false,
+            "sha": "",
             "streaming": false,
             "subject": null,
-            "text": "Python App"
+            "text": "Python App",
+            "width": 200,
+            "x": 300,
+            "y": 100
         }
     ]
 }
