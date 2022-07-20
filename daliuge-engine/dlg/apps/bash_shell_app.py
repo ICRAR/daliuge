@@ -222,7 +222,7 @@ class BashShellBase(object):
         keyargs = {arg:appArgs[arg]["value"] for arg in appArgs if not appArgs[arg]["positional"]}
         logger.debug("pargs: %s; keyargs: %s, appArgs: %s",pargs, keyargs, appArgs)
         if "inputs" in self.parameters and isinstance(self.parameters['inputs'][0], dict):
-            keyargs = droputils.identify_named_ports(
+            pkeyargs = droputils.identify_named_ports(
                             inputs_dict,
                             self.parameters["inputs"],
                             pargs,
@@ -230,6 +230,7 @@ class BashShellBase(object):
                             appArgs,
                             check_len=len(inputs),
                             mode="inputs")
+            keyargs.update(pkeyargs)
         else:
             for i in range(min(len(inputs), len(pargs))):
                 keyargs.update({pargs[i]: list(inputs.values())[i]})
