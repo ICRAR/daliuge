@@ -234,6 +234,19 @@ class BashShellBase(object):
         else:
             for i in range(min(len(inputs), len(pargs))):
                 keyargs.update({pargs[i]: list(inputs.values())[i]})
+        if "outputs" in self.parameters and isinstance(self.parameters['outputs'][0], dict):
+            pkeyargs = droputils.identify_named_ports(
+                            outputs_dict,
+                            self.parameters["outputs"],
+                            pargs,
+                            pargsDict,
+                            appArgs,
+                            check_len=len(outputs),
+                            mode="outputs")
+            keyargs.update(pkeyargs)
+        else:
+            for i in range(min(len(outputs), len(pargs))):
+                keyargs.update({pargs[i]: list(outputs.values())[i]})
         keyargs = droputils.serialize_kwargs(keyargs, 
             prefix=self._argumentPrefix,
             separator=self._paramValueSeparator)
