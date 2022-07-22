@@ -221,6 +221,7 @@ class BashShellBase(object):
             appArgs ={}
         pargNames = [arg for arg in appArgs if appArgs[arg]["positional"]]
         pargsDict = collections.OrderedDict(zip(pargNames,[None]*len(pargNames)))
+        pargs = pargsDict.keys()
         for arg in pargNames:
             pargsDict.update({arg:appArgs[arg]})
         # pargNames = [arg for arg in pargsDict]
