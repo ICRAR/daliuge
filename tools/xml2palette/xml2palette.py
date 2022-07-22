@@ -36,11 +36,12 @@ KNOWN_PARAM_DATA_TYPES = [
     "String",
     "Integer",
     "Float",
-    "Complex",
+    "Object",
     "Boolean",
     "Select",
     "Password",
     "Json",
+    "Python"
 ]
 KNOWN_CONSTRUCT_TYPES = ["Scatter", "Gather"]
 KNOWN_DATA_CATEGORIES = [
@@ -48,10 +49,11 @@ KNOWN_DATA_CATEGORIES = [
     "Memory",
     "SharedMemory",
     "NGAS",
-    "ParameterSet",
     "S3",
     "Plasma",
     "PlasmaFlight",
+    "ParameterSet",
+    "EnvironmentVariables"
 ]
 
 
@@ -240,7 +242,7 @@ def create_field(
         "text": name,
         "name": internal_name,
         "value": value,
-        "default": value,
+        "defaultValue": value,
         "description": description,
         "readonly": access == "readonly",
         "type": type,
