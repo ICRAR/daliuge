@@ -324,9 +324,9 @@ class RandomArrayApp(BarrierAppDROP):
 #     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
-# @param[in] port/array Array/array/
+# @param[in] port/array Array/Object.Array/
 #     \~English Port for the input array(s)
-# @param[out] port/array Array/Array/
+# @param[out] port/array Array/Object.Array/
 #     \~English Port carrying the averaged array
 # @par EAGLE_END
 class AverageArraysApp(BarrierAppDROP):
