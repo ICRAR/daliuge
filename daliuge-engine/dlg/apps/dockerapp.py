@@ -290,10 +290,6 @@ class DockerApp(BarrierAppDROP):
             self._paramValueSeparator
         )
         # defer construction of complete command to run method
-        # cmd = f"{self._command} {self._cmdLineArgs} {' '.join(self.pargs)} "+\
-        #     f"{' '.join(self.keyargs)}"
-        # cmd = cmd.strip()
-        # self._command = cmd
 
         # The user used to run the process in the docker container is now always the user
         # who originally started the DALiuGE process as well. The information is passed through
@@ -430,7 +426,7 @@ class DockerApp(BarrierAppDROP):
             fsInputs = {uid: i for uid, i in iitems if droputils.has_path(i)}
             fsOutputs = {uid: o for uid, o in oitems if droputils.has_path(o)}
             dockerInputs = {
-                #            uid: DockerPath(utils.getDlgDir() + i.path) for uid, i in fsInputs.items()
+                # uid: DockerPath(utils.getDlgDir() + i.path) for uid, i in fsInputs.items()
                 uid: DockerPath(i.path)
                 for uid, i in fsInputs.items()
             }
@@ -443,7 +439,6 @@ class DockerApp(BarrierAppDROP):
             dataURLOutputs = {uid: o for uid, o in oitems if not droputils.has_path(o)}
             self._command = f"{self._command} {' '.join(self.pargs)} "+\
                 f"{' '.join(self.keyargs)}"
-            # TODO: Deal with named inputs
             if self._command:
                 cmd = droputils.replace_path_placeholders(
                     self._command, dockerInputs, dockerOutputs
@@ -546,6 +541,60 @@ class DockerApp(BarrierAppDROP):
                         "Ignoring provided environment variables: Format wrong! Check documentation"
                     )
             logger.debug(f"Adding environment variables: {env}")
+
+            ###########
+            # deal with named ports
+            # TODO: This needs to be moved to droputils as well.
+            # Almost exact same code as for bash
+            inputs_dict = collections.OrderedDict()
+            for uid, drop in iitems:
+                inputs_dict[uid] = drop.path if hasattr(drop, 'path') else ''
+
+            outputs_dict = collections.OrderedDict()
+            for uid, drop in oitems:
+                # if drop does not have a path we assume it is just passing the event
+                # Bash does not support memory drops anyway
+                outputs_dict[uid] = drop.path if hasattr(drop, 'path') else ''
+
+            appArgs = self._applicationArgs
+            pargs = [arg for arg in appArgs if appArgs[arg]["positional"]]
+            pargsDict = collections.OrderedDict(zip(pargs,[None]*len(pargs)))
+            pkeyargs = {}
+            logger.debug("pargs: %s; pkeyargs: %s, appArgs: %s",pargs, pkeyargs, appArgs)
+            if "inputs" in self.parameters and isinstance(self.parameters['inputs'][0], dict):
+                ipkeyargs = droputils.identify_named_ports(
+                                inputs_dict,
+                                self.parameters["inputs"],
+                                pargs,
+                                pargsDict,
+                                appArgs,
+                                check_len=len(iitems),
+                                mode="inputs")
+                pkeyargs.update(ipkeyargs)
+            else:
+                for i in range(min(len(iitems), len(pargs))):
+                    pkeyargs.update({pargs[i]: list(self._inputs.values())[i]})
+            if "outputs" in self.parameters and isinstance(self.parameters['outputs'][0], dict):
+                opkeyargs = droputils.identify_named_ports(
+                                outputs_dict,
+                                self.parameters["outputs"],
+                                pargs,
+                                pargsDict,
+                                appArgs,
+                                check_len=len(oitems),
+                                mode="outputs")
+                pkeyargs.update(opkeyargs)
+            else:
+                for i in range(min(len(oitems), len(pargs))):
+                    pkeyargs.update({pargs[i]: list(self._outputs.values())[i]})
+            pkeyargs = droputils.serialize_kwargs(pkeyargs, 
+                prefix=self._argumentPrefix,
+                separator=self._paramValueSeparator)
+            pargs = list(pargsDict.values())
+            argumentString = f"{' '.join(pkeyargs + pargs)}"  # add kwargs to end of pargs
+            # complete command including all additional parameters and optional redirects
+            cmd = f"{cmd} {argumentString} {self._cmdLineArgs} "
+            ###############
 
             # Wrap everything inside bash
             if len(cmd) > 0 and not self._noBash:

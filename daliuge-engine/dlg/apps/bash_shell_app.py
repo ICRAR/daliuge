@@ -204,7 +204,9 @@ class BashShellBase(object):
 
         outputs_dict = collections.OrderedDict()
         for uid, drop in outputs.items():
-            outputs_dict[uid] = drop.path
+            # if drop does not have a path we assume it is just passing the event
+            # Bash does not support memory drops anyway
+            outputs_dict[uid] = drop.path if hasattr(drop, 'path') else ''
 
         session_id = (
             self._dlg_session.sessionId if self._dlg_session is not None else ""
