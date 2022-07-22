@@ -588,7 +588,7 @@ def identify_named_ports(ports, port_dict, posargs, pargsDict, appArgs, check_le
     for i in range(check_len):
         # key for final dict is value in named ports dict
         key = list(port_dict[i].values())[0]
-        # value for final dict is value in inputs dict
+        # value for final dict is value in ports dict
         value = ports[list(port_dict[i].keys())[0]]
         if not value: value = '' # make sure we are passing NULL drop events
         if key in posargs:
