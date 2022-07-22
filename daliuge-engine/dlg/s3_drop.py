@@ -46,8 +46,8 @@ from .meta import dlg_string_param, dlg_list_param
 #     \~English The S3 Object
 # @param[in] cparam/profile_name Profile Name//String/readwrite/False//False/
 #     \~English The S3 Profile
-# @param[in] port/dummy dummy/Complex/Dummy input port
-# @param[out] port/dummy dummy/Complex/Dummy output port
+# @param[in] port/dummy dummy/Object/Dummy input port
+# @param[out] port/dummy dummy/Object/Dummy output port
 # @par EAGLE_END
 class S3DROP(AbstractDROP):
     """

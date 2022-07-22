@@ -66,7 +66,7 @@ def _filter_parameters(parameters: dict):
 # @par EAGLE_START
 # @param category EnvironmentVariables
 # @param tag daliuge
-# @param[out] port/dummy dummy/Complex/Dummy output port
+# @param[out] port/dummy dummy/Object/Dummy output port
 # @par EAGLE_END
 class EnvironmentVarDROP(AbstractDROP, KeyValueDROP):
     """
