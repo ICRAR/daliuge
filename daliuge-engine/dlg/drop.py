@@ -1975,14 +1975,14 @@ class EndDROP(NullDROP):
 #     \~English Load path for python DB module
 # @param[in] cparam/dbtable DB table name//String/readwrite/False//False/
 #     \~English The name of the table to use
-# @param[in] cparam/vals Values dictionary//Json/readwrite/False//False/
+# @param[in] cparam/vals Values dictionary/{}/Json/readwrite/False//False/
 #     \~English Json encoded values dictionary used for INSERT. The keys of ``vals`` are used as the column names.
 # @param[in] cparam/condition Whats used after WHERE//String/readwrite/False//False/
 #     \~English Condition for SELECT. For this the WHERE statement must be written using the "{X}" or "{}" placeholders
-# @param[in] cparam/selectVals values for WHERE//Json/readwrite/False//False/
+# @param[in] cparam/selectVals values for WHERE/{}/Json/readwrite/False//False/
 #     \~English Values for the WHERE statement
-# @param[in] port/dummy dummy/Complex/Dummy input port
-# @param[out] port/dummy dummy/Complex/Dummy output port
+# @param[in] port/dummy dummy/String/Dummy input port
+# @param[out] port/dummy dummy/String/Dummy output port
 # @par EAGLE_END
 class RDBMSDrop(DataDROP):
     """
