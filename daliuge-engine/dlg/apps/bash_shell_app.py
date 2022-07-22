@@ -424,7 +424,6 @@ class StreamingInputBashAppBase(BashShellBase, AppDROP):
 #     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
-# @param[out] port/dummy dummy/String/Dummy output port
 # @par EAGLE_END
 class BashShellApp(BashShellBase, BarrierAppDROP):
     """

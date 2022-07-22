@@ -38,7 +38,7 @@ from dlg.meta import dlg_string_param
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/Is this node the end of a group?
 # @param[in] cparam/mode Parset mode/"YANDA"/String/readonly/False//False/To what standard DALiuGE should filter and serialize the parameters.
 # @param[in] cparam/config_data ConfigData/""/String/readwrite/False//False/Additional configuration information to be mixed in with the initial data
-# @param[out] port/Config ConfigFile/File/The output configuration file
+# @param[out] port/Config ConfigFile/Object.File/The output configuration file
 # @par EAGLE_END
 class ParameterSetDROP(DataDROP):
     """
