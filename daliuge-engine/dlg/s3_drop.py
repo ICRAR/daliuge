@@ -36,18 +36,13 @@ from .meta import dlg_string_param, dlg_list_param
 # @par EAGLE_START
 # @param category S3
 # @param tag daliuge
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
-# @param[in] cparam/bucket Bucket//String/readwrite/False//False/
-#     \~English The S3 Bucket
-# @param[in] cparam/object_name Object Name//String/readwrite/False//False/
-#     \~English The S3 Object
-# @param[in] cparam/profile_name Profile Name//String/readwrite/False//False/
-#     \~English The S3 Profile
-# @param[in] port/dummy dummy/Object/Dummy input port
-# @param[out] port/dummy dummy/Object/Dummy output port
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param bucket Bucket//String/ComponentParameter/readwrite//False/False/The S3 Bucket
+# @param object_name Object Name//String/ComponentParameter/readwrite//False/False/The S3 Object
+# @param profile_name Profile Name//String/ComponentParameter/readwrite//False/False/The S3 Profile
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class S3DROP(AbstractDROP):
     """
