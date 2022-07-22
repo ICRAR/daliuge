@@ -2742,6 +2742,8 @@ class BarrierAppDROP(InputFiredAppDROP):
 #     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param[out] port/dummy0 dummy0/String/Dummy output port
+# @param[out] port/dummy1 dummy1/String/Dummy output port
 # @par EAGLE_END
 class BranchAppDrop(BarrierAppDROP):
     """
