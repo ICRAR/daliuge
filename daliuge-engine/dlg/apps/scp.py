@@ -62,11 +62,11 @@ from dlg.meta import (
 #     \~English Remote user address
 # @param[in] aparam/pkeyPath Private Key Path//String/readwrite/False//False/
 #     \~English Private key path
-# @param[in] aparam/timeout Timeout//Float/readwrite/False//False/
+# @param[in] aparam/timeout Timeout/60/Float/readwrite/False//False/
 #     \~English Connection timeout in seconds
-# @param[in] port/file File/PathBasedDrop/
+# @param[in] port/file File/Object.PathBasedDrop/
 #     \~English Input file path
-# @param[out] port/file File/PathBasedDrop/
+# @param[out] port/file File/Object.PathBasedDrop/
 #     \~English Output file path
 # @par EAGLE_END
 class ScpApp(BarrierAppDROP):
