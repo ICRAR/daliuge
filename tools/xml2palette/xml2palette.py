@@ -95,8 +95,15 @@ def check_environment_variables():
         value = os.environ.get(variable)
 
         if value is None:
-            logging.error("No " + variable + " environment variable.")
-            return False
+            if variable == 'PROJECT_NAME':
+                os.environ['PROJECT_NAME'] = os.path.basename(os.path.abspath('.'))
+            elif variable == 'PROJECT_VERSION':
+                os.environ['PROJECT_VERSION'] = '0.1'
+            elif variable == 'GIT_REPO':
+                os.environ['GIT_REPO'] = os.environ['PROJECT_NAME']
+            else:
+                logging.error("No " + variable + " environment variable.")
+                return False
 
     return True
 
@@ -1063,6 +1070,10 @@ if __name__ == "__main__":
         level=logging.INFO,
     )
 
+    # read environment variables
+    if not check_environment_variables():
+        sys.exit(1)
+
     logging.info("PROJECT_NAME:" + os.environ.get("PROJECT_NAME"))
     logging.info("PROJECT_VERSION:" + os.environ.get("PROJECT_VERSION"))
     logging.info("GIT_REPO:" + os.environ.get("GIT_REPO"))
@@ -1076,10 +1087,6 @@ if __name__ == "__main__":
 
     # create a temp directory for the output of doxygen
     output_directory = tempfile.TemporaryDirectory()
-
-    # read environment variables
-    if not check_environment_variables():
-        sys.exit(1)
 
     # add extra doxygen setting for input and output locations
     DOXYGEN_SETTINGS.append(("PROJECT_NAME", os.environ.get("PROJECT_NAME")))

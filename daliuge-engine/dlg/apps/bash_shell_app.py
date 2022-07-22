@@ -226,7 +226,7 @@ class BashShellBase(object):
         # pargNames = [arg for arg in pargsDict]
         keyargs = {arg:appArgs[arg]["value"] for arg in appArgs if not appArgs[arg]["positional"]}
         if "inputs" in self.parameters and isinstance(self.parameters['inputs'][0], dict):
-            portargs = droputils.identify_named_ports(
+            pkeyargs = droputils.identify_named_ports(
                             inputs_dict,
                             self.parameters["inputs"],
                             pargNames,
@@ -234,10 +234,23 @@ class BashShellBase(object):
                             appArgs,
                             check_len=len(inputs),
                             mode="inputs")
-            keyargs.update(portargs)
+            keyargs.update(pkeyargs)
         else:
-            for i in range(min(len(inputs), len(pargNames))):
-                keyargs.update({pargNames[i]: list(inputs.values())[i]})
+            for i in range(min(len(inputs), len(pargs))):
+                keyargs.update({pargs[i]: list(inputs.values())[i]})
+        if "outputs" in self.parameters and isinstance(self.parameters['outputs'][0], dict):
+            pkeyargs = droputils.identify_named_ports(
+                            outputs_dict,
+                            self.parameters["outputs"],
+                            pargs,
+                            pargsDict,
+                            appArgs,
+                            check_len=len(outputs),
+                            mode="outputs")
+            keyargs.update(pkeyargs)
+        else:
+            for i in range(min(len(outputs), len(pargs))):
+                keyargs.update({pargs[i]: list(outputs.values())[i]})
         keyargs = droputils.serialize_kwargs(keyargs, 
             prefix=self._argumentPrefix,
             separator=self._paramValueSeparator)
