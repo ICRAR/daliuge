@@ -85,34 +85,29 @@ def lgt_block_fields(rmode: ReproducibilityFlags):
     return data
 
 
-def lg_block_fields(
-    category: Categories, category_type: str, rmode: ReproducibilityFlags
-):
+def lg_block_fields(category_type: str, rmode: ReproducibilityFlags, custom_fields=None):
     """
     Collects dict of fields and operations for all drop types at the lg layer for
     the supplied reproducibility standard.
     :param category: The broad type of drop
-    :param category_type: The specific type of drop
     :param rmode: The reproducibility level in question
+    :param custom_fields: Additional application args (used in custom components)
     :return: Dictionary of <str, FieldOp> pairs
     """
     data = {}
     if rmode in (
-        ReproducibilityFlags.NOTHING,
-        ReproducibilityFlags.RERUN,
-        ReproducibilityFlags.REPRODUCE,
-        ReproducibilityFlags.REPLICATE_SCI,
+            ReproducibilityFlags.NOTHING,
+            ReproducibilityFlags.RERUN,
+            ReproducibilityFlags.REPRODUCE,
+            ReproducibilityFlags.REPLICATE_SCI,
     ):
         return data
-    # Drop category considerations
-    if category == "Application":
-        data["execution_time"] = FieldOps.STORE
-        data["num_cpus"] = FieldOps.STORE
-    elif category == "Group":
-        data["inputApplicationName"] = FieldOps.STORE
-        data["inputApplicationType"] = FieldOps.STORE
-    elif category == Categories.DATA:  # An anomaly, I know
-        data["data_volume"] = FieldOps.STORE
+    # Drop category considerations - Just try to get everything we can, will be filtered later
+    data["execution_time"] = FieldOps.STORE
+    data["num_cpus"] = FieldOps.STORE
+    data["inputApplicationName"] = FieldOps.STORE
+    data["inputApplicationType"] = FieldOps.STORE
+    data["data_volume"] = FieldOps.STORE
 
     # Drop type considerations
     if category_type == Categories.START:
@@ -126,8 +121,8 @@ def lg_block_fields(
     elif category_type == Categories.FILE:
         data["check_filepath_exists"] = FieldOps.STORE
         if rmode in (
-            ReproducibilityFlags.RECOMPUTE,
-            ReproducibilityFlags.REPLICATE_COMP,
+                ReproducibilityFlags.RECOMPUTE,
+                ReproducibilityFlags.REPLICATE_COMP,
         ):
             data["filepath"] = FieldOps.STORE
             data["dirname"] = FieldOps.STORE
@@ -188,6 +183,10 @@ def lg_block_fields(
         data["libpath"] = FieldOps.STORE
     elif category_type == Categories.DYNLIB_PROC_APP:
         data["libpath"] = FieldOps.STORE
+    if custom_fields is not None and rmode in (
+            ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
+        for name in custom_fields:
+            data[name] = FieldOps.STORE
     return data
 
 

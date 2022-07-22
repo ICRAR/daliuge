@@ -43,13 +43,10 @@ import threading
 import time
 import re
 import sys
-import inspect
 import binascii
 from typing import List, Union
 
 import numpy as np
-import pyarrow.plasma as plasma
-import six
 from dlg.common.reproducibility.constants import (
     ReproducibilityFlags,
     REPRO_DEFAULT,
@@ -58,7 +55,6 @@ from dlg.common.reproducibility.constants import (
 )
 from dlg.common.reproducibility.reproducibility import common_hash
 from merklelib import MerkleTree
-from six import BytesIO
 
 from .ddap_protocol import (
     ExecutionMode,
@@ -383,17 +379,25 @@ class AbstractDROP(EventFirer):
             DROPStates.INITIALIZED
         )  # no need to use synchronised self.status here
 
+    _members_cache = {}
+
+    def _get_members(self):
+        cls = self.__class__
+        if cls not in AbstractDROP._members_cache:
+            members = [
+                (name, val)
+                for c in cls.__mro__[:-1]
+                for name, val in vars(c).items()
+                if not (inspect.isfunction(val) or isinstance(val, property))
+            ]
+            AbstractDROP._members_cache[cls] = members
+        return AbstractDROP._members_cache[cls]
+
     def _extract_attributes(self, **kwargs):
         """
         Extracts component and app params then assigns them to class instance attributes.
         Component params take pro
         """
-        def getmembers(object, predicate=None):
-            for cls in object.__class__.__mro__[:-1]:
-                for k, v in vars(cls).items():
-                    if not predicate or predicate(v):
-                        yield k, v
-
         def get_param_value(attr_name, default_value):
             has_component_param = attr_name in kwargs
             has_app_param = 'applicationArgs' in kwargs \
@@ -410,9 +414,7 @@ class AbstractDROP(EventFirer):
             return param
 
         # Take a class dlg defined parameter class attribute and create an instanced attribute on object
-        for attr_name, member in getmembers(
-            self, lambda a: not (inspect.isfunction(a) or isinstance(a, property))
-        ):
+        for attr_name, member in self._get_members():
             if isinstance(member, dlg_float_param):
                 value = get_param_value(attr_name, member.default_value)
                 if value is not None and value != "":
@@ -1139,12 +1141,14 @@ class AbstractDROP(EventFirer):
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             self._closeWriters()
             self.status = DROPStates.CANCELLED
+        self.completedrop()
 
     def skip(self):
         """Moves this drop to the SKIPPED state closing any writers we opened"""
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             self._closeWriters()
             self.status = DROPStates.SKIPPED
+        self.completedrop()
 
     @property
     def node(self):
@@ -1499,6 +1503,8 @@ class DataDROP(AbstractDROP):
 #     \~English Path to the file for this node
 # @param[in] cparam/dirname Directory name//String/readwrite/False//False/
 #     \~English Path to the file for this node
+# @param[in] port/dummy dummy/Complex/Dummy input port
+# @param[out] port/dummy dummy/Complex/Dummy output port
 # @par EAGLE_END
 class FileDROP(DataDROP, PathBasedDrop):
     """
@@ -1699,6 +1705,8 @@ class FileDROP(DataDROP, PathBasedDrop):
 #     \~English Mime-type to be used for archiving
 # @param[in] cparam/ngasTimeout NGAS timeout/2/Integer/readwrite/False//False/
 #     \~English Timeout for receiving responses for NGAS
+# @param[in] port/dummy dummy/Complex/Dummy input port
+# @param[out] port/dummy dummy/Complex/Dummy output port
 # @par EAGLE_END
 class NgasDROP(DataDROP):
     """
@@ -1817,11 +1825,21 @@ class NgasDROP(DataDROP):
 #     \~English Estimated size of the data contained in this node
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
 #     \~English Is this node the end of a group?
+# @param[in] port/dummy dummy/Complex/Dummy input port
+# @param[out] port/dummy dummy/Complex/Dummy output port
 # @par EAGLE_END
 class InMemoryDROP(DataDROP):
     """
     A DROP that points data stored in memory.
     """
+
+    # Allow in-memory drops to be automatically removed by default
+    def __init__(self, *args, **kwargs):
+        if 'precious' not in kwargs:
+            kwargs['precious'] = False
+        if 'expireAfterUse' not in kwargs:
+            kwargs['expireAfterUse'] = True
+        super().__init__(*args, **kwargs)
 
     def initialize(self, **kwargs):
         args = []
@@ -1851,7 +1869,11 @@ class InMemoryDROP(DataDROP):
     def generate_reproduce_data(self):
         from .droputils import allDropContents
 
-        data = allDropContents(self, self.size)
+        data = b""
+        try:
+            data = allDropContents(self, self.size)
+        except Exception:
+            logger.debug("Could not read drop reproduce data")
         return {"data_hash": common_hash(data)}
 
 
@@ -1865,6 +1887,8 @@ class InMemoryDROP(DataDROP):
 #     \~English Estimated size of the data contained in this node
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
 #     \~English Is this node the end of a group?
+# @param[in] port/dummy dummy/Complex/Dummy input port
+# @param[out] port/dummy dummy/Complex/Dummy output port
 # @par EAGLE_END
 class SharedMemoryDROP(DataDROP):
     """
@@ -1915,6 +1939,8 @@ class SharedMemoryDROP(DataDROP):
 #     \~English This never stores any data
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
 #     \~English Is this node the end of a group?
+# @param[in] port/dummy dummy/Complex/Dummy input port
+# @param[out] port/dummy dummy/Complex/Dummy output port
 # @par EAGLE_END
 class NullDROP(DataDROP):
     """
@@ -1955,6 +1981,8 @@ class EndDROP(NullDROP):
 #     \~English Condition for SELECT. For this the WHERE statement must be written using the "{X}" or "{}" placeholders
 # @param[in] cparam/selectVals values for WHERE//Json/readwrite/False//False/
 #     \~English Values for the WHERE statement
+# @param[in] port/dummy dummy/Complex/Dummy input port
+# @param[out] port/dummy dummy/Complex/Dummy output port
 # @par EAGLE_END
 class RDBMSDrop(DataDROP):
     """
@@ -2182,6 +2210,8 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
 #     \~English PlasmaId of the object for all compute nodes
 # @param[in] cparam/use_staging Use Staging/False/Boolean/readwrite/False//False/
 #     \~English Enables writing to a dynamically resizeable staging buffer
+# @param[in] port/dummy dummy/Complex/Dummy input port
+# @param[out] port/dummy dummy/Complex/Dummy output port
 # @par EAGLE_END
 class PlasmaDROP(DataDROP):
     """
@@ -2232,6 +2262,8 @@ class PlasmaDROP(DataDROP):
 #     \~English PlasmaId of the object for all compute nodes
 # @param[in] cparam/flight_path Flight Path//String/readwrite/False//False/
 #     \~English IP and flight port of the drop owner
+# @param[in] port/dummy dummy/Complex/Dummy input port
+# @param[out] port/dummy dummy/Complex/Dummy output port
 # @par EAGLE_END
 class PlasmaFlightDROP(DataDROP):
     """

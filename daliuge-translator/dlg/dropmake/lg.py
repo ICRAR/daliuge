@@ -1324,7 +1324,7 @@ class LG:
             self._drop_dict["new_added"].append(dropSpec_null)
         elif s_type in APP_DROP_TYPES:
             # use name from source and ID from target
-            sIdText = tlgn._getIdText("outputPorts")
+            sIdText = slgn._getIdText("outputPorts")
             tIdText = tlgn._getIdText("inputPorts")
             sdrop.addOutput(tdrop, IdText=sIdText)
             tdrop.addProducer(sdrop, IdText=tIdText)

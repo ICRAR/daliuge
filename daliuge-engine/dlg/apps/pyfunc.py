@@ -414,7 +414,10 @@ class PyFuncApp(BarrierAppDROP):
         for uid, drop in self._inputs.items():
             inputs[uid] = all_contents(drop)
 
-        self.funcargs = {}
+        outputs = collections.OrderedDict()
+        for uid, drop in self._outputs.items():
+            outputs[uid] = all_contents(drop) if self.output_parser is DropParser.PATH else None
+
 
         # Keyword arguments are made up of the default values plus the inputs
         # that match one of the keyword argument names
@@ -430,7 +433,7 @@ class PyFuncApp(BarrierAppDROP):
             if name in self.func_defaults or name not in argnames
         }
         logger.debug(f"updating funcargs with {kwargs}")
-        self.funcargs = kwargs
+        funcargs = kwargs
 
         # Fill arguments with rest of inputs
         logger.debug(f"available inputs: {inputs}")
@@ -440,7 +443,7 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(f"Parameters found: {self.parameters}")
         posargs = self.arguments.args[:self.fn_npos]
         kwargs = {}
-        self.pargs = []
+        pargs = []
         # Initialize pargs dictionary and update with provided argument values
         pargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
         if "applicationArgs" in self.parameters:
@@ -455,37 +458,34 @@ class PyFuncApp(BarrierAppDROP):
             appArgs = {}
 
         if ('inputs' in self.parameters and isinstance(self.parameters['inputs'][0], dict)):
-            logger.debug(f"Using named ports to identify inputs: "+\
-                    f"{self.parameters['inputs']}")
-            for i in range(min(len(inputs),self.fn_nargs +\
-                len(self.arguments.kwonlyargs))):
-                # key for final dict is value in named ports dict
-                key = list(self.parameters['inputs'][i].values())[0]
-                # value for final dict is value in inputs dict
-                value = inputs[list(self.parameters['inputs'][i].keys())[0]]
-                if not value: value = '' # make sure we are passing NULL drop events
-                if key in posargs:
-                    pargsDict.update({key:value})
-                else:
-                    kwargs.update({key:value})
-                _dum = appArgs.pop(key) if key in appArgs else None
-                logger.debug("Using input %s for argument %s", value, key)
-                logger.debug("Argument used as input removed: %s", _dum)
+            check_len = min(len(inputs),self.fn_nargs+
+                len(self.arguments.kwonlyargs))
+            kwargs.update(droputils.identify_named_ports(
+                inputs,
+                self.parameters['inputs'],
+                posargs,
+                pargsDict,
+                appArgs,
+                check_len=check_len,
+                mode="inputs"))
         else:
             for i in range(min(len(inputs),self.fn_nargs)):
                 kwargs.update({self.arguments.args[i]: list(inputs.values())[i]})
 
         logger.debug(f"Updating funcargs with input ports {kwargs}")
-        self.funcargs.update(kwargs)
+        funcargs.update(kwargs)
 
         if ('outputs' in self.parameters and isinstance(self.parameters['outputs'][0], dict)):
-            out_names = [list(i.values())[0] for i in self.parameters['outputs']]
-            logger.debug(f"Using named ports to remove outputs from arguments: "+\
-                    f"{out_names}")
-            _dum = [appArgs.pop(k) for k in out_names if k in appArgs]
-            if len(_dum) > 0: 
-                logger.debug("Application arguments used as outputs removed : %s",
-                    [i['text'] for i in _dum])
+            check_len = min(len(outputs),self.fn_nargs+
+                len(self.arguments.kwonlyargs))
+            kwargs.update(droputils.identify_named_ports(
+                outputs,
+                self.parameters['outputs'],
+                posargs,
+                pargsDict,
+                appArgs,
+                check_len=check_len,
+                mode="outputs"))
 
         # Try to get values for still missing positional arguments from Application Args
         if "applicationArgs" in self.parameters:
@@ -493,7 +493,7 @@ class PyFuncApp(BarrierAppDROP):
             logger.debug("Identified keyword arguments removed: %s",
                 [i['text'] for i in _dum])
             for pa in posargs:
-                if pa != 'self' and pa not in self.funcargs:
+                if pa != 'self' and pa not in funcargs:
                     if pa in appArgs:
                         arg = appArgs.pop(pa)
                         value = arg['value']
@@ -517,13 +517,13 @@ class PyFuncApp(BarrierAppDROP):
             logger.debug("Identified positional arguments removed: %s", 
                 [i['text'] for i in _dum])
             logger.debug(f"updating posargs with {list(pargsDict.keys())}")
-            self.pargs.extend(list(pargsDict.values()))
+            pargs.extend(list(pargsDict.values()))
 
             # Try to get values for still missing kwargs arguments from Application kws
             kwargs = {}
             kws = self.arguments.args[self.fn_npos:]
             for ka in kws:
-                if ka not in self.funcargs:
+                if ka not in funcargs:
                     if ka in appArgs:
                         arg = appArgs.pop(ka)
                         value = arg['value']
@@ -540,13 +540,13 @@ class PyFuncApp(BarrierAppDROP):
                     else:
                         logger.warning(f"Keyword argument '{ka}' not found!")
             logger.debug(f"updating funcargs with {kwargs}")
-            self.funcargs.update(kwargs)
+            funcargs.update(kwargs)
 
             # deal with kwonlyargs
             kwargs = {}
             kws = self.arguments.kwonlyargs
             for ka in kws:
-                if ka not in self.funcargs:
+                if ka not in funcargs:
                     if ka in appArgs:
                         arg = appArgs.pop(ka)
                         value = arg['value']
@@ -563,7 +563,7 @@ class PyFuncApp(BarrierAppDROP):
                     else:
                         logger.warning(f"Keyword only argument '{ka}' not found!")
             logger.debug(f"updating funcargs with kwonlyargs: {kwargs}")
-            self.funcargs.update(kwargs)
+            funcargs.update(kwargs)
 
             # any remaining application arguments will be used for vargs and vkwargs
             vparg = []
@@ -580,25 +580,25 @@ class PyFuncApp(BarrierAppDROP):
                     vkarg.update({arg:value})
 
             if self.arguments.varargs:
-                self.pargs.extend(vparg)
+                pargs.extend(vparg)
             if self.arguments.varkw:
-                self.funcargs.update(vkarg)
+                funcargs.update(vkarg)
 
         # Fill rest with default arguments if there are any more
         kwargs = {}
         for kw in self.func_defaults.keys():
             value = self.func_defaults[kw]
-            if kw not in self.funcargs:
+            if kw not in funcargs:
                 kwargs.update({kw: value})
         logger.debug(f"updating funcargs with {kwargs}")
-        self.funcargs.update(kwargs)
-        self._recompute_data["args"] = self.funcargs.copy()
-        logger.debug(f"Running {self.func_name} with *{self.pargs} **{self.funcargs}")
+        funcargs.update(kwargs)
+        self._recompute_data["args"] = funcargs.copy()
+        logger.debug(f"Running {self.func_name} with *{pargs} **{funcargs}")
 
         # we capture and log whatever is produced on STDOUT
         capture = StringIO()
         with redirect_stdout(capture):
-            result = self.f(*self.pargs, **self.funcargs)
+            result = self.f(*pargs, **funcargs)
         logger.info(f"Captured output from function app '{self.func_name}': {capture.getvalue()}")
         logger.debug(f"Finished execution of {self.func_name}.")
 

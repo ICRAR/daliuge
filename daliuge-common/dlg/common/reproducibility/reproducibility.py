@@ -92,14 +92,13 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
         raise NotImplementedError(
             f"Reproducibility level {level.name} not yet supported"
         )
-    category_type = drop.get(
-        "categoryType", ""
-    )  # Made conditional to support older graphs
     category = drop.get("category", "")
 
     # Cheeky way to get field list into dicts. map(dict, drop...) makes a copy
-    fields = {e.pop("name"): e["value"] for e in map(dict, drop["fields"])}
-    lg_fields = lg_block_fields(category_type, category, level)
+    fields = {e.pop("name"): e["value"] for e in map(dict, drop.get("fields", {}))}
+    app_fields = {e.pop("name"): e["value"] for e in map(dict, drop.get("applicationArgs", {}))}
+    fields.update(app_fields)
+    lg_fields = lg_block_fields(category, level, app_fields.keys())
     data = extract_fields(fields, lg_fields)
     return data
 

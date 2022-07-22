@@ -30,8 +30,6 @@ import logging
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 
-from numpy import isin
-
 from . import droputils
 from .apps.socket_listener import SocketListenerApp
 from .common import Categories
@@ -53,7 +51,7 @@ from .environmentvar_drop import EnvironmentVarDROP
 from dlg.parset_drop import ParameterSetDROP
 from .exceptions import InvalidGraphException
 from .json_drop import JsonDROP
-from .common import Categories, DropType
+from .common import DropType
 
 
 STORAGE_TYPES = {
@@ -136,19 +134,19 @@ def addLink(linkType, lhDropSpec, rhOID, force=False):
 def removeUnmetRelationships(dropSpecList):
     unmetRelationships = []
 
+    normalise_oid = lambda oid: next(iter(oid)) if isinstance(oid, dict) else oid
+
     # Step #1: Get all OIDs
-    oids = []
+    oids = set()
     for dropSpec in dropSpecList:
-        oid = dropSpec["oid"]
-        oid = list(oid.keys())[0] if isinstance(oid, dict) else oid
-        oids.append(oid)
+        oid = normalise_oid(dropSpec["oid"])
+        oids.add(oid)
 
     # Step #2: find unmet relationships and remove them from the original
     # DROP spec, keeping track of them
     for dropSpec in dropSpecList:
 
-        this_oid = dropSpec["oid"]
-        this_oid = list(this_oid.keys())[0] if isinstance(this_oid, dict) else this_oid
+        this_oid = normalise_oid(dropSpec["oid"])
         to_delete = []
 
         for rel in dropSpec:
@@ -162,7 +160,8 @@ def removeUnmetRelationships(dropSpecList):
                 # removing them from the current DROP spec
                 ds = dropSpec[rel]
                 if isinstance(ds[0], dict):
-                    ds = [list(d.keys())[0] for d in ds]
+                    ds = [next(iter(d)) for d in ds]
+#                ds = [normalise_oid(d) for d in ds]
                 missingOids = [oid for oid in ds if oid not in oids]
                 for oid in missingOids:
                     unmetRelationships.append(DROPRel(oid, link, this_oid))
@@ -178,8 +177,7 @@ def removeUnmetRelationships(dropSpecList):
                 link = __TOONE[rel]
 
                 # Check if OID is missing
-                oid = dropSpec[rel]
-                oid = list(oid.keys())[0] if isinstance(oid, dict) else oid
+                oid = normalise_oid(dropSpec[rel])
                 if oid in oids:
                     continue
 
@@ -190,9 +188,7 @@ def removeUnmetRelationships(dropSpecList):
                 to_delete.append(rel)
 
         for rel in to_delete:
-            ds = dropSpec[rel]
-            ds = list(ds.keys())[0] if isinstance(ds, dict) else ds
-            del ds
+            del dropSpec[rel]
 
     return unmetRelationships
 
