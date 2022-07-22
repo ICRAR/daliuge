@@ -36,6 +36,7 @@ default_repro = {
     "lg_blockhash": "x",
     "pgt_blockhash": "y",
     "pg_blockhash": "z",
+    "lgt_data": {"category": "memory"}
 }
 default_graph_repro = {
     "rmode": "1",
