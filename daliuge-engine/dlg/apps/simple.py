@@ -430,9 +430,9 @@ class AverageArraysApp(BarrierAppDROP):
 #     \~English The function used for gathering
 # @param[in] cparam/reduce_axes "Reduce Axes"/None/String/readonly/False//False/
 #     \~English The ndarray axes to reduce, None reduces all axes for sum, prod, max, min functions
-# @param[in] port/array Array/npy/
+# @param[in] port/array Array/Python/
 #     \~English Port for the input array(s)
-# @param[out] port/array Array/npy/
+# @param[out] port/array Array/Python/
 #     \~English Port carrying the reduced array
 # @par EAGLE_END
 class GenericNpyGatherApp(BarrierAppDROP):
