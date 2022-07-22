@@ -241,7 +241,7 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 #     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
-# @param[out] port/array Array/Array/
+# @param[out] port/array Array/Object.Array/
 #     \~English Port carrying the averaged array
 # @par EAGLE_END
 class RandomArrayApp(BarrierAppDROP):
@@ -430,9 +430,9 @@ class AverageArraysApp(BarrierAppDROP):
 #     \~English The function used for gathering
 # @param[in] cparam/reduce_axes "Reduce Axes"/None/String/readonly/False//False/
 #     \~English The ndarray axes to reduce, None reduces all axes for sum, prod, max, min functions
-# @param[in] port/array Array/Python/
+# @param[in] port/array Array/Object.Array/
 #     \~English Port for the input array(s)
-# @param[out] port/array Array/Python/
+# @param[out] port/array Array/Object.Array/
 #     \~English Port carrying the reduced array
 # @par EAGLE_END
 class GenericNpyGatherApp(BarrierAppDROP):
@@ -660,7 +660,7 @@ class UrlRetrieveApp(BarrierAppDROP):
 #     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
-# @param[out] port/array Array/Array/
+# @param[out] port/array Array/Object.Array/
 #     \~English A numpy array of arrays, where the first axis is of length <numSplit>
 # @par EAGLE_END
 class GenericScatterApp(BarrierAppDROP):
@@ -733,7 +733,7 @@ class GenericScatterApp(BarrierAppDROP):
 # @param[in] aparam/scatter_axes Scatter Axes//String/readwrite/False//False/
 #     \~English The axes to split input ndarrays on, e.g. [0,0,0], length must
 #       match the number of input ports
-# @param[out] port/array Array/npy/
+# @param[out] port/array Array/Object.Array/
 #     \~English A numpy array of arrays
 # @par EAGLE_END
 class GenericNpyScatterApp(BarrierAppDROP):
@@ -819,7 +819,7 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 #     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
 #     \~English Specifies the number of times the 'run' method will be executed before finally giving up
-# @param[out] port/array Array/array/
+# @param[out] port/array Array/Object.Array/
 #     \~English Port carrying the random array.
 # @par EAGLE_END
 class ListAppendThrashingApp(BarrierAppDROP):
