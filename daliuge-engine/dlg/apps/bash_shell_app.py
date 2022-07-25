@@ -402,17 +402,17 @@ class StreamingInputBashAppBase(BashShellBase, AppDROP):
 # @par EAGLE_START
 # @param category BashShellApp
 # @param tag template
-# @param command Command//String/cparam/readwrite//False/False/The command to be executed
-# @param input_redirection Input Redirection//String/cparam/readwrite//False/False/The command line argument that specifies the input into this application
-# @param output_redirection Output Redirection//String/cparam/readwrite//False/False/The command line argument that specifies the output from this application
-# @param command_line_arguments Command Line Arguments//String/cparam/readwrite//False/False/Additional command line arguments to be added to the command line to be executed
-# @param paramValueSeparator Param value separator/ /String/cparam/readwrite//False/False/Separator character(s) between parameters on the command line
-# @param argumentPrefix Argument prefix/"--"/String/cparam/readwrite//False/False/Prefix to each keyed argument on the command line
-# @param execution_time Execution Time/5/Float/cparam/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/cparam/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/cparam/readwrite//False/False/Is this node the start of a group?
-# @param input_error_threshold "Input error rate (%)"/0/Integer/cparam/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param n_tries Number of tries/1/Integer/cparam/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param command Command//String/ComponentParameter/readwrite//False/False/The command to be executed
+# @param input_redirection Input Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the input into this application
+# @param output_redirection Output Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the output from this application
+# @param command_line_arguments Command Line Arguments//String/ComponentParameter/readwrite//False/False/Additional command line arguments to be added to the command line to be executed
+# @param paramValueSeparator Param value separator/ /String/ComponentParameter/readwrite//False/False/Separator character(s) between parameters on the command line
+# @param argumentPrefix Argument prefix/"--"/String/ComponentParameter/readwrite//False/False/Prefix to each keyed argument on the command line
+# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
 # @par EAGLE_END
 class BashShellApp(BashShellBase, BarrierAppDROP):
     """
