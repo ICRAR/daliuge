@@ -82,30 +82,18 @@ class ExternalStoreApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] cparam/appclass Application class/dlg.apps.archiving.NgasArchivingApp/String/readonly/False//False/
-#     \~English Application class
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
-#     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
-#     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
-#     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
-#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
-#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
-# @param[in] aparam/ngasSrv NGAS Server URL/localhost/String/readwrite/False//False/
-#     \~English URL of the NGAS Server
-# @param[in] aparam/ngasPort NGAS Server Port/7777/Integer/readwrite/False//False/
-#     \~English TCP/IP Port on the NGAS Server
-# @param[in] aparam/ngasMime NGAS Mime Type/"application/octet-stream"/String/readwrite/False//False/
-#     \~English Mime-type of the NGAS payload
-# @param[in] aparam/ngasTimeout NGAS Server Timeout/2/Integer/readonly/False//False/
-#     \~English Archiving request timeout
-# @param[in] aparam/ngasConnectTimeout NGAS Server Connect Timeout/2/Integer/readonly/False//False/
-#     \~English NGAS Server connection timeout
-# @param[in] port/fileObject File Object/Object.File/
-#     \~English Input File Object
+# @param appclass Application class/dlg.apps.archiving.NgasArchivingApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param ngasSrv NGAS Server URL/localhost/String/ApplicationArgument/readwrite//False/False/URL of the NGAS Server
+# @param ngasPort NGAS Server Port/7777/Integer/ApplicationArgument/readwrite//False/False/TCP/IP Port on the NGAS Server
+# @param ngasMime NGAS Mime Type/"application/octet-stream"/String/ApplicationArgument/readwrite//False/False/Mime-type of the NGAS payload
+# @param ngasTimeout NGAS Server Timeout/2/Integer/ApplicationArgument/readonly//False/False/Archiving request timeout
+# @param ngasConnectTimeout NGAS Server Connect Timeout/2/Integer/ApplicationArgument/readonly//False/False/NGAS Server connection timeout
+# @param fileObject File Object//Object.File/InputPort/readwrite//False/False/Input File Object
 # @par EAGLE_END
 class NgasArchivingApp(ExternalStoreApp):
     """

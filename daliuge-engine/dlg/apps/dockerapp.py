@@ -78,44 +78,25 @@ class ContainerIpWaiter(object):
 # @par EAGLE_START
 # @param category Docker
 # @param tag template
-# @param[in] cparam/image Image//String/readwrite/False//False/
-#     \~English The name of the docker image to be used for this application
-# @param[in] cparam/tag Tag/1.0/String/readwrite/False//False/
-#     \~English The tag of the docker image to be used for this application
-# @param[in] cparam/digest Digest//String/readwrite/False//False/
-#     \~English The hexadecimal hash (long version) of the docker image to be used for this application
-# @param[in] cparam/command Command//String/readwrite/False//False/
-#     \~English The command line to run within the docker instance. The specified command will be executed in a bash shell. That means that images will need a bash shell.
-# @param[in] cparam/input_redirection Input Redirection//String/readwrite/False//False/
-#     \~English The command line argument that specifies the input into this application
-# @param[in] cparam/output_redirection Output Redirection//String/readwrite/False//False/
-#     \~English The command line argument that specifies the output from this application
-# @param[in] cparam/command_line_arguments Command Line Arguments//String/readwrite/False//False/
-#     \~English Additional command line arguments to be added to the command line to be executed
-# @param[in] cparam/paramValueSeparator Param value separator/ /String/readwrite/False//False/
-#     \~English Separator character(s) between parameters and their respective values on the command line
-# @param[in] cparam/argumentPrefix Argument prefix/"--"/String/readwrite/False//False/
-#     \~English Prefix to each keyed argument on the command line
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
-#     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
-#     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
-#     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
-#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
-#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
-# @param[in] cparam/user User//String/readwrite/False//False/
-#     \~English Username of the user who will run the application within the docker image
-# @param[in] cparam/ensureUserAndSwitch Ensure User And Switch/False/Boolean/readwrite/False//False/
-#     \~English Make sure the user specified in the User parameter exists and then run the docker container as that user
-# @param[in] cparam/removeContainer Remove Container/True/Boolean/readwrite/False//False/
-#     \~English Instruct Docker engine to delete the container after execution is complete
-# @param[in] cparam/additionalBindings Additional Bindings//String/readwrite/False//False/
-#     \~English Directories which will be visible inside the container during run-time. Format is srcdir_on_host:trgtdir_on_container. Multiple entries can be separated by commas.
-# @param[in] cparam/portMappings Port Mappings//String/readwrite/False//False/
-#     \~English Port mappings on the host machine
+# @param image Image//String/ComponentParameter/readwrite//False/False/The name of the docker image to be used for this application
+# @param tag Tag/1.0/String/ComponentParameter/readwrite//False/False/The tag of the docker image to be used for this application
+# @param digest Digest//String/ComponentParameter/readwrite//False/False/The hexadecimal hash (long version) of the docker image to be used for this application
+# @param command Command//String/ComponentParameter/readwrite//False/False/The command line to run within the docker instance. The specified command will be executed in a bash shell. That means that images will need a bash shell.
+# @param input_redirection Input Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the input into this application
+# @param output_redirection Output Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the output from this application
+# @param command_line_arguments Command Line Arguments//String/ComponentParameter/readwrite//False/False/Additional command line arguments to be added to the command line to be executed
+# @param paramValueSeparator Param value separator/ /String/ComponentParameter/readwrite//False/False/Separator character(s) between parameters and their respective values on the command line
+# @param argumentPrefix Argument prefix/"--"/String/ComponentParameter/readwrite//False/False/Prefix to each keyed argument on the command line
+# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param user User//String/ComponentParameter/readwrite//False/False/Username of the user who will run the application within the docker image
+# @param ensureUserAndSwitch Ensure User And Switch/False/Boolean/ComponentParameter/readwrite//False/False/Make sure the user specified in the User parameter exists and then run the docker container as that user
+# @param removeContainer Remove Container/True/Boolean/ComponentParameter/readwrite//False/False/Instruct Docker engine to delete the container after execution is complete
+# @param additionalBindings Additional Bindings//String/ComponentParameter/readwrite//False/False/Directories which will be visible inside the container during run-time. Format is srcdir_on_host:trgtdir_on_container. Multiple entries can be separated by commas.
+# @param portMappings Port Mappings//String/ComponentParameter/readwrite//False/False/Port mappings on the host machine
 # @par EAGLE_END
 class DockerApp(BarrierAppDROP):
     """
@@ -286,7 +267,7 @@ class DockerApp(BarrierAppDROP):
 
         # construct the actual command line from all application parameters
         self.pargs, self.keyargs = droputils.serialize_applicationArgs(
-            self._applicationArgs, self._argumentPrefix, 
+            self._applicationArgs, self._argumentPrefix,
             self._paramValueSeparator
         )
         # defer construction of complete command to run method

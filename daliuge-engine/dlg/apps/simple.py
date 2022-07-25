@@ -371,26 +371,16 @@ class AverageArraysApp(BarrierAppDROP):
 # @param category PythonApp
 # @param construct Gather
 # @param tag daliuge
-# @param[in] cparam/appclass Application Class/dlg.apps.simple.GenericNpyGatherApp/String/readonly/False//False/
-#     \~English Application class
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
-#     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
-#     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
-#     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
-#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
-#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
-# @param[in] cparam/function Function/sum/Select/readwrite/False/sum,prod,min,max,add,multiply,maximum,minimum/False/
-#     \~English The function used for gathering
-# @param[in] cparam/reduce_axes "Reduce Axes"/None/String/readonly/False//False/
-#     \~English The ndarray axes to reduce, None reduces all axes for sum, prod, max, min functions
-# @param[in] port/array Array/Object.Array/
-#     \~English Port for the input array(s)
-# @param[out] port/array Array/Object.Array/
-#     \~English Port carrying the reduced array
+# @param appclass Application Class/dlg.apps.simple.GenericNpyGatherApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param function Function/sum/Select/ComponentParameter/readwrite/sum,prod,min,max,add,multiply,maximum,minimum/False/False/The function used for gathering
+# @param reduce_axes "Reduce Axes"/None/String/ComponentParameter/readonly//False/False/The ndarray axes to reduce, None reduces all axes for sum, prod, max, min functions
+# @param array Array//Object.Array/InputPort/readwrite//False/False/Port for the input array(s)
+# @param array Array//Object.Array/OutputPort/readwrite//False/False/Port carrying the reduced array
 # @par EAGLE_END
 class GenericNpyGatherApp(BarrierAppDROP):
     """
@@ -477,22 +467,14 @@ class GenericNpyGatherApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] aparam/greet Greet/World/String/readwrite/False//False/
-#     \~English What appears after 'Hello '
-# @param[in] cparam/appclass Application Class/dlg.apps.simple.HelloWorldApp/String/readonly/False//False/
-#     \~English Application class
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
-#     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
-#     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
-#     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
-#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
-#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
-# @param[out] port/hello Hello/String/
-#     \~English The port carrying the message produced by the app.
+# @param greet Greet/World/String/ApplicationArgument/readwrite//False/False/What appears after 'Hello '
+# @param appclass Application Class/dlg.apps.simple.HelloWorldApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param hello Hello/"world"/String/InputPort/readwrite//False/False/The port carrying the message produced by the app.
 # @par EAGLE_END
 class HelloWorldApp(BarrierAppDROP):
     """
@@ -597,20 +579,13 @@ class UrlRetrieveApp(BarrierAppDROP):
 # @param category PythonApp
 # @param construct Scatter
 # @param tag daliuge
-# @param[in] cparam/appclass Application Class/dlg.apps.simple.GenericScatterApp/String/readonly/False//False/
-#     \~English Application class
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
-#     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
-#     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
-#     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
-#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
-#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
-# @param[out] port/array Array/Object.Array/
-#     \~English A numpy array of arrays, where the first axis is of length <numSplit>
+# @param appclass Application Class/dlg.apps.simple.GenericScatterApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param array Array//Object.Array/OutputPort/readwrite//False/False/A numpy array of arrays, where the first axis is of length <numSplit>
 # @par EAGLE_END
 class GenericScatterApp(BarrierAppDROP):
     """
@@ -667,23 +642,14 @@ class GenericScatterApp(BarrierAppDROP):
 # @param category PythonApp
 # @param construct Scatter
 # @param tag daliuge
-# @param[in] cparam/appclass Application Class/dlg.apps.simple.GenericNpyScatterApp/String/readonly/False//False/
-#     \~English Application class
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
-#     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
-#     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
-#     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
-#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
-#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
-# @param[in] aparam/scatter_axes Scatter Axes//String/readwrite/False//False/
-#     \~English The axes to split input ndarrays on, e.g. [0,0,0], length must
-#       match the number of input ports
-# @param[out] port/array Array/Object.Array/
-#     \~English A numpy array of arrays
+# @param appclass Application Class/dlg.apps.simple.GenericNpyScatterApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param scatter_axes Scatter Axes//String/ApplicationArgument/readwrite//False/False/The axes to split input ndarrays on, e.g. [0,0,0], length must match the number of input ports
+# @param array Object.Array//Object.Array/InputPort/readwrite//False/False/A numpy array of arrays
 # @par EAGLE_END
 class GenericNpyScatterApp(BarrierAppDROP):
     """
@@ -754,22 +720,14 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param[in] aparam/size Size/100/Integer/readwrite/False//False/
-#     \~English the size of the array
-# @param[in] cparam/appclass Application Class/dlg.apps.simple.ListAppendThrashingApp/String/readonly/False//False/
-#     \~English Application class
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
-#     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
-#     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
-#     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
-#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
-#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
-# @param[out] port/array Array/Object.Array/
-#     \~English Port carrying the random array.
+# @param size Size/100/Integer/ApplicationArgument/readwrite//False/False/the size of the array
+# @param appclass Application Class/dlg.apps.simple.ListAppendThrashingApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param array Array//Object.Array/OutputPort/readwrite//False/False/Port carrying the random array.
 # @par EAGLE_END
 class ListAppendThrashingApp(BarrierAppDROP):
     """
