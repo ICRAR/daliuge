@@ -280,7 +280,7 @@ class RandomArrayApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param method Method/mean/Select/aparam/readwrite/mean,median/False/False/The method used for averaging
+# @param method Method/mean/Select/ApplicationArgument/readwrite/mean,median/False/False/The method used for averaging
 # @param appclass Application Class/dlg.apps.simple.AverageArraysApp/String/ComponentParameter/readonly//False/False/Application class
 # @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used

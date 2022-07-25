@@ -458,21 +458,35 @@ def create_palette_node_from_params(params):
                     + access
                 )
 
-            # add a field
-            fields.append(
-                create_field(
-                    internal_name,
-                    external_name,
-                    default_value,
-                    type,
-                    field_type,
-                    access,
-                    options,
-                    precious,
-                    positional,
-                    description
-                )
+            # create a field from this data
+            field = create_field(
+                internal_name,
+                external_name,
+                default_value,
+                type,
+                field_type,
+                access,
+                options,
+                precious,
+                positional,
+                description
             )
+
+            # add the field to the correct list in the component, based on fieldType
+            if field_type == "ComponentParameter" or field_type == "ApplicationArgument":
+                fields.append(field)
+            elif field_type == "InputPort":
+                inputPorts.append(field)
+            elif field_type == "OutputPort":
+                outputPorts.append(field)
+            else:
+                logging.warning(
+                    text
+                    + " '"
+                    + external_name
+                    + "' field_type is Unknown: "
+                    + field_type
+                )
 
     # check for presence of extra fields that must be included for each category
     check_required_fields_for_category(text, fields, category)
