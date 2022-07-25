@@ -56,6 +56,12 @@ KNOWN_DATA_CATEGORIES = [
     "EnvironmentVariables"
 ]
 
+KNOWN_FIELD_TYPES = [
+    "ComponentParameter",
+    "ApplicationArgument",
+    "InputPort",
+    "OutputPort"
+]
 
 def get_options_from_command_line(argv):
     inputdir = ""
@@ -382,14 +388,13 @@ def create_palette_node_from_params(params):
             category = value
         elif key == "construct":
             construct = value
-        elif key == "tag":
+        elif key == "tag" and not any(s in value for s in KNOWN_FIELD_TYPES):
             tag = value
         elif key == "text":
             text = value
         elif key == "description":
             description = value
         else:
-            # parse the param key into name, type etc
             internal_name = key
             (
                 external_name,
@@ -405,7 +410,7 @@ def create_palette_node_from_params(params):
 
             # check that type is in the list of known types
             if type not in KNOWN_PARAM_DATA_TYPES:
-                #logging.warning(text + " cparam '" + name + "' has unknown type: " + type)
+                #logging.warning(text + " " + field_type + " '" + name + "' has unknown type: " + type)
                 pass
 
             # check that a param of type "Select" has some options specified,
