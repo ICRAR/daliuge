@@ -473,12 +473,8 @@ def create_palette_node_from_params(params):
             )
 
             # add the field to the correct list in the component, based on fieldType
-            if field_type == "ComponentParameter" or field_type == "ApplicationArgument":
+            if field_type in KNOWN_FIELD_TYPES:
                 fields.append(field)
-            elif field_type == "InputPort":
-                inputPorts.append(field)
-            elif field_type == "OutputPort":
-                outputPorts.append(field)
             else:
                 logging.warning(
                     text
