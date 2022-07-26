@@ -35,6 +35,8 @@ If no tag is specified, all components found in the input directory will part of
 
   # @param tag <tag_name>
 
+There are also two optional arguments for xml2palette. Allow missing "EAGLE start" (-s) which allows xml2palette.py to run on code without any eagle-specific doxygen comments. Finally (-m) restricts xml2palette.py to produce a palette that only contains methods from within the specified module.
+
 Component Doxygen Markup Guide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In order to support the direct usage of newly written application components in the EAGLE editor, the |daliuge| system supports a custom set of Doxygen directives and tools. When writing an application component, developers can add specific custom `Doxygen <https://www.doxygen.nl/>`_ comments to the source code. These comments describe the component and can be used to automatically generate a JSON DALiuGE component description which in turn can be used in the *EAGLE*. A few basic rules to remember:
@@ -140,24 +142,24 @@ Complete example for C/C++
   * of the parset to load a measurement set.
   * \par EAGLE_START
   * \param category DynlibApp
-  * \param[in] aparam/start_frequency Start Frequency/500/Integer/readwrite/False//False/
+  * \param start_frequency Start Frequency/500/Integer/ComponentParameter/readwrite//False/False/
   *     \~English the start frequency to read from
   *     \~Chinese 要读取的起始频率
-  * \param[in] aparam/end_frequency End Frequency/500/Integer/readwrite/False//False/
+  * \param end_frequency End Frequency/500/Integer/ComponentParameter/readwrite//False/False/
   *     \~English the end frequency to read from
   *     \~Chinese 要读取的结束频率
-  * \param[in] aparam/channels Channels/64/Integer/readonly/False//False/
+  * \param channels Channels/64/Integer/ApplicationArgument/readonly//False/False/
   *     \~English how many channels to load
   *     \~Chinese 需要加载的通道数量
-  * \param[in] aparam/method Method/mean/Select/readwrite/False/mean,median/False/
+  * \param method Method/mean/Select/ApplicationArgument/readwrite/mean,median/False/False/
   *     \~English The method used for averaging
-  * \param[in] port/config Config/String/
+  * \param config Config//String/InputPort/readwrite//False/False/
   *     \~English the configuration of the input_port
   *     \~Chinese 输入端口的设置
-  * \param[in] port/event Event/Event/
+  * \param event Event//Event/InputPort/readwrite//False/False/
   *     \~English the event of the input_port
   *     \~Chinese 输入端口的事件
-  * \param[out] port/File File/File/
+  * \param file File//File/OutputPort/readwrite//False/False/
   *     \~English the file of the output_port
   *     \~Chinese 输出端口的文件
   * \par EAGLE_END
@@ -174,24 +176,24 @@ Complete example for Python
   # of the parset to load a measurement set.
   # @par EAGLE_START
   # @param category PythonApp
-  # @param[in] aparam/start_frequency Start Frequency/500/Integer/readwrite/False//False/
+  # @param start_frequency Start Frequency/500/Integer/ComponentParameter/readwrite//False/False/
   #     \~English the start frequency to read from
   #     \~Chinese 要读取的起始频率
-  # @param[in] aparam/end_frequency End Frequency/500/Integer/readwrite/False//False/
+  # @param end_frequency End Frequency/500/Integer/ComponentParameter/readwrite//False/False/
   #     \~English the end frequency to read from
   #     \~Chinese 要读取的结束频率
-  # @param[in] aparam/channels Channels/64/Integer/readonly/False//False/
+  # @param channels Channels/64/Integer/ApplicationArgument/readonly//False/False/
   #     \~English how many channels to load
   #     \~Chinese 需要加载的通道数量
-  # @param[in] aparam/method Method/mean/Select/readwrite/False/mean,median/False/
+  # @param method Method/mean/Select/ApplicationArgument/readwrite/mean,median/False/False/
   #     \~English The method used for averaging
-  # @param[in] port/config Config/String/
+  # @param config Config//String/InputPort/readwrite//False/False/
   #     \~English the configuration of the input_port
   #     \~Chinese 输入端口的设置
-  # @param[in] port/event Event/Event/
+  # @param event Event//Event/InputPort/readwrite//False/False/
   #     \~English the event of the input_port
   #     \~Chinese 输入端口的事件
-  # @param[out] port/File File/File/
+  # @param file File//File/OutputPort/readwrite//False/False/
   #     \~English the file of the output_port
   #     \~Chinese 输出端口的文件
   # @par EAGLE_END
