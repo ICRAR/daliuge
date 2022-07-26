@@ -1001,7 +1001,7 @@ if __name__ == "__main__":
             params = process_compounddef(compounddef)
 
             ns = params_to_nodes(params)
-            nodes.append(n)
+            nodes.extend(ns)
 
         else: # not eagle node
             functions = process_compounddef_default(compounddef)
