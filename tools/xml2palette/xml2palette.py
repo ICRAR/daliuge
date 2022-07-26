@@ -22,7 +22,7 @@ DOXYGEN_SETTINGS = [
     ("AUTOLINK_SUPPORT", "NO"),
     ("IDL_PROPERTY_SUPPORT", "NO"),
     ("RECURSIVE", "YES"),
-    ("EXCLUDE_PATTERNS", "*/web/*"),
+    ("EXCLUDE_PATTERNS", "*/web/*, CMakeLists.txt"),
     ("VERBATIM_HEADERS", "NO"),
     ("GENERATE_HTML", "NO"),
     ("GENERATE_LATEX", "NO"),
@@ -665,10 +665,10 @@ def process_compounddef_default(compounddef):
                     # some defaults
                     # cparam format is (name, default_value, type, access, precious, options, positional, description)
                     member["params"].append({"key": "category", "direction": None, "value": "PythonApp"})
-                    member["params"].append({"key": "cparam/appclass", "direction": None, "value": "Application Class/dlg.apps.pyfunc.PyFuncApp/String/readwrite/False//False/The python class that implements this application"})
-                    member["params"].append({"key": "cparam/execution_time", "direction": None, "value": "Execution Time/5/Integer/readwrite/False//False/Estimate of execution time (in seconds) for this application."})
-                    member["params"].append({"key": "cparam/num_cpus", "direction": None, "value": "No. of CPUs/1/Integer/readwrite/False//False/Number of CPUs used for this application."})
-                    member["params"].append({"key": "cparam/group_start", "direction": None, "value": "Group start/false/Boolean/readwrite/False//False/Is this node the start of a group?"})
+                    member["params"].append({"key": "appclass", "direction": None, "value": "Application Class/dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/readwrite//False/False/The python class that implements this application"})
+                    member["params"].append({"key": "execution_time", "direction": None, "value": "Execution Time/5/Integer/ComponentParameter/readwrite//False/False/Estimate of execution time (in seconds) for this application."})
+                    member["params"].append({"key": "num_cpus", "direction": None, "value": "No. of CPUs/1/Integer/ComponentParameter/readwrite//False/False/Number of CPUs used for this application."})
+                    member["params"].append({"key": "group_start", "direction": None, "value": "Group start/false/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?"})
 
                     for ggchild in grandchild:
                         if ggchild.tag == "name":
@@ -687,8 +687,8 @@ def process_compounddef_default(compounddef):
                                 if hasReturn:
                                     return_part = dd[dd.rfind(":return:")+8:].strip().replace('\n', ' ')
                                     output_port_name = "output"
-                                    #print("Add output port:" + str(output_port_name) + "/" + str(return_type) + "/" + str(return_part))
-                                    member["params"].append({"key": "port/"+str(output_port_name), "direction": "out", "value": str(output_port_name) + "/" + str(return_type) + "/" + str(return_part) })
+                                    print("Add output port:" + str(output_port_name) + "/" + str(return_type) + "/" + str(return_part))
+                                    member["params"].append({"key": str(output_port_name), "direction": "out", "value": str(output_port_name) + "//" + str(return_type) + "/OutputPort/readwrite//False/False/" + str(return_part) })
 
                                 # get first part of description, up until when the param are mentioned
                                 description = dd[:dd.find(":param")].strip()
@@ -769,7 +769,7 @@ def process_compounddef_default(compounddef):
 
                             # TODO: change
                             # add the param
-                            member["params"].append({"key":"aparam/"+str(name), "direction":"in", "value":str(name) + "/" + str(default_value) + "/" + str(type) + "/readwrite/False//False/"})
+                            member["params"].append({"key":str(name), "direction":"in", "value":str(name) + "/" + str(default_value) + "/" + str(type) + "/ApplicationArgument/readwrite//False/False/"})
 
                         if ggchild.tag == "definition":
                             return_type = ggchild.text.strip().split(" ")[0]
@@ -777,8 +777,8 @@ def process_compounddef_default(compounddef):
 
                             # TODO: change
                             # aparams
-                            member["params"].append({"key": "aparam/func_name", "direction": None, "value": "Function Name/" + func_path + "/String/readonly/False//True/Python function name"})
-                            member["params"].append({"key": "aparam/pickle", "direction": None, "value": "Pickle/false/Boolean/readwrite/False//True/Whether the python arguments are pickled."})
+                            member["params"].append({"key": "func_name", "direction": None, "value": "Function Name/" + func_path + "/String/ApplicationArgument/readonly//False/True/Python function name"})
+                            member["params"].append({"key": "pickle", "direction": None, "value": "Pickle/false/Boolean/ApplicationArgument/readwrite//False/True/Whether the python arguments are pickled."})
 
                             if return_type == "def":
                                 return_type = "None"
@@ -1001,14 +1001,24 @@ if __name__ == "__main__":
             params = process_compounddef(compounddef)
 
             ns = params_to_nodes(params)
-            nodes.extend(ns)
+            nodes.append(n)
 
         else: # not eagle node
             functions = process_compounddef_default(compounddef)
 
             for f in functions:
                 ns = params_to_nodes(f["params"])
-                nodes.extend(ns)
+
+                for n in ns:
+                    alreadyPresent = False
+                    for node in nodes:
+                        if node["text"] == n["text"]:
+                            alreadyPresent = True
+
+                    #print("component " + n["text"] + " alreadyPresent " + str(alreadyPresent))
+
+                    if not alreadyPresent:
+                        nodes.append(n)
 
 
     # write the output json file
