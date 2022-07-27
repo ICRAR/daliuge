@@ -2422,7 +2422,7 @@ class AppDROP(ContainerDROP):
         """
         Generates a named mapping of output data drops. Can only be called during run().
         """
-        named_outputs: OrderedDict[str, DataDROP] = OrderedDict()
+        named_outputs:  OrderedDict[str, DataDROP] = OrderedDict()
         if 'outputs' in self.parameters and isinstance(self.parameters['outputs'][0], dict):
             for i in range(len(self._outputs)):
                 key = list(self.parameters['outputs'][i].values())[0]

@@ -285,9 +285,13 @@ class DockerApp(BarrierAppDROP):
             # "%%" at the start of the command, else it is interpreted as a normal command.
 
         # construct the actual command line from all application parameters
-        self.pargs, self.keyargs = droputils.serialize_applicationArgs(
-            self._applicationArgs, self._argumentPrefix, 
-            self._paramValueSeparator
+        # self.pargs, self.keyargs = droputils.serialize_applicationArgs(
+        #     self._applicationArgs, prefix=self._argumentPrefix, 
+        #     separator=self._paramValueSeparator
+        # )
+        self.appArgs = droputils.clean_applicationArgs(
+            self._applicationArgs, prefix=self._argumentPrefix, 
+            separator=self._paramValueSeparator
         )
         # defer construction of complete command to run method
 
@@ -437,17 +441,6 @@ class DockerApp(BarrierAppDROP):
             }
             dataURLInputs = {uid: i for uid, i in iitems if not droputils.has_path(i)}
             dataURLOutputs = {uid: o for uid, o in oitems if not droputils.has_path(o)}
-            self._command = f"{self._command} {' '.join(self.pargs)} "+\
-                f"{' '.join(self.keyargs)}"
-            if self._command:
-                cmd = droputils.replace_path_placeholders(
-                    self._command, dockerInputs, dockerOutputs
-                )
-                cmd = droputils.replace_dataurl_placeholders(
-                    cmd, dataURLInputs, dataURLOutputs
-                )
-            else:
-                cmd = ""
 
             # We bind the inputs and outputs inside the docker under the utils.getDlgDir()
             # directory, maintaining the rest of their original paths.
@@ -555,45 +548,57 @@ class DockerApp(BarrierAppDROP):
                 # if drop does not have a path we assume it is just passing the event
                 # Bash does not support memory drops anyway
                 outputs_dict[uid] = drop.path if hasattr(drop, 'path') else ''
-
-            appArgs = self._applicationArgs
-            pargs = [arg for arg in appArgs if appArgs[arg]["positional"]]
-            pargsDict = collections.OrderedDict(zip(pargs,[None]*len(pargs)))
-            pkeyargs = {}
-            logger.debug("pargs: %s; pkeyargs: %s, appArgs: %s",pargs, pkeyargs, appArgs)
+            logger.debug("appArgs: %s", self.appArgs)
+            posargs = [arg for arg in self.appArgs if self.appArgs[arg]["positional"]]
+            keyargs = {key:self.appArgs[key]["value"] for (key, value) in self.appArgs.items() if not self.appArgs[key]["positional"]}
+            posargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
+            portkeyargs = {}
+            logger.debug("posargs: %s; keyargs: %s",posargs, keyargs)
             if "inputs" in self.parameters and isinstance(self.parameters['inputs'][0], dict):
                 ipkeyargs = droputils.identify_named_ports(
                                 inputs_dict,
                                 self.parameters["inputs"],
-                                pargs,
-                                pargsDict,
-                                appArgs,
+                                posargs,
+                                posargsDict,
+                                self.appArgs,
                                 check_len=len(iitems),
                                 mode="inputs")
-                pkeyargs.update(ipkeyargs)
+                portkeyargs.update(ipkeyargs)
             else:
-                for i in range(min(len(iitems), len(pargs))):
-                    pkeyargs.update({pargs[i]: list(self._inputs.values())[i]})
+                for i in range(min(len(iitems), len(posargs))):
+                    portkeyargs.update({posargs[i]: list(self._inputs.values())[i]})
             if "outputs" in self.parameters and isinstance(self.parameters['outputs'][0], dict):
                 opkeyargs = droputils.identify_named_ports(
                                 outputs_dict,
                                 self.parameters["outputs"],
-                                pargs,
-                                pargsDict,
-                                appArgs,
+                                posargs,
+                                posargsDict,
+                                self.appArgs,
                                 check_len=len(oitems),
                                 mode="outputs")
-                pkeyargs.update(opkeyargs)
+                portkeyargs.update(opkeyargs)
             else:
-                for i in range(min(len(oitems), len(pargs))):
-                    pkeyargs.update({pargs[i]: list(self._outputs.values())[i]})
-            pkeyargs = droputils.serialize_kwargs(pkeyargs, 
+                for i in range(min(len(oitems), len(posargs))):
+                    portkeyargs.update({posargs[i]: list(self._outputs.values())[i]})
+            keyargs.update(portkeyargs)
+            keyargs = droputils.serialize_kwargs(keyargs, 
                 prefix=self._argumentPrefix,
-                separator=self._paramValueSeparator)
-            pargs = list(pargsDict.values())
-            argumentString = f"{' '.join(pkeyargs + pargs)}"  # add kwargs to end of pargs
+                separator=self._paramValueSeparator) if len(keyargs) > 0 else ['']
+            pargs = list(posargsDict.values())
+            pargs = [''] if len(pargs) == 0 or None in pargs else pargs
+            logger.debug("After port replacement: pargs: %s; keyargs: %s",pargs, keyargs)
+            argumentString = f"{' '.join(keyargs + pargs)}"  # add kwargs to end of pargs
             # complete command including all additional parameters and optional redirects
-            cmd = f"{cmd} {argumentString} {self._cmdLineArgs} "
+            cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
+            if cmd:
+                cmd = droputils.replace_path_placeholders(
+                    cmd, dockerInputs, dockerOutputs
+                )
+                cmd = droputils.replace_dataurl_placeholders(
+                    cmd, dataURLInputs, dataURLOutputs
+                )
+            else:
+                cmd = ""
             ###############
 
             # Wrap everything inside bash

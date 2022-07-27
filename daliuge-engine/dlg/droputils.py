@@ -535,16 +535,17 @@ def serialize_kwargs(keyargs, prefix="--", separator=" "):
         if prefix == "--" and len(name) == 1:
             kwargs += [f"-{name} {value}"]
         else:
-            kwargs += [f"{prefix.strip()}{name.strip()}{separator.strip()}{str(value).strip()}"]
+            kwargs += [f"{prefix.strip()}{name.strip()}{separator}{str(value).strip()}"]
     logger.debug("kwargs after serialization: %s",kwargs)
     return kwargs
 
+def clean_applicationArgs(applicationArgs, prefix="--", separator=" "):
+    """
+    Removes arguments with None and False values, if not precious.
 
-def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
+    Returns a dictionary with the relevant arguments only.
     """
-    Unpacks the applicationArgs dictionary and returns a string
-    that can be used as command line parameters.
-    """
+    cleanedArgs = {}
     if not isinstance(applicationArgs, dict):
         logger.info("applicationArgs are not passed as a dict. Ignored!")
     else:
@@ -560,21 +561,37 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
         if vdict in [None, False, ""]:
             continue
         elif isinstance(vdict, bool):
-            value = ""
+            vdict = {"precious": False, "value": "", "positional": False}
         elif isinstance(vdict, dict):
             precious = vdict["precious"]
-            value = vdict["value"]
-            if value in [None, False, ""] and not precious:
+            if vdict["value"] in [None, False, ""] and not precious:
                 continue
-            positional = vdict["positional"]
+        cleanedArgs.update({name: vdict})
+    return cleanedArgs
+
+def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
+    """
+    Unpacks the applicationArgs dictionary and returns a string
+    that can be used as command line parameters.
+    """
+    applicationArgs = clean_applicationArgs(applicationArgs, 
+        prefix=prefix, separator=separator)
+    pargs = []
+    kwargs = {}
+    for (name, vdict) in applicationArgs.items():
+        precious = vdict["precious"]
+        value = vdict["value"]
+        if value in [None, False, ""] and not precious:
+            continue
+        positional = vdict["positional"]
         if positional:
             pargs.append(str(value).strip())
         else:
             kwargs.update({name:value})
-    kwargs = serialize_kwargs(kwargs, prefix=prefix, separator=separator)
+    skwargs = serialize_kwargs(kwargs, prefix=prefix, separator=separator)
     logger.info('Constructed command line arguments: %s %s', pargs, kwargs)
     # return f"{' '.join(pargs + kwargs)}"  # add kwargs to end of pargs
-    return (pargs, kwargs)
+    return (pargs, skwargs)
 
 def identify_named_ports(ports, port_dict, posargs, pargsDict, appArgs, check_len=0, mode="inputs"):
     """
@@ -585,6 +602,7 @@ def identify_named_ports(ports, port_dict, posargs, pargsDict, appArgs, check_le
     # kwargs = {arg:appArgs[arg]["value"] for arg in appArgs 
     #     if not appArgs[arg]["positional"]}
     portargs = {}
+    posargs = list(posargs)
     for i in range(check_len):
         # key for final dict is value in named ports dict
         key = list(port_dict[i].values())[0]
@@ -595,11 +613,14 @@ def identify_named_ports(ports, port_dict, posargs, pargsDict, appArgs, check_le
             pargsDict.update({key:value})
             logger.debug("Using %s '%s' for parg %s", mode, value, key)
             posargs.pop(posargs.index(key))
-        else:
+        elif key in appArgs:
+            # if not found in appArgs we don't put them into portargs either
             portargs.update({key:value})
             logger.debug("Using %s '%s' for kwarg %s", mode, value, key)
-        _dum = appArgs.pop(key) if key in appArgs else None
-        logger.debug("Argument used as %s removed: %s", mode, _dum)
+            _dum = appArgs.pop(key)
+            logger.debug("Argument used as %s removed: %s", mode, _dum)
+        else:
+            logger.debug("No matching argument found for %s key %s", mode, key)
     logger.debug("Returning mapped ports: %s", portargs)
     return portargs
 
