@@ -25,6 +25,7 @@ Ideally, one would have a pre-existing standard for each drop-type to be tested 
 For now, this will suffice.
 """
 
+import os
 import json
 import optparse
 import tempfile
@@ -40,9 +41,11 @@ from dlg.common.reproducibility.reproducibility import (
 )
 from dlg.translator.tool_commands import dlg_fill, dlg_unroll, dlg_partition, dlg_map
 
+SUPPORTED_WORKFLOWS = ["apps", "files", "misc", "groups"]
+
 
 def _fill_workflow(
-    rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
+        rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
 ):
     lgt = workflow_loc + workflow + ".graph"
     lgr = scratch_loc + "/" + workflow + "LG.graph"
@@ -54,7 +57,7 @@ def _fill_workflow(
 
 
 def _run_full_workflow(
-    rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
+        rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
 ):
     lgr = scratch_loc + "/" + workflow + "LG.graph"
     pgs = scratch_loc + "/" + workflow + "PGS.graph"
@@ -72,6 +75,21 @@ def _run_full_workflow(
     )
 
 
+def _run_workflows(rmode: ReproducibilityFlags, root_file: str, names: list,
+                   temp_out: tempfile.TemporaryDirectory):
+    for wflow_name in names:
+        _run_full_workflow(rmode, wflow_name, root_file, temp_out.name)
+
+
+def _extract_reprodata(temp_out: tempfile.TemporaryDirectory, names: list, suffix: str):
+    output = {}
+    for wflow_name in names:
+        file = open(f"{temp_out.name}{os.sep}{wflow_name}{suffix}")
+        output[wflow_name] = json.load(file)[0:-1]
+        file.close()
+    return output
+
+
 class AccumulateLGTRerunData(unittest.TestCase):
     """
     Tests the rerun standard at the logical graph template level.
@@ -79,7 +97,6 @@ class AccumulateLGTRerunData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.RERUN
     expected = {
-        "categoryType",
         "category",
         "inputPorts",
         "inputLocalPorts",
@@ -123,6 +140,7 @@ class AccumulateLGTRerunData(unittest.TestCase):
         """
         for drop in enumerate(self.lgt_groups_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
+            print(hash_data)
             self.assertEqual(self.expected, hash_data.keys())
 
     def test_other_accumulate(self):
@@ -183,10 +201,10 @@ class AccumulateLGRerunData(unittest.TestCase):
         """
         self._setup()
         for drop in enumerate(
-            self.lg_node_data
-            + self.lg_files_data
-            + self.lg_group_data
-            + self.lg_misc_data
+                self.lg_node_data
+                + self.lg_files_data
+                + self.lg_group_data
+                + self.lg_misc_data
         ):
             hash_data = accumulate_lg_drop_data(drop[1], self.rmode)
             self.assertEqual(self.expected, dict(hash_data.keys()))
@@ -201,23 +219,15 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.RERUN
     temp_out = tempfile.TemporaryDirectory()
-    pgs_node_data = None
-    pgs_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGS.graph")
-        self.pgs_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGS.graph")
-        self.pgs_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -225,7 +235,7 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
         """
         expected = {"type", "dt"}
         self._setup()
-        for drop in enumerate(self.pgs_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
@@ -235,16 +245,23 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
         """
         expected = {"type", "storage"}
         self._setup()
-        for drop in enumerate(self.pgs_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only the drop type and input app type matters for rerunning
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -253,12 +270,12 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Nothing should matter for rerunning
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulatePGTPartitionRerunData(unittest.TestCase):
@@ -268,23 +285,15 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.RERUN
     temp_out = tempfile.TemporaryDirectory()
-    pgt_node_data = None
-    pgt_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
-        self.pgt_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
-        self.pgt_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -292,7 +301,7 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
         """
         expected = {"type", "dt"}
         self._setup()
-        for drop in enumerate(self.pgt_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
@@ -302,16 +311,23 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
         """
         expected = {"type", "storage"}
         self._setup()
-        for drop in enumerate(self.pgt_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only drop type matters for rerunning.
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -320,12 +336,13 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Should not  matter for rerunning.
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulatePGRerunData(unittest.TestCase):
@@ -335,23 +352,15 @@ class AccumulatePGRerunData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.RERUN
     temp_out = tempfile.TemporaryDirectory()
-    pg_node_data = None
-    pg_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PG.graph")
-        self.pg_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PG.graph")
-        self.pg_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -359,7 +368,7 @@ class AccumulatePGRerunData(unittest.TestCase):
         """
         expected = {}
         self._setup()
-        for drop in enumerate(self.pg_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, dict(hash_data.keys()))
 
@@ -369,16 +378,23 @@ class AccumulatePGRerunData(unittest.TestCase):
         """
         expected = {}
         self._setup()
-        for drop in enumerate(self.pg_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, dict(hash_data.keys()))
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Nothing matters for rerunning.
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -387,12 +403,13 @@ class AccumulatePGRerunData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Nothing matters for rerunning.
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulateLGTRepeatData(unittest.TestCase):
@@ -402,7 +419,6 @@ class AccumulateLGTRepeatData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPEAT
     expected = {
-        "categoryType",
         "category",
         "inputPorts",
         "inputLocalPorts",
@@ -598,23 +614,15 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPEAT
     temp_out = tempfile.TemporaryDirectory()
-    pgs_node_data = None
-    pgs_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGS.graph")
-        self.pgs_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGS.graph")
-        self.pgs_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -622,7 +630,7 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
         """
         expected = {"type", "dt"}
         self._setup()
-        for drop in enumerate(self.pgs_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
@@ -632,16 +640,23 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
         """
         expected = {"type", "storage"}
         self._setup()
-        for drop in enumerate(self.pgs_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only type matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -650,12 +665,13 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Only type matters
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulatePGTPartitionRepeatData(unittest.TestCase):
@@ -665,23 +681,15 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPEAT
     temp_out = tempfile.TemporaryDirectory()
-    pgt_node_data = None
-    pgt_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
-        self.pgt_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
-        self.pgt_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -689,7 +697,7 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
         """
         expected = {"type", "dt"}
         self._setup()
-        for drop in enumerate(self.pgt_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
@@ -699,16 +707,23 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
         """
         expected = {"type", "storage"}
         self._setup()
-        for drop in enumerate(self.pgt_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only type matters when repeating.
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -717,12 +732,13 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Should not matter when repeating.
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulatePGRepeatData(unittest.TestCase):
@@ -732,23 +748,15 @@ class AccumulatePGRepeatData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPEAT
     temp_out = tempfile.TemporaryDirectory()
-    pg_node_data = None
-    pg_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
-        self.pg_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
-        self.pg_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -756,7 +764,7 @@ class AccumulatePGRepeatData(unittest.TestCase):
         """
         expected = {}
         self._setup()
-        for drop in enumerate(self.pg_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, dict(hash_data.keys()))
 
@@ -766,16 +774,23 @@ class AccumulatePGRepeatData(unittest.TestCase):
         """
         expected = {}
         self._setup()
-        for drop in enumerate(self.pg_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, dict(hash_data.keys()))
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Nothing matters for repeating.
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -784,12 +799,13 @@ class AccumulatePGRepeatData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Does not matter
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulateLGTRecomputeData(unittest.TestCase):
@@ -799,7 +815,6 @@ class AccumulateLGTRecomputeData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.RECOMPUTE
     expected = {
-        "categoryType",
         "category",
         "inputPorts",
         "inputLocalPorts",
@@ -995,23 +1010,15 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.RECOMPUTE
     temp_out = tempfile.TemporaryDirectory()
-    pgs_node_data = None
-    pgs_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGS.graph")
-        self.pgs_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGS.graph")
-        self.pgs_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -1019,7 +1026,7 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
         """
         expected = {"type", "dt", "rank"}
         self._setup()
-        for drop in enumerate(self.pgs_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
@@ -1029,16 +1036,23 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
         """
         expected = {"type", "storage", "rank"}
         self._setup()
-        for drop in enumerate(self.pgs_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Type and rank matters.
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt", "rank"}
+        expected_file = {"type", "storage", "rank"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -1047,12 +1061,13 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Should not matter
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
@@ -1062,23 +1077,15 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.RECOMPUTE
     temp_out = tempfile.TemporaryDirectory()
-    pgt_node_data = None
-    pgt_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
-        self.pgt_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
-        self.pgt_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -1086,7 +1093,7 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         """
         expected = ["type", "dt", "rank", "node", "island"]
         self._setup()
-        for drop in enumerate(self.pgt_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(sorted(expected), sorted(list(hash_data.keys())))
 
@@ -1096,16 +1103,23 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         """
         expected = ["type", "storage", "rank", "node", "island"]
         self._setup()
-        for drop in enumerate(self.pgt_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(sorted(expected), sorted(list(hash_data.keys())))
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Type, rank and machine information matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt", "rank"}
+        expected_file = {"type", "storage", "rank"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -1114,12 +1128,13 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Should not matter
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulatePGRecomputeData(unittest.TestCase):
@@ -1129,23 +1144,15 @@ class AccumulatePGRecomputeData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.RECOMPUTE
     temp_out = tempfile.TemporaryDirectory()
-    pg_node_data = None
-    pg_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
-        self.pg_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
-        self.pg_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -1153,7 +1160,7 @@ class AccumulatePGRecomputeData(unittest.TestCase):
         """
         expected = {"node", "island"}
         self._setup()
-        for drop in enumerate(self.pg_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
@@ -1163,16 +1170,23 @@ class AccumulatePGRecomputeData(unittest.TestCase):
         """
         expected = {"node", "island"}
         self._setup()
-        for drop in enumerate(self.pg_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Machine information matters when recomputing
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt", "rank"}
+        expected_file = {"type", "storage", "rank"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -1181,12 +1195,13 @@ class AccumulatePGRecomputeData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Should not matter.
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulateLGTReproduceData(unittest.TestCase):
@@ -1195,7 +1210,7 @@ class AccumulateLGTReproduceData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.REPRODUCE
-    expected = {"categoryType", "category"}
+    expected = {"category"}
 
     file = open("test/reproducibility/reproGraphs/apps.graph")
     lgt_node_data = json.load(file)["nodeDataArray"]
@@ -1365,23 +1380,15 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPRODUCE
     temp_out = tempfile.TemporaryDirectory()
-    pgs_node_data = None
-    pgs_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGS.graph")
-        self.pgs_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGS.graph")
-        self.pgs_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -1389,7 +1396,7 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
         """
         expected = {"type"}
         self._setup()
-        for drop in enumerate(self.pgs_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
@@ -1399,16 +1406,23 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
         """
         expected = {"type", "storage"}
         self._setup()
-        for drop in enumerate(self.pgs_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only type matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -1417,12 +1431,13 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Does not matter
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulatePGTPartitionReproduceData(unittest.TestCase):
@@ -1432,23 +1447,15 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPRODUCE
     temp_out = tempfile.TemporaryDirectory()
-    pgt_node_data = None
-    pgt_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
-        self.pgt_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
-        self.pgt_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -1456,7 +1463,7 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
         """
         expected = ["type"]
         self._setup()
-        for drop in enumerate(self.pgt_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, list(hash_data.keys()))
 
@@ -1466,16 +1473,23 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
         """
         expected = ["type", "storage"]
         self._setup()
-        for drop in enumerate(self.pgt_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, list(hash_data.keys()))
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only type matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -1484,12 +1498,13 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Does not matter
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulatePGReproduceData(unittest.TestCase):
@@ -1499,23 +1514,15 @@ class AccumulatePGReproduceData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPRODUCE
     temp_out = tempfile.TemporaryDirectory()
-    pg_node_data = None
-    pg_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
-        self.pg_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
-        self.pg_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -1523,7 +1530,7 @@ class AccumulatePGReproduceData(unittest.TestCase):
         """
         expected = {}
         self._setup()
-        for drop in enumerate(self.pg_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, dict(hash_data.keys()))
 
@@ -1533,16 +1540,23 @@ class AccumulatePGReproduceData(unittest.TestCase):
         """
         expected = {}
         self._setup()
-        for drop in enumerate(self.pg_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, dict(hash_data.keys()))
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Group information does not matter when reproducing
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -1551,12 +1565,13 @@ class AccumulatePGReproduceData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Does not matter
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulateLGTReplicateSciData(unittest.TestCase):
@@ -1566,7 +1581,6 @@ class AccumulateLGTReplicateSciData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPLICATE_SCI
     expected = {
-        "categoryType",
         "category",
         "inputPorts",
         "inputLocalPorts",
@@ -1670,10 +1684,10 @@ class AccumulateLGReplicateSciData(unittest.TestCase):
         """
         self._setup()
         for drop in enumerate(
-            self.lg_node_data
-            + self.lg_files_data
-            + self.lg_group_data
-            + self.lg_misc_data
+                self.lg_node_data
+                + self.lg_files_data
+                + self.lg_group_data
+                + self.lg_misc_data
         ):
             hash_data = accumulate_lg_drop_data(drop[1], self.rmode)
             self.assertEqual(self.expected, dict(hash_data.keys()))
@@ -1688,23 +1702,15 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPLICATE_SCI
     temp_out = tempfile.TemporaryDirectory()
-    pgs_node_data = None
-    pgs_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGS.graph")
-        self.pgs_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGS.graph")
-        self.pgs_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -1712,7 +1718,7 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
         """
         expected = {"type", "dt"}
         self._setup()
-        for drop in enumerate(self.pgs_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
@@ -1722,16 +1728,23 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
         """
         expected = {"type", "storage"}
         self._setup()
-        for drop in enumerate(self.pgs_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only type matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -1740,12 +1753,13 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Does not matter
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
@@ -1755,23 +1769,15 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPLICATE_SCI
     temp_out = tempfile.TemporaryDirectory()
-    pgt_node_data = None
-    pgt_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
-        self.pgt_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
-        self.pgt_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -1779,7 +1785,7 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
         """
         expected = {"type", "dt"}
         self._setup()
-        for drop in enumerate(self.pgt_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
@@ -1789,16 +1795,23 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
         """
         expected = {"type", "storage"}
         self._setup()
-        for drop in enumerate(self.pgt_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only type matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -1807,12 +1820,13 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Does not matter
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulatePGReplicateSciData(unittest.TestCase):
@@ -1822,23 +1836,15 @@ class AccumulatePGReplicateSciData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPLICATE_SCI
     temp_out = tempfile.TemporaryDirectory()
-    pg_node_data = None
-    pg_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
-        self.pg_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
-        self.pg_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -1846,7 +1852,7 @@ class AccumulatePGReplicateSciData(unittest.TestCase):
         """
         expected = {}
         self._setup()
-        for drop in enumerate(self.pg_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, dict(hash_data.keys()))
 
@@ -1856,16 +1862,23 @@ class AccumulatePGReplicateSciData(unittest.TestCase):
         """
         expected = {}
         self._setup()
-        for drop in enumerate(self.pg_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, dict(hash_data.keys()))
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Nothing matters.
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -1874,12 +1887,13 @@ class AccumulatePGReplicateSciData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Does not matter.
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulateLGTReplicateCompData(unittest.TestCase):
@@ -1889,7 +1903,6 @@ class AccumulateLGTReplicateCompData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPLICATE_COMP
     expected = {
-        "categoryType",
         "category",
         "inputPorts",
         "inputLocalPorts",
@@ -2085,23 +2098,15 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPLICATE_COMP
     temp_out = tempfile.TemporaryDirectory()
-    pgs_node_data = None
-    pgs_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGS.graph")
-        self.pgs_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGS.graph")
-        self.pgs_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -2109,7 +2114,7 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
         """
         expected = {"type", "dt", "rank"}
         self._setup()
-        for drop in enumerate(self.pgs_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
@@ -2119,16 +2124,23 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
         """
         expected = {"type", "storage", "rank"}
         self._setup()
-        for drop in enumerate(self.pgs_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Type and rank matter
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt", "rank"}
+        expected_file = {"type", "storage", "rank"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -2137,12 +2149,12 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Does not matter
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
@@ -2152,23 +2164,15 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPLICATE_COMP
     temp_out = tempfile.TemporaryDirectory()
-    pgt_node_data = None
-    pgt_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
-        self.pgt_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
-        self.pgt_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -2176,7 +2180,7 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
         """
         expected = {"type", "dt", "rank", "node", "island"}
         self._setup()
-        for drop in enumerate(self.pgt_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
@@ -2186,16 +2190,23 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
         """
         expected = {"type", "storage", "rank", "node", "island"}
         self._setup()
-        for drop in enumerate(self.pgt_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Type, rank and machine information matters.
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt", "rank"}
+        expected_file = {"type", "storage", "rank"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -2204,12 +2215,13 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Does not matter
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulatePGReplicateCompData(unittest.TestCase):
@@ -2219,23 +2231,15 @@ class AccumulatePGReplicateCompData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPLICATE_COMP
     temp_out = tempfile.TemporaryDirectory()
-    pg_node_data = None
-    pg_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PG.graph")
-        self.pg_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PG.graph")
-        self.pg_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -2243,7 +2247,7 @@ class AccumulatePGReplicateCompData(unittest.TestCase):
         """
         expected = {"node", "island"}
         self._setup()
-        for drop in enumerate(self.pg_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
@@ -2253,16 +2257,23 @@ class AccumulatePGReplicateCompData(unittest.TestCase):
         """
         expected = {"node", "island"}
         self._setup()
-        for drop in enumerate(self.pg_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Machine information matters.
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt", "rank"}
+        expected_file = {"type", "storage", "rank"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -2271,12 +2282,13 @@ class AccumulatePGReplicateCompData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Does not matter.
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulateLGTReplicateTotalData(unittest.TestCase):
@@ -2286,7 +2298,6 @@ class AccumulateLGTReplicateTotalData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPLICATE_TOTAL
     expected = {
-        "categoryType",
         "category",
         "inputPorts",
         "inputLocalPorts",
@@ -2482,23 +2493,15 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPLICATE_TOTAL
     temp_out = tempfile.TemporaryDirectory()
-    pgs_node_data = None
-    pgs_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGS.graph")
-        self.pgs_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGS.graph")
-        self.pgs_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -2506,7 +2509,7 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
         """
         expected = {"type", "dt"}
         self._setup()
-        for drop in enumerate(self.pgs_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
@@ -2516,16 +2519,23 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
         """
         expected = {"type", "storage"}
         self._setup()
-        for drop in enumerate(self.pgs_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Type matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -2534,12 +2544,13 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Does not matter
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
@@ -2549,23 +2560,15 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPLICATE_TOTAL
     temp_out = tempfile.TemporaryDirectory()
-    pgt_node_data = None
-    pgt_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
-        self.pgt_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
-        self.pgt_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -2573,7 +2576,7 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
         """
         expected = {"type", "dt"}
         self._setup()
-        for drop in enumerate(self.pgt_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
@@ -2583,16 +2586,23 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
         """
         expected = {"type", "storage"}
         self._setup()
-        for drop in enumerate(self.pgt_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
             self.assertEqual(expected, hash_data.keys())
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Only type matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -2601,12 +2611,13 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Does not matter
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))
 
 
 class AccumulatePGReplicateTotalData(unittest.TestCase):
@@ -2616,23 +2627,15 @@ class AccumulatePGReplicateTotalData(unittest.TestCase):
 
     rmode = ReproducibilityFlags.REPLICATE_TOTAL
     temp_out = tempfile.TemporaryDirectory()
-    pg_node_data = None
-    pg_file_data = None
+    setup = False
+    graph_data = None
 
     def _setup(self):
-        _run_full_workflow(
-            self.rmode, "apps", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-        _run_full_workflow(
-            self.rmode, "files", "test/reproducibility/reproGraphs/", self.temp_out.name
-        )
-
-        file = open(self.temp_out.name + "/" + "apps" + "PGT.graph")
-        self.pg_node_data = json.load(file)[0:-1]
-        file.close()
-        file = open(self.temp_out.name + "/" + "files" + "PGT.graph")
-        self.pg_file_data = json.load(file)[0:-1]
-        file.close()
+        if not self.setup:
+            _run_workflows(self.rmode, "test/reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
+                           self.temp_out)
+            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph")
+            self.setup = True
 
     def test_app_accumulate(self):
         """
@@ -2640,7 +2643,7 @@ class AccumulatePGReplicateTotalData(unittest.TestCase):
         """
         expected = {}
         self._setup()
-        for drop in enumerate(self.pg_node_data):
+        for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, dict(hash_data.keys()))
 
@@ -2650,16 +2653,23 @@ class AccumulatePGReplicateTotalData(unittest.TestCase):
         """
         expected = {}
         self._setup()
-        for drop in enumerate(self.pg_file_data):
+        for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pg_drop_data(drop[1])
             self.assertEqual(expected, dict(hash_data.keys()))
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_group_accumulate(self):
         """
         Nothing matters
         """
-        self.assertEqual(True, False)
+        expected_app = {"type", "dt"}
+        expected_file = {"type", "storage"}
+        self._setup()
+        for drop in enumerate(self.graph_data["groups"]):
+            hash_data = accumulate_pgt_unroll_drop_data(drop[1])
+            if "dt" in hash_data.keys():
+                self.assertEqual(expected_app, hash_data.keys())
+            if "storage" in hash_data.keys():
+                self.assertEqual(expected_file, hash_data.keys())
 
     @unittest.skip("pg_generator does not like sample graphs")
     def test_control_accumulate(self):
@@ -2668,9 +2678,10 @@ class AccumulatePGReplicateTotalData(unittest.TestCase):
         """
         self.assertEqual(True, False)
 
-    @unittest.skip("pg_generator does not like sample graphs")
     def test_other_accumulate(self):
         """
-        Does not matter
+        Should not matter for rerunning.
+        Will only return the length of the dummy memory drop
         """
-        self.assertEqual(True, False)
+        self._setup()
+        self.assertEqual(1, len(self.graph_data["misc"]))

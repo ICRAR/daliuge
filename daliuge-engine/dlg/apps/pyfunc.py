@@ -27,6 +27,7 @@ import collections
 from enum import Enum
 import importlib
 import inspect
+import json
 import logging
 import pickle
 
@@ -624,4 +625,10 @@ class PyFuncApp(BarrierAppDROP):
                     ValueError(self.output_parser.__repr__())
 
     def generate_recompute_data(self):
+        for name, val in self._recompute_data.items():
+            try:
+                json.dumps(val)
+            except TypeError as e:
+                logger.debug(e)
+                self._recompute_data[name] = repr(val)
         return self._recompute_data
