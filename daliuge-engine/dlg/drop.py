@@ -1720,6 +1720,7 @@ class NgasDROP(DataDROP):
     ngasConnectTimeout = dlg_int_param("ngasConnectTimeout", 2)
     ngasMime = dlg_string_param("ngasMime", "application/octet-stream")
     len = dlg_int_param("len", -1)
+    ngas_checksum = None
 
     def initialize(self, **kwargs):
         if self.len == -1:
@@ -1785,6 +1786,7 @@ class NgasDROP(DataDROP):
                 "Setting size of NGASDrop %s to %s", self.fileId, stat["FileSize"]
             )
             self._size = int(stat["FileSize"])
+            self.ngas_checksum = str(stat["Checksum"])
         except:
             # we''ll try this again in case there is some other issue
             # try:
@@ -1808,11 +1810,9 @@ class NgasDROP(DataDROP):
 
     # Override
     def generate_reproduce_data(self):
-        # TODO: This is a bad implementation. Will need to sort something better out
-        from .droputils import allDropContents
-
-        data = allDropContents(self, self.size)
-        return {"data_hash": common_hash(data)}
+        if self.ngas_checksum is None or self.ngas_checksum == '':
+            return {"fileid": self.ngasFileId, "size": self._size}
+        return {"data_hash": self.ngas_checksum}
 
 
 ##
