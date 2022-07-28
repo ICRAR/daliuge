@@ -485,13 +485,6 @@ class DockerApp(BarrierAppDROP):
                         )
             logger.debug(f"port mappings: {portMappings}")
 
-            # Wait until the DockerApps this application runtime depends on have
-            # started, and replace their IP placeholders by the real IPs
-            for waiter in self._waiters:
-                uid, ip = waiter.waitForIp()
-                cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
-                logger.debug("Command after IP replacement is: %s", cmd)
-
             # deal with environment variables
             env = {}
             env.update({"DLG_UID": self._uid})
@@ -600,6 +593,12 @@ class DockerApp(BarrierAppDROP):
             else:
                 cmd = ""
             ###############
+            # Wait until the DockerApps this application runtime depends on have
+            # started, and replace their IP placeholders by the real IPs
+            for waiter in self._waiters:
+                uid, ip = waiter.waitForIp()
+                cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
+                logger.debug("Command after IP replacement is: %s", cmd)
 
             # Wrap everything inside bash
             if len(cmd) > 0 and not self._noBash:

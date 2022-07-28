@@ -1693,7 +1693,7 @@ class FileDROP(DataDROP, PathBasedDrop):
 #     \~English Estimated size of the data contained in this node
 # @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
 #     \~English Is this node the end of a group?
-# @param[in] cparam/ngsSrv NGAS Server/localhost/String/readwrite/False//False/
+# @param[in] cparam/ngasSrv NGAS Server/localhost/String/readwrite/False//False/
 #     \~English The URL of the NGAS Server
 # @param[in] cparam/ngasPort NGAS Port/7777/Integer/readwrite/False//False/
 #     \~English The port of the NGAS Server
