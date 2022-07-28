@@ -182,6 +182,10 @@ class BashShellBase(object):
                     self, "No command specified, cannot create BashShellApp"
                 )
 
+        self.appArgs = droputils.clean_applicationArgs(
+            self._applicationArgs, prefix=self._argumentPrefix, 
+            separator=self._paramValueSeparator
+        )
         self._recompute_data = {}
 
     def _run_bash(self, inputs, outputs, stdin=None, stdout=subprocess.PIPE):
@@ -198,65 +202,15 @@ class BashShellBase(object):
         method and potentially logged.
         """
         # we currently only support passing a path for bash apps
-        inputs_dict = collections.OrderedDict()
-        for uid, drop in inputs.items():
-            inputs_dict[uid] = drop.path
-
-        outputs_dict = collections.OrderedDict()
-        for uid, drop in outputs.items():
-            # if drop does not have a path we assume it is just passing the event
-            # Bash does not support memory drops anyway
-            outputs_dict[uid] = drop.path if hasattr(drop, 'path') else ''
-
         session_id = (
             self._dlg_session.sessionId if self._dlg_session is not None else ""
         )
         logger.debug(f"Parameters found: {self.parameters}")
-        # pargs, keyargs = droputils.serialize_applicationArgs(
-        #     self._applicationArgs, self._argumentPrefix, self._paramValueSeparator
-        # )
-        if "applicationArgs" in self.parameters:
-            appArgs = self.parameters["applicationArgs"]
-        else:
-            appArgs ={}
-        pargNames = [arg for arg in appArgs if appArgs[arg]["positional"]]
-        pargsDict = collections.OrderedDict(zip(pargNames,[None]*len(pargNames)))
-        pargs = pargsDict.keys()
-        for arg in pargNames:
-            pargsDict.update({arg:appArgs[arg]})
-        # pargNames = [arg for arg in pargsDict]
-        keyargs = {arg:appArgs[arg]["value"] for arg in appArgs if not appArgs[arg]["positional"]}
-        if "inputs" in self.parameters and isinstance(self.parameters['inputs'][0], dict):
-            pkeyargs = droputils.identify_named_ports(
-                            inputs_dict,
-                            self.parameters["inputs"],
-                            pargNames,
-                            pargsDict,
-                            appArgs,
-                            check_len=len(inputs),
-                            mode="inputs")
-            keyargs.update(pkeyargs)
-        else:
-            for i in range(min(len(inputs), len(pargs))):
-                keyargs.update({pargs[i]: list(inputs.values())[i]})
-        if "outputs" in self.parameters and isinstance(self.parameters['outputs'][0], dict):
-            pkeyargs = droputils.identify_named_ports(
-                            outputs_dict,
-                            self.parameters["outputs"],
-                            pargs,
-                            pargsDict,
-                            appArgs,
-                            check_len=len(outputs),
-                            mode="outputs")
-            keyargs.update(pkeyargs)
-        else:
-            for i in range(min(len(outputs), len(pargs))):
-                keyargs.update({pargs[i]: list(outputs.values())[i]})
-        keyargs = droputils.serialize_kwargs(keyargs, 
-            prefix=self._argumentPrefix,
+
+        # deal with named ports
+        keyargs, pargs = droputils.replace_named_ports(inputs.items(), outputs.items(), 
+            self.parameters, self.appArgs, argumentPrefix=self._argumentPrefix, 
             separator=self._paramValueSeparator)
-        logger.debug("pargNames: %s; pargsDict: %s; keyargs: %s, appArgs: %s", pargNames, pargsDict, keyargs, appArgs)
-        pargs = [pargsDict[arg] for arg in pargsDict]
         argumentString = f"{' '.join(pargs + keyargs)}"  # add kwargs to end of pargs
         # complete command including all additional parameters and optional redirects
         cmd = f"{self.command} {argumentString} {self._cmdLineArgs} "

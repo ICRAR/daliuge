@@ -541,7 +541,9 @@ def serialize_kwargs(keyargs, prefix="--", separator=" "):
 
 def clean_applicationArgs(applicationArgs, prefix="--", separator=" "):
     """
-    Removes arguments with None and False values, if not precious.
+    Removes arguments with None and False values, if not precious. This
+    is in particular used for Bash and Docker app command lines, else
+    we would have empty values for command line arguments.
 
     Returns a dictionary with the relevant arguments only.
     """
@@ -571,18 +573,16 @@ def clean_applicationArgs(applicationArgs, prefix="--", separator=" "):
 
 def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     """
-    Unpacks the applicationArgs dictionary and returns a string
-    that can be used as command line parameters.
+    Unpacks the applicationArgs dictionary and returns two strings, one for
+    positional arguments and one for kw arguments that can be used to construct
+    the final command line.
     """
     applicationArgs = clean_applicationArgs(applicationArgs, 
         prefix=prefix, separator=separator)
     pargs = []
     kwargs = {}
     for (name, vdict) in applicationArgs.items():
-        precious = vdict["precious"]
         value = vdict["value"]
-        if value in [None, False, ""] and not precious:
-            continue
         positional = vdict["positional"]
         if positional:
             pargs.append(str(value).strip())
@@ -590,7 +590,6 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
             kwargs.update({name:value})
     skwargs = serialize_kwargs(kwargs, prefix=prefix, separator=separator)
     logger.info('Constructed command line arguments: %s %s', pargs, kwargs)
-    # return f"{' '.join(pargs + kwargs)}"  # add kwargs to end of pargs
     return (pargs, skwargs)
 
 def identify_named_ports(ports, port_dict, posargs, pargsDict, appArgs, check_len=0, mode="inputs"):
@@ -624,6 +623,62 @@ def identify_named_ports(ports, port_dict, posargs, pargsDict, appArgs, check_le
     logger.debug("Returning mapped ports: %s", portargs)
     return portargs
 
+def replace_named_ports(iitems, oitems, parameters, appArgs, argumentPrefix="--",
+    separator=" "):
+    """
+    """
+    inputs_dict = collections.OrderedDict()
+    for uid, drop in iitems:
+        inputs_dict[uid] = drop.path if hasattr(drop, 'path') else ''
+
+    outputs_dict = collections.OrderedDict()
+    for uid, drop in oitems:
+        # if drop does not have a path we assume it is just passing the event
+        # Bash does not support memory drops anyway
+        outputs_dict[uid] = drop.path if hasattr(drop, 'path') else ''
+    logger.debug("appArgs: %s", appArgs)
+    # get positional args
+    posargs = [arg for arg in appArgs if appArgs[arg]["positional"]]
+    # get kwargs
+    keyargs = {arg:appArgs[arg]["value"] for arg in appArgs 
+        if not appArgs[arg]["positional"]}
+    posargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
+    portkeyargs = {}
+    logger.debug("posargs: %s; keyargs: %s",posargs, keyargs)
+    if "inputs" in parameters and isinstance(parameters['inputs'][0], dict):
+        ipkeyargs = identify_named_ports(
+                        inputs_dict,
+                        parameters["inputs"],
+                        posargs,
+                        posargsDict,
+                        appArgs,
+                        check_len=len(iitems),
+                        mode="inputs")
+        portkeyargs.update(ipkeyargs)
+    else:
+        for i in range(min(len(iitems), len(posargs))):
+            portkeyargs.update({posargs[i]: iitems[i][1]})
+    if "outputs" in parameters and isinstance(parameters['outputs'][0], dict):
+        opkeyargs = identify_named_ports(
+                        outputs_dict,
+                        parameters["outputs"],
+                        posargs,
+                        posargsDict,
+                        appArgs,
+                        check_len=len(oitems),
+                        mode="outputs")
+        portkeyargs.update(opkeyargs)
+    else:
+        for i in range(min(len(oitems), len(posargs))):
+            portkeyargs.update({posargs[i]: oitems[i][1]})
+    keyargs.update(portkeyargs)
+    keyargs = serialize_kwargs(keyargs, 
+        prefix=argumentPrefix,
+        separator=separator) if len(keyargs) > 0 else ['']
+    pargs = list(posargsDict.values())
+    pargs = [''] if len(pargs) == 0 or None in pargs else pargs
+    logger.debug("After port replacement: pargs: %s; keyargs: %s",pargs, keyargs)
+    return keyargs, pargs
 
 # Easing the transition from single- to multi-package
 get_leaves = common.get_leaves

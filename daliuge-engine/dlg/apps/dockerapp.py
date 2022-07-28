@@ -273,6 +273,10 @@ class DockerApp(BarrierAppDROP):
                 self._image,
             )
 
+        self.appArgs = droputils.clean_applicationArgs(
+            self._applicationArgs, prefix=self._argumentPrefix, 
+            separator=self._paramValueSeparator
+        )
         self._command = self._getArg(kwargs, "command", None)
 
         self._noBash = False
@@ -284,16 +288,6 @@ class DockerApp(BarrierAppDROP):
             # able to add any arguments straight after. This requires to use the placeholder string
             # "%%" at the start of the command, else it is interpreted as a normal command.
 
-        # construct the actual command line from all application parameters
-        # self.pargs, self.keyargs = droputils.serialize_applicationArgs(
-        #     self._applicationArgs, prefix=self._argumentPrefix, 
-        #     separator=self._paramValueSeparator
-        # )
-        self.appArgs = droputils.clean_applicationArgs(
-            self._applicationArgs, prefix=self._argumentPrefix, 
-            separator=self._paramValueSeparator
-        )
-        # defer construction of complete command to run method
 
         # The user used to run the process in the docker container is now always the user
         # who originally started the DALiuGE process as well. The information is passed through
@@ -528,59 +522,11 @@ class DockerApp(BarrierAppDROP):
                     )
             logger.debug(f"Adding environment variables: {env}")
 
-            ###########
             # deal with named ports
-            # TODO: This needs to be moved to droputils as well.
-            # Almost exact same code as for bash
-            inputs_dict = collections.OrderedDict()
-            for uid, drop in iitems:
-                inputs_dict[uid] = drop.path if hasattr(drop, 'path') else ''
-
-            outputs_dict = collections.OrderedDict()
-            for uid, drop in oitems:
-                # if drop does not have a path we assume it is just passing the event
-                # Bash does not support memory drops anyway
-                outputs_dict[uid] = drop.path if hasattr(drop, 'path') else ''
-            logger.debug("appArgs: %s", self.appArgs)
-            posargs = [arg for arg in self.appArgs if self.appArgs[arg]["positional"]]
-            keyargs = {key:self.appArgs[key]["value"] for (key, value) in self.appArgs.items() if not self.appArgs[key]["positional"]}
-            posargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
-            portkeyargs = {}
-            logger.debug("posargs: %s; keyargs: %s",posargs, keyargs)
-            if "inputs" in self.parameters and isinstance(self.parameters['inputs'][0], dict):
-                ipkeyargs = droputils.identify_named_ports(
-                                inputs_dict,
-                                self.parameters["inputs"],
-                                posargs,
-                                posargsDict,
-                                self.appArgs,
-                                check_len=len(iitems),
-                                mode="inputs")
-                portkeyargs.update(ipkeyargs)
-            else:
-                for i in range(min(len(iitems), len(posargs))):
-                    portkeyargs.update({posargs[i]: list(self._inputs.values())[i]})
-            if "outputs" in self.parameters and isinstance(self.parameters['outputs'][0], dict):
-                opkeyargs = droputils.identify_named_ports(
-                                outputs_dict,
-                                self.parameters["outputs"],
-                                posargs,
-                                posargsDict,
-                                self.appArgs,
-                                check_len=len(oitems),
-                                mode="outputs")
-                portkeyargs.update(opkeyargs)
-            else:
-                for i in range(min(len(oitems), len(posargs))):
-                    portkeyargs.update({posargs[i]: list(self._outputs.values())[i]})
-            keyargs.update(portkeyargs)
-            keyargs = droputils.serialize_kwargs(keyargs, 
-                prefix=self._argumentPrefix,
-                separator=self._paramValueSeparator) if len(keyargs) > 0 else ['']
-            pargs = list(posargsDict.values())
-            pargs = [''] if len(pargs) == 0 or None in pargs else pargs
-            logger.debug("After port replacement: pargs: %s; keyargs: %s",pargs, keyargs)
+            keyargs, pargs = droputils.replace_named_ports(iitems, oitems, self.parameters, 
+                self.appArgs, argumentPrefix=self._argumentPrefix, separator=self._paramValueSeparator)
             argumentString = f"{' '.join(keyargs + pargs)}"  # add kwargs to end of pargs
+            
             # complete command including all additional parameters and optional redirects
             cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
             if cmd:
