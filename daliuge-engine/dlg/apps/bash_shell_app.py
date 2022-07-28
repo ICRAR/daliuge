@@ -247,7 +247,7 @@ class BashShellBase(object):
         else:
             for i in range(min(len(outputs), len(pargs))):
                 keyargs.update({pargs[i]: list(outputs.values())[i]})
-        keyargs = droputils.serialize_kwargs(keyargs, 
+        keyargs = droputils.serialize_kwargs(keyargs,
             prefix=self._argumentPrefix,
             separator=self._paramValueSeparator)
         pargs = list(pargsDict.values())
@@ -402,28 +402,17 @@ class StreamingInputBashAppBase(BashShellBase, AppDROP):
 # @par EAGLE_START
 # @param category BashShellApp
 # @param tag template
-# @param[in] cparam/command Command//String/readwrite/False//False/
-#     \~English The command to be executed
-# @param[in] cparam/input_redirection Input Redirection//String/readwrite/False//False/
-#     \~English The command line argument that specifies the input into this application
-# @param[in] cparam/output_redirection Output Redirection//String/readwrite/False//False/
-#     \~English The command line argument that specifies the output from this application
-# @param[in] cparam/command_line_arguments Command Line Arguments//String/readwrite/False//False/
-#     \~English Additional command line arguments to be added to the command line to be executed
-# @param[in] cparam/paramValueSeparator Param value separator/ /String/readwrite/False//False/
-#     \~English Separator character(s) between parameters on the command line
-# @param[in] cparam/argumentPrefix Argument prefix/"--"/String/readwrite/False//False/
-#     \~English Prefix to each keyed argument on the command line
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
-#     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
-#     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
-#     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
-#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
-#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param command Command//String/ComponentParameter/readwrite//False/False/The command to be executed
+# @param input_redirection Input Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the input into this application
+# @param output_redirection Output Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the output from this application
+# @param command_line_arguments Command Line Arguments//String/ComponentParameter/readwrite//False/False/Additional command line arguments to be added to the command line to be executed
+# @param paramValueSeparator Param value separator/ /String/ComponentParameter/readwrite//False/False/Separator character(s) between parameters on the command line
+# @param argumentPrefix Argument prefix/"--"/String/ComponentParameter/readwrite//False/False/Prefix to each keyed argument on the command line
+# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
 # @par EAGLE_END
 class BashShellApp(BashShellBase, BarrierAppDROP):
     """
