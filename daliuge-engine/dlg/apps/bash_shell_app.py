@@ -201,7 +201,8 @@ class BashShellBase(object):
         output of the process is piped to. If not given it is consumed by this
         method and potentially logged.
         """
-        # we currently only support passing a path for bash apps
+        logger.debug("Parameters found: %s", self.parameters)
+        # we only support passing a path for bash apps
         fsInputs = {uid: i for uid, i in inputs.items() if droputils.has_path(i)}
         fsOutputs = {uid: o for uid, o in outputs.items() if droputils.has_path(o)}
         dataURLInputs = {
@@ -211,10 +212,13 @@ class BashShellBase(object):
             uid: o for uid, o in outputs.items() if not droputils.has_path(o)
         }
 
-
         # deal with named ports
+        inport_names = self.parameters['inputs'] \
+            if "inputs" in self.parameters else []
+        outport_names = self.parameters['outputs'] \
+            if "outputs" in self.parameters else []
         keyargs, pargs = droputils.replace_named_ports(inputs.items(), outputs.items(), 
-            self.parameters, self.appArgs, argumentPrefix=self._argumentPrefix, 
+            inport_names, outport_names, self.appArgs, argumentPrefix=self._argumentPrefix, 
             separator=self._paramValueSeparator)
         argumentString = f"{' '.join(pargs + keyargs)}"  # add kwargs to end of pargs
         # complete command including all additional parameters and optional redirects

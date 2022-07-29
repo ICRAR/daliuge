@@ -523,9 +523,15 @@ class DockerApp(BarrierAppDROP):
             logger.debug(f"Adding environment variables: {env}")
 
             # deal with named ports
-            keyargs, pargs = droputils.replace_named_ports(iitems, oitems, self.parameters, 
-                self.appArgs, argumentPrefix=self._argumentPrefix, separator=self._paramValueSeparator)
-            argumentString = f"{' '.join(keyargs + pargs)}"  # add kwargs to end of pargs
+            inport_names = self.parameters['inputs'] \
+                if "inputs" in self.parameters else []
+            outport_names = self.parameters['outputs'] \
+                if "outputs" in self.parameters else []
+            keyargs, pargs = droputils.replace_named_ports(iitems, oitems, 
+                inport_names, outport_names, self.appArgs, 
+                argumentPrefix=self._argumentPrefix, 
+                separator=self._paramValueSeparator)
+            argumentString = f"{' '.join(keyargs + pargs)}"
             
             # complete command including all additional parameters and optional redirects
             cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
