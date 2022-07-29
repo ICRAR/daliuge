@@ -592,21 +592,18 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     logger.info('Constructed command line arguments: %s %s', pargs, kwargs)
     return (pargs, skwargs)
 
-def identify_named_ports(ports, port_dict, posargs, pargsDict, appArgs, check_len=0, mode="inputs"):
+def identify_named_ports(port_dict, posargs, pargsDict, 
+    appArgs, check_len=0, mode="inputs"):
     """
     """
-    logger.debug("Using named ports to remove %s from arguments (ports, port_dict, check_len): %s %s %d", mode, 
-        ports, port_dict, check_len)
-    # pargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
-    # kwargs = {arg:appArgs[arg]["value"] for arg in appArgs 
-    #     if not appArgs[arg]["positional"]}
+    logger.debug("Using named ports to remove %s from arguments port_dict, check_len): %s %d",
+        mode, port_dict, check_len)
     portargs = {}
     posargs = list(posargs)
+    keys = list(port_dict.keys())
     for i in range(check_len):
-        # key for final dict is value in named ports dict
-        key = list(port_dict[i].values())[0]
-        # value for final dict is value in ports dict
-        value = ports[list(port_dict[i].keys())[0]]
+        key = port_dict[keys[i]]['name']
+        value = port_dict[keys[i]]['path']
         if not value: value = '' # make sure we are passing NULL drop events
         if key in posargs:
             pargsDict.update({key:value})
@@ -623,8 +620,17 @@ def identify_named_ports(ports, port_dict, posargs, pargsDict, appArgs, check_le
     logger.debug("Returning mapped ports: %s", portargs)
     return portargs
 
-def replace_named_ports(iitems, oitems, parameters, appArgs, argumentPrefix="--",
-    separator=" "):
+def check_ports_dict(ports:list) -> bool:
+    """
+    Checks whether all ports in ports list are of type dict
+
+    Input: list of ports
+    """
+    return all(isinstance(p, dict) for p in ports)
+
+
+def replace_named_ports(iitems, oitems, inport_names, outport_names, 
+    appArgs, argumentPrefix="--", separator=" "):
     """
     Function attempts to identify component arguments that match port names.
 
@@ -633,15 +639,15 @@ def replace_named_ports(iitems, oitems, parameters, appArgs, argumentPrefix="--"
         oitems: itemized output port dictionary
         parameters: 
     """
-    inputs_path_dict = collections.OrderedDict()
+    logger.debug("iitems: %s; inport_names: %s; outport_names: %s", 
+        iitems, inport_names, outport_names)
+    inputs_dict = {}
     for uid, drop in iitems:
-        inputs_path_dict[uid] = drop.path if hasattr(drop, 'path') else ''
+        inputs_dict[uid] = {'path': drop.path if hasattr(drop, 'path') else ''}
 
-    outputs_path_dict = collections.OrderedDict()
+    outputs_dict = {}
     for uid, drop in oitems:
-        # if drop does not have a path we assume it is just passing the event
-        # Bash does not support memory drops anyway
-        outputs_path_dict[uid] = drop.path if hasattr(drop, 'path') else ''
+        outputs_dict[uid] = {'path': drop.path if hasattr(drop, 'path') else ''}
     logger.debug("appArgs: %s", appArgs)
     # get positional args
     posargs = [arg for arg in appArgs if appArgs[arg]["positional"]]
@@ -651,10 +657,12 @@ def replace_named_ports(iitems, oitems, parameters, appArgs, argumentPrefix="--"
     posargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
     portkeyargs = {}
     logger.debug("posargs: %s; keyargs: %s",posargs, keyargs)
-    if "inputs" in parameters and isinstance(parameters['inputs'][0], dict):
+    if check_ports_dict(inport_names):
+        for inport in inport_names:
+            key = list(inport.keys())[0]
+            inputs_dict[key].update({'name':inport[key]})
         ipkeyargs = identify_named_ports(
-                        inputs_path_dict,
-                        parameters["inputs"],
+                        inputs_dict,
                         posargs,
                         posargsDict,
                         appArgs,
@@ -664,10 +672,13 @@ def replace_named_ports(iitems, oitems, parameters, appArgs, argumentPrefix="--"
     else:
         for i in range(min(len(iitems), len(posargs))):
             portkeyargs.update({posargs[i]: iitems[i][1]})
-    if "outputs" in parameters and isinstance(parameters['outputs'][0], dict):
+
+    if check_ports_dict(outport_names):
+        for outport in outport_names:
+            key = list(outport.keys())[0]
+            outputs_dict[key].update({'name':outport[key]})
         opkeyargs = identify_named_ports(
-                        outputs_path_dict,
-                        parameters["outputs"],
+                        outputs_dict,
                         posargs,
                         posargsDict,
                         appArgs,
