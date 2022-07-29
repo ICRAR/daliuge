@@ -202,10 +202,15 @@ class BashShellBase(object):
         method and potentially logged.
         """
         # we currently only support passing a path for bash apps
-        session_id = (
-            self._dlg_session.sessionId if self._dlg_session is not None else ""
-        )
-        logger.debug(f"Parameters found: {self.parameters}")
+        fsInputs = {uid: i for uid, i in inputs.items() if droputils.has_path(i)}
+        fsOutputs = {uid: o for uid, o in outputs.items() if droputils.has_path(o)}
+        dataURLInputs = {
+            uid: i for uid, i in inputs.items() if not droputils.has_path(i)
+        }
+        dataURLOutputs = {
+            uid: o for uid, o in outputs.items() if not droputils.has_path(o)
+        }
+
 
         # deal with named ports
         keyargs, pargs = droputils.replace_named_ports(inputs.items(), outputs.items(), 
@@ -224,16 +229,8 @@ class BashShellBase(object):
         # self.run_bash(self._command, self.uid, session_id, *args, **kwargs)
 
         # Replace inputs/outputs in command line with paths or data URLs
-        fsInputs = {uid: i for uid, i in inputs.items() if droputils.has_path(i)}
-        fsOutputs = {uid: o for uid, o in outputs.items() if droputils.has_path(o)}
         cmd = droputils.replace_path_placeholders(cmd, fsInputs, fsOutputs)
 
-        dataURLInputs = {
-            uid: i for uid, i in inputs.items() if not droputils.has_path(i)
-        }
-        dataURLOutputs = {
-            uid: o for uid, o in outputs.items() if not droputils.has_path(o)
-        }
         cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
 
         # Pass down daliuge-specific information to the subprocesses as environment variables
