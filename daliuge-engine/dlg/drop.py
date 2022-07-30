@@ -1493,18 +1493,13 @@ class DataDROP(AbstractDROP):
 # @par EAGLE_START
 # @param category File
 # @param tag daliuge
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
-# @param[in] cparam/check_filepath_exists Check file path exists/True/Boolean/readwrite/False//False/
-#     \~English Perform a check to make sure the file path exists before proceeding with the application
-# @param[in] cparam/filepath File Path//String/readwrite/False//False/
-#     \~English Path to the file for this node
-# @param[in] cparam/dirname Directory name//String/readwrite/False//False/
-#     \~English Path to the file for this node
-# @param[in] port/dummy dummy/Complex/Dummy input port
-# @param[out] port/dummy dummy/Complex/Dummy output port
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param check_filepath_exists Check file path exists/True/Boolean/ComponentParameter/readwrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
+# @param filepath File Path//String/ComponentParameter/readwrite//False/False/Path to the file for this node
+# @param dirname Directory name//String/ComponentParameter/readwrite//False/False/Path to the file for this node
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class FileDROP(DataDROP, PathBasedDrop):
     """
@@ -1689,24 +1684,16 @@ class FileDROP(DataDROP, PathBasedDrop):
 # @par EAGLE_START
 # @param category NGAS
 # @param tag daliuge
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
-# @param[in] cparam/ngasSrv NGAS Server/localhost/String/readwrite/False//False/
-#     \~English The URL of the NGAS Server
-# @param[in] cparam/ngasPort NGAS Port/7777/Integer/readwrite/False//False/
-#     \~English The port of the NGAS Server
-# @param[in] cparam/ngasFileId File ID//String/readwrite/False//False/
-#     \~English File ID on NGAS (for retrieval only)
-# @param[in] cparam/ngasConnectTimeout Connection timeout/2/Integer/readwrite/False//False/
-#     \~English Timeout for connecting to the NGAS server
-# @param[in] cparam/ngasMime NGAS mime-type/"text/ascii"/String/readwrite/False//False/
-#     \~English Mime-type to be used for archiving
-# @param[in] cparam/ngasTimeout NGAS timeout/2/Integer/readwrite/False//False/
-#     \~English Timeout for receiving responses for NGAS
-# @param[in] port/dummy dummy/Complex/Dummy input port
-# @param[out] port/dummy dummy/Complex/Dummy output port
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param ngasSrv NGAS Server/localhost/String/ComponentParameter/readwrite//False/False/The URL of the NGAS Server
+# @param ngasPort NGAS Port/7777/Integer/ComponentParameter/readwrite//False/False/The port of the NGAS Server
+# @param ngasFileId File ID//String/ComponentParameter/readwrite//False/False/File ID on NGAS (for retrieval only)
+# @param ngasConnectTimeout Connection timeout/2/Integer/ComponentParameter/readwrite//False/False/Timeout for connecting to the NGAS server
+# @param ngasMime NGAS mime-type/"text/ascii"/String/ComponentParameter/readwrite//False/False/Mime-type to be used for archiving
+# @param ngasTimeout NGAS timeout/2/Integer/ComponentParameter/readwrite//False/False/Timeout for receiving responses for NGAS
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class NgasDROP(DataDROP):
     """
@@ -1821,12 +1808,10 @@ class NgasDROP(DataDROP):
 # @par EAGLE_START
 # @param category Memory
 # @param tag daliuge
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
-# @param[in] port/dummy dummy/Complex/Dummy input port
-# @param[out] port/dummy dummy/Complex/Dummy output port
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class InMemoryDROP(DataDROP):
     """
@@ -1883,12 +1868,10 @@ class InMemoryDROP(DataDROP):
 # @par EAGLE_START
 # @param category SharedMemory
 # @param tag template
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
-# @param[in] port/dummy dummy/Complex/Dummy input port
-# @param[out] port/dummy dummy/Complex/Dummy output port
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class SharedMemoryDROP(DataDROP):
     """
@@ -1935,12 +1918,10 @@ class SharedMemoryDROP(DataDROP):
 # @par EAGLE_START
 # @param category Memory
 # @param tag daliuge
-# @param[in] cparam/data_volume Data volume/0/Float/readonly/False//False/
-#     \~English This never stores any data
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
-# @param[in] port/dummy dummy/Complex/Dummy input port
-# @param[out] port/dummy dummy/Complex/Dummy output port
+# @param data_volume Data volume/0/Float/ComponentParameter/readonly//False/False/This never stores any data
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class NullDROP(DataDROP):
     """
@@ -1967,22 +1948,15 @@ class EndDROP(NullDROP):
 # @par EAGLE_START
 # @param category File
 # @param tag template
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
-# @param[in] cparam/dbmodule Python DB module//String/readwrite/False//False/
-#     \~English Load path for python DB module
-# @param[in] cparam/dbtable DB table name//String/readwrite/False//False/
-#     \~English The name of the table to use
-# @param[in] cparam/vals Values dictionary//Json/readwrite/False//False/
-#     \~English Json encoded values dictionary used for INSERT. The keys of ``vals`` are used as the column names.
-# @param[in] cparam/condition Whats used after WHERE//String/readwrite/False//False/
-#     \~English Condition for SELECT. For this the WHERE statement must be written using the "{X}" or "{}" placeholders
-# @param[in] cparam/selectVals values for WHERE//Json/readwrite/False//False/
-#     \~English Values for the WHERE statement
-# @param[in] port/dummy dummy/Complex/Dummy input port
-# @param[out] port/dummy dummy/Complex/Dummy output port
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param dbmodule Python DB module//String/ComponentParameter/readwrite//False/False/Load path for python DB module
+# @param dbtable DB table name//String/ComponentParameter/readwrite//False/False/The name of the table to use
+# @param vals Values dictionary/{}/Json/ComponentParameter/readwrite//False/False/Json encoded values dictionary used for INSERT. The keys of ``vals`` are used as the column names.
+# @param condition Whats used after WHERE//String/ComponentParameter/readwrite//False/False/Condition for SELECT. For this the WHERE statement must be written using the "{X}" or "{}" placeholders
+# @param selectVals values for WHERE/{}/Json/ComponentParameter/readwrite//False/False/Values for the WHERE statement
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class RDBMSDrop(DataDROP):
     """
@@ -2200,18 +2174,13 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
 # @par EAGLE_START
 # @param category Plasma
 # @param tag daliuge
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
-# @param[in] cparam/plasma_path Plasma Path//String/readwrite/False//False/
-#     \~English Path to the local plasma store
-# @param[in] cparam/object_id Object Id//String/readwrite/False//False/
-#     \~English PlasmaId of the object for all compute nodes
-# @param[in] cparam/use_staging Use Staging/False/Boolean/readwrite/False//False/
-#     \~English Enables writing to a dynamically resizeable staging buffer
-# @param[in] port/dummy dummy/Complex/Dummy input port
-# @param[out] port/dummy dummy/Complex/Dummy output port
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param plasma_path Plasma Path//String/ComponentParameter/readwrite//False/False/Path to the local plasma store
+# @param object_id Object Id//String/ComponentParameter/readwrite//False/False/PlasmaId of the object for all compute nodes
+# @param use_staging Use Staging/False/Boolean/ComponentParameter/readwrite//False/False/Enables writing to a dynamically resizeable staging buffer
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class PlasmaDROP(DataDROP):
     """
@@ -2252,18 +2221,13 @@ class PlasmaDROP(DataDROP):
 # @par EAGLE_START
 # @param category PlasmaFlight
 # @param tag daliuge
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
-# @param[in] cparam/plasma_path Plasma Path//String/readwrite/False//False/
-#     \~English Path to the local plasma store
-# @param[in] cparam/object_id Object Id//String/readwrite/False//False/
-#     \~English PlasmaId of the object for all compute nodes
-# @param[in] cparam/flight_path Flight Path//String/readwrite/False//False/
-#     \~English IP and flight port of the drop owner
-# @param[in] port/dummy dummy/Complex/Dummy input port
-# @param[out] port/dummy dummy/Complex/Dummy output port
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param plasma_path Plasma Path//String/ComponentParameter/readwrite//False/False/Path to the local plasma store
+# @param object_id Object Id//String/ComponentParameter/readwrite//False/False/PlasmaId of the object for all compute nodes
+# @param flight_path Flight Path//String/ComponentParameter/readwrite//False/False/IP and flight port of the drop owner
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class PlasmaFlightDROP(DataDROP):
     """
@@ -2730,18 +2694,14 @@ class BarrierAppDROP(InputFiredAppDROP):
 # @par EAGLE_START
 # @param category Branch
 # @param tag template
-# @param[in] cparam/appclass Application Class/dlg.apps.simple.SimpleBranch/String/readonly/False//False/
-#     \~English Application class
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
-#     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
-#     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
-#     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
-#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
-#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param appclass Application Class/dlg.apps.simple.SimpleBranch/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param dummy0 dummy0//Object/OutputPort/readwrite//False/False/Dummy output port
+# @param dummy1 dummy1//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class BranchAppDrop(BarrierAppDROP):
     """

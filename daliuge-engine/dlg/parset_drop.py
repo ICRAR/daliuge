@@ -34,11 +34,11 @@ from dlg.meta import dlg_string_param
 # @par EAGLE_START
 # @param category ParameterSet
 # @param tag template
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/Is this node the end of a group?
-# @param[in] cparam/mode Parset mode/"YANDA"/String/readonly/False//False/To what standard DALiuGE should filter and serialize the parameters.
-# @param[in] cparam/config_data ConfigData/""/String/readwrite/False//False/Additional configuration information to be mixed in with the initial data
-# @param[out] port/Config ConfigFile/File/The output configuration file
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param mode Parset mode/"YANDA"/String/ComponentParameter/readonly//False/False/To what standard DALiuGE should filter and serialize the parameters.
+# @param config_data ConfigData/""/String/ComponentParameter/readwrite//False/False/Additional configuration information to be mixed in with the initial data
+# @param Config ConfigFile//Object.File/OutputPort/readwrite//False/False/The output configuration file
 # @par EAGLE_END
 class ParameterSetDROP(DataDROP):
     """
