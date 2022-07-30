@@ -38,6 +38,7 @@ from contextlib import redirect_stdout
 
 from dlg import droputils, utils
 from dlg.drop import BarrierAppDROP
+from pyparsing import col
 from dlg.exceptions import InvalidDropException
 from dlg.meta import (
     dlg_string_param,
@@ -461,12 +462,18 @@ class PyFuncApp(BarrierAppDROP):
         else:
             appArgs = {}
 
-        if ('inputs' in self.parameters and isinstance(self.parameters['inputs'][0], dict)):
+        if ('inputs' in self.parameters and 
+            droputils.check_ports_dict(self.parameters['inputs'])):
             check_len = min(len(inputs),self.fn_nargs+
                 len(self.arguments.kwonlyargs))
+            inputs_dict = collections.OrderedDict()
+            for inport in self.parameters['inputs']:
+                key = list(inport.keys())[0]
+                inputs_dict[key] = {
+                    'name':inport[key],
+                    'path':inputs[key]}
             kwargs.update(droputils.identify_named_ports(
-                inputs,
-                self.parameters['inputs'],
+                inputs_dict,
                 posargs,
                 pargsDict,
                 appArgs,
@@ -479,12 +486,20 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(f"Updating funcargs with input ports {kwargs}")
         funcargs.update(kwargs)
 
-        if ('outputs' in self.parameters and isinstance(self.parameters['outputs'][0], dict)):
+        if ('outputs' in self.parameters and
+            droputils.check_ports_dict(self.parameters['outputs'])):
             check_len = min(len(outputs),self.fn_nargs+
                 len(self.arguments.kwonlyargs))
+            outputs_dict = collections.OrderedDict()
+            for outport in self.parameters['outputs']:
+                key = list(outport.keys())[0]
+                outputs_dict[key] = {
+                    'name':outport[key],
+                    'path': outputs[key]
+                    }
+
             kwargs.update(droputils.identify_named_ports(
-                outputs,
-                self.parameters['outputs'],
+                outputs_dict,
                 posargs,
                 pargsDict,
                 appArgs,
