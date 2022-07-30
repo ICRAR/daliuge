@@ -602,8 +602,12 @@ def identify_named_ports(port_dict, posargs, pargsDict,
     posargs = list(posargs)
     keys = list(port_dict.keys())
     for i in range(check_len):
-        key = port_dict[keys[i]]['name']
-        value = port_dict[keys[i]]['path']
+        try:
+            key = port_dict[keys[i]]['name']
+            value = port_dict[keys[i]]['path']
+        except KeyError:
+            print(port_dict)
+            raise KeyError
         if not value: value = '' # make sure we are passing NULL drop events
         if key in posargs:
             pargsDict.update({key:value})
@@ -626,7 +630,11 @@ def check_ports_dict(ports:list) -> bool:
 
     Input: list of ports
     """
-    return all(isinstance(p, dict) for p in ports)
+    # all returns true if list is empty!
+    if len(ports) > 0:
+        return all(isinstance(p, dict) for p in ports)
+    else:
+        return False
 
 
 def replace_named_ports(iitems, oitems, inport_names, outport_names, 
@@ -641,11 +649,11 @@ def replace_named_ports(iitems, oitems, inport_names, outport_names,
     """
     logger.debug("iitems: %s; inport_names: %s; outport_names: %s", 
         iitems, inport_names, outport_names)
-    inputs_dict = {}
+    inputs_dict = collections.OrderedDict()
     for uid, drop in iitems:
         inputs_dict[uid] = {'path': drop.path if hasattr(drop, 'path') else ''}
 
-    outputs_dict = {}
+    outputs_dict = collections.OrderedDict()
     for uid, drop in oitems:
         outputs_dict[uid] = {'path': drop.path if hasattr(drop, 'path') else ''}
     logger.debug("appArgs: %s", appArgs)
