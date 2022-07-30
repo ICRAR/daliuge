@@ -31,7 +31,7 @@ import pickle
 import re
 import threading
 import traceback
-from typing import IO, Any, AsyncIterable, BinaryIO, Dict, Iterable, overload
+from typing import IO, Any, AsyncIterable, BinaryIO, Dict, Iterable, OrderedDict, Tuple, overload
 import numpy as np
 
 from dlg.ddap_protocol import DROPStates
@@ -592,9 +592,24 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     logger.info('Constructed command line arguments: %s %s', pargs, kwargs)
     return (pargs, skwargs)
 
-def identify_named_ports(port_dict, posargs, pargsDict, 
-    appArgs, check_len=0, mode="inputs"):
+def identify_named_ports(
+    port_dict:dict,
+    posargs:list,
+    pargsDict:dict, 
+    appArgs:dict,
+    check_len: int=0,
+    mode: str="inputs"
+    ) -> dict:
     """
+    Checks port names for matches with arguments and returns mapped ports.
+
+    Args:
+        port_dict (dict): ports {uid:name,...}
+        posargs (list): available positional arguments (will be modified)
+        pargsDict (dict): mapped arguments (will be modified)
+
+    Returns:
+        dict: port arguments
     """
     logger.debug("Using named ports to remove %s from arguments port_dict, check_len): %s %d",
         mode, port_dict, check_len)
@@ -626,9 +641,14 @@ def identify_named_ports(port_dict, posargs, pargsDict,
 
 def check_ports_dict(ports:list) -> bool:
     """
-    Checks whether all ports in ports list are of type dict
+    Checks whether all ports in ports list are of type dict. This is
+    for backwards compatibility.
 
-    Input: list of ports
+    Args: 
+        ports (list): 
+
+    Returns:
+        bool: True if all ports are dict, else False
     """
     # all returns true if list is empty!
     if len(ports) > 0:
@@ -637,15 +657,28 @@ def check_ports_dict(ports:list) -> bool:
         return False
 
 
-def replace_named_ports(iitems, oitems, inport_names, outport_names, 
-    appArgs, argumentPrefix="--", separator=" "):
+def replace_named_ports(
+    iitems:dict,
+    oitems:dict,
+    inport_names:dict,
+    outport_names:dict,
+    appArgs:dict, argumentPrefix="--",
+    separator=" "
+    ) -> Tuple[str, str]:
     """
     Function attempts to identify component arguments that match port names.
 
     Inputs:
         iitems: itemized input port dictionary
         oitems: itemized output port dictionary
-        parameters: 
+        inport_names: dictionary of input port names (key: uid)
+        outport_names: dictionary of output port names (key: uid)
+        appArgs: dictionary of all arguments
+        argumentPrefix: prefix for keyword arguments
+        separator: character used between keyword and value
+
+    Returns:
+        tuple of serialized keyword arguments and positional arguments 
     """
     logger.debug("iitems: %s; inport_names: %s; outport_names: %s", 
         iitems, inport_names, outport_names)
@@ -669,6 +702,7 @@ def replace_named_ports(iitems, oitems, inport_names, outport_names,
         for inport in inport_names:
             key = list(inport.keys())[0]
             inputs_dict[key].update({'name':inport[key]})
+
         ipkeyargs = identify_named_ports(
                         inputs_dict,
                         posargs,
