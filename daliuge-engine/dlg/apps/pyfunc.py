@@ -132,30 +132,20 @@ class DropParser(Enum):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag template
-# @param[in] cparam/appclass Application Class/dlg.apps.pyfunc.PyFuncApp/String/readonly/False//False/
-#     \~English Application class
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
-#     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
-#     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
-#     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
-#     \~English The allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
-#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
-# @param[in] aparam/func_name Function Name//String/readwrite/False//False/
-#     \~English Python function name
-# @param[in] aparam/func_code Function Code//String/readwrite/False//False/
-#     \~English Python function code, e.g. 'def function_name(args): return args'
-# @param[in] aparam/input_parser Input Parser/pickle/Select/readwrite/False/pickle,eval,npy,path,dataurl/False/
-#     \~English Input port parsing technique
-# @param[in] aparam/output_parser Output Parser/pickle/Select/readwrite/False/pickle,eval,npy/False/
-#     \~English output port parsing technique
-# @param[in] aparam/func_defaults Function Defaults//String/readwrite/False//False/
+# @param appclass Application Class/dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/The allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param func_name Function Name//String/ApplicationArgument/readwrite//False/False/Python function name
+# @param func_code Function Code//String/ApplicationArgument/readwrite//False/False/Python function code, e.g. 'def function_name(args): return args'
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy/False/False/Output port parsing technique
+# @param func_defaults Function Defaults//String/ApplicationArgument/readwrite//False/False/
 #     \~English Mapping from argname to default value. Should match only the last part of the argnames list.
 #               Values are interpreted as Python code literals and that means string values need to be quoted.
-# @param[in] aparam/func_arg_mapping Function Arguments Mapping//String/readwrite/False//False/
+# @param func_arg_mapping Function Arguments Mapping//String/ApplicationArgument/readwrite//False/False/
 #     \~English Mapping between argument name and input drop uids
 # @par EAGLE_END
 class PyFuncApp(BarrierAppDROP):
@@ -343,7 +333,7 @@ class PyFuncApp(BarrierAppDROP):
         self.arguments = inspect.getfullargspec(self.f)
         logger.debug(f"Function inspection revealed {self.arguments}")
         # we don't want to mess with the 'self' argument
-        if self.arguments.args.count('self'): 
+        if self.arguments.args.count('self'):
             self.arguments.args.remove('self')
         self.fn_nargs = len(self.arguments.args)
         self.fn_ndef = len(self.arguments.defaults) if self.arguments.defaults else 0
@@ -456,7 +446,7 @@ class PyFuncApp(BarrierAppDROP):
             pargsDict.update({k:self.parameters[k] for k in pargsDict if k in 
                 self.parameters})
             # if defined in both we use AppArgs values
-            pargsDict.update({k:appArgs[k]['value'] for k in pargsDict if k 
+            pargsDict.update({k:appArgs[k]['value'] for k in pargsDict if k
                 in appArgs})
             logger.debug("Initial posargs dictionary: %s", pargsDict)
         else:
@@ -530,7 +520,7 @@ class PyFuncApp(BarrierAppDROP):
                     elif pa != 'self' and pa not in pargsDict:
                         logger.warning(f"Required positional argument '{pa}' not found!")
             _dum = [appArgs.pop(k) for k in pargsDict if k in appArgs]
-            logger.debug("Identified positional arguments removed: %s", 
+            logger.debug("Identified positional arguments removed: %s",
                 [i['text'] for i in _dum])
             logger.debug(f"updating posargs with {list(pargsDict.keys())}")
             pargs.extend(list(pargsDict.values()))

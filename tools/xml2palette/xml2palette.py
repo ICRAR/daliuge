@@ -22,7 +22,7 @@ DOXYGEN_SETTINGS = [
     ("AUTOLINK_SUPPORT", "NO"),
     ("IDL_PROPERTY_SUPPORT", "NO"),
     ("RECURSIVE", "YES"),
-    ("EXCLUDE_PATTERNS", "*/web/*"),
+    ("EXCLUDE_PATTERNS", "*/web/*, CMakeLists.txt"),
     ("VERBATIM_HEADERS", "NO"),
     ("GENERATE_HTML", "NO"),
     ("GENERATE_LATEX", "NO"),
@@ -36,11 +36,12 @@ KNOWN_PARAM_DATA_TYPES = [
     "String",
     "Integer",
     "Float",
-    "Complex",
+    "Object",
     "Boolean",
     "Select",
     "Password",
     "Json",
+    "Python"
 ]
 KNOWN_CONSTRUCT_TYPES = ["Scatter", "Gather"]
 KNOWN_DATA_CATEGORIES = [
@@ -48,12 +49,19 @@ KNOWN_DATA_CATEGORIES = [
     "Memory",
     "SharedMemory",
     "NGAS",
-    "ParameterSet",
     "S3",
     "Plasma",
     "PlasmaFlight",
+    "ParameterSet",
+    "EnvironmentVariables"
 ]
 
+KNOWN_FIELD_TYPES = [
+    "ComponentParameter",
+    "ApplicationArgument",
+    "InputPort",
+    "OutputPort"
+]
 
 def get_options_from_command_line(argv):
     inputdir = ""
@@ -234,18 +242,19 @@ def check_required_fields_for_category(text, fields, category):
 
 
 def create_field(
-    internal_name, name, value, description, access, type, precious, options, positional
+    internal_name, external_name, value, type, field_type, access, options, precious, positional, description
 ):
     return {
-        "text": name,
+        "text": external_name,
         "name": internal_name,
         "value": value,
-        "default": value,
+        "defaultValue": value,
         "description": description,
-        "readonly": access == "readonly",
         "type": type,
-        "precious": precious,
+        "fieldType": field_type,
+        "readonly": access == "readonly",
         "options": options,
+        "precious": precious,
         "positional": positional,
     }
 
@@ -256,27 +265,7 @@ def alert_if_missing(text, fields, internal_name):
         pass
 
 
-def parse_key(key):
-    # parse the key as csv (delimited by '/')
-    parts = []
-    reader = csv.reader([key], delimiter="/", quotechar='"')
-    for row in reader:
-        parts = row
-
-    # init attributes of the param/port
-    object = ""
-    internal_name = ""
-
-    # assign attributes (if present)
-    if len(parts) > 0:
-        object = parts[0]
-    if len(parts) > 1:
-        internal_name = parts[1]
-
-    return (object, internal_name)
-
-
-def parse_param_value(text, prefix, value):
+def parse_value(text, value):
     # parse the value as csv (delimited by '/')
     parts = []
     reader = csv.reader([value], delimiter="/", quotechar='"')
@@ -287,10 +276,12 @@ def parse_param_value(text, prefix, value):
     external_name = ""
     default_value = ""
     type = "String"
+    field_type = "cparam"
     access = "readwrite"
-    precious = False
     options = []
+    precious = False
     positional = False
+    description = ""
 
     # assign attributes (if present)
     if len(parts) > 0:
@@ -299,33 +290,21 @@ def parse_param_value(text, prefix, value):
         default_value = parts[1]
     if len(parts) > 2:
         type = parts[2]
-    if (
-        len(parts) > 4
-    ):  # NOTE: correct that we start looking for >4, but access element 3
-        access = parts[3]
+    if len(parts) > 3:
+        field_type = parts[3]
+    if len(parts) > 4:
+        access = parts[4]
     else:
         logging.warning(
             text
             + " "
-            + prefix
-            + "param ("
+            + field_type
+            + " ("
             + external_name
             + ") has no 'access' descriptor, using default (readwrite) : "
             + value
         )
     if len(parts) > 5:
-        precious = parts[4].lower() == "true"
-    else:
-        logging.warning(
-            text
-            + " "
-            + prefix
-            + "param ("
-            + external_name
-            + ") has no 'precious' descriptor, using default (False) : "
-            + value
-        )
-    if len(parts) > 6:
         if parts[5].strip() == "":
             options = []
         else:
@@ -334,57 +313,38 @@ def parse_param_value(text, prefix, value):
         logging.warning(
             text
             + " "
-            + prefix
-            + "param ("
+            + field_type
+            + " ("
             + external_name
             + ") has no 'options', using default ([]) : "
             + value
         )
-    if len(parts) > 7:
-        positional = parts[6].lower() == "true"
+    if len(parts) > 6:
+        precious = parts[6].lower() == "true"
     else:
         logging.warning(
             text
             + " "
-            + prefix
-            + "param ("
+            + field_type
+            + " ("
+            + external_name
+            + ") has no 'precious' descriptor, using default (False) : "
+            + value
+        )
+    if len(parts) > 7:
+        positional = parts[7].lower() == "true"
+    else:
+        logging.warning(
+            text
+            + " "
+            + field_type
+            + " ("
             + external_name
             + ") has no 'positional', using default (False) : "
             + value
         )
 
-    return (external_name, default_value, type, access, precious, options, positional)
-
-
-def parse_port_value(value):
-    # parse the value as csv (delimited by '/')
-    parts = []
-    reader = csv.reader([value], delimiter="/", quotechar='"')
-    for row in reader:
-        parts = row
-
-    # init attributes of the param
-    name = ""
-    type = "String"
-
-    # assign attributes (if present)
-    if len(parts) > 0:
-        name = parts[0]
-    if len(parts) > 1:
-        type = parts[1]
-    else:
-        logging.warning(
-            "port ("
-            + name
-            + ") has no 'type' descriptor, using default (String) : "
-            + value
-            + " "
-            + str(len(parts))
-            + " "
-            + str(parts)
-        )
-
-    return (name, type)
+    return (external_name, default_value, type, field_type, access, options, precious, positional, description)
 
 
 def parse_description(value):
@@ -428,28 +388,29 @@ def create_palette_node_from_params(params):
             category = value
         elif key == "construct":
             construct = value
-        elif key == "tag":
+        elif key == "tag" and not any(s in value for s in KNOWN_FIELD_TYPES):
             tag = value
         elif key == "text":
             text = value
         elif key == "description":
             description = value
-        elif key.startswith("cparam/"):
-            # parse the param key into name, type etc
-            (param, internal_name) = parse_key(key)
+        else:
+            internal_name = key
             (
-                name,
+                external_name,
                 default_value,
                 type,
+                field_type,
                 access,
-                precious,
                 options,
+                precious,
                 positional,
-            ) = parse_param_value(text, "c", value)
+                description
+            ) = parse_value(text, value)
 
             # check that type is in the list of known types
             if type not in KNOWN_PARAM_DATA_TYPES:
-                #logging.warning(text + " cparam '" + name + "' has unknown type: " + type)
+                #logging.warning(text + " " + field_type + " '" + name + "' has unknown type: " + type)
                 pass
 
             # check that a param of type "Select" has some options specified,
@@ -457,16 +418,20 @@ def create_palette_node_from_params(params):
             if type == "Select" and len(options) == 0:
                 logging.warning(
                     text
-                    + " cparam '"
-                    + name
+                    + " "
+                    + field_type
+                    + " '"
+                    + external_name
                     + "' is of type 'Select' but has no options specified: "
                     + str(options)
                 )
             if len(options) > 0 and type != "Select":
                 logging.warning(
                     text
-                    + " cparam '"
-                    + name
+                    + " "
+                    + field_type
+                    + " '"
+                    + external_name
                     + "' has at least one option specified but is not of type 'Select': "
                     + type
                 )
@@ -475,170 +440,49 @@ def create_palette_node_from_params(params):
             if "\n" in value:
                 logging.info(
                     text
-                    + " "
-                    + "cparam description ("
+                    + " description ("
                     + value
                     + ") contains a newline character, removing."
                 )
                 value = value.replace("\n", " ")
-            param_description = parse_description(value).strip()
 
             # check that access is a known value
             if access != "readonly" and access != "readwrite":
                 logging.warning(
                     text
-                    + " cparam '"
-                    + name
+                    + " "
+                    + field_type
+                    + " '"
+                    + external_name
                     + "' has unknown 'access' descriptor: "
                     + access
                 )
 
-            # add a field
-            fields.append(
-                create_field(
-                    internal_name,
-                    name,
-                    default_value,
-                    param_description,
-                    access,
-                    type,
-                    precious,
-                    options,
-                    positional,
-                )
-            )
-        elif key.startswith("aparam/") or key.startswith("param/"):
-            # parse the param key into name, type etc
-            (param, internal_name) = parse_key(key)
-            (
-                name,
+            # create a field from this data
+            field = create_field(
+                internal_name,
+                external_name,
                 default_value,
                 type,
+                field_type,
                 access,
-                precious,
                 options,
+                precious,
                 positional,
-            ) = parse_param_value(text, "a", value)
-
-            # warn if doc string is still using param instead of aparam
-            if key.startswith("param/"):
-                logging.warning(
-                    text
-                    + " param ("
-                    + internal_name
-                    + ") using obsolete 'param' description, defaulting to 'aparam'"
-                )
-
-            # check that type is in the list of known types
-            if type not in KNOWN_PARAM_DATA_TYPES:
-                #logging.warning(text + " aparam '" + name + "' has unknown type: " + type)
-                pass
-
-            # check that category if suitable for aparams
-            if category in KNOWN_DATA_CATEGORIES:
-                logging.warning(
-                    text
-                    + " has aparam, which is not suitable for a "
-                    + category
-                    + " node"
-                )
-
-            # check that a param of type "Select" has some options specified,
-            # and check that every param with some options specified is of type "Select"
-            if type == "Select" and len(options) == 0:
-                logging.warning(
-                    text
-                    + " aparam '"
-                    + name
-                    + "' is of type 'Select' but has no options specified: "
-                    + str(options)
-                )
-            if len(options) > 0 and type != "Select":
-                logging.warning(
-                    text
-                    + " aparam '"
-                    + name
-                    + "' has at least one option specified but is not of type 'Select': "
-                    + type
-                )
-
-            # parse description
-            if "\n" in value:
-                logging.info(
-                    text
-                    + " "
-                    + "aparam description ("
-                    + value
-                    + ") contains a newline character, removing."
-                )
-                value = value.replace("\n", " ")
-            param_description = parse_description(value).strip()
-
-            # check that access is a known value
-            if access != "readonly" and access != "readwrite":
-                logging.warning(
-                    text
-                    + " aparam '"
-                    + name
-                    + "' has unknown 'access' descriptor: "
-                    + access
-                )
-
-            # add a field
-            applicationArgs.append(
-                create_field(
-                    internal_name,
-                    name,
-                    default_value,
-                    param_description,
-                    access,
-                    type,
-                    precious,
-                    options,
-                    positional,
-                )
+                description
             )
-        elif key.startswith("port/"):
-            (port, internal_name) = parse_key(key)
-            (name, type) = parse_port_value(value)
 
-            # parse description
-            if "\n" in value:
-                logging.info(
-                    "port description ("
-                    + value
-                    + ") contains a newline character, removing."
-                )
-                value = value.replace("\n", " ")
-            port_description = parse_description(value)
-
-            # add the port
-            if direction == "in":
-                inputPorts.append(
-                    create_port(
-                        text,
-                        internal_name,
-                        name,
-                        direction,
-                        False,
-                        type,
-                        port_description,
-                    )
-                )
-            elif direction == "out":
-                outputPorts.append(
-                    create_port(
-                        text,
-                        internal_name,
-                        name,
-                        direction,
-                        False,
-                        type,
-                        port_description,
-                    )
-                )
+            # add the field to the correct list in the component, based on fieldType
+            if field_type in KNOWN_FIELD_TYPES:
+                fields.append(field)
             else:
-                logging.warning("Unknown port direction: " + direction)
+                logging.warning(
+                    text
+                    + " '"
+                    + external_name
+                    + "' field_type is Unknown: "
+                    + field_type
+                )
 
     # check for presence of extra fields that must be included for each category
     check_required_fields_for_category(text, fields, category)
@@ -817,13 +661,14 @@ def process_compounddef_default(compounddef):
                     func_name = "Unknown"
                     return_type = "Unknown"
 
+                    # TODO: change
                     # some defaults
                     # cparam format is (name, default_value, type, access, precious, options, positional, description)
                     member["params"].append({"key": "category", "direction": None, "value": "PythonApp"})
-                    member["params"].append({"key": "cparam/appclass", "direction": None, "value": "Application Class/dlg.apps.pyfunc.PyFuncApp/String/readwrite/False//False/The python class that implements this application"})
-                    member["params"].append({"key": "cparam/execution_time", "direction": None, "value": "Execution Time/5/Integer/readwrite/False//False/Estimate of execution time (in seconds) for this application."})
-                    member["params"].append({"key": "cparam/num_cpus", "direction": None, "value": "No. of CPUs/1/Integer/readwrite/False//False/Number of CPUs used for this application."})
-                    member["params"].append({"key": "cparam/group_start", "direction": None, "value": "Group start/false/Boolean/readwrite/False//False/Is this node the start of a group?"})
+                    member["params"].append({"key": "appclass", "direction": None, "value": "Application Class/dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/readwrite//False/False/The python class that implements this application"})
+                    member["params"].append({"key": "execution_time", "direction": None, "value": "Execution Time/5/Integer/ComponentParameter/readwrite//False/False/Estimate of execution time (in seconds) for this application."})
+                    member["params"].append({"key": "num_cpus", "direction": None, "value": "No. of CPUs/1/Integer/ComponentParameter/readwrite//False/False/Number of CPUs used for this application."})
+                    member["params"].append({"key": "group_start", "direction": None, "value": "Group start/false/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?"})
 
                     for ggchild in grandchild:
                         if ggchild.tag == "name":
@@ -842,8 +687,8 @@ def process_compounddef_default(compounddef):
                                 if hasReturn:
                                     return_part = dd[dd.rfind(":return:")+8:].strip().replace('\n', ' ')
                                     output_port_name = "output"
-                                    #print("Add output port:" + str(output_port_name) + "/" + str(return_type) + "/" + str(return_part))
-                                    member["params"].append({"key": "port/"+str(output_port_name), "direction": "out", "value": str(output_port_name) + "/" + str(return_type) + "/" + str(return_part) })
+                                    print("Add output port:" + str(output_port_name) + "/" + str(return_type) + "/" + str(return_part))
+                                    member["params"].append({"key": str(output_port_name), "direction": "out", "value": str(output_port_name) + "//" + str(return_type) + "/OutputPort/readwrite//False/False/" + str(return_part) })
 
                                 # get first part of description, up until when the param are mentioned
                                 description = dd[:dd.find(":param")].strip()
@@ -922,17 +767,18 @@ def process_compounddef_default(compounddef):
                                             type = "String"
                                             #print("Use String")
 
-
+                            # TODO: change
                             # add the param
-                            member["params"].append({"key":"aparam/"+str(name), "direction":"in", "value":str(name) + "/" + str(default_value) + "/" + str(type) + "/readwrite/False//False/"})
+                            member["params"].append({"key":str(name), "direction":"in", "value":str(name) + "/" + str(default_value) + "/" + str(type) + "/ApplicationArgument/readwrite//False/False/"})
 
                         if ggchild.tag == "definition":
                             return_type = ggchild.text.strip().split(" ")[0]
                             func_path = ggchild.text.strip().split(" ")[-1]
 
+                            # TODO: change
                             # aparams
-                            member["params"].append({"key": "aparam/func_name", "direction": None, "value": "Function Name/" + func_path + "/String/readonly/False//True/Python function name"})
-                            member["params"].append({"key": "aparam/pickle", "direction": None, "value": "Pickle/false/Boolean/readwrite/False//True/Whether the python arguments are pickled."})
+                            member["params"].append({"key": "func_name", "direction": None, "value": "Function Name/" + func_path + "/String/ApplicationArgument/readonly//False/True/Python function name"})
+                            member["params"].append({"key": "pickle", "direction": None, "value": "Pickle/false/Boolean/ApplicationArgument/readwrite//False/True/Whether the python arguments are pickled."})
 
                             if return_type == "def":
                                 return_type = "None"
@@ -1162,7 +1008,17 @@ if __name__ == "__main__":
 
             for f in functions:
                 ns = params_to_nodes(f["params"])
-                nodes.extend(ns)
+
+                for n in ns:
+                    alreadyPresent = False
+                    for node in nodes:
+                        if node["text"] == n["text"]:
+                            alreadyPresent = True
+
+                    #print("component " + n["text"] + " alreadyPresent " + str(alreadyPresent))
+
+                    if not alreadyPresent:
+                        nodes.append(n)
 
 
     # write the output json file
