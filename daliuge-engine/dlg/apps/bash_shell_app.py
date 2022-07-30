@@ -183,9 +183,7 @@ class BashShellBase(object):
                 )
 
         self.appArgs = droputils.clean_applicationArgs(
-            self._applicationArgs, prefix=self._argumentPrefix, 
-            separator=self._paramValueSeparator
-        )
+            self._applicationArgs)
         self._recompute_data = {}
 
     def _run_bash(self, inputs, outputs, stdin=None, stdout=subprocess.PIPE):

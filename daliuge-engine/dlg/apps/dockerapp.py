@@ -254,10 +254,6 @@ class DockerApp(BarrierAppDROP):
                 self._image,
             )
 
-        self.appArgs = droputils.clean_applicationArgs(
-            self._applicationArgs, prefix=self._argumentPrefix, 
-            separator=self._paramValueSeparator
-        )
         self._command = self._getArg(kwargs, "command", None)
 
         self._noBash = False
@@ -504,14 +500,16 @@ class DockerApp(BarrierAppDROP):
             logger.debug(f"Adding environment variables: {env}")
 
             # deal with named ports
+            appArgs = self._applicationArgs
             inport_names = self.parameters['inputs'] \
                 if "inputs" in self.parameters else []
             outport_names = self.parameters['outputs'] \
                 if "outputs" in self.parameters else []
             keyargs, pargs = droputils.replace_named_ports(iitems, oitems, 
-                inport_names, outport_names, self.appArgs, 
+                inport_names, outport_names, appArgs, 
                 argumentPrefix=self._argumentPrefix, 
                 separator=self._paramValueSeparator)
+
             argumentString = f"{' '.join(keyargs + pargs)}"
             
             # complete command including all additional parameters and optional redirects

@@ -539,26 +539,23 @@ def serialize_kwargs(keyargs, prefix="--", separator=" "):
     logger.debug("kwargs after serialization: %s",kwargs)
     return kwargs
 
-def clean_applicationArgs(applicationArgs, prefix="--", separator=" "):
+def clean_applicationArgs(applicationArgs:dict) -> dict:
     """
     Removes arguments with None and False values, if not precious. This
     is in particular used for Bash and Docker app command lines, else
     we would have empty values for command line arguments.
 
-    Returns a dictionary with the relevant arguments only.
+    Args:
+        applicationsArgs (dict): the complete set of arguments
+
+    Returns:
+        dict: a dictionary with the relevant arguments only.
     """
     cleanedArgs = {}
     if not isinstance(applicationArgs, dict):
         logger.info("applicationArgs are not passed as a dict. Ignored!")
     else:
         logger.info("ApplicationArgs found %s", applicationArgs)
-    # construct the actual command line from all application parameters
-    kwargs = {arg:applicationArgs[arg]["value"] for arg in applicationArgs 
-        if not applicationArgs[arg]["positional"]}
-    # kwargs = {}
-    pargs = []
-    positional = False
-    precious = False
     for (name, vdict) in applicationArgs.items():
         if vdict in [None, False, ""]:
             continue
@@ -595,8 +592,8 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
 def identify_named_ports(
     port_dict:dict,
     posargs:list,
-    pargsDict:dict, 
-    appArgs:dict,
+    pargsDict:dict,
+    keyargs: dict,
     check_len: int=0,
     mode: str="inputs"
     ) -> dict:
@@ -610,6 +607,9 @@ def identify_named_ports(
 
     Returns:
         dict: port arguments
+
+    Side effect:
+        modifies the pargsDict OrderedDict
     """
     logger.debug("Using named ports to remove %s from arguments port_dict, check_len): %s %d",
         mode, port_dict, check_len)
@@ -621,22 +621,21 @@ def identify_named_ports(
             key = port_dict[keys[i]]['name']
             value = port_dict[keys[i]]['path']
         except KeyError:
-            print(port_dict)
+            logger.debug("portDict: %s", port_dict)
             raise KeyError
         if not value: value = '' # make sure we are passing NULL drop events
         if key in posargs:
             pargsDict.update({key:value})
             logger.debug("Using %s '%s' for parg %s", mode, value, key)
             posargs.pop(posargs.index(key))
-        elif key in appArgs:
+        elif key in keyargs:
             # if not found in appArgs we don't put them into portargs either
             portargs.update({key:value})
             logger.debug("Using %s '%s' for kwarg %s", mode, value, key)
-            _dum = appArgs.pop(key)
-            logger.debug("Argument used as %s removed: %s", mode, _dum)
+            _dum = keyargs.pop(key) # remove from original arg list
         else:
             logger.debug("No matching argument found for %s key %s", mode, key)
-    logger.debug("Returning mapped ports: %s", portargs)
+    logger.debug("Returning kw mapped ports: %s", portargs)
     return portargs
 
 def check_ports_dict(ports:list) -> bool:
@@ -695,7 +694,9 @@ def replace_named_ports(
     # get kwargs
     keyargs = {arg:appArgs[arg]["value"] for arg in appArgs 
         if not appArgs[arg]["positional"]}
-    posargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
+    # we will need an ordered dict for all positional arguments
+    # thus we create it here and fill it with values
+    portPosargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
     portkeyargs = {}
     logger.debug("posargs: %s; keyargs: %s",posargs, keyargs)
     if check_ports_dict(inport_names):
@@ -706,8 +707,8 @@ def replace_named_ports(
         ipkeyargs = identify_named_ports(
                         inputs_dict,
                         posargs,
-                        posargsDict,
-                        appArgs,
+                        portPosargsDict,
+                        keyargs,
                         check_len=len(iitems),
                         mode="inputs")
         portkeyargs.update(ipkeyargs)
@@ -722,19 +723,30 @@ def replace_named_ports(
         opkeyargs = identify_named_ports(
                         outputs_dict,
                         posargs,
-                        posargsDict,
-                        appArgs,
+                        portPosargsDict,
+                        keyargs,
                         check_len=len(oitems),
                         mode="outputs")
         portkeyargs.update(opkeyargs)
     else:
         for i in range(min(len(oitems), len(posargs))):
             portkeyargs.update({posargs[i]: oitems[i][1]})
-    keyargs.update(portkeyargs)
+    # now that we have the mapped ports we can cleanup the appArgs
+    # and construct the final keyargs and pargs
+    appArgs = clean_applicationArgs(appArgs)
+    # get cleaned positional args 
+    posargs = {arg:appArgs[arg]["value"] for arg in appArgs 
+        if appArgs[arg]["positional"]}
+    # get cleaned kwargs
+    keyargs = {arg:appArgs[arg]["value"] for arg in appArgs 
+        if not appArgs[arg]["positional"]}
+    # update port dictionaries
+    portkeyargs.update(keyargs)
+    portPosargsDict.update(posargs)
     keyargs = serialize_kwargs(keyargs, 
         prefix=argumentPrefix,
         separator=separator) if len(keyargs) > 0 else ['']
-    pargs = list(posargsDict.values())
+    pargs = list(portPosargsDict.values())
     pargs = [''] if len(pargs) == 0 or None in pargs else pargs
     logger.debug("After port replacement: pargs: %s; keyargs: %s",pargs, keyargs)
     return keyargs, pargs
