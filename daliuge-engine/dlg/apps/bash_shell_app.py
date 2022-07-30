@@ -230,7 +230,6 @@ class BashShellBase(object):
         cmd = cmd.strip()
 
         app_uid = self.uid
-        # self.run_bash(self._command, self.uid, session_id, *args, **kwargs)
 
         # Replace inputs/outputs in command line with paths or data URLs
         cmd = droputils.replace_path_placeholders(cmd, fsInputs, fsOutputs)
@@ -244,14 +243,6 @@ class BashShellBase(object):
             env.update({"DLG_SESSION_ID": self._dlg_session.sessionId})
 
         env.update({"DLG_ROOT": utils.getDlgDir()})
-        # # try to change to session directory, else just stay in current
-        # work_dir = utils.getDlgWorkDir()
-        # session_dir = f"{work_dir}/{session_id}"
-        # try:
-        #     os.chdir(session_dir)
-        #     logger.info("Changed to session directory: %s" % session_dir)
-        # except:
-        #     logger.warning("Changing to session directory %s unsuccessful!" % session_dir)
 
         # Wrap everything inside bash
         cmd = ("/bin/bash", "-c", cmd)
