@@ -733,6 +733,7 @@ def replace_named_ports(
             portkeyargs.update({posargs[i]: oitems[i][1]})
     # now that we have the mapped ports we can cleanup the appArgs
     # and construct the final keyargs and pargs
+    logger.debug("Arguments from ports: %s %s", portkeyargs, portPosargsDict)
     appArgs = clean_applicationArgs(appArgs)
     # get cleaned positional args 
     posargs = {arg:appArgs[arg]["value"] for arg in appArgs 
@@ -741,8 +742,12 @@ def replace_named_ports(
     keyargs = {arg:appArgs[arg]["value"] for arg in appArgs 
         if not appArgs[arg]["positional"]}
     # update port dictionaries
-    portkeyargs.update(keyargs)
-    portPosargsDict.update(posargs)
+    # portkeyargs.update({key:arg for key, arg in keyargs.items() 
+    #     if key not in portkeyargs})    
+    # portPosargsDict.update({key:arg for key, arg in posargs.items() 
+    #     if key not in portPosargsDict})
+    keyargs.update(portkeyargs)
+    posargs.update(portPosargsDict)
     keyargs = serialize_kwargs(keyargs, 
         prefix=argumentPrefix,
         separator=separator) if len(keyargs) > 0 else ['']

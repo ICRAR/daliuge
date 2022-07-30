@@ -182,8 +182,7 @@ class BashShellBase(object):
                     self, "No command specified, cannot create BashShellApp"
                 )
 
-        self.appArgs = droputils.clean_applicationArgs(
-            self._applicationArgs)
+        self.appArgs = self._applicationArgs
         self._recompute_data = {}
 
     def _run_bash(self, inputs, outputs, stdin=None, stdout=subprocess.PIPE):
@@ -220,7 +219,11 @@ class BashShellBase(object):
             separator=self._paramValueSeparator)
         argumentString = f"{' '.join(pargs + keyargs)}"  # add kwargs to end of pargs
         # complete command including all additional parameters and optional redirects
-        cmd = f"{self.command} {argumentString} {self._cmdLineArgs} "
+        if len(argumentString.strip()) > 0:
+            # the _cmdLineArgs would very likely make the command line invalid
+            cmd = f"{self.command} {argumentString} "
+        else:
+            cmd = f"{self.command} {argumentString} {self._cmdLineArgs} "
         if self._outputRedirect:
             cmd = f"{cmd} > {self._outputRedirect}"
         if self._inputRedirect:
