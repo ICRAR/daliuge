@@ -317,9 +317,10 @@ class TestSimpleApps(unittest.TestCase):
         # Must be called to unlink all shared memory
         memory_manager.shutdown_all()
 
-    @unittest.skipIf(
-        sys.version_info < (3, 8), "Multiprocessing not compatible with Python < 3.8"
-    )
+    # @unittest.skipIf(
+    #     sys.version_info < (3, 8), "Multiprocessing not compatible with Python < 3.8"
+    # )
+    @unittest.skip
     def test_speedup(self):
         """
         Run serial and parallel test and report speedup.

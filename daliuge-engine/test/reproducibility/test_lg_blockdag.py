@@ -29,6 +29,7 @@ Most of these tests will be asserting the obvious, with the exception of Reprodu
 
 import json
 import unittest
+import pkg_resources
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags, ALL_RMODES
 from dlg.common.reproducibility.reproducibility import (
@@ -39,9 +40,8 @@ from dlg.common.reproducibility.reproducibility import (
 
 
 def _init_graph(filename):
-    file = open(filename)
-    lgt = json.load(file)
-    file.close()
+    with pkg_resources.resource_stream("test.reproducibility", filename) as file:
+        lgt = json.load(file)
     return lgt
 
 
@@ -58,7 +58,9 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         Tests a single drop
         A
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testSingle.graph")
+        # f = pkg_resources.resource_stream("test.reproducibility","topoGraphs/testSingle.graph")
+        # lgt = json.load(f)
+        lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -71,7 +73,7 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
              C
         B -->
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoStart.graph")
+        lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -91,7 +93,7 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         A
           --> C
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoEnd.graph")
+        lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -103,7 +105,7 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         A --> B
         C --> D
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoLines.graph")
+        lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -113,7 +115,7 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         """
         Tests that a single data source scatters its signature to downstream data drops.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFan.graph")
+        lgt = _init_graph("topoGraphs/dataFan.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -130,7 +132,7 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         """
         Tests that two data sources are collected in a single downstream data drop
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFunnel.graph")
+        lgt = _init_graph("topoGraphs/dataFunnel.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -145,7 +147,7 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         Tests two data drops with an interim computing drop
         :return:
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataSandwich.graph")
+        lgt = _init_graph("topoGraphs/dataSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -159,7 +161,7 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         """
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/computationSandwich.graph")
+        lgt = _init_graph("topoGraphs/computationSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -183,7 +185,7 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         Tests a single drop
         A
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testSingle.graph")
+        lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -196,7 +198,7 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
              C
         B -->
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoStart.graph")
+        lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -216,7 +218,7 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         A
           --> C
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoEnd.graph")
+        lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -228,7 +230,7 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         A --> B
         C --> D
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoLines.graph")
+        lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -238,7 +240,7 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         """
         Tests that a single data source scatters its signature to downstream data drops.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFan.graph")
+        lgt = _init_graph("topoGraphs/dataFan.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -255,7 +257,7 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         """
         Tests that two data sources are collected in a single downstream data drop
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFunnel.graph")
+        lgt = _init_graph("topoGraphs/dataFunnel.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -270,7 +272,7 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         Tests two data drops with an interim computing drop
         :return:
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataSandwich.graph")
+        lgt = _init_graph("topoGraphs/dataSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -284,7 +286,7 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         """
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/computationSandwich.graph")
+        lgt = _init_graph("topoGraphs/computationSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -308,7 +310,7 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         Tests a single drop
         A
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testSingle.graph")
+        lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -321,7 +323,7 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
              C
         B -->
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoStart.graph")
+        lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -341,7 +343,7 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         A
           --> C
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoEnd.graph")
+        lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -353,7 +355,7 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         A --> B
         C --> D
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoLines.graph")
+        lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -363,7 +365,7 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         """
         Tests that a single data source scatters its signature to downstream data drops.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFan.graph")
+        lgt = _init_graph("topoGraphs/dataFan.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -380,7 +382,7 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         """
         Tests that two data sources are collected in a single downstream data drop
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFunnel.graph")
+        lgt = _init_graph("topoGraphs/dataFunnel.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -395,7 +397,7 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         Tests two data drops with an interim computing drop
         :return:
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataSandwich.graph")
+        lgt = _init_graph("topoGraphs/dataSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -409,7 +411,7 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         """
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/computationSandwich.graph")
+        lgt = _init_graph("topoGraphs/computationSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -434,7 +436,7 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         Tests a single drop
         A
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testSingle.graph")
+        lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -447,7 +449,7 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
              C
         B -->
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoStart.graph")
+        lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -471,7 +473,7 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         A
           --> C
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoEnd.graph")
+        lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -483,7 +485,7 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         A --> B
         C --> D
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoLines.graph")
+        lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -493,7 +495,7 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         """
         Tests that a single data source scatters its signature to downstream data drops.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFan.graph")
+        lgt = _init_graph("topoGraphs/dataFan.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -510,7 +512,7 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         """
         Tests that two data sources are collected in a single downstream data drop
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFunnel.graph")
+        lgt = _init_graph("topoGraphs/dataFunnel.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -528,7 +530,7 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         Tests two data drops with an interim computing drop
         :return:
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataSandwich.graph")
+        lgt = _init_graph("topoGraphs/dataSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -542,7 +544,7 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         """
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/computationSandwich.graph")
+        lgt = _init_graph("topoGraphs/computationSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -566,7 +568,7 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         Tests a single drop
         A
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testSingle.graph")
+        lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -579,7 +581,7 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
              C
         B -->
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoStart.graph")
+        lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -599,7 +601,7 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         A
           --> C
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoEnd.graph")
+        lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -611,7 +613,7 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         A --> B
         C --> D
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoLines.graph")
+        lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -621,7 +623,7 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         """
         Tests that a single data source scatters its signature to downstream data drops.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFan.graph")
+        lgt = _init_graph("topoGraphs/dataFan.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -638,7 +640,7 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         """
         Tests that two data sources are collected in a single downstream data drop
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFunnel.graph")
+        lgt = _init_graph("topoGraphs/dataFunnel.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -653,7 +655,7 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         Tests two data drops with an interim computing drop
         :return:
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataSandwich.graph")
+        lgt = _init_graph("topoGraphs/dataSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -667,7 +669,7 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         """
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/computationSandwich.graph")
+        lgt = _init_graph("topoGraphs/computationSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -691,7 +693,7 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         Tests a single drop
         A
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testSingle.graph")
+        lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -704,7 +706,7 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
              C
         B -->
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoStart.graph")
+        lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -724,7 +726,7 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         A
           --> C
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoEnd.graph")
+        lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -736,7 +738,7 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         A --> B
         C --> D
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoLines.graph")
+        lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -746,7 +748,7 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         """
         Tests that a single data source scatters its signature to downstream data drops.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFan.graph")
+        lgt = _init_graph("topoGraphs/dataFan.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -763,7 +765,7 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         """
         Tests that two data sources are collected in a single downstream data drop
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFunnel.graph")
+        lgt = _init_graph("topoGraphs/dataFunnel.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -778,7 +780,7 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         Tests two data drops with an interim computing drop
         :return:
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataSandwich.graph")
+        lgt = _init_graph("topoGraphs/dataSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -792,7 +794,7 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         """
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/computationSandwich.graph")
+        lgt = _init_graph("topoGraphs/computationSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -816,7 +818,7 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         Tests a single drop
         A
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testSingle.graph")
+        lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -829,7 +831,7 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
              C
         B -->
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoStart.graph")
+        lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -849,7 +851,7 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         A
           --> C
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoEnd.graph")
+        lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -861,7 +863,7 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         A --> B
         C --> D
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoLines.graph")
+        lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -871,7 +873,7 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         """
         Tests that a single data source scatters its signature to downstream data drops.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFan.graph")
+        lgt = _init_graph("topoGraphs/dataFan.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -888,7 +890,7 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         """
         Tests that two data sources are collected in a single downstream data drop
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFunnel.graph")
+        lgt = _init_graph("topoGraphs/dataFunnel.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -903,7 +905,7 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         Tests two data drops with an interim computing drop
         :return:
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataSandwich.graph")
+        lgt = _init_graph("topoGraphs/dataSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -917,7 +919,7 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         """
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/computationSandwich.graph")
+        lgt = _init_graph("topoGraphs/computationSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -940,7 +942,7 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         Tests a single drop
         A
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testSingle.graph")
+        lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -953,7 +955,7 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
              C
         B -->
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoStart.graph")
+        lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -977,7 +979,7 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         A
           --> C
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoEnd.graph")
+        lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -989,7 +991,7 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         A --> B
         C --> D
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoLines.graph")
+        lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         leaves = lg_build_blockdag(lgt)[0]
@@ -999,7 +1001,7 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         """
         Tests that a single data source scatters its signature to downstream data drops.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFan.graph")
+        lgt = _init_graph("topoGraphs/dataFan.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -1022,7 +1024,7 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         """
         Tests that two data sources are collected in a single downstream data drop
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFunnel.graph")
+        lgt = _init_graph("topoGraphs/dataFunnel.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -1044,7 +1046,7 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         Tests two data drops with an interim computing drop
         :return:
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataSandwich.graph")
+        lgt = _init_graph("topoGraphs/dataSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -1066,7 +1068,7 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         """
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/computationSandwich.graph")
+        lgt = _init_graph("topoGraphs/computationSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         lg_build_blockdag(lgt)
@@ -1096,7 +1098,7 @@ class LogicalBlockdagAllTests(unittest.TestCase):
         Tests a single drop
         A
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testSingle.graph")
+        lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         for rmode in ALL_RMODES:
@@ -1110,7 +1112,7 @@ class LogicalBlockdagAllTests(unittest.TestCase):
              C
         B -->
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoStart.graph")
+        lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         for rmode in ALL_RMODES:
@@ -1134,7 +1136,7 @@ class LogicalBlockdagAllTests(unittest.TestCase):
         A
           --> C
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoEnd.graph")
+        lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         for rmode in ALL_RMODES:
@@ -1147,7 +1149,7 @@ class LogicalBlockdagAllTests(unittest.TestCase):
         A --> B
         C --> D
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoLines.graph")
+        lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         for rmode in ALL_RMODES:
@@ -1158,7 +1160,7 @@ class LogicalBlockdagAllTests(unittest.TestCase):
         """
         Tests that a single data source scatters its signature to downstream data drops.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFan.graph")
+        lgt = _init_graph("topoGraphs/dataFan.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         for rmode in ALL_RMODES:
@@ -1184,7 +1186,7 @@ class LogicalBlockdagAllTests(unittest.TestCase):
         """
         Tests that two data sources are collected in a single downstream data drop
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataFunnel.graph")
+        lgt = _init_graph("topoGraphs/dataFunnel.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         for rmode in ALL_RMODES:
@@ -1209,7 +1211,7 @@ class LogicalBlockdagAllTests(unittest.TestCase):
         Tests two data drops with an interim computing drop
         :return:
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/dataSandwich.graph")
+        lgt = _init_graph("topoGraphs/dataSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         for rmode in ALL_RMODES:
@@ -1232,7 +1234,7 @@ class LogicalBlockdagAllTests(unittest.TestCase):
         """
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/computationSandwich.graph")
+        lgt = _init_graph("topoGraphs/computationSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
         for rmode in ALL_RMODES:
