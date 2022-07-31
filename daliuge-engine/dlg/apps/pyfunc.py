@@ -38,7 +38,6 @@ from contextlib import redirect_stdout
 
 from dlg import droputils, utils
 from dlg.drop import BarrierAppDROP
-from pyparsing import col
 from dlg.exceptions import InvalidDropException
 from dlg.meta import (
     dlg_string_param,
