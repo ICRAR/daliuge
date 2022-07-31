@@ -29,6 +29,8 @@ Assumptions:
 import json
 import unittest
 
+import pkg_resources
+
 from dlg.common.reproducibility.reproducibility import (
     init_lgt_repro_data,
     init_lg_repro_data,
@@ -54,9 +56,8 @@ _dummydrop = {
 
 
 def _init_graph(filename):
-    file = open(filename)
-    lgt = json.load(file)
-    file.close()
+    with pkg_resources.resource_stream("test.reproducibility", filename) as file:
+        lgt = json.load(file)
     for drop in lgt["nodeDataArray"]:
         drop["reprodata"] = {}
         drop["reprodata"]["lg_parenthashes"] = []
@@ -108,7 +109,7 @@ class ToposortTests(unittest.TestCase):
         Tests a single drop
         A
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testSingle.graph")
+        lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt)[1]
@@ -121,7 +122,7 @@ class ToposortTests(unittest.TestCase):
              C
         B -->
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoStart.graph")
+        lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt)[1]
@@ -134,7 +135,7 @@ class ToposortTests(unittest.TestCase):
         A
           --> C
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoEnd.graph")
+        lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt)[1]
@@ -146,7 +147,7 @@ class ToposortTests(unittest.TestCase):
         A --> B
         C --> D
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testTwoLines.graph")
+        lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt)[1]
@@ -156,7 +157,7 @@ class ToposortTests(unittest.TestCase):
         """
         Tests an empty graph. Should fail gracefully.
         """
-        lgt = _init_graph("test/reproducibility/topoGraphs/testEmpty.graph")
+        lgt = _init_graph("topoGraphs/testEmpty.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt)[1]
