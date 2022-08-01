@@ -439,7 +439,10 @@ class PyFuncApp(BarrierAppDROP):
         pargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
         if "applicationArgs" in self.parameters:
             appArgs = self.parameters["applicationArgs"]  # we'll pop the identified ones
-            pargsDict.update({k:self.parameters[k] for k in pargsDict if k in
+            _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
+            logger.debug("Identified keyword arguments removed: %s",
+                [i['text'] for i in _dum])
+            pargsDict.update({k:self.parameters[k] for k in pargsDict if k in 
                 self.parameters})
             # if defined in both we use AppArgs values
             pargsDict.update({k:appArgs[k]['value'] for k in pargsDict if k
@@ -448,12 +451,18 @@ class PyFuncApp(BarrierAppDROP):
         else:
             appArgs = {}
 
-        if ('inputs' in self.parameters and isinstance(self.parameters['inputs'][0], dict)):
+        if ('inputs' in self.parameters and 
+            droputils.check_ports_dict(self.parameters['inputs'])):
             check_len = min(len(inputs),self.fn_nargs+
                 len(self.arguments.kwonlyargs))
+            inputs_dict = collections.OrderedDict()
+            for inport in self.parameters['inputs']:
+                key = list(inport.keys())[0]
+                inputs_dict[key] = {
+                    'name':inport[key],
+                    'path':inputs[key]}
             kwargs.update(droputils.identify_named_ports(
-                inputs,
-                self.parameters['inputs'],
+                inputs_dict,
                 posargs,
                 pargsDict,
                 appArgs,
@@ -466,12 +475,20 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(f"Updating funcargs with input ports {kwargs}")
         funcargs.update(kwargs)
 
-        if ('outputs' in self.parameters and isinstance(self.parameters['outputs'][0], dict)):
+        if ('outputs' in self.parameters and
+            droputils.check_ports_dict(self.parameters['outputs'])):
             check_len = min(len(outputs),self.fn_nargs+
                 len(self.arguments.kwonlyargs))
+            outputs_dict = collections.OrderedDict()
+            for outport in self.parameters['outputs']:
+                key = list(outport.keys())[0]
+                outputs_dict[key] = {
+                    'name':outport[key],
+                    'path': outputs[key]
+                    }
+
             kwargs.update(droputils.identify_named_ports(
-                outputs,
-                self.parameters['outputs'],
+                outputs_dict,
                 posargs,
                 pargsDict,
                 appArgs,
@@ -480,9 +497,6 @@ class PyFuncApp(BarrierAppDROP):
 
         # Try to get values for still missing positional arguments from Application Args
         if "applicationArgs" in self.parameters:
-            _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
-            logger.debug("Identified keyword arguments removed: %s",
-                [i['text'] for i in _dum])
             for pa in posargs:
                 if pa != 'self' and pa not in funcargs:
                     if pa in appArgs:

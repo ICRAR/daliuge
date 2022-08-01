@@ -265,16 +265,6 @@ class DockerApp(BarrierAppDROP):
             # able to add any arguments straight after. This requires to use the placeholder string
             # "%%" at the start of the command, else it is interpreted as a normal command.
 
-        # construct the actual command line from all application parameters
-        self.pargs, self.keyargs = droputils.serialize_applicationArgs(
-            self._applicationArgs, self._argumentPrefix,
-            self._paramValueSeparator
-        )
-        # defer construction of complete command to run method
-        # cmd = f"{self._command} {self._cmdLineArgs} {' '.join(self.pargs)} "+\
-        #     f"{' '.join(self.keyargs)}"
-        # cmd = cmd.strip()
-        # self._command = cmd
 
         # The user used to run the process in the docker container is now always the user
         # who originally started the DALiuGE process as well. The information is passed through
@@ -411,7 +401,7 @@ class DockerApp(BarrierAppDROP):
             fsInputs = {uid: i for uid, i in iitems if droputils.has_path(i)}
             fsOutputs = {uid: o for uid, o in oitems if droputils.has_path(o)}
             dockerInputs = {
-                #            uid: DockerPath(utils.getDlgDir() + i.path) for uid, i in fsInputs.items()
+                # uid: DockerPath(utils.getDlgDir() + i.path) for uid, i in fsInputs.items()
                 uid: DockerPath(i.path)
                 for uid, i in fsInputs.items()
             }
@@ -422,18 +412,6 @@ class DockerApp(BarrierAppDROP):
             }
             dataURLInputs = {uid: i for uid, i in iitems if not droputils.has_path(i)}
             dataURLOutputs = {uid: o for uid, o in oitems if not droputils.has_path(o)}
-            self._command = f"{self._command} {' '.join(self.pargs)} "+\
-                f"{' '.join(self.keyargs)}"
-            # TODO: Deal with named inputs
-            if self._command:
-                cmd = droputils.replace_path_placeholders(
-                    self._command, dockerInputs, dockerOutputs
-                )
-                cmd = droputils.replace_dataurl_placeholders(
-                    cmd, dataURLInputs, dataURLOutputs
-                )
-            else:
-                cmd = ""
 
             # We bind the inputs and outputs inside the docker under the utils.getDlgDir()
             # directory, maintaining the rest of their original paths.
@@ -478,13 +456,6 @@ class DockerApp(BarrierAppDROP):
                         )
             logger.debug(f"port mappings: {portMappings}")
 
-            # Wait until the DockerApps this application runtime depends on have
-            # started, and replace their IP placeholders by the real IPs
-            for waiter in self._waiters:
-                uid, ip = waiter.waitForIp()
-                cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
-                logger.debug("Command after IP replacement is: %s", cmd)
-
             # deal with environment variables
             env = {}
             env.update({"DLG_UID": self._uid})
@@ -527,6 +498,38 @@ class DockerApp(BarrierAppDROP):
                         "Ignoring provided environment variables: Format wrong! Check documentation"
                     )
             logger.debug(f"Adding environment variables: {env}")
+
+            # deal with named ports
+            appArgs = self._applicationArgs
+            inport_names = self.parameters['inputs'] \
+                if "inputs" in self.parameters else []
+            outport_names = self.parameters['outputs'] \
+                if "outputs" in self.parameters else []
+            keyargs, pargs = droputils.replace_named_ports(iitems, oitems, 
+                inport_names, outport_names, appArgs, 
+                argumentPrefix=self._argumentPrefix, 
+                separator=self._paramValueSeparator)
+
+            argumentString = f"{' '.join(keyargs + pargs)}"
+            
+            # complete command including all additional parameters and optional redirects
+            cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
+            if cmd:
+                cmd = droputils.replace_path_placeholders(
+                    cmd, dockerInputs, dockerOutputs
+                )
+                cmd = droputils.replace_dataurl_placeholders(
+                    cmd, dataURLInputs, dataURLOutputs
+                )
+            else:
+                cmd = ""
+            ###############
+            # Wait until the DockerApps this application runtime depends on have
+            # started, and replace their IP placeholders by the real IPs
+            for waiter in self._waiters:
+                uid, ip = waiter.waitForIp()
+                cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
+                logger.debug("Command after IP replacement is: %s", cmd)
 
             # Wrap everything inside bash
             if len(cmd) > 0 and not self._noBash:
