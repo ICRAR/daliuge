@@ -56,7 +56,7 @@ class SlurmClient:
         physical_graph_template_data=None,  # JSON formatted physical graph template
         logical_graph=None,
         job_dur=30,
-        num_nodes=None,
+        num_nodes=1,
         run_proxy=False,
         mon_host=DEFAULT_AWS_MON_HOST,
         mon_port=DEFAULT_AWS_MON_PORT,
