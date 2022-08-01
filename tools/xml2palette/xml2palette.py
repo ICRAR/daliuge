@@ -32,6 +32,11 @@ DOXYGEN_SETTINGS = [
     ("CLASS_DIAGRAMS", "NO"),
 ]
 
+# extra doxygen setting for C repositories
+DOXYGEN_SETTINGS_C = [
+    ("FILE_PATTERNS", "*.h, *.hpp"),
+]
+
 KNOWN_PARAM_DATA_TYPES = [
     "String",
     "Integer",
@@ -69,8 +74,9 @@ def get_options_from_command_line(argv):
     outputfile = ""
     allow_missing_eagle_start = False
     module_path = ""
+    c_mode = False
     try:
-        opts, args = getopt.getopt(argv, "hi:t:o:sm:", ["idir=", "tag=", "ofile="])
+        opts, args = getopt.getopt(argv, "hi:t:o:sm:c", ["idir=", "tag=", "ofile="])
     except getopt.GetoptError:
         print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
         sys.exit(2)
@@ -93,7 +99,9 @@ def get_options_from_command_line(argv):
             allow_missing_eagle_start = True
         elif opt in ("-m", "--module"):
             module_path = arg
-    return inputdir, tag, outputfile, allow_missing_eagle_start, module_path
+        elif opt in ("-c"):
+            c_mode = True
+    return inputdir, tag, outputfile, allow_missing_eagle_start, module_path, c_mode
 
 
 def check_environment_variables():
@@ -647,7 +655,7 @@ def process_compounddef(compounddef):
     return result
 
 
-def process_compounddef_default(compounddef):
+def process_compounddef_default(compounddef, c_mode):
     result = []
 
     # check memberdefs
@@ -661,11 +669,15 @@ def process_compounddef_default(compounddef):
                     func_name = "Unknown"
                     return_type = "Unknown"
 
-                    # TODO: change
                     # some defaults
                     # cparam format is (name, default_value, type, access, precious, options, positional, description)
-                    member["params"].append({"key": "category", "direction": None, "value": "PythonApp"})
-                    member["params"].append({"key": "appclass", "direction": None, "value": "Application Class/dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/readwrite//False/False/The python class that implements this application"})
+                    if c_mode:
+                        member["params"].append({"key": "category", "direction": None, "value": "DynlibApp"})
+                        member["params"].append({"key": "libpath", "direction": None, "value": "Library Path//String/ComponentParameter/readwrite//False/False/The location of the shared object/DLL that implements this application"})
+                    else:
+                        member["params"].append({"key": "category", "direction": None, "value": "PythonApp"})
+                        member["params"].append({"key": "appclass", "direction": None, "value": "Application Class/dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/readwrite//False/False/The python class that implements this application"})
+
                     member["params"].append({"key": "execution_time", "direction": None, "value": "Execution Time/5/Integer/ComponentParameter/readwrite//False/False/Estimate of execution time (in seconds) for this application."})
                     member["params"].append({"key": "num_cpus", "direction": None, "value": "No. of CPUs/1/Integer/ComponentParameter/readwrite//False/False/Number of CPUs used for this application."})
                     member["params"].append({"key": "group_start", "direction": None, "value": "Group start/false/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?"})
@@ -924,7 +936,7 @@ if __name__ == "__main__":
     logging.info("PROJECT_VERSION:" + os.environ.get("PROJECT_VERSION"))
     logging.info("GIT_REPO:" + os.environ.get("GIT_REPO"))
 
-    (inputdir, tag, outputfile, allow_missing_eagle_start, module_path) = get_options_from_command_line(sys.argv[1:])
+    (inputdir, tag, outputfile, allow_missing_eagle_start, module_path, c_mode) = get_options_from_command_line(sys.argv[1:])
     logging.info("Input Directory:" + inputdir)
     logging.info("Tag:" + tag)
     logging.info("Output File:" + outputfile)
@@ -954,6 +966,9 @@ if __name__ == "__main__":
 
     # modify options in the Doxyfile
     modify_doxygen_options(doxygen_filename, DOXYGEN_SETTINGS)
+
+    if c_mode:
+        modify_doxygen_options(doxygen_filename, DOXYGEN_SETTINGS_C)
 
     # run doxygen
     # os.system("doxygen " + doxygen_filename)
@@ -1004,7 +1019,7 @@ if __name__ == "__main__":
             nodes.extend(ns)
 
         else: # not eagle node
-            functions = process_compounddef_default(compounddef)
+            functions = process_compounddef_default(compounddef, c_mode)
 
             for f in functions:
                 ns = params_to_nodes(f["params"])
