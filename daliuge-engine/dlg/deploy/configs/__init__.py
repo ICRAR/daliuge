@@ -25,6 +25,7 @@ __sub_tpl_str = """#!/bin/bash --login
 
 #SBATCH --nodes=$NUM_NODES
 #SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=2
 #SBATCH --job-name=DALiuGE-$SESSION_ID
 #SBATCH --time=$JOB_DURATION
 #SBATCH --error=err-%j.log
