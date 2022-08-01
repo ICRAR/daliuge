@@ -61,11 +61,10 @@ case "$1" in
         exit 0;;
     "slim")
         export DLG_ROOT="$HOME/dlg"
-        export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
         common_prep
         echo "Running Engine development version in background..."
-        echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine.slim:${C_TAG}"
-        docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine.slim:${C_TAG}
+        echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}"
+        docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
         sleep 3
         ./start_local_managers.sh
         exit 0;;
