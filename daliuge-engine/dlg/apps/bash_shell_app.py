@@ -182,6 +182,7 @@ class BashShellBase(object):
                     self, "No command specified, cannot create BashShellApp"
                 )
 
+        self.appArgs = self._applicationArgs
         self._recompute_data = {}
 
     def _run_bash(self, inputs, outputs, stdin=None, stdout=subprocess.PIPE):
@@ -197,63 +198,32 @@ class BashShellBase(object):
         output of the process is piped to. If not given it is consumed by this
         method and potentially logged.
         """
-        # we currently only support passing a path for bash apps
-        inputs_dict = collections.OrderedDict()
-        for uid, drop in inputs.items():
-            inputs_dict[uid] = drop.path
+        logger.debug("Parameters found: %s", self.parameters)
+        # we only support passing a path for bash apps
+        fsInputs = {uid: i for uid, i in inputs.items() if droputils.has_path(i)}
+        fsOutputs = {uid: o for uid, o in outputs.items() if droputils.has_path(o)}
+        dataURLInputs = {
+            uid: i for uid, i in inputs.items() if not droputils.has_path(i)
+        }
+        dataURLOutputs = {
+            uid: o for uid, o in outputs.items() if not droputils.has_path(o)
+        }
 
-        outputs_dict = collections.OrderedDict()
-        for uid, drop in outputs.items():
-            outputs_dict[uid] = drop.path
-
-        session_id = (
-            self._dlg_session.sessionId if self._dlg_session is not None else ""
-        )
-        logger.debug(f"Parameters found: {self.parameters}")
-        # pargs, keyargs = droputils.serialize_applicationArgs(
-        #     self._applicationArgs, self._argumentPrefix, self._paramValueSeparator
-        # )
-        if "applicationArgs" in self.parameters:
-            appArgs = self.parameters["applicationArgs"]
-        else:
-            appArgs ={}
-        pargs = [arg for arg in appArgs if appArgs[arg]["positional"]]
-        pargsDict = collections.OrderedDict(zip(pargs,[None]*len(pargs)))
-        keyargs = {arg:appArgs[arg]["value"] for arg in appArgs if not appArgs[arg]["positional"]}
-        logger.debug("pargs: %s; keyargs: %s, appArgs: %s",pargs, keyargs, appArgs)
-        if "inputs" in self.parameters and isinstance(self.parameters['inputs'][0], dict):
-            pkeyargs = droputils.identify_named_ports(
-                            inputs_dict,
-                            self.parameters["inputs"],
-                            pargs,
-                            pargsDict,
-                            appArgs,
-                            check_len=len(inputs),
-                            mode="inputs")
-            keyargs.update(pkeyargs)
-        else:
-            for i in range(min(len(inputs), len(pargs))):
-                keyargs.update({pargs[i]: list(inputs.values())[i]})
-        if "outputs" in self.parameters and isinstance(self.parameters['outputs'][0], dict):
-            pkeyargs = droputils.identify_named_ports(
-                            outputs_dict,
-                            self.parameters["outputs"],
-                            pargs,
-                            pargsDict,
-                            appArgs,
-                            check_len=len(outputs),
-                            mode="outputs")
-            keyargs.update(pkeyargs)
-        else:
-            for i in range(min(len(outputs), len(pargs))):
-                keyargs.update({pargs[i]: list(outputs.values())[i]})
-        keyargs = droputils.serialize_kwargs(keyargs,
-            prefix=self._argumentPrefix,
+        # deal with named ports
+        inport_names = self.parameters['inputs'] \
+            if "inputs" in self.parameters else []
+        outport_names = self.parameters['outputs'] \
+            if "outputs" in self.parameters else []
+        keyargs, pargs = droputils.replace_named_ports(inputs.items(), outputs.items(), 
+            inport_names, outport_names, self.appArgs, argumentPrefix=self._argumentPrefix, 
             separator=self._paramValueSeparator)
-        pargs = list(pargsDict.values())
         argumentString = f"{' '.join(pargs + keyargs)}"  # add kwargs to end of pargs
         # complete command including all additional parameters and optional redirects
-        cmd = f"{self.command} {argumentString} {self._cmdLineArgs} "
+        if len(argumentString.strip()) > 0:
+            # the _cmdLineArgs would very likely make the command line invalid
+            cmd = f"{self.command} {argumentString} "
+        else:
+            cmd = f"{self.command} {argumentString} {self._cmdLineArgs} "
         if self._outputRedirect:
             cmd = f"{cmd} > {self._outputRedirect}"
         if self._inputRedirect:
@@ -261,19 +231,10 @@ class BashShellBase(object):
         cmd = cmd.strip()
 
         app_uid = self.uid
-        # self.run_bash(self._command, self.uid, session_id, *args, **kwargs)
 
         # Replace inputs/outputs in command line with paths or data URLs
-        fsInputs = {uid: i for uid, i in inputs.items() if droputils.has_path(i)}
-        fsOutputs = {uid: o for uid, o in outputs.items() if droputils.has_path(o)}
         cmd = droputils.replace_path_placeholders(cmd, fsInputs, fsOutputs)
 
-        dataURLInputs = {
-            uid: i for uid, i in inputs.items() if not droputils.has_path(i)
-        }
-        dataURLOutputs = {
-            uid: o for uid, o in outputs.items() if not droputils.has_path(o)
-        }
         cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
 
         # Pass down daliuge-specific information to the subprocesses as environment variables
@@ -283,14 +244,6 @@ class BashShellBase(object):
             env.update({"DLG_SESSION_ID": self._dlg_session.sessionId})
 
         env.update({"DLG_ROOT": utils.getDlgDir()})
-        # # try to change to session directory, else just stay in current
-        # work_dir = utils.getDlgWorkDir()
-        # session_dir = f"{work_dir}/{session_id}"
-        # try:
-        #     os.chdir(session_dir)
-        #     logger.info("Changed to session directory: %s" % session_dir)
-        # except:
-        #     logger.warning("Changing to session directory %s unsuccessful!" % session_dir)
 
         # Wrap everything inside bash
         cmd = ("/bin/bash", "-c", cmd)

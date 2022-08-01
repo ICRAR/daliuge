@@ -1686,7 +1686,7 @@ class FileDROP(DataDROP, PathBasedDrop):
 # @param tag daliuge
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
-# @param ngsSrv NGAS Server/localhost/String/ComponentParameter/readwrite//False/False/The URL of the NGAS Server
+# @param ngasSrv NGAS Server/localhost/String/ComponentParameter/readwrite//False/False/The URL of the NGAS Server
 # @param ngasPort NGAS Port/7777/Integer/ComponentParameter/readwrite//False/False/The port of the NGAS Server
 # @param ngasFileId File ID//String/ComponentParameter/readwrite//False/False/File ID on NGAS (for retrieval only)
 # @param ngasConnectTimeout Connection timeout/2/Integer/ComponentParameter/readwrite//False/False/Timeout for connecting to the NGAS server
@@ -2386,7 +2386,7 @@ class AppDROP(ContainerDROP):
         """
         Generates a named mapping of output data drops. Can only be called during run().
         """
-        named_outputs: OrderedDict[str, DataDROP] = OrderedDict()
+        named_outputs:  OrderedDict[str, DataDROP] = OrderedDict()
         if 'outputs' in self.parameters and isinstance(self.parameters['outputs'][0], dict):
             for i in range(len(self._outputs)):
                 key = list(self.parameters['outputs'][i].values())[0]
