@@ -145,7 +145,7 @@ def find_numislands(physical_graph_template_file):
     #nodes = list(map(lambda x: x["node"], pgt))
     nodes = ["queue1-dy-t3medium-1",]
     #islands = list(map(lambda x: x["island"], pgt))
-    islands = []
+    islands = ["mab_island",]
     num_islands = len(dict(zip(islands, range(len(islands)))))
     num_nodes = len(dict(zip(nodes, range(len(nodes)))))
     pip_name = pgt_name
