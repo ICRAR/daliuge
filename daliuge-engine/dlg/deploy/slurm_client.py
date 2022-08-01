@@ -78,7 +78,7 @@ class SlurmClient:
         )
         self.modules = self._config.getpar("modules")
         self.venv = self._config.getpar("venv")
-        self._num_nodes = num_nodes
+        self._num_nodes = 1
         self._job_dur = job_dur
         self._logical_graph = logical_graph
         self._physical_graph_template_data = physical_graph_template_data
