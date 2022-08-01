@@ -32,7 +32,7 @@ from setuptools import setup
 # by setuptools/pkg_resources or "final" versions.
 MAJOR = 2
 MINOR = 3
-PATCH = 1
+PATCH = 2
 VERSION = (MAJOR, MINOR, PATCH)
 VERSION_FILE = "dlg/common/version.py"
 RELEASE = True

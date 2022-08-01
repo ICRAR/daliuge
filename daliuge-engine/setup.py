@@ -37,7 +37,7 @@ from setuptools.command.install import install
 # by setuptools/pkg_resources or "final" versions.
 MAJOR = 2
 MINOR = 3
-PATCH = 1
+PATCH = 2
 RELEASE = True
 VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
 VERSION_FILE = "dlg/runtime/version.py"
