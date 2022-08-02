@@ -12,6 +12,7 @@ import tempfile
 import uuid
 import xml.etree.ElementTree as ET
 import math
+from enum import Enum
 
 next_key = -1
 
@@ -35,6 +36,10 @@ DOXYGEN_SETTINGS = [
 # extra doxygen setting for C repositories
 DOXYGEN_SETTINGS_C = [
     ("FILE_PATTERNS", "*.h, *.hpp"),
+]
+
+DOXYGEN_SETTINGS_PYTHON = [
+    ("FILE_PATTERNS", "*.py"),
 ]
 
 KNOWN_PARAM_DATA_TYPES = [
@@ -68,15 +73,20 @@ KNOWN_FIELD_TYPES = [
     "OutputPort"
 ]
 
+class Language(Enum):
+    UNKNOWN = 0
+    C = 1
+    PYTHON = 2
+
 def get_options_from_command_line(argv):
     inputdir = ""
     tag = ""
     outputfile = ""
     allow_missing_eagle_start = False
     module_path = ""
-    c_mode = False
+    language = Language.UNKNOWN
     try:
-        opts, args = getopt.getopt(argv, "hi:t:o:sm:c", ["idir=", "tag=", "ofile="])
+        opts, args = getopt.getopt(argv, "hi:t:o:sm:cp", ["idir=", "tag=", "ofile="])
     except getopt.GetoptError:
         print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
         sys.exit(2)
@@ -100,8 +110,10 @@ def get_options_from_command_line(argv):
         elif opt in ("-m", "--module"):
             module_path = arg
         elif opt in ("-c"):
-            c_mode = True
-    return inputdir, tag, outputfile, allow_missing_eagle_start, module_path, c_mode
+            language = Language.C
+        elif opt in ("-p"):
+            language = Language.PYTHON
+    return inputdir, tag, outputfile, allow_missing_eagle_start, module_path, language
 
 
 def check_environment_variables():
@@ -655,7 +667,7 @@ def process_compounddef(compounddef):
     return result
 
 
-def process_compounddef_default(compounddef, c_mode):
+def process_compounddef_default(compounddef, language):
     result = []
 
     # check memberdefs
@@ -671,10 +683,10 @@ def process_compounddef_default(compounddef, c_mode):
 
                     # some defaults
                     # cparam format is (name, default_value, type, access, precious, options, positional, description)
-                    if c_mode:
+                    if language == Language.C:
                         member["params"].append({"key": "category", "direction": None, "value": "DynlibApp"})
                         member["params"].append({"key": "libpath", "direction": None, "value": "Library Path//String/ComponentParameter/readwrite//False/False/The location of the shared object/DLL that implements this application"})
-                    else:
+                    elif language == Language.PYTHON:
                         member["params"].append({"key": "category", "direction": None, "value": "PythonApp"})
                         member["params"].append({"key": "appclass", "direction": None, "value": "Application Class/dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/readwrite//False/False/The python class that implements this application"})
 
@@ -936,7 +948,7 @@ if __name__ == "__main__":
     logging.info("PROJECT_VERSION:" + os.environ.get("PROJECT_VERSION"))
     logging.info("GIT_REPO:" + os.environ.get("GIT_REPO"))
 
-    (inputdir, tag, outputfile, allow_missing_eagle_start, module_path, c_mode) = get_options_from_command_line(sys.argv[1:])
+    (inputdir, tag, outputfile, allow_missing_eagle_start, module_path, language) = get_options_from_command_line(sys.argv[1:])
     logging.info("Input Directory:" + inputdir)
     logging.info("Tag:" + tag)
     logging.info("Output File:" + outputfile)
@@ -967,8 +979,10 @@ if __name__ == "__main__":
     # modify options in the Doxyfile
     modify_doxygen_options(doxygen_filename, DOXYGEN_SETTINGS)
 
-    if c_mode:
+    if language == Language.C:
         modify_doxygen_options(doxygen_filename, DOXYGEN_SETTINGS_C)
+    elif language == Language.PYTHON:
+        modify_doxygen_options(doxygen_filename, DOXYGEN_SETTINGS_PYTHON)
 
     # run doxygen
     # os.system("doxygen " + doxygen_filename)
@@ -1019,7 +1033,7 @@ if __name__ == "__main__":
             nodes.extend(ns)
 
         else: # not eagle node
-            functions = process_compounddef_default(compounddef, c_mode)
+            functions = process_compounddef_default(compounddef, language)
 
             for f in functions:
                 ns = params_to_nodes(f["params"])
