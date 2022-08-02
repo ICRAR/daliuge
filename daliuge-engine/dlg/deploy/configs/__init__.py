@@ -80,6 +80,22 @@ class ICRARoodConfig(DefaultConfig):
         return [self.ACCOUNT, self.LOG_DIR, self.MODULES, self.VENV]
 
 
+class ICRARoodCldConfig(DefaultConfig):
+    # The following is more a workaround than a solution
+    # requires the user to have a venv exectly in that place
+    ACCOUNT = os.environ["USER"]
+    HOME_DIR = os.environ["HOME"]
+    LOG_DIR = f"{HOME_DIR}/dlg/runs"
+    # The compute nodes have have required python and DALiuGE but just in case....
+    VENV = f"source {HOME_DIR}/dlg/venv/bin/activate"
+
+    def __init__(self):
+        super(ICRARoodCldConfig, self).__init__()
+
+    def init_list(self):  # TODO please fill in
+        return [self.ACCOUNT, self.LOG_DIR, self.VENV]
+
+
 class GalaxyMWAConfig(DefaultConfig):
     def __init__(self):
         super(GalaxyMWAConfig, self).__init__()
@@ -130,6 +146,7 @@ class ConfigFactory:
         "galaxy": GalaxyASKAPConfig,
         "shao": TianHe2Config,
         "hyades.icrar.org": ICRARoodConfig,
+        "ood_cloud": ICRARoodCldConfig,
     }
 
     @staticmethod
