@@ -56,7 +56,7 @@ class SlurmClient:
         physical_graph_template_data=None,  # JSON formatted physical graph template
         logical_graph=None,
         job_dur=30,
-        num_nodes=1,
+        num_nodes=None,
         run_proxy=False,
         mon_host=DEFAULT_AWS_MON_HOST,
         mon_port=DEFAULT_AWS_MON_PORT,
@@ -78,7 +78,10 @@ class SlurmClient:
         )
         self.modules = self._config.getpar("modules")
         self.venv = self._config.getpar("venv")
-        self._num_nodes = 1
+        if num_nodes is None:
+            self._num_nodes = 1
+        else:
+            self._num_nodes = num_nodes
         self._job_dur = job_dur
         self._logical_graph = logical_graph
         self._physical_graph_template_data = physical_graph_template_data
@@ -91,7 +94,10 @@ class SlurmClient:
         self._zerorun = zerorun
         self._max_threads = max_threads
         self._sleepncopy = sleepncopy
-        self._num_islands = num_islands
+        if num_islands is None:
+            self._num_islands = 1
+        else:
+            self._num_islands = num_islands
         self._all_nics = all_nics
         self._check_with_session = check_with_session
         self._submit = submit
