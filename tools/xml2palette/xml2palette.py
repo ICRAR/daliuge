@@ -385,7 +385,7 @@ def parse_description(value):
 # NOTE: color, x, y, width, height are not specified in palette node, they will be set by the EAGLE importer
 def create_palette_node_from_params(params):
     text = ""
-    description = ""
+    node_description = ""
     category = ""
     tag = ""
     construct = ""
@@ -413,7 +413,7 @@ def create_palette_node_from_params(params):
         elif key == "text":
             text = value
         elif key == "description":
-            description = value
+            node_description = value
         else:
             internal_name = key
             (
@@ -515,7 +515,7 @@ def create_palette_node_from_params(params):
             "drawOrderHint": 0,
             "key": get_next_key(),
             "text": text,
-            "description": description,
+            "description": node_description,
             "collapsed": False,
             "showPorts": False,
             "streaming": False,
