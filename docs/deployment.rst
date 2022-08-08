@@ -66,6 +66,48 @@ Deployment with OpenOnDemand
 
 `OpenOnDemand <https://openondemand.org>`_ (OOD) is a system providing an interactive interface to remote compute resources. It is becoming increasingly popular with a number of HPC centers around the world. The two Australian research HPC centers Pawsey and NCI are planning to roll it out for their users. Independently we had realized that |daliuge| is missing a authentication, authorization and session management system and started looking into OOD as a solution for this. After a short evaluation we have started integrating OOD into the deployment for our small in-house compute cluster. In order to make this work we needed to implement an additional interface between the translator running on an external server (e.g. AWS) and OOD and then further on into the (SLURM) batch job system. This interface code is currently in a separate private git repository, but will be released as soon as we have finished testing it. The code mimics the |daliuge| data island manager's REST interface, but instead of launching the workflow directly it prepares a SLURM job submission script and places it into the queue. Users can then use the standard OOD web-pages to monitor the jobs and get access to the logs and results of the workflow execution. OOD allows the integration of multiple compute resources, including Kubernetes and also (to a certain degree) GCP, AWS and Azure. Once configured, users can choose to submit their jobs to any of those. Our OOD interface code has been implemented as an OOD embedded `Phusion Passenger <https://www.phusionpassenger.com/>`_ `Flask <https://flask.palletsprojects.com/en/2.0.x/>`_ application, which is `WSGI <https://wsgi.readthedocs.io>`_ compliant. Very little inside that application is OOD specific and can thus be easily ported to other deployment scenarios.
 
+:numref:`deployment.fig.ood` describes the actions taken by DALiuGE elements when submitting a graph through open on demand.
+Importantly, the physical graph deployment is triggered by the user's browser directly, not the machine hosting the translator.
+
+.. _deployment.fig.ood:
+
+.. figure:: images/deploy_ood.jpeg
+
+   Sequence diagram of graph deployment in OOD envrionment.
+
+Direct Deployment
+~~~~~~~~~~~~~~~~~
+
+It is of course possible to submit graphs to |daliuge| managers without additional runtime environments.
+The manager and translator components can be docker images or raw processes.
+We currently support two methods for submitting graphs in this scenario.
+
+Direct
+------
+
+Direct deployments assumes the machine hosting the translator can communicate with the manager machines freely.
+:numref:`deployment.fig.direct` presents a sequence diagram outlining the communication between the different components in this case.
+
+.. _deployment.fig.direct:
+
+.. figure:: images/deploy_direct.jpeg
+
+   Sequence diagram of direct graph deployment.
+
+Restful
+-------
+
+Restful deployment is useful in the case where only a user's machine can communicate with engine instances but the translator cannot (as is often the case with an externally hosted translator process).
+The browser in this case drives execution and submits the graph directly to the manager nodes.
+:numref:`deployment.fig.rest` presents a sequence diagram outlining the communication between the different components in this case.
+Conceptually this is similar to how the OpenOnDemand deployment works, but targeting direct graph deployment rather than slurm job submission.
+
+.. _deployment.fig.rest:
+
+.. figure:: images/deploy_directRest.jpeg
+
+   Sequence diagram of restful graph deployment.
+
 Deployment with Kubernetes (Experimental)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -75,6 +117,15 @@ Multi-node kubernetes clusters are now supported to get started see `start_helm_
 Your environment will need have `kubectl` properly configured to point to your desired cluster.
 See `daliuge-k8s/README.md <https://github.com/ICRAR/daliuge/tree/master/daliuge-k8s>`_ for a more detailed setup guide.
 
+:numref:`deployment.fig.helm` describes the actions taken by DALiuGE elements when submitting a graph through helm.
+Importantly, there is (currently) no return to the browser indicating success or failure of the submission or job.
+The user will need to monitor the k8s environment directly.
+
+.. _deployment.fig.helm:
+
+.. figure:: images/deploy_helm.jpeg
+
+   Sequence diagram of graph deployment in helm environment.
 
 Component Deployment
 ====================
