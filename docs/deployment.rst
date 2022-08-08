@@ -104,6 +104,7 @@ Conceptually this is similar to how the OpenOnDemand deployment works, but targe
 
 N.B. Cross-Origin Resource Sharing (CORS) may return some interesting responses. If running all machines
 locally, make sure that your host descriptions in EAGLE and the translator are 'localhost'.
+
 .. _deployment.fig.rest:
 
 .. figure:: images/deploy_directRest.jpeg
