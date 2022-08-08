@@ -516,6 +516,7 @@ async function directRestDeploy(){
 
     const nodes = await fetch(nodes_url, {
         method: 'GET',
+        mode: request_mode
     })
         .then(handleFetchErrors)
         .then(response => response.json())
