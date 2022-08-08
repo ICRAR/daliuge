@@ -102,6 +102,8 @@ The browser in this case drives execution and submits the graph directly to the 
 :numref:`deployment.fig.rest` presents a sequence diagram outlining the communication between the different components in this case.
 Conceptually this is similar to how the OpenOnDemand deployment works, but targeting direct graph deployment rather than slurm job submission.
 
+N.B. Cross-Origin Resource Sharing (CORS) may return some interesting responses. If running all machines
+locally, make sure that your host descriptions in EAGLE and the translator are 'localhost'.
 .. _deployment.fig.rest:
 
 .. figure:: images/deploy_directRest.jpeg
