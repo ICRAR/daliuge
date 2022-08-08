@@ -15,10 +15,10 @@ NOTE: Using --values my-values will overwrite any values specified in the values
 # Install/Setup
 From mychart directory
 
-helm install daliuge-daemon . --values my-values.yaml
-kubectl get svc -o wide
-curl -d '{"nodes": ["localhost"]}' -H "Content-Type: application/json" -X POST http://<IP address from above>:9000/managers/island/start
-helm uninstall daliuge-daemon
+	helm install daliuge-daemon . --values my-values.yaml
+	kubectl get svc -o wide
+	curl -d '{"nodes": ["localhost"]}' -H "Content-Type: application/json" -X POST http://<IP address from above>:9000/managers/island/start
+	helm uninstall daliuge-daemon
 
 # Multinode Minikube Setups
 Useful for testing multi-node helm chart deployments.

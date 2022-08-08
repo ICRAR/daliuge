@@ -12,7 +12,6 @@ import tempfile
 import uuid
 import xml.etree.ElementTree as ET
 import math
-from enum import Enum
 
 next_key = -1
 
@@ -31,15 +30,6 @@ DOXYGEN_SETTINGS = [
     ("XML_PROGRAMLISTING", "NO"),
     ("ENABLE_PREPROCESSING", "NO"),
     ("CLASS_DIAGRAMS", "NO"),
-]
-
-# extra doxygen setting for C repositories
-DOXYGEN_SETTINGS_C = [
-    ("FILE_PATTERNS", "*.h, *.hpp"),
-]
-
-DOXYGEN_SETTINGS_PYTHON = [
-    ("FILE_PATTERNS", "*.py"),
 ]
 
 KNOWN_PARAM_DATA_TYPES = [
@@ -73,20 +63,14 @@ KNOWN_FIELD_TYPES = [
     "OutputPort"
 ]
 
-class Language(Enum):
-    UNKNOWN = 0
-    C = 1
-    PYTHON = 2
-
 def get_options_from_command_line(argv):
     inputdir = ""
     tag = ""
     outputfile = ""
     allow_missing_eagle_start = False
     module_path = ""
-    language = Language.UNKNOWN
     try:
-        opts, args = getopt.getopt(argv, "hi:t:o:sm:cp", ["idir=", "tag=", "ofile="])
+        opts, args = getopt.getopt(argv, "hi:t:o:sm:", ["idir=", "tag=", "ofile="])
     except getopt.GetoptError:
         print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
         sys.exit(2)
@@ -109,11 +93,7 @@ def get_options_from_command_line(argv):
             allow_missing_eagle_start = True
         elif opt in ("-m", "--module"):
             module_path = arg
-        elif opt in ("-c"):
-            language = Language.C
-        elif opt in ("-p"):
-            language = Language.PYTHON
-    return inputdir, tag, outputfile, allow_missing_eagle_start, module_path, language
+    return inputdir, tag, outputfile, allow_missing_eagle_start, module_path
 
 
 def check_environment_variables():
@@ -363,6 +343,8 @@ def parse_value(text, value):
             + ") has no 'positional', using default (False) : "
             + value
         )
+    if len(parts) > 8:
+        description = parts[8]
 
     return (external_name, default_value, type, field_type, access, options, precious, positional, description)
 
@@ -385,7 +367,7 @@ def parse_description(value):
 # NOTE: color, x, y, width, height are not specified in palette node, they will be set by the EAGLE importer
 def create_palette_node_from_params(params):
     text = ""
-    node_description = ""
+    description = ""
     category = ""
     tag = ""
     construct = ""
@@ -413,7 +395,7 @@ def create_palette_node_from_params(params):
         elif key == "text":
             text = value
         elif key == "description":
-            node_description = value
+            description = value
         else:
             internal_name = key
             (
@@ -515,7 +497,7 @@ def create_palette_node_from_params(params):
             "drawOrderHint": 0,
             "key": get_next_key(),
             "text": text,
-            "description": node_description,
+            "description": description,
             "collapsed": False,
             "showPorts": False,
             "streaming": False,
@@ -667,13 +649,12 @@ def process_compounddef(compounddef):
     return result
 
 
-def process_compounddef_default(compounddef, language):
+def process_compounddef_default(compounddef):
     result = []
 
     # check memberdefs
     for child in compounddef:
         if child.tag == "sectiondef" and child.get("kind") == "func":
-
             for grandchild in child:
                 if grandchild.tag == "memberdef" and grandchild.get("kind") == "function":
                     member = {"params":[]}
@@ -681,15 +662,11 @@ def process_compounddef_default(compounddef, language):
                     func_name = "Unknown"
                     return_type = "Unknown"
 
+                    # TODO: change
                     # some defaults
                     # cparam format is (name, default_value, type, access, precious, options, positional, description)
-                    if language == Language.C:
-                        member["params"].append({"key": "category", "direction": None, "value": "DynlibApp"})
-                        member["params"].append({"key": "libpath", "direction": None, "value": "Library Path//String/ComponentParameter/readwrite//False/False/The location of the shared object/DLL that implements this application"})
-                    elif language == Language.PYTHON:
-                        member["params"].append({"key": "category", "direction": None, "value": "PythonApp"})
-                        member["params"].append({"key": "appclass", "direction": None, "value": "Application Class/dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/readwrite//False/False/The python class that implements this application"})
-
+                    member["params"].append({"key": "category", "direction": None, "value": "PythonApp"})
+                    member["params"].append({"key": "appclass", "direction": None, "value": "Application Class/dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/readwrite//False/False/The python class that implements this application"})
                     member["params"].append({"key": "execution_time", "direction": None, "value": "Execution Time/5/Integer/ComponentParameter/readwrite//False/False/Estimate of execution time (in seconds) for this application."})
                     member["params"].append({"key": "num_cpus", "direction": None, "value": "No. of CPUs/1/Integer/ComponentParameter/readwrite//False/False/Number of CPUs used for this application."})
                     member["params"].append({"key": "group_start", "direction": None, "value": "Group start/false/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?"})
@@ -698,6 +675,7 @@ def process_compounddef_default(compounddef, language):
                         if ggchild.tag == "name":
                             member["params"].append({"key": "text", "direction": None, "value": ggchild.text})
                             func_name = ggchild.text
+                            logging.debug("Found func memberdef with name %s", func_name)
                         if ggchild.tag == "detaileddescription":
                             if len(ggchild) > 0 and len(ggchild[0]) > 0 and ggchild[0][0].text != None:
 
@@ -815,7 +793,6 @@ def process_compounddef_default(compounddef, language):
                     if module_path != "" and not module_path in func_path:
                         #logging.info("Skip " + func_path + ". Doesn't match module path: " + module_path)
                         continue
-
                     result.append(member)
 
     return result
@@ -825,20 +802,21 @@ def process_compounddef_default(compounddef, language):
 def parse_params(detailed_description):
     result = []
 
-    lines = detailed_description.split("\n")
-    param_lines = [line.strip() for line in lines if ":param" in line]
+    detailed_description = detailed_description.split("Returns:")[0]
+    param_lines = [p.replace('\n','').strip() for p in detailed_description.split(":param:")[1:]]
+    # param_lines = [line.strip() for line in detailed_description]
 
     for p_line in param_lines:
-        #print("p_line:" + p_line)
+        logging.debug("p_line: %s" + p_line)
 
         try:
-            index_of_second_colon = p_line.index(':', 1)
+            index_of_second_colon = p_line.index(':', 0)
         except:
             # didnt find second colon, skip
             continue
 
-        param_name = p_line[7:index_of_second_colon]
-        param_description = p_line[index_of_second_colon+2:]
+        param_name = p_line[:index_of_second_colon].strip()
+        param_description = p_line[index_of_second_colon+2:].strip()
 
         result.append((param_name, param_description))
 
@@ -847,9 +825,9 @@ def parse_params(detailed_description):
 
 # find the named aparam in params, and update the description
 def set_param_description(name, description, params):
-    #print("set_param_description():" + str(name) + ":" + str(description))
+    # print("set_param_description():" + str(name) + ":" + str(description))
     for p in params:
-        if p["key"] == "aparam/"+name:
+        if p["key"] == name:
             p["value"] = p["value"] + description
             break
 
@@ -908,6 +886,8 @@ def params_to_nodes(params):
     if len(params) > 2:
         # create a node
         data, node = create_palette_node_from_params(params)
+        logging.debug("data: %s",data)
+        logging.debug("node: %s", node)
 
         # if the node tag matches the command line tag, or no tag was specified on the command line, add the node to the list to output
         if data["tag"] == tag or tag == "":
@@ -948,7 +928,7 @@ if __name__ == "__main__":
     logging.info("PROJECT_VERSION:" + os.environ.get("PROJECT_VERSION"))
     logging.info("GIT_REPO:" + os.environ.get("GIT_REPO"))
 
-    (inputdir, tag, outputfile, allow_missing_eagle_start, module_path, language) = get_options_from_command_line(sys.argv[1:])
+    (inputdir, tag, outputfile, allow_missing_eagle_start, module_path) = get_options_from_command_line(sys.argv[1:])
     logging.info("Input Directory:" + inputdir)
     logging.info("Tag:" + tag)
     logging.info("Output File:" + outputfile)
@@ -978,11 +958,6 @@ if __name__ == "__main__":
 
     # modify options in the Doxyfile
     modify_doxygen_options(doxygen_filename, DOXYGEN_SETTINGS)
-
-    if language == Language.C:
-        modify_doxygen_options(doxygen_filename, DOXYGEN_SETTINGS_C)
-    elif language == Language.PYTHON:
-        modify_doxygen_options(doxygen_filename, DOXYGEN_SETTINGS_PYTHON)
 
     # run doxygen
     # os.system("doxygen " + doxygen_filename)
@@ -1033,7 +1008,7 @@ if __name__ == "__main__":
             nodes.extend(ns)
 
         else: # not eagle node
-            functions = process_compounddef_default(compounddef, language)
+            functions = process_compounddef_default(compounddef)
 
             for f in functions:
                 ns = params_to_nodes(f["params"])
