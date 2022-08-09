@@ -240,6 +240,9 @@ class NodeManagerClient(BaseDROPManagerClient):
     def get_log_file(self, sessionId):
         return self._request(f"/sessions/{sessionId}/logs", "GET")
 
+    def get_submission_method(self):
+        return self._get_json("/submission_method")
+
 
 class CompositeManagerClient(BaseDROPManagerClient):
     def nodes(self):

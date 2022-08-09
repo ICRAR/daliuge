@@ -264,3 +264,8 @@ class TestRest(unittest.TestCase):
         response = c.session_repro_status(sid)
         self.assertTrue(response)
         c.destroySession(sid)
+
+    def test_submit_method(self):
+        c = NodeManagerClient(hostname)
+        response = c.get_submission_method()
+        self.assertEqual(response, {"methods": ["REST"]})
