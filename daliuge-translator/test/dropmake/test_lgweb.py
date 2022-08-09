@@ -284,3 +284,10 @@ class TestLGWeb(unittest.TestCase):
 
     def test_get_gantt_chart(self):
         self._test_pgt_action("pgt_gantt_chart", True)
+
+    def test_get_submission_methods(self):
+        import json
+        c = RestClient("localhost", lgweb_port, timeout=10)
+        response = c._GET("/submission_method")
+        response_content = json.load(response)
+        self.assertEqual(response_content, {'methods': []})

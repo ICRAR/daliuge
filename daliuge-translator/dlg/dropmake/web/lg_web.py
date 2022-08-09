@@ -26,7 +26,9 @@ import json
 import logging
 import optparse
 import os
+import re
 import signal
+import subprocess
 import sys
 import threading
 import time
@@ -139,6 +141,28 @@ def _repo_contents(root_dir):
             contents[b(dirpath)] = files
 
     return contents
+
+
+def _check_k8s_avail() -> bool:
+    """
+    Checks if this process has access to a k8s interface.
+    """
+    try:
+        output = subprocess.run(
+            ["kubectl version"], capture_output=True, shell=True
+        ).stdout
+        pattern = re.compile(r"^Client Version:.*\nServer Version:.*")
+        return bool(re.match(pattern, output.decode(encoding="utf-8")))
+    except subprocess.SubprocessError:
+        return False
+
+
+def _check_mgr_avail(mhost, mport, mprefix):
+    mgr_client = CompositeManagerClient(
+        host=mhost, port=mport, url_prefix=mprefix, timeout=15
+    )
+    response = mgr_client.get_submission_method()
+    return response
 
 
 @route("/static/<filepath:path>")
@@ -317,6 +341,7 @@ def gen_pg_helm():
     RESTful interface to deploy a PGT as a K8s helm chart.
     """
     # Get pgt_data
+    # TODO: @pritchardn de-couple engine from translator - this is dirty
     from ...deploy.start_helm_cluster import start_helm
 
     pgt_id = request.query.get("pgt_id")
@@ -342,6 +367,31 @@ def gen_pg_helm():
     return "Inspect your k8s dashboard for deployment status"
 
 
+def parse_mgr_url(query):
+    mhost = ""
+    mport = -1
+    mprefix = ""
+    if "dlg_mgr_url" in query:
+        murl = query["dlg_mgr_url"][0]
+        mparse = urlparse(murl)
+        try:
+            (mhost, mport) = mparse.netloc.split(":")
+            mport = int(mport)
+        except:
+            mhost = mparse.netloc
+            if mparse.scheme == "http":
+                mport = 80
+            elif mparse.scheme == "https":
+                mport = 443
+        mprefix = mparse.path
+        if mprefix.endswith("/"):
+            mprefix = mprefix[:-1]
+    else:
+        mhost = request.query.get("dlg_mgr_host")
+        if request.query.get("dlg_mgr_port"):
+            mport = int(request.query.get("dlg_mgr_port"))
+    return mhost, mport, mprefix
+
 @get("/gen_pg")
 def gen_pg():
     """
@@ -365,30 +415,9 @@ def gen_pg():
     num_partitions = 0
     num_partitions = len(list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"])))
     surl = urlparse(request.url)
-
-    mhost = ""
-    mport = -1
-    mprefix = ""
     q = parse_qs(surl.query)
-    if "dlg_mgr_url" in q:
-        murl = q["dlg_mgr_url"][0]
-        mparse = urlparse(murl)
-        try:
-            (mhost, mport) = mparse.netloc.split(":")
-            mport = int(mport)
-        except:
-            mhost = mparse.netloc
-            if mparse.scheme == "http":
-                mport = 80
-            elif mparse.scheme == "https":
-                mport = 443
-        mprefix = mparse.path
-        if mprefix.endswith("/"):
-            mprefix = mprefix[:-1]
-    else:
-        mhost = request.query.get("dlg_mgr_host")
-        if request.query.get("dlg_mgr_port"):
-            mport = int(request.query.get("dlg_mgr_port"))
+
+    mhost, mport, mprefix = parse_mgr_url(q)
 
     logger.debug("Manager host: %s", mhost)
     logger.debug("Manager port: %s", mport)
@@ -610,6 +639,21 @@ def gen_pgt_post():
         print(trace_msg)
         raise
         # return "Graph partition exception {1}: {0}".format(trace_msg, lg_name)
+
+
+@route("/submission_method", method="GET")
+def get_submission_method():
+    surl = urlparse(request.url)
+    query = parse_qs(surl.query)
+    mhost, mport, mprefix = parse_mgr_url(query)
+    # return {'mhost': mhost, 'mport': mport, 'mprefix': mprefix}
+    available_methods = []
+    if _check_k8s_avail():
+        available_methods.append("HELM")
+    if mhost is not None:
+        if _check_mgr_avail(mhost, mport, mprefix):
+            available_methods.extend(["SERVER"])
+    return {"methods": available_methods}
 
 
 def unroll_and_partition_with_params(lg, algo_params_source):
