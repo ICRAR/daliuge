@@ -254,6 +254,9 @@ class CompositeManagerClient(BaseDROPManagerClient):
     def remove_node(self, node):
         self._DELETE(f"/nodes/{node}")
 
+    def get_submission_method(self):
+        return self._get_json("/submission_method")
+
 
 class DataIslandManagerClient(CompositeManagerClient):
     """
