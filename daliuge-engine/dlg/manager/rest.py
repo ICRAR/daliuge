@@ -145,6 +145,7 @@ class ManagerRestServer(RestServer):
 
         # Mappings
         app = self.app
+        app.get("/api/submission_method", callback=self.submit_methods)
         app.post("/api/stop", callback=self.stop_manager)
         app.post("/api/sessions", callback=self.createSession)
         app.get("/api/sessions", callback=self.getSessions)
@@ -186,6 +187,10 @@ class ManagerRestServer(RestServer):
         the default ones and perform other DataManager-specific actions.
         The default implementation does nothing.
         """
+
+    @daliuge_aware
+    def submit_methods(self):
+        return {"methods": ["REST"]}
 
     def _stop_manager(self):
         self.dm.shutdown()
