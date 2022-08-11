@@ -169,6 +169,20 @@ async function checkUrlStatus (url) {
     })
 }
 
+async function checkUrlSubmissionMethods(url) {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success: function( response ) {
+                resolve(response)
+            },
+            timeout: 2000
+        });
+    })
+}
+
+
 async function manualCheckUrlStatus (clickPos) {
     var badUrl = false
     //if the event is triggered by click the check icon manually
@@ -326,6 +340,8 @@ function fillOutSettings() {
     deployMethodsArray.forEach(async element => {
 
         var urlReachable = await checkUrlStatus(element.url)
+        var availableMethods = await checkUrlSubmissionMethods(element.url + '/api/submission_method')
+        console.log(availableMethods);
         var ReachableIcon = ""
         
         if(urlReachable){
