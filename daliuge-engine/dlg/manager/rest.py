@@ -30,6 +30,7 @@ import io
 import json
 import logging
 import os
+import re
 import tarfile
 import threading
 
@@ -75,9 +76,12 @@ def daliuge_aware(func):
             if res is not None:
                 bottle.response.content_type = "application/json"
                 # set CORS headers
+                origin = bottle.request.headers.raw("Origin")
+                if not re.match(r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin):
+                    origin = "http://localhost:8084"
                 bottle.response.headers[
                     "Access-Control-Allow-Origin"
-                ] = "http://localhost:8084"
+                ] = origin
                 bottle.response.headers["Access-Control-Allow-Credentials"] = "true"
                 bottle.response.headers[
                     "Access-Control-Allow-Methods"
