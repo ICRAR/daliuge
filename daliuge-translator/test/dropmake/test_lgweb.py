@@ -288,6 +288,6 @@ class TestLGWeb(unittest.TestCase):
     def test_get_submission_methods(self):
         import json
         c = RestClient("localhost", lgweb_port, timeout=10)
-        response = c._GET("/submission_method")
+        response = c._GET("/api/submission_method")
         response_content = json.load(response)
         self.assertEqual(response_content, {'methods': []})

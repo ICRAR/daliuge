@@ -165,6 +165,20 @@ def _check_mgr_avail(mhost, mport, mprefix):
     return response
 
 
+def enable_cors(fn):
+    def _enable_cors(*args, **kwargs):
+        # set CORS headers
+        response.headers['Access-Control-Allow-Origin'] = '*'  # TODO: change to be restrictive
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
+
+        if bottle.request.method != 'OPTIONS':
+            # actual request; reply with the actual response
+            return fn(*args, **kwargs)
+
+    return _enable_cors
+
+
 @route("/static/<filepath:path>")
 def server_static(filepath):
     staticRoot = pkg_resources.resource_filename(
@@ -641,8 +655,10 @@ def gen_pgt_post():
         # return "Graph partition exception {1}: {0}".format(trace_msg, lg_name)
 
 
-@route("/submission_method", method="GET")
+@route("/api/submission_method", method="GET")
+@enable_cors
 def get_submission_method():
+    logger.debug("Received submission_method request")
     surl = urlparse(request.url)
     query = parse_qs(surl.query)
     mhost, mport, mprefix = parse_mgr_url(query)
