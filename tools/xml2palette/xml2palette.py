@@ -552,7 +552,12 @@ def create_palette_node_from_params(params):
     )
 
 
-def write_palette_json(outputfile, nodes, gitrepo, version, signature):
+def write_palette_json(outputfile, nodes, gitrepo, version, block_dag):
+    # add hashes from block_dag to the nodes
+    for i in range(len(nodes)):
+        nodes[i].dataHash = block_dag[i].data_hash;
+
+    # create the palette object
     palette = {
         "modelData": {
             "fileType": "palette",
@@ -563,12 +568,13 @@ def write_palette_json(outputfile, nodes, gitrepo, version, signature):
             "filePath": outputfile,
             "sha": version,
             "git_url": gitrepo,
-            "signature": signature
+            "signature": block_dag['signature']
         },
         "nodeDataArray": nodes,
         "linkDataArray": [],
     }
 
+    # write palette to file
     with open(outputfile, "w") as outfile:
         json.dump(palette, outfile, indent=4)
 
@@ -1070,7 +1076,7 @@ if __name__ == "__main__":
     block_dag = build_block_dag(vertices, [], data_fields=BLOCKDAG_DATA_FIELDS)
 
     # write the output json file
-    write_palette_json(outputfile, nodes, gitrepo, version, block_dag['signature'])
+    write_palette_json(outputfile, nodes, gitrepo, version, block_dag)
     logging.info("Wrote " + str(len(nodes)) + " component(s)")
 
     # cleanup the output directory
