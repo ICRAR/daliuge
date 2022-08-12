@@ -1064,7 +1064,10 @@ if __name__ == "__main__":
                         nodes.append(n)
 
     # add signature for whole palette using BlockDAG
-    palette_signature = build_block_dag(nodes, [], data_fields=BLOCKDAG_DATA_FIELDS)
+    vertices = {}
+    for i in range(len(nodes)):
+        vertices[i] = nodes[i]
+    palette_signature = build_block_dag(vertices, [], data_fields=BLOCKDAG_DATA_FIELDS)
 
     # write the output json file
     write_palette_json(outputfile, nodes, gitrepo, version, palette_signature)
