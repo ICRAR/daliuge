@@ -555,7 +555,7 @@ def create_palette_node_from_params(params):
 def write_palette_json(outputfile, nodes, gitrepo, version, block_dag):
     # add hashes from block_dag to the nodes
     for i in range(len(nodes)):
-        nodes[i].dataHash = block_dag[i].data_hash;
+        nodes[i].dataHash = block_dag[i]['data_hash'];
 
     # create the palette object
     palette = {
