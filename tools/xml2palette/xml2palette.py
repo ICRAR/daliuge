@@ -14,6 +14,8 @@ import xml.etree.ElementTree as ET
 import math
 from enum import Enum
 
+from blockdag import build_block_dag
+
 next_key = -1
 
 # NOTE: not sure if all of these are actually required
@@ -71,6 +73,14 @@ KNOWN_FIELD_TYPES = [
     "ApplicationArgument",
     "InputPort",
     "OutputPort"
+]
+
+BLOCKDAG_DATA_FIELDS = [
+    "inputPorts",
+    "outputPorts",
+    "applicationArgs",
+    "category",
+    "fields"
 ]
 
 class Language(Enum):
@@ -542,7 +552,7 @@ def create_palette_node_from_params(params):
     )
 
 
-def write_palette_json(outputfile, nodes, gitrepo, version):
+def write_palette_json(outputfile, nodes, gitrepo, version, signature):
     palette = {
         "modelData": {
             "fileType": "palette",
@@ -553,6 +563,7 @@ def write_palette_json(outputfile, nodes, gitrepo, version):
             "filePath": outputfile,
             "sha": version,
             "git_url": gitrepo,
+            "signature": signature
         },
         "nodeDataArray": nodes,
         "linkDataArray": [],
@@ -1052,9 +1063,11 @@ if __name__ == "__main__":
                     if not alreadyPresent:
                         nodes.append(n)
 
+    # add signature for whole palette using BlockDAG
+    palette_signature = build_block_dag(nodes, [], data_fields=BLOCKDAG_DATA_FIELDS)
 
     # write the output json file
-    write_palette_json(outputfile, nodes, gitrepo, version)
+    write_palette_json(outputfile, nodes, gitrepo, version, palette_signature)
     logging.info("Wrote " + str(len(nodes)) + " component(s)")
 
     # cleanup the output directory
