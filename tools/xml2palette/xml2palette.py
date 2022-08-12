@@ -120,45 +120,6 @@ def get_args():
     language = Language.C if args.c else Language.PYTHON
     return args.idir, args.tag, args.ofile, args.parse_all, args.module_path, language
 
-
-def get_options_from_command_line(argv):
-    inputdir = ""
-    tag = ""
-    outputfile = ""
-    allow_missing_eagle_start = False
-    module_path = ""
-    language = Language.UNKNOWN
-    try:
-        opts, args = getopt.getopt(argv, "hi:t:o:sm:cp", ["idir=", "tag=", "ofile="])
-    except getopt.GetoptError:
-        print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
-        sys.exit(2)
-
-    if len(opts) < 2:
-        print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
-        sys.exit()
-
-    for opt, arg in opts:
-        if opt == "-h":
-            print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
-            sys.exit()
-        elif opt in ("-i", "--idir"):
-            inputdir = arg
-        elif opt in ("-t", "--tag"):
-            tag = arg
-        elif opt in ("-o", "--ofile"):
-            outputfile = arg
-        elif opt in ("-s"):
-            allow_missing_eagle_start = True
-        elif opt in ("-m", "--module"):
-            module_path = arg
-        elif opt in ("-c"):
-            language = Language.C
-        elif opt in ("-p"):
-            language = Language.PYTHON
-    return inputdir, tag, outputfile, allow_missing_eagle_start, module_path, language
-
-
 def check_environment_variables():
     required_environment_variables = ["PROJECT_NAME", "PROJECT_VERSION", "GIT_REPO"]
 
@@ -1083,7 +1044,6 @@ if __name__ == "__main__":
     # read environment variables
     if not check_environment_variables():
         sys.exit(1)
-    # (inputdir, tag, outputfile, allow_missing_eagle_start, module_path, language) = get_options_from_command_line(sys.argv[1:])
     (inputdir, tag, outputfile, allow_missing_eagle_start, module_path, language) =\
         get_args()
 
