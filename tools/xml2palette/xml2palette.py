@@ -1070,7 +1070,7 @@ if __name__ == "__main__":
     block_dag = build_block_dag(vertices, [], data_fields=BLOCKDAG_DATA_FIELDS)
 
     # write the output json file
-    write_palette_json(outputfile, nodes, gitrepo, version, block_dag.signature)
+    write_palette_json(outputfile, nodes, gitrepo, version, block_dag['signature'])
     logging.info("Wrote " + str(len(nodes)) + " component(s)")
 
     # cleanup the output directory
