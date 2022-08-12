@@ -1067,10 +1067,10 @@ if __name__ == "__main__":
     vertices = {}
     for i in range(len(nodes)):
         vertices[i] = nodes[i]
-    palette_signature = build_block_dag(vertices, [], data_fields=BLOCKDAG_DATA_FIELDS)
+    block_dag = build_block_dag(vertices, [], data_fields=BLOCKDAG_DATA_FIELDS)
 
     # write the output json file
-    write_palette_json(outputfile, nodes, gitrepo, version, palette_signature)
+    write_palette_json(outputfile, nodes, gitrepo, version, block_dag.signature)
     logging.info("Wrote " + str(len(nodes)) + " component(s)")
 
     # cleanup the output directory
