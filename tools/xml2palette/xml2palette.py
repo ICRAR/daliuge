@@ -407,8 +407,6 @@ def create_palette_node_from_params(params):
     outputLocalPorts = []
     fields = []
     applicationArgs = []
-    gitrepo = os.environ.get("GIT_REPO")
-    version = os.environ.get("PROJECT_VERSION")
 
     # process the params
     for param in params:
@@ -546,8 +544,10 @@ def create_palette_node_from_params(params):
             "outputAppFields": [],
             "fields": fields,
             "applicationArgs": applicationArgs,
-            "git_url": gitrepo,
-            "sha": version,
+            "repositoryUrl": gitrepo,
+            "commitHash": version,
+            "paletteDownloadUrl": "",
+            "dataHash": "",
         },
     )
 
@@ -566,9 +566,10 @@ def write_palette_json(outputfile, nodes, gitrepo, version, block_dag):
             "repo": "ICRAR/EAGLE_test_repo",
             "readonly": True,
             "filePath": outputfile,
-            "sha": version,
-            "git_url": gitrepo,
-            "signature": block_dag['signature']
+            "repositoryUrl": gitrepo,
+            "commitHash": version,
+            "downloadUrl": "",
+            "signature": block_dag['signature'],
         },
         "nodeDataArray": nodes,
         "linkDataArray": [],
@@ -890,10 +891,12 @@ def create_construct_node(type, node):
         + " component.",
         "fields": [],
         "applicationArgs": [],
-        "git_url": gitrepo,
+        "repositoryUrl": gitrepo,
+        "commitHash": version,
+        "paletteDownloadUrl": "",
+        "dataHash": "",
         "key": get_next_key(),
         "precious": False,
-        "sha": version,
         "streaming": False,
         "text": type + "/" + node["text"],
     }
