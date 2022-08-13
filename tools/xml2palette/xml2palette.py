@@ -697,7 +697,9 @@ def process_compounddef_default(compounddef, language):
         if child.tag == "detaileddescription" and len(child) > 0 and casa_mode:
             # for child in ggchild:
             dStr = child[0][0].text
-            descDict = parseCasaDocs(dStr)
+            descDict, comp_description = parseCasaDocs(dStr)
+            member["params"].append({"key": "description", "direction": None, "value": comp_description})
+
             pkeys = {p["key"]:i for i,p in enumerate(member["params"])}
             for p in descDict.keys():
                 if p in pkeys:
@@ -1027,7 +1029,7 @@ def parseCasaDocs(dStr:str) -> dict:
         end_ind = [idx for idx, s in enumerate(dList) if '-- example' in s][0]
     except IndexError:
         logging.debug('Problems finding start or end index for task: {task}')
-        return {}
+        return {}, ""
     paramsList = dList[start_ind:end_ind]
     paramsSidx = [idx+1 for idx, p in enumerate(paramsList) if len(p) > 0 and p[0] != ' ']
     paramsEidx = paramsSidx[1:] + [len(paramsList) - 1]
@@ -1040,7 +1042,8 @@ def parseCasaDocs(dStr:str) -> dict:
             pl = [p.strip() for p in paramsList[paramsSidx[i]:paramsEidx[i]-1] if len(p.strip()) > 0]
             paramDocs[i] = paramDocs[i] + ' '+' '.join(pl)
     params = dict(zip(paramNames, paramDocs))
-    return params
+    comp_description = "\n".join(dList[:start_ind-1]) # return main description as well
+    return params, comp_description
 
 
 if __name__ == "__main__":
