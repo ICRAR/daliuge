@@ -24,18 +24,29 @@ The xml2palette.py script is located in the tools directory within the DALiuGE r
 
 The xml2palette.py script can be run using this command line:
 
-.. code-block:: none
+.. code-block::
 
-  python3 xml2palette.py -i <path_to_input_directory> -t <tag> -o <path_output_file>
+  python3 xml2palette.py [-h] [-m MODULE] [-t TAG] [-c] [-r] [-s] [-v] idir ofile
 
+  positional arguments:
+    idir                  input directory path or file name
+    ofile                 output file name
 
-If no tag is specified, all components found in the input directory will part of the output file. If, however, a tag is specified, then only those components with a matching tag will be part of the output. Tags can be added to the Doxygen comments for a component using:
+  optional arguments:
+    -h, --help            show this help message and exit
+    -m MODULE, --module MODULE
+                          Module load path name
+    -t TAG, --tag TAG     filter components with matching tag
+    -c                    C mode, if not set Python will be used
+    -r, --recursive       Traverse sub-directories
+    -s, --parse_all       Try to parse non DAliuGE compliant functions and methods
+    -v, --verbose         increase output verbosity
+
+  If no tag is specified, all components found in the input directory will part of the output file. If, however, a tag is specified, then only those components with a matching tag will be part of the output. Tags can be added to the Doxygen comments for a component using:
 
 .. code-block:: python
 
   # @param tag <tag_name>
-
-There are also two optional arguments for xml2palette. Allow missing "EAGLE start" (-s) which allows xml2palette.py to run on code without any eagle-specific doxygen comments. Finally (-m) restricts xml2palette.py to produce a palette that only contains methods from within the specified module.
 
 Component Doxygen Markup Guide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

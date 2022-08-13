@@ -1,4 +1,12 @@
 #!/usr/bin/env python
+"""
+Script processes a file or a directory of source files and
+produces a DALiuGE compatible palette file containing the
+information required to use functions and components in graphs.
+For more information please refer to the documentation
+https://daliuge.readthedocs.io/en/latest/development/app_development/eagle_app_integration.html#automatic-eagle-palette-generation
+
+"""
 
 import argparse
 import csv
@@ -92,33 +100,34 @@ class Language(Enum):
 
 def get_args():
     # inputdir, tag, outputfile, allow_missing_eagle_start, module_path, language
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-v", "--verbose", help="increase output verbosity",
-                        action="store_true")
-    parser.add_argument("-i", "--idir", help="input directory path spec")
-    parser.add_argument("-o","--ofile", help="output file name")
-    parser.add_argument("-t", "--tag", help="tag to search for", default="")
-    parser.add_argument("-p", "--python", help="Python mode",
-                        action="store_true")
-    parser.add_argument("-c", help="C mode",
+    parser = argparse.ArgumentParser(epilog=__doc__,
+                            formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("idir", help="input directory path or file name")
+    parser.add_argument("ofile", help="output file name")
+    parser.add_argument("-m", "--module", help="Module load path name",
+                        default="")
+    parser.add_argument("-t", "--tag", help="filter components with matching tag", default="")
+    parser.add_argument("-c", help="C mode, if not set Python will be used",
                         action="store_true")
     parser.add_argument("-r", "--recursive", help="Traverse sub-directories",
                         action="store_true")
-    parser.add_argument("-m", "--module_path", help="Module load path name",
-                        default="")
     parser.add_argument("-s", "--parse_all", 
-        help="Try to parse non DAliuGE compliant modules",
+        help="Try to parse non DAliuGE compliant functions and methods",
         action="store_true")
+    parser.add_argument("-v", "--verbose", help="increase output verbosity",
+                        action="store_true")
     args = parser.parse_args()
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
     logging.debug("DEBUG logging switched on")
     if args.recursive:
         DOXYGEN_SETTINGS.append(("RECURSIVE", "YES"))
+        logging.info("Recursive flag ON")
     else:
         DOXYGEN_SETTINGS.append(("RECURSIVE", "NO"))
+        logging.info("Recursive flag OFF")
     language = Language.C if args.c else Language.PYTHON
-    return args.idir, args.tag, args.ofile, args.parse_all, args.module_path, language
+    return args.idir, args.tag, args.ofile, args.parse_all, args.module, language
 
 def check_environment_variables():
     required_environment_variables = ["PROJECT_NAME", "PROJECT_VERSION", "GIT_REPO"]
