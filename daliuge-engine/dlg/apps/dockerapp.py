@@ -78,44 +78,25 @@ class ContainerIpWaiter(object):
 # @par EAGLE_START
 # @param category Docker
 # @param tag template
-# @param[in] cparam/image Image//String/readwrite/False//False/
-#     \~English The name of the docker image to be used for this application
-# @param[in] cparam/tag Tag/1.0/String/readwrite/False//False/
-#     \~English The tag of the docker image to be used for this application
-# @param[in] cparam/digest Digest//String/readwrite/False//False/
-#     \~English The hexadecimal hash (long version) of the docker image to be used for this application
-# @param[in] cparam/command Command//String/readwrite/False//False/
-#     \~English The command line to run within the docker instance. The specified command will be executed in a bash shell. That means that images will need a bash shell.
-# @param[in] cparam/input_redirection Input Redirection//String/readwrite/False//False/
-#     \~English The command line argument that specifies the input into this application
-# @param[in] cparam/output_redirection Output Redirection//String/readwrite/False//False/
-#     \~English The command line argument that specifies the output from this application
-# @param[in] cparam/command_line_arguments Command Line Arguments//String/readwrite/False//False/
-#     \~English Additional command line arguments to be added to the command line to be executed
-# @param[in] cparam/paramValueSeparator Param value separator/ /String/readwrite/False//False/
-#     \~English Separator character(s) between parameters and their respective values on the command line
-# @param[in] cparam/argumentPrefix Argument prefix/"--"/String/readwrite/False//False/
-#     \~English Prefix to each keyed argument on the command line
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
-#     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
-#     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
-#     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
-#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
-#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
-# @param[in] cparam/user User//String/readwrite/False//False/
-#     \~English Username of the user who will run the application within the docker image
-# @param[in] cparam/ensureUserAndSwitch Ensure User And Switch/False/Boolean/readwrite/False//False/
-#     \~English Make sure the user specified in the User parameter exists and then run the docker container as that user
-# @param[in] cparam/removeContainer Remove Container/True/Boolean/readwrite/False//False/
-#     \~English Instruct Docker engine to delete the container after execution is complete
-# @param[in] cparam/additionalBindings Additional Bindings//String/readwrite/False//False/
-#     \~English Directories which will be visible inside the container during run-time. Format is srcdir_on_host:trgtdir_on_container. Multiple entries can be separated by commas.
-# @param[in] cparam/portMappings Port Mappings//String/readwrite/False//False/
-#     \~English Port mappings on the host machine
+# @param image Image//String/ComponentParameter/readwrite//False/False/The name of the docker image to be used for this application
+# @param tag Tag/1.0/String/ComponentParameter/readwrite//False/False/The tag of the docker image to be used for this application
+# @param digest Digest//String/ComponentParameter/readwrite//False/False/The hexadecimal hash (long version) of the docker image to be used for this application
+# @param command Command//String/ComponentParameter/readwrite//False/False/The command line to run within the docker instance. The specified command will be executed in a bash shell. That means that images will need a bash shell.
+# @param input_redirection Input Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the input into this application
+# @param output_redirection Output Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the output from this application
+# @param command_line_arguments Command Line Arguments//String/ComponentParameter/readwrite//False/False/Additional command line arguments to be added to the command line to be executed
+# @param paramValueSeparator Param value separator/ /String/ComponentParameter/readwrite//False/False/Separator character(s) between parameters and their respective values on the command line
+# @param argumentPrefix Argument prefix/"--"/String/ComponentParameter/readwrite//False/False/Prefix to each keyed argument on the command line
+# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param user User//String/ComponentParameter/readwrite//False/False/Username of the user who will run the application within the docker image
+# @param ensureUserAndSwitch Ensure User And Switch/False/Boolean/ComponentParameter/readwrite//False/False/Make sure the user specified in the User parameter exists and then run the docker container as that user
+# @param removeContainer Remove Container/True/Boolean/ComponentParameter/readwrite//False/False/Instruct Docker engine to delete the container after execution is complete
+# @param additionalBindings Additional Bindings//String/ComponentParameter/readwrite//False/False/Directories which will be visible inside the container during run-time. Format is srcdir_on_host:trgtdir_on_container. Multiple entries can be separated by commas.
+# @param portMappings Port Mappings//String/ComponentParameter/readwrite//False/False/Port mappings on the host machine
 # @par EAGLE_END
 class DockerApp(BarrierAppDROP):
     """
@@ -276,22 +257,14 @@ class DockerApp(BarrierAppDROP):
         self._command = self._popArg(kwargs, "command", None)
 
         self._noBash = False
-        if not self._command or self._command[:2].strip() == "%%":
+        if not self._command or self._command.strip()[:2] == "%%":
             logger.warning("Assume a default command is executed in the container")
-            self._command = self._command.strip()[2:].strip() if self._command else ""
+            self._command = self._command.strip().strip()[:2] if self._command else ""
             self._noBash = True
             # This makes sure that we can retain any command defined in the image, but still be
             # able to add any arguments straight after. This requires to use the placeholder string
             # "%%" at the start of the command, else it is interpreted as a normal command.
 
-        # construct the actual command line from all application parameters
-        argumentString = droputils.serialize_applicationArgs(
-            self._applicationArgs, self._argumentPrefix, self._paramValueSeparator
-        )
-        # complete command including all additional parameters and optional redirects
-        cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
-        cmd = cmd.strip()
-        self._command = cmd
 
         # The user used to run the process in the docker container is now always the user
         # who originally started the DALiuGE process as well. The information is passed through
@@ -428,27 +401,17 @@ class DockerApp(BarrierAppDROP):
             fsInputs = {uid: i for uid, i in iitems if droputils.has_path(i)}
             fsOutputs = {uid: o for uid, o in oitems if droputils.has_path(o)}
             dockerInputs = {
-                #            uid: DockerPath(utils.getDlgDir() + i.path) for uid, i in fsInputs.items()
+                # uid: DockerPath(utils.getDlgDir() + i.path) for uid, i in fsInputs.items()
                 uid: DockerPath(i.path)
                 for uid, i in fsInputs.items()
             }
             dockerOutputs = {
-                #            uid: DockerPath(utils.getDlgDir() + o.path) for uid, o in fsOutputs.items()
+                # uid: DockerPath(utils.getDlgDir() + o.path) for uid, o in fsOutputs.items()
                 uid: DockerPath(o.path)
                 for uid, o in fsOutputs.items()
             }
             dataURLInputs = {uid: i for uid, i in iitems if not droputils.has_path(i)}
             dataURLOutputs = {uid: o for uid, o in oitems if not droputils.has_path(o)}
-
-            if self._command:
-                cmd = droputils.replace_path_placeholders(
-                    self._command, dockerInputs, dockerOutputs
-                )
-                cmd = droputils.replace_dataurl_placeholders(
-                    cmd, dataURLInputs, dataURLOutputs
-                )
-            else:
-                cmd = ""
 
             # We bind the inputs and outputs inside the docker under the utils.getDlgDir()
             # directory, maintaining the rest of their original paths.
@@ -493,13 +456,6 @@ class DockerApp(BarrierAppDROP):
                         )
             logger.debug(f"port mappings: {portMappings}")
 
-            # Wait until the DockerApps this application runtime depends on have
-            # started, and replace their IP placeholders by the real IPs
-            for waiter in self._waiters:
-                uid, ip = waiter.waitForIp()
-                cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
-                logger.debug("Command after IP replacement is: %s", cmd)
-
             # deal with environment variables
             env = {}
             env.update({"DLG_UID": self._uid})
@@ -520,7 +476,7 @@ class DockerApp(BarrierAppDROP):
                         logger.warning(
                             "Ignoring provided environment variables: Format wrong? Check documentation"
                         )
-                    addEnv = {}
+                        addEnv = {}
                     if isinstance(addEnv, dict):  # if it is a dict populate directly
                         # but replace placeholders first
                         for key in addEnv:
@@ -542,6 +498,38 @@ class DockerApp(BarrierAppDROP):
                         "Ignoring provided environment variables: Format wrong! Check documentation"
                     )
             logger.debug(f"Adding environment variables: {env}")
+
+            # deal with named ports
+            appArgs = self._applicationArgs
+            inport_names = self.parameters['inputs'] \
+                if "inputs" in self.parameters else []
+            outport_names = self.parameters['outputs'] \
+                if "outputs" in self.parameters else []
+            keyargs, pargs = droputils.replace_named_ports(iitems, oitems, 
+                inport_names, outport_names, appArgs, 
+                argumentPrefix=self._argumentPrefix, 
+                separator=self._paramValueSeparator)
+
+            argumentString = f"{' '.join(keyargs + pargs)}"
+            
+            # complete command including all additional parameters and optional redirects
+            cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
+            if cmd:
+                cmd = droputils.replace_path_placeholders(
+                    cmd, dockerInputs, dockerOutputs
+                )
+                cmd = droputils.replace_dataurl_placeholders(
+                    cmd, dataURLInputs, dataURLOutputs
+                )
+            else:
+                cmd = ""
+            ###############
+            # Wait until the DockerApps this application runtime depends on have
+            # started, and replace their IP placeholders by the real IPs
+            for waiter in self._waiters:
+                uid, ip = waiter.waitForIp()
+                cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
+                logger.debug("Command after IP replacement is: %s", cmd)
 
             # Wrap everything inside bash
             if len(cmd) > 0 and not self._noBash:

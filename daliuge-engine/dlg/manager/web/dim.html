@@ -90,18 +90,9 @@
         selectedNode = null;
     }
     var serverUrl = '{{serverUrl}}';
-    var dmPort = {
-    {
-        dmPort
-    }
-    }
-
-    var nodes = {
-    {
-        !nodes
-    }
-    }
-
+    var dmPort = {{dmPort}}
+    var nodes = {{!nodes}}
+    
     var refreshSessionListBtn = d3.select('#refreshSessionListBtn');
     var addSessionBtn = d3.select('#addSessionBtn');
     var sessionsTbodyEl = d3.select('#sessionsTable tbody');

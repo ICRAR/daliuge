@@ -25,11 +25,14 @@ Created on 20 Jul 2015
 @author: rtobar
 """
 
+import subprocess
 import unittest
+
+import numpy
 
 from dlg import droputils
 from dlg.common import dropdict, Categories
-from dlg.drop import InMemoryDROP, FileDROP, BarrierAppDROP
+from dlg.drop import InMemoryDROP, FileDROP, BarrierAppDROP, PlasmaDROP
 from dlg.droputils import DROPFile
 
 
@@ -140,6 +143,43 @@ class DropUtilsTest(unittest.TestCase):
         a, _, _, _, _, f, _, _, _, j = self._createGraph()
         endNodes = droputils.getLeafNodes(a)
         self.assertSetEqual(set([j, f]), set(endNodes))
+
+    def _test_datadrop_function(self, test_function, input_data):
+        # basic datadrop
+        for drop_type in (InMemoryDROP,FileDROP):
+            test_function(drop_type, input_data)
+
+        #plasma datadrop
+        store = None
+        try:
+            store = subprocess.Popen(
+                ["plasma_store", "-m", "1000000", "-s", "/tmp/plasma"]
+            )
+            test_function(PlasmaDROP, input_data)
+        finally:
+            if store:
+                store.terminate()
+
+    def _test_save_load_pickle(self, drop_type, data):
+        drop = drop_type("a", "a")
+        droputils.save_pickle(drop, data)
+        drop.setCompleted()
+        output_data = droputils.load_pickle(drop)
+        self.assertEqual(data, output_data)
+
+    def test_save_load_pickle(self):
+        input_data = {'nested': {'data': {'object': {}}}}
+        self._test_datadrop_function(self._test_save_load_pickle, input_data)
+
+    def _test_save_load_npy(self, drop_type, data):
+        drop = drop_type("a", "a")
+        droputils.save_npy(drop, data)
+        output_data = droputils.load_npy(drop)
+        numpy.testing.assert_equal(data, output_data)
+
+    def test_save_load_npy(self):
+        input_data = numpy.ones([3,5])
+        self._test_datadrop_function(self._test_save_load_npy, input_data)
 
     def test_DROPFile(self):
         """

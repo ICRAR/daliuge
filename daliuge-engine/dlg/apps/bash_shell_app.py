@@ -38,6 +38,7 @@ import tempfile
 import threading
 import time
 import types
+import collections
 
 from .. import droputils, utils
 from ..ddap_protocol import AppDROPStates, DROPStates
@@ -181,6 +182,7 @@ class BashShellBase(object):
                     self, "No command specified, cannot create BashShellApp"
                 )
 
+        self.appArgs = self._applicationArgs
         self._recompute_data = {}
 
     def _run_bash(self, inputs, outputs, stdin=None, stdout=subprocess.PIPE):
@@ -196,15 +198,32 @@ class BashShellBase(object):
         output of the process is piped to. If not given it is consumed by this
         method and potentially logged.
         """
+        logger.debug("Parameters found: %s", self.parameters)
+        # we only support passing a path for bash apps
+        fsInputs = {uid: i for uid, i in inputs.items() if droputils.has_path(i)}
+        fsOutputs = {uid: o for uid, o in outputs.items() if droputils.has_path(o)}
+        dataURLInputs = {
+            uid: i for uid, i in inputs.items() if not droputils.has_path(i)
+        }
+        dataURLOutputs = {
+            uid: o for uid, o in outputs.items() if not droputils.has_path(o)
+        }
 
-        session_id = (
-            self._dlg_session.sessionId if self._dlg_session is not None else ""
-        )
-        argumentString = droputils.serialize_applicationArgs(
-            self._applicationArgs, self._argumentPrefix, self._paramValueSeparator
-        )
+        # deal with named ports
+        inport_names = self.parameters['inputs'] \
+            if "inputs" in self.parameters else []
+        outport_names = self.parameters['outputs'] \
+            if "outputs" in self.parameters else []
+        keyargs, pargs = droputils.replace_named_ports(inputs.items(), outputs.items(), 
+            inport_names, outport_names, self.appArgs, argumentPrefix=self._argumentPrefix, 
+            separator=self._paramValueSeparator)
+        argumentString = f"{' '.join(pargs + keyargs)}"  # add kwargs to end of pargs
         # complete command including all additional parameters and optional redirects
-        cmd = f"{self.command} {argumentString} {self._cmdLineArgs} "
+        if len(argumentString.strip()) > 0:
+            # the _cmdLineArgs would very likely make the command line invalid
+            cmd = f"{self.command} {argumentString} "
+        else:
+            cmd = f"{self.command} {argumentString} {self._cmdLineArgs} "
         if self._outputRedirect:
             cmd = f"{cmd} > {self._outputRedirect}"
         if self._inputRedirect:
@@ -212,25 +231,19 @@ class BashShellBase(object):
         cmd = cmd.strip()
 
         app_uid = self.uid
-        # self.run_bash(self._command, self.uid, session_id, *args, **kwargs)
 
         # Replace inputs/outputs in command line with paths or data URLs
-        fsInputs = {uid: i for uid, i in inputs.items() if droputils.has_path(i)}
-        fsOutputs = {uid: o for uid, o in outputs.items() if droputils.has_path(o)}
         cmd = droputils.replace_path_placeholders(cmd, fsInputs, fsOutputs)
 
-        dataURLInputs = {
-            uid: i for uid, i in inputs.items() if not droputils.has_path(i)
-        }
-        dataURLOutputs = {
-            uid: o for uid, o in outputs.items() if not droputils.has_path(o)
-        }
         cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
 
         # Pass down daliuge-specific information to the subprocesses as environment variables
         env = os.environ.copy()
-        env["DLG_UID"] = app_uid
-        env["DLG_SESSION_ID"] = session_id
+        env.update({"DLG_UID": self._uid})
+        if self._dlg_session:
+            env.update({"DLG_SESSION_ID": self._dlg_session.sessionId})
+
+        env.update({"DLG_ROOT": utils.getDlgDir()})
 
         # Wrap everything inside bash
         cmd = ("/bin/bash", "-c", cmd)
@@ -319,7 +332,7 @@ class StreamingInputBashAppBase(BashShellBase, AppDROP):
             drop_state = DROPStates.COMPLETED
             execStatus = AppDROPStates.FINISHED
         except:
-            logger.exception("Error while executing %r" % (self,))
+            logger.exception("Error while executing %r", self)
             drop_state = DROPStates.ERROR
             execStatus = AppDROPStates.ERROR
         finally:
@@ -342,28 +355,17 @@ class StreamingInputBashAppBase(BashShellBase, AppDROP):
 # @par EAGLE_START
 # @param category BashShellApp
 # @param tag template
-# @param[in] cparam/command Command//String/readwrite/False//False/
-#     \~English The command to be executed
-# @param[in] cparam/input_redirection Input Redirection//String/readwrite/False//False/
-#     \~English The command line argument that specifies the input into this application
-# @param[in] cparam/output_redirection Output Redirection//String/readwrite/False//False/
-#     \~English The command line argument that specifies the output from this application
-# @param[in] cparam/command_line_arguments Command Line Arguments//String/readwrite/False//False/
-#     \~English Additional command line arguments to be added to the command line to be executed
-# @param[in] cparam/paramValueSeparator Param value separator/ /String/readwrite/False//False/
-#     \~English Separator character(s) between parameters on the command line
-# @param[in] cparam/argumentPrefix Argument prefix/"--"/String/readwrite/False//False/
-#     \~English Prefix to each keyed argument on the command line
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
-#     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
-#     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
-#     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
-#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
-#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param command Command//String/ComponentParameter/readwrite//False/False/The command to be executed
+# @param input_redirection Input Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the input into this application
+# @param output_redirection Output Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the output from this application
+# @param command_line_arguments Command Line Arguments//String/ComponentParameter/readwrite//False/False/Additional command line arguments to be added to the command line to be executed
+# @param paramValueSeparator Param value separator/ /String/ComponentParameter/readwrite//False/False/Separator character(s) between parameters on the command line
+# @param argumentPrefix Argument prefix/"--"/String/ComponentParameter/readwrite//False/False/Prefix to each keyed argument on the command line
+# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
 # @par EAGLE_END
 class BashShellApp(BashShellBase, BarrierAppDROP):
     """

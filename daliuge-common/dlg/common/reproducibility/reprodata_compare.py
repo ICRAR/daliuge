@@ -153,6 +153,8 @@ def write_outfile(data, outfilepath, outfilesuffix="summary", verbose=False):
         writer.writerow(fieldnames)
 
         for filepath, signature_data in data.items():
+            if signature_data == {}:
+                continue
             row = [filepath] + [signature_data[rmode.value] for rmode in ALL_RMODES]
             writer.writerow(row)
             if verbose:

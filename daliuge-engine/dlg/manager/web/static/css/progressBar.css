@@ -19,7 +19,7 @@
   }
   
   .node.expired :first-child, rect.expired {
-    fill: #700000;
+    fill: #888888;
   }
   
   .node.cancelled :first-child, rect.cancelled {
@@ -31,7 +31,7 @@
   }
 
   .node.deleted :first-child, rect.deleted {
-    color: #700000;
+    color: #cccccc;
   }
   
   /* AppDROP states */

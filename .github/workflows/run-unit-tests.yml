@@ -1,0 +1,88 @@
+name: Run unit tests
+
+on: [push, pull_request]
+
+jobs:
+
+  run_tests:
+    name: Run unit tests with python ${{matrix.python-version}} - ${{ matrix.desc }}
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        include:
+          - python-version: '3.8'
+            test_number: 0
+            engine: no
+            translator: yes
+            desc: "no engine"
+          - python-version: '3.8'
+            test_number: 1
+            desc: "no translator"
+            engine: yes
+            translator: no
+          - python-version: '3.9'
+            test_number: 2
+            desc: "full package"
+            engine: yes
+            translator: yes
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        name: Install Python
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install test dependencies
+        run: |
+          pip install -U coveralls pytest pytest-cov
+          pip install -U setuptools pip wheel dask dlg-example-cmpts
+
+      - name: Install daliuge-common
+        run: pip install -e daliuge-common/
+
+      - name: Install daliuge-translator
+        if: ${{ matrix.translator == 'yes' }}
+        run: pip install -e daliuge-translator/
+
+      - name: Install daliuge-engine
+        if: ${{ matrix.engine == 'yes' }}
+        run: pip install -e daliuge-engine/
+
+      - name: Run daliuge-translator tests
+        if: ${{ matrix.translator == 'yes' }}
+        run: |
+          COVFILES=" daliuge-translator/.coverage"
+          echo "COVFILES=$COVFILES" >> $GITHUB_ENV
+          cd daliuge-translator
+          pip install -r test-requirements.txt
+          py.test --cov
+
+      - name: Run daliugen-engine tests
+        if: ${{ matrix.engine == 'yes' }}
+        run: |
+          COVFILES="$COVFILES daliuge-engine/.coverage"
+          echo "COVFILES=$COVFILES" >> $GITHUB_ENV
+          cd daliuge-engine
+          py.test --cov
+
+      - name: Combine coverage
+        run: coverage combine $COVFILES
+
+      - name: Update to coveralls
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: ${{ matrix.test_number }}
+          COVERALLS_PARALLEL: true
+        run: coveralls --service=github
+
+  finish:
+    needs: run_tests
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Coveralls Finished
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        parallel-finished: true

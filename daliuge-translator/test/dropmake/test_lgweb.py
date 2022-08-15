@@ -32,7 +32,7 @@ from dlg.common import tool
 from dlg.restutils import RestClient, RestClientException
 
 lg_dir = pkg_resources.resource_filename(__name__, ".")  # @UndefinedVariable
-lgweb_port = 8084
+lgweb_port = 8086
 
 
 class TestLGWeb(unittest.TestCase):

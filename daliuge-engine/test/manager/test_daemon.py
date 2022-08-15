@@ -29,9 +29,26 @@ from dlg import utils, restutils
 from dlg.manager import constants
 from dlg.manager.client import MasterManagerClient
 from dlg.manager.proc_daemon import DlgDaemon
-from six.moves import http_client as httplib  # @UnresolvedImport
 
 _TIMEOUT = 10
+IDENTITY = lambda x: x
+
+def wait_until(update_condition, test_condition=IDENTITY, timeout=_TIMEOUT, interval=0.1):
+    timeout_time = time.time() + timeout
+    while time.time() < timeout_time:
+        output = update_condition()
+        if test_condition(output):
+            return output
+        time.sleep(interval)
+    return None
+
+
+def _get_dims_from_client(client, **kwargs):
+    return wait_until(lambda: client.dims(), **kwargs)
+
+
+def _get_nodes_from_client(client, **kwargs):
+    return wait_until(lambda: client.nodes(), **kwargs)
 
 
 class TestDaemon(unittest.TestCase):
@@ -104,12 +121,12 @@ class TestDaemon(unittest.TestCase):
     def test_nothing_starts(self):
         # Nothing should start now
         self.create_daemon(master=False, noNM=True, disable_zeroconf=True)
-        self.assertFalse(
-            utils.portIsOpen("localhost", constants.NODE_DEFAULT_REST_PORT, 0),
+        self.assertTrue(
+            utils.portIsClosed("localhost", constants.NODE_DEFAULT_REST_PORT, 0),
             "NM started but it should not have",
         )
-        self.assertFalse(
-            utils.portIsOpen("localhost", constants.MASTER_DEFAULT_REST_PORT, 0),
+        self.assertTrue(
+            utils.portIsClosed("localhost", constants.MASTER_DEFAULT_REST_PORT, 0),
             "NM started but it should not have",
         )
 
@@ -120,13 +137,79 @@ class TestDaemon(unittest.TestCase):
         # Both managers started fine. If they zeroconf themselves correctly then
         # if we query the MM it should know about its nodes, which should have
         # one element
-        nodes = self._get_nodes_from_master(_TIMEOUT)
+        mc = MasterManagerClient()
+        nodes = _get_nodes_from_client(mc)
         self.assertIsNotNone(nodes)
         self.assertEqual(
             1,
             len(nodes),
             "MasterManager didn't find the NodeManager running on the same node",
         )
+
+    def _test_zeroconf_dim_mm(self, disable_zeroconf=False):
+        # Start an empty daemon, then a DIM and a Master on their own
+        self.create_daemon(master=False, noNM=True, disable_zeroconf=disable_zeroconf)
+        self._start("island", http.HTTPStatus.OK, {"nodes": []})
+        self._start("master", http.HTTPStatus.OK)
+
+        # Check that dim registers to MM when using zeroconf
+        mc = MasterManagerClient()
+        if not disable_zeroconf:
+            def _test_dims(dims):
+                return dims and dims["islands"]
+            dims = _get_dims_from_client(mc, test_condition=_test_dims)
+            self.assertIsNotNone(dims)
+            return dims
+        return mc.dims()
+
+    def test_zeroconf_dim_mm(self):
+        dims = self._test_zeroconf_dim_mm(disable_zeroconf=False)
+        self.assertEqual(
+            1,
+            len(dims["islands"]),
+            "MasterManager didn't find the DataIslandManager with zeroconf",
+        )
+
+    def test_without_zeroconf_dim_mm(self):
+        dims = self._test_zeroconf_dim_mm(disable_zeroconf=True)
+        self.assertEqual(
+            0,
+            len(dims["islands"]),
+            "MasterManager found the DataIslandManager without zeroconf!?",
+        )
+
+    def _add_zeroconf_nm(self):
+        self._start("node", http.HTTPStatus.OK)
+        mc = MasterManagerClient()
+        return _get_nodes_from_client(mc)
+
+    def test_zeroconf_dim_nm_setup(self):
+        """
+        Sets up a mm with a node manager
+        Sets up a DIM with zeroconf discovery
+        Asserts that the mm attaches the nm to the discovered dim
+        """
+        self._test_zeroconf_dim_mm(disable_zeroconf=False)
+        nodes = self._add_zeroconf_nm()
+        self.assertIsNotNone(nodes)
+
+    def test_without_zeroconf_dim_nm_setup(self):
+        self._test_zeroconf_dim_mm(disable_zeroconf=True)
+        nodes = self._add_zeroconf_nm()['nodes']
+        self.assertEqual(0, len(nodes))
+
+    def test_zeroconf_nm_down(self):
+        self._test_zeroconf_dim_mm(disable_zeroconf=False)
+        nodes = self._add_zeroconf_nm()
+        self.assertIsNotNone(nodes)
+        self._stop("node", http.HTTPStatus.OK)
+        mc = MasterManagerClient()
+
+        def _test_nodes(nodes):
+            return not nodes['nodes']
+
+        new_nodes = _get_nodes_from_client(mc, test_condition=_test_nodes)['nodes']
+        self.assertEqual(0, len(new_nodes))
 
     def test_start_dataisland_via_rest(self):
 
@@ -135,7 +218,8 @@ class TestDaemon(unittest.TestCase):
         # Both managers started fine. If they zeroconf themselves correctly then
         # if we query the MM it should know about its nodes, which should have
         # one element
-        nodes = self._get_nodes_from_master(_TIMEOUT)
+        mc = MasterManagerClient()
+        nodes = _get_nodes_from_client(mc)
         self.assertIsNotNone(nodes)
         self.assertEqual(
             1,
@@ -154,13 +238,15 @@ class TestDaemon(unittest.TestCase):
 
         # start master and island manager
         self.create_daemon(master=True, noNM=False, disable_zeroconf=False)
-        nodes = self._get_nodes_from_master(_TIMEOUT)
+        mc = MasterManagerClient()
+        nodes = _get_nodes_from_client(mc)
         self._start("island", http.HTTPStatus.OK, {"nodes": nodes})
 
         # Both managers started fine. If they zeroconf themselves correctly then
         # if we query the MM it should know about its nodes, which should have
         # one element
-        nodes = self._get_nodes_from_master(_TIMEOUT)
+        mc = MasterManagerClient()
+        nodes = _get_nodes_from_client(mc)
         self.assertIsNotNone(nodes)
         self.assertEqual(
             1,
@@ -170,8 +256,8 @@ class TestDaemon(unittest.TestCase):
 
         # Check that the DataIsland stopped
         self._stop("island", http.HTTPStatus.OK, "")
-        self.assertFalse(
-            utils.portIsOpen("localhost", constants.ISLAND_DEFAULT_REST_PORT, _TIMEOUT),
+        self.assertTrue(
+            utils.portIsClosed("localhost", constants.ISLAND_DEFAULT_REST_PORT, _TIMEOUT),
             "The DIM did not stop successfully",
         )
 
@@ -183,7 +269,8 @@ class TestDaemon(unittest.TestCase):
         # Both managers started fine. If they zeroconf themselves correctly then
         # if we query the MM it should know about its nodes, which should have
         # one element
-        nodes = self._get_nodes_from_master(_TIMEOUT)
+        mc = MasterManagerClient()
+        nodes = _get_nodes_from_client(mc)
         self.assertIsNotNone(nodes)
         self.assertEqual(
             1,
@@ -193,14 +280,15 @@ class TestDaemon(unittest.TestCase):
 
         # Check that the NM stops
         self._stop("node", http.HTTPStatus.OK, "")
-        self.assertFalse(
-            utils.portIsOpen("localhost", constants.NODE_DEFAULT_REST_PORT, _TIMEOUT),
+        self.assertTrue(
+            utils.portIsClosed('localhost', constants.NODE_DEFAULT_REST_PORT, _TIMEOUT),
             "The node did not stop successfully",
         )
+
         # Check that the NM starts
         self._start("node", http.HTTPStatus.OK, {"pid": nodes})
         self.assertTrue(
-            utils.portIsOpen("localhost", constants.NODE_DEFAULT_REST_PORT, _TIMEOUT),
+            utils.portIsOpen('localhost', constants.NODE_DEFAULT_REST_PORT, _TIMEOUT),
             "The node did not start successfully",
         )
 
@@ -217,9 +305,21 @@ class TestDaemon(unittest.TestCase):
 
         # Check that the MM stops
         self._stop("master", http.HTTPStatus.OK, "")
-        self.assertFalse(
-            utils.portIsOpen("localhost", constants.MASTER_DEFAULT_REST_PORT, _TIMEOUT),
+        self.assertTrue(
+            utils.portIsClosed("localhost", constants.MASTER_DEFAULT_REST_PORT, _TIMEOUT),
             "The MM did not stop successfully",
+        )
+
+    def test_get_dims(self):
+        self.create_daemon(master=True, noNM=True, disable_zeroconf=False)
+        # Check that the DataIsland starts with the given nodes
+        mc = MasterManagerClient()
+        dims = _get_dims_from_client(mc)
+        self.assertIsNotNone(dims)
+        self.assertEqual(
+            0,
+            len(dims["islands"]),
+            "MasterManager didn't find the DataIslandManager running on the same node",
         )
 
     def _start(self, manager_name, expected_code, payload=None):
@@ -230,7 +330,7 @@ class TestDaemon(unittest.TestCase):
             headers["Content-Type"] = "application/json"
         conn.request(
             "POST",
-            "/managers/%s/start" % (manager_name,),
+            f"/managers/{manager_name}/start",
             body=payload,
             headers=headers,
         )
@@ -246,18 +346,9 @@ class TestDaemon(unittest.TestCase):
             payload = json.dumps(payload)
             headers["Content-Type"] = "application/json"
         conn.request(
-            "POST", "/managers/%s/stop" % (manager_name,), body=payload, headers=headers
+            "POST", f"/managers/{manager_name}/stop", body=payload, headers=headers
         )
         response = conn.getresponse()
         self.assertEqual(expected_code, response.status, response.read())
         response.close()
         conn.close()
-
-    def _get_nodes_from_master(self, timeout):
-        mc = MasterManagerClient()
-        timeout_time = time.time() + timeout
-        while time.time() < timeout_time:
-            nodes = mc.nodes()
-            if nodes:
-                return nodes
-            time.sleep(0.1)

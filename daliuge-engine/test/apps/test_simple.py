@@ -113,7 +113,7 @@ class TestSimpleApps(unittest.TestCase):
 
     def test_randomarrayapp(self):
         i = NullDROP("i", "i")
-        c = RandomArrayApp("c", "c")
+        c = RandomArrayApp("c", "c", keep_array=True)
         o = InMemoryDROP("o", "o")
         c.addInput(i)
         c.addOutput(o)
@@ -301,7 +301,7 @@ class TestSimpleApps(unittest.TestCase):
         _ = [d.addOutput(m) for d, m in zip(drops, mdrops)]
         _ = [X.addInput(m) for m in mdrops]
         X.addOutput(Z)
-        print(f"Number of inputs/outputs: {len(X.inputs)}, {len(X.outputs)}")
+        logger.info(f"Number of inputs/outputs: {len(X.inputs)}, {len(X.outputs)}")
         self._test_graph_runs([S, X, Z] + drops + mdrops, S, Z, timeout=200)
         # Need to run our 'copy' of the averaging APP
         num_array = []
@@ -317,25 +317,27 @@ class TestSimpleApps(unittest.TestCase):
         # Must be called to unlink all shared memory
         memory_manager.shutdown_all()
 
-    @unittest.skipIf(
-        sys.version_info < (3, 8), "Multiprocessing not compatible with Python < 3.8"
-    )
+    # @unittest.skipIf(
+    #     sys.version_info < (3, 8), "Multiprocessing not compatible with Python < 3.8"
+    # )
+    @unittest.skip
     def test_speedup(self):
         """
         Run serial and parallel test and report speedup.
         NOTE: In order to get the stdout you need to run pyest with
         --capture=tee-sys
         """
-        size = 2000
-        print("Starting serial test..")
+        size = 3000
+        logger.info("Starting serial test..")
         st = time.time()
         self.test_multi_listappendthrashing(size=size, parallel=False)
         t1 = time.time() - st
-        print("Starting parallel test..")
+        time.sleep(5)
+        logger.info("Starting parallel test..")
         st = time.time()
         self.test_multi_listappendthrashing(size=size, parallel=True)
         t2 = time.time() - st
-        print(f"Speedup: {t1 / t2:.2f} from {cpu_count(logical=False)} cores")
+        logger.info(f"Speedup: {t1 / t2:.2f} from {cpu_count(logical=False)} cores")
         # TODO: This is unpredictable, but maybe we can do something meaningful.
         # self.assertAlmostEqual(t1/cpu_count(logical=False), t2, 1)
         # How about this? We only need to see some type of speedup

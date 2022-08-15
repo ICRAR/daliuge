@@ -43,7 +43,7 @@ class SourceFlux(BarrierAppDROP):
         out = self.outputs[0]
 
         if logger.isEnabledFor(logging.INFO):
-            logger.info("Calculating source flux on %s.image" % (inp.path))
+            logger.info("Calculating source flux on %s.image", inp.path)
 
         import drivecasa
 
@@ -56,7 +56,7 @@ class SourceFlux(BarrierAppDROP):
         flux = float(casaout[0])
         if flux > 9e-4:
             if logger.isEnabledFor(logging.INFO):
-                logger.info("Valid flux found: %f" % (flux))
+                logger.info("Valid flux found: %f", flux)
         out.write(str(flux))
 
 
@@ -115,7 +115,7 @@ class Clean(BarrierAppDROP):
         vis = [i.path for i in inp]
 
         if logger.isEnabledFor(logging.INFO):
-            logger.info("Cleaning %r" % (vis))
+            logger.info("Cleaning %r", vis)
 
         q = Queue.Queue()
         t = threading.Thread(target=self.invoke_clean, args=(q, vis, out.path))
@@ -174,7 +174,7 @@ class Split(BarrierAppDROP):
         out = self.outputs[0]
 
         if logger.isEnabledFor(logging.INFO):
-            logger.info("Splitting %s" % (inp.path))
+            logger.info("Splitting %s", inp.path)
 
         q = Queue.Queue()
         t = threading.Thread(target=self.invoke_split, args=(q, inp.path, out.path))

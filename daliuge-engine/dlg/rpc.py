@@ -104,18 +104,20 @@ class ZeroRPCClient(RPCClientBase):
 
     def __init__(self, *args, **kwargs):
         super(ZeroRPCClient, self).__init__(*args, **kwargs)
-        if not hasattr(self, "_context"):
-            self._context = zerorpc.Context()
         self._zrpcclients = {}
         self._zrpcclientthreads = []
+        self._own_context = False
         logger.debug("RPC Client created")
 
     def __del__(self):
-        if self._context:
+        if self._own_context and self._context:
             self._context.term()
 
     def start(self):
         super(ZeroRPCClient, self).start()
+        if not hasattr(self, "_context"):
+            self._context = zerorpc.Context()
+            self._own_context = True
 
         # One per remote host
         self._zrpcclient_acquisition_lock = threading.Lock()
@@ -128,6 +130,9 @@ class ZeroRPCClient(RPCClientBase):
             t.join(10)
             if t.is_alive():
                 logger.warning("ZeroRPC client thread %s is still alive", t.name)
+        if self._own_context:
+            self._context.term()
+            self._context = None
 
     def get_client_for_endpoint(self, host, port):
 
@@ -275,13 +280,28 @@ class DropProxy(object):
     """
 
     def __init__(self, rpc_client, hostname, port, sessionId, uid):
-        self.rpc_client = ZeroRPCClient()
+        # The current version of multiprocessing support creates an RPCClient
+        # per DropProxy, disregarding the rpc_client parameter given here.
+        # This uses too many resources though, but is only needed if the NM is
+        # instructed to use multiprocessing support. To avoid this resource
+        # over-usage we then detect if the given rpc_client (an instance of
+        # NodeManagerBase) has been started with multiprocessing support (which
+        # is confusingly bound to there being a *thread* pool too) and only if
+        # we detect the situation we create our own RPCClient; otherwise we use
+        # the given rpc_client as is.
+        if hasattr(rpc_client, "_threadpool") and rpc_client._threadpool:
+            self.rpc_client = ZeroRPCClient()
+            self._own_rpc_client = True
+        else:
+            self.rpc_client = rpc_client
+            self._own_rpc_client = False
         self.hostname = hostname
         self.port = port
         self.session_id = sessionId
         self.uid = uid
         logger.debug("Created %r", self)
-        self.rpc_client.start()
+        if self._own_rpc_client:
+            self.rpc_client.start()
 
     def handleEvent(self, evt):
         pass
@@ -304,4 +324,5 @@ class DropProxy(object):
         )
 
     def __del__(self):
-        self.rpc_client.shutdown()
+        if self._own_rpc_client:
+            self.rpc_client.shutdown()

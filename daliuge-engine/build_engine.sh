@@ -39,16 +39,15 @@ case "$1" in
         exit 0;;
     "slim")
         C_TAG="master"
-        [[ ! -z $2 ]] && C_TAG=$2
-        echo "Building daliuge-engine slim version ${VCS_TAG} using daliuge-common:${C_TAG}"
-        docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-engine:${DEV_TAG} -f docker/Dockerfile.dev .
+        echo "Building daliuge-engine slim version ${VCS_TAG} using daliuge-common:${VCS_TAG}"
+        docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-engine.big:${VCS_TAG} -f docker/Dockerfile .
         echo "Build finished! Slimming the image now"
         echo ">>>>> docker-slim output <<<<<<<<<"
         docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock dslim/docker-slim build --include-shell \
             --include-path /etc --include-path /usr/local/lib --include-path /usr/local/bin --include-path /usr/lib/python3.8 \
             --include-path /usr/lib/python3 --include-path /dlg --include-path /daliuge --publish-exposed-ports=true \
-            --http-probe-exec start_local_managers.sh --http-probe=true --tag=icrar/daliuge-engine.slim:${DEV_TAG}\
-            icrar/daliuge-engine:${DEV_TAG} \
+            --http-probe-exec start_local_managers.sh --http-probe=true --tag=icrar/daliuge-engine:${VCS_TAG}\
+            icrar/daliuge-engine.big:${VCS_TAG} \
 	    ;;
     *)
         echo "Usage: build_engine.sh <dep|dev|devall|slim>"

@@ -1,0 +1,25 @@
+name: Run pylint
+
+on: [push, pull_request]
+
+jobs:
+
+  pylint:
+    name: Build pylint
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        name: Install Python
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install pylint
+
+      - name: Run pylint
+        run: |
+          pylint daliuge-common daliuge-translator daliuge-engine
