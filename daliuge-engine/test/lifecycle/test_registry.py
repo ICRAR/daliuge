@@ -22,14 +22,13 @@
 import os
 import sqlite3
 import unittest
+import tempfile
 
 from dlg.data.drops.memory import InMemoryDROP
 from dlg.lifecycle.registry import RDBMSRegistry
 
 
-DBFILE = "/tmp/testing_dlm.db"
-# DBFILE = ":memory:"
-
+DBFILE = tempfile.mktemp()
 
 class TestRDBMSRegistry(unittest.TestCase):
     def setUp(self):
