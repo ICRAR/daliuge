@@ -272,9 +272,9 @@ class PyFuncApp(BarrierAppDROP):
         """
         BarrierAppDROP.initialize(self, **kwargs)
 
-        self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
+        self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
 
-        self.func_code = self._getArg(kwargs, "func_code", None)
+        self.func_code = self._popArg(kwargs, "func_code", None)
 
         # check for function definition arguments in applicationArgs
         self.func_def_keywords = [

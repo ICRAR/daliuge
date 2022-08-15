@@ -701,7 +701,7 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
     """Simple branch app that is told the result of its condition"""
 
     def initialize(self, **kwargs):
-        self.result = self._getArg(kwargs, "result", True)
+        self.result = self._popArg(kwargs, "result", True)
         BranchAppDrop.initialize(self, **kwargs)
 
     def run(self):
@@ -749,7 +749,7 @@ class ListAppendThrashingApp(BarrierAppDROP):
     )
 
     def initialize(self, **kwargs):
-        self.size = self._getArg(kwargs, "size", 100)
+        self.size = self._popArg(kwargs, "size", 100)
         self.marray = []
         super(ListAppendThrashingApp, self).initialize(**kwargs)
 
