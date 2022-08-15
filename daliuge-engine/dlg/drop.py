@@ -1182,13 +1182,13 @@ class PathBasedDrop(object):
         parts = []
         if self._dlg_session:
             parts.append(".")
-            parts.append(self._dlg_session.sessionId)
         else:
             parts.append("/tmp/daliuge_tfiles")
         if dirname:
             parts.append(dirname)
 
         the_dir = os.path.abspath(os.path.normpath(os.path.join(*parts)))
+        logger.debug("Path used for drop: %s", the_dir)
         createDirIfMissing(the_dir)
         return the_dir
 
@@ -2122,6 +2122,22 @@ class ContainerDROP(DataDROP):
             return any([c.exists() for c in self._children])
         return True
 
+##
+# TODO: This needs some more work
+# @brief Directory
+# @details A ContainerDROP that represents a filesystem directory. It only allows
+# FileDROPs and DirectoryContainers to be added as children. Children
+# can only be added if they are placed directly within the directory
+# represented by this DirectoryContainer.
+# @par EAGLE_START
+# @param category Directory
+# @param tag future
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param check_exists Check path exists/True/Boolean/ComponentParameter/readwrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
+# @param dirname Directory name//String/ComponentParameter/readwrite//False/False/"Directory name/path"
+# @param dummy dummy//String/OutputPort/readwrite//False/False/Dummy output port
+# @par EAGLE_END
 
 class DirectoryContainer(PathBasedDrop, ContainerDROP):
     """
@@ -2143,7 +2159,8 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
 
         directory = kwargs["dirname"]
 
-        if self.check_exists is True:
+        logger.debug("Checking existence of %s %s", directory, self.check_exists)
+        if "check_exists" in kwargs and kwargs["check_exists"] is True:
             if not os.path.isdir(directory):
                 raise InvalidDropException(self, "%s is not a directory" % (directory))
 
