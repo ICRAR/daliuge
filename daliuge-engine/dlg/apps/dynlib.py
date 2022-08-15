@@ -379,7 +379,7 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
 
     def initialize(self, **kwargs):
         super(DynlibApp, self).initialize(**kwargs)
-        self.ranks = self._getArg(kwargs, "rank", None)
+        self.ranks = self._popArg(kwargs, "rank", None)
 
     def run(self):
         input_closers = prepare_c_inputs(self._c_app, self.inputs)
@@ -475,7 +475,7 @@ class DynlibProcApp(BarrierAppDROP):
         if "lib" not in kwargs:
             raise InvalidDropException(self, "library not specified")
         self.libname = kwargs.pop("lib")
-        self.timeout = self._getArg(kwargs, "timeout", 600)  # 10 minutes
+        self.timeout = self._popArg(kwargs, "timeout", 600)  # 10 minutes
         self.app_params = kwargs
         self.proc = None
 
