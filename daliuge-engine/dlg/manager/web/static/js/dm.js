@@ -547,9 +547,9 @@ function _addNode(g, doSpec) {
 	else if( doSpec.type == 'plain' ) {
 		notes += 'storage: ' + doSpec.storage;
 	}
-
+	
 	var oid = doSpec.oid;
-	var html = '<div class="drop-label" id="id_' + oid + '">';
+	var html = '<div class="drop-label '+typeShape+'" id="id_' + oid + '">';
 	html += '<span class="notes">' + notes + '</span>';
 	html += '<span style="font-size: 13px;">' + oid + '</span>';
 	html += "</div>";
@@ -623,7 +623,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 
 			var allCompleted = statuses.reduce(function(prevVal, curVal, idx, arr) {
 				var cur_status = get_status_name(curVal);
-				return prevVal && (cur_status == 'completed' || cur_status == 'finished' || cur_status == 'error' || cur_status == 'cancelled' || cur_status == 'skipped');
+				return prevVal && (cur_status == 'completed' || cur_status == 'finished' || cur_status == 'error' || cur_status == 'cancelled' || cur_status == 'skipped' || cur_status == 'deleted' || cur_status == 'expired');
 			}, true);
 			if (!allCompleted) {
 				updateStatesDelayTimer = d3.timer(updateStates, delay);

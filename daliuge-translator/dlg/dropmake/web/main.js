@@ -21,15 +21,37 @@ $(document).ready(function () {
 
     updateDeployOptionsDropdown()
 
+    $("#aboutModal #aboutLicense").load("/static/license.html")
+
     //keyboard shortcuts
+    var keyboardShortcuts = []
+    keyboardShortcuts.push({name:"Open Settings", shortcut:"O", code:79, action: "$('#settingsModal').modal('toggle')"})
+    keyboardShortcuts.push({name:"Deploy", shortcut:"D", code:75, action: "$('#shortcutsModal').modal('toggle')"})
+    keyboardShortcuts.push({name:"Open Keyboardshortcuts Modal", shortcut:"K", code:68, action: "$('#activeDeployMethodButton').click()"})
+
+    //fill out keyboard shortcuts modal
+    keyboardShortcuts.forEach(element => { 
+        var shortCutItem =   '<div class="col-lg-6">'+
+                            '<div class="shortCutsModalItem">'+
+                                '<span>'+element.name+'</span>'+
+                                '<span class="shortCutsModalItemRight">'+element.shortcut+'</span>'+
+                            '</div>'+
+                        '</div>'
+        $("#shortcutsModal .modal-body .row").append(shortCutItem)
+    })
+
+    //keyboard shortcuts execution
     $(document).keydown(function(e){
         if($("input").is(":focus")){
             return
         }
-        if (e.which == 79) //open settings modal on o
-        {
-            $('#settingsModal').modal('toggle')
-        };
+        keyboardShortcuts.forEach(element => { 
+            
+            if (e.which == element.code) //open settings modal on o
+            {
+                eval(element.action)
+            }
+        })
     })
 });
 
@@ -38,11 +60,19 @@ function openSettingsModal(){
     $('#settingsModal').modal("show")
 }
 
-async function initiateDeploy(method, selected, name){
+async function initiateDeploy(method, selected, clickedName){
+    var clickedUrl
+    JSON.parse(window.localStorage.getItem("deployMethods")).forEach(element => {
+        if(element.name === clickedName){
+            clickedUrl = element.url
+        }
+    })
+
     if (selected === false){
-        changeSelectedDeployMethod(name)
+        await changeSelectedDeployMethod(clickedName, clickedUrl)
     }
-    var activeUrlReachable = await checkUrlStatus(window.localStorage.getItem("manager_url"))
+
+    var activeUrlReachable = await checkUrlStatus(clickedUrl)
 
     if(!activeUrlReachable){
         $("#warning-alert").fadeTo(2000, 1000).slideUp(200, function() {
@@ -58,21 +88,27 @@ async function initiateDeploy(method, selected, name){
         $("#gen_helm_button").val("Generate &amp; Deploy Physical Graph")
         $("#dlg_helm_deploy").prop("checked", true)
         $("#pg_helm_form").submit()
-    }else if(method === "rest"){
+    }else if(method === "rest-ood"){
         restDeploy()
+    } else if(method === "rest-direct"){
+        directRestDeploy()
     }
 }
 
-function changeSelectedDeployMethod(name) {
-    var deployMethodsArray = JSON.parse(localStorage.getItem("deployMethods"))
-    deployMethodsArray.forEach(element => {
-        element.active = "false"
-        if(element.name === name){
-            element.active = "true"
-        }
+async function changeSelectedDeployMethod(name,manager_url) {
+    return new Promise((resolve, reject) => {
+        var deployMethodsArray = JSON.parse(localStorage.getItem("deployMethods"))
+        $("#managerUrlInput").val(manager_url);
+        deployMethodsArray.forEach(element => {
+            element.active = "false"
+            if(element.name === name){
+                element.active = "true"
+            }
+        })
+        window.localStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray))
+        updateDeployOptionsDropdown()
+        resolve(true)
     })
-    localStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray))
-    updateDeployOptionsDropdown()
 }
 
 function updateDeployOptionsDropdown() {
@@ -91,7 +127,7 @@ function updateDeployOptionsDropdown() {
             selectedUrl=element.url
             //active option
             $("#deployDropdowns").prepend(
-                `<a href='javascript:void(0)' id='activeDeployMethodButton'  onclick='initiateDeploy("`+element.deployMethod+`",true,"`+element.name+`")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph vi method: `+element.deployMethod+`' value='Deploy Physical Graph via `+element.deployMethod+`'>Deploy: `+element.name+`</a>`
+                `<a href='javascript:void(0)' id='activeDeployMethodButton'  onclick='initiateDeploy("`+element.deployMethod+`",true,"`+element.name+`")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph vi method: `+element.deployMethod+` [D]' value='Deploy Physical Graph via `+element.deployMethod+`'>Deploy: `+element.name+`</a>`
             )
             checkActiveDeployMethod(selectedUrl)
         }
@@ -300,14 +336,17 @@ function fillOutSettings() {
 
         var directOption =  '<option value="direct">Direct</option>'
         var helmOption =  '<option value="helm">Helm</option>'
-        var restOption =  '<option value="rest">Rest</option>'
+        var restOODOption =  '<option value="rest-ood">Rest-OOD</option>'
+        var restDirectOption = '<option value="rest-direct">Rest-Direct</option>'
 
         if(element.deployMethod === "direct"){
             directOption =  '<option value="direct" selected="true">Direct</option>'
         }else if(element.deployMethod === "helm"){
             helmOption =  '<option value="helm" selected="true">Helm</option>'
-        }else if(element.deployMethod === "rest"){
-            restOption = '<option value="rest" selected="true">Rest</option>'
+        }else if(element.deployMethod === "rest-ood"){
+            restOODOption = '<option value="rest-ood" selected="true">Rest-OOD</option>'
+        } else if(element.deployMethod === "rest-direct"){
+            restDirectOption = '<option value="rest-direct" selected="true">Rest-Direct</option>'
         }
 
         var deplpoyMethodRow = '<div class="input-group">'+
@@ -317,7 +356,8 @@ function fillOutSettings() {
         '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod">'+
             directOption+
             helmOption+
-            restOption+
+            restOODOption+
+            restDirectOption+
         '</select></div>'+
         '<input type="text" class="form-control deployMethodActive" value="'+element.active+'">'+
         '<button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>'+
@@ -331,7 +371,8 @@ function addDeployMethod(){
 
     var directOption =  '<option value="direct" selected="true">Direct</option>'
     var helmOption =  '<option value="helm">Helm</option>'
-    var restOption =  '<option value="rest">Rest</option>'
+    var restOODOption =  '<option value="rest-ood">Rest-OOD</option>'
+    var restDirectOption = '<option value="rest-direct">Rest-Direct</option>'
 
     var deplpoyMethodRow = '<div class="input-group">'+
     '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class=" deployMethodName" value=""></div>'+
@@ -340,7 +381,8 @@ function addDeployMethod(){
     '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod" name="Deploy Method">'+
         directOption+
         helmOption+
-        restOption+
+        restOODOption+
+        restDirectOption+
     '</select></div>'+
     '<input type="text" class="form-control deployMethodActive" value="false">'+
     '<button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>'+
@@ -432,9 +474,8 @@ function handleFetchErrors(response) {
     return response;
 }
 
-async function helmDeploy() {
-    // Here as a placeholder until a single rest-deployment is worked out
-    // This code will largely be a copy form restDeploy, but slightly different
+async function directRestDeploy(){
+    // fetch manager host and port from local storage
     murl = window.localStorage.getItem("manager_url");
     if (!murl) {
         saveSettings();
@@ -443,9 +484,9 @@ async function helmDeploy() {
             fillOutSettings()
             murl = window.localStorage.getItem("manager_url");
         })
-    }
+    };
     var manager_url = new URL(murl);
-    console.log("In Helm Deploy")
+    console.log("In Direct REST Deploy");
 
     const manager_host = manager_url.hostname;
     const manager_port = manager_url.port;
@@ -465,23 +506,27 @@ async function helmDeploy() {
     console.log("Manager prefix:'" + manager_prefix + "'");
     console.log("Request mode:'" + request_mode + "'");
 
+
     // sessionId must be unique or the request will fail
     const lgName = pgtName.substring(0, pgtName.lastIndexOf("_pgt.graph"));
     const sessionId = lgName + "-" + Date.now();
     console.log("sessionId:'" + sessionId + "'");
 
-    // build urls
-    // the manager_url in this case has to point to daliuge_ood
-    const create_helm_url = manager_url + "/api/helm/start";
-    const pgt_url = "/gen_pg?tpl_nodes_len=1&pgt_id=" + pgtName; // TODO: tpl_nodes_len >= nodes in LG
-    const node_list_url = manager_url + "/api/nodes";
-    const pg_spec_url = "/gen_pg_spec";
-    const create_session_url = manager_url + "/api/sessions";
-    const append_graph_url = manager_url + "/api/sessions/" + sessionId + "/graph/append";
-    const deploy_graph_url = manager_url + "/api/sessions/" + sessionId + "/deploy";
-    const mgr_url = manager_url + "/session?sessionId=" + sessionId;
-    // fetch the PGT from this server
-    console.log("sending request to ", pgt_url);
+    const nodes_url = manager_url + "/api/nodes";
+
+    const nodes = await fetch(nodes_url, {
+        method: 'GET',
+        mode: request_mode
+    })
+        .then(handleFetchErrors)
+        .then(response => response.json())
+        .catch(function (error){
+            showMessageModal('Error', error + "\nGetting Nodes unsuccessful");
+        })
+    console.log(nodes)
+
+    const pgt_url = "/gen_pg?tpl_nodes_len=" + nodes.length.toString() + "&pgt_id=" + pgtName;
+      console.log("sending request to ", pgt_url);
     console.log("graph name:", pgtName);
     const pgt = await fetch(pgt_url, {
         method: 'GET',
@@ -489,34 +534,19 @@ async function helmDeploy() {
         .then(handleFetchErrors)
         .then(response => response.json())
         .catch(function (error) {
-            showMessageModal("Error", error + "\nGetting PGT unsuccessful: Unable to continue!");
+            showMessageModal('Error', error + "\nGetting PGT unsuccessful: Unable to continue!");
         });
-    // fetch the nodelist from engine
-    console.log("sending request to ", node_list_url);
-    const node_list = await fetch(node_list_url, {
-        method: 'GET',
-        // mode: request_mode,
-        // credentials: 'include',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Origin': 'http://localhost:8084'
-        },
-    })
-        .then(handleFetchErrors)
-        .then(response => response.json())
-        .catch(function (error) {
-            showMessageModal('Error', error + "\nGetting node_list unsuccessful: Unable to continue!");
-        });
-    console.log("node_list", node_list);
-    // build object containing manager data
+
+    console.log("node_list", nodes);
     const pg_spec_request_data = {
         manager_host: manager_host,
-        node_list: node_list,
+        node_list: nodes,
         pgt_id: pgt_id
     }
 
     console.log(pg_spec_request_data);
     // request pg_spec from translator
+    const pg_spec_url = "/gen_pg_spec";
     const pg_spec_response = await fetch(pg_spec_url, {
         method: 'POST',
         mode: request_mode,
@@ -530,10 +560,8 @@ async function helmDeploy() {
         .catch(function (error) {
             showMessageModal('Error', error + "\nGetting pg_spec unsuccessful: Unable to continue!");
         });
-
-    console.log("pg_spec response", pg_spec_response);
-    // create session on engine
     const session_data = {"sessionId": sessionId};
+    const create_session_url = manager_url + "/api/sessions";
     const create_session = await fetch(create_session_url, {
         credentials: 'include',
         cache: 'no-cache',
@@ -558,6 +586,7 @@ async function helmDeploy() {
     console.log("compressed_pg_spec", compressed_pg_spec);
 
     // append graph to session on engine
+    const append_graph_url = manager_url + "/api/sessions/" + sessionId + "/graph/append";
     const append_graph = await fetch(append_graph_url, {
         credentials: 'include',
         method: 'POST',
@@ -579,6 +608,7 @@ async function helmDeploy() {
     console.log("append graph response", append_graph);
     // deploy graph
     // NOTE: URLSearchParams here turns the object into a x-www-form-urlencoded form
+    const deploy_graph_url = manager_url + "/api/sessions/" + sessionId + "/deploy";
     const deploy_graph = await fetch(deploy_graph_url, {
         credentials: 'include',
         method: 'POST',
@@ -593,12 +623,10 @@ async function helmDeploy() {
             showMessageModal('Error', error + "\nUnable to continue!");
         });
     //showMessageModal("Chart deployed" , "Check the dashboard of your k8s cluster for status updates.");
+    const mgr_url = manager_url + "/session?sessionId=" + sessionId;
     console.log("deploy graph response", deploy_graph);
-    // Open DIM session page in new tab
-    // Until we have somewhere else to re-direct helm deployments. This is probably for the best.
-    //window.open(mgr_url, '_blank').focus();
+    window.open(mgr_url, '_blank').focus();
 }
-
 
 async function restDeploy() {
     // fetch manager host and port from local storage

@@ -556,17 +556,24 @@ class LGNode:
                         else:
                             kwargs[k_v[0]] = k_v[1]
 
-    def _getIdText(self, port="inputPorts", index=0):
+    def _getIdText(self, port="inputPorts", index=0, portId=None):
         """
         Return IdText of port if it exists
         """
         idText = None
-        if (
-            port in self.jd
-            and len(self.jd[port]) > index
-            and "IdText" in self.jd[port][index]
-        ):
-            idText = self.jd[port][index]["IdText"]
+        if not portId:
+            if (
+                port in self.jd
+                and len(self.jd[port]) > index
+                and "IdText" in self.jd[port][index]
+            ):
+                idText = self.jd[port][index]["IdText"]
+        else:
+            if (
+                port in self.jd
+            ):
+                idText = [p["IdText"] for p in self.jd["inputPorts"]
+                    if p["Id"] == portId][0]
         return idText
 
     def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
@@ -697,6 +704,7 @@ class LGNode:
             drop_spec = dropdict(
                 {"oid": oid, "type": DropType.APP, "app": app_str, "rank": rank}
             )
+            self._update_key_value_attributes(kwargs)
             if "execution_time" in self.jd:
                 kwargs["tw"] = int(self.jd["execution_time"])
             else:
@@ -765,6 +773,7 @@ class LGNode:
             kwargs["additionalBindings"] = str(self.jd.get("additionalBindings", ""))
             kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
             kwargs["shmSize"] = str(self.jd.get("shmSize", ""))
+            self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
 
         elif drop_type == Categories.GROUP_BY:
@@ -1314,9 +1323,10 @@ class LG:
             tdrop.addStreamingInput(dropSpec_null, IdText="stream")
             self._drop_dict["new_added"].append(dropSpec_null)
         elif s_type in APP_DROP_TYPES:
-            # target is data drop; get name of input port
+            # use name from source and ID from target
+            sIdText = slgn._getIdText("outputPorts")
             tIdText = tlgn._getIdText("inputPorts")
-            sdrop.addOutput(tdrop, IdText=tIdText)
+            sdrop.addOutput(tdrop, IdText=sIdText)
             tdrop.addProducer(sdrop, IdText=tIdText)
             if Categories.BASH_SHELL_APP == s_type:
                 bc = src_drop["command"]
@@ -1332,6 +1342,10 @@ class LG:
             else:  # sdrop is a data drop
                 # there should be only one port, get the name
                 sIdText = slgn._getIdText("outputPorts")
+                # could be multiple ports, need to identify
+                portId = llink["toPort"] if "toPort" in llink else None
+                tIdText = tlgn._getIdText("inputPorts", 
+                            portId=portId)
                 if llink.get("is_stream", False):
                     logger.debug(
                         "link stream connection %s to %s", sdrop["oid"], tdrop["oid"]
@@ -1341,7 +1355,7 @@ class LG:
                 else:
                     # print("not a stream from %s to %s" % (llink['from'], llink['to']))
                     sdrop.addConsumer(tdrop, IdText=sIdText)
-                    tdrop.addInput(sdrop, IdText=sIdText)
+                    tdrop.addInput(sdrop, IdText=tIdText)
             if Categories.BASH_SHELL_APP == t_type:
                 bc = tgt_drop["command"]
                 bc.add_input_param(slgn.id, src_drop["oid"])
@@ -1384,8 +1398,8 @@ class LG:
                     for i, ga_drop in enumerate(sdrops):
                         if ga_drop["oid"] not in self._gather_cache:
                             logger.warning(
-                                "Gather %s Drop not yet in cache, sequentialisation may fail!"
-                                % slgn.text
+                                "Gather %s Drop not yet in cache, sequentialisation may fail!",
+                                slgn.text
                             )
                             continue
                         j = (i + 1) * slgn.gather_width

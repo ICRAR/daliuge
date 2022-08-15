@@ -43,13 +43,10 @@ import threading
 import time
 import re
 import sys
-import inspect
 import binascii
-from typing import List, Optional, Union
+from typing import List, Union
 
 import numpy as np
-import pyarrow.plasma as plasma
-import six
 from dlg.common.reproducibility.constants import (
     ReproducibilityFlags,
     REPRO_DEFAULT,
@@ -58,7 +55,6 @@ from dlg.common.reproducibility.constants import (
 )
 from dlg.common.reproducibility.reproducibility import common_hash
 from merklelib import MerkleTree
-from six import BytesIO
 
 from .ddap_protocol import (
     ExecutionMode,
@@ -383,17 +379,25 @@ class AbstractDROP(EventFirer):
             DROPStates.INITIALIZED
         )  # no need to use synchronised self.status here
 
+    _members_cache = {}
+
+    def _get_members(self):
+        cls = self.__class__
+        if cls not in AbstractDROP._members_cache:
+            members = [
+                (name, val)
+                for c in cls.__mro__[:-1]
+                for name, val in vars(c).items()
+                if not (inspect.isfunction(val) or isinstance(val, property))
+            ]
+            AbstractDROP._members_cache[cls] = members
+        return AbstractDROP._members_cache[cls]
+
     def _extract_attributes(self, **kwargs):
         """
         Extracts component and app params then assigns them to class instance attributes.
         Component params take pro
         """
-        def getmembers(object, predicate=None):
-            for cls in object.__class__.__mro__[:-1]:
-                for k, v in vars(cls).items():
-                    if not predicate or predicate(v):
-                        yield k, v
-
         def get_param_value(attr_name, default_value):
             has_component_param = attr_name in kwargs
             has_app_param = 'applicationArgs' in kwargs \
@@ -410,9 +414,7 @@ class AbstractDROP(EventFirer):
             return param
 
         # Take a class dlg defined parameter class attribute and create an instanced attribute on object
-        for attr_name, member in getmembers(
-            self, lambda a: not (inspect.isfunction(a) or isinstance(a, property))
-        ):
+        for attr_name, member in self._get_members():
             if isinstance(member, dlg_float_param):
                 value = get_param_value(attr_name, member.default_value)
                 if value is not None and value != "":
@@ -692,7 +694,7 @@ class AbstractDROP(EventFirer):
                 # Set as committed
             self._committed = True
         else:
-            logger.debug("Trying to re-commit DROP %s, cannot overwrite." % self)
+            logger.debug("Trying to re-commit DROP %s, cannot overwrite.", self)
 
     @property
     def oid(self):
@@ -849,7 +851,7 @@ class AbstractDROP(EventFirer):
     def parent(self, parent):
         if self._parent and parent:
             logger.warning(
-                "A parent is already set in %r, overwriting with new value" % (self,)
+                "A parent is already set in %r, overwriting with new value", self
             )
         if parent:
             prevParent = self._parent
@@ -1045,8 +1047,8 @@ class AbstractDROP(EventFirer):
         if scuid in self._streamingConsumers_uids:
             return
         logger.debug(
-            "Adding new streaming streaming consumer for %r: %s"
-            % (self, streamingConsumer)
+            "Adding new streaming streaming consumer for %r: %s",
+            self, streamingConsumer
         )
         self._streamingConsumers.append(streamingConsumer)
 
@@ -1137,12 +1139,14 @@ class AbstractDROP(EventFirer):
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             self._closeWriters()
             self.status = DROPStates.CANCELLED
+        self.completedrop()
 
     def skip(self):
         """Moves this drop to the SKIPPED state closing any writers we opened"""
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             self._closeWriters()
             self.status = DROPStates.SKIPPED
+        self.completedrop()
 
     @property
     def node(self):
@@ -1239,7 +1243,7 @@ class DataDROP(AbstractDROP):
             )
 
         io = self.getIO()
-        logger.debug("Opening drop %s" % (self.oid))
+        logger.debug("Opening drop %s", self.oid)
         io.open(OpenMode.OPEN_READ, **kwargs)
 
         # Save the IO object in the dictionary and return its descriptor instead
@@ -1341,8 +1345,8 @@ class DataDROP(AbstractDROP):
         if nbytes != dataLen:
             # TODO: Maybe this should be an actual error?
             logger.warning(
-                "Not all data was correctly written by %s (%d/%d bytes written)"
-                % (self, nbytes, dataLen)
+                "Not all data was correctly written by %s (%d/%d bytes written)",
+                self, nbytes, dataLen
             )
 
         # see __init__ for the initialization to None
@@ -1368,12 +1372,12 @@ class DataDROP(AbstractDROP):
             else:
                 if remaining < 0:
                     logger.warning(
-                        "Received and wrote more bytes than expected: "
-                        + str(-remaining)
+                        "Received and wrote more bytes than expected: %d",
+                        -remaining
                     )
                 logger.debug(
-                    "Automatically moving %r to COMPLETED, all expected data arrived"
-                    % (self,)
+                    "Automatically moving %r to COMPLETED, all expected data arrived",
+                    self
                 )
                 self.setCompleted()
         else:
@@ -1487,16 +1491,13 @@ class DataDROP(AbstractDROP):
 # @par EAGLE_START
 # @param category File
 # @param tag daliuge
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
-# @param[in] cparam/check_filepath_exists Check file path exists/True/Boolean/readwrite/False//False/
-#     \~English Perform a check to make sure the file path exists before proceeding with the application
-# @param[in] cparam/filepath File Path//String/readwrite/False//False/
-#     \~English Path to the file for this node
-# @param[in] cparam/dirname Directory name//String/readwrite/False//False/
-#     \~English Path to the file for this node
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param check_filepath_exists Check file path exists/True/Boolean/ComponentParameter/readwrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
+# @param filepath File Path//String/ComponentParameter/readwrite//False/False/Path to the file for this node
+# @param dirname Directory name//String/ComponentParameter/readwrite//False/False/Path to the file for this node
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class FileDROP(DataDROP, PathBasedDrop):
     """
@@ -1653,7 +1654,7 @@ class FileDROP(DataDROP, PathBasedDrop):
                     pass
             except:
                 self.status = DROPStates.ERROR
-                logger.error("Path not accessible: %s" % self.path)
+                logger.error("Path not accessible: %s", self.path)
             self._size = 0
         # Signal our subscribers that the show is over
         self._fire("dropCompleted", status=DROPStates.COMPLETED)
@@ -1681,22 +1682,16 @@ class FileDROP(DataDROP, PathBasedDrop):
 # @par EAGLE_START
 # @param category NGAS
 # @param tag daliuge
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
-# @param[in] cparam/ngsSrv NGAS Server/localhost/String/readwrite/False//False/
-#     \~English The URL of the NGAS Server
-# @param[in] cparam/ngasPort NGAS Port/7777/Integer/readwrite/False//False/
-#     \~English The port of the NGAS Server
-# @param[in] cparam/ngasFileId File ID//String/readwrite/False//False/
-#     \~English File ID on NGAS (for retrieval only)
-# @param[in] cparam/ngasConnectTimeout Connection timeout/2/Integer/readwrite/False//False/
-#     \~English Timeout for connecting to the NGAS server
-# @param[in] cparam/ngasMime NGAS mime-type/"text/ascii"/String/readwrite/False//False/
-#     \~English Mime-type to be used for archiving
-# @param[in] cparam/ngasTimeout NGAS timeout/2/Integer/readwrite/False//False/
-#     \~English Timeout for receiving responses for NGAS
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param ngasSrv NGAS Server/localhost/String/ComponentParameter/readwrite//False/False/The URL of the NGAS Server
+# @param ngasPort NGAS Port/7777/Integer/ComponentParameter/readwrite//False/False/The port of the NGAS Server
+# @param ngasFileId File ID//String/ComponentParameter/readwrite//False/False/File ID on NGAS (for retrieval only)
+# @param ngasConnectTimeout Connection timeout/2/Integer/ComponentParameter/readwrite//False/False/Timeout for connecting to the NGAS server
+# @param ngasMime NGAS mime-type/"text/ascii"/String/ComponentParameter/readwrite//False/False/Mime-type to be used for archiving
+# @param ngasTimeout NGAS timeout/2/Integer/ComponentParameter/readwrite//False/False/Timeout for receiving responses for NGAS
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class NgasDROP(DataDROP):
     """
@@ -1710,6 +1705,7 @@ class NgasDROP(DataDROP):
     ngasConnectTimeout = dlg_int_param("ngasConnectTimeout", 2)
     ngasMime = dlg_string_param("ngasMime", "application/octet-stream")
     len = dlg_int_param("len", -1)
+    ngas_checksum = None
 
     def initialize(self, **kwargs):
         if self.len == -1:
@@ -1772,9 +1768,10 @@ class NgasDROP(DataDROP):
         try:
             stat = self.getIO().fileStatus()
             logger.debug(
-                "Setting size of NGASDrop %s to %s" % (self.fileId, stat["FileSize"])
+                "Setting size of NGASDrop %s to %s", self.fileId, stat["FileSize"]
             )
             self._size = int(stat["FileSize"])
+            self.ngas_checksum = str(stat["Checksum"])
         except:
             # we''ll try this again in case there is some other issue
             # try:
@@ -1798,11 +1795,9 @@ class NgasDROP(DataDROP):
 
     # Override
     def generate_reproduce_data(self):
-        # TODO: This is a bad implementation. Will need to sort something better out
-        from .droputils import allDropContents
-
-        data = allDropContents(self, self.size)
-        return {"data_hash": common_hash(data)}
+        if self.ngas_checksum is None or self.ngas_checksum == '':
+            return {"fileid": self.ngasFileId, "size": self._size}
+        return {"data_hash": self.ngas_checksum}
 
 
 ##
@@ -1811,15 +1806,23 @@ class NgasDROP(DataDROP):
 # @par EAGLE_START
 # @param category Memory
 # @param tag daliuge
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class InMemoryDROP(DataDROP):
     """
     A DROP that points data stored in memory.
     """
+
+    # Allow in-memory drops to be automatically removed by default
+    def __init__(self, *args, **kwargs):
+        if 'precious' not in kwargs:
+            kwargs['precious'] = False
+        if 'expireAfterUse' not in kwargs:
+            kwargs['expireAfterUse'] = True
+        super().__init__(*args, **kwargs)
 
     def initialize(self, **kwargs):
         args = []
@@ -1849,7 +1852,11 @@ class InMemoryDROP(DataDROP):
     def generate_reproduce_data(self):
         from .droputils import allDropContents
 
-        data = allDropContents(self, self.size)
+        data = b""
+        try:
+            data = allDropContents(self, self.size)
+        except Exception:
+            logger.debug("Could not read drop reproduce data")
         return {"data_hash": common_hash(data)}
 
 
@@ -1859,10 +1866,10 @@ class InMemoryDROP(DataDROP):
 # @par EAGLE_START
 # @param category SharedMemory
 # @param tag template
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class SharedMemoryDROP(DataDROP):
     """
@@ -1909,10 +1916,10 @@ class SharedMemoryDROP(DataDROP):
 # @par EAGLE_START
 # @param category Memory
 # @param tag daliuge
-# @param[in] cparam/data_volume Data volume/0/Float/readonly/False//False/
-#     \~English This never stores any data
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
+# @param data_volume Data volume/0/Float/ComponentParameter/readonly//False/False/This never stores any data
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class NullDROP(DataDROP):
     """
@@ -1939,20 +1946,15 @@ class EndDROP(NullDROP):
 # @par EAGLE_START
 # @param category File
 # @param tag template
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
-# @param[in] cparam/dbmodule Python DB module//String/readwrite/False//False/
-#     \~English Load path for python DB module
-# @param[in] cparam/dbtable DB table name//String/readwrite/False//False/
-#     \~English The name of the table to use
-# @param[in] cparam/vals Values dictionary//Json/readwrite/False//False/
-#     \~English Json encoded values dictionary used for INSERT. The keys of ``vals`` are used as the column names.
-# @param[in] cparam/condition Whats used after WHERE//String/readwrite/False//False/
-#     \~English Condition for SELECT. For this the WHERE statement must be written using the "{X}" or "{}" placeholders
-# @param[in] cparam/selectVals values for WHERE//Json/readwrite/False//False/
-#     \~English Values for the WHERE statement
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param dbmodule Python DB module//String/ComponentParameter/readwrite//False/False/Load path for python DB module
+# @param dbtable DB table name//String/ComponentParameter/readwrite//False/False/The name of the table to use
+# @param vals Values dictionary/{}/Json/ComponentParameter/readwrite//False/False/Json encoded values dictionary used for INSERT. The keys of ``vals`` are used as the column names.
+# @param condition Whats used after WHERE//String/ComponentParameter/readwrite//False/False/Condition for SELECT. For this the WHERE statement must be written using the "{X}" or "{}" placeholders
+# @param selectVals values for WHERE/{}/Json/ComponentParameter/readwrite//False/False/Values for the WHERE statement
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class RDBMSDrop(DataDROP):
     """
@@ -2170,16 +2172,13 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
 # @par EAGLE_START
 # @param category Plasma
 # @param tag daliuge
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
-# @param[in] cparam/plasma_path Plasma Path//String/readwrite/False//False/
-#     \~English Path to the local plasma store
-# @param[in] cparam/object_id Object Id//String/readwrite/False//False/
-#     \~English PlasmaId of the object for all compute nodes
-# @param[in] cparam/use_staging Use Staging/False/Boolean/readwrite/False//False/
-#     \~English Enables writing to a dynamically resizeable staging buffer
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param plasma_path Plasma Path//String/ComponentParameter/readwrite//False/False/Path to the local plasma store
+# @param object_id Object Id//String/ComponentParameter/readwrite//False/False/PlasmaId of the object for all compute nodes
+# @param use_staging Use Staging/False/Boolean/ComponentParameter/readwrite//False/False/Enables writing to a dynamically resizeable staging buffer
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class PlasmaDROP(DataDROP):
     """
@@ -2220,16 +2219,13 @@ class PlasmaDROP(DataDROP):
 # @par EAGLE_START
 # @param category PlasmaFlight
 # @param tag daliuge
-# @param[in] cparam/data_volume Data volume/5/Float/readwrite/False//False/
-#     \~English Estimated size of the data contained in this node
-# @param[in] cparam/group_end Group end/False/Boolean/readwrite/False//False/
-#     \~English Is this node the end of a group?
-# @param[in] cparam/plasma_path Plasma Path//String/readwrite/False//False/
-#     \~English Path to the local plasma store
-# @param[in] cparam/object_id Object Id//String/readwrite/False//False/
-#     \~English PlasmaId of the object for all compute nodes
-# @param[in] cparam/flight_path Flight Path//String/readwrite/False//False/
-#     \~English IP and flight port of the drop owner
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param plasma_path Plasma Path//String/ComponentParameter/readwrite//False/False/Path to the local plasma store
+# @param object_id Object Id//String/ComponentParameter/readwrite//False/False/PlasmaId of the object for all compute nodes
+# @param flight_path Flight Path//String/ComponentParameter/readwrite//False/False/IP and flight port of the drop owner
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class PlasmaFlightDROP(DataDROP):
     """
@@ -2388,7 +2384,7 @@ class AppDROP(ContainerDROP):
         """
         Generates a named mapping of output data drops. Can only be called during run().
         """
-        named_outputs: OrderedDict[str, DataDROP] = OrderedDict()
+        named_outputs:  OrderedDict[str, DataDROP] = OrderedDict()
         if 'outputs' in self.parameters and isinstance(self.parameters['outputs'][0], dict):
             for i in range(len(self._outputs)):
                 key = list(self.parameters['outputs'][i].values())[0]
@@ -2612,6 +2608,8 @@ class InputFiredAppDROP(AppDROP):
             t.daemon = 1
             t.start()
 
+    _dlg_proc_lock = threading.Lock()
+
     @track_current_drop
     def execute(self, _send_notifications=True):
         """
@@ -2633,8 +2631,13 @@ class InputFiredAppDROP(AppDROP):
             try:
                 if hasattr(self, "_tp"):
                     proc = DlgProcess(target=self.run, daemon=True)
-                    proc.start()
-                    proc.join()
+                    # see YAN-975 for why this is happening
+                    lock = InputFiredAppDROP._dlg_proc_lock
+                    with lock:
+                        proc.start()
+                    with lock:
+                        proc.join()
+                    proc.close()
                     if proc.exception:
                         raise proc.exception
                 else:
@@ -2648,7 +2651,7 @@ class InputFiredAppDROP(AppDROP):
                     return
                 tries += 1
                 logger.exception(
-                    "Error while executing %r (try %d/%d)" % (self, tries, self.n_tries)
+                    "Error while executing %r (try %d/%d)", self, tries, self.n_tries
                 )
 
         # We gave up running the application, go to error
@@ -2689,18 +2692,14 @@ class BarrierAppDROP(InputFiredAppDROP):
 # @par EAGLE_START
 # @param category Branch
 # @param tag template
-# @param[in] cparam/appclass Application Class/dlg.apps.simple.SimpleBranch/String/readonly/False//False/
-#     \~English Application class
-# @param[in] cparam/execution_time Execution Time/5/Float/readonly/False//False/
-#     \~English Estimated execution time
-# @param[in] cparam/num_cpus No. of CPUs/1/Integer/readonly/False//False/
-#     \~English Number of cores used
-# @param[in] cparam/group_start Group start/False/Boolean/readwrite/False//False/
-#     \~English Is this node the start of a group?
-# @param[in] cparam/input_error_threshold "Input error rate (%)"/0/Integer/readwrite/False//False/
-#     \~English the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param[in] cparam/n_tries Number of tries/1/Integer/readwrite/False//False/
-#     \~English Specifies the number of times the 'run' method will be executed before finally giving up
+# @param appclass Application Class/dlg.apps.simple.SimpleBranch/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param dummy0 dummy0//Object/OutputPort/readwrite//False/False/Dummy output port
+# @param dummy1 dummy1//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class BranchAppDrop(BarrierAppDROP):
     """

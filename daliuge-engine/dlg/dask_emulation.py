@@ -284,7 +284,7 @@ class _AppDrop(_DelayedDrop):
         self.fcode, self.fdefaults = pyfunc.serialize_func(f)
         self.original_kwarg_names = []
         self.nout = nout
-        logger.debug("Created %r" % self)
+        logger.debug("Created %r", self)
 
     def make_dropdict(self):
 

@@ -25,6 +25,7 @@ integration and testing during component development. As mentioned already, for 
  dynlib_components
  docker_components
  service_components
+ pyfunc_components
  datadrop_io
  wrap_existing
  test_and_debug

@@ -75,10 +75,3 @@ class ManagerStarter(object):
         return self._start_manager_in_thread(
             port, MasterManager, CompositeManagerRestServer, nm_hosts
         )
-
-    def start_mm_in_thread(
-        self, nm_hosts=["127.0.0.1"], port=constants.MASTER_DEFAULT_REST_PORT
-    ):
-        return self._start_manager_in_thread(
-            port, MasterManager, CompositeManagerRestServer, nm_hosts
-        )

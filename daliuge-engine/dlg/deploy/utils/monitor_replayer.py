@@ -88,7 +88,7 @@ class GraphPlayer(object):
         self.gnid_ip_dict = dict()
         self.status_path = status_path
         with open(graph_path) as f:
-            logger.info("Loading graph from file {0}".format(graph_path))
+            logger.info("Loading graph from file %s", graph_path)
             self.pg_spec = json.load(f)["g"]
         for i, dropspec in enumerate(self.pg_spec.values()):
             gnid = str(i)
@@ -142,7 +142,7 @@ class GraphPlayer(object):
             out_dir = os.path.dirname(gexf_file)
         with open(gexf_file) as gf:
             gexf_list = gf.readlines()
-        logger.info("Gexf file '{0}' loaded".format(gexf_file))
+        logger.info("Gexf file '%s' loaded", gexf_file)
         with open(self.status_path) as f:
             for i, line in enumerate(f):
                 colour_dict = dict()
@@ -183,14 +183,14 @@ class GraphPlayer(object):
                         # fo.write('{0}{1}'.format(new_line, os.linesep))
                         # fo.write('{0}{1}'.format(new_line, '\n'))
                         fo.write(new_line)
-                logger.info("GEXF file '{0}' is generated".format(new_gexf))
+                logger.info("GEXF file '%s' is generated", new_gexf)
                 new_png = new_gexf.split(".gexf")[0] + ".png"
                 cmd = "{0} {1} {2}".format(java_cmd, new_gexf, new_png)
                 ret = commands.getstatusoutput(cmd)
                 if ret[0] != 0:
                     logger.error(
-                        "Fail to print png from %s to %s: %s"
-                        % (new_gexf, new_png, ret[1])
+                        "Fail to print png from %s to %s: %s",
+                        new_gexf, new_png, ret[1]
                     )
                 del colour_dict
                 if remove_gexf:
@@ -259,7 +259,7 @@ class GraphPlayer(object):
                     state = line.split()[-1]
                     fo.write("{0},{1},{2},{3}".format(ts, oid, state, os.linesep))
         else:
-            logger.info("csv file already exists: {0}".format(csv_file))
+            logger.info("csv file already exists: %s", csv_file)
 
         if not os.path.exists(sqlite_file):
             sql = sql_create_status.format(csv_file)
@@ -269,10 +269,10 @@ class GraphPlayer(object):
             cmd = "sqlite3 {0} < {1}".format(sqlite_file, sql_file)
             ret = commands.getstatusoutput(cmd)
             if ret[0] != 0:
-                logger.error("fail to create sqlite: {0}".format(ret[1]))
+                logger.error("fail to create sqlite: %s", ret[1])
                 return
         else:
-            logger.info("sqlite file already exists: {0}".format(sqlite_file))
+            logger.info("sqlite file already exists: %s", sqlite_file)
 
         dbconn = dbdrv.connect(sqlite_file)
         q = "SELECT min(ts) from ac"
@@ -299,10 +299,10 @@ class GraphPlayer(object):
             a = el
             b = lr[i + 1]
             step_name = "{0}-{1}".format(a, b)
-            logger.debug("stepname: %s" % step_name)
+            logger.debug("stepname: %s", step_name)
             new_gexf = "{0}/{1}.gexf".format(out_dir, step_name)
             if os.path.exists(new_gexf):
-                logger.info("{0} already exists, ignore".format(new_gexf))
+                logger.info("%s already exists, ignore", new_gexf)
                 last_gexf = new_gexf
                 continue
             sql = sql_query.format(a, b)
@@ -332,18 +332,18 @@ class GraphPlayer(object):
                 colour.attrib["g"] = "{0}".format(g)
                 colour.attrib["b"] = "{0}".format(b)
             tree.write(new_gexf)
-            logger.info("GEXF file '{0}' is generated".format(new_gexf))
+            logger.info("GEXF file '%s' is generated", new_gexf)
             del drop_dict
             if not filecmp.cmp(last_gexf, new_gexf, False):
                 new_png = new_gexf.split(".gexf")[0] + ".png"
                 cmd = "{0} {1} {2}".format(java_cmd, new_gexf, new_png)
                 ret = commands.getstatusoutput(cmd)
             else:
-                logger.info("Identical {0} == {1}".format(new_gexf, last_gexf))
+                logger.info("Identical %s == %s", new_gexf, last_gexf)
             last_gexf = new_gexf
             if ret[0] != 0:
                 logger.error(
-                    "Fail to print png from %s to %s: %s" % (last_gexf, new_png, ret[1])
+                    "Fail to print png from %s to %s: %s", last_gexf, new_png, ret[1]
                 )
 
     def build_drop_subgraphs(self, node_range="[0:20]"):
@@ -519,7 +519,7 @@ if __name__ == "__main__":
     logging.basicConfig(filename=options.log_file, level=logging.DEBUG, format=FORMAT)
 
     if options.edgelist and options.dot_file is not None:
-        logger.info("Loading networx graph from file {0}".format(options.graph_path))
+        logger.info("Loading networx graph from file %s", options.graph_path)
         gp = GraphPlayer(options.graph_path, options.status_path)
         g = gp.build_drop_fullgraphs(graph_lib="networkx")
         nx.write_edgelist(g, options.dot_file)

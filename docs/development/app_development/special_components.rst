@@ -7,7 +7,6 @@ In addition users can develop a number of specialized components, which are base
 #. Start and Stop Components
 #. Branch Components
 #. MPI Components
-#. Python-function Components
 #. Archiving/store Components
 
 Descriptions TODO

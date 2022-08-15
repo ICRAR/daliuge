@@ -69,7 +69,7 @@ def launchServer(opts):
     dmName = opts.dmType.__name__
 
     logger.info("DALiuGE version %s running at %s", version.full_version, os.getcwd())
-    logger.info("Creating %s" % (dmName))
+    logger.info("Creating %s", dmName)
     try:
         dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
     except:
@@ -86,7 +86,7 @@ def launchServer(opts):
         if _terminating:
             return
         _terminating = True
-        logger.info("Exiting from %s" % (dmName))
+        logger.info("Exiting from %s", dmName)
 
         server.stop_manager()
 
@@ -350,8 +350,24 @@ def dlgNM(parser, args):
         "--no-dlm",
         action="store_true",
         dest="noDLM",
-        help="Don't start the Data Lifecycle Manager on this NodeManager",
-        default=True,
+        help="(DEPRECATED) Don't start the Data Lifecycle Manager on this NodeManager",
+    )
+    parser.add_option(
+        "--dlm-check-period",
+        type="float",
+        help="Time in seconds between background DLM drop status checks (defaults to 10)",
+        default=10
+    )
+    parser.add_option(
+        "--dlm-cleanup-period",
+        type="float",
+        help="Time in seconds between background DLM drop automatic cleanups (defaults to 30)",
+        default=30
+    )
+    parser.add_option(
+        "--dlm-enable-replication",
+        action="store_true",
+        help="Turn on data drop automatic replication (off by default)",
     )
     parser.add_option(
         "--dlg-path",
@@ -388,13 +404,22 @@ def dlgNM(parser, args):
     )
     (options, args) = parser.parse_args(args)
 
+    # No logging setup at this point yet
+    if options.noDLM:
+        print("WARNING: --no-dlm is deprecated, use the --dlm-* options instead")
+        options.dlm_check_period = 0
+        options.dlm_cleanup_period = 0
+        options.dlm_enable_replication = False
+
     # Add DM-specific options
     # Note that the host we use to expose the NodeManager itself through Pyro is
     # also used to expose the Sessions it creates
     options.dmType = NodeManager
     options.dmArgs = ()
     options.dmKwargs = {
-        "useDLM": not options.noDLM,
+        "dlm_check_period": options.dlm_check_period,
+        "dlm_cleanup_period": options.dlm_cleanup_period,
+        "dlm_enable_replication": options.dlm_enable_replication,
         "dlgPath": options.dlgPath,
         "host": options.host,
         "error_listener": options.errorListener,

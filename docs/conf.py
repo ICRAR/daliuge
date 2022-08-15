@@ -96,7 +96,7 @@ except ImportError:
     version = "0.2.0"
     release = version
 
-language = None
+language = "en"
 exclude_patterns = ["_build"]
 pygments_style = "sphinx"
 # If true, `todo` and `todoList` produce output, else they produce nothing.

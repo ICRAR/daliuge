@@ -7,9 +7,13 @@ Each drop's provenance information defines what a workflow signature claims.
 Inspired and extending current workflow literature, we define seven R-modes.
 R-mode selection occurs when submitting a workflow to |daliuge| for initial filling and unrolling;
 |daliuge| handles everything else automatically.
+
 Additionally, the ALL mode will generate a signature structure containing separate hash graphs for
 all supported modes, which is a good choice when experimenting with new workflow concepts or
 certifying a particular workflow version.
+
+Conversely, the NOTHING option avoids all provenance collection and processing, which may be of performance interest.
+For now, this is also the default option if no rmode is specified.
 
 Rerunning
 ---------
