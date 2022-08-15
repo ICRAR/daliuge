@@ -433,10 +433,16 @@ class PyFuncApp(BarrierAppDROP):
         # the correct UIDs
         logger.debug(f"Parameters found: {self.parameters}")
         posargs = self.arguments.args[:self.fn_npos]
+        keyargs = self.arguments.args[self.fn_npos:]
         kwargs = {}
         pargs = []
         # Initialize pargs dictionary and update with provided argument values
         pargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
+        if self.arguments.defaults:
+            keyargsDict = dict(zip(keyargs, self.arguments.defaults[self.fn_npos:]))
+        else:
+            keyargsDict = {}
+        logger.debug("Initial keyargs dictionary: %s", keyargsDict)
         if "applicationArgs" in self.parameters:
             appArgs = self.parameters["applicationArgs"]  # we'll pop the identified ones
             _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
@@ -465,15 +471,12 @@ class PyFuncApp(BarrierAppDROP):
                 inputs_dict,
                 posargs,
                 pargsDict,
-                appArgs,
+                keyargsDict,
                 check_len=check_len,
                 mode="inputs"))
         else:
             for i in range(min(len(inputs),self.fn_nargs)):
                 kwargs.update({self.arguments.args[i]: list(inputs.values())[i]})
-
-        logger.debug(f"Updating funcargs with input ports {kwargs}")
-        funcargs.update(kwargs)
 
         if ('outputs' in self.parameters and
             droputils.check_ports_dict(self.parameters['outputs'])):
@@ -491,9 +494,12 @@ class PyFuncApp(BarrierAppDROP):
                 outputs_dict,
                 posargs,
                 pargsDict,
-                appArgs,
+                keyargsDict,
                 check_len=check_len,
                 mode="outputs"))
+        logger.debug(f"Updating funcargs with input ports {kwargs}")
+        funcargs.update(kwargs)
+
 
         # Try to get values for still missing positional arguments from Application Args
         if "applicationArgs" in self.parameters:

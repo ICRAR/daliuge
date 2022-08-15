@@ -41,8 +41,7 @@ from dlg.meta import (
 
 ##
 # @brief ScpApp
-# @details A BarrierAppDROP that copies the content of its single input onto its
-# single output via SSH's scp protocol.
+# @details A BarrierAppDROP that copies the content of its single input onto its single output via SSH's scp protocol.
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
