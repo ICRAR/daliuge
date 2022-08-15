@@ -468,7 +468,7 @@ class AbstractDROP(EventFirer):
         Pops the specified key arg from kwargs else returns the default
         """
         if key not in kwargs:
-            logger.debug("Defaulting %s to %s in %r" % (key, str(default), self))
+            logger.debug("Defaulting %s to %s in %r", key, str(default), self)
         return kwargs.pop(key, default)
 
     def __hash__(self):
