@@ -35,8 +35,8 @@ jobs:
 
       - name: Create palettes
         run: |
-          python3 tools/xml2palette/xml2palette.py -i ./ -t daliuge -o $OUTPUT_FILENAME.palette -p
-          python3 tools/xml2palette/xml2palette.py -i ./ -t template -o $OUTPUT_FILENAME-template.palette -p
+          python3 tools/xml2palette/xml2palette.py -t daliuge -r ./ $OUTPUT_FILENAME.palette
+          python3 tools/xml2palette/xml2palette.py -t template -r ./ $OUTPUT_FILENAME-template.palette
 
       - name: Commit palettes to EAGLE
         env:
