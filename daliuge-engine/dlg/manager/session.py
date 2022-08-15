@@ -164,6 +164,15 @@ class Session(object):
         self._graphreprodata = None
         self._reprofinished = False
 
+        # create the session directory and change CWD
+        self._sessionDir = f"{utils.getDlgWorkDir()}/{sessionId}"
+        logger.debug("Creating session directory: %s", self._sessionDir)
+        createDirIfMissing(self._sessionDir)
+        os.chdir(self._sessionDir)
+
+        logger.debug("Updating ENV with SESSION_ID: %s", sessionId)
+        os.environ.update({"DLG_SESSION_ID": sessionId})
+
         class SessionFilter(logging.Filter):
             def __init__(self, sessionId):
                 self.sessionId = sessionId
@@ -177,10 +186,10 @@ class Session(object):
         fmt = logging.Formatter(fmt)
         fmt.converter = time.gmtime
 
-        logdir = utils.getDlgLogsDir()
-        if self._nm is not None:
-            logdir = self._nm.logdir
-        logfile = generateLogFileName(logdir, self.sessionId)
+        # logdir = utils.getDlgLogsDir()
+        # if self._nm is not None:
+        #     logdir = self._nm.logdir
+        logfile = generateLogFileName(self._sessionDir, self.sessionId)
         try:
             self.file_handler = logging.FileHandler(logfile)
             self.file_handler.setFormatter(fmt)
@@ -194,6 +203,10 @@ class Session(object):
     @property
     def sessionId(self):
         return self._sessionId
+
+    @property
+    def sessionDir(self):
+        return self._sessionDir
 
     @property
     def status(self):

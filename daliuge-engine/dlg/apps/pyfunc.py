@@ -29,6 +29,7 @@ import importlib
 import inspect
 import json
 import logging
+import os
 import pickle
 
 from typing import Callable
@@ -271,6 +272,11 @@ class PyFuncApp(BarrierAppDROP):
         should be driven by matching names, but currently that is not being done.
         """
         BarrierAppDROP.initialize(self, **kwargs)
+
+        env = os.environ.copy()
+        env.update({"DLG_UID": self._uid})
+        if self._dlg_session:
+            env.update({"DLG_SESSION_ID": self._dlg_session.sessionId})
 
         self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
 
