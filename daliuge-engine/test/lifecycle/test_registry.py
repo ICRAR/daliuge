@@ -27,7 +27,8 @@ from dlg.drop import InMemoryDROP
 from dlg.lifecycle.registry import RDBMSRegistry
 
 
-DBFILE = "testing_dlm.db"
+DBFILE = "/tmp/testing_dlm.db"
+# DBFILE = ":memory:"
 
 
 class TestRDBMSRegistry(unittest.TestCase):
