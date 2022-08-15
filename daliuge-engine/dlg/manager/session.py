@@ -240,8 +240,7 @@ class Session(object):
             self._reprofinished = status
 
     def write_reprodata(self):
-        parts = [utils.getDlgLogsDir(), self._sessionId]
-        the_dir = os.path.abspath(os.path.normpath(os.path.join(*parts)))
+        the_dir = self._sessionDir
         createDirIfMissing(the_dir)
         the_path = os.path.join(the_dir, "reprodata.out")
         with open(the_path, "w+", encoding="utf-8") as file:
