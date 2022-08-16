@@ -87,17 +87,17 @@ async function initiateDeploy(method, selected, clickedName){
         });
         return
     }
-    if(method === "direct"){
+    if(method === "SERVER"){
         $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
         $("#dlg_mgr_deploy").prop("checked", true)
         $("#pg_form").submit();
-    }else if(method === "helm"){
+    }else if(method === "HELM"){
         $("#gen_helm_button").val("Generate &amp; Deploy Physical Graph")
         $("#dlg_helm_deploy").prop("checked", true)
         $("#pg_helm_form").submit()
-    }else if(method === "rest-ood"){
+    }else if(method === "OOD"){
         restDeploy()
-    } else if(method === "rest-direct"){
+    } else if(method === "BROWSER"){
         directRestDeploy()
     }
 }
@@ -292,6 +292,7 @@ function saveSettings() {
                 deployMethod : $(this).find(".deployMethodMethod option:selected").val(),
                 active : $(this).find(".deployMethodActive").val()
             }
+            console.log($(this).find(".deployMethodMethod option:selected").val())
             deployMethodsArray.push(deployMethod)
         } 
     })
@@ -312,30 +313,25 @@ function saveSettings() {
 }
 
 function buildDeployMethodEntry(method, selected){
-    let optionValue = "";
     let displayValue = "";
     switch(method){
         case "SERVER":
-            optionValue = "direct";
             displayValue = "Direct";
             break;
         case "BROWSER":
-            optionValue = "rest-direct";
             displayValue = "Rest-Direct";
             break;
         case "OOD":
-            optionValue = "rest-ood";
             displayValue = "Rest-OOD";
             break;
         case "HELM":
-            optionValue = "helm";
             displayValue = "Helm";
             break;
     }
     if(selected){
-        return `<option value="${optionValue}">${displayValue}</option>`
+        return `<option value="${method}" selected="true">${displayValue}</option>`
     } else {
-        return `<option value="${optionValue}" selected="true">${displayValue}</option>`
+        return `<option value="${method}">${displayValue}</option>`
     }
 }
 
@@ -358,7 +354,7 @@ function fillOutSettings() {
             {
                 name : "default deployment",
                 url : "http://localhost:8001/",
-                deployMethod : "direct",
+                deployMethod : "SERVER",
                 active : true
             }
         ]
@@ -393,7 +389,13 @@ function fillOutSettings() {
         console.log(allAvailableMethods);
         for (i = 0; i < allAvailableMethods.length; i++) {
             const deploy_option = allAvailableMethods[i];
-            availableOptions.push(buildDeployMethodEntry(deploy_option, i === 0))
+            if(element.deployMethod !== "undefined"){
+                // If a choice has already been made, go with that.
+                availableOptions.push(buildDeployMethodEntry(deploy_option, element.deployMethod === deploy_option));
+            } else {
+                // By default, select the first listed.
+                availableOptions.push(buildDeployMethodEntry(deploy_option, i === 0));
+            }
         }
         var deplpoyMethodRow = '<div class="input-group">'+
         '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class="deployMethodName" value="'+element.name+'"></div>'+
