@@ -667,8 +667,10 @@ def get_submission_method():
     if _check_k8s_avail():
         available_methods.append("HELM")
     if mhost is not None:
-        if _check_mgr_avail(mhost, mport, mprefix):
-            available_methods.extend(["SERVER"])
+        host_available_methods = _check_mgr_avail(mhost, mport, mprefix)
+        if host_available_methods:
+            if "BROWSER" in host_available_methods["methods"]:
+                available_methods.extend(["SERVER"])
     return {"methods": available_methods}
 
 
