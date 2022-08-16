@@ -27,7 +27,7 @@ import unittest
 from asyncio.log import logger
 import pkg_resources
 
-from dlg.drop import InMemoryDROP
+from dlg.data.memory import InMemoryDROP
 from dlg import runtime
 from dlg import droputils
 from dlg import utils

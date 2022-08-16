@@ -34,7 +34,7 @@ from dlg import droputils, graph_loader
 from dlg.apps import pyfunc
 from dlg.common import Categories
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
-from dlg.drop import InMemoryDROP
+from dlg.data.memory import InMemoryDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
 

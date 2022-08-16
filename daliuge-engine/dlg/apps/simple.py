@@ -33,7 +33,8 @@ import ast
 import numpy as np
 
 from dlg import droputils, utils
-from dlg.drop import BarrierAppDROP, BranchAppDrop, ContainerDROP
+from dlg.drop import BarrierAppDROP, ContainerDROP
+from dlg.apps.branch import BranchAppDrop
 from dlg.meta import (
     dlg_float_param,
     dlg_string_param,
@@ -709,6 +710,66 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 
     def condition(self):
         return self.result
+
+
+##
+# @brief PickOne
+# @details App that picks the first element of an input list, passes that
+# to all outputs, except the first one. The first output is used to pass
+# the remaining array on. This app is useful for a loop.
+#
+# @par EAGLE_START
+# @param category PythonApp
+# @param appclass Application Class/dlg_example_cmpts.apps.PickOne/String/ComponentParameter/readonly//False/False/Import path for application class
+# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time # noqa: E501
+# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used # noqa: E501
+# @param rest_array rest_array//Object.array/InputPort/readwrite//False/FalseList of elements
+# @param element element//Object.element/OutputPort/readwrite//False/False/Port carrying the first element of input array
+# @param rest_array rest_array//Object.array/OutputPort/readwrite//False/False/Port carrying the rest array
+# @par EAGLE_END
+class PickOne(BarrierAppDROP):
+    """
+    Simple app picking one element at a time. Good for Loops.
+    """
+
+    def initialize(self, **kwargs):
+        BarrierAppDROP.initialize(self, **kwargs)
+
+    def readData(self):
+        input = self.inputs[0]
+        data = pickle.loads(droputils.allDropContents(input))
+
+        # make sure we always have a ndarray with at least 1dim.
+        if type(data) not in (list, tuple) and not isinstance(
+            data, (np.ndarray)
+        ):
+            raise TypeError
+        if isinstance(data, np.ndarray) and data.ndim == 0:
+            data = np.array([data])
+        else:
+            data = np.array(data)
+        value = data[0] if len(data) else None
+        rest = data[1:] if len(data) > 1 else np.array([])
+        return value, rest
+
+    def writeData(self, value, rest):
+        """
+        Prepare the data and write to all outputs
+        """
+        # write rest to array output
+        # and value to every other output
+        for output in self.outputs:
+            if output.name == "rest_array":
+                d = pickle.dumps(rest)
+                output.len = len(d)
+            else:
+                d = pickle.dumps(value)
+                output.len = len(d)
+            output.write(d)
+
+    def run(self):
+        value, rest = self.readData()
+        self.writeData(value, rest)
 
 
 ##

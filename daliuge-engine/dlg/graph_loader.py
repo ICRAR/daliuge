@@ -37,21 +37,16 @@ from .common import Categories
 from .ddap_protocol import DROPRel, DROPLinkType
 from .drop import (
     ContainerDROP,
-    InMemoryDROP,
-    SharedMemoryDROP,
-    FileDROP,
-    NgasDROP,
     LINKTYPE_NTO1_PROPERTY,
     LINKTYPE_1TON_APPEND_METHOD,
     NullDROP,
     EndDROP,
-    PlasmaDROP,
-    PlasmaFlightDROP,
 )
+from .data import *  # Make sure to grab every dataDROP
 from .environmentvar_drop import EnvironmentVarDROP
 from dlg.parset_drop import ParameterSetDROP
 from .exceptions import InvalidGraphException
-from .json_drop import JsonDROP
+from dlg.data.json_drop import JsonDROP
 from .common import DropType
 
 
