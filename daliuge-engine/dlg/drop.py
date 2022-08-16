@@ -1944,7 +1944,7 @@ class EndDROP(NullDROP):
 # @brief RDBMS
 # @details A Drop allowing storage and retrieval from a SQL DB.
 # @par EAGLE_START
-# @param category File
+# @param category RDBMS
 # @param tag daliuge
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
