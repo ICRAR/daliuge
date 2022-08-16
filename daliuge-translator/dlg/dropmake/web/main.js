@@ -55,6 +55,13 @@ $(document).ready(function () {
     })
 });
 
+function getCurrentPageUrl(){
+    const pathElements = window.location.href.split('/');
+    const protocol = pathElements[0];
+    const host = pathElements[2];
+    return protocol + '//' + host;
+}
+
 function openSettingsModal(){
     //needed for the dropdown option to open the settings modal, the pure bootstrap method used on the settings gear button proved inconsistent
     $('#settingsModal').modal("show")
@@ -304,6 +311,34 @@ function saveSettings() {
     updateDeployOptionsDropdown()
 }
 
+function buildDeployMethodEntry(method, selected){
+    let optionValue = "";
+    let displayValue = "";
+    switch(method){
+        case "SERVER":
+            optionValue = "direct";
+            displayValue = "Direct";
+            break;
+        case "BROWSER":
+            optionValue = "rest-direct";
+            displayValue = "Rest-Direct";
+            break;
+        case "OOD":
+            optionValue = "rest-ood";
+            displayValue = "Rest-OOD";
+            break;
+        case "HELM":
+            optionValue = "helm";
+            displayValue = "Helm";
+            break;
+    }
+    if(selected){
+        return `<option value="${optionValue}">${displayValue}</option>`
+    } else {
+        return `<option value="${optionValue}" selected="true">${displayValue}</option>`
+    }
+}
+
 function fillOutSettings() {
     //get setting values from local storage
     var manager_url = window.localStorage.getItem("manager_url");
@@ -339,9 +374,12 @@ function fillOutSettings() {
     console.log("filling out settings, GET Errors and Cors warning from Url check")
     deployMethodsArray.forEach(async element => {
 
+        let i;
         var urlReachable = await checkUrlStatus(element.url)
-        var availableMethods = await checkUrlSubmissionMethods(element.url + '/api/submission_method')
-        console.log(availableMethods);
+        var directlyAvailableMethods = await checkUrlSubmissionMethods(element.url + '/api/submission_method')
+        var translatorAvailableMethods = await checkUrlSubmissionMethods(getCurrentPageUrl() + '/api/submission_method?dlg_mgr_url=' + element.url);
+        console.log(directlyAvailableMethods);
+        console.log(translatorAvailableMethods);
         var ReachableIcon = ""
         
         if(urlReachable){
@@ -350,30 +388,22 @@ function fillOutSettings() {
             ReachableIcon = `<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusNotReachable" data-text="Destination URL Is Not Reachable, click to re-check" onclick="manualCheckUrlStatus('icon')"><i class="material-icons md-24">close</i></div>`
         }
 
-        var directOption =  '<option value="direct">Direct</option>'
-        var helmOption =  '<option value="helm">Helm</option>'
-        var restOODOption =  '<option value="rest-ood">Rest-OOD</option>'
-        var restDirectOption = '<option value="rest-direct">Rest-Direct</option>'
-
-        if(element.deployMethod === "direct"){
-            directOption =  '<option value="direct" selected="true">Direct</option>'
-        }else if(element.deployMethod === "helm"){
-            helmOption =  '<option value="helm" selected="true">Helm</option>'
-        }else if(element.deployMethod === "rest-ood"){
-            restOODOption = '<option value="rest-ood" selected="true">Rest-OOD</option>'
-        } else if(element.deployMethod === "rest-direct"){
-            restDirectOption = '<option value="rest-direct" selected="true">Rest-Direct</option>'
+        const allAvailableMethods = directlyAvailableMethods["methods"].concat(translatorAvailableMethods["methods"]);
+        var availableOptions = [];
+        console.log(allAvailableMethods);
+        for (i = 0; i < allAvailableMethods.length; i++) {
+            const deploy_option = allAvailableMethods[i];
+            availableOptions.push(buildDeployMethodEntry(deploy_option, i === 0))
         }
-
         var deplpoyMethodRow = '<div class="input-group">'+
         '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class="deployMethodName" value="'+element.name+'"></div>'+
         `<div class="settingsInputTooltip tooltip tooltipBottom form-control urlInputField" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut')" placeholder="Destination Url" class="deployMethodUrl" value="`+element.url+`"></div>`+
         ReachableIcon+
-        '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod">'+
-            directOption+
-            helmOption+
-            restOODOption+
-            restDirectOption+
+        '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod">'
+        for(i = 0; i < availableOptions.length; i++){
+            deplpoyMethodRow += availableOptions[i]
+        }
+        deplpoyMethodRow +=
         '</select></div>'+
         '<input type="text" class="form-control deployMethodActive" value="'+element.active+'">'+
         '<button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>'+
@@ -384,21 +414,11 @@ function fillOutSettings() {
 
 function addDeployMethod(){
     var deployMethodManagerDiv = $("#DeployMethodManager")
-
-    var directOption =  '<option value="direct" selected="true">Direct</option>'
-    var helmOption =  '<option value="helm">Helm</option>'
-    var restOODOption =  '<option value="rest-ood">Rest-OOD</option>'
-    var restDirectOption = '<option value="rest-direct">Rest-Direct</option>'
-
     var deplpoyMethodRow = '<div class="input-group">'+
     '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class=" deployMethodName" value=""></div>'+
-    `<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut')" placeholder="Destination Url" class="deployMethodUrl"value=""></div>`+
+    `<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut');" placeholder="Destination Url" class="deployMethodUrl"value=""></div>`+
     `<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusUnknown" data-text="Destination URL status Unknown, click to check" onclick="manualCheckUrlStatus('icon')"><a class="urlStatusUnknownIcon">?</a></div>`+
     '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod" name="Deploy Method">'+
-        directOption+
-        helmOption+
-        restOODOption+
-        restDirectOption+
     '</select></div>'+
     '<input type="text" class="form-control deployMethodActive" value="false">'+
     '<button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>'+
