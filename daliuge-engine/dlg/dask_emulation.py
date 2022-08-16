@@ -366,7 +366,7 @@ class _DataDrop(_DelayedDrop):
         logger.debug("Created %r", self)
 
     def make_dropdict(self):
-        my_dropdict = dropdict({"type": "plain", "storage": Categories.MEMORY})
+        my_dropdict = dropdict({"type": "data", "storage": Categories.MEMORY})
         if not self.producer:
             my_dropdict["pydata"] = pyfunc.serialize_data(self.pydata)
         return my_dropdict
