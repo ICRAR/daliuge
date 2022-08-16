@@ -90,7 +90,7 @@ APP_DROP_TYPES = [
 
 
 class DropType:
-    PLAIN = "plain"
+    DATA = "data"
     SOCKET = "socket"
     APP = "app"  # Application drop that terminates onces executed
     SERVICE_APP = "serviceapp"  # App drop that runs continously
@@ -200,7 +200,7 @@ def get_roots(pg_spec):
             if dropspec.get("outputs", None):
                 do = _sanitize_links(dropspec["outputs"])
                 nonroots |= set(do)
-        elif dropspec["type"] == DropType.PLAIN:
+        elif dropspec["type"] == DropType.DATA:
             if dropspec.get("producers", None):
                 nonroots.add(oid)
             if dropspec.get("consumers", None):
@@ -245,7 +245,7 @@ def get_leaves(pg_spec):
             if dropspec.get("inputs", None):
                 di = _sanitize_links(dropspec["inputs"])
                 nonleaves |= set(di)
-        elif dropspec["type"] == DropType.PLAIN:
+        elif dropspec["type"] == DropType.DATA:
             if dropspec.get("producers", None):
                 dp = _sanitize_links(dropspec["producers"])
                 nonleaves |= set(dp)

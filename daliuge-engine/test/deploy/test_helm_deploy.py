@@ -56,7 +56,7 @@ class TestHelmClient(unittest.TestCase):
 
     def test_create_single_node_helm_chart(self):
         pg = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
+            {"oid": "A", "type": "data", "storage": Categories.MEMORY},
             {
                 "oid": "B",
                 "type": "app",
@@ -64,7 +64,7 @@ class TestHelmClient(unittest.TestCase):
                 "inputs": ["A"],
                 "outputs": ["C"],
             },
-            {"oid": "C", "type": "plain", "storage": Categories.MEMORY},
+            {"oid": "C", "type": "data", "storage": Categories.MEMORY},
         ]
         for drop in pg:
             drop["node"] = "127.0.0.1"
@@ -79,7 +79,7 @@ class TestHelmClient(unittest.TestCase):
         pg = [
             {
                 "oid": "A",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "node": "127.0.0.1",
                 "island": "127.0.0.1",
@@ -104,14 +104,14 @@ class TestHelmClient(unittest.TestCase):
             },
             {
                 "oid": "C",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "node": "127.0.0.1",
                 "island": "127.0.0.1",
             },
             {
                 "oid": "E",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "node": "127.0.0.2",
                 "island": "127.0.0.2",

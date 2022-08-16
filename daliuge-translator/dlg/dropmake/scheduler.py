@@ -1226,7 +1226,7 @@ class DAGUtil(object):
             oid = drop["oid"]
             myk = i + 1
             tt = drop["type"]
-            if DropType.PLAIN == tt:
+            if DropType.DATA == tt:
                 # if (drop['nm'] == 'StreamNull'):
                 #     obk = 'streamingConsumers'
                 # else:
@@ -1258,7 +1258,7 @@ class DAGUtil(object):
                 if obk in drop:
                     for oup in drop[obk]:
                         key = list(oup.keys())[0] if isinstance(oup, dict) else oup
-                        if DropType.PLAIN == tt:
+                        if DropType.DATA == tt:
                             G.add_weighted_edges_from(
                                 [(myk, key_dict[key], int(drop["dw"]))]
                             )
@@ -1269,7 +1269,7 @@ class DAGUtil(object):
 
         if fake_super_root:
             super_root = dropdict(
-                {"oid": "-92", "type": DropType.PLAIN, "storage": "null"}
+                {"oid": "-92", "type": DropType.DATA, "storage": "null"}
             )
             super_k = len(drop_list) + 1
             G.add_node(

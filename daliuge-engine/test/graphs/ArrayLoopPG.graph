@@ -1,7 +1,7 @@
 [
     {
         "oid": "2022-06-22T09:13:53_-5_0",
-        "type": "plain",
+        "type": "data",
         "storage": "Memory",
         "rank": [
             0
@@ -210,7 +210,7 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-4_0/0/0",
-        "type": "plain",
+        "type": "data",
         "storage": "File",
         "rank": [
             0,
@@ -239,7 +239,7 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-4_0/0/1",
-        "type": "plain",
+        "type": "data",
         "storage": "File",
         "rank": [
             0,
@@ -268,7 +268,7 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-4_0/1/0",
-        "type": "plain",
+        "type": "data",
         "storage": "File",
         "rank": [
             0,
@@ -297,7 +297,7 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-4_0/1/1",
-        "type": "plain",
+        "type": "data",
         "storage": "File",
         "rank": [
             0,
@@ -326,7 +326,7 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-6_0/0/0",
-        "type": "plain",
+        "type": "data",
         "storage": "Memory",
         "rank": [
             0,
@@ -360,7 +360,7 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-6_0/0/1",
-        "type": "plain",
+        "type": "data",
         "storage": "Memory",
         "rank": [
             0,
@@ -386,7 +386,7 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-6_0/1/0",
-        "type": "plain",
+        "type": "data",
         "storage": "Memory",
         "rank": [
             0,
@@ -420,7 +420,7 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-6_0/1/1",
-        "type": "plain",
+        "type": "data",
         "storage": "Memory",
         "rank": [
             0,
@@ -446,7 +446,7 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-9_0/0",
-        "type": "plain",
+        "type": "data",
         "storage": "Memory",
         "rank": [
             0,
@@ -474,7 +474,7 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-9_0/1",
-        "type": "plain",
+        "type": "data",
         "storage": "Memory",
         "rank": [
             0,
