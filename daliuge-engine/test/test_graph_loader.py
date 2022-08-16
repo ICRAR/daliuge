@@ -27,12 +27,11 @@ from dlg import graph_loader
 from dlg.common import Categories
 from dlg.ddap_protocol import DROPLinkType, DROPRel
 from dlg.drop import (
-    InMemoryDROP,
-    SharedMemoryDROP,
     ContainerDROP,
     AppDROP,
-    DirectoryContainer,
 )
+from dlg.data.memory import InMemoryDROP, SharedMemoryDROP
+from dlg.data.directorycontainer import DirectoryContainer
 from dlg.common import Categories
 from dlg.apps.simple import RandomArrayApp
 
@@ -78,7 +77,7 @@ class TestGraphLoader(unittest.TestCase):
             {
                 "oid": "B",
                 "type": "container",
-                "container": "dlg.drop.DirectoryContainer",
+                "container": "dlg.data.DirectoryContainer",
                 "children": ["A"],
                 "dirname": ".",
             },

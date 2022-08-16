@@ -22,13 +22,12 @@
 from dlg.remote import copyTo, copyFrom
 from dlg.drop import (
     BarrierAppDROP,
-    NgasDROP,
-    InMemoryDROP,
-    SharedMemoryDROP,
     NullDROP,
-    RDBMSDrop,
     ContainerDROP,
 )
+from dlg.data.rdbms import RDBMSDrop
+from dlg.data.memory import InMemoryDROP, SharedMemoryDROP
+from dlg.data.ngas import NgasDROP
 from dlg.meta import (
     dlg_string_param,
     dlg_float_param,

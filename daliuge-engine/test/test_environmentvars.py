@@ -23,7 +23,8 @@ import os
 import tempfile
 import unittest
 
-from dlg.drop import AbstractDROP, FileDROP
+from dlg.drop import AbstractDROP
+from dlg.data.file import FileDROP
 from dlg.environmentvar_drop import EnvironmentVarDROP
 from dlg.utils import getDlgDir
 

@@ -33,7 +33,8 @@ import ast
 import numpy as np
 
 from dlg import droputils, utils
-from dlg.drop import BarrierAppDROP, BranchAppDrop, ContainerDROP
+from dlg.drop import BarrierAppDROP, ContainerDROP
+from dlg.apps.branch import BranchAppDrop
 from dlg.meta import (
     dlg_float_param,
     dlg_string_param,
