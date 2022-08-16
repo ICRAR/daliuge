@@ -89,7 +89,7 @@ class PythonApp(BarrierAppDROP):
 # without executing real algorithms. Very useful for debugging.
 # @par EAGLE_START
 # @param category PythonApp
-# @param tag template
+# @param tag daliuge
 # @param sleepTime Sleep Time/5/Integer/ApplicationArgument/readwrite//False/False/The number of seconds to sleep
 # @param appclass Application Class/dlg.apps.simple.SleepApp/String/ComponentParameter/readonly//False/False/Application class
 # @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
