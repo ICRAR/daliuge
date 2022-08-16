@@ -55,7 +55,7 @@ def add_test_reprodata(graph: list):
 class CommonTestsBase(ManagerStarter):
     def _submit(self):
         pg = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
+            {"oid": "A", "type": "data", "storage": Categories.MEMORY},
             {
                 "oid": "B",
                 "type": "app",
@@ -63,7 +63,7 @@ class CommonTestsBase(ManagerStarter):
                 "inputs": ["A"],
                 "outputs": ["C"],
             },
-            {"oid": "C", "type": "plain", "storage": Categories.MEMORY},
+            {"oid": "C", "type": "data", "storage": Categories.MEMORY},
         ]
         pg = add_test_reprodata(pg)
         for drop in pg:

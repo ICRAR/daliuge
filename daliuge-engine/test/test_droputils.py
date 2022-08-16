@@ -221,7 +221,7 @@ class DropUtilsTest(unittest.TestCase):
         pg_spec = [
             {
                 "oid": "A",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "consumers": ["B"],
             },
@@ -236,7 +236,7 @@ class DropUtilsTest(unittest.TestCase):
         The same, but now B references A
         """
         pg_spec = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
+            {"oid": "A", "type": "data", "storage": Categories.MEMORY},
             {
                 "oid": "B",
                 "type": "app",
@@ -254,12 +254,12 @@ class DropUtilsTest(unittest.TestCase):
         B --------------|
         """
         pg_spec = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
-            {"oid": "B", "type": "plain", "storage": Categories.MEMORY},
+            {"oid": "A", "type": "data", "storage": Categories.MEMORY},
+            {"oid": "B", "type": "data", "storage": Categories.MEMORY},
             {"oid": "C", "type": "app", "app": "dlg.apps.crc.CRCApp", "inputs": ["A"]},
             {
                 "oid": "D",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "producers": ["C"],
             },
@@ -271,7 +271,7 @@ class DropUtilsTest(unittest.TestCase):
             },
             {
                 "oid": "F",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "producers": ["E"],
             },

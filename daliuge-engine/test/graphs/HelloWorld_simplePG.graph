@@ -28,7 +28,7 @@
     },
     {
         "oid": "2022-03-24T11:40:15_-2_0",
-        "type": "plain",
+        "type": "data",
         "storage": "File",
         "rank": [
             0
