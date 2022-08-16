@@ -27,6 +27,7 @@ full JSON representation.
 import collections
 import importlib
 import logging
+from xmlrpc.client import Boolean
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 
@@ -343,6 +344,28 @@ def _createPlain(dropSpec, dryRun=False, session=None):
         return
     return storageType(oid, uid, dlg_session=session, **kwargs)
 
+def _createData(dropSpec, dryRun=False, session=None):
+    oid, uid = _getIds(dropSpec)
+    kwargs = _getKwargs(dropSpec)
+
+    if DropType.DATA in dropSpec:
+        dataClassName = dropSpec[DropType.DATA]
+        parts = dataClassName.split(".")
+        # we don't need to support dfms here
+        module = importlib.import_module(".".join(parts[:-1]))
+        storageType = getattr(module, parts[-1])
+    else:
+        # Fall back to old behaviour or to FileDROP 
+        # if nothing else is specified
+        if "storage" in dropSpec:
+            storageType = STORAGE_TYPES[dropSpec["storage"]]
+        else:
+            storageType = FileDROP
+    if dryRun:
+        return
+
+    return storageType(oid, uid, dlg_session=session, **kwargs)
+
 
 def _createContainer(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
@@ -426,7 +449,7 @@ def _getKwargs(dropSpec):
 
 
 __CREATION_FUNCTIONS = {
-    DropType.PLAIN: _createPlain,
+    DropType.DATA: _createData,
     DropType.CONTAINER: _createContainer,
     DropType.APP: _createApp,
     DropType.SERVICE_APP: _createApp,

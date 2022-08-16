@@ -596,7 +596,7 @@ class LGNode:
                 drop_spec = dropdict(
                     {
                         "oid": oid,
-                        "type": DropType.PLAIN,
+                        "type": DropType.DATA,
                         "storage": drop_type,
                         "rank": rank,
                     }
@@ -620,7 +620,7 @@ class LGNode:
                 drop_spec = dropdict(
                     {
                         "oid": oid,
-                        "type": DropType.PLAIN,
+                        "type": DropType.DATA,
                         "storage": drop_type,
                         "rank": rank,
                     }
@@ -795,7 +795,7 @@ class LGNode:
             dropSpec_grp = dropdict(
                 {
                     "oid": "{0}-grp-data".format(oid),
-                    "type": DropType.PLAIN,
+                    "type": DropType.DATA,
                     "storage": Categories.MEMORY,
                     "nm": "grpdata",
                     "dw": dw,
@@ -825,7 +825,7 @@ class LGNode:
             dropSpec_gather = dropdict(
                 {
                     "oid": "{0}-gather-data".format(oid),
-                    "type": DropType.PLAIN,
+                    "type": DropType.DATA,
                     "storage": Categories.MEMORY,
                     "nm": "gthrdt",
                     "dw": dw,
@@ -859,7 +859,7 @@ class LGNode:
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": DropType.PLAIN,
+                    "type": DropType.DATA,
                     "storage": Categories.NULL,
                     "rank": rank,
                 }
@@ -1311,7 +1311,7 @@ class LG:
                     "oid": "{0}-{1}-stream".format(
                         sdrop["oid"], tdrop["oid"].replace(self._session_id, "")
                     ),
-                    "type": DropType.PLAIN,
+                    "type": DropType.DATA,
                     "storage": Categories.NULL,
                     "nm": "StreamNull",
                     "dw": 0,

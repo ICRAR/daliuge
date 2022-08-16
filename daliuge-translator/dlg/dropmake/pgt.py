@@ -330,7 +330,7 @@ class PGT(object):
             key_dict[oid] = i + 1
             node["oid"] = oid
             tt = drop["type"]
-            if DropType.PLAIN == tt:
+            if DropType.DATA == tt:
                 node["category"] = Categories.DATA
             elif DropType.APP == tt:
                 node["category"] = Categories.COMPONENT
@@ -348,7 +348,7 @@ class PGT(object):
                 for i, oup in enumerate(G.successors(myk)):
                     link = dict()
                     link["from"] = myk
-                    from_dt = 0 if drop["type"] == DropType.PLAIN else 1
+                    from_dt = 0 if drop["type"] == DropType.DATA else 1
                     to_dt = G.nodes[oup]["dt"]
                     if from_dt == to_dt:
                         to_drop = G.nodes[oup]["drop_spec"]
@@ -376,7 +376,7 @@ class PGT(object):
                             dropSpec = dropdict(
                                 {
                                     "oid": extra_oid,
-                                    "type": DropType.PLAIN,
+                                    "type": DropType.DATA,
                                     "storage": Categories.MEMORY,
                                     "nm": "go_data",
                                     "dw": 1,
@@ -428,7 +428,7 @@ class PGT(object):
             node["key"] = (i + 1) * -1
             node["oid"] = oid
             tt = drop["type"]
-            if DropType.PLAIN == tt:
+            if DropType.DATA == tt:
                 node["category"] = Categories.DATA
             elif DropType.APP == tt:
                 node["category"] = Categories.COMPONENT
