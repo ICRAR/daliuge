@@ -34,7 +34,9 @@ from abc import ABCMeta, abstractmethod
 
 import psutil
 
-from ...drop import FileDROP, InMemoryDROP, NgasDROP
+from ...data.memory import InMemoryDROP
+from ...data.ngas import NgasDROP
+from ...data.file import FileDROP
 
 logger = logging.getLogger(__name__)
 
