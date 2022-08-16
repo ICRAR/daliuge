@@ -77,7 +77,9 @@ def daliuge_aware(func):
                 bottle.response.content_type = "application/json"
                 # set CORS headers
                 origin = bottle.request.headers.raw("Origin")
-                if not re.match(r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin):
+                if origin is None:
+                    origin = "http://localhost:8084"
+                elif not re.match(r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin):
                     origin = "http://localhost:8084"
                 bottle.response.headers[
                     "Access-Control-Allow-Origin"
@@ -194,7 +196,7 @@ class ManagerRestServer(RestServer):
 
     @daliuge_aware
     def submit_methods(self):
-        return {"methods": ["REST"]}
+        return {"methods": ["BROWSER"]}
 
     def _stop_manager(self):
         self.dm.shutdown()
