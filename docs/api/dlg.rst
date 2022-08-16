@@ -38,7 +38,7 @@ dlg.io
 
 dlg.json_drop
 ^^^^^^^^^^^^^
-.. automodule:: dlg.json_drop
+.. automodule:: dlg.data.json_drop
    :members:
 
 dlg.rpc
