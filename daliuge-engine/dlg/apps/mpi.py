@@ -66,10 +66,10 @@ class MPIApp(BarrierAppDROP):
     def initialize(self, **kwargs):
         super(MPIApp, self).initialize(**kwargs)
 
-        self._command = self._getArg(kwargs, "command", None)
-        self._maxprocs = self._getArg(kwargs, "maxprocs", 1)
-        self._use_wrapper = self._getArg(kwargs, "use_wrapper", False)
-        self._args = self._getArg(kwargs, "args", [])
+        self._command = self._popArg(kwargs, "command", None)
+        self._maxprocs = self._popArg(kwargs, "maxprocs", 1)
+        self._use_wrapper = self._popArg(kwargs, "use_wrapper", False)
+        self._args = self._popArg(kwargs, "args", [])
         if not self._command:
             raise InvalidDropException(
                 self, "No command specified, cannot create MPIApp"

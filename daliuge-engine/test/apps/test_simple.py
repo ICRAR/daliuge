@@ -41,7 +41,10 @@ from dlg.apps.simple import (
 from dlg.apps.simple import RandomArrayApp, AverageArraysApp, HelloWorldApp
 from dlg.apps.simple import SleepApp, CopyApp, SleepAndCopyApp
 from dlg.ddap_protocol import DROPStates
-from dlg.drop import NullDROP, InMemoryDROP, FileDROP, NgasDROP
+from dlg.drop import NullDROP
+from dlg.data.memory import InMemoryDROP
+from dlg.data.ngas import NgasDROP
+from dlg.data.file import FileDROP
 
 if sys.version_info >= (3, 8):
     from dlg.manager.shared_memory_manager import DlgSharedMemoryManager
