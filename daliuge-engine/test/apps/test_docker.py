@@ -31,8 +31,8 @@ import docker
 
 from dlg import droputils, utils
 from dlg.apps.dockerapp import DockerApp
-from dlg.data.ngas import NgasDROP
-from dlg.data.file import FileDROP
+from dlg.data.drops.ngas import NgasDROP
+from dlg.data.drops.file import FileDROP
 from dlg.droputils import DROPWaiterCtx
 
 docker_unavailable = True
