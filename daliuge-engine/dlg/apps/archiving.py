@@ -22,10 +22,9 @@
 import logging
 from ..drop import BarrierAppDROP, ContainerDROP
 from ..droputils import DROPFile
-from ..io import NgasIO, OpenMode, NgasLiteIO
+from dlg.data.io import NgasIO, OpenMode, NgasLiteIO
 from ..meta import (
     dlg_string_param,
-    dlg_float_param,
     dlg_int_param,
     dlg_component,
     dlg_batch_input,

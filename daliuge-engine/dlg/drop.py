@@ -58,7 +58,7 @@ from .ddap_protocol import (
 )
 from dlg.event import EventFirer
 from dlg.exceptions import InvalidDropException, InvalidRelationshipException
-from dlg.io import (
+from dlg.data.io import (
     DataIO,
     OpenMode,
     ErrorIO,

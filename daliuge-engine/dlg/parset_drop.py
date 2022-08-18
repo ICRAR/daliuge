@@ -24,7 +24,7 @@ import os
 from abc import abstractmethod
 
 from dlg.drop import DataDROP, DEFAULT_INTERNAL_PARAMETERS
-from dlg.io import MemoryIO
+from dlg.data.io import MemoryIO
 from dlg.meta import dlg_string_param
 
 
