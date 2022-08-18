@@ -26,7 +26,7 @@ import numpy as np
 from pyarrow import plasma as plasma
 
 from dlg.drop import DataDROP
-from dlg.io import PlasmaIO, PlasmaFlightIO
+from dlg.data.io import PlasmaIO, PlasmaFlightIO
 from dlg.meta import dlg_string_param, dlg_bool_param
 
 

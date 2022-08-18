@@ -21,7 +21,7 @@
 #
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import DataDROP, logger, track_current_drop
-from dlg.io import NgasIO, NgasLiteIO
+from dlg.data.io import NgasIO, NgasLiteIO
 from dlg.meta import dlg_string_param, dlg_int_param
 
 
