@@ -168,15 +168,15 @@ class BashShellBase(object):
         super(BashShellBase, self).initialize(**kwargs)
 
         self.proc = None
-        self._inputRedirect = self._getArg(kwargs, "input_redirection", "")
-        self._outputRedirect = self._getArg(kwargs, "output_redirection", "")
-        self._cmdLineArgs = self._getArg(kwargs, "command_line_arguments", "")
-        self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
-        self._argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
-        self._paramValueSeparator = self._getArg(kwargs, "paramValueSeparator", " ")
+        self._inputRedirect = self._popArg(kwargs, "input_redirection", "")
+        self._outputRedirect = self._popArg(kwargs, "output_redirection", "")
+        self._cmdLineArgs = self._popArg(kwargs, "command_line_arguments", "")
+        self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
+        self._argumentPrefix = self._popArg(kwargs, "argumentPrefix", "--")
+        self._paramValueSeparator = self._popArg(kwargs, "paramValueSeparator", " ")
 
         if not self.command:
-            self.command = self._getArg(kwargs, "command", None)
+            self.command = self._popArg(kwargs, "command", None)
             if not self.command:
                 raise InvalidDropException(
                     self, "No command specified, cannot create BashShellApp"

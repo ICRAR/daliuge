@@ -32,7 +32,9 @@ import time
 import unittest
 
 from dlg.ddap_protocol import DROPStates, DROPPhases
-from dlg.drop import FileDROP, DirectoryContainer, BarrierAppDROP
+from dlg.drop import BarrierAppDROP
+from dlg.data.directorycontainer import DirectoryContainer
+from dlg.data.file import FileDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.lifecycle import dlm
 

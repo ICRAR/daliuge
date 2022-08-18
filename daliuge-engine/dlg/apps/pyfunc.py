@@ -130,7 +130,7 @@ class DropParser(Enum):
 # calling the function is treated as an iterable, with each individual object
 # being written to its corresponding output.
 # @par EAGLE_START
-# @param category PythonApp
+# @param category PyFuncApp
 # @param tag template
 # @param appclass Application Class/dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/readonly//False/False/Application class
 # @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
@@ -278,9 +278,9 @@ class PyFuncApp(BarrierAppDROP):
         if self._dlg_session:
             env.update({"DLG_SESSION_ID": self._dlg_session.sessionId})
 
-        self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
+        self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
 
-        self.func_code = self._getArg(kwargs, "func_code", None)
+        self.func_code = self._popArg(kwargs, "func_code", None)
 
         # check for function definition arguments in applicationArgs
         self.func_def_keywords = [
@@ -454,7 +454,7 @@ class PyFuncApp(BarrierAppDROP):
             _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
             logger.debug("Identified keyword arguments removed: %s",
                 [i['text'] for i in _dum])
-            pargsDict.update({k:self.parameters[k] for k in pargsDict if k in 
+            pargsDict.update({k:self.parameters[k] for k in pargsDict if k in
                 self.parameters})
             # if defined in both we use AppArgs values
             pargsDict.update({k:appArgs[k]['value'] for k in pargsDict if k
@@ -463,7 +463,7 @@ class PyFuncApp(BarrierAppDROP):
         else:
             appArgs = {}
 
-        if ('inputs' in self.parameters and 
+        if ('inputs' in self.parameters and
             droputils.check_ports_dict(self.parameters['inputs'])):
             check_len = min(len(inputs),self.fn_nargs+
                 len(self.arguments.kwonlyargs))
