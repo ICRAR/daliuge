@@ -328,17 +328,6 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
 
     return roots
 
-
-def _createPlain(dropSpec, dryRun=False, session=None):
-    oid, uid = _getIds(dropSpec)
-    kwargs = _getKwargs(dropSpec)
-
-    # 'storage' is mandatory
-    storageType = STORAGE_TYPES[dropSpec["storage"]]
-    if dryRun:
-        return
-    return storageType(oid, uid, dlg_session=session, **kwargs)
-
 def _createData(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
