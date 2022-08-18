@@ -24,7 +24,7 @@ import importlib
 
 from dlg.drop import DataDROP, logger
 from dlg.exceptions import InvalidDropException
-from dlg.io import ErrorIO
+from dlg.data.io import ErrorIO
 from dlg.meta import dlg_dict_param
 from dlg.utils import prepare_sql
 
