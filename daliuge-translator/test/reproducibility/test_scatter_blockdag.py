@@ -72,7 +72,6 @@ def _read_graph(filename):
 
 def _init_graph(filename):
     with pkg_resources.resource_stream("test", filename) as file:
-    # file = open(filename)
         lgt = json.load(file)
     for drop in lgt["nodeDataArray"]:
         drop["reprodata"] = {}
