@@ -24,21 +24,3 @@ This package contains several general-purpose data stores in form of
 DROPs that we have developed as examples and for real-life use. Most of them
 are based on the :class:`DataDROP`.
 """
-
-__all__ = [
-    "DirectoryContainer",
-    "FileDROP",
-    "InMemoryDROP",
-    "SharedMemoryDROP",
-    "NgasDROP",
-    "RDBMSDrop",
-    "PlasmaDROP",
-    "PlasmaFlightDROP",
-]
-
-from dlg.data.directorycontainer import DirectoryContainer
-from dlg.data.file import FileDROP
-from dlg.data.memory import InMemoryDROP, SharedMemoryDROP
-from dlg.data.ngas import NgasDROP
-from dlg.data.plasma import PlasmaDROP, PlasmaFlightDROP
-from dlg.data.rdbms import RDBMSDrop
