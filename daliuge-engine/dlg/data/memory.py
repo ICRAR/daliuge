@@ -96,7 +96,7 @@ class InMemoryDROP(DataDROP):
 # @details Data stored in shared memory
 # @par EAGLE_START
 # @param category SharedMemory
-# @param tag template
+# @param tag daliuge
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
