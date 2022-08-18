@@ -33,9 +33,9 @@ import numpy
 from dlg import droputils
 from dlg.common import dropdict, Categories
 from dlg.drop import BarrierAppDROP
-from dlg.data.plasma import PlasmaDROP
-from dlg.data.memory import InMemoryDROP
-from dlg.data.file import FileDROP
+from dlg.data.drops.plasma import PlasmaDROP
+from dlg.data.drops.memory import InMemoryDROP
+from dlg.data.drops.file import FileDROP
 from dlg.droputils import DROPFile
 
 

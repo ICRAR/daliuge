@@ -29,8 +29,8 @@ import unittest
 from dlg import droputils
 from dlg.apps.crc import CRCApp, crc32
 from dlg.apps.dynlib import DynlibApp
-from dlg.data.memory import InMemoryDROP
-from dlg.data.file import FileDROP
+from dlg.data.drops.memory import InMemoryDROP
+from dlg.data.drops.file import FileDROP
 
 from . import test_dynlib
 from .setp_up import build_shared_library
