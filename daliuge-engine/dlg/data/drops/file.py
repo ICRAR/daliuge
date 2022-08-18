@@ -27,7 +27,7 @@ from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import DataDROP, PathBasedDrop, logger, track_current_drop
 from dlg.exceptions import InvalidDropException
-from dlg.io import FileIO
+from dlg.data.io import FileIO
 from dlg.meta import dlg_bool_param
 from dlg.utils import isabs
 

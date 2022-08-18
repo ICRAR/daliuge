@@ -31,12 +31,12 @@ import pickle
 import re
 import threading
 import traceback
-from typing import IO, Any, AsyncIterable, BinaryIO, Dict, Iterable, OrderedDict, Tuple, overload
+from typing import Any, Tuple
 import numpy as np
 
 from dlg.ddap_protocol import DROPStates
-from dlg.drop import AppDROP, AbstractDROP, DataDROP, PathBasedDrop
-from dlg.io import IOForURL, OpenMode
+from dlg.drop import AppDROP, AbstractDROP, DataDROP
+from dlg.data.io import IOForURL, OpenMode
 from dlg import common
 from dlg.common import DropType
 

@@ -25,7 +25,7 @@ import os
 import json
 
 from dlg.drop import AbstractDROP, DEFAULT_INTERNAL_PARAMETERS
-from dlg.io import MemoryIO
+from dlg.data.io import MemoryIO
 
 
 class KeyValueDROP:
