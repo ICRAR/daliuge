@@ -23,7 +23,7 @@ import os
 import sqlite3
 import unittest
 
-from dlg.data.memory import InMemoryDROP
+from dlg.data.drops.memory import InMemoryDROP
 from dlg.lifecycle.registry import RDBMSRegistry
 
 

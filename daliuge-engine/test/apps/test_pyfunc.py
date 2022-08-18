@@ -25,16 +25,13 @@ import os
 import pickle
 import random
 import unittest
-import pkg_resources
-import json
 import numpy
 
-from ..manager import test_dm
-from dlg import droputils, graph_loader
+from dlg import droputils
 from dlg.apps import pyfunc
 from dlg.common import Categories
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
-from dlg.data.memory import InMemoryDROP
+from dlg.data.drops.memory import InMemoryDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
 

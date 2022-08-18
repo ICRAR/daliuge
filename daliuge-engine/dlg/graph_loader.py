@@ -42,11 +42,11 @@ from .drop import (
     NullDROP,
     EndDROP,
 )
-from .data import *  # Make sure to grab every dataDROP
 from .environmentvar_drop import EnvironmentVarDROP
 from dlg.parset_drop import ParameterSetDROP
 from .exceptions import InvalidGraphException
-from dlg.data.json_drop import JsonDROP
+from dlg.data.drops.json_drop import JsonDROP
+from dlg.data.drops import *
 from .common import DropType
 
 

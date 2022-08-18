@@ -22,7 +22,7 @@
 import os
 import shutil
 
-from dlg.data.file import FileDROP
+from dlg.data.drops.file import FileDROP
 from dlg.ddap_protocol import DROPRel, DROPLinkType
 from dlg.drop import PathBasedDrop, ContainerDROP
 from dlg.exceptions import InvalidDropException, InvalidRelationshipException

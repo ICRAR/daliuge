@@ -44,7 +44,7 @@ if sys.version_info >= (3, 8):
 from .. import rpc, utils
 from ..ddap_protocol import DROPStates
 from ..drop import AppDROP
-from ..data.memory import InMemoryDROP, SharedMemoryDROP
+from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
 from ..exceptions import (
     NoSessionException,
     SessionAlreadyExistsException,
