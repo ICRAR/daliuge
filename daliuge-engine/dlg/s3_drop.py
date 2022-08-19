@@ -26,7 +26,7 @@ import boto3
 import botocore
 
 from .drop import AbstractDROP
-from .io import ErrorIO
+from dlg.data.io import ErrorIO
 from .meta import dlg_string_param, dlg_list_param
 
 

@@ -21,7 +21,7 @@
 #
 import unittest
 
-from dlg.io import NullIO, OpenMode
+from dlg.data.io import NullIO, OpenMode
 
 
 class TestIO(unittest.TestCase):
