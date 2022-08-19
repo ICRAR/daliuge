@@ -29,6 +29,7 @@ import importlib
 import inspect
 import json
 import logging
+import os
 import pickle
 
 from typing import Callable
@@ -272,7 +273,12 @@ class PyFuncApp(BarrierAppDROP):
         """
         BarrierAppDROP.initialize(self, **kwargs)
 
-        self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
+        env = os.environ.copy()
+        env.update({"DLG_UID": self._uid})
+        if self._dlg_session:
+            env.update({"DLG_SESSION_ID": self._dlg_session.sessionId})
+
+        self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
 
         self.func_code = self._popArg(kwargs, "func_code", None)
 
