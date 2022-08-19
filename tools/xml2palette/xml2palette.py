@@ -1014,8 +1014,6 @@ def cleanString(text: str) -> str:
 def parseCasaDocs(dStr:str) -> dict:
     """
     Parse the special docstring for casatasks
-    """
-    """
     Extract the parameters from the casatask doc string.
 
     :param task: The casatask to derive the parameters from.
