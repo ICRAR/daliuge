@@ -278,7 +278,7 @@ class PyFuncApp(BarrierAppDROP):
         if self._dlg_session:
             env.update({"DLG_SESSION_ID": self._dlg_session.sessionId})
 
-        self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
+        self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
 
         self.func_code = self._popArg(kwargs, "func_code", None)
 
