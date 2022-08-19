@@ -268,4 +268,4 @@ class TestRest(unittest.TestCase):
     def test_submit_method(self):
         c = NodeManagerClient(hostname)
         response = c.get_submission_method()
-        self.assertEqual(response, {"methods": ["REST"]})
+        self.assertEqual({"methods": ["BROWSER"]}, response)
