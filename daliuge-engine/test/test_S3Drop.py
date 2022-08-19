@@ -32,7 +32,7 @@ import unittest
 run_tests = True
 try:
     import boto3
-    from dlg.s3_drop import S3DROP
+    from dlg.data.drops.s3_drop import S3DROP
 except ImportError:
     run_tests = False
 

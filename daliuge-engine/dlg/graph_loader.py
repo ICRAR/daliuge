@@ -42,8 +42,8 @@ from .drop import (
     NullDROP,
     EndDROP,
 )
-from .environmentvar_drop import EnvironmentVarDROP
-from dlg.parset_drop import ParameterSetDROP
+from dlg.data.drops.environmentvar_drop import EnvironmentVarDROP
+from dlg.data.drops.parset_drop import ParameterSetDROP
 from .exceptions import InvalidGraphException
 from dlg.data.drops.json_drop import JsonDROP
 from dlg.data.drops import *
@@ -65,7 +65,7 @@ STORAGE_TYPES = {
 }
 
 try:
-    from .s3_drop import S3DROP
+    from .data.drops.s3_drop import S3DROP
 
     STORAGE_TYPES[Categories.S3] = S3DROP
 except ImportError:
