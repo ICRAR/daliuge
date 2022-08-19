@@ -1162,13 +1162,13 @@ class PathBasedDrop(object):
         parts = []
         if self._dlg_session:
             parts.append(".")
-            parts.append(self._dlg_session.sessionId)
         else:
             parts.append("/tmp/daliuge_tfiles")
         if dirname:
             parts.append(dirname)
 
         the_dir = os.path.abspath(os.path.normpath(os.path.join(*parts)))
+        logger.debug("Path used for drop: %s", the_dir)
         createDirIfMissing(the_dir)
         return the_dir
 
