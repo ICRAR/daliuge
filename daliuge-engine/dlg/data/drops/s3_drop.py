@@ -25,9 +25,9 @@ Drops that interact with AWS S3
 import boto3
 import botocore
 
-from .drop import AbstractDROP
+from ...drop import AbstractDROP
 from dlg.data.io import ErrorIO
-from .meta import dlg_string_param, dlg_list_param
+from ...meta import dlg_string_param, dlg_list_param
 
 
 ##

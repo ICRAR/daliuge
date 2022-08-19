@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 import unittest
-from dlg.parset_drop import ParameterSetDROP
+from dlg.data.drops.parset_drop import ParameterSetDROP
 from dlg.droputils import allDropContents
 
 
