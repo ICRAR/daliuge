@@ -31,8 +31,8 @@ import urllib.parse
 from abc import abstractmethod, ABCMeta
 from typing import Optional, Union
 
-from . import ngaslite
-from .apps.plasmaflight import PlasmaFlightClient
+from dlg import ngaslite
+from dlg.apps.plasmaflight import PlasmaFlightClient
 
 import pyarrow
 import pyarrow.plasma as plasma

@@ -24,7 +24,7 @@ import sqlite3
 import unittest
 import tempfile
 
-from dlg.data.memory import InMemoryDROP
+from dlg.data.drops.memory import InMemoryDROP
 from dlg.lifecycle.registry import RDBMSRegistry
 
 

@@ -28,7 +28,7 @@ import sys
 
 from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.drop import DataDROP, logger
-from dlg.io import SharedMemoryIO, MemoryIO
+from dlg.data.io import SharedMemoryIO, MemoryIO
 
 
 ##

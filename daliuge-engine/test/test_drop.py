@@ -41,11 +41,11 @@ from dlg.drop import (
     ContainerDROP,
     InputFiredAppDROP,
 )
-from dlg.data.plasma import PlasmaDROP, PlasmaFlightDROP
-from dlg.data.rdbms import RDBMSDrop
-from dlg.data.memory import InMemoryDROP, SharedMemoryDROP
-from dlg.data.directorycontainer import DirectoryContainer
-from dlg.data.file import FileDROP
+from dlg.data.drops.plasma import PlasmaDROP, PlasmaFlightDROP
+from dlg.data.drops.rdbms import RDBMSDrop
+from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
+from dlg.data.drops.directorycontainer import DirectoryContainer
+from dlg.data.drops.file import FileDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
 from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp

@@ -19,7 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from cmath import log
 import json
 import os
 import unittest
@@ -27,11 +26,8 @@ import unittest
 from asyncio.log import logger
 import pkg_resources
 
-from dlg.data.memory import InMemoryDROP
-from dlg import runtime
+from dlg.data.drops.memory import InMemoryDROP
 from dlg import droputils
-from dlg import utils
-from dlg.ddap_protocol import DROPStates
 from dlg.manager.composite_manager import DataIslandManager
 from dlg.testutils import ManagerStarter
 

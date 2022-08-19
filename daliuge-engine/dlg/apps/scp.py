@@ -25,9 +25,9 @@ from dlg.drop import (
     NullDROP,
     ContainerDROP,
 )
-from dlg.data.rdbms import RDBMSDrop
-from dlg.data.memory import InMemoryDROP, SharedMemoryDROP
-from dlg.data.ngas import NgasDROP
+from dlg.data.drops.rdbms import RDBMSDrop
+from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
+from dlg.data.drops.ngas import NgasDROP
 from dlg.meta import (
     dlg_string_param,
     dlg_float_param,

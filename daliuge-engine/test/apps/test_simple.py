@@ -26,25 +26,22 @@ import sys
 import time
 import unittest
 from multiprocessing.pool import ThreadPool
-from numpy import random, mean, array, concatenate, random, testing
+from numpy import mean, array, concatenate, random, testing
 from psutil import cpu_count
 
 from dlg import droputils
 from dlg.apps.simple import (
     GenericScatterApp,
     GenericNpyScatterApp,
-    SleepApp,
-    CopyApp,
-    SleepAndCopyApp,
     ListAppendThrashingApp,
 )
 from dlg.apps.simple import RandomArrayApp, AverageArraysApp, HelloWorldApp
 from dlg.apps.simple import SleepApp, CopyApp, SleepAndCopyApp
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import NullDROP
-from dlg.data.memory import InMemoryDROP
-from dlg.data.ngas import NgasDROP
-from dlg.data.file import FileDROP
+from dlg.data.drops.memory import InMemoryDROP
+from dlg.data.drops.ngas import NgasDROP
+from dlg.data.drops.file import FileDROP
 
 if sys.version_info >= (3, 8):
     from dlg.manager.shared_memory_manager import DlgSharedMemoryManager
