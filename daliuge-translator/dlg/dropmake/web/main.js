@@ -25,28 +25,43 @@ $(document).ready(function () {
 
     //keyboard shortcuts
     var keyboardShortcuts = []
-    keyboardShortcuts.push({name:"Open Settings", shortcut:"O", code:79, action: "$('#settingsModal').modal('toggle')"})
-    keyboardShortcuts.push({name:"Deploy", shortcut:"D", code:75, action: "$('#shortcutsModal').modal('toggle')"})
-    keyboardShortcuts.push({name:"Open Keyboardshortcuts Modal", shortcut:"K", code:68, action: "$('#activeDeployMethodButton').click()"})
+    keyboardShortcuts.push({
+        name: "Open Settings",
+        shortcut: "O",
+        code: 79,
+        action: "$('#settingsModal').modal('toggle')"
+    })
+    keyboardShortcuts.push({
+        name: "Deploy",
+        shortcut: "D",
+        code: 75,
+        action: "$('#shortcutsModal').modal('toggle')"
+    })
+    keyboardShortcuts.push({
+        name: "Open Keyboardshortcuts Modal",
+        shortcut: "K",
+        code: 68,
+        action: "$('#activeDeployMethodButton').click()"
+    })
 
     //fill out keyboard shortcuts modal
-    keyboardShortcuts.forEach(element => { 
-        var shortCutItem =   '<div class="col-lg-6">'+
-                            '<div class="shortCutsModalItem">'+
-                                '<span>'+element.name+'</span>'+
-                                '<span class="shortCutsModalItemRight">'+element.shortcut+'</span>'+
-                            '</div>'+
-                        '</div>'
+    keyboardShortcuts.forEach(element => {
+        var shortCutItem = '<div class="col-lg-6">' +
+            '<div class="shortCutsModalItem">' +
+            '<span>' + element.name + '</span>' +
+            '<span class="shortCutsModalItemRight">' + element.shortcut + '</span>' +
+            '</div>' +
+            '</div>'
         $("#shortcutsModal .modal-body .row").append(shortCutItem)
     })
 
     //keyboard shortcuts execution
-    $(document).keydown(function(e){
-        if($("input").is(":focus")){
+    $(document).keydown(function (e) {
+        if ($("input").is(":focus")) {
             return
         }
-        keyboardShortcuts.forEach(element => { 
-            
+        keyboardShortcuts.forEach(element => {
+
             if (e.which == element.code) //open settings modal on o
             {
                 eval(element.action)
@@ -55,60 +70,60 @@ $(document).ready(function () {
     })
 });
 
-function getCurrentPageUrl(){
+function getCurrentPageUrl() {
     const pathElements = window.location.href.split('/');
     const protocol = pathElements[0];
     const host = pathElements[2];
     return protocol + '//' + host;
 }
 
-function openSettingsModal(){
+function openSettingsModal() {
     //needed for the dropdown option to open the settings modal, the pure bootstrap method used on the settings gear button proved inconsistent
     $('#settingsModal').modal("show")
 }
 
-async function initiateDeploy(method, selected, clickedName){
+async function initiateDeploy(method, selected, clickedName) {
     var clickedUrl
     JSON.parse(window.localStorage.getItem("deployMethods")).forEach(element => {
-        if(element.name === clickedName){
+        if (element.name === clickedName) {
             clickedUrl = element.url
         }
     })
 
-    if (selected === false){
+    if (selected === false) {
         await changeSelectedDeployMethod(clickedName, clickedUrl)
     }
 
     var activeUrlReachable = await checkUrlStatus(clickedUrl)
 
-    if(!activeUrlReachable){
-        $("#warning-alert").fadeTo(2000, 1000).slideUp(200, function() {
+    if (!activeUrlReachable) {
+        $("#warning-alert").fadeTo(2000, 1000).slideUp(200, function () {
             $("#warning-alert").slideUp(200);
         });
         return
     }
-    if(method === "SERVER"){
+    if (method === "SERVER") {
         $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
         $("#dlg_mgr_deploy").prop("checked", true)
         $("#pg_form").submit();
-    }else if(method === "HELM"){
+    } else if (method === "HELM") {
         $("#gen_helm_button").val("Generate &amp; Deploy Physical Graph")
         $("#dlg_helm_deploy").prop("checked", true)
         $("#pg_helm_form").submit()
-    }else if(method === "OOD"){
+    } else if (method === "OOD") {
         restDeploy()
-    } else if(method === "BROWSER"){
+    } else if (method === "BROWSER") {
         directRestDeploy()
     }
 }
 
-async function changeSelectedDeployMethod(name,manager_url) {
+async function changeSelectedDeployMethod(name, manager_url) {
     return new Promise((resolve, reject) => {
         var deployMethodsArray = JSON.parse(localStorage.getItem("deployMethods"))
         $("#managerUrlInput").val(manager_url);
         deployMethodsArray.forEach(element => {
             element.active = "false"
-            if(element.name === name){
+            if (element.name === name) {
                 element.active = "true"
             }
         })
@@ -125,16 +140,16 @@ function updateDeployOptionsDropdown() {
 
     //add deployment options
     JSON.parse(localStorage.getItem("deployMethods")).forEach(element => {
-        if(element.active === "false"){
+        if (element.active === "false") {
             //dropdown options
             $("#deployDropdowns .dropdown-menu").prepend(
-                `<a href='javascript:void(0)' onclick='initiateDeploy("`+element.deployMethod+`",false,"`+element.name+`")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph via method: `+element.deployMethod+`' value='Deploy Physical Graph via `+element.deployMethod+`'>`+element.name+`</a>`
+                `<a href='javascript:void(0)' onclick='initiateDeploy("` + element.deployMethod + `",false,"` + element.name + `")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph via method: ` + element.deployMethod + `' value='Deploy Physical Graph via ` + element.deployMethod + `'>` + element.name + `</a>`
             )
-        }else {
-            selectedUrl=element.url
+        } else {
+            selectedUrl = element.url
             //active option
             $("#deployDropdowns").prepend(
-                `<a href='javascript:void(0)' id='activeDeployMethodButton'  onclick='initiateDeploy("`+element.deployMethod+`",true,"`+element.name+`")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph vi method: `+element.deployMethod+` [D]' value='Deploy Physical Graph via `+element.deployMethod+`'>Deploy: `+element.name+`</a>`
+                `<a href='javascript:void(0)' id='activeDeployMethodButton'  onclick='initiateDeploy("` + element.deployMethod + `",true,"` + element.name + `")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph vi method: ` + element.deployMethod + ` [D]' value='Deploy Physical Graph via ` + element.deployMethod + `'>Deploy: ` + element.name + `</a>`
             )
             checkActiveDeployMethod(selectedUrl)
         }
@@ -145,7 +160,7 @@ function updateDeployOptionsDropdown() {
     var newHost = newUrl.hostname;
     var newPrefix = newUrl.pathname;
     var newProtocol = newUrl.protocol;
-    console.log("URL set to:'" + newUrl + "'"); 
+    console.log("URL set to:'" + newUrl + "'");
     console.log("Protocol set to:'" + newProtocol + "'");
     console.log("Host set to:'" + newHost + "'");
     console.log("Port set to:'" + newPort + "'");
@@ -159,16 +174,17 @@ function updateDeployOptionsDropdown() {
 
 }
 
-async function checkUrlStatus (url) {
+async function checkUrlStatus(url) {
     return new Promise((resolve, reject) => {
-        $.ajax({url: url,
+        $.ajax({
+            url: url,
             type: 'HEAD',
             dataType: 'jsonp',
-            complete: function(jqXHR, textStatus){
-                if(jqXHR.status === 200){
-                    resolve(true) 
-                }else{
-                    resolve(false) 
+            complete: function (jqXHR, textStatus) {
+                if (jqXHR.status === 200) {
+                    resolve(true)
+                } else {
+                    resolve(false)
                 }
             },
             timeout: 2000
@@ -181,7 +197,7 @@ async function checkUrlSubmissionMethods(url) {
         $.ajax({
             url: url,
             type: 'GET',
-            success: function( response ) {
+            success: function (response) {
                 resolve(response)
             },
             timeout: 2000
@@ -190,18 +206,18 @@ async function checkUrlSubmissionMethods(url) {
 }
 
 
-async function manualCheckUrlStatus (clickPos) {
+async function manualCheckUrlStatus(clickPos) {
     var badUrl = false
     //if the event is triggered by click the check icon manually
-    if(clickPos === "icon"){
+    if (clickPos === "icon") {
         var url = $(event.target).parent().find($('.deployMethodUrl')).val()
         var target = $(event.target)
-    }else{
+    } else {
         //if the event is triggered by focus leave on the input
         var url = $(event.target).parent().parent().find($('.deployMethodUrl')).val()
         var target = $(event.target).parent().parent().find($('.urlStatusIcon'))
     }
-   
+
 
     //check if jquery deems the url constructed properly
     try {
@@ -210,30 +226,30 @@ async function manualCheckUrlStatus (clickPos) {
         badUrl = true
     }
 
-    if(badUrl){
+    if (badUrl) {
         $("#settingsModalErrorMessage").html('Please ensure deploy methods URLs are valid')
         return
-    }else{
+    } else {
         //if the url is deemed contructed well, here we use an ajax call to see if the url is reachable
         var urlStatus = await checkUrlStatus(url)
         $("#settingsModalErrorMessage").html('')
-        if(urlStatus){
+        if (urlStatus) {
             target.replaceWith(`<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusReachable" data-text="Destination URL Is Reachable, click to re-check" onclick="manualCheckUrlStatus('icon')"><i class="material-icons md-24">done</i></div>`)
-        }else{
+        } else {
             target.replaceWith(`<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusNotReachable" data-text="Destination URL Is Not Reachable, click to re-check" onclick="manualCheckUrlStatus('icon')"><i class="material-icons md-24">close</i></div>`)
-        }   
+        }
     }
 }
 
-async function checkActiveDeployMethod(url){
+async function checkActiveDeployMethod(url) {
     $("#activeDeployMethodButton").removeClass("activeDeployMethodButtonOnline")
     $("#activeDeployMethodButton").removeClass("activeDeployMethodButtonOffline")
     var urlStatus = await checkUrlStatus(url)
-    if(urlStatus){
+    if (urlStatus) {
         $("#activeDeployMethodButton").addClass("activeDeployMethodButtonOnline")
-    }else{
+    } else {
         $("#activeDeployMethodButton").addClass("activeDeployMethodButtonOffline")
-    }   
+    }
 }
 
 function saveSettings() {
@@ -241,66 +257,66 @@ function saveSettings() {
 
     var settingsDeployMethods = $("#DeployMethodManager .input-group")//deploy method rows selector
     var deployMethodsArray = []//temp array of deploy method rows values
-    
+
     //errors
     var errorFillingOut = false
     var duplicateName = false
     var emptyName = false
     var badUrl = false
 
-    settingsDeployMethods.each(function(){
+    settingsDeployMethods.each(function () {
 
         //error detection
-        if($(this).find(".deployMethodName").val().trim() === ""){
+        if ($(this).find(".deployMethodName").val().trim() === "") {
             emptyName = true
         }
 
         try {
             new URL($(this).find(".deployMethodUrl").val());
-          } catch (error) {
-                console.log("faulty Url: ",$(this).find(".deployMethodUrl").val())
-              badUrl = true
-          }
+        } catch (error) {
+            console.log("faulty Url: ", $(this).find(".deployMethodUrl").val())
+            badUrl = true
+        }
 
         //duplicate name check, the name is used as an id of sorts
         deployMethodsArray.forEach(element => {
-            if ($(this).find(".deployMethodName").val() === element.name){
+            if ($(this).find(".deployMethodName").val() === element.name) {
                 duplicateName = true
                 return
             }
         })
 
         //error Handling
-        if(duplicateName){
+        if (duplicateName) {
             errorFillingOut = true;
             $("#settingsModalErrorMessage").html('Please ensure there are no duplicate deploy method names')
         }
-        if(emptyName){
+        if (emptyName) {
             errorFillingOut = true;
             $("#settingsModalErrorMessage").html('Please ensure deploy methods are named')
         }
-        if(badUrl){
+        if (badUrl) {
             errorFillingOut = true;
             $("#settingsModalErrorMessage").html('Please ensure deploy methods URLs are valid')
         }
 
-        if(!errorFillingOut){
-            deployMethod = 
-            {
-                name : $(this).find(".deployMethodName").val(),
-                url : $(this).find(".deployMethodUrl").val(),
-                deployMethod : $(this).find(".deployMethodMethod option:selected").val(),
-                active : $(this).find(".deployMethodActive").val()
-            }
+        if (!errorFillingOut) {
+            deployMethod =
+                {
+                    name: $(this).find(".deployMethodName").val(),
+                    url: $(this).find(".deployMethodUrl").val(),
+                    deployMethod: $(this).find(".deployMethodMethod option:selected").val(),
+                    active: $(this).find(".deployMethodActive").val()
+                }
             console.log($(this).find(".deployMethodMethod option:selected").val())
             deployMethodsArray.push(deployMethod)
-        } 
+        }
     })
 
     //if errors in previous step abort saving
-    if(errorFillingOut){
+    if (errorFillingOut) {
         return;
-    }else{
+    } else {
         $("#settingsModalErrorMessage").html('')
     }
     //save to local storage
@@ -312,9 +328,9 @@ function saveSettings() {
     updateDeployOptionsDropdown()
 }
 
-function buildDeployMethodEntry(method, selected){
+function buildDeployMethodEntry(method, selected) {
     let displayValue = "";
-    switch(method){
+    switch (method) {
         case "SERVER":
             displayValue = "Direct";
             break;
@@ -328,7 +344,7 @@ function buildDeployMethodEntry(method, selected){
             displayValue = "Helm";
             break;
     }
-    if(selected){
+    if (selected) {
         return `<option value="${method}" selected="true">${displayValue}</option>`
     } else {
         return `<option value="${method}">${displayValue}</option>`
@@ -349,17 +365,17 @@ function fillOutSettings() {
     }
 
     //setting up initial default deploy method
-    if(!localStorage.getItem("deployMethods")){
+    if (!localStorage.getItem("deployMethods")) {
         var deployMethodsArray = [
             {
-                name : "default deployment",
-                url : "http://localhost:8001/",
-                deployMethod : "SERVER",
-                active : true
+                name: "default deployment",
+                url: "http://localhost:8001/",
+                deployMethod: "SERVER",
+                active: true
             }
         ]
         localStorage.setItem('deployMethods', JSON.stringify(deployMethodsArray))
-    }else{
+    } else {
         //get deploy methods from local storage 
         var deployMethodsArray = JSON.parse(localStorage.getItem("deployMethods"))
     }
@@ -377,10 +393,10 @@ function fillOutSettings() {
         console.log(directlyAvailableMethods);
         console.log(translatorAvailableMethods);
         var ReachableIcon = ""
-        
-        if(urlReachable){
+
+        if (urlReachable) {
             ReachableIcon = `<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusReachable" data-text="Destination URL Is Reachable, click to re-check" onclick="manualCheckUrlStatus('icon')"><i class="material-icons md-24">done</i></div>`
-        }else{
+        } else {
             ReachableIcon = `<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusNotReachable" data-text="Destination URL Is Not Reachable, click to re-check" onclick="manualCheckUrlStatus('icon')"><i class="material-icons md-24">close</i></div>`
         }
 
@@ -389,7 +405,7 @@ function fillOutSettings() {
         console.log(allAvailableMethods);
         for (i = 0; i < allAvailableMethods.length; i++) {
             const deploy_option = allAvailableMethods[i];
-            if(element.deployMethod !== "undefined"){
+            if (element.deployMethod !== "undefined") {
                 // If a choice has already been made, go with that.
                 availableOptions.push(buildDeployMethodEntry(deploy_option, element.deployMethod === deploy_option));
             } else {
@@ -397,38 +413,38 @@ function fillOutSettings() {
                 availableOptions.push(buildDeployMethodEntry(deploy_option, i === 0));
             }
         }
-        var deplpoyMethodRow = '<div class="input-group">'+
-        '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class="deployMethodName" value="'+element.name+'"></div>'+
-        `<div class="settingsInputTooltip tooltip tooltipBottom form-control urlInputField" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut')" placeholder="Destination Url" class="deployMethodUrl" value="`+element.url+`"></div>`+
-        ReachableIcon+
-        '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod">'
-        for(i = 0; i < availableOptions.length; i++){
+        var deplpoyMethodRow = '<div class="input-group">' +
+            '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class="deployMethodName" value="' + element.name + '"></div>' +
+            `<div class="settingsInputTooltip tooltip tooltipBottom form-control urlInputField" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut')" placeholder="Destination Url" class="deployMethodUrl" value="` + element.url + `"></div>` +
+            ReachableIcon +
+            '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod">'
+        for (i = 0; i < availableOptions.length; i++) {
             deplpoyMethodRow += availableOptions[i]
         }
         deplpoyMethodRow +=
-        '</select></div>'+
-        '<input type="text" class="form-control deployMethodActive" value="'+element.active+'">'+
-        '<button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>'+
-        '</div>'
+            '</select></div>' +
+            '<input type="text" class="form-control deployMethodActive" value="' + element.active + '">' +
+            '<button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>' +
+            '</div>'
         deployMethodManagerDiv.append(deplpoyMethodRow)
     });
 }
 
-function addDeployMethod(){
+function addDeployMethod() {
     var deployMethodManagerDiv = $("#DeployMethodManager")
-    var deplpoyMethodRow = '<div class="input-group">'+
-    '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class=" deployMethodName" value=""></div>'+
-    `<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut');" placeholder="Destination Url" class="deployMethodUrl"value=""></div>`+
-    `<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusUnknown" data-text="Destination URL status Unknown, click to check" onclick="manualCheckUrlStatus('icon')"><a class="urlStatusUnknownIcon">?</a></div>`+
-    '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod" name="Deploy Method">'+
-    '</select></div>'+
-    '<input type="text" class="form-control deployMethodActive" value="false">'+
-    '<button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>'+
-    '</div>'
+    var deplpoyMethodRow = '<div class="input-group">' +
+        '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class=" deployMethodName" value=""></div>' +
+        `<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut');" placeholder="Destination Url" class="deployMethodUrl"value=""></div>` +
+        `<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusUnknown" data-text="Destination URL status Unknown, click to check" onclick="manualCheckUrlStatus('icon')"><a class="urlStatusUnknownIcon">?</a></div>` +
+        '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod" name="Deploy Method">' +
+        '</select></div>' +
+        '<input type="text" class="form-control deployMethodActive" value="false">' +
+        '<button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>' +
+        '</div>'
     deployMethodManagerDiv.append(deplpoyMethodRow)
 }
 
-function removeDeployMethod (e){
+function removeDeployMethod(e) {
     $(e.target).parent().remove()
 }
 
@@ -512,7 +528,7 @@ function handleFetchErrors(response) {
     return response;
 }
 
-async function directRestDeploy(){
+async function directRestDeploy() {
     // fetch manager host and port from local storage
     murl = window.localStorage.getItem("manager_url");
     if (!murl) {
@@ -522,7 +538,8 @@ async function directRestDeploy(){
             fillOutSettings()
             murl = window.localStorage.getItem("manager_url");
         })
-    };
+    }
+    ;
     var manager_url = new URL(murl);
     console.log("In Direct REST Deploy");
 
@@ -558,13 +575,13 @@ async function directRestDeploy(){
     })
         .then(handleFetchErrors)
         .then(response => response.json())
-        .catch(function (error){
+        .catch(function (error) {
             showMessageModal('Error', error + "\nGetting Nodes unsuccessful");
         })
     console.log(nodes)
 
     const pgt_url = "/gen_pg?tpl_nodes_len=" + nodes.length.toString() + "&pgt_id=" + pgtName;
-      console.log("sending request to ", pgt_url);
+    console.log("sending request to ", pgt_url);
     console.log("graph name:", pgtName);
     const pgt = await fetch(pgt_url, {
         method: 'GET',
@@ -676,7 +693,8 @@ async function restDeploy() {
             fillOutSettings()
             murl = window.localStorage.getItem("manager_url");
         })
-    };
+    }
+    ;
     var manager_url = new URL(murl);
     console.log("In REST Deploy")
 
@@ -752,7 +770,6 @@ async function restDeploy() {
         .catch(function (error) {
             showMessageModal('Error', error + "\nSending PGT to backend unsuccessful!");
         });
-
 
 
 // All the rest here is when the managers are actually running
