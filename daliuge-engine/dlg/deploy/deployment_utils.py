@@ -118,7 +118,7 @@ def check_k8s_env():
         output = subprocess.run(
             ["kubectl version"], capture_output=True, shell=True
         ).stdout
-        pattern = re.compile(r"^Client Version:.*\nServer Version:.*")
+        pattern = re.compile(r"^Client Version:.*Server Version:.*")
         return re.match(pattern, output.decode(encoding="utf-8"))
     except subprocess.SubprocessError:
         return False
