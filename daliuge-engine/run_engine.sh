@@ -46,7 +46,7 @@ case "$1" in
         echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${C_TAG}"
         docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${C_TAG}
         sleep 3
-        ./start_local_managers.sh
+        curl -X POST http://localhost:9000/managers/island/start
         exit 0;;
     "casa")
         DLG_ROOT="/tmp/dlg"
@@ -57,7 +57,7 @@ case "$1" in
         echo "docker run -td ${DOCKER_OPTS}  ${CONTAINER_NM}"
         docker run -td ${DOCKER_OPTS}  ${CONTAINER_NM}
         sleep 3
-        ./start_local_managers.sh
+        curl -X POST http://localhost:9000/managers/island/start
         exit 0;;
     "slim")
         export DLG_ROOT="$HOME/dlg"
@@ -66,7 +66,7 @@ case "$1" in
         echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}"
         docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
         sleep 3
-        ./start_local_managers.sh
+        curl -X POST http://localhost:9000/managers/island/start
         exit 0;;
     *)
         echo "Usage run_engine.sh <dep|dev|slim>"
