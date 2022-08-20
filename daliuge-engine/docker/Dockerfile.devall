@@ -41,5 +41,5 @@ RUN apt install -y git python3-dev
 #     curl https://ska-telescope.gitlab.io/external/rascil/rascil_data.tgz -o rascil_data.tgz &&\
 #     tar zxf rascil_data.tgz -C /dlg/lib/python3.8/site-packages
 # RUN pip install --index-url=https://artefact.skao.int/repository/pypi-all/simple rascil
-
-CMD ["dlg", "daemon", "-vv"]
+# starting the daemon, master and NM
+CMD ["dlg", "daemon", "-vv", "-m"]
