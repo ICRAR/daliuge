@@ -22,8 +22,14 @@
 """
 Drops that interact with AWS S3
 """
-import boto3
-import botocore
+from asyncio.log import logger
+
+
+try:
+    import boto3
+    import botocore
+except ImportError:
+    logger.warning("BOTO bindings are not available")
 
 from ...drop import AbstractDROP
 from dlg.data.io import ErrorIO

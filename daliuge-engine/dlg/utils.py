@@ -526,8 +526,8 @@ def prepareUser(DLG_ROOT=getDlgDir()):
 
 
 # Backwards compatibility
-terminate_or_kill = common.terminate_or_kill
-wait_or_kill = common.wait_or_kill
+terminate_or_kill = common.osutils.terminate_or_kill
+wait_or_kill = common.osutils.wait_or_kill
 b2s = common.b2s
 
 check_port = common.check_port
