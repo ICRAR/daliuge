@@ -159,11 +159,15 @@ class DlgDaemon(RestServer):
 
     def _stop_manager(self, name, timeout):
         proc = getattr(self, name)
+        logger.debug("Stopping manager %s", name)
         if proc:
             utils.terminate_or_kill(proc, timeout)
             pid = proc.pid
             setattr(self, name, None)
             return {"terminated": pid}
+        else:
+            logger.warning("No %s manager found!", name)
+            return {}
 
     def stopNM(self, timeout=10):
         if self._nm_info:
@@ -302,6 +306,7 @@ class DlgDaemon(RestServer):
     def _rest_stop_manager(self, proc, stop_method):
         if proc is None:
             bottle.abort(409, "The Drop Manager is not running")  # Conflict
+        logger.debug("Calling %s", stop_method)
         return json.dumps(stop_method())
 
     def _rest_get_manager_info(self, proc):
@@ -339,7 +344,7 @@ class DlgDaemon(RestServer):
         body = bottle.request.json
         if not body or "nodes" not in body:
             # if nothing else is specified we simply add this host
-            nodes = {"localhost"}
+            nodes = {}
         else:
             nodes = body["nodes"]
         self._rest_start_manager(

@@ -434,24 +434,24 @@ class CompositeManagerRestServer(ManagerRestServer):
     def initializeSpecifics(self, app):
         app.get("/api", callback=self.getCMStatus)
         app.get("/api/nodes", callback=self.getCMNodes)
-        app.post("/api/nodes/<node>", callback=self.addCMNode)
-        app.delete("/api/nodes/<node>", callback=self.removeCMNode)
+        app.post("/api/node/<node>", callback=self.addCMNode)
+        app.delete("/api/node/<node>", callback=self.removeCMNode)
 
         # Query forwarding to sub-nodes
-        app.get("/api/nodes/<node>/sessions", callback=self.getNodeSessions)
+        app.get("/api/node/<node>/sessions", callback=self.getNodeSessions)
         app.get(
-            "/api/nodes/<node>/sessions/<sessionId>",
+            "/api/node/<node>/sessions/<sessionId>",
             callback=self.getNodeSessionInformation,
         )
         app.get(
-            "/api/nodes/<node>/sessions/<sessionId>/status",
+            "/api/node/<node>/sessions/<sessionId>/status",
             callback=self.getNodeSessionStatus,
         )
         app.get(
-            "/api/nodes/<node>/sessions/<sessionId>/graph", callback=self.getNodeGraph
+            "/api/node/<node>/sessions/<sessionId>/graph", callback=self.getNodeGraph
         )
         app.get(
-            "/api/nodes/<node>/sessions/<sessionId>/graph/status",
+            "/api/node/<node>/sessions/<sessionId>/graph/status",
             callback=self.getNodeGraphStatus,
         )
 
@@ -577,19 +577,20 @@ class MasterManagerRestServer(CompositeManagerRestServer):
     def initializeSpecifics(self, app):
         CompositeManagerRestServer.initializeSpecifics(self, app)
         # DIM manamagement
-        app.post("/api/islands/<dim>", callback=self.addDIM)
-        app.delete("/api/islands/<dim>", callback=self.removeDIM)
+        app.post("/api/island/<dim>", callback=self.addDIM)
+        app.delete("/api/island/<dim>", callback=self.removeDIM)
         # Query forwarding to daemons
-        app.post("/api/managers/<host>/dataisland", callback=self.createDataIsland)
+        app.post("/api/managers/<host>/island", callback=self.createDataIsland)
         app.post("/api/managers/<host>/node/start", callback=self.startNM)
         app.post("/api/managers/<host>/node/stop", callback=self.stopNM)
-        app.post("/api/managers/<host>/nodes/<node>", callback=self.addNM)
-        app.delete("/api/managers/<host>/nodes/<node>", callback=self.removeNM)
+        # manage node manager assignment
+        app.post("/api/managers/<host>/node/<node>", callback=self.addNM)
+        app.delete("/api/managers/<host>/node/<node>", callback=self.removeNM)
         # Querying about managers
         app.get("/api/islands", callback=self.getDIMs)
         app.get("/api/nodes", callback=self.getNMs)
         app.get("/api/managers/<host>/node", callback=self.getNMInfo)
-        app.get("/api/managers/<host>/dataisland", callback=self.getDIMInfo)
+        app.get("/api/managers/<host>/island", callback=self.getDIMInfo)
         app.get("/api/managers/<host>/master", callback=self.getMMInfo)
 
     @daliuge_aware
@@ -597,8 +598,9 @@ class MasterManagerRestServer(CompositeManagerRestServer):
         with RestClient(
             host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10
         ) as c:
-            c._post_json("/managers/dataisland", bottle.request.body.read())
+            c._post_json("/managers/island/start", bottle.request.body.read())
         self.dm.addDmHost(host)
+        return {"islands": self.dm.dmHosts}
 
     @daliuge_aware
     def getDIMs(self):
@@ -639,7 +641,7 @@ class MasterManagerRestServer(CompositeManagerRestServer):
         with RestClient(host=host, port=port, timeout=10, url_prefix="/api") as c:
             return json.loads(
                 c._POST(
-                    f"/nodes/{node}",
+                    f"/node/{node}",
                 ).read()
             )
 
@@ -648,7 +650,7 @@ class MasterManagerRestServer(CompositeManagerRestServer):
         port = constants.ISLAND_DEFAULT_REST_PORT
         logger.debug("Removing NM %s from DIM %s", node, host)
         with RestClient(host=host, port=port, timeout=10, url_prefix="/api") as c:
-            return json.loads(c._DELETE(f"/nodes/{node}").read())
+            return json.loads(c._DELETE(f"/node/{node}").read())
 
     @daliuge_aware
     def getNMInfo(self, host):
@@ -662,7 +664,7 @@ class MasterManagerRestServer(CompositeManagerRestServer):
         with RestClient(
             host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10
         ) as c:
-            return json.loads(c._GET("/managers/dataisland").read())
+            return json.loads(c._GET("/managers/island").read())
 
     @daliuge_aware
     def getMMInfo(self, host):
