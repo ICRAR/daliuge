@@ -39,7 +39,7 @@ import time
 from itertools import product
 
 import numpy as np
-from dlg.common import Categories, DropType
+from dlg.common import Categories, CategoryType, DropType
 from dlg.common import STORAGE_TYPES, APP_DROP_TYPES
 from dlg.common import dropdict
 from dlg.dropmake.dm_utils import (
@@ -597,6 +597,7 @@ class LGNode:
                     {
                         "oid": oid,
                         "type": DropType.DATA,
+                        "categoryType": CategoryType.DATA,
                         "storage": drop_type,
                         "rank": rank,
                     }
@@ -605,8 +606,10 @@ class LGNode:
                     {
                         "oid": "{0}-s".format(oid),
                         "type": DropType.APP,
+                        "categoryType": CategoryType.APPLICATION,
                         "app": "dlg.apps.simple.SleepApp",
                         "nm": "lstnr",
+                        "text": "lstnr",
                         "tw": 5,
                         "sleepTime": 5,
                         "rank": rank,
@@ -621,6 +624,7 @@ class LGNode:
                     {
                         "oid": oid,
                         "type": DropType.DATA,
+                        "categoryType": CategoryType.DATA,
                         "storage": drop_type,
                         "rank": rank,
                     }
@@ -670,6 +674,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "type": DropType.APP,
+                    "categoryType": CategoryType.APPLICATION,
                     "app": app_class,
                     "rank": rank
                 }
@@ -688,6 +693,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "type": DropType.APP,
+                    "categoryType": CategoryType.APPLICATION,
                     "app": "dlg.apps.dynlib.{}".format(drop_type),
                     "rank": rank,
                 }
@@ -710,6 +716,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "type": DropType.APP,
+                    "categoryType": CategoryType.APPLICATION,
                     "app": app_str,
                     "rank": rank
                 }
@@ -750,6 +757,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "type": typ,
+                    "categoryType": CategoryType.APPLICATION,
                     "app": app_class,
                     "rank": rank
                 }
@@ -785,6 +793,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "type": DropType.APP,
+                    "categoryType": CategoryType.APPLICATION,
                     "app": "dlg.apps.simple.SleepApp",
                     "rank": rank,
                 }
@@ -800,8 +809,10 @@ class LGNode:
                 {
                     "oid": "{0}-grp-data".format(oid),
                     "type": DropType.DATA,
+                    "categoryType": CategoryType.DATA,
                     "storage": Categories.MEMORY,
                     "nm": "grpdata",
+                    "text": "grpdata",
                     "dw": dw,
                     "rank": rank,
                 }
@@ -816,6 +827,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "type": DropType.APP,
+                    "categoryType": CategoryType.APPLICATION,
                     "app": "dlg.apps.simple.SleepApp",
                     "rank": rank,
                 }
@@ -830,8 +842,10 @@ class LGNode:
                 {
                     "oid": "{0}-gather-data".format(oid),
                     "type": DropType.DATA,
+                    "categoryType": CategoryType.DATA,
                     "storage": Categories.MEMORY,
                     "nm": "gthrdt",
+                    "text": "gthrdt",
                     "dw": dw,
                     "rank": rank,
                 }
@@ -851,6 +865,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "type": DropType.DATA,
+                    "categoryType": CategoryType.DATA,
                     "storage": Categories.NULL,
                     "rank": rank,
                 }
@@ -873,7 +888,11 @@ class LGNode:
         kwargs["iid"] = iid
         kwargs["lg_key"] = self.id
         kwargs["dt"] = self.jd["category"]
+        kwargs["category"] = self.jd["category"]
+        if "categoryType" in kwargs:
+            kwargs["categoryType"] = self.jd["categoryType"]
         kwargs["nm"] = self.text
+        kwargs["text"] = self.text
         # Behaviour is that child-nodes inherit reproducibility data from their parents.
         if self._reprodata is not None:
             kwargs["reprodata"] = self._reprodata.copy()
@@ -1294,8 +1313,10 @@ class LG:
                         sdrop["oid"], tdrop["oid"].replace(self._session_id, "")
                     ),
                     "type": DropType.DATA,
+                    "categoryType": CategoryType.DATA,
                     "storage": Categories.NULL,
                     "nm": "StreamNull",
+                    "text": "StreamNull",
                     "dw": 0,
                 }
             )

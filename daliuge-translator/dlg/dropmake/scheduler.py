@@ -1247,13 +1247,15 @@ class DAGUtil(object):
                 G.add_node(
                     myk,
                     weight=tw,
-                    text=drop["nm"],
+                    # text=drop["nm"],
+                    text=drop["text"],
                     dt=dtp,
                     drop_spec=drop,
                     num_cpus=num_cpus,
                 )
             else:
-                G.add_node(myk, weight=tw, text=drop["nm"], dt=dtp, num_cpus=num_cpus)
+                G.add_node(
+                    myk, weight=tw, text=drop["text"], dt=dtp, num_cpus=num_cpus)
             for obk in out_bound_keys:
                 if obk in drop:
                     for oup in drop[obk]:
