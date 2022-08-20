@@ -47,7 +47,7 @@ from dlg.data.drops.parset_drop import ParameterSetDROP
 from .exceptions import InvalidGraphException
 from dlg.data.drops.json_drop import JsonDROP
 from dlg.data.drops import *
-from .common import DropType
+from .common import DropType, CategoryType
 
 
 STORAGE_TYPES = {
@@ -220,7 +220,7 @@ def loadDropSpecs(dropSpecList):
         reprodata = dropSpecList.pop()
     for n, dropSpec in enumerate(dropSpecList):
 
-        # "type" and 'oit' are mandatory
+        # "type" and 'oid' are mandatory
         check_dropspec(n, dropSpec)
         dropType = dropSpec["type"]
 
@@ -332,8 +332,8 @@ def _createData(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
-    if DropType.DATA in dropSpec:
-        dataClassName = dropSpec[DropType.DATA]
+    if CategoryType.DATA in dropSpec:
+        dataClassName = dropSpec[CategoryType.DATA]
         parts = dataClassName.split(".")
         # we don't need to support dfms here
         module = importlib.import_module(".".join(parts[:-1]))
@@ -422,6 +422,7 @@ def _getKwargs(dropSpec):
         "oid",
         "uid",
         "app",
+        "appclass",
     ]
     kwargs = dict(dropSpec)
     for kw in REMOVE:

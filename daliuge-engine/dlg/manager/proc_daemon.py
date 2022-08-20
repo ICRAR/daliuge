@@ -97,6 +97,7 @@ class DlgDaemon(RestServer):
         app.post("/managers/master/stop", callback=self.rest_stopMM)
 
         # Querying about managers
+        app.get("/", callback=self.rest_getMgrs)
         app.get("/managers", callback=self.rest_getMgrs)
         app.get("/managers/master", callback=self.rest_getMMInfo)
         app.get("/managers/island", callback=self.rest_getDIMInfo)

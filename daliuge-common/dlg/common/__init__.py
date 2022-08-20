@@ -90,12 +90,25 @@ APP_DROP_TYPES = [
 
 
 class DropType:
+    # this gives the mapping to fields containing class paths
     DATA = "data"
+    # DATA = "dataclass" TODO: adjust tests
+    # APP = "appclass"
     SOCKET = "socket"
     APP = "app"  # Application drop that terminates onces executed
     SERVICE_APP = "serviceapp"  # App drop that runs continously
     CONTAINER = "container"  # Drop that contains other drops
 
+class CategoryType:
+    DATA = "Data"
+    APPLICATION = "Application"
+    GROUP = "Group"
+    UNKNOWN = "Unknown"
+    SERVICE = "Service"
+    CONTAINER = "Container"
+    SOCKET = "Socket"
+    CONTROL = "Control"
+    OTHER = "Other"
 
 def b2s(b, enc="utf8"):
     "Converts bytes into a string"
