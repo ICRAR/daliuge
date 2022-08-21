@@ -37,7 +37,7 @@ jobs:
       - name: Install test dependencies
         run: |
           pip install -U coveralls pytest pytest-cov
-          pip install -U setuptools pip wheel dask dlg-example-cmpts
+          pip install -U setuptools pip wheel dask
 
       - name: Install daliuge-common
         run: pip install -e daliuge-common/
