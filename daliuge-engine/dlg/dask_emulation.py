@@ -109,7 +109,7 @@ def compute(value, **kwargs):
     transmitter = dropdict(
         {
             "type": "app",
-            "categoryType": CategoryType.APPLICATION,
+#            "categoryType": CategoryType.APPLICATION,
             "app": "dlg.dask_emulation.ResultTransmitter",
             "appclass": "dlg.dask_emulation.ResultTransmitter",
             "oid": transmitter_oid,

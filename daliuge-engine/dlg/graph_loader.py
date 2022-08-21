@@ -47,7 +47,12 @@ from dlg.data.drops.parset_drop import ParameterSetDROP
 from .exceptions import InvalidGraphException
 from dlg.data.drops.json_drop import JsonDROP
 from dlg.data.drops import *
-from .common import DropType, CategoryType
+from .common import DropType
+try:
+    from .common import CategoryType
+except ImportError:
+    class CategoryType:
+        DATA = "dataclass"
 
 
 STORAGE_TYPES = {
