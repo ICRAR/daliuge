@@ -42,11 +42,6 @@ dlg.runtime.delayed
 ^^^^^^^^^^^^^^^^^^^
 .. autofunction:: dlg.runtime.delayed
 
-.. dlg.data
-.. ^^^^^^^^
-.. .. automodule:: dlg.data
-..    :members:
-
 dlg.utils
 ^^^^^^^^^
 .. automodule:: dlg.utils

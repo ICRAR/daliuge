@@ -45,12 +45,7 @@ dlg.data.drops.rdbms
 dlg.data.drops.json_drop
 ^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: dlg.data.drops.json_drop
-<<<<<<< HEAD
-   :members:
 
 dlg.data.drops.s3_drop
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: dlg.data.drops.s3_drop
-=======
->>>>>>> master
-   :members:
