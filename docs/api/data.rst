@@ -46,3 +46,8 @@ dlg.data.drops.json_drop
 ^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: dlg.data.drops.json_drop
    :members:
+
+dlg.data.drops.s3_drop
+^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: dlg.data.drops.s3_drop
+   :members:
