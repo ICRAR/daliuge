@@ -42,6 +42,7 @@ from .drop import (
     NullDROP,
     EndDROP,
 )
+
 from dlg.data.drops.environmentvar_drop import EnvironmentVarDROP
 from dlg.data.drops.parset_drop import ParameterSetDROP
 from .exceptions import InvalidGraphException

@@ -1561,6 +1561,7 @@ class ContainerDROP(DataDROP):
             return any([c.exists() for c in self._children])
         return True
 
+
 # ===============================================================================
 # AppDROP classes follow
 # ===============================================================================
