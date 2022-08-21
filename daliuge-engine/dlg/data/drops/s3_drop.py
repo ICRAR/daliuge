@@ -24,8 +24,6 @@ Drops that interact with AWS S3
 """
 from asyncio.log import logger
 
-<<<<<<< HEAD:daliuge-engine/dlg/data/drops/s3_drop.py
-
 try:
     import boto3
     import botocore
@@ -35,12 +33,6 @@ except ImportError:
 from ...drop import AbstractDROP
 from dlg.data.io import ErrorIO
 from ...meta import dlg_string_param, dlg_list_param
-=======
-from .drop import AbstractDROP
-from dlg.data.io import ErrorIO
-from .meta import dlg_string_param, dlg_list_param
->>>>>>> master:daliuge-engine/dlg/s3_drop.py
-
 
 ##
 # @brief S3
