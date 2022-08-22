@@ -92,6 +92,8 @@ APP_DROP_TYPES = [
 class DropType:
     # this gives the mapping to fields containing class paths
     DATA = "data"
+    DATACLASS = "dataclass"
+    APPCLASS = "appclass"
     # DATA = "dataclass" TODO: adjust tests
     # APP = "appclass"
     SOCKET = "socket"
