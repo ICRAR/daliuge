@@ -334,13 +334,13 @@ function buildDeployMethodEntry(method, selected) {
     let displayValue = "";
     switch (method) {
         case "SERVER":
-            displayValue = "Direct";
+            displayValue = "Server";
             break;
         case "BROWSER":
-            displayValue = "Rest-Direct";
+            displayValue = "Browser Direct";
             break;
         case "OOD":
-            displayValue = "Rest-OOD";
+            displayValue = "OOD";
             break;
         case "HELM":
             displayValue = "Helm";
