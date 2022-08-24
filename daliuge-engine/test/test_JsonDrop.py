@@ -25,7 +25,7 @@
 import os
 import unittest
 
-from dlg.json_drop import JsonDROP
+from dlg.data.drops.json_drop import JsonDROP
 
 DIR = "/tmp/daliuge_tfiles"
 FILE_TEXT = """

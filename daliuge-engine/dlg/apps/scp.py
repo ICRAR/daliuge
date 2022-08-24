@@ -22,13 +22,12 @@
 from dlg.remote import copyTo, copyFrom
 from dlg.drop import (
     BarrierAppDROP,
-    NgasDROP,
-    InMemoryDROP,
-    SharedMemoryDROP,
     NullDROP,
-    RDBMSDrop,
     ContainerDROP,
 )
+from dlg.data.drops.rdbms import RDBMSDrop
+from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
+from dlg.data.drops.ngas import NgasDROP
 from dlg.meta import (
     dlg_string_param,
     dlg_float_param,
@@ -41,8 +40,7 @@ from dlg.meta import (
 
 ##
 # @brief ScpApp
-# @details A BarrierAppDROP that copies the content of its single input onto its
-# single output via SSH's scp protocol.
+# @details A BarrierAppDROP that copies the content of its single input onto its single output via SSH's scp protocol.
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge

@@ -25,13 +25,12 @@ import os
 import time
 import unittest
 
-from .setp_up import build_shared_library
-from ..manager import test_dm
 from dlg import droputils
 from dlg.apps.dynlib import DynlibApp, DynlibStreamApp, DynlibProcApp
 from dlg.common import Categories
 from dlg.ddap_protocol import DROPRel, DROPLinkType, DROPStates
-from dlg.drop import InMemoryDROP, NullDROP
+from dlg.drop import NullDROP
+from dlg.data.drops.memory import InMemoryDROP
 
 from .setp_up import build_shared_library
 from ..manager import test_dm

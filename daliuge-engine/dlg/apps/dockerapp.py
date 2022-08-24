@@ -236,12 +236,12 @@ class DockerApp(BarrierAppDROP):
         self._containerLock = multiprocessing.Lock()
         super().initialize(**kwargs)
 
-        self._image = self._getArg(kwargs, "image", None)
-        self._env = self._getArg(kwargs, "env", None)
-        self._cmdLineArgs = self._getArg(kwargs, "command_line_arguments", "")
-        self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
-        self._argumentPrefix = self._getArg(kwargs, "argumentPrefix", "--")
-        self._paramValueSeparator = self._getArg(kwargs, "paramValueSeparator", " ")
+        self._image = self._popArg(kwargs, "image", None)
+        self._env = self._popArg(kwargs, "env", None)
+        self._cmdLineArgs = self._popArg(kwargs, "command_line_arguments", "")
+        self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
+        self._argumentPrefix = self._popArg(kwargs, "argumentPrefix", "--")
+        self._paramValueSeparator = self._popArg(kwargs, "paramValueSeparator", " ")
         if not self._image:
             raise InvalidDropException(
                 self, "No docker image specified, cannot create DockerApp"
@@ -254,7 +254,7 @@ class DockerApp(BarrierAppDROP):
                 self._image,
             )
 
-        self._command = self._getArg(kwargs, "command", None)
+        self._command = self._popArg(kwargs, "command", None)
 
         self._noBash = False
         if not self._command or self._command.strip()[:2] == "%%":
@@ -283,14 +283,14 @@ class DockerApp(BarrierAppDROP):
         # might want to preserve them.
         # TODO: This might be something that the data lifecycle manager could
         # handle, but for the time being we do it here
-        self._removeContainer = self._getArg(kwargs, "removeContainer", True)
+        self._removeContainer = self._popArg(kwargs, "removeContainer", True)
 
         # Ports - a comma seperated list of the host port mappings of form:
         # "hostport1:containerport1, hostport2:containerport2"
-        self._portMappings = self._getArg(kwargs, "portMappings", "")
+        self._portMappings = self._popArg(kwargs, "portMappings", "")
         logger.info(f"portMappings: {self._portMappings}")
 
-        self._shmSize = self._getArg(kwargs, "shmSize", "")
+        self._shmSize = self._popArg(kwargs, "shmSize", "")
         logger.info(f"shmSize: {self._shmSize}")
 
         # Additional volume bindings can be specified for existing files/dirs
@@ -302,7 +302,7 @@ class DockerApp(BarrierAppDROP):
             f"{utils.getDlgDir()}/workspace/settings/passwd:/etc/passwd",
             f"{utils.getDlgDir()}/workspace/settings/group:/etc/group",
         ]
-        additionalBindings = self._getArg(kwargs, "additionalBindings", [])
+        additionalBindings = self._popArg(kwargs, "additionalBindings", [])
         additionalBindings = (
             additionalBindings.split(",")
             if isinstance(additionalBindings, str)
@@ -352,7 +352,7 @@ class DockerApp(BarrierAppDROP):
         self._sessionId = self._dlg_session.sessionId if self._dlg_session else ""
         if not self.workdir:
             default_workingdir = os.path.join(utils.getDlgWorkDir(), self._sessionId)
-            self.workdir = self._getArg(kwargs, "workingDir", default_workingdir)
+            self.workdir = self._popArg(kwargs, "workingDir", default_workingdir)
 
         c.api.close()
 

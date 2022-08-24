@@ -26,7 +26,7 @@ from dlg import droputils
 from dlg import utils
 from dlg.apps.socket_listener import SocketListenerApp
 from dlg.ddap_protocol import DROPStates
-from dlg.drop import InMemoryDROP
+from dlg.data.drops.memory import InMemoryDROP
 from dlg.droputils import DROPWaiterCtx
 from test.test_drop import SumupContainerChecksum
 

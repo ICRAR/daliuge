@@ -19,28 +19,8 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import unittest
-
-from dlg.data.io import NullIO, OpenMode
-
-
-class TestIO(unittest.TestCase):
-    def test_invalidUseCases(self):
-        io = NullIO()
-
-        # Not opened yet
-        self.assertRaises(ValueError, io.write, "")
-        self.assertRaises(ValueError, io.read, "")
-
-        # Opening in read-only mode
-        io.open(OpenMode.OPEN_READ)
-        self.assertRaises(ValueError, io.write, "")
-        io.close()
-
-        # Opening in write-only mode
-        io.open(OpenMode.OPEN_WRITE)
-        self.assertRaises(ValueError, io.read, 1)
-        io.close()
-
-        # It's OK to close it again
-        io.close()
+"""
+This package contains several general-purpose data stores in form of
+DROPs that we have developed as examples and for real-life use. Most of them
+are based on the :class:`DataDROP`.
+"""

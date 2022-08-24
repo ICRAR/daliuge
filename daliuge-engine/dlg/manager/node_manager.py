@@ -43,7 +43,8 @@ if sys.version_info >= (3, 8):
     from .shared_memory_manager import DlgSharedMemoryManager
 from .. import rpc, utils
 from ..ddap_protocol import DROPStates
-from ..drop import AppDROP, InMemoryDROP, SharedMemoryDROP
+from ..drop import AppDROP
+from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
 from ..exceptions import (
     NoSessionException,
     SessionAlreadyExistsException,

@@ -36,7 +36,8 @@ from dlg.apps.bash_shell_app import (
     StreamingInputOutputBashApp,
 )
 from dlg.ddap_protocol import DROPStates
-from dlg.drop import FileDROP, InMemoryDROP
+from dlg.data.drops.memory import InMemoryDROP
+from dlg.data.drops.file import FileDROP
 from dlg.droputils import DROPWaiterCtx
 
 

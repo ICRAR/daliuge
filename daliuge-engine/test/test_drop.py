@@ -35,19 +35,17 @@ from dlg import droputils
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 from dlg.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
 from dlg.drop import (
-    FileDROP,
     AppDROP,
-    InMemoryDROP,
-    SharedMemoryDROP,
-    PlasmaDROP,
-    PlasmaFlightDROP,
     NullDROP,
     BarrierAppDROP,
-    DirectoryContainer,
     ContainerDROP,
     InputFiredAppDROP,
-    RDBMSDrop,
 )
+from dlg.data.drops.plasma import PlasmaDROP, PlasmaFlightDROP
+from dlg.data.drops.rdbms import RDBMSDrop
+from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
+from dlg.data.drops.directorycontainer import DirectoryContainer
+from dlg.data.drops.file import FileDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
 from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp
