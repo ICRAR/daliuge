@@ -1176,7 +1176,18 @@ class PathBasedDrop(object):
     def path(self) -> str:
         return self._path
 
-
+##
+# @brief Data
+# @details A generic Data drop, whose functionality can be provided by an arbitrary class, as specified in the 'dataclass' component parameter
+# @par EAGLE_START
+# @param category Data
+# @param tag daliuge
+# @param dataclass Data Class/my.awesome.data.Component/String/ComponentParameter/readonly//False/False/The python class that implements this data component
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
+# @par EAGLE_END
 class DataDROP(AbstractDROP):
     """
     A DataDROP is a DROP that stores data for writing with
