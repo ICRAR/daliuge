@@ -61,7 +61,7 @@
     {
         "oid": "2022-06-22T09:13:53_-3_0/0/0",
         "type": "app",
-        "app": "dlg_example_cmpts.apps.PickOne",
+        "app": "dlg.apps.simple.PickOne",
         "rank": [
             0,
             0,
@@ -72,7 +72,7 @@
         "num_cpus": 1,
         "execution_time": 5,
         "group_start": true,
-        "appclass": "dlg_example_cmpts.apps.PickOne",
+        "appclass": "dlg.apps.simple.PickOne",
         "applicationArgs": {},
         "iid": "0/0/0",
         "lg_key": -3,
@@ -97,7 +97,7 @@
     {
         "oid": "2022-06-22T09:13:53_-3_0/0/1",
         "type": "app",
-        "app": "dlg_example_cmpts.apps.PickOne",
+        "app": "dlg.apps.simple.PickOne",
         "rank": [
             0,
             0,
@@ -108,7 +108,7 @@
         "num_cpus": 1,
         "execution_time": 5,
         "group_start": true,
-        "appclass": "dlg_example_cmpts.apps.PickOne",
+        "appclass": "dlg.apps.simple.PickOne",
         "applicationArgs": {},
         "iid": "0/0/1",
         "lg_key": -3,
@@ -136,7 +136,7 @@
     {
         "oid": "2022-06-22T09:13:53_-3_0/1/0",
         "type": "app",
-        "app": "dlg_example_cmpts.apps.PickOne",
+        "app": "dlg.apps.simple.PickOne",
         "rank": [
             0,
             1,
@@ -147,7 +147,7 @@
         "num_cpus": 1,
         "execution_time": 5,
         "group_start": true,
-        "appclass": "dlg_example_cmpts.apps.PickOne",
+        "appclass": "dlg.apps.simple.PickOne",
         "applicationArgs": {},
         "iid": "0/1/0",
         "lg_key": -3,
@@ -172,7 +172,7 @@
     {
         "oid": "2022-06-22T09:13:53_-3_0/1/1",
         "type": "app",
-        "app": "dlg_example_cmpts.apps.PickOne",
+        "app": "dlg.apps.simple.PickOne",
         "rank": [
             0,
             1,
@@ -183,7 +183,7 @@
         "num_cpus": 1,
         "execution_time": 5,
         "group_start": true,
-        "appclass": "dlg_example_cmpts.apps.PickOne",
+        "appclass": "dlg.apps.simple.PickOne",
         "applicationArgs": {},
         "iid": "0/1/1",
         "lg_key": -3,

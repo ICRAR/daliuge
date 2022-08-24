@@ -24,7 +24,7 @@ import os
 from abc import abstractmethod
 
 from dlg.drop import DataDROP, DEFAULT_INTERNAL_PARAMETERS
-from dlg.io import MemoryIO
+from dlg.data.io import MemoryIO
 from dlg.meta import dlg_string_param
 
 
@@ -33,7 +33,7 @@ from dlg.meta import dlg_string_param
 # @details A set of parameters, wholly specified in EAGLE
 # @par EAGLE_START
 # @param category ParameterSet
-# @param tag template
+# @param tag daliuge
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
 # @param mode Parset mode/"YANDA"/String/ComponentParameter/readonly//False/False/To what standard DALiuGE should filter and serialize the parameters.

@@ -1,6 +1,16 @@
 #!/usr/bin/env python
+"""
+Script processes a file or a directory of source files and
+produces a DALiuGE compatible palette file containing the
+information required to use functions and components in graphs.
+For more information please refer to the documentation
+https://daliuge.readthedocs.io/en/latest/development/app_development/eagle_app_integration.html#automatic-eagle-palette-generation
 
+"""
+
+import argparse
 import csv
+from dataclasses import dataclass
 import getopt
 import json
 import logging
@@ -11,7 +21,8 @@ import sys
 import tempfile
 import uuid
 import xml.etree.ElementTree as ET
-import math
+import ast
+import re
 from enum import Enum
 
 next_key = -1
@@ -22,7 +33,6 @@ DOXYGEN_SETTINGS = [
     ("OPTIMIZE_OUTPUT_JAVA", "YES"),
     ("AUTOLINK_SUPPORT", "NO"),
     ("IDL_PROPERTY_SUPPORT", "NO"),
-    ("RECURSIVE", "YES"),
     ("EXCLUDE_PATTERNS", "*/web/*, CMakeLists.txt"),
     ("VERBATIM_HEADERS", "NO"),
     ("GENERATE_HTML", "NO"),
@@ -73,48 +83,51 @@ KNOWN_FIELD_TYPES = [
     "OutputPort"
 ]
 
+VALUE_TYPES = {
+    str: "String",
+    int: "Integer",
+    float: "Float",
+    bool: "Boolean",
+    list: "Json",
+    dict: "Json",
+    tuple: "Json"
+}
+
 class Language(Enum):
     UNKNOWN = 0
     C = 1
     PYTHON = 2
 
-def get_options_from_command_line(argv):
-    inputdir = ""
-    tag = ""
-    outputfile = ""
-    allow_missing_eagle_start = False
-    module_path = ""
-    language = Language.UNKNOWN
-    try:
-        opts, args = getopt.getopt(argv, "hi:t:o:sm:cp", ["idir=", "tag=", "ofile="])
-    except getopt.GetoptError:
-        print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
-        sys.exit(2)
-
-    if len(opts) < 2:
-        print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
-        sys.exit()
-
-    for opt, arg in opts:
-        if opt == "-h":
-            print("xml2palette.py -i <input_directory> -t <tag> -o <output_file>")
-            sys.exit()
-        elif opt in ("-i", "--idir"):
-            inputdir = arg
-        elif opt in ("-t", "--tag"):
-            tag = arg
-        elif opt in ("-o", "--ofile"):
-            outputfile = arg
-        elif opt in ("-s"):
-            allow_missing_eagle_start = True
-        elif opt in ("-m", "--module"):
-            module_path = arg
-        elif opt in ("-c"):
-            language = Language.C
-        elif opt in ("-p"):
-            language = Language.PYTHON
-    return inputdir, tag, outputfile, allow_missing_eagle_start, module_path, language
-
+def get_args():
+    # inputdir, tag, outputfile, allow_missing_eagle_start, module_path, language
+    parser = argparse.ArgumentParser(epilog=__doc__,
+                            formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("idir", help="input directory path or file name")
+    parser.add_argument("ofile", help="output file name")
+    parser.add_argument("-m", "--module", help="Module load path name",
+                        default="")
+    parser.add_argument("-t", "--tag", help="filter components with matching tag", default="")
+    parser.add_argument("-c", help="C mode, if not set Python will be used",
+                        action="store_true")
+    parser.add_argument("-r", "--recursive", help="Traverse sub-directories",
+                        action="store_true")
+    parser.add_argument("-s", "--parse_all", 
+        help="Try to parse non DAliuGE compliant functions and methods",
+        action="store_true")
+    parser.add_argument("-v", "--verbose", help="increase output verbosity",
+                        action="store_true")
+    args = parser.parse_args()
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+    logging.debug("DEBUG logging switched on")
+    if args.recursive:
+        DOXYGEN_SETTINGS.append(("RECURSIVE", "YES"))
+        logging.info("Recursive flag ON")
+    else:
+        DOXYGEN_SETTINGS.append(("RECURSIVE", "NO"))
+        logging.info("Recursive flag OFF")
+    language = Language.C if args.c else Language.PYTHON
+    return args.idir, args.tag, args.ofile, args.parse_all, args.module, language
 
 def check_environment_variables():
     required_environment_variables = ["PROJECT_NAME", "PROJECT_VERSION", "GIT_REPO"]
@@ -178,7 +191,7 @@ def create_uuid(seed):
 
 
 def create_port(
-    component_name, internal_name, external_name, direction, event, type, description
+    component_name, internal_name, external_name, direction, event, value_type, description
 ):
     seed = {
         "component_name": component_name,
@@ -186,7 +199,7 @@ def create_port(
         "external_name": external_name,
         "direction": direction,
         "event": event,
-        "type": type,
+        "type": value_type,
         "description": description,
     }
 
@@ -197,7 +210,7 @@ def create_port(
         "IdText": internal_name,
         "text": external_name,
         "event": event,
-        "type": type,
+        "type": value_type,
         "description": description,
     }
 
@@ -262,7 +275,7 @@ def check_required_fields_for_category(text, fields, category):
 
 
 def create_field(
-    internal_name, external_name, value, type, field_type, access, options, precious, positional, description
+    internal_name, external_name, value, value_type, field_type, access, options, precious, positional, description
 ):
     return {
         "text": external_name,
@@ -270,7 +283,7 @@ def create_field(
         "value": value,
         "defaultValue": value,
         "description": description,
-        "type": type,
+        "type": value_type,
         "fieldType": field_type,
         "readonly": access == "readonly",
         "options": options,
@@ -295,7 +308,7 @@ def parse_value(text, value):
     # init attributes of the param
     external_name = ""
     default_value = ""
-    type = "String"
+    value_type = "String"
     field_type = "cparam"
     access = "readwrite"
     options = []
@@ -309,7 +322,7 @@ def parse_value(text, value):
     if len(parts) > 1:
         default_value = parts[1]
     if len(parts) > 2:
-        type = parts[2]
+        value_type = parts[2]
     if len(parts) > 3:
         field_type = parts[3]
     if len(parts) > 4:
@@ -366,7 +379,7 @@ def parse_value(text, value):
     if len(parts) > 8:
         description = parts[8]
 
-    return (external_name, default_value, type, field_type, access, options, precious, positional, description)
+    return (external_name, default_value, value_type, field_type, access, options, precious, positional, description)
 
 
 def parse_description(value):
@@ -388,6 +401,7 @@ def parse_description(value):
 def create_palette_node_from_params(params):
     text = ""
     description = ""
+    comp_description = ""
     category = ""
     tag = ""
     construct = ""
@@ -415,13 +429,13 @@ def create_palette_node_from_params(params):
         elif key == "text":
             text = value
         elif key == "description":
-            description = value
+            comp_description = value
         else:
             internal_name = key
             (
                 external_name,
                 default_value,
-                type,
+                value_type,
                 field_type,
                 access,
                 options,
@@ -431,13 +445,13 @@ def create_palette_node_from_params(params):
             ) = parse_value(text, value)
 
             # check that type is in the list of known types
-            if type not in KNOWN_PARAM_DATA_TYPES:
+            if value_type not in KNOWN_PARAM_DATA_TYPES:
                 #logging.warning(text + " " + field_type + " '" + name + "' has unknown type: " + type)
                 pass
 
             # check that a param of type "Select" has some options specified,
             # and check that every param with some options specified is of type "Select"
-            if type == "Select" and len(options) == 0:
+            if value_type == "Select" and len(options) == 0:
                 logging.warning(
                     text
                     + " "
@@ -447,7 +461,7 @@ def create_palette_node_from_params(params):
                     + "' is of type 'Select' but has no options specified: "
                     + str(options)
                 )
-            if len(options) > 0 and type != "Select":
+            if len(options) > 0 and value_type != "Select":
                 logging.warning(
                     text
                     + " "
@@ -455,7 +469,7 @@ def create_palette_node_from_params(params):
                     + " '"
                     + external_name
                     + "' has at least one option specified but is not of type 'Select': "
-                    + type
+                    + value_type
                 )
 
             # parse description
@@ -485,7 +499,7 @@ def create_palette_node_from_params(params):
                 internal_name,
                 external_name,
                 default_value,
-                type,
+                value_type,
                 field_type,
                 access,
                 options,
@@ -508,7 +522,6 @@ def create_palette_node_from_params(params):
 
     # check for presence of extra fields that must be included for each category
     check_required_fields_for_category(text, fields, category)
-
     # create and return the node
     return (
         {"tag": tag, "construct": construct},
@@ -517,7 +530,7 @@ def create_palette_node_from_params(params):
             "drawOrderHint": 0,
             "key": get_next_key(),
             "text": text,
-            "description": description,
+            "description": comp_description,
             "collapsed": False,
             "showPorts": False,
             "streaming": False,
@@ -612,7 +625,6 @@ def process_compounddef(compounddef):
                                     found_eagle_start = True
 
                         para = ddchild
-
         # add description
         if description != "":
             result.append(
@@ -665,7 +677,6 @@ def process_compounddef(compounddef):
                         value = pichild[0].text.strip()
 
         result.append({"key": key, "direction": direction, "value": value})
-
     return result
 
 
@@ -674,13 +685,35 @@ def process_compounddef_default(compounddef, language):
 
     # check memberdefs
     for child in compounddef:
-        if child.tag == "sectiondef" and child.get("kind") == "func":
+        logging.debug("Found child element: %s with tag: %s kind: %s", child, child.tag, child.get("kind"))
+        if child.tag == "compoundname":
+            if child.text.find('casatasks:') == 0:
+                casa_mode = True
+                hold_name = child.text.split('::')[1]  
+            else:
+                casa_mode = False
+                hold_name = "Unknown"
+            logging.debug("Found compoundname: %s; extracted: %s", child.text, hold_name)
+        if child.tag == "detaileddescription" and len(child) > 0 and casa_mode:
+            # for child in ggchild:
+            dStr = child[0][0].text
+            descDict, comp_description = parseCasaDocs(dStr)
+            member["params"].append({"key": "description", "direction": None, "value": comp_description})
+
+            pkeys = {p["key"]:i for i,p in enumerate(member["params"])}
+            for p in descDict.keys():
+                if p in pkeys:
+                    member["params"][pkeys[p]]["value"] += f'"{descDict[p]}"'
+
+        if child.tag == "sectiondef" and child.get("kind") in ["func", "public-func"]:
 
             for grandchild in child:
                 if grandchild.tag == "memberdef" and grandchild.get("kind") == "function":
+                    logging.debug("Found function element")
+
                     member = {"params":[]}
                     func_path = "Unknown"
-                    func_name = "Unknown"
+                    func_name = hold_name
                     return_type = "Unknown"
 
                     # some defaults
@@ -697,9 +730,10 @@ def process_compounddef_default(compounddef, language):
                     member["params"].append({"key": "group_start", "direction": None, "value": "Group start/false/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?"})
 
                     for ggchild in grandchild:
+                        logging.debug("grandchild element: %s", ggchild.tag)
                         if ggchild.tag == "name":
-                            member["params"].append({"key": "text", "direction": None, "value": ggchild.text})
-                            func_name = ggchild.text
+                            func_name = ggchild.text if func_name == "Unknown" else func_name
+                            member["params"].append({"key": "text", "direction": None, "value": func_name})
                         if ggchild.tag == "detaileddescription":
                             if len(ggchild) > 0 and len(ggchild[0]) > 0 and ggchild[0][0].text != None:
 
@@ -728,98 +762,128 @@ def process_compounddef_default(compounddef, language):
 
                                 member["params"].append({"key": "description", "direction": None, "value": description})
                         if ggchild.tag == "param":
-                            type = ""
+                            value_type = ""
                             name = ""
                             default_value = ""
 
                             for gggchild in ggchild:
                                 if gggchild.tag == "type":
-                                    type = gggchild.text
+                                    value_type = gggchild.text
 
                                     # also look at children with ref tag
                                     for ggggchild in gggchild:
                                         if ggggchild.tag == "ref":
-                                            type = ggggchild.text
+                                            value_type = ggggchild.text
                                 if gggchild.tag == "declname":
                                     name = gggchild.text
                                 if gggchild.tag == "defname":
                                     name = gggchild.text
                                 if gggchild.tag == "defval":
                                     default_value = gggchild.text
-
+                            if str(name) == "self": continue
                             # type recognised?
                             type_recognised = False
 
                             # fix some types
-                            if type == "bool":
-                                type = "Boolean"
+                            if value_type == "bool":
+                                value_type = "Boolean"
                                 if default_value == "":
                                     default_value = "False"
                                 type_recognised = True
-                            if type == "int":
-                                type = "Integer"
+                            if value_type == "int":
+                                value_type = "Integer"
                                 if default_value == "":
                                     default_value = "0"
                                 type_recognised = True
-                            if type == "float":
-                                type = "Float"
+                            if value_type == "float":
+                                value_type = "Float"
                                 if default_value == "":
                                     default_value = "0"
                                 type_recognised = True
-                            if type == "string" or type == "*" or type == "**":
-                                type = "String"
+                            if value_type in ["string", "*" , "**"]:
+                                value_type = "String"
                                 type_recognised = True
 
                             # try to guess the type based on the default value
                             # TODO: try to parse default_value as JSON to detect JSON types
                             if not type_recognised and default_value != "" and default_value is not None and default_value != "None":
                                 #print("name:" + str(name) + " default_value:" + str(default_value))
-
                                 try:
-                                    val = int(default_value)
-                                    type = "Integer"
-                                    #print("Use Integer")
-                                except:
+                                    # we'll try to interpret what the type of the default_value is using ast
+                                    l = {}
                                     try:
-                                        val = float(default_value)
-                                        type = "Float"
-                                        #print("Use Float")
-                                    except:
-                                        if default_value.lower() == "true" or default_value.lower() == "false":
-                                            type = "Boolean"
-                                            default_value = default_value.lower()
-                                            #print("Use Boolean")
+                                        eval(compile(ast.parse(f't = {default_value}'),filename="",mode="exec"), l)
+                                        vt = type(l['t'])
+                                        if not isinstance(l['t'], type):
+                                            default_value = l['t']
                                         else:
-                                            type = "String"
-                                            #print("Use String")
+                                            vt = str
+                                    except NameError:
+                                        vt = str
+                                    except SyntaxError:
+                                        vt = str
+                                    
+                                    value_type = VALUE_TYPES[vt] if vt in VALUE_TYPES else "String"
+                                    if value_type == "String":
+                                        # if it is String we need to do a few more tests
+                                        try:
+                                            val = int(default_value)
+                                            value_type = "Integer"
+                                            #print("Use Integer")
+                                        except:
+                                            try:
+                                                val = float(default_value)
+                                                value_type = "Float"
+                                                #print("Use Float")
+                                            except:
+                                                if default_value.lower() == "true" or default_value.lower() == "false":
+                                                    value_type = "Boolean"
+                                                    default_value = default_value.lower()
+                                                    #print("Use Boolean")
+                                                else:
+                                                    value_type = "String"
+                                                    #print("Use String")
+                                except NameError or TypeError:
+                                    raise
 
                             # TODO: change
                             # add the param
-                            member["params"].append({"key":str(name), "direction":"in", "value":str(name) + "/" + str(default_value) + "/" + str(type) + "/ApplicationArgument/readwrite//False/False/"})
+                                            
+                            if str(value_type) == "String":
+                                default_value = str(default_value).replace("'", "")
+                                if default_value.find("/") >=0:
+                                    default_value = f'"{default_value}"'
+                            logging.debug("adding param: %s",{"key":str(name), "direction":"in", "value":str(name) + "/" + str(default_value) + "/" + str(value_type) + "/ApplicationArgument/readwrite//False/False/"})
+                            member["params"].append({"key":str(name), "direction":"in", "value":str(name) + "/" + str(default_value) + "/" + str(value_type) + "/ApplicationArgument/readwrite//False/False/"})
 
                         if ggchild.tag == "definition":
                             return_type = ggchild.text.strip().split(" ")[0]
                             func_path = ggchild.text.strip().split(" ")[-1]
+                            if func_path.find("._") >=0 and ggchild.text.find('casatasks') >= 0:
+                                func_path = func_path.split('._')[0]
+                            logging.debug("Using name '%s' for function", func_path)
 
                             # TODO: change
                             # aparams
                             member["params"].append({"key": "func_name", "direction": None, "value": "Function Name/" + func_path + "/String/ApplicationArgument/readonly//False/True/Python function name"})
-                            member["params"].append({"key": "pickle", "direction": None, "value": "Pickle/false/Boolean/ApplicationArgument/readwrite//False/True/Whether the python arguments are pickled."})
+                            member["params"].append({"key": "input_parser", "direction": None, "value": "Input Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Input port parsing technique"})
+                            member["params"].append({"key": "output_parser", "direction": None, "value": "Output Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Output port parsing technique"})
 
                             if return_type == "def":
                                 return_type = "None"
 
                     # skip function if it begins with an underscore
-                    if func_name[0] == "_":
+                    if func_name[0] == "_" and func_name != "__call__":
+                        logging.debug("Skip " + func_name + " starts with underscore")
                         continue
 
                     # skip component if a module_path was specified, and this component is not within it
                     if module_path != "" and not module_path in func_path:
-                        #logging.info("Skip " + func_path + ". Doesn't match module path: " + module_path)
+                        logging.debug("Skip " + func_path + ". Doesn't match module path: " + module_path)
                         continue
-
+                    # logging.debug("Appending members: %s", member)
                     result.append(member)
-
+    
     return result
 
 
@@ -828,7 +892,7 @@ def parse_params(detailed_description):
     result = []
 
     detailed_description = detailed_description.split("Returns:")[0]
-    param_lines = [p.replace('\n','').strip() for p in detailed_description.split(":param:")[1:]]
+    param_lines = [p.replace('\n','').strip() for p in detailed_description.split(":param")[1:]]
     # param_lines = [line.strip() for line in detailed_description]
 
     for p_line in param_lines:
@@ -840,7 +904,7 @@ def parse_params(detailed_description):
             # didnt find second colon, skip
             continue
 
-        param_name = p_line[:index_of_second_colon].strip()
+        param_name = p_line[1:index_of_second_colon].strip()
         param_description = p_line[index_of_second_colon+2:].strip()
 
         result.append((param_name, param_description))
@@ -857,17 +921,17 @@ def set_param_description(name, description, params):
             break
 
 
-def create_construct_node(type, node):
+def create_construct_node(node_type, node):
 
     # check that type is in the list of known types
     if type not in KNOWN_CONSTRUCT_TYPES:
-        logging.warning(text + " construct for node'" + node["text"] + "' has unknown type: " + type)
+        logging.warning(" construct for node'" + node["text"] + "' has unknown type: " + node_type)
         pass
 
     construct_node = {
-        "category": type,
+        "category": node_type,
         "description": "A default "
-        + type
+        + node_type
         + " construct for the "
         + node["text"]
         + " component.",
@@ -878,10 +942,10 @@ def create_construct_node(type, node):
         "precious": False,
         "sha": version,
         "streaming": False,
-        "text": type + "/" + node["text"],
+        "text": node_type + "/" + node["text"],
     }
 
-    if type == "Scatter" or type == "Gather":
+    if node_type == "Scatter" or node_type == "Gather":
         construct_node["inputAppFields"] = node["fields"]
         construct_node["inputAppArgs"] = node["applicationArgs"]
         construct_node["inputApplicationKey"] = node["key"]
@@ -905,6 +969,7 @@ def create_construct_node(type, node):
 
 
 def params_to_nodes(params):
+    # logging.debug("params_to_nodes: %s", params)
     result = []
 
     # if no params were found, or only the name and description were found, then don't bother creating a node
@@ -935,6 +1000,49 @@ def params_to_nodes(params):
 
     return result
 
+def cleanString(text: str) -> str:
+    """
+    Remove ANSI escape strings from text"
+
+    :param text: string to clean
+    """
+    # ansi_escape = re.compile(r'[@-Z\\-_]|\[[0-?]*[ -/]*[@-~]')
+    ansi_escape = re.compile(r'\[[0-?]*[ -/]*[@-~]')
+    return ansi_escape.sub('', text)
+
+
+def parseCasaDocs(dStr:str) -> dict:
+    """
+    Parse the special docstring for casatasks
+    Extract the parameters from the casatask doc string.
+
+    :param task: The casatask to derive the parameters from.
+
+    :returns: Dictionary of form {<paramKey>:<paramDoc>}
+    """
+    dStr = cleanString(dStr)
+    dList = dStr.split('\n')
+    try:
+        start_ind = [idx for idx, s in enumerate(dList) if '-- parameter' in s][0] + 1
+        end_ind = [idx for idx, s in enumerate(dList) if '-- example' in s][0]
+    except IndexError:
+        logging.debug('Problems finding start or end index for task: {task}')
+        return {}, ""
+    paramsList = dList[start_ind:end_ind]
+    paramsSidx = [idx+1 for idx, p in enumerate(paramsList) if len(p) > 0 and p[0] != ' ']
+    paramsEidx = paramsSidx[1:] + [len(paramsList) - 1]
+    paramFirstLine = [(p.strip().split(' ',1)[0], p.strip().split(' ',1)[1].strip()) 
+        for p in paramsList if len(p) > 0 and p[0] != ' ']
+    paramNames = [p[0] for p in paramFirstLine]
+    paramDocs  = [p[1].strip() for p in paramFirstLine]
+    for i in range(len(paramDocs)):
+        if paramsSidx[i] < paramsEidx[i]:
+            pl = [p.strip() for p in paramsList[paramsSidx[i]:paramsEidx[i]-1] if len(p.strip()) > 0]
+            paramDocs[i] = paramDocs[i] + ' '+' '.join(pl)
+    params = dict(zip(paramNames, paramDocs))
+    comp_description = "\n".join(dList[:start_ind-1]) # return main description as well
+    return params, comp_description
+
 
 if __name__ == "__main__":
     logging.basicConfig(
@@ -946,12 +1054,13 @@ if __name__ == "__main__":
     # read environment variables
     if not check_environment_variables():
         sys.exit(1)
+    (inputdir, tag, outputfile, allow_missing_eagle_start, module_path, language) =\
+        get_args()
 
     logging.info("PROJECT_NAME:" + os.environ.get("PROJECT_NAME"))
     logging.info("PROJECT_VERSION:" + os.environ.get("PROJECT_VERSION"))
     logging.info("GIT_REPO:" + os.environ.get("GIT_REPO"))
 
-    (inputdir, tag, outputfile, allow_missing_eagle_start, module_path, language) = get_options_from_command_line(sys.argv[1:])
     logging.info("Input Directory:" + inputdir)
     logging.info("Tag:" + tag)
     logging.info("Output File:" + outputfile)
@@ -1037,7 +1146,7 @@ if __name__ == "__main__":
 
         else: # not eagle node
             functions = process_compounddef_default(compounddef, language)
-
+            # logging.debug("Treating functions %s", functions)
             for f in functions:
                 ns = params_to_nodes(f["params"])
 

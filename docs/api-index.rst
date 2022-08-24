@@ -10,4 +10,5 @@ a complete reference please go to the source code.
  api/dlg
  api/manager
  api/apps
+ api/data
  api/dropmake

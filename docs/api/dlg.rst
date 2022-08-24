@@ -29,17 +29,9 @@ dlg.graph_loader
 .. automodule:: dlg.graph_loader
    :members:
 
-dlg.io
-^^^^^^
-.. automodule:: dlg.io
-   :members:
 
 .. _api.dlg.drop:
 
-dlg.json_drop
-^^^^^^^^^^^^^
-.. automodule:: dlg.json_drop
-   :members:
 
 dlg.rpc
 ^^^^^^^

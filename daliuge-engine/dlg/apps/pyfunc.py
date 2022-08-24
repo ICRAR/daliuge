@@ -29,6 +29,7 @@ import importlib
 import inspect
 import json
 import logging
+import os
 import pickle
 
 from typing import Callable
@@ -129,7 +130,7 @@ class DropParser(Enum):
 # calling the function is treated as an iterable, with each individual object
 # being written to its corresponding output.
 # @par EAGLE_START
-# @param category PythonApp
+# @param category PyFuncApp
 # @param tag template
 # @param appclass Application Class/dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/readonly//False/False/Application class
 # @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
@@ -272,9 +273,14 @@ class PyFuncApp(BarrierAppDROP):
         """
         BarrierAppDROP.initialize(self, **kwargs)
 
-        self._applicationArgs = self._getArg(kwargs, "applicationArgs", {})
+        env = os.environ.copy()
+        env.update({"DLG_UID": self._uid})
+        if self._dlg_session:
+            env.update({"DLG_SESSION_ID": self._dlg_session.sessionId})
 
-        self.func_code = self._getArg(kwargs, "func_code", None)
+        self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
+
+        self.func_code = self._popArg(kwargs, "func_code", None)
 
         # check for function definition arguments in applicationArgs
         self.func_def_keywords = [
@@ -433,16 +439,22 @@ class PyFuncApp(BarrierAppDROP):
         # the correct UIDs
         logger.debug(f"Parameters found: {self.parameters}")
         posargs = self.arguments.args[:self.fn_npos]
+        keyargs = self.arguments.args[self.fn_npos:]
         kwargs = {}
         pargs = []
         # Initialize pargs dictionary and update with provided argument values
         pargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
+        if self.arguments.defaults:
+            keyargsDict = dict(zip(keyargs, self.arguments.defaults[self.fn_npos:]))
+        else:
+            keyargsDict = {}
+        logger.debug("Initial keyargs dictionary: %s", keyargsDict)
         if "applicationArgs" in self.parameters:
             appArgs = self.parameters["applicationArgs"]  # we'll pop the identified ones
             _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
             logger.debug("Identified keyword arguments removed: %s",
                 [i['text'] for i in _dum])
-            pargsDict.update({k:self.parameters[k] for k in pargsDict if k in 
+            pargsDict.update({k:self.parameters[k] for k in pargsDict if k in
                 self.parameters})
             # if defined in both we use AppArgs values
             pargsDict.update({k:appArgs[k]['value'] for k in pargsDict if k
@@ -451,7 +463,7 @@ class PyFuncApp(BarrierAppDROP):
         else:
             appArgs = {}
 
-        if ('inputs' in self.parameters and 
+        if ('inputs' in self.parameters and
             droputils.check_ports_dict(self.parameters['inputs'])):
             check_len = min(len(inputs),self.fn_nargs+
                 len(self.arguments.kwonlyargs))
@@ -465,15 +477,12 @@ class PyFuncApp(BarrierAppDROP):
                 inputs_dict,
                 posargs,
                 pargsDict,
-                appArgs,
+                keyargsDict,
                 check_len=check_len,
                 mode="inputs"))
         else:
             for i in range(min(len(inputs),self.fn_nargs)):
                 kwargs.update({self.arguments.args[i]: list(inputs.values())[i]})
-
-        logger.debug(f"Updating funcargs with input ports {kwargs}")
-        funcargs.update(kwargs)
 
         if ('outputs' in self.parameters and
             droputils.check_ports_dict(self.parameters['outputs'])):
@@ -491,9 +500,12 @@ class PyFuncApp(BarrierAppDROP):
                 outputs_dict,
                 posargs,
                 pargsDict,
-                appArgs,
+                keyargsDict,
                 check_len=check_len,
                 mode="outputs"))
+        logger.debug(f"Updating funcargs with input ports {kwargs}")
+        funcargs.update(kwargs)
+
 
         # Try to get values for still missing positional arguments from Application Args
         if "applicationArgs" in self.parameters:

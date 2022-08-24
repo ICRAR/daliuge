@@ -19,28 +19,26 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import unittest
+"""
+This package contains several general-purpose data stores in form of
+DROPs that we have developed as examples and for real-life use. Most of them
+are based on the :class:`DataDROP`.
+"""
 
-from dlg.data.io import NullIO, OpenMode
+__all__ = [
+    "DirectoryContainer",
+    "FileDROP",
+    "InMemoryDROP",
+    "SharedMemoryDROP",
+    "NgasDROP",
+    "RDBMSDrop",
+    "PlasmaDROP",
+    "PlasmaFlightDROP",
+]
 
-
-class TestIO(unittest.TestCase):
-    def test_invalidUseCases(self):
-        io = NullIO()
-
-        # Not opened yet
-        self.assertRaises(ValueError, io.write, "")
-        self.assertRaises(ValueError, io.read, "")
-
-        # Opening in read-only mode
-        io.open(OpenMode.OPEN_READ)
-        self.assertRaises(ValueError, io.write, "")
-        io.close()
-
-        # Opening in write-only mode
-        io.open(OpenMode.OPEN_WRITE)
-        self.assertRaises(ValueError, io.read, 1)
-        io.close()
-
-        # It's OK to close it again
-        io.close()
+from dlg.data.drops.directorycontainer import DirectoryContainer
+from dlg.data.drops.file import FileDROP
+from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
+from dlg.data.drops.ngas import NgasDROP
+from dlg.data.drops.plasma import PlasmaDROP, PlasmaFlightDROP
+from dlg.data.drops.rdbms import RDBMSDrop
