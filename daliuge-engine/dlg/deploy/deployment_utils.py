@@ -34,8 +34,9 @@ class ListTokens(object):
 
 def _list_tokenizer(s):
     buff = []
+    in_square_brackets = False
     for char in s:
-        if char == "-":
+        if char == "-" and in_square_brackets:
             yield ListTokens.STRING, "".join(buff)
             buff = []
             yield ListTokens.RANGE_SEP, None
@@ -45,11 +46,13 @@ def _list_tokenizer(s):
                 buff = []
             yield ListTokens.COMMA, None
         elif char == "[":
+            in_square_brackets = True
             if buff:
                 yield ListTokens.STRING, "".join(buff)
                 buff = []
             yield ListTokens.MULTICASE_START, None
         elif char == "]":
+            in_square_brackets = False
             if buff:
                 yield ListTokens.STRING, "".join(buff)
                 buff = []
@@ -139,8 +142,10 @@ def find_numislands(physical_graph_template_file):
         (pgt_name, pgt) = pgt_data
     except:
         raise ValueError(type(pgt_data))
-    nodes = list(map(lambda x: x["node"], pgt))
-    islands = list(map(lambda x: x["island"], pgt))
+    #nodes = list(map(lambda x: x["node"], pgt))
+    nodes = ["queue1-dy-t3medium-1",]
+    #islands = list(map(lambda x: x["island"], pgt))
+    islands = ["mab_island",]
     num_islands = len(dict(zip(islands, range(len(islands)))))
     num_nodes = len(dict(zip(nodes, range(len(nodes)))))
     pip_name = pgt_name
