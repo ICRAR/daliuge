@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import json
 import logging
 import os
@@ -9,14 +10,17 @@ import threading
 import time
 import traceback
 from json import JSONDecodeError
+from typing import Union
+from urllib.parse import urlparse
 
 import uvicorn
 from fastapi import FastAPI, Request, Body, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from dlg import restutils
+from dlg import restutils, common
+from dlg.clients import CompositeManagerClient
 from dlg.common.reproducibility.constants import REPRO_DEFAULT
 from dlg.common.reproducibility.reproducibility import init_lgt_repro_data
 from dlg.dropmake.lg import GraphException
@@ -200,6 +204,111 @@ def get_schedule_matrices(
 
 
 # ------ Graph deployment methods ------ #
+
+@app.get("/gen_pg", response_class=StreamingResponse)
+def gen_pg(
+        request: Request,
+        pgt_id: str = Body(),
+        dlg_mgr_deploy: Union[str, None] = Body(default=None),
+        dlg_mgr_url: Union[str, None] = Body(default=None),
+        dlg_mgr_host: Union[str, None] = Body(default=None),
+        dlg_mgr_port: Union[int, None] = Body(default=None),
+        tpl_nodes_len: int = Body(default=0)
+):
+    """
+    RESTful interface to convert a PGT(P) into PG by mapping
+    PGT(P) onto a given set of available resources
+    """
+    # if the 'deploy' checkbox is not checked,
+    # then the form submission will NOT contain a 'dlg_mgr_deploy' field
+    deploy = dlg_mgr_deploy is not None
+    mprefix = ""
+    pgtp = pg_mgr.get_pgt(pgt_id)
+    if pgtp is None:
+        return HTTPException(status_code=404,
+                             detail="PGT(P) with id {0} not found in the Physical Graph Manager"
+                             .format(pgt_id))
+
+    pgtpj = pgtp._gojs_json_obj
+    reprodata = pgtp.reprodata
+    logger.info("PGTP: %s", pgtpj)
+    num_partitions = len(list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"])))
+    mport = 443
+    if dlg_mgr_url is not None:
+        mparse = urlparse(dlg_mgr_url)
+        try:
+            (mhost, mport) = mparse.netloc.split(":")
+            mport = int(mport)
+        except:
+            mhost = mparse.netloc
+            if mparse.scheme == "http":
+                mport = 80
+            elif mparse.scheme == "https":
+                mport = 443
+        mprefix = mparse.path
+        if mprefix.endswith("/"):
+            mprefix = mprefix[:-1]
+    else:
+        mhost = dlg_mgr_host
+        if dlg_mgr_port is not None:
+            mport = dlg_mgr_port
+        else:
+            mport = 443
+
+    logger.debug("Manager host: %s", mhost)
+    logger.debug("Manager port: %s", mport)
+    logger.debug("Manager prefix: %s", mprefix)
+
+    if mhost is None:
+        if tpl_nodes_len > 0:
+            nnodes = num_partitions
+        else:
+            return HTTPException(status_code=500,
+                                 detail="Must specify DALiuGE manager host or tpl_nodes_len")
+
+        pg_spec = pgtp.to_pg_spec([], ret_str=False, tpl_nodes_len=nnodes)
+        pg_spec.append(reprodata)
+        response = StreamingResponse(json.dumps(pg_spec))
+        response.headers["Content-Disposition"] = "attachment; filename=%s" % pgt_id
+        return response
+    try:
+        mgr_client = CompositeManagerClient(
+            host=mhost, port=mport, url_prefix=mprefix, timeout=30
+        )
+        # 1. get a list of nodes
+        node_list = mgr_client.nodes()
+        # 2. mapping PGTP to resources (node list)
+        pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
+
+        if deploy:
+            dt = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S.%f")
+            ssid = "{0}_{1}".format(
+                pgt_id.split(".graph")[0].split("_pgt")[0].split("/")[-1], dt
+            )
+            mgr_client.create_session(ssid)
+            # print "session created"
+            completed_uids = common.get_roots(pg_spec)
+            pg_spec.append(reprodata)
+            mgr_client.append_graph(ssid, pg_spec)
+            # print "graph appended"
+            mgr_client.deploy_session(ssid, completed_uids=completed_uids)
+            # mgr_client.deploy_session(ssid, completed_uids=[])
+            # print "session deployed"
+            # 3. redirect to the master drop manager
+            return RedirectResponse("http://{0}:{1}{2}/session?sessionId={3}".format(
+                mhost, mport, mprefix, ssid
+            ))
+        else:
+            response = StreamingResponse(json.dumps(pg_spec))
+            response.headers["Content-Disposition"] = "attachment; filename=%s" % pgt_id
+            return response
+    except restutils.RestClientException as re:
+        return HTTPException(status_code=500,
+                             detail="Failed to interact with DALiUGE Drop Manager: {0}".format(re))
+    except Exception as ex:
+        logger.error(traceback.format_exc())
+        return HTTPException(status_code=500,
+                             detail="Failed to deploy physical graph: {0}".format(ex))
 
 
 @app.get("gen_pg_helm")
