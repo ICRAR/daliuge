@@ -7,6 +7,7 @@ import signal
 import sys
 import threading
 import time
+import traceback
 from json import JSONDecodeError
 
 import uvicorn
@@ -15,6 +16,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from dlg import restutils
 from dlg.common.reproducibility.constants import REPRO_DEFAULT
 from dlg.common.reproducibility.reproducibility import init_lgt_repro_data
 from dlg.dropmake.lg import GraphException
@@ -195,6 +197,38 @@ def get_schedule_matrices(
     except Exception as e:
         return HTTPException(status_code=500, detail="Failed to get schedule matrices for {0}: {1}"
                              .format(pgt_id, e))
+
+
+# ------ Graph deployment methods ------ #
+
+
+@app.get("gen_pg_helm")
+def gen_pg_helm(
+        pgt_id: str = Body()
+):
+    """
+    Deploys a PGT as a K8s helm chart.
+    """
+    # Get pgt_data
+    from ...deploy.start_helm_cluster import start_helm
+    pgtp = pg_mgr.get_pgt(pgt_id)
+    if pgtp is None:
+        return HTTPException(status_code=404,
+                             detail="PGT(P) with id {0} not found in the Physical Graph Manager"
+                             .format(pgt_id))
+
+    pgtpj = pgtp._gojs_json_obj
+    logger.info("PGTP: %s", pgtpj)
+    num_partitions = len(list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"])))
+    # Send pgt_data to helm_start
+    try:
+        start_helm(pgtp, num_partitions, pgt_dir)
+    except restutils.RestClientException as ex:
+        logger.error(traceback.format_exc())
+        return HTTPException(status_code=500,
+                             detail="Failed to deploy physical graph: {0}".format(ex))
+    # TODO: Not sure what to redirect to yet
+    return "Inspect your k8s dashboard for deployment status"
 
 
 @app.get("/", response_class=HTMLResponse)
