@@ -6,3 +6,4 @@ merklelib >= 1.0
 gputil >= 1.4.0
 fastapi
 uvicorn
+jinja2
