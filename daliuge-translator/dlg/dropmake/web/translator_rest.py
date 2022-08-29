@@ -1,21 +1,41 @@
 import argparse
 import logging
 import os
+import signal
 import sys
 import time
-import signal
+import pathlib
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 from dlg.dropmake.pg_manager import PGManager
 
+file_location = pathlib.Path(__file__).parent.absolute()
+templates = Jinja2Templates(directory=file_location)
+
 app = FastAPI()
+app.mount("/static", StaticFiles(directory=file_location), name="static")
 logger = logging.getLogger(__name__)
 
 global lg_dir
 global pgt_dir
 global pg_mgr
+
+
+@app.get("/", response_class=HTMLResponse)
+def index(request: Request):
+    tpl = templates.TemplateResponse("pg_viewer.html", {
+        "request": request,
+        "pgt_view_json_name": None,
+        "partition_info": None,
+        "title": "Physical Graph Template",
+        "error": None
+    })
+    return tpl
 
 
 def run(_, args):
