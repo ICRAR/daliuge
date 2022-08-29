@@ -85,9 +85,10 @@ class ICRARoodCldConfig(DefaultConfig):
     # requires the user to have a venv exectly in that place
     ACCOUNT = os.environ["USER"]
     HOME_DIR = os.environ["HOME"]
-    LOG_DIR = f"{HOME_DIR}/dlg/runs"
+    DLG_ROOT =f"{HOME_DIR}/dlg"
+    LOG_DIR = f"{DLG_ROOT}/runs"
     # The compute nodes have have required python and DALiuGE but just in case....
-    VENV = f"source {HOME_DIR}/dlg/venv/bin/activate"
+    VENV = f"source {DLG_ROOT}/venv/bin/activate"
 
     def __init__(self):
         super(ICRARoodCldConfig, self).__init__()
