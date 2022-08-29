@@ -91,13 +91,11 @@ APP_DROP_TYPES = [
 
 class DropType:
     # this gives the mapping to fields containing class paths
-    DATA = "data"
+    DATA = "data" # TODO: need to drop this one
     DATACLASS = "dataclass"
     APPCLASS = "appclass"
-    # DATA = "dataclass" TODO: adjust tests
-    # APP = "appclass"
     SOCKET = "socket"
-    APP = "app"  # Application drop that terminates onces executed
+    APP = "app"  # TODO: need to drop this one
     SERVICE_APP = "serviceapp"  # App drop that runs continously
     CONTAINER = "container"  # Drop that contains other drops
 
