@@ -94,7 +94,7 @@ src_files = package_files("dlg")
 
 install_requires = [
     "wheel",
-    "bottle",
+    "uvicorn",
     "daliuge-common==%s" % (VERSION,),
     "jsonschema",
     "metis>=0.2a3",
