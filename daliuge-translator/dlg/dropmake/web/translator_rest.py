@@ -360,7 +360,7 @@ def gen_pg(
                              detail="Failed to deploy physical graph: {0}".format(ex))
 
 
-@app.get("gen_pg_helm")
+@app.get("/gen_pg_helm")
 def gen_pg_helm(
         pgt_id: str = Body()
 ):
