@@ -63,7 +63,7 @@ from dlg.dropmake.pg_manager import PGManager
 from dlg.dropmake.scheduler import SchedulerException
 from jsonschema import validate, ValidationError
 from translator_utils import lg_path, lg_exists, pgt_path, pgt_exists, lg_repo_contents, \
-    pgt_repo_contents, file_as_string
+    pgt_repo_contents, file_as_string, prepare_lgt
 
 logger = logging.getLogger(__name__)
 
@@ -454,10 +454,6 @@ def gen_pg_spec():
         response.status = 500
         print(traceback.format_exc())
         return "Fail to generate pg_spec: {0}".format(ex)
-
-
-def prepare_lgt(filename, rmode: str):
-    return init_lg_repro_data(init_lgt_repro_data(load_lg(filename), rmode))
 
 
 @get("/gen_pgt")
