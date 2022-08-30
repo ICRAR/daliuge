@@ -12,6 +12,7 @@ import traceback
 from json import JSONDecodeError
 from typing import Union
 from urllib.parse import urlparse
+from jsonschema import validate, ValidationError
 
 import uvicorn
 from fastapi import FastAPI, Request, Body, HTTPException
@@ -228,6 +229,62 @@ def gen_pgt(
                                                partition_label, algorithm_parameters)
         num_partitions = 0  # pgt._num_parts;
 
+        pgt_id = pg_mgr.add_pgt(pgt, lg_name)
+
+        part_info = " - ".join(
+            ["{0}:{1}".format(k, v) for k, v in pgt.result().items()]
+        )
+        tpl = templates.TemplateResponse("pg_viewer.html", {
+            "request": request,
+            "pgt_view_json_name": pgt_id,
+            "partition_info": part_info,
+            "title": "Physical Graph Template%s"
+                     % ("" if num_partitions == 0 else "Partitioning"),
+            "error": None
+        })
+        return tpl
+    except GraphException as ge:
+        return HTTPException(status_code=500,
+                             detail="Invalid Logical Graph {1}: {0}".format(str(ge), lg_name))
+    except SchedulerException as se:
+        return HTTPException(status_code=500,
+                             detail="Graph scheduling exception {1}: {0}".format(str(se), lg_name))
+    except Exception:
+        trace_msg = traceback.format_exc()
+        return HTTPException(status_code=500,
+                             detail="Graph partition exception {1}: {0}".format(trace_msg, lg_name))
+
+
+@app.post("/gen_pgt", response_class=HTMLResponse)
+def gen_pgt_post(
+        request: Request,
+        lg_name:str = Body(),
+        json_data:str = Body(),
+        rmode:str = Body(str(REPRO_DEFAULT.value)),
+        test: str = Body(default="false"),
+        algorithm: str = Body(default="none"),
+        num_partitions: int = Body(default=1),
+        num_islands: int = Body(default=0),
+        partition_label: str = Body(default="Partition"),
+        algorithm_parameters: dict = Body(default={}),
+):
+    """
+    Translating Logical Graphs to Physical Graphs.
+    Differs from get_pgt above by the fact that the logical graph data is POSTed
+    to this route in a HTTP form, whereas gen_pgt loads the logical graph data
+    from a local file
+    """
+    test = test.lower() == "true"
+    try:
+        logical_graph = json.loads(json_data)
+        error = None
+        try:
+            validate(logical_graph, LG_SCHEMA)
+        except ValidationError as ve:
+            error = "Validation Error {1}: {0}".format(str(ve), lg_name)
+        logical_graph = prepare_lgt(logical_graph, rmode)
+        # LG -> PGT
+        pgt = unroll_and_partition_with_params(logical_graph, test, algorithm, num_partitions, num_islands, partition_label, algorithm_parameters)
         pgt_id = pg_mgr.add_pgt(pgt, lg_name)
 
         part_info = " - ".join(
