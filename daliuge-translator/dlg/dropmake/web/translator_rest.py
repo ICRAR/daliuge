@@ -585,6 +585,6 @@ def run(_, args):
     uvicorn.run(
         app=app,
         host=options.host,
-        port=8084,
+        port=options.port,
         debug=options.verbose
     )
