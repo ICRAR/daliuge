@@ -360,6 +360,45 @@ def gen_pg(
                              detail="Failed to deploy physical graph: {0}".format(ex))
 
 
+@app.get("/gen_pg_spec")
+def gen_pg_spec(
+        pgt_id: str = Body(),
+        node_list: list = Body(default=[]),
+        manager_host: str = Body(),
+):
+    """
+    Interface to convert a PGT(P) into pg_spec
+    """
+    try:
+        if manager_host == "localhost":
+            manager_host = "127.0.0.1"
+        logger.debug("pgt_id: %s", str(pgt_id))
+        logger.debug("node_list: %s", str(node_list))
+    except Exception as ex:
+        logger.error("%s", traceback.format_exc())
+        return HTTPException(status_code=500,
+                             detail="Unable to parse json body of request for pg_spec: {0}".format(
+                                 ex))
+    pgtp = pg_mgr.get_pgt(pgt_id)
+    if pgtp is None:
+        return HTTPException(status_code=404,
+                             detail="PGT(P) with id {0} not found in the Physical Graph Manager".format(
+                                 pgt_id
+                             ))
+    if node_list is None:
+        return HTTPException(status_code=500, detail="Must specify DALiuGE nodes list")
+
+    try:
+        pg_spec = pgtp.to_pg_spec([manager_host] + node_list, ret_str=False)
+        root_uids = common.get_roots(pg_spec)
+        response = StreamingResponse(json.dumps({"pg_spec": pg_spec, "root_uids": list(root_uids)}))
+        response.content_type = "application/json"
+        return response
+    except Exception as ex:
+        logger.error("%s", traceback.format_exc())
+        return HTTPException(status_code=500, detail="Failed to generate pg_spec: {0}".format(ex))
+
+
 @app.get("/gen_pg_helm")
 def gen_pg_helm(
         pgt_id: str = Body()
