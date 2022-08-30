@@ -25,8 +25,9 @@ from dlg.common.reproducibility.constants import REPRO_DEFAULT
 from dlg.common.reproducibility.reproducibility import init_lgt_repro_data
 from dlg.dropmake.lg import GraphException
 from dlg.dropmake.pg_manager import PGManager
+from dlg.dropmake.scheduler import SchedulerException
 from dlg.dropmake.web.translator_utils import file_as_string, lg_repo_contents, lg_path, lg_exists, \
-    pgt_exists, pgt_path, pgt_repo_contents
+    pgt_exists, pgt_path, pgt_repo_contents, prepare_lgt, unroll_and_partition_with_params
 
 file_location = pathlib.Path(__file__).parent.absolute()
 templates = Jinja2Templates(directory=file_location)
@@ -204,6 +205,54 @@ def get_schedule_matrices(
 
 
 # ------ Graph deployment methods ------ #
+
+@app.get("/gen_pgt", response_class=HTMLResponse)
+def gen_pgt(
+        request: Request,
+        lg_name: str = Body(),
+        rmode: str = Body(default=str(REPRO_DEFAULT.value)),
+        test: str = Body(default="false"),
+        algorithm: str = Body(default="none"),
+        num_partitions: int = Body(default=1),
+        num_islands: int = Body(default=0),
+        partition_label: str = Body(default="Partition"),
+        algorithm_parameters: dict = Body(default={}),
+):
+    if not lg_exists(lg_name):
+        return HTTPException(status_code=404,
+                             detail="Logical graph '{0}' not found".format(lg_name))
+    try:
+        lgt = prepare_lgt(lg_path(lg_name), rmode)
+        test = test.lower() == "true"
+        pgt = unroll_and_partition_with_params(lgt, test, algorithm, num_partitions, num_islands,
+                                               partition_label, algorithm_parameters)
+        num_partitions = 0  # pgt._num_parts;
+
+        pgt_id = pg_mgr.add_pgt(pgt, lg_name)
+
+        part_info = " - ".join(
+            ["{0}:{1}".format(k, v) for k, v in pgt.result().items()]
+        )
+        tpl = templates.TemplateResponse("pg_viewer.html", {
+            "request": request,
+            "pgt_view_json_name": pgt_id,
+            "partition_info": part_info,
+            "title": "Physical Graph Template%s"
+                     % ("" if num_partitions == 0 else "Partitioning"),
+            "error": None
+        })
+        return tpl
+    except GraphException as ge:
+        return HTTPException(status_code=500,
+                             detail="Invalid Logical Graph {1}: {0}".format(str(ge), lg_name))
+    except SchedulerException as se:
+        return HTTPException(status_code=500,
+                             detail="Graph scheduling exception {1}: {0}".format(str(se), lg_name))
+    except Exception:
+        trace_msg = traceback.format_exc()
+        return HTTPException(status_code=500,
+                             detail="Graph partition exception {1}: {0}".format(trace_msg, lg_name))
+
 
 @app.get("/gen_pg", response_class=StreamingResponse)
 def gen_pg(
