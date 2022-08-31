@@ -12,13 +12,13 @@ import traceback
 from json import JSONDecodeError
 from typing import Union
 from urllib.parse import urlparse
-from jsonschema import validate, ValidationError
 
 import uvicorn
-from fastapi import FastAPI, Request, Body, HTTPException
+from fastapi import FastAPI, Request, Body, Query, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from jsonschema import validate, ValidationError
 
 from dlg import restutils, common
 from dlg.clients import CompositeManagerClient
@@ -80,16 +80,16 @@ def jsonbody_get_lg(
     Returns JSON representation of saved logical graph.
     """
     if lg_name is None or len(lg_name) == 0:
-        all_lgs = lg_repo_contents()
+        all_lgs = lg_repo_contents(lg_dir)
         try:
             first_dir = next(iter(all_lgs))
             first_lg = first_dir + "/" + all_lgs[first_dir][0]
             lg_name = first_lg
         except StopIteration:
             return "Nothing found in dir {0}".format(lg_path)
-    if lg_exists(lg_name):
+    if lg_exists(lg_dir, lg_name):
         # print "Loading {0}".format(lg_name)
-        lgp = lg_path(lg_name)
+        lgp = lg_path(lg_dir, lg_name)
         with open(lgp, "r") as f:
             data = f.read()
         return data
@@ -104,9 +104,9 @@ def jsonbody_get_pgt(
     """
     Return JSON representation of a physical graph template
     """
-    if pgt_exists(pgt_name):
+    if pgt_exists(pgt_dir, pgt_name):
         # print "Loading {0}".format(lg_name)
-        pgt = pgt_path(pgt_name)
+        pgt = pgt_path(pgt_dir, pgt_name)
         with open(pgt, "r") as f:
             data = f.read()
         return data
@@ -122,13 +122,13 @@ def load_pg_viewer(request: Request,
     Loads the physical graph viewer
     """
     if pgt_name is None or len(pgt_name) == 0:
-        all_pgts = pgt_repo_contents()
+        all_pgts = pgt_repo_contents(pgt_dir)
         try:
             first_dir = next(iter(all_pgts))
             pgt_name = first_dir + os.sep + all_pgts[first_dir][0]
         except StopIteration:
             pgt_name = None
-    if pgt_exists(pgt_name):
+    if pgt_exists(pgt_dir, pgt_name):
         tpl = templates.TemplateResponse("pg_viewer.html", {
             "request": request,
             "pgt_view_json_name": pgt_name,
@@ -207,26 +207,25 @@ def get_schedule_matrices(
 
 # ------ Graph deployment methods ------ #
 
-@app.get("/gen_pgt", response_class=HTMLResponse)
+@app.get("/gen_pgt")
 def gen_pgt(
         request: Request,
-        lg_name: str = Body(),
-        rmode: str = Body(default=str(REPRO_DEFAULT.value)),
-        test: str = Body(default="false"),
-        algorithm: str = Body(default="none"),
-        num_partitions: int = Body(default=1),
-        num_islands: int = Body(default=0),
-        partition_label: str = Body(default="Partition"),
-        algorithm_parameters: dict = Body(default={}),
+        lg_name: str = Query(),
+        rmode: str = Query(default=str(REPRO_DEFAULT.value)),
+        test: str = Query(default="false"),
+        num_par: int = Query(default=1),
+        algo: str = Query(default="none"),
+        num_islands: int = Query(default=0),
+        par_label: str = Query(default="Partition"),
 ):
-    if not lg_exists(lg_name):
-        return HTTPException(status_code=404,
-                             detail="Logical graph '{0}' not found".format(lg_name))
+    if not lg_exists(lg_dir, lg_name):
+        raise HTTPException(status_code=404,
+                            detail="Logical graph '{0}' not found".format(lg_name))
     try:
-        lgt = prepare_lgt(lg_path(lg_name), rmode)
+        lgt = prepare_lgt(lg_path(lg_dir, lg_name), rmode)
         test = test.lower() == "true"
-        pgt = unroll_and_partition_with_params(lgt, test, algorithm, num_partitions, num_islands,
-                                               partition_label, algorithm_parameters)
+        pgt = unroll_and_partition_with_params(lgt, test, algo, num_par, num_islands,
+                                               par_label, request.query_params.items())
         num_partitions = 0  # pgt._num_parts;
 
         pgt_id = pg_mgr.add_pgt(pgt, lg_name)
@@ -244,23 +243,26 @@ def gen_pgt(
         })
         return tpl
     except GraphException as ge:
-        return HTTPException(status_code=500,
-                             detail="Invalid Logical Graph {1}: {0}".format(str(ge), lg_name))
+        logger.info("Graph Exception")
+        raise HTTPException(status_code=500,
+                            detail="Invalid Logical Graph {1}: {0}".format(str(ge), lg_name))
     except SchedulerException as se:
-        return HTTPException(status_code=500,
-                             detail="Graph scheduling exception {1}: {0}".format(str(se), lg_name))
+        logger.info("Schedule Exception")
+        raise HTTPException(status_code=500,
+                            detail="Graph scheduling exception {1}: {0}".format(str(se), lg_name))
     except Exception:
+        logger.info("Partition / Other exception")
         trace_msg = traceback.format_exc()
-        return HTTPException(status_code=500,
-                             detail="Graph partition exception {1}: {0}".format(trace_msg, lg_name))
+        raise HTTPException(status_code=500,
+                            detail="Graph partition exception {1}: {0}".format(trace_msg, lg_name))
 
 
 @app.post("/gen_pgt", response_class=HTMLResponse)
 def gen_pgt_post(
         request: Request,
-        lg_name:str = Body(),
-        json_data:str = Body(),
-        rmode:str = Body(str(REPRO_DEFAULT.value)),
+        lg_name: str = Body(),
+        json_data: str = Body(),
+        rmode: str = Body(str(REPRO_DEFAULT.value)),
         test: str = Body(default="false"),
         algorithm: str = Body(default="none"),
         num_partitions: int = Body(default=1),
@@ -284,7 +286,8 @@ def gen_pgt_post(
             error = "Validation Error {1}: {0}".format(str(ve), lg_name)
         logical_graph = prepare_lgt(logical_graph, rmode)
         # LG -> PGT
-        pgt = unroll_and_partition_with_params(logical_graph, test, algorithm, num_partitions, num_islands, partition_label, algorithm_parameters)
+        pgt = unroll_and_partition_with_params(logical_graph, test, algorithm, num_partitions,
+                                               num_islands, partition_label, algorithm_parameters)
         pgt_id = pg_mgr.add_pgt(pgt, lg_name)
 
         part_info = " - ".join(
