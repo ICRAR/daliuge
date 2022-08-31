@@ -14,11 +14,12 @@ from typing import Union
 from urllib.parse import urlparse
 
 import uvicorn
-from fastapi import FastAPI, Request, Body, Query, HTTPException
-from fastapi.responses import HTMLResponse, StreamingResponse, RedirectResponse
+from fastapi import FastAPI, Request, Body, Query, HTTPException, Form
+from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from jsonschema import validate, ValidationError
+from pydantic import BaseModel
 
 from dlg import restutils, common
 from dlg.clients import CompositeManagerClient
@@ -28,7 +29,8 @@ from dlg.dropmake.lg import GraphException
 from dlg.dropmake.pg_manager import PGManager
 from dlg.dropmake.scheduler import SchedulerException
 from dlg.dropmake.web.translator_utils import file_as_string, lg_repo_contents, lg_path, lg_exists, \
-    pgt_exists, pgt_path, pgt_repo_contents, prepare_lgt, unroll_and_partition_with_params
+    pgt_exists, pgt_path, pgt_repo_contents, prepare_lgt, unroll_and_partition_with_params, \
+    make_algo_param_dict
 
 file_location = pathlib.Path(__file__).parent.absolute()
 templates = Jinja2Templates(directory=file_location)
@@ -46,15 +48,18 @@ global pg_mgr
 LG_SCHEMA = json.loads(file_as_string("lg.graph.schema", package="dlg.dropmake"))
 
 
-@app.post("/jsonbody/lg")
+@app.post("/jsonbody")
 def jsonbody_post_lg(
-        lg_name: str = Body(),
-        lg_content: str = Body(),
-        rmode: str = Body(default=str(REPRO_DEFAULT.value)),
+        lg_name: str = Form(),
+        lg_content: str = Form(),
+        rmode: str = Form(default=str(REPRO_DEFAULT.value)),
 ):
     """
     Post a logical graph JSON.
     """
+    if not lg_exists(lg_dir, lg_name):
+        raise HTTPException(status_code=404,
+                            detail="Creating new graphs through this API is not supported")
     try:
         lg_content = json.loads(lg_content)
     except JSONDecodeError:
@@ -66,15 +71,15 @@ def jsonbody_post_lg(
         with open(lg_path, "w") as lg_file:
             lg_file.write(json.dumps(lg_content))
     except Exception as e:
-        return HTTPException(status_code=500,
-                             detail="Failed to save logical graph {0}:{1}".format(lg_name, str(e)))
+        raise HTTPException(status_code=500,
+                            detail="Failed to save logical graph {0}:{1}".format(lg_name, str(e)))
     finally:
         post_sem.release()
 
 
-@app.get("/jsonbody/lg")
+@app.get("/jsonbody")
 def jsonbody_get_lg(
-        lg_name: str = Body()
+        lg_name: str = Query(default=None)
 ):
     """
     Returns JSON representation of saved logical graph.
@@ -91,15 +96,15 @@ def jsonbody_get_lg(
         # print "Loading {0}".format(lg_name)
         lgp = lg_path(lg_dir, lg_name)
         with open(lgp, "r") as f:
-            data = f.read()
-        return data
+            data = json.load(f)
+        return JSONResponse(data)
     else:
-        return HTTPException(status_code=404, detail="JSON graph {0} not found\n".format(lg_name))
+        raise HTTPException(status_code=404, detail="JSON graph {0} not found\n".format(lg_name))
 
 
-@app.get("/jsonbody/pgt")
+@app.get("/pgt_jsonbody")
 def jsonbody_get_pgt(
-        pgt_name: str = Body()
+        pgt_name: str = Query()
 ):
     """
     Return JSON representation of a physical graph template
@@ -111,42 +116,42 @@ def jsonbody_get_pgt(
             data = f.read()
         return data
     else:
-        return HTTPException(status_code=404, detail="JSON graph {0} not found".format(pgt_name))
+        raise HTTPException(status_code=404, detail="JSON graph {0} not found".format(pgt_name))
 
 
 @app.get("/pg_viewer", response_class=HTMLResponse)
 def load_pg_viewer(request: Request,
-                   pgt_name: str = Body()
+                   pgt_view_name: str = Query(default=None)
                    ):
     """
     Loads the physical graph viewer
     """
-    if pgt_name is None or len(pgt_name) == 0:
+    if pgt_view_name is None or len(pgt_view_name) == 0:
         all_pgts = pgt_repo_contents(pgt_dir)
         try:
             first_dir = next(iter(all_pgts))
-            pgt_name = first_dir + os.sep + all_pgts[first_dir][0]
+            pgt_view_name = first_dir + os.sep + all_pgts[first_dir][0]
         except StopIteration:
-            pgt_name = None
-    if pgt_exists(pgt_dir, pgt_name):
+            pgt_view_name = None
+    if pgt_exists(pgt_dir, pgt_view_name):
         tpl = templates.TemplateResponse("pg_viewer.html", {
             "request": request,
-            "pgt_view_json_name": pgt_name,
+            "pgt_view_json_name": pgt_view_name,
             "partition_info": None,
             "title": "Physical Graph Template",
             "error": None
         })
         return tpl
     else:
-        return HTTPException(status_code=404,
-                             detail="Physical graph template view {0} not found {1}".format(
-                                 pgt_name, pgt_dir))
+        raise HTTPException(status_code=404,
+                            detail="Physical graph template view {0} not found {1}".format(
+                                pgt_view_name, pgt_dir))
 
 
 @app.get("/show_gantt_chart", response_class=HTMLResponse)
 def show_gantt_chart(
         request: Request,
-        pgt_id: str = Body()
+        pgt_id: str = Query()
 ):
     """
     Interface to show the gantt chart
@@ -161,7 +166,7 @@ def show_gantt_chart(
 
 @app.get("/pgt_gantt_chart")
 def get_gantt_chart(
-        pgt_id: str = Body()
+        pgt_id: str = Query()
 ):
     """
     Interface to retrieve a Gantt Chart matrix associated with a PGT
@@ -170,14 +175,14 @@ def get_gantt_chart(
         ret = pg_mgr.get_gantt_chart(pgt_id)
         return ret
     except GraphException as ge:
-        return HTTPException(status_code=500, detail="Failed to generate Gantt chart for {0}: {1}"
-                             .format(pgt_id, ge))
+        raise HTTPException(status_code=500, detail="Failed to generate Gantt chart for {0}: {1}"
+                            .format(pgt_id, ge))
 
 
-@app.get("/show_schedule_matrix", response_class=HTMLResponse)
+@app.get("/show_schedule_mat", response_class=HTMLResponse)
 def show_schedule_matrix(
         request: Request,
-        pgt_id: str = Body()
+        pgt_id: str = Query()
 ):
     """
     Interface to show the schedule mat
@@ -192,7 +197,7 @@ def show_schedule_matrix(
 
 @app.get("/get_schedule_matrices")
 def get_schedule_matrices(
-        pgt_id: str = Body()
+        pgt_id: str = Query()
 ):
     """
     Interface to return all schedule matrices for a single pgt_id
@@ -201,8 +206,8 @@ def get_schedule_matrices(
         ret = pg_mgr.get_schedule_matrices(pgt_id)
         return ret
     except Exception as e:
-        return HTTPException(status_code=500, detail="Failed to get schedule matrices for {0}: {1}"
-                             .format(pgt_id, e))
+        raise HTTPException(status_code=500, detail="Failed to get schedule matrices for {0}: {1}"
+                            .format(pgt_id, e))
 
 
 # ------ Graph deployment methods ------ #
@@ -257,18 +262,39 @@ def gen_pgt(
                             detail="Graph partition exception {1}: {0}".format(trace_msg, lg_name))
 
 
+class AlgoParams(BaseModel):
+    min_goal: Union[int, None]
+    ptype: Union[int, None]
+    max_load_imb: Union[int, None]
+    max_cpu: Union[int, None]
+    time_greedy: Union[int, None]
+    deadline: Union[int, None]
+    topk: Union[int, None]
+    swarm_size: Union[int, None]
+    max_mem: Union[int, None]
+
+
 @app.post("/gen_pgt", response_class=HTMLResponse)
-def gen_pgt_post(
+async def gen_pgt_post(
         request: Request,
-        lg_name: str = Body(),
-        json_data: str = Body(),
-        rmode: str = Body(str(REPRO_DEFAULT.value)),
-        test: str = Body(default="false"),
-        algorithm: str = Body(default="none"),
-        num_partitions: int = Body(default=1),
-        num_islands: int = Body(default=0),
-        partition_label: str = Body(default="Partition"),
-        algorithm_parameters: dict = Body(default={}),
+        lg_name: str = Form(),
+        json_data: str = Form(),
+        rmode: str = Form(str(REPRO_DEFAULT.value)),
+        test: str = Form(default="false"),
+        algo: str = Form(default="none"),
+        num_par: int = Form(default=1),
+        num_islands: int = Form(default=0),
+        par_label: str = Form(default="Partition"),
+        min_goal: Union[int, None] = Form(default=None),
+        ptype: Union[int, None] = Form(default=None),
+        max_load_imb: Union[int, None] = Form(default=None),
+        max_cpu: Union[int, None] = Form(default=None),
+        time_greedy: Union[int, None] = Form(default=None),
+        deadline: Union[int, None] = Form(default=None),
+        topk: Union[int, None] = Form(default=None),
+        swarm_size: Union[int, None] = Form(default=None),
+        max_mem: Union[int, None] = Form(default=None)
+
 ):
     """
     Translating Logical Graphs to Physical Graphs.
@@ -279,17 +305,20 @@ def gen_pgt_post(
     test = test.lower() == "true"
     try:
         logical_graph = json.loads(json_data)
-        error = None
         try:
             validate(logical_graph, LG_SCHEMA)
         except ValidationError as ve:
             error = "Validation Error {1}: {0}".format(str(ve), lg_name)
+            logger.error(error)
+            # raise HTTPException(status_code=500, detail=error)
         logical_graph = prepare_lgt(logical_graph, rmode)
         # LG -> PGT
-        pgt = unroll_and_partition_with_params(logical_graph, test, algorithm, num_partitions,
-                                               num_islands, partition_label, algorithm_parameters)
+        # TODO: Warning: I dislike doing it this way with a passion, however without changing the tests/ usage of the api getting all form fields is difficult.
+        algo_params = make_algo_param_dict(min_goal, ptype, max_load_imb, max_cpu, time_greedy,
+                                           deadline, topk, swarm_size, max_mem)
+        pgt = unroll_and_partition_with_params(logical_graph, test, algo, num_par,
+                                               num_islands, par_label, algo_params)
         pgt_id = pg_mgr.add_pgt(pgt, lg_name)
-
         part_info = " - ".join(
             ["{0}:{1}".format(k, v) for k, v in pgt.result().items()]
         )
@@ -298,31 +327,34 @@ def gen_pgt_post(
             "pgt_view_json_name": pgt_id,
             "partition_info": part_info,
             "title": "Physical Graph Template%s"
-                     % ("" if num_partitions == 0 else "Partitioning"),
+                     % ("" if num_par == 0 else "Partitioning"),
             "error": None
         })
         return tpl
     except GraphException as ge:
-        return HTTPException(status_code=500,
-                             detail="Invalid Logical Graph {1}: {0}".format(str(ge), lg_name))
+        logger.info("GRAPH EXCEPTION")
+        raise HTTPException(status_code=500,
+                            detail="Invalid Logical Graph {1}: {0}".format(str(ge), lg_name))
     except SchedulerException as se:
-        return HTTPException(status_code=500,
-                             detail="Graph scheduling exception {1}: {0}".format(str(se), lg_name))
+        logger.info("SCHEDULE EXCEPTION")
+        raise HTTPException(status_code=500,
+                            detail="Graph scheduling exception {1}: {0}".format(str(se), lg_name))
     except Exception:
+        logger.info("OTHER EXCEPTION")
         trace_msg = traceback.format_exc()
-        return HTTPException(status_code=500,
-                             detail="Graph partition exception {1}: {0}".format(trace_msg, lg_name))
+        raise HTTPException(status_code=500,
+                            detail="Graph partition exception {1}: {0}".format(trace_msg, lg_name))
 
 
 @app.get("/gen_pg", response_class=StreamingResponse)
 def gen_pg(
         request: Request,
-        pgt_id: str = Body(),
-        dlg_mgr_deploy: Union[str, None] = Body(default=None),
-        dlg_mgr_url: Union[str, None] = Body(default=None),
-        dlg_mgr_host: Union[str, None] = Body(default=None),
-        dlg_mgr_port: Union[int, None] = Body(default=None),
-        tpl_nodes_len: int = Body(default=0)
+        pgt_id: str = Query(),
+        dlg_mgr_deploy: Union[str, None] = Query(default=None),
+        dlg_mgr_url: Union[str, None] = Query(default=None),
+        dlg_mgr_host: Union[str, None] = Query(default=None),
+        dlg_mgr_port: Union[int, None] = Query(default=None),
+        tpl_nodes_len: int = Query(default=0)
 ):
     """
     RESTful interface to convert a PGT(P) into PG by mapping
@@ -334,9 +366,9 @@ def gen_pg(
     mprefix = ""
     pgtp = pg_mgr.get_pgt(pgt_id)
     if pgtp is None:
-        return HTTPException(status_code=404,
-                             detail="PGT(P) with id {0} not found in the Physical Graph Manager"
-                             .format(pgt_id))
+        raise HTTPException(status_code=404,
+                            detail="PGT(P) with id {0} not found in the Physical Graph Manager"
+                            .format(pgt_id))
 
     pgtpj = pgtp._gojs_json_obj
     reprodata = pgtp.reprodata
@@ -372,8 +404,8 @@ def gen_pg(
         if tpl_nodes_len > 0:
             nnodes = num_partitions
         else:
-            return HTTPException(status_code=500,
-                                 detail="Must specify DALiuGE manager host or tpl_nodes_len")
+            raise HTTPException(status_code=500,
+                                detail="Must specify DALiuGE manager host or tpl_nodes_len")
 
         pg_spec = pgtp.to_pg_spec([], ret_str=False, tpl_nodes_len=nnodes)
         pg_spec.append(reprodata)
@@ -412,12 +444,12 @@ def gen_pg(
             response.headers["Content-Disposition"] = "attachment; filename=%s" % pgt_id
             return response
     except restutils.RestClientException as re:
-        return HTTPException(status_code=500,
-                             detail="Failed to interact with DALiUGE Drop Manager: {0}".format(re))
+        raise HTTPException(status_code=500,
+                            detail="Failed to interact with DALiUGE Drop Manager: {0}".format(re))
     except Exception as ex:
         logger.error(traceback.format_exc())
-        return HTTPException(status_code=500,
-                             detail="Failed to deploy physical graph: {0}".format(ex))
+        raise HTTPException(status_code=500,
+                            detail="Failed to deploy physical graph: {0}".format(ex))
 
 
 @app.get("/gen_pg_spec")
@@ -436,17 +468,17 @@ def gen_pg_spec(
         logger.debug("node_list: %s", str(node_list))
     except Exception as ex:
         logger.error("%s", traceback.format_exc())
-        return HTTPException(status_code=500,
-                             detail="Unable to parse json body of request for pg_spec: {0}".format(
-                                 ex))
+        raise HTTPException(status_code=500,
+                            detail="Unable to parse json body of request for pg_spec: {0}".format(
+                                ex))
     pgtp = pg_mgr.get_pgt(pgt_id)
     if pgtp is None:
-        return HTTPException(status_code=404,
-                             detail="PGT(P) with id {0} not found in the Physical Graph Manager".format(
-                                 pgt_id
-                             ))
+        raise HTTPException(status_code=404,
+                            detail="PGT(P) with id {0} not found in the Physical Graph Manager".format(
+                                pgt_id
+                            ))
     if node_list is None:
-        return HTTPException(status_code=500, detail="Must specify DALiuGE nodes list")
+        raise HTTPException(status_code=500, detail="Must specify DALiuGE nodes list")
 
     try:
         pg_spec = pgtp.to_pg_spec([manager_host] + node_list, ret_str=False)
@@ -456,7 +488,7 @@ def gen_pg_spec(
         return response
     except Exception as ex:
         logger.error("%s", traceback.format_exc())
-        return HTTPException(status_code=500, detail="Failed to generate pg_spec: {0}".format(ex))
+        raise HTTPException(status_code=500, detail="Failed to generate pg_spec: {0}".format(ex))
 
 
 @app.get("/gen_pg_helm")
@@ -470,9 +502,9 @@ def gen_pg_helm(
     from ...deploy.start_helm_cluster import start_helm
     pgtp = pg_mgr.get_pgt(pgt_id)
     if pgtp is None:
-        return HTTPException(status_code=404,
-                             detail="PGT(P) with id {0} not found in the Physical Graph Manager"
-                             .format(pgt_id))
+        raise HTTPException(status_code=404,
+                            detail="PGT(P) with id {0} not found in the Physical Graph Manager"
+                            .format(pgt_id))
 
     pgtpj = pgtp._gojs_json_obj
     logger.info("PGTP: %s", pgtpj)
@@ -482,8 +514,8 @@ def gen_pg_helm(
         start_helm(pgtp, num_partitions, pgt_dir)
     except restutils.RestClientException as ex:
         logger.error(traceback.format_exc())
-        return HTTPException(status_code=500,
-                             detail="Failed to deploy physical graph: {0}".format(ex))
+        raise HTTPException(status_code=500,
+                            detail="Failed to deploy physical graph: {0}".format(ex))
     # TODO: Not sure what to redirect to yet
     return "Inspect your k8s dashboard for deployment status"
 
