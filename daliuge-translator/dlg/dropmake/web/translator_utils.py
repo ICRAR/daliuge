@@ -8,8 +8,6 @@ from dlg.common.reproducibility.reproducibility import init_lg_repro_data, init_
 from dlg.dropmake.lg import load_lg
 from dlg.dropmake.pg_generator import unroll, partition
 
-global lg_dir
-global pgt_dir
 
 logger = logging.getLogger(__name__)
 
@@ -26,27 +24,27 @@ ALGO_PARAMS = [
 ]  # max_mem is only relevant for the old editor, not used in EAGLE
 
 
-def lg_path(lg_name):
+def lg_path(lg_dir, lg_name):
     return "{0}/{1}".format(lg_dir, lg_name)
 
 
-def lg_exists(lg_name):
-    return os.path.exists(lg_path(lg_name))
+def lg_exists(lg_dir, lg_name):
+    return os.path.exists(lg_path(lg_dir, lg_name))
 
 
-def pgt_path(pgt_name):
+def pgt_path(pgt_dir, pgt_name):
     return "{0}/{1}".format(pgt_dir, pgt_name)
 
 
-def pgt_exists(pgt_name):
-    return os.path.exists(pgt_path(pgt_name))
+def pgt_exists(pgt_dir, pgt_name):
+    return os.path.exists(pgt_path(pgt_dir, pgt_name))
 
 
-def lg_repo_contents():
+def lg_repo_contents(lg_dir):
     return _repo_contents(lg_dir)
 
 
-def pgt_repo_contents():
+def pgt_repo_contents(pgt_dir):
     return _repo_contents(pgt_dir)
 
 
