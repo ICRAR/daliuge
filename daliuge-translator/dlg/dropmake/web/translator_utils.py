@@ -76,6 +76,28 @@ def prepare_lgt(filename, rmode: str):
     return init_lg_repro_data(init_lgt_repro_data(load_lg(filename), rmode))
 
 
+def filter_dict_to_algo_params(input_dict: dict):
+    algo_params = {}
+    for name, typ in ALGO_PARAMS:
+        if name in input_dict:
+            algo_params[name] = input_dict.get(name)
+    return algo_params
+
+
+def make_algo_param_dict(min_goal, ptype, max_load_imb, max_cpu, time_greedy, deadline, topk, swam_size, max_mem):
+    return {
+        "min_goal": min_goal,
+        "ptype": ptype,
+        "max_load_imb": max_load_imb,
+        "max_cpu": max_cpu,
+        "time_greedy": time_greedy,
+        "deadline": deadline,
+        "topk": topk,
+        "swarm_size": swam_size,
+        "max_mem": max_mem
+    }
+
+
 def unroll_and_partition_with_params(lgt: dict, test: bool, algorithm: str = "none",
                                      num_partitions: int = 1, num_islands: int = 0,
                                      par_label: str = "Partition", algorithm_parameters=None):
@@ -83,10 +105,7 @@ def unroll_and_partition_with_params(lgt: dict, test: bool, algorithm: str = "no
         algorithm_parameters = {}
     app = "dlg.apps.simple.SleepApp" if test else None
     pgt = init_pgt_unroll_repro_data(unroll(lgt, app=app))
-    algo_params = {}
-    for name, typ in ALGO_PARAMS:
-        if name in algorithm_parameters:
-            algo_params[name] = algorithm_parameters.get(name, type=typ)
+    algo_params = filter_dict_to_algo_params(algorithm_parameters)
     reprodata = pgt.pop()
     # Partition the PGT
     pgt = partition(
