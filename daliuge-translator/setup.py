@@ -95,6 +95,10 @@ src_files = package_files("dlg")
 install_requires = [
     "wheel",
     "uvicorn",
+    "fastapi",
+    "uvicorn",
+    "jinja2",
+    "python-multipart",
     "daliuge-common==%s" % (VERSION,),
     "jsonschema",
     "metis>=0.2a3",
