@@ -7,3 +7,4 @@ gputil >= 1.4.0
 fastapi
 uvicorn
 jinja2
+python-multipart
