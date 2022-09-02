@@ -71,7 +71,7 @@ case "$1" in
         exit 0;;
     "local")
         common_prep
-        echo "Starting managers in background.."
+        echo "Starting managers locally in background.."
         dlg nm -vvd -H 0.0.0.0 --dlg-path=$DLG_ROOT --dlm-cleanup-period=10
         dlg dim -vvd -H 0.0.0.0 -N localhost
         echo
@@ -79,6 +79,6 @@ case "$1" in
         python -c "from dlg.utils import get_local_ip_addr; print([f'http://{addr}:8001' for addr,name in get_local_ip_addr() if not name.startswith('docker')])"
         echo "Log files can be found in ${DLG_ROOT}/log";;
     *)
-        echo "Usage run_engine.sh <dep|dev|slim|start-local>"
+        echo "Usage run_engine.sh <dep|dev|slim|local>"
         exit 0;;
 esac
