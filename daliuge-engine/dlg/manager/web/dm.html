@@ -80,7 +80,7 @@ var nodeIP = window.location.href.split("http://").slice(1).join('http://').spli
 if(dimUrl){
 	var dimIP = dimUrl.split("//").pop().split(":").shift();
 	d3.select('#islandDisplay').html("<a href="+dimUrl+">DIM: " + dimIP+"</a>");
-		d3.select('#nodeDisplay').text("/ Node: " + nodeIP);
+	d3.select('#nodeDisplay').html("<a href=/?dim_url="+dimUrl+">/ Node: " + nodeIP+"</a>");
 }
 
 // Listeners for the two buttons

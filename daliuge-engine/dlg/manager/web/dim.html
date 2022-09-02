@@ -31,14 +31,13 @@
 		</button>
 		<div class="collapse navbar-collapse" id="navbarNav">
 			<ul class="nav navbar-nav navbar-center">
-
-    </ul>
+            </ul>
 			<ul class="nav navbar-nav  ml-auto">
 			</ul>
 		</div>
 	</nav>
 	<div id="graphNameWrapper">
-        <liid="islandDisplay"></li>
+        <li id="islandDisplay"></li>
         <li id="nodeDisplay"></li>
     </div>
 	<div id="dimContentWrapper" class="container">
@@ -98,6 +97,7 @@
     var sessionsTbodyEl = d3.select('#sessionsTable tbody');
 
     var serverIP = serverUrl.split("//").pop().split(":").shift();// Show/hide parts of the UI depending on whether we're zooming in or not
+    console.log(selectedNode)
     // into a specific node
     if (selectedNode) {
         d3.select('#nodes').remove();
@@ -106,7 +106,7 @@
     } else {
         d3.select('#zoom-notice').remove();
         d3.select('#nodeDisplay').remove();
-    d3.select('#islandDisplay').text("DIM: " + serverIP);
+        d3.select('#islandDisplay').html("<a href="+serverUrl+">DIM: " + serverIP+"</a>");
 	}
 
 	// Animated filling of DropManagers and Nodes table
@@ -124,7 +124,7 @@
 			.append('span').classed('fa fa-share', true);
 	}
 	if( !selectedNode ) {
-		fillTable('#nodesTable tbody', nodes, function(n) { return '?node=' + n; }, function(n){return "http://"+n+":8000"+"?dim_url="+serverUrl});
+		fillTable('#nodesTable tbody', nodes, function(n) { return '?node=' + n+"&dim_url="+serverUrl; }, function(n){return "http://"+n+":8000"+"?dim_url="+serverUrl});
 	}
 
     // Listeners for the two session-related buttons
