@@ -284,3 +284,82 @@ class TestLGWeb(unittest.TestCase):
 
     def test_get_gantt_chart(self):
         self._test_pgt_action("pgt_gantt_chart", True)
+
+    def test_get_fill(self):
+        c = RestClient("localhost", lgweb_port, timeout=10)
+
+        # an API call with an empty form should cause an error
+        self.assertRaises(RestClientException, c._POST, "/lg_fill")
+
+        with open(
+            os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
+        ) as infile:
+            json_data = infile.read()
+
+        # only invalid lg_name
+        form_data = {
+            "lg_name": "metis.graph",
+        }
+        content = urllib.parse.urlencode(form_data)
+        self.assertRaises(RestClientException, c._POST, "/lg_fill", content, content_type="application/x-www-form-urlencoded")
+
+        # only valid lg_name
+        form_data = {
+            "lg_name": "logical_graphs/chiles_simple.graph",
+        }
+        try:
+            content = urllib.parse.urlencode(form_data)
+            c._POST(
+                "/lg_fill", content, content_type="application/x-www-form-urlencoded"
+            )
+        except RestClientException as e:
+            self.fail(e)
+
+        # both lg_name and lg_content
+        form_data = {
+            "lg_name": "chiles_simple.graph",
+            "lg_content": json_data
+        }
+        content = urllib.parse.urlencode(form_data)
+        self.assertRaises(RestClientException, c._POST, "/lg_fill", content, content_type="application/x-www-form-urlencoded")
+
+        # only invalid lg_content
+        form_data = {
+            "lg_content": "{'garbage: 3}"
+        }
+        content = urllib.parse.urlencode(form_data)
+        self.assertRaises(RestClientException, c._POST, "/lg_fill", content, content_type="application/x-www-form-urlencoded")
+
+        # only valid lg_content
+        form_data = {
+            "lg_content": json_data
+        }
+        try:
+            content = urllib.parse.urlencode(form_data)
+            c._POST(
+                "/lg_fill", content, content_type="application/x-www-form-urlencoded"
+            )
+        except RestClientException as e:
+            self.fail(e)
+
+        # lg_content with invalid parameters
+        form_data = {
+            "lg_content": json_data,
+            "parameters": '{"nonsense: 3}'
+        }
+        content = urllib.parse.urlencode(form_data)
+        self.assertRaises(RestClientException, c._POST, "/lg_fill", content, content_type="application/x-www-form-urlencoded")
+
+
+        # lg_content with valid parameters
+        form_data = {
+            "lg_content": json_data,
+            "parameters": '{"nonsense": 3}'
+        }
+        try:
+            content = urllib.parse.urlencode(form_data)
+            c._POST(
+                "/lg_fill", content, content_type="application/x-www-form-urlencoded"
+            )
+        except RestClientException as e:
+            self.fail(e)

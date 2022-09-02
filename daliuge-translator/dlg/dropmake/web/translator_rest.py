@@ -14,7 +14,7 @@ from typing import Union
 from urllib.parse import urlparse
 
 import uvicorn
-from fastapi import FastAPI, Request, Body, Query, HTTPException, Form
+from fastapi import FastAPI, Request, Body, Query, HTTPException, Form, Depends
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -23,9 +23,10 @@ from pydantic import BaseModel
 
 from dlg import restutils, common
 from dlg.clients import CompositeManagerClient
-from dlg.common.reproducibility.constants import REPRO_DEFAULT
-from dlg.common.reproducibility.reproducibility import init_lgt_repro_data
+from dlg.common.reproducibility.constants import REPRO_DEFAULT, ALL_RMODES, ReproducibilityFlags
+from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data
 from dlg.dropmake.lg import GraphException
+from dlg.dropmake.pg_generator import fill
 from dlg.dropmake.pg_manager import PGManager
 from dlg.dropmake.scheduler import SchedulerException
 from dlg.dropmake.web.translator_utils import file_as_string, lg_repo_contents, lg_path, lg_exists, \
@@ -518,6 +519,49 @@ def gen_pg_helm(
                             detail="Failed to deploy physical graph: {0}".format(ex))
     # TODO: Not sure what to redirect to yet
     return "Inspect your k8s dashboard for deployment status"
+
+
+# ------ Methods from translator CLI ------ #
+
+@app.post("/lg_fill", response_class=JSONResponse)
+def lg_fill(
+        lg_name: str = Form(default=None),
+        lg_content: str = Form(default=None),
+        parameters: str = Form(default="{}"),
+        rmode: str = Form(REPRO_DEFAULT.name, enum=[roption.name for roption in [ReproducibilityFlags.NOTHING] + ALL_RMODES])
+):
+    """
+    Will fill a logical graph (either loaded serverside by name or supplied directly as lg_content).
+    """
+    lg_graph = {}
+    if lg_content is not None and lg_name is not None:
+        raise HTTPException(status_code=400,
+                            detail="Need to supply either an lg_name or lg_content but not both")
+    if not lg_exists(lg_dir, lg_name):
+        try:
+            lg_graph = json.loads(lg_content)
+        except JSONDecodeError as jerror:
+            logger.error(jerror)
+            raise HTTPException(status_code=400,
+                                detail="LG content is malformed")
+    else:
+        lgp = lg_path(lg_dir, lg_name)
+        with open(lgp, "r") as f:
+            try:
+                lg_graph = json.load(f)
+            except JSONDecodeError as jerror:
+                logger.error(jerror)
+                raise HTTPException(status_code=500,
+                                    detail="LG graph on file cannot be loaded")
+    try:
+        params = json.loads(parameters)
+    except JSONDecodeError as jerror:
+        logger.error(jerror)
+        raise HTTPException(status_code=400,
+                            detail="Parameter string is invalid")
+    output_graph = fill(lg_graph, params)
+    output_graph = init_lg_repro_data(init_lgt_repro_data(output_graph, rmode))
+    return JSONResponse(output_graph)
 
 
 @app.get("/", response_class=HTMLResponse)
