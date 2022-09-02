@@ -35,7 +35,7 @@ paths:
                   type: string
       operationId: getCMNodes
       description: Returns the list of nodes covered by this Composite Manager
-  '/api/nodes/{node}':
+  '/api/node/{node}':
     parameters:
       - schema:
           type: string
@@ -58,7 +58,7 @@ paths:
         '200':
           description: OK
       description: "Add `node` to this Composite Manager's nodes list"
-  '/api/nodes/{node}/sessions':
+  '/api/node/{node}/sessions':
     parameters:
       - schema:
           type: string
@@ -103,7 +103,7 @@ paths:
                 description: Generic session information type
       operationId: getNodeSessions
       description: 'Get the list of sessions on `node`, managed by this Manager'
-  '/api/nodes/{node}/sessions/{sessionId}':
+  '/api/node/{node}/sessions/{sessionId}':
     parameters:
       - schema:
           type: string
@@ -127,7 +127,7 @@ paths:
                 $ref: './manager_common.yaml#/components/schemas/session'
       operationId: getNodeSessionInformation
       description: Returns the main information of session `sessionId` in node `node`
-  '/api/nodes/{node}/sessions/{sessionId}/status':
+  '/api/node/{node}/sessions/{sessionId}/status':
     parameters:
       - schema:
           type: string
@@ -151,7 +151,7 @@ paths:
                 type: integer
       operationId: getNodeSessionStatus
       description: Returns the status of `sessionId` in `node`
-  '/api/nodes/{node}/sessions/{sessionId}/graph':
+  '/api/node/{node}/sessions/{sessionId}/graph':
     parameters:
       - schema:
           type: string
@@ -175,7 +175,7 @@ paths:
                 $ref: './manager_common.yaml#/components/schemas/physical_graph'
       operationId: getNodeGraph
       description: Returns the physical graph of session `sessionId` in `node`
-  '/api/nodes/{node}/sessions/{sessionId}/graph/status':
+  '/api/node/{node}/sessions/{sessionId}/graph/status':
     parameters:
       - schema:
           type: string

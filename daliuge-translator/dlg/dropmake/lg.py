@@ -39,7 +39,7 @@ import time
 from itertools import product
 
 import numpy as np
-from dlg.common import Categories, DropType
+from dlg.common import Categories, CategoryType, DropType
 from dlg.common import STORAGE_TYPES, APP_DROP_TYPES
 from dlg.common import dropdict
 from dlg.dropmake.dm_utils import (
@@ -163,7 +163,7 @@ class LGNode:
             and not (lg_node.is_groupby())
         ):
             raise GInvalidNode(
-                "Only Scatters or Loops can be nested, but {0} is neither".format(
+                "Only Scatters, Loops and GroupBys can be nested, but {0} is neither".format(
                     lg_node.id
                 )
             )
@@ -596,7 +596,8 @@ class LGNode:
                 drop_spec = dropdict(
                     {
                         "oid": oid,
-                        "type": DropType.PLAIN,
+                        "type": DropType.DATA,
+                        "categoryType": CategoryType.DATA,
                         "storage": drop_type,
                         "rank": rank,
                     }
@@ -605,8 +606,10 @@ class LGNode:
                     {
                         "oid": "{0}-s".format(oid),
                         "type": DropType.APP,
+                        "categoryType": CategoryType.APPLICATION,
                         "app": "dlg.apps.simple.SleepApp",
                         "nm": "lstnr",
+                        "text": "lstnr",
                         "tw": 5,
                         "sleepTime": 5,
                         "rank": rank,
@@ -620,7 +623,8 @@ class LGNode:
                 drop_spec = dropdict(
                     {
                         "oid": oid,
-                        "type": DropType.PLAIN,
+                        "type": DropType.DATA,
+                        "categoryType": CategoryType.DATA,
                         "storage": drop_type,
                         "rank": rank,
                     }
@@ -667,7 +671,13 @@ class LGNode:
 
             kwargs["tw"] = execTime
             drop_spec = dropdict(
-                {"oid": oid, "type": DropType.APP, "app": app_class, "rank": rank}
+                {
+                    "oid": oid,
+                    "type": DropType.APP,
+                    "categoryType": CategoryType.APPLICATION,
+                    "app": app_class,
+                    "rank": rank
+                }
             )
 
             kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
@@ -683,6 +693,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "type": DropType.APP,
+                    "categoryType": CategoryType.APPLICATION,
                     "app": "dlg.apps.dynlib.{}".format(drop_type),
                     "rank": rank,
                 }
@@ -702,7 +713,13 @@ class LGNode:
             else:
                 app_str = "dlg.apps.bash_shell_app.BashShellApp"
             drop_spec = dropdict(
-                {"oid": oid, "type": DropType.APP, "app": app_str, "rank": rank}
+                {
+                    "oid": oid,
+                    "type": DropType.APP,
+                    "categoryType": CategoryType.APPLICATION,
+                    "app": app_str,
+                    "rank": rank
+                }
             )
             self._update_key_value_attributes(kwargs)
             if "execution_time" in self.jd:
@@ -712,19 +729,8 @@ class LGNode:
                 raise GraphException(
                     "Missing execution_time for Construct '%s'" % self.text
                 )
-            # add more arguments
+            # add more arguments (support for Arg0x dropped!)
             cmds = []
-            for i in range(10):
-                k = "Arg%02d" % (i + 1,)
-                if k not in self.jd:
-                    k = "arg%02d" % (i + 1,)
-                    if k not in self.jd:
-                        continue
-                v = self.jd[k]
-                if v is not None and len(str(v)) > 0:
-                    cmds.append(str(v))
-            # add more arguments - this is the new method of adding arguments in EAGLE
-            # the method above (Arg**) is retained for compatibility, but eventually should be removed
             for k in [
                 "command",
                 "input_redirection",
@@ -748,7 +754,13 @@ class LGNode:
             app_class = "dlg.apps.dockerapp.DockerApp"
             typ = DropType.APP
             drop_spec = dropdict(
-                {"oid": oid, "type": typ, "app": app_class, "rank": rank}
+                {
+                    "oid": oid,
+                    "type": typ,
+                    "categoryType": CategoryType.APPLICATION,
+                    "app": app_class,
+                    "rank": rank
+                }
             )
 
             image = str(self.jd.get("image"))
@@ -781,6 +793,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "type": DropType.APP,
+                    "categoryType": CategoryType.APPLICATION,
                     "app": "dlg.apps.simple.SleepApp",
                     "rank": rank,
                 }
@@ -795,9 +808,11 @@ class LGNode:
             dropSpec_grp = dropdict(
                 {
                     "oid": "{0}-grp-data".format(oid),
-                    "type": DropType.PLAIN,
+                    "type": DropType.DATA,
+                    "categoryType": CategoryType.DATA,
                     "storage": Categories.MEMORY,
                     "nm": "grpdata",
+                    "text": "grpdata",
                     "dw": dw,
                     "rank": rank,
                 }
@@ -812,6 +827,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "type": DropType.APP,
+                    "categoryType": CategoryType.APPLICATION,
                     "app": "dlg.apps.simple.SleepApp",
                     "rank": rank,
                 }
@@ -825,9 +841,11 @@ class LGNode:
             dropSpec_gather = dropdict(
                 {
                     "oid": "{0}-gather-data".format(oid),
-                    "type": DropType.PLAIN,
+                    "type": DropType.DATA,
+                    "categoryType": CategoryType.DATA,
                     "storage": Categories.MEMORY,
                     "nm": "gthrdt",
+                    "text": "gthrdt",
                     "dw": dw,
                     "rank": rank,
                 }
@@ -841,30 +859,18 @@ class LGNode:
             raise GraphException(
                 f"DROP type: {drop_type} should not appear in physical graph"
             )
-            # drop_spec = dropdict(
-            #     {
-            #         "oid": oid,
-            #         "type": DropType.SERVICE_APP,
-            #         "app": "dlg.apps.simple.SleepApp",
-            #         "rank": rank
-            #     }
-            # )
-            # kwargs["tw"] = 1
-
-        # elif drop_type == Categories.BRANCH:
-        # Branches are now dealt with like any other application and essentially ignored by the translator.
-
         elif drop_type in [Categories.START, Categories.END]:
             # this is at least suspicious in terms of implementation....
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": DropType.PLAIN,
+                    "type": DropType.DATA,
+                    "categoryType": CategoryType.DATA,
                     "storage": Categories.NULL,
                     "rank": rank,
                 }
             )
-        elif drop_type == Categories.LOOP:
+        elif drop_type in Categories.LOOP:
             pass
         else:
             raise GraphException("Unknown DROP type: '{0}'".format(drop_type))
@@ -882,7 +888,11 @@ class LGNode:
         kwargs["iid"] = iid
         kwargs["lg_key"] = self.id
         kwargs["dt"] = self.jd["category"]
+        kwargs["category"] = self.jd["category"]
+        if "categoryType" in kwargs:
+            kwargs["categoryType"] = self.jd["categoryType"]
         kwargs["nm"] = self.text
+        kwargs["text"] = self.text
         # Behaviour is that child-nodes inherit reproducibility data from their parents.
         if self._reprodata is not None:
             kwargs["reprodata"] = self._reprodata.copy()
@@ -964,8 +974,6 @@ class LG:
         self._start_list = []
         all_list = []
         stream_output_ports = dict()  # key - port_id, value - construct key
-        input_ports = {}
-        output_ports = {}
         for jd in lg["nodeDataArray"]:
             if (
                 jd["category"] == Categories.COMMENT
@@ -1001,13 +1009,6 @@ class LG:
             self.validate_link(src, tgt)
             src.add_output(tgt)
             tgt.add_input(src)
-            # duplicate link from referenced APP into Gathers
-            # if LG_APPREF == lgver and lgk[tgt]['category'] == 'Gather' and \
-            #     'inputApplicationRef' in lgk[tgt].keys():
-            #     if lgk[lk]['inputApplicationRef']:
-            #         ak = lgk[lk]['inputApplicationRef']
-            #         portId = lgk[ak]['inputPorts']
-
             # check stream links
             from_port = lk.get("fromPort", "__None__")
             if stream_output_ports.get(from_port, None) == lk["from"]:
@@ -1311,9 +1312,11 @@ class LG:
                     "oid": "{0}-{1}-stream".format(
                         sdrop["oid"], tdrop["oid"].replace(self._session_id, "")
                     ),
-                    "type": DropType.PLAIN,
+                    "type": DropType.DATA,
+                    "categoryType": CategoryType.DATA,
                     "storage": Categories.NULL,
                     "nm": "StreamNull",
+                    "text": "StreamNull",
                     "dw": 0,
                 }
             )

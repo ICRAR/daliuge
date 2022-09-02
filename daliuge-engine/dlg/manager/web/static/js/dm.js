@@ -135,7 +135,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 	// Support for node query forwarding
 	var url = serverUrl + '/api';
 	if( selectedNode ) {
-		url += '/nodes/' + selectedNode;
+		url += '/node/' + selectedNode;
 	}
 	url += '/sessions';
 
@@ -470,7 +470,7 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 	// Support for node query forwarding
 	var url = serverUrl + '/api';
 	if( selectedNode ) {
-		url += '/nodes/' + selectedNode;
+		url += '/node/' + selectedNode;
 	}
 	url += '/sessions/' + sessionId;
     var updateGraphDelayTimerActive = false;
@@ -597,7 +597,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 	// Support for node query forwarding
 	var url = serverUrl + '/api';
 	if( selectedNode ) {
-		url += '/nodes/' + selectedNode;
+		url += '/node/' + selectedNode;
 	}
 	url += '/sessions/' + sessionId + '/graph/status';
     var updateStatesDelayTimerActive = false;

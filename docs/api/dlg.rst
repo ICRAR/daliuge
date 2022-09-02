@@ -42,11 +42,6 @@ dlg.runtime.delayed
 ^^^^^^^^^^^^^^^^^^^
 .. autofunction:: dlg.runtime.delayed
 
-dlg.s3_drop
-^^^^^^^^^^^
-.. automodule:: dlg.s3_drop
-   :members:
-
 dlg.utils
 ^^^^^^^^^
 .. automodule:: dlg.utils
