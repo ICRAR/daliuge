@@ -52,7 +52,7 @@ def fileDropSpec(uid, **kwargs):
     dropSpec = dropdict(
         {
             "oid": str(uid),
-            "type": "plain",
+            "type": "data",
             "storage": Categories.FILE,
             "node": "localhost",
             "island": "localhost",

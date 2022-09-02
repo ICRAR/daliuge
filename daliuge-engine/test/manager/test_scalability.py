@@ -59,7 +59,7 @@ def memory_drop(uid):
             "node": hostname,
             "oid": uid,
             "uid": uid,
-            "type": "plain",
+            "type": "data",
             "storage": Categories.MEMORY,
         }
     )

@@ -152,7 +152,7 @@
     },
     {
         "oid": "2022-05-06T08:43:26_-2_0",
-        "type": "plain",
+        "type": "data",
         "storage": "Memory",
         "rank": [
             0

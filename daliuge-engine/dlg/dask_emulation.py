@@ -29,6 +29,8 @@ import socket
 import struct
 import time
 
+from dlg.common import CategoryType, DropType
+
 from . import utils, droputils
 from .apps import pyfunc
 from .common import dropdict, Categories
@@ -107,10 +109,13 @@ def compute(value, **kwargs):
     transmitter = dropdict(
         {
             "type": "app",
+#            "categoryType": CategoryType.APPLICATION,
             "app": "dlg.dask_emulation.ResultTransmitter",
+            "appclass": "dlg.dask_emulation.ResultTransmitter",
             "oid": transmitter_oid,
             "port": port,
             "nm": "result transmitter",
+            "text": "result transmitter",
         }
     )
     for leaf_oid in droputils.get_leaves(graph.values()):
@@ -265,7 +270,13 @@ class _DelayedDrops(_DelayedDrop):
 
     def make_dropdict(self):
         return dropdict(
-            {"type": "app", "app": "dlg.dask_emulation._Listifier", "nm": "listifier"}
+            {
+                "type": "app",
+                "categoryType": CategoryType.APPLICATION,
+                "app": "dlg.dask_emulation._Listifier",
+                "nm": "listifier",
+                "text": "listifier",
+            }
         )
 
     def __repr__(self):
@@ -291,12 +302,19 @@ class _AppDrop(_DelayedDrop):
         self.kwarg_names = list(self.original_kwarg_names)
         self.kwarg_names.reverse()
         my_dropdict = dropdict(
-            {"type": "app", "app": "dlg.apps.pyfunc.PyFuncApp", "func_arg_mapping": {}}
+            {
+                "type": "app",
+                "categoryType": CategoryType.APPLICATION,
+                "app": "dlg.apps.pyfunc.PyFuncApp",
+                "appclass": "dlg.apps.pyfunc.PyFuncApp",
+                "func_arg_mapping": {}
+            }
         )
         if self.fname is not None:
             simple_fname = self.fname.split(".")[-1]
             my_dropdict["func_name"] = self.fname
             my_dropdict["nm"] = simple_fname
+            my_dropdict["text"] = simple_fname
         if self.fcode is not None:
             my_dropdict["func_code"] = utils.b2s(base64.b64encode(self.fcode))
         if self.fdefaults:
@@ -366,7 +384,10 @@ class _DataDrop(_DelayedDrop):
         logger.debug("Created %r", self)
 
     def make_dropdict(self):
-        my_dropdict = dropdict({"type": "plain", "storage": Categories.MEMORY})
+        my_dropdict = dropdict(
+            {"type": "data", 
+            "categoryType": CategoryType.DATA,
+            "storage": Categories.MEMORY})
         if not self.producer:
             my_dropdict["pydata"] = pyfunc.serialize_data(self.pydata)
         return my_dropdict
