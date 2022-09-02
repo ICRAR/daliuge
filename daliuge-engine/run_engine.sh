@@ -12,6 +12,7 @@ $([[ $(nvidia-docker version) ]] && echo '--gpus=all' || echo '') \
 " 
 common_prep ()
 {
+    DLG_ROOT="${DLG_ROOT:-$HOME/dlg}"
     mkdir -p ${DLG_ROOT}/workspace
     mkdir -p ${DLG_ROOT}/testdata
     mkdir -p ${DLG_ROOT}/code
@@ -68,7 +69,16 @@ case "$1" in
         sleep 3
         curl -X POST http://localhost:9000/managers/island/start
         exit 0;;
+    "local")
+        common_prep
+        echo "Starting managers in background.."
+        dlg nm -vvd -H 0.0.0.0 --dlg-path=$DLG_ROOT --dlm-cleanup-period=10
+        dlg dim -vvd -H 0.0.0.0 -N localhost
+        echo
+        echo "Use any of the following URLs to access the DIM:"
+        python -c "from dlg.utils import get_local_ip_addr; print([f'http://{addr}:8001' for addr,name in get_local_ip_addr() if not name.startswith('docker')])"
+        echo "Log files can be found in ${DLG_ROOT}/log";;
     *)
-        echo "Usage run_engine.sh <dep|dev|slim>"
+        echo "Usage run_engine.sh <dep|dev|slim|start-local>"
         exit 0;;
 esac
