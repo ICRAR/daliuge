@@ -71,7 +71,7 @@ case "$1" in
         exit 0;;
     "local")
         common_prep
-        res="$(dlg nm -h| grep -c "Unknown command")"
+        res="$(dlg nm -h| grep -c 'Unknown command')"
         if [[ $res == 1 ]]
         then
             echo "dlg command could not be found!"
