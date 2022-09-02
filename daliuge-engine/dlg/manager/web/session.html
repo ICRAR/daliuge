@@ -24,7 +24,7 @@
 	<!-- custom bootstrap navbar -->
     <nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #004085;">
 		<!-- Navbar content -->
-		<a href="/" class="navbar-brand" href="#" disabled>
+		<a href="/" id="managerLink" class="navbar-brand" href="#" disabled>
 			<object data="/static/icons/liu.svg" type="image/svg+xml" width="30" height="30" class="d-inline-block align-top" alt="LiuIcon"></object>
 			<img src="/static/icons/engine.svg" width="auto" height="30" class="d-inline-block align-top" alt="EngineIcon">
 			<span>{{dmType}}</span>
@@ -155,7 +155,8 @@ if (dimUrl === "null" || !dimUrl){
 	var dimIP = dimUrl.split("//").pop().split(":").shift();
 	var nodeIP = window.location.href.split("http://").slice(1).join('http://').split(":").shift(1);
 	d3.select('#islandDisplay').html("<a href="+dimUrl+">DIM: " + dimIP+"</a>");
-	d3.select('#nodeDisplay').text("/ Node: " + nodeIP + " /");
+	d3.select('#nodeDisplay').html("<a href=/?dim_url="+dimUrl+">/ Node: " + nodeIP + " /</a>");
+	d3.select('#managerLink').attr("href","/?dim_url=" + dimUrl);
 }
 
 function view_as_graph(sessionId, selectedNode, serverUrl) {
