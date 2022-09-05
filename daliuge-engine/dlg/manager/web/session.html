@@ -155,13 +155,14 @@ if (dimUrl===null){
 
 if (dimUrl === "null" || !dimUrl){
 	d3.select('#islandDisplay').remove();
-	d3.select('#nodeDisplay').remove();
 }else if(dimUrl){
 	var dimIP = dimUrl.split("//").pop().split(":").shift();
 	var nodeIP = window.location.href.split("http://").slice(1).join('http://').split(":").shift(1);
 	d3.select('#islandDisplay').html("<a href="+dimUrl+">DIM: " + dimIP+" /</a>");
 	if(!noNode){
 		d3.select('#nodeDisplay').html("<a href=/?dim_url="+dimUrl+">Node: " + nodeIP + " /</a>");
+	}else{
+		d3.select('#nodeDisplay').remove();
 	}
 }
 
