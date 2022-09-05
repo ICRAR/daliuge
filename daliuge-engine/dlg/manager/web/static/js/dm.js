@@ -150,7 +150,10 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		if( selectedNode ) { url += '&node=' + selectedNode; }
 		var dimUrlQuery = new URL(window.location.href);
 		var dimUrl = dimUrlQuery.searchParams.get("dim_url");
-		url+="&dim_url="+dimUrl;
+		if(dimUrl){
+			url+="&dim_url="+dimUrl;
+			console.log(dimUrl)
+		}
 		return url;
 	};
 
