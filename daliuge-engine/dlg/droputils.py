@@ -117,7 +117,7 @@ class DROPWaiterCtx(object):
                 )
 
 
-def allDropContents(drop, bufsize=4096) -> bytes:
+def allDropContents(drop, bufsize=65536) -> bytes:
     """
     Returns all the data contained in a given DROP
     """
@@ -133,7 +133,7 @@ def allDropContents(drop, bufsize=4096) -> bytes:
     return buf.getvalue()
 
 
-def copyDropContents(source: DataDROP, target: DataDROP, bufsize=4096):
+def copyDropContents(source: DataDROP, target: DataDROP, bufsize=65536):
     """
     Manually copies data from one DROP into another, in bufsize steps
     """
@@ -144,10 +144,12 @@ def copyDropContents(source: DataDROP, target: DataDROP, bufsize=4096):
     logger.debug("Read %d bytes from %s", len(buf), 
     repr(source))
     st = time.time()
+    ssize = source.size
+    logger.debug("Source size: %d", ssize)
     tot_w = len(buf)
     ofl = True
     while buf:
-        target.write(buf)
+        target.write(buf, size=ssize)
         tot_w += len(buf)
         dur = time.time() - st
         if int(dur) % 5 == 0 and ofl:
@@ -160,8 +162,8 @@ def copyDropContents(source: DataDROP, target: DataDROP, bufsize=4096):
         # if buf is not None:
         #     logger.debug(f"Read {len(buf)} bytes from {repr(source)}")
     dur = time.time() - st
-    logger.debug("Wrote %.1f MB to %s; rate %.2f MB/s",
-        tot_w/1024**2, repr(target), tot_w/(1024**2*dur))
+    logger.debug("Wrote %.1f MB of %.1f to %s; rate %.2f MB/s",
+        tot_w/1024**2, ssize/1024**2, repr(target), tot_w/(1024**2*dur))
 
     source.close(desc)
 
@@ -422,7 +424,7 @@ class DROPFile(object):
             self._drop.close(self._fd)
         self._isClosed = True
 
-    def read(self, size=4096):
+    def read(self, size=65536):
         if self._io:
             return self._io.read(size)
         return self._drop.read(self._fd, size)
