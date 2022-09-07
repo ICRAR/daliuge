@@ -1279,7 +1279,7 @@ class DataDROP(AbstractDROP):
                 # raise Exception("Problem closing file!")
             self._wio = None
 
-    def read(self, descriptor, count=4096, **kwargs):
+    def read(self, descriptor, count=65536, **kwargs):
         """
         Reads `count` bytes from the given DROP `descriptor`.
         """

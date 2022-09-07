@@ -37,9 +37,12 @@ except ImportError:
     run_tests = False
 
 if run_tests:
-    PROFILE = "aws-chiles02"
+    PROFILE = "acacia-awicenec"
     try:
         boto3.session.Session(profile_name=PROFILE)
+        bucket = "rascil"
+        key = "GLEAM_cutout.fits"
+        endpoint_url = "https://projects.pawsey.org.au"
     except:
         run_tests = False
 
@@ -48,32 +51,72 @@ class TestS3Drop(unittest.TestCase):
     @skipIf(not run_tests, "No profile found to run this test")
     def test_bucket_exists(self):
         drop = S3DROP(
+            "oid:A", "uid:A", 
+            profile_name=PROFILE, 
+            Bucket="ska-low-sim", 
+            Key="Nonsense",
+            endpoint_url=endpoint_url,
+        )
+        self.assertEqual(drop.exists(), False)
+        del(drop)
+
+        drop = S3DROP(
             "oid:A",
             "uid:A",
             profile_name=PROFILE,
-            bucket="DoesNotExist",
-            key="Nonsense",
+            Bucket=bucket,
+            Key=key,
+            endpoint_url=endpoint_url,
         )
-        self.assertEqual(drop.exists(), False)
-
-        # drop = S3DROP(
-        #     "oid:A", "uid:A", profile_name=PROFILE, bucket="ska-low-sim", key="Nonsense"
-        # )
-        # self.assertEqual(drop.exists(), False)
-
-        drop = S3DROP('oid:A', 'uid:A', profile_name=PROFILE, bucket='13b-266', key='chan_avg_1/SPW_9/13B-266.sb25387671.eb28662252.56678.178276527775.spw_9.tar')
         self.assertEqual(drop.exists(), True)
 
     @skipIf(not run_tests, "No profile found to run this test")
     def test_size(self):
         drop = S3DROP(
-            "oid:A",
-            "uid:A",
-            profile_name=PROFILE,
-            bucket="DoesNotExist",
-            key="Nonsense",
+            "oid:A", "uid:A", 
+            profile_name=PROFILE, 
+            Bucket="ska-low-sim", 
+            Key="Nonsense",
+            endpoint_url=endpoint_url,
         )
-        # self.assertEqual(drop.size(), -1)
+        self.assertNotEqual(drop.size, 1123200)
+        del(drop)
 
-        drop = S3DROP('oid:A', 'uid:A', profile_name=PROFILE, bucket='13b-266', key='chan_avg_1/SPW_9/13B-266.sb25387671.eb28662252.56678.178276527775.spw_9.tar')
-        self.assertEqual(drop.size(), 250112000)
+        drop = S3DROP('oid:A', 'uid:A', 
+            profile_name=PROFILE, 
+            Bucket=bucket, 
+            Key=key,
+            endpoint_url=endpoint_url,
+            )
+        self.assertEqual(drop.size, 1123200)
+    
+    @skipIf(not run_tests, "No profile found to run this test")
+    def test_read(self):
+        
+        drop = S3DROP('oid:A', 'uid:A', 
+            profile_name=PROFILE, 
+            Bucket=bucket, 
+            Key=key,
+            endpoint_url=endpoint_url,
+            )
+        drop.status = 2
+        desc = drop.open()
+        self.assertEqual(len(drop.read(desc, count=-1)), 1123200)
+
+    @skipIf(not run_tests, "No profile found to run this test")
+    def test_write(self):
+        """
+        This is also testing delete.
+        """
+        drop = S3DROP('oid:A', 'uid:A', 
+            profile_name=PROFILE, 
+            Bucket=bucket, 
+            Key="testData",
+            endpoint_url=endpoint_url,
+            )
+        if drop.exists():
+            drop.delete()
+        testdata = 10000*b"a"
+        written = drop.write(testdata)
+        self.assertEqual(written, len(testdata))
+        drop.delete()
