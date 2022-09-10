@@ -345,9 +345,11 @@ class PyFuncApp(BarrierAppDROP):
 
         self.arguments = inspect.getfullargspec(self.f)
         logger.debug(f"Function inspection revealed {self.arguments}")
-        # we don't want to mess with the 'self' argument
+        # we don't want to mess with the 'self' or 'cls' arguments
         if self.arguments.args.count('self'):
             self.arguments.args.remove('self')
+        if self.arguments.args.count('cls'): # class methods
+            self.arguments.args.remove('cls')
         self.fn_nargs = len(self.arguments.args)
         self.fn_ndef = len(self.arguments.defaults) if self.arguments.defaults else 0
         self._init_func_defaults()
