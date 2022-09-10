@@ -119,8 +119,8 @@ class S3IO(DataIO):
         aws_secret_access_key=None,
         profile_name=None, Bucket=None, Key=None, endpoint_url=None, **kwargs):
 
-        logger.debug("key_id: %s; key: %s; profile: %s; bucket: %s; object_id: %s; %s" %
-            (aws_access_key_id, aws_secret_access_key, profile_name, Bucket, Key, endpoint_url))
+        logger.debug(("key_id: %s; key: %s; profile: %s; bucket: %s; object_id: %s; %s",
+            aws_access_key_id, aws_secret_access_key, profile_name, Bucket, Key, endpoint_url))
         self._s3 = None
         self._s3_access_key_id = aws_access_key_id
         self._s3_secret_access_key = aws_secret_access_key
