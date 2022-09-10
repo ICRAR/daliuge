@@ -84,8 +84,10 @@ def serialize_func(f):
 
 
 def import_using_name(app, fname):
-    # If only one part check if builtin
+
+    logger.debug("Import from %s %s", fname)
     parts = fname.split(".")
+    # If only one part check if builtin
     if len(parts) < 2:
         b = globals()['__builtins__']
         logger.debug(f"Builtins: {type(b)}")
@@ -96,17 +98,23 @@ def import_using_name(app, fname):
             msg = "%s is not builtin and does not contain a module name" % fname
             raise InvalidDropException(app, msg)
     else:
-        modname, fname = ".".join(parts[:-1]), parts[-1]
-        try:
-            mod = importlib.import_module(modname, __name__)
-            return getattr(mod, fname)
-        except ImportError as e:
-            raise InvalidDropException(
-                app, "Error when loading module %s: %s" % (modname, str(e))
-            )
-        except AttributeError:
-            raise InvalidDropException(app, "Module %s has no member %s" % (modname, fname))
-
+        if len(parts) > 1:
+            logger.debug("Recursive import: %s", parts)
+            try:
+                mod = importlib.import_module(parts[0], __name__)
+            except ImportError as e:
+                raise InvalidDropException(
+                        app, "Error when loading module %s: %s" % (parts[0], str(e))
+                    )
+            for m in parts[1:]:
+                try:
+                    logger.debug("Getting attribute %s",m)
+                    mod = getattr(mod, m)
+                except AttributeError as e:
+                    raise InvalidDropException(
+                            app, "Module %s has no member %s" % (mod, m))
+                
+            return mod
 
 
 def import_using_code(code):
