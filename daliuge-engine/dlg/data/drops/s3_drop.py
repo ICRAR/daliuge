@@ -88,7 +88,7 @@ class S3DROP(DataDROP):
     @property
     def size(self) -> int:
         size = self.getIO()._size()
-        logger.debug("Size of object:{}", size)
+        logger.debug(("Size of object: %s", size))
         # if size > -1:
             # set drop to completed
             # S3 objects are immutable
@@ -182,6 +182,7 @@ class S3IO(DataIO):
         TODO: Need to implement streaming upload
         The current implementation will only upload a single block
         """
+        final_write = True
         PART_SIZE = 5*1024**2
         if 'size' in kwargs:
             logger.debug("Length of object to write: %d",kwargs['size'])
@@ -200,14 +201,15 @@ class S3IO(DataIO):
                 self._s3.create_bucket(Bucket=self._bucket)
             except botocore.exceptions.ClientError as e:
                 raise e
-        if len(buffer) > PART_SIZE:
+        if final_write or len(buffer) > PART_SIZE:
             try:
-                with BytesIO(buffer[:PART_SIZE]) as f:
+                write_buffer = buffer[:PART_SIZE]
+                with BytesIO(write_buffer) as f:
                     self._s3.upload_fileobj(f, self._bucket, self._key)
                     url = f"{self._s3_endpoint_url}/{self._bucket}/{self._key}"
-                    logger.info("Wrote %d bytes to %s", len(PART_SIZE), url)
-                    buffer = buffer[PART_SIZE:]
-                    return len(PART_SIZE)
+                    logger.info("Wrote %d bytes to %s", len(write_buffer), url)
+                    buffer = buffer[PART_SIZE:] if not final_write else []
+                    return len(write_buffer)
             except botocore.exceptions.ClientError as e:
                 logger.error("Writing to S3 failed")
                 return -1
@@ -223,7 +225,7 @@ class S3IO(DataIO):
     def _size(self, **kwargs) -> int:
         if self.exists():
             object_head = self._get_object_head()
-            logger.debug("Size of object:{}", object_head['ContentLength'])
+            logger.debug(("Size of object:%s", object_head['ContentLength']))
             return object_head['ContentLength']
         return -1
 

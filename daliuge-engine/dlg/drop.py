@@ -1333,6 +1333,7 @@ class DataDROP(AbstractDROP):
                 self.status = DROPStates.ERROR
                 raise Exception("Problem opening drop for write!")
         nbytes = self._wio.write(data)
+        nbytes = 0 if nbytes is None else nbytes
 
         dataLen = len(data)
         if nbytes != dataLen:
