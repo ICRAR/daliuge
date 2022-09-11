@@ -144,12 +144,12 @@ def copyDropContents(source: DataDROP, target: DataDROP, bufsize=65536):
     logger.debug("Read %d bytes from %s", len(buf), 
     repr(source))
     st = time.time()
-    ssize = source.size
+    ssize = source.size if source.size is not None else -1
     logger.debug("Source size: %d", ssize)
     tot_w = len(buf)
     ofl = True
     while buf:
-        target.write(buf, size=ssize)
+        target.write(buf)
         tot_w += len(buf)
         dur = time.time() - st
         if int(dur) % 5 == 0 and ofl:
