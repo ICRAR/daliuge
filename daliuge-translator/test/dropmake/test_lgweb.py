@@ -20,13 +20,15 @@
 #    MA 02111-1307  USA
 #
 
+import json
 import os
 import shutil
 import tempfile
-import urllib.parse
 import unittest
+import urllib.parse
 
 import pkg_resources
+
 from dlg import common
 from dlg.common import tool
 from dlg.restutils import RestClient, RestClientException
@@ -221,7 +223,7 @@ class TestLGWeb(unittest.TestCase):
 
         # new logical graph JSON
         with open(
-            os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
+                os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
         ) as infile:
             json_data = infile.read()
 
@@ -292,7 +294,7 @@ class TestLGWeb(unittest.TestCase):
         self.assertRaises(RestClientException, c._POST, "/lg_fill")
 
         with open(
-            os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
+                os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
         ) as infile:
             json_data = infile.read()
 
@@ -301,7 +303,8 @@ class TestLGWeb(unittest.TestCase):
             "lg_name": "metis.graph",
         }
         content = urllib.parse.urlencode(form_data)
-        self.assertRaises(RestClientException, c._POST, "/lg_fill", content, content_type="application/x-www-form-urlencoded")
+        self.assertRaises(RestClientException, c._POST, "/lg_fill", content,
+                          content_type="application/x-www-form-urlencoded")
 
         # only valid lg_name
         form_data = {
@@ -321,14 +324,16 @@ class TestLGWeb(unittest.TestCase):
             "lg_content": json_data
         }
         content = urllib.parse.urlencode(form_data)
-        self.assertRaises(RestClientException, c._POST, "/lg_fill", content, content_type="application/x-www-form-urlencoded")
+        self.assertRaises(RestClientException, c._POST, "/lg_fill", content,
+                          content_type="application/x-www-form-urlencoded")
 
         # only invalid lg_content
         form_data = {
             "lg_content": "{'garbage: 3}"
         }
         content = urllib.parse.urlencode(form_data)
-        self.assertRaises(RestClientException, c._POST, "/lg_fill", content, content_type="application/x-www-form-urlencoded")
+        self.assertRaises(RestClientException, c._POST, "/lg_fill", content,
+                          content_type="application/x-www-form-urlencoded")
 
         # only valid lg_content
         form_data = {
@@ -348,8 +353,8 @@ class TestLGWeb(unittest.TestCase):
             "parameters": '{"nonsense: 3}'
         }
         content = urllib.parse.urlencode(form_data)
-        self.assertRaises(RestClientException, c._POST, "/lg_fill", content, content_type="application/x-www-form-urlencoded")
-
+        self.assertRaises(RestClientException, c._POST, "/lg_fill", content,
+                          content_type="application/x-www-form-urlencoded")
 
         # lg_content with valid parameters
         form_data = {
@@ -363,3 +368,224 @@ class TestLGWeb(unittest.TestCase):
             )
         except RestClientException as e:
             self.fail(e)
+
+    def test_lg_unroll(self):
+        c = RestClient("localhost", lgweb_port, timeout=10)
+
+        # test empty call
+        self.assertRaises(RestClientException, c._POST, "/unroll")
+
+        with open(
+                os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
+        ) as infile:
+            json_data = infile.read()
+
+        # test invalid name
+        form_data = {
+            "lg_name": "fake.graph"
+        }
+        content = urllib.parse.urlencode(form_data)
+        self.assertRaises(RestClientException, c._POST, "/unroll", content,
+                          content_type="application/x-www-form-urlencoded")
+
+        # test valid name
+        form_data = {
+            "lg_name": "logical_graphs/chiles_simple.graph",
+        }
+        try:
+            content = urllib.parse.urlencode(form_data)
+            c._POST(
+                "/unroll", content, content_type="application/x-www-form-urlencoded"
+            )
+        except RestClientException as e:
+            self.fail(e)
+
+        # both lg_name and lg_content
+        form_data = {
+            "lg_name": "chiles_simple.graph",
+            "lg_content": json_data
+        }
+        content = urllib.parse.urlencode(form_data)
+        self.assertRaises(RestClientException, c._POST, "/unroll", content,
+                          content_type="application/x-www-form-urlencoded")
+
+        # test invalid json
+        form_data = {
+            "lg_content": "{'garbage: 3}"
+        }
+        content = urllib.parse.urlencode(form_data)
+        self.assertRaises(RestClientException, c._POST, "/unroll", content,
+                          content_type="application/x-www-form-urlencoded")
+
+        # test valid json
+        form_data = {
+            "lg_content": json_data
+        }
+        try:
+            content = urllib.parse.urlencode(form_data)
+            c._POST(
+                "/unroll", content, content_type="application/x-www-form-urlencoded"
+            )
+        except RestClientException as e:
+            self.fail(e)
+
+        # test default_app
+        form_data = {
+            "lg_content": json_data,
+            "default_app": "test.app"
+        }
+        try:
+            content = urllib.parse.urlencode(form_data)
+            ret = c._POST(
+                "/unroll", content, content_type="application/x-www-form-urlencoded"
+            )
+            pgt = json.load(ret)
+            for dropspec in pgt:
+                if "app" in dropspec:
+                    self.assertEqual(dropspec["app"], "test.app")
+        except RestClientException as e:
+            self.fail(e)
+
+    def test_pgt_partition(self):
+        c = RestClient("localhost", lgweb_port, timeout=10)
+
+        # test empty call
+        self.assertRaises(RestClientException, c._POST, "/partition")
+
+        with open(
+                os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
+        ) as infile:
+            json_data = infile.read()
+
+        # Translate graph
+        form_data = {
+            "lg_content": json_data
+        }
+        content = urllib.parse.urlencode(form_data)
+        json_data = json.load(c._POST("/unroll", content, content_type="application/x-www-form-urlencoded"))
+        # test simple partition
+        form_data = {
+            "pgt_content": json.dumps(json_data)
+        }
+        try:
+            content = urllib.parse.urlencode(form_data)
+            c._POST(
+                "/partition", content, content_type="application/x-www-form-urlencoded"
+            )
+        except RestClientException as e:
+            self.fail(e)
+
+        # Test num_partitions < num_islands
+        form_data = {
+            "pgt_content": json.dumps(json_data),
+            "num_partitions": 1,
+            "num_islands": 3
+        }
+        content = urllib.parse.urlencode(form_data)
+        self.assertRaises(RestClientException, c._POST, "/partition", content, content_type="application/x-www-form-urlencoded")
+
+    def test_lg_unroll_and_partition(self):
+        c = RestClient("localhost", lgweb_port, timeout=10)
+
+        # test empty call
+        self.assertRaises(RestClientException, c._POST, "/unroll_and_partition")
+
+        with open(
+                os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
+        ) as infile:
+            json_data = infile.read()
+
+            # test invalid name
+            form_data = {
+                "lg_name": "fake.graph"
+            }
+            content = urllib.parse.urlencode(form_data)
+            self.assertRaises(RestClientException, c._POST, "/unroll_and_partition", content,
+                              content_type="application/x-www-form-urlencoded")
+
+            # test valid name
+            form_data = {
+                "lg_name": "logical_graphs/chiles_simple.graph",
+            }
+            try:
+                content = urllib.parse.urlencode(form_data)
+                c._POST(
+                    "/unroll_and_partition", content, content_type="application/x-www-form-urlencoded"
+                )
+            except RestClientException as e:
+                self.fail(e)
+
+            # both lg_name and lg_content
+            form_data = {
+                "lg_name": "chiles_simple.graph",
+                "lg_content": json_data
+            }
+            content = urllib.parse.urlencode(form_data)
+            self.assertRaises(RestClientException, c._POST, "/unroll_and_partition", content,
+                              content_type="application/x-www-form-urlencoded")
+
+            # test invalid json
+            form_data = {
+                "lg_content": "{'garbage: 3}"
+            }
+            content = urllib.parse.urlencode(form_data)
+            self.assertRaises(RestClientException, c._POST, "/unroll_and_partition", content,
+                              content_type="application/x-www-form-urlencoded")
+
+            # test valid json
+            form_data = {
+                "lg_content": json_data
+            }
+            try:
+                content = urllib.parse.urlencode(form_data)
+                c._POST(
+                    "/unroll_and_partition", content, content_type="application/x-www-form-urlencoded"
+                )
+            except RestClientException as e:
+                self.fail(e)
+
+            # Test num_partitions < num_islands
+            form_data = {
+                "lg_content": json_data,
+                "num_partitions": 1,
+                "num_islands": 3
+            }
+            content = urllib.parse.urlencode(form_data)
+            self.assertRaises(RestClientException, c._POST, "/unroll_and_partition", content,
+                              content_type="application/x-www-form-urlencoded")
+
+    def test_pgt_map(self):
+        c = RestClient("localhost", lgweb_port, timeout=10)
+
+        # test empty call
+        self.assertRaises(RestClientException, c._POST, "/map")
+
+        with open(
+                os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
+        ) as infile:
+            json_data = infile.read()
+
+        # unroll and partition
+        form_data = {
+            "lg_content": json_data
+        }
+        content = urllib.parse.urlencode(form_data)
+        json_data = json.load(c._POST(
+            "/unroll_and_partition", content, content_type="application/x-www-form-urlencoded"
+        ))
+
+        # test standard call
+        form_data = {
+            "pgt_content": json.dumps(json_data),
+            "nodes": "127.0.0.1",
+            "num_islands": 1,
+            "co_host_dim": True
+        }
+        try:
+            content = urllib.parse.urlencode(form_data)
+            c._POST(
+                "/map", content, content_type="application/x-www-form-urlencoded"
+            )
+        except RestClientException as e:
+            self.fail(e)
+
