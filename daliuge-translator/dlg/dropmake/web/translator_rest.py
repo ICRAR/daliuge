@@ -223,7 +223,7 @@ def gen_pgt(
         rmode: str = Query(default=str(REPRO_DEFAULT.value)),
         test: str = Query(default="false"),
         num_par: int = Query(default=1),
-        algo: str = Query(default="none"),
+        algo: str = Query(default="metis"),
         num_islands: int = Query(default=0),
         par_label: str = Query(default="Partition"),
 ):
@@ -285,7 +285,7 @@ async def gen_pgt_post(
         json_data: str = Form(),
         rmode: str = Form(str(REPRO_DEFAULT.value)),
         test: str = Form(default="false"),
-        algo: str = Form(default="none"),
+        algo: str = Form(default="metis"),
         num_par: int = Form(default=1),
         num_islands: int = Form(default=0),
         par_label: str = Form(default="Partition"),
@@ -532,12 +532,15 @@ def load_graph(graph_content: str, graph_name: str):
         raise HTTPException(status_code=400,
                             detail="Need to supply either an name or content but not both")
     if not lg_exists(lg_dir, graph_name):
-        try:
-            out_graph = json.loads(graph_content)
-        except JSONDecodeError as jerror:
-            logger.error(jerror)
-            raise HTTPException(status_code=400,
-                                detail="LG content is malformed")
+        if not graph_content:
+            raise HTTPException(status_code=400, detail="LG content is nonexistent")
+        else:
+            try:
+                out_graph = json.loads(graph_content)
+            except JSONDecodeError as jerror:
+                logger.error(jerror)
+                raise HTTPException(status_code=400,
+                                    detail="LG content is malformed")
     else:
         lgp = lg_path(lg_dir, graph_name)
         with open(lgp, "r") as f:
@@ -604,17 +607,15 @@ def pgt_partition(
         pgt_content: str = Form(default=None),
         num_partitions: int = Form(default=1),
         num_islands: int = Form(default=1),
-        algorithm: KnownAlgorithms = Form(),
-        algo_params: AlgoParams = Form()
+        algorithm: KnownAlgorithms = Form(default="metis"),
+        algo_params: AlgoParams = Form(default=AlgoParams())
 ):
     graph = load_graph(pgt_content, pgt_name)
     reprodata = {}
-    if not graph[-1].contains("oid"):
+    if not graph[-1].get("oid"):
         reprodata = graph.pop()
     pgt = dlg.dropmake.pg_generator.partition(graph, algorithm, num_partitions, num_islands,
                                               algo_params.dict())
-    pgt = pgt.to_pg_spec([], ret_str=False, num_islands=num_islands,
-                         tpl_nodes_len=num_partitions + num_islands)
     pgt.append(reprodata)
     pgt = init_pgt_partition_repro_data(pgt)
     return JSONResponse(pgt)
@@ -629,21 +630,15 @@ def lg_unroll_and_partition(
         default_app: str = Form(default=None),
         num_partitions: int = Form(default=1),
         num_islands: int = Form(default=1),
-        algorithm: KnownAlgorithms = Form(),
-        algo_params: AlgoParams = Form()
+        algorithm: KnownAlgorithms = Form(default="metis"),
+        algo_params: AlgoParams = Form(default=AlgoParams())
 ):
     lg_graph = load_graph(lg_content, lg_name)
-    reprodata = {}
-    if not lg_graph[-1].contains("oid"):
-        reprodata = lg_graph.pop()
     pgt = dlg.dropmake.pg_generator.unroll(lg_graph, oid_prefix, zero_run, default_app)
-    pgt.append(reprodata)
     pgt = init_pgt_unroll_repro_data(pgt)
     reprodata = pgt.pop()
     pgt = dlg.dropmake.pg_generator.partition(pgt, algorithm, num_partitions, num_islands,
                                               algo_params.dict())
-    pgt = pgt.to_pg_spec([], ret_str=False, num_islands=num_islands,
-                         tpl_nodes_len=num_partitions + num_islands)
     pgt.append(reprodata)
     pgt = init_pgt_partition_repro_data(pgt)
     return JSONResponse(pgt)
@@ -653,7 +648,7 @@ def lg_unroll_and_partition(
 def pgt_map(
         pgt_name: str = Form(default=None),
         pgt_content: str = Form(default=None),
-        nodes: list = Form(default=None),
+        nodes: str = Form(default=None),
         num_islands: int = Form(default=1),
         co_host_dim: bool = Form(default=True),
         host: str = Form(default=None),
@@ -669,8 +664,9 @@ def pgt_map(
                       len(nodes), num_islands))
     pgt = load_graph(pgt_content, pgt_name)
     reprodata = {}
-    if not pgt[-1].contains("oid"):
+    if not pgt[-1].get("oid"):
         reprodata = pgt.pop()
+    logger.info(nodes)
     pg = dlg.dropmake.pg_generator.resource_map(pgt, nodes, num_islands, co_host_dim)
     pg.append(reprodata)
     pg = init_pg_repro_data(pg)
