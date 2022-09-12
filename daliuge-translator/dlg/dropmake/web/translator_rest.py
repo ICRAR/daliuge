@@ -21,12 +21,13 @@ from fastapi.templating import Jinja2Templates
 from jsonschema import validate, ValidationError
 from pydantic import BaseModel
 
+import dlg.dropmake.pg_generator
 from dlg import restutils, common
 from dlg.clients import CompositeManagerClient
 from dlg.common.reproducibility.constants import REPRO_DEFAULT, ALL_RMODES, ReproducibilityFlags
 from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data
 from dlg.dropmake.lg import GraphException
-from dlg.dropmake.pg_generator import fill
+from dlg.dropmake.pg_generator import fill, unroll
 from dlg.dropmake.pg_manager import PGManager
 from dlg.dropmake.scheduler import SchedulerException
 from dlg.dropmake.web.translator_utils import file_as_string, lg_repo_contents, lg_path, lg_exists, \
@@ -523,16 +524,7 @@ def gen_pg_helm(
 
 # ------ Methods from translator CLI ------ #
 
-@app.post("/lg_fill", response_class=JSONResponse)
-def lg_fill(
-        lg_name: str = Form(default=None),
-        lg_content: str = Form(default=None),
-        parameters: str = Form(default="{}"),
-        rmode: str = Form(REPRO_DEFAULT.name, enum=[roption.name for roption in [ReproducibilityFlags.NOTHING] + ALL_RMODES])
-):
-    """
-    Will fill a logical graph (either loaded serverside by name or supplied directly as lg_content).
-    """
+def load_graph(lg_content: str, lg_name: str):
     lg_graph = {}
     if lg_content is not None and lg_name is not None:
         raise HTTPException(status_code=400,
@@ -553,6 +545,20 @@ def lg_fill(
                 logger.error(jerror)
                 raise HTTPException(status_code=500,
                                     detail="LG graph on file cannot be loaded")
+    return lg_graph
+
+
+@app.post("/lg_fill", response_class=JSONResponse)
+def lg_fill(
+        lg_name: str = Form(default=None),
+        lg_content: str = Form(default=None),
+        parameters: str = Form(default="{}"),
+        rmode: str = Form(REPRO_DEFAULT.name, enum=[roption.name for roption in [ReproducibilityFlags.NOTHING] + ALL_RMODES])
+):
+    """
+    Will fill a logical graph (either loaded serverside by name or supplied directly as lg_content).
+    """
+    lg_graph = load_graph(lg_content, lg_name)
     try:
         params = json.loads(parameters)
     except JSONDecodeError as jerror:
@@ -562,6 +568,22 @@ def lg_fill(
     output_graph = fill(lg_graph, params)
     output_graph = init_lg_repro_data(init_lgt_repro_data(output_graph, rmode))
     return JSONResponse(output_graph)
+
+
+@app.post("/unroll", response_class=JSONResponse)
+def unroll(
+        lg_name: str = Form(default=None),
+        lg_content: str = Form(default=None),
+        oid_prefix: str = Form(default=None),
+        zero_run: bool = Form(default=False),
+        default_app: str = Form(default=None)
+):
+    """
+    Will unroll a logical graph (either loaded serverside or posted
+    """
+    lg_graph = load_graph(lg_content, lg_name)
+    pgt = dlg.dropmake.pg_generator.unroll(lg_graph, oid_prefix, zero_run, default_app)
+    return JSONResponse(pgt)
 
 
 @app.get("/", response_class=HTMLResponse)
