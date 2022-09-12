@@ -23,11 +23,12 @@ from jsonschema import validate, ValidationError
 from pydantic import BaseModel
 
 import dlg.dropmake.pg_generator
+import dlg.constants
 from dlg import restutils, common
 from dlg.clients import CompositeManagerClient
 from dlg.common.reproducibility.constants import REPRO_DEFAULT, ALL_RMODES, ReproducibilityFlags
 from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data, \
-    init_pgt_partition_repro_data, init_pgt_unroll_repro_data
+    init_pgt_partition_repro_data, init_pgt_unroll_repro_data, init_pg_repro_data
 from dlg.dropmake.lg import GraphException
 from dlg.dropmake.pg_manager import PGManager
 from dlg.dropmake.scheduler import SchedulerException
@@ -641,6 +642,32 @@ def unroll_and_partition_rest(
     pgt.append(reprodata)
     pgt = init_pgt_partition_repro_data(pgt)
     return JSONResponse(pgt)
+
+
+@app.post("/map", response_class=JSONResponse)
+def map(
+        pgt_name: str = Form(default=None),
+        pgt_content: str = Form(default=None),
+        nodes: list = Form(default=None),
+        num_islands: int = Form(default=1),
+        co_host_dim: bool = Form(default=True),
+        host: str = Form(default=None),
+        port: int = Form(default=dlg.constants.ISLAND_DEFAULT_REST_PORT)
+):
+    if not nodes:
+        client = CompositeManagerClient(host, port, timeout=10)
+        nodes = [host] + client.nodes()
+    if len(nodes) <= num_islands:
+        logger.error("Not enough nodes to fill all islands")
+        HTTPException(status_code=500, detail="#nodes (%d) should be larger than the number of islands (%d)" % (len(nodes), num_islands))
+    pgt = load_graph(pgt_content, pgt_name)
+    reprodata = {}
+    if not pgt[-1].contains("oid"):
+        reprodata = pgt.pop()
+    pg = dlg.dropmake.pg_generator.resource_map(pgt, nodes, num_islands, co_host_dim)
+    pg.append(reprodata)
+    pg = init_pg_repro_data(pg)
+    return JSONResponse(pg)
 
 
 @app.get("/", response_class=HTMLResponse)
