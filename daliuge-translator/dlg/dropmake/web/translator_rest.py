@@ -15,15 +15,15 @@ from typing import Union
 from urllib.parse import urlparse
 
 import uvicorn
-from fastapi import FastAPI, Request, Body, Query, HTTPException, Form, Depends
+from fastapi import FastAPI, Request, Body, Query, HTTPException, Form
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from jsonschema import validate, ValidationError
 from pydantic import BaseModel
 
-import dlg.dropmake.pg_generator
 import dlg.constants
+import dlg.dropmake.pg_generator
 from dlg import restutils, common
 from dlg.clients import CompositeManagerClient
 from dlg.common.reproducibility.constants import REPRO_DEFAULT, ALL_RMODES, ReproducibilityFlags
@@ -555,7 +555,8 @@ def lg_fill(
         lg_name: str = Form(default=None),
         lg_content: str = Form(default=None),
         parameters: str = Form(default="{}"),
-        rmode: str = Form(REPRO_DEFAULT.name, enum=[roption.name for roption in [ReproducibilityFlags.NOTHING] + ALL_RMODES])
+        rmode: str = Form(REPRO_DEFAULT.name, enum=[roption.name for roption in
+                                                    [ReproducibilityFlags.NOTHING] + ALL_RMODES])
 ):
     """
     Will fill a logical graph (either loaded serverside by name or supplied directly as lg_content).
@@ -610,8 +611,10 @@ def partition(
     reprodata = {}
     if not graph[-1].contains("oid"):
         reprodata = graph.pop()
-    pgt = dlg.dropmake.pg_generator.partition(graph, algorithm, num_partitions, num_islands, algo_params.dict())
-    pgt = pgt.to_pg_spec([], ret_str=False, num_islands=num_islands, tpl_nodes_len=num_partitions + num_islands)
+    pgt = dlg.dropmake.pg_generator.partition(graph, algorithm, num_partitions, num_islands,
+                                              algo_params.dict())
+    pgt = pgt.to_pg_spec([], ret_str=False, num_islands=num_islands,
+                         tpl_nodes_len=num_partitions + num_islands)
     pgt.append(reprodata)
     pgt = init_pgt_partition_repro_data(pgt)
     return JSONResponse(pgt)
@@ -637,8 +640,10 @@ def unroll_and_partition_rest(
     pgt.append(reprodata)
     pgt = init_pgt_unroll_repro_data(pgt)
     reprodata = pgt.pop()
-    pgt = dlg.dropmake.pg_generator.partition(pgt, algorithm, num_partitions, num_islands, algo_params.dict())
-    pgt = pgt.to_pg_spec([], ret_str=False, num_islands=num_islands, tpl_nodes_len=num_partitions + num_islands)
+    pgt = dlg.dropmake.pg_generator.partition(pgt, algorithm, num_partitions, num_islands,
+                                              algo_params.dict())
+    pgt = pgt.to_pg_spec([], ret_str=False, num_islands=num_islands,
+                         tpl_nodes_len=num_partitions + num_islands)
     pgt.append(reprodata)
     pgt = init_pgt_partition_repro_data(pgt)
     return JSONResponse(pgt)
@@ -659,7 +664,9 @@ def map(
         nodes = [host] + client.nodes()
     if len(nodes) <= num_islands:
         logger.error("Not enough nodes to fill all islands")
-        HTTPException(status_code=500, detail="#nodes (%d) should be larger than the number of islands (%d)" % (len(nodes), num_islands))
+        HTTPException(status_code=500,
+                      detail="#nodes (%d) should be larger than the number of islands (%d)" % (
+                      len(nodes), num_islands))
     pgt = load_graph(pgt_content, pgt_name)
     reprodata = {}
     if not pgt[-1].contains("oid"):
