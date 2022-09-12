@@ -9,6 +9,7 @@ import sys
 import threading
 import time
 import traceback
+from enum import Enum
 from json import JSONDecodeError
 from typing import Union
 from urllib.parse import urlparse
@@ -25,7 +26,9 @@ import dlg.dropmake.pg_generator
 from dlg import restutils, common
 from dlg.clients import CompositeManagerClient
 from dlg.common.reproducibility.constants import REPRO_DEFAULT, ALL_RMODES, ReproducibilityFlags
-from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data
+from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data, \
+    init_pgt_partition_repro_data, init_pgt_unroll_repro_data
+from dlg.dropmake import pg_generator
 from dlg.dropmake.lg import GraphException
 from dlg.dropmake.pg_generator import fill, unroll
 from dlg.dropmake.pg_manager import PGManager
@@ -95,7 +98,7 @@ def jsonbody_get_lg(
         except StopIteration:
             return "Nothing found in dir {0}".format(lg_path)
     if lg_exists(lg_dir, lg_name):
-        # print "Loading {0}".format(lg_name)
+        # print "Loading {0}".format(name)
         lgp = lg_path(lg_dir, lg_name)
         with open(lgp, "r") as f:
             data = json.load(f)
@@ -112,7 +115,7 @@ def jsonbody_get_pgt(
     Return JSON representation of a physical graph template
     """
     if pgt_exists(pgt_dir, pgt_name):
-        # print "Loading {0}".format(lg_name)
+        # print "Loading {0}".format(name)
         pgt = pgt_path(pgt_dir, pgt_name)
         with open(pgt, "r") as f:
             data = f.read()
@@ -524,28 +527,28 @@ def gen_pg_helm(
 
 # ------ Methods from translator CLI ------ #
 
-def load_graph(lg_content: str, lg_name: str):
-    lg_graph = {}
-    if lg_content is not None and lg_name is not None:
+def load_graph(graph_content: str, graph_name: str):
+    out_graph = {}
+    if graph_content is not None and graph_name is not None:
         raise HTTPException(status_code=400,
-                            detail="Need to supply either an lg_name or lg_content but not both")
-    if not lg_exists(lg_dir, lg_name):
+                            detail="Need to supply either an name or content but not both")
+    if not lg_exists(lg_dir, graph_name):
         try:
-            lg_graph = json.loads(lg_content)
+            out_graph = json.loads(graph_content)
         except JSONDecodeError as jerror:
             logger.error(jerror)
             raise HTTPException(status_code=400,
                                 detail="LG content is malformed")
     else:
-        lgp = lg_path(lg_dir, lg_name)
+        lgp = lg_path(lg_dir, graph_name)
         with open(lgp, "r") as f:
             try:
-                lg_graph = json.load(f)
+                out_graph = json.load(f)
             except JSONDecodeError as jerror:
                 logger.error(jerror)
                 raise HTTPException(status_code=500,
                                     detail="LG graph on file cannot be loaded")
-    return lg_graph
+    return out_graph
 
 
 @app.post("/lg_fill", response_class=JSONResponse)
@@ -583,6 +586,34 @@ def unroll(
     """
     lg_graph = load_graph(lg_content, lg_name)
     pgt = dlg.dropmake.pg_generator.unroll(lg_graph, oid_prefix, zero_run, default_app)
+    pgt = init_pgt_unroll_repro_data(pgt)
+    return JSONResponse(pgt)
+
+
+class KnownAlgorithms(str, Enum):
+    ALGO_NONE = "none",
+    ALGO_METIS = "metis",
+    ALGO_MY_SARKAR = "mysarkar",
+    ALGO_MIN_NUM_PARTS = "min_num_parts",
+    ALGO_PSO = "pso"
+
+
+@app.post("/partition", response_class=JSONResponse)
+def partition(
+        pgt_name: str = Form(default=None),
+        pgt_content: str = Form(default=None),
+        num_partitions: int = Form(default=1),
+        num_islands: int = Form(default=1),
+        algorithm: KnownAlgorithms = Form(),
+        algo_params: AlgoParams = Form()
+):
+    graph = load_graph(pgt_content, pgt_name)
+    reprodata = {}
+    if not graph[-1].contains("oid"):
+        reprodata = graph.pop()
+    pgt = dlg.dropmake.pg_generator.partition(graph, algorithm, num_partitions, num_islands, algo_params.dict())
+    pgt.append(reprodata)
+    pgt = init_pgt_partition_repro_data(pgt)
     return JSONResponse(pgt)
 
 
