@@ -28,9 +28,7 @@ from dlg.clients import CompositeManagerClient
 from dlg.common.reproducibility.constants import REPRO_DEFAULT, ALL_RMODES, ReproducibilityFlags
 from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data, \
     init_pgt_partition_repro_data, init_pgt_unroll_repro_data
-from dlg.dropmake import pg_generator
 from dlg.dropmake.lg import GraphException
-from dlg.dropmake.pg_generator import fill, unroll
 from dlg.dropmake.pg_manager import PGManager
 from dlg.dropmake.scheduler import SchedulerException
 from dlg.dropmake.web.translator_utils import file_as_string, lg_repo_contents, lg_path, lg_exists, \
@@ -568,7 +566,7 @@ def lg_fill(
         logger.error(jerror)
         raise HTTPException(status_code=400,
                             detail="Parameter string is invalid")
-    output_graph = fill(lg_graph, params)
+    output_graph = dlg.dropmake.pg_generator.fill(lg_graph, params)
     output_graph = init_lg_repro_data(init_lgt_repro_data(output_graph, rmode))
     return JSONResponse(output_graph)
 
