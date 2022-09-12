@@ -610,6 +610,34 @@ def partition(
     if not graph[-1].contains("oid"):
         reprodata = graph.pop()
     pgt = dlg.dropmake.pg_generator.partition(graph, algorithm, num_partitions, num_islands, algo_params.dict())
+    pgt = pgt.to_pg_spec([], ret_str=False, num_islands=num_islands, tpl_nodes_len=num_partitions + num_islands)
+    pgt.append(reprodata)
+    pgt = init_pgt_partition_repro_data(pgt)
+    return JSONResponse(pgt)
+
+
+@app.post("/unroll_and_partition", response_class=JSONResponse)
+def unroll_and_partition_rest(
+        lg_name: str = Form(default=None),
+        lg_content: str = Form(default=None),
+        oid_prefix: str = Form(default=None),
+        zero_run: bool = Form(default=None),
+        default_app: str = Form(default=None),
+        num_partitions: int = Form(default=1),
+        num_islands: int = Form(default=1),
+        algorithm: KnownAlgorithms = Form(),
+        algo_params: AlgoParams = Form()
+):
+    lg_graph = load_graph(lg_content, lg_name)
+    reprodata = {}
+    if not lg_graph[-1].contains("oid"):
+        reprodata = lg_graph.pop()
+    pgt = dlg.dropmake.pg_generator.unroll(lg_graph, oid_prefix, zero_run, default_app)
+    pgt.append(reprodata)
+    pgt = init_pgt_unroll_repro_data(pgt)
+    reprodata = pgt.pop()
+    pgt = dlg.dropmake.pg_generator.partition(pgt, algorithm, num_partitions, num_islands, algo_params.dict())
+    pgt = pgt.to_pg_spec([], ret_str=False, num_islands=num_islands, tpl_nodes_len=num_partitions + num_islands)
     pgt.append(reprodata)
     pgt = init_pgt_partition_repro_data(pgt)
     return JSONResponse(pgt)
