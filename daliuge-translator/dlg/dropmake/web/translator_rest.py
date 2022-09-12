@@ -574,7 +574,7 @@ def lg_fill(
 
 
 @app.post("/unroll", response_class=JSONResponse)
-def unroll(
+def pgt_unroll(
         lg_name: str = Form(default=None),
         lg_content: str = Form(default=None),
         oid_prefix: str = Form(default=None),
@@ -599,7 +599,7 @@ class KnownAlgorithms(str, Enum):
 
 
 @app.post("/partition", response_class=JSONResponse)
-def partition(
+def pgt_partition(
         pgt_name: str = Form(default=None),
         pgt_content: str = Form(default=None),
         num_partitions: int = Form(default=1),
@@ -621,7 +621,7 @@ def partition(
 
 
 @app.post("/unroll_and_partition", response_class=JSONResponse)
-def unroll_and_partition_rest(
+def lg_unroll_and_partition(
         lg_name: str = Form(default=None),
         lg_content: str = Form(default=None),
         oid_prefix: str = Form(default=None),
@@ -650,7 +650,7 @@ def unroll_and_partition_rest(
 
 
 @app.post("/map", response_class=JSONResponse)
-def map(
+def pgt_map(
         pgt_name: str = Form(default=None),
         pgt_content: str = Form(default=None),
         nodes: list = Form(default=None),
