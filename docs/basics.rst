@@ -23,7 +23,8 @@ EAGLE is a web-application allowing users to develop complex scientific workflow
 Translator service
 ##################
 
-The Translator, partitioning and scheduling service is a RESTful service. It takes a *Logical Graph* representation of a workflow and translates that into a *Physical Graph*, which in turn is a directed acyclic graph (DAG). It then uses that DAG and applies some complex heuristic algorithms to distribute the complete DAG on the available platform in an optimized way and also produces an optimzed schedule for that distribution. While the *Logical Graph* might look quite small, it can easily translate into a *Physical Graph* with thousands or millions of nodes and optimizing even just the placement of the nodes of such a system represents a N-P hard problem. The *Physical Graph* can then be send to the *Execution Engine* for execution.
+The Translator, partitioning and scheduling service is a FASTApi RESTful service. It takes a *Logical Graph* representation of a workflow and translates that into a *Physical Graph*, which in turn is a directed acyclic graph (DAG). It then uses that DAG and applies some complex heuristic algorithms to distribute the complete DAG on the available platform in an optimized way and also produces an optimzed schedule for that distribution. While the *Logical Graph* might look quite small, it can easily translate into a *Physical Graph* with thousands or millions of nodes and optimizing even just the placement of the nodes of such a system represents a N-P hard problem. The *Physical Graph* can then be send to the *Execution Engine* for execution.
+If given a translator URL, navigate to URL/docs to find a live interface to test the endpoints manually or read up about their usage.
 
 
 Execution Engine
