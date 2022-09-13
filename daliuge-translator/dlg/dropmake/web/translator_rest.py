@@ -163,7 +163,7 @@ def jsonbody_get_lg(
         raise HTTPException(status_code=404, detail="JSON graph {0} not found\n".format(lg_name))
 
 
-@app.get("/pgt_jsonbody", tags=["Original"])
+@app.get("/pgt_jsonbody", response_class=JSONResponse, tags=["Original"])
 def jsonbody_get_pgt(
         pgt_name: str = Query(description="The name of the pgt to load from file")
 ):
@@ -175,7 +175,7 @@ def jsonbody_get_pgt(
         pgt = pgt_path(pgt_dir, pgt_name)
         with open(pgt, "r") as f:
             data = f.read()
-        return data
+        return JSONResponse(data)
     else:
         raise HTTPException(status_code=404, detail="JSON graph {0} not found".format(pgt_name))
 
