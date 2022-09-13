@@ -369,10 +369,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_pgt_partition(self):
         c = RestClient("localhost", lgweb_port, timeout=10)
-
-        # test empty call
-        self.assertRaises(RestClientException, c._POST, "/partition")
-
+        test_url = "/partition"
         with open(
                 os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
         ) as infile:
@@ -382,30 +379,17 @@ class TestLGWeb(unittest.TestCase):
         form_data = {
             "lg_content": json_data
         }
-        content = urllib.parse.urlencode(form_data)
-        json_data = json.load(
-            c._POST("/unroll", content, content_type="application/x-www-form-urlencoded"))
-        # test simple partition
-        form_data = {
-            "pgt_content": json.dumps(json_data)
-        }
-        try:
-            content = urllib.parse.urlencode(form_data)
-            c._POST(
-                "/partition", content, content_type="application/x-www-form-urlencoded"
-            )
-        except RestClientException as e:
-            self.fail(e)
+        pgt = self._test_post_request(c, "/unroll", form_data, False)
+        pgt = json.dumps(pgt)
 
-        # Test num_partitions < num_islands
-        form_data = {
-            "pgt_content": json.dumps(json_data),
-            "num_partitions": 1,
-            "num_islands": 3
-        }
-        content = urllib.parse.urlencode(form_data)
-        self.assertRaises(RestClientException, c._POST, "/partition", content,
-                          content_type="application/x-www-form-urlencoded")
+        request_tests = [
+            (None, True),  # Call with an empty form should cause an error
+            ({"pgt_content": pgt}, False),  # Simple partition
+            ({"pgt_content": pgt, "num_partitions": 1, "num_islands": 3}, True), # num_partitions < num_islands
+        ]
+
+        for request in request_tests:
+            self._test_post_request(c, test_url, request[0], request[1])
 
     def test_lg_unroll_and_partition(self):
         c = RestClient("localhost", lgweb_port, timeout=10)
