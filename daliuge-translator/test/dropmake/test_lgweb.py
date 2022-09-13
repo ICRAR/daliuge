@@ -414,35 +414,20 @@ class TestLGWeb(unittest.TestCase):
 
     def test_pgt_map(self):
         c = RestClient("localhost", lgweb_port, timeout=10)
-
-        # test empty call
-        self.assertRaises(RestClientException, c._POST, "/map")
-
+        test_url = "/map"
         with open(
                 os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
         ) as infile:
             json_data = infile.read()
 
-        # unroll and partition
-        form_data = {
-            "lg_content": json_data
-        }
-        content = urllib.parse.urlencode(form_data)
-        json_data = json.load(c._POST(
-            "/unroll_and_partition", content, content_type="application/x-www-form-urlencoded"
-        ))
+        # unroll and partition graph
+        pgt = self._test_post_request(c, "/unroll_and_partition", {"lg_content": json_data}, False)
+        pgt = json.dumps(pgt)
 
-        # test standard call
-        form_data = {
-            "pgt_content": json.dumps(json_data),
-            "nodes": "127.0.0.1",
-            "num_islands": 1,
-            "co_host_dim": True
-        }
-        try:
-            content = urllib.parse.urlencode(form_data)
-            c._POST(
-                "/map", content, content_type="application/x-www-form-urlencoded"
-            )
-        except RestClientException as e:
-            self.fail(e)
+        request_tests = [
+            (None, True),  # Call with an empty form should cause an error
+            ({"pgt_content": pgt, "nodes": "127.0.0.1", "num_islands": 1, "co_host_dim": True}, False),  # Simple partition
+        ]
+
+        for request in request_tests:
+            self._test_post_request(c, test_url, request[0], request[1])
