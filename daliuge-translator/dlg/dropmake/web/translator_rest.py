@@ -111,8 +111,8 @@ LG_SCHEMA = json.loads(file_as_string("lg.graph.schema", package="dlg.dropmake")
 
 @app.post("/jsonbody", tags=["Original"])
 def jsonbody_post_lg(
-        lg_name: str = Form(),
-        lg_content: str = Form(),
+        lg_name: str = Form(description="The name of the lg to use"),
+        lg_content: str = Form(description="The content of the lg to save to file"),
         rmode: str = Form(default=str(REPRO_DEFAULT.value)),
 ):
     """
@@ -140,7 +140,7 @@ def jsonbody_post_lg(
 
 @app.get("/jsonbody", tags=["Original"])
 def jsonbody_get_lg(
-        lg_name: str = Query(default=None)
+        lg_name: str = Query(default=None, description="The name of the lg to load from file")
 ):
     """
     Returns JSON representation of saved logical graph.
@@ -165,7 +165,7 @@ def jsonbody_get_lg(
 
 @app.get("/pgt_jsonbody", tags=["Original"])
 def jsonbody_get_pgt(
-        pgt_name: str = Query()
+        pgt_name: str = Query(description="The name of the pgt to load from file")
 ):
     """
     Return JSON representation of a physical graph template
@@ -182,7 +182,8 @@ def jsonbody_get_pgt(
 
 @app.get("/pg_viewer", response_class=HTMLResponse, tags=["Original"])
 def load_pg_viewer(request: Request,
-                   pgt_view_name: str = Query(default=None)
+                   pgt_view_name: str = Query(default=None,
+                                              description="The string of the type of view to provide")
                    ):
     """
     Loads the physical graph viewer
@@ -212,7 +213,7 @@ def load_pg_viewer(request: Request,
 @app.get("/show_gantt_chart", response_class=HTMLResponse, tags=["Original"])
 def show_gantt_chart(
         request: Request,
-        pgt_id: str = Query()
+        pgt_id: str = Query(description="The pgt_id used to internally reference this graph")
 ):
     """
     Interface to show the gantt chart
@@ -227,7 +228,7 @@ def show_gantt_chart(
 
 @app.get("/pgt_gantt_chart", tags=["Original"])
 def get_gantt_chart(
-        pgt_id: str = Query()
+        pgt_id: str = Query(description="The pgt_id used to internally reference this graph")
 ):
     """
     Interface to retrieve a Gantt Chart matrix associated with a PGT
@@ -243,7 +244,7 @@ def get_gantt_chart(
 @app.get("/show_schedule_mat", response_class=HTMLResponse, tags=["Original"])
 def show_schedule_matrix(
         request: Request,
-        pgt_id: str = Query()
+        pgt_id: str = Query(description="The pgt_id used to internally reference this graph")
 ):
     """
     Interface to show the schedule mat
@@ -258,7 +259,7 @@ def show_schedule_matrix(
 
 @app.get("/get_schedule_matrices", tags=["Original"])
 def get_schedule_matrices(
-        pgt_id: str = Query()
+        pgt_id: str = Query(description="The pgt_id used to internally reference this graph")
 ):
     """
     Interface to return all schedule matrices for a single pgt_id
@@ -276,13 +277,18 @@ def get_schedule_matrices(
 @app.get("/gen_pgt", tags=["Original"])
 def gen_pgt(
         request: Request,
-        lg_name: str = Query(),
-        rmode: str = Query(default=str(REPRO_DEFAULT.value)),
-        test: str = Query(default="false"),
-        num_par: int = Query(default=1),
-        algo: str = Query(default="metis"),
-        num_islands: int = Query(default=0),
-        par_label: str = Query(default="Partition"),
+        lg_name: str = Query(
+            description="If present, translator will attempt to load this lg from file"),
+        rmode: str = Query(default=str(REPRO_DEFAULT.value),
+                           description="Reproducibility mode setting level of provenance tracking. Refer to main documentation for more information"),
+        test: str = Query(default="false",
+                          description="If 'true', will replace all apps with sleeps"),
+        num_par: int = Query(default=1, description="The number of data partitions in the graph"),
+        algo: str = Query(default="metis",
+                          description="The scheduling algorithm used when unrolling the graph"),
+        num_islands: int = Query(default=0, description="The number of data-islands to partition"),
+        par_label: str = Query(default="Partition",
+                               description="The label prefixed to each generated partition"),
 ):
     if not lg_exists(lg_dir, lg_name):
         raise HTTPException(status_code=404,
@@ -323,29 +329,22 @@ def gen_pgt(
                             detail="Graph partition exception {1}: {0}".format(trace_msg, lg_name))
 
 
-class AlgoParams(BaseModel):
-    min_goal: Union[int, None]
-    ptype: Union[int, None]
-    max_load_imb: Union[int, None]
-    max_cpu: Union[int, None]
-    time_greedy: Union[int, None]
-    deadline: Union[int, None]
-    topk: Union[int, None]
-    swarm_size: Union[int, None]
-    max_mem: Union[int, None]
-
-
 @app.post("/gen_pgt", response_class=HTMLResponse, tags=["Original"])
 async def gen_pgt_post(
         request: Request,
-        lg_name: str = Form(),
-        json_data: str = Form(),
-        rmode: str = Form(str(REPRO_DEFAULT.value)),
-        test: str = Form(default="false"),
-        algo: str = Form(default="metis"),
-        num_par: int = Form(default=1),
-        num_islands: int = Form(default=0),
-        par_label: str = Form(default="Partition"),
+        lg_name: str = Form(
+            description="If present, translator will attempt to load this lg from file"),
+        json_data: str = Form(description="The graph data used as the graph if supplied"),
+        rmode: str = Form(str(REPRO_DEFAULT.value),
+                          description="Reproducibility mode setting level of provenance tracking. Refer to main documentation for more information"),
+        test: str = Form(default="false",
+                         description="If 'true', will replace all apps with sleeps"),
+        algo: str = Form(default="metis",
+                         description="The scheduling algorithm used when unrolling the graph"),
+        num_par: int = Form(default=1, description="The number of data partitions in the graph"),
+        num_islands: int = Form(default=0, description="The number of data-islands to partition"),
+        par_label: str = Form(default="Partition",
+                              description="The label prefixed to each generated partition"),
         min_goal: Union[int, None] = Form(default=None),
         ptype: Union[int, None] = Form(default=None),
         max_load_imb: Union[int, None] = Form(default=None),
@@ -410,12 +409,17 @@ async def gen_pgt_post(
 @app.get("/gen_pg", response_class=StreamingResponse, tags=["Original"])
 def gen_pg(
         request: Request,
-        pgt_id: str = Query(),
-        dlg_mgr_deploy: Union[str, None] = Query(default=None),
-        dlg_mgr_url: Union[str, None] = Query(default=None),
-        dlg_mgr_host: Union[str, None] = Query(default=None),
-        dlg_mgr_port: Union[int, None] = Query(default=None),
-        tpl_nodes_len: int = Query(default=0)
+        pgt_id: str = Query(description="The pgt_id used to internally reference this graph"),
+        dlg_mgr_deploy: Union[str, None] = Query(default=None,
+                                                 description="If supplied, this endpoint will attempt to deploy the graph is the dlg_pgt_url or dlg_mgr_host/port endpoint"),
+        dlg_mgr_url: Union[str, None] = Query(default=None,
+                                              description="The DALiuGE manager to deploy the graph to"),
+        dlg_mgr_host: Union[str, None] = Query(default=None,
+                                               description="The DALiuGE manager base IP to deploy the graph to"),
+        dlg_mgr_port: Union[int, None] = Query(default=None,
+                                               description="The DALiuGE manager port to deploy the graph to"),
+        tpl_nodes_len: int = Query(default=0,
+                                   description="The number of nodes to unroll the graph partition for")
 ):
     """
     RESTful interface to convert a PGT(P) into PG by mapping
@@ -515,9 +519,11 @@ def gen_pg(
 
 @app.get("/gen_pg_spec", tags=["Original"])
 def gen_pg_spec(
-        pgt_id: str = Body(),
-        node_list: list = Body(default=[]),
-        manager_host: str = Body(),
+        pgt_id: str = Body(description="The pgt_id used to internally reference this graph"),
+        node_list: list = Body(default=[],
+                               description="The list of daliuge nodes to submit the graph to"),
+        manager_host: str = Body(
+            description="The address of the manager host where the graph will be deployed to."),
 ):
     """
     Interface to convert a PGT(P) into pg_spec
@@ -554,7 +560,7 @@ def gen_pg_spec(
 
 @app.get("/gen_pg_helm", tags=["Original"])
 def gen_pg_helm(
-        pgt_id: str = Body()
+        pgt_id: str = Body(description="The pgt_id used to internally reference this graph")
 ):
     """
     Deploys a PGT as a K8s helm chart.
@@ -582,6 +588,34 @@ def gen_pg_helm(
 
 
 # ------ Methods from translator CLI ------ #
+
+class AlgoParams(BaseModel):
+    """
+    Set of scheduling algorithm parameters, not all apply to all algorithms.
+    Refer to main documentation for more information.
+    """
+    min_goal: Union[int, None]
+    ptype: Union[int, None]
+    max_load_imb: Union[int, None]
+    max_cpu: Union[int, None]
+    time_greedy: Union[int, None]
+    deadline: Union[int, None]
+    topk: Union[int, None]
+    swarm_size: Union[int, None]
+    max_mem: Union[int, None]
+
+
+class KnownAlgorithms(str, Enum):
+    """
+    List of known scheduling algorithms.
+    Will need to be updated manually.
+    """
+    ALGO_NONE = "none",
+    ALGO_METIS = "metis",
+    ALGO_MY_SARKAR = "mysarkar",
+    ALGO_MIN_NUM_PARTS = "min_num_parts",
+    ALGO_PSO = "pso"
+
 
 def load_graph(graph_content: str, graph_name: str):
     out_graph = {}
@@ -612,14 +646,19 @@ def load_graph(graph_content: str, graph_name: str):
 
 @app.post("/lg_fill", response_class=JSONResponse, tags=["Updated"])
 def lg_fill(
-        lg_name: str = Form(default=None),
-        lg_content: str = Form(default=None),
-        parameters: str = Form(default="{}"),
+        lg_name: str = Form(default=None,
+                            description="If present, translator will attempt to load this lg from file"),
+        lg_content: str = Form(default=None,
+                               description="If present, translator will use this string as the graph content"),
+        parameters: str = Form(default="{}", description="JSON key: value store of graph paramter"),
         rmode: str = Form(REPRO_DEFAULT.name, enum=[roption.name for roption in
-                                                    [ReproducibilityFlags.NOTHING] + ALL_RMODES])
+                                                    [ReproducibilityFlags.NOTHING] + ALL_RMODES],
+                          description="Reproducibility mode setting level of provenance tracking. Refer to main documentation for more information")
 ):
     """
-    Will fill a logical graph (either loaded serverside by name or supplied directly as lg_content).
+    Will fill a logical graph by replacing fields with supplied parameters.
+
+    One of lg_name or lg_content, but not both, must be specified.
     """
     lg_graph = load_graph(lg_content, lg_name)
     try:
@@ -635,14 +674,20 @@ def lg_fill(
 
 @app.post("/unroll", response_class=JSONResponse, tags=["Updated"])
 def lg_unroll(
-        lg_name: str = Form(default=None),
-        lg_content: str = Form(default=None),
-        oid_prefix: str = Form(default=None),
-        zero_run: bool = Form(default=False),
-        default_app: str = Form(default=None)
+        lg_name: str = Form(default=None,
+                            description="If present, translator will attempt to load this lg from file"),
+        lg_content: str = Form(default=None,
+                               description="If present, translator will use this string as the graph content"),
+        oid_prefix: str = Form(default=None, description="ID prefix appended to unrolled nodes"),
+        zero_run: bool = Form(default=None,
+                              description="If true, apps will be replaced with sleep apps"),
+        default_app: str = Form(default=None,
+                                description="If set, will change all apps to this app class"),
 ):
     """
-    Will unroll a logical graph (either loaded serverside or posted
+    Will unroll a logical graph into a physical graph template.
+
+    One of lg_name or lg_content, but not both, needs to be specified.
     """
     lg_graph = load_graph(lg_content, lg_name)
     pgt = dlg.dropmake.pg_generator.unroll(lg_graph, oid_prefix, zero_run, default_app)
@@ -650,23 +695,25 @@ def lg_unroll(
     return JSONResponse(pgt)
 
 
-class KnownAlgorithms(str, Enum):
-    ALGO_NONE = "none",
-    ALGO_METIS = "metis",
-    ALGO_MY_SARKAR = "mysarkar",
-    ALGO_MIN_NUM_PARTS = "min_num_parts",
-    ALGO_PSO = "pso"
-
-
 @app.post("/partition", response_class=JSONResponse, tags=["Updated"])
 def pgt_partition(
-        pgt_name: str = Form(default=None),
-        pgt_content: str = Form(default=None),
-        num_partitions: int = Form(default=1),
-        num_islands: int = Form(default=1),
-        algorithm: KnownAlgorithms = Form(default="metis"),
-        algo_params: AlgoParams = Form(default=AlgoParams())
+        pgt_name: str = Form(default=None,
+                             description="If specified, translator will attempt to load graph from file"),
+        pgt_content: str = Form(default=None,
+                                description="If present, translator will use this string as the graph content"),
+        num_partitions: int = Form(default=1,
+                                   description="Number of partitions to unroll the graph across"),
+        num_islands: int = Form(default=1, description="Number of data islands to partition for"),
+        algorithm: KnownAlgorithms = Form(default="metis",
+                                          description="The selected scheduling algorithm"),
+        algo_params: AlgoParams = Form(default=AlgoParams(),
+                                       description="The parameter values passed to the scheduling algorithm. Required parameters varies per algorithm.")
 ):
+    """
+    Uses scheduling algorithms to partition an unrolled pgt across several partitions and data islands.
+
+    One of pgt_name or pgt_content, but not both, must be specified.
+    """
     graph = load_graph(pgt_content, pgt_name)
     reprodata = {}
     if not graph[-1].get("oid"):
@@ -680,16 +727,28 @@ def pgt_partition(
 
 @app.post("/unroll_and_partition", response_class=JSONResponse, tags=["Updated"])
 def lg_unroll_and_partition(
-        lg_name: str = Form(default=None),
-        lg_content: str = Form(default=None),
-        oid_prefix: str = Form(default=None),
-        zero_run: bool = Form(default=None),
-        default_app: str = Form(default=None),
-        num_partitions: int = Form(default=1),
-        num_islands: int = Form(default=1),
-        algorithm: KnownAlgorithms = Form(default="metis"),
-        algo_params: AlgoParams = Form(default=AlgoParams())
+        lg_name: str = Form(default=None,
+                            description="If present, translator will attempt to load this lg from file"),
+        lg_content: str = Form(default=None,
+                               description="If present, translator will use this string as the graph content"),
+        oid_prefix: str = Form(default=None, description="ID prefix appended to unrolled nodes"),
+        zero_run: bool = Form(default=None,
+                              description="If true, apps will be replaced with sleep apps"),
+        default_app: str = Form(default=None,
+                                description="If set, will change all apps to this app class"),
+        num_partitions: int = Form(default=1,
+                                   description="Number of partitions to unroll the graph across"),
+        num_islands: int = Form(default=1, description="Number of data islands to partition for"),
+        algorithm: KnownAlgorithms = Form(default="metis",
+                                          description="The selected scheduling algorithm"),
+        algo_params: AlgoParams = Form(default=AlgoParams(),
+                                       description="The parameter values passed to the scheduling algorithm. Required parameters varies per algorithm.")
 ):
+    """
+    Unrolls and partitions a logical graph with the provided various parameters.
+
+    One of lg_name and lg_content, but not both, must be specified.
+    """
     lg_graph = load_graph(lg_content, lg_name)
     pgt = dlg.dropmake.pg_generator.unroll(lg_graph, oid_prefix, zero_run, default_app)
     pgt = init_pgt_unroll_repro_data(pgt)
@@ -703,14 +762,22 @@ def lg_unroll_and_partition(
 
 @app.post("/map", response_class=JSONResponse, tags=["Updated"])
 def pgt_map(
-        pgt_name: str = Form(default=None),
-        pgt_content: str = Form(default=None),
-        nodes: str = Form(default=None),
-        num_islands: int = Form(default=1),
-        co_host_dim: bool = Form(default=True),
-        host: str = Form(default=None),
-        port: int = Form(default=dlg.constants.ISLAND_DEFAULT_REST_PORT)
+        pgt_name: str = Form(default=None,
+                             description="If supplied, this graph will attempted to be loaded from disk on the server"),
+        pgt_content: str = Form(default=None, description="If supplied, this is the graph content"),
+        nodes: str = Form(default=None,
+                          description="Comma separated list of IP addrs e.g. '127.0.0.1, 127.0.0.2'"),
+        num_islands: int = Form(default=1, description="The number of data islands to launch"),
+        co_host_dim: bool = Form(default=True,
+                                 description="Whether to launch data island manager processes alongside node-managers"),
+        host: str = Form(default=None,
+                         description="If present, will attempt to query this address for node-managers"),
+        port: int = Form(default=dlg.constants.ISLAND_DEFAULT_REST_PORT,
+                         description="Port used by HOST manager process")
 ):
+    """
+    Maps physical graph templates to node resources.
+    """
     if not nodes:
         client = CompositeManagerClient(host, port, timeout=10)
         nodes = [host] + client.nodes()
@@ -718,7 +785,7 @@ def pgt_map(
         logger.error("Not enough nodes to fill all islands")
         HTTPException(status_code=500,
                       detail="#nodes (%d) should be larger than the number of islands (%d)" % (
-                      len(nodes), num_islands))
+                          len(nodes), num_islands))
     pgt = load_graph(pgt_content, pgt_name)
     reprodata = {}
     if not pgt[-1].get("oid"):
@@ -730,7 +797,7 @@ def pgt_map(
     return JSONResponse(pg)
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse, description="The page used to view physical graphs")
 def index(request: Request):
     tpl = templates.TemplateResponse("pg_viewer.html", {
         "request": request,
