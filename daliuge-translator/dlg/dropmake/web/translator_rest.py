@@ -1,3 +1,25 @@
+#
+#    ICRAR - International Centre for Radio Astronomy Research
+#    (c) UWA - The University of Western Australia, 2016
+#    Copyright by UWA (in the framework of the ICRAR)
+#    All rights reserved
+#
+#    This library is free software; you can redistribute it and/or
+#    modify it under the terms of the GNU Lesser General Public
+#    License as published by the Free Software Foundation; either
+#    version 2.1 of the License, or (at your option) any later version.
+#
+#    This library is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#    Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public
+#    License along with this library; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+#    MA 02111-1307  USA
+#
+#    chen.wu@icrar.org
 import argparse
 import datetime
 import json
@@ -36,10 +58,45 @@ from dlg.dropmake.web.translator_utils import file_as_string, lg_repo_contents, 
     pgt_exists, pgt_path, pgt_repo_contents, prepare_lgt, unroll_and_partition_with_params, \
     make_algo_param_dict
 
+APP_DESCRIPTION = """
+DALiuGE LG Web interface translates and deploys logical graphs.
+
+The interface is split into two parts, refer to the main DALiuGE documentation 
+[DALiuGE documentation](https://daliuge.readthedocs.io/) for more information
+
+### Original API
+A set of endpoints are maintained for backwards compatibility
+
+### New API
+The new API mirrors that of the command line interface with a focus on body parameters, rather
+than query parameters.
+
+However, a new API for deployment is yet to be implemented
+
+Original author: chen.wu@icrar.org
+"""
+APP_TAGS_METADATA = [
+    {"name": "Original", "description": "The original DALiuGE LG_web endpoints."},
+    {"name": "Updated", "description": "The new post-centric style mirror of CLI interface."}
+]
+
 file_location = pathlib.Path(__file__).parent.absolute()
 templates = Jinja2Templates(directory=file_location)
 
-app = FastAPI()
+app = FastAPI(
+    title="DALiuGE LG Web Interface",
+    description=APP_DESCRIPTION,
+    openapi_tags=APP_TAGS_METADATA,
+    contact={
+        "name": "pritchardn",
+        "email": "nicholas.pritchard@icrar.org"
+    },
+    version=dlg.version.version,
+    license_info={
+        "name": "LGPLv2.1",
+        "url": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html"
+    }
+)
 app.mount("/static", StaticFiles(directory=file_location), name="static")
 logger = logging.getLogger(__name__)
 
@@ -52,7 +109,7 @@ global pg_mgr
 LG_SCHEMA = json.loads(file_as_string("lg.graph.schema", package="dlg.dropmake"))
 
 
-@app.post("/jsonbody")
+@app.post("/jsonbody", tags=["Original"])
 def jsonbody_post_lg(
         lg_name: str = Form(),
         lg_content: str = Form(),
@@ -81,7 +138,7 @@ def jsonbody_post_lg(
         post_sem.release()
 
 
-@app.get("/jsonbody")
+@app.get("/jsonbody", tags=["Original"])
 def jsonbody_get_lg(
         lg_name: str = Query(default=None)
 ):
@@ -106,7 +163,7 @@ def jsonbody_get_lg(
         raise HTTPException(status_code=404, detail="JSON graph {0} not found\n".format(lg_name))
 
 
-@app.get("/pgt_jsonbody")
+@app.get("/pgt_jsonbody", tags=["Original"])
 def jsonbody_get_pgt(
         pgt_name: str = Query()
 ):
@@ -123,7 +180,7 @@ def jsonbody_get_pgt(
         raise HTTPException(status_code=404, detail="JSON graph {0} not found".format(pgt_name))
 
 
-@app.get("/pg_viewer", response_class=HTMLResponse)
+@app.get("/pg_viewer", response_class=HTMLResponse, tags=["Original"])
 def load_pg_viewer(request: Request,
                    pgt_view_name: str = Query(default=None)
                    ):
@@ -152,7 +209,7 @@ def load_pg_viewer(request: Request,
                                 pgt_view_name, pgt_dir))
 
 
-@app.get("/show_gantt_chart", response_class=HTMLResponse)
+@app.get("/show_gantt_chart", response_class=HTMLResponse, tags=["Original"])
 def show_gantt_chart(
         request: Request,
         pgt_id: str = Query()
@@ -168,7 +225,7 @@ def show_gantt_chart(
     return tpl
 
 
-@app.get("/pgt_gantt_chart")
+@app.get("/pgt_gantt_chart", tags=["Original"])
 def get_gantt_chart(
         pgt_id: str = Query()
 ):
@@ -183,7 +240,7 @@ def get_gantt_chart(
                             .format(pgt_id, ge))
 
 
-@app.get("/show_schedule_mat", response_class=HTMLResponse)
+@app.get("/show_schedule_mat", response_class=HTMLResponse, tags=["Original"])
 def show_schedule_matrix(
         request: Request,
         pgt_id: str = Query()
@@ -199,7 +256,7 @@ def show_schedule_matrix(
     return tpl
 
 
-@app.get("/get_schedule_matrices")
+@app.get("/get_schedule_matrices", tags=["Original"])
 def get_schedule_matrices(
         pgt_id: str = Query()
 ):
@@ -216,7 +273,7 @@ def get_schedule_matrices(
 
 # ------ Graph deployment methods ------ #
 
-@app.get("/gen_pgt")
+@app.get("/gen_pgt", tags=["Original"])
 def gen_pgt(
         request: Request,
         lg_name: str = Query(),
@@ -278,7 +335,7 @@ class AlgoParams(BaseModel):
     max_mem: Union[int, None]
 
 
-@app.post("/gen_pgt", response_class=HTMLResponse)
+@app.post("/gen_pgt", response_class=HTMLResponse, tags=["Original"])
 async def gen_pgt_post(
         request: Request,
         lg_name: str = Form(),
@@ -350,7 +407,7 @@ async def gen_pgt_post(
                             detail="Graph partition exception {1}: {0}".format(trace_msg, lg_name))
 
 
-@app.get("/gen_pg", response_class=StreamingResponse)
+@app.get("/gen_pg", response_class=StreamingResponse, tags=["Original"])
 def gen_pg(
         request: Request,
         pgt_id: str = Query(),
@@ -456,7 +513,7 @@ def gen_pg(
                             detail="Failed to deploy physical graph: {0}".format(ex))
 
 
-@app.get("/gen_pg_spec")
+@app.get("/gen_pg_spec", tags=["Original"])
 def gen_pg_spec(
         pgt_id: str = Body(),
         node_list: list = Body(default=[]),
@@ -495,7 +552,7 @@ def gen_pg_spec(
         raise HTTPException(status_code=500, detail="Failed to generate pg_spec: {0}".format(ex))
 
 
-@app.get("/gen_pg_helm")
+@app.get("/gen_pg_helm", tags=["Original"])
 def gen_pg_helm(
         pgt_id: str = Body()
 ):
@@ -553,7 +610,7 @@ def load_graph(graph_content: str, graph_name: str):
     return out_graph
 
 
-@app.post("/lg_fill", response_class=JSONResponse)
+@app.post("/lg_fill", response_class=JSONResponse, tags=["Updated"])
 def lg_fill(
         lg_name: str = Form(default=None),
         lg_content: str = Form(default=None),
@@ -576,7 +633,7 @@ def lg_fill(
     return JSONResponse(output_graph)
 
 
-@app.post("/unroll", response_class=JSONResponse)
+@app.post("/unroll", response_class=JSONResponse, tags=["Updated"])
 def lg_unroll(
         lg_name: str = Form(default=None),
         lg_content: str = Form(default=None),
@@ -601,7 +658,7 @@ class KnownAlgorithms(str, Enum):
     ALGO_PSO = "pso"
 
 
-@app.post("/partition", response_class=JSONResponse)
+@app.post("/partition", response_class=JSONResponse, tags=["Updated"])
 def pgt_partition(
         pgt_name: str = Form(default=None),
         pgt_content: str = Form(default=None),
@@ -621,7 +678,7 @@ def pgt_partition(
     return JSONResponse(pgt)
 
 
-@app.post("/unroll_and_partition", response_class=JSONResponse)
+@app.post("/unroll_and_partition", response_class=JSONResponse, tags=["Updated"])
 def lg_unroll_and_partition(
         lg_name: str = Form(default=None),
         lg_content: str = Form(default=None),
@@ -644,7 +701,7 @@ def lg_unroll_and_partition(
     return JSONResponse(pgt)
 
 
-@app.post("/map", response_class=JSONResponse)
+@app.post("/map", response_class=JSONResponse, tags=["Updated"])
 def pgt_map(
         pgt_name: str = Form(default=None),
         pgt_content: str = Form(default=None),
