@@ -94,7 +94,6 @@ class DataIO:
             raise ValueError("Writing operation attempted on closed DataIO object")
         if self._mode == OpenMode.OPEN_READ:
             raise ValueError("Writing operation attempted on write-only DataIO object")
-        logger.debug(("kwargs: %s", kwargs))
         return self._write(data, **kwargs)
 
     def read(self, count: int, **kwargs):
