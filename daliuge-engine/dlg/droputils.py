@@ -152,8 +152,8 @@ def copyDropContents(source: DataDROP, target: DataDROP, bufsize=65536):
     while buf:
         target.write(buf)
         tot_w += len(buf)
-        dur = time.time() - st
-        if int(dur) % 5 == 0 and ofl:
+        dur = int(time.time() - st)
+        if dur > 5 and dur % 5 == 0 and ofl:
             logger.debug("Wrote %.1f MB to %s; rate %.2f MB/s",
                 tot_w/1024**2, repr(target), tot_w/(1024**2*dur))
             ofl = False
