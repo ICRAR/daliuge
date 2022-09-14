@@ -140,6 +140,7 @@ class S3IO(DataIO):
         self._s3 = self._get_s3_connection()
         self.url = f"{endpoint_url}/{Bucket}/{Key}"
         self._expectedSize = expectedSize
+        self._buffer = b''
         if self._mode == 1:
             try:
                 self._s3Stream = self._open()
@@ -187,7 +188,7 @@ class S3IO(DataIO):
             self._uploadId = resp["UploadId"]
             self._buffer = b""
             self._written = 0
-            self._partNo = 0
+            self._partNo = 1
             self._parts = {"Parts":[]}
             return self._s3
         else:
@@ -251,26 +252,27 @@ class S3IO(DataIO):
 
     @overrides
     def _close(self, **kwargs):
-        if len(self._buffer) > 0: # write, if there is still something in the buffer
-            self._writeBuffer2S3(self._buffer)
-        # complete multipart upload and cleanup
-        res = self._s3.list_parts(
-            Bucket=self._bucket,
-            Key=self._key,
-            UploadId=self._uploadId)
-        parts=[{'ETag':p['ETag'],
-                'PartNumber':p['PartNumber']} for p in res['Parts']]
-        #TODO: Check checksum!
-        res = self._s3.complete_multipart_upload(
-            Bucket=self._bucket,
-            Key=self._key,
-            UploadId=self._uploadId,
-            MultipartUpload={'Parts':parts},
-        )
-        del(self._buffer)
-        del(write_buffer)
-        logger.info("Wrote a total of %.1f MB to %s", 
-            self._written/(1024**2), self.url)
+        if self._mode == OpenMode.OPEN_WRITE:
+            if len(self._buffer) > 0: # write, if there is still something in the buffer
+                self._writeBuffer2S3(self._buffer)
+            # complete multipart upload and cleanup
+            res = self._s3.list_parts(
+                Bucket=self._bucket,
+                Key=self._key,
+                UploadId=self._uploadId)
+            parts=[{'ETag':p['ETag'],
+                    'PartNumber':p['PartNumber']} for p in res['Parts']]
+            #TODO: Check checksum!
+            res = self._s3.complete_multipart_upload(
+                Bucket=self._bucket,
+                Key=self._key,
+                UploadId=self._uploadId,
+                MultipartUpload={'Parts':parts},
+            )
+            del(self._buffer)
+            del(write_buffer)
+            logger.info("Wrote a total of %.1f MB to %s", 
+                self._written/(1024**2), self.url)
 
         self._desc.close()
         del(self._s3)
