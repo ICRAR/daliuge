@@ -93,7 +93,7 @@ app = FastAPI(
     },
     version=dlg.version.version,
     license_info={
-        "name": "LGPLv2.1",
+        "name": "LGPLv2+",
         "url": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html"
     }
 )
