@@ -88,10 +88,6 @@ class S3DROP(DataDROP):
     def size(self) -> int:
         size = self.getIO()._size()
         logger.debug(("Size of object: %s", size))
-        # if size > -1:
-            # set drop to completed
-            # S3 objects are immutable
-            # self.status = 2
         return size
 
     def getIO(self) -> DataIO:
@@ -152,9 +148,9 @@ class S3IO(DataIO):
     def _get_s3_connection(self):
         if self._s3 is None:
             if (
-                self._profile_name is not None
-                or self._s3_access_key_id is not None
-                or self._s3_secret_access_key is not None
+                self._profile_name is not None or
+                (self._s3_access_key_id is not None
+                and self._s3_secret_access_key is not None)
             ):
                 logger.debug("Opening boto3 session")
                 session = boto3.Session(
@@ -163,7 +159,6 @@ class S3IO(DataIO):
                     service_name="s3",
                     endpoint_url=self._s3_endpoint_url,
                 )
-                # s3 = session.resource("s3")
             else:
                 s3 = boto3.resource("s3")
         return s3
