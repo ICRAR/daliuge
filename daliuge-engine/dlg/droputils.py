@@ -148,6 +148,7 @@ def copyDropContents(source: DataDROP, target: DataDROP, bufsize=65536):
     logger.debug("Source size: %d", ssize)
     tot_w = len(buf)
     ofl = True
+    target._expectedSize = ssize
     while buf:
         target.write(buf)
         tot_w += len(buf)
@@ -161,7 +162,6 @@ def copyDropContents(source: DataDROP, target: DataDROP, bufsize=65536):
         buf = source.read(desc, bufsize)
         # if buf is not None:
         #     logger.debug(f"Read {len(buf)} bytes from {repr(source)}")
-    target.write(buf) # write the empty buffer as a signal
     dur = time.time() - st
     logger.debug("Wrote %.1f MB of %.1f to %s; rate %.2f MB/s",
         tot_w/1024**2, ssize/1024**2, repr(target), tot_w/(1024**2*dur))

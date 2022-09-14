@@ -106,6 +106,7 @@ class S3DROP(DataDROP):
                     self.Bucket,
                     self.Key,
                     self.endpoint_url,
+                    self._expectedSize,
                     )
 
 class S3IO(DataIO):
@@ -117,7 +118,12 @@ class S3IO(DataIO):
     def __init__(self, 
         aws_access_key_id=None, 
         aws_secret_access_key=None,
-        profile_name=None, Bucket=None, Key=None, endpoint_url=None, **kwargs):
+        profile_name=None,
+        Bucket=None,
+        Key=None,
+        endpoint_url=None,
+        expectedSize=-1,
+        **kwargs):
 
         super().__init__(**kwargs)
 
@@ -133,6 +139,7 @@ class S3IO(DataIO):
         self._s3_endpoint_url = endpoint_url
         self._s3 = self._get_s3_connection()
         self.url = f"{endpoint_url}/{Bucket}/{Key}"
+        self._expectedSize = expectedSize
         if self._mode == 1:
             try:
                 self._s3Stream = self._open()
@@ -197,63 +204,37 @@ class S3IO(DataIO):
         else:
             return self._desc.read()
 
+    def _writeBuffer2S3(self, write_buffer=b''):
+        try:
+            with BytesIO(write_buffer) as f:
+                self._s3.upload_part(
+                    Body=f, 
+                    Bucket=self._bucket, 
+                    Key=self._key, 
+                    UploadId=self._uploadId,
+                    PartNumber=self._partNo)
+            logger.debug("Wrote %d bytes part %d to S3: %s", 
+                len(write_buffer), 
+                self._partNo,
+                self.url)
+            self._partNo += 1
+            self._written += len(write_buffer)
+        except botocore.exceptions.ClientError as e:
+            logger.error("Writing to S3 failed")
+            return -1
+
     @overrides
     def _write(self, data, **kwargs) -> int:
         """
         """
         self._buffer += data
-        final_write = False if len(data) != 0 else True
         PART_SIZE = 5*1024**2
         logger.debug("Length of S3 buffer: %d", len(self._buffer))
-        if final_write or len(self._buffer) >= PART_SIZE:
-            try:
-                write_buffer = self._buffer[:PART_SIZE]
-                with BytesIO(write_buffer) as f:
-                    self._s3.upload_part(
-                        Body=f, 
-                        Bucket=self._bucket, 
-                        Key=self._key, 
-                        UploadId=self._uploadId,
-                        PartNumber=self._partNo)
-                logger.debug("Wrote %d bytes part %d to S3: %s", 
-                    len(write_buffer), 
-                    self._partNo,
-                    self.url)
-                self._partNo += 1
-                self._written += len(write_buffer)
-                if not final_write:
-                    self._buffer = self._buffer[PART_SIZE:]
-                    return len(write_buffer)
-                else:
-                    res = self._s3.list_parts(
-                        Bucket=self._bucket,
-                        Key=self._key,
-                        UploadId=self._uploadId)
-                    parts=[{'ETag':p['ETag'],
-                            'PartNumber':p['PartNumber']} for p in res['Parts']]
-                    #TODO: Check checksum!
-                    res = self._s3.complete_multipart_upload(
-                        Bucket=self._bucket,
-                        Key=self._key,
-                        UploadId=self._uploadId,
-                        MultipartUpload={'Parts':parts},
-                    )
-                    del(self._buffer)
-                    del(write_buffer)
-                    logger.info("Wrote a total of %.1f MB to %s", 
-                        self._written/(1024**2), self.url)
-
-                    return len(data)
-            except botocore.exceptions.ClientError as e:
-                logger.error("Writing to S3 failed")
-                return -1
-        else:
-            logger.debug("Not final write, but buffer not full: %d", len(
-                self._buffer)
-            ) 
-            return len(data)
-
-        
+        if len(self._buffer) >= PART_SIZE:
+            self._writeBuffer2S3(self._buffer[:PART_SIZE])
+            self._buffer = self._buffer[PART_SIZE:]
+        return len(data)  # we return the length of what we have received
+                            # to keep the client happy            ) 
 
     def _get_object_head(self) -> dict:
         return self._s3.head_object(
@@ -270,6 +251,27 @@ class S3IO(DataIO):
 
     @overrides
     def _close(self, **kwargs):
+        if len(self._buffer) > 0: # write, if there is still something in the buffer
+            self._writeBuffer2S3(self._buffer)
+        # complete multipart upload and cleanup
+        res = self._s3.list_parts(
+            Bucket=self._bucket,
+            Key=self._key,
+            UploadId=self._uploadId)
+        parts=[{'ETag':p['ETag'],
+                'PartNumber':p['PartNumber']} for p in res['Parts']]
+        #TODO: Check checksum!
+        res = self._s3.complete_multipart_upload(
+            Bucket=self._bucket,
+            Key=self._key,
+            UploadId=self._uploadId,
+            MultipartUpload={'Parts':parts},
+        )
+        del(self._buffer)
+        del(write_buffer)
+        logger.info("Wrote a total of %.1f MB to %s", 
+            self._written/(1024**2), self.url)
+
         self._desc.close()
         del(self._s3)
 
