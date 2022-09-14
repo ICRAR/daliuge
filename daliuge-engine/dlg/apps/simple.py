@@ -157,6 +157,12 @@ class CopyApp(BarrierAppDROP):
         self.copyAll()
 
     def copyAll(self):
+        expected_size = -1
+        for inputDrop in self.inputs:
+            expected_size = expected_size + inputDrop.size if inputDrop.size is not None else -1
+        for outputDrop in self.outputs:
+            outputDrop._expectedSize = expected_size
+        logger.debug("Setting expected size of output srops to %d", expected_size)
         for inputDrop in self.inputs:
             self.copyRecursive(inputDrop)
 
