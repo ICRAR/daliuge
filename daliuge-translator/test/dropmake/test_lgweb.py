@@ -222,9 +222,7 @@ class TestLGWeb(unittest.TestCase):
         self.assertRaises(RestClientException, c._POST, "/gen_pgt")
 
         # new logical graph JSON
-        with open(
-                os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
-        ) as infile:
+        with open(os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb") as infile:
             json_data = infile.read()
 
         # add 'correct' data to the form
