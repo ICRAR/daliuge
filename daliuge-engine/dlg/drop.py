@@ -1093,7 +1093,7 @@ class AbstractDROP(EventFirer):
             self._fire("dropCompleted", status=status)
             return
         elif status == DROPStates.COMPLETED:
-            logger.warning("%r already in COMPLETED state")
+            logger.warning("%r already in COMPLETED state", self)
             return
         elif status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception(
