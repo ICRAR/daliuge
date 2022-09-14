@@ -46,7 +46,7 @@ from dlg.meta import (
     dlg_batch_output,
     dlg_streaming_input,
 )
-from dlg.exceptions import DaliugeException
+from dlg.exceptions import DaliugeException, DropChecksumException
 from dlg.apps.pyfunc import serialize_data, deserialize_data
 
 
@@ -165,6 +165,8 @@ class CopyApp(BarrierAppDROP):
             outputDrop._expectedSize = expected_size
         for inputDrop in self.inputs:
             self.copyRecursive(inputDrop)
+        
+        logger.debug("Target checksum: %d", outputDrop.checksum)
 
     def copyRecursive(self, inputDrop):
         if isinstance(inputDrop, ContainerDROP):

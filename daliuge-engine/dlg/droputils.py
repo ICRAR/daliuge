@@ -39,7 +39,6 @@ from dlg.drop import AppDROP, AbstractDROP, DataDROP
 from dlg.data.io import IOForURL, OpenMode
 from dlg import common
 from dlg.common import DropType
-from dlg.exceptions import DropChecksumException
 
 logger = logging.getLogger(__name__)
 
@@ -140,8 +139,8 @@ def copyDropContents(source: DataDROP, target: DataDROP, bufsize=65536):
     """
     logger.debug(
         "Copying from %s to %s", repr(source), repr(target))
-    desc = source.open()
-    buf = source.read(desc, bufsize)
+    sdesc = source.open()
+    buf = source.read(sdesc, bufsize)
     logger.debug("Read %d bytes from %s", len(buf), 
     repr(source))
     st = time.time()
@@ -151,27 +150,21 @@ def copyDropContents(source: DataDROP, target: DataDROP, bufsize=65536):
     ofl = True
     # target._expectedSize = ssize
     while buf:
-        target.write(buf)
-        tot_w += len(buf)
+        tot_w += target.write(buf)
         dur = int(time.time() - st)
         if dur > 5 and dur % 5 == 0 and ofl:
-            logger.debug("Wrote %.1f MB to %s; rate %.2f MB/s",
-                tot_w/1024**2, repr(target), tot_w/(1024**2*dur))
+            logger.debug("Wrote %d Bytes to %s; rate %.2f MB/s",
+                tot_w, repr(target), tot_w/(1024**2*dur))
             ofl = False
         elif int(dur) % 5 == 4:
             ofl = True
-        buf = source.read(desc, bufsize)
-        # if buf is not None:
-        #     logger.debug(f"Read {len(buf)} bytes from {repr(source)}")
+        buf = source.read(sdesc, bufsize)
     dur = time.time() - st
-    logger.debug("Wrote %.1f MB of %.1f to %s; rate %.2f MB/s",
-        tot_w/1024**2, ssize/1024**2, repr(target), tot_w/(1024**2*dur))
+    logger.debug("Wrote %d Bytes of %d to %s; rate %.2f MB/s",
+        tot_w, ssize, repr(target), tot_w/(1024**2*dur))
 
-    source.close(desc)
-
-    if source.checksum != target.checksum:
-        raise DropChecksumException(target)
-
+    source.close(sdesc)
+    return
 
 
 def getUpstreamObjects(drop):
