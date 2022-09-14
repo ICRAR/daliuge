@@ -39,6 +39,7 @@ from dlg.drop import AppDROP, AbstractDROP, DataDROP
 from dlg.data.io import IOForURL, OpenMode
 from dlg import common
 from dlg.common import DropType
+from dlg.exceptions import DropChecksumException
 
 logger = logging.getLogger(__name__)
 
@@ -145,7 +146,7 @@ def copyDropContents(source: DataDROP, target: DataDROP, bufsize=65536):
     repr(source))
     st = time.time()
     ssize = source.size if source.size is not None else -1
-    logger.debug("Source size: %d", ssize)
+    logger.debug("Source size: %d; Source checksum: %d", ssize, source.checksum)
     tot_w = 0
     ofl = True
     # target._expectedSize = ssize
@@ -167,6 +168,10 @@ def copyDropContents(source: DataDROP, target: DataDROP, bufsize=65536):
         tot_w/1024**2, ssize/1024**2, repr(target), tot_w/(1024**2*dur))
 
     source.close(desc)
+
+    if source.checksum != target.checksum:
+        raise DropChecksumException(target)
+
 
 
 def getUpstreamObjects(drop):
