@@ -1092,6 +1092,9 @@ class AbstractDROP(EventFirer):
         elif status == DROPStates.SKIPPED:
             self._fire("dropCompleted", status=status)
             return
+        elif status == DROPStates.COMPLETED:
+            logger.warning("%r already in COMPLETED state")
+            return
         elif status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception(
                 "%r not in INITIALIZED or WRITING state (%s), cannot setComplete()"
@@ -1402,10 +1405,10 @@ class DataDROP(AbstractDROP):
             # Generate on the fly
             io = self.getIO()
             io.open(OpenMode.OPEN_READ)
-            data = io.read(4096)
+            data = io.read(65536)
             while data is not None and len(data) > 0:
                 self._updateChecksum(data)
-                data = io.read(4096)
+                data = io.read(65536)
             io.close()
         return self._checksum
 
