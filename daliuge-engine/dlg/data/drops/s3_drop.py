@@ -69,9 +69,8 @@ class S3DROP(DataDROP):
     profile_name = dlg_string_param("profile_name", None)
     endpoint_url = dlg_string_param("endpoint_url", None)
 
-    def __init__(self, oid, uid, **kwargs):
-        super().__init__(oid, uid, **kwargs)
-        self.size
+    def initialize(self, **kwargs):
+        return super().initialize(**kwargs)
 
     @property
     def path(self):
@@ -106,18 +105,21 @@ class S3DROP(DataDROP):
                     self.profile_name,
                     self.Bucket,
                     self.Key,
-                    self.endpoint_url)
+                    self.endpoint_url,
+                    )
 
 class S3IO(DataIO):
     """
     IO class for the S3 Drop
     """
     _desc = None
-    _mode = 1
+    
     def __init__(self, 
         aws_access_key_id=None, 
         aws_secret_access_key=None,
         profile_name=None, Bucket=None, Key=None, endpoint_url=None, **kwargs):
+
+        super().__init__(**kwargs)
 
         logger.debug(("key_id: %s; key: %s; profile: %s; bucket: %s; object_id: %s; %s",
             aws_access_key_id, aws_secret_access_key, profile_name, Bucket, Key, endpoint_url))
@@ -130,11 +132,13 @@ class S3IO(DataIO):
         self._key = Key
         self._s3_endpoint_url = endpoint_url
         self._s3 = self._get_s3_connection()
+        self.url = f"{endpoint_url}/{Bucket}/{Key}"
         if self._mode == 1:
             try:
                 self._s3Stream = self._open()
             except botocore.exceptions.ClientError as e:
                 if not self.exists():
+                    logger.debug("Object does not exist yet. Creating!")
                     self._mode = 0
 
     def _get_s3_connection(self):
@@ -157,12 +161,29 @@ class S3IO(DataIO):
         return s3
 
     def _open(self, **kwargs):
+        logger.debug("Opening S3 object %s in mode %s", self._key, self._mode)
         if self._mode == OpenMode.OPEN_WRITE:
+            exists = self._exists()
+            if exists == (True, True):
+                logger.error("Object exists already. Assuming part upload.")
+                
+            elif exists[0] == False:
+                # bucket does not exist, create first
+                try:
+                    self._s3.create_bucket(Bucket=self._bucket)
+                except botocore.exceptions.ClientError as e:
+                    raise e
+            resp = self._s3.create_multipart_upload(
+                Bucket=self._bucket,
+                Key=self._key,
+                )
+            self._uploadId = resp["UploadId"]
+            self._buffer = b""
+            self._written = 0
+            self._partNo = 0
+            self._parts = {"Parts":[]}
             return self._s3
-            # self._buf = b""
-            # self._writtenDataSize = 0
         else:
-            logger.debug("Opening S3 object %s", self._key)
             s3Object = self._s3.get_object(Bucket=self._bucket, Key=self._key)
             self._desc = s3Object['Body']
         return s3Object['Body']
@@ -179,40 +200,58 @@ class S3IO(DataIO):
     @overrides
     def _write(self, data, **kwargs) -> int:
         """
-        TODO: Need to implement streaming upload
-        The current implementation will only upload a single block
         """
-        final_write = True
+        self._buffer += data
+        final_write = False if len(data) != 0 else True
         PART_SIZE = 5*1024**2
-        if 'size' in kwargs:
-            logger.debug("Length of object to write: %d",kwargs['size'])
-        self._mode = 0
-        exists = self._exists()
-        if 'buffer' in locals():
-            buffer += data
-        else:
-            buffer=data
-        if exists == (True, True):
-            logger.error("Object exists already. Assuming part upload.")
-            
-        elif exists[0] == False:
-            # bucket does not exist, create first
+        logger.debug("Length of S3 buffer: %d", len(self._buffer))
+        if final_write or len(self._buffer) >= PART_SIZE:
             try:
-                self._s3.create_bucket(Bucket=self._bucket)
-            except botocore.exceptions.ClientError as e:
-                raise e
-        if final_write or len(buffer) > PART_SIZE:
-            try:
-                write_buffer = buffer[:PART_SIZE]
+                write_buffer = self._buffer[:PART_SIZE]
                 with BytesIO(write_buffer) as f:
-                    self._s3.upload_fileobj(f, self._bucket, self._key)
-                    url = f"{self._s3_endpoint_url}/{self._bucket}/{self._key}"
-                    logger.info("Wrote %d bytes to %s", len(write_buffer), url)
-                    buffer = buffer[PART_SIZE:] if not final_write else []
+                    self._s3.upload_part(
+                        Body=f, 
+                        Bucket=self._bucket, 
+                        Key=self._key, 
+                        UploadId=self._uploadId,
+                        PartNumber=self._partNo)
+                logger.debug("Wrote %d bytes part %d to S3: %s", 
+                    len(write_buffer), 
+                    self._partNo,
+                    self.url)
+                self._partNo += 1
+                self._written += len(write_buffer)
+                if not final_write:
+                    self._buffer = self._buffer[PART_SIZE:]
                     return len(write_buffer)
+                else:
+                    res = self._s3.list_parts(
+                        Bucket=self._bucket,
+                        Key=self._key,
+                        UploadId=self._uploadId)
+                    parts=[{'ETag':p['ETag'],
+                            'PartNumber':p['PartNumber']} for p in res['Parts']]
+                    #TODO: Check checksum!
+                    res = self._s3.complete_multipart_upload(
+                        Bucket=self._bucket,
+                        Key=self._key,
+                        UploadId=self._uploadId,
+                        MultipartUpload={'Parts':parts},
+                    )
+                    del(self._buffer)
+                    del(write_buffer)
+                    logger.info("Wrote a total of %.1f MB to %s", 
+                        self._written/(1024**2), self.url)
+
+                    return len(data)
             except botocore.exceptions.ClientError as e:
                 logger.error("Writing to S3 failed")
                 return -1
+        else:
+            logger.debug("Not final write, but buffer not full: %d", len(
+                self._buffer)
+            ) 
+            return len(data)
 
         
 
@@ -243,21 +282,27 @@ class S3IO(DataIO):
 
         try:
             # s3.meta.client.head_bucket(Bucket=self.bucket)
+            logger.info("Checking existence of bucket: %s", self._bucket)
             s3.head_bucket(Bucket=self._bucket)
+            logger.info("Bucket: %s exists", self._bucket)
         except botocore.exceptions.ClientError as e:
             # If a client error is thrown, then check that it was a 404 error.
             # If it was a 404 error, then the bucket does not exist.
             error_code = int(e.response["Error"]["Code"])
             if error_code == 404:
+                logger.info("Bucket: %s does not exist", self._bucket)
                 return (False, False)
         try:
+            logger.info("Checking existence of object: %s", self._key)
             s3.head_object(Bucket=self._bucket, Key=self._key)
+            logger.info("Object: %s exists", self._key)
             return (True, True)
         except botocore.exceptions.ClientError as e:
             # If a client error is thrown, then check that it was a 404 error.
-            # If it was a 404 error, then the bucket does not exist.
+            # If it was a 404 error, then the object does not exist.
             error_code = int(e.response["Error"]["Code"])
             if error_code == 404:
+                logger.info("Object: %s does not exist", self._key)
                 return (True, False)
             else:
                 raise ErrorIO()
