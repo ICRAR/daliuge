@@ -406,7 +406,7 @@ async def gen_pgt_post(
                             detail="Graph partition exception {1}: {0}".format(trace_msg, lg_name))
 
 
-@app.get("/gen_pg", response_class=StreamingResponse, tags=["Original"])
+@app.get("/gen_pg", response_class=JSONResponse, tags=["Original"])
 def gen_pg(
         request: Request,
         pgt_id: str = Query(description="The pgt_id used to internally reference this graph"),
@@ -474,9 +474,7 @@ def gen_pg(
 
         pg_spec = pgtp.to_pg_spec([], ret_str=False, tpl_nodes_len=nnodes)
         pg_spec.append(reprodata)
-        response = StreamingResponse(json.dumps(pg_spec))
-        response.headers["Content-Disposition"] = "attachment; filename=%s" % pgt_id
-        return response
+        return JSONResponse(pg_spec)
     try:
         mgr_client = CompositeManagerClient(
             host=mhost, port=mport, url_prefix=mprefix, timeout=30
@@ -505,9 +503,7 @@ def gen_pg(
                 mhost, mport, mprefix, ssid
             ))
         else:
-            response = StreamingResponse(json.dumps(pg_spec))
-            response.headers["Content-Disposition"] = "attachment; filename=%s" % pgt_id
-            return response
+            return JSONResponse(pg_spec)
     except restutils.RestClientException as re:
         raise HTTPException(status_code=500,
                             detail="Failed to interact with DALiUGE Drop Manager: {0}".format(re))
@@ -900,3 +896,7 @@ def run(_, args):
         port=options.port,
         debug=options.verbose
     )
+
+
+if __name__ == "__main__":
+    run(None, sys.argv[1:])
