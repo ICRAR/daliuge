@@ -146,7 +146,7 @@ class TestLGWeb(unittest.TestCase):
         # good!
         c._get_json("/pgt_jsonbody?pgt_name=logical_graphs/chiles_simple1_pgt.graph")
 
-    def test_get_pgt_post(self):
+    def test_get_pgt_post(self, algo="metis"):
 
         c = RestClient("localhost", lgweb_port, timeout=10)
 
@@ -160,7 +160,7 @@ class TestLGWeb(unittest.TestCase):
 
         # add 'correct' data to the form
         form_data = {
-            "algo": "metis",
+            "algo": algo,
             "lg_name": "metis.graph",
             "json_data": json_data,
             "num_islands": 0,
@@ -245,6 +245,10 @@ class TestLGWeb(unittest.TestCase):
             )
         except RestClientException as e:
             self.fail(e)
+
+    def test_translate_algs(self):
+        for algo in ["none", "metis", "mysarkar", "min_num_parts", "pso"]:
+            self.test_get_pgt_post(algo=algo)
 
     def test_pg_viewerer(self):
 
