@@ -23,7 +23,6 @@ import copy
 import logging
 import os
 import platform
-import random
 import time
 from collections import defaultdict
 
@@ -235,8 +234,8 @@ class Partition(object):
         if len(self._dag.nodes()) == 0:
             return (True, False, False)
 
-        unew = u not in self._dag.node
-        vnew = v not in self._dag.node
+        unew = u not in self._dag.nodes
+        vnew = v not in self._dag.nodes
 
         if DEBUG:
             slow_max = DAGUtil.get_max_antichains(self._dag)
@@ -268,7 +267,7 @@ class Partition(object):
                             mydop, mydop_slow, err_msg
                         )
                     )
-        ret = False if mydop > self._ask_max_dop else True
+        ret = False if mydop > self._ask_max_dop.get('num_cpus', 1) else True
         if unew:
             self.remove(u)
         if vnew:
@@ -284,8 +283,8 @@ class Partition(object):
         #     logger.debug("u = ", u, ", v = ", v, ", partition = ", self.partition_id)
         uw = gu["weight"]
         vw = gv["weight"]
-        unew = u not in self._dag.node
-        vnew = v not in self._dag.node
+        unew = u not in self._dag.nodes
+        vnew = v not in self._dag.nodes
         self._dag.add_node(u, weight=uw, num_cpus=gu["num_cpus"])
         self._dag.add_node(v, weight=vw, num_cpus=gv["num_cpus"])
         self._dag.add_edge(u, v)
