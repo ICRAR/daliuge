@@ -249,6 +249,7 @@ class TestLGWeb(unittest.TestCase):
     def _test_translate_alg(self, algorithm):
         self.test_get_pgt_post(algo=algorithm)
 
+    @unittest.skip("None translation is not an option in EAGLE and does not work.")
     def test_none_translation(self):
         self._test_translate_alg(algorithm='none')
 
