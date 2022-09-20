@@ -159,7 +159,7 @@ class Partition(object):
     Logical partition can be nested, and it somewhat resembles the `dlg.manager.drop_manager`
     """
 
-    def __init__(self, gid, max_dop):
+    def __init__(self, gid, max_dop: int):
         """
         gid:        cluster/partition id (string)
         max_dop:    maximum allowed degree of parallelism in this partition (int)
@@ -235,8 +235,8 @@ class Partition(object):
         if len(self._dag.nodes()) == 0:
             return (True, False, False)
 
-        unew = u not in self._dag.node
-        vnew = v not in self._dag.node
+        unew = u not in self._dag.nodes
+        vnew = v not in self._dag.nodes
 
         if DEBUG:
             slow_max = DAGUtil.get_max_antichains(self._dag)
@@ -284,8 +284,8 @@ class Partition(object):
         #     logger.debug("u = ", u, ", v = ", v, ", partition = ", self.partition_id)
         uw = gu["weight"]
         vw = gv["weight"]
-        unew = u not in self._dag.node
-        vnew = v not in self._dag.node
+        unew = u not in self._dag.nodes
+        vnew = v not in self._dag.nodes
         self._dag.add_node(u, weight=uw, num_cpus=gu["num_cpus"])
         self._dag.add_node(v, weight=vw, num_cpus=gv["num_cpus"])
         self._dag.add_edge(u, v)
