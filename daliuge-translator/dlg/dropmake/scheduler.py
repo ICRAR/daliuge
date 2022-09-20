@@ -268,7 +268,7 @@ class Partition(object):
                             mydop, mydop_slow, err_msg
                         )
                     )
-        ret = False if mydop > self._ask_max_dop['num_cpus'] else True
+        ret = False if mydop > self._ask_max_dop.get('num_cpus', 1) else True
         if unew:
             self.remove(u)
         if vnew:
