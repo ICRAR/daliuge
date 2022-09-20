@@ -23,7 +23,6 @@ import copy
 import logging
 import os
 import platform
-import random
 import time
 from collections import defaultdict
 
