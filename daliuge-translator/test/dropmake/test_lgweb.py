@@ -246,9 +246,24 @@ class TestLGWeb(unittest.TestCase):
         except RestClientException as e:
             self.fail(e)
 
-    def test_translate_algs(self):
-        for algo in ["none", "metis", "mysarkar", "min_num_parts", "pso"]:
-            self.test_get_pgt_post(algo=algo)
+    def _test_translate_alg(self, algorithm):
+        self.test_get_pgt_post(algo=algorithm)
+
+    def test_none_translation(self):
+        self._test_translate_alg(algorithm='none')
+
+    def test_metis_translation(self):
+        self._test_translate_alg(algorithm='metis')
+
+    def test_sarkar_translation(self):
+        self._test_translate_alg(algorithm='mysarkar')
+
+    def test_min_num_parts_translation(self):
+        self._test_translate_alg(algorithm='min_num_parts')
+
+    def test_pso_translation(self):
+        self._test_translate_alg(algorithm='pso')
+
 
     def test_pg_viewerer(self):
 
