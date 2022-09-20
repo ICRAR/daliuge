@@ -159,7 +159,7 @@ class Partition(object):
     Logical partition can be nested, and it somewhat resembles the `dlg.manager.drop_manager`
     """
 
-    def __init__(self, gid, max_dop: int):
+    def __init__(self, gid, max_dop):
         """
         gid:        cluster/partition id (string)
         max_dop:    maximum allowed degree of parallelism in this partition (int)
@@ -268,7 +268,7 @@ class Partition(object):
                             mydop, mydop_slow, err_msg
                         )
                     )
-        ret = False if mydop > self._ask_max_dop else True
+        ret = False if mydop > self._ask_max_dop['num_cpus'] else True
         if unew:
             self.remove(u)
         if vnew:
