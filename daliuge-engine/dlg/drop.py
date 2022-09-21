@@ -1078,6 +1078,26 @@ class AbstractDROP(EventFirer):
         self._fire(eventType="dropCompleted", status=DROPStates.ERROR)
         self.completedrop()
 
+    def _setCompletedStateCheck(self) -> bool:
+        """
+        Checks DROP state to identify conflics before setting it to completed
+        """
+        status = self.status
+        if status == DROPStates.CANCELLED:
+            return False
+        elif status == DROPStates.SKIPPED:
+            self._fire("dropCompleted", status=status)
+            return False
+        elif status == DROPStates.COMPLETED:
+            logger.warning("%r already in COMPLETED state", self)
+            return False
+        elif status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
+            raise Exception(
+                "%r not in INITIALIZED or WRITING state (%s), cannot setComplete()"
+                % (self, self.status)
+            )
+        return True
+
     @track_current_drop
     def setCompleted(self):
         """
@@ -1086,20 +1106,8 @@ class AbstractDROP(EventFirer):
         to COMPLETED, or when the expected amount of data held by a DROP
         is not known in advanced.
         """
-        status = self.status
-        if status == DROPStates.CANCELLED:
+        if not self._setCompletedStateCheck():
             return
-        elif status == DROPStates.SKIPPED:
-            self._fire("dropCompleted", status=status)
-            return
-        elif status == DROPStates.COMPLETED:
-            logger.warning("%r already in COMPLETED state", self)
-            return
-        elif status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            raise Exception(
-                "%r not in INITIALIZED or WRITING state (%s), cannot setComplete()"
-                % (self, self.status)
-            )
         try:
             self._closeWriters()
         except AttributeError as exp:
