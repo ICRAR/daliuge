@@ -291,6 +291,11 @@ class S3IO(DataIO):
             if error_code == 404:
                 logger.info("Bucket: %s does not exist", self._bucket)
                 return (False, False)
+            elif error_code == 403:
+                logger.info("Access to bucket %s is forbidden", self._bucket)
+                return False, False
+            elif error_code > 300:
+                logger.info("Error code %s when accessing bucket %s", error_code, self._bucket)
         try:
             logger.info("Checking existence of object: %s", self._key)
             s3.head_object(Bucket=self._bucket, Key=self._key)
