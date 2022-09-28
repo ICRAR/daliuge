@@ -60,6 +60,7 @@ from dlg.common.reproducibility.reproducibility import (
 from dlg.dropmake.lg import GraphException, load_lg
 from dlg.dropmake.pg_generator import unroll, partition
 from dlg.dropmake.pg_manager import PGManager
+from dlg.dropmake.pgt import GPGTException
 from dlg.dropmake.scheduler import SchedulerException
 from jsonschema import validate, ValidationError
 from translator_utils import lg_path, lg_exists, pgt_path, pgt_exists, lg_repo_contents, \
@@ -473,7 +474,11 @@ def gen_pgt():
     try:
         lgt = prepare_lgt(lg_path(lg_name), rmode)
         # LG -> PGT
-        pgt = unroll_and_partition_with_params(lgt, query)
+        try:
+            pgt = unroll_and_partition_with_params(lgt, query)
+        except GPGTException as GE:
+            response.status = 500
+            return "{0}: logical graph {1} cannot be unrolled {2}".format(err_prefix, lg_name, GE)
 
         num_partitions = 0  # pgt._num_parts;
 
@@ -531,7 +536,12 @@ def gen_pgt_post():
 
         logical_graph = prepare_lgt(logical_graph, rmode)
         # LG -> PGT
-        pgt = unroll_and_partition_with_params(logical_graph, reqform)
+        try:
+            pgt = unroll_and_partition_with_params(logical_graph, reqform)
+        except GPGTException as GE:
+            response.status = 500
+            return "{0}: logical graph {1} cannot be unrolled {2}".format(err_prefix, lg_name, GE)
+
         par_algo = reqform.get("algo", "none")
         pgt_id = pg_mgr.add_pgt(pgt, lg_name)
 

@@ -25,6 +25,7 @@ __sub_tpl_str = """#!/bin/bash --login
 
 #SBATCH --nodes=$NUM_NODES
 #SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=2
 #SBATCH --job-name=DALiuGE-$SESSION_ID
 #SBATCH --time=$JOB_DURATION
 #SBATCH --error=err-%j.log
@@ -79,6 +80,23 @@ class ICRARoodConfig(DefaultConfig):
         return [self.ACCOUNT, self.LOG_DIR, self.MODULES, self.VENV]
 
 
+class ICRARoodCldConfig(DefaultConfig):
+    # The following is more a workaround than a solution
+    # requires the user to have a venv exectly in that place
+    ACCOUNT = os.environ["USER"]
+    HOME_DIR = os.environ["HOME"]
+    DLG_ROOT =f"{HOME_DIR}/dlg"
+    LOG_DIR = f"{DLG_ROOT}/runs"
+    # The compute nodes have have required python and DALiuGE but just in case....
+    VENV = f"source {DLG_ROOT}/venv/bin/activate"
+
+    def __init__(self):
+        super(ICRARoodCldConfig, self).__init__()
+
+    def init_list(self):  # TODO please fill in
+        return [self.ACCOUNT, self.LOG_DIR, self.VENV]
+
+
 class GalaxyMWAConfig(DefaultConfig):
     def __init__(self):
         super(GalaxyMWAConfig, self).__init__()
@@ -129,6 +147,7 @@ class ConfigFactory:
         "galaxy": GalaxyASKAPConfig,
         "shao": TianHe2Config,
         "hyades.icrar.org": ICRARoodConfig,
+        "ood_cloud": ICRARoodCldConfig,
     }
 
     @staticmethod
