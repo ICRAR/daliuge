@@ -111,8 +111,14 @@ def import_using_name(app, fname):
                     logger.debug("Getting attribute %s",m)
                     mod = getattr(mod, m)
                 except AttributeError as e:
-                    raise InvalidDropException(
-                            app, "Module %s has no member %s" % (mod, m))
+                    try:
+                        logger.debug("Trying to load backwards: %s", ".".join(parts[:-1]))
+                        mod = importlib.import_module(".".join(parts[:-1]), __name__)
+                        mod = getattr(mod, parts[-1])
+                        break
+                    except Exception as e:
+                        raise InvalidDropException(
+                            app, "Problem importing module %s, %s" % (mod, e))
                 
             return mod
 
@@ -345,11 +351,12 @@ class PyFuncApp(BarrierAppDROP):
 
         self.arguments = inspect.getfullargspec(self.f)
         logger.debug(f"Function inspection revealed {self.arguments}")
-        # we don't want to mess with the 'self' or 'cls' arguments
-        if self.arguments.args.count('self'):
-            self.arguments.args.remove('self')
-        if self.arguments.args.count('cls'): # class methods
-            self.arguments.args.remove('cls')
+        # we now expose the 'self' and 'cls' arguments to allow calling
+        # object member methods to be called in a graph.
+        # if self.arguments.args.count('self'):
+        #     self.arguments.args.remove('self')
+        # if self.arguments.args.count('cls'): # class methods
+        #     self.arguments.args.remove('cls')
         self.fn_nargs = len(self.arguments.args)
         self.fn_ndef = len(self.arguments.defaults) if self.arguments.defaults else 0
         self._init_func_defaults()

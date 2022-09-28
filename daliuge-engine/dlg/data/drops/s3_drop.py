@@ -39,6 +39,7 @@ except ImportError:
 from ...drop import DataDROP
 from dlg.data.io import ErrorIO, OpenMode, DataIO
 from ...meta import dlg_string_param, dlg_list_param
+from dlg.droputils import identify_named_ports, check_ports_dict
 
 ##
 # @brief S3
@@ -70,10 +71,21 @@ class S3DROP(DataDROP):
     endpoint_url = dlg_string_param("endpoint_url", None)
 
     def initialize(self, **kwargs):
+        self.keyargs = {
+            "Bucket": self.Bucket,
+            "Key": self.Key,
+            "storage_class": self.storage_class,
+            "tags": self.tags,
+            "aws_access_key_id": self.aws_access_key_id,
+            "aws_secret_access_key": self.aws_secret_access_key,
+            "profile_name": self.profile_name,
+            "endpoint_url": self.endpoint_url
+        }
+        self.Key = self.uid if not self.Key else self.Key
         return super().initialize(**kwargs)
 
     @property
-    def path(self):
+    def path(self) -> str:
         """
         Returns the path to the S3 object
         :return: the path
@@ -95,6 +107,14 @@ class S3DROP(DataDROP):
         Return 
         :return:
         """
+        logger.debug("S3DROP producers: %s", self._producers)
+        if check_ports_dict(self._producers):
+            self.mapped_inputs = identify_named_ports(
+                self._producers, 
+                {},
+                self.keyargs,
+                mode="inputs"
+                )
         logger.debug("Parameters found: {}", self.parameters)
         return S3IO(self.aws_access_key_id,
                     self.aws_secret_access_key,
@@ -161,6 +181,8 @@ class S3IO(DataIO):
                 )
             else:
                 s3 = boto3.resource("s3")
+        else:
+            s3 = self._s3
         return s3
 
     def _open(self, **kwargs):
