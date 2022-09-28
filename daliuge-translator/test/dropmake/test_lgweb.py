@@ -148,7 +148,7 @@ class TestLGWeb(unittest.TestCase):
         # good!
         c._get_json("/pgt_jsonbody?pgt_name=logical_graphs/chiles_simple1_pgt.graph")
 
-    def test_get_pgt_post(self, algo="metis"):
+    def test_get_pgt_post(self, algo="metis", algo_options=None):
 
         c = RestClient("localhost", lgweb_port, timeout=10)
 
@@ -171,6 +171,8 @@ class TestLGWeb(unittest.TestCase):
             "max_load_imb": 100,
             "max_cpu": 8,
         }
+        if algo_options is not None:
+            form_data.update(algo_options)
 
         # POST form to /gen_pgt
         try:
@@ -246,24 +248,21 @@ class TestLGWeb(unittest.TestCase):
         except RestClientException as e:
             self.fail(e)
 
-    def _test_translate_alg(self, algorithm):
-        self.test_get_pgt_post(algo=algorithm)
-
     @unittest.skip("None translation is not an option in EAGLE and does not work.")
     def test_none_translation(self):
-        self._test_translate_alg(algorithm='none')
+        self.test_get_pgt_post(algo='none')
 
     def test_metis_translation(self):
-        self._test_translate_alg(algorithm='metis')
+        self.test_get_pgt_post(algo='metis')
 
     def test_sarkar_translation(self):
-        self._test_translate_alg(algorithm='mysarkar')
+        self.test_get_pgt_post(algo='mysarkar')
 
     def test_min_num_parts_translation(self):
-        self._test_translate_alg(algorithm='min_num_parts')
+        self.test_get_pgt_post(algo='min_num_parts', algo_options={'deadline': 300, 'time_greedy': 50})
 
     def test_pso_translation(self):
-        self._test_translate_alg(algorithm='pso')
+        self.test_get_pgt_post(algo='pso', algo_options={'swarm_size': 10, 'deadline': 300})
 
 
     def test_pg_viewer(self):
