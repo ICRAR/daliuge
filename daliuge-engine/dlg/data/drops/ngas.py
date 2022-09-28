@@ -89,24 +89,24 @@ class NgasDROP(DataDROP):
             )
         return ngasIO
 
-    # @track_current_drop
-    # def setCompleted(self):
-    #     """
-    #     Override this method in order to get the size of the drop set once it is completed.
-    #     """
-    #     # TODO: This implementation is almost a verbatim copy of the base class'
-    #     # so we should look into merging them
-    #     status = self.status
-    #     if status == DROPStates.CANCELLED:
-    #         return
-    #     elif status == DROPStates.SKIPPED:
-    #         self._fire("dropCompleted", status=status)
-    #         return
-    #     elif status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-    #         raise Exception(
-    #             "%r not in INITIALIZED or WRITING state (%s), cannot setComplete()"
-    #             % (self, self.status)
-    #         )
+    @track_current_drop
+    def setCompleted(self):
+        """
+        Override this method in order to get the size of the drop set once it is completed.
+        """
+        # TODO: This implementation is almost a verbatim copy of the base class'
+        # so we should look into merging them
+        status = self.status
+        if status == DROPStates.CANCELLED:
+            return
+        elif status == DROPStates.SKIPPED:
+            self._fire("dropCompleted", status=status)
+            return
+        elif status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
+            raise Exception(
+                "%r not in INITIALIZED or WRITING state (%s), cannot setComplete()"
+                % (self, self.status)
+            )
 
         self._closeWriters()
 

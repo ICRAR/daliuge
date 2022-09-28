@@ -662,8 +662,9 @@ def replace_named_ports(
     oitems:dict,
     inport_names:dict,
     outport_names:dict,
-    appArgs:dict, argumentPrefix="--",
-    separator=" "
+    appArgs:dict,
+    argumentPrefix:str = "--",
+    separator:str = " "
     ) -> Tuple[str, str]:
     """
     Function attempts to identify component arguments that match port names.
