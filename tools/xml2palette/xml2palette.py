@@ -100,6 +100,8 @@ class Language(Enum):
     PYTHON = 2
 
 def get_args():
+    """
+    """
     # inputdir, tag, outputfile, allow_missing_eagle_start, module_path, language
     parser = argparse.ArgumentParser(epilog=__doc__,
                             formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -130,7 +132,10 @@ def get_args():
     language = Language.C if args.c else Language.PYTHON
     return args.idir, args.tag, args.ofile, args.parse_all, args.module, language
 
-def check_environment_variables():
+def check_environment_variables() -> bool:
+    """
+    Check environment variables and set them if required.
+    """
     required_environment_variables = ["PROJECT_NAME", "PROJECT_VERSION", "GIT_REPO"]
 
     for variable in required_environment_variables:
@@ -150,7 +155,7 @@ def check_environment_variables():
     return True
 
 
-def modify_doxygen_options(doxygen_filename, options):
+def modify_doxygen_options(doxygen_filename:str, options:dict):
     with open(doxygen_filename, "r") as dfile:
         contents = dfile.readlines()
 
@@ -399,7 +404,12 @@ def parse_description(value):
 
 
 # NOTE: color, x, y, width, height are not specified in palette node, they will be set by the EAGLE importer
-def create_palette_node_from_params(params):
+def create_palette_node_from_params(params) -> dict:
+    """
+    Construct the palette from the parameter structure
+
+    TODO: Should split this up into individual parts
+    """
     text = ""
     description = ""
     comp_description = ""
@@ -417,8 +427,9 @@ def create_palette_node_from_params(params):
 
     # process the params
     for param in params:
-        if isinstance(param, list):
-            logger.error("param has wrong type %s", param)
+        if not isinstance(param, dict):
+            logger.error("param %s has wrong type %s. Ignoring!", param, type(param))
+            continue
         key = param["key"]
         direction = param["direction"]
         value = param["value"]
@@ -558,7 +569,10 @@ def create_palette_node_from_params(params):
     )
 
 
-def write_palette_json(outputfile, nodes, gitrepo, version):
+def write_palette_json(outputfile:str, nodes:list, gitrepo:str, version:str):
+    """
+    Write palette to file
+    """
     palette = {
         "modelData": {
             "fileType": "palette",
@@ -578,7 +592,12 @@ def write_palette_json(outputfile, nodes, gitrepo, version):
         json.dump(palette, outfile, indent=4)
 
 
-def process_compounddef(compounddef):
+def process_compounddef(compounddef:dict) -> list:
+    """
+    Interpret the a compound definition.
+
+    TODO: This should be split up.
+    """
     result = []
     found_eagle_start = False
 
@@ -682,9 +701,11 @@ def process_compounddef(compounddef):
         result.append({"key": key, "direction": direction, "value": value})
     return result
 
-def _process_child(child, language):
+def _process_child(child:dict, language:str) -> dict:
     """
+    Private function to process a child element.
     """
+    members = []
     member = {"params":[]}
     # logger.debug("Initialized child member: %s", member)
 
@@ -714,14 +735,17 @@ def _process_child(child, language):
         for grandchild in child:
             gmember = _process_grandchild(grandchild, member, hold_name, language)
             if not gmember:
-                logger.debug("No g_members found: %s", gmember)
+                logger.debug("No gmembers found: %s", gmember)
                 return None
             elif gmember != member:
                 # logger.debug("Adding grandchild members: %s", gmember)
                 member["params"].extend(gmember["params"])
-    return member
+                members.append(gmember)
+    return members
 
 def _process_grandchild(gchild, omember, hold_name, language):
+    """
+    """
     member = {"params": []}
     # logger.debug("Initialized grandchild member: %s", member)
 
@@ -754,7 +778,7 @@ def _process_grandchild(gchild, omember, hold_name, language):
                 logger.debug("Adding ggchild members: %s", gg_member)
                 member["params"].extend(gg_member["params"])
 
-        # skip function if it begins with an underscore
+        # skip function if it begins with a single underscore, but keep __init__ and __call__
         if func_path.find('._') >=0 or\
             (func_name.startswith('_') and func_name not in ["__init__", "__call__"]):
             logger.debug("Skipping %s.%s starts with underscore", func_path, func_name)
