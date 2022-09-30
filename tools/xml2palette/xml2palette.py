@@ -591,6 +591,179 @@ def write_palette_json(outputfile:str, nodes:list, gitrepo:str, version:str):
     with open(outputfile, "w") as outfile:
         json.dump(palette, outfile, indent=4)
 
+class greatgrandchild():
+    
+    def __init__(self, 
+        ggchild:dict = {}, 
+        func_name:str = "Unknown",
+        return_type:str = "Unknown")-> dict:
+
+        self.func_path = ""
+        self.func_name = func_name
+        self.return_type = return_type
+        if ggchild:
+            self.member = self._process_greatgrandchild(ggchild)
+        else:
+            self.member = {"params": []}
+
+    def process_greatgrandchild(self, ggchild):
+        """
+        Process Greatgrandchild
+
+        Returns:
+            member dict
+        """
+
+        logger.debug("Initialized ggchild member: %s", self.member)
+        logger.debug("greatgrandchild element: %s", ggchild.tag)
+        if ggchild.tag == "name":
+            self.func_name = ggchild.text if self.func_name == "Unknown" else self.func_name
+            self.member["params"].append({"key": "text", "direction": None, "value": self.func_name})
+        if ggchild.tag == "detaileddescription":
+            if len(ggchild) > 0 and len(ggchild[0]) > 0 and ggchild[0][0].text != None:
+
+                # get detailed description text
+                dd = ggchild[0][0].text
+
+                # check if a return type exists in the detailed description
+                hasReturn = dd.rfind(":return:") != -1 or dd.rfind(":returns:") != -1
+
+                # get return type, if it exists
+                if hasReturn:
+                    return_part = dd[dd.rfind(":return:")+8:].strip().replace('\n', ' ')
+                    output_port_name = "output"
+                    logger.debug("Add output port:" + str(output_port_name) + "/" + str(self.return_type) + "/" + str(return_part))
+                    self.member["params"].append({"key": str(output_port_name), "direction": "out", "value": str(output_port_name) + "//" + str(return_type) + "/OutputPort/readwrite//False/False/" + str(return_part) })
+
+                # get first part of description, up until when the param are mentioned
+                description = dd[:dd.find(":param")].strip()
+
+                # find the list of param names and descriptions in the <detaileddescription> tag
+                params = parse_params(dd)
+
+                # use the params above
+                for p in params:
+                    set_param_description(p[0], p[1], self.member["params"])
+
+                self.member["params"].append({"key": "description", "direction": None, "value": description})
+        if ggchild.tag == "param":
+            value_type = ""
+            name = ""
+            default_value = ""
+
+            for gggchild in ggchild:
+                if gggchild.tag == "type":
+                    value_type = gggchild.text
+                    if value_type not in VALUE_TYPES.values():
+                        value_type = f"Object.{value_type}"
+                    # also look at children with ref tag
+                    for ggggchild in gggchild:
+                        if ggggchild.tag == "ref":
+                            value_type = ggggchild.text
+                if gggchild.tag == "declname":
+                    name = gggchild.text
+                if gggchild.tag == "defname":
+                    name = gggchild.text
+                if gggchild.tag == "defval":
+                    default_value = gggchild.text
+            if str(name) == "self": return None
+            # type recognised?
+            type_recognised = False
+
+            # fix some types
+            if value_type == "bool":
+                value_type = "Boolean"
+                if default_value == "":
+                    default_value = "False"
+                type_recognised = True
+            if value_type == "int":
+                value_type = "Integer"
+                if default_value == "":
+                    default_value = "0"
+                type_recognised = True
+            if value_type == "float":
+                value_type = "Float"
+                if default_value == "":
+                    default_value = "0"
+                type_recognised = True
+            if value_type in ["string", "*" , "**"]:
+                value_type = "String"
+                type_recognised = True
+
+            # try to guess the type based on the default value
+            # TODO: try to parse default_value as JSON to detect JSON types
+            if not type_recognised and default_value != "" and default_value is not None and default_value != "None":
+                #print("name:" + str(name) + " default_value:" + str(default_value))
+                try:
+                    # we'll try to interpret what the type of the default_value is using ast
+                    l = {}
+                    try:
+                        eval(compile(ast.parse(f't = {default_value}'),filename="",mode="exec"), l)
+                        vt = type(l['t'])
+                        if not isinstance(l['t'], type):
+                            default_value = l['t']
+                        else:
+                            vt = str
+                    except NameError:
+                        vt = str
+                    except SyntaxError:
+                        vt = str
+                    
+                    value_type = VALUE_TYPES[vt] if vt in VALUE_TYPES else "String"
+                    if value_type == "String":
+                        # if it is String we need to do a few more tests
+                        try:
+                            val = int(default_value)
+                            value_type = "Integer"
+                            #print("Use Integer")
+                        except TypeError:
+                            if isinstance(default_value, types.BuiltinFunctionType):
+                                value_type = "String"
+                        except:
+                            try:
+                                val = float(default_value)
+                                value_type = "Float"
+                                #print("Use Float")
+                            except:
+                                if default_value.lower() == "true" or default_value.lower() == "false":
+                                    value_type = "Boolean"
+                                    default_value = default_value.lower()
+                                    #print("Use Boolean")
+                                else:
+                                    value_type = "String"
+                                    #print("Use String")
+                except NameError or TypeError:
+                    raise
+
+            # add the param                                           
+            if str(value_type) == "String":
+                default_value = str(default_value).replace("'", "")
+                if default_value.find("/") >=0:
+                    default_value = f'"{default_value}"'
+            logger.debug("adding param: %s",{"key":str(name), "direction":"in", "value":str(name) + "/" + str(default_value) + "/" + str(value_type) + "/ApplicationArgument/readwrite//False/False/"})
+            self.member["params"].append({"key":str(name), "direction":"in", "value":str(name) + "/" + str(default_value) + "/" + str(value_type) + "/ApplicationArgument/readwrite//False/False/"})
+
+        if ggchild.tag == "definition":
+            self.return_type = ggchild.text.strip().split(" ")[0]
+            func_path = ggchild.text.strip().split(" ")[-1]
+            # if func_path.find("._") >=0 and ggchild.text.find('casatasks') >= 0:
+            # skip function if it begins with a single underscore, but keep __init__ and __call__
+            self.member["params"].append({"key": "func_name", "direction": None, "value": "Function Name/" + self.func_name + "/String/ApplicationArgument/readonly//False/True/Python function name"})
+            self.member["params"].append({"key": "input_parser", "direction": None, "value": "Input Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Input port parsing technique"})
+            self.member["params"].append({"key": "output_parser", "direction": None, "value": "Output Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Output port parsing technique"})
+            if func_path.find(".") >=0:
+                self.func_path, self.func_name = func_path.rsplit('.', 1)
+            logger.debug("func_path '%s' for function '%s'", self.func_path, self.func_name)
+
+            if self.func_name in ["__init__", "__call__"]:
+                logger.debug("Using name %s for %s function", self.func_path, self.func_name)
+                self.func_name = self.func_path
+            elif self.func_name.startswith('_') or self.func_path.find("._") >= 0:
+                logger.debug("Skipping %s.%s",self.func_path, self.func_name)
+                self.member = None
+            else:
+                self.func_name = f"{self.func_path}.{self.func_name}"
+            self.return_type = "None" if self.return_type == "def" else self.return_type
 
 def process_compounddef(compounddef:dict) -> list:
     """
@@ -732,15 +905,17 @@ def _process_child(child:dict, language:str) -> dict:
                 member["params"][pkeys[p]]["value"] += f'"{descDict[p]}"'
 
     if child.tag == "sectiondef" and child.get("kind") in ["func", "public-func"]:
+        logger.debug("Processing %d grand children", len(child))
         for grandchild in child:
             gmember = _process_grandchild(grandchild, member, hold_name, language)
-            if not gmember:
-                logger.debug("No gmembers found: %s", gmember)
-                return None
+            if gmember is None:
+                logger.debug("Bailing out of grandchild processing!")
+                continue
             elif gmember != member:
                 # logger.debug("Adding grandchild members: %s", gmember)
                 member["params"].extend(gmember["params"])
                 members.append(gmember)
+        logger.debug("Finished processing grand children")
     return members
 
 def _process_grandchild(gchild, omember, hold_name, language):
@@ -769,185 +944,20 @@ def _process_grandchild(gchild, omember, hold_name, language):
         member["params"].append({"key": "num_cpus", "direction": None, "value": "No. of CPUs/1/Integer/ComponentParameter/readwrite//False/False/Number of CPUs used for this application."})
         member["params"].append({"key": "group_start", "direction": None, "value": "Group start/false/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?"})
 
+        logger.debug("Processing %d great grand children", len(gchild))
+        gg = greatgrandchild()
         for ggchild in gchild:
-            gg_member = _process_greatgrandchild(ggchild, member)
-            if not gg_member:
-                # logger.debug("No ggchild members found: %s", gg_member)
+            gg.process_greatgrandchild(ggchild)
+            if gg.member is None:
+                logger.debug("Bailing out ggchild processing: %s", gg.member)
+                del(gg)
                 return None
-            elif gg_member != member and gg_member["params"] not in [None, []]:
-                logger.debug("Adding ggchild members: %s", gg_member)
-                member["params"].extend(gg_member["params"])
+        if gg.member != member and gg.member["params"] not in [None, []]:
+            member["params"].extend(gg.member["params"])
+            logger.debug("member after adding gg_members: %s", member)
+        logger.debug("Finished processing great grand children")
+        del(gg)
 
-        # skip function if it begins with a single underscore, but keep __init__ and __call__
-        if func_path.find('._') >=0 or\
-            (func_name.startswith('_') and func_name not in ["__init__", "__call__"]):
-            logger.debug("Skipping %s.%s starts with underscore", func_path, func_name)
-            return None
-
-        # skip component if a module_path was specified, and this component is not within it
-        if module_path != "" and not module_path in func_path:
-            logger.debug("Skip " + func_path + ". Doesn't match module path: " + module_path)
-            return None
-    logger.debug("Returning grandchild members: %s", member)
-    return member
-
-def _process_greatgrandchild(ggchild, omember):
-    member = omember
-    member = {"params": []}
-    logger.debug("Initialized ggchild member: %s", member)
-    func_name = "Unknown"
-    logger.debug("greatgrandchild element: %s", ggchild.tag)
-    if ggchild.tag == "name":
-        func_name = ggchild.text if func_name == "Unknown" else func_name
-        member["params"].append({"key": "text", "direction": None, "value": func_name})
-    if ggchild.tag == "detaileddescription":
-        if len(ggchild) > 0 and len(ggchild[0]) > 0 and ggchild[0][0].text != None:
-
-            # get detailed description text
-            dd = ggchild[0][0].text
-
-            # check if a return type exists in the detailed description
-            hasReturn = dd.rfind(":return:") != -1 or dd.rfind(":returns:") != -1
-
-            # get return type, if it exists
-            if hasReturn:
-                return_part = dd[dd.rfind(":return:")+8:].strip().replace('\n', ' ')
-                output_port_name = "output"
-                logger.debug("Add output port:" + str(output_port_name) + "/" + str(return_type) + "/" + str(return_part))
-                member["params"].append({"key": str(output_port_name), "direction": "out", "value": str(output_port_name) + "//" + str(return_type) + "/OutputPort/readwrite//False/False/" + str(return_part) })
-
-            # get first part of description, up until when the param are mentioned
-            description = dd[:dd.find(":param")].strip()
-
-            # find the list of param names and descriptions in the <detaileddescription> tag
-            params = parse_params(dd)
-
-            # use the params above
-            for p in params:
-                set_param_description(p[0], p[1], member["params"])
-
-            member["params"].append({"key": "description", "direction": None, "value": description})
-    if ggchild.tag == "param":
-        value_type = ""
-        name = ""
-        default_value = ""
-
-        for gggchild in ggchild:
-            if gggchild.tag == "type":
-                value_type = gggchild.text
-                if value_type not in VALUE_TYPES.values():
-                    value_type = f"Object.{value_type}"
-                # also look at children with ref tag
-                for ggggchild in gggchild:
-                    if ggggchild.tag == "ref":
-                        value_type = ggggchild.text
-            if gggchild.tag == "declname":
-                name = gggchild.text
-            if gggchild.tag == "defname":
-                name = gggchild.text
-            if gggchild.tag == "defval":
-                default_value = gggchild.text
-        if str(name) == "self": return None
-        # type recognised?
-        type_recognised = False
-
-        # fix some types
-        if value_type == "bool":
-            value_type = "Boolean"
-            if default_value == "":
-                default_value = "False"
-            type_recognised = True
-        if value_type == "int":
-            value_type = "Integer"
-            if default_value == "":
-                default_value = "0"
-            type_recognised = True
-        if value_type == "float":
-            value_type = "Float"
-            if default_value == "":
-                default_value = "0"
-            type_recognised = True
-        if value_type in ["string", "*" , "**"]:
-            value_type = "String"
-            type_recognised = True
-
-        # try to guess the type based on the default value
-        # TODO: try to parse default_value as JSON to detect JSON types
-        if not type_recognised and default_value != "" and default_value is not None and default_value != "None":
-            #print("name:" + str(name) + " default_value:" + str(default_value))
-            try:
-                # we'll try to interpret what the type of the default_value is using ast
-                l = {}
-                try:
-                    eval(compile(ast.parse(f't = {default_value}'),filename="",mode="exec"), l)
-                    vt = type(l['t'])
-                    if not isinstance(l['t'], type):
-                        default_value = l['t']
-                    else:
-                        vt = str
-                except NameError:
-                    vt = str
-                except SyntaxError:
-                    vt = str
-                
-                value_type = VALUE_TYPES[vt] if vt in VALUE_TYPES else "String"
-                if value_type == "String":
-                    # if it is String we need to do a few more tests
-                    try:
-                        val = int(default_value)
-                        value_type = "Integer"
-                        #print("Use Integer")
-                    except TypeError:
-                        if isinstance(default_value, types.BuiltinFunctionType):
-                            value_type = "String"
-                    except:
-                        try:
-                            val = float(default_value)
-                            value_type = "Float"
-                            #print("Use Float")
-                        except:
-                            if default_value.lower() == "true" or default_value.lower() == "false":
-                                value_type = "Boolean"
-                                default_value = default_value.lower()
-                                #print("Use Boolean")
-                            else:
-                                value_type = "String"
-                                #print("Use String")
-            except NameError or TypeError:
-                raise
-
-        # add the param                                           
-        if str(value_type) == "String":
-            default_value = str(default_value).replace("'", "")
-            if default_value.find("/") >=0:
-                default_value = f'"{default_value}"'
-        logger.debug("adding param: %s",{"key":str(name), "direction":"in", "value":str(name) + "/" + str(default_value) + "/" + str(value_type) + "/ApplicationArgument/readwrite//False/False/"})
-        member["params"].append({"key":str(name), "direction":"in", "value":str(name) + "/" + str(default_value) + "/" + str(value_type) + "/ApplicationArgument/readwrite//False/False/"})
-
-    if ggchild.tag == "definition":
-        return_type = ggchild.text.strip().split(" ")[0]
-        func_path = ggchild.text.strip().split(" ")[-1]
-        # if func_path.find("._") >=0 and ggchild.text.find('casatasks') >= 0:
-        if func_path.find(".") >=0:
-            func_path = func_path.split('.')
-            func_path, func_name = '.'.join(func_path[:-1]), func_path[-1]
-        if func_path.find('._') >= 0:
-            logger.debug("Skipping " + func_path + " contains underscore")
-            return None
-        logger.debug("Using name '%s' for function %s", func_path, func_name)
-
-        # aparams
-        if func_name in ["__init__", "__call__"]:
-            logger.debug("Found %s for %s", func_name, func_path)
-            func_name = func_path
-        else:
-            func_name = f"{func_path}.{func_name}"
-        member["params"].append({"key": "func_name", "direction": None, "value": "Function Name/" + func_name + "/String/ApplicationArgument/readonly//False/True/Python function name"})
-        member["params"].append({"key": "input_parser", "direction": None, "value": "Input Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Input port parsing technique"})
-        member["params"].append({"key": "output_parser", "direction": None, "value": "Output Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Output port parsing technique"})
-
-        return_type = "None" if return_type == "def" else return_type
-    logger.debug("Returning gg_members %s", member)
     return member
 
 def process_compounddef_default(compounddef, language):
@@ -957,12 +967,10 @@ def process_compounddef_default(compounddef, language):
     for child in compounddef:
         logger.debug("Handling child: %s",child)
         cmember = _process_child(child, language)
-        logger.debug("Member content: %s", cmember)
-        if cmember not in [None, []] and cmember["params"] != []:
+        if cmember not in [None, []]:
             result.append(cmember)
         else:
             continue
-    logger.debug("Result for child: %s",result)
     return result
 
 
@@ -1228,10 +1236,14 @@ if __name__ == "__main__":
         else: # not eagle node
             logger.debug("Handling compound: %s",compounddef)
             functions = process_compounddef_default(compounddef, language)
+            functions = functions[0] if len(functions) > 0 else functions
+            logger.debug("Number of functions in compound: %d", len(functions))
             for f in functions:
-                logger.debug("Number of functions in compound: %d", len(f))
                 f_name = [k["value"] for k in f["params"] if k["key"] == "text"]
                 logger.debug("Function names: %s", f_name)
+                if f_name == ['.Unknown']:
+                    continue
+
                 ns = params_to_nodes(f["params"])
 
                 for n in ns:
