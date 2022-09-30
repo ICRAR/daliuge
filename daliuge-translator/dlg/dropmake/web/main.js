@@ -679,7 +679,7 @@ async function restDeploy() {
     // fetch the PGT from this server
     console.log("sending request to ", pgt_url);
     console.log("graph name:", pgtName);
-    const pgt = await fetch(pgt_url, {
+    let pgt = await fetch(pgt_url, {
         method: 'GET',
     })
         .then(handleFetchErrors)
@@ -687,7 +687,7 @@ async function restDeploy() {
         .catch(function (error) {
             showMessageModal('Error', error + "\nGetting PGT unsuccessful: Unable to continue!");
         });
-
+    pgt = JSON.parse(pgt);
     // This is for a deferred start of daliuge, e.g. on SLURM
     console.log("sending request to ", create_slurm_url);
     var body = [pgtName, pgt]; // we send the name in the body with the pgt
