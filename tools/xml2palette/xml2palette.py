@@ -25,6 +25,8 @@ import ast
 import re
 from enum import Enum
 
+from blockdag import build_block_dag
+
 next_key = -1
 
 # NOTE: not sure if all of these are actually required
@@ -93,6 +95,14 @@ VALUE_TYPES = {
     tuple: "Json"
 }
 
+BLOCKDAG_DATA_FIELDS = [
+    "inputPorts",
+    "outputPorts",
+    "applicationArgs",
+    "category",
+    "fields"
+]
+
 class Language(Enum):
     UNKNOWN = 0
     C = 1
@@ -111,7 +121,7 @@ def get_args():
                         action="store_true")
     parser.add_argument("-r", "--recursive", help="Traverse sub-directories",
                         action="store_true")
-    parser.add_argument("-s", "--parse_all", 
+    parser.add_argument("-s", "--parse_all",
         help="Try to parse non DAliuGE compliant functions and methods",
         action="store_true")
     parser.add_argument("-v", "--verbose", help="increase output verbosity",
@@ -411,8 +421,6 @@ def create_palette_node_from_params(params):
     outputLocalPorts = []
     fields = []
     applicationArgs = []
-    gitrepo = os.environ.get("GIT_REPO")
-    version = os.environ.get("PROJECT_VERSION")
 
     # process the params
     for param in params:
@@ -549,13 +557,20 @@ def create_palette_node_from_params(params):
             "outputAppFields": [],
             "fields": fields,
             "applicationArgs": applicationArgs,
-            "git_url": gitrepo,
-            "sha": version,
+            "repositoryUrl": gitrepo,
+            "commitHash": version,
+            "paletteDownloadUrl": "",
+            "dataHash": "",
         },
     )
 
 
-def write_palette_json(outputfile, nodes, gitrepo, version):
+def write_palette_json(outputfile, nodes, gitrepo, version, block_dag):
+    # add hashes from block_dag to the nodes
+    for i in range(len(nodes)):
+        nodes[i]['dataHash'] = block_dag[i]['data_hash'];
+
+    # create the palette object
     palette = {
         "modelData": {
             "fileType": "palette",
@@ -564,13 +579,16 @@ def write_palette_json(outputfile, nodes, gitrepo, version):
             "repo": "ICRAR/EAGLE_test_repo",
             "readonly": True,
             "filePath": outputfile,
-            "sha": version,
-            "git_url": gitrepo,
+            "repositoryUrl": gitrepo,
+            "commitHash": version,
+            "downloadUrl": "",
+            "signature": block_dag['signature'],
         },
         "nodeDataArray": nodes,
         "linkDataArray": [],
     }
 
+    # write palette to file
     with open(outputfile, "w") as outfile:
         json.dump(palette, outfile, indent=4)
 
@@ -689,7 +707,7 @@ def process_compounddef_default(compounddef, language):
         if child.tag == "compoundname":
             if child.text.find('casatasks:') == 0:
                 casa_mode = True
-                hold_name = child.text.split('::')[1]  
+                hold_name = child.text.split('::')[1]
             else:
                 casa_mode = False
                 hold_name = "Unknown"
@@ -822,7 +840,7 @@ def process_compounddef_default(compounddef, language):
                                         vt = str
                                     except SyntaxError:
                                         vt = str
-                                    
+
                                     value_type = VALUE_TYPES[vt] if vt in VALUE_TYPES else "String"
                                     if value_type == "String":
                                         # if it is String we need to do a few more tests
@@ -848,7 +866,7 @@ def process_compounddef_default(compounddef, language):
 
                             # TODO: change
                             # add the param
-                                            
+
                             if str(value_type) == "String":
                                 default_value = str(default_value).replace("'", "")
                                 if default_value.find("/") >=0:
@@ -883,7 +901,7 @@ def process_compounddef_default(compounddef, language):
                         continue
                     # logging.debug("Appending members: %s", member)
                     result.append(member)
-    
+
     return result
 
 
@@ -937,10 +955,12 @@ def create_construct_node(node_type, node):
         + " component.",
         "fields": [],
         "applicationArgs": [],
-        "git_url": gitrepo,
+        "repositoryUrl": gitrepo,
+        "commitHash": version,
+        "paletteDownloadUrl": "",
+        "dataHash": "",
         "key": get_next_key(),
         "precious": False,
-        "sha": version,
         "streaming": False,
         "text": node_type + "/" + node["text"],
     }
@@ -1031,7 +1051,7 @@ def parseCasaDocs(dStr:str) -> dict:
     paramsList = dList[start_ind:end_ind]
     paramsSidx = [idx+1 for idx, p in enumerate(paramsList) if len(p) > 0 and p[0] != ' ']
     paramsEidx = paramsSidx[1:] + [len(paramsList) - 1]
-    paramFirstLine = [(p.strip().split(' ',1)[0], p.strip().split(' ',1)[1].strip()) 
+    paramFirstLine = [(p.strip().split(' ',1)[0], p.strip().split(' ',1)[1].strip())
         for p in paramsList if len(p) > 0 and p[0] != ' ']
     paramNames = [p[0] for p in paramFirstLine]
     paramDocs  = [p[1].strip() for p in paramFirstLine]
@@ -1161,9 +1181,14 @@ if __name__ == "__main__":
                     if not alreadyPresent:
                         nodes.append(n)
 
+    # add signature for whole palette using BlockDAG
+    vertices = {}
+    for i in range(len(nodes)):
+        vertices[i] = nodes[i]
+    block_dag = build_block_dag(vertices, [], data_fields=BLOCKDAG_DATA_FIELDS)
 
     # write the output json file
-    write_palette_json(outputfile, nodes, gitrepo, version)
+    write_palette_json(outputfile, nodes, gitrepo, version, block_dag)
     logging.info("Wrote " + str(len(nodes)) + " component(s)")
 
     # cleanup the output directory
