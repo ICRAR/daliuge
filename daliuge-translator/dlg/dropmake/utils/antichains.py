@@ -81,7 +81,6 @@ def _get_pi_solution(split_graph):
     for ed in split_graph.edges(data=True):
         Cxy = int(ed[2].get("capacity", sys.maxsize))
         Axy = int(ed[2]["weight"])
-        logger.debug(f"Found capacity and weight: {Axy}, {Cxy}")
         if Axy == 0 and Cxy > 0:
             H.add_edge(ed[0], ed[1], capacity=Cxy, weight=Axy)
 

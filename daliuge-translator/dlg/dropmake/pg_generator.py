@@ -28,38 +28,11 @@ which will then be deployed and monitored by the Physical Graph Manager
 if __name__ == "__main__":
     __package__ = "dlg.dropmake"
 
-import collections
-import datetime
 import json
 import logging
 import string
 import time
-from collections import defaultdict
-from itertools import product
-from typing import ValuesView
 
-import networkx as nx
-import numpy as np
-
-from .scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
-from .utils.bash_parameter import BashCommand
-from ..common import dropdict
-from ..common import Categories, DropType
-from .dm_utils import (
-    LG_APPREF,
-    getNodesKeyDict,
-    get_lg_ver_type,
-    convert_construct,
-    convert_fields,
-    convert_mkn,
-    getAppRefInputs,
-    LG_VER_EAGLE,
-    LG_VER_EAGLE_CONVERTED,
-)
-from .utils.bash_parameter import BashCommand
-from ..common import Categories
-from ..common import STORAGE_TYPES, APP_DROP_TYPES
-from ..common import dropdict
 from dlg.dropmake.lg import LG, GraphException
 from dlg.dropmake.pgt import PGT
 from dlg.dropmake.pgtp import MetisPGTP, MySarkarPGTP, MinNumPartsPGTP, PSOPGTP
@@ -267,9 +240,10 @@ def resource_map(pgt, nodes, num_islands=1, co_host_dim=True):
     if type(pgt[0]) is str:
         pgt = pgt[1]  # remove the graph name TODO: we may want to retain that
     for drop_spec in pgt:
-        nidx = int(drop_spec["node"][1:])  # skip '#'
-        drop_spec["node"] = nm_list[nidx]
-        iidx = int(drop_spec["island"][1:])  # skip '#'
-        drop_spec["island"] = dim_list[iidx]
+        if drop_spec != {}:
+            nidx = int(drop_spec["node"][1:])  # skip '#'
+            drop_spec["node"] = nm_list[nidx]
+            iidx = int(drop_spec["island"][1:])  # skip '#'
+            drop_spec["island"] = dim_list[iidx]
 
     return pgt  # now it's a PG
