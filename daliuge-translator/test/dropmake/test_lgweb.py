@@ -146,7 +146,7 @@ class TestLGWeb(unittest.TestCase):
         # good!
         c._get_json("/pgt_jsonbody?pgt_name=logical_graphs/chiles_simple1_pgt.graph")
 
-    def test_get_pgt_post(self):
+    def test_get_pgt_post(self, algo="metis"):
 
         c = RestClient("localhost", lgweb_port, timeout=10)
 
@@ -160,7 +160,7 @@ class TestLGWeb(unittest.TestCase):
 
         # add 'correct' data to the form
         form_data = {
-            "algo": "metis",
+            "algo": algo,
             "lg_name": "metis.graph",
             "json_data": json_data,
             "num_islands": 0,
@@ -245,6 +245,26 @@ class TestLGWeb(unittest.TestCase):
             )
         except RestClientException as e:
             self.fail(e)
+
+    def _test_translate_alg(self, algorithm):
+        self.test_get_pgt_post(algo=algorithm)
+
+    @unittest.skip("None translation is not an option in EAGLE and does not work.")
+    def test_none_translation(self):
+        self._test_translate_alg(algorithm='none')
+
+    def test_metis_translation(self):
+        self._test_translate_alg(algorithm='metis')
+
+    def test_sarkar_translation(self):
+        self._test_translate_alg(algorithm='mysarkar')
+
+    def test_min_num_parts_translation(self):
+        self._test_translate_alg(algorithm='min_num_parts')
+
+    def test_pso_translation(self):
+        self._test_translate_alg(algorithm='pso')
+
 
     def test_pg_viewerer(self):
 
