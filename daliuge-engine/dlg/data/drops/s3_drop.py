@@ -43,15 +43,16 @@ from dlg.droputils import identify_named_ports, check_ports_dict
 
 ##
 # @brief S3
-# @details A 'bucket' object available on Amazon's Simple Storage Service (S3)
+# @details An object available in a bucket on a S3 (Simple Storage Service) object storage platform
 # @par EAGLE_START
 # @param category S3
 # @param tag daliuge
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
 # @param bucket Bucket//String/ComponentParameter/readwrite//False/False/The S3 Bucket
-# @param object_name Object Name//String/ComponentParameter/readwrite//False/False/The S3 Object
-# @param profile_name Profile Name//String/ComponentParameter/readwrite//False/False/The S3 Profile
+# @param object_name Object Name//String/ComponentParameter/readwrite//False/False/The S3 object key
+# @param profile_name Profile Name//String/ComponentParameter/readwrite//False/False/The S3 profile name
+# @param endpoint_url Endpoint URL//String/ComponentParameter/readwrite//False/False/The URL exposing the S3 REST API
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
