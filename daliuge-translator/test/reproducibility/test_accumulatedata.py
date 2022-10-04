@@ -237,7 +237,7 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_data_accumulate(self):
         """
@@ -247,7 +247,7 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_group_accumulate(self):
         """
@@ -303,7 +303,7 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_data_accumulate(self):
         """
@@ -313,7 +313,7 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_group_accumulate(self):
         """
@@ -370,7 +370,7 @@ class AccumulatePGRerunData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
-            self.assertEqual(expected, dict(hash_data.keys()))
+            self.assertEqual(expected, dict(hash_data[self.rmode.name].keys()))
 
     def test_data_accumulate(self):
         """
@@ -380,7 +380,7 @@ class AccumulatePGRerunData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pg_drop_data(drop[1])
-            self.assertEqual(expected, dict(hash_data.keys()))
+            self.assertEqual(expected, dict(hash_data[self.rmode.name].keys()))
 
     def test_group_accumulate(self):
         """
@@ -632,7 +632,7 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_data_accumulate(self):
         """
@@ -642,7 +642,7 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_group_accumulate(self):
         """
@@ -699,7 +699,7 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_data_accumulate(self):
         """
@@ -709,7 +709,7 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_group_accumulate(self):
         """
@@ -766,7 +766,7 @@ class AccumulatePGRepeatData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
-            self.assertEqual(expected, dict(hash_data.keys()))
+            self.assertEqual(expected, dict(hash_data[self.rmode.name].keys()))
 
     def test_data_accumulate(self):
         """
@@ -776,7 +776,7 @@ class AccumulatePGRepeatData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pg_drop_data(drop[1])
-            self.assertEqual(expected, dict(hash_data.keys()))
+            self.assertEqual(expected, dict(hash_data[self.rmode.name].keys()))
 
     def test_group_accumulate(self):
         """
@@ -1028,7 +1028,7 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_data_accumulate(self):
         """
@@ -1038,7 +1038,7 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_group_accumulate(self):
         """
@@ -1095,7 +1095,7 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(sorted(expected), sorted(list(hash_data.keys())))
+            self.assertEqual(sorted(expected), sorted(list(hash_data[self.rmode.name].keys())))
 
     def test_data_accumulate(self):
         """
@@ -1105,7 +1105,7 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(sorted(expected), sorted(list(hash_data.keys())))
+            self.assertEqual(sorted(expected), sorted(list(hash_data[self.rmode.name].keys())))
 
     def test_group_accumulate(self):
         """
@@ -1162,7 +1162,7 @@ class AccumulatePGRecomputeData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_data_accumulate(self):
         """
@@ -1172,7 +1172,7 @@ class AccumulatePGRecomputeData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pg_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_group_accumulate(self):
         """
@@ -1231,6 +1231,7 @@ class AccumulateLGTReproduceData(unittest.TestCase):
         """
         for drop in enumerate(self.lgt_node_data):
             hash_data = accumulate_lgt_drop_data(drop[1], self.rmode)
+            print(hash_data)
             self.assertEqual(self.expected, hash_data.keys())
 
     def test_data_accumulate(self):
@@ -1398,7 +1399,7 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_data_accumulate(self):
         """
@@ -1408,7 +1409,7 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_group_accumulate(self):
         """
@@ -1465,7 +1466,7 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(expected, list(hash_data.keys()))
+            self.assertEqual(expected, list(hash_data[self.rmode.name].keys()))
 
     def test_data_accumulate(self):
         """
@@ -1475,7 +1476,7 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(expected, list(hash_data.keys()))
+            self.assertEqual(expected, list(hash_data[self.rmode.name].keys()))
 
     def test_group_accumulate(self):
         """
@@ -1532,7 +1533,7 @@ class AccumulatePGReproduceData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
-            self.assertEqual(expected, dict(hash_data.keys()))
+            self.assertEqual(expected, dict(hash_data[self.rmode.name].keys()))
 
     def test_data_accumulate(self):
         """
@@ -1542,7 +1543,7 @@ class AccumulatePGReproduceData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pg_drop_data(drop[1])
-            self.assertEqual(expected, dict(hash_data.keys()))
+            self.assertEqual(expected, dict(hash_data[self.rmode.name].keys()))
 
     def test_group_accumulate(self):
         """
@@ -1720,7 +1721,7 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_data_accumulate(self):
         """
@@ -1730,7 +1731,7 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_group_accumulate(self):
         """
@@ -1787,7 +1788,7 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_data_accumulate(self):
         """
@@ -1797,7 +1798,7 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_group_accumulate(self):
         """
@@ -1854,7 +1855,7 @@ class AccumulatePGReplicateSciData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
-            self.assertEqual(expected, dict(hash_data.keys()))
+            self.assertEqual(expected, dict(hash_data[self.rmode.name].keys()))
 
     def test_data_accumulate(self):
         """
@@ -1864,7 +1865,7 @@ class AccumulatePGReplicateSciData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
-            self.assertEqual(expected, dict(hash_data.keys()))
+            self.assertEqual(expected, dict(hash_data[self.rmode.name].keys()))
 
     def test_group_accumulate(self):
         """
@@ -2116,7 +2117,7 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_data_accumulate(self):
         """
@@ -2126,7 +2127,7 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_group_accumulate(self):
         """
@@ -2182,7 +2183,7 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_data_accumulate(self):
         """
@@ -2192,7 +2193,7 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_group_accumulate(self):
         """
@@ -2249,7 +2250,7 @@ class AccumulatePGReplicateCompData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_data_accumulate(self):
         """
@@ -2259,7 +2260,7 @@ class AccumulatePGReplicateCompData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_group_accumulate(self):
         """
@@ -2511,7 +2512,7 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_data_accumulate(self):
         """
@@ -2521,7 +2522,7 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_group_accumulate(self):
         """
@@ -2578,7 +2579,7 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_data_accumulate(self):
         """
@@ -2588,7 +2589,7 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(expected, hash_data.keys())
+            self.assertEqual(expected, hash_data[self.rmode.name].keys())
 
     def test_group_accumulate(self):
         """
@@ -2645,7 +2646,7 @@ class AccumulatePGReplicateTotalData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pg_drop_data(drop[1])
-            self.assertEqual(expected, dict(hash_data.keys()))
+            self.assertEqual(expected, dict(hash_data[self.rmode.name].keys()))
 
     def test_data_accumulate(self):
         """
@@ -2655,7 +2656,7 @@ class AccumulatePGReplicateTotalData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pg_drop_data(drop[1])
-            self.assertEqual(expected, dict(hash_data.keys()))
+            self.assertEqual(expected, dict(hash_data[self.rmode.name].keys()))
 
     def test_group_accumulate(self):
         """
