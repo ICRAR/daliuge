@@ -28,38 +28,11 @@ which will then be deployed and monitored by the Physical Graph Manager
 if __name__ == "__main__":
     __package__ = "dlg.dropmake"
 
-import collections
-import datetime
 import json
 import logging
 import string
 import time
-from collections import defaultdict
-from itertools import product
-from typing import ValuesView
 
-import networkx as nx
-import numpy as np
-
-from .scheduler import MySarkarScheduler, DAGUtil, MinNumPartsScheduler, PSOScheduler
-from .utils.bash_parameter import BashCommand
-from ..common import dropdict
-from ..common import Categories, DropType
-from .dm_utils import (
-    LG_APPREF,
-    getNodesKeyDict,
-    get_lg_ver_type,
-    convert_construct,
-    convert_fields,
-    convert_mkn,
-    getAppRefInputs,
-    LG_VER_EAGLE,
-    LG_VER_EAGLE_CONVERTED,
-)
-from .utils.bash_parameter import BashCommand
-from ..common import Categories
-from ..common import STORAGE_TYPES, APP_DROP_TYPES
-from ..common import dropdict
 from dlg.dropmake.lg import LG, GraphException
 from dlg.dropmake.pgt import PGT
 from dlg.dropmake.pgtp import MetisPGTP, MySarkarPGTP, MinNumPartsPGTP, PSOPGTP
