@@ -33,7 +33,7 @@ from dlg.translator.tool_commands import dlg_fill, dlg_unroll, dlg_partition, dl
 
 
 def _run_full_workflow(
-    rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
+        rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
 ):
     lgt = workflow_loc + "/" + workflow + ".graph"
     lgr = scratch_loc + "/" + workflow + "_" + str(rmode.value) + "LG.graph"
@@ -84,14 +84,23 @@ class IntegrationNothingTest(unittest.TestCase):
             scratch_loc=self.temp_out.name,
         )
 
-        for filename in ['LG', 'PGS', 'PGT', 'PG']:
+        for filename in ['PGS', 'PGT', 'PG']:
             pgr = (
-                self.temp_out.name + "/" + graph_name + "_" + str(rmode.value) + f"{filename}.graph"
+                    self.temp_out.name + "/" + graph_name + "_" + str(
+                rmode.value) + f"{filename}.graph"
             )
             graph = _read_graph(pgr)
-            self.assertNotIn("reprodata", graph)
             for drop in graph:
-                self.assertNotIn("reprodata", drop)
+                if "reprodata" in drop:
+                    self.assertIn("0", drop["reprodata"]["rmode"])
+                else:
+                    self.assertIn("rmode", drop)
+        lgr = (
+                self.temp_out.name + "/" + graph_name + "_" + str(rmode.value) + "LG.graph"
+        )
+        graph = _read_graph(lgr)
+        for drop in graph["nodeDataArray"]:
+            self.assertIn("reprodata", drop)
 
 
 class IntegrationHelloWorldTest(unittest.TestCase):
@@ -145,7 +154,7 @@ class IntegrationHelloWorldTest(unittest.TestCase):
                     + "_"
                     + str(rmode.value)
                     + "PG.graph"
-                )[-1]["signature"]
+                )[-1][rmode.name]["signature"]
 
     def test_integration_rerun(self):
         """
@@ -492,6 +501,7 @@ class IntegrationSplitRmode(unittest.TestCase):
 
     temp_out = tempfile.TemporaryDirectory("out")
 
+    @unittest.skip("Individual rmodes not yet supported again (needs re-working)")
     def test_split_lgt(self):
         """
         Tests a simple 'hello world' graph (HelloWorldBash) where a single component has
@@ -513,7 +523,7 @@ class IntegrationSplitRmode(unittest.TestCase):
             scratch_loc=self.temp_out.name,
         )
         pgr = (
-            self.temp_out.name + "/" + graph_name + "_" + str(rmode.value) + "PG.graph"
+                self.temp_out.name + "/" + graph_name + "_" + str(rmode.value) + "PG.graph"
         )
         _run_full_workflow(
             rmode=rmode,
@@ -522,12 +532,12 @@ class IntegrationSplitRmode(unittest.TestCase):
             scratch_loc=self.temp_out.name,
         )
         pgr_2 = (
-            self.temp_out.name
-            + "/"
-            + control_graph_name
-            + "_"
-            + str(rmode.value)
-            + "PG.graph"
+                self.temp_out.name
+                + "/"
+                + control_graph_name
+                + "_"
+                + str(rmode.value)
+                + "PG.graph"
         )
 
         graph = _read_graph(pgr)

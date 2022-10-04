@@ -63,7 +63,7 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(len(leaves) == 1)
 
     def test_twostart(self):
@@ -76,9 +76,9 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         parenthashes = list(
-            lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(
             len(leaves) == 1
@@ -96,7 +96,7 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_twolines(self):
@@ -108,7 +108,7 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_data_fan(self):
@@ -118,13 +118,13 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataFan.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthash1 = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         parenthash2 = list(
-            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][3]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
@@ -135,10 +135,10 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataFunnel.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][3]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -150,10 +150,10 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -164,10 +164,10 @@ class LogicalBlockdagRerunTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/computationSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -188,7 +188,7 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(len(leaves) == 1)
 
     def test_twostart(self):
@@ -201,9 +201,9 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         parenthashes = list(
-            lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(
             len(leaves) == 1
@@ -221,7 +221,7 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_twolines(self):
@@ -233,7 +233,7 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_data_fan(self):
@@ -243,13 +243,13 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataFan.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthash1 = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         parenthash2 = list(
-            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][3]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
@@ -260,10 +260,10 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataFunnel.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][3]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -275,10 +275,10 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -289,10 +289,10 @@ class LogicalBlockdagRepeatTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/computationSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -313,7 +313,7 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(len(leaves) == 1)
 
     def test_twostart(self):
@@ -326,9 +326,9 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         parenthashes = list(
-            lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(
             len(leaves) == 1
@@ -346,7 +346,7 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_twolines(self):
@@ -358,7 +358,7 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_data_fan(self):
@@ -368,13 +368,13 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataFan.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthash1 = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         parenthash2 = list(
-            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][3]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
@@ -385,10 +385,10 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataFunnel.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][3]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -400,10 +400,10 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -414,10 +414,10 @@ class LogicalBlockdagRecomputeTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/computationSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -439,7 +439,7 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(len(leaves) == 1)
 
     def test_twostart(self):
@@ -452,13 +452,13 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         parenthashes = list(
-            lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
-        sig0 = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
-        sig1 = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
-        sig2 = lgt["nodeDataArray"][2]["reprodata"]["lg_blockhash"]
+        sig0 = lgt["nodeDataArray"][0]["reprodata"][self.rmode.name]["lg_blockhash"]
+        sig1 = lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_blockhash"]
+        sig2 = lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_blockhash"]
         self.assertTrue(
             len(leaves) == 1
             and len(parenthashes) == 0
@@ -476,7 +476,7 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_twolines(self):
@@ -488,7 +488,7 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_data_fan(self):
@@ -498,13 +498,13 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataFan.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthash1 = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         parenthash2 = list(
-            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][3]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
@@ -515,13 +515,13 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataFunnel.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
+        lg_build_blockdag(lgt, self.rmode)
         sourcehashes = [
-            lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"],
-            lgt["nodeDataArray"][2]["reprodata"]["lg_blockhash"],
+            lgt["nodeDataArray"][0]["reprodata"][self.rmode.name]["lg_blockhash"],
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_blockhash"],
         ]
         parenthashes = list(
-            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][3]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehashes == parenthashes and len(parenthashes) == 2)
 
@@ -533,10 +533,10 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -547,9 +547,9 @@ class LogicalBlockdagReproduceTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/computationSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
+        lg_build_blockdag(lgt, self.rmode)
         parenthashes = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         # Not going to get anything out of this, since reproduce only cares about terminal data.
         self.assertEqual(0, len(parenthashes))
@@ -571,7 +571,7 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(len(leaves) == 1)
 
     def test_twostart(self):
@@ -584,9 +584,9 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         parenthashes = list(
-            lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(
             len(leaves) == 1
@@ -604,7 +604,7 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_twolines(self):
@@ -616,7 +616,7 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_data_fan(self):
@@ -626,13 +626,13 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataFan.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthash1 = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         parenthash2 = list(
-            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][3]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
@@ -643,10 +643,10 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataFunnel.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][3]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -658,10 +658,10 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -672,10 +672,10 @@ class LogicalBlockdagReplicateSciTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/computationSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -696,7 +696,7 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(len(leaves) == 1)
 
     def test_twostart(self):
@@ -709,9 +709,9 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         parenthashes = list(
-            lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(
             len(leaves) == 1
@@ -729,7 +729,7 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_twolines(self):
@@ -741,7 +741,7 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_data_fan(self):
@@ -751,13 +751,13 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataFan.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthash1 = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         parenthash2 = list(
-            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][3]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
@@ -768,10 +768,10 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataFunnel.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][3]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -783,10 +783,10 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -797,10 +797,10 @@ class LogicalBlockdagReplicateCompTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/computationSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -821,7 +821,7 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(len(leaves) == 1)
 
     def test_twostart(self):
@@ -834,9 +834,9 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         parenthashes = list(
-            lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(
             len(leaves) == 1
@@ -854,7 +854,7 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_twolines(self):
@@ -866,7 +866,7 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(leaves[0] == leaves[1])
 
     def test_data_fan(self):
@@ -876,13 +876,13 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataFan.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthash1 = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         parenthash2 = list(
-            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][3]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
 
@@ -893,10 +893,10 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataFunnel.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][3]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -908,10 +908,10 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][0]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -922,10 +922,10 @@ class LogicalBlockdagReplicateTOTALTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/computationSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
-        sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+        lg_build_blockdag(lgt, self.rmode)
+        sourcehash = lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_blockhash"]
         parenthashes = list(
-            lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+            lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
         )
         self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
 
@@ -945,7 +945,7 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         self.assertTrue(len(leaves) == 1)
 
     def test_twostart(self):
@@ -958,10 +958,10 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
         if self.rmode != ReproducibilityFlags.NOTHING:
             parenthashes = list(
-                lgt["nodeDataArray"][1]["reprodata"]["lg_parenthashes"].values()
+                lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
             )
             self.assertTrue(len(leaves) == 1)
             if self.rmode != ReproducibilityFlags.REPRODUCE:
@@ -970,7 +970,7 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
             else:
                 self.assertTrue(len(parenthashes) == 0)
         else:
-            self.assertNotIn("reprodata", lgt["nodeDataArray"][1])
+            self.assertIn("reprodata", lgt["nodeDataArray"][1])
 
     def test_twoend(self):
         """
@@ -982,8 +982,8 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
-        self.assertFalse(leaves[0] == leaves[1])
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
+        self.assertTrue(leaves[0] == leaves[1])
 
     def test_twolines(self):
         """
@@ -994,8 +994,8 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        leaves = lg_build_blockdag(lgt)[0]
-        self.assertTrue(leaves[0] != leaves[1])
+        leaves = lg_build_blockdag(lgt, self.rmode)[0]
+        self.assertTrue(leaves[0] == leaves[1])
 
     def test_data_fan(self):
         """
@@ -1004,17 +1004,17 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataFan.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
+        lg_build_blockdag(lgt, self.rmode)
         if self.rmode == ReproducibilityFlags.NOTHING:
             for drop in lgt["nodeDataArray"]:
-                self.assertNotIn("reprodata", drop)
+                self.assertIn("reprodata", drop)
         else:
-            sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+            sourcehash = lgt["nodeDataArray"][0]["reprodata"][self.rmode.name]["lg_blockhash"]
             parenthash1 = list(
-                lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+                lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
             )
             parenthash2 = list(
-                lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+                lgt["nodeDataArray"][3]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
             )
             self.assertTrue(parenthash1 == parenthash2)
             if self.rmode != ReproducibilityFlags.REPRODUCE:
@@ -1027,14 +1027,14 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataFunnel.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
+        lg_build_blockdag(lgt, self.rmode)
         if self.rmode == ReproducibilityFlags.NOTHING:
             for drop in lgt["nodeDataArray"]:
-                self.assertNotIn("reprodata", drop)
+                self.assertIn("reprodata", drop)
         else:
-            sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+            sourcehash = lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_blockhash"]
             parenthashes = list(
-                lgt["nodeDataArray"][3]["reprodata"]["lg_parenthashes"].values()
+                lgt["nodeDataArray"][3]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
             )
             if self.rmode == ReproducibilityFlags.REPRODUCE:
                 self.assertTrue(len(parenthashes) == 2)
@@ -1049,14 +1049,14 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/dataSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
+        lg_build_blockdag(lgt, self.rmode)
         if self.rmode == ReproducibilityFlags.NOTHING:
             for drop in lgt["nodeDataArray"]:
-                self.assertNotIn("reprodata", drop)
+                self.assertIn("reprodata", drop)
         else:
-            sourcehash = lgt["nodeDataArray"][0]["reprodata"]["lg_blockhash"]
+            sourcehash = lgt["nodeDataArray"][0]["reprodata"][self.rmode.name]["lg_blockhash"]
             parenthashes = list(
-                lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+                lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
             )
             self.assertTrue(len(parenthashes) == 1)
             if self.rmode != ReproducibilityFlags.REPRODUCE:
@@ -1071,14 +1071,14 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/computationSandwich.graph")
         init_lgt_repro_data(lgt, rmode=str(self.rmode.value))
         init_lg_repro_data(lgt)
-        lg_build_blockdag(lgt)
+        lg_build_blockdag(lgt, self.rmode)
         if self.rmode == ReproducibilityFlags.NOTHING:
             for drop in lgt["nodeDataArray"]:
-                self.assertNotIn("reprodata", drop)
+                self.assertIn("reprodata", drop)
         else:
-            sourcehash = lgt["nodeDataArray"][1]["reprodata"]["lg_blockhash"]
+            sourcehash = lgt["nodeDataArray"][1]["reprodata"][self.rmode.name]["lg_blockhash"]
             parenthashes = list(
-                lgt["nodeDataArray"][2]["reprodata"]["lg_parenthashes"].values()
+                lgt["nodeDataArray"][2]["reprodata"][self.rmode.name]["lg_parenthashes"].values()
             )
             if self.rmode != ReproducibilityFlags.REPRODUCE:
                 self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1)
