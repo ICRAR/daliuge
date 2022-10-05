@@ -633,7 +633,7 @@ class greatgrandchild():
                     return_part = dd[dd.rfind(":return:")+8:].strip().replace('\n', ' ')
                     output_port_name = "output"
                     logger.debug("Add output port:" + str(output_port_name) + "/" + str(self.return_type) + "/" + str(return_part))
-                    self.member["params"].append({"key": str(output_port_name), "direction": "out", "value": str(output_port_name) + "//" + str(return_type) + "/OutputPort/readwrite//False/False/" + str(return_part) })
+                    self.member["params"].append({"key": str(output_port_name), "direction": "out", "value": str(output_port_name) + "//" + str(self.return_type) + "/OutputPort/readwrite//False/False/" + str(return_part) })
 
                 # get first part of description, up until when the param are mentioned
                 description = dd[:dd.find(":param")].strip()
@@ -748,9 +748,6 @@ class greatgrandchild():
             func_path = ggchild.text.strip().split(" ")[-1]
             # if func_path.find("._") >=0 and ggchild.text.find('casatasks') >= 0:
             # skip function if it begins with a single underscore, but keep __init__ and __call__
-            self.member["params"].append({"key": "func_name", "direction": None, "value": "Function Name/" + self.func_name + "/String/ApplicationArgument/readonly//False/True/Python function name"})
-            self.member["params"].append({"key": "input_parser", "direction": None, "value": "Input Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Input port parsing technique"})
-            self.member["params"].append({"key": "output_parser", "direction": None, "value": "Output Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Output port parsing technique"})
             if func_path.find(".") >=0:
                 self.func_path, self.func_name = func_path.rsplit('.', 1)
             logger.debug("func_path '%s' for function '%s'", self.func_path, self.func_name)
@@ -761,9 +758,12 @@ class greatgrandchild():
             elif self.func_name.startswith('_') or self.func_path.find("._") >= 0:
                 logger.debug("Skipping %s.%s",self.func_path, self.func_name)
                 self.member = None
-            else:
-                self.func_name = f"{self.func_path}.{self.func_name}"
+            # else:
+                # self.func_name = f"{self.func_path}.{self.func_name}"
             self.return_type = "None" if self.return_type == "def" else self.return_type
+            self.member["params"].append({"key": "func_name", "direction": None, "value": "Function Name/" + f"{self.func_path}.{self.func_name}" + "/String/ApplicationArgument/readonly//False/True/Python function name"})
+            self.member["params"].append({"key": "input_parser", "direction": None, "value": "Input Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Input port parsing technique"})
+            self.member["params"].append({"key": "output_parser", "direction": None, "value": "Output Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Output port parsing technique"})
 
 def process_compounddef(compounddef:dict) -> list:
     """
