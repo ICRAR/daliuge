@@ -101,6 +101,15 @@ class Language(Enum):
 
 def get_args():
     """
+    Deal with the command line arguments
+
+    :returns (
+                args.idir:str, 
+                args.tag:str, 
+                args.ofile:str, 
+                args.parse_all:bool, 
+                args.module:str,
+                language)
     """
     # inputdir, tag, outputfile, allow_missing_eagle_start, module_path, language
     parser = argparse.ArgumentParser(epilog=__doc__,
@@ -134,7 +143,9 @@ def get_args():
 
 def check_environment_variables() -> bool:
     """
-    Check environment variables and set them if required.
+    Check environment variables and set them if not defined.
+
+    :returns True
     """
     required_environment_variables = ["PROJECT_NAME", "PROJECT_VERSION", "GIT_REPO"]
 
@@ -156,6 +167,12 @@ def check_environment_variables() -> bool:
 
 
 def modify_doxygen_options(doxygen_filename:str, options:dict):
+    """
+    Updates default doxygen config for this task
+
+    :param doxygen_filename: str, the file name of the config file
+    :param options: dict, dictionary of the options to be modified
+    """
     with open(doxygen_filename, "r") as dfile:
         contents = dfile.readlines()
 
@@ -181,6 +198,9 @@ def modify_doxygen_options(doxygen_filename:str, options:dict):
 
 
 def get_next_key():
+    """
+    TODO: This needs to disappear!!
+    """
     global next_key
 
     next_key -= 1
@@ -189,6 +209,13 @@ def get_next_key():
 
 
 def create_uuid(seed):
+    """
+    Simple helper function to create a UUID
+
+    :param seed: [int| str| bytes| bytearray], seed value, if not provided timestamp is used
+
+    :returns uuid
+    """
     rnd = random.Random()
     rnd.seed(seed)
 
@@ -198,7 +225,27 @@ def create_uuid(seed):
 
 def create_port(
     component_name, internal_name, external_name, direction, event, value_type, description
-):
+    ) -> dict:
+    """
+    Create the dict data structure used to describe a port
+
+    :param component_name: str, the name of the component
+    :param internal_name: str, the identifier name for the component
+    :param external_name: str, the display name of the component
+    :param direction: str, ['input'|'output']
+    :param event: str, if event this string contains event name
+    :param value_type: str, type of the port (not limited to standard data types)
+    :param description: str, short description of the port
+
+    :return dict: {
+                    'Id':uuid, 
+                    'IdText': internal_name,
+                    'text': external_name,
+                    'event': event,
+                    'type': value_type,
+                    'description': description
+                    }
+    """
     seed = {
         "component_name": component_name,
         "internal_name": internal_name,
@@ -222,6 +269,14 @@ def create_port(
 
 
 def find_field_by_name(fields, name):
+    """
+    Get a field from a list of field dictionaries.
+
+    :param fields: list, list of field dictionaries
+    :param name: str, field name to check for
+
+    :returns field dict if found, else None
+    """
     for field in fields:
         if field["name"] == name:
             return field
@@ -229,6 +284,13 @@ def find_field_by_name(fields, name):
 
 
 def check_required_fields_for_category(text, fields, category):
+    """
+    Check if fields have mandatory content and alert with <text> if not.
+
+    :param text: str, the text to be used for the alert
+    :param fields: list of field dicts to be checked
+    :param category: str, category to be checked
+    """
     if category in [
         "DynlibApp",
         "PythonApp",
@@ -281,8 +343,15 @@ def check_required_fields_for_category(text, fields, category):
 
 
 def create_field(
-    internal_name, external_name, value, value_type, field_type, access, options, precious, positional, description
-):
+    internal_name, external_name, value, value_type, field_type, access,
+    options, precious, positional, description
+    ):
+    """
+    TODO: field should be a class
+    Just create a dict using the values provided
+
+    :returns field: dict
+    """
     return {
         "text": external_name,
         "name": internal_name,
@@ -299,13 +368,29 @@ def create_field(
 
 
 def alert_if_missing(text, fields, internal_name):
+    """
+    Produce a warning message using <text> if a field with <internal_name>
+    does not exist.
+
+    :param text: str, message text to be used
+    :param fields: list of dicts of field definitions
+    :param internal_name: str, identifier name of field to check
+    """
     if find_field_by_name(fields, internal_name) is None:
         logger.warning(text + " component missing " + internal_name + " cparam")
         pass
 
 
-def parse_value(text, value):
-    # parse the value as csv (delimited by '/')
+def parse_value(text:str, value:str) -> tuple:
+    """
+    Parse the value from the EAGLE compatible @param string. These are csv strings
+    delimited by '/'
+
+    :param text: str, text to be used for messages.
+    :param value: str, the csv string to be parsed
+
+    :returns tuple of parsed values
+    """
     parts = []
     reader = csv.reader([value], delimiter="/", quotechar='"')
     for row in reader:
@@ -388,7 +473,15 @@ def parse_value(text, value):
     return (external_name, default_value, value_type, field_type, access, options, precious, positional, description)
 
 
-def parse_description(value):
+def parse_description(value:str) -> str:
+    """
+    Parse the description from a csv string.
+
+    :param value: str, csv string to be parsed
+
+    :returns: str, last item from parsed csv
+
+    """
     # parse the value as csv (delimited by '/')
     parts = []
     reader = csv.reader([value], delimiter="/", quotechar='"')
@@ -406,9 +499,15 @@ def parse_description(value):
 # NOTE: color, x, y, width, height are not specified in palette node, they will be set by the EAGLE importer
 def create_palette_node_from_params(params) -> dict:
     """
-    Construct the palette from the parameter structure
+    Construct the palette node entry from the parameter structure
 
     TODO: Should split this up into individual parts
+
+    :param params: list of dicts of params
+
+    :returns tuple of dicts
+
+    TODO: This should return a node object 
     """
     text = ""
     description = ""
@@ -571,7 +670,14 @@ def create_palette_node_from_params(params) -> dict:
 
 def write_palette_json(outputfile:str, nodes:list, gitrepo:str, version:str):
     """
-    Write palette to file
+    Construct palette header and Write nodes to the output file
+
+    :param outputfile: str, the name of the output file
+    :param nodes: list of nodes
+    :param gitrepo: str, the gitrepo URL
+    :param version: str: version string to be used
+
+
     """
     palette = {
         "modelData": {
@@ -592,11 +698,21 @@ def write_palette_json(outputfile:str, nodes:list, gitrepo:str, version:str):
         json.dump(palette, outfile, indent=4)
 
 class greatgrandchild():
+    """
+    The great-grandchild class performs most of the parsing to construct the
+    palette nodes from the doxygen XML.
+    """
     
     def __init__(self, 
         ggchild:dict = {}, 
         func_name:str = "Unknown",
         return_type:str = "Unknown")-> dict:
+        """
+        Constructor of object. The object can be 
+
+        :param ggchild: dict if existing reat-grandchild
+        :param func_name: the function name 
+        """
 
         self.func_path = ""
         self.func_name = func_name
@@ -606,12 +722,11 @@ class greatgrandchild():
         else:
             self.member = {"params": []}
 
-    def process_greatgrandchild(self, ggchild):
+    def process_greatgrandchild(self, ggchild: dict) -> dict:
         """
         Process Greatgrandchild
 
-        Returns:
-            member dict
+        :returns member dict
         """
 
         logger.debug("Initialized ggchild member: %s", self.member)
@@ -907,7 +1022,7 @@ def _process_child(child:dict, language:str) -> dict:
     if child.tag == "sectiondef" and child.get("kind") in ["func", "public-func"]:
         logger.debug("Processing %d grand children", len(child))
         for grandchild in child:
-            gmember = _process_grandchild(grandchild, member, hold_name, language)
+            gmember = _process_grandchild(grandchild, hold_name, language)
             if gmember is None:
                 logger.debug("Bailing out of grandchild processing!")
                 continue
@@ -918,8 +1033,9 @@ def _process_child(child:dict, language:str) -> dict:
         logger.debug("Finished processing grand children")
     return members
 
-def _process_grandchild(gchild, omember, hold_name, language):
+def _process_grandchild(gchild, hold_name, language):
     """
+    Private function to process a grandchild element
     """
     member = {"params": []}
     # logger.debug("Initialized grandchild member: %s", member)
@@ -961,6 +1077,9 @@ def _process_grandchild(gchild, omember, hold_name, language):
     return member
 
 def process_compounddef_default(compounddef, language):
+    """
+    Process the all the sub-elements in a compund definition
+    """
     result = []
 
     # check memberdefs
@@ -975,10 +1094,22 @@ def process_compounddef_default(compounddef, language):
 
 
 # find the list of param names and descriptions in the <detaileddescription> tag
-def parse_params(detailed_description):
+def parse_params(detailed_description: str) -> list:
+    """
+    Parse parameter descirptions found in a detailed_description tag. This assumes
+    rEST style documentation.
+
+    :param detailed_description: str, the content of the description XML node
+
+    :returns list of parameter descriptions
+    """
     result = []
 
-    detailed_description = detailed_description.split("Returns:")[0]
+    if detailed_description.find("Returns:") >= 0:
+        split_str = "Returns:"
+    elif detailed_description.find(":returns") >= 0:
+        split_str = ":returns"
+    detailed_description = detailed_description.split(split_str)[0]
     param_lines = [p.replace('\n','').strip() for p in detailed_description.split(":param")[1:]]
     # param_lines = [line.strip() for line in detailed_description]
 
@@ -1000,7 +1131,16 @@ def parse_params(detailed_description):
 
 
 # find the named aparam in params, and update the description
-def set_param_description(name, description, params):
+def set_param_description(name:str, description:str, params:dict):
+    """
+    Set the description field of a of parameter <name> from parameters.
+
+    :param name: str, the parameter to set the description
+    :param descrition: str, the description to add to the existing string
+    :param params: dict, the set of parameters
+
+    TODO: This should really be part of a class
+    """
     #print("set_param_description():" + str(name) + ":" + str(description))
     for p in params:
         if p["key"] == name:
@@ -1008,7 +1148,15 @@ def set_param_description(name, description, params):
             break
 
 
-def create_construct_node(node_type, node):
+def create_construct_node(node_type:str, node:dict)-> dict:
+    """
+    Create the special node for constructs.
+
+    :param node_type: str, the type of the construct node to be created
+    :param node: dict, node description (TODO: should be a node object)
+
+    :returns dict of the construct node
+    """
 
     # check that type is in the list of known types
     if type not in KNOWN_CONSTRUCT_TYPES:
@@ -1055,7 +1203,14 @@ def create_construct_node(node_type, node):
     return construct_node
 
 
-def params_to_nodes(params):
+def params_to_nodes(params:dict)-> list:
+    """
+    Generate a list of nodes from the params found
+
+    :param params: dict, the parameters to be converted
+    
+    :returns list of node dictionaries
+    """
     # logger.debug("params_to_nodes: %s", params)
     result = []
 
@@ -1132,6 +1287,11 @@ def parseCasaDocs(dStr:str) -> dict:
 
 
 if __name__ == "__main__":
+    """
+    Main method
+
+    TODO: Should be split up
+    """
     logger = logging.getLogger(__name__)
     FORMAT = "%(asctime)s [  %(filename)s  ] [  %(lineno)s  ] [  %(funcName)s  ] || %(message)s ||"
     logging.basicConfig(
