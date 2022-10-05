@@ -223,14 +223,23 @@ class PyFuncApp(BarrierAppDROP):
         Multiple options exist and some are here for compatibility.
         """
         logger.debug(f"Starting evaluation of func_defaults: {self.func_defaults}")
+        self.arguments = inspect.getfullargspec(self.f)
+        self.argsig = inspect.signature(self.f) # TODO: Move to using signature only
+        logger.debug("Function inspection revealed %s", self.arguments)
+        logger.debug("Function sigature: %s", self.argsig)
+        self.fn_nargs = len(self.arguments.args)
+        self.fn_npos = sum([1 if p.kind == p.POSITIONAL_OR_KEYWORD and p.default != inspect._empty\
+                else 0 for p in self.argsig.parameters.values()])
+        self.arguments_defaults = [v.default if v.default != inspect._empty else None for v in self.argsig.parameters.values()]
+        logger.debug("Got signature for function %s %s", self.f, self.argsig)
+        self.fn_defaults = self.arguments_defaults
+ 
+        self.fn_ndef = len(self.arguments_defaults) if self.arguments_defaults else 0
         if (
             isinstance(self.func_defaults, dict)
             and len(self.func_defaults) > 0
             and list(self.func_defaults.keys()) == ["kwargs", "args"]
         ):
-            # we bring everything back to just kwargs, because positional args are messy
-            # NOTE: This means that positional ONLY arguments won't work, but those are not used
-            # too often.
             for arg in self.func_defaults["args"]:
                 self.func_defaults["kwargs"][arg] = arg
                 self.func_defaults = self.func_defaults["kwargs"]
@@ -254,36 +263,41 @@ class PyFuncApp(BarrierAppDROP):
 
         # set the function defaults from introspection
         if self.arguments:
-            self.fn_npos = len(self.arguments.args) - self.fn_ndef
-            self.fn_defaults = {
-                name: None for name in self.arguments.args[: self.fn_npos]
-            }
-            logger.debug(f"initialized fn_defaults with {self.fn_defaults}")
-            # deal with args and kwargs
-            kwargs = (
-                dict(zip(self.arguments.args[self.fn_npos :], self.arguments.defaults))
-                if self.arguments.defaults
-                else {}
-            )
-            self.fn_defaults.update(kwargs)
-            logger.debug(f"fn_defaults updated with {kwargs}")
-            # deal with kwonlyargs
-            if self.arguments.kwonlydefaults:
-                kwonlyargs = dict(
-                    zip(self.arguments.kwonlyargs, self.arguments.kwonlydefaults)
-                )
-                self.fn_defaults.update(kwonlyargs)
-                logger.debug(f"fn_defaults updated with {kwonlyargs}")
-
+            # self.fn_npos = len(self.arguments.args) - self.fn_ndef
             self.fn_posargs = self.arguments.args[
                 : self.fn_npos
             ]  # positional arg names
+            try:
+                raise TypeError
+            except TypeError:
+                logger.error("Problem getting signature for function %s", self.f)
+                self.fn_defaults = {
+                    name: None for name in self.arguments.args[: self.fn_npos]
+                }
+                logger.debug(f"initialized fn_defaults with {self.fn_defaults}")
+                # deal with args and kwargs
+                kwargs = (
+                    dict(zip(self.arguments.args[self.fn_npos :], self.arguments.defaults))
+                    if self.arguments.defaults
+                    else {}
+                )
+                self.fn_defaults.update(kwargs)
+                logger.debug(f"fn_defaults updated with {kwargs}")
+                # deal with kwonlyargs
+                if self.arguments.kwonlydefaults:
+                    kwonlyargs = dict(
+                        zip(self.arguments.kwonlyargs, self.arguments.kwonlydefaults)
+                    )
+                    self.fn_defaults.update(kwonlyargs)
+                    logger.debug(f"fn_defaults updated with {kwonlyargs}")
+                
+
 
     def initialize(self, **kwargs):
         """
         The initialization of a function component is mainly dealing with mapping
         inputs and provided applicationArgs to the function arguments. All of this
-        should be driven by matching names, but currently that is not being done.
+        should be driven by matching names.
         """
         BarrierAppDROP.initialize(self, **kwargs)
 
@@ -295,6 +309,7 @@ class PyFuncApp(BarrierAppDROP):
         self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
 
         self.func_code = self._popArg(kwargs, "func_code", None)
+        self.arguments_defaults = []
 
         # check for function definition arguments in applicationArgs
         self.func_def_keywords = [
@@ -349,20 +364,10 @@ class PyFuncApp(BarrierAppDROP):
         if isinstance(self.func_arg_mapping, str):
             self.func_arg_mapping = ast.literal_eval(self.func_arg_mapping)
 
-        self.arguments = inspect.getfullargspec(self.f)
-        logger.debug(f"Function inspection revealed {self.arguments}")
-        # we now expose the 'self' and 'cls' arguments to allow calling
-        # object member methods to be called in a graph.
-        # if self.arguments.args.count('self'):
-        #     self.arguments.args.remove('self')
-        # if self.arguments.args.count('cls'): # class methods
-        #     self.arguments.args.remove('cls')
-        self.fn_nargs = len(self.arguments.args)
-        self.fn_ndef = len(self.arguments.defaults) if self.arguments.defaults else 0
         self._init_func_defaults()
         logger.info(f"Args summary for '{self.func_name}':")
         logger.info(f"Args: {self.arguments.args}")
-        logger.info(f"Args defaults:  {self.arguments.defaults}")
+        logger.info(f"Args defaults:  {self.fn_defaults}")
         logger.info(f"Args positional: {self.arguments.args[:self.fn_npos]}")
         logger.info(f"Args keyword: {self.arguments.args[self.fn_npos:]}")
         logger.info(f"Args supplied:  {self.func_defaults}")
@@ -370,7 +375,7 @@ class PyFuncApp(BarrierAppDROP):
         logger.info(f"VarKwds allowed:  {self.arguments.varkw}")
 
         # Mapping between argument name and input drop uids
-        logger.debug(f"Input mapping: {self.func_arg_mapping}")
+        logger.debug(f"Input mapping provided: {self.func_arg_mapping}")
         self._recompute_data = {}
 
     def run(self):
@@ -461,8 +466,8 @@ class PyFuncApp(BarrierAppDROP):
         pargs = []
         # Initialize pargs dictionary and update with provided argument values
         pargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
-        if self.arguments.defaults:
-            keyargsDict = dict(zip(keyargs, self.arguments.defaults[self.fn_npos:]))
+        if self.arguments_defaults:
+            keyargsDict = dict(zip(keyargs, self.arguments_defaults[self.fn_npos:]))
         else:
             keyargsDict = {}
         logger.debug("Initial keyargs dictionary: %s", keyargsDict)
