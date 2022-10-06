@@ -6,6 +6,10 @@ information required to use functions and components in graphs.
 For more information please refer to the documentation
 https://daliuge.readthedocs.io/en/latest/development/app_development/eagle_app_integration.html#automatic-eagle-palette-generation
 
+
+TODO: This whole tool needs re-factoring into separate class files 
+(compound, child, grandchild, grandgrandchild, node, param, pluggable parsers)
+Should also be made separate sub-repo with proper installation and entry point.
 """
 
 import argparse
@@ -390,6 +394,8 @@ def parse_value(text:str, value:str) -> tuple:
     :param value: str, the csv string to be parsed
 
     :returns tuple of parsed values
+
+    TODO: This parser should be pluggable
     """
     parts = []
     reader = csv.reader([value], delimiter="/", quotechar='"')
@@ -475,12 +481,13 @@ def parse_value(text:str, value:str) -> tuple:
 
 def parse_description(value:str) -> str:
     """
-    Parse the description from a csv string.
+    Parse the description from a EAGLE formatted csv string.
 
     :param value: str, csv string to be parsed
 
     :returns: str, last item from parsed csv
 
+    TODO: This parser should be pluggable
     """
     # parse the value as csv (delimited by '/')
     parts = []
@@ -882,7 +889,7 @@ class greatgrandchild():
 
 def process_compounddef(compounddef:dict) -> list:
     """
-    Interpret the a compound definition.
+    Interpret a compound definition element.
 
     TODO: This should be split up.
     """
