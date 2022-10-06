@@ -335,7 +335,7 @@ class AbstractDROP(EventFirer):
                 "but they are mutually exclusive" % (self,),
             )
 
-        self._expireAfterUse = self._popArg(kwargs, "expireAfterUse", False)
+        self._expireAfterUse = self._popArg(kwargs, "expireAfterUse", True)
         self._expirationDate = -1
         if not self._expireAfterUse:
             lifespan = float(self._popArg(kwargs, "lifespan", -1))
