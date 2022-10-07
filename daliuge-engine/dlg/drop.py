@@ -335,7 +335,7 @@ class AbstractDROP(EventFirer):
                 "but they are mutually exclusive" % (self,),
             )
 
-        self._expireAfterUse = self._popArg(kwargs, "expireAfterUse", True)
+        self._expireAfterUse = self._popArg(kwargs, "expireAfterUse", False)
         self._expirationDate = -1
         if not self._expireAfterUse:
             lifespan = float(self._popArg(kwargs, "lifespan", -1))
@@ -348,8 +348,11 @@ class AbstractDROP(EventFirer):
         if "expectedSize" in kwargs and kwargs["expectedSize"]:
             self._expectedSize = int(kwargs.pop("expectedSize"))
 
-        # All DROPs are precious unless stated otherwise; used for replication
-        self._precious = self._popArg(kwargs, "precious", True)
+        # No DROP is precious unless stated otherwise; used for replication
+        self._precious = self._popArg(kwargs, "precious", False)
+        # If DROP is precious, don't expire (delete) it.
+        if self._precious:
+            self._expireAfterUse = False
 
         # Useful to have access to all EAGLE parameters without a prior knowledge
         self._parameters = dict(kwargs)
