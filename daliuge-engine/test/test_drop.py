@@ -32,6 +32,7 @@ import tempfile
 import subprocess
 
 from dlg import droputils
+from dlg.apps.bash_shell_app import BashShellApp
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 from dlg.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
 from dlg.drop import (
@@ -1225,7 +1226,7 @@ class BranchAppDropTestsBase(object):
 
         # all_uids is ['de', 'fg', 'hi', ....]
         all_uids = [
-            string.ascii_lowercase[i : i + 2]
+            string.ascii_lowercase[i: i + 2]
             for i in range(3, len(string.ascii_lowercase), 2)
         ]
 
@@ -1243,7 +1244,7 @@ class BranchAppDropTestsBase(object):
             last_false = y
 
         with DROPWaiterCtx(
-            self, [last_true, last_false], 2, [DROPStates.COMPLETED, DROPStates.SKIPPED]
+                self, [last_true, last_false], 2, [DROPStates.COMPLETED, DROPStates.SKIPPED]
         ):
             a.async_execute()
 
@@ -1286,7 +1287,7 @@ class BranchAppDropTestsBase(object):
 
         # all_uids is ['de', 'fg', 'hi', ....]
         all_uids = [
-            string.ascii_lowercase[i : i + 3]
+            string.ascii_lowercase[i: i + 3]
             for i in range(4, len(string.ascii_lowercase), 3)
         ]
 
@@ -1297,7 +1298,7 @@ class BranchAppDropTestsBase(object):
             last_first_output = y
 
         with DROPWaiterCtx(
-            self, all_drops, 2, [DROPStates.COMPLETED, DROPStates.SKIPPED]
+                self, all_drops, 2, [DROPStates.COMPLETED, DROPStates.SKIPPED]
         ):
             a.async_execute()
 
@@ -1328,6 +1329,35 @@ class BranchAppDropTestsWithMemoryDrop(BranchAppDropTestsBase, unittest.TestCase
 
 class BranchAppDropTestsWithFileDrop(BranchAppDropTestsBase, unittest.TestCase):
     DataDropType = FileDROP
+
+
+class NamedParameterSubstituteTests(unittest.TestCase):
+    """
+    These tests are intended to assert that drops are able to receive parameters from input drops
+    """
+
+    def test_filedrop_filename(self):
+        a = FileDROP("a", "a")
+        b = BashShellApp("b", "b", command="cp %i0 %o0")
+        c = FileDROP("c", "c", filepath="b")
+        b.addInput(a)
+        b.addOutput(c)
+        with droputils.DROPWaiterCtx(self, c):
+            a.write(b'test.out')
+            a.setCompleted()
+        self.assertEqual("test.out", c.filepath)
+
+    def test_docker_portnum(self):
+        self.fail()
+
+    def test_pyfunc_argument(self):
+        self.fail()
+
+    def test_python_appclass(self):
+        self.fail()
+
+    def test_bash_arugment(self):
+        self.fail()
 
 
 if __name__ == "__main__":
