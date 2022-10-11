@@ -41,15 +41,19 @@ hostname = "127.0.0.1"
 
 default_repro = {
     "rmode": "1",
-    "lg_blockhash": "x",
-    "pgt_blockhash": "y",
-    "pg_blockhash": "z",
+    "RERUN": {
+        "lg_blockhash": "x",
+        "pgt_blockhash": "y",
+        "pg_blockhash": "z",
+    }
 }
 default_graph_repro = {
     "rmode": "1",
     "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
     "merkleroot": "a",
-    "signature": "b",
+    "RERUN": {
+        "signature": "b",
+    }
 }
 
 
