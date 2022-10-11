@@ -1339,7 +1339,7 @@ class NamedParameterSubstituteTests(unittest.TestCase):
     def test_filedrop_filename(self):
         a = FileDROP("a", "a")
         b = BashShellApp("b", "b", command="cp %i0 %o0")
-        c = FileDROP("c", "c", filepath="b")
+        c = FileDROP("c", "c", filepath="filename", producers={"b": "filename"})
         b.addInput(a)
         b.addOutput(c)
         with droputils.DROPWaiterCtx(self, c):
