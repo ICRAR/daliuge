@@ -33,6 +33,8 @@ import subprocess
 
 from dlg import droputils
 from dlg.apps.bash_shell_app import BashShellApp
+from dlg.apps.dockerapp import DockerApp
+from dlg.apps.pyfunc import PyFuncApp
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 from dlg.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
 from dlg.drop import (
@@ -1339,25 +1341,44 @@ class NamedParameterSubstituteTests(unittest.TestCase):
     def test_filedrop_filename(self):
         a = FileDROP("a", "a")
         b = BashShellApp("b", "b", command="cp %i0 %o0")
-        c = FileDROP("c", "c", filepath="filename", producers={"b": "filename"})
+        c = FileDROP("c", "c", producers=[{"b": "filepath"}])
         b.addInput(a)
         b.addOutput(c)
         with droputils.DROPWaiterCtx(self, c):
-            a.write(b'test.out')
+            a.write(b"test.out")
             a.setCompleted()
         self.assertEqual("test.out", c.filepath)
 
     def test_docker_portnum(self):
-        self.fail()
+        a = InMemoryDROP("a", "a")
+        b = DockerApp("b", "b", inputs=[{"a": "image"}])
+        b.addInput(a)
+        with droputils.DROPWaiterCtx(self, b):
+            a.write(b"dlg:test")
+            a.setCompleted()
+        self.assertEqual("dlg:test", b._image)
 
     def test_pyfunc_argument(self):
-        self.fail()
-
-    def test_python_appclass(self):
-        self.fail()
+        a = InMemoryDROP("a", "a")
+        b = PyFuncApp("b", "b", inputs=[{"a": "pass"}])
+        b.addInput(a)
+        with droputils.DROPWaiterCtx(self, b):
+            a.write(b"dlg.apps.sleepApp")
+            a.setCompleted()
+        self.assertEqual("pass", b.func_name)
 
     def test_bash_arugment(self):
-        self.fail()
+        a = InMemoryDROP("a", "a")
+        c = InMemoryDROP("c", "c")
+        b = BashShellApp("b", "b", command="cp %input_loc %output_loc", inputs=[{"a": "output_loc"}, {"c": "input_loc"}])
+        b.addInput(a)
+        b.addInput(c)
+        with droputils.DROPWaiterCtx(self, b):
+            a.write(b"~/Desktop")
+            c.write(b"/tmp/")
+            a.setCompleted()
+            c.setCompleted()
+        self.assertEqual("cp /tmp/ ~/Desktop", b.command)
 
 
 if __name__ == "__main__":
