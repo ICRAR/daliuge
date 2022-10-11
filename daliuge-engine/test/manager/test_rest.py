@@ -36,15 +36,19 @@ from dlg.restutils import RestClient
 
 default_repro = {
     "rmode": "1",
-    "lg_blockhash": "x",
-    "pgt_blockhash": "y",
-    "pg_blockhash": "z",
+    "RERUN": {
+        "lg_blockhash": "x",
+        "pgt_blockhash": "y",
+        "pg_blockhash": "z",
+    }
 }
 default_graph_repro = {
     "rmode": "1",
     "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
     "merkleroot": "a",
-    "signature": "b",
+    "RERUN": {
+        "signature": "b",
+    }
 }
 
 
@@ -221,7 +225,7 @@ class TestRest(unittest.TestCase):
         c.addGraphSpec(sid, graph_spec)
         c.deploySession(sid, completed_uids=["a"])
         response = c.session_repro_data(sid)
-        self.assertIsNotNone(response["graph"]["a"]["reprodata"]["rg_blockhash"])
+        self.assertIsNotNone(response["graph"]["a"]["reprodata"]["RERUN"]["rg_blockhash"])
         self.assertIsNotNone(response["reprodata"])
         c.destroySession(sid)
         # Test without reprodata
