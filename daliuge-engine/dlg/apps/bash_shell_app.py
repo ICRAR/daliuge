@@ -174,6 +174,7 @@ class BashShellBase(object):
         self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
         self._argumentPrefix = self._popArg(kwargs, "argumentPrefix", "--")
         self._paramValueSeparator = self._popArg(kwargs, "paramValueSeparator", " ")
+        self._finalcmd = ""
 
         if not self.command:
             self.command = self._popArg(kwargs, "command", None)
@@ -250,7 +251,7 @@ class BashShellBase(object):
         logger.debug("Command after wrapping is: %s", cmd)
 
         start = time.time()
-
+        self._finalcmd = cmd
         # Run and wait until it finishes
         process = subprocess.Popen(
             cmd,
