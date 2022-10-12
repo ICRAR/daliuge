@@ -22,20 +22,27 @@
 
 import contextlib
 import io
-import os, unittest
+import os
 import random
 import shutil
 import sqlite3
 import string
+import subprocess
 import sys
 import tempfile
-import subprocess
+import unittest
 
 from dlg import droputils
 from dlg.apps.bash_shell_app import BashShellApp
 from dlg.apps.dockerapp import DockerApp
 from dlg.apps.pyfunc import PyFuncApp
+from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp
 from dlg.common.reproducibility.constants import ReproducibilityFlags
+from dlg.data.drops.directorycontainer import DirectoryContainer
+from dlg.data.drops.file import FileDROP
+from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
+from dlg.data.drops.plasma import PlasmaDROP, PlasmaFlightDROP
+from dlg.data.drops.rdbms import RDBMSDrop
 from dlg.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
 from dlg.drop import (
     AppDROP,
@@ -44,14 +51,8 @@ from dlg.drop import (
     ContainerDROP,
     InputFiredAppDROP,
 )
-from dlg.data.drops.plasma import PlasmaDROP, PlasmaFlightDROP
-from dlg.data.drops.rdbms import RDBMSDrop
-from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
-from dlg.data.drops.directorycontainer import DirectoryContainer
-from dlg.data.drops.file import FileDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
-from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp
 
 try:
     from crc32c import crc32c
@@ -1368,17 +1369,30 @@ class NamedParameterSubstituteTests(unittest.TestCase):
         self.assertEqual("pass", b.func_name)
 
     def test_bash_arugment(self):
-        a = InMemoryDROP("a", "a")
-        c = InMemoryDROP("c", "c")
-        b = BashShellApp("b", "b", command="cp %input_loc %output_loc", inputs=[{"a": "output_loc"}, {"c": "input_loc"}])
+        a = FileDROP("a", "a")
+        c = FileDROP("c", "c")
+        appargs = {'if':
+                       {'text': 'if', 'value': '%i0', 'positional': False, 'precious': False},
+                   'of':
+                       {'text': 'of', 'value': '%o0', 'positional': False, 'precious': False},
+                   'bs':
+                       {'text': 'bs', 'value': 1024, 'positional': False, 'precious': False},
+                   'count':
+                       {'text': 'count', 'value': 10, 'positional': False, 'precious': False}
+                   }
+        b = BashShellApp("b", "b", command="dd", applicationArgs=appargs, inputs=[{'a': 'if'}],
+                         outputs=[{'c': 'of'}])
         b.addInput(a)
-        b.addInput(c)
+        b.addOutput(c)
+        print(f"inputs are {b.inputs}")
         with droputils.DROPWaiterCtx(self, b):
-            a.write(b"~/Desktop")
+            a.write(b"/dev/urandom")
             c.write(b"/tmp/")
             a.setCompleted()
             c.setCompleted()
-        self.assertEqual("cp /tmp/ ~/Desktop", b.command)
+        self.assertEqual(
+            "dd  --if /tmp/daliuge_tfiles/a --of /tmp/daliuge_tfiles/c --bs 1024 --count 10",
+            b._finalcmd[-1])
 
 
 if __name__ == "__main__":
