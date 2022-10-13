@@ -38,7 +38,6 @@ import tempfile
 import threading
 import time
 import types
-import collections
 
 from .. import droputils, utils
 from ..ddap_protocol import AppDROPStates, DROPStates
@@ -46,13 +45,11 @@ from ..drop import BarrierAppDROP, AppDROP
 from ..exceptions import InvalidDropException
 from ..meta import (
     dlg_string_param,
-    dlg_dict_param,
     dlg_component,
     dlg_batch_input,
     dlg_batch_output,
     dlg_streaming_input,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -174,6 +171,8 @@ class BashShellBase(object):
         self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
         self._argumentPrefix = self._popArg(kwargs, "argumentPrefix", "--")
         self._paramValueSeparator = self._popArg(kwargs, "paramValueSeparator", " ")
+        self._keyargs = ""
+        self._pargs = ""
         self._finalcmd = ""
 
         if not self.command:
@@ -186,7 +185,18 @@ class BashShellBase(object):
         self.appArgs = self._applicationArgs
         self._recompute_data = {}
 
-    def _run_bash(self, inputs, outputs, stdin=None, stdout=subprocess.PIPE):
+    def replace_named_ports(self, inputs: dict, outputs: dict):
+        inport_names = self.parameters['inputs'] \
+            if "inputs" in self.parameters else []
+        outport_names = self.parameters['outputs'] \
+            if "outputs" in self.parameters else []
+        self._keyargs, self._pargs = droputils.replace_named_ports(inputs.items(), outputs.items(),
+                                                                   inport_names, outport_names,
+                                                                   self.appArgs,
+                                                                   argumentPrefix=self._argumentPrefix,
+                                                                   separator=self._paramValueSeparator)
+
+    def _run_bash(self, inputs, outputs, parameters, stdin=None, stdout=subprocess.PIPE):
         """
         Runs the given `cmd`. If any `inputs` and/or `outputs` are given
         (dictionaries of uid:drop elements) they are used to replace any placeholder
@@ -199,7 +209,7 @@ class BashShellBase(object):
         output of the process is piped to. If not given it is consumed by this
         method and potentially logged.
         """
-        logger.debug("Parameters found: %s", self.parameters)
+        logger.debug("Parameters found: %s", parameters)
         # we only support passing a path for bash apps
         fsInputs = {uid: i for uid, i in inputs.items() if droputils.has_path(i)}
         fsOutputs = {uid: o for uid, o in outputs.items() if droputils.has_path(o)}
@@ -210,15 +220,7 @@ class BashShellBase(object):
             uid: o for uid, o in outputs.items() if not droputils.has_path(o)
         }
 
-        # deal with named ports
-        inport_names = self.parameters['inputs'] \
-            if "inputs" in self.parameters else []
-        outport_names = self.parameters['outputs'] \
-            if "outputs" in self.parameters else []
-        keyargs, pargs = droputils.replace_named_ports(inputs.items(), outputs.items(), 
-            inport_names, outport_names, self.appArgs, argumentPrefix=self._argumentPrefix, 
-            separator=self._paramValueSeparator)
-        argumentString = f"{' '.join(pargs + keyargs)}"  # add kwargs to end of pargs
+        argumentString = f"{' '.join(self._pargs + self._keyargs)}"  # add kwargs to end of pargs
         # complete command including all additional parameters and optional redirects
         if len(argumentString.strip()) > 0:
             # the _cmdLineArgs would very likely make the command line invalid
@@ -383,8 +385,12 @@ class BashShellApp(BashShellBase, BarrierAppDROP):
         [dlg_streaming_input("text/*")],
     )
 
+    def map_named_ports(self):
+        # deal with named ports
+        self.replace_named_ports(inputs=self._inputs, outputs=self._outputs)
+
     def run(self):
-        self._run_bash(self._inputs, self._outputs)
+        self._run_bash(self._inputs, self._outputs, self.parameters)
 
 
 class StreamingOutputBashApp(BashShellBase, BarrierAppDROP):
@@ -402,11 +408,15 @@ class StreamingOutputBashApp(BashShellBase, BarrierAppDROP):
         [dlg_streaming_input("text/*")],
     )
 
+    def map_named_ports(self):
+        # deal with named ports
+        self.replace_named_ports(inputs=self._inputs, outputs=self._outputs)
+
     def run(self):
         with contextlib.closing(
-            prepare_output_channel(self.node, self.outputs[0])
+                prepare_output_channel(self.node, self.outputs[0])
         ) as outchan:
-            self._run_bash(self._inputs, {}, stdout=outchan)
+            self._run_bash(self._inputs, {}, self.parameters, stdout=outchan)
         logger.debug("Closed output channel")
 
 
@@ -428,9 +438,13 @@ class StreamingInputBashApp(StreamingInputBashAppBase):
         [dlg_streaming_input("text/*")],
     )
 
+    def map_named_ports(self):
+        # deal with named ports
+        self.replace_named_ports(inputs=self._inputs, outputs=self._outputs)
+
     def run(self, data):
         with contextlib.closing(prepare_input_channel(data)) as inchan:
-            self._run_bash({}, self._outputs, stdin=inchan)
+            self._run_bash({}, self._outputs, self.parameters, stdin=inchan)
         logger.debug("Closed input channel")
 
 
@@ -449,11 +463,15 @@ class StreamingInputOutputBashApp(StreamingInputBashAppBase):
         [dlg_streaming_input("text/*")],
     )
 
+    def map_named_ports(self):
+        # deal with named ports
+        self.replace_named_ports(inputs=self._inputs, outputs=self._outputs)
+
     def run(self, data):
         with contextlib.closing(prepare_input_channel(data)) as inchan:
             with contextlib.closing(
-                prepare_output_channel(self.node, self.outputs[0])
+                    prepare_output_channel(self.node, self.outputs[0])
             ) as outchan:
-                self._run_bash({}, {}, stdout=outchan, stdin=inchan)
+                self._run_bash({}, {}, self.parameters, stdout=outchan, stdin=inchan)
             logger.debug("Closed output channel")
         logger.debug("Closed input channel")
