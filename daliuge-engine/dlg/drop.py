@@ -472,6 +472,14 @@ class AbstractDROP(EventFirer):
         method implementation, which is usually the case).
         """
 
+    def map_named_ports(self):
+        """
+        Looks for parameters and ports with the same name, replacing parameter values with those
+        read from discovered matching ports. Should be called after initialization but before
+        execution (in the case of an application) or writing (in the case of a data drop).
+        Can be overwritten with custom logic as necessary.
+        """
+
     def autofill_environment_variables(self):
         """
         Runs through all parameters here, fetching those which match the env-var syntax when
@@ -1320,6 +1328,9 @@ class DataDROP(AbstractDROP):
         if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("No more writing expected")
 
+        if self.status == DROPStates.INITIALIZED:
+            self.map_named_ports()
+
         if not isinstance(data, (bytes, memoryview)):
             raise Exception("Data type not of binary type: %s", type(data).__name__)
 
@@ -1941,6 +1952,7 @@ class InputFiredAppDROP(AppDROP):
         self.execStatus = AppDROPStates.RUNNING
         while tries < self.n_tries:
             try:
+                self.map_named_ports()
                 if hasattr(self, "_tp"):
                     proc = DlgProcess(target=self.run, daemon=True)
                     # see YAN-975 for why this is happening
