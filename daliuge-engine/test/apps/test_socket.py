@@ -48,7 +48,7 @@ class TestSocketListener(unittest.TestCase):
         A --> B --> C --> D
         """
 
-        host = "127.0.0.1"
+        host = "localhost"
         port = 9933
         data = os.urandom(1025)
 

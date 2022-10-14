@@ -67,9 +67,9 @@ class CommonTestsBase(ManagerStarter):
         ]
         pg = add_test_reprodata(pg)
         for drop in pg:
-            drop["node"] = "127.0.0.1"
-            drop["island"] = "127.0.0.1"
-        return common.submit(pg, "127.0.0.1", self.port)
+            drop["node"] = "localhost"
+            drop["island"] = "localhost"
+        return common.submit(pg, "localhost", self.port)
 
     def assert_sessions_finished(self, status, *session_ids):
         for session_id in session_ids:

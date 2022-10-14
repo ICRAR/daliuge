@@ -526,7 +526,7 @@ def gen_pg_spec(
     """
     try:
         if manager_host == "localhost":
-            manager_host = "127.0.0.1"
+            manager_host = "localhost"
         logger.debug("pgt_id: %s", str(pgt_id))
         logger.debug("node_list: %s", str(node_list))
     except Exception as ex:

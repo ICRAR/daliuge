@@ -45,7 +45,7 @@ class ResultTransmitter(BarrierAppDROP):
 
     def initialize(self, **kwargs):
         BarrierAppDROP.initialize(self, input_error_threshold=100, **kwargs)
-        self.host = self._popArg(kwargs, "host", "127.0.0.1")
+        self.host = self._popArg(kwargs, "host", "localhost")
         self.port = self._popArg(kwargs, "port", None)
         if self.port is None:
             raise InvalidDropException(self, "Missing port parameter")
@@ -81,7 +81,7 @@ def _get_client(**kwargs):
     from .manager.client import NodeManagerClient
     from .manager import constants
 
-    host = kwargs.get("host", "127.0.0.1")
+    host = kwargs.get("host", "localhost")
     port = kwargs.get("port", constants.NODE_DEFAULT_REST_PORT)
     timeout = kwargs.get("timeout", None)
     return NodeManagerClient(host, port, timeout)

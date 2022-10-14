@@ -555,7 +555,7 @@ class NodeManager(NodeManagerBase, EventMixIn, RpcMixIn):
         *args,
         **kwargs
     ):
-        host = host or "127.0.0.1"
+        host = host or "localhost"
         NodeManagerBase.__init__(self, *args, **kwargs)
         EventMixIn.__init__(self, host, events_port)
         RpcMixIn.__init__(self, host, rpc_port)
