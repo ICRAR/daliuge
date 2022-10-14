@@ -16,7 +16,7 @@ DLG=dlg
 
 #
 # Hosts to bind the Managers to.
-# An empty value means that Managers will bind to 127.0.0.1
+# An empty value means that Managers will bind to localhost
 # 0.0.0.0 means all interfaces
 #
 NM_HOST=
