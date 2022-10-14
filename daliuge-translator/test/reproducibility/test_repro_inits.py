@@ -40,7 +40,7 @@ class InitReproTest(unittest.TestCase):
     def test_lgt_init(self):
         _graph = {}
         sig = init_lgt_repro_data(_graph, "0")
-        self.assertNotIn("reprodata", sig)
+        self.assertIn("reprodata", sig)
 
     def test_lg_init(self):
         _graph = {}
