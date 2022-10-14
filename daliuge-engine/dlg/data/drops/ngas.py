@@ -94,19 +94,8 @@ class NgasDROP(DataDROP):
         """
         Override this method in order to get the size of the drop set once it is completed.
         """
-        # TODO: This implementation is almost a verbatim copy of the base class'
-        # so we should look into merging them
-        status = self.status
-        if status == DROPStates.CANCELLED:
+        if not self._setCompletedStateCheck():
             return
-        elif status == DROPStates.SKIPPED:
-            self._fire("dropCompleted", status=status)
-            return
-        elif status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            raise Exception(
-                "%r not in INITIALIZED or WRITING state (%s), cannot setComplete()"
-                % (self, self.status)
-            )
 
         self._closeWriters()
 
@@ -129,9 +118,9 @@ class NgasDROP(DataDROP):
             # except:
             #     self.status = DROPStates.ERROR
             #     logger.error("Path not accessible: %s" % self.path)
-            raise
             logger.debug("Setting size of NGASDrop to %s", 0)
             self._size = 0
+            raise
         # Signal our subscribers that the show is over
         logger.debug("Moving %r to COMPLETED", self)
         self.status = DROPStates.COMPLETED
