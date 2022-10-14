@@ -93,16 +93,19 @@ def package_files(directory):
 src_files = package_files("dlg")
 
 install_requires = [
-    "wheel",
-    "bottle",
     "daliuge-common==%s" % (VERSION,),
+    "fastapi",
+    "jinja2",
     "jsonschema",
     "metis>=0.2a3",
     "networkx",
     "numpy",
     "psutil",
     "pyswarm",
+    "python-multipart",
     # "ruamel.yaml.clib<=0.2.2",
+    "uvicorn",
+    "wheel",
 ]
 
 setup(
