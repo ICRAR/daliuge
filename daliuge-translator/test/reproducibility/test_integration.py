@@ -52,7 +52,7 @@ def _run_full_workflow(
     dlg_partition(parser, ["-P", pgs, "-o", pgt, "-f", "newline"])
     parser = optparse.OptionParser()
     dlg_map(
-        parser, ["-P", pgt, "-N", "127.0.0.1, 127.0.0.1", "-o", pgr, "-f", "newline"]
+        parser, ["-P", pgt, "-N", "localhost, localhost", "-o", pgr, "-f", "newline"]
     )
 
 

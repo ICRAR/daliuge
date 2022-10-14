@@ -26,7 +26,7 @@ import logging
 
 import networkx as nx
 
-from dlg.dropmake.pgt import PGT, GraphException
+from dlg.dropmake.pgt import PGT, GPGTException
 from dlg.dropmake.scheduler import (
     MySarkarScheduler,
     DAGUtil,
@@ -36,10 +36,6 @@ from dlg.dropmake.scheduler import (
 from dlg.common import DropType
 
 logger = logging.getLogger(__name__)
-
-
-class GPGTException(GraphException):
-    pass
 
 
 class MetisPGTP(PGT):

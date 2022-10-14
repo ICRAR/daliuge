@@ -348,8 +348,11 @@ class AbstractDROP(EventFirer):
         if "expectedSize" in kwargs and kwargs["expectedSize"]:
             self._expectedSize = int(kwargs.pop("expectedSize"))
 
-        # All DROPs are precious unless stated otherwise; used for replication
-        self._precious = self._popArg(kwargs, "precious", True)
+        # No DROP is precious unless stated otherwise; used for replication
+        self._precious = self._popArg(kwargs, "precious", False)
+        # If DROP is precious, don't expire (delete) it.
+        if self._precious:
+            self._expireAfterUse = False
 
         # Useful to have access to all EAGLE parameters without a prior knowledge
         self._parameters = dict(kwargs)
@@ -1092,6 +1095,9 @@ class AbstractDROP(EventFirer):
         elif status == DROPStates.SKIPPED:
             self._fire("dropCompleted", status=status)
             return
+        elif status == DROPStates.COMPLETED:
+            logger.warning("%r already in COMPLETED state", self)
+            return
         elif status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception(
                 "%r not in INITIALIZED or WRITING state (%s), cannot setComplete()"
@@ -1279,7 +1285,7 @@ class DataDROP(AbstractDROP):
                 # raise Exception("Problem closing file!")
             self._wio = None
 
-    def read(self, descriptor, count=4096, **kwargs):
+    def read(self, descriptor, count=65536, **kwargs):
         """
         Reads `count` bytes from the given DROP `descriptor`.
         """
@@ -1333,6 +1339,7 @@ class DataDROP(AbstractDROP):
                 self.status = DROPStates.ERROR
                 raise Exception("Problem opening drop for write!")
         nbytes = self._wio.write(data)
+        nbytes = 0 if nbytes is None else nbytes
 
         dataLen = len(data)
         if nbytes != dataLen:
@@ -1401,10 +1408,10 @@ class DataDROP(AbstractDROP):
             # Generate on the fly
             io = self.getIO()
             io.open(OpenMode.OPEN_READ)
-            data = io.read(4096)
+            data = io.read(65536)
             while data is not None and len(data) > 0:
                 self._updateChecksum(data)
-                data = io.read(4096)
+                data = io.read(65536)
             io.close()
         return self._checksum
 

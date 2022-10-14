@@ -74,7 +74,7 @@ class DlgSharedMemory:
     _flags = os.O_RDWR
     _mode = 0o600
 
-    def __init__(self, name, size=4096):
+    def __init__(self, name, size=65536):
         """
         Tries to create a file with name provided. If this file exists, returns existing file.
         If name is not provided, a random name is created.

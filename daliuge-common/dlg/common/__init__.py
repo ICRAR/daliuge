@@ -75,6 +75,7 @@ STORAGE_TYPES = {
     Categories.PLASMAFLIGHT,
     Categories.PARSET,
     Categories.ENVIRONMENTVARS,
+    Categories.S3,
 }
 APP_DROP_TYPES = [
     Categories.COMPONENT,

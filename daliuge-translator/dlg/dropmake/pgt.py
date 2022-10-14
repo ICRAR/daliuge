@@ -45,6 +45,10 @@ class GPGTNoNeedMergeException(GraphException):
     pass
 
 
+class GPGTException(GraphException):
+    pass
+
+
 class PGT(object):
     """
     A DROP representation of Physical Graph Template
