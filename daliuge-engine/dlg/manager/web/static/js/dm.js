@@ -24,7 +24,7 @@ var SESSION_STATUS     = ['Pristine', 'Building', 'Deploying', 'Running', 'Finis
 var STATUS_CLASSES     = ['initialized', 'writing', 'completed', 'error', 'expired', 'deleted', 'cancelled', 'skipped']
 var EXECSTATUS_CLASSES = ['not_run', 'running', 'finished', 'error', 'cancelled', 'skipped']
 var TYPE_CLASSES       = ['app', 'container', 'socket', 'plain']
-var TYPE_SHAPES        = {app:'rect', container:'parallelogram', socket:'parallelogram', plain:'parallelogram'}
+var TYPE_SHAPES        = {app:'rect', container:'parallelogram', socket:'parallelogram', data:'parallelogram'}
 
 var TO_MANY_LTR_RELS = ['consumers', 'streamingConsumers', 'outputs']
 var TO_MANY_RTL_RELS = ['inputs', 'streamingInputs', 'producers']

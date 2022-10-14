@@ -3,9 +3,9 @@ import node_manager_client as nmc
 from composite_manager_client.api.default_api import DefaultApi
 
 nm_config = nmc.Configuration()
-nm_config.host = "127.0.0.1:8000"
+nm_config.host = "localhost:8000"
 dim_config = cmc.Configuration()
-dim_config.host = "127.0.0.1:8001"
+dim_config.host = "localhost:8001"
 
 with nmc.ApiClient(nm_config) as nm_client, cmc.ApiClient(dim_config) as dim_client:
     dim = DefaultApi(dim_client)
@@ -17,5 +17,5 @@ with nmc.ApiClient(nm_config) as nm_client, cmc.ApiClient(dim_config) as dim_cli
     print("sessions in DIM: %r" % (dim.get_sessions(),))
     nodes = dim.get_cm_nodes()
     print(nodes)
-    if "127.0.0.1" not in nodes:
+    if "localhost" not in nodes:
         raise ValueError()

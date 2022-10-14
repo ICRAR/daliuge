@@ -60,19 +60,16 @@ from dlg.common.reproducibility.reproducibility import (
 from dlg.dropmake.lg import GraphException, load_lg
 from dlg.dropmake.pg_generator import unroll, partition
 from dlg.dropmake.pg_manager import PGManager
+from dlg.dropmake.pgt import GPGTException
 from dlg.dropmake.scheduler import SchedulerException
 from jsonschema import validate, ValidationError
+from translator_utils import lg_path, lg_exists, pgt_path, pgt_exists, lg_repo_contents, \
+    pgt_repo_contents, file_as_string, prepare_lgt
 
 logger = logging.getLogger(__name__)
 
 # Patched to be larger to accomodate large config drops
 bottle.BaseRequest.MEMFILE_MAX = 1024 * 512
-
-
-def file_as_string(fname, package=__name__, enc="utf8"):
-    b = pkg_resources.resource_string(package, fname)  # @UndefinedVariable
-    return common.b2s(b, enc)
-
 
 # lg_dir = None
 post_sem = threading.Semaphore(1)
@@ -96,49 +93,6 @@ ALGO_PARAMS = [
 
 
 LG_SCHEMA = json.loads(file_as_string("lg.graph.schema", package="dlg.dropmake"))
-
-
-def lg_path(lg_name):
-    return "{0}/{1}".format(lg_dir, lg_name)
-
-
-def lg_exists(lg_name):
-    return os.path.exists(lg_path(lg_name))
-
-
-def pgt_path(pgt_name):
-    return "{0}/{1}".format(pgt_dir, pgt_name)
-
-
-def pgt_exists(pgt_name):
-    return os.path.exists(pgt_path(pgt_name))
-
-
-def lg_repo_contents():
-    return _repo_contents(lg_dir)
-
-
-def pgt_repo_contents():
-    return _repo_contents(pgt_dir)
-
-
-def _repo_contents(root_dir):
-    # We currently allow only one depth level
-    b = os.path.basename
-    contents = {}
-    for dirpath, dirnames, fnames in os.walk(root_dir):
-        if ".git" in dirnames:
-            dirnames.remove(".git")
-        if dirpath == root_dir:
-            continue
-
-        # Not great yet -- we should do a full second step pruning branches
-        # of the tree that are empty
-        files = [f for f in fnames if f.endswith(".graph")]
-        if files:
-            contents[b(dirpath)] = files
-
-    return contents
 
 
 @route("/static/<filepath:path>")
@@ -462,7 +416,7 @@ def gen_pg_spec():
         node_list = request.json.get("node_list")
         manager_host = request.json.get("manager_host")
         if manager_host == "localhost":
-            manager_host = "127.0.0.1"
+            manager_host = "localhost"
         # try:
         #     manager_port   = int(request.json.get("manager_port"));
         # except:
@@ -503,10 +457,6 @@ def gen_pg_spec():
         return "Fail to generate pg_spec: {0}".format(ex)
 
 
-def prepare_lgt(filename, rmode: str):
-    return init_lg_repro_data(init_lgt_repro_data(load_lg(filename), rmode))
-
-
 @get("/gen_pgt")
 def gen_pgt():
     """
@@ -524,7 +474,11 @@ def gen_pgt():
     try:
         lgt = prepare_lgt(lg_path(lg_name), rmode)
         # LG -> PGT
-        pgt = unroll_and_partition_with_params(lgt, query)
+        try:
+            pgt = unroll_and_partition_with_params(lgt, query)
+        except GPGTException as GE:
+            response.status = 500
+            return "{0}: logical graph {1} cannot be unrolled {2}".format(err_prefix, lg_name, GE)
 
         num_partitions = 0  # pgt._num_parts;
 
@@ -582,7 +536,12 @@ def gen_pgt_post():
 
         logical_graph = prepare_lgt(logical_graph, rmode)
         # LG -> PGT
-        pgt = unroll_and_partition_with_params(logical_graph, reqform)
+        try:
+            pgt = unroll_and_partition_with_params(logical_graph, reqform)
+        except GPGTException as GE:
+            response.status = 500
+            return "{0}: logical graph {1} cannot be unrolled {2}".format(err_prefix, lg_name, GE)
+
         par_algo = reqform.get("algo", "none")
         pgt_id = pg_mgr.add_pgt(pgt, lg_name)
 
