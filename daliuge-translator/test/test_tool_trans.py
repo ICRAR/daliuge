@@ -44,7 +44,7 @@ class TestTool(unittest.TestCase):
         )
         map_ = tool.start_process(
             "map",
-            ["-N", "127.0.0.1,127.0.0.1"],
+            ["-N", "localhost,localhost"],
             stdin=partition.stdout,
             stdout=subprocess.PIPE,
         )

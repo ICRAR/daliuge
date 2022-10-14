@@ -67,7 +67,7 @@ def memory(uid, **kwargs):
     dropSpec = dropdict(
         {
             "oid": uid,
-            "type": "plain",
+            "type": "data",
             "storage": Categories.MEMORY,
             "reprodata": default_repro.copy(),
         }
@@ -157,7 +157,7 @@ class NMTestsMixIn(object):
         drops.update(dm2._sessions[sessionId].drops)
 
         leaf_drop = drops[leaf_oid]
-        with droputils.DROPWaiterCtx(self, leaf_drop, 2):
+        with droputils.DROPWaiterCtx(self, leaf_drop, 5):
             for oid in root_oids:
                 drop = drops[oid]
                 drop.write(root_data)
@@ -634,7 +634,7 @@ class TestDM(NodeManagerTestsBase, unittest.TestCase):
         in python < 3.8, and that it *does* run with python >= 3.8
         """
 
-        graph = [{"oid": "A", "type": "plain", "storage": Categories.SHMEM}]
+        graph = [{"oid": "A", "type": "data", "storage": Categories.SHMEM}]
         graph = add_test_reprodata(graph)
         dm = self._start_dm()
         sessionID = "s1"

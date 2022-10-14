@@ -42,14 +42,14 @@ class DummyApp(AppDROP):
 
 class TestGraphLoader(unittest.TestCase):
     def test_singleMemoryDrop(self):
-        dropSpecList = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
+        dropSpecList = [{"oid": "A", "type": "data", "storage": Categories.MEMORY}]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, InMemoryDROP)
         self.assertEqual("A", a.oid)
         self.assertEqual("A", a.uid)
 
     def test_sharedMemoryDrop(self):
-        dropSpecList = [{"oid": "A", "type": "plain", "storage": Categories.SHMEM}]
+        dropSpecList = [{"oid": "A", "type": "data", "storage": Categories.SHMEM}]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, SharedMemoryDROP)
         self.assertEqual("A", a.oid)
@@ -57,7 +57,7 @@ class TestGraphLoader(unittest.TestCase):
 
     def test_containerDrop(self):
         dropSpecList = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
+            {"oid": "A", "type": "data", "storage": Categories.MEMORY},
             {"oid": "B", "type": "container", "children": ["A"]},
         ]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
@@ -72,7 +72,7 @@ class TestGraphLoader(unittest.TestCase):
 
         # A directory container
         dropSpecList = [
-            {"oid": "A", "type": "plain", "storage": Categories.FILE, "dirname": "."},
+            {"oid": "A", "type": "data", "storage": Categories.FILE, "dirname": "."},
             {
                 "oid": "B",
                 "type": "container",
@@ -89,7 +89,7 @@ class TestGraphLoader(unittest.TestCase):
         dropSpecList = [
             {
                 "oid": "A",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "consumers": ["B"],
             },

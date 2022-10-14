@@ -22,7 +22,6 @@ $(document).ready(function () {
     updateDeployOptionsDropdown()
 
     $("#aboutModal #aboutLicense").load("/static/license.html")
-
     //keyboard shortcuts
     var keyboardShortcuts = []
     keyboardShortcuts.push({name:"Open Settings", shortcut:"O", code:79, action: "$('#settingsModal').modal('toggle')"})
@@ -131,7 +130,16 @@ function updateDeployOptionsDropdown() {
             )
             checkActiveDeployMethod(selectedUrl)
         }
+
+        
     })
+
+    if(selectedUrl === undefined){
+        $("#deployDropdowns").prepend(
+            `<a href='javascript:void(0)' id='activeDeployMethodButton' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='No Deploy Method Selected, click to add new' data-toggle='modal' data-target='#settingsModal'>Add Deploy Method</a>`
+        )
+        return
+    }
 
     var newUrl = new URL(selectedUrl);
     var newPort = newUrl.port;

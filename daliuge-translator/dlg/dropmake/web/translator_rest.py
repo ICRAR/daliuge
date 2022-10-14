@@ -762,7 +762,7 @@ def pgt_map(
                              description="If supplied, this graph will attempted to be loaded from disk on the server"),
         pgt_content: str = Form(default=None, description="If supplied, this is the graph content"),
         nodes: str = Form(default=None,
-                          description="Comma separated list of IP addrs e.g. '127.0.0.1, 127.0.0.2'"),
+                          description="Comma separated list of IP addrs e.g. 'localhost, 127.0.0.2'"),
         num_islands: int = Form(default=1, description="The number of data islands to launch"),
         co_host_dim: bool = Form(default=True,
                                  description="Whether to launch data island manager processes alongside node-managers"),

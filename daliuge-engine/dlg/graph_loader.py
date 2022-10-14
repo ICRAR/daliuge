@@ -27,6 +27,7 @@ full JSON representation.
 import collections
 import importlib
 import logging
+from xmlrpc.client import Boolean
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 
@@ -41,12 +42,18 @@ from .drop import (
     NullDROP,
     EndDROP,
 )
-from .environmentvar_drop import EnvironmentVarDROP
-from dlg.parset_drop import ParameterSetDROP
+
+from dlg.data.drops.environmentvar_drop import EnvironmentVarDROP
+from dlg.data.drops.parset_drop import ParameterSetDROP
 from .exceptions import InvalidGraphException
 from dlg.data.drops.json_drop import JsonDROP
 from dlg.data.drops import *
 from .common import DropType
+try:
+    from .common import CategoryType
+except ImportError:
+    class CategoryType:
+        DATA = "dataclass"
 
 
 STORAGE_TYPES = {
@@ -64,7 +71,7 @@ STORAGE_TYPES = {
 }
 
 try:
-    from .s3_drop import S3DROP
+    from .data.drops.s3_drop import S3DROP
 
     STORAGE_TYPES[Categories.S3] = S3DROP
 except ImportError:
@@ -219,7 +226,7 @@ def loadDropSpecs(dropSpecList):
         reprodata = dropSpecList.pop()
     for n, dropSpec in enumerate(dropSpecList):
 
-        # "type" and 'oit' are mandatory
+        # "type" and 'oid' are mandatory
         check_dropspec(n, dropSpec)
         dropType = dropSpec["type"]
 
@@ -327,15 +334,26 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
 
     return roots
 
-
-def _createPlain(dropSpec, dryRun=False, session=None):
+def _createData(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
-    # 'storage' is mandatory
-    storageType = STORAGE_TYPES[dropSpec["storage"]]
+    if DropType.DATACLASS in dropSpec:
+        dataClassName = dropSpec[DropType.DATACLASS]
+        parts = dataClassName.split(".")
+        # we don't need to support dfms here
+        module = importlib.import_module(".".join(parts[:-1]))
+        storageType = getattr(module, parts[-1])
+    else:
+        # Fall back to old behaviour or to FileDROP 
+        # if nothing else is specified
+        if "storage" in dropSpec:
+            storageType = STORAGE_TYPES[dropSpec["storage"]]
+        else:
+            storageType = FileDROP
     if dryRun:
         return
+
     return storageType(oid, uid, dlg_session=session, **kwargs)
 
 
@@ -410,6 +428,7 @@ def _getKwargs(dropSpec):
         "oid",
         "uid",
         "app",
+        "appclass",
     ]
     kwargs = dict(dropSpec)
     for kw in REMOVE:
@@ -421,9 +440,11 @@ def _getKwargs(dropSpec):
 
 
 __CREATION_FUNCTIONS = {
-    DropType.PLAIN: _createPlain,
+    DropType.DATA: _createData,
     DropType.CONTAINER: _createContainer,
     DropType.APP: _createApp,
     DropType.SERVICE_APP: _createApp,
     DropType.SOCKET: _createSocket,
+    "dataclass": _createData,
+    "appclass": _createApp,
 }

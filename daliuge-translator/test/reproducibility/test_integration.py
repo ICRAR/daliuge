@@ -27,6 +27,7 @@ import json
 import optparse
 import tempfile
 import unittest
+import pkg_resources
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags, ALL_RMODES
 from dlg.translator.tool_commands import dlg_fill, dlg_unroll, dlg_partition, dlg_map
@@ -35,6 +36,7 @@ from dlg.translator.tool_commands import dlg_fill, dlg_unroll, dlg_partition, dl
 def _run_full_workflow(
     rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
 ):
+    workflow_loc = pkg_resources.resource_filename("test", workflow_loc)
     lgt = workflow_loc + "/" + workflow + ".graph"
     lgr = scratch_loc + "/" + workflow + "_" + str(rmode.value) + "LG.graph"
     pgs = scratch_loc + "/" + workflow + "_" + str(rmode.value) + "PGS.graph"
@@ -50,7 +52,7 @@ def _run_full_workflow(
     dlg_partition(parser, ["-P", pgs, "-o", pgt, "-f", "newline"])
     parser = optparse.OptionParser()
     dlg_map(
-        parser, ["-P", pgt, "-N", "127.0.0.1, 127.0.0.1", "-o", pgr, "-f", "newline"]
+        parser, ["-P", pgt, "-N", "localhost, localhost", "-o", pgr, "-f", "newline"]
     )
 
 
@@ -75,7 +77,7 @@ class IntegrationNothingTest(unittest.TestCase):
         No data should be present at any level of abstraction, reflected by a null merkleroot.
         """
         graph_name = "HelloSPython"
-        graph_loc = "test/reproducibility/reproGraphs/"
+        graph_loc = "reproducibility/reproGraphs/"
         rmode = ReproducibilityFlags.NOTHING
         _run_full_workflow(
             rmode=rmode,
@@ -111,7 +113,7 @@ class IntegrationHelloWorldTest(unittest.TestCase):
     """
 
     temp_out = tempfile.TemporaryDirectory("out")
-    graph_loc = "test/reproducibility/reproGraphs/"
+    graph_loc = "reproducibility/reproGraphs/"
     graphs = {
         "HelloWorldBash": {},
         "HelloSBash": {},
@@ -504,7 +506,7 @@ class IntegrationSplitRmode(unittest.TestCase):
         """
         graph_name = "HelloWorldBashSplit"
         control_graph_name = "HelloWorldBash"
-        graph_loc = "test/reproducibility/reproGraphs/"
+        graph_loc = "reproducibility/reproGraphs/"
         rmode = ReproducibilityFlags.RERUN
         _run_full_workflow(
             rmode=rmode,

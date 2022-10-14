@@ -202,7 +202,7 @@ class GraphPlayer(object):
     def get_downstream_drop_ids(self, dropspec):
         if dropspec["type"] == "app":
             ds_kw = "outputs"  # down stream key word
-        elif dropspec["type"] == "plain":
+        elif dropspec["type"] == "data":
             ds_kw = "consumers"
         else:
             ds_kw = "None"
@@ -373,7 +373,7 @@ class GraphPlayer(object):
                 G.add_node(
                     gid, shape="rect", label=""
                 )  # , fixedsize=True, hight=.05, width=.05)
-            elif dropspec["type"] == "plain":  # parallelogram
+            elif dropspec["type"] == "data":  # parallelogram
                 G.add_node(
                     gid, shape="circle", label=""
                 )  # , fixedsize=True, hight=.05, width=.05)
@@ -383,7 +383,7 @@ class GraphPlayer(object):
             gid = oid_gnid_dict[dropspec["oid"]]
             if dropspec["type"] == "app":
                 ds_kw = "outputs"  # down stream key word
-            elif dropspec["type"] == "plain":
+            elif dropspec["type"] == "data":
                 ds_kw = "consumers"
             else:
                 ds_kw = "None"

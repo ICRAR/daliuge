@@ -35,7 +35,7 @@ import math
 
 from dlg.dropmake.lg import GraphException
 from dlg.dropmake.scheduler import DAGUtil
-from dlg.common import dropdict
+from dlg.common import CategoryType, dropdict
 from dlg.common import Categories, DropType
 
 logger = logging.getLogger(__name__)
@@ -334,7 +334,7 @@ class PGT(object):
             key_dict[oid] = i + 1
             node["oid"] = oid
             tt = drop["type"]
-            if DropType.PLAIN == tt:
+            if DropType.DATA == tt:
                 node["category"] = Categories.DATA
             elif DropType.APP == tt:
                 node["category"] = Categories.COMPONENT
@@ -352,7 +352,7 @@ class PGT(object):
                 for i, oup in enumerate(G.successors(myk)):
                     link = dict()
                     link["from"] = myk
-                    from_dt = 0 if drop["type"] == DropType.PLAIN else 1
+                    from_dt = 0 if drop["type"] == DropType.DATA else 1
                     to_dt = G.nodes[oup]["dt"]
                     if from_dt == to_dt:
                         to_drop = G.nodes[oup]["drop_spec"]
@@ -363,8 +363,10 @@ class PGT(object):
                                 {
                                     "oid": extra_oid,
                                     "type": DropType.APP,
+                                    "categoryType": CategoryType.APPLICATION,
                                     "app": "dlg.drop.BarrierAppDROP",
                                     "nm": "go_app",
+                                    "text": "go_app",
                                     "tw": 1,
                                 }
                             )
@@ -380,9 +382,11 @@ class PGT(object):
                             dropSpec = dropdict(
                                 {
                                     "oid": extra_oid,
-                                    "type": DropType.PLAIN,
+                                    "type": DropType.DATA,
+                                    "categoryType": CategoryType.DATA,
                                     "storage": Categories.MEMORY,
                                     "nm": "go_data",
+                                    "text": "go_data",
                                     "dw": 1,
                                 }
                             )
@@ -432,11 +436,12 @@ class PGT(object):
             node["key"] = (i + 1) * -1
             node["oid"] = oid
             tt = drop["type"]
-            if DropType.PLAIN == tt:
+            if DropType.DATA == tt:
                 node["category"] = Categories.DATA
             elif DropType.APP == tt:
                 node["category"] = Categories.COMPONENT
             node["text"] = drop["nm"]
+            node["text"] = drop["text"]
             nodes.append(node)
 
         ret["nodeDataArray"] = nodes

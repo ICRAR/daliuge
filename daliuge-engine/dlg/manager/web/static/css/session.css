@@ -135,7 +135,6 @@ svg {
 
 .navbar-brand span{
   margin-left: 10px;
-  text-decoration: underline;
 }
 
 .navbar-nav.navbar-center {
@@ -506,4 +505,9 @@ svg {
   right:0px;
   left:0px;
   padding-right:20px;
+}
+
+.inactiveLink {
+  pointer-events: none;
+  cursor: default;
 }

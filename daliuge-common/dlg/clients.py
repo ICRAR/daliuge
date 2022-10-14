@@ -247,10 +247,10 @@ class CompositeManagerClient(BaseDROPManagerClient):
         return self._get_json("/nodes")
 
     def add_node(self, node):
-        self._POST(f"/nodes/{node}", content=None)
+        self._POST(f"/node/{node}", content=None)
 
     def remove_node(self, node):
-        self._DELETE(f"/nodes/{node}")
+        self._DELETE(f"/node/{node}")
 
 
 class DataIslandManagerClient(CompositeManagerClient):
@@ -278,27 +278,27 @@ class MasterManagerClient(CompositeManagerClient):
 
     def create_island(self, island_host, nodes):
         self._post_json(
-            f"/managers/{quote(island_host)}/dataisland", {"nodes": nodes}
+            f"/managers/{quote(island_host)}/island", {"nodes": nodes}
         )
 
     def dims(self):
         return self._get_json("/islands")
 
     def add_dim(self, dim):
-        self._POST(f"/islands/{dim}", content=None)
+        self._POST(f"/island/{dim}", content=None)
 
     def remove_dim(self, dim):
-        self._DELETE(f"/islands/{dim}")
+        self._DELETE(f"/island/{dim}")
 
     def add_node_to_dim(self, dim, nm):
         """
         Adds a nm to a dim
         """
         self._POST(
-            f"managers/{dim}/nodes/{nm}", content=None, )
+            f"/managers/{dim}/node/{nm}", content=None, )
 
     def remove_node_from_dim(self, dim, nm):
         """
         Removes a nm from a dim
         """
-        self._DELETE(f"managers/{dim}/nodes/{nm}")
+        self._DELETE(f"/managers/{dim}/node/{nm}")

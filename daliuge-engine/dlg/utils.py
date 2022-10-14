@@ -165,7 +165,7 @@ def to_externally_contactable_host(host, prefer_local=False):
     if prefer_local or len(addresses) == 1:
         return "localhost"
 
-    # Choose the first non-127.0.0.1 one
+    # Choose the first non-localhost one
     for a in addresses:
         if not a.startswith("127."):
             return a
@@ -526,8 +526,8 @@ def prepareUser(DLG_ROOT=getDlgDir()):
 
 
 # Backwards compatibility
-terminate_or_kill = common.terminate_or_kill
-wait_or_kill = common.wait_or_kill
+terminate_or_kill = common.osutils.terminate_or_kill
+wait_or_kill = common.osutils.wait_or_kill
 b2s = common.b2s
 
 check_port = common.check_port

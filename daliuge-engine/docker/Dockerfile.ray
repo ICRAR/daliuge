@@ -23,5 +23,5 @@ EXPOSE 8002
 ENV VIRTUAL_ENV=/home/ray/dlg
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV DLG_ROOT="/var/dlg_home"
-
+# starting the daemon and NM
 CMD ["dlg", "daemon", "-vv"]
