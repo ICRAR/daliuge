@@ -519,7 +519,7 @@ def register_commands():
     tool.cmdwrap(
         "lgweb",
         "A Web server for the Logical Graph Editor",
-        "dlg.dropmake.web.lg_web:run",
+        "dlg.dropmake.web.translator_rest:run",
     )
     tool.cmdwrap("submit", "Submits a Physical Graph to a Drop Manager", dlg_submit)
     tool.cmdwrap(

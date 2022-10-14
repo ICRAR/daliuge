@@ -30,6 +30,8 @@ import re
 import types
 from enum import Enum
 
+from blockdag import build_block_dag
+
 next_key = -1
 
 # NOTE: not sure if all of these are actually required
@@ -98,6 +100,14 @@ VALUE_TYPES = {
     tuple: "Json"
 }
 
+BLOCKDAG_DATA_FIELDS = [
+    "inputPorts",
+    "outputPorts",
+    "applicationArgs",
+    "category",
+    "fields"
+]
+
 class Language(Enum):
     UNKNOWN = 0
     C = 1
@@ -127,7 +137,7 @@ def get_args():
                         action="store_true")
     parser.add_argument("-r", "--recursive", help="Traverse sub-directories",
                         action="store_true")
-    parser.add_argument("-s", "--parse_all", 
+    parser.add_argument("-s", "--parse_all",
         help="Try to parse non DAliuGE compliant functions and methods",
         action="store_true")
     parser.add_argument("-v", "--verbose", help="increase output verbosity",
@@ -528,8 +538,6 @@ def create_palette_node_from_params(params) -> dict:
     outputLocalPorts = []
     fields = []
     applicationArgs = []
-    gitrepo = os.environ.get("GIT_REPO")
-    version = os.environ.get("PROJECT_VERSION")
 
     # process the params
     for param in params:
@@ -669,8 +677,10 @@ def create_palette_node_from_params(params) -> dict:
             "outputAppFields": [],
             "fields": fields,
             "applicationArgs": applicationArgs,
-            "git_url": gitrepo,
-            "sha": version,
+            "repositoryUrl": gitrepo,
+            "commitHash": version,
+            "paletteDownloadUrl": "",
+            "dataHash": "",
         },
     )
 
@@ -686,6 +696,8 @@ def write_palette_json(outputfile:str, nodes:list, gitrepo:str, version:str):
 
 
     """
+    for i in range(len(nodes)):
+        nodes[i]['dataHash'] = block_dag[i]['data_hash']
     palette = {
         "modelData": {
             "fileType": "palette",
@@ -694,13 +706,16 @@ def write_palette_json(outputfile:str, nodes:list, gitrepo:str, version:str):
             "repo": "ICRAR/EAGLE_test_repo",
             "readonly": True,
             "filePath": outputfile,
-            "sha": version,
-            "git_url": gitrepo,
+            "repositoryUrl": gitrepo,
+            "commitHash": version,
+            "downloadUrl": "",
+            "signature": block_dag['signature'],
         },
         "nodeDataArray": nodes,
         "linkDataArray": [],
     }
 
+    # write palette to file
     with open(outputfile, "w") as outfile:
         json.dump(palette, outfile, indent=4)
 
@@ -1179,10 +1194,12 @@ def create_construct_node(node_type:str, node:dict)-> dict:
         + " component.",
         "fields": [],
         "applicationArgs": [],
-        "git_url": gitrepo,
+        "repositoryUrl": gitrepo,
+        "commitHash": version,
+        "paletteDownloadUrl": "",
+        "dataHash": "",
         "key": get_next_key(),
         "precious": False,
-        "sha": version,
         "streaming": False,
         "text": node_type + "/" + node["text"],
     }
@@ -1280,7 +1297,7 @@ def parseCasaDocs(dStr:str) -> dict:
     paramsList = dList[start_ind:end_ind]
     paramsSidx = [idx+1 for idx, p in enumerate(paramsList) if len(p) > 0 and p[0] != ' ']
     paramsEidx = paramsSidx[1:] + [len(paramsList) - 1]
-    paramFirstLine = [(p.strip().split(' ',1)[0], p.strip().split(' ',1)[1].strip()) 
+    paramFirstLine = [(p.strip().split(' ',1)[0], p.strip().split(' ',1)[1].strip())
         for p in paramsList if len(p) > 0 and p[0] != ' ']
     paramNames = [p[0] for p in paramFirstLine]
     paramDocs  = [p[1].strip() for p in paramFirstLine]
@@ -1424,9 +1441,14 @@ if __name__ == "__main__":
                     if not alreadyPresent:
                         nodes.append(n)
 
+    # add signature for whole palette using BlockDAG
+    vertices = {}
+    for i in range(len(nodes)):
+        vertices[i] = nodes[i]
+    block_dag = build_block_dag(vertices, [], data_fields=BLOCKDAG_DATA_FIELDS)
 
     # write the output json file
-    write_palette_json(outputfile, nodes, gitrepo, version)
+    write_palette_json(outputfile, nodes, gitrepo, version, block_dag)
     logger.info("Wrote " + str(len(nodes)) + " component(s)")
 
     # cleanup the output directory
