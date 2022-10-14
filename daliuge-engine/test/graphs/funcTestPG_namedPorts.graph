@@ -146,7 +146,7 @@
     },
     {
         "oid": "2022-03-20T04:33:27_-3_0",
-        "type": "plain",
+        "type": "data",
         "storage": "File",
         "rank": [
             0
@@ -243,7 +243,7 @@
     },
     {
         "oid": "2022-03-20T04:33:27_-5_0",
-        "type": "plain",
+        "type": "data",
         "storage": "File",
         "rank": [
             0

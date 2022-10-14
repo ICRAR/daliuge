@@ -46,7 +46,7 @@ from dlg.meta import (
     dlg_batch_output,
     dlg_streaming_input,
 )
-from dlg.exceptions import DaliugeException
+from dlg.exceptions import DaliugeException, DropChecksumException
 from dlg.apps.pyfunc import serialize_data, deserialize_data
 
 
@@ -142,6 +142,7 @@ class CopyApp(BarrierAppDROP):
     All inputs are copied into all outputs in the order they were declared in
     the graph.
     """
+    bufsize = dlg_int_param("bufsize", 65536)
 
     component_meta = dlg_component(
         "CopyApp",
@@ -151,14 +152,15 @@ class CopyApp(BarrierAppDROP):
         [dlg_streaming_input("binary/*")],
     )
 
-    _bufsize = dlg_int_param("bufsize", 65536)
-
     def run(self):
+        logger.debug("Using buffer size %d", self.bufsize)
         self.copyAll()
 
     def copyAll(self):
         for inputDrop in self.inputs:
             self.copyRecursive(inputDrop)
+        
+        # logger.debug("Target checksum: %d", outputDrop.checksum)
 
     def copyRecursive(self, inputDrop):
         if isinstance(inputDrop, ContainerDROP):
@@ -166,7 +168,7 @@ class CopyApp(BarrierAppDROP):
                 self.copyRecursive(child)
         else:
             for outputDrop in self.outputs:
-                droputils.copyDropContents(inputDrop, outputDrop, bufsize=self._bufsize)
+                droputils.copyDropContents(inputDrop, outputDrop, bufsize=self.bufsize)
 
 
 ##

@@ -100,7 +100,7 @@ class TestSession(unittest.TestCase):
                 Exception,
                 s.addGraphSpec,
                 add_test_reprodata(
-                    [{"oid": "D", "type": "plain", "storage": "invalid"}]
+                    [{"oid": "D", "type": "data", "storage": "invalid"}]
                 ),
             )  # invalid "storage"
             self.assertRaises(
@@ -175,7 +175,7 @@ class TestSession(unittest.TestCase):
                     [
                         {
                             "oid": "A",
-                            "type": "plain",
+                            "type": "data",
                             "storage": Categories.MEMORY,
                             "consumers": ["B"],
                         },
@@ -187,7 +187,7 @@ class TestSession(unittest.TestCase):
                         },
                         {
                             "oid": "C",
-                            "type": "plain",
+                            "type": "data",
                             "storage": Categories.MEMORY,
                             "producers": ["B"],
                         },
@@ -210,7 +210,7 @@ class TestSession(unittest.TestCase):
                     [
                         {
                             "oid": "A",
-                            "type": "plain",
+                            "type": "data",
                             "storage": Categories.MEMORY,
                             "consumers": ["B"],
                         },
@@ -222,7 +222,7 @@ class TestSession(unittest.TestCase):
                         },
                         {
                             "oid": "C",
-                            "type": "plain",
+                            "type": "data",
                             "storage": Categories.MEMORY,
                             "producers": ["B"],
                             "consumers": ["D"],
@@ -235,7 +235,7 @@ class TestSession(unittest.TestCase):
                         },
                         {
                             "oid": "E",
-                            "type": "plain",
+                            "type": "data",
                             "storage": Categories.MEMORY,
                             "producers": ["D"],
                         },

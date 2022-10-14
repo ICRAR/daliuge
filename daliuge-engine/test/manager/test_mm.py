@@ -80,7 +80,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "island": hostname,
                 "node": hostname,
@@ -97,7 +97,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
             },
             {
                 "oid": "C",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "island": hostname,
                 "node": hostname,
@@ -118,14 +118,14 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         sessionId = "lalo"
 
         # No node specified
-        graphSpec = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
+        graphSpec = [{"oid": "A", "type": "data", "storage": Categories.MEMORY}]
         self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
 
         # Wrong node specified
         graphSpec = [
             {
                 "oid": "A",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "node": "unknown_host",
             }
@@ -136,7 +136,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "node": hostname,
             }
@@ -147,7 +147,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "node": hostname,
                 "island": "unknown_host",
@@ -159,7 +159,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "node": hostname,
                 "island": hostname,
@@ -177,7 +177,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         self.assertEqual(1, len(graphFromMM))
         dropSpec = list(graphFromMM.values())[0]
         self.assertEqual("A", dropSpec["oid"])
-        self.assertEqual("plain", dropSpec["type"])
+        self.assertEqual("data", dropSpec["type"])
         self.assertEqual("Memory", dropSpec["storage"])
 
     def test_deployGraph(self):

@@ -66,7 +66,7 @@ CUBE_NAME = "cube1408~1412"
 
 
 def fileSpec(uid, **kwargs):
-    dropSpec = dropdict({"oid": str(uid), "type": "plain", "storage": Categories.FILE})
+    dropSpec = dropdict({"oid": str(uid), "type": "data", "storage": Categories.FILE})
     dropSpec.update(kwargs)
     return dropSpec
 

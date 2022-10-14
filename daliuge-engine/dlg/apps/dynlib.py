@@ -125,8 +125,8 @@ def _to_c_output(o):
     Convert an output drop into its corresponding C structure
     """
 
-    def _write(_o, buf, n):
-        return _o.write(buf[:n])
+    def _write(_o, buf, n, **kwargs):
+        return _o.write(buf[:n], **kwargs)
 
     w = _write_cb_type(functools.partial(_write, o))
     return CDlgOutput(

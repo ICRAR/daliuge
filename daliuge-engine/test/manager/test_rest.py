@@ -145,7 +145,7 @@ class TestRest(unittest.TestCase):
                 },
                 {
                     "oid": "b",
-                    "type": "plain",
+                    "type": "data",
                     "storage": Categories.MEMORY,
                     "reprodata": default_repro.copy(),
                 },
@@ -162,7 +162,7 @@ class TestRest(unittest.TestCase):
             sid,
             [
                 {
-                    "type": "plain",
+                    "type": "data",
                     "storage": Categories.FILE,
                     "oid": "a",
                     "filepath": fname,
@@ -209,7 +209,7 @@ class TestRest(unittest.TestCase):
         c = NodeManagerClient(hostname)
         graph_spec = [
             {
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "oid": "a",
                 "reprodata": default_repro.copy(),
@@ -232,7 +232,7 @@ class TestRest(unittest.TestCase):
         c.deploySession(sid, completed_uids=["a"])
         response = c.session_repro_data(sid)
         self.assertEqual(
-            {"a": {"oid": "a", "storage": "Memory", "type": "plain"}}, response["graph"]
+            {"a": {"oid": "a", "storage": "Memory", "type": "data"}}, response["graph"]
         )
         self.assertEqual({}, response["reprodata"])
 
@@ -242,7 +242,7 @@ class TestRest(unittest.TestCase):
         c = NodeManagerClient(hostname)
         graph_spec = [
             {
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "oid": "a",
                 "reprodata": default_repro.copy(),

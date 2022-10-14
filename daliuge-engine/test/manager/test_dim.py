@@ -81,7 +81,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "node": hostname,
                 "consumers": ["B"],
@@ -96,7 +96,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             },
             {
                 "oid": "C",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "node": hostname,
             },
@@ -118,14 +118,14 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         sessionId = "lalo"
 
         # No node specified
-        graphSpec = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
+        graphSpec = [{"oid": "A", "type": "data", "storage": Categories.MEMORY}]
         self.assertRaises(Exception, self.dim.addGraphSpec, sessionId, graphSpec)
 
         # Wrong node specified
         graphSpec = [
             {
                 "oid": "A",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "node": "unknown_host",
             }
@@ -137,7 +137,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "node": hostname,
             }
@@ -151,7 +151,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         self.assertEqual(1, len(graphFromDM))
         dropSpec = list(graphFromDM.values())[0]
         self.assertEqual("A", dropSpec["oid"])
-        self.assertEqual("plain", dropSpec["type"])
+        self.assertEqual("data", dropSpec["type"])
         self.assertEqual("Memory", dropSpec["storage"])
 
     def test_deployGraph(self):
@@ -279,7 +279,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "node": hostname,
                 "consumers": ["B"],
@@ -294,7 +294,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             },
             {
                 "oid": "C",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "node": hostname,
             },
@@ -313,7 +313,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "node": hostname,
                 "consumers": ["B"],
@@ -328,7 +328,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             },
             {
                 "oid": "C",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "node": hostname,
             },
