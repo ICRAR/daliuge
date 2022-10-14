@@ -1063,7 +1063,6 @@ def _process_grandchild(gchild, hold_name, language):
     # logger.debug("Initialized grandchild member: %s", member)
 
     if gchild.tag == "memberdef" and gchild.get("kind") == "function":
-        logger.debug(">>> Found function element")
 
         func_path = "Unknown"
         func_name = hold_name
