@@ -605,6 +605,9 @@ def identify_named_ports(
         port_dict (dict): ports {uid:name,...}
         posargs (list): available positional arguments (will be modified)
         pargsDict (dict): mapped arguments (will be modified)
+        keyargs (dict): keyword arguments
+        check_len (int): number of of ports to be checked
+        mode (str ["inputs"]): mode, used just for logging messages 
 
     Returns:
         dict: port arguments
@@ -612,8 +615,10 @@ def identify_named_ports(
     Side effect:
         modifies the pargsDict OrderedDict
     """
-    logger.debug("Using named ports to remove %s from arguments port_dict, check_len): %s %d",
+    # p_name = [p["name"] for p in port_dict]
+    logger.debug("Using named ports to remove %s from arguments port_dict: %s, check_len: %d)",
         mode, port_dict, check_len)
+    logger.debug("Checking against keyargs: %s", keyargs)
     portargs = {}
     posargs = list(posargs)
     keys = list(port_dict.keys())
@@ -632,7 +637,7 @@ def identify_named_ports(
         elif key in keyargs:
             # if not found in appArgs we don't put them into portargs either
             portargs.update({key:value})
-            logger.debug("Using %s '%s' for kwarg %s", mode, value, key)
+            logger.debug("Using %s of type %s for kwarg %s", mode, type(value), key)
             _dum = keyargs.pop(key) # remove from original arg list
         else:
             logger.debug("No matching argument found for %s key %s", mode, key)
@@ -662,8 +667,9 @@ def replace_named_ports(
     oitems:dict,
     inport_names:dict,
     outport_names:dict,
-    appArgs:dict, argumentPrefix="--",
-    separator=" "
+    appArgs:dict,
+    argumentPrefix:str = "--",
+    separator:str = " "
     ) -> Tuple[str, str]:
     """
     Function attempts to identify component arguments that match port names.

@@ -41,7 +41,7 @@ if run_tests:
     try:
         boto3.session.Session(profile_name=PROFILE)
         bucket = "rascil"
-        key = "GLEAM_cutout.fits"
+        key = "2022-09-27T17:30:02_-13_0/1"
         endpoint_url = "https://projects.pawsey.org.au"
     except:
         run_tests = False
@@ -79,7 +79,7 @@ class TestS3Drop(unittest.TestCase):
             Key="Nonsense",
             endpoint_url=endpoint_url,
         )
-        self.assertNotEqual(drop.size, 1123200)
+        self.assertNotEqual(drop.size, 2785011)
         del(drop)
 
         drop = S3DROP('oid:A', 'uid:A', 
@@ -88,7 +88,7 @@ class TestS3Drop(unittest.TestCase):
             Key=key,
             endpoint_url=endpoint_url,
             )
-        self.assertEqual(drop.size, 1123200)
+        self.assertEqual(drop.size, 2785011)
     
     @skipIf(not run_tests, "No profile found to run this test")
     def test_read(self):
@@ -101,7 +101,7 @@ class TestS3Drop(unittest.TestCase):
             )
         drop.status = 2
         desc = drop.open()
-        self.assertEqual(len(drop.read(desc, count=-1)), 1123200)
+        self.assertEqual(len(drop.read(desc, count=-1)), 2785011)
 
     @skipIf(not run_tests, "No profile found to run this test")
     def test_write(self):

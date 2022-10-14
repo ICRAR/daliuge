@@ -53,6 +53,8 @@ class InMemoryDROP(DataDROP):
             kwargs["precious"] = False
         if "expireAfterUse" not in kwargs:
             kwargs["expireAfterUse"] = True
+        if kwargs["precious"]:
+            kwargs["expireAfterUse"] = False
         super().__init__(*args, **kwargs)
 
     def initialize(self, **kwargs):

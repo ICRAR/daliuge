@@ -246,9 +246,9 @@ class HelmClient:
             )
             time.sleep(5)
             logger.debug(f"Starting node on {ip}")
-            # node_ips = ['127.0.0.1'] + [x['ip'] for x in self._pod_details.values()]
+            # node_ips = ['localhost'] + [x['ip'] for x in self._pod_details.values()]
             node_ips = [x["ip"] for x in self._pod_details.values()]
-            # data = json.dumps({'nodes': ['127.0.0.1']}).encode('utf-8')
+            # data = json.dumps({'nodes': ['localhost']}).encode('utf-8')
             data = json.dumps({"nodes": node_ips}).encode("utf-8")
             client._POST(
                 "/managers/master/start", content=data, content_type="application/json"
@@ -335,7 +335,7 @@ class HelmClient:
         node_ips = [x["ip"] for x in self._pod_details.values()]
         node_ips.remove(self._pod_details["master"]["ip"])
         node_ips = [self._pod_details["master"]["ip"]] + node_ips
-        # node_ips = ['127.0.0.1']
+        # node_ips = ['localhost']
         physical_graph = pg_generator.resource_map(pgt_data, node_ips, co_host_dim=True)
         # TODO: Add dumping to log-dir
         submit(

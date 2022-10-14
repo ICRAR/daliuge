@@ -59,7 +59,7 @@ def _run_full_workflow(
     dlg_partition(parser, ["-P", pgs, "-o", pgt, "-f", "newline"])
     parser = optparse.OptionParser()
     dlg_map(
-        parser, ["-P", pgt, "-N", "127.0.0.1, 127.0.0.1", "-o", pgr, "-f", "newline"]
+        parser, ["-P", pgt, "-N", "localhost, localhost", "-o", pgr, "-f", "newline"]
     )
 
 
@@ -98,19 +98,19 @@ class ScatterTest(unittest.TestCase):
         lgt = _init_graph("reproducibility/reproGraphs/simpleScatter.graph")
         init_lgt_repro_data(lgt, rmode=ReproducibilityFlags.RERUN.value)
         init_lg_repro_data(lgt)
-        visited = lg_build_blockdag(lgt)[1]
+        visited = lg_build_blockdag(lgt, ReproducibilityFlags.RERUN)[1]
         scatter_drop = lgt["nodeDataArray"][1]
         app_drop = lgt["nodeDataArray"][2]
         scatter_inter_drop = lgt["nodeDataArray"][3]
         # Checks that the input app drop is the parent of the main application
         self.assertEqual(
-            list(app_drop["reprodata"]["lg_parenthashes"].values())[0],
-            scatter_inter_drop["reprodata"]["lg_blockhash"],
+            list(app_drop["reprodata"][ReproducibilityFlags.RERUN.name]["lg_parenthashes"].values())[0],
+            scatter_inter_drop["reprodata"][ReproducibilityFlags.RERUN.name]["lg_blockhash"],
         )
         # Checks that the scatter drop is the parent of the input drop
         self.assertEqual(
-            list(scatter_inter_drop["reprodata"]["lg_parenthashes"].values())[0],
-            scatter_drop["reprodata"]["lg_blockhash"],
+            list(scatter_inter_drop["reprodata"][ReproducibilityFlags.RERUN.name]["lg_parenthashes"].values())[0],
+            scatter_drop["reprodata"][ReproducibilityFlags.RERUN.name]["lg_blockhash"],
         )
         self.assertEqual(visited, [-1, -2, -5, -3, -6, -7, -9])
 
@@ -148,6 +148,6 @@ class ScatterTest(unittest.TestCase):
         self.assertEqual(len(no_scatter_graph), 7)
         # Their signatures should in principal be identicle
         self.assertEqual(
-            scatter_graph[-1]["reprodata"]["pg_blockhash"],
-            no_scatter_graph[-1]["reprodata"]["pg_blockhash"],
+            scatter_graph[-1]["reprodata"][ReproducibilityFlags.RERUN.name]["pg_blockhash"],
+            no_scatter_graph[-1]["reprodata"][ReproducibilityFlags.RERUN.name]["pg_blockhash"],
         )

@@ -62,7 +62,7 @@ logger = logging.getLogger(__name__)
 # @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param host Host/127.0.0.1/String/ApplicationArgument/readwrite//False/False/Host address
+# @param host Host/localhost/String/ApplicationArgument/readwrite//False/False/Host address
 # @param port Port/1111/Integer/ApplicationArgument/readwrite//False/False/Host port
 # @param bufsize Buffer Size/4096/String/ApplicationArgument/readwrite//False/False/Receive buffer size
 # @param reuseAddr Reuse Address/False/Boolean/ApplicationArgument/readwrite//False/False/
@@ -90,7 +90,7 @@ class SocketListenerApp(BarrierAppDROP):
         [dlg_streaming_input("binary/*")],
     )
 
-    host = dlg_string_param("host", "127.0.0.1")
+    host = dlg_string_param("host", "localhost")
     port = dlg_int_param("port", 1111)
     bufsize = dlg_int_param("bufsize", 4096)
     reuseAddr = dlg_bool_param("reuseAddr", False)

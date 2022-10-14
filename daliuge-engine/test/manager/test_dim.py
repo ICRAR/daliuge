@@ -19,16 +19,15 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from asyncio.log import logger
 import codecs
 import json
 import os
 import time
 import unittest
+from asyncio.log import logger
 
 import pkg_resources
 
-from dlg import runtime
 from dlg import droputils
 from dlg import utils
 from dlg.common import tool, Categories
@@ -38,21 +37,23 @@ from dlg.manager.session import SessionStates
 from dlg.testutils import ManagerStarter
 from test.manager import testutils
 
-
 hostname = "localhost"
-
 
 default_repro = {
     "rmode": "1",
-    "lg_blockhash": "x",
-    "pgt_blockhash": "y",
-    "pg_blockhash": "z",
+    "RERUN": {
+        "lg_blockhash": "x",
+        "pgt_blockhash": "y",
+        "pg_blockhash": "z",
+    }
 }
 default_graph_repro = {
     "rmode": "1",
     "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
     "merkleroot": "a",
-    "signature": "b",
+    "RERUN": {
+        "signature": "b",
+    }
 }
 
 
@@ -384,7 +385,7 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             # we need to add it manually before submitting -- otherwise it will
             # get rejected by the DIM.
             with pkg_resources.resource_stream(
-                "test", "graphs/complex.js"
+                    "test", "graphs/complex.js"
             ) as f:  # @UndefinedVariable
                 complexGraphSpec = json.load(codecs.getreader("utf-8")(f))
                 logger.debug(f"Loaded graph: {f}")
@@ -425,10 +426,10 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session
             while (
-                SessionStates.RUNNING
-                in testutils.get(
-                    self, "/sessions/%s/status" % (sessionId), restPort
-                ).values()
+                    SessionStates.RUNNING
+                    in testutils.get(
+                self, "/sessions/%s/status" % (sessionId), restPort
+            ).values()
             ):
                 time.sleep(0.2)
 
