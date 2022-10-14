@@ -67,8 +67,8 @@ class TestHelmClient(unittest.TestCase):
             {"oid": "C", "type": "data", "storage": Categories.MEMORY},
         ]
         for drop in pg:
-            drop["node"] = "127.0.0.1"
-            drop["island"] = "127.0.0.1"
+            drop["node"] = "localhost"
+            drop["island"] = "localhost"
         with tempfile.TemporaryDirectory() as tmp_dir:
             helm_client = HelmClient(deploy_dir=tmp_dir, deploy_name="dlg-test")
             helm_client.create_helm_chart(json.dumps(pg), co_host=False)
@@ -81,8 +81,8 @@ class TestHelmClient(unittest.TestCase):
                 "oid": "A",
                 "type": "data",
                 "storage": Categories.MEMORY,
-                "node": "127.0.0.1",
-                "island": "127.0.0.1",
+                "node": "localhost",
+                "island": "localhost",
             },
             {
                 "oid": "B",
@@ -90,8 +90,8 @@ class TestHelmClient(unittest.TestCase):
                 "app": "dlg.apps.simple.SleepApp",
                 "inputs": ["A"],
                 "outputs": ["C"],
-                "node": "127.0.0.1",
-                "island": "127.0.0.1",
+                "node": "localhost",
+                "island": "localhost",
             },
             {
                 "oid": "D",
@@ -106,8 +106,8 @@ class TestHelmClient(unittest.TestCase):
                 "oid": "C",
                 "type": "data",
                 "storage": Categories.MEMORY,
-                "node": "127.0.0.1",
-                "island": "127.0.0.1",
+                "node": "localhost",
+                "island": "localhost",
             },
             {
                 "oid": "E",
