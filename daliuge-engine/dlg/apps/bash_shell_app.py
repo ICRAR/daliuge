@@ -279,6 +279,7 @@ class BashShellBase(object):
         self._recompute_data["stdout"] = str(pstdout)
         self._recompute_data["stderr"] = str(pstderr)
         self._recompute_data["status"] = str(pcode)
+        self._recompute_data["cmd"] = str(cmd)
         if pcode == 0 and logger.isEnabledFor(logging.DEBUG):
             logger.debug(
                 mesage_stdouts("Command finished successfully", pstdout, pstderr)
