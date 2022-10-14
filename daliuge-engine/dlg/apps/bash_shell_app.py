@@ -385,7 +385,7 @@ class BashShellApp(BashShellBase, BarrierAppDROP):
         [dlg_streaming_input("text/*")],
     )
 
-    def map_named_ports(self):
+    def map_named_parameters(self):
         # deal with named ports
         self.replace_named_ports(inputs=self._inputs, outputs=self._outputs)
 
@@ -408,7 +408,7 @@ class StreamingOutputBashApp(BashShellBase, BarrierAppDROP):
         [dlg_streaming_input("text/*")],
     )
 
-    def map_named_ports(self):
+    def map_named_parameters(self):
         # deal with named ports
         self.replace_named_ports(inputs=self._inputs, outputs=self._outputs)
 
@@ -438,7 +438,7 @@ class StreamingInputBashApp(StreamingInputBashAppBase):
         [dlg_streaming_input("text/*")],
     )
 
-    def map_named_ports(self):
+    def map_named_parameters(self):
         # deal with named ports
         self.replace_named_ports(inputs=self._inputs, outputs=self._outputs)
 
@@ -463,7 +463,7 @@ class StreamingInputOutputBashApp(StreamingInputBashAppBase):
         [dlg_streaming_input("text/*")],
     )
 
-    def map_named_ports(self):
+    def map_named_parameters(self):
         # deal with named ports
         self.replace_named_ports(inputs=self._inputs, outputs=self._outputs)
 
