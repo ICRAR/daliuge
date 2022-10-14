@@ -38,19 +38,21 @@ except ImportError:
 from ...drop import DataDROP
 from dlg.data.io import ErrorIO, OpenMode, DataIO
 from ...meta import dlg_string_param, dlg_list_param
+from dlg.droputils import identify_named_ports, check_ports_dict
 
 
 ##
 # @brief S3
-# @details A 'bucket' object available on Amazon's Simple Storage Service (S3)
+# @details An object available in a bucket on a S3 (Simple Storage Service) object storage platform
 # @par EAGLE_START
 # @param category S3
 # @param tag daliuge
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
 # @param bucket Bucket//String/ComponentParameter/readwrite//False/False/The S3 Bucket
-# @param object_name Object Name//String/ComponentParameter/readwrite//False/False/The S3 Object
-# @param profile_name Profile Name//String/ComponentParameter/readwrite//False/False/The S3 Profile
+# @param object_name Object Name//String/ComponentParameter/readwrite//False/False/The S3 object key
+# @param profile_name Profile Name//String/ComponentParameter/readwrite//False/False/The S3 profile name
+# @param endpoint_url Endpoint URL//String/ComponentParameter/readwrite//False/False/The URL exposing the S3 REST API
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
@@ -70,10 +72,21 @@ class S3DROP(DataDROP):
     endpoint_url = dlg_string_param("endpoint_url", None)
 
     def initialize(self, **kwargs):
+        self.keyargs = {
+            "Bucket": self.Bucket,
+            "Key": self.Key,
+            "storage_class": self.storage_class,
+            "tags": self.tags,
+            "aws_access_key_id": self.aws_access_key_id,
+            "aws_secret_access_key": self.aws_secret_access_key,
+            "profile_name": self.profile_name,
+            "endpoint_url": self.endpoint_url
+        }
+        self.Key = self.uid if not self.Key else self.Key
         return super().initialize(**kwargs)
 
     @property
-    def path(self):
+    def path(self) -> str:
         """
         Returns the path to the S3 object
         :return: the path
@@ -95,6 +108,14 @@ class S3DROP(DataDROP):
         Return 
         :return:
         """
+        logger.debug("S3DROP producers: %s", self._producers)
+        if check_ports_dict(self._producers):
+            self.mapped_inputs = identify_named_ports(
+                self._producers, 
+                {},
+                self.keyargs,
+                mode="inputs"
+                )
         logger.debug("Parameters found: {}", self.parameters)
         return S3IO(self.aws_access_key_id,
                     self.aws_secret_access_key,
@@ -164,6 +185,8 @@ class S3IO(DataIO):
                 )
             else:
                 s3 = boto3.resource("s3")
+        else:
+            s3 = self._s3
         return s3
 
     def _open(self, **kwargs):

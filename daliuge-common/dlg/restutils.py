@@ -49,7 +49,7 @@ class LoggingWSGIRequestHandler(wsgiref.simple_server.WSGIRequestHandler):
 
 
 class RestServerWSGIServer:
-    def __init__(self, wsgi_app, listen="127.0.0.1", port=8080):
+    def __init__(self, wsgi_app, listen="localhost", port=8080):
         self.wsgi_app = wsgi_app
         self.listen = listen
         self.port = port

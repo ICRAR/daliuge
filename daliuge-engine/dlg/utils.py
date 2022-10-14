@@ -163,9 +163,9 @@ def to_externally_contactable_host(host, prefer_local=False):
     # if only one interface is found we assume it's a loopback interface
     addresses = get_all_ipv4_addresses()
     if prefer_local or len(addresses) == 1:
-        return "127.0.0.1"
+        return "localhost"
 
-    # Choose the first non-127.0.0.1 one
+    # Choose the first non-localhost one
     for a in addresses:
         if not a.startswith("127."):
             return a

@@ -96,6 +96,7 @@ class NgasDROP(DataDROP):
         """
         if not self._setCompletedStateCheck():
             return
+
         self._closeWriters()
 
         # here we set the size. It could happen that nothing is written into

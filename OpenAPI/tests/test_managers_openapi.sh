@@ -30,7 +30,7 @@ rm config.properties
 tmpdir=`mktemp -d`
 dlg nm -w . -v --no-dlm -l $tmpdir -w $tmpdir &
 nm_pid=$!
-dlg dim -v -N 127.0.0.1 -l $tmpdir -w $tmpdir &
+dlg dim -v -N localhost -l $tmpdir -w $tmpdir &
 dim_pid=$!
 dlg lgweb -d $tmpdir -t $tmpdir -v &
 lgweb_pid=$!

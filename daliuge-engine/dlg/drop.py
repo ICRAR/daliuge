@@ -348,8 +348,11 @@ class AbstractDROP(EventFirer):
         if "expectedSize" in kwargs and kwargs["expectedSize"]:
             self._expectedSize = int(kwargs.pop("expectedSize"))
 
-        # All DROPs are precious unless stated otherwise; used for replication
-        self._precious = self._popArg(kwargs, "precious", True)
+        # No DROP is precious unless stated otherwise; used for replication
+        self._precious = self._popArg(kwargs, "precious", False)
+        # If DROP is precious, don't expire (delete) it.
+        if self._precious:
+            self._expireAfterUse = False
 
         # Useful to have access to all EAGLE parameters without a prior knowledge
         self._parameters = dict(kwargs)

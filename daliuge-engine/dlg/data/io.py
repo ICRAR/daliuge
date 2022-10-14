@@ -645,7 +645,7 @@ def IOForURL(url):
         filename = url.path
         if (
             hostname == "localhost"
-            or hostname == "127.0.0.1"
+            or hostname == "localhost"
             or hostname == os.uname()[1]
         ):
             io = FileIO(filename)

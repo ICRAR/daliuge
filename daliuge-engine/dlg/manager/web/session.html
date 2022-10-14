@@ -54,8 +54,8 @@
 	</nav>
 	<div id="graphNameWrapper">
 		<ol id="graphName">
-			<li><a id="local-manager-a"></a></li>
 			<li id="islandDisplay"></li>
+			<li><a id="local-manager-a"></a></li>
 			<li id="nodeDisplay"></li>
 			<li>Session: {{sessionId}}</li>
 		</ol>
@@ -389,6 +389,7 @@ function view_as_list(sessionId, selectedNode, serverUrl) {
         /* Modify breadcums depending on whether we are zooming into a node or not */
         if (selectedNode) {
             d3.select('#local-manager-a').attr('href', '/?node=' + selectedNode).text("Node: " + selectedNode);
+			d3.select('#nodeDisplay').remove()
         } else {
             d3.select('#local-manager-a').node().parentNode.remove();
         }

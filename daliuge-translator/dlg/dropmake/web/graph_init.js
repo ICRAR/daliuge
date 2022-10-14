@@ -26,6 +26,7 @@ function graphInit(graphType){
         success: function(data) {
             // get node count
             var nodeCount = 0;
+            data = JSON.parse(data);
             data.nodeDataArray.forEach(element => {
                 nodeCount++
             });

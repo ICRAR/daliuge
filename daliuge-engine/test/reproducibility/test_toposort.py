@@ -31,6 +31,7 @@ import unittest
 
 import pkg_resources
 
+from dlg.common.reproducibility.constants import ReproducibilityFlags
 from dlg.common.reproducibility.reproducibility import (
     init_lgt_repro_data,
     init_lg_repro_data,
@@ -42,15 +43,17 @@ _dummydrop = {
     "oid": 1,
     "reprodata": {
         "rmode": "1",
-        "lg_blockhash": "123",
-        "pgt_data": {"merkleroot": "456"},
-        "pgt_parenthashes": {},
-        "pgt_blockhash": "135",
-        "pg_data": {"merkleroot": "bogus"},
-        "pg_parenthashes": {},
-        "pg_blockhash": "246",
-        "rg_data": {"merkleroot": "bogus2"},
-        "rg_parenthashes": {},
+        "RERUN": {
+            "lg_blockhash": "123",
+            "pgt_data": {"merkleroot": "456"},
+            "pgt_parenthashes": {},
+            "pgt_blockhash": "135",
+            "pg_data": {"merkleroot": "bogus"},
+            "pg_parenthashes": {},
+            "pg_blockhash": "246",
+            "rg_data": {"merkleroot": "bogus2"},
+            "rg_parenthashes": {},
+        }
     },
 }
 
@@ -112,7 +115,7 @@ class ToposortTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testSingle.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
-        visited = lg_build_blockdag(lgt)[1]
+        visited = lg_build_blockdag(lgt, ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [-1])
 
     def test_lg_blockdag_twostart(self):
@@ -125,7 +128,7 @@ class ToposortTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoStart.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
-        visited = lg_build_blockdag(lgt)[1]
+        visited = lg_build_blockdag(lgt, ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [-3, -1, -2])
 
     def test_lg_blockdag_twoend(self):
@@ -138,7 +141,7 @@ class ToposortTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoEnd.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
-        visited = lg_build_blockdag(lgt)[1]
+        visited = lg_build_blockdag(lgt, ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [-1, -3, -2])
 
     def test_lg_blockdag_twolines(self):
@@ -150,7 +153,7 @@ class ToposortTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testTwoLines.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
-        visited = lg_build_blockdag(lgt)[1]
+        visited = lg_build_blockdag(lgt, ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [-2, -3, -1, -4])
 
     def test_lg_blockdag_empty(self):
@@ -160,7 +163,7 @@ class ToposortTests(unittest.TestCase):
         lgt = _init_graph("topoGraphs/testEmpty.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
-        visited = lg_build_blockdag(lgt)[1]
+        visited = lg_build_blockdag(lgt, ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [])
 
     def test_pgt_blockdag_single(self):
@@ -169,7 +172,7 @@ class ToposortTests(unittest.TestCase):
         1
         """
         pgt = _init_pgraph_single()
-        visited = build_blockdag(pgt, "pgt")[1]
+        visited = build_blockdag(pgt, "pgt", ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [1])
 
     def test_pgt_blockdag_twostart(self):
@@ -180,7 +183,7 @@ class ToposortTests(unittest.TestCase):
         2 -->
         """
         pgt = _init_pgraph_twostart()
-        visited = build_blockdag(pgt, "pgt")[1]
+        visited = build_blockdag(pgt, "pgt", ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [3, 1, 2])
 
     def test_pgt_blockdag_twoend(self):
@@ -191,7 +194,7 @@ class ToposortTests(unittest.TestCase):
           --> 3
         """
         pgt = _init_pgraph_twoend()
-        visited = build_blockdag(pgt, "pgt")[1]
+        visited = build_blockdag(pgt, "pgt", ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [1, 3, 2])
 
     def test_pgt_blockdag_twolines(self):
@@ -201,7 +204,7 @@ class ToposortTests(unittest.TestCase):
         3 --> 4
         """
         pgt = _init_pgraph_twolines()
-        visited = build_blockdag(pgt, "pgt")[1]
+        visited = build_blockdag(pgt, "pgt", ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [3, 4, 1, 2])
 
     def test_pgt_blockdag_empty(self):
@@ -209,7 +212,7 @@ class ToposortTests(unittest.TestCase):
         Tests an empty graph. Should fail gracefully.
         """
         pgt = []
-        visited = build_blockdag(pgt, "pgt")[1]
+        visited = build_blockdag(pgt, "pgt", ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [])
 
     def test_pg_blockdag_single(self):
@@ -217,7 +220,7 @@ class ToposortTests(unittest.TestCase):
         Tests a single drop
         """
         pgr = _init_pgraph_single()
-        visited = build_blockdag(pgr, "pg")[1]
+        visited = build_blockdag(pgr, "pg", ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [1])
 
     def test_pg_blockdag_twostart(self):
@@ -228,7 +231,7 @@ class ToposortTests(unittest.TestCase):
         2 -->
         """
         pgr = _init_pgraph_twostart()
-        visited = build_blockdag(pgr, "pg")[1]
+        visited = build_blockdag(pgr, "pg", ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [3, 1, 2])
 
     def test_pg_blockdag_twoend(self):
@@ -239,7 +242,7 @@ class ToposortTests(unittest.TestCase):
           --> 3
         """
         pgr = _init_pgraph_twoend()
-        visited = build_blockdag(pgr, "pg")[1]
+        visited = build_blockdag(pgr, "pg", ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [1, 3, 2])
 
     def test_pg_blockdag_twolines(self):
@@ -249,7 +252,7 @@ class ToposortTests(unittest.TestCase):
         3 --> 4
         """
         pgr = _init_pgraph_twolines()
-        visited = build_blockdag(pgr, "pgt")[1]
+        visited = build_blockdag(pgr, "pgt", ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [3, 4, 1, 2])
 
     def test_pg_blockdag_empty(self):
@@ -257,7 +260,7 @@ class ToposortTests(unittest.TestCase):
         Tests an empty graph. Should fail gracefully.
         """
         pgr = []
-        visited = build_blockdag(pgr, "pg")[1]
+        visited = build_blockdag(pgr, "pg", ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [])
 
     def test_rg_blockdag_single(self):
@@ -265,7 +268,7 @@ class ToposortTests(unittest.TestCase):
         Tests a single drop
         """
         rgr = _init_pgraph_single()
-        visited = build_blockdag(rgr, "rg")[1]
+        visited = build_blockdag(rgr, "rg", ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [1])
 
     def test_rg_blockdag_twostart(self):
@@ -276,7 +279,7 @@ class ToposortTests(unittest.TestCase):
         2 -->
         """
         rgr = _init_pgraph_twostart()
-        visited = build_blockdag(rgr, "rg")[1]
+        visited = build_blockdag(rgr, "rg", ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [3, 1, 2])
 
     def test_rg_blockdag_twoend(self):
@@ -287,7 +290,7 @@ class ToposortTests(unittest.TestCase):
           --> 3
         """
         rgr = _init_pgraph_twoend()
-        visited = build_blockdag(rgr, "rg")[1]
+        visited = build_blockdag(rgr, "rg", ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [1, 3, 2])
 
     def test_rg_blockdag_twolines(self):
@@ -297,7 +300,7 @@ class ToposortTests(unittest.TestCase):
         3 --> 4
         """
         rgr = _init_pgraph_twolines()
-        visited = build_blockdag(rgr, "rg")[1]
+        visited = build_blockdag(rgr, "rg", ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [3, 4, 1, 2])
 
     def test_rg_blockdag_empty(self):
@@ -305,5 +308,5 @@ class ToposortTests(unittest.TestCase):
         Tests an empty graph. Should fail gracefully.
         """
         rgr = []
-        visited = build_blockdag(rgr, "rg")[1]
+        visited = build_blockdag(rgr, "rg", ReproducibilityFlags.RERUN)[1]
         self.assertTrue(visited == [])
