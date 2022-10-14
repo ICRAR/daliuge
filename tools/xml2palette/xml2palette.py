@@ -685,14 +685,21 @@ def create_palette_node_from_params(params) -> dict:
     )
 
 
-def write_palette_json(outputfile:str, nodes:list, gitrepo:str, version:str):
+def write_palette_json(
+    outputfile:str,
+    nodes:list,
+    gitrepo:str,
+    version:str,
+    block_dag:list
+    ):
     """
     Construct palette header and Write nodes to the output file
 
     :param outputfile: str, the name of the output file
     :param nodes: list of nodes
     :param gitrepo: str, the gitrepo URL
-    :param version: str: version string to be used
+    :param version: str, version string to be used
+    :param block_dag: list, the reproducibility information
 
 
     """
