@@ -232,6 +232,9 @@ class AbstractDROP(EventFirer):
         self._env_var_matcher = re.compile(r"\$[A-z|\d]+\..+")
         self._dlg_var_matcher = re.compile(r"\$DLG_.+")
 
+        # Variable to store if parameters have been mapped
+        self._params_mapped = False
+
         # Set holding the state of the producers that have finished their
         # execution. Once all producers have finished, this DROP moves
         # itself to the COMPLETED state
@@ -1243,6 +1246,10 @@ class DataDROP(AbstractDROP):
                 % (self, self.status)
             )
 
+        if not self._params_mapped:
+            self.map_named_parameters()
+            self._params_mapped = True
+
         io = self.getIO()
         logger.debug("Opening drop %s", self.oid)
         io.open(OpenMode.OPEN_READ, **kwargs)
@@ -1328,8 +1335,9 @@ class DataDROP(AbstractDROP):
         if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("No more writing expected")
 
-        if self.status == DROPStates.INITIALIZED:
+        if not self._params_mapped:
             self.map_named_parameters()
+            self._params_mapped = True
 
         if not isinstance(data, (bytes, memoryview)):
             raise Exception("Data type not of binary type: %s", type(data).__name__)
@@ -1952,7 +1960,9 @@ class InputFiredAppDROP(AppDROP):
         self.execStatus = AppDROPStates.RUNNING
         while tries < self.n_tries:
             try:
-                self.map_named_parameters()
+                if not self._params_mapped:
+                    self.map_named_parameters()
+                    self._params_mapped = True
                 if hasattr(self, "_tp"):
                     proc = DlgProcess(target=self.run, daemon=True)
                     # see YAN-975 for why this is happening
