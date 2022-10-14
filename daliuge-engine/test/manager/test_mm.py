@@ -37,7 +37,7 @@ from dlg.testutils import ManagerStarter
 from dlg.exceptions import NoSessionException
 from test.manager import testutils
 
-hostname = "127.0.0.1"
+hostname = "localhost"
 
 default_repro = {
     "rmode": "1",

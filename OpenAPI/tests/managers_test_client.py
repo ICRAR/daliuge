@@ -17,5 +17,5 @@ with nmc.ApiClient(nm_config) as nm_client, cmc.ApiClient(dim_config) as dim_cli
     print("sessions in DIM: %r" % (dim.get_sessions(),))
     nodes = dim.get_cm_nodes()
     print(nodes)
-    if "127.0.0.1" not in nodes:
+    if "localhost" not in nodes:
         raise ValueError()

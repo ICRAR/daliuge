@@ -99,7 +99,7 @@ def _session_finished(session):
 def monitor_sessions(
     session_id=None,
     poll_interval=10,
-    host="127.0.0.1",
+    host="localhost",
     port=constants.ISLAND_DEFAULT_REST_PORT,
     timeout=30,
     status_dump_path=None,
@@ -127,7 +127,7 @@ def monitor_sessions(
 def monitor_sessions_repro(
     session_id=None,
     poll_interval=10,
-    host="127.0.0.1",
+    host="localhost",
     port=constants.ISLAND_DEFAULT_REST_PORT,
     timeout=60,
     status_dump_path=None,
@@ -154,7 +154,7 @@ def monitor_sessions_repro(
 def fetch_reproducibility(
     session_id=None,
     poll_interval=10,
-    host="127.0.0.1",
+    host="localhost",
     port=constants.ISLAND_DEFAULT_REST_PORT,
     timeout=60,
 ):
@@ -173,7 +173,7 @@ def fetch_reproducibility(
 
 def submit(
     pg,
-    host="127.0.0.1",
+    host="localhost",
     port=constants.ISLAND_DEFAULT_REST_PORT,
     timeout=30,
     skip_deploy=False,

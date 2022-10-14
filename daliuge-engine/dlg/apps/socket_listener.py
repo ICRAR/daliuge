@@ -90,7 +90,7 @@ class SocketListenerApp(BarrierAppDROP):
         [dlg_streaming_input("binary/*")],
     )
 
-    host = dlg_string_param("host", "127.0.0.1")
+    host = dlg_string_param("host", "localhost")
     port = dlg_int_param("port", 1111)
     bufsize = dlg_int_param("bufsize", 4096)
     reuseAddr = dlg_bool_param("reuseAddr", False)
