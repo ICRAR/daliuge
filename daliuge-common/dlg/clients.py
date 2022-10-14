@@ -31,6 +31,7 @@ compress = os.environ.get("DALIUGE_COMPRESSED_JSON", True)
 
 quote = urllib.parse.quote
 
+default_host = "localhost" # localhost now binds to IPv6 address on some distros
 
 class BaseDROPManagerClient(RestClient):
     """
@@ -222,7 +223,7 @@ class NodeManagerClient(BaseDROPManagerClient):
     """
 
     def __init__(
-            self, host="localhost", port=constants.NODE_DEFAULT_REST_PORT, timeout=10
+            self, host=default_host, port=constants.NODE_DEFAULT_REST_PORT, timeout=10
     ):
         super(NodeManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
@@ -258,7 +259,7 @@ class DataIslandManagerClient(CompositeManagerClient):
     """
 
     def __init__(
-            self, host="localhost", port=constants.ISLAND_DEFAULT_REST_PORT, timeout=10
+            self, host=default_host, port=constants.ISLAND_DEFAULT_REST_PORT, timeout=10
     ):
         super(DataIslandManagerClient, self).__init__(
             host=host, port=port, timeout=timeout
@@ -271,7 +272,7 @@ class MasterManagerClient(CompositeManagerClient):
     """
 
     def __init__(
-            self, host="localhost", port=constants.MASTER_DEFAULT_REST_PORT, timeout=10
+            self, host=default_host, port=constants.MASTER_DEFAULT_REST_PORT, timeout=10
     ):
         super(MasterManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
