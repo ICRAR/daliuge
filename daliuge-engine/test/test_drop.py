@@ -36,7 +36,7 @@ from dlg import droputils
 from dlg.apps.bash_shell_app import BashShellApp
 from dlg.apps.dockerapp import DockerApp
 from dlg.apps.pyfunc import PyFuncApp
-from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp
+from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp, CopyApp
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 from dlg.data.drops.directorycontainer import DirectoryContainer
 from dlg.data.drops.file import FileDROP
@@ -1340,15 +1340,15 @@ class NamedParameterSubstituteTests(unittest.TestCase):
     """
 
     def test_filedrop_filename(self):
-        a = FileDROP("a", "a")
-        b = BashShellApp("b", "b", command="cp %i0 %o0")
-        c = FileDROP("c", "c", producers=[{"b": "filepath"}])
+        a = InMemoryDROP("a", "a")
+        b = CopyApp("b", "b")
+        c = FileDROP("c", "c", filepath='b')
         b.addInput(a)
         b.addOutput(c)
-        with droputils.DROPWaiterCtx(self, c):
-            a.write(b"test.out")
+        with droputils.DROPWaiterCtx(self, c, timeout=1000):
+            a.write(b'test.out')
             a.setCompleted()
-        self.assertEqual("test.out", c.filepath)
+        self.assertEqual("test.out", c.parameters.get('filepath', ''))
 
     def test_docker_portnum(self):
         a = InMemoryDROP("a", "a")
@@ -1361,12 +1361,13 @@ class NamedParameterSubstituteTests(unittest.TestCase):
 
     def test_pyfunc_argument(self):
         a = InMemoryDROP("a", "a")
-        b = PyFuncApp("b", "b", inputs=[{"a": "pass"}])
+        b = PyFuncApp("b", "b", inputs=[{"a": "func_name"}], func_name='sum')
         b.addInput(a)
+        import pickle
         with droputils.DROPWaiterCtx(self, b):
-            a.write(b"dlg.apps.sleepApp")
+            pickle.dump("min", a)
             a.setCompleted()
-        self.assertEqual("pass", b.func_name)
+        self.assertEqual("min", b.func_name)
 
     def test_bash_arugment(self):
         a = FileDROP("a", "a")

@@ -47,6 +47,7 @@ from dlg.common.reproducibility.constants import (
 from dlg.common.reproducibility.reproducibility import common_hash
 from merklelib import MerkleTree
 
+from . import droputils
 from .ddap_protocol import (
     ExecutionMode,
     ChecksumTypes,
@@ -1228,6 +1229,15 @@ class DataDROP(AbstractDROP):
         """
         with self._refLock:
             self._refCount -= 1
+
+    def map_named_parameters(self):
+        producer_names = self.parameters['producers'] \
+            if "producers" in self.parameters else []
+        consumer_names = self.parameters['consumers'] \
+            if "consumers" in self.parameters else []
+        print(f"{self.uid} {producer_names}")
+        key_args, p_args = droputils.replace_named_ports({x.uid: x for x in self.producers},
+                                                         {x.uid: x for x in self.consumers}, producer_names, consumer_names, self.parameters)
 
     @track_current_drop
     def open(self, **kwargs):

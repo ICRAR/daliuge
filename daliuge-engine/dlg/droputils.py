@@ -656,6 +656,22 @@ def check_ports_dict(ports:list) -> bool:
         return False
 
 
+def replace_named_ports_data(
+        producers: list,
+        consumers: list,
+        producer_names: dict,
+        consumer_names: dict,
+        parameters: dict
+) -> dict:
+    for producer in producers:
+        if producer.uid in producer_names.keys():
+            pass
+    for consumer in consumers:
+        if consumer.uid in consumer_names.keys():
+            pass
+    return {}
+
+
 def replace_named_ports(
     iitems:dict,
     oitems:dict,
