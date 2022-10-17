@@ -117,7 +117,7 @@ class MetisPGTP(PGT):
             oid = drop["oid"]
             myk = i + 1
             tt = drop["type"]
-            if DropType.PLAIN == tt:
+            if DropType.DATA == tt:
                 dst = "consumers"  # outbound keyword
                 ust = "producers"
                 tw = 1  # task weight is zero for a Data DROP
@@ -136,7 +136,7 @@ class MetisPGTP(PGT):
 
             for inp in adj_drops:
                 key = list(inp.keys())[0] if isinstance(inp, dict) else inp
-                if DropType.PLAIN == tt:
+                if DropType.DATA == tt:
                     lw = drop["dw"]
                 elif DropType.APP == tt:
                     # lw = drop_dict[inp].get('dw', 1)

@@ -49,7 +49,7 @@ class TestLGWeb(unittest.TestCase):
             "-p",
             str(lgweb_port),
             "-H",
-            "localhost",
+            "127.0.0.1",
         ]
         self.devnull = open(os.devnull, "wb")
         self.web_proc = tool.start_process(
@@ -117,7 +117,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_gen_pgt(self):
 
-        c = RestClient("127.0.0.1", lgweb_port, timeout=10)
+        c = RestClient("localhost", lgweb_port, timeout=10)
 
         # doesn't exist!
         self.assertRaises(
@@ -450,7 +450,7 @@ class TestLGWeb(unittest.TestCase):
 
         request_tests = [
             (None, True),  # Call with an empty form should cause an error
-            ({"pgt_content": pgt, "nodes": "127.0.0.1", "num_islands": 1, "co_host_dim": True}, False),  # Simple partition
+            ({"pgt_content": pgt, "nodes": "localhost", "num_islands": 1, "co_host_dim": True}, False),  # Simple partition
         ]
 
         for request in request_tests:

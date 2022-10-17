@@ -178,7 +178,7 @@ class NullIO(DataIO):
     def _open(self, **kwargs):
         return None
 
-    def _read(self, count=4096, **kwargs):
+    def _read(self, count=65536, **kwargs):
         return None
 
     def _write(self, data, **kwargs) -> int:
@@ -213,7 +213,7 @@ class ErrorIO(DataIO):
         raise NotImplementedError()
 
     @overrides
-    def _read(self, count=4096, **kwargs):
+    def _read(self, count=65536, **kwargs):
         raise NotImplementedError()
 
     @overrides
@@ -264,7 +264,7 @@ class MemoryIO(DataIO):
         return len(data)
 
     @overrides
-    def _read(self, count=4096, **kwargs):
+    def _read(self, count=65536, **kwargs):
         return self._desc.read(count)
 
     @overrides
@@ -332,7 +332,7 @@ class SharedMemoryIO(DataIO):
         return len(data)
 
     @overrides
-    def _read(self, count=4096, **kwargs):
+    def _read(self, count=65536, **kwargs):
         if self._pos == self._buf.size:
             return None
         start = self._pos
@@ -379,7 +379,7 @@ class FileIO(DataIO):
         return open(self._fnm, flag)
 
     @overrides
-    def _read(self, count=4096, **kwargs):
+    def _read(self, count=65536, **kwargs):
         return self._desc.read(count)
 
     @overrides
@@ -610,7 +610,7 @@ class NgasLiteIO(DataIO):
             response = self._desc
             response.close()
 
-    def _read(self, count=4096, **kwargs):
+    def _read(self, count=65536, **kwargs):
         return self._desc.read(count)
 
     def _write(self, data, **kwargs) -> int:
@@ -645,7 +645,7 @@ def IOForURL(url):
         filename = url.path
         if (
             hostname == "localhost"
-            or hostname == "127.0.0.1"
+            or hostname == "localhost"
             or hostname == os.uname()[1]
         ):
             io = FileIO(filename)

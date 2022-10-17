@@ -22,7 +22,6 @@ $(document).ready(function () {
     updateDeployOptionsDropdown()
 
     $("#aboutModal #aboutLicense").load("/static/license.html")
-
     //keyboard shortcuts
     const keyboardShortcuts = [];
     keyboardShortcuts.push({
@@ -153,7 +152,16 @@ function updateDeployOptionsDropdown() {
             )
             checkActiveDeployMethod(selectedUrl)
         }
+
+
     })
+
+    if(selectedUrl === undefined){
+        $("#deployDropdowns").prepend(
+            `<a href='javascript:void(0)' id='activeDeployMethodButton' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='No Deploy Method Selected, click to add new' data-toggle='modal' data-target='#settingsModal'>Add Deploy Method</a>`
+        )
+        return
+    }
 
     const newUrl = new URL(selectedUrl);
     const newPort = newUrl.port;

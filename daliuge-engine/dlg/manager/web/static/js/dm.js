@@ -24,7 +24,7 @@ var SESSION_STATUS     = ['Pristine', 'Building', 'Deploying', 'Running', 'Finis
 var STATUS_CLASSES     = ['initialized', 'writing', 'completed', 'error', 'expired', 'deleted', 'cancelled', 'skipped']
 var EXECSTATUS_CLASSES = ['not_run', 'running', 'finished', 'error', 'cancelled', 'skipped']
 var TYPE_CLASSES       = ['app', 'container', 'socket', 'plain']
-var TYPE_SHAPES        = {app:'rect', container:'parallelogram', socket:'parallelogram', plain:'parallelogram'}
+var TYPE_SHAPES        = {app:'rect', container:'parallelogram', socket:'parallelogram', data:'parallelogram'}
 
 var TO_MANY_LTR_RELS = ['consumers', 'streamingConsumers', 'outputs']
 var TO_MANY_RTL_RELS = ['inputs', 'streamingInputs', 'producers']
@@ -135,7 +135,7 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 	// Support for node query forwarding
 	var url = serverUrl + '/api';
 	if( selectedNode ) {
-		url += '/nodes/' + selectedNode;
+		url += '/node/' + selectedNode;
 	}
 	url += '/sessions';
 
@@ -150,7 +150,9 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		if( selectedNode ) { url += '&node=' + selectedNode; }
 		var dimUrlQuery = new URL(window.location.href);
 		var dimUrl = dimUrlQuery.searchParams.get("dim_url");
-		url+="&dim_url="+dimUrl;
+		if(dimUrl){
+			url+="&dim_url="+dimUrl;
+		}
 		return url;
 	};
 
@@ -470,7 +472,7 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 	// Support for node query forwarding
 	var url = serverUrl + '/api';
 	if( selectedNode ) {
-		url += '/nodes/' + selectedNode;
+		url += '/node/' + selectedNode;
 	}
 	url += '/sessions/' + sessionId;
     var updateGraphDelayTimerActive = false;
@@ -597,7 +599,7 @@ function startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 	// Support for node query forwarding
 	var url = serverUrl + '/api';
 	if( selectedNode ) {
-		url += '/nodes/' + selectedNode;
+		url += '/node/' + selectedNode;
 	}
 	url += '/sessions/' + sessionId + '/graph/status';
     var updateStatesDelayTimerActive = false;

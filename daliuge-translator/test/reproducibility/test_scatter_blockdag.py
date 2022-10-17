@@ -28,6 +28,7 @@ import json
 import optparse
 import tempfile
 import unittest
+import pkg_resources
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 from dlg.common.reproducibility.reproducibility import (
@@ -41,6 +42,7 @@ from dlg.translator.tool_commands import dlg_fill, dlg_partition, dlg_map, dlg_u
 def _run_full_workflow(
     rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
 ):
+    workflow_loc = pkg_resources.resource_filename("test", workflow_loc)
     lgt = workflow_loc + "/" + workflow + ".graph"
     lgr = scratch_loc + "/" + workflow + "LG.graph"
     pgs = scratch_loc + "/" + workflow + "PGS.graph"
@@ -57,7 +59,7 @@ def _run_full_workflow(
     dlg_partition(parser, ["-P", pgs, "-o", pgt, "-f", "newline"])
     parser = optparse.OptionParser()
     dlg_map(
-        parser, ["-P", pgt, "-N", "127.0.0.1, 127.0.0.1", "-o", pgr, "-f", "newline"]
+        parser, ["-P", pgt, "-N", "localhost, localhost", "-o", pgr, "-f", "newline"]
     )
 
 
@@ -69,9 +71,8 @@ def _read_graph(filename):
 
 
 def _init_graph(filename):
-    file = open(filename)
-    lgt = json.load(file)
-    file.close()
+    with pkg_resources.resource_stream("test", filename) as file:
+        lgt = json.load(file)
     for drop in lgt["nodeDataArray"]:
         drop["reprodata"] = {}
         drop["reprodata"]["lg_parenthashes"] = []
@@ -94,22 +95,22 @@ class ScatterTest(unittest.TestCase):
         Expected behaviour should be the same as any other type of graph - they are all logical
         components
         """
-        lgt = _init_graph("test/reproducibility/reproGraphs/simpleScatter.graph")
+        lgt = _init_graph("reproducibility/reproGraphs/simpleScatter.graph")
         init_lgt_repro_data(lgt, rmode=ReproducibilityFlags.RERUN.value)
         init_lg_repro_data(lgt)
-        visited = lg_build_blockdag(lgt)[1]
+        visited = lg_build_blockdag(lgt, ReproducibilityFlags.RERUN)[1]
         scatter_drop = lgt["nodeDataArray"][1]
         app_drop = lgt["nodeDataArray"][2]
         scatter_inter_drop = lgt["nodeDataArray"][3]
         # Checks that the input app drop is the parent of the main application
         self.assertEqual(
-            list(app_drop["reprodata"]["lg_parenthashes"].values())[0],
-            scatter_inter_drop["reprodata"]["lg_blockhash"],
+            list(app_drop["reprodata"][ReproducibilityFlags.RERUN.name]["lg_parenthashes"].values())[0],
+            scatter_inter_drop["reprodata"][ReproducibilityFlags.RERUN.name]["lg_blockhash"],
         )
         # Checks that the scatter drop is the parent of the input drop
         self.assertEqual(
-            list(scatter_inter_drop["reprodata"]["lg_parenthashes"].values())[0],
-            scatter_drop["reprodata"]["lg_blockhash"],
+            list(scatter_inter_drop["reprodata"][ReproducibilityFlags.RERUN.name]["lg_parenthashes"].values())[0],
+            scatter_drop["reprodata"][ReproducibilityFlags.RERUN.name]["lg_blockhash"],
         )
         self.assertEqual(visited, [-1, -2, -5, -3, -6, -7, -9])
 
@@ -121,7 +122,7 @@ class ScatterTest(unittest.TestCase):
         """
         scatter = "simpleScatter"
         noscatter = "simpleNoScatter"
-        graph_loc = "test/reproducibility/reproGraphs/"
+        graph_loc = "reproducibility/reproGraphs/"
         _run_full_workflow(
             rmode=ReproducibilityFlags.RERUN,
             workflow=scatter,
@@ -147,6 +148,6 @@ class ScatterTest(unittest.TestCase):
         self.assertEqual(len(no_scatter_graph), 7)
         # Their signatures should in principal be identicle
         self.assertEqual(
-            scatter_graph[-1]["reprodata"]["pg_blockhash"],
-            no_scatter_graph[-1]["reprodata"]["pg_blockhash"],
+            scatter_graph[-1]["reprodata"][ReproducibilityFlags.RERUN.name]["pg_blockhash"],
+            no_scatter_graph[-1]["reprodata"][ReproducibilityFlags.RERUN.name]["pg_blockhash"],
         )

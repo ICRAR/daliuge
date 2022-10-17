@@ -36,15 +36,19 @@ from dlg.restutils import RestClient
 
 default_repro = {
     "rmode": "1",
-    "lg_blockhash": "x",
-    "pgt_blockhash": "y",
-    "pg_blockhash": "z",
+    "RERUN": {
+        "lg_blockhash": "x",
+        "pgt_blockhash": "y",
+        "pg_blockhash": "z",
+    }
 }
 default_graph_repro = {
     "rmode": "1",
     "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
     "merkleroot": "a",
-    "signature": "b",
+    "RERUN": {
+        "signature": "b",
+    }
 }
 
 
@@ -145,7 +149,7 @@ class TestRest(unittest.TestCase):
                 },
                 {
                     "oid": "b",
-                    "type": "plain",
+                    "type": "data",
                     "storage": Categories.MEMORY,
                     "reprodata": default_repro.copy(),
                 },
@@ -162,7 +166,7 @@ class TestRest(unittest.TestCase):
             sid,
             [
                 {
-                    "type": "plain",
+                    "type": "data",
                     "storage": Categories.FILE,
                     "oid": "a",
                     "filepath": fname,
@@ -209,7 +213,7 @@ class TestRest(unittest.TestCase):
         c = NodeManagerClient(hostname)
         graph_spec = [
             {
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "oid": "a",
                 "reprodata": default_repro.copy(),
@@ -221,7 +225,7 @@ class TestRest(unittest.TestCase):
         c.addGraphSpec(sid, graph_spec)
         c.deploySession(sid, completed_uids=["a"])
         response = c.session_repro_data(sid)
-        self.assertIsNotNone(response["graph"]["a"]["reprodata"]["rg_blockhash"])
+        self.assertIsNotNone(response["graph"]["a"]["reprodata"]["RERUN"]["rg_blockhash"])
         self.assertIsNotNone(response["reprodata"])
         c.destroySession(sid)
         # Test without reprodata
@@ -232,7 +236,7 @@ class TestRest(unittest.TestCase):
         c.deploySession(sid, completed_uids=["a"])
         response = c.session_repro_data(sid)
         self.assertEqual(
-            {"a": {"oid": "a", "storage": "Memory", "type": "plain"}}, response["graph"]
+            {"a": {"oid": "a", "storage": "Memory", "type": "data"}}, response["graph"]
         )
         self.assertEqual({}, response["reprodata"])
 
@@ -242,7 +246,7 @@ class TestRest(unittest.TestCase):
         c = NodeManagerClient(hostname)
         graph_spec = [
             {
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "oid": "a",
                 "reprodata": default_repro.copy(),

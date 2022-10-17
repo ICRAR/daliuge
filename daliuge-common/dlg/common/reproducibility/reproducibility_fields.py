@@ -204,9 +204,9 @@ def pgt_unroll_block_fields(category_type, rmode: ReproducibilityFlags):
     if rmode != ReproducibilityFlags.NOTHING:
         data["type"] = FieldOps.STORE
     if rmode != ReproducibilityFlags.REPRODUCE:
-        if category_type != "plain":
+        if category_type != "data":
             data["dt"] = FieldOps.STORE
-    if category_type == "plain":
+    if category_type == "data":
         data["storage"] = FieldOps.STORE
     if rmode in (ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
         data["rank"] = FieldOps.STORE

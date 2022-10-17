@@ -19,28 +19,32 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import unittest
 import json
+import unittest
+
 import pkg_resources
 
-from dlg import runtime, graph_loader
+from dlg.common import Categories
 from dlg.ddap_protocol import DROPLinkType, DROPStates, AppDROPStates
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidGraphException
 from dlg.manager.session import SessionStates, Session
-from dlg.common import Categories
 
 default_repro = {
     "rmode": "1",
-    "lg_blockhash": "x",
-    "pgt_blockhash": "y",
-    "pg_blockhash": "z",
+    "RERUN": {
+        "lg_blockhash": "x",
+        "pgt_blockhash": "y",
+        "pg_blockhash": "z",
+    }
 }
 default_graph_repro = {
     "rmode": "1",
     "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
     "merkleroot": "a",
-    "signature": "b",
+    "RERUN": {
+        "signature": "b",
+    }
 }
 
 
@@ -100,7 +104,7 @@ class TestSession(unittest.TestCase):
                 Exception,
                 s.addGraphSpec,
                 add_test_reprodata(
-                    [{"oid": "D", "type": "plain", "storage": "invalid"}]
+                    [{"oid": "D", "type": "data", "storage": "invalid"}]
                 ),
             )  # invalid "storage"
             self.assertRaises(
@@ -125,7 +129,7 @@ class TestSession(unittest.TestCase):
 
     def test_addGraphSpec_namedPorts(self):
         with pkg_resources.resource_stream(
-            "test", "graphs/funcTestPG_namedPorts.graph"
+                "test", "graphs/funcTestPG_namedPorts.graph"
         ) as f:  # @UndefinedVariable
             graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
@@ -175,7 +179,7 @@ class TestSession(unittest.TestCase):
                     [
                         {
                             "oid": "A",
-                            "type": "plain",
+                            "type": "data",
                             "storage": Categories.MEMORY,
                             "consumers": ["B"],
                         },
@@ -187,7 +191,7 @@ class TestSession(unittest.TestCase):
                         },
                         {
                             "oid": "C",
-                            "type": "plain",
+                            "type": "data",
                             "storage": Categories.MEMORY,
                             "producers": ["B"],
                         },
@@ -210,7 +214,7 @@ class TestSession(unittest.TestCase):
                     [
                         {
                             "oid": "A",
-                            "type": "plain",
+                            "type": "data",
                             "storage": Categories.MEMORY,
                             "consumers": ["B"],
                         },
@@ -222,7 +226,7 @@ class TestSession(unittest.TestCase):
                         },
                         {
                             "oid": "C",
-                            "type": "plain",
+                            "type": "data",
                             "storage": Categories.MEMORY,
                             "producers": ["B"],
                             "consumers": ["D"],
@@ -235,7 +239,7 @@ class TestSession(unittest.TestCase):
                         },
                         {
                             "oid": "E",
-                            "type": "plain",
+                            "type": "data",
                             "storage": Categories.MEMORY,
                             "producers": ["D"],
                         },

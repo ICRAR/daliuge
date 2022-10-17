@@ -25,7 +25,7 @@ import unittest
 
 from dlg.drop import AbstractDROP
 from dlg.data.drops.file import FileDROP
-from dlg.environmentvar_drop import EnvironmentVarDROP
+from dlg.data.drops.environmentvar_drop import EnvironmentVarDROP
 from dlg.utils import getDlgDir
 
 

@@ -88,6 +88,16 @@ class FileDROP(DataDROP, PathBasedDrop):
     delete_parent_directory = dlg_bool_param("delete_parent_directory", False)
     check_filepath_exists = dlg_bool_param("check_filepath_exists", False)
 
+    # Make sure files are not deleted by default and certainly not if they are
+    # marked as precious no matter what expireAfterUse said
+    def __init__(self, *args, **kwargs):
+        if "precious" not in kwargs:
+            kwargs["precious"] = True
+        if kwargs["precious"] and "lifespan" not in kwargs: 
+            kwargs["expireAfterUse"] = False
+        super().__init__(*args, **kwargs)
+
+
     def sanitize_paths(self, filepath, dirname):
 
         # first replace any ENV_VARS on the names
@@ -178,7 +188,7 @@ class FileDROP(DataDROP, PathBasedDrop):
         elif status == DROPStates.SKIPPED:
             self._fire("dropCompleted", status=status)
             return
-        elif status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
+        elif status not in [DROPStates.COMPLETED, DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception(
                 "%r not in INITIALIZED or WRITING state (%s), cannot setComplete()"
                 % (self, self.status)
@@ -186,8 +196,9 @@ class FileDROP(DataDROP, PathBasedDrop):
 
         self._closeWriters()
 
-        logger.debug("Moving %r to COMPLETED", self)
-        self.status = DROPStates.COMPLETED
+        if status != DROPStates.COMPLETED:
+            logger.debug("Moving %r to COMPLETED", self)
+            self.status = DROPStates.COMPLETED
 
         # here we set the size. It could happen that nothing is written into
         # this file, in which case we create an empty file so applications

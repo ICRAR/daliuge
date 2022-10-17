@@ -290,7 +290,7 @@ class DataLifecycleManager:
 
             # Expire-after-use: mark as expired if all consumers
             # are finished using this DROP
-            if drop.expireAfterUse:
+            if not drop.precious and drop.expireAfterUse:
                 allDone = all(
                     c.execStatus in [AppDROPStates.FINISHED, AppDROPStates.ERROR]
                     for c in drop.consumers
