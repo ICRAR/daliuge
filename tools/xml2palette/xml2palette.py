@@ -1132,11 +1132,17 @@ def parse_params(detailed_description: str) -> list:
     :returns list of parameter descriptions
     """
     result = []
+    split_str = None
 
     if detailed_description.find("Returns:") >= 0:
         split_str = "Returns:"
     elif detailed_description.find(":returns") >= 0:
         split_str = ":returns"
+
+    # not sure how to proceed, abort    
+    if split_str == None:
+        return result
+    
     detailed_description = detailed_description.split(split_str)[0]
     param_lines = [p.replace('\n','').strip() for p in detailed_description.split(":param")[1:]]
     # param_lines = [line.strip() for line in detailed_description]
