@@ -480,7 +480,7 @@ def gen_pg_spec():
         node_list = request.json.get("node_list")
         manager_host = request.json.get("manager_host")
         if manager_host == "localhost":
-            manager_host = "127.0.0.1"
+            manager_host = "localhost"
         # try:
         #     manager_port   = int(request.json.get("manager_port"));
         # except:

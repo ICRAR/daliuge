@@ -33,15 +33,19 @@ from dlg.testutils import ManagerStarter
 
 default_repro = {
     "rmode": "1",
-    "lg_blockhash": "x",
-    "pgt_blockhash": "y",
-    "pg_blockhash": "z",
+    "RERUN":{
+        "lg_blockhash": "x",
+        "pgt_blockhash": "y",
+        "pg_blockhash": "z",
+    }
 }
 default_graph_repro = {
     "rmode": "1",
     "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
     "merkleroot": "a",
-    "signature": "b",
+    "RERUN": {
+        "signature": "b",
+    }
 }
 
 
@@ -55,7 +59,7 @@ def add_test_reprodata(graph: list):
 class CommonTestsBase(ManagerStarter):
     def _submit(self):
         pg = [
-            {"oid": "A", "type": "plain", "storage": Categories.MEMORY},
+            {"oid": "A", "type": "data", "storage": Categories.MEMORY},
             {
                 "oid": "B",
                 "type": "app",
@@ -63,13 +67,13 @@ class CommonTestsBase(ManagerStarter):
                 "inputs": ["A"],
                 "outputs": ["C"],
             },
-            {"oid": "C", "type": "plain", "storage": Categories.MEMORY},
+            {"oid": "C", "type": "data", "storage": Categories.MEMORY},
         ]
         pg = add_test_reprodata(pg)
         for drop in pg:
-            drop["node"] = "127.0.0.1"
-            drop["island"] = "127.0.0.1"
-        return common.submit(pg, "127.0.0.1", self.port)
+            drop["node"] = "localhost"
+            drop["island"] = "localhost"
+        return common.submit(pg, "localhost", self.port)
 
     def assert_sessions_finished(self, status, *session_ids):
         for session_id in session_ids:

@@ -78,5 +78,5 @@ EXPOSE 6666
 ENV VIRTUAL_ENV=/root/dlg
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV DLG_ROOT="/tmp/dlg/var/dlg_home"
-
-CMD ["dlg", "daemon", "-vv"]
+# starting the daemon, master and NM
+CMD ["dlg", "daemon", "-vv", "-m"]

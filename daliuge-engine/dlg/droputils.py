@@ -117,7 +117,7 @@ class DROPWaiterCtx(object):
                 )
 
 
-def allDropContents(drop, bufsize=4096) -> bytes:
+def allDropContents(drop, bufsize=65536) -> bytes:
     """
     Returns all the data contained in a given DROP
     """
@@ -133,37 +133,38 @@ def allDropContents(drop, bufsize=4096) -> bytes:
     return buf.getvalue()
 
 
-def copyDropContents(source: DataDROP, target: DataDROP, bufsize=4096):
+def copyDropContents(source: DataDROP, target: DataDROP, bufsize=65536):
     """
     Manually copies data from one DROP into another, in bufsize steps
     """
     logger.debug(
         "Copying from %s to %s", repr(source), repr(target))
-    desc = source.open()
-    buf = source.read(desc, bufsize)
+    sdesc = source.open()
+    buf = source.read(sdesc, bufsize)
     logger.debug("Read %d bytes from %s", len(buf), 
     repr(source))
     st = time.time()
-    tot_w = len(buf)
+    ssize = source.size if source.size is not None else -1
+    logger.debug("Source size: %d; Source checksum: %d", ssize, source.checksum)
+    tot_w = 0
     ofl = True
+    # target._expectedSize = ssize
     while buf:
-        target.write(buf)
-        tot_w += len(buf)
-        dur = time.time() - st
-        if int(dur) % 5 == 0 and ofl:
-            logger.debug("Wrote %.1f MB to %s; rate %.2f MB/s",
-                tot_w/1024**2, repr(target), tot_w/(1024**2*dur))
+        tot_w += target.write(buf)
+        dur = int(time.time() - st)
+        if dur > 5 and dur % 5 == 0 and ofl:
+            logger.debug("Wrote %d Bytes to %s; rate %.2f MB/s",
+                tot_w, repr(target), tot_w/(1024**2*dur))
             ofl = False
         elif int(dur) % 5 == 4:
             ofl = True
-        buf = source.read(desc, bufsize)
-        # if buf is not None:
-        #     logger.debug(f"Read {len(buf)} bytes from {repr(source)}")
+        buf = source.read(sdesc, bufsize)
     dur = time.time() - st
-    logger.debug("Wrote %.1f MB to %s; rate %.2f MB/s",
-        tot_w/1024**2, repr(target), tot_w/(1024**2*dur))
+    logger.debug("Wrote %d Bytes of %d to %s; rate %.2f MB/s",
+        tot_w, ssize, repr(target), tot_w/(1024**2*dur))
 
-    source.close(desc)
+    source.close(sdesc)
+    return
 
 
 def getUpstreamObjects(drop):
@@ -422,7 +423,7 @@ class DROPFile(object):
             self._drop.close(self._fd)
         self._isClosed = True
 
-    def read(self, size=4096):
+    def read(self, size=65536):
         if self._io:
             return self._io.read(size)
         return self._drop.read(self._fd, size)
@@ -604,6 +605,9 @@ def identify_named_ports(
         port_dict (dict): ports {uid:name,...}
         posargs (list): available positional arguments (will be modified)
         pargsDict (dict): mapped arguments (will be modified)
+        keyargs (dict): keyword arguments
+        check_len (int): number of of ports to be checked
+        mode (str ["inputs"]): mode, used just for logging messages 
 
     Returns:
         dict: port arguments
@@ -611,8 +615,10 @@ def identify_named_ports(
     Side effect:
         modifies the pargsDict OrderedDict
     """
-    logger.debug("Using named ports to remove %s from arguments port_dict, check_len): %s %d",
+    # p_name = [p["name"] for p in port_dict]
+    logger.debug("Using named ports to remove %s from arguments port_dict: %s, check_len: %d)",
         mode, port_dict, check_len)
+    logger.debug("Checking against keyargs: %s", keyargs)
     portargs = {}
     posargs = list(posargs)
     keys = list(port_dict.keys())
@@ -631,7 +637,7 @@ def identify_named_ports(
         elif key in keyargs:
             # if not found in appArgs we don't put them into portargs either
             portargs.update({key:value})
-            logger.debug("Using %s '%s' for kwarg %s", mode, value, key)
+            logger.debug("Using %s of type %s for kwarg %s", mode, type(value), key)
             _dum = keyargs.pop(key) # remove from original arg list
         else:
             logger.debug("No matching argument found for %s key %s", mode, key)
@@ -661,8 +667,9 @@ def replace_named_ports(
     oitems:dict,
     inport_names:dict,
     outport_names:dict,
-    appArgs:dict, argumentPrefix="--",
-    separator=" "
+    appArgs:dict,
+    argumentPrefix:str = "--",
+    separator:str = " "
     ) -> Tuple[str, str]:
     """
     Function attempts to identify component arguments that match port names.

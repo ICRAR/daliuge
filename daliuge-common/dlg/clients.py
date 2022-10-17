@@ -31,6 +31,7 @@ compress = os.environ.get("DALIUGE_COMPRESSED_JSON", True)
 
 quote = urllib.parse.quote
 
+default_host = "localhost" # localhost now binds to IPv6 address on some distros
 
 class BaseDROPManagerClient(RestClient):
     """
@@ -222,7 +223,7 @@ class NodeManagerClient(BaseDROPManagerClient):
     """
 
     def __init__(
-            self, host="localhost", port=constants.NODE_DEFAULT_REST_PORT, timeout=10
+            self, host=default_host, port=constants.NODE_DEFAULT_REST_PORT, timeout=10
     ):
         super(NodeManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
@@ -249,10 +250,10 @@ class CompositeManagerClient(BaseDROPManagerClient):
         return self._get_json("/nodes")
 
     def add_node(self, node):
-        self._POST(f"/nodes/{node}", content=None)
+        self._POST(f"/node/{node}", content=None)
 
     def remove_node(self, node):
-        self._DELETE(f"/nodes/{node}")
+        self._DELETE(f"/node/{node}")
 
     def get_submission_method(self):
         return self._get_json("/submission_method")
@@ -264,7 +265,7 @@ class DataIslandManagerClient(CompositeManagerClient):
     """
 
     def __init__(
-            self, host="localhost", port=constants.ISLAND_DEFAULT_REST_PORT, timeout=10
+            self, host=default_host, port=constants.ISLAND_DEFAULT_REST_PORT, timeout=10
     ):
         super(DataIslandManagerClient, self).__init__(
             host=host, port=port, timeout=timeout
@@ -277,33 +278,33 @@ class MasterManagerClient(CompositeManagerClient):
     """
 
     def __init__(
-            self, host="localhost", port=constants.MASTER_DEFAULT_REST_PORT, timeout=10
+            self, host=default_host, port=constants.MASTER_DEFAULT_REST_PORT, timeout=10
     ):
         super(MasterManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
     def create_island(self, island_host, nodes):
         self._post_json(
-            f"/managers/{quote(island_host)}/dataisland", {"nodes": nodes}
+            f"/managers/{quote(island_host)}/island", {"nodes": nodes}
         )
 
     def dims(self):
         return self._get_json("/islands")
 
     def add_dim(self, dim):
-        self._POST(f"/islands/{dim}", content=None)
+        self._POST(f"/island/{dim}", content=None)
 
     def remove_dim(self, dim):
-        self._DELETE(f"/islands/{dim}")
+        self._DELETE(f"/island/{dim}")
 
     def add_node_to_dim(self, dim, nm):
         """
         Adds a nm to a dim
         """
         self._POST(
-            f"managers/{dim}/nodes/{nm}", content=None, )
+            f"/managers/{dim}/node/{nm}", content=None, )
 
     def remove_node_from_dim(self, dim, nm):
         """
         Removes a nm from a dim
         """
-        self._DELETE(f"managers/{dim}/nodes/{nm}")
+        self._DELETE(f"/managers/{dim}/node/{nm}")

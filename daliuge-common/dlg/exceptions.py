@@ -76,6 +76,18 @@ class InvalidGraphException(DaliugeException):
     Daliuge.
     """
 
+class DropChecksumException(DaliugeException):
+    """
+    An exception thrown when a DROP does not pass a checksum check
+    """
+    def __init__(self, drop):
+        DaliugeException.__init__(self, drop)
+        self.drop = drop
+        self.msg = "DropChecksumException <%r> checksum: %s" % (self.drop, drop.checksum)
+
+    def __str__(self, *args, **kwargs):
+        return self.msg
+
 
 class NoDropException(DaliugeException):
     """

@@ -404,7 +404,7 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         | A --|----|-> B --> C |
         =======    =============
         """
-        g1 = [{"oid": "A", "type": "plain", "storage": Categories.MEMORY}]
+        g1 = [{"oid": "A", "type": "data", "storage": Categories.MEMORY}]
         g2 = [
             {
                 "oid": "B",
@@ -414,7 +414,7 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
             },
             {
                 "oid": "C",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "producers": ["B"],
             },
@@ -437,7 +437,7 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         g1 = [
             {
                 "oid": "A",
-                "type": "plain",
+                "type": "data",
                 "storage": Categories.MEMORY,
                 "consumers": ["B"],
             },
@@ -448,7 +448,7 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
                 "func_name": __name__ + ".func1",
             },
         ]
-        g2 = [{"oid": "C", "type": "plain", "storage": Categories.MEMORY}]
+        g2 = [{"oid": "C", "type": "data", "storage": Categories.MEMORY}]
         rels = [DROPRel("B", DROPLinkType.PRODUCER, "C")]
         a_data = os.urandom(32)
         c_data = self._test_runGraphInTwoNMs(g1, g2, rels, pickle.dumps(a_data), None)

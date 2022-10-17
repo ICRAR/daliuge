@@ -13,5 +13,5 @@ COPY --from=0 /daliuge/. /daliuge/.
 
 EXPOSE 8000
 EXPOSE 9000
-
+# We don't start anything else than the daemon
 CMD ["dlg", "daemon", "-vv", "--no-nm"]

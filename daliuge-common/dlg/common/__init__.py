@@ -75,6 +75,7 @@ STORAGE_TYPES = {
     Categories.PLASMAFLIGHT,
     Categories.PARSET,
     Categories.ENVIRONMENTVARS,
+    Categories.S3,
 }
 APP_DROP_TYPES = [
     Categories.COMPONENT,
@@ -90,12 +91,25 @@ APP_DROP_TYPES = [
 
 
 class DropType:
-    PLAIN = "plain"
+    # this gives the mapping to fields containing class paths
+    DATA = "data" # TODO: need to drop this one
+    DATACLASS = "dataclass"
+    APPCLASS = "appclass"
     SOCKET = "socket"
-    APP = "app"  # Application drop that terminates onces executed
+    APP = "app"  # TODO: need to drop this one
     SERVICE_APP = "serviceapp"  # App drop that runs continously
     CONTAINER = "container"  # Drop that contains other drops
 
+class CategoryType:
+    DATA = "Data"
+    APPLICATION = "Application"
+    GROUP = "Group"
+    UNKNOWN = "Unknown"
+    SERVICE = "Service"
+    CONTAINER = "Container"
+    SOCKET = "Socket"
+    CONTROL = "Control"
+    OTHER = "Other"
 
 def b2s(b, enc="utf8"):
     "Converts bytes into a string"
@@ -200,7 +214,7 @@ def get_roots(pg_spec):
             if dropspec.get("outputs", None):
                 do = _sanitize_links(dropspec["outputs"])
                 nonroots |= set(do)
-        elif dropspec["type"] == DropType.PLAIN:
+        elif dropspec["type"] == DropType.DATA:
             if dropspec.get("producers", None):
                 nonroots.add(oid)
             if dropspec.get("consumers", None):
@@ -245,7 +259,7 @@ def get_leaves(pg_spec):
             if dropspec.get("inputs", None):
                 di = _sanitize_links(dropspec["inputs"])
                 nonleaves |= set(di)
-        elif dropspec["type"] == DropType.PLAIN:
+        elif dropspec["type"] == DropType.DATA:
             if dropspec.get("producers", None):
                 dp = _sanitize_links(dropspec["producers"])
                 nonleaves |= set(dp)
