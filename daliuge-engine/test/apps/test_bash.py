@@ -226,7 +226,7 @@ class StreamingBashAppTests(unittest.TestCase):
         c = StreamingInputOutputBashApp("c", "c", command="cat")
         d = InMemoryDROP("d", "d")
         e = StreamingInputBashApp("e", "e", command="sort -n > %o0")
-        f = FileDROP("f", "f", filepath=output_fname)
+        f = FileDROP("f", "f", output_fname)
 
         a.addOutput(b)
         b.addStreamingConsumer(c)

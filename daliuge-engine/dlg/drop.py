@@ -22,21 +22,23 @@
 """
 Module containing the core DROP classes.
 """
-from sqlite3 import OperationalError
-from abc import ABCMeta, abstractmethod, abstractproperty
 import ast
-from collections import OrderedDict
 import heapq
 import inspect
 import logging
 import math
 import os
 import random
-import threading
-import time
 import re
 import sys
+import threading
+import time
+from abc import ABCMeta, abstractmethod, abstractproperty
+from collections import OrderedDict
+from sqlite3 import OperationalError
 from typing import List, Union
+
+from merklelib import MerkleTree
 
 from dlg.common.reproducibility.constants import (
     ReproducibilityFlags,
@@ -45,9 +47,14 @@ from dlg.common.reproducibility.constants import (
     ALL_RMODES,
 )
 from dlg.common.reproducibility.reproducibility import common_hash
-from merklelib import MerkleTree
-
-from . import droputils
+from dlg.data.io import (
+    DataIO,
+    OpenMode,
+    ErrorIO,
+    NullIO,
+)
+from dlg.event import EventFirer
+from dlg.exceptions import InvalidDropException, InvalidRelationshipException
 from .ddap_protocol import (
     ExecutionMode,
     ChecksumTypes,
@@ -56,14 +63,6 @@ from .ddap_protocol import (
     DROPPhases,
     DROPStates,
     DROPRel,
-)
-from dlg.event import EventFirer
-from dlg.exceptions import InvalidDropException, InvalidRelationshipException
-from dlg.data.io import (
-    DataIO,
-    OpenMode,
-    ErrorIO,
-    NullIO,
 )
 
 DEFAULT_INTERNAL_PARAMETERS = {
@@ -384,13 +383,15 @@ class AbstractDROP(EventFirer):
         Extracts component and app params then assigns them to class instance attributes.
         Component params take pro
         """
+
         def get_param_value(attr_name, default_value):
             has_component_param = attr_name in kwargs
             has_app_param = 'applicationArgs' in kwargs \
-                and attr_name in kwargs['applicationArgs']
+                            and attr_name in kwargs['applicationArgs']
 
             if has_component_param and has_app_param:
-                logger.warning(f"Drop has both component and app param {attr_name}. Using component param.")
+                logger.warning(
+                    f"Drop has both component and app param {attr_name}. Using component param.")
             if has_component_param:
                 param = kwargs.get(attr_name)
             elif has_app_param:
@@ -484,16 +485,23 @@ class AbstractDROP(EventFirer):
         Can be overwritten with custom logic as necessary.
         """
 
+    def _test_env_var_matches(self, key, val, store: dict):
+        if self._env_var_matcher.fullmatch(str(val)):
+            store[key] = self.get_environment_variable(val)
+        if self._dlg_var_matcher.fullmatch(str(val)):
+            store[key] = getDlgVariable(val)
+
     def autofill_environment_variables(self):
         """
-        Runs through all parameters here, fetching those which match the env-var syntax when
+        Runs through all parameters and class variables here, fetching those which match the env-var syntax when
         discovered.
         """
+        # Handle kwargs
         for param_key, param_val in self.parameters.items():
-            if self._env_var_matcher.fullmatch(str(param_val)):
-                self.parameters[param_key] = self.get_environment_variable(param_val)
-            if self._dlg_var_matcher.fullmatch(str(param_val)):
-                self.parameters[param_key] = getDlgVariable(param_val)
+            self._test_env_var_matches(param_key, param_val, self.parameters)
+        # Handle class variables
+        for param_key, param_val in self.__dict__.items():
+            self._test_env_var_matches(param_key, param_val, self.__dict__)
 
     def get_environment_variable(self, key: str):
         """
@@ -1188,6 +1196,7 @@ class PathBasedDrop(object):
     def path(self) -> str:
         return self._path
 
+
 ##
 # @brief Data
 # @details A generic Data drop, whose functionality can be provided by an arbitrary class, as specified in the 'dataclass' component parameter
@@ -1236,8 +1245,6 @@ class DataDROP(AbstractDROP):
         consumer_names = self.parameters['consumers'] \
             if "consumers" in self.parameters else []
         print(f"{self.uid} {producer_names}")
-        key_args, p_args = droputils.replace_named_ports({x.uid: x for x in self.producers},
-                                                         {x.uid: x for x in self.consumers}, producer_names, consumer_names, self.parameters)
 
     @track_current_drop
     def open(self, **kwargs):
@@ -1725,7 +1732,7 @@ class AppDROP(ContainerDROP):
         """
         Generates a named mapping of output data drops. Can only be called during run().
         """
-        named_outputs:  OrderedDict[str, DataDROP] = OrderedDict()
+        named_outputs: OrderedDict[str, DataDROP] = OrderedDict()
         if 'outputs' in self.parameters and isinstance(self.parameters['outputs'][0], dict):
             for i in range(len(self._outputs)):
                 key = list(self.parameters['outputs'][i].values())[0]

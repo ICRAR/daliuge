@@ -263,7 +263,7 @@ class TestEnvironmentVarDROP(unittest.TestCase):
             os.environ["DLG_ROOT"] = tmp_dir
             os.environ["DLG_FILE"] = "test_file"
             test_drop = FileDROP(
-                oid="a", uid="a", filepath="$DLG_FILE", dirname="$DLG_ROOT"
+                "a", "a", "$DLG_FILE", "$DLG_ROOT"
             )
             test_drop.write(b"1234")
             self.assertEqual(tmp_dir, test_drop.dirname)

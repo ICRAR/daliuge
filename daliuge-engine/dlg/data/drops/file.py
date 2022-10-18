@@ -24,10 +24,10 @@ import os
 import re
 
 from dlg.common.reproducibility.reproducibility import common_hash
+from dlg.data.io import FileIO
 from dlg.ddap_protocol import DROPStates
 from dlg.drop import DataDROP, PathBasedDrop, logger, track_current_drop
 from dlg.exceptions import InvalidDropException
-from dlg.data.io import FileIO
 from dlg.meta import dlg_bool_param
 from dlg.utils import isabs
 
@@ -87,6 +87,15 @@ class FileDROP(DataDROP, PathBasedDrop):
     # dirname = dlg_string_param("dirname", None)
     delete_parent_directory = dlg_bool_param("delete_parent_directory", False)
     check_filepath_exists = dlg_bool_param("check_filepath_exists", False)
+    filepath = None
+    dirname = None
+
+    def __init__(self, oid, uid, filepath=None, dirname=None, **kwargs):
+        # filepath, dirpath the two pieces of information we offer users to tweak
+        # These are very intermingled but are not exactly the same, see initialize()
+        self.filepath = filepath
+        self.dirname = dirname
+        super().__init__(oid, uid, **kwargs)
 
     def sanitize_paths(self, filepath, dirname):
 
@@ -116,10 +125,6 @@ class FileDROP(DataDROP, PathBasedDrop):
         """
         FileDROP-specific initialization.
         """
-        # filepath, dirpath the two pieces of information we offer users to tweak
-        # These are very intermingled but are not exactly the same, see below
-        self.filepath = self.parameters.get("filepath", None)
-        self.dirname = self.parameters.get("dirname", None)
         # Duh!
         if isabs(self.filepath) and self.dirname:
             raise InvalidDropException(
