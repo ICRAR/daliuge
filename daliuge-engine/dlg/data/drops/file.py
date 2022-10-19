@@ -89,11 +89,11 @@ class FileDROP(DataDROP, PathBasedDrop):
     check_filepath_exists = dlg_bool_param("check_filepath_exists", False)
 
     # Make sure files are not deleted by default and certainly not if they are
-    # marked as precious no matter what expireAfterUse said
+    # marked to be persisted no matter what expireAfterUse said
     def __init__(self, *args, **kwargs):
-        if "precious" not in kwargs:
-            kwargs["precious"] = True
-        if kwargs["precious"] and "lifespan" not in kwargs: 
+        if "persist" not in kwargs:
+            kwargs["persist"] = True
+        if kwargs["persist"] and "lifespan" not in kwargs:
             kwargs["expireAfterUse"] = False
         super().__init__(*args, **kwargs)
 
