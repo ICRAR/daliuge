@@ -1342,22 +1342,28 @@ class NamedParameterSubstituteTests(unittest.TestCase):
     def test_filedrop_filename(self):
         a = InMemoryDROP("a", "a")
         b = CopyApp("b", "b")
-        c = FileDROP("c", "c", filepath='b')
+        c = FileDROP("c", "c", "b")
         b.addInput(a)
         b.addOutput(c)
         with droputils.DROPWaiterCtx(self, c, timeout=1000):
             a.write(b'test.out')
             a.setCompleted()
-        self.assertEqual("test.out", c.parameters.get('filepath', ''))
+        self.assertEqual("test.out", c.filepath)
 
     def test_docker_portnum(self):
-        a = InMemoryDROP("a", "a")
-        b = DockerApp("b", "b", inputs=[{"a": "image"}])
-        b.addInput(a)
+        d = FileDROP("d", "d")
+        appargs = {
+            'portnum': {'text': 'portnum', 'value': 'd', 'positional': False, 'precious': False}
+        }
+        b = DockerApp("b", "b", image="ubuntu:14.04", command="echo 'test' > %o0", applicationArgs=appargs,
+                      inputs=[{"d": "portnum"}])
+        c = FileDROP("c", "c")
+        b.addInput(d)
+        b.addOutput(c)
         with droputils.DROPWaiterCtx(self, b):
-            a.write(b"dlg:test")
-            a.setCompleted()
-        self.assertEqual("dlg:test", b._image)
+            d.write(b"1234")
+            d.setCompleted()
+        self.assertEqual('/bin/bash -c "echo \'test\' > /tmp/daliuge_tfiles/c --portnum 1234"', b._finalcmd)
 
     def test_pyfunc_argument(self):
         a = InMemoryDROP("a", "a")
@@ -1385,7 +1391,6 @@ class NamedParameterSubstituteTests(unittest.TestCase):
                          outputs=[{'c': 'of'}])
         b.addInput(a)
         b.addOutput(c)
-        print(f"inputs are {b.inputs}")
         with droputils.DROPWaiterCtx(self, b):
             a.write(b"/dev/urandom")
             c.write(b"/tmp/")
