@@ -242,6 +242,7 @@ class DockerApp(BarrierAppDROP):
         self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
         self._argumentPrefix = self._popArg(kwargs, "argumentPrefix", "--")
         self._paramValueSeparator = self._popArg(kwargs, "paramValueSeparator", " ")
+        self._finalcmd = ""
         if not self._image:
             raise InvalidDropException(
                 self, "No docker image specified, cannot create DockerApp"
@@ -545,7 +546,7 @@ class DockerApp(BarrierAppDROP):
 
             c = DockerApp._get_client()
             logger.debug(f"Final user for container: {self._user}:{self._userid}")
-
+            self._finalcmd = cmd
             # Create container
             self._container = c.containers.create(  # type: ignore
                 self._image,
