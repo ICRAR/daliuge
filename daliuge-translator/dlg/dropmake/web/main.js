@@ -731,7 +731,7 @@ async function restDeploy() {
     // const create_session_url = manager_url + "/api/sessions";
     // const append_graph_url   = manager_url + "/api/sessions/" + sessionId + "/graph/append";
     // const deploy_graph_url   = manager_url + "/api/sessions/" + sessionId + "/deploy";
-    // const mgr_url            = manager_url + "/session?sessionId=" + sessionId;
+    // const dlg_mgr_url            = manager_url + "/session?sessionId=" + sessionId;
 
     // fetch the PGT from this server
     console.log("sending request to ", pgt_url);

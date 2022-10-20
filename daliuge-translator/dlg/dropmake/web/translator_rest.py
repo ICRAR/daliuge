@@ -51,12 +51,13 @@ from dlg.clients import CompositeManagerClient
 from dlg.common.reproducibility.constants import REPRO_DEFAULT, ALL_RMODES, ReproducibilityFlags
 from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data, \
     init_pgt_partition_repro_data, init_pgt_unroll_repro_data, init_pg_repro_data
+from dlg.deploy.deployment_utils import check_k8s_env
 from dlg.dropmake.lg import GraphException
 from dlg.dropmake.pg_manager import PGManager
 from dlg.dropmake.scheduler import SchedulerException
 from dlg.dropmake.web.translator_utils import file_as_string, lg_repo_contents, lg_path, lg_exists, \
     pgt_exists, pgt_path, pgt_repo_contents, prepare_lgt, unroll_and_partition_with_params, \
-    make_algo_param_dict
+    make_algo_param_dict, check_mgr_avail, parse_mgr_url
 
 APP_DESCRIPTION = """
 DALiuGE LG Web interface translates and deploys logical graphs.
@@ -793,6 +794,34 @@ def pgt_map(
     return JSONResponse(pg)
 
 
+@app.get("/api/submission_method")
+def get_submission_method(
+        dlg_mgr_url: str = Query(default=None,
+                                description="If present, translator will query this URL for its deployment options"),
+        dlg_mgr_host: str = Query(default=None,
+                                 description="If present with mport and mprefix, will be the base host for deployment"),
+        dlg_mgr_port: int = Query(default=None,
+                                 description="")
+):
+    logger.debug("Received submission_method request")
+    if dlg_mgr_url:
+        mhost, mport, mprefix = parse_mgr_url(dlg_mgr_url)
+    else:
+        mhost = dlg_mgr_host
+        mport = dlg_mgr_port
+        mprefix = ""
+    available_methods = []
+    if check_k8s_env():
+        available_methods.append("HELM")
+    if mhost is not None:
+        host_available_methods = check_mgr_avail(mhost, mport, mprefix)
+        if host_available_methods:
+            if "BROWSER" in host_available_methods["methods"]:
+                available_methods.extend(["SERVER"])
+    print(available_methods)
+    return {"methods": available_methods}
+
+
 @app.get("/", response_class=HTMLResponse, description="The page used to view physical graphs")
 def index(request: Request):
     tpl = templates.TemplateResponse("pg_viewer.html", {
@@ -803,6 +832,11 @@ def index(request: Request):
         "error": None
     })
     return tpl
+
+
+@app.head("/")
+def liveliness():
+    return {}
 
 
 def run(_, args):
