@@ -241,7 +241,7 @@
                     "type": ""
                 }
             ],
-            "precious": false,
+            "persist": false,
             "readonly": true,
             "sha": "",
             "streaming": false,
@@ -349,7 +349,7 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "precious": false,
+            "persist": false,
             "readonly": false,
             "sha": "0023469",
             "streaming": false,

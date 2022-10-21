@@ -186,7 +186,7 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "precious": false,
+            "persist": false,
             "sha": "",
             "streaming": false,
             "subject": null,
@@ -330,7 +330,7 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "precious": false,
+            "persist": false,
             "sha": "",
             "streaming": false,
             "subject": null,
@@ -380,7 +380,7 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "precious": false,
+            "persist": false,
             "sha": "",
             "streaming": false,
             "subject": null,
@@ -451,7 +451,7 @@
                     "type": "String"
                 }
             ],
-            "precious": false,
+            "persist": false,
             "sha": "63d7df9",
             "streaming": false,
             "subject": null,
@@ -548,7 +548,7 @@
                     "type": "Complex"
                 }
             ],
-            "precious": false,
+            "persist": false,
             "sha": "a7abe4c",
             "streaming": false,
             "subject": null,
@@ -629,7 +629,7 @@
                     "type": "Complex"
                 }
             ],
-            "precious": false,
+            "persist": false,
             "sha": "a7abe4c",
             "streaming": false,
             "subject": null,
@@ -725,7 +725,7 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "precious": false,
+            "persist": false,
             "sha": "a7abe4c",
             "streaming": false,
             "subject": null,
