@@ -30,8 +30,9 @@ from dlg.manager import constants
 from dlg.manager.client import MasterManagerClient
 from dlg.manager.proc_daemon import DlgDaemon
 
-_TIMEOUT = 10
+_TIMEOUT = 30
 IDENTITY = lambda x: x
+
 
 def wait_until(update_condition, test_condition=IDENTITY, timeout=_TIMEOUT, interval=0.1):
     timeout_time = time.time() + timeout
@@ -157,6 +158,7 @@ class TestDaemon(unittest.TestCase):
         if not disable_zeroconf:
             def _test_dims(dims):
                 return dims and dims["islands"]
+
             dims = _get_dims_from_client(mc, test_condition=_test_dims)
             self.assertIsNotNone(dims)
             return dims
