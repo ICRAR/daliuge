@@ -118,6 +118,7 @@ class lib64_path(install):
 install_requires = [
     "wheel",  # need to get wheel first...
     "bottle",
+    "boto3",
     "configobj",
     "crc32c",
     "daliuge-common==%s" % (VERSION,),
