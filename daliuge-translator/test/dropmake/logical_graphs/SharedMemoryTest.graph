@@ -143,7 +143,7 @@
                     "type": "String"
                 }
             ],
-            "precious": false,
+            "persist": false,
             "readonly": false,
             "sha": "",
             "streaming": false,
@@ -218,7 +218,7 @@
                     "type": "String"
                 }
             ],
-            "precious": false,
+            "persist": false,
             "readonly": false,
             "sha": "",
             "streaming": false,
@@ -313,7 +313,7 @@
                     "type": "String"
                 }
             ],
-            "precious": false,
+            "persist": false,
             "readonly": false,
             "sha": "",
             "streaming": false,
@@ -408,7 +408,7 @@
                     "type": "String"
                 }
             ],
-            "precious": false,
+            "persist": false,
             "readonly": false,
             "sha": "",
             "streaming": false,
@@ -503,7 +503,7 @@
                     "type": "String"
                 }
             ],
-            "precious": false,
+            "persist": false,
             "readonly": false,
             "sha": "",
             "streaming": false,
@@ -569,7 +569,7 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "precious": false,
+            "persist": false,
             "readonly": false,
             "sha": "",
             "streaming": false,
@@ -635,7 +635,7 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "precious": false,
+            "persist": false,
             "readonly": false,
             "sha": "",
             "streaming": false,
@@ -701,7 +701,7 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "precious": false,
+            "persist": false,
             "readonly": false,
             "sha": "",
             "streaming": false,
