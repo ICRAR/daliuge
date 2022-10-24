@@ -49,11 +49,11 @@ class InMemoryDROP(DataDROP):
 
     # Allow in-memory drops to be automatically removed by default
     def __init__(self, *args, **kwargs):
-        if "precious" not in kwargs:
-            kwargs["precious"] = False
+        if "persist" not in kwargs:
+            kwargs["persist"] = False
         if "expireAfterUse" not in kwargs:
             kwargs["expireAfterUse"] = True
-        if kwargs["precious"]:
+        if kwargs["persist"]:
             kwargs["expireAfterUse"] = False
         super().__init__(*args, **kwargs)
 

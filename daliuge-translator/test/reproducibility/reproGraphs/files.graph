@@ -79,7 +79,7 @@
                     "text": "event"
                 }
             ],
-            "precious": false,
+            "persist": false,
             "sha": "",
             "streaming": false,
             "subject": null,
@@ -185,7 +185,7 @@
                     "text": "event"
                 }
             ],
-            "precious": false,
+            "persist": false,
             "sha": "",
             "streaming": false,
             "subject": null,
@@ -255,7 +255,7 @@
                     "text": "event"
                 }
             ],
-            "precious": false,
+            "persist": false,
             "sha": "",
             "streaming": false,
             "subject": null,

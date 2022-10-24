@@ -70,8 +70,8 @@ class TestDataLifecycleManager(unittest.TestCase):
             self.assertEqual(DROPPhases.SOLID, drop.phase)
             self.assertEqual(2, len(manager.getDropUids(drop)))
 
-            # Try the same with a non-precious data object, it shouldn't be replicated
-            drop = FileDROP("oid:B", "uid:B1", expectedSize=1, precious=False)
+            # Try the same with a non-persisted data object, it shouldn't be replicated
+            drop = FileDROP("oid:B", "uid:B1", expectedSize=1, persist=False)
             manager.addDrop(drop)
             self._writeAndClose(drop)
             self.assertEqual(DROPPhases.GAS, drop.phase)
@@ -93,7 +93,7 @@ class TestDataLifecycleManager(unittest.TestCase):
     def test_lostDrop(self):
         with dlm.DataLifecycleManager(check_period=0.5) as manager:
             drop = FileDROP(
-                "oid:A", "uid:A1", expectedSize=1, lifespan=10, precious=False
+                "oid:A", "uid:A1", expectedSize=1, lifespan=10, persist=False
             )
             manager.addDrop(drop)
             self._writeAndClose(drop)
@@ -110,7 +110,7 @@ class TestDataLifecycleManager(unittest.TestCase):
     def test_cleanupExpiredDrops(self):
         with dlm.DataLifecycleManager(check_period=0.5, cleanup_period=2) as manager:
             drop = FileDROP(
-                "oid:A", "uid:A1", expectedSize=1, lifespan=1, precious=False
+                "oid:A", "uid:A1", expectedSize=1, lifespan=1, persist=False
             )
             manager.addDrop(drop)
             self._writeAndClose(drop)
@@ -140,13 +140,13 @@ class TestDataLifecycleManager(unittest.TestCase):
             a = DirectoryContainer(
                 "a",
                 "a",
-                precious=False,
+                persist=False,
                 expireAfterUse=True,
                 dirname=tempfile.mkdtemp(),
             )
             b_dirname = tempfile.mkdtemp()
             b = DirectoryContainer(
-                "b", "b", precious=False, expireAfterUse=False, dirname=b_dirname
+                "b", "b", persist=False, expireAfterUse=False, dirname=b_dirname
             )
             c = BarrierAppDROP("c", "c")
             d = BarrierAppDROP("d", "d")

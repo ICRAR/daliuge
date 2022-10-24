@@ -118,6 +118,13 @@
                     "expanded": {
                         "type": "boolean"
                     },
+                    "precious": {
+                        "type": "boolean",
+                        "deprecated": true
+                    },
+                    "persist": {
+                        "type": "boolean"
+                    },
                     "inputApplicationName": {
                         "type": "string"
                     },
