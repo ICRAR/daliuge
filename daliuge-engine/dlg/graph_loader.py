@@ -36,6 +36,7 @@ from .apps.socket_listener import SocketListenerApp
 from .common import Categories
 from .ddap_protocol import DROPRel, DROPLinkType
 from .drop import (
+    AbstractDROP,
     ContainerDROP,
     LINKTYPE_NTO1_PROPERTY,
     LINKTYPE_1TON_APPEND_METHOD,
@@ -326,7 +327,7 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
 
     # We're done! Return the roots of the graph to the caller
     logger.info("Calculating graph roots")
-    roots = []
+    roots: list[AbstractDROP] = []
     for drop in drops.values():
         if not droputils.getUpstreamObjects(drop):
             roots.append(drop)
@@ -345,7 +346,7 @@ def _createData(dropSpec, dryRun=False, session=None):
         module = importlib.import_module(".".join(parts[:-1]))
         storageType = getattr(module, parts[-1])
     else:
-        # Fall back to old behaviour or to FileDROP 
+        # Fall back to old behaviour or to FileDROP
         # if nothing else is specified
         if "storage" in dropSpec:
             storageType = STORAGE_TYPES[dropSpec["storage"]]
@@ -424,18 +425,29 @@ def _getIds(dropSpec):
 
 
 def _getKwargs(dropSpec):
+    kwargs = dict(dropSpec)
+
     REMOVE = [
         "oid",
         "uid",
         "app",
         "appclass",
     ]
-    kwargs = dict(dropSpec)
     for kw in REMOVE:
         if kw in kwargs:
             del kwargs[kw]
+
+    RENAME = {
+        "precious": "persist",
+    }
+    for find, replace in RENAME.items():
+        if find in kwargs:
+            kwargs[replace] = kwargs[find]
+            del kwargs[find]
+
     for name, spec in dropSpec.get("applicationArgs", dict()).items():
         kwargs[name] = spec["value"]
+
     return kwargs
 
 

@@ -186,3 +186,26 @@ class TestGraphLoader(unittest.TestCase):
         self.assertEqual(app.integer, True)
         self.assertEqual(app.low, 34)
         self.assertEqual(app.high, 3456)
+
+    def test_backwardsCompatibilityWithPreciousFlag(self):
+        """
+        Ensure that precious is detected and exposed as the persist flag
+        """
+        testCases = [
+            ("precious", True),
+            ("precious", False),
+            ("persist", True),
+            ("persist", False),
+            (None, False), # Default of False is specific to MemoryDrops
+        ]
+        for key, value in testCases:
+            with self.subTest(key=key, value=value):
+                dropSpec = {"oid": "A", "type": "data", "storage": Categories.MEMORY}
+                if key is not None:
+                    dropSpec[key] = value
+
+                graph = graph_loader.createGraphFromDropSpecList([dropSpec])
+                data = graph[0]
+                self.assertIsInstance(data, InMemoryDROP)
+                self.assertEqual(value, data.persist)
+                self.assertFalse(hasattr(data, 'precious'))
