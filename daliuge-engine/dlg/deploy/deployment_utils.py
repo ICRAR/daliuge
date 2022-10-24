@@ -113,21 +113,6 @@ def list_as_string(s):
     return _parse_list_tokens(iter(_list_tokenizer(s)))
 
 
-def check_k8s_env():
-    """
-    Makes sure kubectl can be called and is accessible.
-    """
-    try:
-        output = subprocess.run(
-            ["kubectl version"], capture_output=True, shell=True
-        ).stdout
-        output = output.decode(encoding="utf-8").replace("\n", "")
-        pattern = re.compile(r"^Client Version:.*Server Version:.*")
-        return re.match(pattern, output)
-    except subprocess.SubprocessError:
-        return False
-
-
 def find_numislands(physical_graph_template_file):
     """
     Given the physical graph data extract the graph name and the total number of
