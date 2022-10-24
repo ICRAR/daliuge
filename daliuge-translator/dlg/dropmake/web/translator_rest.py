@@ -51,7 +51,7 @@ from dlg.clients import CompositeManagerClient
 from dlg.common.reproducibility.constants import REPRO_DEFAULT, ALL_RMODES, ReproducibilityFlags
 from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data, \
     init_pgt_partition_repro_data, init_pgt_unroll_repro_data, init_pg_repro_data
-from dlg.deploy.deployment_utils import check_k8s_env
+from dlg.common.k8s_utils import check_k8s_env
 from dlg.dropmake.lg import GraphException
 from dlg.dropmake.pg_manager import PGManager
 from dlg.dropmake.scheduler import SchedulerException
@@ -818,7 +818,6 @@ def get_submission_method(
         if host_available_methods:
             if "BROWSER" in host_available_methods["methods"]:
                 available_methods.extend(["SERVER"])
-    print(available_methods)
     return {"methods": available_methods}
 
 
