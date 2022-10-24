@@ -167,7 +167,7 @@ def copyDropContents(source: DataDROP, target: DataDROP, bufsize=65536):
     return
 
 
-def getUpstreamObjects(drop):
+def getUpstreamObjects(drop: AbstractDROP):
     """
     Returns a list of all direct "upstream" DROPs for the given+
     DROP. An DROP A is "upstream" with respect to DROP B if
@@ -179,7 +179,7 @@ def getUpstreamObjects(drop):
     In practice if A is an upstream DROP of B means that it must be moved
     to the COMPLETED state before B can do so.
     """
-    upObjs = []
+    upObjs: list[AbstractDROP] = []
     if isinstance(drop, AppDROP):
         upObjs += drop.inputs
         upObjs += drop.streamingInputs
