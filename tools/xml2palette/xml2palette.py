@@ -905,9 +905,11 @@ class greatgrandchild():
             # else:
                 # self.func_name = f"{self.func_path}.{self.func_name}"
             self.return_type = "None" if self.return_type == "def" else self.return_type
-            self.member["params"].append({"key": "func_name", "direction": None, "value": "Function Name/" + f"{self.func_path}.{self.func_name}" + "/String/ApplicationArgument/readonly//False/True/Python function name"})
-            self.member["params"].append({"key": "input_parser", "direction": None, "value": "Input Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Input port parsing technique"})
-            self.member["params"].append({"key": "output_parser", "direction": None, "value": "Output Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Output port parsing technique"})
+
+            if self.member is not None:
+                self.member["params"].append({"key": "func_name", "direction": None, "value": "Function Name/" + f"{self.func_path}.{self.func_name}" + "/String/ApplicationArgument/readonly//False/True/Python function name"})
+                self.member["params"].append({"key": "input_parser", "direction": None, "value": "Input Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Input port parsing technique"})
+                self.member["params"].append({"key": "output_parser", "direction": None, "value": "Output Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Output port parsing technique"})
 
 def process_compounddef(compounddef:dict) -> list:
     """
@@ -1132,11 +1134,17 @@ def parse_params(detailed_description: str) -> list:
     :returns list of parameter descriptions
     """
     result = []
+    split_str = None
 
     if detailed_description.find("Returns:") >= 0:
         split_str = "Returns:"
     elif detailed_description.find(":returns") >= 0:
         split_str = ":returns"
+
+    # not sure how to proceed, abort
+    if split_str is None:
+        return result
+    
     detailed_description = detailed_description.split(split_str)[0]
     param_lines = [p.replace('\n','').strip() for p in detailed_description.split(":param")[1:]]
     # param_lines = [line.strip() for line in detailed_description]
