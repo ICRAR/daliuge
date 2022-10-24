@@ -927,8 +927,7 @@ def run(_, args):
     uvicorn.run(
         app=app,
         host=options.host,
-        port=options.port,
-        debug=options.verbose
+        port=options.port
     )
 
 
