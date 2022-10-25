@@ -9,7 +9,7 @@ from dlg.common.reproducibility.reproducibility import init_lg_repro_data, init_
     init_pgt_unroll_repro_data, init_pgt_partition_repro_data
 from dlg.dropmake.lg import load_lg
 from dlg.dropmake.pg_generator import unroll, partition
-
+from dlg.restutils import RestClientException
 
 logger = logging.getLogger(__name__)
 
@@ -87,10 +87,14 @@ def filter_dict_to_algo_params(input_dict: dict):
 
 
 def check_mgr_avail(mhost, mport, mprefix):
-    mgr_client = CompositeManagerClient(
-        host=mhost, port=mport, url_prefix=mprefix, timeout=15
-    )
-    response = mgr_client.get_submission_method()
+    try:
+        mgr_client = CompositeManagerClient(
+            host=mhost, port=mport, url_prefix=mprefix, timeout=15
+        )
+        response = mgr_client.get_submission_method()
+    except RestClientException:
+        logger.debug("Cannot connect to manager object at endpoint %s:%d", mhost, mport)
+        response = None
     return response
 
 
