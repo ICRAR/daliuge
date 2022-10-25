@@ -208,6 +208,9 @@ async function checkUrlSubmissionMethods(url) {
             success: function (response) {
                 resolve(response)
             },
+            error: function (jqXHR, textStatus, errorThrown) {
+              resolve({"methods": []})
+            },
             timeout: 2000
         });
     })
@@ -396,7 +399,6 @@ function fillOutSettings() {
     deployMethodManagerDiv.empty()
     console.log("filling out settings, GET Errors and Cors warning from Url check")
     deployMethodsArray.forEach(async element => {
-
         let i;
         const urlReachable = await checkUrlStatus(element.url);
         const directlyAvailableMethods = await checkUrlSubmissionMethods(element.url + '/api/submission_method');
@@ -411,17 +413,22 @@ function fillOutSettings() {
 
         const allAvailableMethods = directlyAvailableMethods["methods"].concat(translatorAvailableMethods["methods"]);
         const availableOptions = [];
-        console.log(allAvailableMethods);
-        for (i = 0; i < allAvailableMethods.length; i++) {
-            const deploy_option = allAvailableMethods[i];
-            if (element.deployMethod !== "undefined") {
-                // If a choice has already been made, go with that.
-                availableOptions.push(buildDeployMethodEntry(deploy_option, element.deployMethod === deploy_option));
-            } else {
-                // By default, select the first listed.
-                availableOptions.push(buildDeployMethodEntry(deploy_option, i === 0));
+        const default_options = ["SERVER", "BROWSER", "HELM", "OOD"];
+        if (allAvailableMethods.length === 0){  // Support backend without submission/method api
+            default_options.forEach((option, i) => availableOptions.push(buildDeployMethodEntry(option, i === 0)))
+        } else {
+            for (i = 0; i < allAvailableMethods.length; i++) {
+                const deploy_option = allAvailableMethods[i];
+                if (element.deployMethod !== "undefined") {
+                    // If a choice has already been made, go with that.
+                    availableOptions.push(buildDeployMethodEntry(deploy_option, element.deployMethod === deploy_option));
+                } else {
+                    // By default, select the first listed.
+                    availableOptions.push(buildDeployMethodEntry(deploy_option, i === 0));
+                }
             }
         }
+        console.log(availableOptions);
         let deplpoyMethodRow = '<div class="input-group">' +
             '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class="deployMethodName" value="' + element.name + '"></div>' +
             `<div class="settingsInputTooltip tooltip tooltipBottom form-control urlInputField" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut')" placeholder="Destination Url" class="deployMethodUrl" value="` + element.url + `"></div>` +
