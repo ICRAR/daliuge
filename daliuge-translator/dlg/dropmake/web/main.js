@@ -356,6 +356,9 @@ function buildDeployMethodEntry(method, selected) {
         case "HELM":
             displayValue = "Helm";
             break;
+        default:
+            displayValue = "Server";
+            break;
     }
     if (selected) {
         return `<option value="${method}" selected="true">${displayValue}</option>`
