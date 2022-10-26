@@ -99,10 +99,8 @@ def check_mgr_avail(mhost, mport, mprefix):
 
 
 def parse_mgr_url(mgr_url):
-    print(mgr_url)
     mport = -1
     mparse = urlparse(mgr_url)
-    print(mparse)
     if mparse.scheme == "http":
         mport = 80
     elif mparse.scheme == "https":
@@ -115,7 +113,7 @@ def parse_mgr_url(mgr_url):
             mprefix = mprefix[:-1]
     else:
         mprefix = ""
-    return mparse.host, mport, mprefix
+    return mparse.hostname, mport, mprefix
 
 
 def make_algo_param_dict(min_goal, ptype, max_load_imb, max_cpu, time_greedy, deadline, topk, swam_size, max_mem):
