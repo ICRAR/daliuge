@@ -168,11 +168,11 @@ function updateDeployOptionsDropdown() {
     const newHost = newUrl.hostname;
     const newPrefix = newUrl.pathname;
     const newProtocol = newUrl.protocol;
-    console.log("URL set to:'" + newUrl + "'");
-    console.log("Protocol set to:'" + newProtocol + "'");
-    console.log("Host set to:'" + newHost + "'");
-    console.log("Port set to:'" + newPort + "'");
-    console.log("Prefix set to:'" + newPrefix + "'");
+    console.debug("URL set to:'" + newUrl + "'");
+    console.debug("Protocol set to:'" + newProtocol + "'");
+    console.debug("Host set to:'" + newHost + "'");
+    console.debug("Port set to:'" + newPort + "'");
+    console.debug("Prefix set to:'" + newPrefix + "'");
 
     window.localStorage.setItem("manager_url", newUrl);
     window.localStorage.setItem("manager_protocol", newProtocol);
@@ -287,7 +287,7 @@ function saveSettings() {
         try {
             new URL($(this).find(".deployMethodUrl").val());
         } catch (error) {
-            console.log("faulty Url: ", $(this).find(".deployMethodUrl").val())
+            console.error("faulty Url: ", $(this).find(".deployMethodUrl").val())
             badUrl = true
         }
 
@@ -321,7 +321,7 @@ function saveSettings() {
                     deployMethod: $(this).find(".deployMethodMethod option:selected").val(),
                     active: $(this).find(".deployMethodActive").val()
                 }
-            console.log($(this).find(".deployMethodMethod option:selected").val())
+            console.debug($(this).find(".deployMethodMethod option:selected").val())
             deployMethodsArray.push(deployMethod)
         }
     })
@@ -400,7 +400,7 @@ function fillOutSettings() {
     //fill out settings list rom deploy methods array
     const deployMethodManagerDiv = $("#DeployMethodManager");
     deployMethodManagerDiv.empty()
-    console.log("filling out settings, GET Errors and Cors warning from Url check")
+    console.debug("filling out settings, GET Errors and Cors warning from Url check")
     deployMethodsArray.forEach(async element => {
         let i;
         const urlReachable = await checkUrlStatus(element.url);
@@ -431,14 +431,13 @@ function fillOutSettings() {
                 }
             }
         }
-        console.log(availableOptions);
         let deployMethodRow = '<div class="input-group">' +
             '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class="deployMethodName" value="' + element.name + '"></div>' +
             `<div class="settingsInputTooltip tooltip tooltipBottom form-control urlInputField" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut')" placeholder="Destination Url" class="deployMethodUrl" value="` + element.url + `"></div>` +
             ReachableIcon +
             '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod">';
         for (i = 0; i < availableOptions.length; i++) {
-            deppoyMethodRow += availableOptions[i]
+            deployMethodRow += availableOptions[i]
         }
         deployMethodRow +=
             '</select></div>' +
@@ -468,7 +467,7 @@ function removeDeployMethod(e) {
 }
 
 function makeJSON() {
-    console.log("makeJSON()");
+    console.info("makeJSON()");
 
     $.ajax({
         url: "/pgt_jsonbody?pgt_name=" + pgtName,
@@ -553,7 +552,7 @@ async function directRestDeploy() {
     }
 
     let manager_url = new URL(murl);
-    console.log("In Direct REST Deploy");
+    console.info("In Direct REST Deploy");
 
     const manager_host = manager_url.hostname;
     const manager_port = manager_url.port;
@@ -567,17 +566,17 @@ async function directRestDeploy() {
     if (manager_prefix.endsWith('/')) {
         manager_prefix = manager_prefix.substring(0, manager_prefix.length - 1);
     }
-    console.log("Manager URL:'" + manager_url + "'");
-    console.log("Manager host:'" + manager_host + "'");
-    console.log("Manager port:'" + manager_port + "'");
-    console.log("Manager prefix:'" + manager_prefix + "'");
-    console.log("Request mode:'" + request_mode + "'");
+    console.debug("Manager URL:'" + manager_url + "'");
+    console.debug("Manager host:'" + manager_host + "'");
+    console.debug("Manager port:'" + manager_port + "'");
+    console.debug("Manager prefix:'" + manager_prefix + "'");
+    console.debug("Request mode:'" + request_mode + "'");
 
 
     // sessionId must be unique or the request will fail
     const lgName = pgtName.substring(0, pgtName.lastIndexOf("_pgt.graph"));
     const sessionId = lgName + "-" + Date.now();
-    console.log("sessionId:'" + sessionId + "'");
+    console.debug("sessionId:'" + sessionId + "'");
 
     const nodes_url = manager_url + "/api/nodes";
 
@@ -590,11 +589,10 @@ async function directRestDeploy() {
         .catch(function (error) {
             showMessageModal('Error', error + "\nGetting Nodes unsuccessful");
         })
-    console.log(nodes)
 
     const pgt_url = "/gen_pg?tpl_nodes_len=" + nodes.length.toString() + "&pgt_id=" + pgtName;
-    console.log("sending request to ", pgt_url);
-    console.log("graph name:", pgtName);
+    console.debug("sending request to ", pgt_url);
+    console.debug("graph name:", pgtName);
     await fetch(pgt_url, {
         method: 'GET',
     })
@@ -604,14 +602,13 @@ async function directRestDeploy() {
             showMessageModal('Error', error + "\nGetting PGT unsuccessful: Unable to continue!");
         });
 
-    console.log("node_list", nodes);
+    console.debug("node_list", nodes);
     const pg_spec_request_data = {
         manager_host: manager_host,
         node_list: nodes,
         pgt_id: pgt_id
     }
 
-    console.log(pg_spec_request_data);
     // request pg_spec from translator
     const pg_spec_url = "/gen_pg_spec";
     const pg_spec_response = await fetch(pg_spec_url, {
@@ -645,12 +642,11 @@ async function directRestDeploy() {
         .catch(function (error) {
             showMessageModal('Error', error + "\nCreating session unsuccessful: Unable to continue!");
         });
-    console.log("create session response", create_session);
+    console.debug("create session response", create_session);
     // gzip the pg_spec
-    console.log(pg_spec_response.pg_spec);
     const buf = fflate.strToU8(JSON.stringify(pg_spec_response.pg_spec));
     const compressed_pg_spec = fflate.zlibSync(buf);
-    console.log("compressed_pg_spec", compressed_pg_spec);
+    console.debug("compressed_pg_spec", compressed_pg_spec);
 
     // append graph to session on engine
     const append_graph_url = manager_url + "/api/sessions/" + sessionId + "/graph/append";
@@ -672,7 +668,7 @@ async function directRestDeploy() {
         .catch(function (error) {
             showMessageModal('Error', error + "\nUnable to continue!");
         });
-    console.log("append graph response", append_graph);
+    console.debug("append graph response", append_graph);
     // deploy graph
     // NOTE: URLSearchParams here turns the object into a x-www-form-urlencoded form
     const deploy_graph_url = manager_url + "/api/sessions/" + sessionId + "/deploy";
@@ -691,7 +687,6 @@ async function directRestDeploy() {
         });
     //showMessageModal("Chart deployed" , "Check the dashboard of your k8s cluster for status updates.");
     const mgr_url = manager_url + "/session?sessionId=" + sessionId;
-    console.log("deploy graph response", deploy_graph);
     window.open(mgr_url, '_blank').focus();
 }
 
@@ -707,7 +702,7 @@ async function restDeploy() {
         })
     }
     let manager_url = new URL(murl);
-    console.log("In REST Deploy")
+    console.info("In REST Deploy")
 
     const manager_host = manager_url.hostname;
     const manager_port = manager_url.port;
@@ -721,16 +716,16 @@ async function restDeploy() {
     if (manager_prefix.endsWith('/')) {
         manager_prefix = manager_prefix.substring(0, manager_prefix.length - 1);
     }
-    console.log("Manager URL:'" + manager_url + "'");
-    console.log("Manager host:'" + manager_host + "'");
-    console.log("Manager port:'" + manager_port + "'");
-    console.log("Manager prefix:'" + manager_prefix + "'");
-    console.log("Request mode:'" + request_mode + "'");
+    console.debug("Manager URL:'" + manager_url + "'");
+    console.debug("Manager host:'" + manager_host + "'");
+    console.debug("Manager port:'" + manager_port + "'");
+    console.debug("Manager prefix:'" + manager_prefix + "'");
+    console.debug("Request mode:'" + request_mode + "'");
 
     // sessionId must be unique or the request will fail
     const lgName = pgtName.substring(0, pgtName.lastIndexOf("_pgt.graph"));
     const sessionId = lgName + "-" + Date.now();
-    console.log("sessionId:'" + sessionId + "'");
+    console.debug("sessionId:'" + sessionId + "'");
 
     // build urls
     // the manager_url in this case has to point to daliuge_ood
@@ -744,8 +739,8 @@ async function restDeploy() {
     // const dlg_mgr_url            = manager_url + "/session?sessionId=" + sessionId;
 
     // fetch the PGT from this server
-    console.log("sending request to ", pgt_url);
-    console.log("graph name:", pgtName);
+    console.debug("sending request to ", pgt_url);
+    console.debug("graph name:", pgtName);
     let pgt = await fetch(pgt_url, {
         method: 'GET',
     })
@@ -756,9 +751,8 @@ async function restDeploy() {
         });
     pgt = JSON.parse(pgt);
     // This is for a deferred start of daliuge, e.g. on SLURM
-    console.log("sending request to ", create_slurm_url);
+    console.debug("sending request to ", create_slurm_url);
     var body = [pgtName, pgt]; // we send the name in the body with the pgt
-    // console.log("Sending PGT with name:", body);
     const slurm_script = await fetch(create_slurm_url, {
         method: 'POST',
         credentials: 'include',
