@@ -432,26 +432,26 @@ function fillOutSettings() {
             }
         }
         console.log(availableOptions);
-        let deplpoyMethodRow = '<div class="input-group">' +
+        let deployMethodRow = '<div class="input-group">' +
             '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class="deployMethodName" value="' + element.name + '"></div>' +
             `<div class="settingsInputTooltip tooltip tooltipBottom form-control urlInputField" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut')" placeholder="Destination Url" class="deployMethodUrl" value="` + element.url + `"></div>` +
             ReachableIcon +
             '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod">';
         for (i = 0; i < availableOptions.length; i++) {
-            deplpoyMethodRow += availableOptions[i]
+            deppoyMethodRow += availableOptions[i]
         }
-        deplpoyMethodRow +=
+        deployMethodRow +=
             '</select></div>' +
             '<input type="text" class="form-control deployMethodActive" value="' + element.active + '">' +
             '<button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>' +
             '</div>'
-        deployMethodManagerDiv.append(deplpoyMethodRow)
+        deployMethodManagerDiv.append(deployMethodRow)
     });
 }
 
 function addDeployMethod() {
     const deployMethodManagerDiv = $("#DeployMethodManager");
-    const deplpoyMethodRow = '<div class="input-group">' +
+    const deployMethodRow = '<div class="input-group">' +
         '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class=" deployMethodName" value=""></div>' +
         `<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut');" placeholder="Destination Url" class="deployMethodUrl" value=""></div>` +
         `<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusUnknown" data-text="Destination URL status Unknown, click to check" onclick="manualCheckUrlStatus('icon')"><a class="urlStatusUnknownIcon">?</a></div>` +
@@ -460,7 +460,7 @@ function addDeployMethod() {
         '<input type="text" class="form-control deployMethodActive" value="false">' +
         '<button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>' +
         '</div>';
-    deployMethodManagerDiv.append(deplpoyMethodRow)
+    deployMethodManagerDiv.append(deployMethodRow)
 }
 
 function removeDeployMethod(e) {
