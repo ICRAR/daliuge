@@ -69,7 +69,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_get_lgjson(self):
 
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("127.0.0.1", lgweb_port, timeout=10)
 
         # a specific one
         lg = c._get_json("/jsonbody?lg_name=logical_graphs/chiles_simple.graph")
@@ -86,7 +86,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_post_lgjson(self):
 
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("127.0.0.1", lgweb_port, timeout=10)
 
         # new graphs cannot currently be added
         form_data = {
@@ -117,7 +117,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_gen_pgt(self):
 
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("127.0.0.1", lgweb_port, timeout=10)
 
         # doesn't exist!
         self.assertRaises(
@@ -136,7 +136,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_get_pgtjson(self):
 
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("127.0.0.1", lgweb_port, timeout=10)
         c._GET(
             "/gen_pgt?lg_name=logical_graphs/chiles_simple.graph&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100"
         )
@@ -150,7 +150,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_get_pgt_post(self, algo="metis", algo_options=None):
 
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("127.0.0.1", lgweb_port, timeout=10)
 
         # an API call with an empty form should cause an error
         self.assertRaises(RestClientException, c._POST, "/gen_pgt")
@@ -185,7 +185,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_mkn_pgt_post(self):
 
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("127.0.0.1", lgweb_port, timeout=10)
 
         # an API call with an empty form should cause an error
         self.assertRaises(RestClientException, c._POST, "/gen_pgt")
@@ -218,7 +218,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_loop_pgt_post(self):
 
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("127.0.0.1", lgweb_port, timeout=10)
 
         # an API call with an empty form should cause an error
         self.assertRaises(RestClientException, c._POST, "/gen_pgt")
@@ -267,7 +267,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_pg_viewer(self):
 
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("127.0.0.1", lgweb_port, timeout=10)
         self._generate_pgt(c)
 
         # doesn't exist
@@ -281,7 +281,7 @@ class TestLGWeb(unittest.TestCase):
 
     def _test_pgt_action(self, path, unknown_fails):
 
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("127.0.0.1", lgweb_port, timeout=10)
         self._generate_pgt(c)
 
         # doesn't exist
@@ -306,7 +306,7 @@ class TestLGWeb(unittest.TestCase):
 
     def test_get_submission_methods(self):
         import json
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("127.0.0.1", lgweb_port, timeout=10)
         response = c._GET("/api/submission_method")
         response_content = json.load(response)
         self.assertEqual(response_content, {'methods': []})
@@ -341,7 +341,7 @@ class TestLGWeb(unittest.TestCase):
             return json.load(ret)
 
     def test_get_fill(self):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("127.0.0.1", lgweb_port, timeout=10)
         test_url = "/lg_fill"
         with open(
                 os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
@@ -362,7 +362,7 @@ class TestLGWeb(unittest.TestCase):
             self._test_post_request(c, test_url, request[0], request[1])
 
     def test_lg_unroll(self):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("127.0.0.1", lgweb_port, timeout=10)
         test_url = "/unroll"
         with open(
                 os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
@@ -392,7 +392,7 @@ class TestLGWeb(unittest.TestCase):
                 self.assertEqual(dropspec["app"], "test.app")
 
     def test_pgt_partition(self):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("127.0.0.1", lgweb_port, timeout=10)
         test_url = "/partition"
         with open(
                 os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
@@ -416,7 +416,7 @@ class TestLGWeb(unittest.TestCase):
             self._test_post_request(c, test_url, request[0], request[1])
 
     def test_lg_unroll_and_partition(self):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("127.0.0.1", lgweb_port, timeout=10)
         test_url = "/unroll_and_partition"
         with open(
                 os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
@@ -437,7 +437,7 @@ class TestLGWeb(unittest.TestCase):
             self._test_post_request(c, test_url, request[0], request[1])
 
     def test_pgt_map(self):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("127.0.0.1", lgweb_port, timeout=10)
         test_url = "/map"
         with open(
                 os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
@@ -450,7 +450,7 @@ class TestLGWeb(unittest.TestCase):
 
         request_tests = [
             (None, True),  # Call with an empty form should cause an error
-            ({"pgt_content": pgt, "nodes": "localhost", "num_islands": 1, "co_host_dim": True}, False),  # Simple partition
+            ({"pgt_content": pgt, "nodes": "127.0.0.1", "num_islands": 1, "co_host_dim": True}, False),  # Simple partition
         ]
 
         for request in request_tests:
