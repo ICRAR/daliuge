@@ -49,7 +49,7 @@ class TestLGWeb(unittest.TestCase):
             "-p",
             str(lgweb_port),
             "-H",
-            "localhost",
+            "127.0.0.1",
         ]
         self.devnull = open(os.devnull, "wb")
         self.web_proc = tool.start_process(
