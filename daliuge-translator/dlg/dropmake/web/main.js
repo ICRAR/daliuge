@@ -439,7 +439,7 @@ function fillOutSettings() {
         } else {
             for (i = 0; i < allAvailableMethods.length; i++) {
                 const deploy_option = allAvailableMethods[i];
-                if (element.deployMethod !== "undefined") {
+                if (element.deployMethod !== undefined) {
                     // If a choice has already been made, go with that.
                     availableOptions.push(buildDeployMethodEntry(deploy_option, element.deployMethod === deploy_option));
                 } else {
