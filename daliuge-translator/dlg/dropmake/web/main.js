@@ -45,12 +45,7 @@ $(document).ready(function () {
 
     //fill out keyboard shortcuts modal
     keyboardShortcuts.forEach(element => {
-        const shortCutItem = '<div class="col-lg-6">' +
-            '<div class="shortCutsModalItem">' +
-            '<span>' + element.name + '</span>' +
-            '<span class="shortCutsModalItemRight">' + element.shortcut + '</span>' +
-            '</div>' +
-            '</div>';
+        const shortCutItem = `<div class="col-lg-6"><div class="shortCutsModalItem"><span>${element.name}</span><span class="shortCutsModalItemRight">${element.shortcut}</span></div></div>`;
         $("#shortcutsModal .modal-body .row").append(shortCutItem)
     })
 
@@ -69,11 +64,19 @@ $(document).ready(function () {
     })
 });
 
+function consoleDebugUrl(url){
+    console.debug("URL set to: ", url);
+    console.debug("Protocol set to: ", url.protocol);
+    console.debug("Host set to: ", url.hostname);
+    console.debug("Port set to: ", url.port);
+    console.debug("Prefix set to: ", url.pathname);
+}
+
 function getCurrentPageUrl() {
     const pathElements = window.location.href.split('/');
     const protocol = pathElements[0];
     const host = pathElements[2];
-    return protocol + '//' + host;
+    return `${protocol}//${host}`;
 }
 
 function openSettingsModal() {
@@ -142,13 +145,22 @@ function updateDeployOptionsDropdown() {
         if (element.active === "false") {
             //dropdown options
             $("#deployDropdowns .dropdown-menu").prepend(
-                `<a href='javascript:void(0)' onclick='initiateDeploy("` + element.deployMethod + `",false,"` + element.name + `")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph via method: ` + element.deployMethod + `' value='Deploy Physical Graph via ` + element.deployMethod + `'>` + element.name + `</a>`
+                `<a href='javascript:void(0)' 
+                onclick='initiateDeploy("${element.deployMethod}",false,"${element.name}")' 
+                class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' 
+                data-text='Deploy Physical Graph via method:${element.deployMethod}' 
+                value='Deploy Physical Graph via ${element.deployMethod}'>${element.name}</a>`
             )
         } else {
             selectedUrl = element.url
             //active option
             $("#deployDropdowns").prepend(
-                `<a href='javascript:void(0)' id='activeDeployMethodButton'  onclick='initiateDeploy("` + element.deployMethod + `",true,"` + element.name + `")' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='Deploy Physical Graph vi method: ` + element.deployMethod + ` [D]' value='Deploy Physical Graph via ` + element.deployMethod + `'>Deploy: ` + element.name + `</a>`
+                `<a href='javascript:void(0)' 
+                    id='activeDeployMethodButton'  
+                    onclick='initiateDeploy("${element.deployMethod}",true,"${element.name}")' 
+                    class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' 
+                    data-text='Deploy Physical Graph vi method: ${element.deployMethod} [D]' 
+                    value='Deploy Physical Graph via ${element.deployMethod}'>Deploy: ${element.name}</a>`
             )
             checkActiveDeployMethod(selectedUrl)
         }
@@ -156,30 +168,26 @@ function updateDeployOptionsDropdown() {
 
     })
 
-    if(selectedUrl === undefined){
+    if (selectedUrl === undefined) {
         $("#deployDropdowns").prepend(
-            `<a href='javascript:void(0)' id='activeDeployMethodButton' class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' data-text='No Deploy Method Selected, click to add new' data-toggle='modal' data-target='#settingsModal'>Add Deploy Method</a>`
+            `<a href='javascript:void(0)' 
+                id='activeDeployMethodButton' 
+                class='dropdown-item tooltip tooltipLeft deployMethodMenuItem' 
+                data-text='No Deploy Method Selected, click to add new' 
+                data-toggle='modal' 
+                data-target='#settingsModal'>Add Deploy Method</a>`
         )
         return
     }
 
     const newUrl = new URL(selectedUrl);
-    const newPort = newUrl.port;
-    const newHost = newUrl.hostname;
-    const newPrefix = newUrl.pathname;
-    const newProtocol = newUrl.protocol;
-    console.debug("URL set to:'" + newUrl + "'");
-    console.debug("Protocol set to:'" + newProtocol + "'");
-    console.debug("Host set to:'" + newHost + "'");
-    console.debug("Port set to:'" + newPort + "'");
-    console.debug("Prefix set to:'" + newPrefix + "'");
-
+    consoleDebugUrl(newUrl);
+    // TODO: Why are we storing the object and then a copy of its fields?
     window.localStorage.setItem("manager_url", newUrl);
-    window.localStorage.setItem("manager_protocol", newProtocol);
-    window.localStorage.setItem("manager_host", newHost);
-    window.localStorage.setItem("manager_port", newPort);
-    window.localStorage.setItem("manager_prefix", newPrefix);
-
+    window.localStorage.setItem("manager_protocol", newUrl.protocol);
+    window.localStorage.setItem("manager_host", newUrl.host);
+    window.localStorage.setItem("manager_port", newUrl.port);
+    window.localStorage.setItem("manager_prefix", newUrl.pathname);
 }
 
 async function checkUrlStatus(url) {
@@ -209,7 +217,7 @@ async function checkUrlSubmissionMethods(url) {
                 resolve(response)
             },
             error: function (jqXHR, textStatus, errorThrown) {
-              resolve({"methods": []})
+                resolve({"methods": []})
             },
             timeout: 2000
         });
@@ -416,8 +424,9 @@ function fillOutSettings() {
 
         const allAvailableMethods = directlyAvailableMethods["methods"].concat(translatorAvailableMethods["methods"]);
         const availableOptions = [];
+        // TODO: move magic strings to object/enum
         const default_options = ["SERVER", "BROWSER", "HELM", "OOD"];
-        if (allAvailableMethods.length === 0){  // Support backend without submission/method api
+        if (allAvailableMethods.length === 0) {  // Support backend without submission/method api
             default_options.forEach((option, i) => availableOptions.push(buildDeployMethodEntry(option, i === 0)))
         } else {
             for (i = 0; i < allAvailableMethods.length; i++) {
@@ -431,34 +440,33 @@ function fillOutSettings() {
                 }
             }
         }
-        let deployMethodRow = '<div class="input-group">' +
-            '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class="deployMethodName" value="' + element.name + '"></div>' +
-            `<div class="settingsInputTooltip tooltip tooltipBottom form-control urlInputField" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut')" placeholder="Destination Url" class="deployMethodUrl" value="` + element.url + `"></div>` +
-            ReachableIcon +
-            '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod">';
+        let deployMethodRow = `<div class="input-group">
+            <div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class="deployMethodName" value="${element.name}"></div>
+            <div class="settingsInputTooltip tooltip tooltipBottom form-control urlInputField" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut')" placeholder="Destination Url" class="deployMethodUrl" value="${element.url}"></div>
+            ${ReachableIcon}<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod">`;
         for (i = 0; i < availableOptions.length; i++) {
             deployMethodRow += availableOptions[i]
         }
         deployMethodRow +=
-            '</select></div>' +
-            '<input type="text" class="form-control deployMethodActive" value="' + element.active + '">' +
-            '<button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>' +
-            '</div>'
+            `</select></div>
+            <input type="text" class="form-control deployMethodActive" value="${element.active}">
+            <button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>
+            </div>`
         deployMethodManagerDiv.append(deployMethodRow)
     });
 }
 
 function addDeployMethod() {
     const deployMethodManagerDiv = $("#DeployMethodManager");
-    const deployMethodRow = '<div class="input-group">' +
-        '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class=" deployMethodName" value=""></div>' +
-        `<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut');" placeholder="Destination Url" class="deployMethodUrl" value=""></div>` +
-        `<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusUnknown" data-text="Destination URL status Unknown, click to check" onclick="manualCheckUrlStatus('icon')"><a class="urlStatusUnknownIcon">?</a></div>` +
-        '<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod" name="Deploy Method">' +
-        '</select></div>' +
-        '<input type="text" class="form-control deployMethodActive" value="false">' +
-        '<button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>' +
-        '</div>';
+    const deployMethodRow = `<div class="input-group">
+        <div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class=" deployMethodName" value=""></div>
+        <div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut');" placeholder="Destination Url" class="deployMethodUrl" value=""></div>
+        <div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusUnknown" data-text="Destination URL status Unknown, click to check" onclick="manualCheckUrlStatus('icon')"><a class="urlStatusUnknownIcon">?</a></div>
+        <div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod" name="Deploy Method">
+        </select></div>
+        <input type="text" class="form-control deployMethodActive" value="false">
+        <button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>
+        </div>`;
     deployMethodManagerDiv.append(deployMethodRow)
 }
 
@@ -474,9 +482,9 @@ function makeJSON() {
         type: 'get',
         error: function (XMLHttpRequest) {
             if (404 === XMLHttpRequest.status) {
-                console.error('Server cannot locate physical graph file ' + pgtName);
+                console.error('Server cannot locate physical graph file ', pgtName);
             } else {
-                console.error('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
+                console.error(`status: ${XMLHttpRequest.status}, status text: ${XMLHttpRequest.statusText}`);
             }
         },
         success: function (data) {
@@ -555,28 +563,18 @@ async function directRestDeploy() {
     console.info("In Direct REST Deploy");
 
     const manager_host = manager_url.hostname;
-    const manager_port = manager_url.port;
-    let manager_prefix = manager_url.pathname;
     const request_mode = "cors";
     const pgt_id = $("#pg_form input[name='pgt_id']").val();
     manager_url = manager_url.toString();
     if (manager_url.endsWith('/')) {
         manager_url = manager_url.substring(0, manager_url.length - 1);
     }
-    if (manager_prefix.endsWith('/')) {
-        manager_prefix = manager_prefix.substring(0, manager_prefix.length - 1);
-    }
-    console.debug("Manager URL:'" + manager_url + "'");
-    console.debug("Manager host:'" + manager_host + "'");
-    console.debug("Manager port:'" + manager_port + "'");
-    console.debug("Manager prefix:'" + manager_prefix + "'");
-    console.debug("Request mode:'" + request_mode + "'");
-
+    consoleDebugUrl(manager_url);
 
     // sessionId must be unique or the request will fail
     const lgName = pgtName.substring(0, pgtName.lastIndexOf("_pgt.graph"));
     const sessionId = lgName + "-" + Date.now();
-    console.debug("sessionId:'" + sessionId + "'");
+    console.debug("sessionId:", sessionId);
 
     const nodes_url = manager_url + "/api/nodes";
 
@@ -587,19 +585,19 @@ async function directRestDeploy() {
         .then(handleFetchErrors)
         .then(response => response.json())
         .catch(function (error) {
-            showMessageModal('Error', error + "\nGetting Nodes unsuccessful");
+            showMessageModal(`Error ${error}\nGetting nodes unsuccessful`);
         })
 
     const pgt_url = "/gen_pg?tpl_nodes_len=" + nodes.length.toString() + "&pgt_id=" + pgtName;
     console.debug("sending request to ", pgt_url);
-    console.debug("graph name:", pgtName);
+    console.debug("graph name: ", pgtName);
     await fetch(pgt_url, {
         method: 'GET',
     })
         .then(handleFetchErrors)
         .then(response => response.json())
         .catch(function (error) {
-            showMessageModal('Error', error + "\nGetting PGT unsuccessful: Unable to continue!");
+            showMessageModal(`Error ${error}\nGetting PGT unsuccessful: Unable to continue!`);
         });
 
     console.debug("node_list", nodes);
@@ -704,39 +702,22 @@ async function restDeploy() {
     let manager_url = new URL(murl);
     console.info("In REST Deploy")
 
-    const manager_host = manager_url.hostname;
-    const manager_port = manager_url.port;
-    let manager_prefix = manager_url.pathname;
     const request_mode = "cors";
-    const pgt_id = $("#pg_form input[name='pgt_id']").val();
     manager_url = manager_url.toString();
     if (manager_url.endsWith('/')) {
         manager_url = manager_url.substring(0, manager_url.length - 1);
     }
-    if (manager_prefix.endsWith('/')) {
-        manager_prefix = manager_prefix.substring(0, manager_prefix.length - 1);
-    }
-    console.debug("Manager URL:'" + manager_url + "'");
-    console.debug("Manager host:'" + manager_host + "'");
-    console.debug("Manager port:'" + manager_port + "'");
-    console.debug("Manager prefix:'" + manager_prefix + "'");
-    console.debug("Request mode:'" + request_mode + "'");
+    consoleDebugUrl(manager_url);
 
     // sessionId must be unique or the request will fail
     const lgName = pgtName.substring(0, pgtName.lastIndexOf("_pgt.graph"));
-    const sessionId = lgName + "-" + Date.now();
-    console.debug("sessionId:'" + sessionId + "'");
+    const sessionId = `${lgName}-${Date.now()}`;
+    console.debug("sessionId: ", sessionId);
 
     // build urls
     // the manager_url in this case has to point to daliuge_ood
     const create_slurm_url = manager_url + "/api/slurm/script";
     const pgt_url = "/gen_pg?tpl_nodes_len=1&pgt_id=" + pgtName; // TODO: tpl_nodes_len >= nodes in LG
-    // const pg_spec_url        = "/gen_pg_spec";
-    // const node_list_url      = manager_url + "/api/nodes";
-    // const create_session_url = manager_url + "/api/sessions";
-    // const append_graph_url   = manager_url + "/api/sessions/" + sessionId + "/graph/append";
-    // const deploy_graph_url   = manager_url + "/api/sessions/" + sessionId + "/deploy";
-    // const dlg_mgr_url            = manager_url + "/session?sessionId=" + sessionId;
 
     // fetch the PGT from this server
     console.debug("sending request to ", pgt_url);
@@ -753,7 +734,7 @@ async function restDeploy() {
     // This is for a deferred start of daliuge, e.g. on SLURM
     console.debug("sending request to ", create_slurm_url);
     var body = [pgtName, pgt]; // we send the name in the body with the pgt
-    const slurm_script = await fetch(create_slurm_url, {
+    await fetch(create_slurm_url, {
         method: 'POST',
         credentials: 'include',
         cache: 'no-cache',
@@ -768,11 +749,10 @@ async function restDeploy() {
         .then(handleFetchErrors)
         .then(response => {
             if (response.redirected) {
-                // window.location.href = response.url;
                 window.open(response.url, 'deploy_target').focus();
             }
         })
         .catch(function (error) {
-            showMessageModal('Error', error + "\nSending PGT to backend unsuccessful!");
+            showMessageModal(`Error ${error}\nSending PGT to backend unsuccessful!`);
         });
 }
