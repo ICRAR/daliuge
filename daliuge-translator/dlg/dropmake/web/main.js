@@ -83,9 +83,8 @@ function consoleDebugUrl(url) {
 }
 
 function getCurrentPageUrl() {
-    const pathElements = window.location.href.split('/');
-    const protocol = pathElements[0];
-    const host = pathElements[2];
+    const protocol = window.location.protocol;
+    const host = window.location.host;
     return `${protocol}//${host}`;
 }
 
