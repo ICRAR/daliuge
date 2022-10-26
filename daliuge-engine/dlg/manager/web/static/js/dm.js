@@ -152,7 +152,6 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 		var dimUrl = dimUrlQuery.searchParams.get("dim_url");
 		if(dimUrl){
 			url+="&dim_url="+dimUrl;
-			console.log(dimUrl)
 		}
 		return url;
 	};
