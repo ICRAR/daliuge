@@ -1,3 +1,13 @@
+const DEFAULT_OPTIONS = Object.freeze({
+    SERVER: "SERVER",
+    BROWSER: "BROWSER",
+    HELM: "HELM",
+    OOD: "OOD"
+});
+
+const DEFAULT_URL = "http://localhost:8001/";
+const DEFAULT_NAME = "default deployment";
+
 $(document).ready(function () {
     // jquery starts here
     //hides the dropdown navbar elements when stopping hovering over the element
@@ -64,7 +74,7 @@ $(document).ready(function () {
     })
 });
 
-function consoleDebugUrl(url){
+function consoleDebugUrl(url) {
     console.debug("URL set to: ", url);
     console.debug("Protocol set to: ", url.protocol);
     console.debug("Host set to: ", url.hostname);
@@ -104,17 +114,17 @@ async function initiateDeploy(method, selected, clickedName) {
         });
         return
     }
-    if (method === "SERVER") {
+    if (method === DEFAULT_OPTIONS.SERVER) {
         $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
         $("#dlg_mgr_deploy").prop("checked", true)
         $("#pg_form").submit();
-    } else if (method === "HELM") {
+    } if (method === DEFAULT_OPTIONS.HELM) {
         $("#gen_helm_button").val("Generate &amp; Deploy Physical Graph")
         $("#dlg_helm_deploy").prop("checked", true)
         $("#pg_helm_form").submit()
-    } else if (method === "OOD") {
+    } else if (method === DEFAULT_OPTIONS.OOD) {
         await restDeploy()
-    } else if (method === "BROWSER") {
+    } else if (method === DEFAULT_OPTIONS.BROWSER) {
         await directRestDeploy()
     }
 }
@@ -352,16 +362,16 @@ function saveSettings() {
 function buildDeployMethodEntry(method, selected) {
     let displayValue = "";
     switch (method) {
-        case "SERVER":
+        case DEFAULT_OPTIONS.SERVER:
             displayValue = "Server";
             break;
-        case "BROWSER":
+        case DEFAULT_OPTIONS.BROWSER:
             displayValue = "Browser Direct";
             break;
-        case "OOD":
+        case DEFAULT_OPTIONS.OOD:
             displayValue = "OOD";
             break;
-        case "HELM":
+        case DEFAULT_OPTIONS.HELM:
             displayValue = "Helm";
             break;
         default:
@@ -384,7 +394,7 @@ function fillOutSettings() {
 
     //fill settings with saved or default values
     if (!manager_url) {
-        $("#managerUrlInput").val("http://localhost:8001");
+        $("#managerUrlInput").val(DEFAULT_URL);
     } else {
         $("#managerUrlInput").val(manager_url);
     }
@@ -393,9 +403,9 @@ function fillOutSettings() {
     if (!localStorage.getItem("deployMethods")) {
         deployMethodsArray = [
             {
-                name: "default deployment",
-                url: "http://localhost:8001/",
-                deployMethod: "SERVER",
+                name: DEFAULT_NAME,
+                url: DEFAULT_URL,
+                deployMethod: DEFAULT_OPTIONS.SERVER,
                 active: true
             }
         ];
@@ -425,9 +435,8 @@ function fillOutSettings() {
         const allAvailableMethods = directlyAvailableMethods["methods"].concat(translatorAvailableMethods["methods"]);
         const availableOptions = [];
         // TODO: move magic strings to object/enum
-        const default_options = ["SERVER", "BROWSER", "HELM", "OOD"];
         if (allAvailableMethods.length === 0) {  // Support backend without submission/method api
-            default_options.forEach((option, i) => availableOptions.push(buildDeployMethodEntry(option, i === 0)))
+            DEFAULT_OPTIONS.forEach((option, i) => availableOptions.push(buildDeployMethodEntry(option, i === 0)))
         } else {
             for (i = 0; i < allAvailableMethods.length; i++) {
                 const deploy_option = allAvailableMethods[i];
