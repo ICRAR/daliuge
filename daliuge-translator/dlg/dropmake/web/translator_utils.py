@@ -1,7 +1,7 @@
 import os
 import logging
 import pkg_resources
-from rfc3986 import urlparse
+from urllib.parse import urlparse
 
 from dlg import common
 from dlg.clients import CompositeManagerClient
