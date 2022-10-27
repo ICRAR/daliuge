@@ -31,6 +31,7 @@ import pkg_resources
 
 from dlg import common
 from dlg.common import tool
+from dlg.dropmake.web.translator_utils import get_mgr_deployment_methods
 from dlg.restutils import RestClient, RestClientException
 
 lg_dir = pkg_resources.resource_filename(__name__, ".")  # @UndefinedVariable
@@ -455,3 +456,7 @@ class TestLGWeb(unittest.TestCase):
 
         for request in request_tests:
             self._test_post_request(c, test_url, request[0], request[1])
+
+    def test_get_mgr_deployment_methods(self):
+        response = get_mgr_deployment_methods("localhost", lgweb_port, "")
+        self.assertEqual([], response)
