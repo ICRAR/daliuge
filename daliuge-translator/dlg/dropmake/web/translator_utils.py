@@ -86,15 +86,16 @@ def filter_dict_to_algo_params(input_dict: dict):
     return algo_params
 
 
-def check_mgr_avail(mhost, mport, mprefix):
+def get_mgr_deployment_methods(mhost, mport, mprefix):
     try:
         mgr_client = CompositeManagerClient(
             host=mhost, port=mport, url_prefix=mprefix, timeout=15
         )
         response = mgr_client.get_submission_method()
+        response = response.get("methods", [])
     except RestClientException:
         logger.debug("Cannot connect to manager object at endpoint %s:%d", mhost, mport)
-        response = None
+        response = []
     return response
 
 

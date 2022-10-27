@@ -55,6 +55,7 @@ from ..exceptions import (
 from ..restserver import RestServer
 from ..restutils import RestClient, RestClientException
 from .session import generateLogFileName
+from dlg.common.deployment_methods import DeploymentMethods
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +197,7 @@ class ManagerRestServer(RestServer):
 
     @daliuge_aware
     def submit_methods(self):
-        return {"methods": ["BROWSER"]}
+        return {"methods": [DeploymentMethods.BROWSER]}
 
     def _stop_manager(self):
         self.dm.shutdown()
