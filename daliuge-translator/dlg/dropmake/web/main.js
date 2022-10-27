@@ -434,7 +434,11 @@ function fillOutSettings() {
         const allAvailableMethods = directlyAvailableMethods["methods"].concat(translatorAvailableMethods["methods"]);
         const availableOptions = [];
         if (allAvailableMethods.length === 0) {  // Support backend without submission/method api
-            DEFAULT_OPTIONS.forEach((option, i) => availableOptions.push(buildDeployMethodEntry(option, i === 0)))
+            i = 0
+            Object.keys(DEFAULT_OPTIONS).forEach(function(key){
+                availableOptions.push(buildDeployMethodEntry(key, i === 0));
+                i += 1;
+            })
         } else {
             for (i = 0; i < allAvailableMethods.length; i++) {
                 const deploy_option = allAvailableMethods[i];
@@ -470,6 +474,10 @@ function addDeployMethod() {
         <div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut');" placeholder="Destination Url" class="deployMethodUrl" value=""></div>
         <div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusUnknown" data-text="Destination URL status Unknown, click to check" onclick="manualCheckUrlStatus('icon')"><a class="urlStatusUnknownIcon">?</a></div>
         <div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod" name="Deploy Method">
+        <option value="direct" selected="true">Direct</option>
+        <option value="helm">Helm</option>
+        <option value="rest-ood">Rest-OOD</option>
+        <option value="rest-direct">Rest-Direct</option>
         </select></div>
         <input type="text" class="form-control deployMethodActive" value="false">
         <button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>
