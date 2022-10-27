@@ -433,7 +433,6 @@ function fillOutSettings() {
 
         const allAvailableMethods = directlyAvailableMethods["methods"].concat(translatorAvailableMethods["methods"]);
         const availableOptions = [];
-        // TODO: move magic strings to object/enum
         if (allAvailableMethods.length === 0) {  // Support backend without submission/method api
             DEFAULT_OPTIONS.forEach((option, i) => availableOptions.push(buildDeployMethodEntry(option, i === 0)))
         } else {
