@@ -25,6 +25,7 @@ import unittest
 
 from dlg import exceptions
 from dlg.common import Categories
+from dlg.common.deployment_methods import DeploymentMethods
 from dlg.exceptions import InvalidGraphException
 
 from dlg.manager import constants
@@ -272,4 +273,4 @@ class TestRest(unittest.TestCase):
     def test_submit_method(self):
         c = NodeManagerClient(hostname)
         response = c.get_submission_method()
-        self.assertEqual({"methods": ["BROWSER"]}, response)
+        self.assertEqual([DeploymentMethods.BROWSER], response)
