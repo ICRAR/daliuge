@@ -197,7 +197,7 @@ class ManagerRestServer(RestServer):
 
     @daliuge_aware
     def submit_methods(self):
-        return {"methods": [DeploymentMethods.BROWSER]}
+        return {"methods": [DeploymentMethods.BROWSER.name]}
 
     def _stop_manager(self):
         self.dm.shutdown()
