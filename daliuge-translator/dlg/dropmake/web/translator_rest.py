@@ -816,7 +816,7 @@ def get_submission_method(
         available_methods.append(DeploymentMethods.HELM)
     if mhost is not None:
         host_available_methods = get_mgr_deployment_methods(mhost, mport, mprefix)
-        if DeploymentMethods.BROWSER in host_available_methods:
+        if DeploymentMethods.BROWSER.name in host_available_methods:
             available_methods.append(DeploymentMethods.SERVER)
     return {"methods": available_methods}
 
