@@ -51,13 +51,14 @@ from dlg.clients import CompositeManagerClient
 from dlg.common.reproducibility.constants import REPRO_DEFAULT, ALL_RMODES, ReproducibilityFlags
 from dlg.common.reproducibility.reproducibility import init_lgt_repro_data, init_lg_repro_data, \
     init_pgt_partition_repro_data, init_pgt_unroll_repro_data, init_pg_repro_data
+from dlg.common.deployment_methods import DeploymentMethods
 from dlg.common.k8s_utils import check_k8s_env
 from dlg.dropmake.lg import GraphException
 from dlg.dropmake.pg_manager import PGManager
 from dlg.dropmake.scheduler import SchedulerException
 from dlg.dropmake.web.translator_utils import file_as_string, lg_repo_contents, lg_path, lg_exists, \
     pgt_exists, pgt_path, pgt_repo_contents, prepare_lgt, unroll_and_partition_with_params, \
-    make_algo_param_dict, check_mgr_avail, parse_mgr_url
+    make_algo_param_dict, get_mgr_deployment_methods, parse_mgr_url
 
 APP_DESCRIPTION = """
 DALiuGE LG Web interface translates and deploys logical graphs.
@@ -812,12 +813,11 @@ def get_submission_method(
         mprefix = ""
     available_methods = []
     if check_k8s_env():
-        available_methods.append("HELM")
+        available_methods.append(DeploymentMethods.HELM)
     if mhost is not None:
-        host_available_methods = check_mgr_avail(mhost, mport, mprefix)
-        if host_available_methods:
-            if "BROWSER" in host_available_methods["methods"]:
-                available_methods.extend(["SERVER"])
+        host_available_methods = get_mgr_deployment_methods(mhost, mport, mprefix)
+        if DeploymentMethods.BROWSER in host_available_methods:
+            available_methods.append(DeploymentMethods.SERVER)
     return {"methods": available_methods}
 
 
