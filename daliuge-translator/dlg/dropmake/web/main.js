@@ -117,7 +117,8 @@ async function initiateDeploy(method, selected, clickedName) {
         $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
         $("#dlg_mgr_deploy").prop("checked", true)
         $("#pg_form").submit();
-    } if (method === DEFAULT_OPTIONS.HELM) {
+    }
+    if (method === DEFAULT_OPTIONS.HELM) {
         $("#gen_helm_button").val("Generate &amp; Deploy Physical Graph")
         $("#dlg_helm_deploy").prop("checked", true)
         $("#pg_helm_form").submit()
@@ -419,85 +420,56 @@ function fillOutSettings() {
     deployMethodManagerDiv.empty()
     console.debug("filling out settings, GET Errors and Cors warning from Url check")
     deployMethodsArray.forEach(async element => {
-        let i;
         const urlReachable = await checkUrlStatus(element.url);
         const directlyAvailableMethods = await checkUrlSubmissionMethods(element.url + '/api/submission_method');
         const translatorAvailableMethods = await checkUrlSubmissionMethods(getCurrentPageUrl() + '/api/submission_method?dlg_mgr_url=' + element.url);
-        let ReachableIcon;
-
-        if (urlReachable) {
-            ReachableIcon = `<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusReachable" data-text="Destination URL Is Reachable, click to re-check" onclick="manualCheckUrlStatus('icon')"><i class="material-icons md-24">done</i></div>`
-        } else {
-            ReachableIcon = `<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusNotReachable" data-text="Destination URL Is Not Reachable, click to re-check" onclick="manualCheckUrlStatus('icon')"><i class="material-icons md-24">close</i></div>`
-        }
-
         const allAvailableMethods = directlyAvailableMethods["methods"].concat(translatorAvailableMethods["methods"]);
-        const availableOptions = [];
         if (allAvailableMethods.length === 0) {  // Support backend without submission/method api
-            i = 0
-            Object.keys(DEFAULT_OPTIONS).forEach(function(key){
-                availableOptions.push(buildDeployMethodEntry(key, i === 0));
-                i += 1;
+            Object.keys(DEFAULT_OPTIONS).forEach(function (key) {
+                allAvailableMethods.push(key);
             })
-        } else {
-            for (i = 0; i < allAvailableMethods.length; i++) {
-                const deploy_option = allAvailableMethods[i];
-                if(element.deployMethod === undefined){
-                    // By default, select the first listed.
-                    availableOptions.push(buildDeployMethodEntry(deploy_option, i === 0));
-                } else {
-                    // If a choice has already been made, go with that.
-                    availableOptions.push(buildDeployMethodEntry(deploy_option, element.deployMethod === deploy_option));
-                }
-            }
         }
-        let deployMethodRow = `<div class="input-group">
-            <div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class="deployMethodName" value="${element.name}"></div>
-            <div class="settingsInputTooltip tooltip tooltipBottom form-control urlInputField" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut')" placeholder="Destination Url" class="deployMethodUrl" value="${element.url}"></div>
-            ${ReachableIcon}<div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod">`;
-        for (i = 0; i < availableOptions.length; i++) {
-            deployMethodRow += availableOptions[i]
-        }
-        deployMethodRow +=
-            `</select></div>
-            <input type="text" class="form-control deployMethodActive" value="${element.active}">
-            <button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>
-            </div>`
-        deployMethodManagerDiv.append(deployMethodRow)
+        deployMethodManagerDiv.append(buildDeployMethod(allAvailableMethods, urlReachable, element.active, element.name, element.url, element.deployMethod))
     });
 }
 
 function addDeployMethod() {
     const deployMethodManagerDiv = $("#DeployMethodManager");
     let methods = [];
-    Object.keys(DEFAULT_OPTIONS).forEach(function(key){
+    Object.keys(DEFAULT_OPTIONS).forEach(function (key) {
         methods.push(key);
     })
-    deployMethodManagerDiv.append(buildDeployMethod(methods, undefined));
+    deployMethodManagerDiv.append(buildDeployMethod(methods, undefined, "false", "", "", undefined));
 }
 
-function buildDeployMethod(methods, reachable, deployActive, deployName, deployUrl){
+function buildDeployMethod(methods, reachable, deployActive, deployName, deployUrl, selectedMethod) {
     let i;
     let reachableIcon;
-
     if (reachable === undefined) {
         reachableIcon = `<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusUnknown" data-text="Destination URL status Unknown, click to check" onclick="manualCheckUrlStatus('icon')"><a class="urlStatusUnknownIcon">?</a></div>`;
-    } else if(reachable){
+    } else if (reachable) {
         reachableIcon = `<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusReachable" data-text="Destination URL Is Reachable, click to re-check" onclick="manualCheckUrlStatus('icon')"><i class="material-icons md-24">done</i></div>`;
     } else {
         reachableIcon = `<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusNotReachable" data-text="Destination URL Is Not Reachable, click to re-check" onclick="manualCheckUrlStatus('icon')"><i class="material-icons md-24">close</i></div>`;
     }
     let deployMethodRow = `<div class="input-group">
-        <div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class=" deployMethodName" value=""></div>
-        <div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut');" placeholder="Destination Url" class="deployMethodUrl" value=""></div>
+        <div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class=" deployMethodName" value=${deployName}></div>
+        <div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut');" placeholder="Destination Url" class="deployMethodUrl" value=${deployUrl}></div>
         ${reachableIcon}
         <div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod" name="Deploy Method">`;
-    for(i = 0; i < methods.length; i++){
-        deployMethodRow += buildDeployMethodEntry(methods[i], i === 0);
+    for (i = 0; i < methods.length; i++) {
+        if (selectedMethod === undefined) {
+            deployMethodRow += buildDeployMethodEntry(methods[i], i === 0);
+        } else if (selectedMethod === methods[i].toString()) {
+            deployMethodRow += buildDeployMethodEntry(methods[i], true);
+        } else {
+            // Has the edge case resulting in nothing being selected if the previous option is no longer available. I think this is an acceptable interpretation @pritchardn
+            deployMethodRow += buildDeployMethodEntry(methods[i], false);
+        }
     }
     deployMethodRow +=
-            `</select></div>
-            <input type="text" class="form-control deployMethodActive" value="false">
+        `</select></div>
+            <input type="text" class="form-control deployMethodActive" value=${deployActive}>
             <button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>
             </div>`
     return deployMethodRow;
