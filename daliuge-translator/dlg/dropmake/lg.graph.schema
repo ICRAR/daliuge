@@ -5,6 +5,9 @@
         "modelData": {
             "type": "object",
             "properties": {
+                "fileType": {
+                    "type": "string"
+                },
                 "repoService": {
                     "type": "string"
                 },
@@ -20,7 +23,10 @@
                 "filePath": {
                     "type": "string"
                 },
-                "fileType": {
+                "sha": {
+                    "type": "string"
+                },
+                "gitUrl": {
                     "type": "string"
                 },
                 "eagleVersion": {
@@ -43,38 +49,23 @@
                 },
                 "numLGNodes": {
                     "type": "integer"
-                },
-                "commitHash": {
-                    "type": "string"
-                },
-                "downloadUrl": {
-                    "type": "string"
-                },
-                "repositoryUrl": {
-                    "type": "string"
-                },
-                "signature": {
-                    "type": "string"
                 }
             },
             "required": [
                 "filePath",
                 "fileType",
+                "gitUrl",
                 "readonly",
                 "repo",
                 "repoBranch",
                 "repoService",
+                "sha",
                 "eagleVersion",
                 "eagleCommitHash",
                 "schemaVersion",
                 "lastModifiedName",
                 "lastModifiedEmail",
-                "lastModifiedDatetime",
-                "numLGNodes",
-                "commitHash",
-                "downloadUrl",
-                "repositoryUrl",
-                "signature"
+                "lastModifiedDatetime"
             ]
         },
         "nodeDataArray": {
@@ -89,12 +80,6 @@
                        "type": "boolean"
                     },
                     "color": {
-                        "type": "string"
-                    },
-                    "commitHash": {
-                        "type": "string"
-                    },
-                    "dataHash": {
                         "type": "string"
                     },
                     "drawOrderHint": {
@@ -124,10 +109,20 @@
                     "collapsed": {
                         "type": "boolean"
                     },
+                    "streaming": {
+                        "type": "boolean"
+                    },
                     "subject": {
                         "type": "null"
                     },
                     "expanded": {
+                        "type": "boolean"
+                    },
+                    "precious": {
+                        "type": "boolean",
+                        "deprecated": true
+                    },
+                    "persist": {
                         "type": "boolean"
                     },
                     "inputApplicationName": {
@@ -266,12 +261,6 @@
                             ]
                         }
                     },
-                    "paletteDownloadUrl": {
-                        "type": "string"
-                    },
-                    "repositoryUrl": {
-                        "type": "string"
-                    },
                     "fields": {
                         "type": "array",
                         "items": {
@@ -307,20 +296,58 @@
                                 "positional": {
                                     "type": "boolean",
                                     "default": false
-                                },
-                                "keyAttribute": {
-                                    "type": "boolean"
                                 }
                             },
                             "required": [
                                 "description",
                                 "name",
                                 "text",
-                                "value",
-                                "type",
-                                "precious",
-                                "options",
-                                "positional"
+                                "value"
+                            ]
+                        }
+                    },
+                    "applicationArgs": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "text": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": ["string","boolean","number", "null"]
+                                },
+                                "defaultValue": {
+                                    "type": ["string","boolean","number", "null"]
+                                },
+                                "description": {
+                                    "type": "string"
+                                },
+                                "readonly": {
+                                    "type": "boolean"
+                                },
+                                "type": {
+                                    "type": "string"
+                                },
+                                "precious": {
+                                    "type": "boolean"
+                                },
+                                "options": {
+                                    "type": "array"
+                                },
+                                "positional": {
+                                    "type": "boolean",
+                                    "default": false
+                                }
+                            },
+                            "required": [
+                                "description",
+                                "name",
+                                "text",
+                                "value"
                             ]
                         }
                     },
@@ -332,12 +359,11 @@
                     "category",
                     "collapsed",
                     "color",
-                    "commitHash",
-                    "dataHash",
                     "description",
                     "drawOrderHint",
                     "expanded",
                     "fields",
+                    "applicationArgs",
                     "height",
                     "inputAppFields",
                     "inputApplicationName",
@@ -351,8 +377,7 @@
                     "outputApplicationType",
                     "outputLocalPorts",
                     "outputPorts",
-                    "paletteDownloadUrl",
-                    "repositoryUrl",
+                    "streaming",
                     "subject",
                     "text",
                     "width",
@@ -366,12 +391,6 @@
             "items": {
                 "type": "object",
                 "properties": {
-                    "closesLoop": {
-                        "type": "boolean"
-                    },
-                    "dataType": {
-                        "type": "string"
-                    },
                     "from": {
                         "type": "integer"
                     },
@@ -389,8 +408,6 @@
                     }
                 },
                 "required": [
-                    "closesLoop",
-                    "dataType",
                     "from",
                     "fromPort",
                     "to",
