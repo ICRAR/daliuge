@@ -131,7 +131,7 @@ install_requires = [
     "overrides",
     "paramiko",
     "psutil",
-    "pyarrow",
+    "pyarrow==9.0",
     "python-daemon",
     "pyzmq ~= 22.3.0",
     "scp",
