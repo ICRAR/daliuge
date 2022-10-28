@@ -469,20 +469,38 @@ function fillOutSettings() {
 
 function addDeployMethod() {
     const deployMethodManagerDiv = $("#DeployMethodManager");
-    const deployMethodRow = `<div class="input-group">
+    let methods = [];
+    Object.keys(DEFAULT_OPTIONS).forEach(function(key){
+        methods.push(key);
+    })
+    deployMethodManagerDiv.append(buildDeployMethod(methods, undefined));
+}
+
+function buildDeployMethod(methods, reachable, deployActive, deployName, deployUrl){
+    let i;
+    let reachableIcon;
+
+    if (reachable === undefined) {
+        reachableIcon = `<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusUnknown" data-text="Destination URL status Unknown, click to check" onclick="manualCheckUrlStatus('icon')"><a class="urlStatusUnknownIcon">?</a></div>`;
+    } else if(reachable){
+        reachableIcon = `<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusReachable" data-text="Destination URL Is Reachable, click to re-check" onclick="manualCheckUrlStatus('icon')"><i class="material-icons md-24">done</i></div>`;
+    } else {
+        reachableIcon = `<div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusNotReachable" data-text="Destination URL Is Not Reachable, click to re-check" onclick="manualCheckUrlStatus('icon')"><i class="material-icons md-24">close</i></div>`;
+    }
+    let deployMethodRow = `<div class="input-group">
         <div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Name, This must be unique"><input type="text" placeholder="Deployment Name" class=" deployMethodName" value=""></div>
         <div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Option Destination URL"><input type="text" onfocusout="manualCheckUrlStatus('focusOut');" placeholder="Destination Url" class="deployMethodUrl" value=""></div>
-        <div class="settingsInputTooltip tooltip tooltipBottom urlStatusIcon urlStatusUnknown" data-text="Destination URL status Unknown, click to check" onclick="manualCheckUrlStatus('icon')"><a class="urlStatusUnknownIcon">?</a></div>
-        <div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod" name="Deploy Method">
-        <option value="direct" selected="true">Direct</option>
-        <option value="helm">Helm</option>
-        <option value="rest-ood">Rest-OOD</option>
-        <option value="rest-direct">Rest-Direct</option>
-        </select></div>
-        <input type="text" class="form-control deployMethodActive" value="false">
-        <button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>
-        </div>`;
-    deployMethodManagerDiv.append(deployMethodRow)
+        ${reachableIcon}
+        <div class="settingsInputTooltip tooltip tooltipBottom form-control" data-text="Deploy Method"><select class="deployMethodMethod" name="Deploy Method">`;
+    for(i = 0; i < methods.length; i++){
+        deployMethodRow += buildDeployMethodEntry(methods[i], i === 0);
+    }
+    deployMethodRow +=
+            `</select></div>
+            <input type="text" class="form-control deployMethodActive" value="false">
+            <button class="btn btn-secondary btn-sm tooltip tooltipBottom" data-text="Delete Deploy Option" type="button" onclick="removeDeployMethod(event)"><i class="material-icons md-24">delete</i></button>
+            </div>`
+    return deployMethodRow;
 }
 
 function removeDeployMethod(e) {
