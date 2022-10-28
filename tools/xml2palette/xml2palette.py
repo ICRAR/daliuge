@@ -661,7 +661,6 @@ def create_palette_node_from_params(params) -> dict:
             "description": comp_description,
             "collapsed": False,
             "showPorts": False,
-            "streaming": False,
             "subject": None,
             "selected": False,
             "expanded": False,
@@ -1213,8 +1212,6 @@ def create_construct_node(node_type:str, node:dict)-> dict:
         "paletteDownloadUrl": "",
         "dataHash": "",
         "key": get_next_key(),
-        "precious": False,
-        "streaming": False,
         "text": node_type + "/" + node["text"],
     }
 
