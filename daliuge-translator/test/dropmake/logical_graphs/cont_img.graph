@@ -541,7 +541,6 @@
             ],
             "readonly": true,
             "showPorts": false,
-            ,
             "subject": null,
             "text": "Cal. Source\nFinding",
             "width": 200,

@@ -241,10 +241,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "Enter label",
             "width": 200,
@@ -362,10 +360,8 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "persist": false,
             "readonly": false,
             "sha": "0023469",
-            "streaming": false,
             "subject": null,
             "text": "File",
             "width": 200,
