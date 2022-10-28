@@ -967,6 +967,19 @@
                     "readonly": false,
                     "type": "Unknown",
                     "precious": false
+                },
+                {
+                    "defaultValue": true,
+                    "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "keyAttribute": false,
+                    "name": "persist",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Persist",
+                    "type": "Boolean",
+                    "value": false
                 }
             ],
             "applicationArgs": [],
@@ -1352,6 +1365,19 @@
                     "readonly": false,
                     "type": "Unknown",
                     "precious": false
+                },
+                {
+                    "defaultValue": true,
+                    "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "keyAttribute": false,
+                    "name": "persist",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Persist",
+                    "type": "Boolean",
+                    "value": false
                 }
             ],
             "applicationArgs": [],

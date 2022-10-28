@@ -371,10 +371,8 @@
                     "type": "Boolean"
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Self-Cal\nConverge?",
             "width": 200,
@@ -429,10 +427,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Update GSM",
             "width": 200,
@@ -487,10 +483,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Update LSM",
             "width": 200,
@@ -545,10 +539,9 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
+            ,
             "subject": null,
             "text": "Cal. Source\nFinding",
             "width": 200,
@@ -603,10 +596,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Image Plane\nSpectral Averaging",
             "width": 200,
@@ -670,10 +661,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Predict 01",
             "width": 200,
@@ -735,10 +724,8 @@
                     "type": "string"
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Solve",
             "width": 200,
@@ -793,10 +780,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Correct",
             "width": 200,
@@ -867,10 +852,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Subtract",
             "width": 200,
@@ -925,10 +908,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Flag",
             "width": 200,
@@ -983,10 +964,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "iFFT",
             "width": 200,
@@ -1048,10 +1027,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "deGrid",
             "width": 200,
@@ -1122,10 +1099,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Subtract",
             "width": 200,
@@ -1180,10 +1155,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Flag",
             "width": 200,
@@ -1238,10 +1211,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "FFT",
             "width": 200,
@@ -1296,10 +1267,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Subtract \ncompnt frm\nimg plane",
             "width": 200,
@@ -1345,10 +1314,8 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "End",
             "width": 200,
@@ -1412,10 +1379,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Calibration\nParameters",
             "width": 200,
@@ -1487,10 +1452,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Data",
             "width": 200,
@@ -1562,10 +1525,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Data",
             "width": 200,
@@ -1637,10 +1598,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Data",
             "width": 200,
@@ -1712,10 +1671,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Data",
             "width": 200,
@@ -1787,10 +1744,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Data",
             "width": 200,
@@ -1862,10 +1817,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Data",
             "width": 200,
@@ -1937,10 +1890,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Data",
             "width": 200,
@@ -1988,10 +1939,8 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Minor Cycle",
             "width": 709,
@@ -2143,10 +2092,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Identify\nComponent",
             "width": 200,
@@ -2218,10 +2165,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Model",
             "width": 200,
@@ -2300,10 +2245,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Image",
             "width": 200,
@@ -2351,10 +2294,8 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Major Cycle",
             "width": 1217,
@@ -2426,10 +2367,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Data",
             "width": 200,
@@ -2501,10 +2440,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Model Vis",
             "width": 200,
@@ -2576,10 +2513,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Residul Vis",
             "width": 200,
@@ -2643,10 +2578,8 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "FRV",
             "width": 200,
@@ -2726,10 +2659,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Data",
             "width": 200,
@@ -2881,10 +2812,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Grid",
             "width": 200,
@@ -2956,10 +2885,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "CC",
             "width": 200,
@@ -3030,10 +2957,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "GSM",
             "width": 200,
@@ -3097,10 +3022,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Raw Vis",
             "width": 200,
@@ -3147,10 +3070,8 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Self-Cal Cycle",
             "width": 1885,
@@ -3222,10 +3143,8 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "LSM",
             "width": 200,
@@ -3377,10 +3296,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Check Conv",
             "width": 200,
@@ -3452,10 +3369,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "result",
             "width": 200,
@@ -3526,10 +3441,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Start Data ",
             "width": 200,
@@ -3575,10 +3488,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Start",
             "width": 200,
@@ -3722,10 +3633,8 @@
                     "type": ""
                 }
             ],
-            "persist": false,
             "readonly": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Predict 02",
             "width": 200,

@@ -143,10 +143,8 @@
                     "type": "String"
                 }
             ],
-            "persist": false,
             "readonly": false,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "Python App",
             "width": 200,
@@ -218,10 +216,8 @@
                     "type": "String"
                 }
             ],
-            "persist": false,
             "readonly": false,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "Shared Memory",
             "width": 200,
@@ -313,10 +309,8 @@
                     "type": "String"
                 }
             ],
-            "persist": false,
             "readonly": false,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "Python App",
             "width": 200,
@@ -408,10 +402,8 @@
                     "type": "String"
                 }
             ],
-            "persist": false,
             "readonly": false,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "Python App",
             "width": 200,
@@ -503,10 +495,8 @@
                     "type": "String"
                 }
             ],
-            "persist": false,
             "readonly": false,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "Python App",
             "width": 200,
@@ -569,10 +559,8 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "persist": false,
             "readonly": false,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "Shared Memory",
             "width": 200,
@@ -635,10 +623,8 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "persist": false,
             "readonly": false,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "Shared Memory",
             "width": 200,
@@ -701,10 +687,8 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "persist": false,
             "readonly": false,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "Shared Memory",
             "width": 200,

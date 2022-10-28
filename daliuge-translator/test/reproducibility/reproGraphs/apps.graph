@@ -111,9 +111,7 @@
                     "text": "event"
                 }
             ],
-            "persist": false,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "Bash Shell App",
             "width": 200,
@@ -213,9 +211,7 @@
                     "text": "event"
                 }
             ],
-            "persist": false,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "Dynlib App",
             "width": 200,
@@ -315,9 +311,7 @@
                     "text": "event"
                 }
             ],
-            "persist": false,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "MPI",
             "width": 200,
@@ -477,9 +471,7 @@
                     "text": "event"
                 }
             ],
-            "persist": false,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "Docker",
             "width": 200,
@@ -579,9 +571,7 @@
                     "text": "event"
                 }
             ],
-            "persist": false,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "Python App",
             "width": 200,
