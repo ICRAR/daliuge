@@ -23,7 +23,7 @@
 from enum import Enum
 
 
-class DeploymentMethods(Enum):
+class DeploymentMethods(str, Enum):
     SERVER = "SERVER",
     BROWSER = "BROWSER",
     HELM = "HELM",
