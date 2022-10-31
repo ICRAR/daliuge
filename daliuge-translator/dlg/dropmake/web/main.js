@@ -117,8 +117,7 @@ async function initiateDeploy(method, selected, clickedName) {
         $("#gen_pg_button").val("Generate &amp; Deploy Physical Graph")
         $("#dlg_mgr_deploy").prop("checked", true)
         $("#pg_form").submit();
-    }
-    if (method === DEFAULT_OPTIONS.HELM) {
+    } else if (method === DEFAULT_OPTIONS.HELM) {
         $("#gen_helm_button").val("Generate &amp; Deploy Physical Graph")
         $("#dlg_helm_deploy").prop("checked", true)
         $("#pg_helm_form").submit()
