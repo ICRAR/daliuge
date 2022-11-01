@@ -130,6 +130,7 @@
                     "expanded": {
                         "type": "boolean"
                     },
+
                     "inputApplicationName": {
                         "type": "string"
                     },
@@ -324,6 +325,58 @@
                             ]
                         }
                     },
+                    "applicationArgs": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "text": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": ["string","boolean","number", "null"]
+                                },
+                                "defaultValue": {
+                                    "type": ["string","boolean","number", "null"]
+                                },
+                                "description": {
+                                    "type": "string"
+                                },
+                                "readonly": {
+                                    "type": "boolean",
+                                },
+                                "type": {
+                                    "type": "string"
+                                },
+                                "precious": {
+                                    "type": "boolean"
+                                },
+                                "options": {
+                                    "type": "array"
+                                },
+                                "positional": {
+                                    "type": "boolean",
+                                    "default": false
+                                },
+                                "keyAttribute": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": [
+                                "description",
+                                "name",
+                                "text",
+                                "value"
+                                "type",
+                                "precious",
+                                "options",
+                                "positional"
+                            ]
+                        }
+                    },
                     "group": {
                         "type": "integer"
                     }
@@ -338,6 +391,7 @@
                     "drawOrderHint",
                     "expanded",
                     "fields",
+                    "applicationArgs",
                     "height",
                     "inputAppFields",
                     "inputApplicationName",
