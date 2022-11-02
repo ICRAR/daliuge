@@ -346,7 +346,7 @@
                                     "type": "string"
                                 },
                                 "readonly": {
-                                    "type": "boolean",
+                                    "type": "boolean"
                                 },
                                 "type": {
                                     "type": "string"
@@ -369,7 +369,7 @@
                                 "description",
                                 "name",
                                 "text",
-                                "value"
+                                "value",
                                 "type",
                                 "precious",
                                 "options",
