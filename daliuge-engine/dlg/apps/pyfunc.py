@@ -99,6 +99,8 @@ def import_using_name(app, fname):
             raise InvalidDropException(app, msg)
     else:
         if len(parts) > 1:
+            if parts[-1] in ["__init__", "__class__"]:
+                parts = parts[:-1]
             logger.debug("Recursive import: %s", parts)
             try:
                 mod = importlib.import_module(parts[0], __name__)
@@ -267,31 +269,25 @@ class PyFuncApp(BarrierAppDROP):
             self.fn_posargs = self.arguments.args[
                 : self.fn_npos
             ]  # positional arg names
-            try:
-                raise TypeError
-            except TypeError:
-                logger.error("Problem getting signature for function %s", self.f)
-                self.fn_defaults = {
-                    name: None for name in self.arguments.args[: self.fn_npos]
-                }
-                logger.debug(f"initialized fn_defaults with {self.fn_defaults}")
-                # deal with args and kwargs
-                kwargs = (
-                    dict(zip(self.arguments.args[self.fn_npos :], self.arguments.defaults))
-                    if self.arguments.defaults
-                    else {}
+            self.fn_defaults = {
+                name: None for name in self.arguments.args[: self.fn_npos]
+            }
+            logger.debug(f"initialized fn_defaults with {self.fn_defaults}")
+            # deal with args and kwargs
+            kwargs = (
+                dict(zip(self.arguments.args[self.fn_npos :], self.arguments.defaults))
+                if self.arguments.defaults
+                else {}
+            )
+            self.fn_defaults.update(kwargs)
+            logger.debug(f"fn_defaults updated with {kwargs}")
+            # deal with kwonlyargs
+            if self.arguments.kwonlydefaults:
+                kwonlyargs = dict(
+                    zip(self.arguments.kwonlyargs, self.arguments.kwonlydefaults)
                 )
-                self.fn_defaults.update(kwargs)
-                logger.debug(f"fn_defaults updated with {kwargs}")
-                # deal with kwonlyargs
-                if self.arguments.kwonlydefaults:
-                    kwonlyargs = dict(
-                        zip(self.arguments.kwonlyargs, self.arguments.kwonlydefaults)
-                    )
-                    self.fn_defaults.update(kwonlyargs)
-                    logger.debug(f"fn_defaults updated with {kwonlyargs}")
-                
-
+                self.fn_defaults.update(kwonlyargs)
+                logger.debug(f"fn_defaults updated with {kwonlyargs}")
 
     def initialize(self, **kwargs):
         """
@@ -619,8 +615,10 @@ class PyFuncApp(BarrierAppDROP):
                     vkarg.update({arg:value})
 
             if self.arguments.varargs:
+                logger.debug("Adding remaining posargs to varargs")
                 pargs.extend(vparg)
             if self.arguments.varkw:
+                logger.debug("Adding remaining kwargs to varkw")
                 funcargs.update(vkarg)
 
         # Fill rest with default arguments if there are any more
@@ -638,6 +636,7 @@ class PyFuncApp(BarrierAppDROP):
         capture = StringIO()
         with redirect_stdout(capture):
             result = self.f(*pargs, **funcargs)
+        logger.debug("Returned result from %s: %s", self.func_name, result)
         logger.info(f"Captured output from function app '{self.func_name}': {capture.getvalue()}")
         logger.debug(f"Finished execution of {self.func_name}.")
 
