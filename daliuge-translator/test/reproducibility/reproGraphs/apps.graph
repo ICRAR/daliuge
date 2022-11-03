@@ -1,11 +1,12 @@
 {
     "linkDataArray": [],
     "modelData": {
-        "eagleCommitHash": "fc70a7587a6223322914cb82bf199ffb4be301de",
-        "eagleVersion": "v4.5.2",
+        "commitHash": "",
+        "downloadUrl": "",
+        "eagleCommitHash": "Unknown",
+        "eagleVersion": "Unknown",
         "filePath": "apps.graph",
         "fileType": "Graph",
-        "gitUrl": "",
         "lastModifiedDatetime": 0,
         "lastModifiedEmail": "",
         "lastModifiedName": "",
@@ -14,15 +15,19 @@
         "repo": "",
         "repoBranch": "",
         "repoService": "Unknown",
+        "repositoryUrl": "",
         "schemaVersion": "OJS",
-        "sha": ""
+        "signature": ""
     },
     "nodeDataArray": [
         {
             "applicationArgs": [],
             "category": "BashShellApp",
+            "categoryType": "Application",
             "collapsed": false,
             "color": "#0059a5",
+            "commitHash": "",
+            "dataHash": "",
             "description": "An application component run within the Bash Shell",
             "drawOrderHint": 0,
             "expanded": false,
@@ -30,6 +35,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "execution_time",
                     "options": [],
                     "positional": false,
@@ -42,6 +48,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "num_cpus",
                     "options": [],
                     "positional": false,
@@ -54,6 +61,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "group_start",
                     "options": [],
                     "positional": false,
@@ -66,6 +74,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "Arg01",
                     "options": [],
                     "positional": false,
@@ -77,7 +86,6 @@
                 }
             ],
             "flipPorts": false,
-            "git_url": "",
             "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
@@ -91,6 +99,7 @@
                     "IdText": "event",
                     "description": "",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "event"
                 }
             ],
@@ -108,10 +117,12 @@
                     "IdText": "event",
                     "description": "",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "event"
                 }
             ],
-            "sha": "",
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
             "text": "Bash Shell App",
             "width": 200,
@@ -121,8 +132,11 @@
         {
             "applicationArgs": [],
             "category": "DynlibApp",
+            "categoryType": "Application",
             "collapsed": false,
             "color": "#0059a5",
+            "commitHash": "",
+            "dataHash": "",
             "description": "An application component run from a dynamic library",
             "drawOrderHint": 0,
             "expanded": false,
@@ -130,6 +144,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "execution_time",
                     "options": [],
                     "positional": false,
@@ -142,6 +157,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "num_cpus",
                     "options": [],
                     "positional": false,
@@ -154,6 +170,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "group_start",
                     "options": [],
                     "positional": false,
@@ -166,6 +183,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "libpath",
                     "options": [],
                     "positional": false,
@@ -177,7 +195,6 @@
                 }
             ],
             "flipPorts": false,
-            "git_url": "",
             "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
@@ -191,6 +208,7 @@
                     "IdText": "event",
                     "description": "",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "event"
                 }
             ],
@@ -208,10 +226,12 @@
                     "IdText": "event",
                     "description": "",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "event"
                 }
             ],
-            "sha": "",
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
             "text": "Dynlib App",
             "width": 200,
@@ -221,8 +241,11 @@
         {
             "applicationArgs": [],
             "category": "Mpi",
+            "categoryType": "Application",
             "collapsed": false,
             "color": "#0059a5",
+            "commitHash": "",
+            "dataHash": "",
             "description": "An application component using the Message Passing Interface (MPI)",
             "drawOrderHint": 0,
             "expanded": false,
@@ -230,6 +253,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "group_end",
                     "options": [],
                     "positional": false,
@@ -242,6 +266,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "execution_time",
                     "options": [],
                     "positional": false,
@@ -254,6 +279,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "num_cpus",
                     "options": [],
                     "positional": false,
@@ -266,6 +292,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "num_of_procs",
                     "options": [],
                     "positional": false,
@@ -277,7 +304,6 @@
                 }
             ],
             "flipPorts": false,
-            "git_url": "",
             "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
@@ -291,6 +317,7 @@
                     "IdText": "event",
                     "description": "",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "event"
                 }
             ],
@@ -308,10 +335,12 @@
                     "IdText": "event",
                     "description": "",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "event"
                 }
             ],
-            "sha": "",
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
             "text": "MPI",
             "width": 200,
@@ -321,8 +350,11 @@
         {
             "applicationArgs": [],
             "category": "Docker",
+            "categoryType": "Application",
             "collapsed": false,
             "color": "#0059a5",
+            "commitHash": "",
+            "dataHash": "",
             "description": "An application component run from a Docker image",
             "drawOrderHint": 0,
             "expanded": false,
@@ -330,6 +362,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "execution_time",
                     "options": [],
                     "positional": false,
@@ -342,6 +375,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "num_cpus",
                     "options": [],
                     "positional": false,
@@ -354,6 +388,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "group_start",
                     "options": [],
                     "positional": false,
@@ -366,6 +401,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "image",
                     "options": [],
                     "positional": false,
@@ -378,6 +414,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "command",
                     "options": [],
                     "positional": false,
@@ -390,6 +427,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "user",
                     "options": [],
                     "positional": false,
@@ -402,6 +440,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "ensureUserAndSwitch",
                     "options": [],
                     "positional": false,
@@ -414,6 +453,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "removeContainer",
                     "options": [],
                     "positional": false,
@@ -426,6 +466,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "additionalBindings",
                     "options": [],
                     "positional": false,
@@ -437,7 +478,6 @@
                 }
             ],
             "flipPorts": false,
-            "git_url": "",
             "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
@@ -451,6 +491,7 @@
                     "IdText": "event",
                     "description": "",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "event"
                 }
             ],
@@ -468,10 +509,12 @@
                     "IdText": "event",
                     "description": "",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "event"
                 }
             ],
-            "sha": "",
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
             "text": "Docker",
             "width": 200,
@@ -481,8 +524,11 @@
         {
             "applicationArgs": [],
             "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": false,
             "color": "#0059a5",
+            "commitHash": "",
+            "dataHash": "",
             "description": "An application component in the form of a Python app",
             "drawOrderHint": 0,
             "expanded": false,
@@ -490,6 +536,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "execution_time",
                     "options": [],
                     "positional": false,
@@ -502,6 +549,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "num_cpus",
                     "options": [],
                     "positional": false,
@@ -514,6 +562,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "group_start",
                     "options": [],
                     "positional": false,
@@ -526,6 +575,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "appclass",
                     "options": [],
                     "positional": false,
@@ -537,7 +587,6 @@
                 }
             ],
             "flipPorts": false,
-            "git_url": "",
             "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
@@ -551,6 +600,7 @@
                     "IdText": "event",
                     "description": "",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "event"
                 }
             ],
@@ -568,10 +618,12 @@
                     "IdText": "event",
                     "description": "",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "event"
                 }
             ],
-            "sha": "",
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
             "text": "Python App",
             "width": 200,
