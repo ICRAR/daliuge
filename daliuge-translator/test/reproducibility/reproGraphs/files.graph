@@ -79,9 +79,7 @@
                     "text": "event"
                 }
             ],
-            "persist": false,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "Memory",
             "width": 200,
@@ -156,6 +154,19 @@
                     "text": "Directory name",
                     "type": "Unknown",
                     "value": ""
+                },
+                {
+                    "defaultValue": true,
+                    "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "keyAttribute": false,
+                    "name": "persist",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Persist",
+                    "type": "Boolean",
+                    "value": false
                 }
             ],
             "flipPorts": false,
@@ -185,9 +196,7 @@
                     "text": "event"
                 }
             ],
-            "persist": false,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "File",
             "width": 200,
@@ -255,9 +264,7 @@
                     "text": "event"
                 }
             ],
-            "persist": false,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "NGAS",
             "width": 200,

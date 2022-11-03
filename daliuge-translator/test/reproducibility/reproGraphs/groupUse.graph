@@ -68,7 +68,6 @@
                     "IdText": "event"
                 }
             ],
-            "streaming": false,
             "subject": null,
             "text": "Group By"
         },
@@ -127,7 +126,6 @@
                     "IdText": "event"
                 }
             ],
-            "streaming": false,
             "subject": null,
             "text": "Bash Shell App"
         }
