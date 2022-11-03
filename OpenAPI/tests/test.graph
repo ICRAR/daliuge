@@ -33,8 +33,6 @@
             "height": 72,
             "collapsed": true,
             "flipPorts": false,
-            "streaming": false,
-            "persist": false,
             "subject": null,
             "expanded": false,
             "readonly": true,
@@ -235,8 +233,6 @@
             "height": 72,
             "collapsed": true,
             "flipPorts": false,
-            "streaming": false,
-            "persist": false,
             "subject": null,
             "expanded": false,
             "readonly": true,
@@ -304,6 +300,19 @@
                     "readonly": false,
                     "type": "Unknown",
                     "precious": false
+                },
+                {
+                    "defaultValue": true,
+                    "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "keyAttribute": false,
+                    "name": "persist",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Persist",
+                    "type": "Boolean",
+                    "value": false
                 }
             ],
             "applicationArgs": [],
@@ -337,8 +346,6 @@
             "height": 72,
             "collapsed": true,
             "flipPorts": false,
-            "streaming": false,
-            "persist": false,
             "subject": null,
             "expanded": false,
             "readonly": true,
@@ -386,6 +393,19 @@
                     "readonly": false,
                     "type": "Unknown",
                     "precious": false
+                },
+                {
+                    "defaultValue": true,
+                    "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "keyAttribute": false,
+                    "name": "persist",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Persist",
+                    "type": "Boolean",
+                    "value": false
                 }
             ],
             "applicationArgs": [],
