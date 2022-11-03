@@ -41,7 +41,7 @@ section 8 "Data Life Cycle Management", where the DLM is defined:
       SDP_REQ-252, and the need for data tracing, provenance and access control,
       SKA1-SYS_REQ-2821, SDP_REQ-255
    3. Migration between storage layers, includes SDP_REQ-263
-   4. Replication/distribution including resilience (preciousness) support,
+   4. Replication/distribution including resilience (persistence) support,
       incl. SKA1-SYS_REQ-2350, SDP_REQ-260 - 262
    5. Retirement of expired (temporary) data, incl. SDP_REQ-256."
 
@@ -126,9 +126,10 @@ import time
 
 from . import registry
 from .hsm import manager
+from .hsm.store import AbstractStore
 from .. import droputils
 from ..ddap_protocol import DROPStates, DROPPhases, AppDROPStates
-from ..drop import ContainerDROP
+from ..drop import AbstractDROP, ContainerDROP
 
 logger = logging.getLogger(__name__)
 
@@ -222,7 +223,7 @@ class DataLifecycleManager:
         # instead of _drops.itervalues() to get a full, thread-safe copy of the
         # dictionary values. Maybe there's a better approach for thread-safety
         # here
-        self._drops = {}
+        self._drops: dict[str, AbstractDROP] = {}
 
         self._check_period = check_period
         self._cleanup_period = cleanup_period
@@ -290,7 +291,7 @@ class DataLifecycleManager:
 
             # Expire-after-use: mark as expired if all consumers
             # are finished using this DROP
-            if not drop.precious and drop.expireAfterUse:
+            if not drop.persist and drop.expireAfterUse:
                 allDone = all(
                     c.execStatus in [AppDROPStates.FINISHED, AppDROPStates.ERROR]
                     for c in drop.consumers
@@ -482,8 +483,8 @@ class DataLifecycleManager:
             return
 
         drop = self._drops[uid]
-        if drop.precious and self.isReplicable(drop):
-            logger.debug("Replicating %r because it's precious", drop)
+        if drop.persist and self.isReplicable(drop):
+            logger.debug("Replicating %r because it's marked to be persisted", drop)
             try:
                 self.replicateDrop(drop)
             except:
@@ -532,7 +533,7 @@ class DataLifecycleManager:
     def getDropUids(self, drop):
         return self._reg.getDropUids(drop)
 
-    def _replicate(self, drop, store):
+    def _replicate(self, drop: AbstractDROP, store: AbstractStore):
 
         # Dummy, but safe, new UID
         newUid = "uid:" + "".join(
@@ -546,7 +547,7 @@ class DataLifecycleManager:
 
         # For the time being we manually copy the contents of the current DROP into it
         newDrop = store.createDrop(
-            drop.oid, newUid, expectedSize=drop.size, precious=drop.precious
+            drop.oid, newUid, expectedSize=drop.size, persist=drop.persist
         )
         droputils.copyDropContents(drop, newDrop)
 

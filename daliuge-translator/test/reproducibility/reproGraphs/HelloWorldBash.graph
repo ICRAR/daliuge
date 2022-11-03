@@ -63,6 +63,19 @@
                     "name": "dirname",
                     "text": "Directory name",
                     "value": ""
+                },
+                {
+                    "defaultValue": true,
+                    "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "keyAttribute": false,
+                    "name": "persist",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Persist",
+                    "type": "Boolean",
+                    "value": false
                 }
             ],
             "inputAppFields": [],
@@ -89,7 +102,6 @@
                     "IdText": "event"
                 }
             ],
-            "streaming": false,
             "subject": null,
             "text": "File"
         },
@@ -128,6 +140,19 @@
                     "name": "dirname",
                     "text": "Directory name",
                     "value": ""
+                },
+                {
+                    "defaultValue": true,
+                    "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "keyAttribute": false,
+                    "name": "persist",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Persist",
+                    "type": "Boolean",
+                    "value": false
                 }
             ],
             "inputAppFields": [],
@@ -149,7 +174,6 @@
             "outputApplication": "Unknown",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "streaming": false,
             "subject": null,
             "text": "File"
         },
@@ -183,6 +207,19 @@
                     "name": "Arg01",
                     "text": "Arg01",
                     "value": "echo -en 'Hello world' > %o0"
+                },
+                {
+                    "defaultValue": false,
+                    "description": "Specifies whether this data component streams input and output data",
+                    "keyAttribute": false,
+                    "name": "streaming",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Streaming",
+                    "type": "Boolean",
+                    "value": true
                 }
             ],
             "inputAppFields": [],
@@ -204,7 +241,6 @@
                     "IdText": "event"
                 }
             ],
-            "streaming": true,
             "subject": null,
             "text": "Bash Shell App"
         },
@@ -264,7 +300,6 @@
                     "IdText": "event"
                 }
             ],
-            "streaming": false,
             "subject": null,
             "text": "Bash Shell App"
         }

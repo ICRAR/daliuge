@@ -95,10 +95,8 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "precious": false,
             "readonly": true,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "Loop",
             "width": 385.98717625064404,
@@ -200,10 +198,8 @@
                     "type": ""
                 }
             ],
-            "precious": false,
             "readonly": true,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "SleepExternal",
             "width": 200,
@@ -306,10 +302,8 @@
                     "type": ""
                 }
             ],
-            "precious": false,
             "readonly": true,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "SleepInternal",
             "width": 200,
@@ -374,6 +368,19 @@
                     "text": "Directory name",
                     "type": "String",
                     "value": ""
+                },
+                {
+                    "defaultValue": true,
+                    "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "keyAttribute": false,
+                    "name": "persist",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Persist",
+                    "type": "Boolean",
+                    "value": false
                 }
             ],
             "flipPorts": false,
@@ -412,10 +419,8 @@
                     "type": "event"
                 }
             ],
-            "precious": false,
             "readonly": true,
             "sha": "",
-            "streaming": false,
             "subject": null,
             "text": "event",
             "width": 200,

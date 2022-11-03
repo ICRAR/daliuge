@@ -137,7 +137,7 @@ install_requires = [
     "scp",
     "pyyaml",
     # 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
-    "zeroconf >= 0.38.4",
+    "zeroconf ~= 0.38.4",
     # 0.6 brings python3 support plus other fixes
     "zerorpc ~= 0.6.3",
 ]

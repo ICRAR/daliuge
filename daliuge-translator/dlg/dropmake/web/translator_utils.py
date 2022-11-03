@@ -1,13 +1,15 @@
 import os
 import logging
 import pkg_resources
+from urllib.parse import urlparse
 
 from dlg import common
+from dlg.clients import CompositeManagerClient
 from dlg.common.reproducibility.reproducibility import init_lg_repro_data, init_lgt_repro_data, \
     init_pgt_unroll_repro_data, init_pgt_partition_repro_data
 from dlg.dropmake.lg import load_lg
 from dlg.dropmake.pg_generator import unroll, partition
-
+from dlg.restutils import RestClientException
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +84,37 @@ def filter_dict_to_algo_params(input_dict: dict):
         if name in input_dict:
             algo_params[name] = input_dict.get(name)
     return algo_params
+
+
+def get_mgr_deployment_methods(mhost, mport, mprefix):
+    try:
+        mgr_client = CompositeManagerClient(
+            host=mhost, port=mport, url_prefix=mprefix, timeout=15
+        )
+        response = mgr_client.get_submission_method()
+        response = response.get("methods", [])
+    except RestClientException:
+        logger.debug("Cannot connect to manager object at endpoint %s:%d", mhost, mport)
+        response = []
+    return response
+
+
+def parse_mgr_url(mgr_url):
+    mport = -1
+    mparse = urlparse(mgr_url)
+    if mparse.scheme == "http":
+        mport = 80
+    elif mparse.scheme == "https":
+        mport = 443
+    if mparse.port is not None:
+        mport = mparse.port
+    mprefix = mparse.path
+    if mprefix is not None:
+        if mprefix.endswith("/"):
+            mprefix = mprefix[:-1]
+    else:
+        mprefix = ""
+    return mparse.hostname, mport, mprefix
 
 
 def make_algo_param_dict(min_goal, ptype, max_load_imb, max_cpu, time_greedy, deadline, topk, swam_size, max_mem):

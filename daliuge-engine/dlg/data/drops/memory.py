@@ -39,6 +39,8 @@ from dlg.data.io import SharedMemoryIO, MemoryIO
 # @param tag daliuge
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data 
+# @param persist Persist/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
@@ -49,11 +51,11 @@ class InMemoryDROP(DataDROP):
 
     # Allow in-memory drops to be automatically removed by default
     def __init__(self, *args, **kwargs):
-        if "precious" not in kwargs:
-            kwargs["precious"] = False
+        if "persist" not in kwargs:
+            kwargs["persist"] = False
         if "expireAfterUse" not in kwargs:
             kwargs["expireAfterUse"] = True
-        if kwargs["precious"]:
+        if kwargs["persist"]:
             kwargs["expireAfterUse"] = False
         super().__init__(*args, **kwargs)
 
@@ -101,6 +103,8 @@ class InMemoryDROP(DataDROP):
 # @param tag daliuge
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data 
+# @param persist Persist/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
