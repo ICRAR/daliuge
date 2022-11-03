@@ -42,15 +42,11 @@ class MemberDocs():
         self.__members = {}
 
     @property
-
-
-    def members(self):
-        """
-        """
+    def members(self) ->dict:
         return self.__members
 
     @members.setter
-    def set_members(self, module):
+    def set_members(self, module:str):
         """
         Initialize members data structure
         """
