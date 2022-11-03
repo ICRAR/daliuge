@@ -1,191 +1,228 @@
 {
+    "linkDataArray": [
+        {
+            "closesLoop": false,
+            "dataType": "Unknown",
+            "from": -1,
+            "fromPort": "09b9f140-837d-40eb-99b9-060a5559ce15",
+            "loop_aware": "0",
+            "to": -2,
+            "toPort": "9bf94db3-c563-4141-8dde-20b843e3d82d"
+        }
+    ],
     "modelData": {
-        "fileType": "graph",
-        "repoService": "GitHub",
-        "repoBranch": "master",
-        "repo": "ICRAR/EAGLE_test_repo",
+        "commitHash": "",
+        "downloadUrl": "",
+        "eagleCommitHash": "Unknown",
+        "eagleVersion": "Unknown",
         "filePath": "HelloWorld_simple.graph",
-        "sha": "",
-        "git_url": "",
-        "eagleVersion": "v3.0.5",
-        "eagleCommitHash": "4b29bb5d2c8de0b6f98e66204c24dde59a611022",
+        "fileType": "Graph",
+        "lastModifiedDatetime": 0,
+        "lastModifiedEmail": "",
+        "lastModifiedName": "",
+        "numLGNodes": 2,
+        "readonly": true,
+        "repo": "",
+        "repoBranch": "",
+        "repoService": "Unknown",
+        "repositoryUrl": "",
         "schemaVersion": "OJS",
-        "readonly": true
+        "signature": ""
     },
     "nodeDataArray": [
         {
+            "applicationArgs": [],
             "category": "PythonApp",
             "categoryType": "Application",
-            "isData": false,
-            "isGroup": false,
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "color": "#3498DB",
-            "drawOrderHint": 0,
-            "key": -1,
-            "text": "HelloWorldApp",
-            "description": "A simple APP that implements the standard Hello World in DALiuGE. It allows to change 'World' with some other string and it also permits to connect the single output port to multiple sinks, which will all receive the same message. App does not require any input.",
-            "x": 79.15975327762027,
-            "y": 157.58665007965354,
-            "width": 200,
-            "height": 200,
             "collapsed": false,
-            "showPorts": true,
-            "flipPorts": false,
-            "subject": null,
-            "selected": true,
+            "color": "#0059a5",
+            "commitHash": "",
+            "dataHash": "",
+            "description": "A simple APP that implements the standard Hello World in DALiuGE. It allows to change 'World' with some other string and it also permits to connect the single output port to multiple sinks, which will all receive the same message. App does not require any input.",
+            "drawOrderHint": 0,
             "expanded": false,
-            "readonly": false,
+            "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "What appears after 'Hello '",
+                    "keyAttribute": false,
+                    "name": "greet",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "greet",
+                    "type": "String",
+                    "value": "Everybody"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "Application class",
+                    "keyAttribute": false,
+                    "name": "appclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "appclass",
+                    "type": "String",
+                    "value": "dlg.apps.simple.HelloWorldApp"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "Estimated execution time",
+                    "keyAttribute": false,
+                    "name": "execution_time",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Float",
+                    "value": 1
+                },
+                {
+                    "defaultValue": "",
+                    "description": "Number of cores used",
+                    "keyAttribute": false,
+                    "name": "num_cpus",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Integer",
+                    "value": 1
+                },
+                {
+                    "defaultValue": "",
+                    "description": "Component is start of a group",
+                    "keyAttribute": false,
+                    "name": "group_start",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Boolean",
+                    "value": false
+                }
+            ],
+            "flipPorts": false,
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationDescription": "",
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
             "inputPorts": [],
+            "isGroup": false,
+            "key": -1,
+            "outputAppFields": [],
+            "outputApplicationDescription": "",
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
             "outputPorts": [
                 {
                     "Id": "09b9f140-837d-40eb-99b9-060a5559ce15",
                     "IdText": "hello",
+                    "description": "",
                     "event": false,
+                    "keyAttribute": false,
+                    "text": "hello",
                     "type": "Unknown"
                 }
             ],
-            "inputLocalPorts": [],
-            "outputLocalPorts": [],
-            "fields": [
-                {
-                    "text": "greet",
-                    "name": "greet",
-                    "value": "Everybody",
-                    "description": "What appears after 'Hello '",
-                    "readonly": false,
-                    "type": "String"
-                },
-                {
-                    "text": "appclass",
-                    "name": "appclass",
-                    "value": "dlg.apps.simple.HelloWorldApp",
-                    "description": "Application class",
-                    "readonly": true,
-                    "type": "String"
-                },
-                {
-                    "text": "Execution time",
-                    "name": "execution_time",
-                    "value": 1,
-                    "description": "Estimated execution time",
-                    "readonly": false,
-                    "type": "Float"
-                },
-                {
-                    "text": "Num CPUs",
-                    "name": "num_cpus",
-                    "value": 1,
-                    "description": "Number of cores used",
-                    "readonly": false,
-                    "type": "Integer"
-                },
-                {
-                    "text": "Group start",
-                    "name": "group_start",
-                    "value": false,
-                    "description": "Component is start of a group",
-                    "readonly": false,
-                    "type": "Boolean"
-                }
-            ],
-            "inputAppFields": [],
-            "outputAppFields": [],
-            "exitAppFields": [],
-            "inputApplicationName": "",
-            "inputApplicationType": "None",
-            "inputApplicationKey": null,
-            "outputApplicationName": "",
-            "outputApplicationType": "None",
-            "outputApplicationKey": null,
-            "exitApplicationName": "",
-            "exitApplicationType": "None",
-            "exitApplicationKey": null
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
+            "subject": null,
+            "text": "HelloWorldApp",
+            "width": 200,
+            "x": 79.15975327762027,
+            "y": 157.58665007965354
         },
         {
+            "applicationArgs": [],
             "category": "File",
             "categoryType": "Data",
-            "isData": true,
-            "isGroup": false,
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "color": "#394BB2",
-            "drawOrderHint": 0,
-            "key": -2,
-            "text": "hello",
+            "collapsed": true,
+            "color": "#2c2c2c",
+            "commitHash": "",
+            "dataHash": "",
             "description": "",
-            "x": 343.61809816257795,
-            "y": 163.98988923310688,
-            "width": 200,
-            "height": 200,
-            "collapsed": false,
-            "showPorts": false,
-            "flipPorts": false,
-            "subject": null,
-            "selected": false,
+            "drawOrderHint": 0,
             "expanded": false,
-            "readonly": false,
-            "inputPorts": [
-                {
-                    "Id": "9bf94db3-c563-4141-8dde-20b843e3d82d",
-                    "IdText": "hello",
-                    "event": false,
-                    "type": "Unknown"
-                }
-            ],
-            "outputPorts": [
-                {
-                    "Id": "641de2d1-7d01-4335-acfb-6797d3a06009",
-                    "IdText": "hello",
-                    "event": false,
-                    "type": "Unknown"
-                }
-            ],
-            "inputLocalPorts": [],
-            "outputLocalPorts": [],
             "fields": [
                 {
-                    "text": "Data volume",
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
                     "name": "data_volume",
-                    "value": "5",
-                    "description": "",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
                     "readonly": false,
-                    "type": "Unknown"
+                    "text": "Data volume",
+                    "type": "Unknown",
+                    "value": "5"
                 },
                 {
-                    "text": "Group end",
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
                     "name": "group_end",
-                    "value": "0",
-                    "description": "",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
                     "readonly": false,
-                    "type": "Unknown"
+                    "text": "Group end",
+                    "type": "Unknown",
+                    "value": "0"
                 },
                 {
-                    "text": "Check file path exists",
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
                     "name": "check_filepath_exists",
-                    "value": "1",
-                    "description": "",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
                     "readonly": false,
-                    "type": "Unknown"
+                    "text": "Check file path exists",
+                    "type": "Unknown",
+                    "value": "1"
                 },
                 {
-                    "text": "File path",
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
                     "name": "filepath",
-                    "value": "hello.txt",
-                    "description": "",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
                     "readonly": false,
-                    "type": "Unknown"
+                    "text": "File path",
+                    "type": "Unknown",
+                    "value": "hello.txt"
                 },
                 {
-                    "text": "Directory name",
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
                     "name": "dirname",
-                    "value": "",
-                    "description": "",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
                     "readonly": false,
-                    "type": "Unknown"
+                    "text": "Directory name",
+                    "type": "Unknown",
+                    "value": ""
                 },
                 {
-                    "defaultValue": true,
+                    "defaultValue": "true",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
                     "keyAttribute": false,
                     "name": "persist",
@@ -198,27 +235,51 @@
                     "value": false
                 }
             ],
+            "flipPorts": false,
+            "height": 72,
             "inputAppFields": [],
-            "outputAppFields": [],
-            "exitAppFields": [],
+            "inputApplicationDescription": "",
+            "inputApplicationKey": null,
             "inputApplicationName": "",
             "inputApplicationType": "None",
-            "inputApplicationKey": null,
+            "inputLocalPorts": [],
+            "inputPorts": [
+                {
+                    "Id": "9bf94db3-c563-4141-8dde-20b843e3d82d",
+                    "IdText": "hello",
+                    "description": "",
+                    "event": false,
+                    "keyAttribute": false,
+                    "text": "hello",
+                    "type": "Unknown"
+                }
+            ],
+            "isGroup": false,
+            "key": -2,
+            "outputAppFields": [],
+            "outputApplicationDescription": "",
+            "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
-            "outputApplicationKey": null,
-            "exitApplicationName": "",
-            "exitApplicationType": "None",
-            "exitApplicationKey": null
-        }
-    ],
-    "linkDataArray": [
-        {
-            "from": -1,
-            "fromPort": "09b9f140-837d-40eb-99b9-060a5559ce15",
-            "to": -2,
-            "toPort": "9bf94db3-c563-4141-8dde-20b843e3d82d",
-            "loop_aware": "0"
+            "outputLocalPorts": [],
+            "outputPorts": [
+                {
+                    "Id": "641de2d1-7d01-4335-acfb-6797d3a06009",
+                    "IdText": "hello",
+                    "description": "",
+                    "event": false,
+                    "keyAttribute": false,
+                    "text": "hello",
+                    "type": "Unknown"
+                }
+            ],
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
+            "subject": null,
+            "text": "hello",
+            "width": 200,
+            "x": 343.61809816257795,
+            "y": 163.98988923310688
         }
     ]
 }

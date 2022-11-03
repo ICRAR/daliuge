@@ -1,200 +1,296 @@
 {
+    "linkDataArray": [
+        {
+            "closesLoop": false,
+            "dataType": "Unknown",
+            "from": -1,
+            "fromPort": "123200f3-804b-4409-842f-97ba0e037de8",
+            "loop_aware": "0",
+            "to": -2,
+            "toPort": "d9b4b786-fa81-4cde-b560-9c1441d47871"
+        }
+    ],
     "modelData": {
-        "fileType": "graph",
-        "repoService": "GitHub",
-        "repoBranch": "ray_test",
-        "repo": "ICRAR/daliuge",
-        "filePath": "daliuge-translator/test/dropmake/logical_graphs/testScatter.graph",
-        "sha": "",
-        "git_url": "",
-        "eagleVersion": "v2.8.6",
-        "eagleCommitHash": "c68cc1ea2e7806d903851a15d56684382dc02806"
+        "commitHash": "",
+        "downloadUrl": "",
+        "eagleCommitHash": "Unknown",
+        "eagleVersion": "Unknown",
+        "filePath": "testScatter.graph",
+        "fileType": "Graph",
+        "lastModifiedDatetime": 0,
+        "lastModifiedEmail": "",
+        "lastModifiedName": "",
+        "numLGNodes": 2,
+        "readonly": true,
+        "repo": "",
+        "repoBranch": "",
+        "repoService": "Unknown",
+        "repositoryUrl": "",
+        "schemaVersion": "OJS",
+        "signature": ""
     },
     "nodeDataArray": [
         {
+            "applicationArgs": [],
             "category": "Scatter",
-            "categoryType": "Group",
-            "isData": false,
-            "isGroup": true,
-            "canHaveInputs": false,
-            "canHaveOutputs": false,
-            "color": "#DDAD00",
-            "drawOrderHint": 0,
-            "key": -1,
-            "text": "Scatter",
-            "description": "Placeholder 'scatter' description",
-            "x": 466.39676113360315,
-            "y": 210.1093140575086,
-            "width": 597.1659919028341,
-            "height": 372.46963562753047,
+            "categoryType": "Construct",
             "collapsed": false,
-            "showPorts": false,
-            "flipPorts": false,
-            "subject": null,
-            "selected": false,
+            "color": "rgb(211 165 0)",
+            "commitHash": "",
+            "dataHash": "",
+            "description": "Placeholder 'scatter' description",
+            "drawOrderHint": 0,
             "expanded": true,
-            "inputPorts": [
+            "fields": [
                 {
-                    "Id": "db1fe162-3a4a-44d4-936b-357983ba15f8",
-                    "IdText": "event",
-                    "event": true
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "num_of_copies",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Number of copies",
+                    "type": "Unknown",
+                    "value": "4"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "scatter_axis",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Scatter axis",
+                    "type": "Unknown",
+                    "value": "time"
                 }
             ],
-            "outputPorts": [],
+            "flipPorts": false,
+            "height": 372.46963562753047,
+            "inputAppFields": [
+                {
+                    "defaultValue": "",
+                    "description": "Estimate of execution time (in seconds) for this application.",
+                    "keyAttribute": false,
+                    "name": "execution_time",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "num_cpus",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Unknown",
+                    "value": "1"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "group_start",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Unknown",
+                    "value": "0"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "The python class that implements this application",
+                    "keyAttribute": false,
+                    "name": "appclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Appclass",
+                    "type": "Unknown",
+                    "value": "test.graphsRepository"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "event",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "event",
+                    "type": "Event",
+                    "value": ""
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "event",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "event",
+                    "type": "Event",
+                    "value": ""
+                }
+            ],
+            "inputApplicationKey": -3,
+            "inputApplicationName": "InpApp",
+            "inputApplicationType": "PythonApp",
             "inputLocalPorts": [
                 {
                     "Id": "123200f3-804b-4409-842f-97ba0e037de8",
                     "IdText": "event",
-                    "event": true
+                    "description": "",
+                    "event": true,
+                    "keyAttribute": false,
+                    "text": "event"
                 }
             ],
-            "outputLocalPorts": [],
-            "fields": [
+            "inputPorts": [
                 {
-                    "text": "Number of copies",
-                    "name": "num_of_copies",
-                    "value": "4",
+                    "Id": "db1fe162-3a4a-44d4-936b-357983ba15f8",
+                    "IdText": "event",
                     "description": "",
-                    "readonly": false,
-                    "type": "Unknown"
-                },
-                {
-                    "text": "Scatter axis",
-                    "name": "scatter_axis",
-                    "value": "time",
-                    "description": "",
-                    "readonly": false,
-                    "type": "Unknown"
+                    "event": true,
+                    "keyAttribute": false,
+                    "text": "event"
                 }
             ],
-            "inputAppFields": [
-                {
-                    "text": "Execution time",
-                    "name": "execution_time",
-                    "value": "5",
-                    "description": "Estimate of execution time (in seconds) for this application.",
-                    "readonly": false,
-                    "type": "Unknown"
-                },
-                {
-                    "text": "Num CPUs",
-                    "name": "num_cpus",
-                    "value": "1",
-                    "description": "",
-                    "readonly": false,
-                    "type": "Unknown"
-                },
-                {
-                    "text": "Group start",
-                    "name": "group_start",
-                    "value": "0",
-                    "description": "",
-                    "readonly": false,
-                    "type": "Unknown"
-                },
-                {
-                    "text": "Appclass",
-                    "name": "appclass",
-                    "value": "test.graphsRepository",
-                    "description": "The python class that implements this application",
-                    "readonly": false,
-                    "type": "Unknown"
-                }
-            ],
+            "isGroup": true,
+            "key": -1,
             "outputAppFields": [],
-            "exitAppFields": [],
-            "inputApplicationName": "InpApp",
-            "inputApplicationType": "PythonApp",
+            "outputApplicationDescription": "",
+            "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
-            "exitApplicationName": "",
-            "exitApplicationType": "None"
+            "outputLocalPorts": [],
+            "outputPorts": [],
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
+            "subject": null,
+            "text": "Scatter",
+            "width": 597.1659919028341,
+            "x": 466.39676113360315,
+            "y": 210.1093140575086
         },
         {
-            "category": "Component",
+            "applicationArgs": [],
+            "category": "PythonApp",
             "categoryType": "Application",
-            "isData": false,
-            "isGroup": false,
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "color": "#3498DB",
-            "drawOrderHint": 0,
-            "key": -2,
-            "text": "ScatterSleep",
+            "collapsed": true,
+            "color": "#0059a5",
+            "commitHash": "",
+            "dataHash": "",
             "description": "An application component in the form of a Python app",
-            "x": 643.724696356276,
-            "y": 385.0080994826098,
-            "width": 200,
-            "height": 200,
-            "collapsed": false,
-            "showPorts": false,
-            "flipPorts": false,
-            "subject": null,
-            "selected": false,
+            "drawOrderHint": 0,
             "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Estimate of execution time (in seconds) for this application.",
+                    "keyAttribute": false,
+                    "name": "execution_time",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "num_cpus",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Unknown",
+                    "value": "1"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "group_start",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Unknown",
+                    "value": "0"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "The python class that implements this application",
+                    "keyAttribute": false,
+                    "name": "appclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Appclass",
+                    "type": "Unknown",
+                    "value": "dlg.apps.simple.SleepApp"
+                }
+            ],
+            "flipPorts": false,
             "group": -1,
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationDescription": "",
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
+            "inputLocalPorts": [],
             "inputPorts": [
                 {
                     "Id": "d9b4b786-fa81-4cde-b560-9c1441d47871",
                     "IdText": "event",
-                    "event": true
+                    "description": "",
+                    "event": true,
+                    "keyAttribute": false,
+                    "text": "event"
                 }
             ],
-            "outputPorts": [],
-            "inputLocalPorts": [],
-            "outputLocalPorts": [],
-            "fields": [
-                {
-                    "text": "Execution time",
-                    "name": "execution_time",
-                    "value": "5",
-                    "description": "Estimate of execution time (in seconds) for this application.",
-                    "readonly": false,
-                    "type": "Unknown"
-                },
-                {
-                    "text": "Num CPUs",
-                    "name": "num_cpus",
-                    "value": "1",
-                    "description": "",
-                    "readonly": false,
-                    "type": "Unknown"
-                },
-                {
-                    "text": "Group start",
-                    "name": "group_start",
-                    "value": "0",
-                    "description": "",
-                    "readonly": false,
-                    "type": "Unknown"
-                },
-                {
-                    "text": "Appclass",
-                    "name": "appclass",
-                    "value": "dlg.apps.simple.SleepApp",
-                    "description": "The python class that implements this application",
-                    "readonly": false,
-                    "type": "Unknown"
-                }
-            ],
-            "inputAppFields": [],
+            "isGroup": false,
+            "key": -2,
             "outputAppFields": [],
-            "exitAppFields": [],
-            "inputApplicationName": "",
-            "inputApplicationType": "None",
+            "outputApplicationDescription": "",
+            "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
-            "exitApplicationName": "",
-            "exitApplicationType": "None"
-        }
-    ],
-    "linkDataArray": [
-        {
-            "from": -3,
-            "fromPort": "123200f3-804b-4409-842f-97ba0e037de8",
-            "to": -2,
-            "toPort": "d9b4b786-fa81-4cde-b560-9c1441d47871",
-            "loop_aware": "0"
+            "outputLocalPorts": [],
+            "outputPorts": [],
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
+            "subject": null,
+            "text": "ScatterSleep",
+            "width": 200,
+            "x": 643.724696356276,
+            "y": 385.0080994826098
         }
     ]
 }
