@@ -1,13 +1,23 @@
 {
     "linkDataArray": [],
     "modelData": {
+        "commitHash": "",
+        "downloadUrl": "",
+        "eagleCommitHash": "Unknown",
+        "eagleVersion": "Unknown",
         "filePath": "testEmpty.graph",
-        "fileType": "graph",
-        "git_url": "",
+        "fileType": "Graph",
+        "lastModifiedDatetime": 0,
+        "lastModifiedEmail": "",
+        "lastModifiedName": "",
+        "numLGNodes": 0,
+        "readonly": true,
         "repo": "",
         "repoBranch": "",
         "repoService": "Unknown",
-        "sha": ""
+        "repositoryUrl": "",
+        "schemaVersion": "OJS",
+        "signature": ""
     },
     "nodeDataArray": []
 }
