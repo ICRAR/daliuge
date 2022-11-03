@@ -682,7 +682,6 @@ def create_palette_node_from_params(params)->tuple:
             "description": comp_description,
             "collapsed": False,
             "showPorts": False,
-            "streaming": False,
             "subject": None,
             "selected": False,
             "expanded": False,
@@ -1357,6 +1356,53 @@ def process_compounddef_default(compounddef, language):
             continue
     return result
 
+<<<<<<< HEAD
+=======
+
+# find the list of param names and descriptions in the <detaileddescription> tag
+def parse_params(detailed_description: str) -> list:
+    """
+    Parse parameter descirptions found in a detailed_description tag. This assumes
+    rEST style documentation.
+
+    :param detailed_description: str, the content of the description XML node
+
+    :returns list of parameter descriptions
+    """
+    result = []
+    split_str = None
+
+    if detailed_description.find("Returns:") >= 0:
+        split_str = "Returns:"
+    elif detailed_description.find(":returns") >= 0:
+        split_str = ":returns"
+
+    # not sure how to proceed, abort
+    if split_str is None:
+        return result
+    
+    detailed_description = detailed_description.split(split_str)[0]
+    param_lines = [p.replace('\n','').strip() for p in detailed_description.split(":param")[1:]]
+    # param_lines = [line.strip() for line in detailed_description]
+
+    for p_line in param_lines:
+        logger.debug("p_line: %s" + p_line)
+
+        try:
+            index_of_second_colon = p_line.index(':', 0)
+        except:
+            # didnt find second colon, skip
+            continue
+
+        param_name = p_line[1:index_of_second_colon].strip()
+        param_description = p_line[index_of_second_colon+2:].strip()
+
+        result.append((param_name, param_description))
+
+    return result
+
+
+>>>>>>> master
 # find the named aparam in params, and update the description
 def set_param_description(name:str, description:str, p_type: str, params:dict):
     """
@@ -1409,8 +1455,6 @@ def create_construct_node(node_type:str, node:dict)-> dict:
         "paletteDownloadUrl": "",
         "dataHash": "",
         "key": get_next_key(),
-        "precious": False,
-        "streaming": False,
         "text": node_type + "/" + node["text"],
     }
 

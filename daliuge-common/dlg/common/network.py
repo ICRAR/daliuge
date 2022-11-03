@@ -95,6 +95,10 @@ def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
             )
             return not checking_open
 
+        except socket.gaierror:
+            logger.debug("Endpoint service %s:%d not known", host, port)
+            return not checking_open
+
         except socket.error as e:
 
             # If the connection becomes suddenly closed from the server-side.

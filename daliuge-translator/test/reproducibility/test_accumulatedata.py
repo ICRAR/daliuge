@@ -106,7 +106,6 @@ class AccumulateLGTRerunData(unittest.TestCase):
         "inputLocalPorts",
         "outputLocalPorts",
         "outputPorts",
-        "streaming",
     }
     ddGraph = "graphs/ddTest.graph"
 
@@ -433,7 +432,6 @@ class AccumulateLGTRepeatData(unittest.TestCase):
         "inputLocalPorts",
         "outputPorts",
         "outputLocalPorts",
-        "streaming",
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
@@ -833,7 +831,6 @@ class AccumulateLGTRecomputeData(unittest.TestCase):
         "inputLocalPorts",
         "outputPorts",
         "outputLocalPorts",
-        "streaming",
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
@@ -1608,7 +1605,6 @@ class AccumulateLGTReplicateSciData(unittest.TestCase):
         "inputLocalPorts",
         "outputPorts",
         "outputLocalPorts",
-        "streaming",
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
@@ -1934,7 +1930,6 @@ class AccumulateLGTReplicateCompData(unittest.TestCase):
         "inputLocalPorts",
         "outputPorts",
         "outputLocalPorts",
-        "streaming",
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
@@ -2333,7 +2328,6 @@ class AccumulateLGTReplicateTotalData(unittest.TestCase):
         "inputLocalPorts",
         "outputPorts",
         "outputLocalPorts",
-        "streaming",
     }
 
     file = "reproducibility/reproGraphs/apps.graph"

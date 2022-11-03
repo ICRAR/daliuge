@@ -348,10 +348,10 @@ class AbstractDROP(EventFirer):
         if "expectedSize" in kwargs and kwargs["expectedSize"]:
             self._expectedSize = int(kwargs.pop("expectedSize"))
 
-        # No DROP is precious unless stated otherwise; used for replication
-        self._precious = self._popArg(kwargs, "precious", False)
-        # If DROP is precious, don't expire (delete) it.
-        if self._precious:
+        # No DROP should be persisted unless stated otherwise; used for replication
+        self._persist: bool = self._popArg(kwargs, "persist", False)
+        # If DROP should be persisted, don't expire (delete) it.
+        if self._persist:
             self._expireAfterUse = False
 
         # Useful to have access to all EAGLE parameters without a prior knowledge
@@ -798,11 +798,11 @@ class AbstractDROP(EventFirer):
         self._size = size
 
     @property
-    def precious(self):
+    def persist(self):
         """
-        Whether this DROP should be considered as 'precious' or not
+        Whether this DROP should be considered persisted after completion
         """
-        return self._precious
+        return self._persist
 
     @property
     def status(self):
@@ -1199,6 +1199,8 @@ class PathBasedDrop(object):
 # @param dataclass Data Class/my.awesome.data.Component/String/ComponentParameter/readonly//False/False/The python class that implements this data component
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data 
+# @param persist Persist/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END

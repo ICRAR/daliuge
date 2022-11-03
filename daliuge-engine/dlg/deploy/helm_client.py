@@ -42,10 +42,10 @@ from dlg.deploy.deployment_utils import (
     find_service_ips,
     find_pod_ips,
     wait_for_pods,
-    check_k8s_env,
 )
 from dlg.dropmake import pg_generator
 from dlg.restutils import RestClient
+from dlg.common.k8s_utils import check_k8s_env
 
 logger = logging.getLogger(__name__)
 

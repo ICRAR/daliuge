@@ -74,7 +74,6 @@
             ],
             "selected": true,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Bash Shell App",
             "width": 200,

@@ -40,9 +40,12 @@ from dlg.utils import isabs
 # @param tag daliuge
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
-# @param check_filepath_exists Check file path exists/True/Boolean/ComponentParameter/readwrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
+# @param delete_parent_directory Delete parent directory/False/Boolean/ComponentParameter/readwrite//False/False/Also delete the parent directory of this file when deleting the file itself
+# @param check_filepath_exists Check file path exists/False/Boolean/ComponentParameter/readwrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
 # @param filepath File Path//String/ComponentParameter/readwrite//False/False/Path to the file for this node
 # @param dirname Directory name//String/ComponentParameter/readwrite//False/False/Path to the file for this node
+# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data 
+# @param persist Persist/True/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
@@ -89,11 +92,11 @@ class FileDROP(DataDROP, PathBasedDrop):
     check_filepath_exists = dlg_bool_param("check_filepath_exists", False)
 
     # Make sure files are not deleted by default and certainly not if they are
-    # marked as precious no matter what expireAfterUse said
+    # marked to be persisted no matter what expireAfterUse said
     def __init__(self, *args, **kwargs):
-        if "precious" not in kwargs:
-            kwargs["precious"] = True
-        if kwargs["precious"] and "lifespan" not in kwargs: 
+        if "persist" not in kwargs:
+            kwargs["persist"] = True
+        if kwargs["persist"] and "lifespan" not in kwargs:
             kwargs["expireAfterUse"] = False
         super().__init__(*args, **kwargs)
 
