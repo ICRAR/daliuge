@@ -102,6 +102,7 @@ class AccumulateLGTRerunData(unittest.TestCase):
     rmode = ReproducibilityFlags.RERUN
     expected = {
         "category",
+        "categoryType",
         "inputPorts",
         "inputLocalPorts",
         "outputLocalPorts",
@@ -428,6 +429,7 @@ class AccumulateLGTRepeatData(unittest.TestCase):
     rmode = ReproducibilityFlags.REPEAT
     expected = {
         "category",
+        "categoryType",
         "inputPorts",
         "inputLocalPorts",
         "outputPorts",
@@ -827,6 +829,7 @@ class AccumulateLGTRecomputeData(unittest.TestCase):
     rmode = ReproducibilityFlags.RECOMPUTE
     expected = {
         "category",
+        "categoryType",
         "inputPorts",
         "inputLocalPorts",
         "outputPorts",
@@ -1224,7 +1227,7 @@ class AccumulateLGTReproduceData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.REPRODUCE
-    expected = {"category"}
+    expected = {"category", "categoryType"}
 
     file = "reproducibility/reproGraphs/apps.graph"
     with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
@@ -1601,6 +1604,7 @@ class AccumulateLGTReplicateSciData(unittest.TestCase):
     rmode = ReproducibilityFlags.REPLICATE_SCI
     expected = {
         "category",
+        "categoryType",
         "inputPorts",
         "inputLocalPorts",
         "outputPorts",
@@ -1926,6 +1930,7 @@ class AccumulateLGTReplicateCompData(unittest.TestCase):
     rmode = ReproducibilityFlags.REPLICATE_COMP
     expected = {
         "category",
+        "categoryType",
         "inputPorts",
         "inputLocalPorts",
         "outputPorts",
@@ -2324,6 +2329,7 @@ class AccumulateLGTReplicateTotalData(unittest.TestCase):
     rmode = ReproducibilityFlags.REPLICATE_TOTAL
     expected = {
         "category",
+        "categoryType",
         "inputPorts",
         "inputLocalPorts",
         "outputPorts",
