@@ -118,6 +118,7 @@ class lib64_path(install):
 install_requires = [
     "wheel",  # need to get wheel first...
     "bottle",
+    "boto3",
     "configobj",
     "crc32c",
     "daliuge-common==%s" % (VERSION,),
@@ -130,13 +131,13 @@ install_requires = [
     "overrides",
     "paramiko",
     "psutil",
-    "pyarrow",
+    "pyarrow<10",
     "python-daemon",
     "pyzmq ~= 22.3.0",
     "scp",
     "pyyaml",
     # 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
-    "zeroconf >= 0.19.1",
+    "zeroconf >= 0.38.4",
     # 0.6 brings python3 support plus other fixes
     "zerorpc ~= 0.6.3",
 ]
