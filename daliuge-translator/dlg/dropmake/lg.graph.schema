@@ -5,9 +5,6 @@
         "modelData": {
             "type": "object",
             "properties": {
-                "fileType": {
-                    "type": "string"
-                },
                 "repoService": {
                     "type": "string"
                 },
@@ -23,10 +20,7 @@
                 "filePath": {
                     "type": "string"
                 },
-                "sha": {
-                    "type": "string"
-                },
-                "gitUrl": {
+                "fileType": {
                     "type": "string"
                 },
                 "eagleVersion": {
@@ -49,23 +43,38 @@
                 },
                 "numLGNodes": {
                     "type": "integer"
+                },
+                "commitHash": {
+                    "type": "string"
+                },
+                "downloadUrl": {
+                    "type": "string"
+                },
+                "repositoryUrl": {
+                    "type": "string"
+                },
+                "signature": {
+                    "type": "string"
                 }
             },
             "required": [
                 "filePath",
                 "fileType",
-                "gitUrl",
                 "readonly",
                 "repo",
                 "repoBranch",
                 "repoService",
-                "sha",
                 "eagleVersion",
                 "eagleCommitHash",
                 "schemaVersion",
                 "lastModifiedName",
                 "lastModifiedEmail",
-                "lastModifiedDatetime"
+                "lastModifiedDatetime",
+                "numLGNodes",
+                "commitHash",
+                "downloadUrl",
+                "repositoryUrl",
+                "signature"
             ]
         },
         "nodeDataArray": {
@@ -80,6 +89,12 @@
                        "type": "boolean"
                     },
                     "color": {
+                        "type": "string"
+                    },
+                    "commitHash": {
+                        "type": "string"
+                    },
+                    "dataHash": {
                         "type": "string"
                     },
                     "drawOrderHint": {
@@ -109,22 +124,13 @@
                     "collapsed": {
                         "type": "boolean"
                     },
-                    "streaming": {
-                        "type": "boolean"
-                    },
                     "subject": {
                         "type": "null"
                     },
                     "expanded": {
                         "type": "boolean"
                     },
-                    "precious": {
-                        "type": "boolean",
-                        "deprecated": true
-                    },
-                    "persist": {
-                        "type": "boolean"
-                    },
+
                     "inputApplicationName": {
                         "type": "string"
                     },
@@ -261,6 +267,12 @@
                             ]
                         }
                     },
+                    "paletteDownloadUrl": {
+                        "type": "string"
+                    },
+                    "repositoryUrl": {
+                        "type": "string"
+                    },
                     "fields": {
                         "type": "array",
                         "items": {
@@ -296,13 +308,20 @@
                                 "positional": {
                                     "type": "boolean",
                                     "default": false
+                                },
+                                "keyAttribute": {
+                                    "type": "boolean"
                                 }
                             },
                             "required": [
                                 "description",
                                 "name",
                                 "text",
-                                "value"
+                                "value",
+                                "type",
+                                "precious",
+                                "options",
+                                "positional"
                             ]
                         }
                     },
@@ -341,13 +360,20 @@
                                 "positional": {
                                     "type": "boolean",
                                     "default": false
+                                },
+                                "keyAttribute": {
+                                    "type": "boolean"
                                 }
                             },
                             "required": [
                                 "description",
                                 "name",
                                 "text",
-                                "value"
+                                "value",
+                                "type",
+                                "precious",
+                                "options",
+                                "positional"
                             ]
                         }
                     },
@@ -359,6 +385,8 @@
                     "category",
                     "collapsed",
                     "color",
+                    "commitHash",
+                    "dataHash",
                     "description",
                     "drawOrderHint",
                     "expanded",
@@ -377,7 +405,8 @@
                     "outputApplicationType",
                     "outputLocalPorts",
                     "outputPorts",
-                    "streaming",
+                    "paletteDownloadUrl",
+                    "repositoryUrl",
                     "subject",
                     "text",
                     "width",
@@ -391,6 +420,12 @@
             "items": {
                 "type": "object",
                 "properties": {
+                    "closesLoop": {
+                        "type": "boolean"
+                    },
+                    "dataType": {
+                        "type": "string"
+                    },
                     "from": {
                         "type": "integer"
                     },
@@ -408,6 +443,8 @@
                     }
                 },
                 "required": [
+                    "closesLoop",
+                    "dataType",
                     "from",
                     "fromPort",
                     "to",

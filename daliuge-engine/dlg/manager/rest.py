@@ -30,6 +30,7 @@ import io
 import json
 import logging
 import os
+import re
 import tarfile
 import threading
 
@@ -54,6 +55,7 @@ from ..exceptions import (
 from ..restserver import RestServer
 from ..restutils import RestClient, RestClientException
 from .session import generateLogFileName
+from dlg.common.deployment_methods import DeploymentMethods
 
 logger = logging.getLogger(__name__)
 
@@ -75,9 +77,14 @@ def daliuge_aware(func):
             if res is not None:
                 bottle.response.content_type = "application/json"
                 # set CORS headers
+                origin = bottle.request.headers.raw("Origin")
+                if origin is None:
+                    origin = "http://localhost:8084"
+                elif not re.match(r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin):
+                    origin = "http://localhost:8084"
                 bottle.response.headers[
                     "Access-Control-Allow-Origin"
-                ] = "http://localhost:8084"
+                ] = origin
                 bottle.response.headers["Access-Control-Allow-Credentials"] = "true"
                 bottle.response.headers[
                     "Access-Control-Allow-Methods"
@@ -145,6 +152,7 @@ class ManagerRestServer(RestServer):
 
         # Mappings
         app = self.app
+        app.get("/api/submission_method", callback=self.submit_methods)
         app.post("/api/stop", callback=self.stop_manager)
         app.post("/api/sessions", callback=self.createSession)
         app.get("/api/sessions", callback=self.getSessions)
@@ -186,6 +194,10 @@ class ManagerRestServer(RestServer):
         the default ones and perform other DataManager-specific actions.
         The default implementation does nothing.
         """
+
+    @daliuge_aware
+    def submit_methods(self):
+        return {"methods": [DeploymentMethods.BROWSER]}
 
     def _stop_manager(self):
         self.dm.shutdown()

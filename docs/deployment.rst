@@ -54,7 +54,9 @@ Deployment Scenarios
 
 The three components described in the :ref:`basics` section allow for a very flexible deployment. In a real world deployment there will always be one data island manager, zero or one master managers, and as many node managers as there are computing nodes available to the |daliuge| execution engine. In very small deployments one node manager can take over the role of the master manager as well. For extremely large deployments |daliuge| supports a hierarchy of island managers to be deployed, although even with 10s of millions of tasks we have not seen the actual need to do this. Note that the managers are only deploying the graph, the execution is completely asynchronous and does not require any of the higher level managers to run. Even the *manager functionality* of the node manager is not required at run-time.
 
-The primary usage scenario for the |daliuge| execution engine is to run it on a large cluster of machines with very large workflows of thousands to millions of individual tasks. However, for testing and small scale applications it is also possible to deploy the whole system on a single laptop or on a small cluster. It is also possible to deploy the whole system or parts of it on AWS or a Kubernetes cluster. For instance EAGLE and/or the *translator* could run locally, or on a single AWS instance and submit the physical graph to a master manager on some HPC system. This flexible deployment is also the reason why the individual components are kept well separated. 
+The primary usage scenario for the |daliuge| execution engine is to run it on a large cluster of machines with very large workflows of thousands to millions of individual tasks. However, for testing and small scale applications it is also possible to deploy the whole system on a single laptop or on a small cluster. It is also possible to deploy the whole system or parts of it on AWS or a Kubernetes cluster. For instance EAGLE and/or the *translator* could run locally, or on a single AWS instance and submit the physical graph to a master manager on some HPC system. This flexible deployment is also the reason why the individual components are kept well separated.
+
+The translator is able to determine which of the following options is available given the selected deployment endpoint.
 
 Deployment in HPC Centers
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -82,37 +84,37 @@ It is of course possible to submit graphs to |daliuge| managers without addition
 The manager and translator components can be docker images or raw processes.
 We currently support two methods for submitting graphs in this scenario.
 
-Direct
+Server
 ------
 
-Direct deployments assumes the machine hosting the translator can communicate with the manager machines freely.
-:numref:`deployment.fig.direct` presents a sequence diagram outlining the communication between the different components in this case.
+The server deployment option assumes the machine hosting the translator can communicate with the manager machines freely.
+:numref:`deployment.fig.server` presents a sequence diagram outlining the communication between the different components in this case.
 
-.. _deployment.fig.direct:
+.. _deployment.fig.server:
 
-.. figure:: images/deploy_direct.jpeg
+.. figure:: images/deploy_server.jpeg
 
    Sequence diagram of direct graph deployment.
 
-Restful
+Browser
 -------
 
-Restful deployment is useful in the case where only a user's machine can communicate with engine instances but the translator cannot (as is often the case with an externally hosted translator process).
+Browser-based deployment is useful in the case where only a user's machine can communicate with engine instances but the translator cannot (as is often the case with an externally hosted translator process).
 The browser in this case drives execution and submits the graph directly to the manager nodes.
-:numref:`deployment.fig.rest` presents a sequence diagram outlining the communication between the different components in this case.
+:numref:`deployment.fig.browser` presents a sequence diagram outlining the communication between the different components in this case.
 Conceptually this is similar to how the OpenOnDemand deployment works, but targeting direct graph deployment rather than slurm job submission.
 
 N.B. Cross-Origin Resource Sharing (CORS) may return some interesting responses. If running all machines
 locally, make sure that your host descriptions in EAGLE and the translator are 'localhost'.
 
-.. _deployment.fig.rest:
+.. _deployment.fig.browser:
 
-.. figure:: images/deploy_directRest.jpeg
+.. figure:: images/deploy_browser.jpeg
 
    Sequence diagram of restful graph deployment.
 
-Deployment with Kubernetes (Experimental)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Deployment with Kubernetes/Helm (Experimental)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Kubernetes is a canonical container orchestration system.
 We are building support to deploy workflows as helm charts which will enable easier and more reliably deployments across more computing facilities.
