@@ -31,6 +31,7 @@ import pkg_resources
 
 from dlg import common
 from dlg.common import tool
+from dlg.dropmake.web.translator_utils import get_mgr_deployment_methods
 from dlg.restutils import RestClient, RestClientException
 
 lg_dir = pkg_resources.resource_filename(__name__, ".")  # @UndefinedVariable
@@ -49,7 +50,7 @@ class TestLGWeb(unittest.TestCase):
             "-p",
             str(lgweb_port),
             "-H",
-            "127.0.0.1",
+            "localhost",
         ]
         self.devnull = open(os.devnull, "wb")
         self.web_proc = tool.start_process(
@@ -304,6 +305,13 @@ class TestLGWeb(unittest.TestCase):
     def test_get_gantt_chart(self):
         self._test_pgt_action("pgt_gantt_chart", True)
 
+    def test_get_submission_methods(self):
+        import json
+        c = RestClient("localhost", lgweb_port, timeout=10)
+        response = c._GET("/api/submission_method")
+        response_content = json.load(response)
+        self.assertEqual(response_content, {'methods': []})
+
     def _test_post_request(self, client: RestClient, url: str, form_data: dict = None,
                            expect_fail=True):
         if form_data:
@@ -448,3 +456,7 @@ class TestLGWeb(unittest.TestCase):
 
         for request in request_tests:
             self._test_post_request(c, test_url, request[0], request[1])
+
+    def test_get_mgr_deployment_methods(self):
+        response = get_mgr_deployment_methods("localhost", lgweb_port, "")
+        self.assertEqual([], response)
