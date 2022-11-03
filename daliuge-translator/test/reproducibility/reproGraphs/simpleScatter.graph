@@ -111,6 +111,19 @@
                     "text": "Directory name",
                     "type": "String",
                     "value": ""
+                },
+                {
+                    "defaultValue": true,
+                    "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "keyAttribute": false,
+                    "name": "persist",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Persist",
+                    "type": "Boolean",
+                    "value": false
                 }
             ],
             "flipPorts": false,
@@ -140,7 +153,6 @@
             "readonly": false,
             "selected": false,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "File",
             "width": 200,
@@ -246,7 +258,6 @@
             "readonly": false,
             "selected": false,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Scatter",
             "width": 461,
@@ -336,7 +347,6 @@
             "readonly": false,
             "selected": false,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Bash Shell App",
             "width": 200,
@@ -397,6 +407,19 @@
                     "text": "Directory name",
                     "type": "String",
                     "value": ""
+                },
+                {
+                    "defaultValue": true,
+                    "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "keyAttribute": false,
+                    "name": "persist",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Persist",
+                    "type": "Boolean",
+                    "value": false
                 }
             ],
             "flipPorts": false,
@@ -434,7 +457,6 @@
             "readonly": false,
             "selected": false,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "scatter",
             "width": 200,
@@ -495,6 +517,19 @@
                     "text": "Directory name",
                     "type": "String",
                     "value": ""
+                },
+                {
+                    "defaultValue": true,
+                    "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "keyAttribute": false,
+                    "name": "persist",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Persist",
+                    "type": "Boolean",
+                    "value": false
                 }
             ],
             "flipPorts": false,
@@ -532,7 +567,6 @@
             "readonly": false,
             "selected": false,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "File",
             "width": 200,
@@ -638,7 +672,6 @@
             "readonly": false,
             "selected": false,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "Gather",
             "width": 286,
@@ -699,6 +732,19 @@
                     "text": "Directory name",
                     "type": "String",
                     "value": ""
+                },
+                {
+                    "defaultValue": true,
+                    "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "keyAttribute": false,
+                    "name": "persist",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Persist",
+                    "type": "Boolean",
+                    "value": false
                 }
             ],
             "flipPorts": false,
@@ -729,7 +775,6 @@
             "readonly": false,
             "selected": false,
             "showPorts": false,
-            "streaming": false,
             "subject": null,
             "text": "File",
             "width": 200,

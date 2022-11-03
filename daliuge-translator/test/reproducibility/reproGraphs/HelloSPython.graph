@@ -79,7 +79,6 @@
                     "IdText": "event"
                 }
             ],
-            "streaming": false,
             "subject": null,
             "text": "Python App"
         },
@@ -118,6 +117,19 @@
                     "name": "dirname",
                     "text": "Directory name",
                     "value": ""
+                },
+                {
+                    "defaultValue": true,
+                    "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "keyAttribute": false,
+                    "name": "persist",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Persist",
+                    "type": "Boolean",
+                    "value": false
                 }
             ],
             "inputAppFields": [],
@@ -144,7 +156,6 @@
                     "IdText": "event"
                 }
             ],
-            "streaming": false,
             "subject": null,
             "text": "File"
         },
@@ -204,7 +215,6 @@
                     "IdText": "event"
                 }
             ],
-            "streaming": false,
             "subject": null,
             "text": "Python App"
         },
@@ -243,6 +253,19 @@
                     "name": "dirname",
                     "text": "Directory name",
                     "value": ""
+                },
+                {
+                    "defaultValue": true,
+                    "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "keyAttribute": false,
+                    "name": "persist",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Persist",
+                    "type": "Boolean",
+                    "value": false
                 }
             ],
             "inputAppFields": [],
@@ -264,7 +287,6 @@
             "outputApplication": "Unknown",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "streaming": false,
             "subject": null,
             "text": "File"
         }
