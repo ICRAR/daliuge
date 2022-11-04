@@ -123,4 +123,8 @@ class EventFirer(object):
             setattr(e, k, v)
 
         for l in listeners:
-            l.handleEvent(e)
+            try:
+                l.handleEvent(e)
+            except:
+                logger.exception("Exception in listener %s while handling event %s", l, e)
+                raise
