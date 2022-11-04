@@ -56,7 +56,7 @@ from .ddap_protocol import (
     DROPStates,
     DROPRel,
 )
-from dlg.event import EventFirer
+from dlg.event import EventFirer, EventHandler
 from dlg.exceptions import InvalidDropException, InvalidRelationshipException
 from dlg.data.io import (
     DataIO,
@@ -129,7 +129,7 @@ track_current_drop = object_tracking("drop")
 # ===============================================================================
 
 
-class AbstractDROP(EventFirer):
+class AbstractDROP(EventFirer, EventHandler):
     """
     Base class for all DROP implementations.
 
@@ -734,7 +734,7 @@ class AbstractDROP(EventFirer):
         contained in the dropspec dictionaries held in the session.
         """
 
-    def _fire(self, eventType, **kwargs):
+    def _fire(self, eventType: str, **kwargs):
         """
         Delivers an event of `eventType` to all interested listeners.
 
