@@ -21,7 +21,6 @@
 #
 import io
 import os
-from abc import abstractmethod
 
 from dlg.drop import DataDROP, DEFAULT_INTERNAL_PARAMETERS
 from dlg.data.io import MemoryIO
@@ -51,7 +50,6 @@ class ParameterSetDROP(DataDROP):
 
     mode = dlg_string_param("mode", None)
 
-    @abstractmethod
     def serialize_parameters(self, parameters: dict, mode):
         """
         Returns a string representing a serialization of the parameters.
@@ -62,7 +60,6 @@ class ParameterSetDROP(DataDROP):
         # Add more formats (.ini for example)
         return "\n".join(f"{x}={y}" for x, y in parameters.items())
 
-    @abstractmethod
     def filter_parameters(self, parameters: dict, mode):
         """
         Returns a dictionary of parameters, with daliuge-internal or other parameters filtered out

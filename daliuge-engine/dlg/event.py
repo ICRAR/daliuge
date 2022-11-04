@@ -20,8 +20,10 @@
 #    MA 02111-1307  USA
 #
 
-import collections
+from collections import defaultdict
 import logging
+from abc import ABC, abstractmethod
+from typing import Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -36,11 +38,17 @@ class Event(object):
     attached to individual instances of this class, depending on the event type.
     """
 
-    def __init__(self):
-        self.type = None
+    def __init__(self, type: str):
+        self.type = type
 
     def __repr__(self, *args, **kwargs):
         return "<Event %r>" % (self.__dict__)
+
+
+class EventHandler(ABC):
+    @abstractmethod
+    def handleEvent(self, e: Event) -> None:
+        pass
 
 
 class EventFirer(object):
@@ -60,9 +68,12 @@ class EventFirer(object):
     __ALL_EVENTS = object()
 
     def __init__(self):
-        self._listeners = collections.defaultdict(list)
+        # Union string key with object to handle __ALL_EVENTS above
+        self._listeners: defaultdict[
+            Union[str, object], list[EventHandler]
+        ] = defaultdict(list)
 
-    def subscribe(self, listener, eventType=None):
+    def subscribe(self, listener: EventHandler, eventType: Optional[str] = None):
         """
         Subscribes `listener` to events fired by this object. If `eventType` is
         not `None` then `listener` will only receive events of `eventType` that
@@ -74,7 +85,7 @@ class EventFirer(object):
         eventType = eventType or EventFirer.__ALL_EVENTS
         self._listeners[eventType].append(listener)
 
-    def unsubscribe(self, listener, eventType=None):
+    def unsubscribe(self, listener: EventHandler, eventType: Optional[str] = None):
         """
         Unsubscribes `listener` from events fired by this object.
         """
@@ -86,7 +97,7 @@ class EventFirer(object):
         if listener in self._listeners[eventType]:
             self._listeners[eventType].remove(listener)
 
-    def _fireEvent(self, eventType, **attrs):
+    def _fireEvent(self, eventType: str, **attrs):
         """
         Delivers an event of `eventType` to all interested listeners.
 
@@ -95,7 +106,7 @@ class EventFirer(object):
         """
 
         # Which listeners should we call?
-        listeners = []
+        listeners: list[EventHandler] = []
         if eventType in self._listeners:
             listeners += self._listeners[eventType]
         if EventFirer.__ALL_EVENTS in self._listeners:
@@ -106,8 +117,8 @@ class EventFirer(object):
 
         # Now that we are sure there are listeners for our event
         # create it and send it to all of them
-        e = Event()
-        e.type = eventType
+        e = Event(eventType)
+
         for k, v in attrs.items():
             setattr(e, k, v)
 
