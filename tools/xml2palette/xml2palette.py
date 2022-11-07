@@ -927,7 +927,7 @@ class greatgrandchild():
             if param_name in result:
                 result[param_name]["type"] = param_type
             else:
-                logger.warning("No parameter named %s found in parameter dictionary", param_name)
+                logger.warning("No parameter named %s found in parameter dictionary. Known parameters are: %s", param_name, ', '.join(str(key) for key in result.keys()))
 
         return detailed_description.split(":param")[0], result
 
