@@ -923,7 +923,11 @@ class greatgrandchild():
             param_type = param_type[:p_ind]
             param_type = _typeFix(param_type)
             # logger.debug("%s type after fix: %s", param_name, param_type)
-            result[param_name]["type"] = param_type
+
+            if param_name in result:
+                result[param_name]["type"] = param_type
+            else:
+                logger.warning("No parameter named %s found in parameter dictionary", param_name)
 
         return detailed_description.split(":param")[0], result
 
