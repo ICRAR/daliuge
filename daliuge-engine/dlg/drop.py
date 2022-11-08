@@ -56,7 +56,7 @@ from .ddap_protocol import (
     DROPStates,
     DROPRel,
 )
-from dlg.event import EventFirer
+from dlg.event import EventFirer, EventHandler
 from dlg.exceptions import InvalidDropException, InvalidRelationshipException
 from dlg.data.io import (
     DataIO,
@@ -129,7 +129,7 @@ track_current_drop = object_tracking("drop")
 # ===============================================================================
 
 
-class AbstractDROP(EventFirer):
+class AbstractDROP(EventFirer, EventHandler):
     """
     Base class for all DROP implementations.
 
@@ -734,7 +734,7 @@ class AbstractDROP(EventFirer):
         contained in the dropspec dictionaries held in the session.
         """
 
-    def _fire(self, eventType, **kwargs):
+    def _fire(self, eventType: str, **kwargs):
         """
         Delivers an event of `eventType` to all interested listeners.
 
@@ -1199,7 +1199,7 @@ class PathBasedDrop(object):
 # @param dataclass Data Class/my.awesome.data.Component/String/ComponentParameter/readonly//False/False/The python class that implements this data component
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
-# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data 
+# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
 # @param persist Persist/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
@@ -1931,11 +1931,18 @@ class InputFiredAppDROP(AppDROP):
         # Return immediately, but schedule the execution of this app
         # If we have been given a thread pool use that
         if hasattr(self, "_tp"):
-            self._tp.apply_async(self.execute)
+            self._tp.apply_async(self._execute_and_log_exception)
         else:
-            t = threading.Thread(target=self.execute)
+            t = threading.Thread(target=self._execute_and_log_exception)
             t.daemon = 1
             t.start()
+            return t
+
+    def _execute_and_log_exception(self):
+        try:
+            self.execute()
+        except:
+            logger.exception("Unexpected exception during drop (%r) execution", self)
 
     _dlg_proc_lock = threading.Lock()
 
