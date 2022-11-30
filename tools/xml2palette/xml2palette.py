@@ -847,7 +847,9 @@ class greatgrandchild():
 
         self.func_path = ""
         self.func_name = func_name
+        self.fname = func_name
         self.return_type = return_type
+        self.pcount = 0 # number of parameters
         if ggchild:
             self.member = self._process_greatgrandchild(ggchild)
         else:
@@ -928,8 +930,8 @@ class greatgrandchild():
                 result[param_name]["type"] = param_type
             else:
                 logger.warning("No parameter named %s found in parameter dictionary. Known parameters are: %s", param_name, ', '.join(str(key) for key in result.keys()))
-
-        return detailed_description.split(":param")[0], result
+            rdict = {} # TODO
+        return detailed_description.split(":param")[0], result, rdict
 
     def _process_Numpy(self, dd:str)-> tuple:
         """
@@ -957,8 +959,9 @@ class greatgrandchild():
         # extract return documentation
         rest = pds[1] if len(pds) > 1 else ""
         ret = re.split("\nRaises\n------\n", rest)
+        rdict = {} # TODO
         rai = ret[1] if len(ret) > 1 else ""
-        return description, pdict
+        return description, pdict, rdict
 
     def _process_Google(self, dd:str):
         """
@@ -975,21 +978,38 @@ class greatgrandchild():
         (description, rest) = ds.split("\nArgs:")
         # logger.debug("Splitting: %s %s", description, rest)
         # extract parameter documentation (up to Returns line)
-        pds = rest.split("\nReturns:\n")
-        spds = re.split(r"\n?([\w_]+)\s?\((\w+)\)\s?:", pds[0])[1:] # split :param lines
-        pdict = dict(zip(spds[::3],zip(spds[1::3],spds[2::3]))) # create initial param dict
+        pds = re.split("\nReturns?:\n(.+)\n", rest)
+        spds = re.split(r"\n?([\w_]+)\s?\((\w+.+)\)\s?:", pds[0])[1:] # split param lines
         types = spds[1::3]
+        types = [re.split(r"[\,\s]", t)[0] for t in types]
+        pdict = dict(zip(spds[::3],zip(types,spds[2::3]))) # create initial param dict
         pdict = {k:{
                     "desc":v[1].replace("\n", " "), 
-                    # this cryptic line tries to extract the type
                     "type": _typeFix(v[0])
                     } 
                 for k,v in pdict.items()}
         # extract return documentation
-        rest = pds[1] if len(pds) > 1 else ""
-        ret = re.split("\nRaises\n------\n", rest)
+        ret = pds[1] if len(pds) > 1 else ""
+        rest = pds[2] if len(pds) > 2 else ""
+        logger.debug("Return string: %s", ret)
+        if ret:
+            rpds = re.split(r"\n?\(([\w_]+)\)\s?:", ret) # split return lines
+            if len(rpds) > 1: # complete with type
+                rpds = rpds[1:]
+            else: # if something else use first word and type Unknown
+                rpds = re.findall(r"\w+", rpds[0])[0:1] + ["Unknown"]
+            rdict = dict(zip(rpds[::3],zip(rpds[1::3]))) # create initial return dict
+            rdict = {k:{
+                        "desc":v[0].replace("\n", " "),
+                        "type": _typeFix(k)
+                        }
+                    for k,v in rdict.items()
+            }
+        else:
+            rdict = {}
         rai = ret[1] if len(ret) > 1 else ""
-        return description, pdict
+        logger.debug("Raises string: %s", rai)
+        return description, pdict, rdict
 
     def _identify_format(self, descr_string:str) -> str:
         """
@@ -1041,29 +1061,38 @@ class greatgrandchild():
             args = ggchild.text[1:-1] # get rid of parantheses
             args = [a.strip() for a in args.split(',')]
             if 'self' in args:
-                class_name = self.func_path.rsplit(".", 1)[-1]
-                self.func_name = f"{class_name}::{self.func_name}"
+                self.class_name = self.func_path.rsplit(".", 1)[-1]
+                self.fname = self.func_name
+                self.func_name = f"{self.class_name}::{self.func_name}"
 
         if ggchild.tag == "detaileddescription":
             # this contains the main description of the function and the parameters.
             # Might not be complete or correct and has to be merged with the information
             # in the param section below.
+            direction = None
             if len(ggchild) > 0 and len(ggchild[0]) > 0 and ggchild[0][0].text != None:
 
-                # get detailed description text
+                # get description, params and return
                 dd = ggchild[0][0].text
-                d_format = self._identify_format(dd) # identift docstyle
+                d_format = self._identify_format(dd) # identify docstyle
                 if d_format:
-                    (desc, params) = self.process_descr(d_format, dd)
+                    # process docstyle
+                    (desc, params, ret) = self.process_descr(d_format, dd)
                 else:
-                    (desc, params) = dd, {}
+                    (desc, params, ret) = dd, {}, {}
 
                 # use the params above
                 for (p_key, p_value) in params.items():
                     set_param_description(p_key, p_value["desc"], p_value["type"], self.member["params"])
+                    direction = None
+                for (r_key, r_value) in ret.items():
+                    set_param_description(r_key, r_value["desc"], r_value["type"], self.member["params"])
+                    direction = "Out"
+                    logger.debug("adding port: %s",{"key":r_key, "direction":"out", "value":r_value["type"] + "//" + r_value["type"] + "/OutputPort/readwrite//False/False/"})
+                    self.member["params"].append({"key":r_key, "direction":"out", "value":r_value["type"] + "//" + r_value["type"] + "/OutputPort/readwrite//False/False/"})
 
-                logger.debug("adding description param: %s",{"key":"description", "direction": None, "value":desc})
-                self.member["params"].append({"key": "description", "direction": None, "value": desc})
+                logger.debug("adding description param: %s",{"key":"description", "direction": direction, "value":desc})
+                self.member["params"].append({"key": "description", "direction": direction, "value": desc})
 
         if ggchild.tag == "param":
             # Depending on the format used this section only contains parameter names
@@ -1072,6 +1101,7 @@ class greatgrandchild():
             value_type = ""
             name = ""
             default_value = ""
+            self.pcount += 1
 
             for gggchild in ggchild:
                 if gggchild.tag == "type":
@@ -1104,8 +1134,18 @@ class greatgrandchild():
                 default_value = str(default_value).replace("'", "")
                 if default_value.find("/") >=0:
                     default_value = f'"{default_value}"'
-            logger.debug("adding param: %s",{"key":str(name), "direction":"in", "value":str(name) + "/" + str(default_value) + "/" + str(value_type) + "/ApplicationArgument/readwrite//False/False/"})
-            self.member["params"].append({"key":str(name), "direction":"in", "value":str(name) + "/" + str(default_value) + "/" + str(value_type) + "/ApplicationArgument/readwrite//False/False/"})
+            logger.debug("Func name %s, pcount %d", self.fname, self.pcount)
+            if self.fname in ["__init__", "__call__"] and self.pcount == 1: # first parameter is "self"
+                value_type = f"Object.{self.class_name}"
+                logger.debug("adding port: %s",{"key":str(name), "direction":"out", "value":self.class_name + "/" + str(default_value) + "/" + str(value_type) + "/OutputPort/readwrite//False/False/"})
+                self.member["params"].append({"key":str(name), "direction":"out", "value":self.class_name + "/" + str(default_value) + "/" + str(value_type) + "/OutputPort/readwrite//False/False/"})
+            elif hasattr(self, "class_name") and self.func_name != self.fname and self.pcount == 1:
+                value_type = f"Object.{self.class_name}"
+                logger.debug("adding port: %s",{"key":str(name), "direction":"in", "value":self.class_name + "/" + str(default_value) + "/" + str(value_type) + "/InPort/readwrite//False/False/"})
+                self.member["params"].append({"key":str(name), "direction":"in", "value":self.class_name + "/" + str(default_value) + "/" + str(value_type) + "/InputPort/readwrite//False/False/"})
+            else:
+                logger.debug("adding param: %s",{"key":str(name), "direction":"in", "value":str(name) + "/" + str(default_value) + "/" + str(value_type) + "/ApplicationArgument/readwrite//False/False/"})
+                self.member["params"].append({"key":str(name), "direction":"in", "value":str(name) + "/" + str(default_value) + "/" + str(value_type) + "/ApplicationArgument/readwrite//False/False/"})
 
         if ggchild.tag == "definition":
             self.return_type = ggchild.text.strip().split(" ")[0]
@@ -1120,7 +1160,9 @@ class greatgrandchild():
                 pass
                 # self.func_name = "OBJ:" + self.func_path.rsplit(".",1)[-1]
                 # logger.debug("Using name %s for %s function", self.func_path, self.func_name)
-            elif self.func_name.startswith('_') or self.func_path.find("._") >= 0:
+            elif self.func_name.startswith('_') or \
+                self.fname.startswith('_') or   \
+                self.func_path.find("._") >= 0:
                 logger.debug("Skipping %s.%s",self.func_path, self.func_name)
                 self.member = None
             # else:
@@ -1367,7 +1409,7 @@ def set_param_description(name:str, description:str, p_type: str, params:dict):
     TODO: This should really be part of a class
 
     :param name: str, the parameter to set the description
-    :param descrition: str, the description to add to the existing string
+    :param description: str, the description to add to the existing string
     :param p_type: str, the type of the parameter if known
     :param params: dict, the set of parameters
     """
