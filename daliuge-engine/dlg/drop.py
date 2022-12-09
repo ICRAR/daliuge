@@ -375,6 +375,8 @@ class AbstractDROP(EventFirer, EventHandler):
                 for name, val in vars(c).items()
                 if not (inspect.isfunction(val) or isinstance(val, property))
             ]
+            logger.info("GOT MEMBEEEERS: %r", members)
+
             AbstractDROP._members_cache[cls] = members
         return AbstractDROP._members_cache[cls]
 
@@ -396,6 +398,7 @@ class AbstractDROP(EventFirer, EventHandler):
                 param = kwargs['applicationArgs'].get(attr_name).value
             else:
                 param = default_value
+            logger.debug(">>>!!! param extracted: %s; %s", attr_name, param)
             return param
 
         # Take a class dlg defined parameter class attribute and create an instanced attribute on object
