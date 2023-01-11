@@ -665,7 +665,7 @@ class GenericScatterApp(BarrierAppDROP):
 ##
 # @brief GenericNpyScatterApp
 # @details An APP that splits about any axis on any npy format data drop
-# into as many parts as the app has outputs, provided that the initially converted numpy
+# into as many part./run    s as the app has outputs, provided that the initially converted numpy
 # array has enough elements. The return will be a numpy array of arrays, where the first
 # axis is of length len(outputs). The modulo remainder of the length of the original array and
 # the number of outputs will be distributed across the first len(outputs)-1 elements of the
