@@ -67,6 +67,7 @@ class NullBarrierApp(BarrierAppDROP):
     def run(self):
         pass
 
+
 ##
 # @brief PythonApp
 # @details A placeholder APP to aid construction of new applications.
@@ -81,7 +82,9 @@ class NullBarrierApp(BarrierAppDROP):
 # @par EAGLE_END
 class PythonApp(BarrierAppDROP):
     """A placeholder BarrierAppDrop that just aids the generation of the palette component"""
+
     pass
+
 
 ##
 # @brief SleepApp
@@ -142,6 +145,7 @@ class CopyApp(BarrierAppDROP):
     All inputs are copied into all outputs in the order they were declared in
     the graph.
     """
+
     bufsize = dlg_int_param("bufsize", 65536)
 
     component_meta = dlg_component(
@@ -159,7 +163,7 @@ class CopyApp(BarrierAppDROP):
     def copyAll(self):
         for inputDrop in self.inputs:
             self.copyRecursive(inputDrop)
-        
+
         # logger.debug("Target checksum: %d", outputDrop.checksum)
 
     def copyRecursive(self, inputDrop):
@@ -168,7 +172,9 @@ class CopyApp(BarrierAppDROP):
                 self.copyRecursive(child)
         else:
             for outputDrop in self.outputs:
-                droputils.copyDropContents(inputDrop, outputDrop, bufsize=self.bufsize)
+                droputils.copyDropContents(
+                    inputDrop, outputDrop, bufsize=self.bufsize
+                )
 
 
 ##
@@ -250,7 +256,9 @@ class RandomArrayApp(BarrierAppDROP):
         # At least one output should have been added
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception("At least one output should have been added to %r" % self)
+            raise Exception(
+                "At least one output should have been added to %r" % self
+            )
         marray = self.generateRandomArray()
         if self._keep_array:
             self.marray = marray
@@ -263,7 +271,9 @@ class RandomArrayApp(BarrierAppDROP):
         if self.integer:
             # generate an array of self.size integers with numbers between
             # slef.low and self.high
-            marray = np.random.randint(int(self.low), int(self.high), size=(self.size))
+            marray = np.random.randint(
+                int(self.low), int(self.high), size=(self.size)
+            )
         else:
             # generate an array of self.size floats with numbers between
             # self.low and self.high
@@ -332,7 +342,9 @@ class AverageArraysApp(BarrierAppDROP):
 
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception("At least one output should have been added to %r" % self)
+            raise Exception(
+                "At least one output should have been added to %r" % self
+            )
         self.getInputArrays()
         self._avg = self.averageArray()
         for o in outs:
@@ -348,7 +360,9 @@ class AverageArraysApp(BarrierAppDROP):
         """
         ins = self.inputs
         if len(ins) < 1:
-            raise Exception("At least one input should have been added to %r" % self)
+            raise Exception(
+                "At least one input should have been added to %r" % self
+            )
         marray = []
         for inp in ins:
             sarray = droputils.allDropContents(inp)
@@ -420,11 +434,17 @@ class GenericNpyGatherApp(BarrierAppDROP):
 
     def run(self):
         if len(self.inputs) < 1:
-            raise Exception(f"At least one input should have been added to {self}")
+            raise Exception(
+                f"At least one input should have been added to {self}"
+            )
         if len(self.outputs) < 1:
-            raise Exception(f"At least one output should have been added to {self}")
+            raise Exception(
+                f"At least one output should have been added to {self}"
+            )
         if self.function not in self.functions:
-            raise Exception(f"Function {self.function} not supported by {self}")
+            raise Exception(
+                f"Function {self.function} not supported by {self}"
+            )
 
         result = (
             self.reduce_gather_inputs()
@@ -507,14 +527,20 @@ class HelloWorldApp(BarrierAppDROP):
             raise Exception("Only one input expected for %r" % self)
         else:  # the input is expected to be a vector. We'll use the first element
             try:
-                phrase = str(pickle.loads(droputils.allDropContents(ins[0]))[0])
+                phrase = str(
+                    pickle.loads(droputils.allDropContents(ins[0]))[0]
+                )
             except _pickle.UnpicklingError:
-                phrase = str(droputils.allDropContents(ins[0]), encoding="utf-8")
+                phrase = str(
+                    droputils.allDropContents(ins[0]), encoding="utf-8"
+                )
             self.greeting = f"Hello {phrase}"
 
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception("At least one output should have been added to %r" % self)
+            raise Exception(
+                "At least one output should have been added to %r" % self
+            )
         for o in outs:
             o.len = len(self.greeting.encode())
             o.write(self.greeting.encode())  # greet across all outputs
@@ -564,7 +590,9 @@ class UrlRetrieveApp(BarrierAppDROP):
 
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception("At least one output should have been added to %r" % self)
+            raise Exception(
+                "At least one output should have been added to %r" % self
+            )
         for o in outs:
             o.len = len(content)
             o.write(content)  # send content to all outputs
@@ -582,12 +610,13 @@ class UrlRetrieveApp(BarrierAppDROP):
 # @param category PythonApp
 # @param construct Scatter
 # @param tag daliuge
-# @param appclass Application Class/dlg.apps.simple.GenericScatterApp/String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param num_of_copies Scatter dimension/4/Integer/ComponentParameter/readwrite//False/False/Specifies the number of replications of the content of the scatter construct
 # @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param appclass Application Class/dlg.apps.simple.GenericScatterApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param array Array//Object.Array/OutputPort/readwrite//False/False/A numpy array of arrays, where the first axis is of length <numSplit>
 # @par EAGLE_END
 class GenericScatterApp(BarrierAppDROP):
@@ -645,12 +674,13 @@ class GenericScatterApp(BarrierAppDROP):
 # @param category PythonApp
 # @param construct Scatter
 # @param tag daliuge
-# @param appclass Application Class/dlg.apps.simple.GenericNpyScatterApp/String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param num_of_copies Scatter dimension/4/Integer/ComponentParameter/readwrite//False/False/Specifies the number of replications of the content of the scatter construct
 # @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param appclass Application Class/dlg.apps.simple.GenericNpyScatterApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param scatter_axes Scatter Axes//String/ApplicationArgument/readwrite//False/False/The axes to split input ndarrays on, e.g. [0,0,0], length must match the number of input ports
 # @param array Object.Array//Object.Array/InputPort/readwrite//False/False/A numpy array of arrays
 # @par EAGLE_END
@@ -697,7 +727,9 @@ class GenericNpyScatterApp(BarrierAppDROP):
                 raise err
             for split_index in range(self.num_of_copies):
                 out_index = in_index * self.num_of_copies + split_index
-                droputils.save_numpy(self.outputs[out_index], result[split_index])
+                droputils.save_numpy(
+                    self.outputs[out_index], result[split_index]
+                )
 
 
 class SimpleBranch(BranchAppDrop, NullBarrierApp):
@@ -820,7 +852,9 @@ class ListAppendThrashingApp(BarrierAppDROP):
         # At least one output should have been added
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception("At least one output should have been added to %r" % self)
+            raise Exception(
+                "At least one output should have been added to %r" % self
+            )
         self.marray = self.generateArray()
         for o in outs:
             d = pickle.dumps(self.marray)

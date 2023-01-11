@@ -11,7 +11,7 @@ case "$1" in
         echo "Building daliuge-engine version using tag ${VCS_TAG}"
         echo $VCS_TAG > dlg/manager/web/VERSION
         cp ../LICENSE dlg/manager/web/.
-        docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-engine:${VCS_TAG} -f docker/Dockerfile .
+        docker build --build-arg USER=${USER} --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-engine:${VCS_TAG} -f docker/Dockerfile .
         echo "Build finished!"
         exit 0 ;;
     "dev")
@@ -23,7 +23,7 @@ case "$1" in
         echo "$VERSION:$VCS_TAG" > dlg/manager/web/VERSION
         git rev-parse --verify HEAD >> dlg/manager/web/VERSION
         cp ../LICENSE dlg/manager/web/.
-        docker build --build-arg VCS_TAG=${C_TAG} --no-cache -t icrar/daliuge-engine:${DEV_TAG} -f docker/Dockerfile.dev .
+        docker build --build-arg USER=${USER} --build-arg VCS_TAG=${C_TAG} --no-cache -t icrar/daliuge-engine:${DEV_TAG} -f docker/Dockerfile.dev .
         echo "Build finished!"
         exit 0;;
     "devall")
@@ -34,13 +34,13 @@ case "$1" in
         echo "$VERSION:$VCS_TAG" > dlg/manager/web/VERSION
         git rev-parse --verify HEAD >> dlg/manager/web/VERSION
         cp ../LICENSE dlg/manager/web/.
-        docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-engine:${DEV_TAG} -f docker/Dockerfile.devall .
+        docker build --build-arg USER=${USER} --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-engine:${DEV_TAG} -f docker/Dockerfile.devall .
         echo "Build finished!"
         exit 0;;
     "slim")
         C_TAG="master"
         echo "Building daliuge-engine slim version ${VCS_TAG} using daliuge-common:${VCS_TAG}"
-        docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-engine.big:${VCS_TAG} -f docker/Dockerfile .
+        docker build --build-arg USER=${USER} --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-engine.big:${VCS_TAG} -f docker/Dockerfile .
         echo "Build finished! Slimming the image now"
         echo ">>>>> docker-slim output <<<<<<<<<"
         docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock dslim/docker-slim build --include-shell \
