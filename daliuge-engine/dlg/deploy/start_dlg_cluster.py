@@ -495,6 +495,7 @@ def main():
         action="append",
         dest="algo_params",
         help="Extra name=value parameters used by the algorithms (algorithm-specific)",
+        default=[]
     )
 
     parser.add_option(
