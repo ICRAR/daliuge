@@ -320,14 +320,19 @@ def get_pg(opts, nms, dims):
         unrolled = init_pgt_unroll_repro_data(pg_generator.unroll(
             opts.logical_graph, opts.ssid, opts.zerorun, APPS[opts.app]
         ))
+        reprodata = {}
+        if not unrolled[-1].get("oid"):
+            reprodata = unrolled.pop()
         algo_params = parse_partition_algo_params(opts.algo_params)
-        pgt = init_pgt_partition_repro_data(pg_generator.partition(
+        pgt = pg_generator.partition(
             unrolled,
             opts.part_algo,
             num_partitions=num_nms,
             num_islands=num_dims,
             **algo_params,
-        ))
+        )
+        pgt.append(reprodata)
+        pgt = init_pgt_partition_repro_data(pgt)
         del unrolled  # quickly dispose of potentially big object
     else:
         with open(opts.physical_graph, "rb") as pg_file:
