@@ -130,7 +130,7 @@ class SleepApp(BarrierAppDROP):
 # @param category PythonApp
 # @param tag daliuge
 # @param appclass Application Class/dlg.apps.simple.CopyApp/String/ComponentParameter/readonly//False/False/Application class
-# @param bufsize buffer size/65536/Integer/ComponentParameter/readwrite//False/False/Buffer size
+# @param bufsize buffer size/65536/Integer/ApplicationArgument/readwrite//False/False/Buffer size
 # @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
@@ -394,8 +394,8 @@ class AverageArraysApp(BarrierAppDROP):
 # @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param function Function/sum/Select/ComponentParameter/readwrite/sum,prod,min,max,add,multiply,maximum,minimum/False/False/The function used for gathering
-# @param reduce_axes "Reduce Axes"/None/String/ComponentParameter/readonly//False/False/The ndarray axes to reduce, None reduces all axes for sum, prod, max, min functions
+# @param function Function/sum/Select/ApplicationArgument/readwrite/sum,prod,min,max,add,multiply,maximum,minimum/False/False/The function used for gathering
+# @param reduce_axes "Reduce Axes"/None/String/ApplicationArgument/readonly//False/False/The ndarray axes to reduce, None reduces all axes for sum, prod, max, min functions
 # @param array Array//Object.Array/InputPort/readwrite//False/False/Port for the input array(s)
 # @param array Array//Object.Array/OutputPort/readwrite//False/False/Port carrying the reduced array
 # @par EAGLE_END
@@ -617,7 +617,8 @@ class UrlRetrieveApp(BarrierAppDROP):
 # @param appclass Application Class/dlg.apps.simple.GenericScatterApp/String/ComponentParameter/readonly//False/False/Application class
 # @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param array Array//Object.Array/OutputPort/readwrite//False/False/A numpy array of arrays, where the first axis is of length <numSplit>
+# @param array Array//Object.Array/OutputPort/readwrite//False/False/Port carrying the reduced array
+# @param array Array//Object.Array/InputPort/readwrite//False/False/A numpy array of arrays, where the first axis is of length <numSplit>
 # @par EAGLE_END
 class GenericScatterApp(BarrierAppDROP):
     """
@@ -674,7 +675,6 @@ class GenericScatterApp(BarrierAppDROP):
 # @param category PythonApp
 # @param construct Scatter
 # @param tag daliuge
-# @param num_of_copies Scatter dimension/4/Integer/ComponentParameter/readwrite//False/False/Specifies the number of replications of the content of the scatter construct
 # @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
@@ -683,6 +683,7 @@ class GenericScatterApp(BarrierAppDROP):
 # @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param scatter_axes Scatter Axes//String/ApplicationArgument/readwrite//False/False/The axes to split input ndarrays on, e.g. [0,0,0], length must match the number of input ports
 # @param array Object.Array//Object.Array/InputPort/readwrite//False/False/A numpy array of arrays
+# @param array Array//Object.Array/OutputPort/readwrite//False/False/Port carrying the reduced array
 # @par EAGLE_END
 class GenericNpyScatterApp(BarrierAppDROP):
     """
