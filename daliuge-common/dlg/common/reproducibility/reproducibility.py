@@ -848,6 +848,9 @@ def init_runtime_repro_data(runtime_graph: dict, reprodata: dict):
         # logger.warning("Requested reproducibility mode %s not yet implemented", str(rmode))
         level = REPRO_DEFAULT
         reprodata["rmode"] = str(level.value)
+    if level == ReproducibilityFlags.NOTHING:
+        runtime_graph["reprodata"] = reprodata
+        return runtime_graph
     for drop in runtime_graph.values():
         init_rg_repro_drop_data(drop)
     candidate_rmodes = []
