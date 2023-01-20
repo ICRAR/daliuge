@@ -73,7 +73,9 @@ class TestLGWeb(unittest.TestCase):
         c = RestClient("localhost", lgweb_port, timeout=10)
 
         # a specific one
-        lg = c._get_json("/jsonbody?lg_name=logical_graphs/chiles_simple.graph")
+        lg = c._get_json(
+            "/jsonbody?lg_name=logical_graphs/chiles_simple.graph"
+        )
         self.assertIsNotNone(lg)
 
         # by default the first one found by the lg_web should be returned
@@ -82,7 +84,9 @@ class TestLGWeb(unittest.TestCase):
 
         # doesn't exist
         self.assertRaises(
-            RestClientException, c._get_json, "/jsonbody?lg_name=doesnt_exist.graph"
+            RestClientException,
+            c._get_json,
+            "/jsonbody?lg_name=doesnt_exist.graph",
         )
 
     def test_post_lgjson(self):
@@ -95,18 +99,24 @@ class TestLGWeb(unittest.TestCase):
             "lg_content": '{"id": 1, "name": "example"}',
             "rmode": "1",
         }
-        self.assertRaises(RestClientException, c._post_form, "/jsonbody", form_data)
+        self.assertRaises(
+            RestClientException, c._post_form, "/jsonbody", form_data
+        )
 
         # Replace the contents of an existing one
         # (but replace it back with original after the test)
-        original_fname = os.path.join(lg_dir, "logical_graphs", "chiles_simple.graph")
+        original_fname = os.path.join(
+            lg_dir, "logical_graphs", "chiles_simple.graph"
+        )
         copy_fname = tempfile.mktemp()
         shutil.copy(original_fname, copy_fname)
 
         try:
             form_data["lg_name"] = "logical_graphs/chiles_simple.graph"
             c._post_form("/jsonbody", form_data)
-            new = c._get_json("/jsonbody?lg_name=logical_graphs/chiles_simple.graph")
+            new = c._get_json(
+                "/jsonbody?lg_name=logical_graphs/chiles_simple.graph"
+            )
             self.assertIsNotNone(new)
             self.assertIn("id", new)
             self.assertIn("name", new)
@@ -144,10 +154,14 @@ class TestLGWeb(unittest.TestCase):
 
         # doesn't exist
         self.assertRaises(
-            RestClientException, c._get_json, "/pgt_jsonbody?pgt_name=unknown.json"
+            RestClientException,
+            c._get_json,
+            "/pgt_jsonbody?pgt_name=unknown.json",
         )
         # good!
-        c._get_json("/pgt_jsonbody?pgt_name=logical_graphs/chiles_simple1_pgt.graph")
+        c._get_json(
+            "/pgt_jsonbody?pgt_name=logical_graphs/chiles_simple1_pgt.graph"
+        )
 
     def test_get_pgt_post(self, algo="metis", algo_options=None):
 
@@ -157,7 +171,9 @@ class TestLGWeb(unittest.TestCase):
         self.assertRaises(RestClientException, c._POST, "/gen_pgt")
 
         # new logical graph JSON
-        fname = os.path.join(lg_dir, "logical_graphs", "test-20190830-110556.graph")
+        fname = os.path.join(
+            lg_dir, "logical_graphs", "test-20190830-110556.graph"
+        )
         with open(fname, "rb") as infile:
             json_data = infile.read()
 
@@ -179,7 +195,9 @@ class TestLGWeb(unittest.TestCase):
         try:
             content = urllib.parse.urlencode(form_data)
             c._POST(
-                "/gen_pgt", content, content_type="application/x-www-form-urlencoded"
+                "/gen_pgt",
+                content,
+                content_type="application/x-www-form-urlencoded",
             )
         except RestClientException as e:
             self.fail(e)
@@ -212,7 +230,9 @@ class TestLGWeb(unittest.TestCase):
         try:
             content = urllib.parse.urlencode(form_data)
             c._POST(
-                "/gen_pgt", content, content_type="application/x-www-form-urlencoded"
+                "/gen_pgt",
+                content,
+                content_type="application/x-www-form-urlencoded",
             )
         except RestClientException as e:
             self.fail(e)
@@ -225,7 +245,9 @@ class TestLGWeb(unittest.TestCase):
         self.assertRaises(RestClientException, c._POST, "/gen_pgt")
 
         # new logical graph JSON
-        with open(os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb") as infile:
+        with open(
+            os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
+        ) as infile:
             json_data = infile.read()
 
         # add 'correct' data to the form
@@ -244,27 +266,35 @@ class TestLGWeb(unittest.TestCase):
         try:
             content = urllib.parse.urlencode(form_data)
             c._POST(
-                "/gen_pgt", content, content_type="application/x-www-form-urlencoded"
+                "/gen_pgt",
+                content,
+                content_type="application/x-www-form-urlencoded",
             )
         except RestClientException as e:
             self.fail(e)
 
-    @unittest.skip("None translation is not an option in EAGLE and does not work.")
+    @unittest.skip(
+        "None translation is not an option in EAGLE and does not work."
+    )
     def test_none_translation(self):
-        self.test_get_pgt_post(algo='none')
+        self.test_get_pgt_post(algo="none")
 
     def test_metis_translation(self):
-        self.test_get_pgt_post(algo='metis')
+        self.test_get_pgt_post(algo="metis")
 
     def test_sarkar_translation(self):
-        self.test_get_pgt_post(algo='mysarkar')
+        self.test_get_pgt_post(algo="mysarkar")
 
     def test_min_num_parts_translation(self):
-        self.test_get_pgt_post(algo='min_num_parts', algo_options={'deadline': 300, 'time_greedy': 50})
+        self.test_get_pgt_post(
+            algo="min_num_parts",
+            algo_options={"deadline": 300, "time_greedy": 50},
+        )
 
     def test_pso_translation(self):
-        self.test_get_pgt_post(algo='pso', algo_options={'swarm_size': 10, 'deadline': 300})
-
+        self.test_get_pgt_post(
+            algo="pso", algo_options={"swarm_size": 10, "deadline": 300}
+        )
 
     def test_pg_viewer(self):
 
@@ -273,12 +303,16 @@ class TestLGWeb(unittest.TestCase):
 
         # doesn't exist
         self.assertRaises(
-            RestClientException, c._GET, "/pg_viewer?pgt_view_name=unknown.json"
+            RestClientException,
+            c._GET,
+            "/pg_viewer?pgt_view_name=unknown.json",
         )
         # Defaults to first PGT
         c._GET("/pg_viewer")
         # also fine, PGT exists
-        c._GET("/pg_viewer?pgt_view_name=logical_graphs/chiles_simple1_pgt.graph")
+        c._GET(
+            "/pg_viewer?pgt_view_name=logical_graphs/chiles_simple1_pgt.graph"
+        )
 
     def _test_pgt_action(self, path, unknown_fails):
 
@@ -288,7 +322,9 @@ class TestLGWeb(unittest.TestCase):
         # doesn't exist
         if unknown_fails:
             self.assertRaises(
-                RestClientException, c._GET, "/" + path + "?pgt_id=unknown.json"
+                RestClientException,
+                c._GET,
+                "/" + path + "?pgt_id=unknown.json",
             )
         else:
             c._GET("/" + path + "?pgt_id=unknown.json")
@@ -307,36 +343,47 @@ class TestLGWeb(unittest.TestCase):
 
     def test_get_submission_methods(self):
         import json
+
         c = RestClient("localhost", lgweb_port, timeout=10)
         response = c._GET("/api/submission_method")
         response_content = json.load(response)
-        self.assertEqual(response_content, {'methods': []})
+        self.assertEqual(response_content, {"methods": []})
 
-    def _test_post_request(self, client: RestClient, url: str, form_data: dict = None,
-                           expect_fail=True):
+    def _test_post_request(
+        self,
+        client: RestClient,
+        url: str,
+        form_data: dict = None,
+        expect_fail=True,
+    ):
         if form_data:
             content = urllib.parse.urlencode(form_data)
         else:
             content = None
         if expect_fail:
             if content:
-                self.assertRaises(RestClientException, client._POST, url, content,
-                                  content_type="application/x-www-form-urlencoded")
+                self.assertRaises(
+                    RestClientException,
+                    client._POST,
+                    url,
+                    content,
+                    content_type="application/x-www-form-urlencoded",
+                )
             else:
                 self.assertRaises(RestClientException, client._POST, url)
         else:
             if content:
                 try:
                     ret = client._POST(
-                        url, content, content_type="application/x-www-form-urlencoded"
+                        url,
+                        content,
+                        content_type="application/x-www-form-urlencoded",
                     )
                 except RestClientException as e:
                     self.fail(e)
             else:
                 try:
-                    ret = client._POST(
-                        url
-                    )
+                    ret = client._POST(url)
                 except RestClientException as e:
                     self.fail(e)
             return json.load(ret)
@@ -345,18 +392,30 @@ class TestLGWeb(unittest.TestCase):
         c = RestClient("localhost", lgweb_port, timeout=10)
         test_url = "/lg_fill"
         with open(
-                os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
+            os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
         ) as infile:
             json_data = infile.read()
         request_tests = [
             (None, True),  # Call with an empty form should cause an error
             ({"lg_name": "metis.graph"}, True),  # Invalid lg_name
-            ({"lg_name": "logical_graphs/chiles_simple.graph"}, False),  # Valid lg_name
-            ({"lg_name": "chiles_simple.graph", "lg_content": json_data}, True),  # Both lg_name and lg_content
+            (
+                {"lg_name": "logical_graphs/chiles_simple.graph"},
+                False,
+            ),  # Valid lg_name
+            (
+                {"lg_name": "chiles_simple.graph", "lg_content": json_data},
+                True,
+            ),  # Both lg_name and lg_content
             ({"lg_content": "{'garbage: 3}"}, True),  # Invalid lg_content
             ({"lg_content": json_data}, False),  # Valid lg_content
-            ({"lg_content": json_data, "parameters": '{"nonsense: 3}'}, True),  # Invalid parameters
-            ({"lg_content": json_data, "parameters": '{"nonsense": 3}'}, False)  # Valid parameters
+            (
+                {"lg_content": json_data, "parameters": '{"nonsense: 3}'},
+                True,
+            ),  # Invalid parameters
+            (
+                {"lg_content": json_data, "parameters": '{"nonsense": 3}'},
+                False,
+            ),  # Valid parameters
         ]
 
         for request in request_tests:
@@ -366,15 +425,21 @@ class TestLGWeb(unittest.TestCase):
         c = RestClient("localhost", lgweb_port, timeout=10)
         test_url = "/unroll"
         with open(
-                os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
+            os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
         ) as infile:
             json_data = infile.read()
 
         request_tests = [
             (None, True),  # Call with an empty form should cause an error
             ({"lg_name": "metis.graph"}, True),  # Invalid lg_name
-            ({"lg_name": "logical_graphs/chiles_simple.graph"}, False),  # Valid lg_name
-            ({"lg_name": "chiles_simple.graph", "lg_content": json_data}, True),  # Both lg_name and lg_content
+            (
+                {"lg_name": "logical_graphs/chiles_simple.graph"},
+                False,
+            ),  # Valid lg_name
+            (
+                {"lg_name": "chiles_simple.graph", "lg_content": json_data},
+                True,
+            ),  # Both lg_name and lg_content
             ({"lg_content": "{'garbage: 3}"}, True),  # Invalid lg_content
             ({"lg_content": json_data}, False),  # Valid lg_content
         ]
@@ -383,10 +448,7 @@ class TestLGWeb(unittest.TestCase):
             self._test_post_request(c, test_url, request[0], request[1])
 
         # test default_app
-        form_data = {
-            "lg_content": json_data,
-            "default_app": "test.app"
-        }
+        form_data = {"lg_content": json_data, "default_app": "test.app"}
         pgt = self._test_post_request(c, test_url, form_data, False)
         for dropspec in pgt:
             if "app" in dropspec:
@@ -396,21 +458,22 @@ class TestLGWeb(unittest.TestCase):
         c = RestClient("localhost", lgweb_port, timeout=10)
         test_url = "/partition"
         with open(
-                os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
+            os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
         ) as infile:
             json_data = infile.read()
 
         # Translate graph
-        form_data = {
-            "lg_content": json_data
-        }
+        form_data = {"lg_content": json_data}
         pgt = self._test_post_request(c, "/unroll", form_data, False)
         pgt = json.dumps(pgt)
 
         request_tests = [
             (None, True),  # Call with an empty form should cause an error
             ({"pgt_content": pgt}, False),  # Simple partition
-            ({"pgt_content": pgt, "num_partitions": 1, "num_islands": 3}, True), # num_partitions < num_islands
+            (
+                {"pgt_content": pgt, "num_partitions": 1, "num_islands": 3},
+                True,
+            ),  # num_partitions < num_islands
         ]
 
         for request in request_tests:
@@ -420,18 +483,31 @@ class TestLGWeb(unittest.TestCase):
         c = RestClient("localhost", lgweb_port, timeout=10)
         test_url = "/unroll_and_partition"
         with open(
-                os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
+            os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
         ) as infile:
             json_data = infile.read()
 
         request_tests = [
             (None, True),  # Call with an empty form should cause an error
             ({"lg_name": "fake.graph"}, True),  # Invalid lg_name
-            ({"lg_name": "logical_graphs/chiles_simple.graph"}, False),  # Valid lg_name
-            ({"lg_name": "chiles_simple.graph", "lg_content": json_data}, True), # Both lg_name and lg_content
+            (
+                {"lg_name": "logical_graphs/chiles_simple.graph"},
+                False,
+            ),  # Valid lg_name
+            (
+                {"lg_name": "chiles_simple.graph", "lg_content": json_data},
+                True,
+            ),  # Both lg_name and lg_content
             ({"lg_content": "{'garbage: 3}"}, True),  # Invalid lg_content
             ({"lg_content": json_data}, False),  # Valid lg_content
-            ({"lg_content": json_data, "num_partitions": 1, "num_islands": 3}, True), # num_partitions < num_islands
+            (
+                {
+                    "lg_content": json_data,
+                    "num_partitions": 1,
+                    "num_islands": 3,
+                },
+                True,
+            ),  # num_partitions < num_islands
         ]
 
         for request in request_tests:
@@ -441,17 +517,27 @@ class TestLGWeb(unittest.TestCase):
         c = RestClient("localhost", lgweb_port, timeout=10)
         test_url = "/map"
         with open(
-                os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
+            os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
         ) as infile:
             json_data = infile.read()
 
         # unroll and partition graph
-        pgt = self._test_post_request(c, "/unroll_and_partition", {"lg_content": json_data}, False)
+        pgt = self._test_post_request(
+            c, "/unroll_and_partition", {"lg_content": json_data}, False
+        )
         pgt = json.dumps(pgt)
 
         request_tests = [
             (None, True),  # Call with an empty form should cause an error
-            ({"pgt_content": pgt, "nodes": "localhost", "num_islands": 1, "co_host_dim": True}, False),  # Simple partition
+            (
+                {
+                    "pgt_content": pgt,
+                    "nodes": "localhost",
+                    "num_islands": 1,
+                    "co_host_dim": True,
+                },
+                False,
+            ),  # Simple partition
         ]
 
         for request in request_tests:
