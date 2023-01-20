@@ -26,10 +26,13 @@ Dropmake utils
 
 import copy
 import json
+import logging
 import os
 import os.path as osp
 
 from ..common import Categories
+
+logger = logging.getLogger(__name__)
 
 LG_VER_OLD = 1
 LG_VER_EAGLE_CONVERTED = 2
@@ -102,6 +105,7 @@ def getNodesKeyDict(lgo):
 
 
 def convert_fields(lgo):
+    logger.debug("Converting fields")
     nodes = lgo["nodeDataArray"]
     for node in nodes:
         fields = node["fields"]
@@ -111,6 +115,8 @@ def convert_fields(lgo):
                 # Add a node property.
                 # print("Set %s to %s" % (name, field.get('value', '')))
                 node[name] = field.get("value", "")
+                if node[name] == "":
+                    node[name] = field.get("defaultValue", "")
     return lgo
 
 
@@ -178,7 +184,9 @@ def convert_mkn(lgo):
         for ak in app_keywords:
             if ak not in node:
                 raise Exception(
-                    "MKN construct {0} must specify {1}".format(node["key"], ak)
+                    "MKN construct {0} must specify {1}".format(
+                        node["key"], ak
+                    )
                 )
         mknv_dict = dict()
         for mknv in node["fields"]:
@@ -188,10 +196,12 @@ def convert_mkn(lgo):
         # step 1 - clone the current MKN
         mkn_key = node["key"]
         mkn_local_input_keys = [
-            _make_unique_port_key(x["Id"], node["key"]) for x in node["inputLocalPorts"]
+            _make_unique_port_key(x["Id"], node["key"])
+            for x in node["inputLocalPorts"]
         ]
         mkn_output_keys = [
-            _make_unique_port_key(x["Id"], node["key"]) for x in node["outputPorts"]
+            _make_unique_port_key(x["Id"], node["key"])
+            for x in node["outputPorts"]
         ]
         node_mk = node
         node_mk["mkn"] = [M, K, N]
@@ -335,7 +345,9 @@ def convert_mkn_all_share_m(lgo):
         for ak in app_keywords:
             if ak not in node:
                 raise Exception(
-                    "MKN construct {0} must specify {1}".format(node["key"], ak)
+                    "MKN construct {0} must specify {1}".format(
+                        node["key"], ak
+                    )
                 )
         mknv_dict = dict()
         for mknv in node["fields"]:
@@ -448,7 +460,11 @@ def convert_construct(lgo):
         # try to find a application using several app_keywords
         # disregard app_keywords that are not present, or have value "None"
         for ak in app_keywords:
-            if ak in node and node[ak] != "None" and node[ak] != "UnknownApplication":
+            if (
+                ak in node
+                and node[ak] != "None"
+                and node[ak] != "UnknownApplication"
+            ):
                 has_app = ak
                 break
         if has_app is None:
@@ -677,7 +693,9 @@ def convert_eagle_to_daliuge_json(lg_name):
             json.dump(logical_graph, outfile, sort_keys=True, indent=4)
     except Exception as exp:
         raise Exception(
-            "Failed to save a pretranslated graph {0}:{1}".format(lg_name, str(exp))
+            "Failed to save a pretranslated graph {0}:{1}".format(
+                lg_name, str(exp)
+            )
         )
     finally:
         pass
@@ -686,6 +704,8 @@ def convert_eagle_to_daliuge_json(lg_name):
 
 
 if __name__ == "__main__":
-    lg_name = "/Users/Chen/proj/daliuge/test/dropmake/logical_graphs/lofar_std.graph"
+    lg_name = (
+        "/Users/Chen/proj/daliuge/test/dropmake/logical_graphs/lofar_std.graph"
+    )
     # convert_eagle_to_daliuge_json(lg_name)
     print(get_lg_ver_type(lg_name))

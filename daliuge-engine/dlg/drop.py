@@ -307,7 +307,9 @@ class AbstractDROP(EventFirer, EventHandler):
         # in the state they currently are. In this case an external entity must
         # listen to the events and decide when to trigger the execution of the
         # applications.
-        self._executionMode = self._popArg(kwargs, "executionMode", ExecutionMode.DROP)
+        self._executionMode = self._popArg(
+            kwargs, "executionMode", ExecutionMode.DROP
+        )
 
         # The physical node where this DROP resides.
         # This piece of information is mandatory when submitting the physical
@@ -375,7 +377,7 @@ class AbstractDROP(EventFirer, EventHandler):
                 for name, val in vars(c).items()
                 if not (inspect.isfunction(val) or isinstance(val, property))
             ]
-            logger.info("GOT MEMBEEEERS: %r", members)
+            # logger.info("GOT MEMBEEEERS: %r", members)
 
             AbstractDROP._members_cache[cls] = members
         return AbstractDROP._members_cache[cls]
@@ -385,17 +387,22 @@ class AbstractDROP(EventFirer, EventHandler):
         Extracts component and app params then assigns them to class instance attributes.
         Component params take pro
         """
+
         def get_param_value(attr_name, default_value):
             has_component_param = attr_name in kwargs
-            has_app_param = 'applicationArgs' in kwargs \
-                and attr_name in kwargs['applicationArgs']
+            has_app_param = (
+                "applicationArgs" in kwargs
+                and attr_name in kwargs["applicationArgs"]
+            )
 
             if has_component_param and has_app_param:
-                logger.warning(f"Drop has both component and app param {attr_name}. Using component param.")
+                logger.warning(
+                    f"Drop has both component and app param {attr_name}. Using component param."
+                )
             if has_component_param:
                 param = kwargs.get(attr_name)
             elif has_app_param:
-                param = kwargs['applicationArgs'].get(attr_name).value
+                param = kwargs["applicationArgs"].get(attr_name).value
             else:
                 param = default_value
             logger.debug(">>>!!! param extracted: %s; %s", attr_name, param)
@@ -463,7 +470,11 @@ class AbstractDROP(EventFirer, EventHandler):
         return hash(self._uid)
 
     def __repr__(self):
-        return "<%s oid=%s, uid=%s>" % (self.__class__.__name__, self.oid, self.uid)
+        return "<%s oid=%s, uid=%s>" % (
+            self.__class__.__name__,
+            self.oid,
+            self.uid,
+        )
 
     def initialize(self, **kwargs):
         """
@@ -485,7 +496,9 @@ class AbstractDROP(EventFirer, EventHandler):
         """
         for param_key, param_val in self.parameters.items():
             if self._env_var_matcher.fullmatch(str(param_val)):
-                self.parameters[param_key] = self.get_environment_variable(param_val)
+                self.parameters[param_key] = self.get_environment_variable(
+                    param_val
+                )
             if self._dlg_var_matcher.fullmatch(str(param_val)):
                 self.parameters[param_key] = getDlgVariable(param_val)
 
@@ -508,7 +521,9 @@ class AbstractDROP(EventFirer, EventHandler):
         for producer in self._producers:
             if producer.name == env_var_ref:
                 env_var_drop = producer
-        if env_var_drop is not None:  # TODO: Check for KeyValueDROP interface support
+        if (
+            env_var_drop is not None
+        ):  # TODO: Check for KeyValueDROP interface support
             ret_val = env_var_drop.get(env_var_key)
             if ret_val is None:
                 return key
@@ -538,7 +553,9 @@ class AbstractDROP(EventFirer, EventHandler):
     def reproducibility_level(self, new_flag):
         if type(new_flag) != ReproducibilityFlags:
             raise TypeError("new_flag must be a reproducibility flag enum.")
-        elif rmode_supported(new_flag):  # TODO: Support custom checkers for repro-level
+        elif rmode_supported(
+            new_flag
+        ):  # TODO: Support custom checkers for repro-level
             self._reproducibility = new_flag
             if new_flag == ReproducibilityFlags.ALL:
                 self._committed = False
@@ -552,7 +569,9 @@ class AbstractDROP(EventFirer, EventHandler):
                 self._merkleTree = None
                 self._merkleData = []
         else:
-            raise NotImplementedError("new_flag %d is not supported", new_flag.value)
+            raise NotImplementedError(
+                "new_flag %d is not supported", new_flag.value
+            )
 
     def generate_rerun_data(self):
         """
@@ -657,7 +676,9 @@ class AbstractDROP(EventFirer, EventHandler):
                 ReproducibilityFlags.REPLICATE_TOTAL.name: self.generate_replicate_total_data(),
             }
         else:
-            raise NotImplementedError("Currently other levels are not in development.")
+            raise NotImplementedError(
+                "Currently other levels are not in development."
+            )
 
     def commit(self):
         """
@@ -677,12 +698,16 @@ class AbstractDROP(EventFirer, EventHandler):
                     ].merkle_root
             else:
                 # Fill MerkleTree, add data and set the MerkleRoot Value
-                self._merkleTree = MerkleTree(self._merkleData.items(), common_hash)
+                self._merkleTree = MerkleTree(
+                    self._merkleData.items(), common_hash
+                )
                 self._merkleRoot = self._merkleTree.merkle_root
                 # Set as committed
             self._committed = True
         else:
-            logger.debug("Trying to re-commit DROP %s, cannot overwrite.", self)
+            logger.debug(
+                "Trying to re-commit DROP %s, cannot overwrite.", self
+            )
 
     @property
     def oid(self):
@@ -747,7 +772,9 @@ class AbstractDROP(EventFirer, EventHandler):
         """
         kwargs["oid"] = self.oid
         kwargs["uid"] = self.uid
-        kwargs["session_id"] = self._dlg_session.sessionId if self._dlg_session else ""
+        kwargs["session_id"] = (
+            self._dlg_session.sessionId if self._dlg_session else ""
+        )
         kwargs["name"] = self.name
         kwargs["lg_key"] = self.lg_key
         self._fireEvent(eventType, **kwargs)
@@ -839,7 +866,8 @@ class AbstractDROP(EventFirer, EventHandler):
     def parent(self, parent):
         if self._parent and parent:
             logger.warning(
-                "A parent is already set in %r, overwriting with new value", self
+                "A parent is already set in %r, overwriting with new value",
+                self,
             )
         if parent:
             prevParent = self._parent
@@ -1027,7 +1055,9 @@ class AbstractDROP(EventFirer, EventHandler):
         scuid = streamingConsumer.uid
         if scuid in self._consumers_uids:
             raise InvalidRelationshipException(
-                DROPRel(streamingConsumer, DROPLinkType.STREAMING_CONSUMER, self),
+                DROPRel(
+                    streamingConsumer, DROPLinkType.STREAMING_CONSUMER, self
+                ),
                 "Consumer is already registered as a normal consumer",
             )
 
@@ -1036,7 +1066,8 @@ class AbstractDROP(EventFirer, EventHandler):
             return
         logger.debug(
             "Adding new streaming streaming consumer for %r: %s",
-            self, streamingConsumer
+            self,
+            streamingConsumer,
         )
         self._streamingConsumers.append(streamingConsumer)
 
@@ -1193,6 +1224,7 @@ class PathBasedDrop(object):
     def path(self) -> str:
         return self._path
 
+
 ##
 # @brief Data
 # @details A generic Data drop, whose functionality can be provided by an arbitrary class, as specified in the 'dataclass' component parameter
@@ -1260,7 +1292,7 @@ class DataDROP(AbstractDROP):
 
         # Save the IO object in the dictionary and return its descriptor instead
         while True:
-            descriptor = random.SystemRandom().randint(-(2 ** 31), 2 ** 31 - 1)
+            descriptor = random.SystemRandom().randint(-(2**31), 2**31 - 1)
             if descriptor not in self._rios:
                 break
         self._rios[descriptor] = io
@@ -1309,13 +1341,15 @@ class DataDROP(AbstractDROP):
     def _checkStateAndDescriptor(self, descriptor):
         if self.status != DROPStates.COMPLETED:
             raise Exception(
-                "%r is in state %s (!=COMPLETED), cannot be read" % (self, self.status)
+                "%r is in state %s (!=COMPLETED), cannot be read"
+                % (self, self.status)
             )
         if descriptor is None:
             raise ValueError("Illegal empty descriptor given")
         if descriptor not in self._rios:
             raise Exception(
-                "Illegal descriptor %d given, remember to open() first" % (descriptor)
+                "Illegal descriptor %d given, remember to open() first"
+                % (descriptor)
             )
 
     def isBeingRead(self):
@@ -1340,7 +1374,9 @@ class DataDROP(AbstractDROP):
             raise Exception("No more writing expected")
 
         if not isinstance(data, (bytes, memoryview)):
-            raise Exception("Data type not of binary type: %s", type(data).__name__)
+            raise Exception(
+                "Data type not of binary type: %s", type(data).__name__
+            )
 
         # We lazily initialize our writing IO instance because the data of this
         # DROP might not be written through this DROP
@@ -1359,7 +1395,9 @@ class DataDROP(AbstractDROP):
             # TODO: Maybe this should be an actual error?
             logger.warning(
                 "Not all data was correctly written by %s (%d/%d bytes written)",
-                self, nbytes, dataLen
+                self,
+                nbytes,
+                dataLen,
             )
 
         # see __init__ for the initialization to None
@@ -1386,11 +1424,11 @@ class DataDROP(AbstractDROP):
                 if remaining < 0:
                     logger.warning(
                         "Received and wrote more bytes than expected: %d",
-                        -remaining
+                        -remaining,
                     )
                 logger.debug(
                     "Automatically moving %r to COMPLETED, all expected data arrived",
-                    self
+                    self,
                 )
                 self.setCompleted()
         else:
@@ -1558,7 +1596,8 @@ class ContainerDROP(DataDROP):
         # Avoid circular dependencies between Containers
         if child == self.parent:
             raise InvalidRelationshipException(
-                DROPRel(child, DROPLinkType.CHILD, self), "Circular dependency found"
+                DROPRel(child, DROPLinkType.CHILD, self),
+                "Circular dependency found",
             )
 
         logger.debug("Adding new child for %r: %r", self, child)
@@ -1578,7 +1617,9 @@ class ContainerDROP(DataDROP):
     @property
     def expirationDate(self):
         if self._children:
-            return heapq.nlargest(1, [c.expirationDate for c in self._children])[0]
+            return heapq.nlargest(
+                1, [c.expirationDate for c in self._children]
+            )[0]
         return self._expirationDate
 
     @property
@@ -1705,10 +1746,14 @@ class AppDROP(ContainerDROP):
         Generates a named mapping of input data drops. Can only be called during run().
         """
         named_inputs: OrderedDict[str, DataDROP] = OrderedDict()
-        if 'inputs' in self.parameters and isinstance(self.parameters['inputs'][0], dict):
+        if "inputs" in self.parameters and isinstance(
+            self.parameters["inputs"][0], dict
+        ):
             for i in range(len(self._inputs)):
-                key = list(self.parameters['inputs'][i].values())[0]
-                value = self._inputs[list(self.parameters['inputs'][i].keys())[0]]
+                key = list(self.parameters["inputs"][i].values())[0]
+                value = self._inputs[
+                    list(self.parameters["inputs"][i].keys())[0]
+                ]
                 named_inputs[key] = value
         return named_inputs
 
@@ -1716,11 +1761,15 @@ class AppDROP(ContainerDROP):
         """
         Generates a named mapping of output data drops. Can only be called during run().
         """
-        named_outputs:  OrderedDict[str, DataDROP] = OrderedDict()
-        if 'outputs' in self.parameters and isinstance(self.parameters['outputs'][0], dict):
+        named_outputs: OrderedDict[str, DataDROP] = OrderedDict()
+        if "outputs" in self.parameters and isinstance(
+            self.parameters["outputs"][0], dict
+        ):
             for i in range(len(self._outputs)):
-                key = list(self.parameters['outputs'][i].values())[0]
-                value = self._outputs[list(self.parameters['outputs'][i].keys())[0]]
+                key = list(self.parameters["outputs"][i].values())[0]
+                value = self._outputs[
+                    list(self.parameters["outputs"][i].keys())[0]
+                ]
                 named_outputs[key] = value
         return named_outputs
 
@@ -1772,8 +1821,12 @@ class AppDROP(ContainerDROP):
             self.status = DROPStates.ERROR
         else:
             self.status = DROPStates.COMPLETED
-        logger.debug("Moving %r to %s", self, "FINISHED" if not is_error else "ERROR")
-        self._fire("producerFinished", status=self.status, execStatus=self.execStatus)
+        logger.debug(
+            "Moving %r to %s", self, "FINISHED" if not is_error else "ERROR"
+        )
+        self._fire(
+            "producerFinished", status=self.status, execStatus=self.execStatus
+        )
         self.completedrop()
 
     def cancel(self):
@@ -1793,7 +1846,9 @@ class AppDROP(ContainerDROP):
         logger.debug(f"Moving {self.__repr__()} to SKIPPED")
         if prev_execStatus in [AppDROPStates.NOT_RUN]:
             self._fire(
-                "producerFinished", status=self.status, execStatus=self.execStatus
+                "producerFinished",
+                status=self.status,
+                execStatus=self.execStatus,
             )
 
 
@@ -1828,7 +1883,9 @@ class InputFiredAppDROP(AppDROP):
     run but moved to the ERROR state itself instead.
     """
 
-    input_error_threshold = dlg_int_param("Input error threshold (0 and 100)", 0)
+    input_error_threshold = dlg_int_param(
+        "Input error threshold (0 and 100)", 0
+    )
     n_effective_inputs = dlg_int_param("Number of effective inputs", -1)
     n_tries = dlg_int_param("Number of tries", 1)
 
@@ -1852,7 +1909,8 @@ class InputFiredAppDROP(AppDROP):
 
         if self.n_effective_inputs < -1 or self.n_effective_inputs == 0:
             raise InvalidDropException(
-                self, "%r: n_effective_inputs must be > 0 or equals to -1" % (self,)
+                self,
+                "%r: n_effective_inputs must be > 0 or equals to -1" % (self,),
             )
 
         # Number of tries
@@ -1871,7 +1929,9 @@ class InputFiredAppDROP(AppDROP):
         super(InputFiredAppDROP, self).dropCompleted(uid, drop_state)
 
         logger.debug(
-            "Received notification from input drop: uid=%s, state=%d", uid, drop_state
+            "Received notification from input drop: uid=%s, state=%d",
+            uid,
+            drop_state,
         )
 
         # A value of -1 means all inputs
@@ -1894,7 +1954,9 @@ class InputFiredAppDROP(AppDROP):
         elif drop_state == DROPStates.SKIPPED:
             self._skippedInputs.append(uid)
         else:
-            raise Exception("Invalid DROP state in dropCompleted: %s" % drop_state)
+            raise Exception(
+                "Invalid DROP state in dropCompleted: %s" % drop_state
+            )
 
         error_len = len(self._errorInputs)
         ok_len = len(self._completedInputs)
@@ -1904,7 +1966,9 @@ class InputFiredAppDROP(AppDROP):
         if (skipped_len + error_len + ok_len) == n_eff_inputs:
 
             # calculate the number of errors that have already occurred
-            percent_failed = math.floor((error_len / float(n_eff_inputs)) * 100)
+            percent_failed = math.floor(
+                (error_len / float(n_eff_inputs)) * 100
+            )
             if percent_failed > 0:
                 logger.debug(
                     "Error rate on inputs for %r: %d/%d",
@@ -1945,7 +2009,9 @@ class InputFiredAppDROP(AppDROP):
         try:
             self.execute()
         except:
-            logger.exception("Unexpected exception during drop (%r) execution", self)
+            logger.exception(
+                "Unexpected exception during drop (%r) execution", self
+            )
 
     _dlg_proc_lock = threading.Lock()
 
@@ -1990,7 +2056,10 @@ class InputFiredAppDROP(AppDROP):
                     return
                 tries += 1
                 logger.exception(
-                    "Error while executing %r (try %d/%d)", self, tries, self.n_tries
+                    "Error while executing %r (try %d/%d)",
+                    self,
+                    tries,
+                    self.n_tries,
                 )
 
         # We gave up running the application, go to error

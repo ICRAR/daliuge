@@ -38,7 +38,7 @@ import tempfile
 import threading
 import time
 import types
-import collections
+import json
 
 from .. import droputils, utils
 from ..ddap_protocol import AppDROPStates, DROPStates
@@ -202,7 +202,7 @@ class BashShellBase(object):
         output of the process is piped to. If not given it is consumed by this
         method and potentially logged.
         """
-        logger.debug("Parameters found: %s", self.parameters)
+        # logger.debug("Parameters found: %s", json.dumps(self.parameters))
         # we only support passing a path for bash apps
         fsInputs = {
             uid: i for uid, i in inputs.items() if droputils.has_path(i)
