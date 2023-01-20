@@ -727,7 +727,7 @@ def replace_named_ports(
         outputs_dict[uid] = {
             "path": drop.path if hasattr(drop, "path") else ""
         }
-    logger.debug("appArgs: %s", appArgs)
+    # logger.debug("appArgs: %s", appArgs)
     # get positional args
     posargs = [arg for arg in appArgs if appArgs[arg]["positional"]]
     # get kwargs
@@ -742,7 +742,7 @@ def replace_named_ports(
         zip(posargs, [None] * len(posargs))
     )
     portkeyargs = {}
-    logger.debug("posargs: %s; keyargs: %s", posargs, keyargs)
+    # logger.debug("posargs: %s; keyargs: %s", posargs, keyargs)
     if check_ports_dict(inport_names):
         for inport in inport_names:
             key = list(inport.keys())[0]
