@@ -40,7 +40,7 @@ class BashCommand(object):
             dict()
         )  # key: logical drop id, value: a list of physical oids
         self._output_map = dict()
-        if isinstance(cmds[0], dict):
+        if len(cmds) > 0 and isinstance(cmds[0], dict):
             cmds = [list(c.keys())[0] for c in cmds]
         cmd = " ".join(cmds)
         self._cmds = cmd.replace(

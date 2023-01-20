@@ -551,6 +551,8 @@ class LGNode:
                 j = {je["name"]: {k: je[k] for k in je if k not in ["name"]}}
                 self.jd.update(j)
                 kwargs["applicationArgs"].update(j)
+        if "nodeAttributes" not in kwargs:
+            kwargs.update({"nodeAttributes": {}})
         for k, na in kwargs["nodeAttributes"].items():
             if (
                 "parameterType" in na
