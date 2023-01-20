@@ -552,7 +552,10 @@ class LGNode:
                 self.jd.update(j)
                 kwargs["applicationArgs"].update(j)
         for k, na in kwargs["nodeAttributes"].items():
-            if na["parameterType"] == "ApplicationArgument":
+            if (
+                "parameterType" in na
+                and na["parameterType"] == "ApplicationArgument"
+            ):
                 kwargs["applicationArgs"].update({k: na})
         # NOTE: drop Argxx keywords
 
