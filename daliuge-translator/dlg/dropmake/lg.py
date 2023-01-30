@@ -147,10 +147,14 @@ class LGNode:
             return self.group.id
 
     def add_output(self, lg_node):
-        self._outs.append(lg_node)
+        if lg_node not in self._outs:
+            self._outs.append(lg_node)
 
     def add_input(self, lg_node):
-        self._inputs.append(lg_node)
+        # only add if not already there
+        # this may happen in nested constructs
+        if lg_node not in self._inputs:
+            self._inputs.append(lg_node)
 
     def add_child(self, lg_node):
         """
@@ -1192,12 +1196,15 @@ class LG:
                         )
                     for ge in grp_ends:
                         for gs in grp_starts:  # make an artificial circle
-                            ge.add_output(gs)
-                            gs.add_input(ge)
                             lk = dict()
+                            if gs not in ge._outs:
+                                ge.add_output(gs)
+                            if ge not in gs._inputs:
+                                gs.add_input(ge)
                             lk["from"] = ge.id
                             lk["to"] = gs.id
                             self._lg_links.append(lk)
+                            logger.debug("Loop constructed: %s", gs._inputs)
                 else:
                     for (
                         gs
