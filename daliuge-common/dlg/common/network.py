@@ -77,9 +77,12 @@ def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
                 if not return_socket:
                     s.close()
             except (OSError, socket.error):
-                s.close()
-                logger.error("Unable to connect to %s:%s", host, port)
-                return not checking_open
+                if socket.error:
+                    s.close()
+                    raise
+                elif OSError:
+                    logger.error("Unable to connect to %s:%s", host, port)
+                    return not checking_open
 
             # Success if we were checking for an open port!
             if checking_open:
