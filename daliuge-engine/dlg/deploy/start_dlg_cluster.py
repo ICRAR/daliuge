@@ -55,6 +55,8 @@ from dlg.manager.constants import (
     ISLAND_DEFAULT_REST_PORT,
     MASTER_DEFAULT_REST_PORT,
 )
+from dlg.common.reproducibility.reproducibility import init_pgt_unroll_repro_data, \
+    init_pgt_partition_repro_data, init_pg_repro_data
 
 DIM_WAIT_TIME = 60
 MM_WAIT_TIME = DIM_WAIT_TIME
@@ -315,9 +317,12 @@ def get_pg(opts, nms, dims):
     num_nms = len(nms)
     num_dims = len(dims)
     if opts.logical_graph:
-        unrolled = pg_generator.unroll(
+        unrolled = init_pgt_unroll_repro_data(pg_generator.unroll(
             opts.logical_graph, opts.ssid, opts.zerorun, APPS[opts.app]
-        )
+        ))
+        reprodata = {}
+        if not unrolled[-1].get("oid"):
+            reprodata = unrolled.pop()
         algo_params = parse_partition_algo_params(opts.algo_params)
         pgt = pg_generator.partition(
             unrolled,
@@ -326,6 +331,8 @@ def get_pg(opts, nms, dims):
             num_islands=num_dims,
             **algo_params,
         )
+        pgt.append(reprodata)
+        pgt = init_pgt_partition_repro_data(pgt)
         del unrolled  # quickly dispose of potentially big object
     else:
         with open(opts.physical_graph, "rb") as pg_file:
@@ -345,9 +352,9 @@ def get_pg(opts, nms, dims):
         retry=3,
     )
     LOGGER.info(f"Mapping graph to available resources: nms {nms}, dims {dims}")
-    physical_graph = pg_generator.resource_map(
+    physical_graph = init_pg_repro_data(pg_generator.resource_map(
         pgt, dims + nms, num_islands=num_dims, co_host_dim=opts.co_host_dim
-    )
+    ))
     graph_name = os.path.basename(opts.log_dir)
     graph_name = f"{graph_name.split('_')[0]}.json"  # get just the graph name
     with open(os.path.join(opts.log_dir, graph_name), "wt") as pg_file:
