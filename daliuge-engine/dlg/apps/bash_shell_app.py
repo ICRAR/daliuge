@@ -38,7 +38,7 @@ import tempfile
 import threading
 import time
 import types
-import collections
+import json
 
 from .. import droputils, utils
 from ..ddap_protocol import AppDROPStates, DROPStates
@@ -139,7 +139,9 @@ def prepare_input_channel(data):
         chan = lambda: None  # a simple object where attributes can be set!
         chan.read = pipe.read
         chan.fileno = pipe.fileno
-        chan.close = types.MethodType(lambda s: close_and_remove(pipe, pipe_name), chan)
+        chan.close = types.MethodType(
+            lambda s: close_and_remove(pipe, pipe_name), chan
+        )
         return chan
 
     elif data.startswith(b"tcp://"):
@@ -173,7 +175,9 @@ class BashShellBase(object):
         self._cmdLineArgs = self._popArg(kwargs, "command_line_arguments", "")
         self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
         self._argumentPrefix = self._popArg(kwargs, "argumentPrefix", "--")
-        self._paramValueSeparator = self._popArg(kwargs, "paramValueSeparator", " ")
+        self._paramValueSeparator = self._popArg(
+            kwargs, "paramValueSeparator", " "
+        )
 
         if not self.command:
             self.command = self._popArg(kwargs, "command", None)
@@ -198,10 +202,14 @@ class BashShellBase(object):
         output of the process is piped to. If not given it is consumed by this
         method and potentially logged.
         """
-        logger.debug("Parameters found: %s", self.parameters)
+        # logger.debug("Parameters found: %s", json.dumps(self.parameters))
         # we only support passing a path for bash apps
-        fsInputs = {uid: i for uid, i in inputs.items() if droputils.has_path(i)}
-        fsOutputs = {uid: o for uid, o in outputs.items() if droputils.has_path(o)}
+        fsInputs = {
+            uid: i for uid, i in inputs.items() if droputils.has_path(i)
+        }
+        fsOutputs = {
+            uid: o for uid, o in outputs.items() if droputils.has_path(o)
+        }
         dataURLInputs = {
             uid: i for uid, i in inputs.items() if not droputils.has_path(i)
         }
@@ -210,14 +218,22 @@ class BashShellBase(object):
         }
 
         # deal with named ports
-        inport_names = self.parameters['inputs'] \
-            if "inputs" in self.parameters else []
-        outport_names = self.parameters['outputs'] \
-            if "outputs" in self.parameters else []
-        keyargs, pargs = droputils.replace_named_ports(inputs.items(), outputs.items(), 
-            inport_names, outport_names, self.appArgs, argumentPrefix=self._argumentPrefix, 
-            separator=self._paramValueSeparator)
-        argumentString = f"{' '.join(pargs + keyargs)}"  # add kwargs to end of pargs
+        inport_names = (
+            self.parameters["inputs"] if "inputs" in self.parameters else []
+        )
+        outport_names = (
+            self.parameters["outputs"] if "outputs" in self.parameters else []
+        )
+        keyargs, pargs = droputils.replace_named_ports(
+            inputs.items(),
+            outputs.items(),
+            inport_names,
+            outport_names,
+            self.appArgs,
+            argumentPrefix=self._argumentPrefix,
+            separator=self._paramValueSeparator,
+        )
+        argumentString = f"{' '.join(map(str,pargs + keyargs))}"  # add kwargs to end of pargs
         # complete command including all additional parameters and optional redirects
         if len(argumentString.strip()) > 0:
             # the _cmdLineArgs would very likely make the command line invalid
@@ -235,7 +251,9 @@ class BashShellBase(object):
         # Replace inputs/outputs in command line with paths or data URLs
         cmd = droputils.replace_path_placeholders(cmd, fsInputs, fsOutputs)
 
-        cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
+        cmd = droputils.replace_dataurl_placeholders(
+            cmd, dataURLInputs, dataURLOutputs
+        )
 
         # Pass down daliuge-specific information to the subprocesses as environment variables
         env = os.environ.copy()
@@ -270,18 +288,26 @@ class BashShellBase(object):
             pstdout = b"<piped-out>"
         pcode = process.returncode
         end = time.time()
-        logger.info("Finished in %.3f [s] with exit code %d", (end - start), pcode)
+        logger.info(
+            "Finished in %.3f [s] with exit code %d", (end - start), pcode
+        )
 
-        logger.info("Finished in %.3f [s] with exit code %d", (end - start), pcode)
+        logger.info(
+            "Finished in %.3f [s] with exit code %d", (end - start), pcode
+        )
         self._recompute_data["stdout"] = str(pstdout)
         self._recompute_data["stderr"] = str(pstderr)
         self._recompute_data["status"] = str(pcode)
         if pcode == 0 and logger.isEnabledFor(logging.DEBUG):
             logger.debug(
-                mesage_stdouts("Command finished successfully", pstdout, pstderr)
+                mesage_stdouts(
+                    "Command finished successfully", pstdout, pstderr
+                )
             )
         elif pcode != 0:
-            message = "Command didn't finish successfully (exit code %d)" % (pcode,)
+            message = "Command didn't finish successfully (exit code %d)" % (
+                pcode,
+            )
             logger.error(mesage_stdouts(message, pstdout, pstderr))
             raise Exception(message)
 

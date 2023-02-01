@@ -46,7 +46,9 @@ def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
     """
 
     if return_socket and not checking_open:
-        raise ValueError("If return_socket is True then checking_open must be True")
+        raise ValueError(
+            "If return_socket is True then checking_open must be True"
+        )
 
     start = time.time()
     while True:
@@ -74,9 +76,13 @@ def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
                 s.connect((host, port))
                 if not return_socket:
                     s.close()
-            except socket.error:
-                s.close()
-                raise
+            except (OSError, socket.error):
+                if socket.error:
+                    s.close()
+                    raise
+                elif OSError:
+                    logger.error("Unable to connect to %s:%s", host, port)
+                    return not checking_open
 
             # Success if we were checking for an open port!
             if checking_open:

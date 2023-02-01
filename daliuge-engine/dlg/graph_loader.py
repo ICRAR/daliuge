@@ -27,6 +27,7 @@ full JSON representation.
 import collections
 import importlib
 import logging
+import json
 from xmlrpc.client import Boolean
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags
@@ -50,9 +51,11 @@ from .exceptions import InvalidGraphException
 from dlg.data.drops.json_drop import JsonDROP
 from dlg.data.drops import *
 from .common import DropType
+
 try:
     from .common import CategoryType
 except ImportError:
+
     class CategoryType:
         DATA = "dataclass"
 
@@ -119,13 +122,16 @@ def addLink(linkType, lhDropSpec, rhOID, force=False):
         if rhOID not in relList:
             relList.append(rhOID)
         else:
-            raise Exception("DROP %s is already part of %s's %s" % (rhOID, lhOID, rel))
+            raise Exception(
+                "DROP %s is already part of %s's %s" % (rhOID, lhOID, rel)
+            )
     # N-1 relationship, overwrite existing relationship only if `force` is specified
     elif linkType in __TOONE:
         rel = __TOONE[linkType]
         if rel and not force:
             raise Exception(
-                "DROP %s already has a '%s', use 'force' to override" % (lhOID, rel)
+                "DROP %s already has a '%s', use 'force' to override"
+                % (lhOID, rel)
             )
         lhDropSpec[rel] = rhOID
     else:
@@ -137,7 +143,9 @@ def addLink(linkType, lhDropSpec, rhOID, force=False):
 def removeUnmetRelationships(dropSpecList):
     unmetRelationships = []
 
-    normalise_oid = lambda oid: next(iter(oid)) if isinstance(oid, dict) else oid
+    normalise_oid = (
+        lambda oid: next(iter(oid)) if isinstance(oid, dict) else oid
+    )
 
     # Step #1: Get all OIDs
     oids = set()
@@ -164,7 +172,7 @@ def removeUnmetRelationships(dropSpecList):
                 ds = dropSpec[rel]
                 if isinstance(ds[0], dict):
                     ds = [next(iter(d)) for d in ds]
-#                ds = [normalise_oid(d) for d in ds]
+                #                ds = [normalise_oid(d) for d in ds]
                 missingOids = [oid for oid in ds if oid not in oids]
                 for oid in missingOids:
                     unmetRelationships.append(DROPRel(oid, link, this_oid))
@@ -332,8 +340,10 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
         if not droputils.getUpstreamObjects(drop):
             roots.append(drop)
     logger.info("%d graph roots found, bye-bye!", len(roots))
+    logger.debug("Graph spec: %s", drops.values())
 
     return roots
+
 
 def _createData(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)

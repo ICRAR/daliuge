@@ -3,27 +3,27 @@ require([
     "/static/main.js",
 ]);
 
-function showMessageModal(title, content){
+function showMessageModal(title, content) {
     $("#messageModalTitle").html(title);
     $("#messageModalContent").html(content);
     $('#messageModal').modal('show');
 }
 
-function graphInit(graphType){
+function graphInit(graphType) {
 
     $.ajax({
         //get data
-        url: "/pgt_jsonbody?pgt_name="+pgtName,
+        url: "/pgt_jsonbody?pgt_name=" + pgtName,
         dataType: "json",
         type: 'get',
-        error: function(XMLHttpRequest, textStatus, errorThrown) {
+        error: function (XMLHttpRequest, textStatus, errorThrown) {
             if (404 == XMLHttpRequest.status) {
-              showMessageModal('Error', 'Server cannot locate physical graph file: ' + pgtName.toString());
+                showMessageModal('Error', 'Server cannot locate physical graph file: ' + pgtName.toString());
             } else {
-              showMessageModal('Error', 'status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
+                showMessageModal('Error', 'status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
             }
         },
-        success: function(data) {
+        success: function (data) {
             // get node count
             var nodeCount = 0;
             data = JSON.parse(data);
@@ -34,7 +34,7 @@ function graphInit(graphType){
             console.log(data['reprodata'])
 
             //set initially shown graph based on node count
-            if(graphType === "default"){
+            if (graphType === "default") {
                 if (nodeCount < 100) {
                     graphType = "dag"
                 } else {
@@ -45,9 +45,9 @@ function graphInit(graphType){
             //reset graph divs
             $("#main").empty()
             //initiate the correct function
-            if(graphType === "sankey"){
+            if (graphType === "sankey") {
                 echartsGraphInit("sankey", data)
-            }else if(graphType === "dag"){
+            } else if (graphType === "dag") {
                 dagGraphInit(data)
             }
 
@@ -63,7 +63,7 @@ function graphInit(graphType){
             }
 
             // display any errors that were generated during translation
-            if (error !== "None"){
+            if (error !== "None") {
                 showMessageModal("Error", error);
             }
         }
@@ -74,157 +74,159 @@ function graphInit(graphType){
 
 function dagGraphInit(data) {
 
-  const heightValue = 300;
-  const widthValue = 600;
+    const heightValue = 300;
+    const widthValue = 600;
 
-  // Set up zoom support
-  d3.select("#main").append("div").attr("id","dagGraphArea").append("svg").attr("id", "smallD3Graph").append("g").attr("id","root")
+    // Set up zoom support
+    d3.select("#main").append("div").attr("id", "dagGraphArea").append("svg").attr("id", "smallD3Graph").append("g").attr("id", "root")
     var svg = d3.select("#smallD3Graph")
     var inner = svg.select("g");
 
-  //Add mouse wheel zoom event
-  var zoom = d3.zoom().on("zoom", function () {
-  inner.attr("transform", d3.event.transform);
-  });
-  svg.call(zoom);
+    //Add mouse wheel zoom event
+    var zoom = d3.zoom().on("zoom", function () {
+        inner.attr("transform", d3.event.transform);
+    });
+    svg.call(zoom);
 
-  var g = new dagreD3.graphlib.Graph({compound:true})
-  .setGraph({
-      nodesep : 70,
-      ranksep : 50,
-      rankdir : "LR", // Left-to-right layout
-      marginx : 20,
-      marginy : 20
-  })
-  .setDefaultEdgeLabel(function () { return {}; });
+    var g = new dagreD3.graphlib.Graph({ compound: true })
+        .setGraph({
+            nodesep: 70,
+            ranksep: 50,
+            rankdir: "LR", // Left-to-right layout
+            marginx: 20,
+            marginy: 20
+        })
+        .setDefaultEdgeLabel(function () { return {}; });
 
-  var render = getRender();
-  function drawGraph() {
-      inner.call(render, g);
-  }
+    var render = getRender();
+    function drawGraph() {
+        inner.call(render, g);
+    }
 
-  // initiating
-  var graph_update_handler = drawGraphForDrops.bind(null, g, drawGraph);
-  graph_update_handler(data)
+    // initiating
+    var graph_update_handler = drawGraphForDrops.bind(null, g, drawGraph);
+    graph_update_handler(data)
 }
 
 function getRender() {
 
-	var render = new dagreD3.render();
+    var render = new dagreD3.render();
 
-	// Add our custom shape (parallelogram, similar to the PIP PDR document)
-	render.shapes().parallelogram = function(parent, bbox, node) {
-		var w = bbox.width,
-		h = bbox.height,
-		points = [
-		    { x: 0,     y: 0},
-		    { x: w*0.8, y: 0},
-		    { x: w,     y: -h},
-		    { x: w*0.2, y: -h},
-		];
-		var shapeSvg = parent.insert("polygon", ":first-child")
-		.attr("points", points.map(function(d) { return d.x + "," + d.y; }).join(" "))
-		.attr("transform", "translate(" + (-w/2) + "," + (h/2) + ")");
+    // Add our custom shape (parallelogram, similar to the PIP PDR document)
+    render.shapes().parallelogram = function (parent, bbox, node) {
+        var w = bbox.width,
+            h = bbox.height,
+            points = [
+                { x: 0, y: 0 },
+                { x: w * 0.8, y: 0 },
+                { x: w, y: -h },
+                { x: w * 0.2, y: -h },
+            ];
+        var shapeSvg = parent.insert("polygon", ":first-child")
+            .attr("points", points.map(function (d) { return d.x + "," + d.y; }).join(" "))
+            .attr("transform", "translate(" + (-w / 2) + "," + (h / 2) + ")");
 
-		node.intersect = function(point) {
-			return dagreD3.intersect.polygon(node, points, point);
-		};
-		return shapeSvg;
-	};
-	return render;
+        node.intersect = function (point) {
+            return dagreD3.intersect.polygon(node, points, point);
+        };
+        return shapeSvg;
+    };
+    return render;
 }
 
 function zoomFit() {
 
-  // Center the graph
-  var zoom = d3.zoom().on("zoom", function () {//Add mouse wheel zoom event
-      inner.attr("transform", d3.event.transform);
-  });
-  var svg = d3.select('#smallD3Graph')
-  ;
+    // Center the graph
+    var zoom = d3.zoom().on("zoom", function () {//Add mouse wheel zoom event
+        inner.attr("transform", d3.event.transform);
+    });
+    var svg = d3.select('#smallD3Graph')
+        ;
 
-  var root = svg.select('#root');
-  var boot = $(".output");
-  var bounds = root.node().getBBox();
-  var parent = root.node().parentElement;
-  var fullWidth = parent.clientWidth,
-      fullHeight = parent.clientHeight;
-  var width = bounds.width,
-      height = bounds.height,
-      initialScale;
-  var widthScale = ((fullWidth-80)/width);
-  var heightScale = ((fullHeight-200)/height)
-  if (heightScale<widthScale){
-      initialScale = heightScale;
-  } else {
-      initialScale = widthScale;
-  };
-  initialScale = initialScale
-  var xCenterOffset = -(fullWidth - fullWidth) / 2;
-  boot.attr("transform", "translate(" + (fullWidth-(width*initialScale))/2 + ", " + ((fullHeight-80)-(height*initialScale))/2 + ")"+' scale('+initialScale+')');
+    var root = svg.select('#root');
+    var boot = $(".output");
+    var bounds = root.node().getBBox();
+    var parent = root.node().parentElement;
+    var fullWidth = parent.clientWidth,
+        fullHeight = parent.clientHeight;
+    var width = bounds.width,
+        height = bounds.height,
+        initialScale;
+    var widthScale = ((fullWidth - 80) / width);
+    var heightScale = ((fullHeight - 200) / height)
+    if (heightScale < widthScale) {
+        initialScale = heightScale;
+    } else {
+        initialScale = widthScale;
+    };
+    initialScale = initialScale
+    var xCenterOffset = -(fullWidth - fullWidth) / 2;
+    boot.attr("transform", "translate(" + (fullWidth - (width * initialScale)) / 2 + ", " + ((fullHeight - 80) - (height * initialScale)) / 2 + ")" + ' scale(' + initialScale + ')');
 }
 
 function drawGraphForDrops(g, drawGraph, data) {
 
-	// Keep track of modifications to see if we need to re-draw
-	var modified = false;
+    // Keep track of modifications to see if we need to re-draw
+    var modified = false;
 
-	// #1: create missing nodes in the graph
-	// Because oids is sorted, they will be created in oid order
-	var time0 = new Date().getTime();
+    // #1: create missing nodes in the graph
+    // Because oids is sorted, they will be created in oid order
+    var time0 = new Date().getTime();
     var nodes = data['nodeDataArray'];
     var links = data['linkDataArray']
     var nodes_dict = {};
-	for(var idx of nodes.keys()) {
-		var node = nodes[idx];
-    if (node.oid){
-      modified |= _addNode(g, node);
-      nodes_dict[node.key] = {node}
+    for (var idx of nodes.keys()) {
+        if (idx != 'reprodata') {
+            var node = nodes[idx];
+        }
+        if (node.oid) {
+            modified |= _addNode(g, node);
+            nodes_dict[node.key] = { node }
+        }
     }
-	}
 
-	var time1 = new Date().getTime();
-	console.log('Took %d [ms] to create the nodes', (time1 - time0))
+    var time1 = new Date().getTime();
+    console.log('Took %d [ms] to create the nodes', (time1 - time0))
 
-	// #2: establish missing relationships
-	for(var idx of links.keys()) {
-    var findex = links[idx]['from']
-    var tindex = links[idx]['to']
-    g.setEdge(nodes_dict[findex].node.oid, nodes_dict[tindex].node.oid, {width: 40});
-	}
+    // #2: establish missing relationships
+    for (var idx of links.keys()) {
+        var findex = links[idx]['from']
+        var tindex = links[idx]['to']
+        g.setEdge(nodes_dict[findex].node.oid, nodes_dict[tindex].node.oid, { width: 40 });
+    }
 
-	if( modified ) {
-		drawGraph();
-	}
+    if (modified) {
+        drawGraph();
+    }
     zoomFit()
 }
 
 function _addNode(g, node) {
-  var TYPE_SHAPES= {Component:'rect', Data:'parallelogram'}
+    var TYPE_SHAPES = { Component: 'rect', Data: 'parallelogram' }
 
-	if( g.hasNode(g) ) {
-		return false;
-	}
+    if (g.hasNode(g)) {
+        return false;
+    }
 
-	var typeClass = node.category;
-	var typeShape = TYPE_SHAPES[node.category];
-	var notes = node.text;
+    var typeClass = node.category;
+    var typeShape = TYPE_SHAPES[node.category];
+    var notes = node.text;
 
     var oid = node.oid;
-	var html = '<div class="drop-label '+typeShape+'" id="id_' + oid + '">';
-	html += '<span class="notes">' + notes + '</span>';
-	html += '<span style="font-size: 13px;">' + oid + '</span>';
-	html += "</div>";
-	g.setNode(oid, {
-		labelType: "html",
-		label: html,
-		rx: 5,
-		ry: 5,
-		padding: 0,
-		class: typeClass,
-		shape: typeShape
-	});
-	return true;
+    var html = '<div class="drop-label ' + typeShape + '" id="id_' + oid + '">';
+    html += '<span class="notes">' + notes + '</span>';
+    html += '<span style="font-size: 13px;">' + oid + '</span>';
+    html += "</div>";
+    g.setNode(oid, {
+        labelType: "html",
+        label: html,
+        rx: 5,
+        ry: 5,
+        padding: 0,
+        class: typeClass,
+        shape: typeShape
+    });
+    return true;
 }
 
 
@@ -288,12 +290,12 @@ function echartsGraphInit(type, data) {
     })
     graphData.nodeDataArray.forEach(element => {
         var group = graphDataParts.nodeDataArray.filter(
-            function(item) {
+            function (item) {
                 return item.name == element.label.color
             });
 
         // if graph was generated without partitions, then group[0] is undefined
-        if (typeof group[0] !== 'undefined'){
+        if (typeof group[0] !== 'undefined') {
             element.label.color = group[0].color;
         } else {
             element.label.color = 'black';
@@ -350,7 +352,7 @@ function graphSetup(type, chart, graphData, graphDataParts) {
             }
         }]
     });
-    chart.on('click', function(params) {
+    chart.on('click', function (params) {
         console.log(params, params.series);
     });
 }

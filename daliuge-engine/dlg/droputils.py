@@ -98,7 +98,8 @@ class DROPWaiterCtx(object):
         for drop in self._drops:
             evt = threading.Event()
             drop.subscribe(
-                EvtConsumer(evt, expected_states=self._expected_states), "status"
+                EvtConsumer(evt, expected_states=self._expected_states),
+                "status",
             )
             self._evts.append(evt)
         return self
@@ -137,15 +138,15 @@ def copyDropContents(source: DataDROP, target: DataDROP, bufsize=65536):
     """
     Manually copies data from one DROP into another, in bufsize steps
     """
-    logger.debug(
-        "Copying from %s to %s", repr(source), repr(target))
+    logger.debug("Copying from %s to %s", repr(source), repr(target))
     sdesc = source.open()
     buf = source.read(sdesc, bufsize)
-    logger.debug("Read %d bytes from %s", len(buf), 
-    repr(source))
+    logger.debug("Read %d bytes from %s", len(buf), repr(source))
     st = time.time()
     ssize = source.size if source.size is not None else -1
-    logger.debug("Source size: %d; Source checksum: %d", ssize, source.checksum)
+    logger.debug(
+        "Source size: %d; Source checksum: %d", ssize, source.checksum
+    )
     tot_w = 0
     ofl = True
     # target._expectedSize = ssize
@@ -153,15 +154,24 @@ def copyDropContents(source: DataDROP, target: DataDROP, bufsize=65536):
         tot_w += target.write(buf)
         dur = int(time.time() - st)
         if dur > 5 and dur % 5 == 0 and ofl:
-            logger.debug("Wrote %d Bytes to %s; rate %.2f MB/s",
-                tot_w, repr(target), tot_w/(1024**2*dur))
+            logger.debug(
+                "Wrote %d Bytes to %s; rate %.2f MB/s",
+                tot_w,
+                repr(target),
+                tot_w / (1024**2 * dur),
+            )
             ofl = False
         elif int(dur) % 5 == 4:
             ofl = True
         buf = source.read(sdesc, bufsize)
     dur = time.time() - st
-    logger.debug("Wrote %d Bytes of %d to %s; rate %.2f MB/s",
-        tot_w, ssize, repr(target), tot_w/(1024**2*dur))
+    logger.debug(
+        "Wrote %d Bytes of %d to %s; rate %.2f MB/s",
+        tot_w,
+        ssize,
+        repr(target),
+        tot_w / (1024**2 * dur),
+    )
 
     source.close(sdesc)
     return
@@ -530,17 +540,21 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
 
     return cmd
 
+
 def serialize_kwargs(keyargs, prefix="--", separator=" "):
     kwargs = []
     for (name, value) in iter(keyargs.items()):
         if prefix == "--" and len(name) == 1:
             kwargs += [f"-{name} {value}"]
         else:
-            kwargs += [f"{prefix.strip()}{name.strip()}{separator}{str(value).strip()}"]
-    logger.debug("kwargs after serialization: %s",kwargs)
+            kwargs += [
+                f"{prefix.strip()}{name.strip()}{separator}{str(value).strip()}"
+            ]
+    logger.debug("kwargs after serialization: %s", kwargs)
     return kwargs
 
-def clean_applicationArgs(applicationArgs:dict) -> dict:
+
+def clean_applicationArgs(applicationArgs: dict) -> dict:
     """
     Removes arguments with None and False values, if not precious. This
     is in particular used for Bash and Docker app command lines, else
@@ -567,7 +581,9 @@ def clean_applicationArgs(applicationArgs:dict) -> dict:
             if vdict["value"] in [None, False, ""] and not precious:
                 continue
         cleanedArgs.update({name: vdict})
+    logger.debug("After clean_applicationArgs: %s", cleanedArgs)
     return cleanedArgs
+
 
 def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     """
@@ -575,8 +591,9 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     positional arguments and one for kw arguments that can be used to construct
     the final command line.
     """
-    applicationArgs = clean_applicationArgs(applicationArgs, 
-        prefix=prefix, separator=separator)
+    applicationArgs = clean_applicationArgs(
+        applicationArgs, prefix=prefix, separator=separator
+    )
     pargs = []
     kwargs = {}
     for (name, vdict) in applicationArgs.items():
@@ -585,19 +602,20 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
         if positional:
             pargs.append(str(value).strip())
         else:
-            kwargs.update({name:value})
+            kwargs.update({name: value})
     skwargs = serialize_kwargs(kwargs, prefix=prefix, separator=separator)
-    logger.info('Constructed command line arguments: %s %s', pargs, kwargs)
+    logger.info("Constructed command line arguments: %s %s", pargs, kwargs)
     return (pargs, skwargs)
 
+
 def identify_named_ports(
-    port_dict:dict,
-    posargs:list,
-    pargsDict:dict,
+    port_dict: dict,
+    posargs: list,
+    pargsDict: dict,
     keyargs: dict,
-    check_len: int=0,
-    mode: str="inputs"
-    ) -> dict:
+    check_len: int = 0,
+    mode: str = "inputs",
+) -> dict:
     """
     Checks port names for matches with arguments and returns mapped ports.
 
@@ -607,7 +625,7 @@ def identify_named_ports(
         pargsDict (dict): mapped arguments (will be modified)
         keyargs (dict): keyword arguments
         check_len (int): number of of ports to be checked
-        mode (str ["inputs"]): mode, used just for logging messages 
+        mode (str ["inputs"]): mode, used just for logging messages
 
     Returns:
         dict: port arguments
@@ -616,41 +634,49 @@ def identify_named_ports(
         modifies the pargsDict OrderedDict
     """
     # p_name = [p["name"] for p in port_dict]
-    logger.debug("Using named ports to remove %s from arguments port_dict: %s, check_len: %d)",
-        mode, port_dict, check_len)
+    logger.debug(
+        "Using named ports to remove %s from arguments port_dict: %s, check_len: %d)",
+        mode,
+        port_dict,
+        check_len,
+    )
     logger.debug("Checking against keyargs: %s", keyargs)
     portargs = {}
     posargs = list(posargs)
     keys = list(port_dict.keys())
     for i in range(check_len):
         try:
-            key = port_dict[keys[i]]['name']
-            value = port_dict[keys[i]]['path']
+            key = port_dict[keys[i]]["name"]
+            value = port_dict[keys[i]]["path"]
         except KeyError:
             logger.debug("portDict: %s", port_dict)
             raise KeyError
-        if not value: value = '' # make sure we are passing NULL drop events
+        if not value:
+            value = ""  # make sure we are passing NULL drop events
         if key in posargs:
-            pargsDict.update({key:value})
+            pargsDict.update({key: value})
             logger.debug("Using %s '%s' for parg %s", mode, value, key)
             posargs.pop(posargs.index(key))
         elif key in keyargs:
             # if not found in appArgs we don't put them into portargs either
-            portargs.update({key:value})
-            logger.debug("Using %s of type %s for kwarg %s", mode, type(value), key)
-            _dum = keyargs.pop(key) # remove from original arg list
+            portargs.update({key: value})
+            logger.debug(
+                "Using %s of type %s for kwarg %s", mode, type(value), key
+            )
+            _dum = keyargs.pop(key)  # remove from original arg list
         else:
             logger.debug("No matching argument found for %s key %s", mode, key)
     logger.debug("Returning kw mapped ports: %s", portargs)
     return portargs
 
-def check_ports_dict(ports:list) -> bool:
+
+def check_ports_dict(ports: list) -> bool:
     """
     Checks whether all ports in ports list are of type dict. This is
     for backwards compatibility.
 
-    Args: 
-        ports (list): 
+    Args:
+        ports (list):
 
     Returns:
         bool: True if all ports are dict, else False
@@ -663,14 +689,14 @@ def check_ports_dict(ports:list) -> bool:
 
 
 def replace_named_ports(
-    iitems:dict,
-    oitems:dict,
-    inport_names:dict,
-    outport_names:dict,
-    appArgs:dict,
-    argumentPrefix:str = "--",
-    separator:str = " "
-    ) -> Tuple[str, str]:
+    iitems: dict,
+    oitems: dict,
+    inport_names: dict,
+    outport_names: dict,
+    appArgs: dict,
+    argumentPrefix: str = "--",
+    separator: str = " ",
+) -> Tuple[str, str]:
     """
     Function attempts to identify component arguments that match port names.
 
@@ -684,40 +710,52 @@ def replace_named_ports(
         separator: character used between keyword and value
 
     Returns:
-        tuple of serialized keyword arguments and positional arguments 
+        tuple of serialized keyword arguments and positional arguments
     """
-    logger.debug("iitems: %s; inport_names: %s; outport_names: %s", 
-        iitems, inport_names, outport_names)
+    logger.debug(
+        "iitems: %s; inport_names: %s; outport_names: %s",
+        iitems,
+        inport_names,
+        outport_names,
+    )
     inputs_dict = collections.OrderedDict()
     for uid, drop in iitems:
-        inputs_dict[uid] = {'path': drop.path if hasattr(drop, 'path') else ''}
+        inputs_dict[uid] = {"path": drop.path if hasattr(drop, "path") else ""}
 
     outputs_dict = collections.OrderedDict()
     for uid, drop in oitems:
-        outputs_dict[uid] = {'path': drop.path if hasattr(drop, 'path') else ''}
-    logger.debug("appArgs: %s", appArgs)
+        outputs_dict[uid] = {
+            "path": drop.path if hasattr(drop, "path") else ""
+        }
+    # logger.debug("appArgs: %s", appArgs)
     # get positional args
     posargs = [arg for arg in appArgs if appArgs[arg]["positional"]]
     # get kwargs
-    keyargs = {arg:appArgs[arg]["value"] for arg in appArgs 
-        if not appArgs[arg]["positional"]}
+    keyargs = {
+        arg: appArgs[arg]["value"]
+        for arg in appArgs
+        if not appArgs[arg]["positional"]
+    }
     # we will need an ordered dict for all positional arguments
     # thus we create it here and fill it with values
-    portPosargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
+    portPosargsDict = collections.OrderedDict(
+        zip(posargs, [None] * len(posargs))
+    )
     portkeyargs = {}
-    logger.debug("posargs: %s; keyargs: %s",posargs, keyargs)
+    # logger.debug("posargs: %s; keyargs: %s", posargs, keyargs)
     if check_ports_dict(inport_names):
         for inport in inport_names:
             key = list(inport.keys())[0]
-            inputs_dict[key].update({'name':inport[key]})
+            inputs_dict[key].update({"name": inport[key]})
 
         ipkeyargs = identify_named_ports(
-                        inputs_dict,
-                        posargs,
-                        portPosargsDict,
-                        keyargs,
-                        check_len=len(iitems),
-                        mode="inputs")
+            inputs_dict,
+            posargs,
+            portPosargsDict,
+            keyargs,
+            check_len=len(iitems),
+            mode="inputs",
+        )
         portkeyargs.update(ipkeyargs)
     else:
         for i in range(min(len(iitems), len(posargs))):
@@ -726,14 +764,15 @@ def replace_named_ports(
     if check_ports_dict(outport_names):
         for outport in outport_names:
             key = list(outport.keys())[0]
-            outputs_dict[key].update({'name':outport[key]})
+            outputs_dict[key].update({"name": outport[key]})
         opkeyargs = identify_named_ports(
-                        outputs_dict,
-                        posargs,
-                        portPosargsDict,
-                        keyargs,
-                        check_len=len(oitems),
-                        mode="outputs")
+            outputs_dict,
+            posargs,
+            portPosargsDict,
+            keyargs,
+            check_len=len(oitems),
+            mode="outputs",
+        )
         portkeyargs.update(opkeyargs)
     else:
         for i in range(min(len(oitems), len(posargs))):
@@ -742,26 +781,44 @@ def replace_named_ports(
     # and construct the final keyargs and pargs
     logger.debug("Arguments from ports: %s %s", portkeyargs, portPosargsDict)
     appArgs = clean_applicationArgs(appArgs)
-    # get cleaned positional args 
-    posargs = {arg:appArgs[arg]["value"] for arg in appArgs 
-        if appArgs[arg]["positional"]}
+    # get cleaned positional args
+    posargs = {
+        arg: appArgs[arg]["value"]
+        for arg in appArgs
+        if appArgs[arg]["positional"]
+    }
+    logger.debug("posargs: %s", posargs)
     # get cleaned kwargs
-    keyargs = {arg:appArgs[arg]["value"] for arg in appArgs 
-        if not appArgs[arg]["positional"]}
+    keyargs = {
+        arg: appArgs[arg]["value"]
+        for arg in appArgs
+        if not appArgs[arg]["positional"]
+    }
     # update port dictionaries
-    # portkeyargs.update({key:arg for key, arg in keyargs.items() 
-    #     if key not in portkeyargs})    
-    # portPosargsDict.update({key:arg for key, arg in posargs.items() 
+    # portkeyargs.update({key:arg for key, arg in keyargs.items()
+    #     if key not in portkeyargs})
+    # portPosargsDict.update({key:arg for key, arg in posargs.items()
     #     if key not in portPosargsDict})
-    keyargs.update(portkeyargs)
-    posargs.update(portPosargsDict)
-    keyargs = serialize_kwargs(keyargs, 
-        prefix=argumentPrefix,
-        separator=separator) if len(keyargs) > 0 else ['']
-    pargs = list(portPosargsDict.values())
-    pargs = [''] if len(pargs) == 0 or None in pargs else pargs
-    logger.debug("After port replacement: pargs: %s; keyargs: %s",pargs, keyargs)
+    for k, v in portkeyargs.items():
+        if v not in [None, ""]:
+            keyargs.update({k: v})
+    for k, v in portPosargsDict.items():
+        logger.debug("port posarg %s has value %s", k, v)
+        logger.debug("default posarg %s has value %s", k, posargs[k])
+        if v not in [None, ""]:
+            posargs.update({k: v})
+    keyargs = (
+        serialize_kwargs(keyargs, prefix=argumentPrefix, separator=separator)
+        if len(keyargs) > 0
+        else [""]
+    )
+    pargs = list(posargs.values())
+    pargs = [""] if len(pargs) == 0 or None in pargs else pargs
+    logger.debug(
+        "After port replacement: pargs: %s; keyargs: %s", pargs, keyargs
+    )
     return keyargs, pargs
+
 
 # Easing the transition from single- to multi-package
 get_leaves = common.get_leaves
