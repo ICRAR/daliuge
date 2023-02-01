@@ -1,6 +1,47 @@
 from dlg.drop import BarrierAppDROP
 
 ##
+# @brief Scatter
+# @details A Scatter template drop
+# @par EAGLE_START
+# @param category Scatter
+# @param tag template
+# @param appclass Application Class//String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time Execution Time//Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs//Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param num_of_splits No. of splits/2/Integer/ComponentParameter/readwrite//False/False/Number of splits
+# @par EAGLE_END
+class ScatterDrop(BarrierAppDROP):
+    """
+    This only exists to make sure we have a GroupBy in the template palette
+    """
+
+    pass
+
+
+##
+# @brief Gather
+# @details A Gather template drop
+# @par EAGLE_START
+# @param category Gather
+# @param tag template
+# @param appclass Application Class//String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time Execution Time//Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs//Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param num_of_inputs No. of inputs/2/Integer/ComponentParameter/readwrite//False/False/Number of inputs
+# @param gather_axis Index of gather axis/0/Integer/ComponentParameter/readwrite//False/False/Index of gather axis
+# @par EAGLE_END
+class GatherDrop(BarrierAppDROP):
+    """
+    This only exists to make sure we have a GroupBy in the template palette
+    """
+
+    pass
+
+
+##
 # @brief Loop
 # @details A loop template drop
 # @par EAGLE_START
