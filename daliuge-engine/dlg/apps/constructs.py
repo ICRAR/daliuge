@@ -2,7 +2,7 @@ from dlg.drop import BarrierAppDROP
 
 ##
 # @brief Loop
-# @details A loop placeholder drop
+# @details A loop template drop
 # @par EAGLE_START
 # @param category Loop
 # @param tag template
@@ -22,7 +22,7 @@ class LoopDrop(BarrierAppDROP):
 
 ##
 # @brief MKN
-# @details A MKN placeholder drop
+# @details A MKN template drop
 # @par EAGLE_START
 # @param category MKN
 # @param tag template
@@ -40,8 +40,29 @@ class MKNDrop(BarrierAppDROP):
 
 
 ##
+# @brief GroupBy
+# @details A GroupBy template drop
+# @par EAGLE_START
+# @param category GroupBy
+# @param tag template
+# @param appclass Application Class//String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time Execution Time//Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus No. of CPUs//Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param num_of_inputs No. of inputs/2/Integer/ComponentParameter/readwrite//False/False/Number of inputs
+# @param gather_axis Index of gather axis/0/Integer/ComponentParameter/readwrite//False/False/Index of gather axis
+# @par EAGLE_END
+class GroupByDrop(BarrierAppDROP):
+    """
+    This only exists to make sure we have a GroupBy in the template palette
+    """
+
+    pass
+
+
+##
 # @brief SubGraph
-# @details A SubGraph placeholder drop
+# @details A SubGraph template drop
 # @par EAGLE_START
 # @param category SubGraph
 # @param tag template
@@ -59,7 +80,7 @@ class SubGraphDrop(BarrierAppDROP):
 
 ##
 # @brief Comment
-# @details A comment placeholder drop
+# @details A comment template drop
 # @par EAGLE_START
 # @param category Comment
 # @param tag template
@@ -74,7 +95,7 @@ class CommentDrop(BarrierAppDROP):
 
 ##
 # @brief Description
-# @details A loop placeholder drop
+# @details A loop template drop
 # @par EAGLE_START
 # @param category Description
 # @param tag template
@@ -89,7 +110,7 @@ class DescriptionDrop(BarrierAppDROP):
 
 ##
 # @brief Exclusive Force Node
-# @details An Exclusive Force Node placeholder
+# @details An Exclusive Force Node
 # @par EAGLE_START
 # @param category ExclusiveForceNode
 # @param tag template
