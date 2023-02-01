@@ -158,7 +158,15 @@ class CopyApp(BarrierAppDROP):
 
     def run(self):
         logger.debug("Using buffer size %d", self.bufsize)
+        logger.info(
+            "Copying data from inputs %s to outputs %s",
+            [x.name for x in self.inputs],
+            [x.name for x in self.outputs],
+        )
         self.copyAll()
+        logger.info(
+            "Copy finished",
+        )
 
     def copyAll(self):
         for inputDrop in self.inputs:
