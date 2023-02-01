@@ -11,6 +11,10 @@ dlg.data.io
 .. automodule:: dlg.data.io
    :members:
 
+dlg.data.drops.data_base
+^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: dlg.data.drops.data_base
+        :members:
 
 dlg.data.drops.directorycontainer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
