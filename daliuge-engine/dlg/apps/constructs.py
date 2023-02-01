@@ -1,4 +1,4 @@
-from dlg.drop import BarrierAppDROP
+from dlg.apps.app_base import BarrierAppDROP
 
 ##
 # @brief Scatter
