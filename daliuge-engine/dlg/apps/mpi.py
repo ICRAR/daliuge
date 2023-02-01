@@ -26,7 +26,7 @@ import signal
 import subprocess
 import sys
 
-from ..drop import BarrierAppDROP
+from dlg.apps.app_base import BarrierAppDROP
 from ..exceptions import InvalidDropException
 
 logger = logging.getLogger(__name__)
@@ -103,25 +103,39 @@ class MPIApp(BarrierAppDROP):
         vendor, version = MPI.get_vendor()  # @UndefinedVariable
         info = MPI.Info.Create()  # @UndefinedVariable
         logger.debug(
-            "MPI vendor is %s, version %s", vendor, ".".join([str(x) for x in version])
+            "MPI vendor is %s, version %s",
+            vendor,
+            ".".join([str(x) for x in version]),
         )  # @UndefinedVariable
         comm_children = MPI.COMM_SELF.Spawn(
-            cmd, args=args, maxprocs=self._maxprocs, errcodes=errcodes, info=info
+            cmd,
+            args=args,
+            maxprocs=self._maxprocs,
+            errcodes=errcodes,
+            info=info,
         )  # @UndefinedVariable
 
         n_children = comm_children.Get_remote_size()
-        logger.info("%d MPI children apps spawned, gathering exit data", n_children)
+        logger.info(
+            "%d MPI children apps spawned, gathering exit data", n_children
+        )
 
         if self._use_wrapper:
             children_data = comm_children.gather(
                 ("", "", 0), root=MPI.ROOT
             )  # @UndefinedVariable
             exit_codes = [x[2] for x in children_data]
-            logger.info("Exit codes gathered from children processes: %r", exit_codes)
+            logger.info(
+                "Exit codes gathered from children processes: %r", exit_codes
+            )
 
             any_failed = False
             for rank, (stdout, stderr, code) in enumerate(children_data):
-                self._recompute_data[str(rank)] = [code, str(stdout), str(stderr)]
+                self._recompute_data[str(rank)] = [
+                    code,
+                    str(stdout),
+                    str(stderr),
+                ]
                 if code == 0:
                     continue
                 any_failed = True

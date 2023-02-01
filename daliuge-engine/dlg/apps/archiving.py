@@ -20,7 +20,8 @@
 #    MA 02111-1307  USA
 #
 import logging
-from ..drop import BarrierAppDROP, ContainerDROP
+from dlg.apps.app_base import BarrierAppDROP
+from dlg.data.drops.container import ContainerDROP
 from ..droputils import DROPFile
 from dlg.data.io import NgasIO, OpenMode, NgasLiteIO
 from ..meta import (
@@ -60,7 +61,9 @@ class ExternalStoreApp(BarrierAppDROP):
 
         # Check that the constrains are correct
         if self.outputs:
-            raise Exception("No outputs should be declared for this application")
+            raise Exception(
+                "No outputs should be declared for this application"
+            )
         if len(self.inputs) != 1:
             raise Exception("Only one input is expected by this application")
 
@@ -150,7 +153,9 @@ class NgasArchivingApp(ExternalStoreApp):
                 mimeType=self.ngasMime,
             )
         except ImportError:
-            logger.warning("NgasIO library not available, falling back to NgasLiteIO.")
+            logger.warning(
+                "NgasIO library not available, falling back to NgasLiteIO."
+            )
             ngasIO = NgasLiteIO(
                 self.ngasSrv,
                 inDrop.uid,
