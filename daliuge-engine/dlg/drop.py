@@ -25,9 +25,7 @@ Module containing the core DROP classes.
 import ast
 import inspect
 import logging
-import math
 import os
-import random
 import threading
 import time
 import re
