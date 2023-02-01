@@ -38,12 +38,11 @@ from .common import Categories
 from .ddap_protocol import DROPRel, DROPLinkType
 from .drop import (
     AbstractDROP,
-    ContainerDROP,
     LINKTYPE_NTO1_PROPERTY,
     LINKTYPE_1TON_APPEND_METHOD,
-    NullDROP,
-    EndDROP,
 )
+from .data.drops.data_base import NullDROP, EndDROP
+from .data.drops.container import ContainerDROP
 
 from dlg.data.drops.environmentvar_drop import EnvironmentVarDROP
 from dlg.data.drops.parset_drop import ParameterSetDROP

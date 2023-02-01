@@ -31,7 +31,7 @@ import random
 from dlg import droputils
 from dlg.common import dropdict, Categories
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
-from dlg.drop import BarrierAppDROP
+from dlg.apps.app_base import BarrierAppDROP
 from dlg.manager.node_manager import NodeManager
 
 try:
@@ -44,19 +44,19 @@ random.seed(42)
 hostname = "localhost"
 default_repro = {
     "rmode": "1",
-    "RERUN":{
+    "RERUN": {
         "lg_blockhash": "x",
         "pgt_blockhash": "y",
         "pg_blockhash": "z",
-    }
+    },
 }
 default_graph_repro = {
     "rmode": "1",
     "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
     "merkleroot": "a",
-    "RERUN":{
+    "RERUN": {
         "signature": "b",
-    }
+    },
 }
 
 
@@ -147,7 +147,9 @@ class NMTestsMixIn(object):
     ):
         """Utility to run a graph in two Node Managers"""
 
-        dm1, dm2 = node_managers or [self._start_dm(threads=threads) for _ in range(2)]
+        dm1, dm2 = node_managers or [
+            self._start_dm(threads=threads) for _ in range(2)
+        ]
         add_test_reprodata(g1)
         add_test_reprodata(g2)
         quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
@@ -170,7 +172,9 @@ class NMTestsMixIn(object):
         expected_successes = [
             drops[oid] for oid in drops if oid not in expected_failures
         ]
-        expected_failures = [drops[oid] for oid in drops if oid in expected_failures]
+        expected_failures = [
+            drops[oid] for oid in drops if oid in expected_failures
+        ]
         for drop in expected_successes:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
         for drop in expected_failures:
@@ -190,7 +194,6 @@ class NMTestsMixIn(object):
 
 
 class NodeManagerTestsBase(NMTestsMixIn):
-
     def _deploy_error_graph(self, **kwargs):
         sessionId = f"s{random.randint(0, 1000)}"
         g = [
@@ -217,7 +220,9 @@ class NodeManagerTestsBase(NMTestsMixIn):
         class listener(object):
             def on_error(self, drop):
                 erroneous_drops.append(drop.uid)
-                if len(erroneous_drops) == 2:  # both 'C' and 'B' failed already
+                if (
+                    len(erroneous_drops) == 2
+                ):  # both 'C' and 'B' failed already
                     evt.set()
 
         self._deploy_error_graph(error_listener=listener())
@@ -249,7 +254,9 @@ class NodeManagerTestsBase(NMTestsMixIn):
         rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
         a_data = os.urandom(32)
         c_data = str(crc32c(a_data, 0)).encode("utf8")
-        node_managers = [self._start_dm(threads=self.nm_threads) for _ in range(2)]
+        node_managers = [
+            self._start_dm(threads=self.nm_threads) for _ in range(2)
+        ]
         ids = [0] * repeats
         for n in range(repeats):
             choice = 0
@@ -309,7 +316,11 @@ class NodeManagerTestsBase(NMTestsMixIn):
             memory("D", producers=["C"]),
         ]
         g2 = [
-            {"oid": "E", "type": "app", "app": "test.test_drop.SumupContainerChecksum"},
+            {
+                "oid": "E",
+                "type": "app",
+                "app": "test.test_drop.SumupContainerChecksum",
+            },
             memory("F", producers=["E"]),
         ]
         add_test_reprodata(g1)
@@ -326,7 +337,9 @@ class NodeManagerTestsBase(NMTestsMixIn):
 
         # Run! The sole fact that this doesn't throw exceptions is already
         # a good proof that everything is working as expected
-        a, b, c, d = [dm1._sessions[sessionId].drops[x] for x in ("A", "B", "C", "D")]
+        a, b, c, d = [
+            dm1._sessions[sessionId].drops[x] for x in ("A", "B", "C", "D")
+        ]
         e, f = [dm2._sessions[sessionId].drops[x] for x in ("E", "F")]
         with droputils.DROPWaiterCtx(self, f, 5):
             a.write(b"a")
@@ -342,7 +355,9 @@ class NodeManagerTestsBase(NMTestsMixIn):
             )
 
         self.assertEqual(a.checksum, int(droputils.allDropContents(d)))
-        self.assertEqual(b.checksum + d.checksum, int(droputils.allDropContents(f)))
+        self.assertEqual(
+            b.checksum + d.checksum, int(droputils.allDropContents(f))
+        )
 
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
@@ -372,7 +387,9 @@ class NodeManagerTestsBase(NMTestsMixIn):
         B, F, G, K and N are AppDOs; the rest are plain in-memory DROPs
         """
 
-        dm1, dm2, dm3, dm4 = [self._start_dm(threads=self.nm_threads) for _ in range(4)]
+        dm1, dm2, dm3, dm4 = [
+            self._start_dm(threads=self.nm_threads) for _ in range(4)
+        ]
 
         sessionId = f"s{random.randint(0, 1000)}"
         g1 = [memory("A", expectedSize=1)]
@@ -403,16 +420,28 @@ class NodeManagerTestsBase(NMTestsMixIn):
         rels_24 = [DROPRel("F", DROPLinkType.PRODUCER, "L")]
         rels_34 = [DROPRel("K", DROPLinkType.PRODUCER, "M")]
         quickDeploy(
-            dm1, sessionId, g1, {nm_conninfo(1): rels_12, nm_conninfo(2): rels_13}
+            dm1,
+            sessionId,
+            g1,
+            {nm_conninfo(1): rels_12, nm_conninfo(2): rels_13},
         )
         quickDeploy(
-            dm2, sessionId, g2, {nm_conninfo(0): rels_12, nm_conninfo(3): rels_24}
+            dm2,
+            sessionId,
+            g2,
+            {nm_conninfo(0): rels_12, nm_conninfo(3): rels_24},
         )
         quickDeploy(
-            dm3, sessionId, g3, {nm_conninfo(0): rels_13, nm_conninfo(3): rels_34}
+            dm3,
+            sessionId,
+            g3,
+            {nm_conninfo(0): rels_13, nm_conninfo(3): rels_34},
         )
         quickDeploy(
-            dm4, sessionId, g4, {nm_conninfo(1): rels_24, nm_conninfo(2): rels_34}
+            dm4,
+            sessionId,
+            g4,
+            {nm_conninfo(1): rels_24, nm_conninfo(2): rels_34},
         )
 
         self.assertEqual(1, len(dm1._sessions[sessionId].drops))
@@ -434,7 +463,8 @@ class NodeManagerTestsBase(NMTestsMixIn):
             self.assertEqual(
                 DROPStates.COMPLETED,
                 drop.status,
-                "Status of '%s' is not COMPLETED: %d" % (drop.uid, drop.status),
+                "Status of '%s' is not COMPLETED: %d"
+                % (drop.uid, drop.status),
             )
 
         for dm in [dm1, dm2, dm3, dm4]:
@@ -643,15 +673,18 @@ class TestDM(NodeManagerTestsBase, unittest.TestCase):
         dm = self._start_dm()
         sessionID = "s1"
         if sys.version_info < (3, 8):
-            self.assertRaises(NotImplementedError, quickDeploy, dm, sessionID, graph)
+            self.assertRaises(
+                NotImplementedError, quickDeploy, dm, sessionID, graph
+            )
         else:
             quickDeploy(dm, sessionID, graph)
             self.assertEqual(1, len(dm._sessions[sessionID].drops))
             dm.destroySession(sessionID)
 
 
-
-@unittest.skipUnless(os.environ.get('DALIUGE_RUN_MP_TESTS', '0') == '1',
-                     "Unstable multiprocessing tests not run by default")
+@unittest.skipUnless(
+    os.environ.get("DALIUGE_RUN_MP_TESTS", "0") == "1",
+    "Unstable multiprocessing tests not run by default",
+)
 class TestDMParallel(NodeManagerTestsBase, unittest.TestCase):
     nm_threads = multiprocessing.cpu_count()

@@ -1,4 +1,5 @@
-from dlg.drop import BarrierAppDROP, track_current_drop
+from dlg.drop import track_current_drop
+from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import InvalidDropException
 
 ##

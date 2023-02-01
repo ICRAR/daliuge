@@ -41,12 +41,12 @@ import types
 import json
 
 from .. import droputils, utils
+from dlg.named_port_utils import replace_named_ports
 from ..ddap_protocol import AppDROPStates, DROPStates
-from ..drop import BarrierAppDROP, AppDROP
+from ..apps.app_base import BarrierAppDROP, AppDROP
 from ..exceptions import InvalidDropException
 from ..meta import (
     dlg_string_param,
-    dlg_dict_param,
     dlg_component,
     dlg_batch_input,
     dlg_batch_output,
@@ -224,7 +224,7 @@ class BashShellBase(object):
         outport_names = (
             self.parameters["outputs"] if "outputs" in self.parameters else []
         )
-        keyargs, pargs = droputils.replace_named_ports(
+        keyargs, pargs = replace_named_ports(
             inputs.items(),
             outputs.items(),
             inport_names,

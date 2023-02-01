@@ -22,7 +22,7 @@
 import contextlib
 import importlib
 
-from dlg.drop import DataDROP, logger
+from dlg.data.drops.data_base import DataDROP, logger
 from dlg.exceptions import InvalidDropException
 from dlg.data.io import ErrorIO
 from dlg.meta import dlg_dict_param
@@ -60,7 +60,9 @@ class RDBMSDrop(DataDROP):
                 self, '%r needs a "dbmodule" parameter' % (self,)
             )
         if "dbtable" not in kwargs:
-            raise InvalidDropException(self, '%r needs a "dbtable" parameter' % (self,))
+            raise InvalidDropException(
+                self, '%r needs a "dbtable" parameter' % (self,)
+            )
 
         # The DB-API 2.0 module
         dbmodname = kwargs.pop("dbmodule")
@@ -99,7 +101,9 @@ class RDBMSDrop(DataDROP):
                 sql, vals = prepare_sql(
                     sql, self._db_drv.paramstyle, list(vals.values())
                 )
-                logger.debug("Executing SQL with parameters: %s / %r", sql, vals)
+                logger.debug(
+                    "Executing SQL with parameters: %s / %r", sql, vals
+                )
                 cur.execute(sql, vals)
                 c.commit()
 
@@ -116,14 +120,20 @@ class RDBMSDrop(DataDROP):
 
                 # Build up SQL with optional columns and conditions
                 columns = columns or ("*",)
-                sql = ["SELECT %s FROM %s" % (",".join(columns), self._db_table)]
+                sql = [
+                    "SELECT %s FROM %s" % (",".join(columns), self._db_table)
+                ]
                 if condition:
                     sql.append(" WHERE ")
                     sql.append(condition)
 
                 # Go, go, go!
-                sql, vals = prepare_sql("".join(sql), self._db_drv.paramstyle, vals)
-                logger.debug("Executing SQL with parameters: %s / %r", sql, vals)
+                sql, vals = prepare_sql(
+                    "".join(sql), self._db_drv.paramstyle, vals
+                )
+                logger.debug(
+                    "Executing SQL with parameters: %s / %r", sql, vals
+                )
                 cur.execute(sql, vals)
                 if cur.description:
                     ret = cur.fetchall()
