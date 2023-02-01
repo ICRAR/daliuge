@@ -27,7 +27,7 @@ import string
 import sys
 
 from dlg.common.reproducibility.reproducibility import common_hash
-from dlg.drop import DataDROP, logger
+from dlg.data.drops.data_base import DataDROP, logger
 from dlg.data.io import SharedMemoryIO, MemoryIO
 
 
@@ -39,7 +39,7 @@ from dlg.data.io import SharedMemoryIO, MemoryIO
 # @param tag daliuge
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
-# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data 
+# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
 # @param persist Persist/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
@@ -103,7 +103,7 @@ class InMemoryDROP(DataDROP):
 # @param tag daliuge
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
-# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data 
+# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
 # @param persist Persist/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
@@ -133,7 +133,9 @@ class SharedMemoryDROP(DataDROP):
             else:
                 # Using Drop without manager, just generate a random name.
                 sess_id = "".join(
-                    random.choices(string.ascii_uppercase + string.digits, k=10)
+                    random.choices(
+                        string.ascii_uppercase + string.digits, k=10
+                    )
                 )
                 return SharedMemoryIO(self.oid, sess_id)
         else:

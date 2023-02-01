@@ -29,7 +29,7 @@ from dlg import droputils
 from dlg.apps.dynlib import DynlibApp, DynlibStreamApp, DynlibProcApp
 from dlg.common import Categories
 from dlg.ddap_protocol import DROPRel, DROPLinkType, DROPStates
-from dlg.drop import NullDROP
+from dlg.data.drops.data_base import NullDROP
 from dlg.data.drops.memory import InMemoryDROP
 
 from .setp_up import build_shared_library
@@ -43,7 +43,8 @@ bufsize = 10 * 1024 * 1024
 
 
 @unittest.skipUnless(
-    build_shared_library(_libname, _libpath), "Example dynamic library not available"
+    build_shared_library(_libname, _libpath),
+    "Example dynamic library not available",
 )
 class DynlibAppTest(unittest.TestCase):
     def test_simple_batch_copy(self):
@@ -87,7 +88,9 @@ class DynlibAppTest(unittest.TestCase):
             if streaming:
                 # Write the data in chunks so we actually exercise multiple calls
                 # to the data_written library call
-                for datum in iter(functools.partial(reader.read, 1024 * 1024), b""):
+                for datum in iter(
+                    functools.partial(reader.read, 1024 * 1024), b""
+                ):
                     a.write(datum)
             else:
                 a.write(data)
@@ -114,7 +117,9 @@ class DynlibAppTest(unittest.TestCase):
         t0 = time.time()
         a.cancel()
         self.assertLess(
-            time.time() - t0, 1, "Cancelled dynlibprocapp in less than a second"
+            time.time() - t0,
+            1,
+            "Cancelled dynlibprocapp in less than a second",
         )
         self.assertEqual(DROPStates.CANCELLED, a.status)
 
@@ -223,19 +228,27 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
         ]
         a_data = os.urandom(32)
         self._test_runGraphInTwoNMs(
-            g1, g2, rels, a_data, a_data * 2, root_oids=("A", "B"), leaf_oid="D"
+            g1,
+            g2,
+            rels,
+            a_data,
+            a_data * 2,
+            root_oids=("A", "B"),
+            leaf_oid="D",
         )
 
 
 @unittest.skipUnless(
-    build_shared_library(_libname, _libpath), "Example dynamic library not available"
+    build_shared_library(_libname, _libpath),
+    "Example dynamic library not available",
 )
 class IntraNMDynlibAppTest(IntraNMMixIng, unittest.TestCase):
     app = "dlg.apps.dynlib.DynlibApp"
 
 
 @unittest.skipUnless(
-    build_shared_library(_libname, _libpath), "Example dynamic library not available"
+    build_shared_library(_libname, _libpath),
+    "Example dynamic library not available",
 )
 class IntraNMDynlibProcAppTest(IntraNMMixIng, unittest.TestCase):
     app = "dlg.apps.dynlib.DynlibProcApp"
@@ -281,7 +294,8 @@ class IntraNMDynlibProcAppTest(IntraNMMixIng, unittest.TestCase):
 
 
 @unittest.skipUnless(
-    build_shared_library(_libname, _libpath), "Example dynamic library not available"
+    build_shared_library(_libname, _libpath),
+    "Example dynamic library not available",
 )
 class TestExceptionRaised(unittest.TestCase):
     def test_exception_print_stats(self):
@@ -290,7 +304,11 @@ class TestExceptionRaised(unittest.TestCase):
         """
         with self.assertRaises(TypeError) as context:
             _ = DynlibApp(
-                "a", "a", lib=_libpath, print_stats="print_stats", bufsize=bufsize
+                "a",
+                "a",
+                lib=_libpath,
+                print_stats="print_stats",
+                bufsize=bufsize,
             )
 
         self.assertTrue(
@@ -303,7 +321,11 @@ class TestExceptionRaised(unittest.TestCase):
         """
         with self.assertRaises(TypeError) as context:
             _ = DynlibApp(
-                "a", "a", lib=_libpath, print_stats=print_stats, bufsize="bufsize"
+                "a",
+                "a",
+                lib=_libpath,
+                print_stats=print_stats,
+                bufsize="bufsize",
             )
 
         self.assertTrue("bufsize should be an Int" in str(context.exception))
@@ -314,10 +336,15 @@ class TestExceptionRaised(unittest.TestCase):
         """
         with self.assertRaises(MemoryError) as context:
             dynlib_app = DynlibApp(
-                "a", "a", lib=_libpath, print_stats=print_stats, bufsize=pow(2, 50)
+                "a",
+                "a",
+                lib=_libpath,
+                print_stats=print_stats,
+                bufsize=pow(2, 50),
             )
             dynlib_app.run()
 
         self.assertTrue(
-            "Couldn't allocate memory for read/write buffer" in str(context.exception)
+            "Couldn't allocate memory for read/write buffer"
+            in str(context.exception)
         )

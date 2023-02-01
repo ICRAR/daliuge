@@ -25,10 +25,9 @@ import pkg_resources
 
 from dlg import graph_loader
 from dlg.ddap_protocol import DROPLinkType, DROPRel
-from dlg.drop import (
-    ContainerDROP,
-    AppDROP,
-)
+from dlg.data.drops.container import ContainerDROP
+from dlg.apps.app_base import AppDROP
+
 from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
 from dlg.data.drops.directorycontainer import DirectoryContainer
 from dlg.common import Categories
@@ -42,14 +41,18 @@ class DummyApp(AppDROP):
 
 class TestGraphLoader(unittest.TestCase):
     def test_singleMemoryDrop(self):
-        dropSpecList = [{"oid": "A", "type": "data", "storage": Categories.MEMORY}]
+        dropSpecList = [
+            {"oid": "A", "type": "data", "storage": Categories.MEMORY}
+        ]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, InMemoryDROP)
         self.assertEqual("A", a.oid)
         self.assertEqual("A", a.uid)
 
     def test_sharedMemoryDrop(self):
-        dropSpecList = [{"oid": "A", "type": "data", "storage": Categories.SHMEM}]
+        dropSpecList = [
+            {"oid": "A", "type": "data", "storage": Categories.SHMEM}
+        ]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, SharedMemoryDROP)
         self.assertEqual("A", a.oid)
@@ -72,7 +75,12 @@ class TestGraphLoader(unittest.TestCase):
 
         # A directory container
         dropSpecList = [
-            {"oid": "A", "type": "data", "storage": Categories.FILE, "dirname": "."},
+            {
+                "oid": "A",
+                "type": "data",
+                "storage": Categories.FILE,
+                "dirname": ".",
+            },
             {
                 "oid": "B",
                 "type": "container",
@@ -93,7 +101,11 @@ class TestGraphLoader(unittest.TestCase):
                 "storage": Categories.MEMORY,
                 "consumers": ["B"],
             },
-            {"oid": "B", "type": "app", "app": "test.test_graph_loader.DummyApp"},
+            {
+                "oid": "B",
+                "type": "app",
+                "app": "test.test_graph_loader.DummyApp",
+            },
         ]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, InMemoryDROP)
@@ -120,12 +132,19 @@ class TestGraphLoader(unittest.TestCase):
 
         unmetRelationships = graph_loader.removeUnmetRelationships(graphDesc)
         self.assertEqual(4, len(unmetRelationships))
-        self.assertIn(DROPRel("D", DROPLinkType.CONSUMER, "A"), unmetRelationships)
         self.assertIn(
-            DROPRel("D", DROPLinkType.STREAMING_CONSUMER, "C"), unmetRelationships
+            DROPRel("D", DROPLinkType.CONSUMER, "A"), unmetRelationships
         )
-        self.assertIn(DROPRel("Z", DROPLinkType.PRODUCER, "A"), unmetRelationships)
-        self.assertIn(DROPRel("X", DROPLinkType.PRODUCER, "A"), unmetRelationships)
+        self.assertIn(
+            DROPRel("D", DROPLinkType.STREAMING_CONSUMER, "C"),
+            unmetRelationships,
+        )
+        self.assertIn(
+            DROPRel("Z", DROPLinkType.PRODUCER, "A"), unmetRelationships
+        )
+        self.assertIn(
+            DROPRel("X", DROPLinkType.PRODUCER, "A"), unmetRelationships
+        )
 
         # The original dropSpecs have changed as well
         a = graphDesc[0]
@@ -134,7 +153,9 @@ class TestGraphLoader(unittest.TestCase):
         self.assertEqual(1, len(a["consumers"]))
         self.assertEqual("B", a["consumers"][0])
         self.assertFalse("producers" in a and len(a["producers"]) > 0)
-        self.assertFalse("streamingConsumers" in c and len(c["streamingConsumers"]) > 0)
+        self.assertFalse(
+            "streamingConsumers" in c and len(c["streamingConsumers"]) > 0
+        )
 
     def test_removeUnmetRelationships_named(self):
 
@@ -196,11 +217,15 @@ class TestGraphLoader(unittest.TestCase):
             ("precious", False),
             ("persist", True),
             ("persist", False),
-            (None, False), # Default of False is specific to MemoryDrops
+            (None, False),  # Default of False is specific to MemoryDrops
         ]
         for key, value in testCases:
             with self.subTest(key=key, value=value):
-                dropSpec = {"oid": "A", "type": "data", "storage": Categories.MEMORY}
+                dropSpec = {
+                    "oid": "A",
+                    "type": "data",
+                    "storage": Categories.MEMORY,
+                }
                 if key is not None:
                     dropSpec[key] = value
 
@@ -208,4 +233,4 @@ class TestGraphLoader(unittest.TestCase):
                 data = graph[0]
                 self.assertIsInstance(data, InMemoryDROP)
                 self.assertEqual(value, data.persist)
-                self.assertFalse(hasattr(data, 'precious'))
+                self.assertFalse(hasattr(data, "precious"))

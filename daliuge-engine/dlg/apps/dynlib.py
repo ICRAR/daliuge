@@ -30,7 +30,7 @@ import six
 
 from .. import rpc, utils
 from ..ddap_protocol import AppDROPStates
-from ..drop import AppDROP, BarrierAppDROP
+from ..apps.app_base import AppDROP, BarrierAppDROP
 from ..exceptions import InvalidDropException
 
 logger = logging.getLogger(__name__)
@@ -115,7 +115,11 @@ def _to_c_input(i):
     desc = i.open()
     r = _read_cb_type(functools.partial(_read, desc))
     c_input = CDlgInput(
-        i.uid.encode("utf8"), i.oid.encode("utf8"), i.name.encode("utf8"), i.status, r
+        i.uid.encode("utf8"),
+        i.oid.encode("utf8"),
+        i.name.encode("utf8"),
+        i.status,
+        r,
     )
     return desc, c_input
 
@@ -187,11 +191,15 @@ def run(lib, c_app, input_closers):
                 raise result
             if result:
                 raise Exception(
-                    "Invocation of {}:run2 returned with status {}".format(lib, result)
+                    "Invocation of {}:run2 returned with status {}".format(
+                        lib, result
+                    )
                 )
 
         elif lib.run(ctypes.pointer(c_app)):
-            raise Exception("Invocation of %r:run returned with status != 0" % lib)
+            raise Exception(
+                "Invocation of %r:run returned with status != 0" % lib
+            )
     finally:
         for closer in input_closers:
             closer()
@@ -225,7 +233,9 @@ def load_and_init(libname, oid, uid, params):
 
         if not found_one:
             raise InvalidLibrary(
-                "{} doesn't have one of the functions {}".format(libname, functions)
+                "{} doesn't have one of the functions {}".format(
+                    libname, functions
+                )
             )
 
     # Create the initial contents of the C dlg_app_info structure
@@ -267,9 +277,12 @@ def load_and_init(libname, oid, uid, params):
         # We need to keep them in a local variable so when we expose them to
         # the app later on via pointers we still have their contents
         local_params = [
-            (str(k).encode("utf8"), str(v).encode("utf8")) for k, v in params.items()
+            (str(k).encode("utf8"), str(v).encode("utf8"))
+            for k, v in params.items()
         ]
-        logger.debug("Extra parameters passed to application: %r", local_params)
+        logger.debug(
+            "Extra parameters passed to application: %r", local_params
+        )
 
         # Wrap in ctypes
         str_ptr_type = ctypes.POINTER(ctypes.c_char_p)
@@ -350,7 +363,9 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
         self._c_app.n_inputs += 1
 
     def addStreamingInput(self, streamingInputDrop, back=True):
-        super(DynlibStreamApp, self).addStreamingInput(streamingInputDrop, back)
+        super(DynlibStreamApp, self).addStreamingInput(
+            streamingInputDrop, back
+        )
         self._c_app.n_streaming_inputs += 1
 
     def generate_recompute_data(self):
@@ -425,7 +440,9 @@ def _do_run_in_proc(queue, libname, oid, uid, params, inputs, outputs):
         client.start()
 
         def setup_drop_proxies(inputs, outputs):
-            to_drop_proxy = lambda x: rpc.DropProxy(client, x[0], x[1], x[2], x[3])
+            to_drop_proxy = lambda x: rpc.DropProxy(
+                client, x[0], x[1], x[2], x[3]
+            )
             inputs = [to_drop_proxy(i) for i in inputs]
             outputs = [to_drop_proxy(o) for o in outputs]
             return inputs, outputs

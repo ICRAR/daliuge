@@ -38,7 +38,7 @@ from dlg.apps.simple import (
 from dlg.apps.simple import RandomArrayApp, AverageArraysApp, HelloWorldApp
 from dlg.apps.simple import SleepApp, CopyApp, SleepAndCopyApp
 from dlg.ddap_protocol import DROPStates
-from dlg.drop import NullDROP
+from dlg.data.drops.data_base import NullDROP
 from dlg.data.drops.memory import InMemoryDROP
 from dlg.data.drops.ngas import NgasDROP
 from dlg.data.drops.file import FileDROP

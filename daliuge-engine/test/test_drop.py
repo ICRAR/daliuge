@@ -34,13 +34,9 @@ import subprocess
 from dlg import droputils
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 from dlg.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
-from dlg.drop import (
-    AppDROP,
-    NullDROP,
-    BarrierAppDROP,
-    ContainerDROP,
-    InputFiredAppDROP,
-)
+from dlg.apps.app_base import AppDROP, BarrierAppDROP, InputFiredAppDROP
+from dlg.data.drops.data_base import NullDROP
+from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.plasma import PlasmaDROP, PlasmaFlightDROP
 from dlg.data.drops.rdbms import RDBMSDrop
 from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
@@ -55,7 +51,7 @@ try:
 except:
     from binascii import crc32
 
-ONE_MB = 1024 ** 2
+ONE_MB = 1024**2
 
 
 def _start_ns_thread(ns_daemon):
@@ -205,7 +201,9 @@ class TestDROP(unittest.TestCase):
         """
         Test an AbstractDROP and a simple AppDROP (for checksum calculation)
         """
-        a = dropType("oid:A", "uid:A", expectedSize=self._test_drop_sz * ONE_MB)
+        a = dropType(
+            "oid:A", "uid:A", expectedSize=self._test_drop_sz * ONE_MB
+        )
         b = SumupContainerChecksum("oid:B", "uid:B")
         c = InMemoryDROP("oid:C", "uid:C")
         b.addInput(a)
@@ -279,7 +277,9 @@ class TestDROP(unittest.TestCase):
             def run(self):
                 drop = self.inputs[0]
                 output = self.outputs[0]
-                allLines = io.BytesIO(droputils.allDropContents(drop)).readlines()
+                allLines = io.BytesIO(
+                    droputils.allDropContents(drop)
+                ).readlines()
                 for line in allLines:
                     if self._substring in line:
                         output.write(line)
@@ -288,7 +288,9 @@ class TestDROP(unittest.TestCase):
             def run(self):
                 drop = self.inputs[0]
                 output = self.outputs[0]
-                sortedLines = io.BytesIO(droputils.allDropContents(drop)).readlines()
+                sortedLines = io.BytesIO(
+                    droputils.allDropContents(drop)
+                ).readlines()
                 sortedLines.sort()
                 for line in sortedLines:
                     output.write(line)
@@ -323,7 +325,9 @@ class TestDROP(unittest.TestCase):
         f.addOutput(g)
 
         # Initial write
-        contents = b"first line\nwe have an a here\nand another one\nnoone knows me"
+        contents = (
+            b"first line\nwe have an a here\nand another one\nnoone knows me"
+        )
         cResExpected = b"we have an a here\nand another one\n"
         eResExpected = b"and another one\nwe have an a here\n"
         gResExpected = b"dna rehtona eno\new evah na a ereh\n"
@@ -425,7 +429,9 @@ class TestDROP(unittest.TestCase):
             completedDrops = dropAList[0:1] + dropBList[0:1] + dropCList[0:1]
             errorDrops = dropAList[1:] + dropBList[1:] + dropCList[1:] + [d, e]
         else:
-            completedDrops = dropAList[0:2] + dropBList[0:2] + dropCList[0:2] + [d, e]
+            completedDrops = (
+                dropAList[0:2] + dropBList[0:2] + dropCList[0:2] + [d, e]
+            )
             errorDrops = dropAList[2:] + dropBList[2:] + dropCList[2:]
 
         for drop in completedDrops:
@@ -568,7 +574,9 @@ class TestDROP(unittest.TestCase):
         # Check the final results are correct
         for drop in [a, b, c, d, e]:
             self.assertEqual(
-                drop.status, DROPStates.COMPLETED, "%r is not yet COMPLETED" % (drop)
+                drop.status,
+                DROPStates.COMPLETED,
+                "%r is not yet COMPLETED" % (drop),
             )
         self.assertEqual(
             b"0 2 4 6 8 10 12 14 16 18", droputils.allDropContents(e).strip()
@@ -729,21 +737,33 @@ class TestDROP(unittest.TestCase):
                 self.assertEqual(lastByte, b._lastByte)
 
         checkDropStates(
-            DROPStates.INITIALIZED, DROPStates.INITIALIZED, DROPStates.INITIALIZED, None
+            DROPStates.INITIALIZED,
+            DROPStates.INITIALIZED,
+            DROPStates.INITIALIZED,
+            None,
         )
         a.write(b"abcde")
         checkDropStates(
-            DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, b"e"
+            DROPStates.WRITING,
+            DROPStates.WRITING,
+            DROPStates.INITIALIZED,
+            b"e",
         )
         a.write(b"fghij")
         checkDropStates(
-            DROPStates.WRITING, DROPStates.WRITING, DROPStates.INITIALIZED, b"j"
+            DROPStates.WRITING,
+            DROPStates.WRITING,
+            DROPStates.INITIALIZED,
+            b"j",
         )
         a.write(b"k")
         with DROPWaiterCtx(self, [d, e]):
             a.setCompleted()
         checkDropStates(
-            DROPStates.COMPLETED, DROPStates.COMPLETED, DROPStates.COMPLETED, b"k"
+            DROPStates.COMPLETED,
+            DROPStates.COMPLETED,
+            DROPStates.COMPLETED,
+            b"k",
         )
 
         self.assertEqual(b"ejk", droputils.allDropContents(d))
@@ -754,7 +774,9 @@ class TestDROP(unittest.TestCase):
         drop.delete() if they are instructed to do so.
         """
 
-        def assertFiles(delete_parent_directory, parentDirExists, tempDir=None):
+        def assertFiles(
+            delete_parent_directory, parentDirExists, tempDir=None
+        ):
             tempDir = tempDir or tempfile.mkdtemp()
             a = FileDROP(
                 "a",
@@ -805,9 +827,12 @@ class TestDROP(unittest.TestCase):
         cont2 = DirectoryContainer("f", "f", dirname=dirname2)
 
         # Paths are absolutely reported
-        self.assertEqual(os.path.realpath("/tmp/.hidden"), os.path.realpath(cont1.path))
         self.assertEqual(
-            os.path.realpath("/tmp/.hidden/inside"), os.path.realpath(cont2.path)
+            os.path.realpath("/tmp/.hidden"), os.path.realpath(cont1.path)
+        )
+        self.assertEqual(
+            os.path.realpath("/tmp/.hidden/inside"),
+            os.path.realpath(cont2.path),
         )
 
         # Certain children-to-be are rejected
@@ -838,7 +863,9 @@ class TestDROP(unittest.TestCase):
         class App(BarrierAppDROP):
             pass
 
-        a, b, c, d, e = [App(chr(ord("A") + i), chr(ord("A") + i)) for i in range(5)]
+        a, b, c, d, e = [
+            App(chr(ord("A") + i), chr(ord("A") + i)) for i in range(5)
+        ]
         f = InMemoryDROP("F", "F")
         for drop in a, b, c, d, e:
             drop.addOutput(f)
@@ -870,10 +897,18 @@ class TestDROP(unittest.TestCase):
         self.assertRaises(InvalidDropException, InputFiredAppDROP, "a", "a")
         # Invalid values
         self.assertRaises(
-            InvalidDropException, InputFiredAppDROP, "a", "a", n_effective_inputs=-2
+            InvalidDropException,
+            InputFiredAppDROP,
+            "a",
+            "a",
+            n_effective_inputs=-2,
         )
         self.assertRaises(
-            InvalidDropException, InputFiredAppDROP, "a", "a", n_effective_inputs=0
+            InvalidDropException,
+            InputFiredAppDROP,
+            "a",
+            "a",
+            n_effective_inputs=0,
         )
 
         # More effective inputs than inputs
@@ -928,7 +963,9 @@ class TestDROP(unittest.TestCase):
         if os.path.isfile(dbfile):
             os.unlink(dbfile)
 
-        with contextlib.closing(sqlite3.connect(dbfile)) as conn:  # @UndefinedVariable
+        with contextlib.closing(
+            sqlite3.connect(dbfile)
+        ) as conn:  # @UndefinedVariable
             with contextlib.closing(conn.cursor()) as cur:
                 cur.execute(
                     "CREATE TABLE super_mega_table(a_string varchar(64) PRIMARY KEY, an_integer integer)"
@@ -960,14 +997,18 @@ class TestDROPReproducibility(unittest.TestCase):
         a = NullDROP("a", "a")
         a.reproducibility_level = ReproducibilityFlags.RERUN
         a.setCompleted()
-        self.assertEqual(a.generate_merkle_data(), {"status": DROPStates.COMPLETED})
+        self.assertEqual(
+            a.generate_merkle_data(), {"status": DROPStates.COMPLETED}
+        )
         self.assertIsNotNone(a.merkleroot)
 
     def test_drop_repeat(self):
         a = NullDROP("a", "a")
         a.reproducibility_level = ReproducibilityFlags.REPEAT
         a.setCompleted()
-        self.assertEqual(a.generate_merkle_data(), {"status": DROPStates.COMPLETED})
+        self.assertEqual(
+            a.generate_merkle_data(), {"status": DROPStates.COMPLETED}
+        )
         self.assertIsNotNone(a.merkleroot)
         pass
 
@@ -975,7 +1016,9 @@ class TestDROPReproducibility(unittest.TestCase):
         a = NullDROP("a", "a")
         a.reproducibility_level = ReproducibilityFlags.RECOMPUTE
         a.setCompleted()
-        self.assertEqual(a.generate_merkle_data(), {"status": DROPStates.COMPLETED})
+        self.assertEqual(
+            a.generate_merkle_data(), {"status": DROPStates.COMPLETED}
+        )
         self.assertIsNotNone(a.merkleroot)
         pass
 
@@ -991,7 +1034,9 @@ class TestDROPReproducibility(unittest.TestCase):
         a = NullDROP("a", "a")
         a.reproducibility_level = ReproducibilityFlags.REPLICATE_SCI
         a.setCompleted()
-        self.assertEqual(a.generate_rerun_data(), {"status": DROPStates.COMPLETED})
+        self.assertEqual(
+            a.generate_rerun_data(), {"status": DROPStates.COMPLETED}
+        )
         self.assertIsNotNone(a.merkleroot)
         pass
 
@@ -999,7 +1044,9 @@ class TestDROPReproducibility(unittest.TestCase):
         a = NullDROP("a", "a")
         a.reproducibility_level = ReproducibilityFlags.REPLICATE_COMP
         a.setCompleted()
-        self.assertEqual(a.generate_rerun_data(), {"status": DROPStates.COMPLETED})
+        self.assertEqual(
+            a.generate_rerun_data(), {"status": DROPStates.COMPLETED}
+        )
         self.assertIsNotNone(a.merkleroot)
         pass
 
@@ -1007,7 +1054,9 @@ class TestDROPReproducibility(unittest.TestCase):
         a = NullDROP("a", "a")
         a.reproducibility_level = ReproducibilityFlags.REPLICATE_TOTAL
         a.setCompleted()
-        self.assertEqual(a.generate_rerun_data(), {"status": DROPStates.COMPLETED})
+        self.assertEqual(
+            a.generate_rerun_data(), {"status": DROPStates.COMPLETED}
+        )
         self.assertIsNotNone(a.merkleroot)
         pass
 
@@ -1122,7 +1171,9 @@ class TestDROPReproducibility(unittest.TestCase):
         b.reproducibility_level = ReproducibilityFlags.RERUN
         b.setCompleted()
 
-        with contextlib.closing(sqlite3.connect(dbfile)) as conn:  # @UndefinedVariable
+        with contextlib.closing(
+            sqlite3.connect(dbfile)
+        ) as conn:  # @UndefinedVariable
             with contextlib.closing(conn.cursor()) as cur:
                 cur.execute(
                     "CREATE TABLE super_mega_table(a_string varchar(64) PRIMARY KEY, an_integer integer)"
@@ -1152,7 +1203,9 @@ class TestDROPReproducibility(unittest.TestCase):
 
             a.reproducibility_level = ReproducibilityFlags.REPRODUCE
             a.commit()
-            self.assertEqual(a.generate_merkle_data(), {"query_log": a._querylog})
+            self.assertEqual(
+                a.generate_merkle_data(), {"query_log": a._querylog}
+            )
             self.assertNotEqual(a.merkleroot, b.merkleroot)
 
             a.reproducibility_level = ReproducibilityFlags.REPLICATE_SCI
@@ -1209,7 +1262,9 @@ class BranchAppDropTestsBase(object):
                 drop, DROPStates.COMPLETED, AppDROPStates.FINISHED
             )
         else:
-            self._assert_drop_in_status(drop, DROPStates.SKIPPED, AppDROPStates.SKIPPED)
+            self._assert_drop_in_status(
+                drop, DROPStates.SKIPPED, AppDROPStates.SKIPPED
+            )
 
     def _test_single_branch_graph(self, result, levels):
         """
@@ -1243,7 +1298,10 @@ class BranchAppDropTestsBase(object):
             last_false = y
 
         with DROPWaiterCtx(
-            self, [last_true, last_false], 2, [DROPStates.COMPLETED, DROPStates.SKIPPED]
+            self,
+            [last_true, last_false],
+            2,
+            [DROPStates.COMPLETED, DROPStates.SKIPPED],
         ):
             a.async_execute()
 
@@ -1322,11 +1380,15 @@ class BranchAppDropTestsBase(object):
             self._test_multi_branch_graph(False, levels)
 
 
-class BranchAppDropTestsWithMemoryDrop(BranchAppDropTestsBase, unittest.TestCase):
+class BranchAppDropTestsWithMemoryDrop(
+    BranchAppDropTestsBase, unittest.TestCase
+):
     DataDropType = InMemoryDROP
 
 
-class BranchAppDropTestsWithFileDrop(BranchAppDropTestsBase, unittest.TestCase):
+class BranchAppDropTestsWithFileDrop(
+    BranchAppDropTestsBase, unittest.TestCase
+):
     DataDropType = FileDROP
 
 

@@ -1,5 +1,5 @@
 import threading
-from dlg.drop import InputFiredAppDROP
+from dlg.apps.app_base import InputFiredAppDROP
 from dlg.event import Event, EventHandler
 import pytest
 

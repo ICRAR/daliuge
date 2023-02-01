@@ -38,7 +38,8 @@ from io import StringIO
 from contextlib import redirect_stdout
 
 from dlg import droputils, utils
-from dlg.drop import BarrierAppDROP
+from dlg.named_port_utils import check_ports_dict, identify_named_ports
+from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import InvalidDropException
 from dlg.meta import (
     dlg_string_param,
@@ -544,7 +545,7 @@ class PyFuncApp(BarrierAppDROP):
         else:
             appArgs = {}
 
-        if "inputs" in self.parameters and droputils.check_ports_dict(
+        if "inputs" in self.parameters and check_ports_dict(
             self.parameters["inputs"]
         ):
             check_len = min(
@@ -555,7 +556,7 @@ class PyFuncApp(BarrierAppDROP):
                 key = list(inport.keys())[0]
                 inputs_dict[key] = {"name": inport[key], "path": inputs[key]}
             kwargs.update(
-                droputils.identify_named_ports(
+                identify_named_ports(
                     inputs_dict,
                     posargs,
                     pargsDict,

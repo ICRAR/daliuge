@@ -32,7 +32,7 @@ import numpy
 
 from dlg import droputils
 from dlg.common import dropdict, Categories
-from dlg.drop import BarrierAppDROP
+from dlg.apps.app_base import AppDROP, BarrierAppDROP
 from dlg.data.drops.plasma import PlasmaDROP
 from dlg.data.drops.memory import InMemoryDROP
 from dlg.data.drops.file import FileDROP
@@ -118,7 +118,9 @@ class DropUtilsTest(unittest.TestCase):
             upstreamNodes = [upstreamNodes]
 
         # Normal check
-        self.assertSetEqual(set(upstreamNodes), set(droputils.getUpstreamObjects(node)))
+        self.assertSetEqual(
+            set(upstreamNodes), set(droputils.getUpstreamObjects(node))
+        )
         # Check the other way too
         for upNode in upstreamNodes:
             self.assertTrue(node in droputils.getDownstreamObjects(upNode))
@@ -149,10 +151,10 @@ class DropUtilsTest(unittest.TestCase):
 
     def _test_datadrop_function(self, test_function, input_data):
         # basic datadrop
-        for drop_type in (InMemoryDROP,FileDROP):
+        for drop_type in (InMemoryDROP, FileDROP):
             test_function(drop_type, input_data)
 
-        #plasma datadrop
+        # plasma datadrop
         store = None
         try:
             store = subprocess.Popen(
@@ -171,7 +173,7 @@ class DropUtilsTest(unittest.TestCase):
         self.assertEqual(data, output_data)
 
     def test_save_load_pickle(self):
-        input_data = {'nested': {'data': {'object': {}}}}
+        input_data = {"nested": {"data": {"object": {}}}}
         self._test_datadrop_function(self._test_save_load_pickle, input_data)
 
     def _test_save_load_npy(self, drop_type, data):
@@ -181,7 +183,7 @@ class DropUtilsTest(unittest.TestCase):
         numpy.testing.assert_equal(data, output_data)
 
     def test_save_load_npy(self):
-        input_data = numpy.ones([3,5])
+        input_data = numpy.ones([3, 5])
         self._test_datadrop_function(self._test_save_load_npy, input_data)
 
     def test_DROPFile(self):
@@ -207,7 +209,9 @@ class DropUtilsTest(unittest.TestCase):
 
         visitedNodes = []
         for drop, downStreamDrops in droputils.breadFirstTraverse(a):
-            downStreamDrops[:] = [x for x in downStreamDrops if x.uid not in ("b", "f")]
+            downStreamDrops[:] = [
+                x for x in downStreamDrops if x.uid not in ("b", "f")
+            ]
             visitedNodes.append(drop)
 
         self.assertEqual(5, len(visitedNodes))
@@ -228,7 +232,11 @@ class DropUtilsTest(unittest.TestCase):
                 "storage": Categories.MEMORY,
                 "consumers": ["B"],
             },
-            {"oid": "B", "type": "app", "app": "test.test_graph_loader.DummyApp"},
+            {
+                "oid": "B",
+                "type": "app",
+                "app": "test.test_graph_loader.DummyApp",
+            },
         ]
         roots = droputils.get_roots(pg_spec)
         self.assertEqual(1, len(roots))
@@ -259,7 +267,12 @@ class DropUtilsTest(unittest.TestCase):
         pg_spec = [
             {"oid": "A", "type": "data", "storage": Categories.MEMORY},
             {"oid": "B", "type": "data", "storage": Categories.MEMORY},
-            {"oid": "C", "type": "app", "app": "dlg.apps.crc.CRCApp", "inputs": ["A"]},
+            {
+                "oid": "C",
+                "type": "app",
+                "app": "dlg.apps.crc.CRCApp",
+                "inputs": ["A"],
+            },
             {
                 "oid": "D",
                 "type": "data",

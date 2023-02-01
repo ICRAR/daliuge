@@ -37,7 +37,7 @@ __all__ = [
     "ParameterSetDROP",
     "EnvironmentVarDROP",
     "S3DROP",
-    "DataDummyDROP"
+    "DataDROP",
 ]
 
 from dlg.data.drops.directorycontainer import DirectoryContainer
@@ -49,4 +49,4 @@ from dlg.data.drops.rdbms import RDBMSDrop
 from dlg.data.drops.parset_drop import ParameterSetDROP
 from dlg.data.drops.environmentvar_drop import EnvironmentVarDROP
 from dlg.data.drops.s3_drop import S3DROP
-from dlg.data.drops.dataDummy_drop import DataDummyDROP
+from dlg.data.drops.data_base import DataDROP
