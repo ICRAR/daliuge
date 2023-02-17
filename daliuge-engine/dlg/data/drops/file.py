@@ -83,8 +83,6 @@ class FileDROP(DataDROP, PathBasedDrop):
         """
         FileDROP-specific initialization.
         """
-        # filepath, dirpath the two pieces of information we offer users to tweak
-        # These are very intermingled but are not exactly the same, see below
         self.filepath = self.parameters.get("filepath", None)
 
         filepath = self.sanitize_paths(self.filepath)
