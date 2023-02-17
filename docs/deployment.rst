@@ -142,13 +142,11 @@ Docker components
 
   (1) Memory Data Components can't be used directly as input or output of Docker components. However, it is possible to use Plasma/Flight as a shared memory mechansim.
 
-  (2) Parameters are not accessible to the application code inside the container. They are accessible to the component code and can be fed through, but that requires some dedicated code inside the container. That also includes command line parameters, although users can specify the complete command line in the dedicated configuration field. We are working on a solution to make this more generic.
+  (2) Care has to be taken when using files to exchange data between docker components and other components. In particular any usage of absolute path names is quite tricky to get working and requires cross-mounting of additional volumes. Although this is possible it is not recommended. The |daliuge| workspace directory is mounted by default in the container components as well.
 
-  (3) Care has to be taken when using files to exchange data between docker components and other components. In particular any usage of absolute path names is quite tricky to get working and requires cross-mounting of additional volumes. Although this is possible it is not recommended. The |daliuge| workspace directory is mounted by default in the container components as well.
+  (3) By default the docker containers are started with the same user/group ids as the user running the engine.
 
-  (4) Specifying a user as well as specifying a command in the configuration requires that /bin/bash is available in the container. In particular for minimized containers this is very often not the case. Again, we are working on a solution for that.
-
-Note that it is not recommended to pack big external packages together with |daliuge| in a single image. The internal launch mechanism of docker components is under revision and we will keep this document up-to-date accordingly.
+Note that it is not recommended to pack big external packages together with |daliuge| in a single image. We are using the `slimtoolkit <https://github.com/slimtoolkit/slim>`_ to minimize the size of our docker images and recommend doing this for component images as well.
 
 Python components
 ~~~~~~~~~~~~~~~~~

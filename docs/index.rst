@@ -33,8 +33,6 @@ and is performed by the `DIA team <http://www.icrar.org/our-research/data-intens
  cli
  api-index
 
-Should you have any questions, please contact us at: dfms_prototype AT googlegroups DOT com
-
 Citations
 ---------
 As you use |daliuge| for your exciting projects, please cite the following paper:
