@@ -781,7 +781,7 @@ class TestDROP(unittest.TestCase):
             a = FileDROP(
                 "a",
                 "a",
-                dirname=tempDir,
+                filepath=tempDir + "/",
                 delete_parent_directory=delete_parent_directory,
             )
             a.write(b" ")
@@ -819,10 +819,10 @@ class TestDROP(unittest.TestCase):
             os.makedirs(dirname2)
 
         # DROPs involved
-        a = FileDROP("a", "a", dirname=dirname)
-        b = FileDROP("b", "b", dirname=dirname)
-        c = FileDROP("c", "c", dirname=dirname2)
-        d = FileDROP("d", "d", dirname=dirname2)
+        a = FileDROP("a", "a", filepath=f"{dirname}/")
+        b = FileDROP("b", "b", filepath=f"{dirname}/")
+        c = FileDROP("c", "c", filepath=f"{dirname2}/")
+        d = FileDROP("d", "d", filepath=f"{dirname2}/")
         cont1 = DirectoryContainer("e", "e", dirname=dirname)
         cont2 = DirectoryContainer("f", "f", dirname=dirname2)
 

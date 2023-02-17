@@ -57,7 +57,9 @@ class TestEnvironmentVarDROP(unittest.TestCase):
         self.assertEqual(3, env_drop.get("int_var"))
         self.assertEqual(False, env_drop.get("bool_var"))
         self.assertEqual(0.5, env_drop.get("float_var"))
-        self.assertEqual({"first": 1, "second": "sec"}, env_drop.get("dict_var"))
+        self.assertEqual(
+            {"first": 1, "second": "sec"}, env_drop.get("dict_var")
+        )
         self.assertEqual([1, 2.0, "3"], env_drop.get("list_var"))
         self.assertIsNone(env_drop.get("non_var"))
         self.assertIsNone(env_drop.get("uid"))
@@ -113,23 +115,30 @@ class TestEnvironmentVarDROP(unittest.TestCase):
         self.assertEqual(
             "/HOME/", test_drop.get_environment_variable("$env_vars.dir_var")
         )
-        self.assertEqual(3, test_drop.get_environment_variable("$env_vars.int_var"))
+        self.assertEqual(
+            3, test_drop.get_environment_variable("$env_vars.int_var")
+        )
         self.assertEqual(
             False, test_drop.get_environment_variable("$env_vars.bool_var")
         )
-        self.assertEqual(0.5, test_drop.get_environment_variable("$env_vars.float_var"))
+        self.assertEqual(
+            0.5, test_drop.get_environment_variable("$env_vars.float_var")
+        )
         self.assertEqual(
             {"first": 1, "second": "sec"},
             test_drop.get_environment_variable("$env_vars.dict_var"),
         )
         self.assertEqual(
-            [1, 2.0, "3"], test_drop.get_environment_variable("$env_vars.list_var")
+            [1, 2.0, "3"],
+            test_drop.get_environment_variable("$env_vars.list_var"),
         )
         self.assertEqual(
-            "$env_vars.non_var", test_drop.get_environment_variable("$env_vars.non_var")
+            "$env_vars.non_var",
+            test_drop.get_environment_variable("$env_vars.non_var"),
         )
         self.assertEqual(
-            "$env_vars.uid", test_drop.get_environment_variable("$env_vars.uid")
+            "$env_vars.uid",
+            test_drop.get_environment_variable("$env_vars.uid"),
         )
 
     def test_drop_get_multiple(self):
@@ -168,7 +177,9 @@ class TestEnvironmentVarDROP(unittest.TestCase):
         extra_keys = ["dir_var", "$non_store.non_var"]
         query_keys.extend(extra_keys)
         expected_vars.extend(extra_keys)
-        self.assertEqual(expected_vars, test_drop.get_environment_variables(query_keys))
+        self.assertEqual(
+            expected_vars, test_drop.get_environment_variables(query_keys)
+        )
 
     def test_drop_get_empty(self):
         """
@@ -195,24 +206,39 @@ class TestEnvironmentVarDROP(unittest.TestCase):
         test_drop.addProducer(env1_drop)
         test_drop.addProducer(env2_drop)
         self.assertEqual(
-            "/HOME/", test_drop.get_environment_variable(f"${env1_name}.dir_var")
+            "/HOME/",
+            test_drop.get_environment_variable(f"${env1_name}.dir_var"),
         )
         self.assertEqual(
-            "/DIFFERENT/", test_drop.get_environment_variable(f"${env2_name}.dir_var")
+            "/DIFFERENT/",
+            test_drop.get_environment_variable(f"${env2_name}.dir_var"),
         )
-        self.assertEqual(3, test_drop.get_environment_variable(f"${env1_name}.int_var"))
-        self.assertEqual(4, test_drop.get_environment_variable(f"${env2_name}.int_var"))
+        self.assertEqual(
+            3, test_drop.get_environment_variable(f"${env1_name}.int_var")
+        )
+        self.assertEqual(
+            4, test_drop.get_environment_variable(f"${env2_name}.int_var")
+        )
         self.assertEqual(
             f"{env1_name}.int_var",
             test_drop.get_environment_variable(f"{env1_name}.int_var"),
         )
-        self.assertEqual(f".int_var", test_drop.get_environment_variable(f".int_var"))
+        self.assertEqual(
+            f".int_var", test_drop.get_environment_variable(f".int_var")
+        )
         self.assertEqual(
             f"$third_env.int_var",
             test_drop.get_environment_variable(f"$third_env.int_var"),
         )
         self.assertEqual(
-            ["/HOME/", "/DIFFERENT/", 3, 4, f"${env1_name}.non_var", "$fake.var"],
+            [
+                "/HOME/",
+                "/DIFFERENT/",
+                3,
+                4,
+                f"${env1_name}.non_var",
+                "$fake.var",
+            ],
             test_drop.get_environment_variables(
                 [
                     f"${env1_name}.dir_var",
@@ -252,10 +278,13 @@ class TestEnvironmentVarDROP(unittest.TestCase):
         )
         test_drop.autofill_environment_variables()
         self.assertEqual(getDlgDir(), test_drop.parameters["dlg_root"])
-        self.assertEqual(getDlgDir(), test_drop.get_environment_variable("$DLG_ROOT"))
+        self.assertEqual(
+            getDlgDir(), test_drop.get_environment_variable("$DLG_ROOT")
+        )
         self.assertEqual("$DLG_NONEXISTS", test_drop.parameters["non_dlg_var"])
         self.assertEqual(
-            "$DLG_NONEXISTS", test_drop.get_environment_variable("$DLG_NONEXISTS")
+            "$DLG_NONEXISTS",
+            test_drop.get_environment_variable("$DLG_NONEXISTS"),
         )
 
     def test_filename_integration(self):
@@ -263,8 +292,8 @@ class TestEnvironmentVarDROP(unittest.TestCase):
             os.environ["DLG_ROOT"] = tmp_dir
             os.environ["DLG_FILE"] = "test_file"
             test_drop = FileDROP(
-                oid="a", uid="a", filepath="$DLG_FILE", dirname="$DLG_ROOT"
+                oid="a", uid="a", filepath="$DLG_ROOT/$DLG_FILE"
             )
             test_drop.write(b"1234")
             self.assertEqual(tmp_dir, test_drop.dirname)
-            self.assertEqual("test_file", test_drop.filepath)
+            self.assertEqual("test_file", test_drop.filename)
