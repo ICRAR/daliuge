@@ -13,7 +13,7 @@ with a filesystem path.
 File Drop
 ---------
 
-:class:`FileDROP <dlg.drop.FileDROP>` is a highly compatibile data drop type that can be easily used as persistent volume I/O
+:class:`FileDROP <dlg.drop.FileDROP>` is a highly compatible data drop type that can be easily used as persistent volume I/O
 and inspection of individual app component I/O. The downside of using file drops is reduced I/O performance compared to
 alternative memory based drops that can instead utilize buffer protocol.
 

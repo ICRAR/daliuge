@@ -42,8 +42,7 @@ from dlg.utils import isabs
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
 # @param delete_parent_directory Delete parent directory/False/Boolean/ComponentParameter/readwrite//False/False/Also delete the parent directory of this file when deleting the file itself
 # @param check_filepath_exists Check file path exists/False/Boolean/ComponentParameter/readwrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
-# @param filepath File Path//String/ComponentParameter/readwrite//False/False/Path to the file for this node
-# @param dirname Directory name//String/ComponentParameter/readwrite//False/False/Path to the file for this node
+# @param filepath File Path//String/ComponentParameter/readwrite//False/False/File path for this file. If it has a '/' at the end it will be treated as a directory name and the filename will the generated. If it does not have a '/', the last part will be  treated as a filename. If `filepath` does not start with '/’ (relative path) then the session directory will be pre-pended to make the path absolute.
 # @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
 # @param persist Persist/True/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
@@ -53,41 +52,14 @@ class FileDROP(DataDROP, PathBasedDrop):
     """
     A DROP that points to data stored in a mounted filesystem.
 
-    Users can (but usually don't need to) specify both a `filepath` and a
-    `dirname` parameter for each FileDrop. The combination of these two parameters
-    will determine the final location of the file backed up by this drop on the
-    underlying filesystem. When no ``filepath`` is provided, the drop's UID will be
-    used as a filename. When a relative filepath is provided, it is relative to
-    ``dirname``. When an absolute ``filepath`` is given, it is used as-is.
-    When a relative ``dirname`` is provided, it is relative to the base directory
-    of the currently running session (i.e., a directory with the session ID as a
-    name, placed within the currently working directory of the Node Manager
-    hosting that session). If ``dirname`` is absolute, it is used as-is.
-
-    In some cases drops are created **outside** the context of a session, most
-    notably during unit tests. In these cases the base directory is a fixed
-    location under ``/tmp``.
-
-    The following table summarizes the calculation of the final path used by
-    the ``FileDrop`` class depending on its parameters:
-
-    ============ ===================== ===================== ==========
-         .                               filepath
-    ------------ ------------------------------------------------------
-    dirname      empty                 relative              absolute
-    ============ ===================== ===================== ==========
-    **empty**    /``$B``/``$u``        /``$B``/``$f``        /``$f``
-    **relative** /``$B``/``$d``/``$u`` /``$B``/``$d``/``$f`` **ERROR**
-    **absolute** /``$d``/``$u``        /``$d``/``$f``        **ERROR**
-    ============ ===================== ===================== ==========
-
-    In the table, ``$f`` is the value of ``filepath``, ``$d`` is the value of
-    ``dirname``, ``$u`` is the drop's UID and ``$B`` is the base directory for
-    this drop's session, namely ``/the/cwd/$session_id``.
+    Users can fix both the path and the name of a FileDrop using the `filepath`
+    parameter for each FileDrop. We distinguish three cases and their combinations.
+    If it has a '/' at the end it will be treated as a directory name and the
+    filename will the generated. If it does not have a '/', the last part will be
+    treated as a filename. If `filepath` does not start with '/’ (relative path)
+    then the session directory will be pre-pended to make the path absolute.
     """
 
-    # filepath = dlg_string_param("filepath", None)
-    # dirname = dlg_string_param("dirname", None)
     delete_parent_directory = dlg_bool_param("delete_parent_directory", False)
     check_filepath_exists = dlg_bool_param("check_filepath_exists", False)
 
@@ -100,27 +72,10 @@ class FileDROP(DataDROP, PathBasedDrop):
             kwargs["expireAfterUse"] = False
         super().__init__(*args, **kwargs)
 
-    def sanitize_paths(self, filepath, dirname):
+    def sanitize_paths(self, filepath):
 
-        # first replace any ENV_VARS on the names
-        if filepath:
-            filepath = os.path.expandvars(filepath)
-        if dirname:
-            dirname = os.path.expandvars(dirname)
-        # No filepath has been given, there's nothing to sanitize
-        if not filepath:
-            return filepath, dirname
-
-        # All is good, return unchanged
-        filepath_b = os.path.basename(filepath)
-        if filepath_b == filepath:
-            return filepath, dirname
-
-        # Extract the dirname from filepath and append it to dirname
-        filepath_d = os.path.dirname(filepath)
-        if not isabs(filepath_d) and dirname:
-            filepath_d = os.path.join(dirname, filepath_d)
-        return filepath_b, filepath_d
+        # replace any ENV_VARS on the names
+        return os.path.expandvars(filepath) if filepath else None
 
     non_fname_chars = re.compile(r":|%s" % os.sep)
 
@@ -128,35 +83,28 @@ class FileDROP(DataDROP, PathBasedDrop):
         """
         FileDROP-specific initialization.
         """
-        # filepath, dirpath the two pieces of information we offer users to tweak
-        # These are very intermingled but are not exactly the same, see below
         self.filepath = self.parameters.get("filepath", None)
-        self.dirname = self.parameters.get("dirname", None)
-        # Duh!
-        if isabs(self.filepath) and self.dirname:
-            raise InvalidDropException(
-                self,
-                "An absolute filepath does not allow a dirname to be specified",
-            )
 
-        # Sanitize filepath/dirname into proper directories-only and
-        # filename-only components (e.g., dirname='lala' and filename='1/2'
-        # results in dirname='lala/1' and filename='2'
-        filepath, dirname = self.sanitize_paths(self.filepath, self.dirname)
+        filepath = self.sanitize_paths(self.filepath)
+        filename = os.path.basename(filepath) if filepath else None
+        dirname = os.path.dirname(filepath) if filepath else None
         # We later check if the file exists, but only if the user has specified
         # an absolute dirname/filepath (otherwise it doesn't make sense, since
         # we create our own filenames/dirnames dynamically as necessary
         check = False
-        if isabs(dirname) and filepath:
+        if isabs(dirname):
             check = self.check_filepath_exists
 
-        # Default filepath to drop UID and dirname to per-session directory
-        if not filepath:
-            filepath = self.non_fname_chars.sub("_", self.uid)
-        dirname = self.get_dir(dirname)
+        # Default filename to drop UID
+        if not filename:
+            filename = self.non_fname_chars.sub("_", self.uid)
+        self.filename = filename
+        self.dirname = self.get_dir(dirname)
 
-        self._root = dirname
-        self._path = os.path.join(dirname, filepath)
+        self._root = self.dirname
+        self._path = os.path.join(
+            self.dirname, self.filename
+        )  # put it back together again
         logger.debug(f"Set path of drop {self._uid}: {self._path}")
         if check and not os.path.isfile(self._path):
             raise InvalidDropException(
