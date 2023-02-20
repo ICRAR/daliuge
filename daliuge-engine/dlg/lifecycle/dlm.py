@@ -129,7 +129,8 @@ from .hsm import manager
 from .hsm.store import AbstractStore
 from .. import droputils
 from ..ddap_protocol import DROPStates, DROPPhases, AppDROPStates
-from ..drop import AbstractDROP, ContainerDROP
+from ..drop import AbstractDROP
+from ..data.drops.container import ContainerDROP
 
 logger = logging.getLogger(__name__)
 
@@ -210,7 +211,9 @@ class DataLifecycleManager:
     An object that deals with automatic data drop replication and deletion.
     """
 
-    def __init__(self, check_period=0, cleanup_period=0, enable_drop_replication=False):
+    def __init__(
+        self, check_period=0, cleanup_period=0, enable_drop_replication=False
+    ):
         self._reg = registry.InMemoryRegistry()
         self._listener = DropEventListener(self)
         self._enable_drop_replication = enable_drop_replication
@@ -235,16 +238,12 @@ class DataLifecycleManager:
         # Spawn the background threads
         if self._check_period:
             self._drop_checker = DROPChecker(
-                "DropChecker",
-                self,
-                self._check_period
+                "DropChecker", self, self._check_period
             )
             self._drop_checker.start()
         if self._cleanup_period:
             self._drop_garbage_collector = DROPGarbageCollector(
-                "DropGarbageCollector",
-                self,
-                self._cleanup_period
+                "DropGarbageCollector", self, self._cleanup_period
             )
             self._drop_garbage_collector.start()
 
@@ -293,7 +292,8 @@ class DataLifecycleManager:
             # are finished using this DROP
             if not drop.persist and drop.expireAfterUse:
                 allDone = all(
-                    c.execStatus in [AppDROPStates.FINISHED, AppDROPStates.ERROR]
+                    c.execStatus
+                    in [AppDROPStates.FINISHED, AppDROPStates.ERROR]
                     for c in drop.consumers
                 )
                 if not allDone:
@@ -349,17 +349,21 @@ class DataLifecycleManager:
                         replicas.append(siblingDrop)
                     else:
                         logger.warning(
-                            "%r (replicated from %r) has disappeared", siblingDrop, drop
+                            "%r (replicated from %r) has disappeared",
+                            siblingDrop,
+                            drop,
                         )
                         toRemove.append(siblingDrop.uid)
 
                 if len(replicas) > 1:
                     logger.info(
-                        "%r has still more than one replica, no action needed", drop
+                        "%r has still more than one replica, no action needed",
+                        drop,
                     )
                 elif len(replicas) == 1:
                     logger.info(
-                        "Only one replica left for DROP %r, will create a new one", drop
+                        "Only one replica left for DROP %r, will create a new one",
+                        drop,
                     )
                     self.replicateDrop(replicas[0])
                 else:
@@ -484,7 +488,9 @@ class DataLifecycleManager:
 
         drop = self._drops[uid]
         if drop.persist and self.isReplicable(drop):
-            logger.debug("Replicating %r because it's marked to be persisted", drop)
+            logger.debug(
+                "Replicating %r because it's marked to be persisted", drop
+            )
             try:
                 self.replicateDrop(drop)
             except:
@@ -513,7 +519,9 @@ class DataLifecycleManager:
         availableSpace = store.getAvailableSpace()
 
         if size > availableSpace:
-            raise Exception("Cannot replicate DROP to store %s: not enough space left")
+            raise Exception(
+                "Cannot replicate DROP to store %s: not enough space left"
+            )
 
         # Create new DROP and write the contents of the original into it
         # TODO: In a real world application this will probably happen in a separate
@@ -538,7 +546,9 @@ class DataLifecycleManager:
         # Dummy, but safe, new UID
         newUid = "uid:" + "".join(
             [
-                random.SystemRandom().choice(string.ascii_letters + string.digits)
+                random.SystemRandom().choice(
+                    string.ascii_letters + string.digits
+                )
                 for _ in range(10)
             ]
         )

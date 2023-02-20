@@ -35,10 +35,17 @@ from typing import Any, Tuple
 import numpy as np
 
 from dlg.ddap_protocol import DROPStates
-from dlg.drop import AppDROP, AbstractDROP, DataDROP
 from dlg.data.io import IOForURL, OpenMode
 from dlg import common
 from dlg.common import DropType
+from dlg.apps.app_base import AppDROP
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from dlg.drop import AbstractDROP
+    from dlg.apps.app_base import AppDROP
+    from dlg.data.drops.data_base import DataDROP
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +105,8 @@ class DROPWaiterCtx(object):
         for drop in self._drops:
             evt = threading.Event()
             drop.subscribe(
-                EvtConsumer(evt, expected_states=self._expected_states), "status"
+                EvtConsumer(evt, expected_states=self._expected_states),
+                "status",
             )
             self._evts.append(evt)
         return self
@@ -133,19 +141,21 @@ def allDropContents(drop, bufsize=65536) -> bytes:
     return buf.getvalue()
 
 
-def copyDropContents(source: DataDROP, target: DataDROP, bufsize=65536):
+def copyDropContents(
+    source: "DataDROP", target: "DataDROP", bufsize: int = 65536
+):
     """
     Manually copies data from one DROP into another, in bufsize steps
     """
-    logger.debug(
-        "Copying from %s to %s", repr(source), repr(target))
+    logger.debug("Copying from %s to %s", repr(source), repr(target))
     sdesc = source.open()
     buf = source.read(sdesc, bufsize)
-    logger.debug("Read %d bytes from %s", len(buf), 
-    repr(source))
+    logger.debug("Read %d bytes from %s", len(buf), repr(source))
     st = time.time()
     ssize = source.size if source.size is not None else -1
-    logger.debug("Source size: %d; Source checksum: %d", ssize, source.checksum)
+    logger.debug(
+        "Source size: %d; Source checksum: %d", ssize, source.checksum
+    )
     tot_w = 0
     ofl = True
     # target._expectedSize = ssize
@@ -153,21 +163,30 @@ def copyDropContents(source: DataDROP, target: DataDROP, bufsize=65536):
         tot_w += target.write(buf)
         dur = int(time.time() - st)
         if dur > 5 and dur % 5 == 0 and ofl:
-            logger.debug("Wrote %d Bytes to %s; rate %.2f MB/s",
-                tot_w, repr(target), tot_w/(1024**2*dur))
+            logger.debug(
+                "Wrote %d Bytes to %s; rate %.2f MB/s",
+                tot_w,
+                repr(target),
+                tot_w / (1024**2 * dur),
+            )
             ofl = False
         elif int(dur) % 5 == 4:
             ofl = True
         buf = source.read(sdesc, bufsize)
     dur = time.time() - st
-    logger.debug("Wrote %d Bytes of %d to %s; rate %.2f MB/s",
-        tot_w, ssize, repr(target), tot_w/(1024**2*dur))
+    logger.debug(
+        "Wrote %d Bytes of %d to %s; rate %.2f MB/s",
+        tot_w,
+        ssize,
+        repr(target),
+        tot_w / (1024**2 * dur),
+    )
 
     source.close(sdesc)
     return
 
 
-def getUpstreamObjects(drop: AbstractDROP):
+def getUpstreamObjects(drop: "AbstractDROP"):
     """
     Returns a list of all direct "upstream" DROPs for the given+
     DROP. An DROP A is "upstream" with respect to DROP B if
@@ -221,7 +240,7 @@ def getLeafNodes(drops):
     ]
 
 
-def depthFirstTraverse(node: AbstractDROP, visited=[]):
+def depthFirstTraverse(node: "AbstractDROP", visited=[]):
     """
     Depth-first iterator for a DROP graph.
 
@@ -284,12 +303,12 @@ def listify(o):
     return [o]
 
 
-def save_pickle(drop: DataDROP, data: Any):
+def save_pickle(drop: "DataDROP", data: Any):
     """Saves a python object in pkl format"""
     pickle.dump(data, drop)
 
 
-def load_pickle(drop: DataDROP) -> Any:
+def load_pickle(drop: "DataDROP") -> Any:
     """Loads a pkl formatted data object stored in a DataDROP.
     Note: does not support streaming mode.
     """
@@ -315,7 +334,7 @@ def load_pickle(drop: DataDROP) -> Any:
 #             yield pickle.load(p)
 
 
-def save_npy(drop: DataDROP, ndarray: np.ndarray, allow_pickle=False):
+def save_npy(drop: "DataDROP", ndarray: np.ndarray, allow_pickle=False):
     """
     Saves a numpy ndarray to a drop in npy format
     """
@@ -329,11 +348,11 @@ def save_npy(drop: DataDROP, ndarray: np.ndarray, allow_pickle=False):
     dropio.close()
 
 
-def save_numpy(drop: DataDROP, ndarray: np.ndarray):
+def save_numpy(drop: "DataDROP", ndarray: np.ndarray):
     save_npy(drop, ndarray)
 
 
-def load_npy(drop: DataDROP, allow_pickle=False) -> np.ndarray:
+def load_npy(drop: "DataDROP", allow_pickle=False) -> np.ndarray:
     """
     Loads a numpy ndarray from a drop in npy format
     """
@@ -344,7 +363,7 @@ def load_npy(drop: DataDROP, allow_pickle=False) -> np.ndarray:
     return res
 
 
-def load_numpy(drop: DataDROP):
+def load_numpy(drop: "DataDROP"):
     return load_npy(drop)
 
 
@@ -530,238 +549,6 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
 
     return cmd
 
-def serialize_kwargs(keyargs, prefix="--", separator=" "):
-    kwargs = []
-    for (name, value) in iter(keyargs.items()):
-        if prefix == "--" and len(name) == 1:
-            kwargs += [f"-{name} {value}"]
-        else:
-            kwargs += [f"{prefix.strip()}{name.strip()}{separator}{str(value).strip()}"]
-    logger.debug("kwargs after serialization: %s",kwargs)
-    return kwargs
-
-def clean_applicationArgs(applicationArgs:dict) -> dict:
-    """
-    Removes arguments with None and False values, if not precious. This
-    is in particular used for Bash and Docker app command lines, else
-    we would have empty values for command line arguments.
-
-    Args:
-        applicationsArgs (dict): the complete set of arguments
-
-    Returns:
-        dict: a dictionary with the relevant arguments only.
-    """
-    cleanedArgs = {}
-    if not isinstance(applicationArgs, dict):
-        logger.info("applicationArgs are not passed as a dict. Ignored!")
-    else:
-        logger.info("ApplicationArgs found %s", applicationArgs)
-    for (name, vdict) in applicationArgs.items():
-        if vdict in [None, False, ""]:
-            continue
-        elif isinstance(vdict, bool):
-            vdict = {"precious": False, "value": "", "positional": False}
-        elif isinstance(vdict, dict):
-            precious = vdict["precious"]
-            if vdict["value"] in [None, False, ""] and not precious:
-                continue
-        cleanedArgs.update({name: vdict})
-    return cleanedArgs
-
-def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
-    """
-    Unpacks the applicationArgs dictionary and returns two strings, one for
-    positional arguments and one for kw arguments that can be used to construct
-    the final command line.
-    """
-    applicationArgs = clean_applicationArgs(applicationArgs, 
-        prefix=prefix, separator=separator)
-    pargs = []
-    kwargs = {}
-    for (name, vdict) in applicationArgs.items():
-        value = vdict["value"]
-        positional = vdict["positional"]
-        if positional:
-            pargs.append(str(value).strip())
-        else:
-            kwargs.update({name:value})
-    skwargs = serialize_kwargs(kwargs, prefix=prefix, separator=separator)
-    logger.info('Constructed command line arguments: %s %s', pargs, kwargs)
-    return (pargs, skwargs)
-
-def identify_named_ports(
-    port_dict:dict,
-    posargs:list,
-    pargsDict:dict,
-    keyargs: dict,
-    check_len: int=0,
-    mode: str="inputs"
-    ) -> dict:
-    """
-    Checks port names for matches with arguments and returns mapped ports.
-
-    Args:
-        port_dict (dict): ports {uid:name,...}
-        posargs (list): available positional arguments (will be modified)
-        pargsDict (dict): mapped arguments (will be modified)
-        keyargs (dict): keyword arguments
-        check_len (int): number of of ports to be checked
-        mode (str ["inputs"]): mode, used just for logging messages 
-
-    Returns:
-        dict: port arguments
-
-    Side effect:
-        modifies the pargsDict OrderedDict
-    """
-    # p_name = [p["name"] for p in port_dict]
-    logger.debug("Using named ports to remove %s from arguments port_dict: %s, check_len: %d)",
-        mode, port_dict, check_len)
-    logger.debug("Checking against keyargs: %s", keyargs)
-    portargs = {}
-    posargs = list(posargs)
-    keys = list(port_dict.keys())
-    for i in range(check_len):
-        try:
-            key = port_dict[keys[i]]['name']
-            value = port_dict[keys[i]]['path']
-        except KeyError:
-            logger.debug("portDict: %s", port_dict)
-            raise KeyError
-        if not value: value = '' # make sure we are passing NULL drop events
-        if key in posargs:
-            pargsDict.update({key:value})
-            logger.debug("Using %s '%s' for parg %s", mode, value, key)
-            posargs.pop(posargs.index(key))
-        elif key in keyargs:
-            # if not found in appArgs we don't put them into portargs either
-            portargs.update({key:value})
-            logger.debug("Using %s of type %s for kwarg %s", mode, type(value), key)
-            _dum = keyargs.pop(key) # remove from original arg list
-        else:
-            logger.debug("No matching argument found for %s key %s", mode, key)
-    logger.debug("Returning kw mapped ports: %s", portargs)
-    return portargs
-
-def check_ports_dict(ports:list) -> bool:
-    """
-    Checks whether all ports in ports list are of type dict. This is
-    for backwards compatibility.
-
-    Args: 
-        ports (list): 
-
-    Returns:
-        bool: True if all ports are dict, else False
-    """
-    # all returns true if list is empty!
-    if len(ports) > 0:
-        return all(isinstance(p, dict) for p in ports)
-    else:
-        return False
-
-
-def replace_named_ports(
-    iitems:dict,
-    oitems:dict,
-    inport_names:dict,
-    outport_names:dict,
-    appArgs:dict,
-    argumentPrefix:str = "--",
-    separator:str = " "
-    ) -> Tuple[str, str]:
-    """
-    Function attempts to identify component arguments that match port names.
-
-    Inputs:
-        iitems: itemized input port dictionary
-        oitems: itemized output port dictionary
-        inport_names: dictionary of input port names (key: uid)
-        outport_names: dictionary of output port names (key: uid)
-        appArgs: dictionary of all arguments
-        argumentPrefix: prefix for keyword arguments
-        separator: character used between keyword and value
-
-    Returns:
-        tuple of serialized keyword arguments and positional arguments 
-    """
-    logger.debug("iitems: %s; inport_names: %s; outport_names: %s", 
-        iitems, inport_names, outport_names)
-    inputs_dict = collections.OrderedDict()
-    for uid, drop in iitems:
-        inputs_dict[uid] = {'path': drop.path if hasattr(drop, 'path') else ''}
-
-    outputs_dict = collections.OrderedDict()
-    for uid, drop in oitems:
-        outputs_dict[uid] = {'path': drop.path if hasattr(drop, 'path') else ''}
-    logger.debug("appArgs: %s", appArgs)
-    # get positional args
-    posargs = [arg for arg in appArgs if appArgs[arg]["positional"]]
-    # get kwargs
-    keyargs = {arg:appArgs[arg]["value"] for arg in appArgs 
-        if not appArgs[arg]["positional"]}
-    # we will need an ordered dict for all positional arguments
-    # thus we create it here and fill it with values
-    portPosargsDict = collections.OrderedDict(zip(posargs,[None]*len(posargs)))
-    portkeyargs = {}
-    logger.debug("posargs: %s; keyargs: %s",posargs, keyargs)
-    if check_ports_dict(inport_names):
-        for inport in inport_names:
-            key = list(inport.keys())[0]
-            inputs_dict[key].update({'name':inport[key]})
-
-        ipkeyargs = identify_named_ports(
-                        inputs_dict,
-                        posargs,
-                        portPosargsDict,
-                        keyargs,
-                        check_len=len(iitems),
-                        mode="inputs")
-        portkeyargs.update(ipkeyargs)
-    else:
-        for i in range(min(len(iitems), len(posargs))):
-            portkeyargs.update({posargs[i]: iitems[i][1]})
-
-    if check_ports_dict(outport_names):
-        for outport in outport_names:
-            key = list(outport.keys())[0]
-            outputs_dict[key].update({'name':outport[key]})
-        opkeyargs = identify_named_ports(
-                        outputs_dict,
-                        posargs,
-                        portPosargsDict,
-                        keyargs,
-                        check_len=len(oitems),
-                        mode="outputs")
-        portkeyargs.update(opkeyargs)
-    else:
-        for i in range(min(len(oitems), len(posargs))):
-            portkeyargs.update({posargs[i]: oitems[i][1]})
-    # now that we have the mapped ports we can cleanup the appArgs
-    # and construct the final keyargs and pargs
-    logger.debug("Arguments from ports: %s %s", portkeyargs, portPosargsDict)
-    appArgs = clean_applicationArgs(appArgs)
-    # get cleaned positional args 
-    posargs = {arg:appArgs[arg]["value"] for arg in appArgs 
-        if appArgs[arg]["positional"]}
-    # get cleaned kwargs
-    keyargs = {arg:appArgs[arg]["value"] for arg in appArgs 
-        if not appArgs[arg]["positional"]}
-    # update port dictionaries
-    # portkeyargs.update({key:arg for key, arg in keyargs.items() 
-    #     if key not in portkeyargs})    
-    # portPosargsDict.update({key:arg for key, arg in posargs.items() 
-    #     if key not in portPosargsDict})
-    keyargs.update(portkeyargs)
-    posargs.update(portPosargsDict)
-    keyargs = serialize_kwargs(keyargs, 
-        prefix=argumentPrefix,
-        separator=separator) if len(keyargs) > 0 else ['']
-    pargs = list(portPosargsDict.values())
-    pargs = [''] if len(pargs) == 0 or None in pargs else pargs
-    logger.debug("After port replacement: pargs: %s; keyargs: %s",pargs, keyargs)
-    return keyargs, pargs
 
 # Easing the transition from single- to multi-package
 get_leaves = common.get_leaves

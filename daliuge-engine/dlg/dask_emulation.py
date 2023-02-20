@@ -35,7 +35,7 @@ from . import utils, droputils
 from .apps import pyfunc
 from .common import dropdict, Categories
 from .ddap_protocol import DROPStates
-from .drop import BarrierAppDROP
+from .apps.app_base import BarrierAppDROP
 from .exceptions import InvalidDropException
 
 logger = logging.getLogger(__name__)
@@ -90,7 +90,11 @@ def _get_client(**kwargs):
 
 
 def _is_list_of_delayeds(x):
-    return isinstance(x, (list, tuple)) and len(x) > 0 and isinstance(x[0], _DataDrop)
+    return (
+        isinstance(x, (list, tuple))
+        and len(x) > 0
+        and isinstance(x[0], _DataDrop)
+    )
 
 
 def compute(value, **kwargs):
@@ -109,7 +113,7 @@ def compute(value, **kwargs):
     transmitter = dropdict(
         {
             "type": "app",
-#            "categoryType": CategoryType.APPLICATION,
+            #            "categoryType": CategoryType.APPLICATION,
             "app": "dlg.dask_emulation.ResultTransmitter",
             "appclass": "dlg.dask_emulation.ResultTransmitter",
             "oid": transmitter_oid,
@@ -129,7 +133,9 @@ def compute(value, **kwargs):
     client = _get_client(**kwargs)
     client.create_session(session_id)
     client.append_graph(session_id, graph)
-    client.deploy_session(session_id, completed_uids=droputils.get_roots(graph))
+    client.deploy_session(
+        session_id, completed_uids=droputils.get_roots(graph)
+    )
 
     timeout = kwargs.get("timeout", None)
     s = utils.connect_to("localhost", port, timeout)
@@ -217,12 +223,20 @@ class _DelayedDrop(object):
         if isinstance(self, _DataDrop):
             self_dd.addProducer(up_dd)
             logger.debug(
-                "Set %r/%s as producer of %r/%s", upstream, upstream.oid, self, self.oid
+                "Set %r/%s as producer of %r/%s",
+                upstream,
+                upstream.oid,
+                self,
+                self.oid,
             )
         else:
             self_dd.addInput(up_dd)
             logger.debug(
-                "Set %r/%s as input of %r/%s", upstream, upstream.oid, self, self.oid
+                "Set %r/%s as input of %r/%s",
+                upstream,
+                upstream.oid,
+                self,
+                self.oid,
             )
 
 
@@ -232,7 +246,10 @@ class _Listifier(BarrierAppDROP):
     def run(self):
         self.outputs[0].write(
             pickle.dumps(
-                [pickle.loads(droputils.allDropContents(x)) for x in self.inputs]
+                [
+                    pickle.loads(droputils.allDropContents(x))
+                    for x in self.inputs
+                ]
             )
         )
 
@@ -307,7 +324,7 @@ class _AppDrop(_DelayedDrop):
                 "categoryType": CategoryType.APPLICATION,
                 "app": "dlg.apps.pyfunc.PyFuncApp",
                 "appclass": "dlg.apps.pyfunc.PyFuncApp",
-                "func_arg_mapping": {}
+                "func_arg_mapping": {},
             }
         )
         if self.fname is not None:
@@ -327,7 +344,10 @@ class _AppDrop(_DelayedDrop):
             name = self.kwarg_names.pop()
             if name is not None:
                 logger.debug(
-                    "Adding %s/%s to function mapping for %s", name, dep.oid, self.fname
+                    "Adding %s/%s to function mapping for %s",
+                    name,
+                    dep.oid,
+                    self.fname,
                 )
                 self.dropdict["func_arg_mapping"][name] = dep.oid
 
@@ -385,9 +405,12 @@ class _DataDrop(_DelayedDrop):
 
     def make_dropdict(self):
         my_dropdict = dropdict(
-            {"type": "data", 
-            "categoryType": CategoryType.DATA,
-            "storage": Categories.MEMORY})
+            {
+                "type": "data",
+                "categoryType": CategoryType.DATA,
+                "storage": Categories.MEMORY,
+            }
+        )
         if not self.producer:
             my_dropdict["pydata"] = pyfunc.serialize_data(self.pydata)
         return my_dropdict
@@ -417,7 +440,10 @@ class _DataDropSequence(_DataDrop):
         return delayed(lambda x, i: x[i])(self, i)
 
     def __repr__(self):
-        return "<_DataDropSequence nout=%d, producer=%r>" % (self.nout, self.producer)
+        return "<_DataDropSequence nout=%d, producer=%r>" % (
+            self.nout,
+            self.producer,
+        )
 
 
 def delayed(x, *args, **kwargs):

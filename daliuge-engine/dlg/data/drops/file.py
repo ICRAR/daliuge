@@ -25,7 +25,7 @@ import re
 
 from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.ddap_protocol import DROPStates
-from dlg.drop import DataDROP, PathBasedDrop, logger, track_current_drop
+from .data_base import DataDROP, PathBasedDrop, logger, track_current_drop
 from dlg.exceptions import InvalidDropException
 from dlg.data.io import FileIO
 from dlg.meta import dlg_bool_param
@@ -44,7 +44,7 @@ from dlg.utils import isabs
 # @param check_filepath_exists Check file path exists/False/Boolean/ComponentParameter/readwrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
 # @param filepath File Path//String/ComponentParameter/readwrite//False/False/Path to the file for this node
 # @param dirname Directory name//String/ComponentParameter/readwrite//False/False/Path to the file for this node
-# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data 
+# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
 # @param persist Persist/True/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
@@ -100,7 +100,6 @@ class FileDROP(DataDROP, PathBasedDrop):
             kwargs["expireAfterUse"] = False
         super().__init__(*args, **kwargs)
 
-
     def sanitize_paths(self, filepath, dirname):
 
         # first replace any ENV_VARS on the names
@@ -136,7 +135,8 @@ class FileDROP(DataDROP, PathBasedDrop):
         # Duh!
         if isabs(self.filepath) and self.dirname:
             raise InvalidDropException(
-                self, "An absolute filepath does not allow a dirname to be specified"
+                self,
+                "An absolute filepath does not allow a dirname to be specified",
             )
 
         # Sanitize filepath/dirname into proper directories-only and
@@ -191,7 +191,11 @@ class FileDROP(DataDROP, PathBasedDrop):
         elif status == DROPStates.SKIPPED:
             self._fire("dropCompleted", status=status)
             return
-        elif status not in [DROPStates.COMPLETED, DROPStates.INITIALIZED, DROPStates.WRITING]:
+        elif status not in [
+            DROPStates.COMPLETED,
+            DROPStates.INITIALIZED,
+            DROPStates.WRITING,
+        ]:
             raise Exception(
                 "%r not in INITIALIZED or WRITING state (%s), cannot setComplete()"
                 % (self, self.status)

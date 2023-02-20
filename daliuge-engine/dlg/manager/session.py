@@ -44,12 +44,12 @@ from ..common.reproducibility.constants import ReproducibilityFlags, ALL_RMODES
 from ..ddap_protocol import DROPLinkType, DROPRel, DROPStates
 from ..drop import (
     AbstractDROP,
-    AppDROP,
-    EndDROP,
-    InputFiredAppDROP,
     LINKTYPE_1TON_APPEND_METHOD,
     LINKTYPE_1TON_BACK_APPEND_METHOD,
 )
+from ..apps.app_base import AppDROP, InputFiredAppDROP
+from ..data.drops.data_base import EndDROP
+
 from ..exceptions import (
     InvalidSessionState,
     InvalidGraphException,
@@ -98,13 +98,21 @@ class ReproFinishedListener(object):
         self._completed += 1
         self._session.append_reprodata(evt.oid, evt.reprodata)
         logger.debug(
-            "%d/%d drops filed reproducibility", self._completed, self._nexpected
+            "%d/%d drops filed reproducibility",
+            self._completed,
+            self._nexpected,
         )
         if self._completed == self._nexpected:
             if not self._session.reprostatus:
                 logger.debug("Building Reproducibility BlockDAG")
-                new_reprodata = init_runtime_repro_data(self._session._graph, self._session._graphreprodata).get("reprodata", {})
-                logger.debug("Reprodata for %s is %s", self._session.sessionId, json.dumps(new_reprodata))
+                new_reprodata = init_runtime_repro_data(
+                    self._session._graph, self._session._graphreprodata
+                ).get("reprodata", {})
+                logger.debug(
+                    "Reprodata for %s is %s",
+                    self._session.sessionId,
+                    json.dumps(new_reprodata),
+                )
                 self._session._graphreprodata = new_reprodata
                 self._session.reprostatus = True
                 self._session.write_reprodata()
@@ -279,17 +287,22 @@ class Session(object):
         self.status = SessionStates.BUILDING
 
         # This will check the consistency of each dropSpec
-        graphSpecDict, self._graphreprodata = graph_loader.loadDropSpecs(graphSpec)
+        graphSpecDict, self._graphreprodata = graph_loader.loadDropSpecs(
+            graphSpec
+        )
         # Check for duplicates
         duplicates = set(graphSpecDict) & set(self._graph)
         if duplicates:
             raise InvalidGraphException(
-                "Trying to add drops with OIDs that already exist: %r" % (duplicates,)
+                "Trying to add drops with OIDs that already exist: %r"
+                % (duplicates,)
             )
 
         self._graph.update(graphSpecDict)
 
-        logger.debug("Added a graph definition with %d DROPs", len(graphSpecDict))
+        logger.debug(
+            "Added a graph definition with %d DROPs", len(graphSpecDict)
+        )
 
     @track_current_session
     def linkGraphParts(self, lhOID, rhOID, linkType, force=False):
@@ -315,7 +328,9 @@ class Session(object):
             missingOids.append(rhOID)
         if missingOids:
             oids = "OID" if len(missingOids) == 1 else "OIDs"
-            raise InvalidGraphException("No DROP found for %s %r" % (oids, missingOids))
+            raise InvalidGraphException(
+                "No DROP found for %s %r" % (oids, missingOids)
+            )
 
         graph_loader.addLink(linkType, lhDropSpec, rhOID, force=force)
 
@@ -337,10 +352,11 @@ class Session(object):
         # in reality this particular session is managing nothing
         status = self.status
         if (self._graph and status != SessionStates.BUILDING) or (
-                not self._graph and status != SessionStates.PRISTINE
+            not self._graph and status != SessionStates.PRISTINE
         ):
             raise InvalidSessionState(
-                "Can't deploy this session in its current status: %d" % (status)
+                "Can't deploy this session in its current status: %d"
+                % (status)
             )
 
         if not self._graph and completedDrops:
@@ -415,10 +431,14 @@ class Session(object):
 
         # Append proxies
         logger.info(
-            "Creating %d drop proxies: %r", len(self._proxyinfo), self._proxyinfo
+            "Creating %d drop proxies: %r",
+            len(self._proxyinfo),
+            self._proxyinfo,
         )
         for host, port, local_uid, relname, remote_uid in self._proxyinfo:
-            proxy = rpc.DropProxy(self._nm, host, port, self._sessionId, remote_uid)
+            proxy = rpc.DropProxy(
+                self._nm, host, port, self._sessionId, remote_uid
+            )
             logger.debug(
                 "Attaching proxy to local %r via %s(proxy, False)",
                 self._drops[local_uid],
@@ -446,7 +466,9 @@ class Session(object):
     def trigger_drops(self, uids):
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [
-                dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
+                dsDrop
+                for dsDrop in downStreamDrops
+                if isinstance(dsDrop, AbstractDROP)
             ]
             if drop.uid in uids:
                 if isinstance(drop, InputFiredAppDROP):
@@ -507,7 +529,7 @@ class Session(object):
 
                 # We are in the event receiver side
                 if (rel.rel in evt_consumer and rel.lhs is local_uid) or (
-                        rel.rel in evt_producer and rel.rhs is local_uid
+                    rel.rel in evt_producer and rel.rhs is local_uid
                 ):
                     dropsubs[remote_uid].add(local_uid)
 
@@ -523,14 +545,16 @@ class Session(object):
                     remote_uid = rel.rhs
                     mname = LINKTYPE_1TON_BACK_APPEND_METHOD[rel.rel]
 
-                self._proxyinfo.append((host, rpc_port, local_uid, mname, remote_uid))
+                self._proxyinfo.append(
+                    (host, rpc_port, local_uid, mname, remote_uid)
+                )
 
     def append_reprodata(self, oid, reprodata):
         if oid in self._graph:
             if self._graph[oid].get("reprodata") is None:
                 return
             if self._graph[oid]["reprodata"]["rmode"] == str(
-                    ReproducibilityFlags.ALL.value
+                ReproducibilityFlags.ALL.value
             ):
                 drop_reprodata = reprodata.get("data", {})
                 drop_hashes = reprodata.get("merkleroot", {})
@@ -543,10 +567,12 @@ class Session(object):
                     ] = drop_hashes.get(rmode.name, b"")
 
             else:
-                self._graph[oid]["reprodata"]["rg_data"] = reprodata.get("data", {})
-                self._graph[oid]["reprodata"]["rg_data"]["merkleroot"] = reprodata.get(
-                    "merkleroot", b""
+                self._graph[oid]["reprodata"]["rg_data"] = reprodata.get(
+                    "data", {}
                 )
+                self._graph[oid]["reprodata"]["rg_data"][
+                    "merkleroot"
+                ] = reprodata.get("merkleroot", b"")
 
     @track_current_session
     def finish(self):
@@ -554,7 +580,9 @@ class Session(object):
         logger.info("Session %s finished", self._sessionId)
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [
-                dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
+                dsDrop
+                for dsDrop in downStreamDrops
+                if isinstance(dsDrop, AbstractDROP)
             ]
             if drop.status in (DROPStates.INITIALIZED, DROPStates.WRITING):
                 drop.setCompleted()
@@ -565,16 +593,18 @@ class Session(object):
         logger.info("Session %s ended", self._sessionId)
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [
-                dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
+                dsDrop
+                for dsDrop in downStreamDrops
+                if isinstance(dsDrop, AbstractDROP)
             ]
             if drop.status in (DROPStates.INITIALIZED, DROPStates.WRITING):
                 drop.skip()
 
     def getGraphStatus(self):
         if self.status not in (
-                SessionStates.RUNNING,
-                SessionStates.FINISHED,
-                SessionStates.CANCELLED,
+            SessionStates.RUNNING,
+            SessionStates.FINISHED,
+            SessionStates.CANCELLED,
         ):
             raise InvalidSessionState(
                 "The session is currently not running, cannot get graph status"
@@ -589,7 +619,9 @@ class Session(object):
         statusDict = collections.defaultdict(dict)
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [
-                dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
+                dsDrop
+                for dsDrop in downStreamDrops
+                if isinstance(dsDrop, AbstractDROP)
             ]
             if isinstance(drop, AppDROP):
                 statusDict[drop.oid]["execStatus"] = drop.execStatus
@@ -602,16 +634,19 @@ class Session(object):
         status = self.status
         if status != SessionStates.RUNNING:
             raise InvalidSessionState(
-                "Can't cancel this session in its current status: %d" % (status)
+                "Can't cancel this session in its current status: %d"
+                % (status)
             )
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [
-                dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
+                dsDrop
+                for dsDrop in downStreamDrops
+                if isinstance(dsDrop, AbstractDROP)
             ]
             if drop.status not in (
-                    DROPStates.ERROR,
-                    DROPStates.COMPLETED,
-                    DROPStates.CANCELLED,
+                DROPStates.ERROR,
+                DROPStates.COMPLETED,
+                DROPStates.CANCELLED,
             ):
                 drop.cancel()
         self.status = SessionStates.CANCELLED
@@ -645,7 +680,9 @@ class Session(object):
             drop = self._drops[uid]
             return getattr(drop, prop_name)
         except AttributeError:
-            raise DaliugeException("%r has no property called %s" % (drop, prop_name))
+            raise DaliugeException(
+                "%r has no property called %s" % (drop, prop_name)
+            )
 
     def call_drop(self, uid, method, *args):
         if uid not in self._drops:
@@ -654,7 +691,9 @@ class Session(object):
             drop = self._drops[uid]
             m = getattr(drop, method)
         except AttributeError:
-            raise DaliugeException("%r has no method called %s" % (drop, method))
+            raise DaliugeException(
+                "%r has no method called %s" % (drop, method)
+            )
         return m(*args)
 
     # Support for the 'with' keyword

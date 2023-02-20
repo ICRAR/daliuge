@@ -60,10 +60,14 @@ class MetisPGTP(PGT):
         TODO - integrate from within PYTHON module (using C API) soon!
         """
         super(MetisPGTP, self).__init__(drop_list, build_dag=False)
-        self._metis_path = "gpmetis"  # assuming it is installed at the sys path
+        self._metis_path = (
+            "gpmetis"  # assuming it is installed at the sys path
+        )
         if num_partitions <= 0:
             # self._num_parts = self.get_opt_num_parts()
-            raise GPGTException("Invalid num_partitions {0}".format(num_partitions))
+            raise GPGTException(
+                "Invalid num_partitions {0}".format(num_partitions)
+            )
         else:
             self._num_parts = num_partitions
         if 1 == min_goal:
@@ -100,7 +104,11 @@ class MetisPGTP(PGT):
         G.graph["node_size_attr"] = "sz"
 
         for i, drop in enumerate(droplist):
-            oid = drop["oid"]
+            try:
+                oid = drop["oid"]
+            except KeyError:
+                logger.debug("Drop does not have oid: %s", drop)
+                continue
             key_dict[oid] = i + 1  # METIS index starts from 1
 
         logger.info("Metis partition input progress - dropdict is built")
@@ -110,7 +118,7 @@ class MetisPGTP(PGT):
 
             logger.info(
                 "self._drop_list, max RSS: %.2f GB",
-                resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0 ** 2
+                resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0**2,
             )
 
         for i, drop in enumerate(droplist):
@@ -152,7 +160,7 @@ class MetisPGTP(PGT):
 
             logger.info(
                 "Max RSS after creating the Graph: %.2f GB",
-                resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0 ** 2
+                resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0**2,
             )
         return G
 
@@ -177,7 +185,9 @@ class MetisPGTP(PGT):
         # key_dict = dict() #k - gojs key, v - gojs group id
         groups = set()
         ogm = self._oid_gid_map
-        group_weight = self._group_workloads  # k - gid, v - a tuple of (tw, sz)
+        group_weight = (
+            self._group_workloads
+        )  # k - gid, v - a tuple of (tw, sz)
         G = self._G
         # start_k = len(self._drop_list) + 1
         start_k = self._drop_list_len + 1
@@ -249,7 +259,7 @@ class MetisPGTP(PGT):
 
                 logger.info(
                     "RSS before METIS partitioning: %.2f GB",
-                    resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0 ** 2
+                    resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0**2,
                 )
 
             # Call METIS C-lib
@@ -270,7 +280,9 @@ class MetisPGTP(PGT):
         if visual:
             if self.dag is None:
                 self._dag = DAGUtil.build_dag_from_drops(self._drop_list)
-            jsobj = super(MetisPGTP, self).to_gojs_json(string_rep=False, visual=visual)
+            jsobj = super(MetisPGTP, self).to_gojs_json(
+                string_rep=False, visual=visual
+            )
         else:
             jsobj = None
         self._parse_metis_output(metis_parts, jsobj)
@@ -407,7 +419,9 @@ class MySarkarPGTP(PGT):
                 def merge_partitions(self, new_num_parts, form_island=False)
         """
         super(MySarkarPGTP, self).__init__(drop_list, build_dag=False)
-        self._dag = DAGUtil.build_dag_from_drops(self._drop_list, fake_super_root=False)
+        self._dag = DAGUtil.build_dag_from_drops(
+            self._drop_list, fake_super_root=False
+        )
         self._num_parts = num_partitions
         self._max_dop = max_dop  # max dop per partition
         self._par_label = par_label
@@ -465,7 +479,9 @@ class MySarkarPGTP(PGT):
         in_out_part_map = dict()
         outer_groups = set()
         if new_num_parts > 1:
-            self._scheduler.merge_partitions(new_num_parts, bal_cond=island_type)
+            self._scheduler.merge_partitions(
+                new_num_parts, bal_cond=island_type
+            )
         else:
             # all parts share the same outer group (island) when # of island == 1
             ppid = self._drop_list_len + len(groups) + 1
@@ -479,7 +495,9 @@ class MySarkarPGTP(PGT):
             # parent_id starts from
             # len(self._drop_list) + len(self._parts) + 1, which is the same as
             # start_i
-            island_id = part.parent_id - start_i  # make sure island_id starts from 0
+            island_id = (
+                part.parent_id - start_i
+            )  # make sure island_id starts from 0
             outer_groups.add(island_id)
             in_out_part_map[part.partition_id - start_k] = island_id
 
@@ -522,7 +540,9 @@ class MySarkarPGTP(PGT):
                     node_list.append(gn)
 
                 for ip in inner_parts:
-                    ip["group"] = in_out_part_map[ip["key"] - start_k] + start_i
+                    ip["group"] = (
+                        in_out_part_map[ip["key"] - start_k] + start_i
+                    )
 
     def to_gojs_json(self, string_rep=True, outdict=None, visual=False):
         """
@@ -585,7 +605,9 @@ class MySarkarPGTP(PGT):
                 gid = G.nodes[node["key"]]["gid"]  # gojs group_id
                 if gid is None:
                     raise GPGTException(
-                        "Node {0} does not have a Partition".format(node["key"])
+                        "Node {0} does not have a Partition".format(
+                            node["key"]
+                        )
                     )
                 node["group"] = gid
                 # key_dict[node['key']] = gid
@@ -598,7 +620,9 @@ class MySarkarPGTP(PGT):
                 gn["isGroup"] = True
                 # gojs group_id label starts from 1
                 # so "gid - leng" instead of "gid - start_k"
-                gn["text"] = "{1}_{0}".format((gid - start_k + 1), self._par_label)
+                gn["text"] = "{1}_{0}".format(
+                    (gid - start_k + 1), self._par_label
+                )
                 node_list.append(gn)
                 inner_parts.append(gn)
 
@@ -669,7 +693,9 @@ class PSOPGTP(MySarkarPGTP):
         self._deadline = deadline
         self._topk = topk
         self._swarm_size = swarm_size
-        super(PSOPGTP, self).__init__(drop_list, 0, par_label, max_dop, merge_parts)
+        super(PSOPGTP, self).__init__(
+            drop_list, 0, par_label, max_dop, merge_parts
+        )
         self._extra_drops = None
 
     def get_partition_info(self):

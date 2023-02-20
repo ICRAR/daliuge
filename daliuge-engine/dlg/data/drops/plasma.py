@@ -25,7 +25,7 @@ import os
 import numpy as np
 from pyarrow import plasma as plasma
 
-from dlg.drop import DataDROP
+from dlg.data.drops.data_base import DataDROP
 from dlg.data.io import PlasmaIO, PlasmaFlightIO
 from dlg.meta import dlg_string_param, dlg_bool_param
 
@@ -58,7 +58,9 @@ class PlasmaDROP(DataDROP):
         self.plasma_path = os.path.expandvars(self.plasma_path)
         if self.object_id is None:
             self.object_id = (
-                np.random.bytes(20) if len(self.uid) != 20 else self.uid.encode("ascii")
+                np.random.bytes(20)
+                if len(self.uid) != 20
+                else self.uid.encode("ascii")
             )
         elif isinstance(self.object_id, str):
             self.object_id = self.object_id.encode("ascii")
@@ -73,7 +75,9 @@ class PlasmaDROP(DataDROP):
 
     @property
     def dataURL(self) -> str:
-        return "plasma://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
+        return "plasma://%s" % (
+            binascii.hexlify(self.object_id).decode("ascii")
+        )
 
 
 ##
@@ -106,7 +110,9 @@ class PlasmaFlightDROP(DataDROP):
         self.plasma_path = os.path.expandvars(self.plasma_path)
         if self.object_id is None:
             self.object_id = (
-                np.random.bytes(20) if len(self.uid) != 20 else self.uid.encode("ascii")
+                np.random.bytes(20)
+                if len(self.uid) != 20
+                else self.uid.encode("ascii")
             )
         elif isinstance(self.object_id, str):
             self.object_id = self.object_id.encode("ascii")
@@ -122,4 +128,6 @@ class PlasmaFlightDROP(DataDROP):
 
     @property
     def dataURL(self) -> str:
-        return "plasmaflight://%s" % (binascii.hexlify(self.object_id).decode("ascii"))
+        return "plasmaflight://%s" % (
+            binascii.hexlify(self.object_id).decode("ascii")
+        )

@@ -23,11 +23,15 @@
 Module containing an example application that calculates a CRC value
 """
 
-from ..drop import BarrierAppDROP, AppDROP
+from ..apps.app_base import BarrierAppDROP, AppDROP
 from dlg.ddap_protocol import AppDROPStates
 
-from ..drop import BarrierAppDROP, AppDROP
-from ..meta import dlg_component, dlg_batch_input, dlg_batch_output, dlg_streaming_input
+from ..meta import (
+    dlg_component,
+    dlg_batch_input,
+    dlg_batch_output,
+    dlg_streaming_input,
+)
 
 try:
     from crc32c import crc32c as crc32  # @UnusedImport
@@ -45,7 +49,8 @@ class CRCApp(BarrierAppDROP):
 
     component_meta = dlg_component(
         "CRCApp",
-        "A BarrierAppDROP that calculates the " "CRC of the single DROP it consumes",
+        "A BarrierAppDROP that calculates the "
+        "CRC of the single DROP it consumes",
         [dlg_batch_input("binary/*", [])],
         [dlg_batch_output("binary/*", [])],
         [dlg_streaming_input("binary/*")],
@@ -60,7 +65,7 @@ class CRCApp(BarrierAppDROP):
         inputDrop = self.inputs[0]
         outputDrop = self.outputs[0]
 
-        bufsize = 4 * 1024 ** 2
+        bufsize = 4 * 1024**2
         desc = inputDrop.open()
         buf = inputDrop.read(desc, bufsize)
         crc = 0

@@ -2,7 +2,7 @@
     "linkDataArray": [
         {
             "closesLoop": false,
-            "dataType": "Unknown",
+            "dataType": "Object.",
             "from": -4,
             "fromPort": "1765f421-782c-4972-ab76-ac0c23bd95e3",
             "loop_aware": "1",
@@ -11,7 +11,7 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Unknown",
+            "dataType": "Object.event",
             "from": -3,
             "fromPort": "b8739916-45c0-41e1-b38d-afede242bcfd",
             "loop_aware": "1",
@@ -22,8 +22,8 @@
     "modelData": {
         "commitHash": "",
         "downloadUrl": "",
-        "eagleCommitHash": "Unknown",
-        "eagleVersion": "Unknown",
+        "eagleCommitHash": "03e501c70edc704739c7dd9c73aae44780502418",
+        "eagleVersion": "v5.0.2",
         "filePath": "testLoop.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -160,7 +160,21 @@
             "y": 337.06816127722925
         },
         {
-            "applicationArgs": [],
+            "applicationArgs": [
+                {
+                    "defaultValue": "3",
+                    "description": "The amount of time to sleep",
+                    "keyAttribute": false,
+                    "name": "sleep_time",
+                    "options": [],
+                    "positional": true,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "sleep time",
+                    "type": "Integer",
+                    "value": 3
+                }
+            ],
             "category": "BashShellApp",
             "categoryType": "Application",
             "collapsed": true,
@@ -169,7 +183,7 @@
             "dataHash": "",
             "description": "An application component run within the Bash Shell",
             "drawOrderHint": 0,
-            "expanded": false,
+            "expanded": true,
             "fields": [
                 {
                     "defaultValue": "",
@@ -211,19 +225,6 @@
                     "value": "0"
                 },
                 {
-                    "defaultValue": "",
-                    "description": "The command line to be executed",
-                    "keyAttribute": false,
-                    "name": "Arg01",
-                    "options": [],
-                    "positional": false,
-                    "precious": false,
-                    "readonly": false,
-                    "text": "Arg01",
-                    "type": "Unknown",
-                    "value": "5"
-                },
-                {
                     "defaultValue": "sleep",
                     "description": "",
                     "keyAttribute": false,
@@ -253,7 +254,7 @@
                     "event": false,
                     "keyAttribute": false,
                     "text": "event",
-                    "type": ""
+                    "type": "Object.event"
                 }
             ],
             "isGroup": false,
@@ -272,7 +273,7 @@
                     "event": false,
                     "keyAttribute": false,
                     "text": "event",
-                    "type": ""
+                    "type": "Object."
                 }
             ],
             "paletteDownloadUrl": "",
@@ -284,7 +285,21 @@
             "y": 855.7366246240957
         },
         {
-            "applicationArgs": [],
+            "applicationArgs": [
+                {
+                    "defaultValue": "3",
+                    "description": "The amount of time to sleep",
+                    "keyAttribute": false,
+                    "name": "sleep_time",
+                    "options": [],
+                    "positional": true,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "sleep time",
+                    "type": "Integer",
+                    "value": 3
+                }
+            ],
             "category": "BashShellApp",
             "categoryType": "Application",
             "collapsed": false,
@@ -293,7 +308,7 @@
             "dataHash": "",
             "description": "An application component run within the Bash Shell",
             "drawOrderHint": 0,
-            "expanded": false,
+            "expanded": true,
             "fields": [
                 {
                     "defaultValue": "",
@@ -335,19 +350,6 @@
                     "value": true
                 },
                 {
-                    "defaultValue": "",
-                    "description": "The command line to be executed",
-                    "keyAttribute": false,
-                    "name": "Arg01",
-                    "options": [],
-                    "positional": false,
-                    "precious": false,
-                    "readonly": false,
-                    "text": "Arg01",
-                    "type": "Unknown",
-                    "value": "3"
-                },
-                {
                     "defaultValue": "sleep",
                     "description": "",
                     "keyAttribute": false,
@@ -378,7 +380,7 @@
                     "event": false,
                     "keyAttribute": false,
                     "text": "event",
-                    "type": ""
+                    "type": "Object."
                 }
             ],
             "isGroup": false,
@@ -397,7 +399,7 @@
                     "event": false,
                     "keyAttribute": false,
                     "text": "event",
-                    "type": ""
+                    "type": "Object."
                 }
             ],
             "paletteDownloadUrl": "",
@@ -405,7 +407,7 @@
             "subject": null,
             "text": "SleepInternal",
             "width": 200,
-            "x": 692.9306540506565,
+            "x": 693.977220992636,
             "y": 454.94735749242614
         },
         {
@@ -418,7 +420,7 @@
             "dataHash": "",
             "description": "A standard file on a filesystem mounted to the deployment machine",
             "drawOrderHint": 0,
-            "expanded": false,
+            "expanded": true,
             "fields": [
                 {
                     "defaultValue": "5",
@@ -516,7 +518,7 @@
                     "event": false,
                     "keyAttribute": false,
                     "text": "event",
-                    "type": "event"
+                    "type": "Object."
                 }
             ],
             "isGroup": false,
@@ -535,7 +537,7 @@
                     "event": false,
                     "keyAttribute": false,
                     "text": "event",
-                    "type": "event"
+                    "type": "Object.event"
                 }
             ],
             "paletteDownloadUrl": "",

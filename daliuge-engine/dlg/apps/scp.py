@@ -20,11 +20,9 @@
 #    MA 02111-1307  USA
 #
 from dlg.remote import copyTo, copyFrom
-from dlg.drop import (
-    BarrierAppDROP,
-    NullDROP,
-    ContainerDROP,
-)
+from dlg.apps.app_base import BarrierAppDROP
+from dlg.data.drops.data_base import NullDROP
+from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.rdbms import RDBMSDrop
 from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
 from dlg.data.drops.ngas import NgasDROP

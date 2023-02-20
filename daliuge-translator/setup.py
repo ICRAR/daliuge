@@ -104,7 +104,7 @@ install_requires = [
     "pyswarm",
     "python-multipart",
     # "ruamel.yaml.clib<=0.2.2",
-    "uvicorn",
+    "uvicorn==0.18",
     "wheel",
 ]
 

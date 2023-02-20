@@ -43,7 +43,7 @@ if sys.version_info >= (3, 8):
     from .shared_memory_manager import DlgSharedMemoryManager
 from .. import rpc, utils
 from ..ddap_protocol import DROPStates
-from ..drop import AppDROP
+from ..apps.app_base import AppDROP
 from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
 from ..exceptions import (
     NoSessionException,
@@ -102,7 +102,9 @@ def _load(obj, callable_attr):
     """
     if isinstance(obj, str):
         obj = utils.get_symbol(obj)()
-    if not hasattr(obj, callable_attr) or not callable(getattr(obj, callable_attr)):
+    if not hasattr(obj, callable_attr) or not callable(
+        getattr(obj, callable_attr)
+    ):
         raise ValueError(
             "%r doesn't contain an %s attribute that can be called"
             % (obj, callable_attr)
@@ -141,7 +143,7 @@ class NodeManagerBase(DROPManager):
         self._dlm = DataLifecycleManager(
             check_period=dlm_check_period,
             cleanup_period=dlm_cleanup_period,
-            enable_drop_replication=dlm_enable_replication
+            enable_drop_replication=dlm_enable_replication,
         )
         self._sessions = {}
         self.logdir = logdir
@@ -167,7 +169,9 @@ class NodeManagerBase(DROPManager):
         self._error_listener = (
             _load(error_listener, "on_error") if error_listener else None
         )
-        self._event_listeners = [_load(l, "handleEvent") for l in event_listeners]
+        self._event_listeners = [
+            _load(l, "handleEvent") for l in event_listeners
+        ]
 
         # Start thread pool
         self._threadpool = None
@@ -178,7 +182,9 @@ class NodeManagerBase(DROPManager):
         if sys.version_info >= (3, 8):
             self._memoryManager = DlgSharedMemoryManager()
             if max_threads > 1:
-                logger.info("Initializing thread pool with %d threads", max_threads)
+                logger.info(
+                    "Initializing thread pool with %d threads", max_threads
+                )
                 self._threadpool = multiprocessing.pool.ThreadPool(
                     processes=max_threads
                 )
@@ -206,7 +212,8 @@ class NodeManagerBase(DROPManager):
         if not evt.session_id in self._sessions:
             logger.warning(
                 "No session %s found, event (%s) will be dropped",
-                evt.session_id, evt.type
+                evt.session_id,
+                evt.type,
             )
             return
         self._sessions[evt.session_id].deliver_event(evt)
@@ -291,10 +298,14 @@ class NodeManagerBase(DROPManager):
         # Add user-supplied listeners
         listeners = self._event_listeners[:]
         if self._error_listener:
-            listeners.append(ErrorStatusListener(session, self._error_listener))
+            listeners.append(
+                ErrorStatusListener(session, self._error_listener)
+            )
 
         session.deploy(
-            completedDrops=completedDrops, event_listeners=listeners, foreach=foreach
+            completedDrops=completedDrops,
+            event_listeners=listeners,
+            foreach=foreach,
         )
 
     def cancelSession(self, sessionId):
@@ -384,7 +395,9 @@ class ZMQPubSubMixIn(object):
     handling of ZeroMQ resources simpler.
     """
 
-    subscription = collections.namedtuple("subscription", "endpoint finished_evt")
+    subscription = collections.namedtuple(
+        "subscription", "endpoint finished_evt"
+    )
 
     def __init__(self, host, events_port):
         self._events_host = host
@@ -405,7 +418,9 @@ class ZMQPubSubMixIn(object):
         self._event_receiver = self._start_thread(
             self._receive_events, "Evt recv", timeout
         )
-        self._event_deliverer = self._start_thread(self._deliver_events, "Evt delivery")
+        self._event_deliverer = self._start_thread(
+            self._deliver_events, "Evt delivery"
+        )
 
     def _start_thread(self, target, name, timeout=None):
         evt = threading.Event() if timeout else None
@@ -413,7 +428,9 @@ class ZMQPubSubMixIn(object):
         t = threading.Thread(target=target, name=name, args=args)
         t.start()
         if evt and not evt.wait(timeout):
-            raise Exception("Failed to start %s thread in %d seconds" % (name, timeout))
+            raise Exception(
+                "Failed to start %s thread in %d seconds" % (name, timeout)
+            )
         return t
 
     def shutdown(self):
@@ -431,7 +448,9 @@ class ZMQPubSubMixIn(object):
         timeout = 5
         finished_evt = threading.Event()
         endpoint = "tcp://%s:%d" % (utils.zmq_safe(host), port)
-        self._subscriptions.put(ZMQPubSubMixIn.subscription(endpoint, finished_evt))
+        self._subscriptions.put(
+            ZMQPubSubMixIn.subscription(endpoint, finished_evt)
+        )
         if not finished_evt.wait(timeout):
             raise DaliugeException(
                 "ZMQ subscription not achieved within %d seconds" % (timeout,)
@@ -461,7 +480,9 @@ class ZMQPubSubMixIn(object):
 
             while self._pubsub_running:
                 try:
-                    pub.send_pyobj(obj, flags=zmq.NOBLOCK)  # @UndefinedVariable
+                    pub.send_pyobj(
+                        obj, flags=zmq.NOBLOCK
+                    )  # @UndefinedVariable
                     break
                 except zmq.error.Again:
                     logger.debug("Got an 'Again' when publishing event")
@@ -553,7 +574,7 @@ class NodeManager(NodeManagerBase, EventMixIn, RpcMixIn):
         rpc_port=constants.NODE_DEFAULT_RPC_PORT,
         events_port=constants.NODE_DEFAULT_EVENTS_PORT,
         *args,
-        **kwargs
+        **kwargs,
     ):
         host = host or "localhost"
         NodeManagerBase.__init__(self, *args, **kwargs)

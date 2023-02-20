@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 from dlg.ddap_protocol import DROPStates
-from dlg.drop import DataDROP, logger, track_current_drop
+from dlg.data.drops.data_base import DataDROP, logger, track_current_drop
 from dlg.data.io import NgasIO, NgasLiteIO
 from dlg.meta import dlg_string_param, dlg_int_param
 
@@ -39,7 +39,7 @@ from dlg.meta import dlg_string_param, dlg_int_param
 # @param ngasConnectTimeout Connection timeout/2/Integer/ComponentParameter/readwrite//False/False/Timeout for connecting to the NGAS server
 # @param ngasMime NGAS mime-type/"text/ascii"/String/ComponentParameter/readwrite//False/False/Mime-type to be used for archiving
 # @param ngasTimeout NGAS timeout/2/Integer/ComponentParameter/readwrite//False/False/Timeout for receiving responses for NGAS
-# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data 
+# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
 # @param persist Persist/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
@@ -108,7 +108,9 @@ class NgasDROP(DataDROP):
         try:
             stat = self.getIO().fileStatus()
             logger.debug(
-                "Setting size of NGASDrop %s to %s", self.fileId, stat["FileSize"]
+                "Setting size of NGASDrop %s to %s",
+                self.fileId,
+                stat["FileSize"],
             )
             self._size = int(stat["FileSize"])
             self.ngas_checksum = str(stat["Checksum"])
