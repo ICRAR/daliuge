@@ -21,6 +21,7 @@
     },
     "nodeDataArray": [
         {
+            "applicationArgs": [],
             "category": "BashShellApp",
             "categoryType": "Application",
             "collapsed": false,
@@ -231,6 +232,8 @@
             "inputApplicationKey": null,
             "inputApplicationName": "",
             "inputApplicationType": "None",
+            "inputLocalPorts": [],
+            "inputPorts": [],
             "isGroup": false,
             "key": -1,
             "outputAppFields": [],
@@ -238,6 +241,8 @@
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [],
             "paletteDownloadUrl": "",
             "repositoryUrl": "daliuge",
             "subject": null,
