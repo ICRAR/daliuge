@@ -30,7 +30,7 @@ import logging
 import os
 import os.path as osp
 
-from ..common import Categories
+from dlg.common import Categories
 
 logger = logging.getLogger(__name__)
 
@@ -704,8 +704,13 @@ def convert_eagle_to_daliuge_json(lg_name):
 
 
 if __name__ == "__main__":
-    lg_name = (
-        "/Users/Chen/proj/daliuge/test/dropmake/logical_graphs/lofar_std.graph"
-    )
+    import pkg_resources
+
+    lg_dir = pkg_resources.resource_filename(
+        __name__, "../../test/dropmake/logical_graphs"
+    )  # @UndefinedVariable
+    lg_name = f"{lg_dir}/lofar_std.graph"
     # convert_eagle_to_daliuge_json(lg_name)
-    print(get_lg_ver_type(lg_name))
+    with open(lg_name) as f:
+        lgo = f.read()
+        print(get_lg_ver_type(json.loads(lgo)))
