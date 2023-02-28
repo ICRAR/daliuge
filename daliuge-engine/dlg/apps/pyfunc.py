@@ -63,7 +63,6 @@ def deserialize_data(d):
 
 
 def serialize_func(f):
-
     if isinstance(f, str):
         parts = f.split(".")
         f = getattr(importlib.import_module(".".join(parts[:-1])), parts[-1])
@@ -88,7 +87,6 @@ def serialize_func(f):
 
 
 def import_using_name(app, fname):
-
     logger.debug("Import from %s", fname)
     parts = fname.split(".")
     # If only one part check if builtin
@@ -571,7 +569,7 @@ class PyFuncApp(BarrierAppDROP):
                     {self.arguments.args[i]: list(inputs.values())[i]}
                 )
 
-        if "outputs" in self.parameters and droputils.check_ports_dict(
+        if "outputs" in self.parameters and check_ports_dict(
             self.parameters["outputs"]
         ):
             check_len = min(
@@ -586,7 +584,7 @@ class PyFuncApp(BarrierAppDROP):
                 }
 
             kwargs.update(
-                droputils.identify_named_ports(
+                identify_named_ports(
                     outputs_dict,
                     posargs,
                     pargsDict,
