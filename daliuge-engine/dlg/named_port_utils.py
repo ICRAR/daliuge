@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 def serialize_kwargs(keyargs, prefix="--", separator=" "):
     kwargs = []
-    for (name, value) in iter(keyargs.items()):
+    for name, value in iter(keyargs.items()):
         if prefix == "--" and len(name) == 1:
             kwargs += [f"-{name} {value}"]
         else:
@@ -36,7 +36,7 @@ def clean_applicationArgs(applicationArgs: dict) -> dict:
         logger.info("applicationArgs are not passed as a dict. Ignored!")
     else:
         logger.info("ApplicationArgs found %s", applicationArgs)
-    for (name, vdict) in applicationArgs.items():
+    for name, vdict in applicationArgs.items():
         if vdict in [None, False, ""]:
             continue
         elif isinstance(vdict, bool):
@@ -61,7 +61,7 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     )
     pargs = []
     kwargs = {}
-    for (name, vdict) in applicationArgs.items():
+    for name, vdict in applicationArgs.items():
         value = vdict["value"]
         positional = vdict["positional"]
         if positional:
@@ -109,6 +109,7 @@ def identify_named_ports(
     portargs = {}
     posargs = list(posargs)
     keys = list(port_dict.keys())
+    logger.debug("Checking ports: %s", keys)
     for i in range(check_len):
         try:
             key = port_dict[keys[i]]["name"]
@@ -116,7 +117,7 @@ def identify_named_ports(
         except KeyError:
             logger.debug("portDict: %s", port_dict)
             raise KeyError
-        if not value:
+        if value is None:
             value = ""  # make sure we are passing NULL drop events
         if key in posargs:
             pargsDict.update({key: value})
