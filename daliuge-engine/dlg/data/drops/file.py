@@ -30,6 +30,7 @@ from dlg.exceptions import InvalidDropException
 from dlg.data.io import FileIO
 from dlg.meta import dlg_bool_param
 from dlg.utils import isabs
+from typing import Union
 
 
 ##
@@ -43,6 +44,7 @@ from dlg.utils import isabs
 # @param delete_parent_directory Delete parent directory/False/Boolean/ComponentParameter/readwrite//False/False/Also delete the parent directory of this file when deleting the file itself
 # @param check_filepath_exists Check file path exists/False/Boolean/ComponentParameter/readwrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
 # @param filepath File Path//String/ComponentParameter/readwrite//False/False/File path for this file. If it has a '/' at the end it will be treated as a directory name and the filename will the generated. If it does not have a '/', the last part will be  treated as a filename. If `filepath` does not start with '/’ (relative path) then the session directory will be pre-pended to make the path absolute.
+# @param is_dir is directory/False/Boolean/ComponentParameter/readwrite//False/False/Indicates that the filepath parameter points to a directory, i.e. no filename will be generated
 # @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
 # @param persist Persist/True/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
@@ -53,15 +55,22 @@ class FileDROP(DataDROP, PathBasedDrop):
     A DROP that points to data stored in a mounted filesystem.
 
     Users can fix both the path and the name of a FileDrop using the `filepath`
-    parameter for each FileDrop. We distinguish three cases and their combinations.
-    If it has a '/' at the end it will be treated as a directory name and the
-    filename will the generated. If it does not have a '/', the last part will be
-    treated as a filename. If `filepath` does not start with '/’ (relative path)
+    parameter for each FileDrop. We distinguish four cases and their combinations.
+
+    1) If not specified the filename will be generated.
+    2) If it has a '/' at the end it will be treated as a directory name and the
+       filename will the generated.
+    3) If it does not end with a '/' and it is not an existing directory, it is
+       treated as dirname plus filename.
+    4) If filepath points to an existing directory, the filename will be generated
+
+    In all cases above, if `filepath` does not start with '/’ (relative path)
     then the session directory will be pre-pended to make the path absolute.
     """
 
     delete_parent_directory = dlg_bool_param("delete_parent_directory", False)
     check_filepath_exists = dlg_bool_param("check_filepath_exists", False)
+    # is_dir = dlg_bool_param("is_dir", False)
 
     # Make sure files are not deleted by default and certainly not if they are
     # marked to be persisted no matter what expireAfterUse said
@@ -70,12 +79,30 @@ class FileDROP(DataDROP, PathBasedDrop):
             kwargs["persist"] = True
         if kwargs["persist"] and "lifespan" not in kwargs:
             kwargs["expireAfterUse"] = False
+        self.is_dir = False
         super().__init__(*args, **kwargs)
 
-    def sanitize_paths(self, filepath):
+    def sanitize_paths(self, filepath: str) -> Union[None, str]:
+        """
+        Expand ENV_VARS, but also deal with relative
+        and absolute paths. filepath can be either just be
+        a directory, a directory including a file name, only
+        a directory (both relative and absolute), or just
+        a file name.
 
+        :param filepath: string, path and or directory
+
+        :returns filepath
+        """
         # replace any ENV_VARS on the names
-        return os.path.expandvars(filepath) if filepath else None
+        if not filepath:
+            return None
+        filepath = os.path.expandvars(filepath)
+        if isabs(filepath):
+            return filepath
+        else:
+            filepath = self.get_dir(filepath)
+        return filepath
 
     non_fname_chars = re.compile(r":|%s" % os.sep)
 
@@ -86,8 +113,14 @@ class FileDROP(DataDROP, PathBasedDrop):
         self.filepath = self.parameters.get("filepath", None)
 
         filepath = self.sanitize_paths(self.filepath)
-        filename = os.path.basename(filepath) if filepath else None
-        dirname = os.path.dirname(filepath) if filepath else None
+        if filepath and filepath[-1] == "/":
+            self.is_dir = True
+        if filepath and os.path.isdir(filepath):
+            filename = None
+            dirname = filepath
+        else:
+            filename = os.path.basename(filepath) if filepath else None
+            dirname = os.path.dirname(filepath) if filepath else None
         # We later check if the file exists, but only if the user has specified
         # an absolute dirname/filepath (otherwise it doesn't make sense, since
         # we create our own filenames/dirnames dynamically as necessary
@@ -96,15 +129,17 @@ class FileDROP(DataDROP, PathBasedDrop):
             check = self.check_filepath_exists
 
         # Default filename to drop UID
-        if not filename:
+        if not filename and not self.is_dir:
             filename = self.non_fname_chars.sub("_", self.uid)
         self.filename = filename
         self.dirname = self.get_dir(dirname)
 
         self._root = self.dirname
-        self._path = os.path.join(
-            self.dirname, self.filename
-        )  # put it back together again
+        self._path = (
+            os.path.join(self.dirname, self.filename)
+            if self.filename
+            else self.dirname
+        )
         logger.debug(f"Set path of drop {self._uid}: {self._path}")
         if check and not os.path.isfile(self._path):
             raise InvalidDropException(
