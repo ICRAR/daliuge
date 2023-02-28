@@ -371,14 +371,19 @@ class PathBasedDrop(object):
     _path: str = None
 
     def get_dir(self, dirname):
+        """
+        dirname will be based on the current working directory
+        If we have a session, it goes into the path as well
+        (most times we should have a session BTW, we should expect *not* to
+        have one only during testing)
 
+        :param dirname: str
+
+        :returns dir
+        """
         if isabs(dirname):
             return dirname
 
-        # dirname will be based on the current working directory
-        # If we have a session, it goes into the path as well
-        # (most times we should have a session BTW, we should expect *not* to
-        # have one only during testing)
         parts = []
         if self._dlg_session:
             parts.append(".")
