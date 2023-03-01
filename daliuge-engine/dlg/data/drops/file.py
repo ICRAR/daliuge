@@ -39,7 +39,7 @@ from typing import Union
 # @par EAGLE_START
 # @param category File
 # @param tag daliuge
-# @param filepath File Path//String/ComponentParameter/readwrite//False/False/File path for this file. If it has a / at the end it will be treated as a directory name and the filename will the generated. If it does not have a /, the last part will be treated as a filename. If filepath does not start with / (relative path) then the session directory will be pre-pended to make the path absolute.
+# @param filepath File Path//String/ComponentParameter/readwrite//False/False/File path for this file. If it has a \/ at the end it will be treated as a directory name and the filename will the generated. If it does not have a \/, the last part will be treated as a filename. If filepath does not start with \/ (relative path) then the session directory will be pre-pended to make the path absolute.
 # @param check_filepath_exists Check file path exists/False/Boolean/ComponentParameter/readwrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
 # @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
 # @param persist Persist/True/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
