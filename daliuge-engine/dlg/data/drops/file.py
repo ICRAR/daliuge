@@ -43,8 +43,7 @@ from typing import Union
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
 # @param delete_parent_directory Delete parent directory/False/Boolean/ComponentParameter/readwrite//False/False/Also delete the parent directory of this file when deleting the file itself
 # @param check_filepath_exists Check file path exists/False/Boolean/ComponentParameter/readwrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
-# @param filepath File Path//String/ComponentParameter/readwrite//False/False/File path for this file. If it has a '/' at the end it will be treated as a directory name and the filename will the generated. If it does not have a '/', the last part will be  treated as a filename. If `filepath` does not start with '/’ (relative path) then the session directory will be pre-pended to make the path absolute.
-# @param is_dir is directory/False/Boolean/ComponentParameter/readwrite//False/False/Indicates that the filepath parameter points to a directory, i.e. no filename will be generated
+# @param filepath File Path//String/ComponentParameter/readwrite//False/False/File path for this file. If it has a / at the end it will be treated as a directory name and the filename will the generated. If it does not have a /, the last part will be treated as a filename. If filepath does not start with / (relative path) then the session directory will be pre-pended to make the path absolute.
 # @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
 # @param persist Persist/True/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
