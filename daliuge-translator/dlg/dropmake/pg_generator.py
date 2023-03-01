@@ -88,7 +88,11 @@ def unroll(lg, oid_prefix=None, zerorun=False, app=None):
         for dropspec in drop_list:
             if "app" in dropspec:
                 dropspec["app"] = app
-                dropspec["sleepTime"] = dropspec["execution_time"]
+                dropspec["sleepTime"] = (
+                    dropspec["execution_time"]
+                    if "execution_time" in dropspec
+                    else 2
+                )
     drop_list.append(lg.reprodata)
     return drop_list
 
