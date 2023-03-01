@@ -781,7 +781,7 @@ class TestDROP(unittest.TestCase):
             a = FileDROP(
                 "a",
                 "a",
-                filepath=tempDir + "/",
+                filepath=tempDir,
                 delete_parent_directory=delete_parent_directory,
             )
             a.write(b" ")
@@ -958,7 +958,6 @@ class TestDROP(unittest.TestCase):
         self.assertEqual(AppDROPStates.FINISHED, a.execStatus)
 
     def test_rdbms_drop(self):
-
         dbfile = "test_rdbms_drop.db"
         if os.path.isfile(dbfile):
             os.unlink(dbfile)
