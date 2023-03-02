@@ -1,0 +1,26 @@
+name: Validate graphs
+
+on: [push, pull_request]
+
+jobs:
+
+  validate_graphs:
+    name: Validate graphs
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        name: Install Python
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install jsonschema
+
+      - name: Validate graphs
+        run: |
+          cd tools
+          find .. -type f -name '*.graph' -print0 | xargs -0 -I {} python checkGraph.py {}

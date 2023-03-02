@@ -2,6 +2,7 @@
     "linkDataArray": [
         {
             "closesLoop": false,
+            "dataType": "Unknown",
             "from": -7,
             "fromPort": "01c127af-3de3-4ba0-8d4d-d86872703639",
             "loop_aware": "0",
@@ -10,6 +11,7 @@
         },
         {
             "closesLoop": false,
+            "dataType": "Unknown",
             "from": -7,
             "fromPort": "01c127af-3de3-4ba0-8d4d-d86872703639",
             "loop_aware": "0",
@@ -18,6 +20,7 @@
         },
         {
             "closesLoop": false,
+            "dataType": "Unknown",
             "from": -1,
             "fromPort": "b2f574bd-934f-4d90-ae54-bd5f37265320",
             "loop_aware": "0",
@@ -26,6 +29,7 @@
         },
         {
             "closesLoop": false,
+            "dataType": "Unknown",
             "from": -5,
             "fromPort": "70f32d75-be8b-43c3-9b4e-b5412d25d682",
             "loop_aware": "1",
@@ -34,11 +38,12 @@
         }
     ],
     "modelData": {
-        "eagleCommitHash": "fc70a7587a6223322914cb82bf199ffb4be301de",
-        "eagleVersion": "v4.5.2",
+        "commitHash": "",
+        "downloadUrl": "",
+        "eagleCommitHash": "Unknown",
+        "eagleVersion": "Unknown",
         "filePath": "groups.graph",
         "fileType": "Graph",
-        "gitUrl": "",
         "lastModifiedDatetime": 0,
         "lastModifiedEmail": "",
         "lastModifiedName": "",
@@ -47,15 +52,19 @@
         "repo": "",
         "repoBranch": "",
         "repoService": "Unknown",
+        "repositoryUrl": "",
         "schemaVersion": "OJS",
-        "sha": ""
+        "signature": ""
     },
     "nodeDataArray": [
         {
             "applicationArgs": [],
             "category": "Gather",
+            "categoryType": "Construct",
             "collapsed": false,
             "color": "rgb(211 165 0)",
+            "commitHash": "",
+            "dataHash": "",
             "description": "Placeholder 'gather' description",
             "drawOrderHint": 0,
             "expanded": false,
@@ -63,6 +72,7 @@
                 {
                     "defaultValue": "",
                     "description": "The number of inputs that will be gathered together by this construct.",
+                    "keyAttribute": false,
                     "name": "num_of_inputs",
                     "options": [],
                     "positional": false,
@@ -75,6 +85,7 @@
                 {
                     "defaultValue": "",
                     "description": "The axis by which to gather the inputs together",
+                    "keyAttribute": false,
                     "name": "gather_axis",
                     "options": [],
                     "positional": false,
@@ -86,12 +97,12 @@
                 }
             ],
             "flipPorts": false,
-            "git_url": "",
             "height": 200,
             "inputAppFields": [
                 {
                     "defaultValue": "",
                     "description": "Application class",
+                    "keyAttribute": false,
                     "name": "appclass",
                     "options": [],
                     "positional": false,
@@ -104,6 +115,7 @@
                 {
                     "defaultValue": "",
                     "description": "Estimated execution time",
+                    "keyAttribute": false,
                     "name": "execution_time",
                     "options": [],
                     "positional": false,
@@ -116,6 +128,7 @@
                 {
                     "defaultValue": "",
                     "description": "Is this node the start of a group?",
+                    "keyAttribute": false,
                     "name": "group_start",
                     "options": [],
                     "positional": false,
@@ -128,6 +141,7 @@
                 {
                     "defaultValue": "",
                     "description": "The number of seconds to sleep",
+                    "keyAttribute": false,
                     "name": "sleepTime",
                     "options": [],
                     "positional": false,
@@ -140,6 +154,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "in",
                     "options": [],
                     "positional": false,
@@ -152,6 +167,20 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
+                    "name": "in",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "in",
+                    "type": "String",
+                    "value": ""
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
                     "name": "in",
                     "options": [],
                     "positional": false,
@@ -173,6 +202,7 @@
                     "IdText": "in",
                     "description": "",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "in",
                     "type": "String"
                 }
@@ -186,7 +216,8 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "sha": "",
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
             "text": "Gather",
             "width": 200,
@@ -196,8 +227,11 @@
         {
             "applicationArgs": [],
             "category": "Scatter",
+            "categoryType": "Construct",
             "collapsed": false,
             "color": "rgb(211 165 0)",
+            "commitHash": "",
+            "dataHash": "",
             "description": "Placeholder 'scatter' description",
             "drawOrderHint": 0,
             "expanded": false,
@@ -205,6 +239,7 @@
                 {
                     "defaultValue": "",
                     "description": "The number of outputs generated by this construct",
+                    "keyAttribute": false,
                     "name": "num_of_copies",
                     "options": [],
                     "positional": false,
@@ -217,6 +252,7 @@
                 {
                     "defaultValue": "",
                     "description": "The axis used to split the input into multiple outputs",
+                    "keyAttribute": false,
                     "name": "scatter_axis",
                     "options": [],
                     "positional": false,
@@ -228,12 +264,12 @@
                 }
             ],
             "flipPorts": false,
-            "git_url": "",
             "height": 200,
             "inputAppFields": [
                 {
                     "defaultValue": "",
                     "description": "Application class",
+                    "keyAttribute": false,
                     "name": "appclass",
                     "options": [],
                     "positional": false,
@@ -246,6 +282,7 @@
                 {
                     "defaultValue": "",
                     "description": "Estimated execution time",
+                    "keyAttribute": false,
                     "name": "execution_time",
                     "options": [],
                     "positional": false,
@@ -258,6 +295,7 @@
                 {
                     "defaultValue": "",
                     "description": "Is this node the start of a group?",
+                    "keyAttribute": false,
                     "name": "group_start",
                     "options": [],
                     "positional": false,
@@ -270,6 +308,7 @@
                 {
                     "defaultValue": "",
                     "description": "The number of seconds to sleep",
+                    "keyAttribute": false,
                     "name": "sleepTime",
                     "options": [],
                     "positional": false,
@@ -282,6 +321,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "in",
                     "options": [],
                     "positional": false,
@@ -294,6 +334,20 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
+                    "name": "in",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "in",
+                    "type": "String",
+                    "value": ""
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
                     "name": "in",
                     "options": [],
                     "positional": false,
@@ -315,6 +369,7 @@
                     "IdText": "in",
                     "description": "",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "in",
                     "type": "String"
                 }
@@ -328,7 +383,8 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "sha": "",
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
             "text": "Scatter",
             "width": 200,
@@ -338,8 +394,11 @@
         {
             "applicationArgs": [],
             "category": "Loop",
+            "categoryType": "Construct",
             "collapsed": false,
             "color": "rgb(211 165 0)",
+            "commitHash": "",
+            "dataHash": "",
             "description": "Placeholder 'loop' description",
             "drawOrderHint": 0,
             "expanded": false,
@@ -347,6 +406,7 @@
                 {
                     "defaultValue": "",
                     "description": "The number of iterations performed by this loop construct",
+                    "keyAttribute": false,
                     "name": "num_of_iter",
                     "options": [],
                     "positional": false,
@@ -358,7 +418,6 @@
                 }
             ],
             "flipPorts": false,
-            "git_url": "",
             "height": 273.3278599501599,
             "inputAppFields": [],
             "inputApplicationDescription": "",
@@ -376,7 +435,8 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "sha": "",
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
             "text": "Loop",
             "width": 493.31143980063956,
@@ -386,8 +446,11 @@
         {
             "applicationArgs": [],
             "category": "Memory",
+            "categoryType": "Data",
             "collapsed": false,
             "color": "#2c2c2c",
+            "commitHash": "",
+            "dataHash": "",
             "description": "In-memory storage of intermediate data products",
             "drawOrderHint": 0,
             "expanded": false,
@@ -395,6 +458,7 @@
                 {
                     "defaultValue": "",
                     "description": "Estimated size of the data contained in this node",
+                    "keyAttribute": false,
                     "name": "data_volume",
                     "options": [],
                     "positional": false,
@@ -407,6 +471,7 @@
                 {
                     "defaultValue": "",
                     "description": "Is this node the end of a group?",
+                    "keyAttribute": false,
                     "name": "group_end",
                     "options": [],
                     "positional": false,
@@ -418,7 +483,6 @@
                 }
             ],
             "flipPorts": false,
-            "git_url": "https://github.com/ICRAR/daliuge",
             "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
@@ -441,11 +505,13 @@
                     "IdText": "in",
                     "description": "Dummy output port",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "in",
                     "type": "String"
                 }
             ],
-            "sha": "63d7df9",
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
             "text": "Memory",
             "width": 200,
@@ -457,6 +523,7 @@
                 {
                     "defaultValue": "",
                     "description": "The number of seconds to sleep",
+                    "keyAttribute": false,
                     "name": "sleepTime",
                     "options": [],
                     "positional": false,
@@ -468,8 +535,11 @@
                 }
             ],
             "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": false,
             "color": "#0059a5",
+            "commitHash": "",
+            "dataHash": "",
             "description": "A simple APP that sleeps the specified amount of time (0 by default). This is mainly useful (and used) to test graph translation and structure without executing real algorithms. Very useful for debugging.",
             "drawOrderHint": 0,
             "expanded": false,
@@ -477,6 +547,7 @@
                 {
                     "defaultValue": "",
                     "description": "Application class",
+                    "keyAttribute": false,
                     "name": "appclass",
                     "options": [],
                     "positional": false,
@@ -489,6 +560,7 @@
                 {
                     "defaultValue": "",
                     "description": "Estimated execution time",
+                    "keyAttribute": false,
                     "name": "execution_time",
                     "options": [],
                     "positional": false,
@@ -501,6 +573,7 @@
                 {
                     "defaultValue": "",
                     "description": "Is this node the start of a group?",
+                    "keyAttribute": false,
                     "name": "group_start",
                     "options": [],
                     "positional": false,
@@ -512,7 +585,6 @@
                 }
             ],
             "flipPorts": false,
-            "git_url": "https://github.com/ICRAR/daliuge",
             "group": -4,
             "height": 72,
             "inputAppFields": [],
@@ -536,11 +608,13 @@
                     "IdText": "dummy",
                     "description": "",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "dummy",
                     "type": "Complex"
                 }
             ],
-            "sha": "a7abe4c",
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
             "text": "SleepApp",
             "width": 200,
@@ -550,8 +624,11 @@
         {
             "applicationArgs": [],
             "category": "Memory",
+            "categoryType": "Data",
             "collapsed": false,
             "color": "#2c2c2c",
+            "commitHash": "",
+            "dataHash": "",
             "description": "In-memory storage of intermediate data products",
             "drawOrderHint": 0,
             "expanded": false,
@@ -559,6 +636,7 @@
                 {
                     "defaultValue": "",
                     "description": "Estimated size of the data contained in this node",
+                    "keyAttribute": false,
                     "name": "data_volume",
                     "options": [],
                     "positional": false,
@@ -571,6 +649,7 @@
                 {
                     "defaultValue": "",
                     "description": "Is this node the end of a group?",
+                    "keyAttribute": false,
                     "name": "group_end",
                     "options": [],
                     "positional": false,
@@ -582,7 +661,6 @@
                 }
             ],
             "flipPorts": false,
-            "git_url": "https://github.com/ICRAR/daliuge",
             "group": -4,
             "height": 72,
             "inputAppFields": [],
@@ -597,6 +675,7 @@
                     "IdText": "dummy",
                     "description": "Dummy input port",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "dummy",
                     "type": "Complex"
                 }
@@ -615,11 +694,13 @@
                     "IdText": "dummy",
                     "description": "Dummy output port",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "dummy",
                     "type": "Complex"
                 }
             ],
-            "sha": "a7abe4c",
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
             "text": "Memory",
             "width": 200,
@@ -631,6 +712,7 @@
                 {
                     "defaultValue": "",
                     "description": "The number of seconds to sleep",
+                    "keyAttribute": false,
                     "name": "sleepTime",
                     "options": [],
                     "positional": false,
@@ -642,8 +724,11 @@
                 }
             ],
             "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": false,
             "color": "#0059a5",
+            "commitHash": "",
+            "dataHash": "",
             "description": "A simple APP that sleeps the specified amount of time (0 by default). This is mainly useful (and used) to test graph translation and structure without executing real algorithms. Very useful for debugging.",
             "drawOrderHint": 0,
             "expanded": false,
@@ -651,6 +736,7 @@
                 {
                     "defaultValue": "",
                     "description": "Application class",
+                    "keyAttribute": false,
                     "name": "appclass",
                     "options": [],
                     "positional": false,
@@ -663,6 +749,7 @@
                 {
                     "defaultValue": "",
                     "description": "Estimated execution time",
+                    "keyAttribute": false,
                     "name": "execution_time",
                     "options": [],
                     "positional": false,
@@ -675,6 +762,7 @@
                 {
                     "defaultValue": "",
                     "description": "Is this node the start of a group?",
+                    "keyAttribute": false,
                     "name": "group_start",
                     "options": [],
                     "positional": false,
@@ -686,7 +774,6 @@
                 }
             ],
             "flipPorts": false,
-            "git_url": "https://github.com/ICRAR/daliuge",
             "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
@@ -700,6 +787,7 @@
                     "IdText": "dummy",
                     "description": "",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "dummy",
                     "type": "Complex"
                 }
@@ -713,7 +801,8 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "sha": "a7abe4c",
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
             "text": "SleepApp",
             "width": 200,

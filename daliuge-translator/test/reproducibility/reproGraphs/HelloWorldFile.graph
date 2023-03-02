@@ -1,52 +1,104 @@
 {
     "linkDataArray": [],
     "modelData": {
+        "commitHash": "",
+        "downloadUrl": "",
+        "eagleCommitHash": "Unknown",
+        "eagleVersion": "Unknown",
         "filePath": "HelloWorldFile.graph",
-        "fileType": "graph",
-        "git_url": "",
+        "fileType": "Graph",
+        "lastModifiedDatetime": 0,
+        "lastModifiedEmail": "",
+        "lastModifiedName": "",
+        "numLGNodes": 1,
+        "readonly": true,
         "repo": "",
+        "repoBranch": "",
         "repoService": "Unknown",
-        "sha": ""
+        "repositoryUrl": "",
+        "schemaVersion": "OJS",
+        "signature": ""
     },
     "nodeDataArray": [
         {
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
+            "applicationArgs": [],
             "category": "File",
             "categoryType": "Data",
             "collapsed": false,
-            "colour": "#394BB2",
+            "color": "#2c2c2c",
+            "commitHash": "",
+            "dataHash": "",
             "description": "",
             "drawOrderHint": 0,
-            "exitAppName": "",
+            "expanded": true,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
                     "name": "data_volume",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Data volume",
+                    "type": "Unknown",
                     "value": "5"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
                     "name": "group_end",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Group end",
+                    "type": "Unknown",
                     "value": "0"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
                     "name": "check_filepath_exists",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Check file path exists",
+                    "type": "Unknown",
                     "value": "1"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
                     "name": "filepath",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "File path",
+                    "type": "Unknown",
                     "value": "result.out"
                 },
                 {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
                     "name": "dirname",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
                     "text": "Directory name",
+                    "type": "Unknown",
                     "value": ""
                 },
                 {
-                    "defaultValue": true,
+                    "defaultValue": "true",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
                     "keyAttribute": false,
                     "name": "persist",
@@ -59,27 +111,40 @@
                     "value": false
                 }
             ],
+            "flipPorts": false,
+            "height": 72,
             "inputAppFields": [],
-            "inputAppName": "",
-            "inputApplication": "Unknown",
+            "inputApplicationDescription": "",
+            "inputApplicationKey": null,
+            "inputApplicationName": "",
+            "inputApplicationType": "None",
             "inputLocalPorts": [],
             "inputPorts": [],
-            "isData": true,
             "isGroup": false,
             "key": -1,
-            "loc": "658 195",
             "outputAppFields": [],
-            "outputAppName": "",
-            "outputApplication": "Unknown",
+            "outputApplicationDescription": "",
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [
                 {
                     "Id": "ad058285-1989-4e76-8133-9e1d1c830251",
-                    "IdText": "event"
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "keyAttribute": false,
+                    "text": "event"
                 }
             ],
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
-            "text": "File"
+            "text": "File",
+            "width": 200,
+            "x": 658,
+            "y": 195
         }
     ]
 }
