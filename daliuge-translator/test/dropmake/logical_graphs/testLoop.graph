@@ -39,7 +39,7 @@
         "repositoryUrl": "",
         "repositoryUrl": "",
         "schemaVersion": "OJS",
-        "signature": """signature": ""
+        "signature": "signature"
     },
     "nodeDataArray": [
         {
