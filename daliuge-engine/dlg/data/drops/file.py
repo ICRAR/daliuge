@@ -114,11 +114,11 @@ class FileDROP(DataDROP, PathBasedDrop):
         filename = None
 
         if filepath:  # if there is anything provided
-            if filepath.count("/") == 0:  # just a name
+            if "/" not in filepath:  # just a name
                 filename = filepath
                 dirname = self.get_dir(".")
             # filepath = self.sanitize_paths(self.filepath)
-            elif filepath[-1] == "/":  # just a directory name
+            elif filepath.endswith("/"):  # just a directory name
                 self.is_dir = True
                 filename = None
                 dirname = filepath
