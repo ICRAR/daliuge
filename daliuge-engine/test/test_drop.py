@@ -781,7 +781,7 @@ class TestDROP(unittest.TestCase):
             a = FileDROP(
                 "a",
                 "a",
-                filepath=tempDir,
+                filepath=tempDir + "/",
                 delete_parent_directory=delete_parent_directory,
             )
             a.write(b" ")

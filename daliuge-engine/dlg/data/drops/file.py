@@ -109,17 +109,26 @@ class FileDROP(DataDROP, PathBasedDrop):
         """
         FileDROP-specific initialization.
         """
-        self.filepath = self.parameters.get("filepath", None)
+        filepath = self.parameters.get("filepath", None)
+        dirname = None
+        filename = None
 
-        filepath = self.sanitize_paths(self.filepath)
-        if filepath and filepath[-1] == "/":
-            self.is_dir = True
-        if filepath and os.path.isdir(filepath):
-            filename = None
-            dirname = filepath
-        else:
-            filename = os.path.basename(filepath) if filepath else None
-            dirname = os.path.dirname(filepath) if filepath else None
+        if filepath:  # if there is anything provided
+            if filepath.count("/") == 0:  # just a name
+                filename = filepath
+                dirname = self.get_dir(".")
+            # filepath = self.sanitize_paths(self.filepath)
+            elif filepath[-1] == "/":  # just a directory name
+                self.is_dir = True
+                filename = None
+                dirname = filepath
+            else:
+                filename = os.path.basename(filepath)
+                dirname = os.path.dirname(filepath)
+        if dirname is None:
+            dirname = "."
+        filename = os.path.expandvars(filename) if filename else None
+        dirname = self.sanitize_paths(dirname) if dirname else None
         # We later check if the file exists, but only if the user has specified
         # an absolute dirname/filepath (otherwise it doesn't make sense, since
         # we create our own filenames/dirnames dynamically as necessary
@@ -128,7 +137,7 @@ class FileDROP(DataDROP, PathBasedDrop):
             check = self.check_filepath_exists
 
         # Default filename to drop UID
-        if not filename and not self.is_dir:
+        if filename is None:
             filename = self.non_fname_chars.sub("_", self.uid)
         self.filename = filename
         self.dirname = self.get_dir(dirname)
