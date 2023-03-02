@@ -159,7 +159,7 @@
         "applicationArgs": {
             "check_filepath_exists": {
                 "text": "Check file path exists",
-                "value": true,
+                "value": false,
                 "defaultValue": "",
                 "description": "Perform a check to make sure the file path exists before proceeding with the application",
                 "readonly": false,
@@ -256,7 +256,7 @@
         "applicationArgs": {
             "check_filepath_exists": {
                 "text": "Check file path exists",
-                "value": true,
+                "value": false,
                 "defaultValue": "",
                 "description": "Perform a check to make sure the file path exists before proceeding with the application",
                 "readonly": false,

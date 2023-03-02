@@ -84,9 +84,15 @@ def unroll(lg, oid_prefix=None, zerorun=False, app=None):
             if "sleepTime" in dropspec:
                 dropspec["sleepTime"] = 0
     if app:
+        logger.info("Replacing apps with %s", app)
         for dropspec in drop_list:
             if "app" in dropspec:
                 dropspec["app"] = app
+                dropspec["sleepTime"] = (
+                    dropspec["execution_time"]
+                    if "execution_time" in dropspec
+                    else 2
+                )
     drop_list.append(lg.reprodata)
     return drop_list
 
@@ -184,7 +190,11 @@ def partition(
 
     elif algo == ALGO_MY_SARKAR:
         pgt = MySarkarPGTP(
-            pgt, num_partitions, partition_label, max_dop, merge_parts=could_merge
+            pgt,
+            num_partitions,
+            partition_label,
+            max_dop,
+            merge_parts=could_merge,
         )
 
     elif algo == ALGO_MIN_NUM_PARTS:

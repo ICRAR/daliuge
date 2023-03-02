@@ -1,11 +1,12 @@
 {
     "linkDataArray": [],
     "modelData": {
-        "eagleCommitHash": "fc70a7587a6223322914cb82bf199ffb4be301de",
-        "eagleVersion": "v4.5.2",
+        "commitHash": "",
+        "downloadUrl": "",
+        "eagleCommitHash": "Unknown",
+        "eagleVersion": "Unknown",
         "filePath": "files.graph",
         "fileType": "Graph",
-        "gitUrl": "",
         "lastModifiedDatetime": 0,
         "lastModifiedEmail": "",
         "lastModifiedName": "",
@@ -14,15 +15,19 @@
         "repo": "",
         "repoBranch": "",
         "repoService": "Unknown",
+        "repositoryUrl": "",
         "schemaVersion": "OJS",
-        "sha": ""
+        "signature": ""
     },
     "nodeDataArray": [
         {
             "applicationArgs": [],
             "category": "Memory",
+            "categoryType": "Data",
             "collapsed": false,
             "color": "#2c2c2c",
+            "commitHash": "",
+            "dataHash": "",
             "description": "",
             "drawOrderHint": 0,
             "expanded": false,
@@ -30,6 +35,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "data_volume",
                     "options": [],
                     "positional": false,
@@ -42,6 +48,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "group_end",
                     "options": [],
                     "positional": false,
@@ -53,7 +60,6 @@
                 }
             ],
             "flipPorts": false,
-            "git_url": "",
             "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
@@ -76,10 +82,12 @@
                     "IdText": "event",
                     "description": "",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "event"
                 }
             ],
-            "sha": "",
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
             "text": "Memory",
             "width": 200,
@@ -89,8 +97,11 @@
         {
             "applicationArgs": [],
             "category": "File",
+            "categoryType": "Data",
             "collapsed": false,
             "color": "#2c2c2c",
+            "commitHash": "",
+            "dataHash": "",
             "description": "",
             "drawOrderHint": 0,
             "expanded": false,
@@ -98,6 +109,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "data_volume",
                     "options": [],
                     "positional": false,
@@ -110,6 +122,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "group_end",
                     "options": [],
                     "positional": false,
@@ -122,6 +135,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "check_filepath_exists",
                     "options": [],
                     "positional": false,
@@ -134,6 +148,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "filepath",
                     "options": [],
                     "positional": false,
@@ -146,6 +161,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "dirname",
                     "options": [],
                     "positional": false,
@@ -156,7 +172,7 @@
                     "value": ""
                 },
                 {
-                    "defaultValue": true,
+                    "defaultValue": "true",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
                     "keyAttribute": false,
                     "name": "persist",
@@ -170,7 +186,6 @@
                 }
             ],
             "flipPorts": false,
-            "git_url": "",
             "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
@@ -193,10 +208,12 @@
                     "IdText": "event",
                     "description": "",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "event"
                 }
             ],
-            "sha": "",
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
             "text": "File",
             "width": 200,
@@ -206,8 +223,11 @@
         {
             "applicationArgs": [],
             "category": "NGAS",
+            "categoryType": "Data",
             "collapsed": false,
             "color": "#2c2c2c",
+            "commitHash": "",
+            "dataHash": "",
             "description": "",
             "drawOrderHint": 0,
             "expanded": false,
@@ -215,6 +235,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "data_volume",
                     "options": [],
                     "positional": false,
@@ -227,6 +248,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "group_end",
                     "options": [],
                     "positional": false,
@@ -238,7 +260,6 @@
                 }
             ],
             "flipPorts": false,
-            "git_url": "",
             "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
@@ -261,10 +282,12 @@
                     "IdText": "event",
                     "description": "",
                     "event": false,
+                    "keyAttribute": false,
                     "text": "event"
                 }
             ],
-            "sha": "",
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
             "text": "NGAS",
             "width": 200,
