@@ -1,346 +1,598 @@
 {
+    "linkDataArray": [
+        {
+            "closesLoop": false,
+            "dataType": "Unknown",
+            "from": -3,
+            "fromPort": "68fc1918-f262-4003-b944-1f76339859e0",
+            "loop_aware": "0",
+            "to": -1,
+            "toPort": "09874eb2-72bd-4ddb-9727-b700678b18f5"
+        },
+        {
+            "closesLoop": false,
+            "dataType": "Unknown",
+            "from": -1,
+            "fromPort": "efb6a0b8-99d1-4979-b72c-0039c28d0a28",
+            "loop_aware": "0",
+            "to": -4,
+            "toPort": "ae981288-d839-4890-bb11-f54f336cfad0"
+        },
+        {
+            "closesLoop": false,
+            "dataType": "Unknown",
+            "from": -1,
+            "fromPort": "af2b86b8-7a98-4864-9d0d-08b7ad202fbe",
+            "loop_aware": "0",
+            "to": -2,
+            "toPort": "c17a6ac4-7c75-423d-ad08-9a35a5918cd4"
+        },
+        {
+            "closesLoop": false,
+            "dataType": "Unknown",
+            "from": -2,
+            "fromPort": "728014ae-a135-4b47-a295-da5884b83310",
+            "loop_aware": "0",
+            "to": -1,
+            "toPort": "9980ceea-f9c3-40e4-a41b-8964869552d6"
+        }
+    ],
     "modelData": {
-        "fileType": "graph",
-        "repoService": "GitHub",
-        "repoBranch": "graph_fixes",
-        "repo": "ICRAR/daliuge",
-        "filePath": "daliuge-translator/test/dropmake/logical_graphs/simpleMKN.graph",
-        "sha": "",
-        "git_url": ""
+        "commitHash": "",
+        "downloadUrl": "",
+        "eagleCommitHash": "Unknown",
+        "eagleVersion": "Unknown",
+        "filePath": "simpleMKN.graph",
+        "fileType": "Graph",
+        "lastModifiedDatetime": 0,
+        "lastModifiedEmail": "",
+        "lastModifiedName": "",
+        "numLGNodes": 4,
+        "readonly": true,
+        "repo": "",
+        "repoBranch": "",
+        "repoService": "Unknown",
+        "repositoryUrl": "",
+        "schemaVersion": "OJS",
+        "signature": ""
     },
     "nodeDataArray": [
         {
+            "applicationArgs": [],
             "category": "MKN",
-            "categoryType": "Group",
-            "isData": false,
-            "isGroup": true,
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "color": "#D32000",
-            "drawOrderHint": 0,
-            "key": -1,
-            "text": "MKN",
-            "description": "Placeholder 'mkn' description",
-            "x": 941.7277781953355,
-            "y": 100,
-            "width": 255.79229031760582,
-            "height": 252.30527217275548,
+            "categoryType": "Construct",
             "collapsed": false,
-            "showPorts": true,
-            "subject": null,
-            "selected": true,
+            "color": "rgb(211 165 0)",
+            "commitHash": "",
+            "dataHash": "",
+            "description": "Placeholder 'mkn' description",
+            "drawOrderHint": 0,
             "expanded": true,
+            "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "m",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "M",
+                    "type": "Unknown",
+                    "value": "1"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "k",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "K",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "n",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "N",
+                    "type": "Unknown",
+                    "value": "2"
+                }
+            ],
+            "flipPorts": false,
+            "height": 252.30527217275548,
+            "inputAppFields": [
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "execution_time",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "num_cpus",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Unknown",
+                    "value": "1"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "group_start",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Unknown",
+                    "value": "0"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "appclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Appclass",
+                    "type": "Unknown",
+                    "value": "dlg.apps.simple.SleepApp"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "event",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "event",
+                    "value": ""
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "event",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "event",
+                    "value": ""
+                }
+            ],
+            "inputApplicationKey": -5,
             "inputApplicationName": "sleep",
-            "outputApplicationName": "sleep",
-            "exitApplicationName": "",
             "inputApplicationType": "PythonApp",
-            "outputApplicationType": "PythonApp",
-            "exitApplicationType": "None",
+            "inputLocalPorts": [
+                {
+                    "Id": "9980ceea-f9c3-40e4-a41b-8964869552d6",
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "keyAttribute": false,
+                    "text": "event"
+                }
+            ],
             "inputPorts": [
                 {
                     "Id": "09874eb2-72bd-4ddb-9727-b700678b18f5",
-                    "IdText": "event"
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "keyAttribute": false,
+                    "text": "event"
+                }
+            ],
+            "isGroup": true,
+            "key": -1,
+            "outputAppFields": [
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "execution_time",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "num_cpus",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Unknown",
+                    "value": "1"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "group_start",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Unknown",
+                    "value": "0"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "appclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Appclass",
+                    "type": "Unknown",
+                    "value": "dlg.apps.simple.SleepApp"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "event",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "event",
+                    "value": ""
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "event",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "event",
+                    "value": ""
+                }
+            ],
+            "outputApplicationKey": -6,
+            "outputApplicationName": "sleep",
+            "outputApplicationType": "PythonApp",
+            "outputLocalPorts": [
+                {
+                    "Id": "af2b86b8-7a98-4864-9d0d-08b7ad202fbe",
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "keyAttribute": false,
+                    "text": "event"
                 }
             ],
             "outputPorts": [
                 {
                     "Id": "efb6a0b8-99d1-4979-b72c-0039c28d0a28",
-                    "IdText": "event"
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "keyAttribute": false,
+                    "text": "event"
                 }
             ],
-            "inputLocalPorts": [
-                {
-                    "Id": "9980ceea-f9c3-40e4-a41b-8964869552d6",
-                    "IdText": "event"
-                }
-            ],
-            "outputLocalPorts": [
-                {
-                    "Id": "af2b86b8-7a98-4864-9d0d-08b7ad202fbe",
-                    "IdText": "event"
-                }
-            ],
-            "inputAppFields": [
-                {
-                    "text": "Execution time",
-                    "name": "execution_time",
-                    "value": "5",
-                    "description": ""
-                },
-                {
-                    "text": "Num CPUs",
-                    "name": "num_cpus",
-                    "value": "1",
-                    "description": ""
-                },
-                {
-                    "text": "Group start",
-                    "name": "group_start",
-                    "value": "0",
-                    "description": ""
-                },
-                {
-                    "text": "Appclass",
-                    "name": "appclass",
-                    "value": "dlg.apps.simple.SleepApp",
-                    "description": ""
-                }
-            ],
-            "outputAppFields": [
-                {
-                    "text": "Execution time",
-                    "name": "execution_time",
-                    "value": "5",
-                    "description": ""
-                },
-                {
-                    "text": "Num CPUs",
-                    "name": "num_cpus",
-                    "value": "1",
-                    "description": ""
-                },
-                {
-                    "text": "Group start",
-                    "name": "group_start",
-                    "value": "0",
-                    "description": ""
-                },
-                {
-                    "text": "Appclass",
-                    "name": "appclass",
-                    "value": "dlg.apps.simple.SleepApp",
-                    "description": ""
-                }
-            ],
-            "fields": [
-                {
-                    "text": "M",
-                    "name": "m",
-                    "value": "1",
-                    "description": ""
-                },
-                {
-                    "text": "K",
-                    "name": "k",
-                    "value": "5",
-                    "description": ""
-                },
-                {
-                    "text": "N",
-                    "name": "n",
-                    "value": "2",
-                    "description": ""
-                }
-            ]
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
+            "subject": null,
+            "text": "MKN",
+            "width": 255.79229031760582,
+            "x": 941.7277781953355,
+            "y": 100
         },
         {
+            "applicationArgs": [],
             "category": "PythonApp",
             "categoryType": "Application",
-            "isData": false,
-            "isGroup": false,
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "color": "#3498DB",
-            "drawOrderHint": 0,
-            "key": -2,
-            "text": "SleepApp",
+            "collapsed": true,
+            "color": "#0059a5",
+            "commitHash": "",
+            "dataHash": "",
             "description": "An application component in the form of a Python app",
-            "x": 974.5102787954545,
-            "y": 236.714399186708,
-            "width": 200,
-            "height": 200,
-            "collapsed": false,
-            "showPorts": false,
-            "subject": null,
-            "selected": false,
+            "drawOrderHint": 0,
             "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "execution_time",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Execution time",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "num_cpus",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Num CPUs",
+                    "type": "Unknown",
+                    "value": "1"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "group_start",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group start",
+                    "type": "Unknown",
+                    "value": "0"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "appclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Appclass",
+                    "type": "Unknown",
+                    "value": "dlg.apps.simple.SleepApp"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "arg01",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Arg01",
+                    "type": "Unknown",
+                    "value": "sleep time=20"
+                }
+            ],
+            "flipPorts": false,
             "group": -1,
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationDescription": "",
+            "inputApplicationKey": null,
             "inputApplicationName": "",
-            "outputApplicationName": "",
-            "exitApplicationName": "",
             "inputApplicationType": "None",
-            "outputApplicationType": "None",
-            "exitApplicationType": "None",
+            "inputLocalPorts": [],
             "inputPorts": [
                 {
                     "Id": "c17a6ac4-7c75-423d-ad08-9a35a5918cd4",
-                    "IdText": "event"
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "keyAttribute": false,
+                    "text": "event"
                 }
             ],
+            "isGroup": false,
+            "key": -2,
+            "outputAppFields": [],
+            "outputApplicationDescription": "",
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
             "outputPorts": [
                 {
                     "Id": "728014ae-a135-4b47-a295-da5884b83310",
-                    "IdText": "event"
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "keyAttribute": false,
+                    "text": "event"
                 }
             ],
-            "inputLocalPorts": [],
-            "outputLocalPorts": [],
-            "inputAppFields": [],
-            "outputAppFields": [],
-            "fields": [
-                {
-                    "text": "Execution time",
-                    "name": "execution_time",
-                    "value": "5",
-                    "description": ""
-                },
-                {
-                    "text": "Num CPUs",
-                    "name": "num_cpus",
-                    "value": "1",
-                    "description": ""
-                },
-                {
-                    "text": "Group start",
-                    "name": "group_start",
-                    "value": "0",
-                    "description": ""
-                },
-                {
-                    "text": "Appclass",
-                    "name": "appclass",
-                    "value": "dlg.apps.simple.SleepApp",
-                    "description": ""
-                },
-                {
-                    "text": "Arg01",
-                    "name": "arg01",
-                    "value": "sleep time=20",
-                    "description": ""
-                }
-            ]
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
+            "subject": null,
+            "text": "SleepApp",
+            "width": 200,
+            "x": 974.5102787954545,
+            "y": 236.714399186708
         },
         {
+            "applicationArgs": [],
             "category": "Memory",
             "categoryType": "Data",
-            "isData": true,
-            "isGroup": false,
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "color": "#394BB2",
-            "drawOrderHint": 0,
-            "key": -3,
-            "text": "Memory",
+            "collapsed": true,
+            "color": "#2c2c2c",
+            "commitHash": "",
+            "dataHash": "",
             "description": "",
-            "x": 600,
-            "y": 281.32494353221887,
-            "width": 200,
-            "height": 200,
-            "collapsed": false,
-            "showPorts": false,
-            "subject": null,
-            "selected": false,
+            "drawOrderHint": 0,
             "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "data_volume",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Data volume",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "group_end",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group end",
+                    "type": "Unknown",
+                    "value": "0"
+                }
+            ],
+            "flipPorts": false,
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationDescription": "",
+            "inputApplicationKey": null,
             "inputApplicationName": "",
-            "outputApplicationName": "",
-            "exitApplicationName": "",
             "inputApplicationType": "None",
-            "outputApplicationType": "None",
-            "exitApplicationType": "None",
+            "inputLocalPorts": [],
             "inputPorts": [],
+            "isGroup": false,
+            "key": -3,
+            "outputAppFields": [],
+            "outputApplicationDescription": "",
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
             "outputPorts": [
                 {
                     "Id": "68fc1918-f262-4003-b944-1f76339859e0",
-                    "IdText": "event"
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "keyAttribute": false,
+                    "text": "event"
                 }
             ],
-            "inputLocalPorts": [],
-            "outputLocalPorts": [],
-            "inputAppFields": [],
-            "outputAppFields": [],
-            "fields": [
-                {
-                    "text": "Data volume",
-                    "name": "data_volume",
-                    "value": "5",
-                    "description": ""
-                },
-                {
-                    "text": "Group end",
-                    "name": "group_end",
-                    "value": "0",
-                    "description": ""
-                }
-            ]
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
+            "subject": null,
+            "text": "Memory",
+            "width": 200,
+            "x": 600,
+            "y": 281.32494353221887
         },
         {
+            "applicationArgs": [],
             "category": "Memory",
             "categoryType": "Data",
-            "isData": true,
-            "isGroup": false,
-            "canHaveInputs": true,
-            "canHaveOutputs": true,
-            "color": "#394BB2",
-            "drawOrderHint": 0,
-            "key": -4,
-            "text": "Memory",
+            "collapsed": true,
+            "color": "#2c2c2c",
+            "commitHash": "",
+            "dataHash": "",
             "description": "",
-            "x": 1334.5984891818098,
-            "y": 204.6105443455109,
-            "width": 200,
-            "height": 200,
-            "collapsed": false,
-            "showPorts": false,
-            "subject": null,
-            "selected": false,
+            "drawOrderHint": 0,
             "expanded": false,
+            "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "data_volume",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Data volume",
+                    "type": "Unknown",
+                    "value": "5"
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "keyAttribute": false,
+                    "name": "group_end",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "Group end",
+                    "type": "Unknown",
+                    "value": "0"
+                }
+            ],
+            "flipPorts": false,
+            "height": 72,
+            "inputAppFields": [],
+            "inputApplicationDescription": "",
+            "inputApplicationKey": null,
             "inputApplicationName": "",
-            "outputApplicationName": "",
-            "exitApplicationName": "",
             "inputApplicationType": "None",
-            "outputApplicationType": "None",
-            "exitApplicationType": "None",
+            "inputLocalPorts": [],
             "inputPorts": [
                 {
                     "Id": "ae981288-d839-4890-bb11-f54f336cfad0",
-                    "IdText": "event"
+                    "IdText": "event",
+                    "description": "",
+                    "event": false,
+                    "keyAttribute": false,
+                    "text": "event"
                 }
             ],
-            "outputPorts": [],
-            "inputLocalPorts": [],
-            "outputLocalPorts": [],
-            "inputAppFields": [],
+            "isGroup": false,
+            "key": -4,
             "outputAppFields": [],
-            "fields": [
-                {
-                    "text": "Data volume",
-                    "name": "data_volume",
-                    "value": "5",
-                    "description": ""
-                },
-                {
-                    "text": "Group end",
-                    "name": "group_end",
-                    "value": "0",
-                    "description": ""
-                }
-            ]
-        }
-    ],
-    "linkDataArray": [
-        {
-            "from": -3,
-            "fromPort": "68fc1918-f262-4003-b944-1f76339859e0",
-            "to": -1,
-            "toPort": "09874eb2-72bd-4ddb-9727-b700678b18f5"
-        },
-        {
-            "from": -1,
-            "fromPort": "efb6a0b8-99d1-4979-b72c-0039c28d0a28",
-            "to": -4,
-            "toPort": "ae981288-d839-4890-bb11-f54f336cfad0"
-        },
-        {
-            "from": -1,
-            "fromPort": "af2b86b8-7a98-4864-9d0d-08b7ad202fbe",
-            "to": -2,
-            "toPort": "c17a6ac4-7c75-423d-ad08-9a35a5918cd4"
-        },
-        {
-            "from": -2,
-            "fromPort": "728014ae-a135-4b47-a295-da5884b83310",
-            "to": -1,
-            "toPort": "9980ceea-f9c3-40e4-a41b-8964869552d6"
+            "outputApplicationDescription": "",
+            "outputApplicationKey": null,
+            "outputApplicationName": "",
+            "outputApplicationType": "None",
+            "outputLocalPorts": [],
+            "outputPorts": [],
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
+            "subject": null,
+            "text": "Memory",
+            "width": 200,
+            "x": 1334.5984891818098,
+            "y": 204.6105443455109
         }
     ]
 }

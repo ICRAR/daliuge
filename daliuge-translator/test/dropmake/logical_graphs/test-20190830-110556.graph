@@ -1,6 +1,8 @@
 {
     "linkDataArray": [
         {
+            "closesLoop": false,
+            "dataType": "Unknown",
             "from": -2,
             "fromPort": "47c421b8-5cdc-4ff7-ab7e-b75140f2d951",
             "loop_aware": "0",
@@ -9,11 +11,12 @@
         }
     ],
     "modelData": {
-        "eagleCommitHash": "b34ff925a5c6883fdba168c073afeffb9a9fc446",
-        "eagleVersion": "v4.2.0",
+        "commitHash": "",
+        "downloadUrl": "",
+        "eagleCommitHash": "Unknown",
+        "eagleVersion": "Unknown",
         "filePath": "test-20190830-110556.graph",
         "fileType": "Graph",
-        "gitUrl": "",
         "lastModifiedDatetime": 0,
         "lastModifiedEmail": "",
         "lastModifiedName": "",
@@ -22,15 +25,19 @@
         "repo": "",
         "repoBranch": "",
         "repoService": "Unknown",
+        "repositoryUrl": "",
         "schemaVersion": "OJS",
-        "sha": ""
+        "signature": ""
     },
     "nodeDataArray": [
         {
             "applicationArgs": [],
             "category": "BashShellApp",
+            "categoryType": "Application",
             "collapsed": false,
             "color": "#0059a5",
+            "commitHash": "",
+            "dataHash": "",
             "description": "",
             "drawOrderHint": 0,
             "expanded": false,
@@ -38,6 +45,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "execution_time",
                     "options": [],
                     "positional": false,
@@ -50,6 +58,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "num_cpus",
                     "options": [],
                     "positional": false,
@@ -62,6 +71,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "group_start",
                     "options": [],
                     "positional": false,
@@ -74,6 +84,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "Arg01",
                     "options": [],
                     "positional": false,
@@ -86,6 +97,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "Arg02",
                     "options": [],
                     "positional": false,
@@ -98,6 +110,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "Arg03",
                     "options": [],
                     "positional": false,
@@ -110,6 +123,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "Arg04",
                     "options": [],
                     "positional": false,
@@ -122,6 +136,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "Arg05",
                     "options": [],
                     "positional": false,
@@ -134,6 +149,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "Arg06",
                     "options": [],
                     "positional": false,
@@ -146,6 +162,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "Arg07",
                     "options": [],
                     "positional": false,
@@ -158,6 +175,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "Arg08",
                     "options": [],
                     "positional": false,
@@ -170,6 +188,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "Arg09",
                     "options": [],
                     "positional": false,
@@ -182,6 +201,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "keyAttribute": false,
                     "name": "Arg10",
                     "options": [],
                     "positional": false,
@@ -194,6 +214,7 @@
                 {
                     "defaultValue": "",
                     "description": "just a dummy command",
+                    "keyAttribute": false,
                     "name": "command",
                     "options": [],
                     "positional": false,
@@ -205,7 +226,6 @@
                 }
             ],
             "flipPorts": false,
-            "git_url": "",
             "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
@@ -219,7 +239,8 @@
                     "IdText": "event",
                     "description": "",
                     "event": false,
-                    "text": "",
+                    "keyAttribute": false,
+                    "text": "event",
                     "type": ""
                 }
             ],
@@ -237,12 +258,13 @@
                     "IdText": "event",
                     "description": "",
                     "event": false,
-                    "text": "",
+                    "keyAttribute": false,
+                    "text": "event",
                     "type": ""
                 }
             ],
-            "readonly": true,
-            "sha": "",
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
             "text": "Enter label",
             "width": 200,
@@ -252,8 +274,11 @@
         {
             "applicationArgs": [],
             "category": "File",
+            "categoryType": "Data",
             "collapsed": false,
             "color": "#2c2c2c",
+            "commitHash": "",
+            "dataHash": "",
             "description": "A standard file on a filesystem mounted to the deployment machine \nIn some cases drops are created **outside** the context of a session, most notably during unit tests. In these cases the base directory is a fixed location under ``/tmp``.\nThe following table summarizes the calculation of the final path used by the ``FileDrop`` class depending on its parameters:\n============ ===================== ===================== ========== . filepath ------------ ------------------------------------------------------ dirname empty relative absolute ============ ===================== ===================== ========== **empty** /``$B``/``$u`` /``$B``/``$f`` /``$f`` **relative** /``$B``/``$d``/``$u`` /``$B``/``$d``/``$f`` **ERROR** **absolute** /``$d``/``$u`` /``$d``/``$f`` **ERROR** ============ ===================== ===================== ==========\nIn the table, ``$f`` is the value of ``filepath``, ``$d`` is the value of ``dirname``, ``$u`` is the drop's UID and ``$B`` is the base directory for this drop's session, namely ``/the/cwd/$session_id``.",
             "drawOrderHint": 0,
             "expanded": false,
@@ -261,6 +286,7 @@
                 {
                     "defaultValue": "5",
                     "description": "Estimated size of the data contained in this node",
+                    "keyAttribute": false,
                     "name": "data_volume",
                     "options": [],
                     "positional": false,
@@ -273,6 +299,7 @@
                 {
                     "defaultValue": "False",
                     "description": "Is this node the end of a group?",
+                    "keyAttribute": false,
                     "name": "group_end",
                     "options": [],
                     "positional": false,
@@ -285,6 +312,7 @@
                 {
                     "defaultValue": "True",
                     "description": "Perform a check to make sure the file path exists before proceeding with the application",
+                    "keyAttribute": false,
                     "name": "check_filepath_exists",
                     "options": [],
                     "positional": false,
@@ -297,6 +325,7 @@
                 {
                     "defaultValue": "",
                     "description": "Path to the file for this node",
+                    "keyAttribute": false,
                     "name": "filepath",
                     "options": [],
                     "positional": false,
@@ -309,6 +338,7 @@
                 {
                     "defaultValue": "",
                     "description": "Path to the file for this node",
+                    "keyAttribute": false,
                     "name": "dirname",
                     "options": [],
                     "positional": false,
@@ -319,7 +349,7 @@
                     "value": ""
                 },
                 {
-                    "defaultValue": true,
+                    "defaultValue": "true",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
                     "keyAttribute": false,
                     "name": "persist",
@@ -333,7 +363,6 @@
                 }
             ],
             "flipPorts": false,
-            "git_url": "https://github.com/ICRAR/daliuge.git",
             "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
@@ -347,7 +376,8 @@
                     "IdText": "event",
                     "description": "",
                     "event": false,
-                    "text": "",
+                    "keyAttribute": false,
+                    "text": "event",
                     "type": ""
                 }
             ],
@@ -360,8 +390,8 @@
             "outputApplicationType": "None",
             "outputLocalPorts": [],
             "outputPorts": [],
-            "readonly": false,
-            "sha": "0023469",
+            "paletteDownloadUrl": "",
+            "repositoryUrl": "",
             "subject": null,
             "text": "File",
             "width": 200,
