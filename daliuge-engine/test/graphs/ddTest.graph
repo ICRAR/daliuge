@@ -85,7 +85,7 @@
         ],
         "loop_cxt": null,
         "dw": 5,
-        "check_filepath_exists": true,
+        "check_filepath_exists": false,
         "data_volume": 5,
         "group_end": false,
         "filepath": "",
@@ -116,7 +116,7 @@
         "applicationArgs": {
             "check_filepath_exists": {
                 "text": "Check file path exists",
-                "value": true,
+                "value": false,
                 "defaultValue": "True",
                 "description": "Perform a check to make sure the file path exists before proceeding with the application",
                 "readonly": false,
