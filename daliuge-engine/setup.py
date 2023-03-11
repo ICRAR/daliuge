@@ -36,8 +36,8 @@ from setuptools.command.install import install
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
 MAJOR = 2
-MINOR = 3
-PATCH = 2
+MINOR = 4
+PATCH = 0
 RELEASE = True
 VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
 VERSION_FILE = "dlg/runtime/version.py"
