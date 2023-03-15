@@ -39,7 +39,9 @@
         "repositoryUrl": "",
         "repositoryUrl": "",
         "schemaVersion": "OJS",
-        "signature": "signature"
+        "signature": "signature",
+        "shortDescription": "",
+        "detailedDescription": ""
     },
     "nodeDataArray": [
         {

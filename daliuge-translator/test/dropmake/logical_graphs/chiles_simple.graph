@@ -252,7 +252,9 @@
         "repoService": "Unknown",
         "repositoryUrl": "",
         "schemaVersion": "OJS",
-        "signature": ""
+        "signature": "",
+        "shortDescription": "",
+        "detailedDescription": ""
     },
     "nodeDataArray": [
         {
