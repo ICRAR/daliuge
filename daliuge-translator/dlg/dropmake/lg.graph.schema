@@ -55,6 +55,12 @@
                 },
                 "signature": {
                     "type": "string"
+                },
+                "shortDescription": {
+                    "type": "string"
+                },
+                "detailedDescription": {
+                    "type": "string"
                 }
             },
             "required": [
@@ -74,7 +80,9 @@
                 "commitHash",
                 "downloadUrl",
                 "repositoryUrl",
-                "signature"
+                "signature",
+                "shortDescription",
+                "detailedDescription"
             ]
         },
         "nodeDataArray": {
