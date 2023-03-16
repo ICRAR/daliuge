@@ -6,11 +6,7 @@ from dlg.apps.app_base import BarrierAppDROP
 # @par EAGLE_START
 # @param category Scatter
 # @param tag template
-# @param appclass Application Class//String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time//Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs//Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param num_of_splits No. of splits/2/Integer/ComponentParameter/readwrite//False/False/Number of splits
+# @param num_of_splits No. of splits/2/Integer/ApplicationArgument/readwrite//False/False/Number of splits
 # @par EAGLE_END
 class ScatterDrop(BarrierAppDROP):
     """
@@ -26,12 +22,8 @@ class ScatterDrop(BarrierAppDROP):
 # @par EAGLE_START
 # @param category Gather
 # @param tag template
-# @param appclass Application Class//String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time//Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs//Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param num_of_inputs No. of inputs/2/Integer/ComponentParameter/readwrite//False/False/Number of inputs
-# @param gather_axis Index of gather axis/0/Integer/ComponentParameter/readwrite//False/False/Index of gather axis
+# @param num_of_inputs No. of inputs/2/Integer/ApplicationArgument/readwrite//False/False/Number of inputs
+# @param gather_axis Index of gather axis/0/Integer/ApplicationArgument/readwrite//False/False/Index of gather axis
 # @par EAGLE_END
 class GatherDrop(BarrierAppDROP):
     """
@@ -47,11 +39,7 @@ class GatherDrop(BarrierAppDROP):
 # @par EAGLE_START
 # @param category Loop
 # @param tag template
-# @param appclass Application Class//String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time//Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs//Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param num_of_iter No. of iterations/2/Integer/ComponentParameter/readwrite//False/False/Number of iterations
+# @param num_of_iter No. of iterations/2/Integer/ApplicationArguments/readwrite//False/False/Number of iterations
 # @par EAGLE_END
 class LoopDrop(BarrierAppDROP):
     """
@@ -67,10 +55,6 @@ class LoopDrop(BarrierAppDROP):
 # @par EAGLE_START
 # @param category MKN
 # @param tag template
-# @param appclass Application Class//String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time//Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs//Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @par EAGLE_END
 class MKNDrop(BarrierAppDROP):
     """
@@ -86,12 +70,8 @@ class MKNDrop(BarrierAppDROP):
 # @par EAGLE_START
 # @param category GroupBy
 # @param tag template
-# @param appclass Application Class//String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time//Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs//Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param num_of_inputs No. of inputs/2/Integer/ComponentParameter/readwrite//False/False/Number of inputs
-# @param gather_axis Index of gather axis/0/Integer/ComponentParameter/readwrite//False/False/Index of gather axis
+# @param num_of_inputs No. of inputs/2/Integer/ApplicationArgument/readwrite//False/False/Number of inputs
+# @param gather_axis Index of gather axis/0/Integer/ApplicationArgument/readwrite//False/False/Index of gather axis
 # @par EAGLE_END
 class GroupByDrop(BarrierAppDROP):
     """
@@ -107,9 +87,6 @@ class GroupByDrop(BarrierAppDROP):
 # @par EAGLE_START
 # @param category SubGraph
 # @param tag template
-# @param appclass Application Class//String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time//Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs//Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @par EAGLE_END
 class SubGraphDrop(BarrierAppDROP):
     """

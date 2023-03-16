@@ -220,7 +220,7 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 # @param integer Integer/True/Boolean/ApplicationArgument/readwrite//False/False/Generate integer array?
 # @param low Low/0/Float/ApplicationArgument/readwrite//False/False/Low value of range in array [inclusive]
 # @param high High/1/Float/ApplicationArgument/readwrite//False/False/High value of range of array [exclusive]
-# @param appclass Application class/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param appclass Application Class/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
 # @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
