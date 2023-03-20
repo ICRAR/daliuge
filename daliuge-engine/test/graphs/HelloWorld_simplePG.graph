@@ -29,7 +29,7 @@
     {
         "oid": "2022-03-24T11:40:15_-2_0",
         "type": "data",
-        "storage": "File",
+        "dataclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0
         ],

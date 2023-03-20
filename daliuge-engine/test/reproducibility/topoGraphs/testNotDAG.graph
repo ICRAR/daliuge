@@ -51,7 +51,7 @@
         {
             "applicationArgs": [],
             "category": "BashShellApp",
-            "categoryType": "Application",
+            "type": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -160,7 +160,7 @@
         {
             "applicationArgs": [],
             "category": "BashShellApp",
-            "categoryType": "Application",
+            "type": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -269,7 +269,7 @@
         {
             "applicationArgs": [],
             "category": "BashShellApp",
-            "categoryType": "Application",
+            "type": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -378,7 +378,7 @@
         {
             "applicationArgs": [],
             "category": "BashShellApp",
-            "categoryType": "Application",
+            "type": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",

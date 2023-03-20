@@ -66,7 +66,13 @@ CUBE_NAME = "cube1408~1412"
 
 
 def fileSpec(uid, **kwargs):
-    dropSpec = dropdict({"oid": str(uid), "type": "data", "storage": Categories.FILE})
+    dropSpec = dropdict(
+        {
+            "oid": str(uid),
+            "type": "data",
+            "dataclass": "dlg.data.drops.file.FileDROP",
+        }
+    )
     dropSpec.update(kwargs)
     return dropSpec
 
@@ -97,21 +103,31 @@ def fluxSpec(uid, **kwargs):
 
 def splitSpec(uid, **kwargs):
     dropSpec = dropdict(
-        {"oid": str(uid), "type": "app", "app": "test.integrate.chiles.chilesdo.Split"}
+        {
+            "oid": str(uid),
+            "type": "app",
+            "app": "test.integrate.chiles.chilesdo.Split",
+        }
     )
     dropSpec.update(kwargs)
     return dropSpec
 
 
 def scpSpec(uid, **kwargs):
-    dropSpec = dropdict({"oid": str(uid), "type": "app", "app": "dlg.apps.scp.ScpApp"})
+    dropSpec = dropdict(
+        {"oid": str(uid), "type": "app", "app": "dlg.apps.scp.ScpApp"}
+    )
     dropSpec.update(kwargs)
     return dropSpec
 
 
 def cleanSpec(uid, **kwargs):
     dropSpec = dropdict(
-        {"oid": str(uid), "type": "app", "app": "test.integrate.chiles.chilesdo.Clean"}
+        {
+            "oid": str(uid),
+            "type": "app",
+            "app": "test.integrate.chiles.chilesdo.Clean",
+        }
     )
     dropSpec.update(kwargs)
     return dropSpec
@@ -180,9 +196,14 @@ if __name__ == "__main__":
             node=node,
         )
         split_out = directorySpec(
-            "SplitOutput_%d" % (i), dirname=splitOutDir, check_exists=False, node=node
+            "SplitOutput_%d" % (i),
+            dirname=splitOutDir,
+            check_exists=False,
+            node=node,
         )
-        scp = scpSpec("Scp_%d" % (i), node=node, pkeyPath=KEY_PATH, timeout=3600)
+        scp = scpSpec(
+            "Scp_%d" % (i), node=node, pkeyPath=KEY_PATH, timeout=3600
+        )
         scpOut = directorySpec(
             "SplitOutput_%d_Copy" % (i),
             dirname=splitCopyDir,

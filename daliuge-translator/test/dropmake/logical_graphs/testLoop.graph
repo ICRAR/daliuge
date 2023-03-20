@@ -45,8 +45,8 @@
         {
             "applicationArgs": [],
             "category": "Loop",
-            "categoryType": "Construct",
-            "categoryType": "Construct",
+            "type": "Construct",
+            "type": "Construct",
             "collapsed": false,
             "color": "rgb(211 165 0)",
             "commitHash": "",
@@ -236,8 +236,8 @@
                 }
             ],
             "category": "BashShellApp",
-            "categoryType": "Application",
-            "categoryType": "Application",
+            "type": "Application",
+            "type": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -380,8 +380,8 @@
                 }
             ],
             "category": "BashShellApp",
-            "categoryType": "Application",
-            "categoryType": "Application",
+            "type": "Application",
+            "type": "Application",
             "collapsed": false,
             "color": "#0059a5",
             "commitHash": "",
@@ -511,8 +511,8 @@
         {
             "applicationArgs": [],
             "category": "File",
-            "categoryType": "Data",
-            "categoryType": "Data",
+            "type": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",

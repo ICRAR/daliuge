@@ -68,7 +68,7 @@ def lgt_block_fields(rmode: ReproducibilityFlags):
     if rmode == ReproducibilityFlags.NOTHING:
         return {}
     data = {
-        "categoryType": FieldOps.STORE,
+        "type": FieldOps.STORE,
         "category": FieldOps.STORE,
         "inputPorts": FieldOps.COUNT,
         "outputPorts": FieldOps.COUNT,
@@ -83,7 +83,9 @@ def lgt_block_fields(rmode: ReproducibilityFlags):
     return data
 
 
-def lg_block_fields(category_type: str, rmode: ReproducibilityFlags, custom_fields=None):
+def lg_block_fields(
+    category_type: str, rmode: ReproducibilityFlags, custom_fields=None
+):
     """
     Collects dict of fields and operations for all drop types at the lg layer for
     the supplied reproducibility standard.
@@ -94,10 +96,10 @@ def lg_block_fields(category_type: str, rmode: ReproducibilityFlags, custom_fiel
     """
     data = {}
     if rmode in (
-            ReproducibilityFlags.NOTHING,
-            ReproducibilityFlags.RERUN,
-            ReproducibilityFlags.REPRODUCE,
-            ReproducibilityFlags.REPLICATE_SCI,
+        ReproducibilityFlags.NOTHING,
+        ReproducibilityFlags.RERUN,
+        ReproducibilityFlags.REPRODUCE,
+        ReproducibilityFlags.REPLICATE_SCI,
     ):
         return data
     # Drop category considerations - Just try to get everything we can, will be filtered later
@@ -119,8 +121,8 @@ def lg_block_fields(category_type: str, rmode: ReproducibilityFlags, custom_fiel
     elif category_type == Categories.FILE:
         data["check_filepath_exists"] = FieldOps.STORE
         if rmode in (
-                ReproducibilityFlags.RECOMPUTE,
-                ReproducibilityFlags.REPLICATE_COMP,
+            ReproducibilityFlags.RECOMPUTE,
+            ReproducibilityFlags.REPLICATE_COMP,
         ):
             data["filepath"] = FieldOps.STORE
             data["dirname"] = FieldOps.STORE
@@ -182,7 +184,9 @@ def lg_block_fields(category_type: str, rmode: ReproducibilityFlags, custom_fiel
     elif category_type == Categories.DYNLIB_PROC_APP:
         data["libpath"] = FieldOps.STORE
     if custom_fields is not None and rmode in (
-            ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
+        ReproducibilityFlags.RECOMPUTE,
+        ReproducibilityFlags.REPLICATE_COMP,
+    ):
         for name in custom_fields:
             data[name] = FieldOps.STORE
     return data
@@ -202,11 +206,14 @@ def pgt_unroll_block_fields(category_type, rmode: ReproducibilityFlags):
     if rmode != ReproducibilityFlags.NOTHING:
         data["type"] = FieldOps.STORE
     if rmode != ReproducibilityFlags.REPRODUCE:
-        if category_type != "data":
+        if category_type.lower() != "data":
             data["dt"] = FieldOps.STORE
-    if category_type == "data":
+    if category_type.lower() == "data":
         data["storage"] = FieldOps.STORE
-    if rmode in (ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
+    if rmode in (
+        ReproducibilityFlags.RECOMPUTE,
+        ReproducibilityFlags.REPLICATE_COMP,
+    ):
         data["rank"] = FieldOps.STORE
 
     return data
@@ -220,7 +227,10 @@ def pgt_partition_block_fields(rmode: ReproducibilityFlags):
     :return: Dictionary of <str, FieldOp> pairs
     """
     data = {}
-    if rmode in (ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
+    if rmode in (
+        ReproducibilityFlags.RECOMPUTE,
+        ReproducibilityFlags.REPLICATE_COMP,
+    ):
         data["node"] = FieldOps.REMOVE_FIRST
         data["island"] = FieldOps.REMOVE_FIRST
     return data
@@ -235,7 +245,10 @@ def pg_block_fields(rmode: ReproducibilityFlags):
     """
     # These two happen to have the same data.
     data = {}
-    if rmode in (ReproducibilityFlags.RECOMPUTE, ReproducibilityFlags.REPLICATE_COMP):
+    if rmode in (
+        ReproducibilityFlags.RECOMPUTE,
+        ReproducibilityFlags.REPLICATE_COMP,
+    ):
         data["node"] = FieldOps.STORE
         data["island"] = FieldOps.STORE
     return data

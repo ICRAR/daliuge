@@ -36,7 +36,7 @@ default_repro = {
         "lg_blockhash": "x",
         "pgt_blockhash": "y",
         "pg_blockhash": "z",
-    }
+    },
 }
 default_graph_repro = {
     "rmode": "1",
@@ -44,7 +44,7 @@ default_graph_repro = {
     "merkleroot": "a",
     "RERUN": {
         "signature": "b",
-    }
+    },
 }
 
 
@@ -60,7 +60,9 @@ class TestSession(unittest.TestCase):
         with Session("1") as s:
             self.assertEqual(SessionStates.PRISTINE, s.status)
             self.assertRaises(Exception, s.linkGraphParts, "", "", 0)
-            s.addGraphSpec(add_test_reprodata([{"oid": "A", "type": "container"}]))
+            s.addGraphSpec(
+                add_test_reprodata([{"oid": "A", "type": "container"}])
+            )
             self.assertEqual(SessionStates.BUILDING, s.status)
 
             s.deploy()
@@ -79,13 +81,21 @@ class TestSession(unittest.TestCase):
             self.assertEqual(SessionStates.FINISHED, s.status)
 
         with Session("2") as s:
-            self.assertRaises(InvalidGraphException, s.deploy, completedDrops=["a"])
+            self.assertRaises(
+                InvalidGraphException, s.deploy, completedDrops=["a"]
+            )
 
     def test_addGraphSpec(self):
         with Session("1") as s:
-            s.addGraphSpec(add_test_reprodata([{"oid": "A", "type": "container"}]))
-            s.addGraphSpec(add_test_reprodata([{"oid": "B", "type": "container"}]))
-            s.addGraphSpec(add_test_reprodata([{"oid": "C", "type": "container"}]))
+            s.addGraphSpec(
+                add_test_reprodata([{"oid": "A", "type": "container"}])
+            )
+            s.addGraphSpec(
+                add_test_reprodata([{"oid": "B", "type": "container"}])
+            )
+            s.addGraphSpec(
+                add_test_reprodata([{"oid": "C", "type": "container"}])
+            )
 
             # Adding an existing DROP
             self.assertRaises(
@@ -104,7 +114,7 @@ class TestSession(unittest.TestCase):
                 Exception,
                 s.addGraphSpec,
                 add_test_reprodata(
-                    [{"oid": "D", "type": "data", "storage": "invalid"}]
+                    [{"oid": "D", "type": "data", "dataclass": "invalid"}]
                 ),
             )  # invalid "storage"
             self.assertRaises(
@@ -120,7 +130,7 @@ class TestSession(unittest.TestCase):
                         {
                             "oid": "D",
                             "type": "app",
-                            "storage": Categories.NULL,
+                            "dataclass": "dlg.data.drops.NullDROP",
                             "outputs": ["X"],
                         }
                     ]
@@ -129,7 +139,7 @@ class TestSession(unittest.TestCase):
 
     def test_addGraphSpec_namedPorts(self):
         with pkg_resources.resource_stream(
-                "test", "graphs/funcTestPG_namedPorts.graph"
+            "test", "graphs/funcTestPG_namedPorts.graph"
         ) as f:  # @UndefinedVariable
             graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
@@ -139,20 +149,24 @@ class TestSession(unittest.TestCase):
 
     def test_linking(self):
         with Session("1") as s:
-            s.addGraphSpec(add_test_reprodata([{"oid": "A", "type": "container"}]))
+            s.addGraphSpec(
+                add_test_reprodata([{"oid": "A", "type": "container"}])
+            )
             s.addGraphSpec(
                 add_test_reprodata(
                     [
                         {
                             "oid": "B",
-                            "type": "app",
-                            "storage": Categories.NULL,
-                            "app": "dlg.apps.crc.CRCApp",
+                            "type": "Application",
+                            # "dataclass": "dlg.data.drops.data_base.NullDROP",
+                            "appclass": "dlg.apps.crc.CRCApp",
                         }
                     ]
                 )
             )
-            s.addGraphSpec(add_test_reprodata([{"oid": "C", "type": "container"}]))
+            s.addGraphSpec(
+                add_test_reprodata([{"oid": "C", "type": "container"}])
+            )
 
             # Link them now
             s.linkGraphParts("A", "B", DROPLinkType.CONSUMER)
@@ -179,20 +193,20 @@ class TestSession(unittest.TestCase):
                     [
                         {
                             "oid": "A",
-                            "type": "data",
-                            "storage": Categories.MEMORY,
+                            "type": "Data",
+                            "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                             "consumers": ["B"],
                         },
                         {
                             "oid": "B",
-                            "type": "app",
-                            "app": "dlg.apps.simple.SleepApp",
+                            "type": "Application",
+                            "appclass": "dlg.apps.simple.SleepApp",
                             "sleepTime": 2,
                         },
                         {
                             "oid": "C",
-                            "type": "data",
-                            "storage": Categories.MEMORY,
+                            "type": "Data",
+                            "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                             "producers": ["B"],
                         },
                     ]
@@ -214,33 +228,33 @@ class TestSession(unittest.TestCase):
                     [
                         {
                             "oid": "A",
-                            "type": "data",
-                            "storage": Categories.MEMORY,
+                            "type": "Data",
+                            "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                             "consumers": ["B"],
                         },
                         {
                             "oid": "B",
-                            "type": "app",
-                            "app": "dlg.apps.simple.SleepApp",
+                            "type": "Application",
+                            "appclass": "dlg.apps.simple.SleepApp",
                             "sleepTime": 0,
                         },
                         {
                             "oid": "C",
-                            "type": "data",
-                            "storage": Categories.MEMORY,
+                            "type": "Data",
+                            "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                             "producers": ["B"],
                             "consumers": ["D"],
                         },
                         {
                             "oid": "D",
-                            "type": "app",
-                            "app": "dlg.apps.simple.SleepApp",
+                            "type": "Application",
+                            "appclass": "dlg.apps.simple.SleepApp",
                             "sleepTime": 10,
                         },
                         {
                             "oid": "E",
-                            "type": "data",
-                            "storage": Categories.MEMORY,
+                            "type": "Data",
+                            "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                             "producers": ["D"],
                         },
                     ]

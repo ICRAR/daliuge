@@ -23,7 +23,7 @@
         {
             "applicationArgs": [],
             "category": "BashShellApp",
-            "categoryType": "Application",
+            "type": "Application",
             "collapsed": false,
             "color": "#0059a5",
             "commitHash": "0.1",

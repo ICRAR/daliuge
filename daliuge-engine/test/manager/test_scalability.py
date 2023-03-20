@@ -38,7 +38,7 @@ default_repro = {
         "lg_blockhash": "x",
         "pgt_blockhash": "y",
         "pg_blockhash": "z",
-    }
+    },
 }
 default_graph_repro = {
     "rmode": "1",
@@ -46,7 +46,7 @@ default_graph_repro = {
     "merkleroot": "a",
     "RERUN": {
         "signature": "b",
-    }
+    },
 }
 
 
@@ -64,7 +64,7 @@ def memory_drop(uid):
             "oid": uid,
             "uid": uid,
             "type": "data",
-            "storage": Categories.MEMORY,
+            "dataclass": "dlg.data.drops.memory.InMemoryDROP",
         }
     )
 
