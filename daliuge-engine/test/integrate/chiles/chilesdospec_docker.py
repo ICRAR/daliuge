@@ -53,7 +53,7 @@ def fileDropSpec(uid, **kwargs):
         {
             "oid": str(uid),
             "type": "data",
-            "storage": Categories.FILE,
+            "dataclass": dlg.data.drops.file.FileDROP",
             "node": "localhost",
             "island": "localhost",
         }
@@ -166,7 +166,9 @@ if __name__ == "__main__":
         flux.addOutput(flux_out)
 
         for i, v in enumerate(VIS):
-            vis_in = directorySpec("vis%d" % (i), dirname=v[0], check_exists=False)
+            vis_in = directorySpec(
+                "vis%d" % (i), dirname=v[0], check_exists=False
+            )
             split_out = directorySpec(
                 "SplitOutput_%d" % (i), dirname=v[1], check_exists=False
             )

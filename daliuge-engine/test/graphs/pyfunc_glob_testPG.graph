@@ -150,7 +150,7 @@
     {
         "oid": "2022-03-30T03:46:01_-3_0",
         "type": "data",
-        "storage": "File",
+        "dataclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0
         ],
@@ -247,7 +247,7 @@
     {
         "oid": "2022-03-30T03:46:01_-5_0",
         "type": "data",
-        "storage": "File",
+        "dataclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0
         ],
@@ -344,7 +344,7 @@
     {
         "oid": "2022-03-30T03:46:01_-7_0",
         "type": "data",
-        "storage": "File",
+        "dataclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0
         ],

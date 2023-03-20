@@ -418,7 +418,13 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         | A --|----|-> B --> C |
         =======    =============
         """
-        g1 = [{"oid": "A", "type": "data", "storage": Categories.MEMORY}]
+        g1 = [
+            {
+                "oid": "A",
+                "type": "data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+            }
+        ]
         g2 = [
             {
                 "oid": "B",
@@ -429,7 +435,7 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
             {
                 "oid": "C",
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "producers": ["B"],
             },
         ]
@@ -454,7 +460,7 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
             {
                 "oid": "A",
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "consumers": ["B"],
             },
             {
@@ -464,7 +470,13 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
                 "func_name": __name__ + ".func1",
             },
         ]
-        g2 = [{"oid": "C", "type": "data", "storage": Categories.MEMORY}]
+        g2 = [
+            {
+                "oid": "C",
+                "type": "data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+            }
+        ]
         rels = [DROPRel("B", DROPLinkType.PRODUCER, "C")]
         a_data = os.urandom(32)
         c_data = self._test_runGraphInTwoNMs(

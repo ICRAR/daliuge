@@ -228,13 +228,13 @@ class DropUtilsTest(unittest.TestCase):
         pg_spec = [
             {
                 "oid": "A",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "type": "Data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "consumers": ["B"],
             },
             {
                 "oid": "B",
-                "type": "app",
+                "type": "Application",
                 "app": "test.test_graph_loader.DummyApp",
             },
         ]
@@ -247,10 +247,14 @@ class DropUtilsTest(unittest.TestCase):
         The same, but now B references A
         """
         pg_spec = [
-            {"oid": "A", "type": "data", "storage": Categories.MEMORY},
+            {
+                "oid": "A",
+                "type": "Data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+            },
             {
                 "oid": "B",
-                "type": "app",
+                "type": "Application",
                 "app": "test.test_graph_loader.DummyApp",
                 "inputs": ["A"],
             },
@@ -265,8 +269,16 @@ class DropUtilsTest(unittest.TestCase):
         B --------------|
         """
         pg_spec = [
-            {"oid": "A", "type": "data", "storage": Categories.MEMORY},
-            {"oid": "B", "type": "data", "storage": Categories.MEMORY},
+            {
+                "oid": "A",
+                "type": "Data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+            },
+            {
+                "oid": "B",
+                "type": "Data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+            },
             {
                 "oid": "C",
                 "type": "app",
@@ -275,8 +287,8 @@ class DropUtilsTest(unittest.TestCase):
             },
             {
                 "oid": "D",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "type": "Data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "producers": ["C"],
             },
             {
@@ -287,8 +299,8 @@ class DropUtilsTest(unittest.TestCase):
             },
             {
                 "oid": "F",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "type": "Data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "producers": ["E"],
             },
         ]

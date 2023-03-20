@@ -41,7 +41,7 @@ default_repro = {
         "lg_blockhash": "x",
         "pgt_blockhash": "y",
         "pg_blockhash": "z",
-    }
+    },
 }
 default_graph_repro = {
     "rmode": "1",
@@ -49,7 +49,7 @@ default_graph_repro = {
     "merkleroot": "a",
     "RERUN": {
         "signature": "b",
-    }
+    },
 }
 
 
@@ -96,7 +96,9 @@ class TestRest(unittest.TestCase):
 
     def test_index(self):
         # Just check that the HTML pages load properly
-        with RestClient(hostname, constants.NODE_DEFAULT_REST_PORT, timeout=10) as c:
+        with RestClient(
+            hostname, constants.NODE_DEFAULT_REST_PORT, timeout=10
+        ) as c:
             c._GET("/")
             c._GET("/session")
 
@@ -117,7 +119,9 @@ class TestRest(unittest.TestCase):
         )
 
         # invalid dropspec, it has no oid/type (is completely empty actually)
-        self.assertRaises(exceptions.InvalidGraphException, c.addGraphSpec, sid, gempty)
+        self.assertRaises(
+            exceptions.InvalidGraphException, c.addGraphSpec, sid, gempty
+        )
 
         # invalid dropspec, app doesn't exist
         self.assertRaises(
@@ -136,7 +140,9 @@ class TestRest(unittest.TestCase):
         )
 
         # invalid state, the graph status is only queried when the session is running
-        self.assertRaises(exceptions.InvalidSessionState, c.getGraphStatus, sid)
+        self.assertRaises(
+            exceptions.InvalidSessionState, c.getGraphStatus, sid
+        )
 
         # valid dropspec, but the socket listener app doesn't allow inputs
         c.addGraphSpec(
@@ -151,13 +157,15 @@ class TestRest(unittest.TestCase):
                 {
                     "oid": "b",
                     "type": "data",
-                    "storage": Categories.MEMORY,
+                    "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                     "reprodata": default_repro.copy(),
                 },
                 default_graph_repro.copy(),
             ],
         )
-        self.assertRaises(exceptions.InvalidRelationshipException, c.deploySession, sid)
+        self.assertRaises(
+            exceptions.InvalidRelationshipException, c.deploySession, sid
+        )
 
         # And here we point to an unexisting file, making an invalid drop
         c.destroySession(sid)
@@ -168,7 +176,7 @@ class TestRest(unittest.TestCase):
             [
                 {
                     "type": "data",
-                    "storage": Categories.FILE,
+                    "dataclass": "dlg.data.drops.file.FileDROP",
                     "oid": "a",
                     "filepath": fname,
                     "check_filepath_exists": True,
@@ -177,7 +185,9 @@ class TestRest(unittest.TestCase):
                 default_graph_repro.copy(),
             ],
         )
-        self.assertRaises(exceptions.InvalidDropException, c.deploySession, sid)
+        self.assertRaises(
+            exceptions.InvalidDropException, c.deploySession, sid
+        )
 
     def test_recursive(self):
         sid = "lala"
@@ -203,7 +213,9 @@ class TestRest(unittest.TestCase):
             )
         ex = cm.exception
         self.assertTrue(hostname in ex.args[0])
-        self.assertTrue(isinstance(ex.args[0][hostname], InvalidGraphException))
+        self.assertTrue(
+            isinstance(ex.args[0][hostname], InvalidGraphException)
+        )
 
     def test_reprodata_get(self):
         """
@@ -215,7 +227,7 @@ class TestRest(unittest.TestCase):
         graph_spec = [
             {
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "oid": "a",
                 "reprodata": default_repro.copy(),
             },
@@ -226,7 +238,9 @@ class TestRest(unittest.TestCase):
         c.addGraphSpec(sid, graph_spec)
         c.deploySession(sid, completed_uids=["a"])
         response = c.session_repro_data(sid)
-        self.assertIsNotNone(response["graph"]["a"]["reprodata"]["RERUN"]["rg_blockhash"])
+        self.assertIsNotNone(
+            response["graph"]["a"]["reprodata"]["RERUN"]["rg_blockhash"]
+        )
         self.assertIsNotNone(response["reprodata"])
         c.destroySession(sid)
         # Test without reprodata
@@ -237,7 +251,14 @@ class TestRest(unittest.TestCase):
         c.deploySession(sid, completed_uids=["a"])
         response = c.session_repro_data(sid)
         self.assertEqual(
-            {"a": {"oid": "a", "storage": "Memory", "type": "data"}}, response["graph"]
+            {
+                "a": {
+                    "oid": "a",
+                    "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                    "type": "data",
+                }
+            },
+            response["graph"],
         )
         self.assertEqual({}, response["reprodata"])
 
@@ -248,7 +269,7 @@ class TestRest(unittest.TestCase):
         graph_spec = [
             {
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "oid": "a",
                 "reprodata": default_repro.copy(),
             },

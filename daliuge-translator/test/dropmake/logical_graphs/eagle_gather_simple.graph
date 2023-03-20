@@ -141,7 +141,7 @@
         {
             "applicationArgs": [],
             "category": "Memory",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -227,7 +227,7 @@
         {
             "applicationArgs": [],
             "category": "Scatter",
-            "categoryType": "Construct",
+            "type": "Construct",
             "collapsed": false,
             "color": "rgb(211 165 0)",
             "commitHash": "",
@@ -403,7 +403,7 @@
         {
             "applicationArgs": [],
             "category": "Memory",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -489,7 +489,7 @@
         {
             "applicationArgs": [],
             "category": "Memory",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -575,7 +575,7 @@
         {
             "applicationArgs": [],
             "category": "File",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -702,7 +702,7 @@
         {
             "applicationArgs": [],
             "category": "Gather",
-            "categoryType": "Construct",
+            "type": "Construct",
             "collapsed": false,
             "color": "rgb(211 165 0)",
             "commitHash": "",
@@ -865,7 +865,7 @@
         {
             "applicationArgs": [],
             "category": "Memory",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -951,7 +951,7 @@
         {
             "applicationArgs": [],
             "category": "Memory",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -1037,7 +1037,7 @@
         {
             "applicationArgs": [],
             "category": "Gather",
-            "categoryType": "Construct",
+            "type": "Construct",
             "collapsed": false,
             "color": "rgb(211 165 0)",
             "commitHash": "",
@@ -1200,7 +1200,7 @@
         {
             "applicationArgs": [],
             "category": "File",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -1328,7 +1328,7 @@
         {
             "applicationArgs": [],
             "category": "PythonApp",
-            "categoryType": "Application",
+            "type": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -1453,7 +1453,7 @@
         {
             "applicationArgs": [],
             "category": "PythonApp",
-            "categoryType": "Application",
+            "type": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -1587,7 +1587,7 @@
         {
             "applicationArgs": [],
             "category": "Gather",
-            "categoryType": "Construct",
+            "type": "Construct",
             "collapsed": false,
             "color": "rgb(211 165 0)",
             "commitHash": "",
@@ -1750,7 +1750,7 @@
         {
             "applicationArgs": [],
             "category": "File",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",

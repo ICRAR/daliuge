@@ -92,13 +92,12 @@ APP_DROP_TYPES = [
 
 class DropType:
     # this gives the mapping to fields containing class paths
-    DATA = "data" # TODO: need to drop this one
     DATACLASS = "dataclass"
     APPCLASS = "appclass"
     SOCKET = "socket"
-    APP = "app"  # TODO: need to drop this one
     SERVICE_APP = "serviceapp"  # App drop that runs continously
     CONTAINER = "container"  # Drop that contains other drops
+
 
 class CategoryType:
     DATA = "Data"
@@ -110,6 +109,7 @@ class CategoryType:
     SOCKET = "Socket"
     CONTROL = "Control"
     OTHER = "Other"
+
 
 def b2s(b, enc="utf8"):
     "Converts bytes into a string"
@@ -193,7 +193,6 @@ def get_roots(pg_spec):
     all_oids = set()
     nonroots = set()
     for dropspec in pg_spec:
-
         # Assumed to be reprodata / other non-drop elements
         #
         # TODO (rtobar): Note that this should be a temporary measure.
@@ -208,13 +207,19 @@ def get_roots(pg_spec):
         oid = dropspec["oid"]
         all_oids.add(oid)
 
-        if dropspec["type"] in (DropType.APP, DropType.SOCKET):
-            if dropspec.get("inputs", None) or dropspec.get("streamingInputs", None):
+        if dropspec["type"] in (
+            CategoryType.APPLICATION,
+            CategoryType.SOCKET,
+            "app",
+        ):
+            if dropspec.get("inputs", None) or dropspec.get(
+                "streamingInputs", None
+            ):
                 nonroots.add(oid)
             if dropspec.get("outputs", None):
                 do = _sanitize_links(dropspec["outputs"])
                 nonroots |= set(do)
-        elif dropspec["type"] == DropType.DATA:
+        elif dropspec["type"] == CategoryType.DATA:
             if dropspec.get("producers", None):
                 nonroots.add(oid)
             if dropspec.get("consumers", None):
@@ -238,11 +243,10 @@ def get_leaves(pg_spec):
     all_oids = set()
     nonleaves = set()
     for dropspec in pg_spec:
-
         oid = dropspec["oid"]
         all_oids.add(oid)
 
-        if dropspec["type"] == DropType.APP:
+        if dropspec["type"] in [CategoryType.APPLICATION, "data"]:
             if dropspec.get("outputs", None):
                 nonleaves.add(oid)
             if dropspec.get("streamingInputs", None):
@@ -251,7 +255,7 @@ def get_leaves(pg_spec):
             if dropspec.get("inputs", None):
                 di = _sanitize_links(dropspec["inputs"])
                 nonleaves |= set(di)
-        if dropspec["type"] == DropType.SERVICE_APP:
+        if dropspec["type"] in [CategoryType.SERVICE, "socket"]:
             nonleaves.add(oid)  # services are never leaves
             if dropspec.get("streamingInputs", None):
                 dsi = _sanitize_links(dropspec["streamingInputs"])
@@ -259,7 +263,7 @@ def get_leaves(pg_spec):
             if dropspec.get("inputs", None):
                 di = _sanitize_links(dropspec["inputs"])
                 nonleaves |= set(di)
-        elif dropspec["type"] == DropType.DATA:
+        elif dropspec["type"] in [CategoryType.DATA, "data"]:
             if dropspec.get("producers", None):
                 dp = _sanitize_links(dropspec["producers"])
                 nonleaves |= set(dp)

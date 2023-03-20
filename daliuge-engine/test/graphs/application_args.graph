@@ -75,7 +75,7 @@
   {
     "oid": "b",
     "type": "data",
-    "storage": "Memory",
+    "dataclass": "dlg.data.drops.memory.InMemoryDROP",
     "rank": [
       0
     ],

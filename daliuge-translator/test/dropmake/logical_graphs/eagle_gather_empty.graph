@@ -96,7 +96,7 @@
         {
             "applicationArgs": [],
             "category": "Memory",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -182,7 +182,7 @@
         {
             "applicationArgs": [],
             "category": "Scatter",
-            "categoryType": "Construct",
+            "type": "Construct",
             "collapsed": false,
             "color": "rgb(211 165 0)",
             "commitHash": "",
@@ -484,7 +484,7 @@
         {
             "applicationArgs": [],
             "category": "BashShellApp",
-            "categoryType": "Application",
+            "type": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -713,7 +713,7 @@
         {
             "applicationArgs": [],
             "category": "Memory",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -799,7 +799,7 @@
         {
             "applicationArgs": [],
             "category": "Memory",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -885,7 +885,7 @@
         {
             "applicationArgs": [],
             "category": "BashShellApp",
-            "categoryType": "Application",
+            "type": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -1113,7 +1113,7 @@
         {
             "applicationArgs": [],
             "category": "File",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -1250,7 +1250,7 @@
         {
             "applicationArgs": [],
             "category": "Gather",
-            "categoryType": "Construct",
+            "type": "Construct",
             "collapsed": false,
             "color": "rgb(211 165 0)",
             "commitHash": "",
@@ -1552,7 +1552,7 @@
         {
             "applicationArgs": [],
             "category": "End",
-            "categoryType": "Control",
+            "type": "Control",
             "collapsed": true,
             "color": "rgb(88 167 94)",
             "commitHash": "",
@@ -1600,7 +1600,7 @@
         {
             "applicationArgs": [],
             "category": "Memory",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",

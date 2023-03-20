@@ -45,7 +45,7 @@ default_repro = {
         "lg_blockhash": "x",
         "pgt_blockhash": "y",
         "pg_blockhash": "z",
-    }
+    },
 }
 default_graph_repro = {
     "rmode": "1",
@@ -53,7 +53,7 @@ default_graph_repro = {
     "merkleroot": "a",
     "RERUN": {
         "signature": "b",
-    }
+    },
 }
 
 
@@ -83,7 +83,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             {
                 "oid": "A",
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
                 "consumers": ["B"],
             },
@@ -98,7 +98,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             {
                 "oid": "C",
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
             },
         ]
@@ -119,27 +119,37 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         sessionId = "lalo"
 
         # No node specified
-        graphSpec = [{"oid": "A", "type": "data", "storage": Categories.MEMORY}]
-        self.assertRaises(Exception, self.dim.addGraphSpec, sessionId, graphSpec)
+        graphSpec = [
+            {
+                "oid": "A",
+                "type": "data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+            }
+        ]
+        self.assertRaises(
+            Exception, self.dim.addGraphSpec, sessionId, graphSpec
+        )
 
         # Wrong node specified
         graphSpec = [
             {
                 "oid": "A",
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": "unknown_host",
             }
         ]
         graphSpec = add_test_reprodata(graphSpec)
-        self.assertRaises(Exception, self.dim.addGraphSpec, sessionId, graphSpec)
+        self.assertRaises(
+            Exception, self.dim.addGraphSpec, sessionId, graphSpec
+        )
 
         # OK
         graphSpec = [
             {
                 "oid": "A",
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
             }
         ]
@@ -153,7 +163,9 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         dropSpec = list(graphFromDM.values())[0]
         self.assertEqual("A", dropSpec["oid"])
         self.assertEqual("data", dropSpec["type"])
-        self.assertEqual("Memory", dropSpec["storage"])
+        self.assertEqual(
+            "dlg.data.drops.memory.InMemoryDROP", dropSpec["dataclass"]
+        )
 
     def test_deployGraph(self):
 
@@ -281,7 +293,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             {
                 "oid": "A",
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
                 "consumers": ["B"],
             },
@@ -296,15 +308,15 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             {
                 "oid": "C",
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
             },
-            {}  # A dummy empty reprodata (the default if absolutely nothing is specified)
+            {},  # A dummy empty reprodata (the default if absolutely nothing is specified)
         ]
-        self.dim.createSession('a')
-        self.assertEqual(0, self.dim.getGraphSize('a'))
-        self.dim.addGraphSpec('a', graphSpec)
-        self.assertEqual(len(graphSpec), self.dim.getGraphSize('a'))
+        self.dim.createSession("a")
+        self.assertEqual(0, self.dim.getGraphSize("a"))
+        self.dim.addGraphSpec("a", graphSpec)
+        self.assertEqual(len(graphSpec), self.dim.getGraphSize("a"))
 
     def test_submit_noreprodata(self):
         """
@@ -315,7 +327,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             {
                 "oid": "A",
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
                 "consumers": ["B"],
             },
@@ -330,14 +342,14 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             {
                 "oid": "C",
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
             },
         ]
-        self.dim.createSession('a')
-        self.assertEqual(0, self.dim.getGraphSize('a'))
-        self.dim.addGraphSpec('a', graphSpec)
-        self.assertEqual(len(graphSpec), self.dim.getGraphSize('a'))
+        self.dim.createSession("a")
+        self.assertEqual(0, self.dim.getGraphSize("a"))
+        self.dim.addGraphSpec("a", graphSpec)
+        self.assertEqual(len(graphSpec), self.dim.getGraphSize("a"))
 
 
 class TestREST(LocalDimStarter, unittest.TestCase):
@@ -385,7 +397,7 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             # we need to add it manually before submitting -- otherwise it will
             # get rejected by the DIM.
             with pkg_resources.resource_stream(
-                    "test", "graphs/complex.js"
+                "test", "graphs/complex.js"
             ) as f:  # @UndefinedVariable
                 complexGraphSpec = json.load(codecs.getreader("utf-8")(f))
                 logger.debug(f"Loaded graph: {f}")
@@ -399,7 +411,9 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             )
             self.assertEqual(
                 {hostname: SessionStates.BUILDING},
-                testutils.get(self, "/sessions/%s/status" % (sessionId), restPort),
+                testutils.get(
+                    self, "/sessions/%s/status" % (sessionId), restPort
+                ),
             )
 
             # Now we deploy the graph...
@@ -412,7 +426,9 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             )
             self.assertEqual(
                 {hostname: SessionStates.RUNNING},
-                testutils.get(self, "/sessions/%s/status" % (sessionId), restPort),
+                testutils.get(
+                    self, "/sessions/%s/status" % (sessionId), restPort
+                ),
             )
 
             # ...and write to all 5 root nodes that are listening in ports
@@ -426,16 +442,18 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session
             while (
-                    SessionStates.RUNNING
-                    in testutils.get(
-                self, "/sessions/%s/status" % (sessionId), restPort
-            ).values()
+                SessionStates.RUNNING
+                in testutils.get(
+                    self, "/sessions/%s/status" % (sessionId), restPort
+                ).values()
             ):
                 time.sleep(0.2)
 
             self.assertEqual(
                 {hostname: SessionStates.FINISHED},
-                testutils.get(self, "/sessions/%s/status" % (sessionId), restPort),
+                testutils.get(
+                    self, "/sessions/%s/status" % (sessionId), restPort
+                ),
             )
             testutils.delete(self, "/sessions/%s" % (sessionId), restPort)
             sessions = testutils.get(self, "/sessions", restPort)

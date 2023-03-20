@@ -607,8 +607,8 @@ class LGNode:
                 drop_spec = dropdict(
                     {
                         "oid": oid,
-                        "type": DropType.DATA,
-                        "categoryType": CategoryType.DATA,
+                        # "type": DropType.DATA,
+                        "type": CategoryType.DATA,
                         "storage": drop_type,
                         "rank": rank,
                     }
@@ -616,8 +616,8 @@ class LGNode:
                 dropSpec_socket = dropdict(
                     {
                         "oid": "{0}-s".format(oid),
-                        "type": DropType.APP,
-                        "categoryType": CategoryType.APPLICATION,
+                        # "type": DropType.APP,
+                        "type": CategoryType.APPLICATION,
                         "app": "dlg.apps.simple.SleepApp",
                         "nm": "lstnr",
                         "text": "lstnr",
@@ -634,8 +634,8 @@ class LGNode:
                 drop_spec = dropdict(
                     {
                         "oid": oid,
-                        "type": DropType.DATA,
-                        "categoryType": CategoryType.DATA,
+                        # "type": DropType.DATA,
+                        "type": CategoryType.DATA,
                         "storage": drop_type,
                         "rank": rank,
                     }
@@ -684,8 +684,7 @@ class LGNode:
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": DropType.APP,
-                    "categoryType": CategoryType.APPLICATION,
+                    "type": CategoryType.APPLICATION,
                     "app": app_class,
                     "rank": rank,
                 }
@@ -705,8 +704,7 @@ class LGNode:
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": DropType.APP,
-                    "categoryType": CategoryType.APPLICATION,
+                    "type": CategoryType.APPLICATION,
                     "app": "dlg.apps.dynlib.{}".format(drop_type),
                     "rank": rank,
                 }
@@ -728,8 +726,7 @@ class LGNode:
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": DropType.APP,
-                    "categoryType": CategoryType.APPLICATION,
+                    "type": CategoryType.APPLICATION,
                     "app": app_str,
                     "rank": rank,
                 }
@@ -771,12 +768,11 @@ class LGNode:
         elif drop_type == Categories.DOCKER:
             # Docker application.
             app_class = "dlg.apps.dockerapp.DockerApp"
-            typ = DropType.APP
+            typ = CategoryType.APPLICATION
             drop_spec = dropdict(
                 {
                     "oid": oid,
                     "type": typ,
-                    "categoryType": CategoryType.APPLICATION,
                     "app": app_class,
                     "rank": rank,
                 }
@@ -815,8 +811,7 @@ class LGNode:
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": DropType.APP,
-                    "categoryType": CategoryType.APPLICATION,
+                    "type": CategoryType.APPLICATION,
                     "app": "dlg.apps.simple.SleepApp",
                     "rank": rank,
                 }
@@ -831,9 +826,9 @@ class LGNode:
             dropSpec_grp = dropdict(
                 {
                     "oid": "{0}-grp-data".format(oid),
-                    "type": DropType.DATA,
-                    "categoryType": CategoryType.DATA,
-                    "storage": Categories.MEMORY,
+                    # "type": DropType.DATA,
+                    "type": CategoryType.DATA,
+                    "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                     "nm": "grpdata",
                     "text": "grpdata",
                     "dw": dw,
@@ -851,8 +846,7 @@ class LGNode:
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": DropType.APP,
-                    "categoryType": CategoryType.APPLICATION,
+                    "type": CategoryType.APPLICATION,
                     "app": "dlg.apps.simple.SleepApp",
                     "rank": rank,
                 }
@@ -870,9 +864,9 @@ class LGNode:
             dropSpec_gather = dropdict(
                 {
                     "oid": "{0}-gather-data".format(oid),
-                    "type": DropType.DATA,
-                    "categoryType": CategoryType.DATA,
-                    "storage": Categories.MEMORY,
+                    # "type": DropType.DATA,
+                    "type": CategoryType.DATA,
+                    "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                     "nm": "gthrdt",
                     "text": "gthrdt",
                     "dw": dw,
@@ -893,9 +887,9 @@ class LGNode:
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    "type": DropType.DATA,
-                    "categoryType": CategoryType.DATA,
-                    "storage": Categories.NULL,
+                    # "type": DropType.DATA,
+                    "type": CategoryType.DATA,
+                    "dataclass": "dlg.data.drops.data_base.NullDROP",
                     "rank": rank,
                 }
             )
@@ -918,8 +912,8 @@ class LGNode:
         kwargs["lg_key"] = self.id
         kwargs["dt"] = self.jd["category"]
         kwargs["category"] = self.jd["category"]
-        if "categoryType" in kwargs:
-            kwargs["categoryType"] = self.jd["categoryType"]
+        if "type" in kwargs:
+            kwargs["type"] = self.jd["type"]
         kwargs["nm"] = self.text
         kwargs["text"] = self.text
         # Behaviour is that child-nodes inherit reproducibility data from their parents.
@@ -1365,9 +1359,9 @@ class LG:
                         sdrop["oid"],
                         tdrop["oid"].replace(self._session_id, ""),
                     ),
-                    "type": DropType.DATA,
-                    "categoryType": CategoryType.DATA,
-                    "storage": Categories.NULL,
+                    # "type": DropType.DATA,
+                    "type": CategoryType.DATA,
+                    "dataclass": "dlg.data.drops.data_base.NullDROP",
                     "nm": "StreamNull",
                     "text": "StreamNull",
                     "dw": 0,
@@ -1663,7 +1657,7 @@ class LG:
                     # Only the service node's inputApplication will be translated
                     # to the physical graph as a node of type SERVICE_APP instead of APP
                     # per compute instance
-                    tlgn["type"] = DropType.SERVICE_APP
+                    tlgn["type"] in [CategoryType.SERVICE, "serviceapp"]
                 else:
                     raise GraphException(
                         "Unsupported target group {0}".format(
@@ -1731,9 +1725,9 @@ class LG:
             ret += drop_list
 
         for drop in ret:
-            if drop["type"] == DropType.APP and drop["app"].endswith(
-                Categories.BASH_SHELL_APP
-            ):
+            if drop["type"] in [CategoryType.APPLICATION, "app"] and drop[
+                "app"
+            ].endswith(Categories.BASH_SHELL_APP):
                 bc = drop["command"]
                 drop["command"] = bc.to_real_command()
 

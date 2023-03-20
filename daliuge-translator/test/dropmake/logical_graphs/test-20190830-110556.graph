@@ -33,7 +33,7 @@
         {
             "applicationArgs": [],
             "category": "BashShellApp",
-            "categoryType": "Application",
+            "type": "Application",
             "collapsed": false,
             "color": "#0059a5",
             "commitHash": "",
@@ -274,7 +274,7 @@
         {
             "applicationArgs": [],
             "category": "File",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": false,
             "color": "#2c2c2c",
             "commitHash": "",

@@ -51,7 +51,7 @@
         {
             "applicationArgs": [],
             "category": "File",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -178,7 +178,7 @@
         {
             "applicationArgs": [],
             "category": "BashShellApp",
-            "categoryType": "Application",
+            "type": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -298,7 +298,7 @@
         {
             "applicationArgs": [],
             "category": "File",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -425,7 +425,7 @@
         {
             "applicationArgs": [],
             "category": "File",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",

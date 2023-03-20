@@ -33,7 +33,7 @@
         {
             "applicationArgs": [],
             "category": "Scatter",
-            "categoryType": "Construct",
+            "type": "Construct",
             "collapsed": false,
             "color": "rgb(211 165 0)",
             "commitHash": "",
@@ -194,7 +194,7 @@
         {
             "applicationArgs": [],
             "category": "PythonApp",
-            "categoryType": "Application",
+            "type": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",

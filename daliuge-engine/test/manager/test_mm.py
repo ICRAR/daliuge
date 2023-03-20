@@ -45,7 +45,7 @@ default_repro = {
         "lg_blockhash": "x",
         "pgt_blockhash": "y",
         "pg_blockhash": "z",
-    }
+    },
 }
 default_graph_repro = {
     "rmode": "1",
@@ -53,7 +53,7 @@ default_graph_repro = {
     "merkleroot": "a",
     "RERUN": {
         "signature": "b",
-    }
+    },
 }
 
 
@@ -85,7 +85,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
             {
                 "oid": "A",
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "island": hostname,
                 "node": hostname,
                 "consumers": ["B"],
@@ -102,7 +102,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
             {
                 "oid": "C",
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "island": hostname,
                 "node": hostname,
             },
@@ -122,49 +122,63 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         sessionId = "lalo"
 
         # No node specified
-        graphSpec = [{"oid": "A", "type": "data", "storage": Categories.MEMORY}]
-        self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
+        graphSpec = [
+            {
+                "oid": "A",
+                "type": "data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+            }
+        ]
+        self.assertRaises(
+            Exception, self.mm.addGraphSpec, sessionId, graphSpec
+        )
 
         # Wrong node specified
         graphSpec = [
             {
                 "oid": "A",
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": "unknown_host",
             }
         ]
-        self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
+        self.assertRaises(
+            Exception, self.mm.addGraphSpec, sessionId, graphSpec
+        )
 
         # No island specified
         graphSpec = [
             {
                 "oid": "A",
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
             }
         ]
-        self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
+        self.assertRaises(
+            Exception, self.mm.addGraphSpec, sessionId, graphSpec
+        )
 
         # Wrong island specified
         graphSpec = [
             {
                 "oid": "A",
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
                 "island": "unknown_host",
             }
         ]
-        self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
+        self.assertRaises(
+            Exception, self.mm.addGraphSpec, sessionId, graphSpec
+        )
 
         # OK
         graphSpec = [
             {
                 "oid": "A",
                 "type": "data",
-                "storage": Categories.MEMORY,
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
                 "island": hostname,
             }
@@ -182,7 +196,9 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         dropSpec = list(graphFromMM.values())[0]
         self.assertEqual("A", dropSpec["oid"])
         self.assertEqual("data", dropSpec["type"])
-        self.assertEqual("Memory", dropSpec["storage"])
+        self.assertEqual(
+            "dlg.data.drops.memory.InMemoryDROP", dropSpec["dataclass"]
+        )
 
     def test_deployGraph(self):
 
@@ -223,7 +239,9 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
             self.assertEqual(1, len(sessionStatusMM))
             self.assertIn(hostname, sessionStatusMM)
             self.assertDictEqual(sessionStatusDIM, sessionStatusMM[hostname])
-            self.assertEqual(sessionStatusNM, sessionStatusMM[hostname][hostname])
+            self.assertEqual(
+                sessionStatusNM, sessionStatusMM[hostname][hostname]
+            )
             self.assertEqual(sessionStatusNM, status)
 
         sessionId = "lala"
@@ -319,7 +337,8 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             self.assertEqual(1, len(sessions))
             self.assertEqual(sessionId, sessions[0]["sessionId"])
             self.assertDictEqual(
-                {hostname: {hostname: SessionStates.PRISTINE}}, sessions[0]["status"]
+                {hostname: {hostname: SessionStates.PRISTINE}},
+                sessions[0]["status"],
             )
 
             # Add this complex graph spec to the session
@@ -342,7 +361,9 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             )
             self.assertEqual(
                 {hostname: {hostname: SessionStates.BUILDING}},
-                testutils.get(self, "/sessions/%s/status" % (sessionId), restPort),
+                testutils.get(
+                    self, "/sessions/%s/status" % (sessionId), restPort
+                ),
             )
 
             # Now we deploy the graph...
@@ -355,7 +376,9 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             )
             self.assertEqual(
                 {hostname: {hostname: SessionStates.RUNNING}},
-                testutils.get(self, "/sessions/%s/status" % (sessionId), restPort),
+                testutils.get(
+                    self, "/sessions/%s/status" % (sessionId), restPort
+                ),
             )
 
             # ...and write to all 5 root nodes that are listening in ports
@@ -370,15 +393,17 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             # it finished by polling the status of the session
             while (
                 SessionStates.RUNNING
-                in testutils.get(self, "/sessions/%s/status" % (sessionId), restPort)[
-                    hostname
-                ].values()
+                in testutils.get(
+                    self, "/sessions/%s/status" % (sessionId), restPort
+                )[hostname].values()
             ):
                 time.sleep(0.2)
 
             self.assertEqual(
                 {hostname: {hostname: SessionStates.FINISHED}},
-                testutils.get(self, "/sessions/%s/status" % (sessionId), restPort),
+                testutils.get(
+                    self, "/sessions/%s/status" % (sessionId), restPort
+                ),
             )
             testutils.delete(self, "/sessions/%s" % (sessionId), restPort)
             sessions = testutils.get(self, "/sessions", restPort)

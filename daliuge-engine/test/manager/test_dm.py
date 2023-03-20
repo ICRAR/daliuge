@@ -71,8 +71,8 @@ def memory(uid, **kwargs):
     dropSpec = dropdict(
         {
             "oid": uid,
-            "type": "data",
-            "storage": Categories.MEMORY,
+            "type": "Data",
+            "dataclass": "dlg.data.drops.memory.InMemoryDROP",
             "reprodata": default_repro.copy(),
         }
     )
@@ -213,7 +213,6 @@ class NodeManagerTestsBase(NMTestsMixIn):
         dm.deploySession(sessionId, ["A"])
 
     def test_error_listener(self):
-
         evt = threading.Event()
         erroneous_drops = []
 
@@ -605,8 +604,8 @@ class NodeManagerTestsBase(NMTestsMixIn):
             memory("A"),
             {
                 "oid": "B",
-                "type": "app",
-                "app": "dlg.apps.simple.CopyApp",
+                "type": "Application",
+                "appclass": "dlg.apps.simple.CopyApp",
                 "inputs": ["A"],
                 "outputs": ["C"],
             },
@@ -635,8 +634,8 @@ class NodeManagerTestsBase(NMTestsMixIn):
             memory("A"),
             {
                 "oid": "B",
-                "type": "app",
-                "app": "dlg.apps.simple.CopyApp",
+                "type": "Application",
+                "appclass": "dlg.apps.simple.CopyApp",
                 "inputs": ["A"],
             },
         ]
@@ -644,8 +643,8 @@ class NodeManagerTestsBase(NMTestsMixIn):
             memory("C"),
             {
                 "oid": "D",
-                "type": "app",
-                "app": "dlg.apps.crc.CRCStreamApp",
+                "type": "Application",
+                "appclass": "dlg.apps.crc.CRCStreamApp",
                 "streamingInputs": ["C"],
                 "outputs": ["E"],
             },
@@ -658,7 +657,6 @@ class NodeManagerTestsBase(NMTestsMixIn):
 
 
 class TestDM(NodeManagerTestsBase, unittest.TestCase):
-
     nm_threads = 0
 
     def test_run_invalid_shmem_graph(self):
@@ -668,7 +666,13 @@ class TestDM(NodeManagerTestsBase, unittest.TestCase):
         in python < 3.8, and that it *does* run with python >= 3.8
         """
 
-        graph = [{"oid": "A", "type": "data", "storage": Categories.SHMEM}]
+        graph = [
+            {
+                "oid": "A",
+                "type": "Data",
+                "dataclass": "dlg.data.drops.memory.SharedMemoryDROP",
+            }
+        ]
         graph = add_test_reprodata(graph)
         dm = self._start_dm()
         sessionID = "s1"

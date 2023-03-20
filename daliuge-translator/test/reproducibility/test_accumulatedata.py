@@ -42,13 +42,21 @@ from dlg.common.reproducibility.reproducibility import (
     accumulate_pgt_partition_drop_data,
     accumulate_pg_drop_data,
 )
-from dlg.translator.tool_commands import dlg_fill, dlg_unroll, dlg_partition, dlg_map
+from dlg.translator.tool_commands import (
+    dlg_fill,
+    dlg_unroll,
+    dlg_partition,
+    dlg_map,
+)
 
 SUPPORTED_WORKFLOWS = ["apps", "files", "misc", "groups"]
 
 
 def _fill_workflow(
-        rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
+    rmode: ReproducibilityFlags,
+    workflow: str,
+    workflow_loc="./",
+    scratch_loc="./",
 ):
     workflow_loc = pkg_resources.resource_filename("test", workflow_loc)
     logger.debug(workflow_loc)
@@ -62,7 +70,10 @@ def _fill_workflow(
 
 
 def _run_full_workflow(
-        rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
+    rmode: ReproducibilityFlags,
+    workflow: str,
+    workflow_loc="./",
+    scratch_loc="./",
 ):
     lgr = scratch_loc + "/" + workflow + "LG.graph"
     pgs = scratch_loc + "/" + workflow + "PGS.graph"
@@ -76,23 +87,31 @@ def _run_full_workflow(
     dlg_partition(parser, ["-P", pgs, "-o", pgt, "-f", "newline"])
     parser = optparse.OptionParser()
     dlg_map(
-        parser, ["-P", pgt, "-N", "localhost, localhost", "-o", pgr, "-f", "newline"]
+        parser,
+        ["-P", pgt, "-N", "localhost, localhost", "-o", pgr, "-f", "newline"],
     )
 
 
-def _run_workflows(rmode: ReproducibilityFlags, root_file: str, names: list,
-                   temp_out: tempfile.TemporaryDirectory):
+def _run_workflows(
+    rmode: ReproducibilityFlags,
+    root_file: str,
+    names: list,
+    temp_out: tempfile.TemporaryDirectory,
+):
     for wflow_name in names:
         _run_full_workflow(rmode, wflow_name, root_file, temp_out.name)
 
 
-def _extract_reprodata(temp_out: tempfile.TemporaryDirectory, names: list, suffix: str):
+def _extract_reprodata(
+    temp_out: tempfile.TemporaryDirectory, names: list, suffix: str
+):
     output = {}
     for wflow_name in names:
         file = open(f"{temp_out.name}{os.sep}{wflow_name}{suffix}")
         output[wflow_name] = json.load(file)[0:-1]
         file.close()
     return output
+
 
 class AccumulateLGTRerunData(unittest.TestCase):
     """
@@ -102,28 +121,32 @@ class AccumulateLGTRerunData(unittest.TestCase):
     rmode = ReproducibilityFlags.RERUN
     expected = {
         "category",
-        "categoryType",
-        "inputPorts",
-        "inputLocalPorts",
-        "outputLocalPorts",
-        "outputPorts",
+        # "type",
     }
     ddGraph = "graphs/ddTest.graph"
 
     file = "reproducibility/reproGraphs/apps.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
@@ -176,10 +199,16 @@ class AccumulateLGRerunData(unittest.TestCase):
 
     def _setup(self):
         _fill_workflow(
-            self.rmode, "apps", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "apps",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
         _fill_workflow(
-            self.rmode, "files", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "files",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
         _fill_workflow(
             self.rmode,
@@ -188,7 +217,10 @@ class AccumulateLGRerunData(unittest.TestCase):
             self.temp_out.name,
         )
         _fill_workflow(
-            self.rmode, "misc", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "misc",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
 
         file = open(self.temp_out.name + "/" + "apps" + "LG.graph")
@@ -210,10 +242,10 @@ class AccumulateLGRerunData(unittest.TestCase):
         """
         self._setup()
         for drop in enumerate(
-                self.lg_node_data
-                + self.lg_files_data
-                + self.lg_group_data
-                + self.lg_misc_data
+            self.lg_node_data
+            + self.lg_files_data
+            + self.lg_group_data
+            + self.lg_misc_data
         ):
             hash_data = accumulate_lg_drop_data(drop[1], self.rmode)
             self.assertEqual(self.expected, dict(hash_data.keys()))
@@ -233,9 +265,15 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -299,9 +337,15 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -366,9 +410,15 @@ class AccumulatePGRerunData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -429,27 +479,31 @@ class AccumulateLGTRepeatData(unittest.TestCase):
     rmode = ReproducibilityFlags.REPEAT
     expected = {
         "category",
-        "categoryType",
-        "inputPorts",
-        "inputLocalPorts",
-        "outputPorts",
-        "outputLocalPorts",
+        # "type",
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
@@ -501,10 +555,16 @@ class AccumulateLGRepeatData(unittest.TestCase):
 
     def _setup(self):
         _fill_workflow(
-            self.rmode, "apps", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "apps",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
         _fill_workflow(
-            self.rmode, "files", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "files",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
         _fill_workflow(
             self.rmode,
@@ -513,7 +573,10 @@ class AccumulateLGRepeatData(unittest.TestCase):
             self.temp_out.name,
         )
         _fill_workflow(
-            self.rmode, "misc", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "misc",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
 
         file = open(self.temp_out.name + "/" + "apps" + "LG.graph")
@@ -599,7 +662,11 @@ class AccumulateLGRepeatData(unittest.TestCase):
         self.assertEqual(expected, hash_data)
 
     def _loop(self, drop):
-        expected = {"inputApplicationName", "inputApplicationType", "num_of_iter"}
+        expected = {
+            "inputApplicationName",
+            "inputApplicationType",
+            "num_of_iter",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data)
 
@@ -632,9 +699,15 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -699,9 +772,15 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -766,9 +845,15 @@ class AccumulatePGRepeatData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -829,27 +914,31 @@ class AccumulateLGTRecomputeData(unittest.TestCase):
     rmode = ReproducibilityFlags.RECOMPUTE
     expected = {
         "category",
-        "categoryType",
-        "inputPorts",
-        "inputLocalPorts",
-        "outputPorts",
-        "outputLocalPorts",
+        # "type",
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
@@ -901,10 +990,16 @@ class AccumulateLGRecomputeData(unittest.TestCase):
 
     def _setup(self):
         _fill_workflow(
-            self.rmode, "apps", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "apps",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
         _fill_workflow(
-            self.rmode, "files", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "files",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
         _fill_workflow(
             self.rmode,
@@ -913,7 +1008,10 @@ class AccumulateLGRecomputeData(unittest.TestCase):
             self.temp_out.name,
         )
         _fill_workflow(
-            self.rmode, "misc", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "misc",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
 
         file = open(self.temp_out.name + "/" + "apps" + "LG.graph")
@@ -969,7 +1067,12 @@ class AccumulateLGRecomputeData(unittest.TestCase):
         self.assertEqual(expected, hash_data.keys())
 
     def _file(self, drop):
-        expected = {"data_volume", "check_filepath_exists", "filepath", "dirname"}
+        expected = {
+            "data_volume",
+            "check_filepath_exists",
+            "filepath",
+            "dirname",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
@@ -999,7 +1102,11 @@ class AccumulateLGRecomputeData(unittest.TestCase):
         self.assertEqual(expected, hash_data)
 
     def _loop(self, drop):
-        expected = {"inputApplicationName", "inputApplicationType", "num_of_iter"}
+        expected = {
+            "inputApplicationName",
+            "inputApplicationType",
+            "num_of_iter",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data)
 
@@ -1032,9 +1139,15 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -1099,9 +1212,15 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -1112,7 +1231,10 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(sorted(expected), sorted(list(hash_data[self.rmode.name].keys())))
+            self.assertEqual(
+                sorted(expected),
+                sorted(list(hash_data[self.rmode.name].keys())),
+            )
 
     def test_data_accumulate(self):
         """
@@ -1122,7 +1244,10 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
-            self.assertEqual(sorted(expected), sorted(list(hash_data[self.rmode.name].keys())))
+            self.assertEqual(
+                sorted(expected),
+                sorted(list(hash_data[self.rmode.name].keys())),
+            )
 
     def test_group_accumulate(self):
         """
@@ -1166,9 +1291,15 @@ class AccumulatePGRecomputeData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -1227,22 +1358,30 @@ class AccumulateLGTReproduceData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.REPRODUCE
-    expected = {"category", "categoryType"}
+    expected = {"category"}
 
     file = "reproducibility/reproGraphs/apps.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
@@ -1295,10 +1434,16 @@ class AccumulateLGReproduceData(unittest.TestCase):
 
     def _setup(self):
         _fill_workflow(
-            self.rmode, "apps", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "apps",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
         _fill_workflow(
-            self.rmode, "files", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "files",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
         _fill_workflow(
             self.rmode,
@@ -1307,7 +1452,10 @@ class AccumulateLGReproduceData(unittest.TestCase):
             self.temp_out.name,
         )
         _fill_workflow(
-            self.rmode, "misc", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "misc",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
 
         file = open(self.temp_out.name + "/" + "apps" + "LG.graph")
@@ -1407,9 +1555,15 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -1474,9 +1628,15 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -1541,9 +1701,15 @@ class AccumulatePGReproduceData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -1604,27 +1770,31 @@ class AccumulateLGTReplicateSciData(unittest.TestCase):
     rmode = ReproducibilityFlags.REPLICATE_SCI
     expected = {
         "category",
-        "categoryType",
-        "inputPorts",
-        "inputLocalPorts",
-        "outputPorts",
-        "outputLocalPorts",
+        # "type",
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
@@ -1676,10 +1846,16 @@ class AccumulateLGReplicateSciData(unittest.TestCase):
 
     def _setup(self):
         _fill_workflow(
-            self.rmode, "apps", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "apps",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
         _fill_workflow(
-            self.rmode, "files", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "files",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
         _fill_workflow(
             self.rmode,
@@ -1688,7 +1864,10 @@ class AccumulateLGReplicateSciData(unittest.TestCase):
             self.temp_out.name,
         )
         _fill_workflow(
-            self.rmode, "misc", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "misc",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
 
         file = open(self.temp_out.name + "/" + "apps" + "LG.graph")
@@ -1710,10 +1889,10 @@ class AccumulateLGReplicateSciData(unittest.TestCase):
         """
         self._setup()
         for drop in enumerate(
-                self.lg_node_data
-                + self.lg_files_data
-                + self.lg_group_data
-                + self.lg_misc_data
+            self.lg_node_data
+            + self.lg_files_data
+            + self.lg_group_data
+            + self.lg_misc_data
         ):
             hash_data = accumulate_lg_drop_data(drop[1], self.rmode)
             self.assertEqual(self.expected, dict(hash_data.keys()))
@@ -1733,9 +1912,15 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -1800,9 +1985,15 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -1867,9 +2058,15 @@ class AccumulatePGReplicateSciData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -1930,27 +2127,31 @@ class AccumulateLGTReplicateCompData(unittest.TestCase):
     rmode = ReproducibilityFlags.REPLICATE_COMP
     expected = {
         "category",
-        "categoryType",
-        "inputPorts",
-        "inputLocalPorts",
-        "outputPorts",
-        "outputLocalPorts",
+        # "type",
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
@@ -2002,10 +2203,16 @@ class AccumulateLGReplicateCompData(unittest.TestCase):
 
     def _setup(self):
         _fill_workflow(
-            self.rmode, "apps", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "apps",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
         _fill_workflow(
-            self.rmode, "files", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "files",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
         _fill_workflow(
             self.rmode,
@@ -2014,7 +2221,10 @@ class AccumulateLGReplicateCompData(unittest.TestCase):
             self.temp_out.name,
         )
         _fill_workflow(
-            self.rmode, "misc", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "misc",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
 
         file = open(self.temp_out.name + "/" + "apps" + "LG.graph")
@@ -2070,7 +2280,12 @@ class AccumulateLGReplicateCompData(unittest.TestCase):
         self.assertEqual(expected, hash_data.keys())
 
     def _file(self, drop):
-        expected = {"data_volume", "check_filepath_exists", "filepath", "dirname"}
+        expected = {
+            "data_volume",
+            "check_filepath_exists",
+            "filepath",
+            "dirname",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
@@ -2100,7 +2315,11 @@ class AccumulateLGReplicateCompData(unittest.TestCase):
         self.assertEqual(expected, hash_data)
 
     def _loop(self, drop):
-        expected = {"inputApplicationName", "inputApplicationType", "num_of_iter"}
+        expected = {
+            "inputApplicationName",
+            "inputApplicationType",
+            "num_of_iter",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data)
 
@@ -2133,9 +2352,15 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -2199,9 +2424,15 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -2266,9 +2497,15 @@ class AccumulatePGReplicateCompData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -2329,27 +2566,31 @@ class AccumulateLGTReplicateTotalData(unittest.TestCase):
     rmode = ReproducibilityFlags.REPLICATE_TOTAL
     expected = {
         "category",
-        "categoryType",
-        "inputPorts",
-        "inputLocalPorts",
-        "outputPorts",
-        "outputLocalPorts",
+        # "type",
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
-    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream(
+        "test", file
+    ) as f:  # @UndefinedVariable
         logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
@@ -2401,10 +2642,16 @@ class AccumulateLGReplicateTotalData(unittest.TestCase):
 
     def _setup(self):
         _fill_workflow(
-            self.rmode, "apps", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "apps",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
         _fill_workflow(
-            self.rmode, "files", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "files",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
         _fill_workflow(
             self.rmode,
@@ -2413,7 +2660,10 @@ class AccumulateLGReplicateTotalData(unittest.TestCase):
             self.temp_out.name,
         )
         _fill_workflow(
-            self.rmode, "misc", "reproducibility/reproGraphs/", self.temp_out.name
+            self.rmode,
+            "misc",
+            "reproducibility/reproGraphs/",
+            self.temp_out.name,
         )
 
         file = open(self.temp_out.name + "/" + "apps" + "LG.graph")
@@ -2499,7 +2749,11 @@ class AccumulateLGReplicateTotalData(unittest.TestCase):
         self.assertEqual(expected, hash_data)
 
     def _loop(self, drop):
-        expected = {"inputApplicationName", "inputApplicationType", "num_of_iter"}
+        expected = {
+            "inputApplicationName",
+            "inputApplicationType",
+            "num_of_iter",
+        }
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data)
 
@@ -2532,9 +2786,15 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PGS.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -2599,9 +2859,15 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PGT.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
@@ -2666,9 +2932,15 @@ class AccumulatePGReplicateTotalData(unittest.TestCase):
 
     def _setup(self):
         if not self.setup:
-            _run_workflows(self.rmode, "reproducibility/reproGraphs/", SUPPORTED_WORKFLOWS,
-                           self.temp_out)
-            self.graph_data = _extract_reprodata(self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph")
+            _run_workflows(
+                self.rmode,
+                "reproducibility/reproGraphs/",
+                SUPPORTED_WORKFLOWS,
+                self.temp_out,
+            )
+            self.graph_data = _extract_reprodata(
+                self.temp_out, SUPPORTED_WORKFLOWS, "PG.graph"
+            )
             self.setup = True
 
     def test_app_accumulate(self):
