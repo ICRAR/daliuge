@@ -55,6 +55,36 @@ from dlg.dropmake.utils.bash_parameter import BashCommand
 
 logger = logging.getLogger(__name__)
 
+DATA_TYPES = [
+    Categories.FILE,
+    Categories.MEMORY,
+    Categories.S3,
+    Categories.NGAS,
+    Categories.JSON,
+    Categories.SHMEM,
+    Categories.DATA,
+    Categories.NULL,
+    Categories.PLASMA,
+    Categories.PLASMAFLIGHT,
+    Categories.PARSET,
+    Categories.ENVIRONMENTVARS,
+    Categories.START,
+    Categories.END,
+]
+
+APP_TYPES = [
+    "Branch"
+    "Data"
+    "Component"
+    "PythonApp"
+    "BashShellApp"
+    "Mpi"
+    "DynlibApp"
+    "Docker"
+    "DynlibProcApp"
+    "Service"
+]
+
 
 class GraphException(Exception):
     pass
@@ -595,8 +625,16 @@ class LGNode:
         drop_type = self.jd["category"]
         if drop_type not in ["Memory", "PythonApp"]:
             logger.debug(">>>>>>>>> drop_type:%s", drop_type)
-        drop_class = self.jd["type"] if "type" in self.jd else drop_type
+        if "type" in self.jd:
+            drop_class = self.jd["type"]
+        elif drop_type in DATA_TYPES:
+            drop_class = "Data"
+        elif drop_type in APP_TYPES:
+            drop_class = "Application"
+        else:
+            drop_class = "Unknown"
         if drop_class not in ["Data", "Application"]:
+            drop_class = drop_type
             logger.debug(">>>>>>>>> drop_class:%s, %s", drop_class, drop_type)
 
         if drop_class.lower() == "data":
@@ -661,6 +699,7 @@ class LGNode:
             Categories.COMPONENT,
             Categories.PYTHON_APP,
             Categories.BRANCH,
+            Categories.PLASMA,
         ]:
             # default generic component becomes "sleep and copy"
             if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
@@ -901,7 +940,9 @@ class LGNode:
         elif drop_type in Categories.LOOP:
             pass
         else:
-            raise GraphException("Unknown DROP type: '{0}'".format(drop_type))
+            raise GraphException(
+                "Unknown DROP type: '{0} {1}'".format(drop_type, drop_class)
+            )
         return drop_spec
 
     def make_single_drop(self, iid="0", **kwargs):
@@ -917,8 +958,16 @@ class LGNode:
         kwargs["lg_key"] = self.id
         kwargs["dt"] = self.jd["category"]
         kwargs["category"] = self.jd["category"]
-        kwargs["type"] = (
-            self.jd["categoryType"] if "categoryType" in kwargs else "Unknown"
+        if "categoryType" in kwargs:
+            kwargs["type"] = self.jd["categoryType"]
+        elif self.jd["category"] in DATA_TYPES:
+            kwargs["type"] = "Data"
+        else:
+            kwargs["type"] = "Application"
+        logger.debug(
+            ">>>>>>> kwargs['type']: %s, %s",
+            kwargs["type"],
+            self.jd["category"],
         )
         kwargs["nm"] = self.text
         kwargs["text"] = self.text
@@ -1109,10 +1158,11 @@ class LG:
                     )
                 )
         elif tgt.is_gather():
+            logger.debug(">>>>>>>>>>> src.jd: %s", src.jd)
             if not src.jd["type"].lower() == "data" and not src.is_groupby():
                 raise GInvalidLink(
-                    "Gather {0}'s input {1} should be either a GroupBy or Data".format(
-                        tgt.id, src.id
+                    "Gather {0}'s input {1} should be either a GroupBy or Data. {2}".format(
+                        tgt.id, src.id, src.jd
                     )
                 )
 
@@ -1729,6 +1779,7 @@ class LG:
             ret += drop_list
 
         for drop in ret:
+            logger.debug(">>>>>>> drop: %s", drop)
             if drop["type"] in [CategoryType.APPLICATION, "app"] and drop[
                 "app"
             ].endswith(Categories.BASH_SHELL_APP):
