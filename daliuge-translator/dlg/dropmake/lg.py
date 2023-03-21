@@ -593,8 +593,11 @@ class LGNode:
         """
         drop_spec = None
         drop_type = self.jd["category"]
-        logger.debug(">>>>>>>>> JD:%s", self.jd)
-        drop_class = self.jd["type"]
+        if drop_type not in ["Memory", "PythonApp"]:
+            logger.debug(">>>>>>>>> drop_type:%s", drop_type)
+        drop_class = self.jd["type"] if "type" in self.jd else drop_type
+        if drop_class not in ["Data", "Application"]:
+            logger.debug(">>>>>>>>> drop_class:%s, %s", drop_class, drop_type)
 
         if drop_class.lower() == "data":
             logger.debug("Storage node spec: %s", json.dumps(kwargs))
