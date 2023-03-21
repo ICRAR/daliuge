@@ -33,7 +33,7 @@ from dlg.common import CategoryType, DropType
 
 from . import utils, droputils
 from .apps import pyfunc
-from .common import dropdict, Categories
+from .common import dropdict
 from .ddap_protocol import DROPStates
 from .apps.app_base import BarrierAppDROP
 from .exceptions import InvalidDropException

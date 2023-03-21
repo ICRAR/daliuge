@@ -30,7 +30,7 @@ import pkg_resources
 
 from dlg import droputils
 from dlg import utils
-from dlg.common import tool, Categories
+from dlg.common import tool
 from dlg.ddap_protocol import DROPStates
 from dlg.manager.composite_manager import DataIslandManager
 from dlg.manager.session import SessionStates
@@ -115,7 +115,6 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         self.assertEqual(sessionId, self.dm.getSessionIds()[0])
 
     def test_addGraphSpec(self):
-
         sessionId = "lalo"
 
         # No node specified
@@ -168,7 +167,6 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         )
 
     def test_deployGraph(self):
-
         sessionId = "lalo"
         self.createSessionAndAddTypicalGraph(sessionId)
 
@@ -190,7 +188,6 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         self._test_deployGraphWithCompletedDOs("lala with spaces")
 
     def _test_deployGraphWithCompletedDOs(self, sessionId):
-
         self.createSessionAndAddTypicalGraph(sessionId, sleepTime=1)
 
         # Deploy now and get C
@@ -231,7 +228,6 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         assertSessionStatus(sessionId, SessionStates.FINISHED)
 
     def test_getGraph(self):
-
         sessionId = "lalo"
         self.createSessionAndAddTypicalGraph(sessionId)
 
@@ -365,7 +361,6 @@ class TestREST(LocalDimStarter, unittest.TestCase):
         dimProcess = tool.start_process("dim", args)
 
         with testutils.terminating(dimProcess, timeout=10):
-
             # Wait until the REST server becomes alive
             self.assertTrue(
                 utils.portIsOpen("localhost", restPort, timeout=10),

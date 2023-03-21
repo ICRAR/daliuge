@@ -27,7 +27,6 @@ import unittest
 
 from dlg import droputils
 from dlg.apps.dynlib import DynlibApp, DynlibStreamApp, DynlibProcApp
-from dlg.common import Categories
 from dlg.ddap_protocol import DROPRel, DROPLinkType, DROPStates
 from dlg.data.drops.data_base import NullDROP
 from dlg.data.drops.memory import InMemoryDROP

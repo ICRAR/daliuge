@@ -30,7 +30,6 @@ from dlg.apps.app_base import AppDROP
 
 from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
 from dlg.data.drops.directorycontainer import DirectoryContainer
-from dlg.common import Categories
 from dlg.apps.simple import RandomArrayApp
 
 

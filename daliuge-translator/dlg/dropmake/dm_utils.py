@@ -30,8 +30,6 @@ import logging
 import os
 import os.path as osp
 
-from dlg.common import Categories
-
 logger = logging.getLogger(__name__)
 
 LG_VER_OLD = 1
@@ -40,6 +38,16 @@ LG_VER_EAGLE = 3
 LG_APPREF = "AppRef"
 
 TEMP_FILE_FOLDER = "/tmp"
+
+
+class Categories:
+    MKN = "MKN"
+    SCATTER = "Scatter"
+    GATHER = "Gather"
+    GROUP_BY = "GroupBy"
+    LOOP = "Loop"
+    VARIABLES = "Variables"
+    SERVICE = "Service"
 
 
 def get_lg_ver_type(lgo):
@@ -196,12 +204,14 @@ def convert_mkn(lgo):
         # step 1 - clone the current MKN
         mkn_key = node["key"]
         mkn_local_input_keys = [
-            _make_unique_port_key(x["Id"], node["key"])
-            for x in node["inputLocalPorts"]
+            _make_unique_port_key(x["id"], node["key"])
+            for x in node["inputAppFields"]
+            if x["usage"] == "InputPort"
         ]
         mkn_output_keys = [
-            _make_unique_port_key(x["Id"], node["key"])
-            for x in node["outputPorts"]
+            _make_unique_port_key(x["id"], node["key"])
+            for x in node["inputAppFields"]
+            if x["usage"] == "OutputPort"
         ]
         node_mk = node
         node_mk["mkn"] = [M, K, N]

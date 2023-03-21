@@ -24,7 +24,6 @@ import unittest
 
 import pkg_resources
 
-from dlg.common import Categories
 from dlg.ddap_protocol import DROPLinkType, DROPStates, AppDROPStates
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidGraphException

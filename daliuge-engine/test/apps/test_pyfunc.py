@@ -29,7 +29,6 @@ import numpy
 
 from dlg import droputils
 from dlg.apps import pyfunc
-from dlg.common import Categories
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.data.drops.memory import InMemoryDROP
 from dlg.droputils import DROPWaiterCtx
@@ -241,7 +240,6 @@ class TestPyFuncApp(unittest.TestCase):
         self._test_simple_functions(lambda x: (x + n) / 2, n, (n + n) / 2)
 
     def _test_func3(self, output_drops, expected_outputs):
-
         a = _PyFuncApp("a", "a", "func3")
         for drop in output_drops:
             a.addOutput(drop)
