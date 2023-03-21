@@ -34,7 +34,6 @@ from dlg.common.reproducibility.constants import ReproducibilityFlags
 
 from . import droputils
 from .apps.socket_listener import SocketListenerApp
-from .common import Categories
 from .ddap_protocol import DROPRel, DROPLinkType
 from .drop import (
     AbstractDROP,
@@ -51,14 +50,13 @@ from dlg.data.drops.json_drop import JsonDROP
 from dlg.data.drops import *
 from .common import DropType
 
-try:
-    from .common import CategoryType
-except ImportError:
 
-    class CategoryType:
-        DATA = "dataclass"
+class CategoryType:
+    DATA = "dataclass"
 
     # Dictionary for the key used to store 1-to-N relationships between DROPs
+
+
 # in the the DROP specification format
 __TOMANY = {
     DROPLinkType.CONSUMER: "consumers",
@@ -335,23 +333,22 @@ def _createData(dropSpec, dryRun=False, session=None):
         # Fall back to old behaviour or to FileDROP
         # if nothing else is specified
         STORAGE_TYPES = {
-            Categories.MEMORY: InMemoryDROP,
-            Categories.SHMEM: SharedMemoryDROP,
-            Categories.FILE: FileDROP,
-            Categories.NGAS: NgasDROP,
-            Categories.NULL: NullDROP,
-            Categories.END: EndDROP,
-            Categories.JSON: JsonDROP,
-            Categories.PLASMA: PlasmaDROP,
-            Categories.PLASMAFLIGHT: PlasmaFlightDROP,
-            Categories.PARSET: ParameterSetDROP,
-            Categories.ENVIRONMENTVARS: EnvironmentVarDROP,
+            "Memory": InMemoryDROP,
+            "SharedMemory": SharedMemoryDROP,
+            "File": FileDROP,
+            "NGAS": NgasDROP,
+            "null": NullDROP,
+            "json": JsonDROP,
+            "Plasma": PlasmaDROP,
+            "PlasmaFlight": PlasmaFlightDROP,
+            "ParameterSet": ParameterSetDROP,
+            "EnvironmentVariables": EnvironmentVarDROP,
         }
 
         try:
             from .data.drops.s3_drop import S3DROP
 
-            STORAGE_TYPES[Categories.S3] = S3DROP
+            STORAGE_TYPES["S3"] = S3DROP
         except ImportError:
             pass
         if "storage" in dropSpec:

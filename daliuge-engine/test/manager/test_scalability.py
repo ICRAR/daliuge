@@ -23,7 +23,7 @@ import logging
 import time
 import unittest
 
-from dlg.common import dropdict, tool, Categories
+from dlg.common import dropdict, tool
 from dlg.manager import client
 from dlg.utils import terminate_or_kill
 from test.manager import testutils
@@ -137,7 +137,6 @@ class TestBigGraph(unittest.TestCase):
         self._run_graph(graph, completed_uids, timeout=5)
 
     def _run_graph(self, graph, completed_uids, timeout=5):
-
         sessionId = "lala"
         restPort = 8989
         args = ["--port", str(restPort), "-N", hostname, "-qq"]

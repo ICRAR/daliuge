@@ -30,7 +30,6 @@ import time
 
 from dlg.drop import dropdict
 from dlg.manager.client import DataIslandManagerClient
-from dlg.common import Categories
 
 LOCAL_FILES = os.path.dirname(os.path.realpath(__file__))
 CASAPY = "/opt/casa-release-4.4.0-el6/"

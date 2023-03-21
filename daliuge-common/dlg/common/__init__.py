@@ -63,33 +63,6 @@ class Categories:
     DESCRIPTION = "Description"
 
 
-STORAGE_TYPES = {
-    Categories.MEMORY,
-    Categories.SHMEM,
-    Categories.FILE,
-    Categories.NGAS,
-    Categories.NULL,
-    Categories.END,
-    Categories.JSON,
-    Categories.PLASMA,
-    Categories.PLASMAFLIGHT,
-    Categories.PARSET,
-    Categories.ENVIRONMENTVARS,
-    Categories.S3,
-}
-APP_DROP_TYPES = [
-    Categories.COMPONENT,
-    Categories.PYTHON_APP,
-    Categories.BRANCH,
-    Categories.BASH_SHELL_APP,
-    Categories.MPI,
-    Categories.DYNLIB_APP,
-    Categories.DOCKER,
-    Categories.DYNLIB_PROC_APP,
-    Categories.SERVICE,
-]
-
-
 class DropType:
     # this gives the mapping to fields containing class paths
     DATACLASS = "dataclass"

@@ -23,7 +23,6 @@ import os
 import tempfile
 import unittest
 
-from dlg.common import Categories
 from dlg.deploy import common
 from dlg.manager import constants
 from dlg.manager.session import SessionStates

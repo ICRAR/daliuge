@@ -33,7 +33,6 @@ from dlg.common.k8s_utils import check_k8s_env
 
 if check_k8s_env():
     from dlg.common.version import version as dlg_version
-    from dlg.common import Categories
     from dlg.deploy.helm_client import HelmClient
 
 

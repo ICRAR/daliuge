@@ -29,7 +29,6 @@ Most of these tests will be asserting the obvious, with the exception of Reprodu
 
 import unittest
 
-from dlg.common import Categories
 from dlg.common.reproducibility.constants import (
     ReproducibilityFlags,
     ALL_RMODES,
@@ -46,7 +45,7 @@ def _generate_dummy_compute(rmode: ReproducibilityFlags):
                 rmode.name: {
                     "lgt_data": {
                         "type": "Application",
-                        "category": Categories.BASH_SHELL_APP,
+                        "category": "BashShellApp",
                     },
                     "lg_blockhash": "1",
                     "pgt_data": {"merkleroot": "2"},
@@ -67,7 +66,7 @@ def _generate_dummy_compute(rmode: ReproducibilityFlags):
             out_val["reprodata"][level.name] = {
                 "lgt_data": {
                     "type": "Application",
-                    "category": Categories.BASH_SHELL_APP,
+                    "category": "BashShellApp",
                 },
                 "lg_blockhash": "1",
                 "pgt_data": {"merkleroot": "2"},
@@ -90,8 +89,8 @@ def _generate_dummy_data(rmode: ReproducibilityFlags):
                 "rmode": str(rmode.value),
                 rmode.name: {
                     "lgt_data": {
-                        "type": Categories.DATA,
-                        "category": Categories.FILE,
+                        "type": "Data",
+                        "category": "File",
                     },
                     "lg_blockhash": "a",
                     "pgt_data": {"merkleroot": "b"},
@@ -111,8 +110,8 @@ def _generate_dummy_data(rmode: ReproducibilityFlags):
         for level in ALL_RMODES:
             out_val["reprodata"][level.name] = {
                 "lgt_data": {
-                    "type": Categories.DATA,
-                    "category": Categories.FILE,
+                    "type": "Data",
+                    "category": "File",
                 },
                 "lg_blockhash": "a",
                 "pgt_data": {"merkleroot": "b"},

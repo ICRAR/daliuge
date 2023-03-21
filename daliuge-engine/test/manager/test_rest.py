@@ -24,7 +24,6 @@ import threading
 import unittest
 
 from dlg import exceptions
-from dlg.common import Categories
 from dlg.common.deployment_methods import DeploymentMethods
 from dlg.exceptions import InvalidGraphException
 

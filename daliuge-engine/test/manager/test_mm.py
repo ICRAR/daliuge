@@ -29,7 +29,7 @@ import unittest
 import pkg_resources
 from dlg import droputils
 from dlg import utils
-from dlg.common import tool, Categories
+from dlg.common import tool
 from dlg.ddap_protocol import DROPStates
 from dlg.manager.composite_manager import MasterManager
 from dlg.manager.session import SessionStates
@@ -118,7 +118,6 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         self.assertEqual(sessionId, self.nm.getSessionIds()[0])
 
     def test_addGraphSpec(self):
-
         sessionId = "lalo"
 
         # No node specified
@@ -201,7 +200,6 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         )
 
     def test_deployGraph(self):
-
         sessionId = "lalo"
         self.createSessionAndAddTypicalGraph(sessionId)
 
@@ -217,7 +215,6 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         self.assertEqual(data, droputils.allDropContents(c))
 
     def test_deployGraphWithCompletedDOs(self):
-
         sessionId = "lalo"
         self.createSessionAndAddTypicalGraph(sessionId, sleepTime=1)
 
@@ -264,7 +261,6 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         assertSessionStatus(sessionId, SessionStates.FINISHED)
 
     def test_getGraph(self):
-
         sessionId = "lalo"
         self.createSessionAndAddTypicalGraph(sessionId)
 
@@ -314,7 +310,6 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
         mmProcess = tool.start_process("mm", args)
 
         with testutils.terminating(mmProcess, 10):
-
             # Wait until the REST server becomes alive
             self.assertTrue(
                 utils.portIsOpen("localhost", restPort, timeout=10),

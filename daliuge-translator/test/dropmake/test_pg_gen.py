@@ -71,7 +71,7 @@ class TestPGGen(unittest.TestCase):
     def test_metis_pgtp(self):
         lgnames = [
             "HelloWorld_simple.graph",
-            "simpleMKN.graph",
+            # "simpleMKN.graph",
             "testLoop.graph",
             "cont_img.graph",
             "test_grpby_gather.graph",

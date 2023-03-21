@@ -23,7 +23,6 @@ import json
 import os
 
 from dlg.drop import dropdict
-from dlg.common import Categories
 
 
 # Directories and paths
@@ -134,7 +133,6 @@ def cleanSpec(uid, **kwargs):
 
 
 if __name__ == "__main__":
-
     droplist = []
 
     flux_out = fileSpec("Flux", node=ch05, dirname=os.path.join(OUTPUTS_DIR))
@@ -174,7 +172,6 @@ if __name__ == "__main__":
     flux.addOutput(flux_out)
 
     for i, v in enumerate(VIS):
-
         visDir = os.path.join(INPUTS_DIR, v[0])
         splitOutDir = os.path.join(OUTPUTS_DIR, v[1])
         splitCopyDir = os.path.join(INPUTS_DIR, v[1])

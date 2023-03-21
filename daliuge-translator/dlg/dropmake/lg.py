@@ -40,7 +40,6 @@ from itertools import product
 
 import numpy as np
 from dlg.common import Categories, CategoryType, DropType
-from dlg.common import STORAGE_TYPES, APP_DROP_TYPES
 from dlg.common import dropdict
 from dlg.dropmake.dm_utils import (
     LG_APPREF,
@@ -289,7 +288,7 @@ class LGNode:
         return (
             len(self.inputs) == 1
             and self.inputs[0].jd["category"] == Categories.START
-            and self.jd["category"] in STORAGE_TYPES
+            and self.jd["type"].lower() == "data"
         )
 
     def is_group_start(self):
@@ -594,7 +593,10 @@ class LGNode:
         """
         drop_spec = None
         drop_type = self.jd["category"]
-        if drop_type in STORAGE_TYPES:
+        logger.debug(">>>>>>>>> JD:%s", self.jd)
+        drop_class = self.jd["type"]
+
+        if drop_class.lower() == "data":
             logger.debug("Storage node spec: %s", json.dumps(kwargs))
             if "data_volume" in self.jd:
                 kwargs["dw"] = int(self.jd["data_volume"])  # dw -- data weight
@@ -878,9 +880,9 @@ class LGNode:
             kwargs["sleepTime"] = 1
             drop_spec.addOutput(dropSpec_gather, IdText="gthrdata")
             dropSpec_gather.addProducer(drop_spec, IdText="gthrdata")
-        elif drop_type == Categories.SERVICE:
+        elif drop_class == Categories.SERVICE:
             raise GraphException(
-                f"DROP type: {drop_type} should not appear in physical graph"
+                f"DROP type: {drop_class} should not appear in physical graph"
             )
         elif drop_type in [Categories.START, Categories.END]:
             # this is at least suspicious in terms of implementation....
@@ -912,8 +914,9 @@ class LGNode:
         kwargs["lg_key"] = self.id
         kwargs["dt"] = self.jd["category"]
         kwargs["category"] = self.jd["category"]
-        if "type" in kwargs:
-            kwargs["type"] = self.jd["type"]
+        kwargs["type"] = (
+            self.jd["categoryType"] if "categoryType" in kwargs else "Unknown"
+        )
         kwargs["nm"] = self.text
         kwargs["text"] = self.text
         # Behaviour is that child-nodes inherit reproducibility data from their parents.
@@ -1073,7 +1076,7 @@ class LG:
 
         if src.is_gather():
             if not (
-                tgt.jd["category"] in APP_DROP_TYPES
+                tgt.jd["type"] in ["app", "application", "Application"]
                 and tgt.is_group_start()
                 and src.inputs[0].h_level == tgt.h_level
             ):
@@ -1103,10 +1106,7 @@ class LG:
                     )
                 )
         elif tgt.is_gather():
-            if (
-                not src.jd["category"] in STORAGE_TYPES
-                and not src.is_groupby()
-            ):
+            if not src.jd["type"].lower() == "data" and not src.is_groupby():
                 raise GInvalidLink(
                     "Gather {0}'s input {1} should be either a GroupBy or Data".format(
                         tgt.id, src.id
@@ -1372,7 +1372,7 @@ class LG:
             dropSpec_null.addStreamingConsumer(tdrop, IdText="stream")
             tdrop.addStreamingInput(dropSpec_null, IdText="stream")
             self._drop_dict["new_added"].append(dropSpec_null)
-        elif s_type in APP_DROP_TYPES:
+        elif s_type in ["Application", "application", "app"]:
             # use name from source and ID from target
             sIdText = slgn._getIdText("outputPorts")
             tIdText = tlgn._getIdText("inputPorts")
@@ -1657,7 +1657,8 @@ class LG:
                     # Only the service node's inputApplication will be translated
                     # to the physical graph as a node of type SERVICE_APP instead of APP
                     # per compute instance
-                    tlgn["type"] in [CategoryType.SERVICE, "serviceapp"]
+                    tlgn["type"] = DropType.APPCLASS
+                    tlgn["category"] = DropType.SERVICE_APP
                 else:
                     raise GraphException(
                         "Unsupported target group {0}".format(
