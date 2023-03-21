@@ -437,7 +437,7 @@ class Session(object):
         )
         for host, port, local_uid, relname, remote_uid in self._proxyinfo:
             proxy = rpc.DropProxy(
-                self._nm, host, port, self._sessionId, remote_uid
+                self._nm, rpc.ProxyInfo(host, port, self._sessionId, remote_uid)
             )
             logger.debug(
                 "Attaching proxy to local %r via %s(proxy, False)",
