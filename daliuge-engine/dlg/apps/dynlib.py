@@ -440,9 +440,7 @@ def _do_run_in_proc(queue, libname, oid, uid, params, inputs, outputs):
         client.start()
 
         def setup_drop_proxies(inputs, outputs):
-            to_drop_proxy = lambda x: rpc.DropProxy(
-                client, x[0], x[1], x[2], x[3]
-            )
+            to_drop_proxy = lambda proxy_info: rpc.DropProxy(client, proxy_info)
             inputs = [to_drop_proxy(i) for i in inputs]
             outputs = [to_drop_proxy(o) for o in outputs]
             return inputs, outputs
@@ -504,8 +502,8 @@ class DynlibProcApp(BarrierAppDROP):
         # from our inputs/outputs their contact point (RPC-wise) information.
         # If one of our inputs/outputs is a DropProxy we already have this
         # information; otherwise we must figure it out.
-        inputs = [self._get_proxy_info(i) for i in self.inputs]
-        outputs = [self._get_proxy_info(o) for o in self.outputs]
+        inputs = [rpc.ProxyInfo.from_data_drop(i) for i in self.inputs]
+        outputs = [rpc.ProxyInfo.from_data_drop(o) for o in self.outputs]
 
         logger.info("Starting new process to run the dynlib on")
         queue = multiprocessing.Queue()
@@ -535,18 +533,6 @@ class DynlibProcApp(BarrierAppDROP):
                     raise error
         finally:
             self.proc.join(self.timeout)
-
-    def _get_proxy_info(self, x):
-        if isinstance(x, rpc.DropProxy):
-            return x.hostname, x.port, x.session_id, x.uid
-
-        # TODO: we can't use the NodeManager's host directly here, as that
-        #       indicates the address the different servers *bind* to
-        #       (and, for example, can be 0.0.0.0)
-        rpc_server = x._rpc_server
-        host, port = rpc_server._rpc_host, rpc_server._rpc_port
-        host = utils.to_externally_contactable_host(host, prefer_local=True)
-        return (host, port, x._dlg_session.sessionId, x.uid)
 
     def cancel(self):
         BarrierAppDROP.cancel(self)

@@ -27,6 +27,7 @@ technologies we support.
 """
 
 import collections
+import dataclasses
 import logging
 import queue
 import threading
@@ -272,6 +273,35 @@ class ZeroRPCServer(RPCServerBase):
 RPCServer, RPCClient = ZeroRPCServer, ZeroRPCClient
 
 
+@dataclasses.dataclass(frozen=True)
+class ProxyInfo:
+    """Information needed to create a DropProxy"""
+
+    hostname: str
+    port: int
+    session_id: str
+    uid: str
+
+    @classmethod
+    def from_data_drop(cls, drop):
+        if isinstance(drop, DropProxy):
+            return drop._proxy_info
+
+        # TODO: we can't use the NodeManager's host directly here, as that
+        #       indicates the address the different servers *bind* to
+        #       (and, for example, can be 0.0.0.0)
+        rpc_server = drop._rpc_server
+        host, port = rpc_server._rpc_host, rpc_server._rpc_port
+        host = utils.to_externally_contactable_host(host, prefer_local=True)
+        return cls(host, port, drop._dlg_session.sessionId, drop.uid)
+
+    def __repr__(self):
+        return (
+            f"<ProxyInfo {self.uid}, session {self.session_id} "
+            f"@{self.hostname}:{self.port}>"
+        )
+
+
 class DropProxy(object):
     """
     A proxy to a remote drop.
@@ -279,7 +309,7 @@ class DropProxy(object):
     It forwards attribute requests and procedure calls through the given RPC client.
     """
 
-    def __init__(self, rpc_client, hostname, port, sessionId, uid):
+    def __init__(self, rpc_client, proxy_info: ProxyInfo):
         # The current version of multiprocessing support creates an RPCClient
         # per DropProxy, disregarding the rpc_client parameter given here.
         # This uses too many resources though, but is only needed if the NM is
@@ -295,10 +325,7 @@ class DropProxy(object):
         else:
             self.rpc_client = rpc_client
             self._own_rpc_client = False
-        self.hostname = hostname
-        self.port = port
-        self.session_id = sessionId
-        self.uid = uid
+        self._proxy_info: ProxyInfo = proxy_info
         logger.debug("Created %r", self)
         if self._own_rpc_client:
             self.rpc_client.start()
@@ -308,20 +335,19 @@ class DropProxy(object):
 
     def __getattr__(self, name):
         if name == "uid":
-            return self.uid
+            return self._proxy_info.uid
         elif name in ("inputs", "streamingInputs", "outputs", "consumers", "producers"):
             return []
         return self.rpc_client.get_drop_attribute(
-            self.hostname, self.port, self.session_id, self.uid, name
+            self._proxy_info.hostname,
+            self._proxy_info.port,
+            self._proxy_info.session_id,
+            self.uid,
+            name
         )
 
     def __repr__(self):
-        return "<DropProxy %s, session %s @%s:%d>" % (
-            self.uid,
-            self.session_id,
-            self.hostname,
-            self.port,
-        )
+        return f"<DropProxy with {self._proxy_info}"
 
     def __del__(self):
         if self._own_rpc_client:
