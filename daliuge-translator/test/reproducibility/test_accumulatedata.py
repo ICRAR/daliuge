@@ -30,8 +30,10 @@ import json
 import optparse
 import tempfile
 import unittest
+import pytest
 
-from asyncio.log import logger
+# from asyncio.log import logger
+import logging
 import pkg_resources
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags
@@ -51,22 +53,31 @@ from dlg.translator.tool_commands import (
 
 SUPPORTED_WORKFLOWS = ["apps", "files", "misc", "groups"]
 
+logger = logging.getLogger("__name__")
+
+
+@pytest.fixture(scope="session")
+def log_level(pytestconfig):
+    return pytestconfig.getoption("--log-cli-level")
+
 
 def _fill_workflow(
     rmode: ReproducibilityFlags,
     workflow: str,
     workflow_loc="./",
     scratch_loc="./",
+    log_level=log_level,
 ):
     workflow_loc = pkg_resources.resource_filename("test", workflow_loc)
-    logger.debug(workflow_loc)
+    # # logger.debug(workflow_loc)
     lgt = workflow_loc + workflow + ".graph"
     lgr = scratch_loc + "/" + workflow + "LG.graph"
 
     rmodes = str(rmode.value)
 
     parser = optparse.OptionParser()
-    dlg_fill(parser, ["-L", lgt, "-R", rmodes, "-o", lgr, "-f", "newline"])
+    ll = "-v" if log_level else "-vv"
+    dlg_fill(parser, ["-L", lgt, "-R", rmodes, "-o", lgr, "-f", "newline", ll])
 
 
 def _run_full_workflow(
@@ -74,21 +85,33 @@ def _run_full_workflow(
     workflow: str,
     workflow_loc="./",
     scratch_loc="./",
+    log_level=log_level,
 ):
     lgr = scratch_loc + "/" + workflow + "LG.graph"
     pgs = scratch_loc + "/" + workflow + "PGS.graph"
     pgt = scratch_loc + "/" + workflow + "PGT.graph"
     pgr = scratch_loc + "/" + workflow + "PG.graph"
 
+    ll = "-v" if log_level.__repr__ else "-vv"
     _fill_workflow(rmode, workflow, workflow_loc, scratch_loc)
     parser = optparse.OptionParser()
-    dlg_unroll(parser, ["-L", lgr, "-o", pgs, "-f", "newline"])
+    dlg_unroll(parser, ["-L", lgr, "-o", pgs, "-f", "newline", ll])
     parser = optparse.OptionParser()
-    dlg_partition(parser, ["-P", pgs, "-o", pgt, "-f", "newline"])
+    dlg_partition(parser, ["-P", pgs, "-o", pgt, "-f", "newline", ll])
     parser = optparse.OptionParser()
     dlg_map(
         parser,
-        ["-P", pgt, "-N", "localhost, localhost", "-o", pgr, "-f", "newline"],
+        [
+            "-P",
+            pgt,
+            "-N",
+            "localhost, localhost",
+            "-o",
+            pgr,
+            "-f",
+            "newline",
+            ll,
+        ],
     )
 
 
@@ -129,25 +152,25 @@ class AccumulateLGTRerunData(unittest.TestCase):
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # # logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
     def test_app_accumulate(self):
@@ -486,25 +509,25 @@ class AccumulateLGTRepeatData(unittest.TestCase):
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
     def test_app_accumulate(self):
@@ -921,25 +944,25 @@ class AccumulateLGTRecomputeData(unittest.TestCase):
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
     def test_app_accumulate(self):
@@ -1364,25 +1387,25 @@ class AccumulateLGTReproduceData(unittest.TestCase):
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
     def test_app_accumulate(self):
@@ -1777,25 +1800,25 @@ class AccumulateLGTReplicateSciData(unittest.TestCase):
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
     def test_app_accumulate(self):
@@ -2134,25 +2157,25 @@ class AccumulateLGTReplicateCompData(unittest.TestCase):
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
     def test_app_accumulate(self):
@@ -2573,25 +2596,25 @@ class AccumulateLGTReplicateTotalData(unittest.TestCase):
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
     with pkg_resources.resource_stream(
         "test", file
     ) as f:  # @UndefinedVariable
-        logger.debug(f"Loading graph: {f}")
+        # logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
     def test_app_accumulate(self):

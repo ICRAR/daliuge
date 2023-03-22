@@ -625,8 +625,11 @@ class LGNode:
         drop_type = self.jd["category"]
         if drop_type not in ["Memory", "PythonApp"]:
             logger.debug(">>>>>>>>> drop_type:%s", drop_type)
+        drop_class = "Data"
         if "type" in self.jd:
             drop_class = self.jd["type"]
+        if "categoryType" in self.jd:
+            drop_class = self.jd["categoryType"]
         elif drop_type in DATA_TYPES:
             drop_class = "Data"
         elif drop_type in APP_TYPES:
@@ -635,7 +638,6 @@ class LGNode:
             drop_class = "Unknown"
         if drop_class not in ["Data", "Application"]:
             drop_class = drop_type
-            logger.debug(">>>>>>>>> drop_class:%s, %s", drop_class, drop_type)
 
         if drop_class.lower() == "data":
             logger.debug("Storage node spec: %s", json.dumps(kwargs))
@@ -964,11 +966,6 @@ class LGNode:
             kwargs["type"] = "Data"
         else:
             kwargs["type"] = "Application"
-        logger.debug(
-            ">>>>>>> kwargs['type']: %s, %s",
-            kwargs["type"],
-            self.jd["category"],
-        )
         kwargs["nm"] = self.text
         kwargs["text"] = self.text
         # Behaviour is that child-nodes inherit reproducibility data from their parents.
@@ -1158,7 +1155,8 @@ class LG:
                     )
                 )
         elif tgt.is_gather():
-            logger.debug(">>>>>>>>>>> src.jd: %s", src.jd)
+            if "type" not in src.jd:
+                src.jd["type"] = "data"
             if not src.jd["type"].lower() == "data" and not src.is_groupby():
                 raise GInvalidLink(
                     "Gather {0}'s input {1} should be either a GroupBy or Data. {2}".format(
@@ -1779,7 +1777,6 @@ class LG:
             ret += drop_list
 
         for drop in ret:
-            logger.debug(">>>>>>> drop: %s", drop)
             if drop["type"] in [CategoryType.APPLICATION, "app"] and drop[
                 "app"
             ].endswith(Categories.BASH_SHELL_APP):
