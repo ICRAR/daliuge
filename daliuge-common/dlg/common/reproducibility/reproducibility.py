@@ -93,6 +93,7 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
             f"Reproducibility level {level.name} not yet supported"
         )
     category = drop.get("category", "")
+    # category = drop.get("categoryType", "")
 
     # Cheeky way to get field list into dicts. map(dict, drop...) makes a copy
     fields = {
@@ -130,8 +131,8 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
         )
         level = REPRO_DEFAULT
         drop["reprodata"]["rmode"] = str(level.value)
-    if drop.get("type") is None:
-        return {}
+    # if drop.get("type") is None:
+    #     return {}
     drop_type = drop["type"]
     candidate_rmodes = []
     if level == ReproducibilityFlags.ALL:
@@ -490,8 +491,12 @@ def lg_build_blockdag(logical_graph: dict, level):
             parenthash = {}
             if rmode != ReproducibilityFlags.NOTHING:
                 if rmode == ReproducibilityFlags.REPRODUCE:
+                    if "type" in dropset[did][0]:
+                        dtype = dropset[did][0]["type"].lower()
+                    elif "categoryType" in dropset[did][0]:
+                        dtype = dropset[did][0]["categoryType"].lower()
                     if (
-                        dropset[did][0]["type"].lower() == "data"
+                        dtype == "data"
                         and (dropset[did][1] == 0 or dropset[did][2] == 0)
                         and (did in roots or did in leaves)
                     ):

@@ -28,12 +28,15 @@ Most of these tests will be asserting the obvious, with the exception of Reprodu
 """
 
 import unittest
+import logging
 
 from dlg.common.reproducibility.constants import (
     ReproducibilityFlags,
     ALL_RMODES,
 )
 from dlg.common.reproducibility.reproducibility import build_blockdag
+
+logger = logging.getLogger("__name__")
 
 
 def _generate_dummy_compute(rmode: ReproducibilityFlags):
@@ -646,6 +649,10 @@ class PhysicalBlockdagReproduceTests(unittest.TestCase):
         )
         parenthash2 = list(
             pgr[3]["reprodata"][self.rmode.name]["pg_parenthashes"].values()
+        )
+        logger.debug(
+            ">>>>>>>>>%s",
+            pgr,
         )
         self.assertTrue(
             parenthash1 == parenthash2 and parenthash1[0] == sourcehash
