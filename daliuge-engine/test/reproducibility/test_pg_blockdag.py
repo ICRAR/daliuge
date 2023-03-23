@@ -650,10 +650,6 @@ class PhysicalBlockdagReproduceTests(unittest.TestCase):
         parenthash2 = list(
             pgr[3]["reprodata"][self.rmode.name]["pg_parenthashes"].values()
         )
-        logger.debug(
-            ">>>>>>>>>%s",
-            pgr,
-        )
         self.assertTrue(
             parenthash1 == parenthash2 and parenthash1[0] == sourcehash
         )
