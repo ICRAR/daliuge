@@ -108,7 +108,7 @@ class LGNode:
         """
         self._jd = jd
         self._children = []
-        self._outs = []  # event flow target
+        self._outputs = []  # event flow target
         self._inputs = []  # event flow source
         self.group = None
         self._id = jd["key"]
@@ -120,6 +120,8 @@ class LGNode:
         self._dop = None
         self._gaw = None
         self._grpw = None
+        self._nodetype = None  # e.g. Data or Application
+        self._nodeclass = None  # e.g. dlg.apps.simple.HelloWorldAPP
         self._reprodata = jd.get("reprodata", {}).copy()
         if "isGroup" in jd and jd["isGroup"] is True:
             self._isgrp = True
@@ -146,6 +148,22 @@ class LGNode:
     @property
     def id(self):
         return self._id
+
+    @property
+    def nodetype(self):
+        return self._nodetype
+
+    @nodetype.setter
+    def nodetype(self, value):
+        self._nodetype = value
+
+    @property
+    def nodeclass(self):
+        return self._nodeclass
+
+    @nodeclass.setter
+    def nodetype(self, value):
+        self._nodeclass = value
 
     @property
     def text(self):
@@ -176,8 +194,8 @@ class LGNode:
             return self.group.id
 
     def add_output(self, lg_node):
-        if lg_node not in self._outs:
-            self._outs.append(lg_node)
+        if lg_node not in self._outputs:
+            self._outputs.append(lg_node)
 
     def add_input(self, lg_node):
         # only add if not already there
@@ -208,7 +226,7 @@ class LGNode:
 
     @property
     def outputs(self):
-        return self._outs
+        return self._outputs
 
     @property
     def inputs(self):
@@ -289,7 +307,7 @@ class LGNode:
         return len(self._children) > 0
 
     def has_output(self):
-        return len(self._outs) > 0
+        return len(self._outputs) > 0
 
     def is_start_node(self):
         return self.jd["category"] == Categories.START
@@ -1050,7 +1068,7 @@ class LG:
         self._group_q = collections.defaultdict(list)
         self._output_q = collections.defaultdict(list)
         self._start_list = []
-        all_list = []
+        self._lgn_list = []
         stream_output_ports = dict()  # key - port_id, value - construct key
         for jd in lg["nodeDataArray"]:
             if (
@@ -1059,16 +1077,7 @@ class LG:
             ):
                 continue
             lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
-            all_list.append(lgn)
-            node_ouput_ports = jd.get("outputPorts", [])
-            node_ouput_ports += jd.get("outputLocalPorts", [])
-            # check all the outports of this node, and store "stream" output
-            if len(node_ouput_ports) > 0:
-                for out_port in node_ouput_ports:
-                    if out_port.get("IdText", "").lower().endswith("stream"):
-                        stream_output_ports[out_port["Id"]] = jd["key"]
-
-        for lgn in all_list:
+            self._lgn_list.append(lgn)
             if (
                 lgn.is_start()
                 and lgn.jd["category"] != Categories.COMMENT
@@ -1078,6 +1087,13 @@ class LG:
                     self._g_var.append(lgn)
                 else:
                     self._start_list.append(lgn)
+            node_ouput_ports = jd.get("outputPorts", [])
+            node_ouput_ports += jd.get("outputLocalPorts", [])
+            # check all the outports of this node, and store "stream" output
+            if len(node_ouput_ports) > 0:
+                for out_port in node_ouput_ports:
+                    if out_port.get("IdText", "").lower().endswith("stream"):
+                        stream_output_ports[out_port["Id"]] = jd["key"]
 
         self._lg_links = lg["linkDataArray"]
 
@@ -1101,7 +1117,6 @@ class LG:
 
         # key - lgn id, val - a list of pgns associated with this lgn
         self._drop_dict = collections.defaultdict(list)
-        self._lgn_list = all_list
         self._reprodata = lg.get("reprodata", {})
 
     def validate_link(self, src, tgt):
@@ -1242,7 +1257,7 @@ class LG:
                     for ge in grp_ends:
                         for gs in grp_starts:  # make an artificial circle
                             lk = dict()
-                            if gs not in ge._outs:
+                            if gs not in ge._outputs:
                                 ge.add_output(gs)
                             if ge not in gs._inputs:
                                 gs.add_input(ge)
