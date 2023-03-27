@@ -121,6 +121,7 @@ class MetisPGTP(PGT):
                 resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0**2,
             )
 
+        # logger.debug(">>>> PGPT droplist: %s", droplist)
         for i, drop in enumerate(droplist):
             oid = drop["oid"]
             myk = i + 1
