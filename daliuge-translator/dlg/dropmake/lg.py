@@ -73,16 +73,16 @@ DATA_TYPES = [
 ]
 
 APP_TYPES = [
-    "Branch"
-    "Data"
-    "Component"
-    "PythonApp"
-    "BashShellApp"
-    "Mpi"
-    "DynlibApp"
-    "Docker"
-    "DynlibProcApp"
-    "Service"
+    "Branch",
+    "Data",
+    "Component",
+    "PythonApp",
+    "BashShellApp",
+    "Mpi",
+    "DynlibApp",
+    "Docker",
+    "DynlibProcApp",
+    "Service",
 ]
 
 
@@ -106,25 +106,29 @@ class LGNode:
         done_dict: LGNode that have been processed (Dict)
         ssid:   session id (string)
         """
-        self._jd = jd
+        self.jd = jd
+        self.inputPorts = jd
+        self.outputPorts = jd
         self._children = []
         self._outputs = []  # event flow target
         self._inputs = []  # event flow source
         self.group = None
         self._id = jd["key"]
         self._ssid = ssid
-        self._isgrp = False
+        self._is_group = False
+        self._is_app = False
+        self._is_data = False
         self._converted = False
         self._h_level = None
         self._g_h = None
         self._dop = None
         self._gaw = None
         self._grpw = None
-        self._nodetype = None  # e.g. Data or Application
-        self._nodeclass = None  # e.g. dlg.apps.simple.HelloWorldAPP
+        self._nodetype = ""  # e.g. Data or Application
+        self._nodeclass = ""  # e.g. dlg.apps.simple.HelloWorldAPP
         self._reprodata = jd.get("reprodata", {}).copy()
         if "isGroup" in jd and jd["isGroup"] is True:
-            self._isgrp = True
+            self._is_group = True
             for wn in group_q[self.id]:
                 wn.group = self
                 self.add_child(wn)
@@ -141,9 +145,68 @@ class LGNode:
 
         done_dict[self.id] = self
 
+    def __str__(self):
+        return json.dumps(self.jd)
+
+    @property
+    def inputPorts(self):
+        return self._inputPorts
+
+    @inputPorts.setter
+    def inputPorts(self, value):
+        logger.debug(">>>>> value (in): %s", value)
+        if value["categoryType"] == "Construct":
+            self._inputPorts = []
+        elif not "inputPorts" in value:
+            self._inputPorts = [
+                f
+                for f in value["fields"]
+                if "usage" in f and f["usage"] in ["InputPort", "InOutPort"]
+            ]
+            # we need this as long as the fields are still using "name"
+            if len(self._inputPorts) > 0 and "name" in self._inputPorts[0]:
+                for p in self._inputPorts:
+                    p["IdText"] = p["name"]
+        else:
+            self._inputPorts = value["inputPorts"]
+
+    @property
+    def outputPorts(self):
+        return self._outputPorts
+
+    @outputPorts.setter
+    def outputPorts(self, value):
+        logger.debug(">>>>> value: %s", value)
+        if value["categoryType"] == "Construct":
+            self._outputPorts = []
+        elif not "outputPorts" in value:
+            self._outputPorts = [
+                f
+                for f in value["fields"]
+                if f["usage"] in ["OutputPort", "InOutPort"]
+            ]
+            # we need this as long as the fields are still using "name"
+            if len(self._outputPorts) > 0 and "name" in self._outputPorts[0]:
+                for p in self._outputPorts:
+                    p["IdText"] = p["name"]
+        else:
+            self._outputPorts = value["outputPorts"]
+
     @property
     def jd(self):
         return self._jd
+
+    @jd.setter
+    def jd(self, value):
+        if "categoryType" not in value:
+            if value["category"] in APP_TYPES:
+                value["categoryType"] = CategoryType.APPLICATION
+            elif value["category"] in DATA_TYPES:
+                value["categoryType"] = CategoryType.DATA
+        logger.debug(
+            ">>>>> categoryType: %s, %s", value["category"], APP_TYPES
+        )
+        self._jd = value
 
     @property
     def id(self):
@@ -162,7 +225,11 @@ class LGNode:
         return self._nodeclass
 
     @nodeclass.setter
-    def nodetype(self, value):
+    def nodeclass(self, value):
+        if value == CategoryType.DATA:
+            self.isdata = True
+        if value == CategoryType.APPLICATION:
+            self.isapp = True
         self._nodeclass = value
 
     @property
@@ -309,6 +376,12 @@ class LGNode:
     def has_output(self):
         return len(self._outputs) > 0
 
+    def is_data(self):
+        return self.jd["categoryType"] == CategoryType.DATA
+
+    def is_app(self):
+        return self.jd["categoryType"] == CategoryType.APPLICATION
+
     def is_start_node(self):
         return self.jd["category"] == Categories.START
 
@@ -364,7 +437,7 @@ class LGNode:
         return result
 
     def is_group(self):
-        return self._isgrp
+        return self._is_group
 
     def is_scatter(self):
         return self.is_group() and self._jd["category"] == Categories.SCATTER
@@ -383,6 +456,10 @@ class LGNode:
 
     def is_groupby(self):
         return self._jd["category"] == Categories.GROUP_BY
+
+    def is_branch(self):
+        # This is the only special thing required for a branch
+        return self._jd["category"] == Categories.BRANCH
 
     def is_mpi(self):
         return self._jd["category"] == Categories.MPI
@@ -407,10 +484,6 @@ class LGNode:
                         ve
                     )
                 )
-
-    def is_branch(self):
-        # This is the only special thing required for a branch
-        return self._jd["category"] == Categories.BRANCH
 
     @property
     def gather_width(self):
@@ -641,24 +714,40 @@ class LGNode:
         """
         drop_spec = None
         drop_type = self.jd["category"]
-        if drop_type not in ["Memory", "PythonApp"]:
-            logger.debug(">>>>>>>>> drop_type:%s", drop_type)
-        drop_class = "Data"
-        if "type" in self.jd:
-            drop_class = self.jd["type"]
+        drop_class = "Unknown"
+        if "category" in self.jd:
+            logger.debug(">>>> category: %s", self.jd["category"])
+            drop_class = self.jd["category"]
         if "categoryType" in self.jd:
+            logger.debug(">>>> categoryType: %s", self.jd["categoryType"])
             drop_class = self.jd["categoryType"]
-        elif drop_type in DATA_TYPES:
-            drop_class = "Data"
-        elif drop_type in APP_TYPES:
-            drop_class = "Application"
-        else:
-            drop_class = "Unknown"
-        if drop_class not in ["Data", "Application"]:
-            drop_class = drop_type
 
-        if drop_class.lower() == "data":
-            logger.debug("Storage node spec: %s", json.dumps(kwargs))
+        # backwards compatibility
+        if "type" in self.jd:
+            drop_type = self.jd["type"]
+            if drop_type in DATA_TYPES:
+                drop_class = "Data"
+            elif drop_type in APP_TYPES:
+                drop_class = "Application"
+            else:
+                drop_class = "Unknown"
+
+        self.nodeclass = drop_class
+        self.nodetype = drop_type
+
+        logger.debug(">>>>> nodetype: %s", self.nodetype)
+        logger.debug(">>>>> nodeclass: %s", self.nodeclass)
+        logger.debug(
+            ">>>>>> cmptypes: %s, %s",
+            [
+                Categories.COMPONENT,
+                Categories.PYTHON_APP,
+                Categories.BRANCH,
+                Categories.PLASMA,
+            ],
+            self.is_data(),
+        )
+        if self.is_data():
             if "data_volume" in self.jd:
                 kwargs["dw"] = int(self.jd["data_volume"])  # dw -- data weight
             else:
@@ -681,7 +770,7 @@ class LGNode:
                         "oid": "{0}-s".format(oid),
                         # "type": DropType.APP,
                         "type": CategoryType.APPLICATION,
-                        "app": "dlg.apps.simple.SleepApp",
+                        "appclass": "dlg.apps.simple.SleepApp",
                         "nm": "lstnr",
                         "text": "lstnr",
                         "tw": 5,
@@ -713,9 +802,12 @@ class LGNode:
                 fp = self.jd.get("filepath", None)
                 if fp:
                     kwargs["filepath"] = fp
+                kwargs["dataclass"] = str(
+                    self.jd.get("dataclass", "dlg.data.drops.file.FileDROP")
+                )
             self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
-        elif drop_type in [
+        elif self.nodetype in [
             Categories.COMPONENT,
             Categories.PYTHON_APP,
             Categories.BRANCH,
@@ -749,7 +841,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "type": CategoryType.APPLICATION,
-                    "app": app_class,
+                    "appclass": app_class,
                     "rank": rank,
                 }
             )
@@ -758,6 +850,7 @@ class LGNode:
             if "mkn" in self.jd:
                 kwargs["mkn"] = self.jd["mkn"]
             self._update_key_value_attributes(kwargs)
+            logger.debug(">>>>>>> kwargs: %s", kwargs)
             drop_spec.update(kwargs)
 
         elif drop_type in [Categories.DYNLIB_APP, Categories.DYNLIB_PROC_APP]:
@@ -769,7 +862,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "type": CategoryType.APPLICATION,
-                    "app": "dlg.apps.dynlib.{}".format(drop_type),
+                    "appclass": "dlg.apps.dynlib.{}".format(drop_type),
                     "rank": rank,
                 }
             )
@@ -791,7 +884,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "type": CategoryType.APPLICATION,
-                    "app": app_str,
+                    "appclass": app_str,
                     "rank": rank,
                 }
             )
@@ -837,7 +930,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "type": typ,
-                    "app": app_class,
+                    "appclass": app_class,
                     "rank": rank,
                 }
             )
@@ -876,7 +969,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "type": CategoryType.APPLICATION,
-                    "app": "dlg.apps.simple.SleepApp",
+                    "appclass": "dlg.apps.simple.SleepApp",
                     "rank": rank,
                 }
             )
@@ -911,7 +1004,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "type": CategoryType.APPLICATION,
-                    "app": "dlg.apps.simple.SleepApp",
+                    "appclass": "dlg.apps.simple.SleepApp",
                     "rank": rank,
                 }
             )
@@ -1171,7 +1264,7 @@ class LG:
                 )
         elif tgt.is_gather():
             if "type" not in src.jd:
-                src.jd["type"] = "data"
+                src.jd["type"] = "Data"
             if not src.jd["type"].lower() == "data" and not src.is_groupby():
                 raise GInvalidLink(
                     "Gather {0}'s input {1} should be either a GroupBy or Data. {2}".format(
@@ -1471,8 +1564,8 @@ class LG:
                     tdrop.addStreamingInput(sdrop, IdText=sIdText)
                 else:
                     # print("not a stream from %s to %s" % (llink['from'], llink['to']))
-                    sdrop.addConsumer(tdrop, IdText=sIdText)
-                    tdrop.addInput(sdrop, IdText=tIdText)
+                    sdrop.addOutput(tdrop, IdText=sIdText)
+                    tdrop.addProducer(sdrop, IdText=tIdText)
             if Categories.BASH_SHELL_APP == t_type:
                 bc = tgt_drop["command"]
                 bc.add_input_param(slgn.id, src_drop["oid"])
@@ -1502,6 +1595,9 @@ class LG:
             tlgn = self._done_dict[tid]
             sdrops = self._drop_dict[sid]
             tdrops = self._drop_dict[tid]
+            logger.debug(
+                ">>>>> group: %s, %s", slgn.is_group(), tlgn.is_group()
+            )
             chunk_size = self._get_chunk_size(slgn, tlgn)
             if slgn.is_group() and not tlgn.is_group():
                 # this link must be artifically added (within group link)
@@ -1610,6 +1706,9 @@ class LG:
                             self._link_drops(slgn, tlgn, sdrop, tdrop, lk)
                 else:
                     lpaw = ("%s-%s" % (sid, tid)) in self_loop_aware_set
+                    logger.debug(
+                        ">>>> h_level: %s, %s", slgn.h_level, tlgn.h_level
+                    )
                     if (
                         slgn.group is not None
                         and slgn.group.is_loop()
@@ -1759,7 +1858,7 @@ class LG:
                 # print(data_drop['nm'], data_drop['oid'], '-->', output_drop['nm'], output_drop['oid'])
 
         logger.info(
-            "Unroll progress - links done %d for session %s",
+            "Unroll progress - %d links done for session %s",
             len(self._lg_links),
             self._session_id,
         )
@@ -1792,8 +1891,9 @@ class LG:
             ret += drop_list
 
         for drop in ret:
+            logger.debug(">>>>> drop: %s", drop)
             if drop["type"] in [CategoryType.APPLICATION, "app"] and drop[
-                "app"
+                "appclass"
             ].endswith(Categories.BASH_SHELL_APP):
                 bc = drop["command"]
                 drop["command"] = bc.to_real_command()
