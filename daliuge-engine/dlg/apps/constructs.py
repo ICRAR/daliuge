@@ -55,6 +55,7 @@ class LoopDrop(BarrierAppDROP):
 # @par EAGLE_START
 # @param category MKN
 # @param tag template
+# @param k K/1/Integer/ApplicationArgument/readwrite//False/False/Internal multiplicity
 # @par EAGLE_END
 class MKNDrop(BarrierAppDROP):
     """
