@@ -239,7 +239,7 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "5d9153e898ae56bd7efb8d62694c7187836b9d79",
+        "eagleCommitHash": "4af0ebaf63e777c367b16bd8c03a0da5004891d5",
         "eagleVersion": "v5.0.2",
         "filePath": "chiles_simple.graph",
         "fileType": "Graph",
@@ -259,7 +259,7 @@
     "nodeDataArray": [
         {
             "category": "Start",
-            "type": "Control",
+            "categoryType": "Control",
             "collapsed": true,
             "color": "rgb(88 167 94)",
             "commitHash": "",
@@ -373,7 +373,7 @@
         },
         {
             "category": "Comment",
-            "type": "Other",
+            "categoryType": "Other",
             "collapsed": true,
             "color": "rgb(157 43 96)",
             "commitHash": "",
@@ -406,7 +406,7 @@
         },
         {
             "category": "Comment",
-            "type": "Other",
+            "categoryType": "Other",
             "collapsed": true,
             "color": "rgb(157 43 96)",
             "commitHash": "",
@@ -439,7 +439,7 @@
         },
         {
             "category": "Memory",
-            "type": "Data",
+            "categoryType": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -521,7 +521,7 @@
         },
         {
             "category": "Component",
-            "type": "Application",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -779,7 +779,7 @@
         },
         {
             "category": "Memory",
-            "type": "Data",
+            "categoryType": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -861,7 +861,7 @@
         },
         {
             "category": "Memory",
-            "type": "Data",
+            "categoryType": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -927,7 +927,7 @@
         },
         {
             "category": "Component",
-            "type": "Application",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -1249,7 +1249,7 @@
         },
         {
             "category": "Memory",
-            "type": "Data",
+            "categoryType": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -1331,7 +1331,7 @@
         },
         {
             "category": "Memory",
-            "type": "Data",
+            "categoryType": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -1413,7 +1413,7 @@
         },
         {
             "category": "Memory",
-            "type": "Data",
+            "categoryType": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -1495,7 +1495,7 @@
         },
         {
             "category": "Memory",
-            "type": "Data",
+            "categoryType": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -1577,7 +1577,7 @@
         },
         {
             "category": "Component",
-            "type": "Application",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -1835,7 +1835,7 @@
         },
         {
             "category": "Component",
-            "type": "Application",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -2093,7 +2093,7 @@
         },
         {
             "category": "Component",
-            "type": "Application",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -2351,7 +2351,7 @@
         },
         {
             "category": "Component",
-            "type": "Application",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -2609,7 +2609,7 @@
         },
         {
             "category": "Memory",
-            "type": "Data",
+            "categoryType": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -2691,7 +2691,7 @@
         },
         {
             "category": "Memory",
-            "type": "Data",
+            "categoryType": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -2773,7 +2773,7 @@
         },
         {
             "category": "Memory",
-            "type": "Data",
+            "categoryType": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -2855,7 +2855,7 @@
         },
         {
             "category": "Memory",
-            "type": "Data",
+            "categoryType": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -2937,7 +2937,7 @@
         },
         {
             "category": "Component",
-            "type": "Application",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -3195,7 +3195,7 @@
         },
         {
             "category": "Component",
-            "type": "Application",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -3453,7 +3453,7 @@
         },
         {
             "category": "Component",
-            "type": "Application",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -3711,7 +3711,7 @@
         },
         {
             "category": "Component",
-            "type": "Application",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",
@@ -3969,7 +3969,7 @@
         },
         {
             "category": "Component",
-            "type": "Application",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
             "commitHash": "",

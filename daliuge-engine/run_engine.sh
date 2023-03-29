@@ -23,9 +23,14 @@ common_prep ()
     DOCKER_OPTS=${DOCKER_OPTS}" -v ${DLG_ROOT}/workspace/settings/group:/etc/group"
     DOCKER_OPTS=${DOCKER_OPTS}" -v ${DLG_ROOT}:${DLG_ROOT} --env DLG_ROOT=${DLG_ROOT}"
 }
-
-export VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
-export C_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
+if [ $2 ]
+then
+	export VCS_TAG=$2
+	export C_TAG=$VCS_TAG
+else
+	export VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
+	export C_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
+fi
 case "$1" in
     "dep")
         DLG_ROOT="/var/dlg_home"

@@ -108,7 +108,7 @@ class MetisPGTP(PGT):
                 oid = drop["oid"]
             except KeyError:
                 logger.debug("Drop does not have oid: %s", drop)
-                continue
+                droplist.pop(i)
             key_dict[oid] = i + 1  # METIS index starts from 1
 
         logger.info("Metis partition input progress - dropdict is built")
@@ -146,6 +146,8 @@ class MetisPGTP(PGT):
             for inp in adj_drops:
                 key = list(inp.keys())[0] if isinstance(inp, dict) else inp
                 if tt in [CategoryType.DATA, "data"]:
+                    if "dw" not in drop:
+                        logger.debug(">>>>> %s", drop)
                     lw = drop["dw"]
                 elif tt in [CategoryType.APPLICATION, "app"]:
                     # lw = drop_dict[inp].get('dw', 1)
