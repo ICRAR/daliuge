@@ -415,7 +415,6 @@ class PGT(object):
                             dropSpec = dropdict(
                                 {
                                     "oid": extra_oid,
-                                    # "type": DropType.DATA,
                                     "type": CategoryType.DATA,
                                     "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                                     "nm": "go_data",
@@ -479,7 +478,7 @@ class PGT(object):
             tt = drop["type"]
             if CategoryType.DATA == tt:
                 node["category"] = "Data"
-            elif DropType.APPCLASS == tt:
+            elif DropType.APP == tt:
                 node["category"] = "Component"
             node["text"] = drop["nm"]
             node["text"] = drop["text"]

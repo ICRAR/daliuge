@@ -29,8 +29,6 @@ import socket
 import struct
 import time
 
-from dlg.common import CategoryType, DropType
-
 from . import utils, droputils
 from .apps import pyfunc
 from .common import dropdict

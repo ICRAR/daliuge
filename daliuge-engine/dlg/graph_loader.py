@@ -321,8 +321,8 @@ def _createData(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
-    if DropType.DATACLASS in dropSpec:
-        dataClassName = dropSpec[DropType.DATACLASS]
+    if DropType.DATA in dropSpec:
+        dataClassName = dropSpec[DropType.DATA]
         parts = dataClassName.split(".")
         # we don't need to support dfms here
         module = importlib.import_module(".".join(parts[:-1]))
@@ -398,8 +398,8 @@ def _createApp(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
-    if DropType.APPCLASS in dropSpec:
-        appName = dropSpec[DropType.APPCLASS]
+    if DropType.APP in dropSpec:
+        appName = dropSpec[DropType.APP]
     elif "app" in dropSpec:
         appName = dropSpec["app"]
     parts = appName.split(".")
@@ -456,8 +456,8 @@ __CREATION_FUNCTIONS = {
     DropType.CONTAINER: _createContainer,
     DropType.SERVICE_APP: _createApp,
     DropType.SOCKET: _createSocket,
-    DropType.DATACLASS: _createData,
-    DropType.APPCLASS: _createApp,
+    DropType.DATA: _createData,
+    DropType.APP: _createApp,
     "Data": _createData,
     "data": _createData,
     "Application": _createApp,

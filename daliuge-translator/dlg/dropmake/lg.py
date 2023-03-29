@@ -39,7 +39,7 @@ import time
 from itertools import product
 
 import numpy as np
-from dlg.common import Categories, CategoryType, DropType
+from dlg.common import CategoryType, DropType
 from dlg.common import dropdict
 from dlg.dropmake.dm_utils import (
     LG_APPREF,
@@ -52,38 +52,9 @@ from dlg.dropmake.dm_utils import (
     LG_VER_EAGLE_CONVERTED,
 )
 from dlg.dropmake.utils.bash_parameter import BashCommand
+from .definition_classes import Categories, DATA_TYPES, APP_TYPES
 
 logger = logging.getLogger(__name__)
-
-DATA_TYPES = [
-    Categories.FILE,
-    Categories.MEMORY,
-    Categories.S3,
-    Categories.NGAS,
-    Categories.JSON,
-    Categories.SHMEM,
-    Categories.DATA,
-    Categories.NULL,
-    Categories.PLASMA,
-    Categories.PLASMAFLIGHT,
-    Categories.PARSET,
-    Categories.ENVIRONMENTVARS,
-    Categories.START,
-    Categories.END,
-]
-
-APP_TYPES = [
-    "Branch",
-    "Data",
-    "Component",
-    "PythonApp",
-    "BashShellApp",
-    "Mpi",
-    "DynlibApp",
-    "Docker",
-    "DynlibProcApp",
-    "Service",
-]
 
 
 class GraphException(Exception):
@@ -758,7 +729,6 @@ class LGNode:
                 drop_spec = dropdict(
                     {
                         "oid": oid,
-                        # "type": DropType.DATA,
                         "type": CategoryType.DATA,
                         "storage": drop_type,
                         "rank": rank,
@@ -767,7 +737,6 @@ class LGNode:
                 dropSpec_socket = dropdict(
                     {
                         "oid": "{0}-s".format(oid),
-                        # "type": DropType.APP,
                         "type": CategoryType.APPLICATION,
                         "appclass": "dlg.apps.simple.SleepApp",
                         "nm": "lstnr",
@@ -785,7 +754,6 @@ class LGNode:
                 drop_spec = dropdict(
                     {
                         "oid": oid,
-                        # "type": DropType.DATA,
                         "type": CategoryType.DATA,
                         "storage": drop_type,
                         "rank": rank,
@@ -984,7 +952,6 @@ class LGNode:
             dropSpec_grp = dropdict(
                 {
                     "oid": "{0}-grp-data".format(oid),
-                    # "type": DropType.DATA,
                     "type": CategoryType.DATA,
                     "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                     "nm": "grpdata",
@@ -1022,7 +989,6 @@ class LGNode:
             dropSpec_gather = dropdict(
                 {
                     "oid": "{0}-gather-data".format(oid),
-                    # "type": DropType.DATA,
                     "type": CategoryType.DATA,
                     "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                     "nm": "gthrdt",
@@ -1045,7 +1011,6 @@ class LGNode:
             drop_spec = dropdict(
                 {
                     "oid": oid,
-                    # "type": DropType.DATA,
                     "type": CategoryType.DATA,
                     "dataclass": "dlg.data.drops.data_base.NullDROP",
                     "dw": 0,
@@ -1530,7 +1495,6 @@ class LG:
                         sdrop["oid"],
                         tdrop["oid"].replace(self._session_id, ""),
                     ),
-                    # "type": DropType.DATA,
                     "type": CategoryType.DATA,
                     "dataclass": "dlg.data.drops.data_base.NullDROP",
                     "nm": "StreamNull",
@@ -1828,7 +1792,7 @@ class LG:
                     # Only the service node's inputApplication will be translated
                     # to the physical graph as a node of type SERVICE_APP instead of APP
                     # per compute instance
-                    tlgn["type"] = DropType.APPCLASS
+                    tlgn["type"] = DropType.APP
                     tlgn["category"] = DropType.SERVICE_APP
                 else:
                     raise GraphException(

@@ -25,48 +25,13 @@ from .network import check_port, connect_to, portIsClosed, portIsOpen, write_to
 from .streams import ZlibCompressedStream, JSONStream
 
 
-class Categories:
-    START = "Start"
-    END = "End"
-
-    MEMORY = "Memory"
-    SHMEM = "SharedMemory"
-    FILE = "File"
-    NGAS = "NGAS"
-    NULL = "null"
-    JSON = "json"
-    S3 = "S3"
-    PLASMA = "Plasma"
-    PLASMAFLIGHT = "PlasmaFlight"
-    PARSET = "ParameterSet"
-    ENVIRONMENTVARS = "EnvironmentVariables"
-
-    MKN = "MKN"
-    SCATTER = "Scatter"
-    GATHER = "Gather"
-    GROUP_BY = "GroupBy"
-    LOOP = "Loop"
-    VARIABLES = "Variables"
-
-    BRANCH = "Branch"
-    DATA = "Data"
-    COMPONENT = "Component"
-    PYTHON_APP = "PythonApp"
-    BASH_SHELL_APP = "BashShellApp"
-    MPI = "Mpi"
-    DYNLIB_APP = "DynlibApp"
-    DOCKER = "Docker"
-    DYNLIB_PROC_APP = "DynlibProcApp"
-    SERVICE = "Service"
-
-    COMMENT = "Comment"
-    DESCRIPTION = "Description"
-
-
 class DropType:
-    # this gives the mapping to fields containing class paths
-    DATACLASS = "dataclass"
-    APPCLASS = "appclass"
+    """
+    Class defining the LG keyword to be used to load the module defining the Drop.
+    """
+
+    DATA = "dataclass"
+    APP = "appclass"
     SOCKET = "socket"
     SERVICE_APP = "serviceapp"  # App drop that runs continously
     CONTAINER = "container"  # Drop that contains other drops
