@@ -184,7 +184,7 @@ class AbstractDROP(EventFirer, EventHandler):
 
         # The physical graph drop type. This is determined
         # by the drop category when generating the drop spec
-        self._type = self._popArg(kwargs, "type", None)
+        self._type = self._popArg(kwargs, "categoryType", None)
 
         # The Session owning this drop, if any
         # In most real-world situations this attribute will be set, but in

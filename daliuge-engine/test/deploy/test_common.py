@@ -60,19 +60,19 @@ class CommonTestsBase(ManagerStarter):
         pg = [
             {
                 "oid": "A",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
             },
             {
                 "oid": "B",
-                "type": "app",
-                "app": "dlg.apps.simple.SleepApp",
+                "categoryType": "Application",
+                "appclass": "dlg.apps.simple.SleepApp",
                 "inputs": ["A"],
                 "outputs": ["C"],
             },
             {
                 "oid": "C",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
             },
         ]

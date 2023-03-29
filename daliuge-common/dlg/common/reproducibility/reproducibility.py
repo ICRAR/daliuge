@@ -131,9 +131,9 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
         )
         level = REPRO_DEFAULT
         drop["reprodata"]["rmode"] = str(level.value)
-    # if drop.get("type") is None:
+    # if drop.get("categoryType") is None:
     #     return {}
-    drop_type = drop["type"]
+    drop_type = drop["categoryType"]
     candidate_rmodes = []
     if level == ReproducibilityFlags.ALL:
         candidate_rmodes.extend(ALL_RMODES)
@@ -494,8 +494,8 @@ def lg_build_blockdag(logical_graph: dict, level):
             parenthash = {}
             if rmode != ReproducibilityFlags.NOTHING:
                 if rmode == ReproducibilityFlags.REPRODUCE:
-                    if "type" in dropset[did][0]:
-                        dtype = dropset[did][0]["type"].lower()
+                    if "categoryType" in dropset[did][0]:
+                        dtype = dropset[did][0]["categoryType"].lower()
                     elif "categoryType" in dropset[did][0]:
                         dtype = dropset[did][0]["categoryType"].lower()
                     if (
@@ -619,16 +619,16 @@ def build_blockdag(drops: list, abstraction: str, level: ReproducibilityFlags):
                 if rmode == ReproducibilityFlags.REPRODUCE:
                     # WARNING: Hack! may break later, proceed with caution
                     if (
-                        "type"
+                        "categoryType"
                         in dropset[did][0]["reprodata"][rmode.name]["pgt_data"]
                     ):
                         ctype = dropset[did][0]["reprodata"][rmode.name][
                             "pgt_data"
-                        ]["type"]
+                        ]["categoryType"]
                     else:
                         ctype = dropset[did][0]["reprodata"][rmode.name][
                             "lgt_data"
-                        ]["type"]
+                        ]["categoryType"]
 
                     if (
                         ctype.lower() == "data"

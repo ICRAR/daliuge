@@ -130,8 +130,8 @@ class TestRest(unittest.TestCase):
             [
                 {
                     "oid": "a",
-                    "type": "app",
-                    "app": "doesnt.exist",
+                    "categoryType": "Application",
+                    "appclass": "doesnt.exist",
                     "reprodata": default_repro.copy(),
                 },
                 default_graph_repro.copy(),
@@ -148,14 +148,14 @@ class TestRest(unittest.TestCase):
             sid,
             [
                 {
-                    "type": "socket",
+                    "categoryType": "socket",
                     "oid": "a",
                     "inputs": ["b"],
                     "reprodata": default_repro.copy(),
                 },
                 {
                     "oid": "b",
-                    "type": "data",
+                    "categoryType": "Data",
                     "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                     "reprodata": default_repro.copy(),
                 },
@@ -174,7 +174,7 @@ class TestRest(unittest.TestCase):
             sid,
             [
                 {
-                    "type": "data",
+                    "categoryType": "Data",
                     "dataclass": "dlg.data.drops.file.FileDROP",
                     "oid": "a",
                     "filepath": fname,
@@ -202,8 +202,8 @@ class TestRest(unittest.TestCase):
                 [
                     {
                         "oid": "a",
-                        "type": "app",
-                        "app": "doesnt.exist",
+                        "categoryType": "Application",
+                        "appclass": "doesnt.exist",
                         "node": hostname,
                         "reprodata": default_repro.copy(),
                     },
@@ -225,7 +225,7 @@ class TestRest(unittest.TestCase):
         c = NodeManagerClient(hostname)
         graph_spec = [
             {
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "oid": "a",
                 "reprodata": default_repro.copy(),
@@ -254,7 +254,7 @@ class TestRest(unittest.TestCase):
                 "a": {
                     "oid": "a",
                     "dataclass": "dlg.data.drops.memory.InMemoryDROP",
-                    "type": "data",
+                    "categoryType": "Data",
                 }
             },
             response["graph"],
@@ -267,7 +267,7 @@ class TestRest(unittest.TestCase):
         c = NodeManagerClient(hostname)
         graph_spec = [
             {
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "oid": "a",
                 "reprodata": default_repro.copy(),

@@ -783,10 +783,10 @@ class LGNode:
             # default generic component becomes "sleep and copy"
             if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
                 app_class = "dlg.apps.simple.SleepApp"
-                self.jd["appclass"] = app_class
+                self.jd[DropType.APP] = app_class
                 self.jd["category"] = Categories.PYTHON_APP
             else:
-                app_class = self.jd["appclass"]
+                app_class = self.jd[DropType.APP]
 
             if "execution_time" in self.jd:
                 execTime = int(self.jd["execution_time"])

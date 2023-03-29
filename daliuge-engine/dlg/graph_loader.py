@@ -180,9 +180,9 @@ def check_dropspec(n, dropSpec):
         raise InvalidGraphException(
             "Drop #%d is missing its 'oid' argument: %r" % (n, dropSpec)
         )
-    if "type" not in dropSpec:
+    if "categoryType" not in dropSpec:
         raise InvalidGraphException(
-            "Drop %s is missing its 'type' argument" % (dropSpec["oid"])
+            "Drop %s is missing its 'categoryType' argument" % (dropSpec)
         )
 
 
@@ -205,10 +205,10 @@ def loadDropSpecs(dropSpecList):
     if dropSpecList[-1].get("rmode"):
         reprodata = dropSpecList.pop()
     for n, dropSpec in enumerate(dropSpecList):
-        # "type" and 'oid' are mandatory
+        # "categoryType" and 'oid' are mandatory
         check_dropspec(n, dropSpec)
         # backwards compatibility
-        dropType = dropSpec["type"]
+        dropType = dropSpec["categoryType"]
 
         cf = __CREATION_FUNCTIONS[dropType]
         cf(dropSpec, dryRun=True)
@@ -251,9 +251,9 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
     logger.info("Creating %d drops", len(dropSpecList))
     for n, dropSpec in enumerate(dropSpecList):
         check_dropspec(n, dropSpec)
-        #        dropType = dropSpec.pop("type")
+        #        dropType = dropSpec.pop("categoryType")
         # backwards compatibility
-        dropType = dropSpec["type"]
+        dropType = dropSpec["categoryType"]
         if dropType.lower() in ["application", "app"]:
             dropType = "appclass"
         if dropType.lower() == "data":
@@ -400,8 +400,8 @@ def _createApp(dropSpec, dryRun=False, session=None):
 
     if DropType.APP in dropSpec:
         appName = dropSpec[DropType.APP]
-    elif "app" in dropSpec:
-        appName = dropSpec["app"]
+    elif "Application" in dropSpec:
+        appName = dropSpec["Application"]
     parts = appName.split(".")
 
     # Support old "dfms..." package names (pre-Oct2017)
@@ -433,7 +433,15 @@ def _getIds(dropSpec):
 def _getKwargs(dropSpec):
     kwargs = dict(dropSpec)
 
-    REMOVE = ["oid", "uid", "app", "appclass", "dataclass", "data", "Data"]
+    REMOVE = [
+        "oid",
+        "uid",
+        "Application",
+        "appclass",
+        "dataclass",
+        "data",
+        "Data",
+    ]
     for kw in REMOVE:
         if kw in kwargs:
             del kwargs[kw]
