@@ -144,8 +144,12 @@ def get_roots(pg_spec):
 
         oid = dropspec["oid"]
         all_oids.add(oid)
-
-        if dropspec["categoryType"] in (
+        ctype = (
+            dropspec["categoryType"]
+            if "categoryType" in dropspec
+            else dropspec["type"]
+        )
+        if ctype in (
             CategoryType.APPLICATION,
             CategoryType.SOCKET,
             "app",
@@ -157,7 +161,7 @@ def get_roots(pg_spec):
             if dropspec.get("outputs", None):
                 do = _sanitize_links(dropspec["outputs"])
                 nonroots |= set(do)
-        elif dropspec["categoryType"] == CategoryType.DATA:
+        elif ctype == CategoryType.DATA:
             if dropspec.get("producers", None):
                 nonroots.add(oid)
             if dropspec.get("consumers", None):
@@ -183,8 +187,13 @@ def get_leaves(pg_spec):
     for dropspec in pg_spec:
         oid = dropspec["oid"]
         all_oids.add(oid)
+        ctype = (
+            dropspec["categoryType"]
+            if "categoryType" in dropspec
+            else dropspec["type"]
+        )
 
-        if dropspec["categoryType"] in [CategoryType.APPLICATION, "app"]:
+        if ctype in [CategoryType.APPLICATION, "app"]:
             if dropspec.get("outputs", None):
                 nonleaves.add(oid)
             if dropspec.get("streamingInputs", None):
@@ -193,7 +202,7 @@ def get_leaves(pg_spec):
             if dropspec.get("inputs", None):
                 di = _sanitize_links(dropspec["inputs"])
                 nonleaves |= set(di)
-        if dropspec["categoryType"] in [CategoryType.SERVICE, "socket"]:
+        if ctype in [CategoryType.SERVICE, "socket"]:
             nonleaves.add(oid)  # services are never leaves
             if dropspec.get("streamingInputs", None):
                 dsi = _sanitize_links(dropspec["streamingInputs"])
@@ -201,7 +210,7 @@ def get_leaves(pg_spec):
             if dropspec.get("inputs", None):
                 di = _sanitize_links(dropspec["inputs"])
                 nonleaves |= set(di)
-        elif dropspec["categoryType"] in [CategoryType.DATA, "data"]:
+        elif ctype in [CategoryType.DATA, "data"]:
             if dropspec.get("producers", None):
                 dp = _sanitize_links(dropspec["producers"])
                 nonleaves |= set(dp)

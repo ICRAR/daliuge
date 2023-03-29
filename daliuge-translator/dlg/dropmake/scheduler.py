@@ -1281,7 +1281,7 @@ class DAGUtil(object):
         for i, drop in enumerate(drop_list):
             oid = drop["oid"]
             myk = i + 1
-            tt = drop["type"]
+            tt = drop["categoryType"]
             if tt in [CategoryType.DATA, "data"]:
                 # if (drop['nm'] == 'StreamNull'):
                 #     obk = 'streamingConsumers'
@@ -1346,7 +1346,7 @@ class DAGUtil(object):
             super_root = dropdict(
                 {
                     "oid": "-92",
-                    "type": CategoryType.DATA,
+                    "categoryType": CategoryType.DATA,
                     "dataclass": "dlg.data.drops.data_base.NullDROP",
                 }
             )

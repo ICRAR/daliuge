@@ -144,7 +144,7 @@ class AccumulateLGTRerunData(unittest.TestCase):
     rmode = ReproducibilityFlags.RERUN
     expected = {
         "category",
-        # "type",
+        "categoryType",
     }
     ddGraph = "graphs/ddTest.graph"
 
@@ -303,7 +303,7 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
         """
         The the application type matters for rerunning
         """
-        expected = {"type", "dt"}
+        expected = {"categoryType", "dt"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -313,7 +313,7 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
         """
         Only the storage type matters for rerunning
         """
-        expected = {"type", "storage"}
+        expected = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -323,8 +323,8 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
         """
         Only the drop type and input app type matters for rerunning
         """
-        expected_app = {"type", "dt"}
-        expected_file = {"type", "storage"}
+        expected_app = {"categoryType", "dt"}
+        expected_file = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -375,7 +375,7 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
         """
         Only application type matters for rerunning.
         """
-        expected = {"type", "dt"}
+        expected = {"categoryType", "dt"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -385,7 +385,7 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
         """
         Only storage type matters for rerunning.
         """
-        expected = {"type", "storage"}
+        expected = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -395,8 +395,8 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
         """
         Only drop type matters for rerunning.
         """
-        expected_app = {"type", "dt"}
-        expected_file = {"type", "storage"}
+        expected_app = {"categoryType", "dt"}
+        expected_file = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -468,8 +468,8 @@ class AccumulatePGRerunData(unittest.TestCase):
         """
         Nothing matters for rerunning.
         """
-        expected_app = {"type", "dt"}
-        expected_file = {"type", "storage"}
+        expected_app = {"categoryType", "dt"}
+        expected_file = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -502,7 +502,7 @@ class AccumulateLGTRepeatData(unittest.TestCase):
     rmode = ReproducibilityFlags.REPEAT
     expected = {
         "category",
-        # "type",
+        "categoryType",
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
@@ -737,7 +737,7 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {"type", "dt"}
+        expected = {"categoryType", "dt"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -747,7 +747,7 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {"type", "storage"}
+        expected = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -757,8 +757,8 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
         """
         Only type matters
         """
-        expected_app = {"type", "dt"}
-        expected_file = {"type", "storage"}
+        expected_app = {"categoryType", "dt"}
+        expected_file = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -810,7 +810,7 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
         """
         Only type matters when repeating.
         """
-        expected = {"type", "dt"}
+        expected = {"categoryType", "dt"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -820,7 +820,7 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
         """
         Only type matters when repeating.
         """
-        expected = {"type", "storage"}
+        expected = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -830,8 +830,8 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
         """
         Only type matters when repeating.
         """
-        expected_app = {"type", "dt"}
-        expected_file = {"type", "storage"}
+        expected_app = {"categoryType", "dt"}
+        expected_file = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -903,8 +903,8 @@ class AccumulatePGRepeatData(unittest.TestCase):
         """
         Nothing matters for repeating.
         """
-        expected_app = {"type", "dt"}
-        expected_file = {"type", "storage"}
+        expected_app = {"categoryType", "dt"}
+        expected_file = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -937,7 +937,7 @@ class AccumulateLGTRecomputeData(unittest.TestCase):
     rmode = ReproducibilityFlags.RECOMPUTE
     expected = {
         "category",
-        # "type",
+        "categoryType",
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
@@ -1177,7 +1177,7 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
         """
         Type and rank matters.
         """
-        expected = {"type", "dt", "rank"}
+        expected = {"categoryType", "dt", "rank"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1187,7 +1187,7 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
         """
         Type and rank matters.
         """
-        expected = {"type", "storage", "rank"}
+        expected = {"categoryType", "storage", "rank"}
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1197,8 +1197,8 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
         """
         Type and rank matters.
         """
-        expected_app = {"type", "dt", "rank"}
-        expected_file = {"type", "storage", "rank"}
+        expected_app = {"categoryType", "dt", "rank"}
+        expected_file = {"categoryType", "storage", "rank"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1250,7 +1250,7 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         """
         Type, rank and machine information matters
         """
-        expected = ["type", "dt", "rank", "node", "island"]
+        expected = ["categoryType", "dt", "rank", "node", "island"]
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -1263,7 +1263,7 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         """
         Type, rank and machine information matters
         """
-        expected = ["type", "storage", "rank", "node", "island"]
+        expected = ["categoryType", "storage", "rank", "node", "island"]
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -1276,8 +1276,8 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         """
         Type, rank and machine information matters
         """
-        expected_app = {"type", "dt", "rank"}
-        expected_file = {"type", "storage", "rank"}
+        expected_app = {"categoryType", "dt", "rank"}
+        expected_file = {"categoryType", "storage", "rank"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1349,8 +1349,8 @@ class AccumulatePGRecomputeData(unittest.TestCase):
         """
         Machine information matters when recomputing
         """
-        expected_app = {"type", "dt", "rank"}
-        expected_file = {"type", "storage", "rank"}
+        expected_app = {"categoryType", "dt", "rank"}
+        expected_file = {"categoryType", "storage", "rank"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1381,7 +1381,7 @@ class AccumulateLGTReproduceData(unittest.TestCase):
     """
 
     rmode = ReproducibilityFlags.REPRODUCE
-    expected = {"category"}
+    expected = {"category", "categoryType"}
 
     file = "reproducibility/reproGraphs/apps.graph"
     with pkg_resources.resource_stream(
@@ -1593,7 +1593,7 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {"type"}
+        expected = {"categoryType"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1603,7 +1603,7 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {"type", "storage"}
+        expected = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1613,8 +1613,8 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
         """
         Only type matters
         """
-        expected_app = {"type", "dt"}
-        expected_file = {"type", "storage"}
+        expected_app = {"categoryType", "dt"}
+        expected_file = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1666,7 +1666,7 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = ["type"]
+        expected = ["categoryType"]
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -1676,7 +1676,7 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = ["type", "storage"]
+        expected = ["categoryType", "storage"]
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -1686,8 +1686,8 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
         """
         Only type matters
         """
-        expected_app = {"type", "dt"}
-        expected_file = {"type", "storage"}
+        expected_app = {"categoryType", "dt"}
+        expected_file = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1759,8 +1759,8 @@ class AccumulatePGReproduceData(unittest.TestCase):
         """
         Group information does not matter when reproducing
         """
-        expected_app = {"type", "dt"}
-        expected_file = {"type", "storage"}
+        expected_app = {"categoryType", "dt"}
+        expected_file = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1793,7 +1793,7 @@ class AccumulateLGTReplicateSciData(unittest.TestCase):
     rmode = ReproducibilityFlags.REPLICATE_SCI
     expected = {
         "category",
-        # "type",
+        "categoryType",
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
@@ -1950,7 +1950,7 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {"type", "dt"}
+        expected = {"categoryType", "dt"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1960,7 +1960,7 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {"type", "storage"}
+        expected = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1970,8 +1970,8 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
         """
         Only type matters
         """
-        expected_app = {"type", "dt"}
-        expected_file = {"type", "storage"}
+        expected_app = {"categoryType", "dt"}
+        expected_file = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -2023,7 +2023,7 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {"type", "dt"}
+        expected = {"categoryType", "dt"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -2033,7 +2033,7 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {"type", "storage"}
+        expected = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -2043,8 +2043,8 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
         """
         Only type matters
         """
-        expected_app = {"type", "dt"}
-        expected_file = {"type", "storage"}
+        expected_app = {"categoryType", "dt"}
+        expected_file = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -2116,8 +2116,8 @@ class AccumulatePGReplicateSciData(unittest.TestCase):
         """
         Nothing matters.
         """
-        expected_app = {"type", "dt"}
-        expected_file = {"type", "storage"}
+        expected_app = {"categoryType", "dt"}
+        expected_file = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -2150,7 +2150,7 @@ class AccumulateLGTReplicateCompData(unittest.TestCase):
     rmode = ReproducibilityFlags.REPLICATE_COMP
     expected = {
         "category",
-        # "type",
+        "categoryType",
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
@@ -2390,7 +2390,7 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
         """
         Type and rank matter
         """
-        expected = {"type", "dt", "rank"}
+        expected = {"categoryType", "dt", "rank"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -2400,7 +2400,7 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
         """
         Type and rank matter
         """
-        expected = {"type", "storage", "rank"}
+        expected = {"categoryType", "storage", "rank"}
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -2410,8 +2410,8 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
         """
         Type and rank matter
         """
-        expected_app = {"type", "dt", "rank"}
-        expected_file = {"type", "storage", "rank"}
+        expected_app = {"categoryType", "dt", "rank"}
+        expected_file = {"categoryType", "storage", "rank"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -2462,7 +2462,7 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
         """
         Type, rank and machine information matters.
         """
-        expected = {"type", "dt", "rank", "node", "island"}
+        expected = {"categoryType", "dt", "rank", "node", "island"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -2472,7 +2472,7 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
         """
         Type, rank and machine information matters.
         """
-        expected = {"type", "storage", "rank", "node", "island"}
+        expected = {"categoryType", "storage", "rank", "node", "island"}
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -2482,8 +2482,8 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
         """
         Type, rank and machine information matters.
         """
-        expected_app = {"type", "dt", "rank"}
-        expected_file = {"type", "storage", "rank"}
+        expected_app = {"categoryType", "dt", "rank"}
+        expected_file = {"categoryType", "storage", "rank"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -2555,8 +2555,8 @@ class AccumulatePGReplicateCompData(unittest.TestCase):
         """
         Machine information matters.
         """
-        expected_app = {"type", "dt", "rank"}
-        expected_file = {"type", "storage", "rank"}
+        expected_app = {"categoryType", "dt", "rank"}
+        expected_file = {"categoryType", "storage", "rank"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -2589,7 +2589,7 @@ class AccumulateLGTReplicateTotalData(unittest.TestCase):
     rmode = ReproducibilityFlags.REPLICATE_TOTAL
     expected = {
         "category",
-        # "type",
+        "categoryType",
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
@@ -2824,7 +2824,7 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
         """
         Type matters
         """
-        expected = {"type", "dt"}
+        expected = {"categoryType", "dt"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -2834,7 +2834,7 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
         """
         Type matters
         """
-        expected = {"type", "storage"}
+        expected = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -2844,8 +2844,8 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
         """
         Type matters
         """
-        expected_app = {"type", "dt"}
-        expected_file = {"type", "storage"}
+        expected_app = {"categoryType", "dt"}
+        expected_file = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -2897,7 +2897,7 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {"type", "dt"}
+        expected = {"categoryType", "dt"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -2907,7 +2907,7 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {"type", "storage"}
+        expected = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["files"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -2917,8 +2917,8 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
         """
         Only type matters
         """
-        expected_app = {"type", "dt"}
-        expected_file = {"type", "storage"}
+        expected_app = {"categoryType", "dt"}
+        expected_file = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -2990,8 +2990,8 @@ class AccumulatePGReplicateTotalData(unittest.TestCase):
         """
         Nothing matters
         """
-        expected_app = {"type", "dt"}
-        expected_file = {"type", "storage"}
+        expected_app = {"categoryType", "dt"}
+        expected_file = {"categoryType", "storage"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])

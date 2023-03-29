@@ -109,9 +109,9 @@ CONSTRUCT_TYPES = [
 
 
 class ConstructTypes:
-    Categories.SCATTER,
-    Categories.GATHER,
-    Categories.GROUP_BY,
-    Categories.LOOP,
-    Categories.MKN,
-    Categories.SERVICE,
+    SCATTER = Categories.SCATTER
+    GATHER = Categories.GATHER
+    GROUP_BY = Categories.GROUP_BY
+    LOOP = Categories.LOOP
+    MKN = Categories.MKN
+    SERVICE = Categories.SERVICE

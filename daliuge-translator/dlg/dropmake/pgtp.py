@@ -124,7 +124,7 @@ class MetisPGTP(PGT):
         for i, drop in enumerate(droplist):
             oid = drop["oid"]
             myk = i + 1
-            tt = drop["type"]
+            tt = drop["categoryType"]
             if tt in [CategoryType.DATA, "data"]:
                 dst = "consumers"  # outbound keyword
                 ust = "producers"
