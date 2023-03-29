@@ -109,9 +109,9 @@ def compute(value, **kwargs):
     transmitter_oid = "-1"
     transmitter = dropdict(
         {
-            "type": "Application",
+            "categoryType": "Application",
             #            "categoryType": CategoryType.APPLICATION,
-            "app": "dlg.dask_emulation.ResultTransmitter",
+            "Application": "dlg.dask_emulation.ResultTransmitter",
             "appclass": "dlg.dask_emulation.ResultTransmitter",
             "oid": transmitter_oid,
             "port": port,
@@ -284,7 +284,7 @@ class _DelayedDrops(_DelayedDrop):
     def make_dropdict(self):
         return dropdict(
             {
-                "type": "Application",
+                "categoryType": "Application",
                 "appclass": "dlg.dask_emulation._Listifier",
                 "nm": "listifier",
                 "text": "listifier",
@@ -314,7 +314,7 @@ class _AppDrop(_DelayedDrop):
         self.kwarg_names.reverse()
         my_dropdict = dropdict(
             {
-                "type": "Application",
+                "categoryType": "Application",
                 "appclass": "dlg.apps.pyfunc.PyFuncApp",
                 "func_arg_mapping": {},
             }
@@ -396,7 +396,7 @@ class _DataDrop(_DelayedDrop):
     def make_dropdict(self):
         my_dropdict = dropdict(
             {
-                "type": "Data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
             }
         )

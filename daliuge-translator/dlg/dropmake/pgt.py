@@ -397,7 +397,7 @@ class PGT(object):
                                 {
                                     "oid": extra_oid,
                                     "type": CategoryType.APPLICATION,
-                                    "app": "dlg.drop.BarrierAppDROP",
+                                    "appclass": "dlg.drop.BarrierAppDROP",
                                     "nm": "go_app",
                                     "text": "go_app",
                                     "tw": 1,

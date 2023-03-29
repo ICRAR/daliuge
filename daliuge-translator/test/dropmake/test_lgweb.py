@@ -459,8 +459,8 @@ class TestLGWeb(unittest.TestCase):
         form_data = {"lg_content": json_data, "default_app": "test.app"}
         pgt = self._test_post_request(c, test_url, form_data, False)
         for dropspec in pgt:
-            if "app" in dropspec:
-                self.assertEqual(dropspec["app"], "test.app")
+            if "appclass" in dropspec:
+                self.assertEqual(dropspec["appclass"], "test.app")
 
     def test_pgt_partition(self):
         c = RestClient("localhost", lgweb_port, timeout=10)

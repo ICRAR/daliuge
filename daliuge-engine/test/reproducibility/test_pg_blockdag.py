@@ -47,7 +47,7 @@ def _generate_dummy_compute(rmode: ReproducibilityFlags):
                 "rmode": str(rmode.value),
                 rmode.name: {
                     "lgt_data": {
-                        "type": "Application",
+                        "categoryType": "Application",
                         "category": "BashShellApp",
                     },
                     "lg_blockhash": "1",
@@ -68,7 +68,7 @@ def _generate_dummy_compute(rmode: ReproducibilityFlags):
         for level in ALL_RMODES:
             out_val["reprodata"][level.name] = {
                 "lgt_data": {
-                    "type": "Application",
+                    "categoryType": "Application",
                     "category": "BashShellApp",
                 },
                 "lg_blockhash": "1",
@@ -92,7 +92,7 @@ def _generate_dummy_data(rmode: ReproducibilityFlags):
                 "rmode": str(rmode.value),
                 rmode.name: {
                     "lgt_data": {
-                        "type": "Data",
+                        "categoryType": "Data",
                         "category": "File",
                     },
                     "lg_blockhash": "a",
@@ -113,7 +113,7 @@ def _generate_dummy_data(rmode: ReproducibilityFlags):
         for level in ALL_RMODES:
             out_val["reprodata"][level.name] = {
                 "lgt_data": {
-                    "type": "Data",
+                    "categoryType": "Data",
                     "category": "File",
                 },
                 "lg_blockhash": "a",

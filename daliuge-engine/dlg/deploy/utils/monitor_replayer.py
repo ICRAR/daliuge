@@ -210,9 +210,9 @@ class GraphPlayer(object):
                         pass
 
     def get_downstream_drop_ids(self, dropspec):
-        if dropspec["type"] in ["Application", "app"]:
+        if dropspec["categoryType"] in ["Application", "appclass"]:
             ds_kw = "outputs"  # down stream key word
-        elif dropspec["type"] in ["Data", "data"]:
+        elif dropspec["categoryType"] in ["Data", "data"]:
             ds_kw = "consumers"
         else:
             ds_kw = "None"
@@ -392,11 +392,11 @@ class GraphPlayer(object):
             gid = oid_gnid_dict[dropspec["oid"]]
             ip = dropspec["node"]
             subgraph_dict[ip].append(gid)
-            if dropspec["type"] in ["Application", "app"]:
+            if dropspec["categoryType"] in ["Application", "app"]:
                 G.add_node(
                     gid, shape="rect", label=""
                 )  # , fixedsize=True, hight=.05, width=.05)
-            elif dropspec["type"] in ["Data", "data"]:  # parallelogram
+            elif dropspec["categoryType"] in ["Data", "data"]:  # parallelogram
                 G.add_node(
                     gid, shape="circle", label=""
                 )  # , fixedsize=True, hight=.05, width=.05)
@@ -404,9 +404,9 @@ class GraphPlayer(object):
 
         for dropspec in self.pg_spec.itervalues():
             gid = oid_gnid_dict[dropspec["oid"]]
-            if dropspec["type"] in ["Application", "app"]:
+            if dropspec["categoryType"] in ["Application", "app"]:
                 ds_kw = "outputs"  # down stream key word
-            elif dropspec["type"] in ["Data", "data"]:
+            elif dropspec["categoryType"] in ["Data", "data"]:
                 ds_kw = "consumers"
             else:
                 ds_kw = "None"

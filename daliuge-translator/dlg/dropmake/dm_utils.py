@@ -29,6 +29,7 @@ import json
 import logging
 import os
 import os.path as osp
+from .definition_classes import ConstructTypes
 
 logger = logging.getLogger(__name__)
 
@@ -38,16 +39,6 @@ LG_VER_EAGLE = 3
 LG_APPREF = "AppRef"
 
 TEMP_FILE_FOLDER = "/tmp"
-
-
-class Categories:
-    MKN = "MKN"
-    SCATTER = "Scatter"
-    GATHER = "Gather"
-    GROUP_BY = "GroupBy"
-    LOOP = "Loop"
-    VARIABLES = "Variables"
-    SERVICE = "Service"
 
 
 def get_lg_ver_type(lgo):
@@ -187,7 +178,7 @@ def convert_mkn(lgo):
     app_keywords = ["inputApplicationName", "outputApplicationName"]
 
     for node in lgo["nodeDataArray"]:
-        if Categories.MKN != node["category"]:
+        if ConstructTypes.MKN != node["category"]:
             continue
         for ak in app_keywords:
             if ak not in node:
@@ -219,8 +210,8 @@ def convert_mkn(lgo):
         node_split_n = copy.deepcopy(node_mk)
 
         node_mk["application"] = node["inputApplicationName"]
-        node_mk["category"] = Categories.GATHER
-        node_mk["type"] = Categories.GATHER
+        node_mk["category"] = ConstructTypes.GATHER
+        node_mk["type"] = ConstructTypes.GATHER
         ipan = node_mk.get("inputApplicationName", "")
         if len(ipan) == 0:
             node_mk["text"] = node_mk["text"] + "_InApp"
@@ -236,8 +227,8 @@ def convert_mkn(lgo):
         }
         node_mk["fields"].append(new_field)
 
-        node_kn["category"] = Categories.SCATTER
-        node_kn["type"] = Categories.SCATTER
+        node_kn["category"] = ConstructTypes.SCATTER
+        node_kn["type"] = ConstructTypes.SCATTER
 
         opan = node_kn.get("outputAppName", "")
         if len(opan) == 0:
@@ -275,8 +266,8 @@ def convert_mkn(lgo):
         for mok in mkn_output_keys:
             old_new_k2n_from_map[mok] = k_new
 
-        node_split_n["category"] = Categories.SCATTER
-        node_split_n["type"] = Categories.SCATTER
+        node_split_n["category"] = ConstructTypes.SCATTER
+        node_split_n["type"] = ConstructTypes.SCATTER
         node_split_n["text"] = "Nothing"
         k_new = min(keyset) - 1
         keyset.add(k_new)
@@ -350,7 +341,7 @@ def convert_mkn_all_share_m(lgo):
     app_keywords = ["inputApplicationName", "outputApplicationName"]
 
     for node in lgo["nodeDataArray"]:
-        if Categories.MKN != node["category"]:
+        if ConstructTypes.MKN != node["category"]:
             continue
         for ak in app_keywords:
             if ak not in node:
@@ -373,7 +364,7 @@ def convert_mkn_all_share_m(lgo):
         node_kn = copy.deepcopy(node_mk)
 
         node_mk["application"] = node["inputApplicationName"]
-        node_mk["category"] = Categories.GATHER
+        node_mk["category"] = ConstructTypes.GATHER
         node_mk["text"] = node_mk["text"] + "_InApp"
         del node["inputApplicationName"]
         del node["outputApplicationName"]
@@ -385,7 +376,7 @@ def convert_mkn_all_share_m(lgo):
         }
         node_mk["fields"].append(new_field)
 
-        node_kn["category"] = Categories.GATHER
+        node_kn["category"] = ConstructTypes.GATHER
         node_kn["text"] = node_kn["text"] + "_OutApp"
         k_new = min(keyset) - 1
         keyset.add(k_new)
@@ -430,7 +421,10 @@ def getAppRefInputs(lgo):
     Used to recover the Gather node inputs for AppRef format graphs.
     """
     for node in lgo["nodeDataArray"]:
-        if node["category"] not in [Categories.SCATTER, Categories.GATHER]:
+        if node["category"] not in [
+            ConstructTypes.SCATTER,
+            ConstructTypes.GATHER,
+        ]:
             continue
         has_app = None
 
@@ -460,9 +454,9 @@ def convert_construct(lgo):
     app_keywords = ["inputApplicationType", "outputApplicationType"]
     for node in lgo["nodeDataArray"]:
         if node["category"] not in [
-            Categories.SCATTER,
-            Categories.GATHER,
-            Categories.SERVICE,
+            ConstructTypes.SCATTER,
+            ConstructTypes.GATHER,
+            ConstructTypes.SERVICE,
         ]:
             continue
         has_app = None
@@ -505,10 +499,10 @@ def convert_construct(lgo):
             for afd in node[INPUT_APP_FIELDS]:
                 app_node[afd["name"]] = afd["value"]
 
-        if node["category"] == Categories.GATHER:
+        if node["category"] == ConstructTypes.GATHER:
             app_node["group_start"] = 1
 
-        if node["category"] == Categories.SERVICE:
+        if node["category"] == ConstructTypes.SERVICE:
             app_node["isService"] = True
 
         new_nodes.append(app_node)
@@ -519,7 +513,7 @@ def convert_construct(lgo):
         keyset.add(k_new)
         old_new_grpk_map[app_node["key"]] = k_new
 
-        if Categories.GATHER == node["category"]:
+        if ConstructTypes.GATHER == node["category"]:
             old_new_gather_map[app_node["key"]] = k_new
             app_node["group"] = k_new
             app_node["group_start"] = 1
@@ -664,8 +658,8 @@ def convert_eagle_to_daliuge_json(lg_name):
                 group_category = group_node.get("category", "")
 
                 if (
-                    group_category == Categories.GATHER
-                    or group_category == Categories.GROUP_BY
+                    group_category == ConstructTypes.GATHER
+                    or group_category == ConstructTypes.GROUP_BY
                 ):
                     # Check if the node is first in that group.
                     fields = node["fields"]

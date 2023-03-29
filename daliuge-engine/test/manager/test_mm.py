@@ -84,7 +84,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "island": hostname,
                 "node": hostname,
@@ -92,8 +92,8 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
             },
             {
                 "oid": "B",
-                "type": "app",
-                "app": "dlg.apps.simple.SleepAndCopyApp",
+                "categoryType": "Application",
+                "appclass": "dlg.apps.simple.SleepAndCopyApp",
                 "sleepTime": sleepTime,
                 "outputs": ["C"],
                 "node": hostname,
@@ -101,7 +101,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
             },
             {
                 "oid": "C",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "island": hostname,
                 "node": hostname,
@@ -124,7 +124,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
             }
         ]
@@ -136,7 +136,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": "unknown_host",
             }
@@ -149,7 +149,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
             }
@@ -162,7 +162,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
                 "island": "unknown_host",
@@ -176,7 +176,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
                 "island": hostname,
@@ -194,7 +194,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         self.assertEqual(1, len(graphFromMM))
         dropSpec = list(graphFromMM.values())[0]
         self.assertEqual("A", dropSpec["oid"])
-        self.assertEqual("data", dropSpec["type"])
+        self.assertEqual("Data", dropSpec["categoryType"])
         self.assertEqual(
             "dlg.data.drops.memory.InMemoryDROP", dropSpec["dataclass"]
         )

@@ -51,7 +51,7 @@ def fileDropSpec(uid, **kwargs):
     dropSpec = dropdict(
         {
             "oid": str(uid),
-            "type": "data",
+            "categoryType": "Data",
             "dataclass": dlg.data.drops.file.FileDROP",
             "node": "localhost",
             "island": "localhost",
@@ -65,7 +65,7 @@ def directorySpec(uid, **kwargs):
     dropSpec = dropdict(
         {
             "oid": str(uid),
-            "type": "container",
+            "categoryType": "container",
             "container": "dlg.drop.DirectoryContainer",
             "node": "localhost",
             "island": "localhost",
@@ -84,8 +84,8 @@ def casapyDockerAppSpec(uid, script):
     return dropdict(
         {
             "oid": str(uid),
-            "type": "app",
-            "app": "dlg.apps.dockerapp.DockerApp",
+            "categoryType": "Application",
+            "appclass": "dlg.apps.dockerapp.DockerApp",
             "image": "dfms/casapy_centos7_dfms:0.1",
             "command": cmd,
             "user": "dfms",

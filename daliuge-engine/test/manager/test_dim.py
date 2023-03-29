@@ -82,22 +82,22 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
                 "consumers": ["B"],
             },
             {
                 "oid": "B",
-                "type": "app",
-                "app": "dlg.apps.simple.SleepAndCopyApp",
+                "categoryType": "Application",
+                "appclass": "dlg.apps.simple.SleepAndCopyApp",
                 "sleepTime": sleepTime,
                 "outputs": ["C"],
                 "node": hostname,
             },
             {
                 "oid": "C",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
             },
@@ -121,7 +121,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
             }
         ]
@@ -133,7 +133,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": "unknown_host",
             }
@@ -147,7 +147,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
             }
@@ -161,7 +161,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         self.assertEqual(1, len(graphFromDM))
         dropSpec = list(graphFromDM.values())[0]
         self.assertEqual("A", dropSpec["oid"])
-        self.assertEqual("data", dropSpec["type"])
+        self.assertEqual("Data", dropSpec["categoryType"])
         self.assertEqual(
             "dlg.data.drops.memory.InMemoryDROP", dropSpec["dataclass"]
         )
@@ -288,22 +288,22 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
                 "consumers": ["B"],
             },
             {
                 "oid": "B",
-                "type": "app",
-                "app": "dlg.apps.simple.SleepAndCopyApp",
+                "categoryType": "Application",
+                "appclass": "dlg.apps.simple.SleepAndCopyApp",
                 "sleepTime": 1,
                 "outputs": ["C"],
                 "node": hostname,
             },
             {
                 "oid": "C",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
             },
@@ -322,22 +322,22 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
                 "consumers": ["B"],
             },
             {
                 "oid": "B",
-                "type": "app",
-                "app": "dlg.apps.simple.SleepAndCopyApp",
+                "categoryType": "Application",
+                "appclass": "dlg.apps.simple.SleepAndCopyApp",
                 "sleepTime": 1,
                 "outputs": ["C"],
                 "node": hostname,
             },
             {
                 "oid": "C",
-                "type": "data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
             },

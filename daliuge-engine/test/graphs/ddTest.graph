@@ -1,8 +1,8 @@
 [
     {
         "oid": "2022-02-11T08:05:47_-1_0",
-        "type": "app",
-        "app": "dlg.apps.bash_shell_app.BashShellApp",
+        "categoryType": "Application",
+        "appclass": "dlg.apps.bash_shell_app.BashShellApp",
         "rank": [
             0
         ],
@@ -78,7 +78,7 @@
     },
     {
         "oid": "2022-02-11T08:05:47_-3_0",
-        "type": "data",
+        "categoryType": "Data",
         "dataclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0
@@ -103,7 +103,7 @@
     },
     {
         "oid": "2022-02-11T08:05:47_-5_0",
-        "type": "data",
+        "categoryType": "Data",
         "dataclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0

@@ -43,7 +43,7 @@ class TestGraphLoader(unittest.TestCase):
         dropSpecList = [
             {
                 "oid": "A",
-                "type": "Data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
             }
         ]
@@ -56,7 +56,7 @@ class TestGraphLoader(unittest.TestCase):
         dropSpecList = [
             {
                 "oid": "A",
-                "type": "Data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.SharedMemoryDROP",
             }
         ]
@@ -69,10 +69,10 @@ class TestGraphLoader(unittest.TestCase):
         dropSpecList = [
             {
                 "oid": "A",
-                "type": "Data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
             },
-            {"oid": "B", "type": "container", "children": ["A"]},
+            {"oid": "B", "categoryType": "container", "children": ["A"]},
         ]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, InMemoryDROP)
@@ -88,13 +88,13 @@ class TestGraphLoader(unittest.TestCase):
         dropSpecList = [
             {
                 "oid": "A",
-                "type": "Data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.file.FileDROP",
                 "dirname": ".",
             },
             {
                 "oid": "B",
-                "type": "Container",
+                "categoryType": "Container",
                 "container": "dlg.data.drops.DirectoryContainer",
                 "children": ["A"],
                 "dirname": ".",
@@ -108,14 +108,14 @@ class TestGraphLoader(unittest.TestCase):
         dropSpecList = [
             {
                 "oid": "A",
-                "type": "Data",
+                "categoryType": "Data",
                 "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "consumers": ["B"],
             },
             {
                 "oid": "B",
-                "type": "Application",
-                "app": "test.test_graph_loader.DummyApp",
+                "categoryType": "Application",
+                "appclass": "test.test_graph_loader.DummyApp",
             },
         ]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
@@ -233,7 +233,7 @@ class TestGraphLoader(unittest.TestCase):
             with self.subTest(key=key, value=value):
                 dropSpec = {
                     "oid": "A",
-                    "type": "Data",
+                    "categoryType": "Data",
                     "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 }
                 if key is not None:
