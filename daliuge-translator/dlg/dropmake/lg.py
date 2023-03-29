@@ -141,7 +141,6 @@ class LGNode:
             grp_id = jd["group"]
             if grp_id in done_dict:
                 grp_nd = done_dict[grp_id]
-                logger.debug(">>>>> Setting group membership to %s", grp_nd)
                 self.group = grp_nd
                 grp_nd.add_child(self)
             else:
@@ -331,7 +330,6 @@ class LGNode:
                 cg = cg.group
                 if len(glist) > 100:
                     # likely something went wrong
-                    logger.debug(">>>>> Problem with hierarchy?: %s", self.jd)
                     raise ValueError
             glist.append("0")
             self._g_h = "/".join(reversed(glist))
@@ -731,38 +729,23 @@ class LGNode:
         drop_type = self.jd["category"]
         drop_class = "Unknown"
         if "category" in self.jd:
-            # logger.debug(">>>> category: %s", self.jd["category"])
             drop_class = self.jd["category"]
         if "categoryType" in self.jd:
-            # logger.debug(">>>> categoryType: %s", self.jd["categoryType"])
             drop_class = self.jd["categoryType"]
 
         # backwards compatibility
-        if "type" in self.jd:
+        if not "categoryType" in self.jd and "type" in self.jd:
             drop_type = self.jd["type"]
             if drop_type in DATA_TYPES:
                 drop_class = "Data"
             elif drop_type in APP_TYPES:
                 drop_class = "Application"
             else:
-                logger.debug(">>>>> Unknown drop: %s", self.jd)
                 drop_class = "Unknown"
 
         self.nodeclass = drop_class
         self.nodetype = drop_type
 
-        # logger.debug(">>>>> nodetype: %s", self.nodetype)
-        # logger.debug(">>>>> nodeclass: %s", self.nodeclass)
-        # logger.debug(
-        #     ">>>>>> cmptypes: %s, %s",
-        #     [
-        #         Categories.COMPONENT,
-        #         Categories.PYTHON_APP,
-        #         Categories.BRANCH,
-        #         Categories.PLASMA,
-        #     ],
-        #     self.is_data(),
-        # )
         if self.is_data():
             if "data_volume" in self.jd:
                 kwargs["dw"] = int(self.jd["data_volume"])  # dw -- data weight
@@ -869,7 +852,6 @@ class LGNode:
             if "mkn" in self.jd:
                 kwargs["mkn"] = self.jd["mkn"]
             self._update_key_value_attributes(kwargs)
-            # logger.debug(">>>>>>> kwargs: %s", kwargs)
             drop_spec.update(kwargs)
 
         elif drop_type in [Categories.DYNLIB_APP, Categories.DYNLIB_PROC_APP]:
@@ -1612,11 +1594,11 @@ class LG:
         for lgn in self._start_list:
             self.lgn_to_pgn(lgn)
 
-        logger.info(
-            "Unroll progress - lgn_to_pgn done %d for session %s",
-            len(self._start_list),
-            self._session_id,
-        )
+        # logger.info(
+        #     "Unroll progress - lgn_to_pgn done %d for session %s",
+        #     len(self._start_list),
+        #     self._session_id,
+        # )
         self_loop_aware_set = self._loop_aware_set
         for lk in self._lg_links:
             sid = lk["from"]  # source
@@ -1733,14 +1715,6 @@ class LG:
                             self._link_drops(slgn, tlgn, sdrop, tdrop, lk)
                 else:
                     lpaw = ("%s-%s" % (sid, tid)) in self_loop_aware_set
-                    logger.debug(
-                        ">>>> h_level: %s, %s, %s, %s, %s",
-                        slgn.h_level,
-                        tlgn.h_level,
-                        sid,
-                        tid,
-                        chunk_size,
-                    )
                     if (
                         slgn.group is not None
                         and slgn.group.is_loop()
@@ -1775,17 +1749,11 @@ class LG:
                                     )
 
                     elif slgn.h_level >= tlgn.h_level:
-                        logger.debug(
-                            ">>>>> sdrops: %s, tdrops: %s",
-                            len(sdrops),
-                            len(tdrops),
-                        )
                         for i, chunk in enumerate(
                             self._split_list(sdrops, chunk_size)
                         ):
                             # distribute slgn evenly to tlgn
                             for sdrop in chunk:
-                                logger.debug(">>>> i: %s", i)
                                 self._link_drops(
                                     slgn, tlgn, sdrop, tdrops[i], lk
                                 )
@@ -1929,7 +1897,6 @@ class LG:
             ret += drop_list
 
         for drop in ret:
-            # logger.debug(">>>>> drop: %s", drop)
             if (
                 drop["type"] in [CategoryType.APPLICATION, "app"]
                 and "appclass" in drop

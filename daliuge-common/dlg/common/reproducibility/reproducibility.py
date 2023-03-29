@@ -618,9 +618,18 @@ def build_blockdag(drops: list, abstraction: str, level: ReproducibilityFlags):
             if rmode != ReproducibilityFlags.NOTHING:
                 if rmode == ReproducibilityFlags.REPRODUCE:
                     # WARNING: Hack! may break later, proceed with caution
-                    ctype = dropset[did][0]["reprodata"][rmode.name][
-                        "lgt_data"
-                    ]["type"]
+                    if (
+                        "type"
+                        in dropset[did][0]["reprodata"][rmode.name]["pgt_data"]
+                    ):
+                        ctype = dropset[did][0]["reprodata"][rmode.name][
+                            "pgt_data"
+                        ]["type"]
+                    else:
+                        ctype = dropset[did][0]["reprodata"][rmode.name][
+                            "lgt_data"
+                        ]["type"]
+
                     if (
                         ctype.lower() == "data"
                         and (dropset[did][1] == 0 or dropset[did][2] == 0)

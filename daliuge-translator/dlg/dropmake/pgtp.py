@@ -121,7 +121,6 @@ class MetisPGTP(PGT):
                 resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0**2,
             )
 
-        # logger.debug(">>>> PGPT droplist: %s", droplist)
         for i, drop in enumerate(droplist):
             oid = drop["oid"]
             myk = i + 1
@@ -146,8 +145,6 @@ class MetisPGTP(PGT):
             for inp in adj_drops:
                 key = list(inp.keys())[0] if isinstance(inp, dict) else inp
                 if tt in [CategoryType.DATA, "data"]:
-                    if "dw" not in drop:
-                        logger.debug(">>>>> %s", drop)
                     lw = drop["dw"]
                 elif tt in [CategoryType.APPLICATION, "app"]:
                     # lw = drop_dict[inp].get('dw', 1)
