@@ -557,50 +557,54 @@ def convert_construct(lgo):
                 node["group"] = old_new_grpk_map[k_old]
 
         # step 4
-        for link in lgo["linkDataArray"]:
-            if link["to"] in old_new_gather_map:
-                k_old = link["to"]
-                k_new = old_new_gather_map[k_old]
-                link["to"] = k_new
+        if len(old_new_gather_map) > 0:
+            for link in lgo["linkDataArray"]:
+                if link["to"] in old_new_gather_map:
+                    k_old = link["to"]
+                    k_new = old_new_gather_map[k_old]
+                    link["to"] = k_new
 
-                # deal with the internal output from Gather
-                from_node = node_index[link["from"]]
-                # this is an obsolete and awkard way of checking internal output (for backward compatibility)
-                if "group" in from_node and from_node["group"] == k_new:
-                    dup_app_node = duplicated_gather_app[k_new]
-                    k_new_new = dup_app_node["key"]
-                    link["to"] = k_new_new
-                    if k_new_new not in node_index:
-                        node_index[k_new_new] = dup_app_node
-                        dup_app_node["reprodata"] = (
-                            node_index[k_new].get("reprodata", {}).copy()
-                        )
-                        lgo["nodeDataArray"].append(dup_app_node)
-                        old_newnew_gather_map[k_old] = k_new_new
+                    # deal with the internal output from Gather
+                    from_node = node_index[link["from"]]
+                    # this is an obsolete and awkard way of checking internal output (for backward compatibility)
+                    if "group" in from_node and from_node["group"] == k_new:
+                        dup_app_node = duplicated_gather_app[k_new]
+                        k_new_new = dup_app_node["key"]
+                        link["to"] = k_new_new
+                        if k_new_new not in node_index:
+                            node_index[k_new_new] = dup_app_node
+                            dup_app_node["reprodata"] = (
+                                node_index[k_new].get("reprodata", {}).copy()
+                            )
+                            lgo["nodeDataArray"].append(dup_app_node)
+                            old_newnew_gather_map[k_old] = k_new_new
 
-        # step 5
-        # relink the connection from gather to its external output if the gather
-        # has internal output that has been delt with in Step 4
-        for link in lgo["linkDataArray"]:
-            if link["from"] in old_new_gather_map:
-                k_old = link["from"]
-                k_new = old_new_gather_map[k_old]
-                to_node = node_index[link["to"]]
-                gather_construct = node_index[k_new]
-                if "group" not in to_node and "group" not in gather_construct:
-                    cond1 = True
-                elif (
-                    "group" in to_node
-                    and "group" in gather_construct
-                    and to_node["group"] == gather_construct["group"]
-                ):
-                    cond1 = True
-                else:
-                    cond1 = False
+            # step 5
+            # relink the connection from gather to its external output if the gather
+            # has internal output that has been delt with in Step 4
+            for link in lgo["linkDataArray"]:
+                if link["from"] in old_new_gather_map:
+                    k_old = link["from"]
+                    k_new = old_new_gather_map[k_old]
+                    to_node = node_index[link["to"]]
+                    gather_construct = node_index[k_new]
+                    if (
+                        "group" not in to_node
+                        and "group" not in gather_construct
+                    ):
+                        cond1 = True
+                    elif (
+                        "group" in to_node
+                        and "group" in gather_construct
+                        and to_node["group"] == gather_construct["group"]
+                    ):
+                        cond1 = True
+                    else:
+                        cond1 = False
 
-                if cond1 and (k_old in old_newnew_gather_map):
-                    link["from"] = old_newnew_gather_map[k_old]
-                # print("from %d to %d to %d" % (link['from'], k_old, link['to']))
+                    if cond1 and (k_old in old_newnew_gather_map):
+                        link["from"] = old_newnew_gather_map[k_old]
+                    # print("from %d to %d to %d" % (link['from'], k_old, link['to']))
 
     # print('%d nodes in lg after construct conversion' % len(lgo['nodeDataArray']))
     return lgo

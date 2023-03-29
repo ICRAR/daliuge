@@ -106,16 +106,17 @@ class LGNode:
         done_dict: LGNode that have been processed (Dict)
         ssid:   session id (string)
         """
-        self.jd = jd
-        self.inputPorts = jd
-        self.outputPorts = jd
+        self._id = jd["key"]
+        self.group_q = group_q
+        self.group = None
         self._children = []
         self._outputs = []  # event flow target
         self._inputs = []  # event flow source
-        self.group = None
-        self._id = jd["key"]
+        self.jd = jd
+        self.inputPorts = jd
+        self.outputPorts = jd
+        # self.group = None
         self._ssid = ssid
-        self._is_group = False
         self._is_app = False
         self._is_data = False
         self._converted = False
@@ -133,11 +134,14 @@ class LGNode:
                 wn.group = self
                 self.add_child(wn)
             group_q.pop(self.id)  # not thread safe
+        else:
+            self._is_group = False
 
         if "group" in jd:
             grp_id = jd["group"]
             if grp_id in done_dict:
                 grp_nd = done_dict[grp_id]
+                logger.debug(">>>>> Setting group membership to %s", grp_nd)
                 self.group = grp_nd
                 grp_nd.add_child(self)
             else:
@@ -145,8 +149,8 @@ class LGNode:
 
         done_dict[self.id] = self
 
-    def __str__(self):
-        return json.dumps(self.jd)
+    # def __str__(self):
+    #     return json.dumps(self.jd)
 
     @property
     def inputPorts(self):
@@ -154,8 +158,9 @@ class LGNode:
 
     @inputPorts.setter
     def inputPorts(self, value):
-        logger.debug(">>>>> value (in): %s", value)
-        if value["categoryType"] == "Construct":
+        if (
+            "categoryType" in value and value["categoryType"] == "Construct"
+        ) or ("type" in value and value["type"] == "Construct"):
             self._inputPorts = []
         elif not "inputPorts" in value:
             self._inputPorts = [
@@ -176,8 +181,9 @@ class LGNode:
 
     @outputPorts.setter
     def outputPorts(self, value):
-        logger.debug(">>>>> value: %s", value)
-        if value["categoryType"] == "Construct":
+        if (
+            "categoryType" in value and value["categoryType"] == "Construct"
+        ) or ("type" in value and value["type"] == "Construct"):
             self._outputPorts = []
         elif not "outputPorts" in value:
             self._outputPorts = [
@@ -203,10 +209,21 @@ class LGNode:
                 value["categoryType"] = CategoryType.APPLICATION
             elif value["category"] in DATA_TYPES:
                 value["categoryType"] = CategoryType.DATA
-        logger.debug(
-            ">>>>> categoryType: %s, %s", value["category"], APP_TYPES
-        )
         self._jd = value
+        # if "isGroup" in value and value["isGroup"]:
+        #     self._is_group = True
+        #     self.group = self
+        #     for wn in self.group_q[self.id]:
+        #         wn.group = self
+        #         self.add_child(wn)
+        #     self.group_q.pop(self.id)  # not thread safe
+        # else:
+        #     self._is_group = False
+        #     self.group = None
+
+    @property
+    def is_group(self):
+        return self._is_group
 
     @property
     def id(self):
@@ -235,14 +252,6 @@ class LGNode:
     @property
     def text(self):
         return self.jd.get("text", "")
-
-    @property
-    def group(self):
-        return self._grp
-
-    @group.setter
-    def group(self, value):
-        self._grp = value
 
     def has_group(self):
         return self.group is not None
@@ -320,6 +329,10 @@ class LGNode:
             while cg.has_group():
                 glist.append(str(cg.gid))
                 cg = cg.group
+                if len(glist) > 100:
+                    # likely something went wrong
+                    logger.debug(">>>>> Problem with hierarchy?: %s", self.jd)
+                    raise ValueError
             glist.append("0")
             self._g_h = "/".join(reversed(glist))
         return self._g_h
@@ -409,7 +422,7 @@ class LGNode:
         return (
             len(self.inputs) == 1
             and self.inputs[0].jd["category"] == Categories.START
-            and self.jd["type"].lower() == "data"
+            and self.jd["categoryType"] == CategoryType.DATA
         )
 
     def is_group_start(self):
@@ -501,9 +514,10 @@ class LGNode:
             """
             TODO: use OO style to replace all type-related statements!
             """
-            raise GraphException(
-                "Non-Gather LGN {0} does not have gather_width".format(self.id)
-            )
+            return None
+            # raise GraphException(
+            #     "Non-Gather LGN {0} does not have gather_width".format(self.id)
+            # )
 
     @property
     def groupby_width(self):
@@ -521,11 +535,12 @@ class LGNode:
                 self._grpw = re_dop
             return self._grpw
         else:
-            raise GraphException(
-                "Non-GroupBy LGN {0} does not have groupby_width".format(
-                    self.id
-                )
-            )
+            return None
+            # raise GraphException(
+            #     "Non-GroupBy LGN {0} does not have groupby_width".format(
+            #         self.id
+            #     )
+            # )
 
     @property
     def group_by_scatter_layers(self):
@@ -716,10 +731,10 @@ class LGNode:
         drop_type = self.jd["category"]
         drop_class = "Unknown"
         if "category" in self.jd:
-            logger.debug(">>>> category: %s", self.jd["category"])
+            # logger.debug(">>>> category: %s", self.jd["category"])
             drop_class = self.jd["category"]
         if "categoryType" in self.jd:
-            logger.debug(">>>> categoryType: %s", self.jd["categoryType"])
+            # logger.debug(">>>> categoryType: %s", self.jd["categoryType"])
             drop_class = self.jd["categoryType"]
 
         # backwards compatibility
@@ -730,23 +745,24 @@ class LGNode:
             elif drop_type in APP_TYPES:
                 drop_class = "Application"
             else:
+                logger.debug(">>>>> Unknown drop: %s", self.jd)
                 drop_class = "Unknown"
 
         self.nodeclass = drop_class
         self.nodetype = drop_type
 
-        logger.debug(">>>>> nodetype: %s", self.nodetype)
-        logger.debug(">>>>> nodeclass: %s", self.nodeclass)
-        logger.debug(
-            ">>>>>> cmptypes: %s, %s",
-            [
-                Categories.COMPONENT,
-                Categories.PYTHON_APP,
-                Categories.BRANCH,
-                Categories.PLASMA,
-            ],
-            self.is_data(),
-        )
+        # logger.debug(">>>>> nodetype: %s", self.nodetype)
+        # logger.debug(">>>>> nodeclass: %s", self.nodeclass)
+        # logger.debug(
+        #     ">>>>>> cmptypes: %s, %s",
+        #     [
+        #         Categories.COMPONENT,
+        #         Categories.PYTHON_APP,
+        #         Categories.BRANCH,
+        #         Categories.PLASMA,
+        #     ],
+        #     self.is_data(),
+        # )
         if self.is_data():
             if "data_volume" in self.jd:
                 kwargs["dw"] = int(self.jd["data_volume"])  # dw -- data weight
@@ -816,6 +832,8 @@ class LGNode:
             # default generic component becomes "sleep and copy"
             if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
                 app_class = "dlg.apps.simple.SleepApp"
+                self.jd["appclass"] = app_class
+                self.jd["category"] = Categories.PYTHON_APP
             else:
                 app_class = self.jd["appclass"]
 
@@ -837,6 +855,7 @@ class LGNode:
                 kwargs["sleepTime"] = execTime
 
             kwargs["tw"] = execTime
+            self.jd["execution_time"] = execTime
             drop_spec = dropdict(
                 {
                     "oid": oid,
@@ -850,7 +869,7 @@ class LGNode:
             if "mkn" in self.jd:
                 kwargs["mkn"] = self.jd["mkn"]
             self._update_key_value_attributes(kwargs)
-            logger.debug(">>>>>>> kwargs: %s", kwargs)
+            # logger.debug(">>>>>>> kwargs: %s", kwargs)
             drop_spec.update(kwargs)
 
         elif drop_type in [Categories.DYNLIB_APP, Categories.DYNLIB_PROC_APP]:
@@ -1047,11 +1066,12 @@ class LGNode:
                     # "type": DropType.DATA,
                     "type": CategoryType.DATA,
                     "dataclass": "dlg.data.drops.data_base.NullDROP",
+                    "dw": 0,
                     "rank": rank,
                 }
             )
         elif drop_type in Categories.LOOP:
-            pass
+            drop_spec = {}
         else:
             raise GraphException(
                 "Unknown DROP type: '{0} {1}'".format(drop_type, drop_class)
@@ -1067,6 +1087,14 @@ class LGNode:
         """
         oid, rank = self.make_oid(iid)
         dropSpec = self._create_test_drop_spec(oid, rank, kwargs)
+        if dropSpec is None:
+            logger.error(
+                ">>>> Unsuccessful creating dropSpec!!%s, %s, %s",
+                oid,
+                rank,
+                kwargs,
+            )
+            raise ValueError
         kwargs["iid"] = iid
         kwargs["lg_key"] = self.id
         kwargs["dt"] = self.jd["category"]
@@ -1114,6 +1142,7 @@ def load_lg(f):
         lg = json.load(f)
     else:
         lg = f
+    logger.info("Loaded graph: %s", lg["modelData"]["filePath"])
     return lg
 
 
@@ -1595,9 +1624,6 @@ class LG:
             tlgn = self._done_dict[tid]
             sdrops = self._drop_dict[sid]
             tdrops = self._drop_dict[tid]
-            logger.debug(
-                ">>>>> group: %s, %s", slgn.is_group(), tlgn.is_group()
-            )
             chunk_size = self._get_chunk_size(slgn, tlgn)
             if slgn.is_group() and not tlgn.is_group():
                 # this link must be artifically added (within group link)
@@ -1707,13 +1733,18 @@ class LG:
                 else:
                     lpaw = ("%s-%s" % (sid, tid)) in self_loop_aware_set
                     logger.debug(
-                        ">>>> h_level: %s, %s", slgn.h_level, tlgn.h_level
+                        ">>>> h_level: %s, %s, %s, %s, %s",
+                        slgn.h_level,
+                        tlgn.h_level,
+                        sid,
+                        tid,
+                        chunk_size,
                     )
                     if (
                         slgn.group is not None
                         and slgn.group.is_loop()
                         and lpaw
-                        and slgn.h_level > tlgn.h_level
+                        and slgn.h_level < tlgn.h_level
                     ):
                         loop_iter = slgn.group.dop
                         for i, chunk in enumerate(
@@ -1729,7 +1760,7 @@ class LG:
                         tlgn.group is not None
                         and tlgn.group.is_loop()
                         and lpaw
-                        and slgn.h_level < tlgn.h_level
+                        and slgn.h_level > tlgn.h_level
                     ):
                         loop_iter = tlgn.group.dop
                         for i, chunk in enumerate(
@@ -1743,11 +1774,17 @@ class LG:
                                     )
 
                     elif slgn.h_level >= tlgn.h_level:
+                        logger.debug(
+                            ">>>>> sdrops: %s, tdrops: %s",
+                            len(sdrops),
+                            len(tdrops),
+                        )
                         for i, chunk in enumerate(
                             self._split_list(sdrops, chunk_size)
                         ):
                             # distribute slgn evenly to tlgn
                             for sdrop in chunk:
+                                logger.debug(">>>> i: %s", i)
                                 self._link_drops(
                                     slgn, tlgn, sdrop, tdrops[i], lk
                                 )
@@ -1891,10 +1928,12 @@ class LG:
             ret += drop_list
 
         for drop in ret:
-            logger.debug(">>>>> drop: %s", drop)
-            if drop["type"] in [CategoryType.APPLICATION, "app"] and drop[
-                "appclass"
-            ].endswith(Categories.BASH_SHELL_APP):
+            # logger.debug(">>>>> drop: %s", drop)
+            if (
+                drop["type"] in [CategoryType.APPLICATION, "app"]
+                and "appclass" in drop
+                and drop["appclass"].endswith(Categories.BASH_SHELL_APP)
+            ):
                 bc = drop["command"]
                 drop["command"] = bc.to_real_command()
 

@@ -355,7 +355,10 @@ def accumulate_meta_data():
     """
     WARNING: Relies on naming convention in hashlib.
     """
-    data = {"repro_protocol": PROTOCOL_VERSION, "HashingAlg": str(HashingAlg)}
+    data = {
+        "repro_protocol": PROTOCOL_VERSION,
+        "HashingAlg": HashingAlg.__name__,
+    }
     return data
 
 
@@ -617,7 +620,7 @@ def build_blockdag(drops: list, abstraction: str, level: ReproducibilityFlags):
                     # WARNING: Hack! may break later, proceed with caution
                     ctype = dropset[did][0]["reprodata"][rmode.name][
                         "lgt_data"
-                    ]["categoryType"]
+                    ]["type"]
                     if (
                         ctype.lower() == "data"
                         and (dropset[did][1] == 0 or dropset[did][2] == 0)
