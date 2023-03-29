@@ -4,3 +4,4 @@ typing>=3.7.4
 pyyaml>=6.0
 merklelib >= 1.0
 gputil >= 1.4.0
+parameterized >= 0.9.0

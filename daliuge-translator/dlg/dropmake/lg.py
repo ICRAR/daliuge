@@ -1200,6 +1200,14 @@ class LG:
                 continue
             lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
             self._lgn_list.append(lgn)
+            node_ouput_ports = jd.get("outputPorts", [])
+            node_ouput_ports += jd.get("outputLocalPorts", [])
+            # check all the outports of this node, and store "stream" output
+            if len(node_ouput_ports) > 0:
+                for out_port in node_ouput_ports:
+                    if out_port.get("IdText", "").lower().endswith("stream"):
+                        stream_output_ports[out_port["Id"]] = jd["key"]
+        for lgn in self._lgn_list:
             if (
                 lgn.is_start()
                 and lgn.jd["category"] != Categories.COMMENT
@@ -1209,13 +1217,6 @@ class LG:
                     self._g_var.append(lgn)
                 else:
                     self._start_list.append(lgn)
-            node_ouput_ports = jd.get("outputPorts", [])
-            node_ouput_ports += jd.get("outputLocalPorts", [])
-            # check all the outports of this node, and store "stream" output
-            if len(node_ouput_ports) > 0:
-                for out_port in node_ouput_ports:
-                    if out_port.get("IdText", "").lower().endswith("stream"):
-                        stream_output_ports[out_port["Id"]] = jd["key"]
 
         self._lg_links = lg["linkDataArray"]
 
