@@ -365,7 +365,7 @@ class PGT(object):
             node["key"] = i + 1
             key_dict[oid] = i + 1
             node["oid"] = oid
-            tt = drop["type"]
+            tt = drop["categoryType"]
             if CategoryType.DATA == tt:
                 node["category"] = "Data"
             elif CategoryType.APPLICATION == tt:
@@ -385,7 +385,9 @@ class PGT(object):
                     link = dict()
                     link["from"] = myk
                     from_dt = (
-                        0 if drop["type"] in [CategoryType.DATA, "data"] else 1
+                        0
+                        if drop["categoryType"] in [CategoryType.DATA, "data"]
+                        else 1
                     )
                     to_dt = G.nodes[oup]["dt"]
                     if from_dt == to_dt:
@@ -396,7 +398,7 @@ class PGT(object):
                             dropSpec = dropdict(
                                 {
                                     "oid": extra_oid,
-                                    "type": CategoryType.APPLICATION,
+                                    "categoryType": CategoryType.APPLICATION,
                                     "appclass": "dlg.drop.BarrierAppDROP",
                                     "nm": "go_app",
                                     "text": "go_app",
@@ -415,7 +417,7 @@ class PGT(object):
                             dropSpec = dropdict(
                                 {
                                     "oid": extra_oid,
-                                    "type": CategoryType.DATA,
+                                    "categoryType": CategoryType.DATA,
                                     "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                                     "nm": "go_data",
                                     "text": "go_data",
@@ -475,7 +477,7 @@ class PGT(object):
             node = dict()
             node["key"] = (i + 1) * -1
             node["oid"] = oid
-            tt = drop["type"]
+            tt = drop["categoryType"]
             if CategoryType.DATA == tt:
                 node["category"] = "Data"
             elif DropType.APP == tt:

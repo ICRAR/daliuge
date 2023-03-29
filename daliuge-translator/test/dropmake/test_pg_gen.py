@@ -244,5 +244,5 @@ class TestPGGen(unittest.TestCase):
             lg = LG(fp)
             out = lg.unroll_to_tpl()
             for drop in out:
-                if drop["type"] in [CategoryType.DATA, "data"]:
+                if drop["categoryType"] in [CategoryType.DATA, "data"]:
                     self.assertEqual("SharedMemory", drop["category"])

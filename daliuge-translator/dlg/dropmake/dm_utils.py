@@ -211,7 +211,7 @@ def convert_mkn(lgo):
 
         node_mk["application"] = node["inputApplicationName"]
         node_mk["category"] = ConstructTypes.GATHER
-        node_mk["type"] = ConstructTypes.GATHER
+        node_mk["categoryType"] = ConstructTypes.GATHER
         ipan = node_mk.get("inputApplicationName", "")
         if len(ipan) == 0:
             node_mk["text"] = node_mk["text"] + "_InApp"
@@ -228,7 +228,7 @@ def convert_mkn(lgo):
         node_mk["fields"].append(new_field)
 
         node_kn["category"] = ConstructTypes.SCATTER
-        node_kn["type"] = ConstructTypes.SCATTER
+        node_kn["categoryType"] = ConstructTypes.SCATTER
 
         opan = node_kn.get("outputAppName", "")
         if len(opan) == 0:
@@ -267,7 +267,7 @@ def convert_mkn(lgo):
             old_new_k2n_from_map[mok] = k_new
 
         node_split_n["category"] = ConstructTypes.SCATTER
-        node_split_n["type"] = ConstructTypes.SCATTER
+        node_split_n["categoryType"] = ConstructTypes.SCATTER
         node_split_n["text"] = "Nothing"
         k_new = min(keyset) - 1
         keyset.add(k_new)
