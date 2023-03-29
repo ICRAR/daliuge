@@ -73,11 +73,11 @@ def unroll(lg, oid_prefix=None, zerorun=False, app=None):
     start = time.time()
     lg = LG(lg, ssid=oid_prefix)
     drop_list = lg.unroll_to_tpl()
-    logger.info(
-        "Logical Graph unroll completed in %.3f [s]. # of Drops: %d",
-        (time.time() - start),
-        len(drop_list),
-    )
+    # logger.info(
+    #     "Logical Graph unroll completed in %.3f [s]. # of Drops: %d",
+    #     (time.time() - start),
+    #     len(drop_list),
+    # )
     # Optionally set sleepTimes to 0 and apps to a specific type
     if zerorun:
         for dropspec in drop_list:

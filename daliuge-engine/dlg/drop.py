@@ -391,7 +391,6 @@ class AbstractDROP(EventFirer, EventHandler):
                 param = kwargs["applicationArgs"].get(attr_name).value
             else:
                 param = default_value
-            logger.debug(">>>!!! param extracted: %s; %s", attr_name, param)
             return param
 
         # Take a class dlg defined parameter class attribute and create an instanced attribute on object
