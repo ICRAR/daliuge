@@ -31,7 +31,6 @@ import sys
 import threading
 import time
 import traceback
-import tempfile
 from enum import Enum
 from json import JSONDecodeError
 from typing import Union
