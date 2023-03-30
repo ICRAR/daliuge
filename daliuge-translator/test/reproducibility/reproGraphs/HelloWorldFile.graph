@@ -141,6 +141,7 @@
                     "precious": false,
                     "readonly": false,
                     "text": "event",
+                    "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
                 }
