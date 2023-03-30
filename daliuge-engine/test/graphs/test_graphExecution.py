@@ -67,7 +67,9 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         """
         sessionId = "lalo"
         ddGraph = "graphs/ddTest.graph"
-        with pkg_resources.resource_stream("test", ddGraph) as f:  # @UndefinedVariable
+        with pkg_resources.resource_stream(
+            "test", ddGraph
+        ) as f:  # @UndefinedVariable
             logger.debug(f"Loading graph: {f}")
             graphSpec = json.load(f)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
@@ -153,8 +155,8 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         """
         sessionId = "lalo"
         with pkg_resources.resource_stream(
-                "test", "graphs/compilePG.graph"
-            ) as f:  # @UndefinedVariable
+            "test", "graphs/compilePG.graph"
+        ) as f:  # @UndefinedVariable
             graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
@@ -166,8 +168,8 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         with droputils.DROPWaiterCtx(self, fd, 3):
             sd.setCompleted()
 
-        #logger.debug(f'PyfuncAPPDrop signature: {dir(fd)}')
-        logger.debug(f'PyfuncAPPDrop status: {fd.status}')
+        # logger.debug(f'PyfuncAPPDrop signature: {dir(fd)}')
+        logger.debug(f"PyfuncAPPDrop status: {fd.status}")
         self.assertEqual(2, fd.status)
 
     def test_ArrayLoop(self):
@@ -175,22 +177,22 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         Use a graph with compile function to test positional only arguments
         """
         sessionId = "lalo"
-        start_drop = InMemoryDROP('a', 'a')
+        start_drop = InMemoryDROP("a", "a")
         with pkg_resources.resource_stream(
-                "test", "graphs/ArrayLoopPG.graph"
-            ) as f:  # @UndefinedVariable
+            "test", "graphs/ArrayLoopPG.graph"
+        ) as f:  # @UndefinedVariable
             graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
 
         # Deploy now and get OIDs
         self.dim.deploySession(sessionId)
-        sd = self.dm._sessions[sessionId].drops["2022-06-22T09:13:53_-1_0"]
+        sd = self.dm._sessions[sessionId].drops["2023-03-30T09:58:53_-1_0"]
         sd.addInput(start_drop)
-        fd = self.dm._sessions[sessionId].drops["2022-06-22T09:13:53_-4_0/0/0"]
+        fd = self.dm._sessions[sessionId].drops["2023-03-30T09:58:53_-4_0/0/0"]
         with droputils.DROPWaiterCtx(self, fd, 3):
             start_drop.setCompleted()
 
-        #logger.debug(f'PyfuncAPPDrop signature: {dir(fd)}')
-        logger.debug(f'PyfuncAPPDrop status: {fd.status}')
+        # logger.debug(f'PyfuncAPPDrop signature: {dir(fd)}')
+        logger.debug(f"PyfuncAPPDrop status: {fd.status}")
         self.assertEqual(2, fd.status)
