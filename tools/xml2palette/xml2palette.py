@@ -1640,7 +1640,7 @@ def _process_grandchild(gchild: dict, hold_name: str, language: str) -> dict:
         return_type = "Unknown"
 
         # some defaults
-        # cparam format is (name, default_value, type, access, precious, options, positional, description)
+        # param string format is (idText name/value/value_type/param_type/access_restriction/options/precious/positional/description)
         if language == Language.C:
             member["params"].append(
                 {"key": "category", "direction": None, "value": "DynlibApp"}
