@@ -86,6 +86,7 @@ KNOWN_DATA_CATEGORIES = [
 KNOWN_FIELD_TYPES = [
     "ComponentParameter",
     "ApplicationArgument",
+    "ConstructParameter",
     "InputPort",
     "OutputPort",
 ]
@@ -618,6 +619,7 @@ def create_palette_node_from_params(params) -> tuple:
     inputLocalPorts = []
     outputLocalPorts = []
     fields = []
+    construct_fields = []
     applicationArgs = []
 
     # process the params
@@ -721,7 +723,10 @@ def create_palette_node_from_params(params) -> tuple:
 
             # add the field to the correct list in the component, based on fieldType
             if field_type in KNOWN_FIELD_TYPES:
-                fields.append(field)
+                if field_type == "ConstructParameter":
+                    construct_fields.append(field)
+                else:
+                    fields.append(field)
             else:
                 logger.warning(
                     text
@@ -757,6 +762,7 @@ def create_palette_node_from_params(params) -> tuple:
             "outputLocalPorts": outputLocalPorts,
             "inputAppFields": [],
             "outputAppFields": [],
+            "constructFields": construct_fields,
             "fields": fields,
             "applicationArgs": applicationArgs,
             "repositoryUrl": gitrepo,
@@ -1759,7 +1765,7 @@ def create_construct_node(node_type: str, node: dict) -> dict:
     """
 
     # check that type is in the list of known types
-    if type not in KNOWN_CONSTRUCT_TYPES:
+    if node_type not in KNOWN_CONSTRUCT_TYPES:
         logger.warning(
             " construct for node'"
             + node["text"]
@@ -1786,6 +1792,7 @@ def create_construct_node(node_type: str, node: dict) -> dict:
     }
 
     if node_type == "Scatter" or node_type == "Gather":
+        construct_node["fields"] = node["constructFields"]
         construct_node["inputAppFields"] = node["fields"]
         construct_node["inputAppArgs"] = node["applicationArgs"]
         construct_node["inputApplicationKey"] = node["key"]
@@ -1832,13 +1839,16 @@ def params_to_nodes(params: dict) -> list:
             # if a construct is found, add to nodes
             if data["construct"] != "":
                 logger.info(
-                    "Adding component: "
+                    "Adding construct component: "
                     + data["construct"]
                     + "/"
                     + node["text"]
                 )
                 construct_node = create_construct_node(data["construct"], node)
                 result.append(construct_node)
+            # have to get rid of them for the non-construct nodes
+            if "constructFields" in node:
+                del node["constructFields"]
 
     # check if gitrepo and version params were found and cache the values
     for param in params:
