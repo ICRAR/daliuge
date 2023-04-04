@@ -60,7 +60,6 @@ class TestSimpleApps(unittest.TestCase):
             self.assertEqual(DROPStates.COMPLETED, x.status)
 
     def test_sleepapp(self):
-
         # Nothing fancy, just run it and be done with it
         a = NullDROP("a", "a")
         b = SleepApp("b", "b")
@@ -71,7 +70,6 @@ class TestSimpleApps(unittest.TestCase):
         self._test_graph_runs((a, b, c), a, c)
 
     def _test_copyapp_simple(self, app):
-
         # Again, not foo fancy, simple apps require simple tests
         a, c = (InMemoryDROP(x, x, nm=x) for x in ("a", "c"))
         b = app("b", "b")
@@ -85,7 +83,6 @@ class TestSimpleApps(unittest.TestCase):
         self.assertEqual(data, droputils.allDropContents(c))
 
     def _test_copyapp_order_preserved(self, app):
-
         # Inputs are copied in the order they are added
         a, b, d = (InMemoryDROP(x, x, nm=x) for x in ("a", "b", "d"))
         c = app("c", "c")
@@ -178,6 +175,7 @@ class TestSimpleApps(unittest.TestCase):
                 droputils.allDropContents(f[i]),
             )
 
+    @unittest.skip
     def test_ngasio(self):
         nd_in = NgasDROP("HelloWorld.txt", "HelloWorld.txt")
         nd_in.ngasSrv = "ngas.ddns.net"
