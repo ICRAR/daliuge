@@ -55,7 +55,6 @@ class AppDROP(ContainerDROP):
     """
 
     def initialize(self, **kwargs):
-
         super(AppDROP, self).initialize(**kwargs)
 
         # Inputs and Outputs are the DROPs that get read from and written
@@ -145,6 +144,10 @@ class AppDROP(ContainerDROP):
                     list(self.parameters["inputs"][i].keys())[0]
                 ]
                 named_inputs[key] = value
+        else:
+            for key, field in self.parameters["applicationArgs"].items():
+                if field["usage"] in ["InputPort", "InputOutput"]:
+                    named_inputs[field["text"]] = field
         return named_inputs
 
     def _generateNamedOutputs(self):
@@ -161,6 +164,10 @@ class AppDROP(ContainerDROP):
                     list(self.parameters["outputs"][i].keys())[0]
                 ]
                 named_outputs[key] = value
+        else:
+            for key, field in self.parameters["applicationArgs"].items():
+                if field["usage"] in ["OutputPort", "InputOutput"]:
+                    named_outputs[field["text"]] = field
         return named_outputs
 
     def handleEvent(self, e):
@@ -354,7 +361,6 @@ class InputFiredAppDROP(AppDROP):
 
         # We have enough inputs to proceed
         if (skipped_len + error_len + ok_len) == n_eff_inputs:
-
             # calculate the number of errors that have already occurred
             percent_failed = math.floor(
                 (error_len / float(n_eff_inputs)) * 100
