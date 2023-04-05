@@ -593,6 +593,8 @@ class LGNode:
             else:  # everything in 'fields'
                 if port == "inputPorts":
                     for field in self.jd["fields"]:
+                        if "usage" not in field:  # fixes manual graphs
+                            continue
                         if field["usage"] in port_selector[port]:
                             idText = field["text"]
                             break
@@ -1453,9 +1455,7 @@ class LG:
         self_loop_aware_set = self._loop_aware_set
         for lk in self._lg_links:
             sid = lk["from"]  # source key
-            s_port_id = lk["fromPort"]  # source port ID
             tid = lk["to"]  # target key
-            t_port_id = lk["toPort"]  # target port ID
             slgn = self._done_dict[sid]
             tlgn = self._done_dict[tid]
             sdrops = self._drop_dict[sid]
