@@ -543,16 +543,16 @@ class LGNode:
             kwargs.update({"nodeAttributes": {}})
             for je in self.jd["fields"]:
                 # The field to be used is not the text, but the name field
-                self.jd[je["name"]] = je["value"]
-                kwargs[je["name"]] = je["value"]
-                self.jd["nodeAttributes"].update({je["name"]: je})
-                kwargs["nodeAttributes"].update({je["name"]: je})
+                self.jd[je["text"]] = je["value"]
+                kwargs[je["text"]] = je["value"]
+                self.jd["nodeAttributes"].update({je["text"]: je})
+                kwargs["nodeAttributes"].update({je["text"]: je})
         kwargs[
             "applicationArgs"
         ] = {}  # make sure the dict always exists downstream
         if "applicationArgs" in self.jd:  # and fill it if provided
             for je in self.jd["applicationArgs"]:
-                j = {je["name"]: {k: je[k] for k in je if k not in ["name"]}}
+                j = {je["text"]: {k: je[k] for k in je if k not in ["text"]}}
                 self.jd.update(j)
                 kwargs["applicationArgs"].update(j)
         if "nodeAttributes" not in kwargs:
@@ -568,26 +568,42 @@ class LGNode:
     def _getIdText(self, port="inputPorts", index=0, portId=None):
         """
         Return IdText of port if it exists
+
+        NOTE: This has now been changed to use the 'text' rather than idText, in anticipation
+        of removing idText completely.
+        TODO: only returns the first one!!
         """
+        port_selector = {
+            "inputPorts": ["InputPort", "InputOutput"],
+            "outputPorts": ["OutpuPort", "InputOutput"],
+        }
         idText = None
         if not portId:
             if (
                 port in self.jd
                 and len(self.jd[port]) > index
-                and "IdText" in self.jd[port][index]
+                and "text" in self.jd[port][index]
             ):
-                idText = self.jd[port][index]["IdText"]
+                idText = self.jd[port][index]["text"]
         else:
             if port in self.jd:
                 idText = [
-                    p["IdText"]
-                    for p in self.jd["inputPorts"]
-                    if p["Id"] == portId
+                    p["text"] for p in self.jd[port] if p["Id"] == portId
                 ][0]
+            else:  # everything in 'fields'
+                if port == "inputPorts":
+                    for field in self.jd["fields"]:
+                        if "usage" not in field:  # fixes manual graphs
+                            continue
+                        if field["usage"] in port_selector[port]:
+                            idText = field["text"]
+                            break
+        logger.debug("%s names found: %s", port, idText)
         return idText
 
     def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
         """
+        NOTE: This IS the main function right now, still called 'test' and still should be replaced!!!
         TODO
         This is a test function only
         should be replaced by LGNode class specific methods
@@ -602,6 +618,7 @@ class LGNode:
                 kwargs["dw"] = 1
             iIdText = self._getIdText(port="inputPorts")
             oIdText = self._getIdText(port="outputPorts")
+            logger.debug("Found port names: IN: %s, OUT: %s", iIdText, oIdText)
             if self.is_start_listener():
                 # create socket listener DROP first
                 drop_spec = dropdict(
@@ -1382,6 +1399,7 @@ class LG:
             # use name from source and ID from target
             sIdText = slgn._getIdText("outputPorts")
             tIdText = tlgn._getIdText("inputPorts")
+            logger.debug("Found port names: IN: %s, OUT: %s", sIdText, tIdText)
             sdrop.addOutput(tdrop, IdText=sIdText)
             tdrop.addProducer(sdrop, IdText=tIdText)
             if Categories.BASH_SHELL_APP == s_type:
@@ -1436,8 +1454,8 @@ class LG:
         )
         self_loop_aware_set = self._loop_aware_set
         for lk in self._lg_links:
-            sid = lk["from"]  # source
-            tid = lk["to"]  # target
+            sid = lk["from"]  # source key
+            tid = lk["to"]  # target key
             slgn = self._done_dict[sid]
             tlgn = self._done_dict[tid]
             sdrops = self._drop_dict[sid]

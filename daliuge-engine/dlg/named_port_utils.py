@@ -35,7 +35,7 @@ def clean_applicationArgs(applicationArgs: dict) -> dict:
     if not isinstance(applicationArgs, dict):
         logger.info("applicationArgs are not passed as a dict. Ignored!")
     else:
-        logger.info("ApplicationArgs found %s", applicationArgs)
+        logger.debug("ApplicationArgs found %s", applicationArgs)
     for name, vdict in applicationArgs.items():
         if vdict in [None, False, ""]:
             continue
@@ -208,7 +208,12 @@ def replace_named_ports(
         zip(posargs, [None] * len(posargs))
     )
     portkeyargs = {}
-    # logger.debug("posargs: %s; keyargs: %s", posargs, keyargs)
+    logger.debug(
+        "posargs: %s; keyargs: %s, %s",
+        posargs,
+        keyargs,
+        check_ports_dict(inport_names),
+    )
     if check_ports_dict(inport_names):
         for inport in inport_names:
             key = list(inport.keys())[0]
@@ -225,7 +230,7 @@ def replace_named_ports(
         portkeyargs.update(ipkeyargs)
     else:
         for i in range(min(len(iitems), len(posargs))):
-            portkeyargs.update({posargs[i]: iitems[i][1]})
+            portkeyargs.update({list(posargs)[i]: list(iitems)[i][1]})
 
     if check_ports_dict(outport_names):
         for outport in outport_names:
@@ -242,7 +247,7 @@ def replace_named_ports(
         portkeyargs.update(opkeyargs)
     else:
         for i in range(min(len(oitems), len(posargs))):
-            portkeyargs.update({posargs[i]: oitems[i][1]})
+            portkeyargs.update({posargs[i]: list(oitems)[i][1]})
     # now that we have the mapped ports we can cleanup the appArgs
     # and construct the final keyargs and pargs
     logger.debug("Arguments from ports: %s %s", portkeyargs, portPosargsDict)
@@ -270,7 +275,7 @@ def replace_named_ports(
             keyargs.update({k: v})
     for k, v in portPosargsDict.items():
         logger.debug("port posarg %s has value %s", k, v)
-        logger.debug("default posarg %s has value %s", k, posargs[k])
+        # logger.debug("default posarg %s has value %s", k, posargs[k])
         if v not in [None, ""]:
             posargs.update({k: v})
     keyargs = (

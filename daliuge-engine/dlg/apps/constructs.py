@@ -1,16 +1,17 @@
 from dlg.apps.app_base import BarrierAppDROP
 
+
 ##
 # @brief Scatter
 # @details A Scatter template drop
 # @par EAGLE_START
 # @param category Scatter
 # @param tag template
-# @param num_of_splits No. of splits/2/Integer/ApplicationArgument/readwrite//False/False/Number of splits
+# @param num_of_copies Scatter dimension/4/Integer/ComponentParameter/readwrite//False/False/Specifies the number of replications of the content of the scatter construct
 # @par EAGLE_END
 class ScatterDrop(BarrierAppDROP):
     """
-    This only exists to make sure we have a GroupBy in the template palette
+    This only exists to make sure we have a Scatter in the template palette
     """
 
     pass

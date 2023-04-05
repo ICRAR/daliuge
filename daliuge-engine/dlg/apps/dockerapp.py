@@ -395,7 +395,6 @@ class DockerApp(BarrierAppDROP):
         return self._containerId
 
     def handleInterest(self, drop):
-
         # The only interest we currently have is the containerIp of other
         # DockerApps, and only if our command actually uses this IP
         if isinstance(drop, DockerApp):
@@ -577,17 +576,19 @@ class DockerApp(BarrierAppDROP):
 
             # Wrap everything inside bash
             if len(cmd) > 0 and not self._noBash:
-                cmd = '/bin/bash -c "%s"' % (
-                    utils.escapeQuotes(cmd, singleQuotes=False)
+                cmd = (
+                    '/bin/bash -c "%s"'
+                    % (utils.escapeQuotes(cmd, singleQuotes=False)).strip()
                 )
-                logger.debug(
+                logger.info(
                     "Command after user creation and wrapping is: %s", cmd
                 )
             else:
-                logger.debug(
-                    "executing container with default cmd and wrapped arguments"
+                cmd = f"{utils.escapeQuotes(cmd, singleQuotes=False)}".strip()
+                logger.info(
+                    "executing container with default cmd and wrapped arguments: %s",
+                    cmd,
                 )
-                cmd = f"{utils.escapeQuotes(cmd, singleQuotes=False)}"
 
             c = DockerApp._get_client()
             logger.debug(

@@ -202,7 +202,8 @@ class BashShellBase(object):
         output of the process is piped to. If not given it is consumed by this
         method and potentially logged.
         """
-        # logger.debug("Parameters found: %s", json.dumps(self.parameters))
+        logger.debug("Parameters found: %s", json.dumps(self.parameters))
+        logger.debug("Bash Inputs: %s; Bash Outputs: %s", inputs, outputs)
         # we only support passing a path for bash apps
         fsInputs = {
             uid: i for uid, i in inputs.items() if droputils.has_path(i)
@@ -216,7 +217,6 @@ class BashShellBase(object):
         dataURLOutputs = {
             uid: o for uid, o in outputs.items() if not droputils.has_path(o)
         }
-
         # deal with named ports
         inport_names = (
             self.parameters["inputs"] if "inputs" in self.parameters else []
@@ -265,7 +265,7 @@ class BashShellBase(object):
 
         # Wrap everything inside bash
         cmd = ("/bin/bash", "-c", cmd)
-        logger.debug("Command after wrapping is: %s", cmd)
+        logger.info("Command after wrapping is: %s", cmd)
 
         start = time.time()
 
