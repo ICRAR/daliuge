@@ -51,22 +51,14 @@ from dlg.dropmake.dm_utils import (
     convert_mkn,
     LG_VER_EAGLE,
     LG_VER_EAGLE_CONVERTED,
+    GraphException,
+    GInvalidLink,
+    GInvalidNode,
+    load_lg,
 )
 from dlg.dropmake.utils.bash_parameter import BashCommand
 
 logger = logging.getLogger(__name__)
-
-
-class GraphException(Exception):
-    pass
-
-
-class GInvalidLink(GraphException):
-    pass
-
-
-class GInvalidNode(GraphException):
-    pass
 
 
 class LGNode:
@@ -91,6 +83,10 @@ class LGNode:
         self._dop = None
         self._gaw = None
         self._grpw = None
+        self.inputPorts = "inputPorts"
+        self.outputPorts = "outputPorts"
+        logger.debug("%s input_ports: %s", self.text, self.inputPorts)
+        logger.debug("%s output_ports: %s", self.text, self.outputPorts)
         self._reprodata = jd.get("reprodata", {}).copy()
         if "isGroup" in jd and jd["isGroup"] is True:
             self._isgrp = True
@@ -121,6 +117,10 @@ class LGNode:
     @property
     def text(self):
         return self.jd.get("text", "")
+
+    @property
+    def category(self):
+        return self.jd.get("category", "")
 
     @property
     def group(self):
@@ -565,7 +565,7 @@ class LGNode:
                 kwargs["applicationArgs"].update({k: na})
         # NOTE: drop Argxx keywords
 
-    def _getIdText(self, port="inputPorts", index=0, portId=None):
+    def _getIdText(self, port="outputPorts", index=0, portId=None):
         """
         Return IdText of port if it exists
 
@@ -575,36 +575,59 @@ class LGNode:
         """
         port_selector = {
             "inputPorts": ["InputPort", "InputOutput"],
-            "outputPorts": ["OutpuPort", "InputOutput"],
+            "outputPorts": ["OutputPort", "InputOutput"],
         }
+        ports_dict = {}
         idText = None
-        if not portId:
+        if portId is None and index >= 0:
             if (
                 port in self.jd
                 and len(self.jd[port]) > index
                 and "text" in self.jd[port][index]
             ):
                 idText = self.jd[port][index]["text"]
-        else:
-            if port in self.jd:
-                idText = [
-                    p["text"] for p in self.jd[port] if p["Id"] == portId
-                ][0]
             else:  # everything in 'fields'
-                if port == "inputPorts":
+                if port in port_selector:
                     for field in self.jd["fields"]:
                         if "usage" not in field:  # fixes manual graphs
                             continue
                         if field["usage"] in port_selector[port]:
                             idText = field["text"]
-                            break
-        logger.debug("%s names found: %s", port, idText)
-        return idText
+                            # can't be sure that name is unique
+                            if idText not in ports_dict:
+                                ports_dict[idText] = [field["id"]]
+                            else:
+                                ports_dict[idText].append(field["id"])
+        else:
+            if port in self.jd:
+                idText = [
+                    p["text"] for p in self.jd[port] if p["Id"] == portId
+                ]
+                idText = idText[0] if len(idText) > 0 else None
+        return idText if index >= 0 else ports_dict
+
+    @property
+    def inputPorts(self):
+        return self._inputPorts
+
+    @inputPorts.setter
+    def inputPorts(self, port="inputPorts"):
+        self._inputPorts = self._getIdText(port="inputPorts", index=-1)
+
+    @property
+    def outputPorts(self):
+        return self._outputPorts
+
+    @outputPorts.setter
+    def outputPorts(self, port="outputPorts"):
+        self._outputPorts = self._getIdText(port="outputPorts", index=-1)
 
     def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
         """
-        NOTE: This IS the main function right now, still called 'test' and still should be replaced!!!
-        TODO
+        NOTE: This IS the main function right now, still called 'test' and
+        still should be replaced!!!
+
+        TODO:
         This is a test function only
         should be replaced by LGNode class specific methods
         """
@@ -933,8 +956,8 @@ class LGNode:
         dropSpec = self._create_test_drop_spec(oid, rank, kwargs)
         kwargs["iid"] = iid
         kwargs["lg_key"] = self.id
-        kwargs["dt"] = self.jd["category"]
-        kwargs["category"] = self.jd["category"]
+        kwargs["dt"] = self.category
+        kwargs["category"] = self.category
         if "categoryType" in kwargs:
             kwargs["categoryType"] = self.jd["categoryType"]
         kwargs["nm"] = self.text
@@ -964,22 +987,12 @@ class LGNode:
         return value
 
 
-def load_lg(f):
-    if isinstance(f, str):
-        if not os.path.exists(f):
-            raise GraphException("Logical graph {0} not found".format(f))
-        with open(f) as f:
-            lg = json.load(f)
-    elif hasattr(f, "read"):
-        lg = json.load(f)
-    else:
-        lg = f
-    return lg
-
-
 class LG:
     """
-    An object representation of Logical Graph
+    An object representation of a Logical Graph
+
+    TODO: This is a lot more than just a LG class,
+    it is doing all the conversion inside __init__
     """
 
     def __init__(self, f, ssid=None):
@@ -1021,34 +1034,29 @@ class LG:
         self._group_q = collections.defaultdict(list)
         self._output_q = collections.defaultdict(list)
         self._start_list = []
-        all_list = []
+        self._lgn_list = []
         stream_output_ports = dict()  # key - port_id, value - construct key
         for jd in lg["nodeDataArray"]:
-            if (
-                jd["category"] == Categories.COMMENT
-                or jd["category"] == Categories.DESCRIPTION
-            ):
-                continue
             lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
-            all_list.append(lgn)
-            node_ouput_ports = jd.get("outputPorts", [])
-            node_ouput_ports += jd.get("outputLocalPorts", [])
-            # check all the outports of this node, and store "stream" output
-            if len(node_ouput_ports) > 0:
-                for out_port in node_ouput_ports:
-                    if out_port.get("IdText", "").lower().endswith("stream"):
-                        stream_output_ports[out_port["Id"]] = jd["key"]
+            if lgn.category in [Categories.COMMENT, Categories.DESCRIPTION]:
+                # ignore COMMENT and DESCRIPTION nodes
+                continue
+            self._lgn_list.append(lgn)
+            # node_ouput_ports = jd.get("outputPorts", [])
+            # node_ouput_ports += jd.get("outputLocalPorts", [])
+            # # check all the outports of this node, and store "stream" output
+            # if len(node_ouput_ports) > 0:
+            #     for out_port in node_ouput_ports:
+            #         # TODO: Check usage of IdText
+            #         if out_port.get("IdText", "").lower().endswith("stream"):
+            #             stream_output_ports[out_port["Id"]] = jd["key"]
 
-        for lgn in all_list:
-            if (
-                lgn.is_start()
-                and lgn.jd["category"] != Categories.COMMENT
-                and lgn.jd["category"] != Categories.DESCRIPTION
-            ):
-                if lgn.jd["category"] == Categories.VARIABLES:
-                    self._g_var.append(lgn)
-                else:
-                    self._start_list.append(lgn)
+        for lgn in self._lgn_list:
+            # we need to run this loop again because _done_dict is recursive!
+            if lgn.is_start() and lgn.category == Categories.VARIABLES:
+                self._g_var.append(lgn)
+            elif lgn.is_start():
+                self._start_list.append(lgn)
 
         self._lg_links = lg["linkDataArray"]
 
@@ -1072,7 +1080,6 @@ class LG:
 
         # key - lgn id, val - a list of pgns associated with this lgn
         self._drop_dict = collections.defaultdict(list)
-        self._lgn_list = all_list
         self._reprodata = lg.get("reprodata", {})
 
     def validate_link(self, src, tgt):
@@ -1096,7 +1103,7 @@ class LG:
 
         if src.is_gather():
             if not (
-                tgt.jd["category"] in APP_DROP_TYPES
+                tgt.jd.category in APP_DROP_TYPES
                 and tgt.is_group_start()
                 and src.inputs[0].h_level == tgt.h_level
             ):
@@ -1126,10 +1133,7 @@ class LG:
                     )
                 )
         elif tgt.is_gather():
-            if (
-                not src.jd["category"] in STORAGE_TYPES
-                and not src.is_groupby()
-            ):
+            if not src.category in STORAGE_TYPES and not src.is_groupby():
                 raise GInvalidLink(
                     "Gather {0}'s input {1} should be either a GroupBy or Data".format(
                         tgt.id, src.id
@@ -1178,16 +1182,27 @@ class LG:
                     )
                 )
 
+    def get_child_lp_ctx(self, lgn, lpcxt, idx):
+        if lgn.is_loop:
+            if lpcxt is None:
+                return "{0}".format(idx)
+            else:
+                return "{0}/{1}".format(lpcxt, idx)
+        else:
+            return None
+
     def lgn_to_pgn(self, lgn, iid="0", lpcxt=None):
         """
-        convert logical graph node to physical graph node
-        without considering pg links
+        convert a logical graph node to physical graph node(s)
+        without considering pg links. This is a recursive method, creating also
+        all child nodes required by constructs.
 
         iid:    instance id (string)
         lpcxt:  Loop context
         """
         if lgn.is_group():
-            # services nodes are replaced with the input application in the logical graph
+            # group nodes are replaced with the input application of the
+            # construct
             extra_links_drops = not lgn.is_scatter()
             if extra_links_drops:
                 non_inputs = []
@@ -1207,9 +1222,8 @@ class LG:
                 if lgn.is_loop():
                     if len(grp_starts) == 0 or len(grp_ends) == 0:
                         raise GInvalidNode(
-                            "Loop '{0}' should have at least one Start Component and one End Data".format(
-                                lgn.text
-                            )
+                            "Loop '{0}' should have at least one Start "
+                            + "Component and one End Data".format(lgn.text)
                         )
                     for ge in grp_ends:
                         for gs in grp_starts:  # make an artificial circle
@@ -1248,15 +1262,6 @@ class LG:
 
             lgn_is_loop = lgn.is_loop()
 
-            def get_child_lp_ctx(idx):
-                if lgn_is_loop:
-                    if lpcxt is None:
-                        return "{0}".format(idx)
-                    else:
-                        return "{0}/{1}".format(lpcxt, idx)
-                else:
-                    return None
-
             for i in range(lgn.dop):
                 miid = "{0}/{1}".format(iid, i)
                 if multikey_grpby:
@@ -1278,7 +1283,9 @@ class LG:
                         pass
                         # self._drop_dict['new_added'].append(src_drop['gather-data_drop'])
                 for child in lgn.children:
-                    self.lgn_to_pgn(child, miid, get_child_lp_ctx(i))
+                    self.lgn_to_pgn(
+                        child, miid, self.get_child_lp_ctx(lgn, lpcxt, i)
+                    )
         elif lgn.is_mpi():
             for i in range(lgn.dop):
                 miid = "{0}/{1}".format(iid, i)
@@ -1489,7 +1496,7 @@ class LG:
                             ][1]
                             # TODO merge this code into the function
                             # def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink)
-                            tIdText = tlgn._getIdText("inputPorts")
+                            tIdText = tlgn._getIdText(port="inputPorts")
                             for gddrop in gather_input_list:
                                 gddrop.addConsumer(tdrops[j], IdText=tIdText)
                                 tdrops[j].addInput(gddrop, IdText=tIdText)
@@ -1684,9 +1691,7 @@ class LG:
                     tlgn["type"] = DropType.SERVICE_APP
                 else:
                     raise GraphException(
-                        "Unsupported target group {0}".format(
-                            tlgn.jd["category"]
-                        )
+                        "Unsupported target group {0}".format(tlgn.jd.category)
                     )
 
         for _, v in self._gather_cache.items():
@@ -1701,7 +1706,7 @@ class LG:
             for data_drop in input_list:
                 # TODO merge this code into the function
                 # def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink)
-                sIdText = slgn._getIdText("outputPorts")
+                sIdText = slgn._getIdText(port="outputPorts")
                 if llink.get("is_stream", False):
                     logger.debug(
                         "link stream connection %s to %s",
