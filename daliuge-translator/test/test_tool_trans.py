@@ -35,16 +35,21 @@ class TestTool(unittest.TestCase):
             "test.dropmake", "logical_graphs/cont_img.graph"
         )
 
-        fill = tool.start_process("fill", ["-L", lg], stdout=subprocess.PIPE)
+        fill = tool.start_process(
+            "fill", ["-vv", "-L", lg], stdout=subprocess.PIPE
+        )
         unroll = tool.start_process(
-            "unroll", ["-z", "--app", "1"], stdin=fill.stdout, stdout=subprocess.PIPE
+            "unroll",
+            ["-z", "--app", "1", "-vv"],
+            stdin=fill.stdout,
+            stdout=subprocess.PIPE,
         )
         partition = tool.start_process(
             "partition", stdin=unroll.stdout, stdout=subprocess.PIPE
         )
         map_ = tool.start_process(
             "map",
-            ["-N", "localhost,localhost"],
+            ["-vv", "-N", "localhost,localhost"],
             stdin=partition.stdout,
             stdout=subprocess.PIPE,
         )

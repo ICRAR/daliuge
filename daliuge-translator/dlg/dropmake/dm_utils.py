@@ -42,6 +42,18 @@ LG_APPREF = "AppRef"
 TEMP_FILE_FOLDER = "/tmp"
 
 
+class GraphException(Exception):
+    pass
+
+
+class GInvalidLink(GraphException):
+    pass
+
+
+class GInvalidNode(GraphException):
+    pass
+
+
 def get_lg_ver_type(lgo):
     """
     Get the version type of this logical graph
@@ -701,6 +713,19 @@ def convert_eagle_to_daliuge_json(lg_name):
         pass
 
     return new_path
+
+
+def load_lg(f):
+    if isinstance(f, str):
+        if not os.path.exists(f):
+            raise GraphException("Logical graph {0} not found".format(f))
+        with open(f) as f:
+            lg = json.load(f)
+    elif hasattr(f, "read"):
+        lg = json.load(f)
+    else:
+        lg = f
+    return lg
 
 
 if __name__ == "__main__":
