@@ -287,7 +287,6 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
                     try:
                         relFunc = getattr(drop, relFuncName)
                     except AttributeError:
-                        logger.debug(">>>>> dropSpec: %s", dropSpec)
                         logger.error(
                             '%r cannot be linked to %r due to missing method "%s"',
                             drop,
