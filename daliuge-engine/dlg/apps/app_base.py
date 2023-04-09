@@ -55,7 +55,6 @@ class AppDROP(ContainerDROP):
     """
 
     def initialize(self, **kwargs):
-
         super(AppDROP, self).initialize(**kwargs)
 
         # Inputs and Outputs are the DROPs that get read from and written
@@ -354,7 +353,6 @@ class InputFiredAppDROP(AppDROP):
 
         # We have enough inputs to proceed
         if (skipped_len + error_len + ok_len) == n_eff_inputs:
-
             # calculate the number of errors that have already occurred
             percent_failed = math.floor(
                 (error_len / float(n_eff_inputs)) * 100

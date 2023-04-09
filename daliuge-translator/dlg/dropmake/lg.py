@@ -644,10 +644,10 @@ class LGNode:
             kwargs.update({"nodeAttributes": {}})
             for je in self.jd["fields"]:
                 # The field to be used is not the text, but the name field
-                self.jd[je["text"]] = je["value"]
-                kwargs[je["text"]] = je["value"]
-                self.jd["nodeAttributes"].update({je["text"]: je})
-                kwargs["nodeAttributes"].update({je["text"]: je})
+                self.jd[je["name"]] = je["value"]
+                kwargs[je["name"]] = je["value"]
+                self.jd["nodeAttributes"].update({je["name"]: je})
+                kwargs["nodeAttributes"].update({je["name"]: je})
         kwargs[
             "applicationArgs"
         ] = {}  # make sure the dict always exists downstream
@@ -687,24 +687,20 @@ class LGNode:
                 and "text" in self.jd[port][index]
             ):
                 idText = self.jd[port][index]["text"]
-            else:  # everything in 'fields'
-                if port in port_selector:
-                    for field in self.jd["fields"]:
-                        if "usage" not in field:  # fixes manual graphs
-                            continue
-                        if field["usage"] in port_selector[port]:
-                            idText = field["text"]
-                            # can't be sure that name is unique
-                            if idText not in ports_dict:
-                                ports_dict[idText] = [field["id"]]
-                            else:
-                                ports_dict[idText].append(field["id"])
-        else:
-            if port in self.jd:
-                idText = [
-                    p["text"] for p in self.jd[port] if p["Id"] == portId
-                ]
-                idText = idText[0] if len(idText) > 0 else None
+        elif port in port_selector:
+            for field in self.jd["fields"]:
+                if "usage" not in field:  # fixes manual graphs
+                    continue
+                if field["usage"] in port_selector[port]:
+                    idText = field["text"]
+                    # can't be sure that name is unique
+                    if idText not in ports_dict:
+                        ports_dict[idText] = [field["id"]]
+                    else:
+                        ports_dict[idText].append(field["id"])
+        elif port in self.jd:
+            idText = [p["text"] for p in self.jd[port] if p["Id"] == portId]
+            idText = idText[0] if len(idText) > 0 else None
         return idText if index >= 0 else ports_dict
 
     def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
@@ -750,6 +746,7 @@ class LGNode:
                         "oid": oid,
                         "categoryType": CategoryType.DATA,
                         "category": drop_type,
+                        "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                         "storage": drop_type,
                         "rank": rank,
                     }
@@ -777,6 +774,7 @@ class LGNode:
                         "oid": oid,
                         "categoryType": CategoryType.DATA,
                         "category": drop_type,
+                        "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                         "storage": drop_type,
                         "rank": rank,
                     }
@@ -793,6 +791,12 @@ class LGNode:
                     kwargs["filepath"] = fp
                 kwargs["dataclass"] = str(
                     self.jd.get("dataclass", "dlg.data.drops.file.FileDROP")
+                )
+            if drop_type == Categories.MEMORY:
+                kwargs["dataclass"] = str(
+                    self.jd.get(
+                        "dataclass", "dlg.data.drops.memory.InMemoryDROP"
+                    )
                 )
             self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
@@ -1505,8 +1509,8 @@ class LG:
             return
 
         tdrop = tgt_drop
-        s_type = slgn.jd["category"]
-        t_type = tlgn.jd["category"]
+        s_type = slgn.jd["categoryType"]
+        t_type = tlgn.jd["categoryType"]
 
         if self._is_stream_link(s_type, t_type):
             """
@@ -1532,8 +1536,9 @@ class LG:
             dropSpec_null.addStreamingConsumer(tdrop, IdText="stream")
             tdrop.addStreamingInput(dropSpec_null, IdText="stream")
             self._drop_dict["new_added"].append(dropSpec_null)
-        elif s_type in ["Application", "application", "app"]:
-            # use name from source and ID from target
+        elif s_type in ["Application", "Control"]:
+            # TODO: The above needs a propoer fix!!!
+            # Why is s_type taking all these values???
             sIdText = slgn._getIdText("outputPorts")
             tIdText = tlgn._getIdText("inputPorts")
             sdrop.addOutput(tdrop, IdText=sIdText)
@@ -1551,10 +1556,18 @@ class LG:
                 tup[2].append(tgt_drop)
             else:  # sdrop is a data drop
                 # there should be only one port, get the name
-                sIdText = slgn._getIdText("outputPorts")
+                portId = llink["fromPort"] if "fromPort" in llink else None
+                sIdText = slgn._getIdText("outputPorts", portId=portId)
                 # could be multiple ports, need to identify
                 portId = llink["toPort"] if "toPort" in llink else None
                 tIdText = tlgn._getIdText("inputPorts", portId=portId)
+                # logger.debug(
+                #     ">>> link from %s to %s (%s) (%s)",
+                #     sIdText,
+                #     tIdText,
+                #     llink,
+                #     portId,
+                # )
                 if llink.get("is_stream", False):
                     logger.debug(
                         "link stream connection %s to %s",
@@ -1564,9 +1577,13 @@ class LG:
                     sdrop.addStreamingConsumer(tdrop, IdText=sIdText)
                     tdrop.addStreamingInput(sdrop, IdText=sIdText)
                 else:
-                    # print("not a stream from %s to %s" % (llink['from'], llink['to']))
-                    sdrop.addOutput(tdrop, IdText=sIdText)
-                    tdrop.addProducer(sdrop, IdText=tIdText)
+                    # logger.debug(
+                    #     ">>> adding consumer %s to %s",
+                    #     tdrop["categoryType"],
+                    #     sdrop["categoryType"],
+                    # )
+                    sdrop.addConsumer(tdrop, IdText=sIdText)
+                    tdrop.addInput(sdrop, IdText=tIdText)
             if Categories.BASH_SHELL_APP == t_type:
                 bc = tgt_drop["command"]
                 bc.add_input_param(slgn.id, src_drop["oid"])
@@ -1893,7 +1910,6 @@ class LG:
             ):
                 bc = drop["command"]
                 drop["command"] = bc.to_real_command()
-
         return ret
 
     @property
