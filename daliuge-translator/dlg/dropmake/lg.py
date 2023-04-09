@@ -680,7 +680,7 @@ class LGNode:
         }
         ports_dict = {}
         idText = None
-        if portId is None and index >= 0:
+        if portId is None and index > 0:
             if (
                 port in self.jd
                 and len(self.jd[port]) > index
@@ -730,7 +730,6 @@ class LGNode:
 
         self.nodeclass = drop_class
         self.nodetype = drop_type
-        logger.debug(">>>>>>: %s %s %s", drop_type, drop_class, self.is_data())
         if self.is_data():
             if "data_volume" in self.jd:
                 kwargs["dw"] = int(self.jd["data_volume"])  # dw -- data weight
@@ -1537,8 +1536,6 @@ class LG:
             tdrop.addStreamingInput(dropSpec_null, IdText="stream")
             self._drop_dict["new_added"].append(dropSpec_null)
         elif s_type in ["Application", "Control"]:
-            # TODO: The above needs a propoer fix!!!
-            # Why is s_type taking all these values???
             sIdText = slgn._getIdText("outputPorts")
             tIdText = tlgn._getIdText("inputPorts")
             sdrop.addOutput(tdrop, IdText=sIdText)
@@ -1692,9 +1689,7 @@ class LG:
                     for i, chunk in enumerate(
                         self._split_list(sdrops, loop_chunk_size)
                     ):
-                        # logger.debug("{0} ** {1}".format(i, loop_chunk_size))
                         for j, sdrop in enumerate(chunk):
-                            # logger.debug("{0} -- {1}".format(j, loop_chunk_size))
                             if j < loop_chunk_size - 1:
                                 self._link_drops(
                                     slgn,
@@ -1703,7 +1698,6 @@ class LG:
                                     tdrops[i * loop_chunk_size + j + 1],
                                     lk,
                                 )
-                                # logger.debug("{0} --> {1}".format(i * loop_chunk_size + j, i * loop_chunk_size + j + 1))
 
                     # for i, sdrop in enumerate(sdrops):
                     #     if (i < lsd - 1):
