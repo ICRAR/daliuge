@@ -369,7 +369,7 @@ class PGT(object):
             if CategoryType.DATA == tt:
                 node["category"] = "Data"
             elif CategoryType.APPLICATION == tt:
-                node["category"] = "Component"
+                node["category"] = "Application"
             node["text"] = drop["nm"]
             nodes.append(node)
 
