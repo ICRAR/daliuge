@@ -607,7 +607,6 @@ def gen_pg(
 
     pgtpj = pgtp._gojs_json_obj
     reprodata = pgtp.reprodata
-    logger.info("PGTP: %s", pgtpj)
     num_partitions = len(
         list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"]))
     )

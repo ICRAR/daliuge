@@ -323,13 +323,6 @@ class PGT(object):
                 "#%s" % x for x in range(len(is_list))
             ]  # so that is_list[i] == '#i'
 
-        logger.info(
-            "nm_list: %s, is_list: %s, lm: %s, lm2: %s",
-            nm_list,
-            is_list,
-            lm,
-            lm2,
-        )
         for drop in drop_list:
             oid = drop["oid"]
             # For now, simply round robin, but need to consider
