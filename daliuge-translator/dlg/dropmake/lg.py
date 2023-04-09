@@ -644,10 +644,10 @@ class LGNode:
             kwargs.update({"nodeAttributes": {}})
             for je in self.jd["fields"]:
                 # The field to be used is not the text, but the name field
-                self.jd[je["name"]] = je["value"]
-                kwargs[je["name"]] = je["value"]
-                self.jd["nodeAttributes"].update({je["name"]: je})
-                kwargs["nodeAttributes"].update({je["name"]: je})
+                self.jd[je["text"]] = je["value"]
+                kwargs[je["text"]] = je["value"]
+                self.jd["nodeAttributes"].update({je["text"]: je})
+                kwargs["nodeAttributes"].update({je["text"]: je})
         kwargs[
             "applicationArgs"
         ] = {}  # make sure the dict always exists downstream
@@ -666,7 +666,7 @@ class LGNode:
                 kwargs["applicationArgs"].update({k: na})
         # NOTE: drop Argxx keywords
 
-    def _getIdText(self, port="inputPorts", index=0, portId=None):
+    def _getIdText(self, port="outputPorts", index=0, portId=None):
         """
         Return IdText of port if it exists
 
@@ -678,19 +678,15 @@ class LGNode:
             "inputPorts": ["InputPort", "InputOutput"],
             "outputPorts": ["OutputPort", "InputOutput"],
         }
+        ports_dict = {}
         idText = None
-        if not portId:
+        if portId is None and index >= 0:
             if (
                 port in self.jd
                 and len(self.jd[port]) > index
                 and "text" in self.jd[port][index]
             ):
                 idText = self.jd[port][index]["text"]
-        else:
-            if port in self.jd:
-                idText = [
-                    p["text"] for p in self.jd[port] if p["Id"] == portId
-                ][0]
             else:  # everything in 'fields'
                 if port in port_selector:
                     for field in self.jd["fields"]:
@@ -698,9 +694,18 @@ class LGNode:
                             continue
                         if field["usage"] in port_selector[port]:
                             idText = field["text"]
-                            break
-        logger.debug("%s names found: %s", port, idText)
-        return idText
+                            # can't be sure that name is unique
+                            if idText not in ports_dict:
+                                ports_dict[idText] = [field["id"]]
+                            else:
+                                ports_dict[idText].append(field["id"])
+        else:
+            if port in self.jd:
+                idText = [
+                    p["text"] for p in self.jd[port] if p["Id"] == portId
+                ]
+                idText = idText[0] if len(idText) > 0 else None
+        return idText if index >= 0 else ports_dict
 
     def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
         """
