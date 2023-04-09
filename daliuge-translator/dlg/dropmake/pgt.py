@@ -478,10 +478,10 @@ class PGT(object):
             node["key"] = (i + 1) * -1
             node["oid"] = oid
             tt = drop["categoryType"]
-            if CategoryType.DATA == tt:
+            if tt == CategoryType.DATA:
                 node["category"] = "Data"
-            elif DropType.APP == tt:
-                node["category"] = "Component"
+            elif tt == DropType.APPCLASS:
+                node["category"] = "PythonApp"  # might not be correct
             node["text"] = drop["nm"]
             node["text"] = drop["text"]
             nodes.append(node)

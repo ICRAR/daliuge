@@ -167,11 +167,11 @@ def lg_block_fields(
     elif category_type == "Variables":
         pass
     elif category_type == "Branch":
-        data[DropType.APP] = FieldOps.STORE
+        data[DropType.APPCLASS] = FieldOps.STORE
     elif category_type == "PythonApp":
-        data[DropType.APP] = FieldOps.STORE
+        data[DropType.APPCLASS] = FieldOps.STORE
     elif category_type == "Component":
-        data[DropType.APP] = FieldOps.STORE
+        data[DropType.APPCLASS] = FieldOps.STORE
     elif category_type == "BashShellApp":
         data["Arg01"] = FieldOps.STORE
     elif category_type == "Mpi":

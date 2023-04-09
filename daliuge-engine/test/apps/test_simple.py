@@ -175,9 +175,9 @@ class TestSimpleApps(unittest.TestCase):
                 droputils.allDropContents(f[i]),
             )
 
-    @unittest.skip  # NGAS server down
+    # @unittest.skip
     def test_ngasio(self):
-        nd_in = NgasDROP("HelloWorld.txt", "HelloWorld.txt")
+        nd_in = NgasDROP("HelloWorld_out.txt", "HelloWorld_out.txt")
         nd_in.ngasSrv = "ngas.ddns.net"
         b = CopyApp("b", "b")
         did = "HelloWorld-%f" % time.time()

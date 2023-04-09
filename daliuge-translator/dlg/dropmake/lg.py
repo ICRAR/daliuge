@@ -141,7 +141,7 @@ class LGNode:
             # we need this as long as the fields are still using "name"
             if len(self._inputPorts) > 0 and "name" in self._inputPorts[0]:
                 for p in self._inputPorts:
-                    p["IdText"] = p["name"]
+                    p["text"] = p["name"]
         else:
             self._inputPorts = value["inputPorts"]
 
@@ -164,7 +164,7 @@ class LGNode:
             # we need this as long as the fields are still using "name"
             if len(self._outputPorts) > 0 and "name" in self._outputPorts[0]:
                 for p in self._outputPorts:
-                    p["IdText"] = p["name"]
+                    p["text"] = p["name"]
         else:
             self._outputPorts = value["outputPorts"]
 
@@ -299,9 +299,6 @@ class LGNode:
             while cg.has_group():
                 glist.append(str(cg.gid))
                 cg = cg.group
-                if len(glist) > 100:
-                    # likely something went wrong
-                    raise ValueError
             glist.append("0")
             self._g_h = "/".join(reversed(glist))
         return self._g_h
@@ -672,26 +669,42 @@ class LGNode:
     def _getIdText(self, port="inputPorts", index=0, portId=None):
         """
         Return IdText of port if it exists
+
+        NOTE: This has now been changed to use the 'text' rather than idText, in anticipation
+        of removing idText completely.
+        TODO: only returns the first one!!
         """
+        port_selector = {
+            "inputPorts": ["InputPort", "InputOutput"],
+            "outputPorts": ["OutputPort", "InputOutput"],
+        }
         idText = None
         if not portId:
             if (
                 port in self.jd
                 and len(self.jd[port]) > index
-                and "IdText" in self.jd[port][index]
+                and "text" in self.jd[port][index]
             ):
-                idText = self.jd[port][index]["IdText"]
+                idText = self.jd[port][index]["text"]
         else:
             if port in self.jd:
                 idText = [
-                    p["IdText"]
-                    for p in self.jd["inputPorts"]
-                    if p["Id"] == portId
+                    p["text"] for p in self.jd[port] if p["Id"] == portId
                 ][0]
+            else:  # everything in 'fields'
+                if port in port_selector:
+                    for field in self.jd["fields"]:
+                        if "usage" not in field:  # fixes manual graphs
+                            continue
+                        if field["usage"] in port_selector[port]:
+                            idText = field["text"]
+                            break
+        logger.debug("%s names found: %s", port, idText)
         return idText
 
     def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
         """
+        NOTE: This IS the main function right now, still called 'test' and still should be replaced!!!
         TODO
         This is a test function only
         should be replaced by LGNode class specific methods
@@ -716,7 +729,7 @@ class LGNode:
 
         self.nodeclass = drop_class
         self.nodetype = drop_type
-
+        logger.debug(">>>>>>: %s %s %s", drop_type, drop_class, self.is_data())
         if self.is_data():
             if "data_volume" in self.jd:
                 kwargs["dw"] = int(self.jd["data_volume"])  # dw -- data weight
@@ -724,12 +737,14 @@ class LGNode:
                 kwargs["dw"] = 1
             iIdText = self._getIdText(port="inputPorts")
             oIdText = self._getIdText(port="outputPorts")
+            logger.debug("Found port names: IN: %s, OUT: %s", iIdText, oIdText)
             if self.is_start_listener():
                 # create socket listener DROP first
                 drop_spec = dropdict(
                     {
                         "oid": oid,
                         "categoryType": CategoryType.DATA,
+                        "category": drop_type,
                         "storage": drop_type,
                         "rank": rank,
                     }
@@ -738,6 +753,7 @@ class LGNode:
                     {
                         "oid": "{0}-s".format(oid),
                         "categoryType": CategoryType.APPLICATION,
+                        "category": "PythonApp",
                         "appclass": "dlg.apps.simple.SleepApp",
                         "nm": "lstnr",
                         "text": "lstnr",
@@ -755,6 +771,7 @@ class LGNode:
                     {
                         "oid": oid,
                         "categoryType": CategoryType.DATA,
+                        "category": drop_type,
                         "storage": drop_type,
                         "rank": rank,
                     }
@@ -783,10 +800,10 @@ class LGNode:
             # default generic component becomes "sleep and copy"
             if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
                 app_class = "dlg.apps.simple.SleepApp"
-                self.jd[DropType.APP] = app_class
+                self.jd[DropType.APPCLASS] = app_class
                 self.jd["category"] = Categories.PYTHON_APP
             else:
-                app_class = self.jd[DropType.APP]
+                app_class = self.jd[DropType.APPCLASS]
 
             if "execution_time" in self.jd:
                 execTime = int(self.jd["execution_time"])
@@ -1058,7 +1075,7 @@ class LGNode:
         if self._reprodata is not None:
             kwargs["reprodata"] = self._reprodata.copy()
         if "isService" in self.jd and self.jd["isService"]:
-            kwargs["categoryType"] = DropType.SERVICE_APP
+            kwargs["categoryType"] = DropType.SERVICECLASS
         dropSpec.update(kwargs)
         return dropSpec
 
@@ -1152,14 +1169,14 @@ class LG:
             # check all the outports of this node, and store "stream" output
             if len(node_ouput_ports) > 0:
                 for out_port in node_ouput_ports:
-                    if out_port.get("IdText", "").lower().endswith("stream"):
+                    if out_port.get("text", "").lower().endswith("stream"):
                         stream_output_ports[out_port["Id"]] = jd["key"]
+        # Need to go through the list again, since done_dict is recursive
         for lgn in self._lgn_list:
-            if (
-                lgn.is_start()
-                and lgn.jd["category"] != Categories.COMMENT
-                and lgn.jd["category"] != Categories.DESCRIPTION
-            ):
+            if lgn.is_start() and lgn.jd["category"] not in [
+                Categories.COMMENT,
+                Categories.DESCRIPTION,
+            ]:
                 if lgn.jd["category"] == Categories.VARIABLES:
                     self._g_var.append(lgn)
                 else:
@@ -1561,11 +1578,11 @@ class LG:
         for lgn in self._start_list:
             self.lgn_to_pgn(lgn)
 
-        # logger.info(
-        #     "Unroll progress - lgn_to_pgn done %d for session %s",
-        #     len(self._start_list),
-        #     self._session_id,
-        # )
+        logger.debug(
+            "Unroll progress - lgn_to_pgn done %d for session %s",
+            len(self._start_list),
+            self._session_id,
+        )
         self_loop_aware_set = self._loop_aware_set
         for lk in self._lg_links:
             sid = lk["from"]  # source
@@ -1795,8 +1812,8 @@ class LG:
                     # Only the service node's inputApplication will be translated
                     # to the physical graph as a node of type SERVICE_APP instead of APP
                     # per compute instance
-                    tlgn["categoryType"] = DropType.APP
-                    tlgn["category"] = DropType.SERVICE_APP
+                    tlgn["categoryType"] = DropType.APPCLASS
+                    tlgn["category"] = DropType.SERVICECLASS
                 else:
                     raise GraphException(
                         "Unsupported target group {0}".format(

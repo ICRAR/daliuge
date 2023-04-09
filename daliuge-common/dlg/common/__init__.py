@@ -30,11 +30,11 @@ class DropType:
     Class defining the LG keyword to be used to load the module defining the Drop.
     """
 
-    DATA = "dataclass"
-    APP = "appclass"
-    SOCKET = "socket"
-    SERVICE_APP = "serviceapp"  # App drop that runs continously
-    CONTAINER = "container"  # Drop that contains other drops
+    DATACLASS = "dataclass"
+    APPCLASS = "appclass"
+    SOCKETCLASS = "socket"
+    SERVICECLASS = "serviceapp"  # App drop that runs continously
+    CONTAINERCLASS = "container"  # Drop that contains other drops
 
 
 class CategoryType:
