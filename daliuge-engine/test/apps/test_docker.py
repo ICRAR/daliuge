@@ -160,7 +160,7 @@ class DockerTests(unittest.TestCase):
         msg = 'This is a message with a double quotes: "'
         assertMsgIsCorrect(msg, "echo -n '{0}' > %o0".format(msg))
 
-    @unittest.skip  # NGAS server down
+    # @unittest.skip
     def test_dataURLReference(self):
         """
         A test to check that DROPs other than FileDROPs and DirectoryContainers
@@ -168,18 +168,18 @@ class DockerTests(unittest.TestCase):
         """
         self._ngas_and_fs_io("echo -n '%iDataURL0' > %o0")
 
-    @unittest.skip
+    # @unittest.skip
     def test_refer_to_io_by_uid(self):
         """
         A test to check that input and output Drops can be referred to by their
         UIDs (in addition to their position in the list of inputs or outputs)
         in the command-line.
         """
-        self._ngas_and_fs_io("echo -n '%iDataURL[HelloWorld.txt]' > %o[c]")
+        self._ngas_and_fs_io("echo -n '%iDataURL[HelloWorld_out.txt]' > %o[c]")
 
     def _ngas_and_fs_io(self, command):
         a = NgasDROP(
-            "HelloWorld.txt", "HelloWorld.txt"
+            "HelloWorld_out.txt", "HelloWorld_out.txt"
         )  # not a filesystem-related DROP, we can reference its URL in the command-line
         a.ngasSrv = "ngas.ddns.net"
         b = DockerApp("b", "b", image="ubuntu:14.04", command=command)

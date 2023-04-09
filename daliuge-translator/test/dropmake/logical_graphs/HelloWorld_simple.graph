@@ -33,7 +33,7 @@
     },
     "nodeDataArray": [
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "collapsed": false,
             "color": "#0059a5",
@@ -41,7 +41,7 @@
             "dataHash": "",
             "description": "A simple APP that implements the standard Hello World in DALiuGE. It allows to change 'World' with some other string and it also permits to connect the single output port to multiple sinks, which will all receive the same message. App does not require any input.",
             "drawOrderHint": 0,
-            "expanded": true,
+            "expanded": false,
             "fields": [
                 {
                     "defaultValue": "",
@@ -171,7 +171,7 @@
             "dataHash": "",
             "description": "",
             "drawOrderHint": 0,
-            "expanded": true,
+            "expanded": false,
             "fields": [
                 {
                     "defaultValue": "",

@@ -321,8 +321,8 @@ def _createData(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
-    if DropType.DATA in dropSpec:
-        dataClassName = dropSpec[DropType.DATA]
+    if DropType.DATACLASS in dropSpec:
+        dataClassName = dropSpec[DropType.DATACLASS]
         parts = dataClassName.split(".")
         # we don't need to support dfms here
         module = importlib.import_module(".".join(parts[:-1]))
@@ -366,8 +366,8 @@ def _createContainer(dropSpec, dryRun=False, session=None):
     kwargs = _getKwargs(dropSpec)
 
     # if no 'container' is specified, we default to ContainerDROP
-    if DropType.CONTAINER in dropSpec:
-        containerTypeName = dropSpec[DropType.CONTAINER]
+    if DropType.CONTAINERCLASS in dropSpec:
+        containerTypeName = dropSpec[DropType.CONTAINERCLASS]
         parts = containerTypeName.split(".")
 
         # Support old "dfms..." package names (pre-Oct2017)
@@ -398,8 +398,8 @@ def _createApp(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
-    if DropType.APP in dropSpec:
-        appName = dropSpec[DropType.APP]
+    if DropType.APPCLASS in dropSpec:
+        appName = dropSpec[DropType.APPCLASS]
     elif "Application" in dropSpec:
         appName = dropSpec["Application"]
     parts = appName.split(".")
@@ -461,11 +461,11 @@ def _getKwargs(dropSpec):
 
 
 __CREATION_FUNCTIONS = {
-    DropType.CONTAINER: _createContainer,
-    DropType.SERVICE_APP: _createApp,
-    DropType.SOCKET: _createSocket,
-    DropType.DATA: _createData,
-    DropType.APP: _createApp,
+    DropType.CONTAINERCLASS: _createContainer,
+    DropType.SERVICECLASS: _createApp,
+    DropType.SOCKETCLASS: _createSocket,
+    DropType.DATACLASS: _createData,
+    DropType.APPCLASS: _createApp,
     "Data": _createData,
     "data": _createData,
     "Application": _createApp,
