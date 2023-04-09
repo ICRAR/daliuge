@@ -737,7 +737,12 @@ class LGNode:
                 kwargs["dw"] = 1
             iIdText = self._getIdText(port="inputPorts")
             oIdText = self._getIdText(port="outputPorts")
-            logger.debug("Found port names: IN: %s, OUT: %s", iIdText, oIdText)
+            logger.debug(
+                "Found port names for %s: IN: %s, OUT: %s",
+                oid,
+                iIdText,
+                oIdText,
+            )
             if self.is_start_listener():
                 # create socket listener DROP first
                 drop_spec = dropdict(
