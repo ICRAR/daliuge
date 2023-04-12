@@ -169,7 +169,7 @@ class DropParser(Enum):
 # @param func_name Function Name//String/ApplicationArgument/readwrite//False/False/Python function name
 # @param func_code Function Code//String/ApplicationArgument/readwrite//False/False/Python function code, e.g. 'def function_name(args): return args'
 # @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy/False/False/Output port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param func_defaults Function Defaults//String/ApplicationArgument/readwrite//False/False/
 #     \~English Mapping from argname to default value. Should match only the last part of the argnames list.
 #               Values are interpreted as Python code literals and that means string values need to be quoted.

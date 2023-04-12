@@ -53,7 +53,7 @@ from dlg.event import EventFirer, EventHandler
 from dlg.exceptions import InvalidDropException, InvalidRelationshipException
 
 DEFAULT_INTERNAL_PARAMETERS = {
-    "storage",
+    "dataclass",
     "rank",
     "loop_cxt",
     "dw",
@@ -184,7 +184,7 @@ class AbstractDROP(EventFirer, EventHandler):
 
         # The physical graph drop type. This is determined
         # by the drop category when generating the drop spec
-        self._type = self._popArg(kwargs, "type", None)
+        self._type = self._popArg(kwargs, "categoryType", None)
 
         # The Session owning this drop, if any
         # In most real-world situations this attribute will be set, but in
@@ -391,7 +391,6 @@ class AbstractDROP(EventFirer, EventHandler):
                 param = kwargs["applicationArgs"].get(attr_name).value
             else:
                 param = default_value
-            logger.debug(">>>!!! param extracted: %s; %s", attr_name, param)
             return param
 
         # Take a class dlg defined parameter class attribute and create an instanced attribute on object

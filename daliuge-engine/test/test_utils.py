@@ -32,7 +32,6 @@ from dlg import utils
 
 class TestUtils(unittest.TestCase):
     def test_zlib_uncompressed_stream(self):
-
         fname = tempfile.mktemp()
         with open(fname, "wb") as f:
             f.write(zlib.compress(b"abc"))
@@ -54,14 +53,15 @@ class TestUtils(unittest.TestCase):
         os.remove(fname)
 
         # Try now with bigger data sizes
-        for size in [2 ** x + y for x in range(3, 18) for y in (-1, 0, 1)]:
-
+        for size in [2**x + y for x in range(3, 18) for y in (-1, 0, 1)]:
             original_bytes = os.urandom(size)
             compressed_bytes = zlib.compress(original_bytes)
 
             # Try first with whole reads
             compressed_stream = io.BytesIO(compressed_bytes)
-            uncompressed_stream = utils.ZlibUncompressedStream(compressed_stream)
+            uncompressed_stream = utils.ZlibUncompressedStream(
+                compressed_stream
+            )
             b = uncompressed_stream.read()
             self.assertEqual(size, len(b))
             self.assertEqual(original_bytes, b)
@@ -70,14 +70,17 @@ class TestUtils(unittest.TestCase):
             read_size = min(size // 4, 1024)
             b = b""
             compressed_stream = io.BytesIO(compressed_bytes)
-            uncompressed_stream = utils.ZlibUncompressedStream(compressed_stream)
-            for u in iter(functools.partial(uncompressed_stream.read, read_size), b""):
+            uncompressed_stream = utils.ZlibUncompressedStream(
+                compressed_stream
+            )
+            for u in iter(
+                functools.partial(uncompressed_stream.read, read_size), b""
+            ):
                 b += u
             self.assertEqual(size, len(b))
             self.assertEqual(original_bytes, b)
 
     def test_zlib_compressed_stream_writer(self):
-
         compressed_ref = zlib.compress(b"abcd")
 
         # Read parts from the beginning
@@ -89,8 +92,7 @@ class TestUtils(unittest.TestCase):
             self.assertEqual(compressed_ref[0:x], compressed[0:x])
 
         # Try now with bigger data sizes
-        for size in [2 ** x + y for x in range(3, 18) for y in (-1, 0, 1)]:
-
+        for size in [2**x + y for x in range(3, 18) for y in (-1, 0, 1)]:
             original_bytes = os.urandom(size)
             compressed_bytes = zlib.compress(original_bytes)
 
@@ -110,7 +112,9 @@ class TestUtils(unittest.TestCase):
             uncompressed_stream = io.BytesIO(original_bytes)
             compressed_stream = utils.ZlibCompressedStream(uncompressed_stream)
             b = b""
-            for c in iter(functools.partial(compressed_stream.read, read_size), b""):
+            for c in iter(
+                functools.partial(compressed_stream.read, read_size), b""
+            ):
                 b += c
             self.assertEqual(
                 len(compressed_bytes),
@@ -126,16 +130,16 @@ class TestUtils(unittest.TestCase):
         self._test_zlib_streams_combined(lambda n: b"0" * n)
 
     def _test_zlib_streams_combined(self, gen_bytes):
-
-        sizes = [2 ** x + y for x in range(1, 18) for y in (-1, 0, 1)]
+        sizes = [2**x + y for x in range(1, 18) for y in (-1, 0, 1)]
         for size in sizes:
-
             original_bytes = gen_bytes(size)
 
             # Read the whole thing
             original_stream = io.BytesIO(original_bytes)
             compressed_stream = utils.ZlibCompressedStream(original_stream)
-            uncompressed_stream = utils.ZlibUncompressedStream(compressed_stream)
+            uncompressed_stream = utils.ZlibUncompressedStream(
+                compressed_stream
+            )
             b = uncompressed_stream.read()
             self.assertEqual(size, len(b))
             self.assertEqual(original_bytes, b)
@@ -146,12 +150,13 @@ class TestUtils(unittest.TestCase):
 
             # Read with given number of bytes
             for n in (1, len(original_bytes) // 2, len(original_bytes)):
-
                 these_bytes = original_bytes[0:n]
 
                 original_stream = io.BytesIO(these_bytes)
                 compressed_stream = utils.ZlibCompressedStream(original_stream)
-                uncompressed_stream = utils.ZlibUncompressedStream(compressed_stream)
+                uncompressed_stream = utils.ZlibUncompressedStream(
+                    compressed_stream
+                )
 
                 b = uncompressed_stream.read(n)
                 self.assertEqual(n, len(b))
@@ -162,12 +167,11 @@ class TestUtils(unittest.TestCase):
                     self.assertEqual(0, len(uncompressed_stream.read(100)))
 
     def test_json_stream_simple_sequence(self):
-        for s in ([0], [{}], ["a"], [{"oid": "A", "type": "data"}]):
+        for s in ([0], [{}], ["a"], [{"oid": "A", "categoryType": "Data"}]):
             stream = utils.JSONStream(s)
             self.assertEqual(s, json.loads(stream.read(100).decode("utf8")))
 
     def test_json_stream_sequences(self):
-
         ref = [1, 2, 3]
         objects_list = [1, 2, 3]
         objects_tuple = (1, 2, 3)
@@ -179,19 +183,21 @@ class TestUtils(unittest.TestCase):
 
         for objects in (objects_list, objects_tuple, objects_gen()):
             stream = utils.JSONStream(objects)
-            self.assertSequenceEqual(ref, json.loads(stream.read(100).decode("latin1")))
+            self.assertSequenceEqual(
+                ref, json.loads(stream.read(100).decode("latin1"))
+            )
             self.assertEqual(0, len(stream.read(100).decode("latin1")))
 
     def test_json_stream_simpleobj(self):
-
         sessionId = "some_id"
         for obj in (1, {"a": 2}, "b", {"sessionId": sessionId}):
             stream = utils.JSONStream(obj)
-            self.assertEqual(obj, json.loads(stream.read(100).decode("latin1")))
+            self.assertEqual(
+                obj, json.loads(stream.read(100).decode("latin1"))
+            )
             self.assertEqual(0, len(stream.read(100).decode("latin1")))
 
     def test_get_dlg_root(self):
-
         # It should obey the DLG_ROOT environment variable
         old = os.environ.get("DLG_ROOT", None)
         os.environ["DLG_ROOT"] = tempfile.mkdtemp()

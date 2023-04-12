@@ -34,7 +34,6 @@ from dlg.common.reproducibility.constants import ReproducibilityFlags
 
 from . import droputils
 from .apps.socket_listener import SocketListenerApp
-from .common import Categories
 from .ddap_protocol import DROPRel, DROPLinkType
 from .drop import (
     AbstractDROP,
@@ -51,36 +50,13 @@ from dlg.data.drops.json_drop import JsonDROP
 from dlg.data.drops import *
 from .common import DropType
 
-try:
-    from .common import CategoryType
-except ImportError:
 
-    class CategoryType:
-        DATA = "dataclass"
-
-
-STORAGE_TYPES = {
-    Categories.MEMORY: InMemoryDROP,
-    Categories.SHMEM: SharedMemoryDROP,
-    Categories.FILE: FileDROP,
-    Categories.NGAS: NgasDROP,
-    Categories.NULL: NullDROP,
-    Categories.END: EndDROP,
-    Categories.JSON: JsonDROP,
-    Categories.PLASMA: PlasmaDROP,
-    Categories.PLASMAFLIGHT: PlasmaFlightDROP,
-    Categories.PARSET: ParameterSetDROP,
-    Categories.ENVIRONMENTVARS: EnvironmentVarDROP,
-}
-
-try:
-    from .data.drops.s3_drop import S3DROP
-
-    STORAGE_TYPES[Categories.S3] = S3DROP
-except ImportError:
-    pass
+class CategoryType:
+    DATA = "dataclass"
 
     # Dictionary for the key used to store 1-to-N relationships between DROPs
+
+
 # in the the DROP specification format
 __TOMANY = {
     DROPLinkType.CONSUMER: "consumers",
@@ -155,15 +131,12 @@ def removeUnmetRelationships(dropSpecList):
     # Step #2: find unmet relationships and remove them from the original
     # DROP spec, keeping track of them
     for dropSpec in dropSpecList:
-
         this_oid = normalise_oid(dropSpec["oid"])
         to_delete = []
 
         for rel in dropSpec:
-
             # 1-N relationships
             if rel in __TOMANY:
-
                 link = __TOMANY[rel]
 
                 # Find missing OIDs in this relationship and keep track of them,
@@ -183,7 +156,6 @@ def removeUnmetRelationships(dropSpecList):
 
             # N-1 relationships
             elif rel in __TOONE:
-
                 link = __TOONE[rel]
 
                 # Check if OID is missing
@@ -208,9 +180,9 @@ def check_dropspec(n, dropSpec):
         raise InvalidGraphException(
             "Drop #%d is missing its 'oid' argument: %r" % (n, dropSpec)
         )
-    if "type" not in dropSpec:
+    if "categoryType" not in dropSpec:
         raise InvalidGraphException(
-            "Drop %s is missing its 'type' argument" % (dropSpec["oid"])
+            "Drop %s is missing its 'categoryType' argument" % (dropSpec)
         )
 
 
@@ -233,10 +205,10 @@ def loadDropSpecs(dropSpecList):
     if dropSpecList[-1].get("rmode"):
         reprodata = dropSpecList.pop()
     for n, dropSpec in enumerate(dropSpecList):
-
-        # "type" and 'oid' are mandatory
+        # "categoryType" and 'oid' are mandatory
         check_dropspec(n, dropSpec)
-        dropType = dropSpec["type"]
+        # backwards compatibility
+        dropType = dropSpec["categoryType"]
 
         cf = __CREATION_FUNCTIONS[dropType]
         cf(dropSpec, dryRun=True)
@@ -248,11 +220,9 @@ def loadDropSpecs(dropSpecList):
     # TODO: shouldn't this loop be done the other way around, going through all __TOMANY
     # and __TOONE and directly address the respective dropSpec attribute?
     for dropSpec in dropSpecList:
-
         # 1-N relationships
         for rel in dropSpec:
             if rel in __TOMANY:
-
                 # A KeyError will be raised if a oid has been specified in the
                 # relationship list but doesn't exist in the list of DROPs
                 for oid in dropSpec[rel]:
@@ -280,12 +250,16 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
     drops = collections.OrderedDict()
     logger.info("Creating %d drops", len(dropSpecList))
     for n, dropSpec in enumerate(dropSpecList):
-
         check_dropspec(n, dropSpec)
-        #        dropType = dropSpec.pop("type")
-        dropType = dropSpec["type"]
+        #        dropType = dropSpec.pop("categoryType")
+        # backwards compatibility
+        dropType = dropSpec["categoryType"]
+        if dropType.lower() in ["application", "app"]:
+            dropType = "appclass"
+        if dropType.lower() == "data":
+            dropType = "dataclass"
 
-        cf = __CREATION_FUNCTIONS[dropType]
+        cf = __CREATION_FUNCTIONS[dropType.lower()]
         drop = cf(dropSpec, session=session)
         if session is not None:
             # Now using per-drop reproducibility setting.
@@ -298,7 +272,6 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
     # Step #2: establish relationships
     logger.info("Establishing relationships between drops")
     for dropSpec in dropSpecList:
-
         # 'oid' is mandatory
         oid = dropSpec["oid"]
         drop = drops[oid]
@@ -355,15 +328,36 @@ def _createData(dropSpec, dryRun=False, session=None):
         module = importlib.import_module(".".join(parts[:-1]))
         storageType = getattr(module, parts[-1])
     else:
+        # STORAGE_TYPES are deprecated, but here for backwards compatibility
+
         # Fall back to old behaviour or to FileDROP
         # if nothing else is specified
+        STORAGE_TYPES = {
+            "Memory": InMemoryDROP,
+            "SharedMemory": SharedMemoryDROP,
+            "File": FileDROP,
+            "NGAS": NgasDROP,
+            "null": NullDROP,
+            "json": JsonDROP,
+            "Plasma": PlasmaDROP,
+            "PlasmaFlight": PlasmaFlightDROP,
+            "ParameterSet": ParameterSetDROP,
+            "EnvironmentVariables": EnvironmentVarDROP,
+        }
+
+        try:
+            from .data.drops.s3_drop import S3DROP
+
+            STORAGE_TYPES["S3"] = S3DROP
+        except ImportError:
+            pass
         if "storage" in dropSpec:
             storageType = STORAGE_TYPES[dropSpec["storage"]]
+            # pass
         else:
             storageType = FileDROP
     if dryRun:
         return
-
     return storageType(oid, uid, dlg_session=session, **kwargs)
 
 
@@ -372,8 +366,8 @@ def _createContainer(dropSpec, dryRun=False, session=None):
     kwargs = _getKwargs(dropSpec)
 
     # if no 'container' is specified, we default to ContainerDROP
-    if DropType.CONTAINER in dropSpec:
-        containerTypeName = dropSpec[DropType.CONTAINER]
+    if DropType.CONTAINERCLASS in dropSpec:
+        containerTypeName = dropSpec[DropType.CONTAINERCLASS]
         parts = containerTypeName.split(".")
 
         # Support old "dfms..." package names (pre-Oct2017)
@@ -404,7 +398,10 @@ def _createApp(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
-    appName = dropSpec[DropType.APP]
+    if DropType.APPCLASS in dropSpec:
+        appName = dropSpec[DropType.APPCLASS]
+    elif "Application" in dropSpec:
+        appName = dropSpec["Application"]
     parts = appName.split(".")
 
     # Support old "dfms..." package names (pre-Oct2017)
@@ -439,8 +436,11 @@ def _getKwargs(dropSpec):
     REMOVE = [
         "oid",
         "uid",
-        "app",
+        "Application",
         "appclass",
+        "dataclass",
+        "data",
+        "Data",
     ]
     for kw in REMOVE:
         if kw in kwargs:
@@ -461,11 +461,13 @@ def _getKwargs(dropSpec):
 
 
 __CREATION_FUNCTIONS = {
-    DropType.DATA: _createData,
-    DropType.CONTAINER: _createContainer,
-    DropType.APP: _createApp,
-    DropType.SERVICE_APP: _createApp,
-    DropType.SOCKET: _createSocket,
-    "dataclass": _createData,
-    "appclass": _createApp,
+    DropType.CONTAINERCLASS: _createContainer,
+    DropType.SERVICECLASS: _createApp,
+    DropType.SOCKETCLASS: _createSocket,
+    DropType.DATACLASS: _createData,
+    DropType.APPCLASS: _createApp,
+    "Data": _createData,
+    "data": _createData,
+    "Application": _createApp,
+    "app": _createApp,
 }

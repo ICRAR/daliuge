@@ -607,7 +607,6 @@ def gen_pg(
 
     pgtpj = pgtp._gojs_json_obj
     reprodata = pgtp.reprodata
-    logger.info("PGTP: %s", pgtpj)
     num_partitions = len(
         list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"]))
     )
@@ -1229,7 +1228,11 @@ def run(_, args):
     signal.signal(signal.SIGTERM, handler)
     signal.signal(signal.SIGINT, handler)
 
-    uvicorn.run(app=app, host=options.host, port=options.port)
+    uvicorn.run(
+        app=app,
+        host=options.host,
+        port=options.port,
+    )
 
 
 if __name__ == "__main__":

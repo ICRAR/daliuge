@@ -23,7 +23,6 @@ import json
 import os
 
 from dlg.drop import dropdict
-from dlg.common import Categories
 
 
 # Directories and paths
@@ -66,7 +65,13 @@ CUBE_NAME = "cube1408~1412"
 
 
 def fileSpec(uid, **kwargs):
-    dropSpec = dropdict({"oid": str(uid), "type": "data", "storage": Categories.FILE})
+    dropSpec = dropdict(
+        {
+            "oid": str(uid),
+            "categoryType": "Data",
+            "dataclass": "dlg.data.drops.file.FileDROP",
+        }
+    )
     dropSpec.update(kwargs)
     return dropSpec
 
@@ -75,7 +80,7 @@ def directorySpec(uid, **kwargs):
     dropSpec = dropdict(
         {
             "oid": str(uid),
-            "type": "container",
+            "categoryType": "container",
             "container": "dlg.drop.DirectoryContainer",
         }
     )
@@ -87,8 +92,8 @@ def fluxSpec(uid, **kwargs):
     dropSpec = dropdict(
         {
             "oid": str(uid),
-            "type": "app",
-            "app": "test.integrate.chiles.chilesdo.SourceFlux",
+            "categoryType": "Application",
+            "appclass": "test.integrate.chiles.chilesdo.SourceFlux",
         }
     )
     dropSpec.update(kwargs)
@@ -97,28 +102,41 @@ def fluxSpec(uid, **kwargs):
 
 def splitSpec(uid, **kwargs):
     dropSpec = dropdict(
-        {"oid": str(uid), "type": "app", "app": "test.integrate.chiles.chilesdo.Split"}
+        {
+            "oid": str(uid),
+            "categoryType": "Application",
+            "appclass": "test.integrate.chiles.chilesdo.Split",
+        }
     )
     dropSpec.update(kwargs)
     return dropSpec
 
 
 def scpSpec(uid, **kwargs):
-    dropSpec = dropdict({"oid": str(uid), "type": "app", "app": "dlg.apps.scp.ScpApp"})
+    dropSpec = dropdict(
+        {
+            "oid": str(uid),
+            "categoryType": "Application",
+            "appclass": "dlg.apps.scp.ScpApp",
+        }
+    )
     dropSpec.update(kwargs)
     return dropSpec
 
 
 def cleanSpec(uid, **kwargs):
     dropSpec = dropdict(
-        {"oid": str(uid), "type": "app", "app": "test.integrate.chiles.chilesdo.Clean"}
+        {
+            "oid": str(uid),
+            "categoryType": "Application",
+            "appclass": "test.integrate.chiles.chilesdo.Clean",
+        }
     )
     dropSpec.update(kwargs)
     return dropSpec
 
 
 if __name__ == "__main__":
-
     droplist = []
 
     flux_out = fileSpec("Flux", node=ch05, dirname=os.path.join(OUTPUTS_DIR))
@@ -158,7 +176,6 @@ if __name__ == "__main__":
     flux.addOutput(flux_out)
 
     for i, v in enumerate(VIS):
-
         visDir = os.path.join(INPUTS_DIR, v[0])
         splitOutDir = os.path.join(OUTPUTS_DIR, v[1])
         splitCopyDir = os.path.join(INPUTS_DIR, v[1])
@@ -180,9 +197,14 @@ if __name__ == "__main__":
             node=node,
         )
         split_out = directorySpec(
-            "SplitOutput_%d" % (i), dirname=splitOutDir, check_exists=False, node=node
+            "SplitOutput_%d" % (i),
+            dirname=splitOutDir,
+            check_exists=False,
+            node=node,
         )
-        scp = scpSpec("Scp_%d" % (i), node=node, pkeyPath=KEY_PATH, timeout=3600)
+        scp = scpSpec(
+            "Scp_%d" % (i), node=node, pkeyPath=KEY_PATH, timeout=3600
+        )
         scpOut = directorySpec(
             "SplitOutput_%d_Copy" % (i),
             dirname=splitCopyDir,

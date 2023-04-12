@@ -1,8 +1,8 @@
 [
     {
         "oid": "2022-03-24T11:40:15_-1_0",
-        "type": "app",
-        "app": "dlg.apps.simple.HelloWorldApp",
+        "categoryType": "Application",
+        "appclass": "dlg.apps.simple.HelloWorldApp",
         "rank": [
             0
         ],
@@ -28,8 +28,8 @@
     },
     {
         "oid": "2022-03-24T11:40:15_-2_0",
-        "type": "data",
-        "storage": "File",
+        "categoryType": "Data",
+        "dataclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0
         ],

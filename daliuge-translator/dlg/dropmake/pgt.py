@@ -36,7 +36,7 @@ import math
 from dlg.dropmake.lg import GraphException
 from dlg.dropmake.scheduler import DAGUtil
 from dlg.common import CategoryType, dropdict
-from dlg.common import Categories, DropType
+from dlg.common import DropType
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,11 @@ class PGT(object):
         self._drop_list = drop_list
         self._drop_list_len = len(drop_list)
         self._extra_drops = []  # artifacts DROPs produced during L2G mapping
-        self._dag = DAGUtil.build_dag_from_drops(self._drop_list) if build_dag else None
+        self._dag = (
+            DAGUtil.build_dag_from_drops(self._drop_list)
+            if build_dag
+            else None
+        )
         self._json_str = None
         self._oid_gid_map = dict()
         self._gid_island_id_map = dict()
@@ -75,15 +79,21 @@ class PGT(object):
 
     def _can_merge(self, new_num_parts):
         if new_num_parts <= 0:
-            raise GPGTException("Invalid new_num_parts {0}".format(new_num_parts))
+            raise GPGTException(
+                "Invalid new_num_parts {0}".format(new_num_parts)
+            )
         if not self._merge_parts:
             raise GPGTException(
-                "This {0} PGTP is not made for merging".format(self.__class__.__name__)
+                "This {0} PGTP is not made for merging".format(
+                    self.__class__.__name__
+                )
             )
         if self._num_parts_done <= new_num_parts:
             raise GPGTNoNeedMergeException(
                 "No need to merge this {0} PGTP: {1} <= {2}".format(
-                    self.__class__.__name__, self._num_parts_done, new_num_parts
+                    self.__class__.__name__,
+                    self._num_parts_done,
+                    new_num_parts,
                 )
             )
         if self._partition_merged == new_num_parts:
@@ -155,10 +165,14 @@ class PGT(object):
             return self._data_movement
         elif self.dag is not None:
             G = self.dag
-            self._data_movement = sum(e[2].get("weight", 0) for e in G.edges(data=True))
+            self._data_movement = sum(
+                e[2].get("weight", 0) for e in G.edges(data=True)
+            )
         return self._data_movement
 
-    def pred_exec_time(self, app_drop_only=False, wk="weight", force_answer=False):
+    def pred_exec_time(
+        self, app_drop_only=False, wk="weight", force_answer=False
+    ):
         """
         Predict execution time using the longest path length
         """
@@ -201,7 +215,12 @@ class PGT(object):
         raise Exception("Not implemented. Call sub-class")
 
     def to_pg_spec(
-        self, node_list, ret_str=True, num_islands=1, tpl_nodes_len=0, co_host_dim=True
+        self,
+        node_list,
+        ret_str=True,
+        num_islands=1,
+        tpl_nodes_len=0,
+        co_host_dim=True,
     ):
         """
         convert pgt to pg specification, and map that to the hardware resources
@@ -221,7 +240,9 @@ class PGT(object):
             The pg_spec template is what needs to be send to a deferred deployemnt
             where the daliuge system is started up afer submission (e.g. SLURM)
         """
-        logger.debug("tpl_nodes_len: %s, node_list: %s", tpl_nodes_len, node_list)
+        logger.debug(
+            "tpl_nodes_len: %s, node_list: %s", tpl_nodes_len, node_list
+        )
         if tpl_nodes_len > 0:  # generate pg_spec template
             node_list = range(tpl_nodes_len)  # create a fake list for now
 
@@ -235,7 +256,9 @@ class PGT(object):
         try:
             num_islands = int(num_islands)
         except:
-            raise GPGTException("Invalid num_islands spec: {0}".format(num_islands))
+            raise GPGTException(
+                "Invalid num_islands spec: {0}".format(num_islands)
+            )
         if num_islands < 1:
             num_islands = 1  # need at least one island manager
         if num_islands > nodes_len:
@@ -267,7 +290,10 @@ class PGT(object):
         nm_len = len(nm_list)
         logger.info(
             "Drops count: %d, partitions count: %d, nodes count: %d, island count: %d",
-            len(drop_list), num_parts, nodes_len, len(is_list)
+            len(drop_list),
+            num_parts,
+            nodes_len,
+            len(is_list),
         )
 
         if form_island:
@@ -290,14 +316,13 @@ class PGT(object):
         # lm = {k:values[v] for (k, v) in lm.items()} # replace old values with new
 
         if tpl_nodes_len:
-            nm_list = ["#%s" % x for x in range(nm_len)]  # so that nm_list[i] == '#i'
+            nm_list = [
+                "#%s" % x for x in range(nm_len)
+            ]  # so that nm_list[i] == '#i'
             is_list = [
                 "#%s" % x for x in range(len(is_list))
             ]  # so that is_list[i] == '#i'
 
-        logger.info(
-            "nm_list: %s, is_list: %s, lm: %s, lm2: %s", nm_list, is_list, lm, lm2
-        )
         for drop in drop_list:
             oid = drop["oid"]
             # For now, simply round robin, but need to consider
@@ -333,11 +358,11 @@ class PGT(object):
             node["key"] = i + 1
             key_dict[oid] = i + 1
             node["oid"] = oid
-            tt = drop["type"]
-            if DropType.DATA == tt:
-                node["category"] = Categories.DATA
-            elif DropType.APP == tt:
-                node["category"] = Categories.COMPONENT
+            tt = drop["categoryType"]
+            if CategoryType.DATA == tt:
+                node["category"] = "Data"
+            elif CategoryType.APPLICATION == tt:
+                node["category"] = "Application"
             node["text"] = drop["nm"]
             nodes.append(node)
 
@@ -352,7 +377,11 @@ class PGT(object):
                 for i, oup in enumerate(G.successors(myk)):
                     link = dict()
                     link["from"] = myk
-                    from_dt = 0 if drop["type"] == DropType.DATA else 1
+                    from_dt = (
+                        0
+                        if drop["categoryType"] in [CategoryType.DATA, "data"]
+                        else 1
+                    )
                     to_dt = G.nodes[oup]["dt"]
                     if from_dt == to_dt:
                         to_drop = G.nodes[oup]["drop_spec"]
@@ -362,9 +391,8 @@ class PGT(object):
                             dropSpec = dropdict(
                                 {
                                     "oid": extra_oid,
-                                    "type": DropType.APP,
                                     "categoryType": CategoryType.APPLICATION,
-                                    "app": "dlg.drop.BarrierAppDROP",
+                                    "appclass": "dlg.drop.BarrierAppDROP",
                                     "nm": "go_app",
                                     "text": "go_app",
                                     "tw": 1,
@@ -382,9 +410,8 @@ class PGT(object):
                             dropSpec = dropdict(
                                 {
                                     "oid": extra_oid,
-                                    "type": DropType.DATA,
                                     "categoryType": CategoryType.DATA,
-                                    "storage": Categories.MEMORY,
+                                    "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                                     "nm": "go_data",
                                     "text": "go_data",
                                     "dw": 1,
@@ -405,7 +432,13 @@ class PGT(object):
                         # global graph updates
                         # the new drop must have the same gid as the to_drop
                         add_nodes.append(
-                            (lid, 1, mydt, dropSpec, G.nodes[oup].get("gid", None))
+                            (
+                                lid,
+                                1,
+                                mydt,
+                                dropSpec,
+                                G.nodes[oup].get("gid", None),
+                            )
                         )
                         remove_edges.append((myk, oup))
                         add_edges.append((myk, lid))
@@ -415,7 +448,9 @@ class PGT(object):
                     links.append(link)
             for gn in add_nodes:
                 # logger.debug("added gid = {0} for new node {1}".format(gn[4], gn[0]))
-                G.add_node(gn[0], weight=gn[1], dt=gn[2], drop_spec=gn[3], gid=gn[4])
+                G.add_node(
+                    gn[0], weight=gn[1], dt=gn[2], drop_spec=gn[3], gid=gn[4]
+                )
             G.remove_edges_from(remove_edges)
             G.add_edges_from(add_edges)
             self._extra_drops = extra_drops
@@ -435,11 +470,11 @@ class PGT(object):
             node = dict()
             node["key"] = (i + 1) * -1
             node["oid"] = oid
-            tt = drop["type"]
-            if DropType.DATA == tt:
-                node["category"] = Categories.DATA
-            elif DropType.APP == tt:
-                node["category"] = Categories.COMPONENT
+            tt = drop["categoryType"]
+            if tt == CategoryType.DATA:
+                node["category"] = "Data"
+            elif tt == DropType.APPCLASS:
+                node["category"] = "PythonApp"  # might not be correct
             node["text"] = drop["nm"]
             node["text"] = drop["text"]
             nodes.append(node)
