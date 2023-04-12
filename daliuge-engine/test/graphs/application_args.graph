@@ -1,8 +1,8 @@
 [
   {
     "oid": "a",
-    "type": "app",
-    "app": "dlg.apps.simple.RandomArrayApp",
+    "categoryType": "Application",
+    "appclass": "dlg.apps.simple.RandomArrayApp",
     "rank": [
       0
     ],
@@ -74,8 +74,8 @@
   },
   {
     "oid": "b",
-    "type": "data",
-    "storage": "Memory",
+    "categoryType": "Data",
+    "dataclass": "dlg.data.drops.memory.InMemoryDROP",
     "rank": [
       0
     ],

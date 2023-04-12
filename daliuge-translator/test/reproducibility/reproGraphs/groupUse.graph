@@ -2,9 +2,10 @@
     "linkDataArray": [],
     "modelData": {
         "commitHash": "",
+        "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "Unknown",
-        "eagleVersion": "Unknown",
+        "eagleCommitHash": "5d9153e898ae56bd7efb8d62694c7187836b9d79",
+        "eagleVersion": "v5.0.2",
         "filePath": "groupUse.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -17,13 +18,11 @@
         "repoService": "Unknown",
         "repositoryUrl": "",
         "schemaVersion": "OJS",
-        "signature": "",
         "shortDescription": "",
-        "detailedDescription": ""
+        "signature": ""
     },
     "nodeDataArray": [
         {
-            "applicationArgs": [],
             "category": "GroupBy",
             "categoryType": "Construct",
             "collapsed": false,
@@ -37,27 +36,33 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "id": "c7156c12-7740-4bb5-b243-7212b6ef3e76",
                     "keyAttribute": false,
                     "name": "group_key",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
                     "text": "Group key",
                     "type": "Unknown",
+                    "usage": "NoPort",
                     "value": "None"
                 },
                 {
                     "defaultValue": "",
                     "description": "",
+                    "id": "64744ff5-dfee-43ea-8021-984b9280c758",
                     "keyAttribute": false,
                     "name": "group_axis",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
                     "text": "Group axis",
                     "type": "Unknown",
+                    "usage": "NoPort",
                     "value": "frequency"
                 }
             ],
@@ -67,104 +72,80 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "id": "c4f1785d-2427-42ef-ad3e-b4ed2428c5b4",
                     "keyAttribute": false,
                     "name": "event",
                     "options": [],
+                    "parameterType": "ApplicationArgument",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
                     "text": "event",
+                    "type": "Unknown",
+                    "usage": "InputPort",
                     "value": ""
                 },
                 {
                     "defaultValue": "",
                     "description": "",
+                    "id": "f21dd6fd-08ae-4955-bb05-6466dfa884f6",
                     "keyAttribute": false,
                     "name": "event",
                     "options": [],
+                    "parameterType": "ApplicationArgument",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
                     "text": "event",
+                    "type": "Unknown",
+                    "usage": "OutputPort",
                     "value": ""
                 }
             ],
             "inputApplicationDescription": "",
             "inputApplicationKey": -3,
-            "inputApplicationName": "",
-            "inputApplicationType": "Unknown",
-            "inputLocalPorts": [
-                {
-                    "Id": "f21dd6fd-08ae-4955-bb05-6466dfa884f6",
-                    "IdText": "event",
-                    "description": "",
-                    "event": false,
-                    "keyAttribute": false,
-                    "text": "event"
-                }
-            ],
-            "inputPorts": [
-                {
-                    "Id": "c4f1785d-2427-42ef-ad3e-b4ed2428c5b4",
-                    "IdText": "event",
-                    "description": "",
-                    "event": false,
-                    "keyAttribute": false,
-                    "text": "event"
-                }
-            ],
+            "inputApplicationName": "event",
+            "inputApplicationType": "UnknownApplication",
             "isGroup": true,
             "key": -1,
             "outputAppFields": [
                 {
                     "defaultValue": "",
                     "description": "",
+                    "id": "8ac46084-6e76-4223-8ff7-a352488368d4",
                     "keyAttribute": false,
                     "name": "event",
                     "options": [],
+                    "parameterType": "ApplicationArgument",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
                     "text": "event",
+                    "type": "Unknown",
+                    "usage": "OutputPort",
                     "value": ""
                 },
                 {
                     "defaultValue": "",
                     "description": "",
+                    "id": "ff77c691-624b-471e-ac7e-c0f25cf86559",
                     "keyAttribute": false,
                     "name": "event",
                     "options": [],
+                    "parameterType": "ApplicationArgument",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
                     "text": "event",
+                    "type": "Unknown",
+                    "usage": "InputPort",
                     "value": ""
                 }
             ],
             "outputApplicationDescription": "",
             "outputApplicationKey": -4,
-            "outputApplicationName": "",
-            "outputApplicationType": "Unknown",
-            "outputLocalPorts": [
-                {
-                    "Id": "ff77c691-624b-471e-ac7e-c0f25cf86559",
-                    "IdText": "event",
-                    "description": "",
-                    "event": false,
-                    "keyAttribute": false,
-                    "text": "event"
-                }
-            ],
-            "outputPorts": [
-                {
-                    "Id": "8ac46084-6e76-4223-8ff7-a352488368d4",
-                    "IdText": "event",
-                    "description": "",
-                    "event": false,
-                    "keyAttribute": false,
-                    "text": "event"
-                }
-            ],
+            "outputApplicationName": "event",
+            "outputApplicationType": "UnknownApplication",
             "paletteDownloadUrl": "",
             "repositoryUrl": "",
             "subject": null,
@@ -174,7 +155,6 @@
             "y": 100
         },
         {
-            "applicationArgs": [],
             "category": "BashShellApp",
             "categoryType": "Application",
             "collapsed": false,
@@ -188,53 +168,97 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "id": "e28bb152-62c6-464a-86f3-7c284f574cd2",
                     "keyAttribute": false,
                     "name": "execution_time",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
                     "text": "Execution time",
                     "type": "Unknown",
+                    "usage": "NoPort",
                     "value": "5"
                 },
                 {
                     "defaultValue": "",
                     "description": "",
+                    "id": "d0ff4c96-2d81-4336-8f94-57fa957dccea",
                     "keyAttribute": false,
                     "name": "num_cpus",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
                     "text": "Num CPUs",
                     "type": "Unknown",
+                    "usage": "NoPort",
                     "value": "1"
                 },
                 {
                     "defaultValue": "",
                     "description": "",
+                    "id": "8bdeeb70-a345-4386-a455-8eb1095f90e2",
                     "keyAttribute": false,
                     "name": "group_start",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
                     "text": "Group start",
                     "type": "Unknown",
+                    "usage": "NoPort",
                     "value": "0"
                 },
                 {
                     "defaultValue": "",
                     "description": "",
+                    "id": "a5481f32-2085-46d5-8299-c2eb6da1167d",
                     "keyAttribute": false,
                     "name": "Arg01",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
                     "text": "Arg01",
                     "type": "Unknown",
+                    "usage": "NoPort",
+                    "value": ""
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "id": "4e9ba4ed-1f51-45ed-9320-ad7978701970",
+                    "keyAttribute": false,
+                    "name": "event",
+                    "options": [],
+                    "parameterType": "ApplicationArgument",
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "event",
+                    "type": "Unknown",
+                    "usage": "InputPort",
+                    "value": ""
+                },
+                {
+                    "defaultValue": "",
+                    "description": "",
+                    "id": "260b62fe-1624-4fd2-b638-3e64f6293453",
+                    "keyAttribute": false,
+                    "name": "event",
+                    "options": [],
+                    "parameterType": "ApplicationArgument",
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "event",
+                    "type": "Unknown",
+                    "usage": "OutputPort",
                     "value": ""
                 }
             ],
@@ -245,17 +269,6 @@
             "inputApplicationKey": null,
             "inputApplicationName": "",
             "inputApplicationType": "None",
-            "inputLocalPorts": [],
-            "inputPorts": [
-                {
-                    "Id": "4e9ba4ed-1f51-45ed-9320-ad7978701970",
-                    "IdText": "event",
-                    "description": "",
-                    "event": false,
-                    "keyAttribute": false,
-                    "text": "event"
-                }
-            ],
             "isGroup": false,
             "key": -2,
             "outputAppFields": [],
@@ -263,17 +276,6 @@
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
-            "outputLocalPorts": [],
-            "outputPorts": [
-                {
-                    "Id": "260b62fe-1624-4fd2-b638-3e64f6293453",
-                    "IdText": "event",
-                    "description": "",
-                    "event": false,
-                    "keyAttribute": false,
-                    "text": "event"
-                }
-            ],
             "paletteDownloadUrl": "",
             "repositoryUrl": "",
             "subject": null,

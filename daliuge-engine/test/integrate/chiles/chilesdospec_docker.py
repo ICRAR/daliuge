@@ -30,7 +30,6 @@ import time
 
 from dlg.drop import dropdict
 from dlg.manager.client import DataIslandManagerClient
-from dlg.common import Categories
 
 LOCAL_FILES = os.path.dirname(os.path.realpath(__file__))
 CASAPY = "/opt/casa-release-4.4.0-el6/"
@@ -52,8 +51,8 @@ def fileDropSpec(uid, **kwargs):
     dropSpec = dropdict(
         {
             "oid": str(uid),
-            "type": "data",
-            "storage": Categories.FILE,
+            "categoryType": "Data",
+            "dataclass": dlg.data.drops.file.FileDROP",
             "node": "localhost",
             "island": "localhost",
         }
@@ -66,7 +65,7 @@ def directorySpec(uid, **kwargs):
     dropSpec = dropdict(
         {
             "oid": str(uid),
-            "type": "container",
+            "categoryType": "container",
             "container": "dlg.drop.DirectoryContainer",
             "node": "localhost",
             "island": "localhost",
@@ -85,8 +84,8 @@ def casapyDockerAppSpec(uid, script):
     return dropdict(
         {
             "oid": str(uid),
-            "type": "app",
-            "app": "dlg.apps.dockerapp.DockerApp",
+            "categoryType": "Application",
+            "appclass": "dlg.apps.dockerapp.DockerApp",
             "image": "dfms/casapy_centos7_dfms:0.1",
             "command": cmd,
             "user": "dfms",
@@ -166,7 +165,9 @@ if __name__ == "__main__":
         flux.addOutput(flux_out)
 
         for i, v in enumerate(VIS):
-            vis_in = directorySpec("vis%d" % (i), dirname=v[0], check_exists=False)
+            vis_in = directorySpec(
+                "vis%d" % (i), dirname=v[0], check_exists=False
+            )
             split_out = directorySpec(
                 "SplitOutput_%d" % (i), dirname=v[1], check_exists=False
             )

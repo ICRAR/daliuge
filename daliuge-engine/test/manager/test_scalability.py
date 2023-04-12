@@ -23,7 +23,7 @@ import logging
 import time
 import unittest
 
-from dlg.common import dropdict, tool, Categories
+from dlg.common import dropdict, tool
 from dlg.manager import client
 from dlg.utils import terminate_or_kill
 from test.manager import testutils
@@ -38,7 +38,7 @@ default_repro = {
         "lg_blockhash": "x",
         "pgt_blockhash": "y",
         "pg_blockhash": "z",
-    }
+    },
 }
 default_graph_repro = {
     "rmode": "1",
@@ -46,7 +46,7 @@ default_graph_repro = {
     "merkleroot": "a",
     "RERUN": {
         "signature": "b",
-    }
+    },
 }
 
 
@@ -63,8 +63,8 @@ def memory_drop(uid):
             "node": hostname,
             "oid": uid,
             "uid": uid,
-            "type": "data",
-            "storage": Categories.MEMORY,
+            "categoryType": "Data",
+            "dataclass": "dlg.data.drops.memory.InMemoryDROP",
         }
     )
 
@@ -83,8 +83,8 @@ def create_graph(branches, drops_per_branch):
                     "node": hostname,
                     "oid": app_uid,
                     "uid": app_uid,
-                    "type": "app",
-                    "app": "dlg.apps.simple.SleepAndCopyApp",
+                    "categoryType": "Application",
+                    "appclass": "dlg.apps.simple.SleepAndCopyApp",
                     "sleepTime": 0,
                 }
             )
@@ -137,7 +137,6 @@ class TestBigGraph(unittest.TestCase):
         self._run_graph(graph, completed_uids, timeout=5)
 
     def _run_graph(self, graph, completed_uids, timeout=5):
-
         sessionId = "lala"
         restPort = 8989
         args = ["--port", str(restPort), "-N", hostname, "-qq"]

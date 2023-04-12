@@ -236,7 +236,8 @@ def getLeafNodes(drops):
     return [
         drop
         for drop, _ in breadFirstTraverse(drops)
-        if not getDownstreamObjects(drop) and drop.type != DropType.SERVICE_APP
+        if not getDownstreamObjects(drop)
+        and drop.type != DropType.SERVICECLASS
     ]
 
 

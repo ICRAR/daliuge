@@ -29,7 +29,6 @@ import numpy
 
 from dlg import droputils
 from dlg.apps import pyfunc
-from dlg.common import Categories
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.data.drops.memory import InMemoryDROP
 from dlg.droputils import DROPWaiterCtx
@@ -241,7 +240,6 @@ class TestPyFuncApp(unittest.TestCase):
         self._test_simple_functions(lambda x: (x + n) / 2, n, (n + n) / 2)
 
     def _test_func3(self, output_drops, expected_outputs):
-
         a = _PyFuncApp("a", "a", "func3")
         for drop in output_drops:
             a.addOutput(drop)
@@ -418,18 +416,24 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         | A --|----|-> B --> C |
         =======    =============
         """
-        g1 = [{"oid": "A", "type": "data", "storage": Categories.MEMORY}]
+        g1 = [
+            {
+                "oid": "A",
+                "categoryType": "Data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+            }
+        ]
         g2 = [
             {
                 "oid": "B",
-                "type": "app",
-                "app": "dlg.apps.pyfunc.PyFuncApp",
+                "categoryType": "Application",
+                "appclass": "dlg.apps.pyfunc.PyFuncApp",
                 "func_name": __name__ + ".func1",
             },
             {
                 "oid": "C",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "categoryType": "Data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "producers": ["B"],
             },
         ]
@@ -453,18 +457,24 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         g1 = [
             {
                 "oid": "A",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "categoryType": "Data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "consumers": ["B"],
             },
             {
                 "oid": "B",
-                "type": "app",
-                "app": "dlg.apps.pyfunc.PyFuncApp",
+                "categoryType": "Application",
+                "appclass": "dlg.apps.pyfunc.PyFuncApp",
                 "func_name": __name__ + ".func1",
             },
         ]
-        g2 = [{"oid": "C", "type": "data", "storage": Categories.MEMORY}]
+        g2 = [
+            {
+                "oid": "C",
+                "categoryType": "Data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+            }
+        ]
         rels = [DROPRel("B", DROPLinkType.PRODUCER, "C")]
         a_data = os.urandom(32)
         c_data = self._test_runGraphInTwoNMs(

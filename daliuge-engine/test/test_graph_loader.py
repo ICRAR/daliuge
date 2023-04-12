@@ -30,7 +30,6 @@ from dlg.apps.app_base import AppDROP
 
 from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
 from dlg.data.drops.directorycontainer import DirectoryContainer
-from dlg.common import Categories
 from dlg.apps.simple import RandomArrayApp
 
 
@@ -42,7 +41,11 @@ class DummyApp(AppDROP):
 class TestGraphLoader(unittest.TestCase):
     def test_singleMemoryDrop(self):
         dropSpecList = [
-            {"oid": "A", "type": "data", "storage": Categories.MEMORY}
+            {
+                "oid": "A",
+                "categoryType": "Data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+            }
         ]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, InMemoryDROP)
@@ -51,7 +54,11 @@ class TestGraphLoader(unittest.TestCase):
 
     def test_sharedMemoryDrop(self):
         dropSpecList = [
-            {"oid": "A", "type": "data", "storage": Categories.SHMEM}
+            {
+                "oid": "A",
+                "categoryType": "Data",
+                "dataclass": "dlg.data.drops.memory.SharedMemoryDROP",
+            }
         ]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, SharedMemoryDROP)
@@ -60,8 +67,12 @@ class TestGraphLoader(unittest.TestCase):
 
     def test_containerDrop(self):
         dropSpecList = [
-            {"oid": "A", "type": "data", "storage": Categories.MEMORY},
-            {"oid": "B", "type": "container", "children": ["A"]},
+            {
+                "oid": "A",
+                "categoryType": "Data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+            },
+            {"oid": "B", "categoryType": "container", "children": ["A"]},
         ]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, InMemoryDROP)
@@ -77,13 +88,13 @@ class TestGraphLoader(unittest.TestCase):
         dropSpecList = [
             {
                 "oid": "A",
-                "type": "data",
-                "storage": Categories.FILE,
+                "categoryType": "Data",
+                "dataclass": "dlg.data.drops.file.FileDROP",
                 "dirname": ".",
             },
             {
                 "oid": "B",
-                "type": "container",
+                "categoryType": "Container",
                 "container": "dlg.data.drops.DirectoryContainer",
                 "children": ["A"],
                 "dirname": ".",
@@ -97,14 +108,14 @@ class TestGraphLoader(unittest.TestCase):
         dropSpecList = [
             {
                 "oid": "A",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "categoryType": "Data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 "consumers": ["B"],
             },
             {
                 "oid": "B",
-                "type": "app",
-                "app": "test.test_graph_loader.DummyApp",
+                "categoryType": "Application",
+                "appclass": "test.test_graph_loader.DummyApp",
             },
         ]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
@@ -158,7 +169,6 @@ class TestGraphLoader(unittest.TestCase):
         )
 
     def test_removeUnmetRelationships_named(self):
-
         with pkg_resources.resource_stream(
             "test", "graphs/HelloWorld_simplePG.graph"
         ) as f:  # @UndefinedVariable
@@ -223,8 +233,8 @@ class TestGraphLoader(unittest.TestCase):
             with self.subTest(key=key, value=value):
                 dropSpec = {
                     "oid": "A",
-                    "type": "data",
-                    "storage": Categories.MEMORY,
+                    "categoryType": "Data",
+                    "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                 }
                 if key is not None:
                     dropSpec[key] = value

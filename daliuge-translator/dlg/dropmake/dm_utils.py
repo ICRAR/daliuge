@@ -29,8 +29,7 @@ import json
 import logging
 import os
 import os.path as osp
-
-from dlg.common import Categories
+from .definition_classes import ConstructTypes
 
 logger = logging.getLogger(__name__)
 
@@ -191,7 +190,7 @@ def convert_mkn(lgo):
     app_keywords = ["inputApplicationName", "outputApplicationName"]
 
     for node in lgo["nodeDataArray"]:
-        if Categories.MKN != node["category"]:
+        if ConstructTypes.MKN != node["category"]:
             continue
         for ak in app_keywords:
             if ak not in node:
@@ -208,12 +207,14 @@ def convert_mkn(lgo):
         # step 1 - clone the current MKN
         mkn_key = node["key"]
         mkn_local_input_keys = [
-            _make_unique_port_key(x["Id"], node["key"])
-            for x in node["inputLocalPorts"]
+            _make_unique_port_key(x["id"], node["key"])
+            for x in node["inputAppFields"]
+            if x["usage"] == "InputPort"
         ]
         mkn_output_keys = [
-            _make_unique_port_key(x["Id"], node["key"])
-            for x in node["outputPorts"]
+            _make_unique_port_key(x["id"], node["key"])
+            for x in node["inputAppFields"]
+            if x["usage"] == "OutputPort"
         ]
         node_mk = node
         node_mk["mkn"] = [M, K, N]
@@ -221,8 +222,8 @@ def convert_mkn(lgo):
         node_split_n = copy.deepcopy(node_mk)
 
         node_mk["application"] = node["inputApplicationName"]
-        node_mk["category"] = Categories.GATHER
-        node_mk["type"] = Categories.GATHER
+        node_mk["category"] = ConstructTypes.GATHER
+        node_mk["categoryType"] = ConstructTypes.GATHER
         ipan = node_mk.get("inputApplicationName", "")
         if len(ipan) == 0:
             node_mk["text"] = node_mk["text"] + "_InApp"
@@ -238,8 +239,8 @@ def convert_mkn(lgo):
         }
         node_mk["fields"].append(new_field)
 
-        node_kn["category"] = Categories.SCATTER
-        node_kn["type"] = Categories.SCATTER
+        node_kn["category"] = ConstructTypes.SCATTER
+        node_kn["categoryType"] = ConstructTypes.SCATTER
 
         opan = node_kn.get("outputAppName", "")
         if len(opan) == 0:
@@ -277,8 +278,8 @@ def convert_mkn(lgo):
         for mok in mkn_output_keys:
             old_new_k2n_from_map[mok] = k_new
 
-        node_split_n["category"] = Categories.SCATTER
-        node_split_n["type"] = Categories.SCATTER
+        node_split_n["category"] = ConstructTypes.SCATTER
+        node_split_n["categoryType"] = ConstructTypes.SCATTER
         node_split_n["text"] = "Nothing"
         k_new = min(keyset) - 1
         keyset.add(k_new)
@@ -352,7 +353,7 @@ def convert_mkn_all_share_m(lgo):
     app_keywords = ["inputApplicationName", "outputApplicationName"]
 
     for node in lgo["nodeDataArray"]:
-        if Categories.MKN != node["category"]:
+        if ConstructTypes.MKN != node["category"]:
             continue
         for ak in app_keywords:
             if ak not in node:
@@ -375,7 +376,7 @@ def convert_mkn_all_share_m(lgo):
         node_kn = copy.deepcopy(node_mk)
 
         node_mk["application"] = node["inputApplicationName"]
-        node_mk["category"] = Categories.GATHER
+        node_mk["category"] = ConstructTypes.GATHER
         node_mk["text"] = node_mk["text"] + "_InApp"
         del node["inputApplicationName"]
         del node["outputApplicationName"]
@@ -387,7 +388,7 @@ def convert_mkn_all_share_m(lgo):
         }
         node_mk["fields"].append(new_field)
 
-        node_kn["category"] = Categories.GATHER
+        node_kn["category"] = ConstructTypes.GATHER
         node_kn["text"] = node_kn["text"] + "_OutApp"
         k_new = min(keyset) - 1
         keyset.add(k_new)
@@ -432,7 +433,10 @@ def getAppRefInputs(lgo):
     Used to recover the Gather node inputs for AppRef format graphs.
     """
     for node in lgo["nodeDataArray"]:
-        if node["category"] not in [Categories.SCATTER, Categories.GATHER]:
+        if node["category"] not in [
+            ConstructTypes.SCATTER,
+            ConstructTypes.GATHER,
+        ]:
             continue
         has_app = None
 
@@ -462,9 +466,9 @@ def convert_construct(lgo):
     app_keywords = ["inputApplicationType", "outputApplicationType"]
     for node in lgo["nodeDataArray"]:
         if node["category"] not in [
-            Categories.SCATTER,
-            Categories.GATHER,
-            Categories.SERVICE,
+            ConstructTypes.SCATTER,
+            ConstructTypes.GATHER,
+            ConstructTypes.SERVICE,
         ]:
             continue
         has_app = None
@@ -507,10 +511,10 @@ def convert_construct(lgo):
             for afd in node[INPUT_APP_FIELDS]:
                 app_node[afd["name"]] = afd["value"]
 
-        if node["category"] == Categories.GATHER:
+        if node["category"] == ConstructTypes.GATHER:
             app_node["group_start"] = 1
 
-        if node["category"] == Categories.SERVICE:
+        if node["category"] == ConstructTypes.SERVICE:
             app_node["isService"] = True
 
         new_nodes.append(app_node)
@@ -521,7 +525,7 @@ def convert_construct(lgo):
         keyset.add(k_new)
         old_new_grpk_map[app_node["key"]] = k_new
 
-        if Categories.GATHER == node["category"]:
+        if ConstructTypes.GATHER == node["category"]:
             old_new_gather_map[app_node["key"]] = k_new
             app_node["group"] = k_new
             app_node["group_start"] = 1
@@ -559,50 +563,54 @@ def convert_construct(lgo):
                 node["group"] = old_new_grpk_map[k_old]
 
         # step 4
-        for link in lgo["linkDataArray"]:
-            if link["to"] in old_new_gather_map:
-                k_old = link["to"]
-                k_new = old_new_gather_map[k_old]
-                link["to"] = k_new
+        if len(old_new_gather_map) > 0:
+            for link in lgo["linkDataArray"]:
+                if link["to"] in old_new_gather_map:
+                    k_old = link["to"]
+                    k_new = old_new_gather_map[k_old]
+                    link["to"] = k_new
 
-                # deal with the internal output from Gather
-                from_node = node_index[link["from"]]
-                # this is an obsolete and awkard way of checking internal output (for backward compatibility)
-                if "group" in from_node and from_node["group"] == k_new:
-                    dup_app_node = duplicated_gather_app[k_new]
-                    k_new_new = dup_app_node["key"]
-                    link["to"] = k_new_new
-                    if k_new_new not in node_index:
-                        node_index[k_new_new] = dup_app_node
-                        dup_app_node["reprodata"] = (
-                            node_index[k_new].get("reprodata", {}).copy()
-                        )
-                        lgo["nodeDataArray"].append(dup_app_node)
-                        old_newnew_gather_map[k_old] = k_new_new
+                    # deal with the internal output from Gather
+                    from_node = node_index[link["from"]]
+                    # this is an obsolete and awkard way of checking internal output (for backward compatibility)
+                    if "group" in from_node and from_node["group"] == k_new:
+                        dup_app_node = duplicated_gather_app[k_new]
+                        k_new_new = dup_app_node["key"]
+                        link["to"] = k_new_new
+                        if k_new_new not in node_index:
+                            node_index[k_new_new] = dup_app_node
+                            dup_app_node["reprodata"] = (
+                                node_index[k_new].get("reprodata", {}).copy()
+                            )
+                            lgo["nodeDataArray"].append(dup_app_node)
+                            old_newnew_gather_map[k_old] = k_new_new
 
-        # step 5
-        # relink the connection from gather to its external output if the gather
-        # has internal output that has been delt with in Step 4
-        for link in lgo["linkDataArray"]:
-            if link["from"] in old_new_gather_map:
-                k_old = link["from"]
-                k_new = old_new_gather_map[k_old]
-                to_node = node_index[link["to"]]
-                gather_construct = node_index[k_new]
-                if "group" not in to_node and "group" not in gather_construct:
-                    cond1 = True
-                elif (
-                    "group" in to_node
-                    and "group" in gather_construct
-                    and to_node["group"] == gather_construct["group"]
-                ):
-                    cond1 = True
-                else:
-                    cond1 = False
+            # step 5
+            # relink the connection from gather to its external output if the gather
+            # has internal output that has been delt with in Step 4
+            for link in lgo["linkDataArray"]:
+                if link["from"] in old_new_gather_map:
+                    k_old = link["from"]
+                    k_new = old_new_gather_map[k_old]
+                    to_node = node_index[link["to"]]
+                    gather_construct = node_index[k_new]
+                    if (
+                        "group" not in to_node
+                        and "group" not in gather_construct
+                    ):
+                        cond1 = True
+                    elif (
+                        "group" in to_node
+                        and "group" in gather_construct
+                        and to_node["group"] == gather_construct["group"]
+                    ):
+                        cond1 = True
+                    else:
+                        cond1 = False
 
-                if cond1 and (k_old in old_newnew_gather_map):
-                    link["from"] = old_newnew_gather_map[k_old]
-                # print("from %d to %d to %d" % (link['from'], k_old, link['to']))
+                    if cond1 and (k_old in old_newnew_gather_map):
+                        link["from"] = old_newnew_gather_map[k_old]
+                    # print("from %d to %d to %d" % (link['from'], k_old, link['to']))
 
     # print('%d nodes in lg after construct conversion' % len(lgo['nodeDataArray']))
     return lgo
@@ -662,8 +670,8 @@ def convert_eagle_to_daliuge_json(lg_name):
                 group_category = group_node.get("category", "")
 
                 if (
-                    group_category == Categories.GATHER
-                    or group_category == Categories.GROUP_BY
+                    group_category == ConstructTypes.GATHER
+                    or group_category == ConstructTypes.GROUP_BY
                 ):
                     # Check if the node is first in that group.
                     fields = node["fields"]

@@ -33,7 +33,6 @@ import logging
 
 from merklelib import MerkleTree
 
-from dlg.common import STORAGE_TYPES
 from dlg.common.reproducibility.constants import (
     ReproducibilityFlags,
     REPRO_DEFAULT,
@@ -94,10 +93,16 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
             f"Reproducibility level {level.name} not yet supported"
         )
     category = drop.get("category", "")
+    # category = drop.get("categoryType", "")
 
     # Cheeky way to get field list into dicts. map(dict, drop...) makes a copy
-    fields = {e.pop("name"): e["value"] for e in map(dict, drop.get("fields", {}))}
-    app_fields = {e.pop("name"): e["value"] for e in map(dict, drop.get("applicationArgs", {}))}
+    fields = {
+        e.pop("name"): e["value"] for e in map(dict, drop.get("fields", {}))
+    }
+    app_fields = {
+        e.pop("name"): e["value"]
+        for e in map(dict, drop.get("applicationArgs", {}))
+    }
     fields.update(app_fields)
     lg_fields = lg_block_fields(category, level, app_fields.keys())
     data = extract_fields(fields, lg_fields)
@@ -111,7 +116,10 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
     :return: A dictionary containing accumulated reproducibility data for a given drop.
     """
     if drop.get("reprodata") is None:
-        drop["reprodata"] = {"rmode": str(REPRO_DEFAULT.value), "lg_blockhash": None}
+        drop["reprodata"] = {
+            "rmode": str(REPRO_DEFAULT.value),
+            "lg_blockhash": None,
+        }
     if drop["reprodata"].get("rmode") is None:
         level = REPRO_DEFAULT
         drop["reprodata"]["rmode"] = str(level.value)
@@ -123,9 +131,9 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
         )
         level = REPRO_DEFAULT
         drop["reprodata"]["rmode"] = str(level.value)
-    if drop.get("type") is None:
-        return {}
-    drop_type = drop["type"]
+    # if drop.get("categoryType") is None:
+    #     return {}
+    drop_type = drop["categoryType"]
     candidate_rmodes = []
     if level == ReproducibilityFlags.ALL:
         candidate_rmodes.extend(ALL_RMODES)
@@ -145,7 +153,10 @@ def accumulate_pgt_partition_drop_data(drop: dict):
     :return:
     """
     if drop.get("reprodata") is None:
-        drop["reprodata"] = {"rmode": str(REPRO_DEFAULT.value), "lg_blockhash": None}
+        drop["reprodata"] = {
+            "rmode": str(REPRO_DEFAULT.value),
+            "lg_blockhash": None,
+        }
     if drop["reprodata"].get("rmode") is None:
         level = REPRO_DEFAULT
         drop["reprodata"]["rmode"] = str(level.value)
@@ -344,7 +355,10 @@ def accumulate_meta_data():
     """
     WARNING: Relies on naming convention in hashlib.
     """
-    data = {"repro_protocol": PROTOCOL_VERSION, "HashingAlg": str(HashingAlg)}
+    data = {
+        "repro_protocol": PROTOCOL_VERSION,
+        "HashingAlg": HashingAlg.__name__,
+    }
     return data
 
 
@@ -359,7 +373,7 @@ def build_lg_block_data(drop: dict, rmode):
         lg_hash = drop["reprodata"][rmode.name]["lg_data"]["merkleroot"]
         block_data.append(lg_hash)
     for parenthash in sorted(
-            drop["reprodata"][rmode.name]["lg_parenthashes"].values()
+        drop["reprodata"][rmode.name]["lg_parenthashes"].values()
     ):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data, common_hash)
@@ -381,7 +395,7 @@ def build_pgt_block_data(drop: dict, rmode):
     if "lg_blockhash" in drop["reprodata"][rmode.name]:
         block_data.append(drop["reprodata"][rmode.name]["lg_blockhash"])
     for parenthash in sorted(
-            drop["reprodata"][rmode.name]["pgt_parenthashes"].values()
+        drop["reprodata"][rmode.name]["pgt_parenthashes"].values()
     ):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data, common_hash)
@@ -400,7 +414,7 @@ def build_pg_block_data(drop: dict, rmode):
         drop["reprodata"][rmode.name]["lg_blockhash"],
     ]
     for parenthash in sorted(
-            drop["reprodata"][rmode.name]["pg_parenthashes"].values()
+        drop["reprodata"][rmode.name]["pg_parenthashes"].values()
     ):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data, common_hash)
@@ -422,7 +436,7 @@ def build_rg_block_data(drop: dict, rmode):
         drop["reprodata"][rmode.name]["lg_blockhash"],
     ]
     for parenthash in sorted(
-            drop["reprodata"][rmode.name]["rg_parenthashes"].values()
+        drop["reprodata"][rmode.name]["rg_parenthashes"].values()
     ):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data, common_hash)
@@ -480,10 +494,14 @@ def lg_build_blockdag(logical_graph: dict, level):
             parenthash = {}
             if rmode != ReproducibilityFlags.NOTHING:
                 if rmode == ReproducibilityFlags.REPRODUCE:
+                    if "categoryType" in dropset[did][0]:
+                        dtype = dropset[did][0]["categoryType"].lower()
+                    elif "categoryType" in dropset[did][0]:
+                        dtype = dropset[did][0]["categoryType"].lower()
                     if (
-                            dropset[did][0]["category"] in STORAGE_TYPES
-                            and (dropset[did][1] == 0 or dropset[did][2] == 0)
-                            and (did in roots or did in leaves)
+                        dtype == "data"
+                        and (dropset[did][1] == 0 or dropset[did][2] == 0)
+                        and (did in roots or did in leaves)
                     ):
                         # Add my new hash to the parent-hash list
                         if did not in parenthash:
@@ -499,7 +517,9 @@ def lg_build_blockdag(logical_graph: dict, level):
                             ]
                         )
                         # parenthash.extend(dropset[did][0]['reprodata']['lg_parenthashes'])
-                if rmode != ReproducibilityFlags.REPRODUCE:  # Non-compressing behaviour
+                if (
+                    rmode != ReproducibilityFlags.REPRODUCE
+                ):  # Non-compressing behaviour
                     parenthash[did] = dropset[did][0]["reprodata"][level.name][
                         "lg_blockhash"
                     ]
@@ -569,7 +589,7 @@ def build_blockdag(drops: list, abstraction: str, level: ReproducibilityFlags):
                 dropset[did][2] += 1
                 neighbourset[did].append(dest)
         if (
-                "consumers" in drop
+            "consumers" in drop
         ):  # There may be some bizarre scenario when a drop has both
             for dest in drop["consumers"]:
                 if isinstance(dest, dict):
@@ -598,13 +618,22 @@ def build_blockdag(drops: list, abstraction: str, level: ReproducibilityFlags):
             if rmode != ReproducibilityFlags.NOTHING:
                 if rmode == ReproducibilityFlags.REPRODUCE:
                     # WARNING: Hack! may break later, proceed with caution
-                    category = dropset[did][0]["reprodata"][rmode.name]["lgt_data"][
-                        "category"
-                    ]
                     if (
-                            category in STORAGE_TYPES
-                            and (dropset[did][1] == 0 or dropset[did][2] == 0)
-                            and (did in roots or did in leaves)
+                        "categoryType"
+                        in dropset[did][0]["reprodata"][rmode.name]["pgt_data"]
+                    ):
+                        ctype = dropset[did][0]["reprodata"][rmode.name][
+                            "pgt_data"
+                        ]["categoryType"]
+                    else:
+                        ctype = dropset[did][0]["reprodata"][rmode.name][
+                            "lgt_data"
+                        ]["categoryType"]
+
+                    if (
+                        ctype.lower() == "data"
+                        and (dropset[did][1] == 0 or dropset[did][2] == 0)
+                        and (did in roots or did in leaves)
                     ):
                         # Add my new hash to the parent-hash list
                         if did not in parenthash:
@@ -621,12 +650,12 @@ def build_blockdag(drops: list, abstraction: str, level: ReproducibilityFlags):
                 if rmode != ReproducibilityFlags.REPRODUCE:
                     parenthash[did] = dropset[did][0]["reprodata"][level.name][
                         blockstr + "_blockhash"
-                        ]
+                    ]
                 # Add our new hash to the parent-hash list if on the critical path
                 if rmode == ReproducibilityFlags.RERUN:
                     if "iid" in dropset[did][0].keys():
                         if (
-                                dropset[did][0]["iid"] == "0/0"
+                            dropset[did][0]["iid"] == "0/0"
                         ):  # TODO: This is probably wrong
                             dropset[neighbour][0]["reprodata"][level.name][
                                 parentstr
@@ -648,7 +677,7 @@ def build_blockdag(drops: list, abstraction: str, level: ReproducibilityFlags):
     for i, leaf in enumerate(leaves):
         leaves[i] = dropset[leaf][0]["reprodata"][level.name][
             blockstr + "_blockhash"
-            ]
+        ]
     return leaves, visited
 
     # logger.info("BlockDAG Generated at" + abstraction + " level")
@@ -678,7 +707,10 @@ def init_lgt_repro_data(logical_graph_template: dict, rmode: str):
             "Requested reproducibility mode %s not yet implemented", str(rmode)
         )
         rmode = REPRO_DEFAULT
-    reprodata = {"rmode": str(rmode.value), "meta_data": accumulate_meta_data()}
+    reprodata = {
+        "rmode": str(rmode.value),
+        "meta_data": accumulate_meta_data(),
+    }
     meta_tree = MerkleTree(reprodata.items(), common_hash)
     reprodata["merkleroot"] = meta_tree.merkle_root
     for drop in logical_graph_template.get("nodeDataArray", []):
@@ -714,9 +746,9 @@ def init_lg_repro_data(logical_graph: dict):
         if rmode.name not in logical_graph["reprodata"]:
             logical_graph["reprodata"][rmode.name] = {}
         leaves, _ = lg_build_blockdag(logical_graph, rmode)
-        logical_graph["reprodata"][rmode.name]["signature"] = agglomerate_leaves(
-            leaves
-        )
+        logical_graph["reprodata"][rmode.name][
+            "signature"
+        ] = agglomerate_leaves(leaves)
     logger.info("Reproducibility data finished at LG level")
     return logical_graph
 

@@ -33,7 +33,7 @@ from dlg.dropmake.scheduler import (
     MinNumPartsScheduler,
     PSOScheduler,
 )
-from dlg.common import DropType
+from dlg.common import CategoryType
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +108,7 @@ class MetisPGTP(PGT):
                 oid = drop["oid"]
             except KeyError:
                 logger.debug("Drop does not have oid: %s", drop)
-                continue
+                droplist.pop(i)
             key_dict[oid] = i + 1  # METIS index starts from 1
 
         logger.info("Metis partition input progress - dropdict is built")
@@ -124,13 +124,13 @@ class MetisPGTP(PGT):
         for i, drop in enumerate(droplist):
             oid = drop["oid"]
             myk = i + 1
-            tt = drop["type"]
-            if DropType.DATA == tt:
+            tt = drop["categoryType"]
+            if tt in [CategoryType.DATA, "data"]:
                 dst = "consumers"  # outbound keyword
                 ust = "producers"
                 tw = 1  # task weight is zero for a Data DROP
                 sz = drop.get("dw", 1)  # size
-            elif DropType.APP == tt:
+            elif tt in [CategoryType.APPLICATION, "app"]:
                 dst = "outputs"
                 ust = "inputs"
                 tw = drop["tw"]
@@ -144,9 +144,9 @@ class MetisPGTP(PGT):
 
             for inp in adj_drops:
                 key = list(inp.keys())[0] if isinstance(inp, dict) else inp
-                if DropType.DATA == tt:
+                if tt in [CategoryType.DATA, "data"]:
                     lw = drop["dw"]
-                elif DropType.APP == tt:
+                elif tt in [CategoryType.APPLICATION, "app"]:
                     # lw = drop_dict[inp].get('dw', 1)
                     lw = droplist[key_dict[key] - 1].get("dw", 1)
                 if lw <= 0:

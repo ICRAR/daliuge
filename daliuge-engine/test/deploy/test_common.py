@@ -23,7 +23,6 @@ import os
 import tempfile
 import unittest
 
-from dlg.common import Categories
 from dlg.deploy import common
 from dlg.manager import constants
 from dlg.manager.session import SessionStates
@@ -33,11 +32,11 @@ from dlg.testutils import ManagerStarter
 
 default_repro = {
     "rmode": "1",
-    "RERUN":{
+    "RERUN": {
         "lg_blockhash": "x",
         "pgt_blockhash": "y",
         "pg_blockhash": "z",
-    }
+    },
 }
 default_graph_repro = {
     "rmode": "1",
@@ -45,7 +44,7 @@ default_graph_repro = {
     "merkleroot": "a",
     "RERUN": {
         "signature": "b",
-    }
+    },
 }
 
 
@@ -59,15 +58,23 @@ def add_test_reprodata(graph: list):
 class CommonTestsBase(ManagerStarter):
     def _submit(self):
         pg = [
-            {"oid": "A", "type": "data", "storage": Categories.MEMORY},
+            {
+                "oid": "A",
+                "categoryType": "Data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+            },
             {
                 "oid": "B",
-                "type": "app",
-                "app": "dlg.apps.simple.SleepApp",
+                "categoryType": "Application",
+                "appclass": "dlg.apps.simple.SleepApp",
                 "inputs": ["A"],
                 "outputs": ["C"],
             },
-            {"oid": "C", "type": "data", "storage": Categories.MEMORY},
+            {
+                "oid": "C",
+                "categoryType": "Data",
+                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+            },
         ]
         pg = add_test_reprodata(pg)
         for drop in pg:
@@ -84,7 +91,9 @@ class CommonTestsBase(ManagerStarter):
 
     def test_monitor(self):
         session_id = self._submit()
-        status = common.monitor_sessions(session_id, port=self.port, poll_interval=0.1)
+        status = common.monitor_sessions(
+            session_id, port=self.port, poll_interval=0.1
+        )
         self.assert_session_finished(status)
 
     def test_monitor_all(self):

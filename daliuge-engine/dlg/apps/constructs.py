@@ -115,7 +115,7 @@ class CommentDrop(BarrierAppDROP):
 
 ##
 # @brief Description
-# @details A loop template drop
+# @details A description template drop
 # @par EAGLE_START
 # @param category Description
 # @param tag template

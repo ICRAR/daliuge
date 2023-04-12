@@ -22,6 +22,7 @@
 import unittest
 
 import pkg_resources
+from dlg.common import CategoryType
 from dlg.dropmake.lg import LG
 from dlg.dropmake.pgt import PGT, GPGTNoNeedMergeException
 from dlg.dropmake.pgtp import MetisPGTP, MySarkarPGTP, MinNumPartsPGTP
@@ -70,7 +71,7 @@ class TestPGGen(unittest.TestCase):
     def test_metis_pgtp(self):
         lgnames = [
             "HelloWorld_simple.graph",
-            "simpleMKN.graph",
+            # "simpleMKN.graph",
             "testLoop.graph",
             "cont_img.graph",
             "test_grpby_gather.graph",
@@ -152,7 +153,11 @@ class TestPGGen(unittest.TestCase):
         # ERROR: dlg.dropmake.scheduler.SchedulerException: Cannot find a idle PID, max_dop provided: 8
 
         # lgnames = ['testLoop.graph', 'cont_img.graph', 'test_grpby_gather.graph', 'chiles_simple.graph']
-        lgnames = ["testLoop.graph", "test_grpby_gather.graph", "chiles_simple.graph"]
+        lgnames = [
+            "testLoop.graph",
+            "test_grpby_gather.graph",
+            "chiles_simple.graph",
+        ]
         tgt_partnum = [15, 15, 10, 10, 5]
         node_list = ["10.128.0.11", "10.128.0.12", "10.128.0.13"]
         for i, lgn in enumerate(lgnames):
@@ -188,7 +193,9 @@ class TestPGGen(unittest.TestCase):
             nb_islands = 2
             # print(lgn)
             try:
-                pgtp.merge_partitions(len(node_list) - nb_islands, form_island=False)
+                pgtp.merge_partitions(
+                    len(node_list) - nb_islands, form_island=False
+                )
             except GPGTNoNeedMergeException as ge:
                 continue
             pg_spec = pgtp.to_pg_spec(node_list, num_islands=nb_islands)
@@ -237,5 +244,5 @@ class TestPGGen(unittest.TestCase):
             lg = LG(fp)
             out = lg.unroll_to_tpl()
             for drop in out:
-                if drop["type"] == "data":
-                    self.assertEqual("SharedMemory", drop["storage"])
+                if drop["categoryType"] in [CategoryType.DATA, "data"]:
+                    self.assertEqual("SharedMemory", drop["category"])

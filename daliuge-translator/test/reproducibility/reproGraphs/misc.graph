@@ -2,9 +2,10 @@
     "linkDataArray": [],
     "modelData": {
         "commitHash": "",
+        "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "Unknown",
-        "eagleVersion": "Unknown",
+        "eagleCommitHash": "5d9153e898ae56bd7efb8d62694c7187836b9d79",
+        "eagleVersion": "v5.0.2",
         "filePath": "misc.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -17,13 +18,11 @@
         "repoService": "Unknown",
         "repositoryUrl": "",
         "schemaVersion": "OJS",
-        "signature": "",
         "shortDescription": "",
-        "detailedDescription": ""
+        "signature": ""
     },
     "nodeDataArray": [
         {
-            "applicationArgs": [],
             "category": "Comment",
             "categoryType": "Other",
             "collapsed": true,
@@ -41,8 +40,6 @@
             "inputApplicationKey": null,
             "inputApplicationName": "",
             "inputApplicationType": "None",
-            "inputLocalPorts": [],
-            "inputPorts": [],
             "isGroup": false,
             "key": -1,
             "outputAppFields": [],
@@ -50,8 +47,6 @@
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
-            "outputLocalPorts": [],
-            "outputPorts": [],
             "paletteDownloadUrl": "",
             "repositoryUrl": "",
             "subject": null,
@@ -61,7 +56,6 @@
             "y": 476.17884359131426
         },
         {
-            "applicationArgs": [],
             "category": "Description",
             "categoryType": "Other",
             "collapsed": true,
@@ -79,8 +73,6 @@
             "inputApplicationKey": null,
             "inputApplicationName": "",
             "inputApplicationType": "None",
-            "inputLocalPorts": [],
-            "inputPorts": [],
             "isGroup": false,
             "key": -2,
             "outputAppFields": [],
@@ -88,8 +80,6 @@
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
-            "outputLocalPorts": [],
-            "outputPorts": [],
             "paletteDownloadUrl": "",
             "repositoryUrl": "",
             "subject": null,
@@ -99,7 +89,6 @@
             "y": 396.09421989641135
         },
         {
-            "applicationArgs": [],
             "category": "Memory",
             "categoryType": "Data",
             "collapsed": false,
@@ -113,28 +102,66 @@
                 {
                     "defaultValue": "",
                     "description": "Estimated size of the data contained in this node",
+                    "id": "d484bb52-8360-493b-b880-aa8a4a227765",
                     "keyAttribute": false,
                     "name": "data_volume",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
                     "text": "Data volume",
                     "type": "Float",
+                    "usage": "NoPort",
                     "value": 5
                 },
                 {
                     "defaultValue": "",
                     "description": "Is this node the end of a group?",
+                    "id": "22aaf475-80b4-46aa-adec-12af9c28827d",
                     "keyAttribute": false,
                     "name": "group_end",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
                     "text": "Group end",
                     "type": "Boolean",
+                    "usage": "NoPort",
                     "value": false
+                },
+                {
+                    "defaultValue": "",
+                    "description": "Dummy input port",
+                    "id": "a7c4eeef-349d-451a-a375-1abfc74b7c04",
+                    "keyAttribute": false,
+                    "name": "dummy",
+                    "options": [],
+                    "parameterType": "ApplicationArgument",
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "dummy",
+                    "type": "Complex",
+                    "usage": "InputPort",
+                    "value": ""
+                },
+                {
+                    "defaultValue": "",
+                    "description": "Dummy output port",
+                    "id": "f98649cd-0799-4248-aae7-0f087f20324b",
+                    "keyAttribute": false,
+                    "name": "dummy",
+                    "options": [],
+                    "parameterType": "ApplicationArgument",
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "text": "dummy",
+                    "type": "Complex",
+                    "usage": "OutputPort",
+                    "value": ""
                 }
             ],
             "flipPorts": false,
@@ -144,18 +171,6 @@
             "inputApplicationKey": null,
             "inputApplicationName": "",
             "inputApplicationType": "None",
-            "inputLocalPorts": [],
-            "inputPorts": [
-                {
-                    "Id": "a7c4eeef-349d-451a-a375-1abfc74b7c04",
-                    "IdText": "dummy",
-                    "description": "Dummy input port",
-                    "event": false,
-                    "keyAttribute": false,
-                    "text": "dummy",
-                    "type": "Complex"
-                }
-            ],
             "isGroup": false,
             "key": -3,
             "outputAppFields": [],
@@ -163,18 +178,6 @@
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
-            "outputLocalPorts": [],
-            "outputPorts": [
-                {
-                    "Id": "f98649cd-0799-4248-aae7-0f087f20324b",
-                    "IdText": "dummy",
-                    "description": "Dummy output port",
-                    "event": false,
-                    "keyAttribute": false,
-                    "text": "dummy",
-                    "type": "Complex"
-                }
-            ],
             "paletteDownloadUrl": "",
             "repositoryUrl": "",
             "subject": null,

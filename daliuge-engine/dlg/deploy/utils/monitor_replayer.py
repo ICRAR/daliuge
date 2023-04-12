@@ -129,7 +129,11 @@ class GraphPlayer(object):
         else:
             st = status["status"]
         r, g, b = self.status_to_colour(st)
-        colour_dict[gnid] = '<viz:color r="%d" g="%d" b="%d"></viz:color>' % (r, g, b)
+        colour_dict[gnid] = '<viz:color r="%d" g="%d" b="%d"></viz:color>' % (
+            r,
+            g,
+            b,
+        )
 
     def parse_status(self, gexf_file, out_dir=None, remove_gexf=False):
         """
@@ -146,7 +150,9 @@ class GraphPlayer(object):
         with open(self.status_path) as f:
             for i, line in enumerate(f):
                 colour_dict = dict()
-                colour_dict["{}"] = '<viz:color r="%d" g="%d" b="%d"></viz:color>\n' % (
+                colour_dict[
+                    "{}"
+                ] = '<viz:color r="%d" g="%d" b="%d"></viz:color>\n' % (
                     ORIGINAL_COLOR[0],
                     ORIGINAL_COLOR[1],
                     ORIGINAL_COLOR[2],
@@ -174,7 +180,9 @@ class GraphPlayer(object):
                             if gexf_line.find("<node id=") > -1:
                                 # <node id="38345" label="38345">
                                 # 38345
-                                node_id = gexf_line.split()[1].split("=")[1][1:-1]
+                                node_id = gexf_line.split()[1].split("=")[1][
+                                    1:-1
+                                ]
                             output_lines.append(gexf_line)
                 # each line generate a new file
                 new_gexf = "{0}/{1}.gexf".format(out_dir, ts)
@@ -190,7 +198,9 @@ class GraphPlayer(object):
                 if ret[0] != 0:
                     logger.error(
                         "Fail to print png from %s to %s: %s",
-                        new_gexf, new_png, ret[1]
+                        new_gexf,
+                        new_png,
+                        ret[1],
                     )
                 del colour_dict
                 if remove_gexf:
@@ -200,9 +210,9 @@ class GraphPlayer(object):
                         pass
 
     def get_downstream_drop_ids(self, dropspec):
-        if dropspec["type"] == "app":
+        if dropspec["categoryType"] in ["Application", "appclass"]:
             ds_kw = "outputs"  # down stream key word
-        elif dropspec["type"] == "data":
+        elif dropspec["categoryType"] in ["Data", "data"]:
             ds_kw = "consumers"
         else:
             ds_kw = "None"
@@ -235,7 +245,9 @@ class GraphPlayer(object):
 
         return G
 
-    def get_state_changes(self, gexf_file, grep_log_file, steps=400, out_dir=None):
+    def get_state_changes(
+        self, gexf_file, grep_log_file, steps=400, out_dir=None
+    ):
         """
         grep -R "changed to state" --include=*.log . > statelog.txt
         the simulation time will be evenly divided up by "steps"
@@ -253,11 +265,17 @@ class GraphPlayer(object):
                 alllines = f.readlines()
             with open(csv_file, "w") as fo:
                 for line in alllines:
-                    ts = line.split("[DEBUG]")[0].split("dlgNM.log:")[1].strip()
-                    ts = int(dt.strptime(ts, "%Y-%m-%d %H:%M:%S,%f").strftime("%s"))
+                    ts = (
+                        line.split("[DEBUG]")[0].split("dlgNM.log:")[1].strip()
+                    )
+                    ts = int(
+                        dt.strptime(ts, "%Y-%m-%d %H:%M:%S,%f").strftime("%s")
+                    )
                     oid = line.split("oid=")[1].split()[0]
                     state = line.split()[-1]
-                    fo.write("{0},{1},{2},{3}".format(ts, oid, state, os.linesep))
+                    fo.write(
+                        "{0},{1},{2},{3}".format(ts, oid, state, os.linesep)
+                    )
         else:
             logger.info("csv file already exists: %s", csv_file)
 
@@ -343,7 +361,10 @@ class GraphPlayer(object):
             last_gexf = new_gexf
             if ret[0] != 0:
                 logger.error(
-                    "Fail to print png from %s to %s: %s", last_gexf, new_png, ret[1]
+                    "Fail to print png from %s to %s: %s",
+                    last_gexf,
+                    new_png,
+                    ret[1],
                 )
 
     def build_drop_subgraphs(self, node_range="[0:20]"):
@@ -358,7 +379,9 @@ class GraphPlayer(object):
         else:
             G = nx.Graph()
             do_subgraph = False
-        subgraph_dict = defaultdict(list)  # k - node-ip, v - a list of graph nodes
+        subgraph_dict = defaultdict(
+            list
+        )  # k - node-ip, v - a list of graph nodes
         oid_gnid_dict = dict()
 
         for i, oid in enumerate(self.pg_spec.keys()):
@@ -369,11 +392,11 @@ class GraphPlayer(object):
             gid = oid_gnid_dict[dropspec["oid"]]
             ip = dropspec["node"]
             subgraph_dict[ip].append(gid)
-            if dropspec["type"] == "app":
+            if dropspec["categoryType"] in ["Application", "app"]:
                 G.add_node(
                     gid, shape="rect", label=""
                 )  # , fixedsize=True, hight=.05, width=.05)
-            elif dropspec["type"] == "data":  # parallelogram
+            elif dropspec["categoryType"] in ["Data", "data"]:  # parallelogram
                 G.add_node(
                     gid, shape="circle", label=""
                 )  # , fixedsize=True, hight=.05, width=.05)
@@ -381,9 +404,9 @@ class GraphPlayer(object):
 
         for dropspec in self.pg_spec.itervalues():
             gid = oid_gnid_dict[dropspec["oid"]]
-            if dropspec["type"] == "app":
+            if dropspec["categoryType"] in ["Application", "app"]:
                 ds_kw = "outputs"  # down stream key word
-            elif dropspec["type"] == "data":
+            elif dropspec["categoryType"] in ["Data", "data"]:
                 ds_kw = "consumers"
             else:
                 ds_kw = "None"
@@ -396,7 +419,10 @@ class GraphPlayer(object):
             for i, subgraph_nodes in enumerate(subgraph_dict.values()):
                 # we don't care about the subgraph label or rank
                 subgraph = G.add_subgraph(
-                    subgraph_nodes, label="%d" % i, name="cluster_%d" % i, rank="same"
+                    subgraph_nodes,
+                    label="%d" % i,
+                    name="cluster_%d" % i,
+                    rank="same",
                 )
                 subgraph.graph_attr["rank"] = "same"
             logger.info("Subgraph added")
@@ -516,7 +542,9 @@ if __name__ == "__main__":
         sys.exit(1)
 
     FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
-    logging.basicConfig(filename=options.log_file, level=logging.DEBUG, format=FORMAT)
+    logging.basicConfig(
+        filename=options.log_file, level=logging.DEBUG, format=FORMAT
+    )
 
     if options.edgelist and options.dot_file is not None:
         logger.info("Loading networx graph from file %s", options.graph_path)
@@ -532,7 +560,9 @@ if __name__ == "__main__":
     gp = GraphPlayer(options.graph_path, options.status_path)
     # gp.parse_status(options.gexf_file, out_dir=options.gexf_output_dir)
     gp.get_state_changes(
-        options.gexf_file, options.grep_log_file, out_dir=options.gexf_output_dir
+        options.gexf_file,
+        options.grep_log_file,
+        out_dir=options.gexf_output_dir,
     )
     """
     g = gp.build_node_graph()

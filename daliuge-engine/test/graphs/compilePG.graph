@@ -1,8 +1,8 @@
 [
     {
         "oid": "2022-05-06T08:43:26_-1_0",
-        "type": "app",
-        "app": "dlg.apps.pyfunc.PyFuncApp",
+        "categoryType": "Application",
+        "appclass": "dlg.apps.pyfunc.PyFuncApp",
         "rank": [
             0
         ],
@@ -152,8 +152,8 @@
     },
     {
         "oid": "2022-05-06T08:43:26_-2_0",
-        "type": "data",
-        "storage": "Memory",
+        "categoryType": "Data",
+        "dataclass": "dlg.data.drops.memory.InMemoryDROP",
         "rank": [
             0
         ],
