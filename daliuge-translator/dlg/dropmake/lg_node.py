@@ -64,8 +64,8 @@ class LGNode:
         self.outputPorts = jd
         # self.group = None
         self._ssid = ssid
-        self._is_app = False
-        self._is_data = False
+        self._is_app = self.jd["categoryType"] == CategoryType.APPLICATION
+        self._is_data = self.jd["categoryType"] == CategoryType.DATA
         self._converted = False
         self._h_level = None
         self._g_h = None
@@ -154,22 +154,16 @@ class LGNode:
 
     @jd.setter
     def jd(self, value):
+        """
+        Setting he jd property to the original data structure directly loaded
+        from JSON.
+        """
         if "categoryType" not in value:
             if value["category"] in APP_TYPES:
                 value["categoryType"] = CategoryType.APPLICATION
             elif value["category"] in DATA_TYPES:
                 value["categoryType"] = CategoryType.DATA
         self._jd = value
-        # if "isGroup" in value and value["isGroup"]:
-        #     self._is_group = True
-        #     self.group = self
-        #     for wn in self.group_q[self.id]:
-        #         wn.group = self
-        #         self.add_child(wn)
-        #     self.group_q.pop(self.id)  # not thread safe
-        # else:
-        #     self._is_group = False
-        #     self.group = None
 
     @property
     def is_group(self):
@@ -194,9 +188,9 @@ class LGNode:
     @nodeclass.setter
     def nodeclass(self, value):
         if value == CategoryType.DATA:
-            self.isdata = True
+            self.is_data = True
         if value == CategoryType.APPLICATION:
-            self.isapp = True
+            self.is_app = True
         self._nodeclass = value
 
     @property
@@ -205,7 +199,11 @@ class LGNode:
 
     @property
     def category(self):
-        return self.jd.get("category", "")
+        return self.jd.get("category", "Unknown")
+
+    @property
+    def categoryType(self):
+        return self.jd.get("categoryType", "Unknown")
 
     @property
     def group(self):
@@ -246,10 +244,10 @@ class LGNode:
         Add a group member
         """
         if (
-            lg_node.is_group()
-            and not (lg_node.is_scatter())
-            and not (lg_node.is_loop())
-            and not (lg_node.is_groupby())
+            lg_node.is_group
+            and not (lg_node.is_scatter)
+            and not (lg_node.is_loop)
+            and not (lg_node.is_groupby)
         ):
             raise GInvalidNode(
                 "Only Scatters, Loops and GroupBys can be nested, but {0} is neither".format(
@@ -278,7 +276,7 @@ class LGNode:
             while cg.has_group():
                 cg = cg.group
                 _level += 1
-            if self.is_mpi():
+            if self.is_mpi:
                 _level += 1
             self._h_level = _level
         return self._h_level
@@ -295,94 +293,63 @@ class LGNode:
             self._g_h = "/".join(reversed(glist))
         return self._g_h
 
-    def dop_diff(self, that_lgn):
-        """
-        dop difference between inner node/group and outer group
-        e.g for each outer group, how many instances of inner nodes/groups
-        """
-        # if (self.is_group() or that_lgn.is_group()):
-        #     raise GraphException("Cannot compute dop diff between groups.")
-        # don't check h_related for efficiency since it should have been checked
-        # if (self.h_related(that_lgn)):
-        il = self.h_level
-        al = that_lgn.h_level
-        if il == al:
-            return 1
-        elif il > al:
-            oln = that_lgn
-            iln = self
-        else:
-            iln = that_lgn
-            oln = self
-        re_dop = 1
-        cg = iln
-        init_cond = cg.gid != oln.gid and cg.has_group()
-        while init_cond or cg.is_mpi():
-            if cg.is_mpi():
-                re_dop *= cg.dop
-            # else:
-            if init_cond:
-                re_dop *= cg.group.dop
-            cg = cg.group
-            if cg is None:
-                break
-            init_cond = cg.gid != oln.gid and cg.has_group()
-        return re_dop
-        # else:
-        #     pass
-        # raise GInvalidLink("{0} and {1} are not hierarchically related".format(self.id, that_lgn.id))
-
-    def h_related(self, that_lgn):
-        that_gh = that_lgn.group_hierarchy
-        this_gh = self.group_hierarchy
-        if len(that_gh) + len(this_gh) <= 1:
-            # at least one is at the root level
-            return True
-
-        return that_gh.find(this_gh) > -1 or this_gh.find(that_gh) > -1
-
+    @property
     def has_child(self):
         return len(self._children) > 0
 
+    @property
     def has_output(self):
         return len(self._outputs) > 0
 
+    @property
     def is_data(self):
-        return self.jd["categoryType"] == CategoryType.DATA
+        return self._is_data
 
+    @is_data.setter
+    def is_data(self, value):
+        self._is_data = value
+
+    @property
     def is_app(self):
-        return self.jd["categoryType"] == CategoryType.APPLICATION
+        return self._is_app
+        # return self.jd["categoryType"] == CategoryType.APPLICATION
 
+    @is_app.setter
+    def is_app(self, value):
+        self._is_app = value
+
+    @property
     def is_start_node(self):
         return self.jd["category"] == Categories.START
 
+    @property
     def is_end_node(self):
         return self.jd["category"] == Categories.END
 
+    @property
     def is_start(self):
         return not self.has_group()
 
+    @property
     def is_dag_root(self):
         leng = len(self.inputs)
         if leng > 1:
             return False
         elif leng == 0:
-            if self.is_start_node():
+            if self.is_start_node:
                 return False
             else:
                 return True
-        elif self.inputs[0].jd["category"] == Categories.START:
+        elif self.is_start:
             return True
         else:
             return False
 
+    @property
     def is_start_listener(self):
-        return (
-            len(self.inputs) == 1
-            and self.inputs[0].jd["category"] == Categories.START
-            and self.jd["categoryType"] == CategoryType.DATA
-        )
+        return len(self.inputs) == 1 and self.is_start and self.is_data
 
+    @property
     def is_group_start(self):
         result = False
         if self.has_group() and "group_start" in self.jd:
@@ -395,6 +362,7 @@ class LGNode:
                 result = gs.lower() in ("true", "1")
         return result
 
+    @property
     def is_group_end(self):
         result = False
         if self.has_group() and "group_end" in self.jd:
@@ -407,31 +375,39 @@ class LGNode:
                 result = ge.lower() in ("true", "1")
         return result
 
+    @property
     def is_group(self):
         return self._is_group
 
+    @property
     def is_scatter(self):
-        return self.is_group() and self._jd["category"] == Categories.SCATTER
+        return self.is_group and self._jd["category"] == Categories.SCATTER
 
+    @property
     def is_gather(self):
         return self._jd["category"] == Categories.GATHER
 
+    @property
     def is_loop(self):
-        return self.is_group() and self._jd["category"] == Categories.LOOP
+        return self.is_group and self._jd["category"] == Categories.LOOP
 
+    @property
     def is_service(self):
         """
         Determines whether a node the parent service node (not the input application)
         """
         return self._jd["category"] == Categories.SERVICE
 
+    @property
     def is_groupby(self):
         return self._jd["category"] == Categories.GROUP_BY
 
+    @property
     def is_branch(self):
         # This is the only special thing required for a branch
         return self._jd["category"] == Categories.BRANCH
 
+    @property
     def is_mpi(self):
         return self._jd["category"] == Categories.MPI
 
@@ -441,7 +417,7 @@ class LGNode:
         Return:
             None or a list of keys (each key is an integer)
         """
-        if not self.is_groupby():
+        if not self.is_groupby:
             return None
         val = str(self.jd.get("group_key", "None"))
         if val in ["None", "-1", ""]:
@@ -461,7 +437,7 @@ class LGNode:
         """
         Gather width
         """
-        if self.is_gather():
+        if self.is_gather:
             if self._gaw is None:
                 try:
                     self._gaw = int(self.jd["num_of_inputs"])
@@ -482,7 +458,7 @@ class LGNode:
         """
         GroupBy count
         """
-        if self.is_groupby():
+        if self.is_groupby:
             if self._grpw is None:
                 tlgn = self.inputs[0]
                 re_dop = 1
@@ -510,7 +486,7 @@ class LGNode:
                 (2) layer indexes (list) from innser scatter to outer scatter
                 (3) layers (list)
         """
-        if not self.is_groupby():
+        if not self.is_groupby:
             return None
 
         tlgn = self.inputs[0]
@@ -519,7 +495,7 @@ class LGNode:
         layer_index = []  # from inner to outer
         layers = []  # from inner to outer
         c = 0
-        if tlgn.group.is_groupby():
+        if tlgn.group.is_groupby:
             # group by followed by another group by
             if grpks is None or len(grpks) < 1:
                 raise GInvalidNode(
@@ -531,13 +507,13 @@ class LGNode:
             inputgrp = self
             while (inputgrp is not None) and inputgrp.inputs[
                 0
-            ].group.is_groupby():
+            ].group.is_groupby:
                 inputgrp = inputgrp.inputs[0].group
             # inputgrp now is the "root" groupby that follows Scatter immiately
             # move it to Scatter
             inputgrp = inputgrp.inputs[0].group
             # go thru all the scatters
-            while (inputgrp is not None) and inputgrp.is_scatter():
+            while (inputgrp is not None) and inputgrp.is_scatter:
                 if inputgrp.id in grpks:
                     ret_dop *= inputgrp.dop
                     layer_index.append(c)
@@ -562,7 +538,7 @@ class LGNode:
                 else:
                     inputgrp = tlgn.group
                     # find the "groupby column list" from all layers of scatter loops
-                    while (inputgrp is not None) and inputgrp.is_scatter():
+                    while (inputgrp is not None) and inputgrp.is_scatter:
                         if inputgrp.id in grpks:
                             ret_dop *= inputgrp.dop
                             layer_index.append(c)
@@ -579,31 +555,31 @@ class LGNode:
         default:    1
         """
         if self._dop is None:
-            if self.is_group():
-                if self.is_scatter():
+            if self.is_group:
+                if self.is_scatter:
                     for kw in ["num_of_copies", "num_of_splits"]:
                         if kw in self.jd:
                             self._dop = int(self.jd[kw])
                             break
                     if self._dop is None:
                         self._dop = 4  # dummy impl. TODO: Why is this here?
-                elif self.is_gather():
+                elif self.is_gather:
                     try:
                         tlgn = self.inputs[0]
                     except IndexError:
                         raise GInvalidLink(
                             "Gather '{0}' does not have input!".format(self.id)
                         )
-                    if tlgn.is_groupby():
+                    if tlgn.is_groupby:
                         tt = tlgn.dop
                     else:
                         tt = self.dop_diff(tlgn)
                     self._dop = int(math.ceil(tt / float(self.gather_width)))
-                elif self.is_groupby():
+                elif self.is_groupby:
                     self._dop = self.group_by_scatter_layers[0]
-                elif self.is_loop():
+                elif self.is_loop:
                     self._dop = int(self.jd.get("num_of_iter", 1))
-                elif self.is_service():
+                elif self.is_service:
                     self._dop = 1  # TODO: number of compute nodes
                 else:
                     raise GInvalidNode(
@@ -611,11 +587,73 @@ class LGNode:
                             self._jd["category"]
                         )
                     )
-            elif self.is_mpi():
+            elif self.is_mpi:
                 self._dop = int(self.jd["num_of_procs"])
             else:
                 self._dop = 1
         return self._dop
+
+    @property
+    def inputPorts(self):
+        return self._inputPorts
+
+    @inputPorts.setter
+    def inputPorts(self, port="inputPorts"):
+        self._inputPorts = self._getIdText(port="inputPorts", index=-1)
+
+    @property
+    def outputPorts(self):
+        return self._outputPorts
+
+    @outputPorts.setter
+    def outputPorts(self, port="outputPorts"):
+        self._outputPorts = self._getIdText(port="outputPorts", index=-1)
+
+    def dop_diff(self, that_lgn):
+        """
+        dop difference between inner node/group and outer group
+        e.g for each outer group, how many instances of inner nodes/groups
+        """
+        # if (self.is_group() or that_lgn.is_group()):
+        #     raise GraphException("Cannot compute dop diff between groups.")
+        # don't check h_related for efficiency since it should have been checked
+        # if (self.h_related(that_lgn)):
+        il = self.h_level
+        al = that_lgn.h_level
+        if il == al:
+            return 1
+        elif il > al:
+            oln = that_lgn
+            iln = self
+        else:
+            iln = that_lgn
+            oln = self
+        re_dop = 1
+        cg = iln
+        init_cond = cg.gid != oln.gid and cg.has_group()
+        while init_cond or cg.is_mpi:
+            if cg.is_mpi:
+                re_dop *= cg.dop
+            # else:
+            if init_cond:
+                re_dop *= cg.group.dop
+            cg = cg.group
+            if cg is None:
+                break
+            init_cond = cg.gid != oln.gid and cg.has_group()
+        return re_dop
+        # else:
+        #     pass
+        # raise GInvalidLink("{0} and {1} are not hierarchically related".format(self.id, that_lgn.id))
+
+    def h_related(self, that_lgn):
+        that_gh = that_lgn.group_hierarchy
+        this_gh = self.group_hierarchy
+        if len(that_gh) + len(this_gh) <= 1:
+            # at least one is at the root level
+            return True
+
+        return that_gh.find(this_gh) > -1 or this_gh.find(that_gh) > -1
 
     def make_oid(self, iid="0"):
         """
@@ -699,22 +737,6 @@ class LGNode:
                 idText = idText[0] if len(idText) > 0 else None
         return idText if index >= 0 else ports_dict
 
-    @property
-    def inputPorts(self):
-        return self._inputPorts
-
-    @inputPorts.setter
-    def inputPorts(self, port="inputPorts"):
-        self._inputPorts = self._getIdText(port="inputPorts", index=-1)
-
-    @property
-    def outputPorts(self):
-        return self._outputPorts
-
-    @outputPorts.setter
-    def outputPorts(self, port="outputPorts"):
-        self._outputPorts = self._getIdText(port="outputPorts", index=-1)
-
     def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
         """
         NOTE: This IS the main function right now, still called 'test' and still should be replaced!!!
@@ -723,15 +745,11 @@ class LGNode:
         should be replaced by LGNode class specific methods
         """
         drop_spec = None
-        drop_type = self.jd["category"]
-        drop_class = "Unknown"
-        if "category" in self.jd:
-            drop_class = self.jd["category"]
-        if "categoryType" in self.jd:
-            drop_class = self.jd["categoryType"]
+        drop_type = self.category
+        drop_class = self.category if self.category else self.categoryType
 
         # backwards compatibility
-        if not "categoryType" in self.jd and "type" in self.jd:
+        if self.categoryType == "Unknown" and "type" in self.jd:
             drop_type = self.jd["type"]
             if drop_type in DATA_TYPES:
                 drop_class = "Data"
@@ -742,7 +760,7 @@ class LGNode:
 
         self.nodeclass = drop_class
         self.nodetype = drop_type
-        if self.is_data():
+        if self.is_data:
             if "data_volume" in self.jd:
                 kwargs["dw"] = int(self.jd["data_volume"])  # dw -- data weight
             else:
@@ -755,7 +773,7 @@ class LGNode:
                 iIdText,
                 oIdText,
             )
-            if self.is_start_listener():
+            if self.is_start_listener:
                 # create socket listener DROP first
                 drop_spec = dropdict(
                     {
@@ -1019,7 +1037,7 @@ class LGNode:
                 }
             )
             gi = self.inputs[0]
-            if gi.is_groupby():
+            if gi.is_groupby:
                 gii = gi.inputs[0]
                 dw = (
                     int(gii.jd["data_volume"])
@@ -1089,7 +1107,7 @@ class LGNode:
         kwargs["dt"] = self.category
         kwargs["category"] = self.category
         if "categoryType" in kwargs:
-            kwargs["categoryType"] = self.jd["categoryType"]
+            kwargs["categoryType"] = self.categoryType
         elif self.jd["category"] in DATA_TYPES:
             kwargs["categoryType"] = "Data"
         else:
@@ -1099,7 +1117,7 @@ class LGNode:
         # Behaviour is that child-nodes inherit reproducibility data from their parents.
         if self._reprodata is not None:
             kwargs["reprodata"] = self._reprodata.copy()
-        if "isService" in self.jd and self.jd["isService"]:
+        if self.is_service:
             kwargs["categoryType"] = DropType.SERVICECLASS
         dropSpec.update(kwargs)
         return dropSpec
