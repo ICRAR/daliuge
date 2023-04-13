@@ -118,11 +118,15 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
     if drop.get("reprodata") is None:
         drop["reprodata"] = {
             "rmode": str(REPRO_DEFAULT.value),
-            "lg_blockhash": None,
+            REPRO_DEFAULT.name: {
+                "rmode": str(REPRO_DEFAULT.value),
+                "lg_blockhash": None,
+            },
         }
     if drop["reprodata"].get("rmode") is None:
         level = REPRO_DEFAULT
-        drop["reprodata"]["rmode"] = str(level.value)
+        drop["reprodata"]["rmode"] = str(level.level)
+        drop["reprodata"][level.name] = {}
     else:
         level = rflag_caster(drop["reprodata"]["rmode"])
     if not rmode_supported(level):

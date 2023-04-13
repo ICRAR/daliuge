@@ -178,7 +178,6 @@ class Partition(object):
         self._child_parts = None
         self._tmp_merge_dag = None
         self._tmp_new_ac = None
-        logger.debug("My dop = %r", self._ask_max_dop)
 
     @property
     def parent_id(self):
@@ -462,13 +461,18 @@ class KFamilyPartition(Partition):
         tmp_max_dop = copy.deepcopy(self._tmp_max_dop)
 
         for _w_attr in self._w_attr:
+            ask_max_dop = (
+                self._ask_max_dop[_w_attr]
+                if self._ask_max_dop[_w_attr] is not None
+                else 1
+            )
             mydop = get_max_weighted_antichain(dag, w_attr=_w_attr)[0]
-            curr_max = max(self._max_dop[_w_attr], that._max_dop[_w_attr])
+            curr_max = max(ask_max_dop, that._max_dop[_w_attr])
 
             if mydop <= curr_max:
                 # if you don't increase DoP, we accept that immediately
                 tmp_max_dop[_w_attr] = curr_max
-            elif mydop > self._ask_max_dop[_w_attr]:
+            elif mydop > ask_max_dop:
                 return False
             else:
                 tmp_max_dop[_w_attr] = mydop

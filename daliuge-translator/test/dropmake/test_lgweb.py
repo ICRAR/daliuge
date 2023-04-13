@@ -55,15 +55,18 @@ class TestLGWeb(unittest.TestCase):
             "-H",
             "localhost",
             "-vv",
+            "-l",
+            self.temp_dir,
         ]
-        self.devnull = open(os.devnull, "wb")
-        self.web_proc = tool.start_process(
-            "lgweb", args, stdout=self.devnull, stderr=self.devnull
-        )
+        self.logfile = open(f"{self.temp_dir}/dlgTrans.log", "wb")
+        with self.logfile as logfile:
+            self.web_proc = tool.start_process(
+                "lgweb", args, stdout=logfile, stderr=logfile
+            )
 
     def tearDown(self):
-        shutil.rmtree(self.temp_dir)
-        self.devnull.close()
+        # shutil.rmtree(self.temp_dir)
+        self.logfile.close()
         common.terminate_or_kill(self.web_proc, 10)
         unittest.TestCase.tearDown(self)
 
