@@ -783,6 +783,7 @@ class LGNode:
                         "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                         "storage": drop_type,
                         "rank": rank,
+                        "reprodata": self.jd.get("reprodata", {}),
                     }
                 )
                 dropSpec_socket = dropdict(
@@ -794,8 +795,9 @@ class LGNode:
                         "nm": "lstnr",
                         "text": "lstnr",
                         "tw": 5,
-                        "sleepTime": 5,
+                        "sleepTime": 1,
                         "rank": rank,
+                        "reprodata": self.jd.get("reprodata", {}),
                     }
                 )
                 # tw -- task weight
@@ -811,6 +813,7 @@ class LGNode:
                         "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                         "storage": drop_type,
                         "rank": rank,
+                        "reprodata": self.jd.get("reprodata", {}),
                     }
                 )
             if drop_type == Categories.FILE:
@@ -873,6 +876,7 @@ class LGNode:
                     "categoryType": CategoryType.APPLICATION,
                     "appclass": app_class,
                     "rank": rank,
+                    "reprodata": self.jd.get("reprodata", {}),
                 }
             )
 
@@ -893,6 +897,7 @@ class LGNode:
                     "categoryType": CategoryType.APPLICATION,
                     "appclass": "dlg.apps.dynlib.{}".format(drop_type),
                     "rank": rank,
+                    "reprodata": self.jd.get("reprodata", {}),
                 }
             )
             kwargs["lib"] = self.jd["libpath"]
@@ -915,6 +920,7 @@ class LGNode:
                     "categoryType": CategoryType.APPLICATION,
                     "appclass": app_str,
                     "rank": rank,
+                    "reprodata": self.jd.get("reprodata", {}),
                 }
             )
             self._update_key_value_attributes(kwargs)
@@ -961,6 +967,7 @@ class LGNode:
                     "categoryType": typ,
                     "appclass": app_class,
                     "rank": rank,
+                    "reprodata": self.jd.get("reprodata", {}),
                 }
             )
 
@@ -1000,6 +1007,7 @@ class LGNode:
                     "categoryType": CategoryType.APPLICATION,
                     "appclass": "dlg.apps.simple.SleepApp",
                     "rank": rank,
+                    "reprodata": self.jd.get("reprodata", {}),
                 }
             )
             sij = self.inputs[0].jd
@@ -1018,6 +1026,7 @@ class LGNode:
                     "text": "grpdata",
                     "dw": dw,
                     "rank": rank,
+                    "reprodata": self.jd.get("reprodata", {}),
                 }
             )
             kwargs["grp-data_drop"] = dropSpec_grp
@@ -1034,6 +1043,7 @@ class LGNode:
                     "categoryType": CategoryType.APPLICATION,
                     "appclass": "dlg.apps.simple.SleepApp",
                     "rank": rank,
+                    "reprodata": self.jd.get("reprodata", {}),
                 }
             )
             gi = self.inputs[0]
@@ -1055,6 +1065,7 @@ class LGNode:
                     "text": "gthrdt",
                     "dw": dw,
                     "rank": rank,
+                    "reprodata": self.jd.get("reprodata", {}),
                 }
             )
             kwargs["gather-data_drop"] = dropSpec_gather
@@ -1075,6 +1086,7 @@ class LGNode:
                     "dataclass": "dlg.data.drops.data_base.NullDROP",
                     "dw": 0,
                     "rank": rank,
+                    "reprodata": self.jd.get("reprodata", {}),
                 }
             )
         elif drop_type in Categories.LOOP:

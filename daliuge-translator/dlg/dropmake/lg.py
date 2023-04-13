@@ -84,6 +84,7 @@ class LG:
         self._gather_cache = dict()
 
         lgver = get_lg_ver_type(lg)
+        logger.info("Loading graph: %s", lg["modelData"]["filePath"])
         logger.info("Found LG version: %s", lgver)
 
         if LG_VER_EAGLE == lgver:

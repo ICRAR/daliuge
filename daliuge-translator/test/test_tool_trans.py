@@ -32,7 +32,7 @@ class TestTool(unittest.TestCase):
     def test_pipeline(self):
         """A pipeline from an LG all the way to a finished graph execution"""
         lg = pkg_resources.resource_filename(  # @UndefinedVariable
-            "test.dropmake", "logical_graphs/cont_img.graph"
+            "test.dropmake", "logical_graphs/cont_img_mvp.graph"
         )
 
         fill = tool.start_process(
