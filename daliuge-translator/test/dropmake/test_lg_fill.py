@@ -31,6 +31,7 @@ lg_dir = pkg_resources.resource_filename(
     __name__, "logical_graphs"
 )  # @UndefinedVariable
 
+
 # Test LGT to LG method: Filling parameter values in LG.
 class LGFillTest(unittest.TestCase):
     def test_fill_lg(self):
@@ -40,7 +41,7 @@ class LGFillTest(unittest.TestCase):
             "param1.param2": True,
             "param4": {"what": "hi"},
         }
-        with open(os.path.join(lg_dir, "cont_img.graph")) as f:
+        with open(os.path.join(lg_dir, "cont_img_mvp.graph")) as f:
             lg = pg_generator.fill(json.load(f), params)
         for node_idx, value in zip((5, 12, 26, 34), ("1", "2", "True", "hi")):
             print(node_idx)

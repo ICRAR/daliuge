@@ -55,13 +55,13 @@ class TestScheduler(unittest.TestCase):
     def test_incremental_antichain(self):
         part = Partition(100, 8)
         G = part._dag
-        assert part.probe_max_dop(1, 2, True, True, True) == DAGUtil.get_max_dop(
-            part._dag
-        )
+        assert part.probe_max_dop(
+            1, 2, True, True, True
+        ) == DAGUtil.get_max_dop(part._dag)
         G.add_edge(2, 3)
-        assert part.probe_max_dop(2, 3, False, True, True) == DAGUtil.get_max_dop(
-            part._dag
-        )
+        assert part.probe_max_dop(
+            2, 3, False, True, True
+        ) == DAGUtil.get_max_dop(part._dag)
         # G.add_edge(1, 4)
         # assert(part.probe_max_dop(1, 4, False, True, True) == DAGUtil.get_max_dop(part._dag))
         # G.add_edge(2, 5)
@@ -70,15 +70,15 @@ class TestScheduler(unittest.TestCase):
         assert l == r, "l = {0}, r = {1}".format(l, r)
 
     def test_basic_scheduler(self):
-        fp = get_lg_fname("cont_img.graph")
+        fp = get_lg_fname("cont_img_mvp.graph")
         lg = LG(fp)
         drop_list = lg.unroll_to_tpl()
         Scheduler(drop_list)
 
     def test_minnumparts_scheduler(self):
         lgs = {
-            "cont_img.graph": 500,
-            "cont_img.graph": 200,
+            "cont_img_mvp.graph": 500,
+            "cont_img_mvp.graph": 200,
             "test_grpby_gather.graph": 90,
             "chiles_simple.graph": 160,
         }
@@ -95,8 +95,8 @@ class TestScheduler(unittest.TestCase):
 
     def test_mysarkar_scheduler(self):
         lgs = {
-            "cont_img.graph": 20,
-            "cont_img.graph": 15,
+            "cont_img_mvp.graph": 20,
+            "cont_img_mvp.graph": 15,
             "test_grpby_gather.graph": 10,
             "chiles_simple.graph": 5,
         }
@@ -122,8 +122,8 @@ class TestScheduler(unittest.TestCase):
     )
     def test_pso_scheduler(self):
         lgs = {
-            "cont_img.graph": 540,
-            "cont_img.graph": 450,
+            "cont_img_mvp.graph": 540,
+            "cont_img_mvp.graph": 450,
             "test_grpby_gather.graph": 70,
             "chiles_simple.graph": 160,
         }

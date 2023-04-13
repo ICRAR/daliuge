@@ -84,6 +84,7 @@ class LG:
         self._gather_cache = dict()
 
         lgver = get_lg_ver_type(lg)
+        logger.info("Loading graph: %s", lg["modelData"]["filePath"])
         logger.info("Found LG version: %s", lgver)
 
         if LG_VER_EAGLE == lgver:
@@ -118,7 +119,7 @@ class LG:
                         stream_output_ports[out_port["Id"]] = jd["key"]
         # Need to go through the list again, since done_dict is recursive
         for lgn in self._lgn_list:
-            if lgn.is_start() and lgn.jd["category"] not in [
+            if lgn.is_start and lgn.jd["category"] not in [
                 Categories.COMMENT,
                 Categories.DESCRIPTION,
             ]:
@@ -153,7 +154,7 @@ class LG:
 
     def validate_link(self, src, tgt):
         # print("validate_link()", src.id, src.is_scatter(), tgt.id, tgt.is_scatter())
-        if src.is_scatter() or tgt.is_scatter():
+        if src.is_scatter or tgt.is_scatter:
             prompt = (
                 "Remember to specify Input App Type for the Scatter construct!"
             )
@@ -163,17 +164,17 @@ class LG:
                 )
             )
 
-        if src.is_loop() or tgt.is_loop():
+        if src.is_loop or tgt.is_loop:
             raise GInvalidLink(
                 "Loop construct {0} or {1} cannot be linked".format(
                     src.text, tgt.text
                 )
             )
 
-        if src.is_gather():
+        if src.is_gather:
             if not (
                 tgt.jd["categoryType"] in ["app", "application", "Application"]
-                and tgt.is_group_start()
+                and tgt.is_group_start
                 and src.inputs[0].h_level == tgt.h_level
             ):
                 raise GInvalidLink(
@@ -182,8 +183,8 @@ class LG:
                     )
                 )
             # raise GInvalidLink("Gather {0} cannot be the input".format(src.id))
-        if tgt.is_groupby():
-            if src.is_group():
+        if tgt.is_groupby:
+            if src.is_group:
                 raise GInvalidLink(
                     "GroupBy {0} input must not be a group {1}".format(
                         tgt.id, src.id
@@ -201,12 +202,12 @@ class LG:
                         tgt.id, src.id
                     )
                 )
-        elif tgt.is_gather():
+        elif tgt.is_gather:
             if "categoryType" not in src.jd:
                 src.jd["categoryType"] = "Data"
             if (
                 not src.jd["categoryType"].lower() == "data"
-                and not src.is_groupby()
+                and not src.is_groupby
             ):
                 raise GInvalidLink(
                     "Gather {0}'s input {1} should be either a GroupBy or Data. {2}".format(
@@ -214,7 +215,7 @@ class LG:
                     )
                 )
 
-        if src.is_groupby() and not tgt.is_gather():
+        if src.is_groupby and not tgt.is_gather:
             raise GInvalidLink(
                 "Output {1} from GroupBy {0} must be Gather, otherwise embbed {1} inside GroupBy {0}".format(
                     src.id, tgt.id
@@ -224,12 +225,12 @@ class LG:
         if not src.h_related(tgt):
             ll = src.group
             rl = tgt.group
-            if ll.is_loop() and rl.is_loop():
+            if ll.is_loop and rl.is_loop:
                 valid_loop_link = True
                 while True:
                     if ll is None or rl is None:
                         break
-                    if ll.is_loop() and rl.is_loop():
+                    if ll.is_loop and rl.is_loop:
                         if ll.dop != rl.dop:
                             valid_loop_link = False
                             break
@@ -274,10 +275,10 @@ class LG:
         iid:    instance id (string)
         lpcxt:  Loop context
         """
-        if lgn.is_group():
+        if lgn.is_group:
             # group nodes are replaced with the input application of the
             # construct
-            extra_links_drops = not lgn.is_scatter()
+            extra_links_drops = not lgn.is_scatter
             if extra_links_drops:
                 non_inputs = []
                 grp_starts = []
@@ -285,15 +286,15 @@ class LG:
                 for child in lgn.children:
                     if len(child.inputs) == 0:
                         non_inputs.append(child)
-                    if child.is_group_start():
+                    if child.is_group_start:
                         grp_starts.append(child)
-                    elif child.is_group_end():
+                    elif child.is_group_end:
                         grp_ends.append(child)
                 if len(grp_starts) == 0:
                     gs_list = non_inputs
                 else:
                     gs_list = grp_starts
-                if lgn.is_loop():
+                if lgn.is_loop:
                     if len(grp_starts) == 0 or len(grp_ends) == 0:
                         raise GInvalidNode(
                             "Loop '{0}' should have at least one Start "
@@ -334,7 +335,7 @@ class LG:
                     x.dop for x in scatters
                 ]  # inner most is also the slowest running index
 
-            lgn_is_loop = lgn.is_loop()
+            lgn_is_loop = lgn.is_loop
 
             for i in range(lgn.dop):
                 miid = "{0}/{1}".format(iid, i)
@@ -345,35 +346,35 @@ class LG:
                     grp_h = [str(x) for x in grp_h]
                     miid += "${0}".format("-".join(grp_h))
 
-                if extra_links_drops and not lgn.is_loop():
+                if extra_links_drops and not lgn.is_loop:
                     # make GroupBy and Gather drops
                     src_drop = lgn.make_single_drop(miid)
                     self._drop_dict[lgn.id].append(src_drop)
-                    if lgn.is_groupby():
+                    if lgn.is_groupby:
                         self._drop_dict["new_added"].append(
                             src_drop["grp-data_drop"]
                         )
-                    elif lgn.is_gather():
+                    elif lgn.is_gather:
                         pass
                         # self._drop_dict['new_added'].append(src_drop['gather-data_drop'])
                 for child in lgn.children:
                     self.lgn_to_pgn(
                         child, miid, self.get_child_lp_ctx(lgn, lpcxt, i)
                     )
-        elif lgn.is_mpi():
+        elif lgn.is_mpi:
             for i in range(lgn.dop):
                 miid = "{0}/{1}".format(iid, i)
                 src_drop = lgn.make_single_drop(
                     miid, loop_cxt=lpcxt, proc_index=i
                 )
                 self._drop_dict[lgn.id].append(src_drop)
-        elif lgn.is_service():
+        elif lgn.is_service:
             # no action required, inputapp node aleady created and marked with "isService"
             pass
         else:
             src_drop = lgn.make_single_drop(iid, loop_cxt=lpcxt)
             self._drop_dict[lgn.id].append(src_drop)
-            if lgn.is_start_listener():
+            if lgn.is_start_listener:
                 self._drop_dict["new_added"].append(src_drop["listener_drop"])
 
     @staticmethod
@@ -403,9 +404,9 @@ class LG:
         Assumption:
         s or t cannot be Scatter as Scatter does not convert into DROPs
         """
-        if t.is_gather():
+        if t.is_gather:
             ret = t.gather_width
-        elif t.is_groupby():
+        elif t.is_groupby:
             ret = t.groupby_width
         else:
             ret = s.dop_diff(t)
@@ -427,15 +428,15 @@ class LG:
     def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink):
         """ """
         sdrop = None
-        if slgn.is_gather():
+        if slgn.is_gather:
             # sdrop = src_drop['gather-data_drop']
             pass
-        elif slgn.is_groupby():
+        elif slgn.is_groupby:
             sdrop = src_drop["grp-data_drop"]
         else:
             sdrop = src_drop
 
-        if tlgn.is_gather():
+        if tlgn.is_gather:
             gather_oid = tgt_drop["oid"]
             if gather_oid not in self._gather_cache:
                 # [self, input_list, output_list]
@@ -485,7 +486,7 @@ class LG:
                 bc = src_drop["command"]
                 bc.add_output_param(tlgn.id, tgt_drop["oid"])
         else:
-            if slgn.is_gather():  # don't really add them
+            if slgn.is_gather:  # don't really add them
                 gather_oid = src_drop["oid"]
                 if gather_oid not in self._gather_cache:
                     # [self, input_list, output_list]
@@ -552,13 +553,13 @@ class LG:
             sdrops = self._drop_dict[sid]
             tdrops = self._drop_dict[tid]
             chunk_size = self._get_chunk_size(slgn, tlgn)
-            if slgn.is_group() and not tlgn.is_group():
+            if slgn.is_group and not tlgn.is_group:
                 # this link must be artifically added (within group link)
                 # since
                 # 1. GroupBy's "natural" output must be a Scatter (i.e. group)
                 # 2. Scatter "naturally" does not have output
                 if (
-                    slgn.is_gather() and tlgn.gid != sid
+                    slgn.is_gather and tlgn.gid != sid
                 ):  # not the artifical link between gather and its own start child
                     # gather iteration case, tgt must be a Group-Start Component
                     # this is a way to manually sequentialise a Scatter that has a high DoP
@@ -599,20 +600,20 @@ class LG:
                         raise GraphException(err_info)
                     for i, sdrop in enumerate(sdrops):
                         self._link_drops(slgn, tlgn, sdrop, tdrops[i], lk)
-            elif slgn.is_group() and tlgn.is_group():
+            elif slgn.is_group and tlgn.is_group:
                 # slgn must be GroupBy and tlgn must be Gather
                 self._unroll_gather_as_output(
                     slgn, tlgn, sdrops, tdrops, chunk_size, lk
                 )
-            elif not slgn.is_group() and (not tlgn.is_group()):
-                if slgn.is_start_node():
+            elif not slgn.is_group and (not tlgn.is_group):
+                if slgn.is_start_node:
                     continue
                 elif (
                     (slgn.group is not None)
-                    and slgn.group.is_loop()
+                    and slgn.group.is_loop
                     and slgn.gid == tlgn.gid
-                    and slgn.is_group_end()
-                    and tlgn.is_group_start()
+                    and slgn.is_group_end
+                    and tlgn.is_group_start
                 ):
                     # Re-link to the next iteration's start
                     lsd = len(sdrops)
@@ -645,9 +646,9 @@ class LG:
                     #         self._link_drops(slgn, tlgn, sdrop, tdrops[i + 1])
                 elif (
                     slgn.group is not None
-                    and slgn.group.is_loop()
+                    and slgn.group.is_loop
                     and tlgn.group is not None
-                    and tlgn.group.is_loop()
+                    and tlgn.group.is_loop
                     and (not slgn.h_related(tlgn))
                 ):
                     # stepwise locking for links between two Loops
@@ -658,7 +659,7 @@ class LG:
                     lpaw = ("%s-%s" % (sid, tid)) in self_loop_aware_set
                     if (
                         slgn.group is not None
-                        and slgn.group.is_loop()
+                        and slgn.group.is_loop
                         and lpaw
                         and slgn.h_level < tlgn.h_level
                     ):
@@ -674,7 +675,7 @@ class LG:
                                     )
                     elif (
                         tlgn.group is not None
-                        and tlgn.group.is_loop()
+                        and tlgn.group.is_loop
                         and lpaw
                         and slgn.h_level > tlgn.h_level
                     ):
@@ -708,7 +709,7 @@ class LG:
                                     slgn, tlgn, sdrops[i], tdrop, lk
                                 )
             else:  # slgn is not group, but tlgn is group
-                if tlgn.is_groupby():
+                if tlgn.is_groupby:
                     grpby_dict = collections.defaultdict(list)
                     layer_index = tlgn.group_by_scatter_layers[1]
                     for gdd in sdrops:
@@ -726,7 +727,7 @@ class LG:
                         else:
                             # find the "group by" scatter level
                             gbylist = []
-                            if slgn.group.is_groupby():  # a chain of group bys
+                            if slgn.group.is_groupby:  # a chain of group bys
                                 try:
                                     src_ctx = (
                                         gdd["iid"].split("$")[1].split("-")
@@ -761,11 +762,11 @@ class LG:
                             drp.addOutput(grpby_drop)
                             grpby_drop.addInput(drp)
                             """
-                elif tlgn.is_gather():
+                elif tlgn.is_gather:
                     self._unroll_gather_as_output(
                         slgn, tlgn, sdrops, tdrops, chunk_size, lk
                     )
-                elif tlgn.is_service():
+                elif tlgn.is_service:
                     # Only the service node's inputApplication will be translated
                     # to the physical graph as a node of type SERVICE_APP instead of APP
                     # per compute instance
@@ -810,17 +811,17 @@ class LG:
 
         # clean up extra drops
         for lid, lgn in self._done_dict.items():
-            if (lgn.is_start_node()) and lid in self._drop_dict:
+            if (lgn.is_start_node) and lid in self._drop_dict:
                 del self._drop_dict[lid]
-            elif lgn.is_start_listener():
+            elif lgn.is_start_listener:
                 for sl_drop in self._drop_dict[lid]:
                     if "listener_drop" in sl_drop:
                         del sl_drop["listener_drop"]
-            elif lgn.is_groupby():
+            elif lgn.is_groupby:
                 for sl_drop in self._drop_dict[lid]:
                     if "grp-data_drop" in sl_drop:
                         del sl_drop["grp-data_drop"]
-            elif lgn.is_gather():
+            elif lgn.is_gather:
                 # lid_sub = "{0}-gather-data".format(lid)
                 del self._drop_dict[lid]
                 # for sl_drop in self._drop_dict[lid]:

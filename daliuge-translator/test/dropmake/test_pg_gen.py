@@ -40,10 +40,10 @@ def get_lg_fname(lg_name):
 
 class TestPGGen(unittest.TestCase):
     def test_pg_generator(self):
-        fp = get_lg_fname("cont_img.graph")
+        fp = get_lg_fname("cont_img_mvp.graph")
         #        fp = get_lg_fname('testScatter.graph')
         lg = LG(fp)
-        self.assertEqual(len(lg._done_dict.keys()), 46)
+        self.assertEqual(len(lg._done_dict.keys()), 45)
         drop_list = lg.unroll_to_tpl()
         # print json.dumps(drop_list, indent=2)
         # pprint.pprint(drop_list)
@@ -73,7 +73,7 @@ class TestPGGen(unittest.TestCase):
             "HelloWorld_simple.graph",
             # "simpleMKN.graph",
             "testLoop.graph",
-            "cont_img.graph",
+            "cont_img_mvp.graph",
             "test_grpby_gather.graph",
             "chiles_simple.graph",
         ]
@@ -89,7 +89,7 @@ class TestPGGen(unittest.TestCase):
         lgnames = [
             "HelloWorld_simple.graph",
             "testLoop.graph",
-            "cont_img.graph",
+            "cont_img_mvp.graph",
             "test_grpby_gather.graph",
             "chiles_simple.graph",
         ]
@@ -109,7 +109,7 @@ class TestPGGen(unittest.TestCase):
     def test_metis_pgtp_gen_pg_island(self):
         lgnames = [
             "testLoop.graph",
-            "cont_img.graph",
+            "cont_img_mvp.graph",
             "test_grpby_gather.graph",
             "chiles_simple.graph",
         ]
@@ -136,11 +136,11 @@ class TestPGGen(unittest.TestCase):
     def test_mysarkar_pgtp(self):
         lgnames = [
             "testLoop.graph",
-            "cont_img.graph",
+            "cont_img_mvp.graph",
             "test_grpby_gather.graph",
             "chiles_simple.graph",
         ]
-        tgt_partnum = [15, 15, 10, 10, 5]
+        # tgt_partnum = [15, 15, 10, 10, 5]
         for i, lgn in enumerate(lgnames):
             fp = get_lg_fname(lgn)
             lg = LG(fp)
@@ -149,12 +149,9 @@ class TestPGGen(unittest.TestCase):
             pgtp.json
 
     def test_mysarkar_pgtp_gen_pg(self):
-        # TODO: cont_img.graph causes random failures in this test.
-        # ERROR: dlg.dropmake.scheduler.SchedulerException: Cannot find a idle PID, max_dop provided: 8
-
-        # lgnames = ['testLoop.graph', 'cont_img.graph', 'test_grpby_gather.graph', 'chiles_simple.graph']
         lgnames = [
             "testLoop.graph",
+            "cont_img_mvp.graph",
             "test_grpby_gather.graph",
             "chiles_simple.graph",
         ]
@@ -172,7 +169,7 @@ class TestPGGen(unittest.TestCase):
     def test_mysarkar_pgtp_gen_pg_island(self):
         lgnames = [
             "testLoop.graph",
-            "cont_img.graph",
+            "cont_img_mvp.graph",
             "test_grpby_gather.graph",
             "chiles_simple.graph",
         ]
@@ -204,7 +201,7 @@ class TestPGGen(unittest.TestCase):
     def test_minnumparts_pgtp(self):
         lgnames = [
             "testLoop.graph",
-            "cont_img.graph",
+            "cont_img_mvp.graph",
             "test_grpby_gather.graph",
             "chiles_simple.graph",
         ]
