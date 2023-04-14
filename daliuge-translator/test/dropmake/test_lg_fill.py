@@ -43,11 +43,11 @@ class LGFillTest(unittest.TestCase):
         }
         with open(os.path.join(lg_dir, "cont_img_mvp.graph")) as f:
             lg = pg_generator.fill(json.load(f), params)
-        for node_idx, value in zip((5, 12, 26, 34), ("1", "2", "True", "hi")):
+        for node_idx, value in zip((5, 12, 24, 33), (5, 1, 0, "10")):
             print(node_idx)
             node = lg["nodeDataArray"][node_idx]
             found = None
             for field in node["fields"]:
-                if field["name"] == "arg10":
+                if field["name"] == "execution_time":
                     found = field["value"]
             self.assertEqual(found, value)

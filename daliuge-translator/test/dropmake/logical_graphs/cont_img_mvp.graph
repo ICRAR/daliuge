@@ -1255,7 +1255,7 @@
                 {
                     "text": "Execution time",
                     "name": "execution_time",
-                    "value": 5,
+                    "value": 1,
                     "defaultValue": "0",
                     "description": "Estimate of execution time (in seconds) for this application.",
                     "readonly": false,
@@ -1795,7 +1795,7 @@
                 {
                     "text": "Execution time",
                     "name": "execution_time",
-                    "value": 5,
+                    "value": 1,
                     "defaultValue": "0",
                     "description": "Estimate of execution time (in seconds) for this application.",
                     "readonly": false,
@@ -3287,8 +3287,8 @@
                 {
                     "text": "Execution time",
                     "name": "execution_time",
-                    "value": 5,
-                    "defaultValue": "0",
+                    "value": 0,
+                    "defaultValue": 0,
                     "description": "Estimate of execution time (in seconds) for this application.",
                     "readonly": false,
                     "type": "Float",
@@ -4354,8 +4354,8 @@
                 {
                     "text": "Execution Time",
                     "name": "execution_time",
-                    "value": "5",
-                    "defaultValue": "",
+                    "value": "10",
+                    "defaultValue": "10",
                     "description": "",
                     "readonly": false,
                     "type": "Unknown",

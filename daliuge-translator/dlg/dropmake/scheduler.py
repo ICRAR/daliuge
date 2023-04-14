@@ -1087,6 +1087,7 @@ class DAGUtil(object):
         """
         dist = {}  # stores {v : (length, u)}
         if topo_sort is None:
+            logger.debug("Running topological sort")
             topo_sort = nx.topological_sort(G)
         for v in topo_sort:
             us = [
