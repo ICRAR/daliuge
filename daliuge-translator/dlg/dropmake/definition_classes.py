@@ -22,6 +22,7 @@
 """
 Helper classes to aid the translation
 """
+from dataclasses import dataclass, fields, asdict
 
 
 class Categories:
@@ -108,6 +109,7 @@ CONSTRUCT_TYPES = [
 ]
 
 
+@dataclass
 class ConstructTypes:
     SCATTER = Categories.SCATTER
     GATHER = Categories.GATHER
