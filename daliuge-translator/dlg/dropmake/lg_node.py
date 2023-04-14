@@ -674,10 +674,10 @@ class LGNode:
             kwargs.update({"nodeAttributes": {}})
             for je in self.jd["fields"]:
                 # The field to be used is not the text, but the name field
-                self.jd[je["text"]] = je["value"]
-                kwargs[je["text"]] = je["value"]
-                self.jd["nodeAttributes"].update({je["text"]: je})
-                kwargs["nodeAttributes"].update({je["text"]: je})
+                self.jd[je["name"]] = je["value"]
+                kwargs[je["name"]] = je["value"]
+                self.jd["nodeAttributes"].update({je["name"]: je})
+                kwargs["nodeAttributes"].update({je["name"]: je})
         kwargs[
             "applicationArgs"
         ] = {}  # make sure the dict always exists downstream
@@ -736,6 +736,13 @@ class LGNode:
                 ]
                 idText = idText[0] if len(idText) > 0 else None
         return idText if index >= 0 else ports_dict
+
+    def create_drop_spec(self, oid, rank, kwargs) -> dropdict:
+        """
+        New implementation of drop_spec generation method.
+        """
+        drop_spec = {}
+        return drop_spec
 
     def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
         """
