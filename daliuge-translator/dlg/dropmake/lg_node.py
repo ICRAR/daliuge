@@ -347,7 +347,7 @@ class LGNode:
 
     @property
     def is_start_listener(self):
-        return len(self.inputs) == 1 and self.is_start and self.is_data
+        return len(self.inputs) == 1 and self.is_start_node and self.is_data
 
     @property
     def is_group_start(self):
