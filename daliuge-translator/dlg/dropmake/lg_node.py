@@ -736,7 +736,7 @@ class LGNode:
         }
         ports_dict = {}
         idText = None
-        if portId is None and index > 0:
+        if portId is None and index >= 0:
             if (
                 port in self.jd
                 and len(self.jd[port]) > index
@@ -758,7 +758,7 @@ class LGNode:
         else:
             if port in self.jd:
                 idText = [
-                    p["text"] for p in self.jd[port] if p["Id"] == portId
+                    p["name"] for p in self.jd[port] if p["Id"] == portId
                 ]
                 idText = idText[0] if len(idText) > 0 else None
         return idText if index >= 0 else ports_dict
