@@ -5036,9 +5036,9 @@
                     "usage": "NoPort"
                 },
                 {
-                    "text": "Arg 10",
-                    "name": "arg10",
-                    "value": "hi",
+                    "text": "dummy",
+                    "name": "dummy",
+                    "value": "~param4.what",
                     "defaultValue": "",
                     "description": "",
                     "readonly": false,
