@@ -227,7 +227,7 @@ class MetisPGTP(PGT):
                 gn = dict()
                 gn["key"] = start_k + gid
                 gn["isGroup"] = True
-                gn["text"] = "{1}_{0}".format(gid + 1, self._par_label)
+                gn["name"] = "{1}_{0}".format(gid + 1, self._par_label)
                 node_list.append(gn)
                 inner_parts.append(gn)
 
@@ -390,7 +390,7 @@ class MetisPGTP(PGT):
                     gn = dict()
                     gn["key"] = island_id + start_i
                     gn["isGroup"] = True
-                    gn["text"] = "{1}_{0}".format(island_id + 1, island_label)
+                    gn["name"] = "{1}_{0}".format(island_id + 1, island_label)
                     node_list.append(gn)
                 inner_parts = self._inner_parts
                 for ip in inner_parts:
@@ -536,7 +536,7 @@ class MySarkarPGTP(PGT):
                     gn = dict()
                     gn["key"] = island_id + start_i
                     gn["isGroup"] = True
-                    gn["text"] = "{1}_{0}".format(island_id + 1, island_label)
+                    gn["name"] = "{1}_{0}".format(island_id + 1, island_label)
                     node_list.append(gn)
 
                 for ip in inner_parts:
@@ -620,7 +620,7 @@ class MySarkarPGTP(PGT):
                 gn["isGroup"] = True
                 # gojs group_id label starts from 1
                 # so "gid - leng" instead of "gid - start_k"
-                gn["text"] = "{1}_{0}".format(
+                gn["name"] = "{1}_{0}".format(
                     (gid - start_k + 1), self._par_label
                 )
                 node_list.append(gn)

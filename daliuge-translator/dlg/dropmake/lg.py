@@ -115,7 +115,7 @@ class LG:
             # check all the outports of this node, and store "stream" output
             if len(node_ouput_ports) > 0:
                 for out_port in node_ouput_ports:
-                    if out_port.get("text", "").lower().endswith("stream"):
+                    if out_port.get("name", "").lower().endswith("stream"):
                         stream_output_ports[out_port["Id"]] = jd["key"]
         # Need to go through the list again, since done_dict is recursive
         for lgn in self._lgn_list:
@@ -467,7 +467,7 @@ class LG:
                     "categoryType": CategoryType.DATA,
                     "dataclass": "dlg.data.drops.data_base.NullDROP",
                     "nm": "StreamNull",
-                    "text": "StreamNull",
+                    "name": "StreamNull",
                     "dw": 0,
                 }
             )

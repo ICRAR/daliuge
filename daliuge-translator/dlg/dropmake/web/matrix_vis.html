@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+
 <head>
     <!-- <script src="http://d3js.org/d3.v3.min.js"></script> -->
     <script src="/static/d3.v3.min.js"></script>
@@ -15,60 +16,60 @@
         }
         */
 
-  function loadMatrix() {
-    //given a logical graph name, get its JSON from the server
-    //alert("Previous lg name = " + window.curr_lg_name);
-    //alert("Requesting " + pgtName.toString());
-    var action = "{{vis_action}}";
-    var gantt = false;
-    if (action == "pgt_gantt_chart") {
-      gantt = true;
-    }
-    $.ajax({
-      //url: "/pgt_gantt_chart?pgt_id={{pgt_view_json_name}}",
-      url: "/" + action.toString() + "?pgt_id={{pgt_view_json_name}}",
-      //url: "/pgt_gantt_chart?pgt_id=lofar_cal1_pgt.graph",
-      type: 'get',
-      error: function(XMLHttpRequest, textStatus, errorThrown) {
-        alert('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
-      },
-      success: function(data){
-        //console.log(data);
-        // show the matrix
-        var gm = JSON.parse(data)
-        var numrows = gm.length;
-        var numcols = gm[0].length;
-        var matrix = new Array(numrows);
-        var min = Number.MAX_SAFE_INTEGER;
-        var max = -1;
-        for (var i = 0; i < numrows; i++) {
-          matrix[i] = new Array(numcols);
-          for (var j = 0; j < numcols; j++) {
-            var t = gm[i][j];
-            if (gantt && t == 1) {
-              t = i;
+        function loadMatrix() {
+            //given a logical graph name, get its JSON from the server
+            //alert("Previous lg name = " + window.curr_lg_name);
+            //alert("Requesting " + pgtName.toString());
+            var action = "{{vis_action}}";
+            var gantt = false;
+            if (action == "pgt_gantt_chart") {
+                gantt = true;
             }
-            if (t < min) {
-              min = t;
-            }
-            if (t > max) {
-              max = t;
-            }
-            matrix[i][j] = t;
-          }
+            $.ajax({
+                //url: "/pgt_gantt_chart?pgt_id={{pgt_view_json_name}}",
+                url: "/" + action.toString() + "?pgt_id={{pgt_view_json_name}}",
+                //url: "/pgt_gantt_chart?pgt_id=lofar_cal1_pgt.graph",
+                type: 'get',
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert('status:' + XMLHttpRequest.status + ', status text: ' + XMLHttpRequest.statusText);
+                },
+                success: function (data) {
+                    //console.log(data);
+                    // show the matrix
+                    var gm = JSON.parse(data)
+                    var numrows = gm.length;
+                    var numcols = gm[0].length;
+                    var matrix = new Array(numrows);
+                    var min = Number.MAX_SAFE_INTEGER;
+                    var max = -1;
+                    for (var i = 0; i < numrows; i++) {
+                        matrix[i] = new Array(numcols);
+                        for (var j = 0; j < numcols; j++) {
+                            var t = gm[i][j];
+                            if (gantt && t == 1) {
+                                t = i;
+                            }
+                            if (t < min) {
+                                min = t;
+                            }
+                            if (t > max) {
+                                max = t;
+                            }
+                            matrix[i][j] = t;
+                        }
+                    }
+                    var colorMap = d3.scale.linear()
+                        //var colorMap = d3.scale.log()
+                        //.domain([-1, 0, 1])
+                        .domain([min, Math.round((min + max) / 2), max])
+                        //.domain([min, max])
+                        .range(["white", "blue", "red"]);
+                    //.range(["red", "black", "green"]);
+                    //.range(["brown", "#ddd", "darkgreen"]);
+                    showMatrix(numrows, numcols, matrix, colorMap);
+                }
+            });
         }
-        var colorMap = d3.scale.linear()
-        //var colorMap = d3.scale.log()
-            //.domain([-1, 0, 1])
-            .domain([min, Math.round((min + max) / 2), max])
-            //.domain([min, max])
-            .range(["white", "blue", "red"]);
-            //.range(["red", "black", "green"]);
-            //.range(["brown", "#ddd", "darkgreen"]);
-        showMatrix(numrows, numcols, matrix, colorMap);
-      }
-    });
-}
 
         function init() {
             /*
@@ -89,7 +90,7 @@
 
         function showMatrix(numrows, numcols, matrix, colorMap) {
 
-            var margin = {top: 100, right: 100, bottom: 100, left: 100},
+            var margin = { top: 100, right: 100, bottom: 100, left: 100 },
                 width = 1024,
                 height = 768;
 
@@ -195,6 +196,7 @@
 
     </script>
 </head>
+
 <body onload="init()">
 
 </body>

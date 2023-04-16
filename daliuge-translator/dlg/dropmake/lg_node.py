@@ -74,8 +74,8 @@ class LGNode:
         self._grpw = None
         self.inputPorts = "inputPorts"
         self.outputPorts = "outputPorts"
-        logger.debug("%s input_ports: %s", self.text, self.inputPorts)
-        logger.debug("%s output_ports: %s", self.text, self.outputPorts)
+        logger.debug("%s input_ports: %s", self.name, self.inputPorts)
+        logger.debug("%s output_ports: %s", self.name, self.outputPorts)
         self._nodetype = ""  # e.g. Data or Application
         self._nodeclass = ""  # e.g. dlg.apps.simple.HelloWorldAPP
         self._reprodata = jd.get("reprodata", {}).copy()
@@ -121,7 +121,7 @@ class LGNode:
             # we need this as long as the fields are still using "name"
             if len(self._inputPorts) > 0 and "name" in self._inputPorts[0]:
                 for p in self._inputPorts:
-                    p["text"] = p["name"]
+                    p["name"] = p["name"]
         else:
             self._inputPorts = value["inputPorts"]
 
@@ -144,7 +144,7 @@ class LGNode:
             # we need this as long as the fields are still using "name"
             if len(self._outputPorts) > 0 and "name" in self._outputPorts[0]:
                 for p in self._outputPorts:
-                    p["text"] = p["name"]
+                    p["name"] = p["name"]
         else:
             self._outputPorts = value["outputPorts"]
 
@@ -164,6 +164,10 @@ class LGNode:
             elif value["category"] in DATA_TYPES:
                 value["categoryType"] = CategoryType.DATA
         self._jd = value
+
+    @property
+    def reprodata(self):
+        return self._reprodata
 
     @property
     def is_group(self):
@@ -194,8 +198,13 @@ class LGNode:
         self._nodeclass = value
 
     @property
-    def text(self):
-        return self.jd.get("text", "")
+    def name(self):
+        if self.jd.get("name"):
+            # backwards compatibility
+            # TODO: deprecated
+            return self.jd.get("name", "")
+        else:
+            return self.jd.get("name", "")
 
     @property
     def category(self):
@@ -347,10 +356,16 @@ class LGNode:
 
     @property
     def is_start_listener(self):
+        """
+        is this a socket listener node
+        """
         return len(self.inputs) == 1 and self.is_start_node and self.is_data
 
     @property
     def is_group_start(self):
+        """
+        is this a node starting a group (usually inside a loop)
+        """
         result = False
         if self.has_group() and "group_start" in self.jd:
             gs = self.jd["group_start"]
@@ -364,6 +379,9 @@ class LGNode:
 
     @property
     def is_group_end(self):
+        """
+        is this a node ending a group (usually inside a loop)
+        """
         result = False
         if self.has_group() and "group_end" in self.jd:
             ge = self.jd["group_end"]
@@ -377,6 +395,9 @@ class LGNode:
 
     @property
     def is_group(self):
+        """
+        is this a group (aka construct) node
+        """
         return self._is_group
 
     @property
@@ -431,6 +452,22 @@ class LGNode:
                         ve
                     )
                 )
+
+    @property
+    def inputPorts(self):
+        return self._inputPorts
+
+    @inputPorts.setter
+    def inputPorts(self, port="inputPorts"):
+        self._inputPorts = self._getIdText(port="inputPorts", index=-1)
+
+    @property
+    def outputPorts(self):
+        return self._outputPorts
+
+    @outputPorts.setter
+    def outputPorts(self, port="outputPorts"):
+        self._outputPorts = self._getIdText(port="outputPorts", index=-1)
 
     @property
     def gather_width(self):
@@ -500,7 +537,7 @@ class LGNode:
             if grpks is None or len(grpks) < 1:
                 raise GInvalidNode(
                     "Must specify group_key for Group By '{0}'".format(
-                        self.text
+                        self.name
                     )
                 )
             # find the "root" groupby and get all of its scatters
@@ -533,7 +570,7 @@ class LGNode:
                         layers.append(tlgn.group)
                     else:
                         raise GInvalidNode(
-                            "Wrong single group_key for {0}".format(self.text)
+                            "Wrong single group_key for {0}".format(self.name)
                         )
                 else:
                     inputgrp = tlgn.group
@@ -593,24 +630,10 @@ class LGNode:
                 self._dop = 1
         return self._dop
 
-    @property
-    def inputPorts(self):
-        return self._inputPorts
-
-    @inputPorts.setter
-    def inputPorts(self, port="inputPorts"):
-        self._inputPorts = self._getIdText(port="inputPorts", index=-1)
-
-    @property
-    def outputPorts(self):
-        return self._outputPorts
-
-    @outputPorts.setter
-    def outputPorts(self, port="outputPorts"):
-        self._outputPorts = self._getIdText(port="outputPorts", index=-1)
-
     def dop_diff(self, that_lgn):
         """
+        TODO: This does not belong in the LGNode class
+
         dop difference between inner node/group and outer group
         e.g for each outer group, how many instances of inner nodes/groups
         """
@@ -647,6 +670,9 @@ class LGNode:
         # raise GInvalidLink("{0} and {1} are not hierarchically related".format(self.id, that_lgn.id))
 
     def h_related(self, that_lgn):
+        """
+        TODO: This does not belong in the LGNode class
+        """
         that_gh = that_lgn.group_hierarchy
         this_gh = self.group_hierarchy
         if len(that_gh) + len(this_gh) <= 1:
@@ -683,7 +709,7 @@ class LGNode:
         ] = {}  # make sure the dict always exists downstream
         if "applicationArgs" in self.jd:  # and fill it if provided
             for je in self.jd["applicationArgs"]:
-                j = {je["text"]: {k: je[k] for k in je if k not in ["text"]}}
+                j = {je["name"]: {k: je[k] for k in je if k not in ["name"]}}
                 self.jd.update(j)
                 kwargs["applicationArgs"].update(j)
         if "nodeAttributes" not in kwargs:
@@ -700,7 +726,7 @@ class LGNode:
         """
         Return IdText of port if it exists
 
-        NOTE: This has now been changed to use the 'text' rather than idText, in anticipation
+        NOTE: This has now been changed to use the 'name' rather than idText, in anticipation
         of removing idText completely.
         TODO: only returns the first one!!
         """
@@ -710,20 +736,20 @@ class LGNode:
         }
         ports_dict = {}
         idText = None
-        if portId is None and index > 0:
+        if portId is None and index >= 0:
             if (
                 port in self.jd
                 and len(self.jd[port]) > index
-                and "text" in self.jd[port][index]
+                and "name" in self.jd[port][index]
             ):
-                idText = self.jd[port][index]["text"]
+                idText = self.jd[port][index]["name"]
             else:  # everything in 'fields'
                 if port in port_selector:
                     for field in self.jd["fields"]:
                         if "usage" not in field:  # fixes manual graphs
                             continue
                         if field["usage"] in port_selector[port]:
-                            idText = field["text"]
+                            idText = field["name"]
                             # can't be sure that name is unique
                             if idText not in ports_dict:
                                 ports_dict[idText] = [field["id"]]
@@ -732,10 +758,17 @@ class LGNode:
         else:
             if port in self.jd:
                 idText = [
-                    p["text"] for p in self.jd[port] if p["Id"] == portId
+                    p["name"] for p in self.jd[port] if p["Id"] == portId
                 ]
                 idText = idText[0] if len(idText) > 0 else None
         return idText if index >= 0 else ports_dict
+
+    def create_drop_spec(self, oid, rank, kwargs) -> dropdict:
+        """
+        New implementation of drop_spec generation method.
+        """
+        drop_spec = {}
+        return drop_spec
 
     def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
         """
@@ -793,7 +826,7 @@ class LGNode:
                         "category": "PythonApp",
                         "appclass": "dlg.apps.simple.SleepApp",
                         "nm": "lstnr",
-                        "text": "lstnr",
+                        "name": "lstnr",
                         "tw": 5,
                         "sleepTime": 1,
                         "rank": rank,
@@ -856,11 +889,11 @@ class LGNode:
                 if execTime < 0:
                     raise GraphException(
                         "Execution_time must be greater"
-                        " than 0 for Construct '%s'" % self.text
+                        " than 0 for Construct '%s'" % self.name
                     )
             elif app_class != "dlg.apps.simple.SleepApp":
                 raise GraphException(
-                    "Missing execution_time for Construct '%s'" % self.text
+                    "Missing execution_time for Construct '%s'" % self.name
                 )
             else:
                 execTime = random.randint(3, 8)
@@ -889,7 +922,7 @@ class LGNode:
         elif drop_type in [Categories.DYNLIB_APP, Categories.DYNLIB_PROC_APP]:
             if "libpath" not in self.jd or len(self.jd["libpath"]) == 0:
                 raise GraphException(
-                    "Missing 'libpath' in Drop {0}".format(self.text)
+                    "Missing 'libpath' in Drop {0}".format(self.name)
                 )
             drop_spec = dropdict(
                 {
@@ -932,7 +965,7 @@ class LGNode:
             else:
                 # kwargs['tw'] = random.randint(3, 8)
                 raise GraphException(
-                    "Missing execution_time for Construct '%s'" % self.text
+                    "Missing execution_time for Construct '%s'" % self.name
                 )
             # add more arguments (support for Arg0x dropped!)
             cmds = []
@@ -974,13 +1007,13 @@ class LGNode:
             image = str(self.jd.get("image"))
             if image == "":
                 raise GraphException(
-                    "Missing image for Construct '%s'" % self.text
+                    "Missing image for Construct '%s'" % self.name
                 )
 
             command = str(self.jd.get("command"))
             # There ARE containers which don't need/want a command
             # if command == "":
-            #     raise GraphException("Missing command for Construct '%s'" % self.text)
+            #     raise GraphException("Missing command for Construct '%s'" % self.name)
 
             kwargs["tw"] = int(self.jd.get("execution_time", "5"))
             kwargs["image"] = image
@@ -1023,7 +1056,7 @@ class LGNode:
                     "categoryType": CategoryType.DATA,
                     "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                     "nm": "grpdata",
-                    "text": "grpdata",
+                    "name": "grpdata",
                     "dw": dw,
                     "rank": rank,
                     "reprodata": self.jd.get("reprodata", {}),
@@ -1062,7 +1095,7 @@ class LGNode:
                     "categoryType": CategoryType.DATA,
                     "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                     "nm": "gthrdt",
-                    "text": "gthrdt",
+                    "name": "gthrdt",
                     "dw": dw,
                     "rank": rank,
                     "reprodata": self.jd.get("reprodata", {}),
@@ -1124,8 +1157,8 @@ class LGNode:
             kwargs["categoryType"] = "Data"
         else:
             kwargs["categoryType"] = "Application"
-        kwargs["nm"] = self.text
-        kwargs["text"] = self.text
+        kwargs["nm"] = self.name
+        kwargs["name"] = self.name
         # Behaviour is that child-nodes inherit reproducibility data from their parents.
         if self._reprodata is not None:
             kwargs["reprodata"] = self._reprodata.copy()
