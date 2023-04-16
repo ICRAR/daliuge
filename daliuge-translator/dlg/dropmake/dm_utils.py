@@ -226,15 +226,15 @@ def convert_mkn(lgo):
         node_mk["categoryType"] = ConstructTypes.GATHER
         ipan = node_mk.get("inputApplicationName", "")
         if len(ipan) == 0:
-            node_mk["text"] = node_mk["text"] + "_InApp"
+            node_mk["name"] = node_mk["name"] + "_InApp"
         else:
-            node_mk["text"] = ipan
+            node_mk["name"] = ipan
         #        del node_mk["inputApplicationName"]
         #        del node_mk["outputApplicationName"]
         #        del node_mk["outputAppFields"]
         new_field = {
             "name": "num_of_inputs",
-            "text": "Number of inputs",
+            "name": "Number of inputs",
             "value": "%d" % (M),
         }
         node_mk["fields"].append(new_field)
@@ -244,9 +244,9 @@ def convert_mkn(lgo):
 
         opan = node_kn.get("outputAppName", "")
         if len(opan) == 0:
-            node_kn["text"] = node_kn["text"] + "_OutApp"
+            node_kn["name"] = node_kn["name"] + "_OutApp"
         else:
-            node_kn["text"] = opan
+            node_kn["name"] = opan
         k_new = min(keyset) - 1
         keyset.add(k_new)
         node_kn["key"] = k_new
@@ -261,7 +261,7 @@ def convert_mkn(lgo):
 
         new_field_kn = {
             "name": "num_of_copies",
-            "text": "Number of copies",
+            "name": "Number of copies",
             "value": "%d" % (K),
         }
         node_kn["fields"].append(new_field_kn)
@@ -280,7 +280,7 @@ def convert_mkn(lgo):
 
         node_split_n["category"] = ConstructTypes.SCATTER
         node_split_n["categoryType"] = ConstructTypes.SCATTER
-        node_split_n["text"] = "Nothing"
+        node_split_n["name"] = "Nothing"
         k_new = min(keyset) - 1
         keyset.add(k_new)
         node_split_n["key"] = k_new
@@ -298,7 +298,7 @@ def convert_mkn(lgo):
 
         new_field_kn = {
             "name": "num_of_copies",
-            "text": "Number of copies",
+            "name": "Number of copies",
             "value": "%d" % (N),
         }
         node_split_n["fields"].append(new_field_kn)
@@ -377,19 +377,18 @@ def convert_mkn_all_share_m(lgo):
 
         node_mk["application"] = node["inputApplicationName"]
         node_mk["category"] = ConstructTypes.GATHER
-        node_mk["text"] = node_mk["text"] + "_InApp"
+        node_mk["name"] = node_mk["name"] + "_InApp"
         del node["inputApplicationName"]
         del node["outputApplicationName"]
         del node["outputAppFields"]
         new_field = {
             "name": "num_of_inputs",
-            "text": "Number of inputs",
             "value": "%d" % (ratio_mk),
         }
         node_mk["fields"].append(new_field)
 
         node_kn["category"] = ConstructTypes.GATHER
-        node_kn["text"] = node_kn["text"] + "_OutApp"
+        node_kn["name"] = node_kn["name"] + "_OutApp"
         k_new = min(keyset) - 1
         keyset.add(k_new)
         node_kn["key"] = k_new
@@ -400,8 +399,7 @@ def convert_mkn_all_share_m(lgo):
         del node_kn["outputAppFields"]
 
         new_field_kn = {
-            "name": "num_of_inputs",
-            "text": "Number of inputs",
+            "name": "Number of inputs",
             "value": "%d" % (ratio_kn),
         }
         node_kn["fields"].append(new_field_kn)
@@ -491,9 +489,9 @@ def convert_construct(lgo):
         app_node["key"] = node["key"]
         app_node["category"] = node[has_app]  # node['application']
         if has_app[0] == "i":
-            app_node["text"] = node["text"]
+            app_node["name"] = node["text"]
         else:
-            app_node["text"] = node["text"]
+            app_node["name"] = node["text"]
 
         if "mkn" in node:
             app_node["mkn"] = node["mkn"]
@@ -536,7 +534,7 @@ def convert_construct(lgo):
             dup_app_node = dict()
             dup_app_node["key"] = dup_app_node_k
             dup_app_node["category"] = node[has_app]  # node['application']
-            dup_app_node["text"] = node["text"]
+            dup_app_node["name"] = node["text"]
 
             if "mkn" in node:
                 dup_app_node["mkn"] = node["mkn"]

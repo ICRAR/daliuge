@@ -147,7 +147,7 @@ class AppDROP(ContainerDROP):
         else:
             for key, field in self.parameters["applicationArgs"].items():
                 if field["usage"] in ["InputPort", "InputOutput"]:
-                    named_inputs[field["text"]] = field
+                    named_inputs[field["name"]] = field
         return named_inputs
 
     def _generateNamedOutputs(self):
@@ -167,7 +167,7 @@ class AppDROP(ContainerDROP):
         else:
             for key, field in self.parameters["applicationArgs"].items():
                 if field["usage"] in ["OutputPort", "InputOutput"]:
-                    named_outputs[field["text"]] = field
+                    named_outputs[field["name"]] = field
         return named_outputs
 
     def handleEvent(self, e):
