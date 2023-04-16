@@ -48,6 +48,6 @@ class LGFillTest(unittest.TestCase):
             node = lg["nodeDataArray"][node_idx]
             found = None
             for field in node["fields"]:
-                if field["name"] == "execution_time":
+                if field["name"] == "dummy":
                     found = field["value"]
             self.assertEqual(found, value)

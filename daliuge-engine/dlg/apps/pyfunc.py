@@ -526,7 +526,7 @@ class PyFuncApp(BarrierAppDROP):
             ]
             logger.debug(
                 "Identified keyword arguments removed: %s",
-                [i["text"] for i in _dum],
+                [i["name"] for i in _dum],
             )
             pargsDict.update(
                 {
@@ -625,7 +625,7 @@ class PyFuncApp(BarrierAppDROP):
             _dum = [appArgs.pop(k) for k in pargsDict if k in appArgs]
             logger.debug(
                 "Identified positional arguments removed: %s",
-                [i["text"] for i in _dum],
+                [i["name"] for i in _dum],
             )
             logger.debug(f"updating posargs with {list(pargsDict.keys())}")
             pargs.extend(list(pargsDict.values()))

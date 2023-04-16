@@ -858,6 +858,22 @@
                     "id": "c9ae7b89-c140-4ab0-845e-6d4f0a0673d3",
                     "parameterType": "ComponentParameter",
                     "usage": "NoPort"
+                },
+                {
+                    "text": "dummy",
+                    "name": "dummy",
+                    "value": "~param1",
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Object.",
+                    "precious": false,
+                    "options": [],
+                    "positional": false,
+                    "keyAttribute": false,
+                    "id": "caae2b87-66d8-4ae1-af1f-a62702629919",
+                    "parameterType": "ApplicationArgument",
+                    "usage": "OutputPort"
                 }
             ],
             "inputAppFields": [],
@@ -1764,6 +1780,22 @@
                     "text": "R-L",
                     "name": "R-L",
                     "value": "",
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Object.",
+                    "precious": false,
+                    "options": [],
+                    "positional": false,
+                    "keyAttribute": false,
+                    "id": "caae2b87-66d8-4ae1-af1f-a62702629919",
+                    "parameterType": "ApplicationArgument",
+                    "usage": "OutputPort"
+                },
+                {
+                    "text": "dummy",
+                    "name": "dummy",
+                    "value": "~param2",
                     "defaultValue": "",
                     "description": "",
                     "readonly": false,
@@ -3561,6 +3593,22 @@
                     "id": "3e5fff6b-396a-4749-b666-5ad8c02ddacc",
                     "parameterType": "ApplicationArgument",
                     "usage": "OutputPort"
+                },
+                {
+                    "text": "dummy",
+                    "name": "dummy",
+                    "value": "~param1.param2",
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Object.",
+                    "precious": false,
+                    "options": [],
+                    "positional": false,
+                    "keyAttribute": false,
+                    "id": "caae2b87-66d8-4ae1-af1f-a62702629919",
+                    "parameterType": "ApplicationArgument",
+                    "usage": "OutputPort"
                 }
             ],
             "inputAppFields": [],
@@ -4545,6 +4593,22 @@
                     "id": "56afe407-72bd-402b-9704-a3f6ab67f559",
                     "parameterType": "ApplicationArgument",
                     "usage": "InputOutput"
+                },
+                {
+                    "text": "dummy",
+                    "name": "dummy",
+                    "value": "~param4.what",
+                    "defaultValue": "",
+                    "description": "",
+                    "readonly": false,
+                    "type": "Object.",
+                    "precious": false,
+                    "options": [],
+                    "positional": false,
+                    "keyAttribute": false,
+                    "id": "caae2b87-66d8-4ae1-af1f-a62702629919",
+                    "parameterType": "ApplicationArgument",
+                    "usage": "OutputPort"
                 }
             ],
             "inputAppFields": [],

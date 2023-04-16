@@ -116,7 +116,7 @@ def compute(value, **kwargs):
             "oid": transmitter_oid,
             "port": port,
             "nm": "result transmitter",
-            "text": "result transmitter",
+            "name": "result transmitter",
         }
     )
     for leaf_oid in droputils.get_leaves(graph.values()):
@@ -287,7 +287,7 @@ class _DelayedDrops(_DelayedDrop):
                 "categoryType": "Application",
                 "appclass": "dlg.dask_emulation._Listifier",
                 "nm": "listifier",
-                "text": "listifier",
+                "name": "listifier",
             }
         )
 
@@ -323,7 +323,7 @@ class _AppDrop(_DelayedDrop):
             simple_fname = self.fname.split(".")[-1]
             my_dropdict["func_name"] = self.fname
             my_dropdict["nm"] = simple_fname
-            my_dropdict["text"] = simple_fname
+            my_dropdict["name"] = simple_fname
         if self.fcode is not None:
             my_dropdict["func_code"] = utils.b2s(base64.b64encode(self.fcode))
         if self.fdefaults:
