@@ -363,7 +363,7 @@ class PGT(object):
                 node["category"] = "Data"
             elif CategoryType.APPLICATION == tt:
                 node["category"] = "Application"
-            node["text"] = drop["nm"]
+            node["name"] = drop["nm"]
             nodes.append(node)
 
         if self._extra_drops is None:
@@ -394,7 +394,7 @@ class PGT(object):
                                     "categoryType": CategoryType.APPLICATION,
                                     "appclass": "dlg.drop.BarrierAppDROP",
                                     "nm": "go_app",
-                                    "text": "go_app",
+                                    "name": "go_app",
                                     "tw": 1,
                                 }
                             )
@@ -413,7 +413,7 @@ class PGT(object):
                                     "categoryType": CategoryType.DATA,
                                     "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                                     "nm": "go_data",
-                                    "text": "go_data",
+                                    "name": "go_data",
                                     "dw": 1,
                                 }
                             )
@@ -475,8 +475,8 @@ class PGT(object):
                 node["category"] = "Data"
             elif tt == DropType.APPCLASS:
                 node["category"] = "PythonApp"  # might not be correct
-            node["text"] = drop["nm"]
-            node["text"] = drop["text"]
+            node["name"] = drop["nm"]
+            node["name"] = drop["name"]
             nodes.append(node)
 
         ret["nodeDataArray"] = nodes
