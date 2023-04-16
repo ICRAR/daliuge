@@ -888,7 +888,7 @@ class PSOScheduler(Scheduler):
         # val - a tuple of (critical_path (int), num_parts (int))
         self._sspace_dict = dict()
         self._topk = topk
-        self._swarm_size = swarm_size
+        self._swarm_size = swarm_size if swarm_size is not None else 40
         self._lite_dag = DAGUtil.build_dag_from_drops(
             self._drop_list, embed_drop=False
         )
