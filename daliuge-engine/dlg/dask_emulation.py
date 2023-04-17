@@ -286,7 +286,6 @@ class _DelayedDrops(_DelayedDrop):
             {
                 "categoryType": "Application",
                 "appclass": "dlg.dask_emulation._Listifier",
-                # "nm": "listifier",
                 "name": "listifier",
             }
         )

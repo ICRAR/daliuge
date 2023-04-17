@@ -466,7 +466,6 @@ class LG:
                     ),
                     "categoryType": CategoryType.DATA,
                     "dataclass": "dlg.data.drops.data_base.NullDROP",
-                    # "nm": "StreamNull",
                     "name": "StreamNull",
                     "dw": 0,
                 }
