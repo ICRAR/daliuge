@@ -270,7 +270,7 @@ class PGT(object):
             raise GPGTException("Too few nodes: {0}".format(nodes_len))
 
         num_parts = self._num_parts_done
-        drop_list = self._drop_list + self._extra_drops
+        drop_list = self.drops
 
         # deal with the co-hosting of DIMs
         if not co_host_dim:
@@ -382,7 +382,7 @@ class PGT(object):
                         if drop["categoryType"] in [CategoryType.DATA, "data"]
                         else 1
                     )
-                    to_dt = G.nodes[oup]["dt"]
+                    to_dt = G.nodes[oup]["drop_type"]
                     if from_dt == to_dt:
                         to_drop = G.nodes[oup]["drop_spec"]
                         if from_dt == 0:
@@ -447,7 +447,11 @@ class PGT(object):
             for gn in add_nodes:
                 # logger.debug("added gid = {0} for new node {1}".format(gn[4], gn[0]))
                 G.add_node(
-                    gn[0], weight=gn[1], dt=gn[2], drop_spec=gn[3], gid=gn[4]
+                    gn[0],
+                    weight=gn[1],
+                    drop_type=gn[2],
+                    drop_spec=gn[3],
+                    gid=gn[4],
                 )
             G.remove_edges_from(remove_edges)
             G.add_edges_from(add_edges)

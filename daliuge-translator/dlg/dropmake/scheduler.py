@@ -1310,7 +1310,7 @@ class DAGUtil(object):
                     myk,
                     weight=tw,
                     text=drop["name"],
-                    dt=dtp,
+                    drop_type=dtp,
                     drop_spec=drop,
                     num_cpus=num_cpus,
                 )
@@ -1319,7 +1319,7 @@ class DAGUtil(object):
                     myk,
                     weight=tw,
                     text=drop["name"],
-                    dt=dtp,
+                    drop_type=dtp,
                     num_cpus=num_cpus,
                 )
             for obk in out_bound_keys:
@@ -1357,7 +1357,7 @@ class DAGUtil(object):
             G.add_node(
                 super_k,
                 weight=0,
-                dtp=0,
+                drop_type=0,
                 drop_spec=super_root,
                 num_cpus=0,
                 text="fake_super_root",
