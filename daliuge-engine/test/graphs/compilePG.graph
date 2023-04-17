@@ -16,7 +16,7 @@
         "n_tries": 1,
         "applicationArgs": {
             "func_name": {
-                "text": "Function Name",
+                "name": "Function Name",
                 "value": "compile",
                 "defaultValue": "",
                 "description": "Python function name",
@@ -27,7 +27,7 @@
                 "positional": false
             },
             "func_code": {
-                "text": "Function Code",
+                "name": "Function Code",
                 "value": "",
                 "defaultValue": "",
                 "description": "Python function code, e.g. 'def function_name(args): return args'",
@@ -38,7 +38,7 @@
                 "positional": false
             },
             "input_parser": {
-                "text": "Input Parser",
+                "name": "Input Parser",
                 "value": "eval",
                 "defaultValue": "pickle",
                 "description": "Input port parsing technique",
@@ -55,7 +55,7 @@
                 "positional": false
             },
             "output_parser": {
-                "text": "Output Parser",
+                "name": "Output Parser",
                 "value": "eval",
                 "defaultValue": "pickle",
                 "description": "Output port parsing technique",
@@ -72,7 +72,7 @@
                 "positional": false
             },
             "func_defaults": {
-                "text": "Function Defaults",
+                "name": "Function Defaults",
                 "value": "",
                 "defaultValue": "",
                 "description": "Mapping from argname to default value. Should match only the last part of the argnames list. Values are interpreted as Python code literals and that means string values need to be quoted.",
@@ -83,7 +83,7 @@
                 "positional": false
             },
             "func_arg_mapping": {
-                "text": "Function Arguments Mapping",
+                "name": "Function Arguments Mapping",
                 "value": "",
                 "defaultValue": "",
                 "description": "Mapping between argument name and input drop uids",
@@ -94,7 +94,7 @@
                 "positional": false
             },
             "source": {
-                "text": "source",
+                "name": "source",
                 "value": "print('Hello')",
                 "defaultValue": "",
                 "description": "",
@@ -105,7 +105,7 @@
                 "positional": false
             },
             "filename": {
-                "text": "filename",
+                "name": "filename",
                 "value": "",
                 "defaultValue": "",
                 "description": "",
@@ -116,7 +116,7 @@
                 "positional": false
             },
             "mode": {
-                "text": "mode",
+                "name": "mode",
                 "value": "exec",
                 "defaultValue": "",
                 "description": "",
@@ -127,7 +127,7 @@
                 "positional": false
             },
             "optimize": {
-                "text": "optimize",
+                "name": "optimize",
                 "value": true,
                 "defaultValue": "",
                 "description": "",
@@ -141,7 +141,7 @@
         "iid": "0",
         "lg_key": -1,
         "dt": "PythonApp",
-        "nm": "compile",
+        "name": "compile",
         "inputs": [
             {
                 "2022-05-06T08:43:26_-2_0": "filename"
@@ -165,7 +165,7 @@
         "iid": "0",
         "lg_key": -2,
         "dt": "Memory",
-        "nm": "NULL",
+        "name": "NULL",
         "consumers": [
             {
                 "2022-05-06T08:43:26_-1_0": "filename"
