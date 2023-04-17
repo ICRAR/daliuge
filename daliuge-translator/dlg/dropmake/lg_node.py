@@ -797,9 +797,11 @@ class LGNode:
         self.nodetype = drop_type
         if self.is_data:
             if "data_volume" in self.jd:
-                kwargs["dw"] = int(self.jd["data_volume"])  # dw -- data weight
+                kwargs["weight"] = int(
+                    self.jd["data_volume"]
+                )  # dw -- data weight
             else:
-                kwargs["dw"] = 1
+                kwargs["weight"] = 1
             iIdText = self._getIdText(port="inputPorts")
             oIdText = self._getIdText(port="outputPorts")
             logger.debug(
@@ -828,7 +830,7 @@ class LGNode:
                         "category": "PythonApp",
                         "appclass": "dlg.apps.simple.SleepApp",
                         "name": "lstnr",
-                        "tw": 5,
+                        "weigth": 5,
                         "sleepTime": 1,
                         "rank": rank,
                         "reprodata": self.jd.get("reprodata", {}),
@@ -902,7 +904,7 @@ class LGNode:
             if app_class == "dlg.apps.simple.SleepApp":
                 kwargs["sleepTime"] = execTime
 
-            kwargs["tw"] = execTime
+            kwargs["weight"] = execTime
             self.jd["execution_time"] = execTime
             drop_spec = dropdict(
                 {
@@ -935,7 +937,7 @@ class LGNode:
                 }
             )
             kwargs["lib"] = self.jd["libpath"]
-            kwargs["tw"] = int(self.jd["execution_time"])
+            kwargs["weight"] = int(self.jd["execution_time"])
             if "mkn" in self.jd:
                 kwargs["mkn"] = self.jd["mkn"]
 
@@ -960,9 +962,9 @@ class LGNode:
             self._update_key_value_attributes(kwargs)
             if "execution_time" in self.jd:
                 try:
-                    kwargs["tw"] = int(self.jd["execution_time"])
+                    kwargs["weight"] = int(self.jd["execution_time"])
                 except TypeError:
-                    kwargs["tw"] = int(self.jd["execution_time"]["value"])
+                    kwargs["weight"] = int(self.jd["execution_time"]["value"])
             else:
                 # kwargs['tw'] = random.randint(3, 8)
                 raise GraphException(
@@ -1016,7 +1018,7 @@ class LGNode:
             # if command == "":
             #     raise GraphException("Missing command for Construct '%s'" % self.name)
 
-            kwargs["tw"] = int(self.jd.get("execution_time", "5"))
+            kwargs["weight"] = int(self.jd.get("execution_time", "5"))
             kwargs["image"] = image
             kwargs["command"] = command
             kwargs["user"] = str(self.jd.get("user", ""))
@@ -1057,14 +1059,14 @@ class LGNode:
                     "categoryType": CategoryType.DATA,
                     "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                     "name": "grpdata",
-                    "dw": dw,
+                    "weight": dw,
                     "rank": rank,
                     "reprodata": self.jd.get("reprodata", {}),
                 }
             )
             kwargs["grp-data_drop"] = dropSpec_grp
             kwargs[
-                "tw"
+                "weight"
             ] = 1  # barrier literarlly takes no time for its own computation
             kwargs["sleepTime"] = 1
             drop_spec.addOutput(dropSpec_grp, IdText="grpdata")
@@ -1095,13 +1097,13 @@ class LGNode:
                     "categoryType": CategoryType.DATA,
                     "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                     "name": "gthrdt",
-                    "dw": dw,
+                    "weight": dw,
                     "rank": rank,
                     "reprodata": self.jd.get("reprodata", {}),
                 }
             )
             kwargs["gather-data_drop"] = dropSpec_gather
-            kwargs["tw"] = 1
+            kwargs["weight"] = 1
             kwargs["sleepTime"] = 1
             drop_spec.addOutput(dropSpec_gather, IdText="gthrdata")
             dropSpec_gather.addProducer(drop_spec, IdText="gthrdata")
@@ -1116,7 +1118,7 @@ class LGNode:
                     "oid": oid,
                     "categoryType": CategoryType.DATA,
                     "dataclass": "dlg.data.drops.data_base.NullDROP",
-                    "dw": 0,
+                    "weight": 0,
                     "rank": rank,
                     "reprodata": self.jd.get("reprodata", {}),
                 }
@@ -1148,7 +1150,7 @@ class LGNode:
             raise ValueError
         kwargs["iid"] = iid
         kwargs["lg_key"] = self.id
-        kwargs["dt"] = self.category
+        # kwargs["dt"] = self.category
         kwargs["category"] = self.category
         if "categoryType" in kwargs:
             kwargs["categoryType"] = self.categoryType

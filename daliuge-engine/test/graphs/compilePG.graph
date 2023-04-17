@@ -7,7 +7,7 @@
             0
         ],
         "loop_ctx": null,
-        "tw": 5,
+        "weight": 5,
         "num_cpus": 1,
         "appclass": "dlg.apps.pyfunc.PyFuncApp",
         "execution_time": 5,
@@ -158,7 +158,7 @@
             0
         ],
         "loop_ctx": null,
-        "dw": 0,
+        "weight": 0,
         "data_volume": 0,
         "group_end": false,
         "applicationArgs": {},

@@ -6,7 +6,7 @@
             0
         ],
         "loop_ctx": null,
-        "tw": 5,
+        "weight": 5,
         "num_cpus": 1,
         "appclass": "dlg.apps.pyfunc.PyFuncApp",
         "execution_time": 5,
@@ -95,7 +95,6 @@
         },
         "iid": "0",
         "lg_key": -1,
-        "dt": "PythonApp",
         "name": "os.path.abspath",
         "inputs": [
             {
@@ -118,7 +117,7 @@
             0
         ],
         "loop_ctx": null,
-        "tw": 5,
+        "weight": 5,
         "command": "echo \"'$HOME'\" > %o0",
         "input_redirection": "",
         "output_redirection": "",
@@ -133,7 +132,6 @@
         "applicationArgs": {},
         "iid": "0",
         "lg_key": -2,
-        "dt": "BashShellApp",
         "name": "generate",
         "outputs": [
             {
@@ -151,7 +149,7 @@
             0
         ],
         "loop_ctx": null,
-        "dw": 5,
+        "weight": 5,
         "check_filepath_exists": false,
         "data_volume": 5,
         "group_end": false,
@@ -192,7 +190,6 @@
         },
         "iid": "0",
         "lg_key": -3,
-        "dt": "File",
         "name": "path",
         "producers": [
             {
@@ -215,7 +212,7 @@
             0
         ],
         "loop_ctx": null,
-        "tw": 5,
+        "weight": 5,
         "command": "cat %i0",
         "input_redirection": "",
         "output_redirection": "",
@@ -230,7 +227,6 @@
         "applicationArgs": {},
         "iid": "0",
         "lg_key": -4,
-        "dt": "BashShellApp",
         "name": "output",
         "inputs": [
             {
@@ -248,7 +244,7 @@
             0
         ],
         "loop_ctx": null,
-        "dw": 5,
+        "weight": 5,
         "check_filepath_exists": false,
         "data_volume": 5,
         "group_end": false,
@@ -289,7 +285,6 @@
         },
         "iid": "0",
         "lg_key": -5,
-        "dt": "File",
         "name": "result",
         "producers": [
             {

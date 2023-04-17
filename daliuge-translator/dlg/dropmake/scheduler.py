@@ -1295,10 +1295,10 @@ class DAGUtil(object):
                 dtp = 0
             elif tt in [CategoryType.APPLICATION, "app"]:
                 # obk = 'outputs'
-                tw = int(drop["tw"])
+                tw = int(drop["weight"])
                 dtp = 1
             elif tt in [CategoryType.SERVICE, "serviceapp"]:
-                tw = int(drop["tw"])
+                tw = int(drop["weight"])
                 dtp = 1
             else:
                 raise SchedulerException(
@@ -1332,7 +1332,7 @@ class DAGUtil(object):
                         )
                         if CategoryType.DATA == tt:
                             G.add_weighted_edges_from(
-                                [(myk, key_dict[key], int(drop["dw"]))]
+                                [(myk, key_dict[key], int(drop["weight"]))]
                             )
                         elif CategoryType.APPLICATION == tt:
                             G.add_weighted_edges_from(
@@ -1340,7 +1340,7 @@ class DAGUtil(object):
                                     (
                                         myk,
                                         key_dict[key],
-                                        int(drop_dict[key].get("dw", 5)),
+                                        int(drop_dict[key].get("weight", 5)),
                                     )
                                 ]
                             )
