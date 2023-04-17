@@ -54,7 +54,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -70,7 +69,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -86,7 +84,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -102,7 +99,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "command",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "echo \"Hello\""
@@ -118,7 +114,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Object.",
                     "usage": "InputOutput",
                     "value": ""
@@ -141,7 +136,7 @@
             "paletteDownloadUrl": "",
             "repositoryUrl": "",
             "subject": null,
-            "text": "Enter label",
+            "name": "Enter label",
             "width": 200,
             "x": 457,
             "y": 349
@@ -168,7 +163,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -184,7 +178,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -200,7 +193,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Check file path exists",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": true
@@ -216,7 +208,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "File Path",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -232,7 +223,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -248,7 +238,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Object.",
                     "usage": "InputPort",
                     "value": ""
@@ -271,7 +260,7 @@
             "paletteDownloadUrl": "",
             "repositoryUrl": "",
             "subject": null,
-            "text": "File",
+            "name": "File",
             "width": 200,
             "x": 789,
             "y": 299

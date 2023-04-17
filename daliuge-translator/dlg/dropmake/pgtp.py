@@ -101,7 +101,7 @@ class MetisPGTP(PGT):
         G = nx.Graph()
         G.graph["edge_weight_attr"] = "weight"
         G.graph["node_weight_attr"] = "weight"
-        G.graph["node_size_attr"] = "sz"
+        G.graph["node_size_attr"] = "size"
 
         for i, drop in enumerate(droplist):
             try:
@@ -213,7 +213,7 @@ class MetisPGTP(PGT):
             for gnode in G.nodes(data=True):
                 tt = group_weight[gnode[1]["gid"]]
                 tt[0] += gnode[1]["weight"]
-                tt[1] += gnode[1]["sz"]
+                tt[1] += gnode[1]["size"]
         # the following is for visualisation using GOJS
         if jsobj is not None:
             node_list = jsobj["nodeDataArray"]
@@ -328,12 +328,12 @@ class MetisPGTP(PGT):
         G = nx.Graph()
         G.graph["edge_weight_attr"] = "weight"
         G.graph["node_weight_attr"] = "weight"
-        G.graph["node_size_attr"] = "sz"
+        G.graph["node_size_attr"] = "size"
         for gid, v in self._group_workloads.items():
             # for compute islands, we need to count the # of nodes instead of
             # the actual workload
             twv = 1 if (island_type == 1) else v[0]
-            G.add_node(gid, tw=twv, sz=v[1])
+            G.add_node(gid, weight=twv, size=v[1])
         for glinks, v in part_edges.items():
             gl = glinks.split("**")
             G.add_edge(int(gl[0]), int(gl[1]), weight=v)

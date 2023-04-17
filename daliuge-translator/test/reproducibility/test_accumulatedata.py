@@ -303,7 +303,7 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
         """
         The the application type matters for rerunning
         """
-        expected = {"categoryType", "dt"}
+        expected = {"categoryType"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -375,7 +375,7 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
         """
         Only application type matters for rerunning.
         """
-        expected = {"categoryType", "dt"}
+        expected = {"categoryType"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -737,7 +737,7 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {"categoryType", "dt"}
+        expected = {"categoryType"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -810,7 +810,7 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
         """
         Only type matters when repeating.
         """
-        expected = {"categoryType", "dt"}
+        expected = {"categoryType"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -1177,7 +1177,7 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
         """
         Type and rank matters.
         """
-        expected = {"categoryType", "dt", "rank"}
+        expected = {"categoryType", "rank"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -1250,7 +1250,7 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         """
         Type, rank and machine information matters
         """
-        expected = ["categoryType", "dt", "rank", "node", "island"]
+        expected = ["categoryType", "rank", "node", "island"]
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -1276,7 +1276,7 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         """
         Type, rank and machine information matters
         """
-        expected_app = {"categoryType", "dt", "rank"}
+        expected_app = {"categoryType", "rank"}
         expected_file = {"categoryType", "storage", "rank"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
@@ -1349,7 +1349,7 @@ class AccumulatePGRecomputeData(unittest.TestCase):
         """
         Machine information matters when recomputing
         """
-        expected_app = {"categoryType", "dt", "rank"}
+        expected_app = {"categoryType", "rank"}
         expected_file = {"categoryType", "storage", "rank"}
         self._setup()
         for drop in enumerate(self.graph_data["groups"]):
@@ -1950,7 +1950,7 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {"categoryType", "dt"}
+        expected = {"categoryType"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -2023,7 +2023,7 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {"categoryType", "dt"}
+        expected = {"categoryType"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -2390,7 +2390,7 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
         """
         Type and rank matter
         """
-        expected = {"categoryType", "dt", "rank"}
+        expected = {"categoryType", "rank"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -2462,7 +2462,7 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
         """
         Type, rank and machine information matters.
         """
-        expected = {"categoryType", "dt", "rank", "node", "island"}
+        expected = {"categoryType", "rank", "node", "island"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])
@@ -2824,7 +2824,7 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
         """
         Type matters
         """
-        expected = {"categoryType", "dt"}
+        expected = {"categoryType"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_unroll_drop_data(drop[1])
@@ -2897,7 +2897,7 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
         """
         Only type matters
         """
-        expected = {"categoryType", "dt"}
+        expected = {"categoryType"}
         self._setup()
         for drop in enumerate(self.graph_data["apps"]):
             hash_data = accumulate_pgt_partition_drop_data(drop[1])

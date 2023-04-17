@@ -244,7 +244,6 @@
                             "required": [
                                 "description",
                                 "name",
-                                "text",
                                 "value"
                             ]
                         }
@@ -270,7 +269,6 @@
                             "required": [
                                 "description",
                                 "name",
-                                "text",
                                 "value"
                             ]
                         }
@@ -324,7 +322,6 @@
                             "required": [
                                 "description",
                                 "name",
-                                "text",
                                 "value",
                                 "type",
                                 "precious",
@@ -376,7 +373,6 @@
                             "required": [
                                 "description",
                                 "name",
-                                "text",
                                 "value",
                                 "type",
                                 "precious",
@@ -411,7 +407,6 @@
                     "paletteDownloadUrl",
                     "repositoryUrl",
                     "subject",
-                    "text",
                     "width",
                     "x",
                     "y"
