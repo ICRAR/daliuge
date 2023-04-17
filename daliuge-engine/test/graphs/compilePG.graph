@@ -6,7 +6,7 @@
         "rank": [
             0
         ],
-        "loop_cxt": null,
+        "loop_ctx": null,
         "tw": 5,
         "num_cpus": 1,
         "appclass": "dlg.apps.pyfunc.PyFuncApp",
@@ -157,7 +157,7 @@
         "rank": [
             0
         ],
-        "loop_cxt": null,
+        "loop_ctx": null,
         "dw": 0,
         "data_volume": 0,
         "group_end": false,

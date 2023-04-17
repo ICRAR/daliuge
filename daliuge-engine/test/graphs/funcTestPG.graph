@@ -6,7 +6,7 @@
         "rank": [
             0
         ],
-        "loop_cxt": null,
+        "loop_ctx": null,
         "tw": 5,
         "num_cpus": 1,
         "appclass": "dlg.apps.pyfunc.PyFuncApp",
@@ -91,7 +91,7 @@
         "rank": [
             0
         ],
-        "loop_cxt": null,
+        "loop_ctx": null,
         "tw": 5,
         "command": "echo \"'/tmp'\" > %o0",
         "input_redirection": "",
@@ -122,7 +122,7 @@
         "rank": [
             0
         ],
-        "loop_cxt": null,
+        "loop_ctx": null,
         "dw": 5,
         "check_filepath_exists": false,
         "data_volume": 5,
@@ -182,7 +182,7 @@
         "rank": [
             0
         ],
-        "loop_cxt": null,
+        "loop_ctx": null,
         "tw": 5,
         "command": "cat %i0",
         "input_redirection": "",
@@ -213,7 +213,7 @@
         "rank": [
             0
         ],
-        "loop_cxt": null,
+        "loop_ctx": null,
         "dw": 5,
         "check_filepath_exists": false,
         "data_volume": 5,
