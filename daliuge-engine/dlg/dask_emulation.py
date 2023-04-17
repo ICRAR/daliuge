@@ -115,7 +115,6 @@ def compute(value, **kwargs):
             "appclass": "dlg.dask_emulation.ResultTransmitter",
             "oid": transmitter_oid,
             "port": port,
-            # "nm": "result transmitter",
             "name": "result transmitter",
         }
     )

@@ -66,7 +66,7 @@
         "iid": "0",
         "lg_key": -1,
         "dt": "BashShellApp",
-        "nm": "dd",
+        "name": "dd",
         "outputs": [
             "2022-02-11T08:05:47_-3_0"
         ],
@@ -94,7 +94,7 @@
         "iid": "0",
         "lg_key": -3,
         "dt": "File",
-        "nm": "OutputFile",
+        "name": "OutputFile",
         "producers": [
             "2022-02-11T08:05:47_-1_0"
         ],
@@ -151,7 +151,7 @@
         "iid": "0",
         "lg_key": -5,
         "dt": "File",
-        "nm": "content",
+        "name": "content",
         "consumers": [
             "2022-02-11T08:05:47_-1_0"
         ],
