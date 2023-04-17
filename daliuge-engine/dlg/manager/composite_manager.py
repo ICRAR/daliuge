@@ -575,7 +575,7 @@ class DataIslandManager(CompositeManager):
         super(DataIslandManager, self).__init__(
             NODE_DEFAULT_REST_PORT,
             "node",
-            "nm",
+            "nm",  # Node manager
             dmHosts=dmHosts,
             pkeyPath=pkeyPath,
             dmCheckTimeout=dmCheckTimeout,
