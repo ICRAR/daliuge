@@ -63,7 +63,7 @@
     "iid": "0",
     "lg_key": -2,
     "dt": "PythonApp",
-    "nm": "RandomArrayApp",
+    "name": "RandomArrayApp",
     "outputs": [
       {
         "b": "array"
@@ -87,7 +87,7 @@
     "iid": "0",
     "lg_key": -3,
     "dt": "Memory",
-    "nm": "Memory",
+    "name": "Memory",
     "producers": [
       {
         "a": "array"

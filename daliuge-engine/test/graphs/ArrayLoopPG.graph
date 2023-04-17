@@ -14,7 +14,7 @@
         "iid": "0",
         "lg_key": -5,
         "dt": "Memory",
-        "nm": "array",
+        "name": "array",
         "producers": [
             {
                 "2022-06-22T09:13:53_-1_0": "array"
@@ -49,7 +49,7 @@
         "iid": "0",
         "lg_key": -1,
         "dt": "PythonApp",
-        "nm": "RandomArrayApp",
+        "name": "RandomArrayApp",
         "outputs": [
             {
                 "2022-06-22T09:13:53_-5_0": "array"
@@ -77,7 +77,7 @@
         "iid": "0/0/0",
         "lg_key": -3,
         "dt": "PythonApp",
-        "nm": "PickOne",
+        "name": "PickOne",
         "outputs": [
             {
                 "2022-06-22T09:13:53_-4_0/0/0": "data"
@@ -113,7 +113,7 @@
         "iid": "0/0/1",
         "lg_key": -3,
         "dt": "PythonApp",
-        "nm": "PickOne",
+        "name": "PickOne",
         "outputs": [
             {
                 "2022-06-22T09:13:53_-4_0/0/1": "data"
@@ -152,7 +152,7 @@
         "iid": "0/1/0",
         "lg_key": -3,
         "dt": "PythonApp",
-        "nm": "PickOne",
+        "name": "PickOne",
         "outputs": [
             {
                 "2022-06-22T09:13:53_-4_0/1/0": "data"
@@ -188,7 +188,7 @@
         "iid": "0/1/1",
         "lg_key": -3,
         "dt": "PythonApp",
-        "nm": "PickOne",
+        "name": "PickOne",
         "outputs": [
             {
                 "2022-06-22T09:13:53_-4_0/1/1": "data"
@@ -228,7 +228,7 @@
         "iid": "0/0/0",
         "lg_key": -4,
         "dt": "File",
-        "nm": "File",
+        "name": "File",
         "producers": [
             {
                 "2022-06-22T09:13:53_-3_0/0/0": "data"
@@ -257,7 +257,7 @@
         "iid": "0/0/1",
         "lg_key": -4,
         "dt": "File",
-        "nm": "File",
+        "name": "File",
         "producers": [
             {
                 "2022-06-22T09:13:53_-3_0/0/1": "data"
@@ -286,7 +286,7 @@
         "iid": "0/1/0",
         "lg_key": -4,
         "dt": "File",
-        "nm": "File",
+        "name": "File",
         "producers": [
             {
                 "2022-06-22T09:13:53_-3_0/1/0": "data"
@@ -315,7 +315,7 @@
         "iid": "0/1/1",
         "lg_key": -4,
         "dt": "File",
-        "nm": "File",
+        "name": "File",
         "producers": [
             {
                 "2022-06-22T09:13:53_-3_0/1/1": "data"
@@ -341,7 +341,7 @@
         "iid": "0/0/0",
         "lg_key": -6,
         "dt": "Memory",
-        "nm": "rest_array",
+        "name": "rest_array",
         "producers": [
             {
                 "2022-06-22T09:13:53_-3_0/0/0": "rest_array"
@@ -375,7 +375,7 @@
         "iid": "0/0/1",
         "lg_key": -6,
         "dt": "Memory",
-        "nm": "rest_array",
+        "name": "rest_array",
         "producers": [
             {
                 "2022-06-22T09:13:53_-3_0/0/1": "rest_array"
@@ -401,7 +401,7 @@
         "iid": "0/1/0",
         "lg_key": -6,
         "dt": "Memory",
-        "nm": "rest_array",
+        "name": "rest_array",
         "producers": [
             {
                 "2022-06-22T09:13:53_-3_0/1/0": "rest_array"
@@ -435,7 +435,7 @@
         "iid": "0/1/1",
         "lg_key": -6,
         "dt": "Memory",
-        "nm": "rest_array",
+        "name": "rest_array",
         "producers": [
             {
                 "2022-06-22T09:13:53_-3_0/1/1": "rest_array"
@@ -458,7 +458,7 @@
         "iid": "0/0",
         "lg_key": -9,
         "dt": "Memory",
-        "nm": "rest_array",
+        "name": "rest_array",
         "consumers": [
             {
                 "2022-06-22T09:13:53_-3_0/0/0": "rest_array"
@@ -486,7 +486,7 @@
         "iid": "0/1",
         "lg_key": -9,
         "dt": "Memory",
-        "nm": "rest_array",
+        "name": "rest_array",
         "consumers": [
             {
                 "2022-06-22T09:13:53_-3_0/1/0": "rest_array"
@@ -520,7 +520,7 @@
         "iid": "0",
         "lg_key": -7,
         "dt": "PythonApp",
-        "nm": "Scatter",
+        "name": "Scatter",
         "inputs": [
             "2022-06-22T09:13:53_-5_0"
         ],

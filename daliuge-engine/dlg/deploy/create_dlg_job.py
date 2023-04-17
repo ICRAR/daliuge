@@ -214,7 +214,6 @@ class LogParser:
 
     kwords = dict()
     kwords["dim"] = dim_kl
-    # kwords["nm"] = nm_kl
     kwords["name"] = nm_kl
 
     def __init__(self, log_dir):

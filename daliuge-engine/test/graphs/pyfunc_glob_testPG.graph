@@ -97,7 +97,7 @@
         "iid": "0",
         "lg_key": -1,
         "dt": "PythonApp",
-        "nm": "glob.glob",
+        "name": "glob.glob",
         "inputs": [
             {
                 "2022-03-30T03:46:01_-3_0": "pathname"
@@ -138,7 +138,7 @@
         "iid": "0",
         "lg_key": -2,
         "dt": "BashShellApp",
-        "nm": "generate",
+        "name": "generate",
         "outputs": [
             {
                 "2022-03-30T03:46:01_-3_0": "content"
@@ -197,7 +197,7 @@
         "iid": "0",
         "lg_key": -3,
         "dt": "File",
-        "nm": "pathname",
+        "name": "pathname",
         "producers": [
             {
                 "2022-03-30T03:46:01_-2_0": "content"
@@ -235,7 +235,7 @@
         "iid": "0",
         "lg_key": -4,
         "dt": "BashShellApp",
-        "nm": "output",
+        "name": "output",
         "inputs": [
             {
                 "2022-03-30T03:46:01_-5_0": "content"
@@ -294,7 +294,7 @@
         "iid": "0",
         "lg_key": -5,
         "dt": "File",
-        "nm": "result",
+        "name": "result",
         "producers": [
             {
                 "2022-03-30T03:46:01_-1_0": "content"
@@ -332,7 +332,7 @@
         "iid": "0",
         "lg_key": -6,
         "dt": "BashShellApp",
-        "nm": "generate",
+        "name": "generate",
         "outputs": [
             {
                 "2022-03-30T03:46:01_-7_0": "recursive"
@@ -359,7 +359,7 @@
         "iid": "0",
         "lg_key": -7,
         "dt": "File",
-        "nm": "recursive",
+        "name": "recursive",
         "producers": [
             {
                 "2022-03-30T03:46:01_-6_0": "recursive"

@@ -411,7 +411,6 @@ class PGT(object):
                                     "oid": extra_oid,
                                     "categoryType": CategoryType.DATA,
                                     "dataclass": "dlg.data.drops.memory.InMemoryDROP",
-                                    # "nm": "go_data",
                                     "name": "go_data",
                                     "dw": 1,
                                 }
