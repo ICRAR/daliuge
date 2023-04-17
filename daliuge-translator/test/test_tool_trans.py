@@ -35,18 +35,39 @@ class TestTool(unittest.TestCase):
             "test.dropmake", "logical_graphs/cont_img_mvp.graph"
         )
 
+        # first fill the LGT parameters
         fill = tool.start_process(
-            "fill", ["-vv", "-L", lg], stdout=subprocess.PIPE
+            "fill",
+            [
+                "-vv",
+                "-L",
+                lg,
+                "-p",
+                "param1=hello",
+                "-p",
+                "param2=1",
+                "-p",
+                "param1.param2=hi",
+                "-p",
+                "param4.what=False",
+            ],
+            stdout=subprocess.PIPE,
         )
+
+        # unroll the resulting LG
         unroll = tool.start_process(
             "unroll",
             ["-z", "--app", "1", "-vv"],
             stdin=fill.stdout,
             stdout=subprocess.PIPE,
         )
+
+        # partition the PGT
         partition = tool.start_process(
             "partition", stdin=unroll.stdout, stdout=subprocess.PIPE
         )
+
+        # map PGT to resources to construct PG
         map_ = tool.start_process(
             "map",
             ["-vv", "-N", "localhost,localhost"],

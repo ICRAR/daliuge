@@ -1309,7 +1309,6 @@ class DAGUtil(object):
                 G.add_node(
                     myk,
                     weight=tw,
-                    # text=drop["nm"],
                     text=drop["name"],
                     dt=dtp,
                     drop_spec=drop,

@@ -115,7 +115,7 @@ def compute(value, **kwargs):
             "appclass": "dlg.dask_emulation.ResultTransmitter",
             "oid": transmitter_oid,
             "port": port,
-            "nm": "result transmitter",
+            # "nm": "result transmitter",
             "name": "result transmitter",
         }
     )
@@ -286,7 +286,7 @@ class _DelayedDrops(_DelayedDrop):
             {
                 "categoryType": "Application",
                 "appclass": "dlg.dask_emulation._Listifier",
-                "nm": "listifier",
+                # "nm": "listifier",
                 "name": "listifier",
             }
         )
