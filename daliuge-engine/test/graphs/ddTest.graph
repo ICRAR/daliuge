@@ -7,7 +7,7 @@
             0
         ],
         "loop_ctx": null,
-        "tw": 5,
+        "weight": 5,
         "execution_time": 5,
         "num_cpus": 1,
         "group_start": false,
@@ -84,7 +84,7 @@
             0
         ],
         "loop_ctx": null,
-        "dw": 5,
+        "weight": 5,
         "check_filepath_exists": false,
         "data_volume": 5,
         "group_end": false,
@@ -109,7 +109,7 @@
             0
         ],
         "loop_ctx": null,
-        "dw": 5,
+        "weight": 5,
         "check_filepath_exists": false,
         "data_volume": 5,
         "group_end": false,
