@@ -6,7 +6,7 @@
         "rank": [
             0
         ],
-        "loop_cxt": null,
+        "loop_ctx": null,
         "tw": 1,
         "num_cpus": 1,
         "greet": "Everybody",
@@ -33,7 +33,7 @@
         "rank": [
             0
         ],
-        "loop_cxt": null,
+        "loop_ctx": null,
         "dw": 5,
         "check_filepath_exists": "1",
         "filepath": "hello.txt",

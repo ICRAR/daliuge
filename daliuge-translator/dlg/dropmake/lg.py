@@ -365,14 +365,14 @@ class LG:
             for i in range(lgn.dop):
                 miid = "{0}/{1}".format(iid, i)
                 src_drop = lgn.make_single_drop(
-                    miid, loop_cxt=lpcxt, proc_index=i
+                    miid, loop_ctx=lpcxt, proc_index=i
                 )
                 self._drop_dict[lgn.id].append(src_drop)
         elif lgn.is_service:
             # no action required, inputapp node aleady created and marked with "isService"
             pass
         else:
-            src_drop = lgn.make_single_drop(iid, loop_cxt=lpcxt)
+            src_drop = lgn.make_single_drop(iid, loop_ctx=lpcxt)
             self._drop_dict[lgn.id].append(src_drop)
             if lgn.is_start_listener:
                 self._drop_dict["new_added"].append(src_drop["listener_drop"])
@@ -652,7 +652,7 @@ class LG:
                 ):
                     # stepwise locking for links between two Loops
                     for sdrop, tdrop in product(sdrops, tdrops):
-                        if sdrop["loop_cxt"] == tdrop["loop_cxt"]:
+                        if sdrop["loop_ctx"] == tdrop["loop_ctx"]:
                             self._link_drops(slgn, tlgn, sdrop, tdrop, lk)
                 else:
                     lpaw = ("%s-%s" % (sid, tid)) in self_loop_aware_set

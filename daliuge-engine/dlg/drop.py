@@ -55,7 +55,7 @@ from dlg.exceptions import InvalidDropException, InvalidRelationshipException
 DEFAULT_INTERNAL_PARAMETERS = {
     "dataclass",
     "rank",
-    "loop_cxt",
+    "loop_ctx",
     "dw",
     "iid",
     "dt",
