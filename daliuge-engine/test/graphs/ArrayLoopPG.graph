@@ -7,13 +7,12 @@
             0
         ],
         "loop_ctx": null,
-        "dw": 5,
+        "weight": 5,
         "data_volume": 5,
         "group_end": false,
         "applicationArgs": {},
         "iid": "0",
         "lg_key": -5,
-        "dt": "Memory",
         "name": "array",
         "producers": [
             {
@@ -36,7 +35,7 @@
             0
         ],
         "loop_ctx": null,
-        "tw": 5,
+        "weight": 5,
         "num_cpus": 1,
         "size": 8000,
         "integer": false,
@@ -48,7 +47,6 @@
         "applicationArgs": {},
         "iid": "0",
         "lg_key": -1,
-        "dt": "PythonApp",
         "name": "RandomArrayApp",
         "outputs": [
             {
@@ -68,7 +66,7 @@
             0
         ],
         "loop_ctx": "0",
-        "tw": 5,
+        "weight": 5,
         "num_cpus": 1,
         "execution_time": 5,
         "group_start": true,
@@ -76,7 +74,6 @@
         "applicationArgs": {},
         "iid": "0/0/0",
         "lg_key": -3,
-        "dt": "PythonApp",
         "name": "PickOne",
         "outputs": [
             {
@@ -104,7 +101,7 @@
             1
         ],
         "loop_ctx": "1",
-        "tw": 5,
+        "weight": 5,
         "num_cpus": 1,
         "execution_time": 5,
         "group_start": true,
@@ -112,7 +109,6 @@
         "applicationArgs": {},
         "iid": "0/0/1",
         "lg_key": -3,
-        "dt": "PythonApp",
         "name": "PickOne",
         "outputs": [
             {
@@ -143,7 +139,7 @@
             0
         ],
         "loop_ctx": "0",
-        "tw": 5,
+        "weight": 5,
         "num_cpus": 1,
         "execution_time": 5,
         "group_start": true,
@@ -151,7 +147,6 @@
         "applicationArgs": {},
         "iid": "0/1/0",
         "lg_key": -3,
-        "dt": "PythonApp",
         "name": "PickOne",
         "outputs": [
             {
@@ -179,7 +174,7 @@
             1
         ],
         "loop_ctx": "1",
-        "tw": 5,
+        "weight": 5,
         "num_cpus": 1,
         "execution_time": 5,
         "group_start": true,
@@ -187,7 +182,6 @@
         "applicationArgs": {},
         "iid": "0/1/1",
         "lg_key": -3,
-        "dt": "PythonApp",
         "name": "PickOne",
         "outputs": [
             {
@@ -218,7 +212,7 @@
             0
         ],
         "loop_ctx": "0",
-        "dw": 5,
+        "weight": 5,
         "check_filepath_exists": false,
         "data_volume": 5,
         "group_end": false,
@@ -227,7 +221,6 @@
         "applicationArgs": {},
         "iid": "0/0/0",
         "lg_key": -4,
-        "dt": "File",
         "name": "File",
         "producers": [
             {
@@ -247,7 +240,7 @@
             1
         ],
         "loop_ctx": "1",
-        "dw": 5,
+        "weight": 5,
         "check_filepath_exists": false,
         "data_volume": 5,
         "group_end": false,
@@ -256,7 +249,6 @@
         "applicationArgs": {},
         "iid": "0/0/1",
         "lg_key": -4,
-        "dt": "File",
         "name": "File",
         "producers": [
             {
@@ -276,7 +268,7 @@
             0
         ],
         "loop_ctx": "0",
-        "dw": 5,
+        "weight": 5,
         "check_filepath_exists": false,
         "data_volume": 5,
         "group_end": false,
@@ -285,7 +277,6 @@
         "applicationArgs": {},
         "iid": "0/1/0",
         "lg_key": -4,
-        "dt": "File",
         "name": "File",
         "producers": [
             {
@@ -305,7 +296,7 @@
             1
         ],
         "loop_ctx": "1",
-        "dw": 5,
+        "weight": 5,
         "check_filepath_exists": false,
         "data_volume": 5,
         "group_end": false,
@@ -314,7 +305,6 @@
         "applicationArgs": {},
         "iid": "0/1/1",
         "lg_key": -4,
-        "dt": "File",
         "name": "File",
         "producers": [
             {
@@ -334,13 +324,12 @@
             0
         ],
         "loop_ctx": "0",
-        "dw": 5,
+        "weight": 5,
         "data_volume": 5,
         "group_end": true,
         "applicationArgs": {},
         "iid": "0/0/0",
         "lg_key": -6,
-        "dt": "Memory",
         "name": "rest_array",
         "producers": [
             {
@@ -368,13 +357,12 @@
             1
         ],
         "loop_ctx": "1",
-        "dw": 5,
+        "weight": 5,
         "data_volume": 5,
         "group_end": true,
         "applicationArgs": {},
         "iid": "0/0/1",
         "lg_key": -6,
-        "dt": "Memory",
         "name": "rest_array",
         "producers": [
             {
@@ -394,13 +382,12 @@
             0
         ],
         "loop_ctx": "0",
-        "dw": 5,
+        "weight": 5,
         "data_volume": 5,
         "group_end": true,
         "applicationArgs": {},
         "iid": "0/1/0",
         "lg_key": -6,
-        "dt": "Memory",
         "name": "rest_array",
         "producers": [
             {
@@ -428,13 +415,12 @@
             1
         ],
         "loop_ctx": "1",
-        "dw": 5,
+        "weight": 5,
         "data_volume": 5,
         "group_end": true,
         "applicationArgs": {},
         "iid": "0/1/1",
         "lg_key": -6,
-        "dt": "Memory",
         "name": "rest_array",
         "producers": [
             {
@@ -453,11 +439,10 @@
             0
         ],
         "loop_ctx": null,
-        "dw": 1,
+        "weight": 1,
         "applicationArgs": {},
         "iid": "0/0",
         "lg_key": -9,
-        "dt": "Memory",
         "name": "rest_array",
         "consumers": [
             {
@@ -481,11 +466,10 @@
             1
         ],
         "loop_ctx": null,
-        "dw": 1,
+        "weight": 1,
         "applicationArgs": {},
         "iid": "0/1",
         "lg_key": -9,
-        "dt": "Memory",
         "name": "rest_array",
         "consumers": [
             {
@@ -508,7 +492,7 @@
             0
         ],
         "loop_ctx": null,
-        "tw": 5,
+        "weight": 5,
         "num_cpus": 1,
         "appclass": "dlg.apps.simple.GenericScatterApp",
         "execution_time": 5,
@@ -519,7 +503,6 @@
         "applicationArgs": {},
         "iid": "0",
         "lg_key": -7,
-        "dt": "PythonApp",
         "name": "Scatter",
         "inputs": [
             "2022-06-22T09:13:53_-5_0"

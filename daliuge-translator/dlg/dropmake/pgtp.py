@@ -100,7 +100,7 @@ class MetisPGTP(PGT):
 
         G = nx.Graph()
         G.graph["edge_weight_attr"] = "weight"
-        G.graph["node_weight_attr"] = "tw"
+        G.graph["node_weight_attr"] = "weight"
         G.graph["node_size_attr"] = "sz"
 
         for i, drop in enumerate(droplist):
@@ -129,13 +129,13 @@ class MetisPGTP(PGT):
                 dst = "consumers"  # outbound keyword
                 ust = "producers"
                 tw = 1  # task weight is zero for a Data DROP
-                sz = drop.get("dw", 1)  # size
+                sz = drop.get("weight", 1)  # size
             elif tt in [CategoryType.APPLICATION, "app"]:
                 dst = "outputs"
                 ust = "inputs"
-                tw = drop["tw"]
+                tw = drop["weight"]
                 sz = 1
-            G.add_node(myk, tw=tw, sz=sz, oid=oid)
+            G.add_node(myk, weight=tw, size=sz, oid=oid)
             adj_drops = []  # adjacent drops (all neighbours)
             if dst in drop:
                 adj_drops += drop[dst]
@@ -145,10 +145,10 @@ class MetisPGTP(PGT):
             for inp in adj_drops:
                 key = list(inp.keys())[0] if isinstance(inp, dict) else inp
                 if tt in [CategoryType.DATA, "data"]:
-                    lw = drop["dw"]
+                    lw = drop["weight"]
                 elif tt in [CategoryType.APPLICATION, "app"]:
-                    # lw = drop_dict[inp].get('dw', 1)
-                    lw = droplist[key_dict[key] - 1].get("dw", 1)
+                    # get the weight of the previous drop
+                    lw = droplist[key_dict[key] - 1].get("weight", 1)
                 if lw <= 0:
                     lw = 1
                 G.add_edge(myk, key_dict[key], weight=lw)
@@ -212,7 +212,7 @@ class MetisPGTP(PGT):
                 group_weight[gid] = [0, 0]
             for gnode in G.nodes(data=True):
                 tt = group_weight[gnode[1]["gid"]]
-                tt[0] += gnode[1]["tw"]
+                tt[0] += gnode[1]["weight"]
                 tt[1] += gnode[1]["sz"]
         # the following is for visualisation using GOJS
         if jsobj is not None:
@@ -327,7 +327,7 @@ class MetisPGTP(PGT):
         # with each partition being a node
         G = nx.Graph()
         G.graph["edge_weight_attr"] = "weight"
-        G.graph["node_weight_attr"] = "tw"
+        G.graph["node_weight_attr"] = "weight"
         G.graph["node_size_attr"] = "sz"
         for gid, v in self._group_workloads.items():
             # for compute islands, we need to count the # of nodes instead of

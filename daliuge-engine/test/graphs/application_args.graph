@@ -7,7 +7,7 @@
       0
     ],
     "loop_ctx": null,
-    "tw": 5,
+    "weight": 5,
     "num_cpus": 1,
     "appclass": "dlg.apps.simple.RandomArrayApp",
     "execution_time": 5,
@@ -80,7 +80,7 @@
       0
     ],
     "loop_ctx": null,
-    "dw": 5,
+    "weight": 5,
     "data_volume": 5,
     "group_end": false,
     "applicationArgs": {},

@@ -467,7 +467,7 @@ class LG:
                     "categoryType": CategoryType.DATA,
                     "dataclass": "dlg.data.drops.data_base.NullDROP",
                     "name": "StreamNull",
-                    "dw": 0,
+                    "weight": 0,
                 }
             )
             sdrop.addOutput(dropSpec_null, IdText="stream")

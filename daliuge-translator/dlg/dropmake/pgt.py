@@ -394,7 +394,7 @@ class PGT(object):
                                     "categoryType": CategoryType.APPLICATION,
                                     "appclass": "dlg.drop.BarrierAppDROP",
                                     "name": "go_app",
-                                    "tw": 1,
+                                    "weight": 1,
                                 }
                             )
                             # create links
@@ -412,7 +412,7 @@ class PGT(object):
                                     "categoryType": CategoryType.DATA,
                                     "dataclass": "dlg.data.drops.memory.InMemoryDROP",
                                     "name": "go_data",
-                                    "dw": 1,
+                                    "weight": 1,
                                 }
                             )
                             drop.addOutput(dropSpec)
