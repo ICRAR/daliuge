@@ -53,40 +53,37 @@ class LGNode:
         done_dict: LGNode that have been processed (Dict)
         ssid:   session id (string)
         """
-        self._id = jd["key"]
-        self.group_q = group_q
-        self.group = None
-        self._children = []
-        self._outputs = []  # event flow target
-        self._inputs = []  # event flow source
-        self.jd = jd
-        self.inputPorts = jd
-        self.outputPorts = jd
-        # self.group = None
-        self._ssid = ssid
-        self._is_app = self.jd["categoryType"] == CategoryType.APPLICATION
-        self._is_data = self.jd["categoryType"] == CategoryType.DATA
+        self.id = jd["key"]  # node ID
+        self.jd = jd  # JSON TODO: this should be removed
+        self.group_q = group_q  # the group hierarchy queue
+        self.group = None  # used if node belongs to group
+        self._children = []  # list of LGNode objects, children of this node
+        self._ssid = ssid  # session ID
+        self.is_app = self.jd["categoryType"] == CategoryType.APPLICATION
+        self.is_data = self.jd["categoryType"] == CategoryType.DATA
         self._converted = False
-        self._h_level = None
+        self._h_level = None  # hierarcht level
         self._g_h = None
-        self._dop = None
+        self._dop = None  # degree of parallelism
         self._gaw = None
         self._grpw = None
+        self._inputs = []  # list of LGNode objects connected to this node
+        self._outputs = []  # list of LGNode objects connected to this node
         self.inputPorts = "inputPorts"
         self.outputPorts = "outputPorts"
         logger.debug("%s input_ports: %s", self.name, self.inputPorts)
         logger.debug("%s output_ports: %s", self.name, self.outputPorts)
-        self._nodetype = ""  # e.g. Data or Application
-        self._nodeclass = ""  # e.g. dlg.apps.simple.HelloWorldAPP
-        self._reprodata = jd.get("reprodata", {}).copy()
+        self.nodetype = ""  # e.g. Data or Application
+        self.nodeclass = ""  # e.g. dlg.apps.simple.HelloWorldAPP
+        self.reprodata = jd.get("reprodata", {}).copy()
         if "isGroup" in jd and jd["isGroup"] is True:
-            self._is_group = True
+            self.is_group = True
             for wn in group_q[self.id]:
                 wn.group = self
                 self.add_child(wn)
             group_q.pop(self.id)  # not thread safe
         else:
-            self._is_group = False
+            self.is_group = False
 
         if "group" in jd:
             grp_id = jd["group"]
@@ -169,13 +166,25 @@ class LGNode:
     def reprodata(self):
         return self._reprodata
 
+    @reprodata.setter
+    def reprodata(self, value):
+        self._reprodata = value
+
     @property
     def is_group(self):
         return self._is_group
 
+    @is_group.setter
+    def is_group(self, value):
+        self._is_group = value
+
     @property
     def id(self):
         return self._id
+
+    @id.setter
+    def id(self, value):
+        self._id = value
 
     @property
     def nodetype(self):
@@ -392,13 +401,6 @@ class LGNode:
             elif type(ge) == type("s"):
                 result = ge.lower() in ("true", "1")
         return result
-
-    @property
-    def is_group(self):
-        """
-        is this a group (aka construct) node
-        """
-        return self._is_group
 
     @property
     def is_scatter(self):
