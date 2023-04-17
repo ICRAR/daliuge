@@ -96,7 +96,7 @@
         "iid": "0",
         "lg_key": -1,
         "dt": "PythonApp",
-        "nm": "os.path.abspath",
+        "name": "os.path.abspath",
         "inputs": [
             {
                 "2022-03-20T04:33:27_-3_0": "path"
@@ -134,7 +134,7 @@
         "iid": "0",
         "lg_key": -2,
         "dt": "BashShellApp",
-        "nm": "generate",
+        "name": "generate",
         "outputs": [
             {
                 "2022-03-20T04:33:27_-3_0": "path"
@@ -193,7 +193,7 @@
         "iid": "0",
         "lg_key": -3,
         "dt": "File",
-        "nm": "path",
+        "name": "path",
         "producers": [
             {
                 "2022-03-20T04:33:27_-2_0": "path"
@@ -231,7 +231,7 @@
         "iid": "0",
         "lg_key": -4,
         "dt": "BashShellApp",
-        "nm": "output",
+        "name": "output",
         "inputs": [
             {
                 "2022-03-20T04:33:27_-5_0": "path"
@@ -290,7 +290,7 @@
         "iid": "0",
         "lg_key": -5,
         "dt": "File",
-        "nm": "result",
+        "name": "result",
         "producers": [
             {
                 "2022-03-20T04:33:27_-1_0": "path"

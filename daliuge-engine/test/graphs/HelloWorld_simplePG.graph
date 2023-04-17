@@ -17,7 +17,7 @@
         "iid": "0",
         "lg_key": -1,
         "dt": "PythonApp",
-        "nm": "HelloWorldApp",
+        "name": "HelloWorldApp",
         "outputs": [
             {
                 "2022-03-24T11:40:15_-2_0": "hello"
@@ -44,7 +44,7 @@
         "iid": "0",
         "lg_key": -2,
         "dt": "File",
-        "nm": "hello",
+        "name": "hello",
         "producers": [
             {
                 "2022-03-24T11:40:15_-1_0": "hello"
