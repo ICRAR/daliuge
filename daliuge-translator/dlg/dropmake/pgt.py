@@ -393,7 +393,6 @@ class PGT(object):
                                     "oid": extra_oid,
                                     "categoryType": CategoryType.APPLICATION,
                                     "appclass": "dlg.drop.BarrierAppDROP",
-                                    # "nm": "go_app",
                                     "name": "go_app",
                                     "tw": 1,
                                 }
@@ -475,7 +474,6 @@ class PGT(object):
                 node["category"] = "Data"
             elif tt == DropType.APPCLASS:
                 node["category"] = "PythonApp"  # might not be correct
-            # node["name"] = drop["nm"]
             node["name"] = drop["name"]
             nodes.append(node)
 
