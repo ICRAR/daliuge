@@ -540,8 +540,8 @@ function _addNode(g, doSpec) {
 	var typeShape = TYPE_SHAPES[doSpec.type];
 	var notes = '';
 	// console.log('Drop type', doSpec.type)
-	if (doSpec.nm) {
-		notes = "<span>" + doSpec.nm + "</span>"
+	if (doSpec.name) {
+		notes = "<span>" + doSpec.name + "</span>"
 	}
 	if (doSpec.type == 'app') {
 		var nameParts = doSpec.app.split('.');
