@@ -660,7 +660,7 @@ class LG:
                         slgn.group is not None
                         and slgn.group.is_loop
                         and lpaw
-                        and slgn.h_level < tlgn.h_level
+                        and slgn.h_level > tlgn.h_level
                     ):
                         loop_iter = slgn.group.dop
                         for i, chunk in enumerate(
@@ -676,7 +676,7 @@ class LG:
                         tlgn.group is not None
                         and tlgn.group.is_loop
                         and lpaw
-                        and slgn.h_level > tlgn.h_level
+                        and slgn.h_level < tlgn.h_level
                     ):
                         loop_iter = tlgn.group.dop
                         for i, chunk in enumerate(
