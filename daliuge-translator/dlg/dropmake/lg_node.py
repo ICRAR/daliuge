@@ -400,8 +400,14 @@ class LGNode:
         is this a node starting a group (usually inside a loop)
         """
         result = False
-        if self.has_group() and "group_start" in self.jd:
-            gs = self.jd["group_start"]
+        if self.has_group() and (
+            "group_start" in self.jd or "Group start" in self.jd
+        ):
+            gs = (
+                self.jd.get("group_start", False)
+                if "group_start" in self.jd
+                else self.jd.get("Group start", False)
+            )
             if type(gs) == type(True):
                 result = gs
             elif type(gs) in [type(1), type(1.0)]:
@@ -416,8 +422,14 @@ class LGNode:
         is this a node ending a group (usually inside a loop)
         """
         result = False
-        if self.has_group() and "group_end" in self.jd:
-            ge = self.jd["group_end"]
+        if self.has_group() and (
+            "group_end" in self.jd or "Group end" in self.jd
+        ):
+            ge = (
+                self.jd.get("group_end", False)
+                if "group_end" in self.jd
+                else self.jd.get("Group end", False)
+            )
             if type(ge) == type(True):
                 result = ge
             elif type(ge) in [type(1), type(1.0)]:
@@ -620,7 +632,11 @@ class LGNode:
         if self._dop is None:
             if self.is_group:
                 if self.is_scatter:
-                    for kw in ["num_of_copies", "num_of_splits"]:
+                    for kw in [
+                        "num_of_copies",
+                        "num_of_splits",
+                        "Number of copies",
+                    ]:
                         if kw in self.jd:
                             self._dop = int(self.jd[kw])
                             break
@@ -641,7 +657,10 @@ class LGNode:
                 elif self.is_groupby:
                     self._dop = self.group_by_scatter_layers[0]
                 elif self.is_loop:
-                    self._dop = int(self.jd.get("num_of_iter", 1))
+                    key = "num_of_iter"
+                    if "num_of_iter" not in self.jd:
+                        key = "Number of loops"
+                    self._dop = self.jd.get(key, 1)
                 elif self.is_service:
                     self._dop = 1  # TODO: number of compute nodes
                 else:
