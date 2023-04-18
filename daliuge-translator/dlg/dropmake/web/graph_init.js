@@ -210,7 +210,7 @@ function _addNode(g, node) {
 
     var typeClass = node.category;
     var typeShape = TYPE_SHAPES[node.category];
-    var notes = node.text;
+    var notes = node.name;
 
     var oid = node.oid;
     var html = '<div class="drop-label ' + typeShape + '" id="id_' + oid + '">';

@@ -160,14 +160,14 @@ class LG:
             )
             raise GInvalidLink(
                 "Scatter construct {0} or {1} cannot be linked. {2}".format(
-                    src.text, tgt.text, prompt
+                    src.name, tgt.name, prompt
                 )
             )
 
         if src.is_loop or tgt.is_loop:
             raise GInvalidLink(
                 "Loop construct {0} or {1} cannot be linked".format(
-                    src.text, tgt.text
+                    src.name, tgt.name
                 )
             )
 
@@ -252,8 +252,8 @@ class LG:
                         tgt.id,
                         src.group_hierarchy,
                         tgt.group_hierarchy,
-                        src.text,
-                        tgt.text,
+                        src.name,
+                        tgt.name,
                     )
                 )
 
@@ -298,7 +298,7 @@ class LG:
                     if len(grp_starts) == 0 or len(grp_ends) == 0:
                         raise GInvalidNode(
                             "Loop '{0}' should have at least one Start "
-                            + "Component and one End Data".format(lgn.text)
+                            + "Component and one End Data".format(lgn.name)
                         )
                     for ge in grp_ends:
                         for gs in grp_starts:  # make an artificial circle
@@ -566,7 +566,7 @@ class LG:
                         if ga_drop["oid"] not in self._gather_cache:
                             logger.warning(
                                 "Gather %s Drop not yet in cache, sequentialisation may fail!",
-                                slgn.text,
+                                slgn.name,
                             )
                             continue
                         j = (i + 1) * slgn.gather_width
@@ -619,7 +619,7 @@ class LG:
                     if lsd != len(tdrops):
                         raise GraphException(
                             "# of sdrops '{0}' != # of tdrops '{1}'for Loop '{2}'".format(
-                                slgn.text, tlgn.text, slgn.group.text
+                                slgn.name, tlgn.name, slgn.group.name
                             )
                         )
                     # first add the outer construct (scatter, gather, group-by) boundary
@@ -734,7 +734,7 @@ class LG:
                                 except IndexError:
                                     raise GraphException(
                                         "The group by hiearchy in the multi-key group by '{0}' is not specified for node '{1}'".format(
-                                            slgn.group.text, slgn.text
+                                            slgn.group.name, slgn.name
                                         )
                                     )
                             else:

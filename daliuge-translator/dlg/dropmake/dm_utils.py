@@ -489,10 +489,9 @@ def convert_construct(lgo):
         app_node["key"] = node["key"]
         app_node["category"] = node[has_app]  # node['application']
         if has_app[0] == "i":
-            app_node["name"] = node["text"]
+            app_node["name"] = node["text"] if "text" in node else node["name"]
         else:
-            app_node["name"] = node["text"]
-
+            app_node["name"] = node["text"] if "text" in node else node["name"]
         if "mkn" in node:
             app_node["mkn"] = node["mkn"]
 
@@ -534,7 +533,9 @@ def convert_construct(lgo):
             dup_app_node = dict()
             dup_app_node["key"] = dup_app_node_k
             dup_app_node["category"] = node[has_app]  # node['application']
-            dup_app_node["name"] = node["text"]
+            dup_app_node["name"] = (
+                node["text"] if "text" in node else node["name"]
+            )
 
             if "mkn" in node:
                 dup_app_node["mkn"] = node["mkn"]
