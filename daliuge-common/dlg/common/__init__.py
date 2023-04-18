@@ -40,6 +40,7 @@ class DropType:
 class CategoryType:
     DATA = "Data"
     APPLICATION = "Application"
+    CONSTRUCT = "Construct"
     GROUP = "Group"
     UNKNOWN = "Unknown"
     SERVICE = "Service"

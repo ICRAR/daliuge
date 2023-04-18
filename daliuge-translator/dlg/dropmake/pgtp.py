@@ -212,7 +212,6 @@ class MetisPGTP(PGT):
                 group_weight[gid] = [0, 0]
             for gnode in G.nodes(data=True):
                 tt = group_weight[gnode[1]["gid"]]
-                logger.debug(">>>> %s", gnode[1])
                 tt[0] += gnode[1]["weight"]
                 tt[1] += gnode[1]["size"]
         # the following is for visualisation using GOJS
