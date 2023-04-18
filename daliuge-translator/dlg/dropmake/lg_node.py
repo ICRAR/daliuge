@@ -152,17 +152,17 @@ class LGNode:
         return self._jd
 
     @jd.setter
-    def jd(self, value):
+    def jd(self, node_json):
         """
         Setting he jd property to the original data structure directly loaded
         from JSON.
         """
-        if "categoryType" not in value:
-            if value["category"] in APP_TYPES:
-                value["categoryType"] = CategoryType.APPLICATION
-            elif value["category"] in DATA_TYPES:
-                value["categoryType"] = CategoryType.DATA
-        self._jd = value
+        if "categoryType" not in node_json:
+            if node_json["category"] in APP_TYPES:
+                node_json["categoryType"] = CategoryType.APPLICATION
+            elif node_json["category"] in DATA_TYPES:
+                node_json["categoryType"] = CategoryType.DATA
+        self._jd = node_json
 
     @property
     def reprodata(self):
@@ -201,11 +201,28 @@ class LGNode:
         return self._nodeclass
 
     @nodeclass.setter
-    def nodeclass(self, value):
-        if value == CategoryType.DATA:
+    def nodeclass(self, default_value):
+        self.is_data = False
+        self.is_app = False
+        value = None
+        if default_value is None or len(default_value) == 0:
+            default_value = "dlg.apps.simple.SleepApp"
+        if self.jd["categoryType"] == CategoryType.DATA:
             self.is_data = True
-        if value == CategoryType.APPLICATION:
+            keys = ["dataclass", "Data class"]
+        elif self.jd["categoryType"] == CategoryType.APPLICATION:
+            keys = ["appclass", "Application Class", "Application class"]
             self.is_app = True
+        elif self.jd["categoryType"] == CategoryType.CONSTRUCT:
+            logger.info(">>>> %s", self.jd)
+            keys = ["inputApplicationName"]
+        for key in keys:
+            if key in self.jd:
+                value = self.jd[key]
+                break
+            if value is None or value == "":
+                value = default_value
+
         self._nodeclass = value
 
     @property
@@ -923,12 +940,12 @@ class LGNode:
             Categories.PLASMA,
         ]:
             # default generic component becomes "sleep and copy"
-            if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
+            if self.nodeclass is None or self.nodeclass == "":
                 app_class = "dlg.apps.simple.SleepApp"
                 self.jd[DropType.APPCLASS] = app_class
                 self.jd["category"] = Categories.PYTHON_APP
             else:
-                app_class = self.jd[DropType.APPCLASS]
+                app_class = self.nodeclass
                 execTime = self.weight
             if self.weight is not None:
                 execTime = self.weight
