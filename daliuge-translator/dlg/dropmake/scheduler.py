@@ -1295,10 +1295,16 @@ class DAGUtil(object):
                 dtp = 0
             elif tt in [CategoryType.APPLICATION, "app"]:
                 # obk = 'outputs'
-                tw = int(drop["weight"])
+                try:
+                    tw = int(drop["weight"])
+                except (ValueError, KeyError):
+                    tw = 1
                 dtp = 1
             elif tt in [CategoryType.SERVICE, "serviceapp"]:
-                tw = int(drop["weight"])
+                try:
+                    tw = int(drop["weight"])
+                except (ValueError, KeyError):
+                    tw = 1
                 dtp = 1
             else:
                 raise SchedulerException(

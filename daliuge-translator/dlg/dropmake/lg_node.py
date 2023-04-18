@@ -31,6 +31,7 @@ if __name__ == "__main__":
 import logging
 import math
 import random
+import re
 
 from dlg.common import CategoryType, DropType
 from dlg.common import dropdict
@@ -61,6 +62,7 @@ class LGNode:
         self._ssid = ssid  # session ID
         self.is_app = self.jd["categoryType"] == CategoryType.APPLICATION
         self.is_data = self.jd["categoryType"] == CategoryType.DATA
+        self.weight = 1  # try to find the weights, else set to 1
         self._converted = False
         self._h_level = None  # hierarcht level
         self._g_h = None
@@ -310,6 +312,28 @@ class LGNode:
             glist.append("0")
             self._g_h = "/".join(reversed(glist))
         return self._g_h
+
+    @property
+    def weight(self):
+        return self._weight
+
+    @weight.setter
+    def weight(self, default_value):
+        key = []
+        if self.is_app:
+            key = [
+                k
+                for k in self.jd
+                if re.match(r"execution[\s\_]time", k.lower())
+            ]
+        elif self.is_data:
+            key = [
+                k for k in self.jd if re.match(r"data[\s\_]volume", k.lower())
+            ]
+        try:
+            self._weight = float(self.jd[key[0]])
+        except (KeyError, ValueError, IndexError):
+            self._weight = default_value
 
     @property
     def has_child(self):
@@ -765,6 +789,11 @@ class LGNode:
                 idText = idText[0] if len(idText) > 0 else None
         return idText if index >= 0 else ports_dict
 
+    def get_(self):
+        """
+        Get the
+        """
+
     def create_drop_spec(self, oid, rank, kwargs) -> dropdict:
         """
         New implementation of drop_spec generation method.
@@ -796,12 +825,7 @@ class LGNode:
         self.nodeclass = drop_class
         self.nodetype = drop_type
         if self.is_data:
-            if "data_volume" in self.jd:
-                kwargs["weight"] = int(
-                    self.jd["data_volume"]
-                )  # dw -- data weight
-            else:
-                kwargs["weight"] = 1
+            kwargs["weight"] = self.weight
             iIdText = self._getIdText(port="inputPorts")
             oIdText = self._getIdText(port="outputPorts")
             logger.debug(
@@ -886,26 +910,22 @@ class LGNode:
                 self.jd["category"] = Categories.PYTHON_APP
             else:
                 app_class = self.jd[DropType.APPCLASS]
-
-            if "execution_time" in self.jd:
-                execTime = int(self.jd["execution_time"])
+                execTime = self.weight
+            if self.weight is not None:
+                execTime = self.weight
                 if execTime < 0:
                     raise GraphException(
                         "Execution_time must be greater"
-                        " than 0 for Construct '%s'" % self.name
+                        " than 0 for Node '%s'" % self.name
                     )
-            elif app_class != "dlg.apps.simple.SleepApp":
-                raise GraphException(
-                    "Missing execution_time for Construct '%s'" % self.name
-                )
             else:
                 execTime = random.randint(3, 8)
 
+            kwargs["weight"] = execTime
+            self.jd["execution_time"] = self.weight = execTime
             if app_class == "dlg.apps.simple.SleepApp":
                 kwargs["sleepTime"] = execTime
 
-            kwargs["weight"] = execTime
-            self.jd["execution_time"] = execTime
             drop_spec = dropdict(
                 {
                     "oid": oid,
@@ -937,7 +957,7 @@ class LGNode:
                 }
             )
             kwargs["lib"] = self.jd["libpath"]
-            kwargs["weight"] = int(self.jd["execution_time"])
+            kwargs["weight"] = self.weight
             if "mkn" in self.jd:
                 kwargs["mkn"] = self.jd["mkn"]
 
@@ -960,16 +980,6 @@ class LGNode:
                 }
             )
             self._update_key_value_attributes(kwargs)
-            if "execution_time" in self.jd:
-                try:
-                    kwargs["weight"] = int(self.jd["execution_time"])
-                except TypeError:
-                    kwargs["weight"] = int(self.jd["execution_time"]["value"])
-            else:
-                # kwargs['tw'] = random.randint(3, 8)
-                raise GraphException(
-                    "Missing execution_time for Construct '%s'" % self.name
-                )
             # add more arguments (support for Arg0x dropped!)
             cmds = []
             for k in [
@@ -1009,16 +1019,14 @@ class LGNode:
 
             image = str(self.jd.get("image"))
             if image == "":
-                raise GraphException(
-                    "Missing image for Construct '%s'" % self.name
-                )
+                raise GraphException("Missing image for Node '%s'" % self.name)
 
             command = str(self.jd.get("command"))
             # There ARE containers which don't need/want a command
             # if command == "":
             #     raise GraphException("Missing command for Construct '%s'" % self.name)
 
-            kwargs["weight"] = int(self.jd.get("execution_time", "5"))
+            kwargs["weight"] = self.weight
             kwargs["image"] = image
             kwargs["command"] = command
             kwargs["user"] = str(self.jd.get("user", ""))
@@ -1052,7 +1060,7 @@ class LGNode:
                     "GroupBy should be connected to a DataDrop, not '%s'"
                     % sij["category"]
                 )
-            dw = int(sij["data_volume"]) * self.groupby_width
+            dw = sij.weight * self.groupby_width
             dropSpec_grp = dropdict(
                 {
                     "oid": "{0}-grp-data".format(oid),
@@ -1090,7 +1098,7 @@ class LGNode:
                     * self.gather_width
                 )
             else:  # data
-                dw = int(gi.jd["data_volume"]) * self.gather_width
+                dw = gi.weight * self.gather_width
             dropSpec_gather = dropdict(
                 {
                     "oid": "{0}-gather-data".format(oid),
@@ -1158,7 +1166,6 @@ class LGNode:
             kwargs["categoryType"] = "Data"
         else:
             kwargs["categoryType"] = "Application"
-        kwargs["nm"] = self.name
         kwargs["name"] = self.name
         # Behaviour is that child-nodes inherit reproducibility data from their parents.
         if self._reprodata is not None:
