@@ -95,11 +95,11 @@ class PythonApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param sleepTime Sleep Time/5/Integer/ApplicationArgument/readwrite//False/False/The number of seconds to sleep
-# @param appclass Application Class/dlg.apps.simple.SleepApp/String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param sleep_time sleep_time/5/Integer/ApplicationArgument/readwrite//False/False/The number of seconds to sleep
+# @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @par EAGLE_END
 class SleepApp(BarrierAppDROP):
     """A BarrierAppDrop that sleeps the specified amount of time (0 by default)"""
@@ -112,12 +112,13 @@ class SleepApp(BarrierAppDROP):
         [dlg_streaming_input("binary/*")],
     )
 
-    sleepTime = dlg_float_param("sleep time", 0)
+    sleepTime = dlg_float_param("sleep_time", 0)
 
     def initialize(self, **kwargs):
         super(SleepApp, self).initialize(**kwargs)
 
     def run(self):
+        logger.debug("%s sleeping for %s s", self.name, self.sleepTime)
         time.sleep(self.sleepTime)
 
 
@@ -131,10 +132,10 @@ class SleepApp(BarrierAppDROP):
 # @param category PythonApp
 # @param tag daliuge
 # @param bufsize buffer size/65536/Integer/ApplicationArgument/readwrite//False/False/Buffer size
-# @param appclass Application Class/dlg.apps.simple.CopyApp/String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
 # @param dummy_in dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy_out dummy//Object/OutputPort/readwrite//False/False/Dummy output port
@@ -190,12 +191,11 @@ class CopyApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param sleepTime Sleep Time/5/Integer/ApplicationArgument/readwrite//False/False/The number of seconds to sleep
-# @param appclass Application Class/dlg.apps.simple.SleepAndCopyApp/String/ComponentParameter/readonly//False/False/Application class
-# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param sleep_time sleep_time/5/Integer/ApplicationArgument/readwrite//False/False/The number of seconds to sleep
+# @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @par EAGLE_END
 class SleepAndCopyApp(SleepApp, CopyApp):
     """A combination of the SleepApp and the CopyApp. It sleeps, then copies"""
@@ -214,15 +214,15 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param size Size/100/Integer/ApplicationArgument/readwrite//False/False/The size of the array
-# @param low Low/0/Float/ApplicationArgument/readwrite//False/False/Low value of range in array [inclusive]
-# @param high High/1/Float/ApplicationArgument/readwrite//False/False/High value of range of array [exclusive]
-# @param integer Integer/True/Boolean/ApplicationArgument/readwrite//False/False/Generate integer array?
-# @param appclass Application Class/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param array Array//Object.Array/OutputPort/readwrite//False/False/Port carrying the averaged array
+# @param size size/100/Integer/ApplicationArgument/readwrite//False/False/The size of the array
+# @param low low/0/Float/ApplicationArgument/readwrite//False/False/Low value of range in array [inclusive]
+# @param high high/1/Float/ApplicationArgument/readwrite//False/False/High value of range of array [exclusive]
+# @param integer integer/True/Boolean/ApplicationArgument/readwrite//False/False/Generate integer array?
+# @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param array array//Object.Array/OutputPort/readwrite//False/False/Port carrying the averaged array
 # @par EAGLE_END
 class RandomArrayApp(BarrierAppDROP):
     """
@@ -298,11 +298,11 @@ class RandomArrayApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param method Method/mean/Select/ApplicationArgument/readwrite/mean,median/False/False/The method used for averaging
-# @param appclass Application Class/dlg.apps.simple.AverageArraysApp/String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param method method/mean/Select/ApplicationArgument/readwrite/mean,median/False/False/The method used for averaging
+# @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @param array_in Array//Object.Array/InputPort/readwrite//False/False/Port for the input array(s)
 # @param array_out Array//Object.Array/OutputPort/readwrite//False/False/Port carrying the averaged array
 # @par EAGLE_END
@@ -395,11 +395,11 @@ class AverageArraysApp(BarrierAppDROP):
 # @param category PythonApp
 # @param construct Gather
 # @param tag daliuge
-# @param num_of_inputs Number of inputs/4/Integer/ConstructParameter/readwrite//False/False/The Gather “width”, stating how many inputs each Gather instance will handle
-# @param appclass Application Class/dlg_example_cmpts.apps.GenericGather/String/ComponentParameter/readonly//False/False/Import path for application class
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param num_of_inputs num_of_inputs/4/Integer/ConstructParameter/readwrite//False/False/The Gather “width”, stating how many inputs each Gather instance will handle
+# @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @param input input//Object/InputPort/readwrite//False/False/0-base placeholder port for inputs
 # @param output output//Object/OutputPort/readwrite//False/False/Placeholder port for outputs
 # @par EAGLE_END
@@ -427,15 +427,15 @@ class GenericGatherApp(BarrierAppDROP):
 # @param category PythonApp
 # @param construct Gather
 # @param tag daliuge
-# @param num_of_inputs Number of inputs/4/Integer/ConstructParameter/readwrite//False/False/The Gather “width”, stating how many inputs each Gather instance will handle
-# @param function Function/sum/Select/ApplicationArgument/readwrite/sum,prod,min,max,add,multiply,maximum,minimum/False/False/The function used for gathering
-# @param reduce_axes "Reduce Axes"/None/String/ApplicationArgument/readonly//False/False/The ndarray axes to reduce, None reduces all axes for sum, prod, max, min functions
-# @param appclass Application Class/dlg.apps.simple.GenericNpyGatherApp/String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param array_in Array//Object.Array/InputPort/readwrite//False/False/Port for the input array(s)
-# @param array_out Array//Object.Array/OutputPort/readwrite//False/False/Port carrying the reduced array
+# @param num_of_inputs num_of_inputs/4/Integer/ConstructParameter/readwrite//False/False/The Gather “width”, stating how many inputs each Gather instance will handle
+# @param function function/sum/Select/ApplicationArgument/readwrite/sum,prod,min,max,add,multiply,maximum,minimum/False/False/The function used for gathering
+# @param reduce_axes reduce_axes/None/String/ApplicationArgument/readonly//False/False/The ndarray axes to reduce, None reduces all axes for sum, prod, max, min functions
+# @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param array_in array_in//Object.Array/InputPort/readwrite//False/False/Port for the input array(s)
+# @param array_out array_out//Object.Array/OutputPort/readwrite//False/False/Port carrying the reduced array
 # @par EAGLE_END
 class GenericNpyGatherApp(BarrierAppDROP):
     """
@@ -536,12 +536,12 @@ class GenericNpyGatherApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param greet Greet/World/String/ApplicationArgument/readwrite//False/False/What appears after 'Hello '
-# @param appclass Application Class/dlg.apps.simple.HelloWorldApp/String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param hello Hello/"world"/Object/OutputPort/readwrite//False/False/The port carrying the message produced by the app.
+# @param greet greet/World/String/ApplicationArgument/readwrite//False/False/What appears after 'Hello '
+# @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param hello hello/"world"/Object/OutputPort/readwrite//False/False/The port carrying the message produced by the app.
 # @par EAGLE_END
 class HelloWorldApp(BarrierAppDROP):
     """
@@ -597,12 +597,12 @@ class HelloWorldApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param url URL/"https://eagle.icrar.org"/String/ApplicationArgument/readwrite//False/False/The URL to retrieve
-# @param appclass Application Class/dlg.apps.simple.UrlRetrieveApp/String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param content Content//String/OutputPort/readwrite//False/False/The port carrying the content read from the URL
+# @param url url/"https://eagle.icrar.org"/String/ApplicationArgument/readwrite//False/False/The URL to retrieve
+# @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param content content//String/OutputPort/readwrite//False/False/The port carrying the content read from the URL
 # @par EAGLE_END
 class UrlRetrieveApp(BarrierAppDROP):
     """
@@ -652,14 +652,14 @@ class UrlRetrieveApp(BarrierAppDROP):
 # @param category PythonApp
 # @param construct Scatter
 # @param tag daliuge
-# @param num_of_copies Scatter width/4/Integer/ConstructParameter/readwrite//False/False/Specifies the number of replications of the content of the scatter construct
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param appclass Application Class/dlg.apps.simple.GenericScatterApp/String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param array_in Array//Object.Array/InputPort/readwrite//False/False/A numpy array of arrays, where the first axis is of length <numSplit>
-# @param array_out Array//Object.Array/OutputPort/readwrite//False/False/Port carrying the reduced array
+# @param num_of_copies num_of_copies/4/Integer/ConstructParameter/readwrite//False/False/Specifies the number of replications of the content of the scatter construct
+# @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param n_tries n_tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param appclass appclass/dlg.apps.simple.GenericScatterApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param array_in array_in//Object.Array/InputPort/readwrite//False/False/A numpy array of arrays, where the first axis is of length <numSplit>
+# @param array_out array_out//Object.Array/OutputPort/readwrite//False/False/Port carrying the reduced array
 # @par EAGLE_END
 class GenericScatterApp(BarrierAppDROP):
     """
@@ -716,14 +716,14 @@ class GenericScatterApp(BarrierAppDROP):
 # @param construct Scatter
 # @param category PythonApp
 # @param tag daliuge
-# @param num_of_copies Scatter width/4/Integer/ConstructParameter/readwrite//False/False/Specifies the number of replications of the content of the scatter construct
-# @param scatter_axes Scatter Axes//String/ApplicationArgument/readwrite//False/False/The axes to split input ndarrays on, e.g. [0,0,0], length must match the number of input ports
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param appclass Application Class/dlg.apps.simple.GenericNpyScatterApp/String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param array_in Object.Array//Object.Array/InputPort/readwrite//False/False/A numpy array of arrays
-# @param array_out Object.Array//Object.Array/OutputPort/readwrite//False/False/Port carrying the reduced array
+# @param num_of_copies num_of_copies/4/Integer/ConstructParameter/readwrite//False/False/Specifies the number of replications of the content of the scatter construct
+# @param scatter_axes scatter_axes//String/ApplicationArgument/readwrite//False/False/The axes to split input ndarrays on, e.g. [0,0,0], length must match the number of input ports
+# @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param appclass appclass/dlg.apps.simple.GenericNpyScatterApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param array_in array_in//Object.Array/InputPort/readwrite//False/False/A numpy array of arrays
+# @param array_out array_out//Object.Array/OutputPort/readwrite//False/False/Port carrying the reduced array
 # @par EAGLE_END
 class GenericNpyScatterApp(BarrierAppDROP):
     """
@@ -795,10 +795,10 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 #
 # @par EAGLE_START
 # @param category PythonApp
-# @param appclass Application Class/dlg.apps.simple.PickOne/String/ComponentParameter/readonly//False/False/Import path for application class
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time # noqa: E501
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used # noqa: E501
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @param rest_array_in rest_array//Object.array/InputPort/readwrite//False/FalseList of elements
 # @param rest_array_out rest_array//Object.array/OutputPort/readwrite//False/False/Port carrying the rest array
 # @param element element//Object.element/OutputPort/readwrite//False/False/Port carrying the first element of input array
@@ -857,12 +857,12 @@ class PickOne(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param size Size/100/Integer/ApplicationArgument/readwrite//False/False/the size of the array
-# @param appclass Application Class/dlg.apps.simple.ListAppendThrashingApp/String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param array Array//Object.Array/OutputPort/readwrite//False/False/Port carrying the random array.
+# @param size size/100/Integer/ApplicationArgument/readwrite//False/False/the size of the array
+# @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param array array//Object.Array/OutputPort/readwrite//False/False/Port carrying the random array.
 # @par EAGLE_END
 class ListAppendThrashingApp(BarrierAppDROP):
     """
