@@ -30,7 +30,6 @@ import threading
 import time
 import re
 import sys
-import pickle
 from abc import ABCMeta
 
 from dlg.common.reproducibility.constants import (
@@ -52,7 +51,6 @@ from .ddap_protocol import (
 )
 from dlg.event import EventFirer, EventHandler
 from dlg.exceptions import InvalidDropException, InvalidRelationshipException
-from dlg import droputils
 
 DEFAULT_INTERNAL_PARAMETERS = {
     "dataclass",
