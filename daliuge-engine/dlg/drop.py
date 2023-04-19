@@ -30,6 +30,7 @@ import threading
 import time
 import re
 import sys
+import pickle
 from abc import ABCMeta
 
 from dlg.common.reproducibility.constants import (
@@ -51,6 +52,7 @@ from .ddap_protocol import (
 )
 from dlg.event import EventFirer, EventHandler
 from dlg.exceptions import InvalidDropException, InvalidRelationshipException
+from dlg import droputils
 
 DEFAULT_INTERNAL_PARAMETERS = {
     "dataclass",
@@ -388,7 +390,18 @@ class AbstractDROP(EventFirer, EventHandler):
             if has_component_param:
                 param = kwargs.get(attr_name)
             elif has_app_param:
-                param = kwargs["applicationArgs"].get(attr_name).value
+                if kwargs["applicationArgs"].get(attr_name).usage in [
+                    "InputPort",
+                    "OutputPort",
+                    "InputOutput",
+                ]:
+                    # inp = kwargs["input"]
+                    # param = pickle.loads(
+                    #     droputils.allDropContents()
+                    #     )
+                    pass
+                else:
+                    param = kwargs["applicationArgs"].get(attr_name).value
             else:
                 param = default_value
             return param

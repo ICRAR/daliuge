@@ -213,9 +213,16 @@ class LGNode:
         elif self.jd["categoryType"] == CategoryType.APPLICATION:
             keys = ["appclass", "Application Class", "Application class"]
             self.is_app = True
-        elif self.jd["categoryType"] == CategoryType.CONSTRUCT:
-            logger.info(">>>> %s", self.jd)
+        elif self.jd["categoryType"] in [
+            CategoryType.CONSTRUCT,
+            CategoryType.CONTROL,
+        ]:
             keys = ["inputApplicationName"]
+        else:
+            logger.error(
+                "Found unknown categoryType: %s", self.jd["categoryType"]
+            )
+            raise ValueError
         for key in keys:
             if key in self.jd:
                 value = self.jd[key]
@@ -514,7 +521,7 @@ class LGNode:
 
     @inputPorts.setter
     def inputPorts(self, port="inputPorts"):
-        self._inputPorts = self._getIdText(port="inputPorts", index=-1)
+        self._inputPorts = self._getIdText(ports="inputPorts", index=0)
 
     @property
     def outputPorts(self):
@@ -522,7 +529,7 @@ class LGNode:
 
     @outputPorts.setter
     def outputPorts(self, port="outputPorts"):
-        self._outputPorts = self._getIdText(port="outputPorts", index=-1)
+        self._outputPorts = self._getIdText(ports="outputPorts", index=0)
 
     @property
     def gather_width(self):
@@ -784,7 +791,7 @@ class LGNode:
                 kwargs["applicationArgs"].update({k: na})
         # NOTE: drop Argxx keywords
 
-    def _getIdText(self, port="outputPorts", index=0, portId=None):
+    def _getIdText(self, ports="outputPorts", index=0, portId=None):
         """
         Return IdText of port if it exists
 
@@ -798,37 +805,34 @@ class LGNode:
         }
         ports_dict = {}
         idText = None
-        if portId is None and index >= 0:
-            if (
-                port in self.jd
-                and len(self.jd[port]) > index
-                and "name" in self.jd[port][index]
-            ):
-                idText = self.jd[port][index]["name"]
-            else:  # everything in 'fields'
-                if port in port_selector:
-                    for field in self.jd["fields"]:
-                        if "usage" not in field:  # fixes manual graphs
-                            continue
-                        if field["usage"] in port_selector[port]:
+        # if portId is None and index >= 0:
+        if index >= 0:
+            if ports in port_selector:
+                for field in self.jd["fields"]:
+                    if "usage" not in field:  # fixes manual graphs
+                        continue
+                    if field["usage"] in port_selector[ports]:
+                        if portId is None:
                             idText = field["name"]
-                            # can't be sure that name is unique
-                            if idText not in ports_dict:
-                                ports_dict[idText] = [field["id"]]
-                            else:
-                                ports_dict[idText].append(field["id"])
+                        elif field["id"] == portId:
+                            idText = field["name"]
+                        # can't be sure that name is unique
+                        if idText not in ports_dict:
+                            ports_dict[idText] = [field["id"]]
+                        else:
+                            ports_dict[idText].append(field["id"])
         else:
-            if port in self.jd:
+            # TODO: This is not really correct, but maybe not needed at all?
+            for port in port_selector[ports]:
                 idText = [
-                    p["name"] for p in self.jd[port] if p["Id"] == portId
+                    p["name"]
+                    for p in self.jd[port]
+                    if port in self.jd and p["Id"] == portId
                 ]
                 idText = idText[0] if len(idText) > 0 else None
+                if idText is not None:
+                    break
         return idText if index >= 0 else ports_dict
-
-    def get_(self):
-        """
-        Get the
-        """
 
     def create_drop_spec(self, oid, rank, kwargs) -> dropdict:
         """
@@ -862,8 +866,8 @@ class LGNode:
         self.nodetype = drop_type
         if self.is_data:
             kwargs["weight"] = self.weight
-            iIdText = self._getIdText(port="inputPorts")
-            oIdText = self._getIdText(port="outputPorts")
+            iIdText = self._getIdText(ports="inputPorts")
+            oIdText = self._getIdText(ports="outputPorts")
             logger.debug(
                 "Found port names for %s: IN: %s, OUT: %s",
                 oid,
