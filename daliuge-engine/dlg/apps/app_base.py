@@ -452,7 +452,7 @@ class InputFiredAppDROP(AppDROP):
                     return
                 tries += 1
                 logger.exception(
-                    "Error while executing %r (try %d/%d)",
+                    "Error while executing %r (try %s/%s)",
                     self,
                     tries,
                     self.n_tries,
