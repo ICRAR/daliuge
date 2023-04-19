@@ -111,15 +111,26 @@ class SleepApp(BarrierAppDROP):
         [dlg_batch_output("binary/*", [])],
         [dlg_streaming_input("binary/*")],
     )
-
-    sleepTime = dlg_float_param("sleep_time", 0)
+    pname = "sleep_time"
+    sleep_time = dlg_float_param(pname, 0)
 
     def initialize(self, **kwargs):
         super(SleepApp, self).initialize(**kwargs)
 
     def run(self):
-        logger.debug("%s sleeping for %s s", self.name, self.sleepTime)
-        time.sleep(self.sleepTime)
+        if self.sleep_time is None:
+            if len(self.inputs) > 0:
+                for inp in self.inputs:
+                    if inp.name == self.pname:
+                        self.sleep_time = pickle.loads(
+                            droputils.allDropContents(inp)
+                        )
+        try:
+            time.sleep(self.sleep_time)
+        except (TypeError, ValueError):
+            self.sleep_time = 1
+            time.sleep(1)
+        logger.debug("%s slept for %s s", self.name, self.sleep_time)
 
 
 ##
@@ -795,6 +806,7 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 #
 # @par EAGLE_START
 # @param category PythonApp
+# @param tag daliuge
 # @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
 # @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used

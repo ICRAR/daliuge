@@ -499,6 +499,9 @@ class LG:
                 # could be multiple ports, need to identify
                 portId = llink["toPort"] if "toPort" in llink else None
                 tIdText = tlgn._getIdText("inputPorts", portId=portId)
+                logger.debug(
+                    "Found port names: IN: %s, OUT: %s", sIdText, tIdText
+                )
                 # logger.debug(
                 #     ">>> link from %s to %s (%s) (%s)",
                 #     sIdText,
