@@ -204,6 +204,7 @@ class LGNode:
     def nodeclass(self, default_value):
         self.is_data = False
         self.is_app = False
+        keys = []
         value = None
         if default_value is None or len(default_value) == 0:
             default_value = "dlg.apps.simple.SleepApp"
@@ -218,11 +219,13 @@ class LGNode:
             CategoryType.CONTROL,
         ]:
             keys = ["inputApplicationName"]
+        elif self.jd["categoryType"] in ["Other"]:
+            value = "Other"
         else:
             logger.error(
                 "Found unknown categoryType: %s", self.jd["categoryType"]
             )
-            raise ValueError
+            # raise ValueError
         for key in keys:
             if key in self.jd:
                 value = self.jd[key]
@@ -355,9 +358,9 @@ class LGNode:
                 k for k in self.jd if re.match(r"data[\s\_]volume", k.lower())
             ]
         try:
-            self._weight = float(self.jd[key[0]])
+            self._weight = int(self.jd[key[0]])
         except (KeyError, ValueError, IndexError):
-            self._weight = default_value
+            self._weight = int(default_value)
 
     @property
     def has_child(self):
@@ -684,7 +687,7 @@ class LGNode:
                     key = "num_of_iter"
                     if "num_of_iter" not in self.jd:
                         key = "Number of loops"
-                    self._dop = self.jd.get(key, 1)
+                    self._dop = int(self.jd.get(key, 1))
                 elif self.is_service:
                     self._dop = 1  # TODO: number of compute nodes
                 else:
@@ -895,7 +898,7 @@ class LGNode:
                         "appclass": "dlg.apps.simple.SleepApp",
                         "name": "lstnr",
                         "weigth": 5,
-                        "sleepTime": 1,
+                        "sleep_time": 1,
                         "rank": rank,
                         "reprodata": self.jd.get("reprodata", {}),
                     }
@@ -964,7 +967,7 @@ class LGNode:
             kwargs["weight"] = execTime
             self.jd["execution_time"] = self.weight = execTime
             if app_class == "dlg.apps.simple.SleepApp":
-                kwargs["sleepTime"] = execTime
+                kwargs["sleep_time"] = execTime
 
             drop_spec = dropdict(
                 {
@@ -1094,11 +1097,11 @@ class LGNode:
                     "reprodata": self.jd.get("reprodata", {}),
                 }
             )
-            sij = self.inputs[0].jd
-            if not "data_volume" in sij:
+            sij = self.inputs[0]
+            if not sij.is_data:
                 raise GInvalidNode(
                     "GroupBy should be connected to a DataDrop, not '%s'"
-                    % sij["category"]
+                    % sij.category
                 )
             dw = sij.weight * self.groupby_width
             dropSpec_grp = dropdict(
@@ -1116,7 +1119,7 @@ class LGNode:
             kwargs[
                 "weight"
             ] = 1  # barrier literarlly takes no time for its own computation
-            kwargs["sleepTime"] = 1
+            kwargs["sleep_time"] = 1
             drop_spec.addOutput(dropSpec_grp, IdText="grpdata")
             dropSpec_grp.addProducer(drop_spec, IdText="grpdata")
         elif drop_type == Categories.GATHER:
@@ -1152,7 +1155,7 @@ class LGNode:
             )
             kwargs["gather-data_drop"] = dropSpec_gather
             kwargs["weight"] = 1
-            kwargs["sleepTime"] = 1
+            kwargs["sleep_time"] = 1
             drop_spec.addOutput(dropSpec_gather, IdText="gthrdata")
             dropSpec_gather.addProducer(drop_spec, IdText="gthrdata")
         elif drop_class == Categories.SERVICE:

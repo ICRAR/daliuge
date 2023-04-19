@@ -111,9 +111,10 @@ def compute(value, **kwargs):
         {
             "categoryType": "Application",
             #            "categoryType": CategoryType.APPLICATION,
-            "Application": "dlg.dask_emulation.ResultTransmitter",
+            # "Application": "dlg.dask_emulation.ResultTransmitter",
             "appclass": "dlg.dask_emulation.ResultTransmitter",
             "oid": transmitter_oid,
+            "uid": transmitter_oid,
             "port": port,
             "name": "result transmitter",
         }
@@ -320,7 +321,6 @@ class _AppDrop(_DelayedDrop):
         if self.fname is not None:
             simple_fname = self.fname.split(".")[-1]
             my_dropdict["func_name"] = self.fname
-            my_dropdict["nm"] = simple_fname
             my_dropdict["name"] = simple_fname
         if self.fcode is not None:
             my_dropdict["func_code"] = utils.b2s(base64.b64encode(self.fcode))
