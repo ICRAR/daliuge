@@ -83,8 +83,8 @@ class dropdict(dict):
             self[key] = []
         if other["oid"] not in self[key]:
             append = {other["oid"]: IdText} if IdText else {other["oid"]: None}
-            if IdText is None:
-                raise ValueError
+            # if IdText is None:
+            # raise ValueError
             self[key].append(append)
 
     def addConsumer(self, other, IdText=None):

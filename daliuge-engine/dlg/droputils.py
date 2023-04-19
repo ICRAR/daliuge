@@ -154,7 +154,7 @@ def copyDropContents(
     st = time.time()
     ssize = source.size if source.size is not None else -1
     logger.debug(
-        "Source size: %d; Source checksum: %d", ssize, source.checksum
+        "Source size: %s; Source checksum: %s", ssize, source.checksum
     )
     tot_w = 0
     ofl = True
