@@ -82,7 +82,10 @@ class dropdict(dict):
         if key not in self:
             self[key] = []
         if other["oid"] not in self[key]:
-            append = {other["oid"]: IdText} if IdText else {other["oid"]: None}
+            # TODO: Returning just the other drop OID instead of the named
+            #       port list is not a good solution. Required for the dask
+            #       tests.
+            append = {other["oid"]: IdText} if IdText else other["oid"]
             # if IdText is None:
             # raise ValueError
             self[key].append(append)

@@ -138,7 +138,12 @@ class _TestDelayed(object):
         delayed = self.delayed
         compute = self.compute
 
-        one, two, three, four = delayed(1.0), delayed(2.0), delayed(3.0), delayed(4.0)
+        one, two, three, four = (
+            delayed(1.0),
+            delayed(2.0),
+            delayed(3.0),
+            delayed(4.0),
+        )
         the_sum = delayed(add_list)([one, two])
         the_sub = delayed(subtract_list)([four, three])
         division = delayed(divide)(the_sum, the_sub)
@@ -151,8 +156,15 @@ class _TestDelayed(object):
         delayed = self.delayed
         compute = self.compute
 
-        one, two, three, four = delayed(1.0), delayed(2.0), delayed(3.0), delayed(4.0)
-        doubles = [delayed(lambda i: i * 2)(x) for x in (one, two, three, four)]
+        one, two, three, four = (
+            delayed(1.0),
+            delayed(2.0),
+            delayed(3.0),
+            delayed(4.0),
+        )
+        doubles = [
+            delayed(lambda i: i * 2)(x) for x in (one, two, three, four)
+        ]
         result = compute(doubles)
         self.assertEqual([2.0, 4.0, 6.0, 8.0], result)
 
@@ -180,7 +192,9 @@ class _TestDelayed(object):
 
         self.assertEqual(compute(delayed(sum_with_kwargs)(1)), 1)
         self.assertEqual(compute(delayed(sum_with_kwargs)(1, b=20)), 21)
-        self.assertEqual(compute(delayed(sum_with_kwargs)(1, b=20, x=-111)), 21)
+        self.assertEqual(
+            compute(delayed(sum_with_kwargs)(1, b=20, x=-111)), 21
+        )
 
     def test_with_args_and_kwargs(self):
         """Tests that delayed() works correctly with kwargs"""
@@ -200,7 +214,9 @@ class _TestDelayed(object):
         delayed = self.delayed
         compute = self.compute
 
-        self.assertEqual(compute(delayed(sum_with_user_defined_default)(1)), 11)
+        self.assertEqual(
+            compute(delayed(sum_with_user_defined_default)(1)), 11
+        )
         self.assertEqual(
             compute(delayed(sum_with_user_defined_default)(1, MyType(20))), 21
         )

@@ -65,7 +65,7 @@ class TestLGWeb(unittest.TestCase):
             )
 
     def tearDown(self):
-        shutil.rmtree(self.temp_dir)
+        # shutil.rmtree(self.temp_dir)
         self.logfile.close()
         common.terminate_or_kill(self.web_proc, 10)
         unittest.TestCase.tearDown(self)

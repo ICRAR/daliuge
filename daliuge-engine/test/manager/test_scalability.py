@@ -85,7 +85,7 @@ def create_graph(branches, drops_per_branch):
                     "uid": app_uid,
                     "categoryType": "Application",
                     "appclass": "dlg.apps.simple.SleepAndCopyApp",
-                    "sleepTime": 0,
+                    "sleep_time": 0,
                 }
             )
             data_drop.addConsumer(app_drop)

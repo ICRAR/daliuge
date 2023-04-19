@@ -210,7 +210,7 @@ class TestSession(unittest.TestCase):
                             "oid": "B",
                             "categoryType": "Application",
                             "appclass": "dlg.apps.simple.SleepApp",
-                            "sleepTime": 2,
+                            "sleep_time": 2,
                         },
                         {
                             "oid": "C",
@@ -245,7 +245,7 @@ class TestSession(unittest.TestCase):
                             "oid": "B",
                             "categoryType": "Application",
                             "appclass": "dlg.apps.simple.SleepApp",
-                            "sleepTime": 0,
+                            "sleep_time": 0,
                         },
                         {
                             "oid": "C",
@@ -258,7 +258,7 @@ class TestSession(unittest.TestCase):
                             "oid": "D",
                             "categoryType": "Application",
                             "appclass": "dlg.apps.simple.SleepApp",
-                            "sleepTime": 10,
+                            "sleep_time": 10,
                         },
                         {
                             "oid": "E",
