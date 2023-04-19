@@ -128,8 +128,8 @@ class SleepApp(BarrierAppDROP):
         try:
             time.sleep(self.sleep_time)
         except (TypeError, ValueError):
-            self.sleep_time = 1
-            time.sleep(1)
+            self.sleep_time = 0
+            time.sleep(self.sleep_time)
         logger.debug("%s slept for %s s", self.name, self.sleep_time)
 
 

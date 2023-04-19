@@ -75,14 +75,14 @@ def unroll(lg, oid_prefix=None, zerorun=False, app=None):
     drop_list = lg.unroll_to_tpl()
     if zerorun:
         for dropspec in drop_list:
-            if "sleepTime" in dropspec:
-                dropspec["sleepTime"] = 0
+            if "sleep_time" in dropspec:
+                dropspec["sleep_time"] = 0
     if app:
         logger.info("Replacing apps with %s", app)
         for dropspec in drop_list:
             if "appclass" in dropspec:
                 dropspec["appclass"] = app
-                dropspec["sleepTime"] = (
+                dropspec["sleep_time"] = (
                     dropspec["execution_time"]
                     if "execution_time" in dropspec
                     else 2

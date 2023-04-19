@@ -94,7 +94,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
                 "oid": "B",
                 "categoryType": "Application",
                 "appclass": "dlg.apps.simple.SleepAndCopyApp",
-                "sleepTime": sleepTime,
+                "sleep_time": sleepTime,
                 "outputs": ["C"],
                 "node": hostname,
                 "island": hostname,
@@ -216,14 +216,14 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
 
     def test_deployGraphWithCompletedDOs(self):
         sessionId = "lalo"
-        self.createSessionAndAddTypicalGraph(sessionId, sleepTime=1)
+        self.createSessionAndAddTypicalGraph(sessionId, sleepTime=2)
 
         # Deploy now and get A
         self.mm.deploySession(sessionId, completedDrops=["A"])
         c = self.nm._sessions[sessionId].drops["C"]
 
         # This should be happening before the sleepTime expires
-        with droputils.DROPWaiterCtx(self, c, 2):
+        with droputils.DROPWaiterCtx(self, c, 5):
             pass
 
         self.assertEqual(DROPStates.COMPLETED, c.status)

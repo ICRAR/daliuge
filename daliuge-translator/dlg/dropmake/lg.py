@@ -336,7 +336,7 @@ class LG:
                 ]  # inner most is also the slowest running index
 
             lgn_is_loop = lgn.is_loop
-
+            logger.debug(">>>>> %d", int(lgn.dop))
             for i in range(lgn.dop):
                 miid = "{0}/{1}".format(iid, i)
                 if multikey_grpby:
@@ -791,7 +791,7 @@ class LG:
             for data_drop in input_list:
                 # TODO merge this code into the function
                 # def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink)
-                sIdText = slgn._getIdText(port="outputPorts")
+                sIdText = slgn._getIdText(ports="outputPorts")
                 if llink.get("is_stream", False):
                     logger.debug(
                         "link stream connection %s to %s",
