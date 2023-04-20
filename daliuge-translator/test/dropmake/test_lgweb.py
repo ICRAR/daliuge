@@ -55,11 +55,11 @@ class TestLGWeb(unittest.TestCase):
             "-H",
             "localhost",
             "-vv",
-            "-l",
-            self.temp_dir,
+            # "-l",
+            # self.temp_dir,
         ]
-        # self.logfile = open(f"{self.temp_dir}/dlgTrans.log", "wb")
-        with self.logfile as logfile:
+        # # self.logfile = open(f"{self.temp_dir}/dlgTrans.log", "wb")
+        with open("/dev/null", "wb") as logfile:
             self.web_proc = tool.start_process(
                 "lgweb", args, stdout=logfile, stderr=logfile
             )
