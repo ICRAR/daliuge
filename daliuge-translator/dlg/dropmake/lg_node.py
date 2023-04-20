@@ -212,7 +212,12 @@ class LGNode:
             self.is_data = True
             keys = ["dataclass", "Data class"]
         elif self.jd["categoryType"] == CategoryType.APPLICATION:
-            keys = ["appclass", "Application Class", "Application class"]
+            keys = [
+                "appclass",
+                "Application Class",
+                "Application class",
+                "Appclass",
+            ]
             self.is_app = True
         elif self.jd["categoryType"] in [
             CategoryType.CONSTRUCT,
@@ -428,7 +433,9 @@ class LGNode:
         """
         result = False
         if self.has_group() and (
-            "group_start" in self.jd or "Group start" in self.jd
+            "group_start" in self.jd
+            or "Group start" in self.jd
+            or "Group Start" in self.jd
         ):
             gs = (
                 self.jd.get("group_start", False)
@@ -450,7 +457,9 @@ class LGNode:
         """
         result = False
         if self.has_group() and (
-            "group_end" in self.jd or "Group end" in self.jd
+            "group_end" in self.jd
+            or "Group end" in self.jd
+            or "Group End" in self.jd
         ):
             ge = (
                 self.jd.get("group_end", False)
@@ -684,10 +693,14 @@ class LGNode:
                 elif self.is_groupby:
                     self._dop = self.group_by_scatter_layers[0]
                 elif self.is_loop:
-                    key = "num_of_iter"
-                    if "num_of_iter" not in self.jd:
-                        key = "Number of loops"
-                    self._dop = int(self.jd.get(key, 1))
+                    for key in [
+                        "num_of_iter",
+                        "Number of Iterations",
+                        "Number of loops",
+                    ]:
+                        if key in self.jd:
+                            self._dop = int(self.jd.get(key, 1))
+                            break
                 elif self.is_service:
                     self._dop = 1  # TODO: number of compute nodes
                 else:
