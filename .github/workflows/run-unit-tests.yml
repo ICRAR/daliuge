@@ -10,12 +10,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - python-version: '3.8'
+          - python-version: '3.8.10'
             test_number: 0
             engine: no
             translator: yes
             desc: "no engine"
-          - python-version: '3.8'
+          - python-version: '3.8.10'
             test_number: 1
             desc: "no translator"
             engine: yes
