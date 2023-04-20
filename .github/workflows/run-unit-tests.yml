@@ -3,24 +3,23 @@ name: Run unit tests
 on: [push, pull_request]
 
 jobs:
-
   run_tests:
     name: Run unit tests with python ${{matrix.python-version}} - ${{ matrix.desc }}
     runs-on: ubuntu-20.04
     strategy:
       matrix:
         include:
-          - python-version: '3.8.10'
+          - python-version: "3.8.10"
             test_number: 0
             engine: no
             translator: yes
             desc: "no engine"
-          - python-version: '3.8.10'
+          - python-version: "3.8.10"
             test_number: 1
             desc: "no translator"
             engine: yes
             translator: no
-          - python-version: '3.9'
+          - python-version: "3.9"
             test_number: 2
             desc: "full package"
             engine: yes
@@ -81,8 +80,8 @@ jobs:
     needs: run_tests
     runs-on: ubuntu-20.04
     steps:
-    - name: Coveralls Finished
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        parallel-finished: true
+      - name: Coveralls Finished
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          parallel-finished: true

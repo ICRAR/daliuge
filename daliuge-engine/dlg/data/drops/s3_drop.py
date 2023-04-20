@@ -146,7 +146,6 @@ class S3IO(DataIO):
         expectedSize=-1,
         **kwargs,
     ):
-
         super().__init__(**kwargs)
 
         logger.debug(
