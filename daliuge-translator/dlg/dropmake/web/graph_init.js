@@ -254,9 +254,9 @@ function echartsGraphInit(type, data) {
         newElement = {};
         if (!element.hasOwnProperty("isGroup")) {
             // helper map to fix the links later
-            keyIndex.set(element.key, element.text + '-' + element.key.toString());
+            keyIndex.set(element.key, element.name + '-' + element.key.toString());
             //data options
-            newElement.name = element.text + '-' + element.key.toString();
+            newElement.name = element.name + '-' + element.key.toString();
 
             newElement.label = {
                 'rotate': 45,
