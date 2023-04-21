@@ -27,8 +27,6 @@ full JSON representation.
 import collections
 import importlib
 import logging
-import json
-from xmlrpc.client import Boolean
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 
@@ -40,7 +38,7 @@ from .drop import (
     LINKTYPE_NTO1_PROPERTY,
     LINKTYPE_1TON_APPEND_METHOD,
 )
-from .data.drops.data_base import NullDROP, EndDROP
+from .data.drops.data_base import NullDROP
 from .data.drops.container import ContainerDROP
 
 from dlg.data.drops.environmentvar_drop import EnvironmentVarDROP
@@ -330,6 +328,7 @@ def _createData(dropSpec, dryRun=False, session=None):
         # we don't need to support dfms here
         module = importlib.import_module(".".join(parts[:-1]))
         storageType = getattr(module, parts[-1])
+        # logger.debug(">>>>: %s", dropSpec)
     else:
         # STORAGE_TYPES are deprecated, but here for backwards compatibility
 
@@ -361,6 +360,8 @@ def _createData(dropSpec, dryRun=False, session=None):
             storageType = FileDROP
     if dryRun:
         return
+    if "self" in kwargs:
+        kwargs.pop("self")
     return storageType(oid, uid, dlg_session=session, **kwargs)
 
 
