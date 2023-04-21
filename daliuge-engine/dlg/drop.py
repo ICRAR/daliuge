@@ -54,14 +54,21 @@ from dlg.exceptions import InvalidDropException, InvalidRelationshipException
 
 DEFAULT_INTERNAL_PARAMETERS = {
     "dataclass",
+    "category",
+    "storage",
+    "nodeAttributes",
+    "streaming",
+    "persist",
     "rank",
     "loop_ctx",
     "weight",
     "iid",
-    # "dt",
     "consumers",
     "config_data",
     "mode",
+    "group_end",
+    "applicationArgs",
+    "reprodata",
 }
 
 if sys.version_info >= (3, 8):
