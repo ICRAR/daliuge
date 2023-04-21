@@ -501,7 +501,7 @@ class PyFuncApp(BarrierAppDROP):
 
         # if we have named ports use the inputs with
         # the correct UIDs
-        logger.debug(f"Parameters found: {self.parameters}")
+        # logger.debug(f"Parameters found: {self.parameters}")
         posargs = self.arguments.args[: self.fn_npos]
         keyargs = self.arguments.args[self.fn_npos :]
         kwargs = {}
@@ -702,8 +702,15 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(f"updating funcargs with {kwargs}")
         funcargs.update(kwargs)
         self._recompute_data["args"] = funcargs.copy()
-        logger.debug(f"Running {self.func_name} with *{pargs} **{funcargs}")
 
+        if (
+            self.func_name is not None
+            and self.func_name.split(".")[-1] in ["__init__", "__class__"]
+            and "self" in funcargs
+        ):
+            # remove self if this is the initializer.
+            funcargs.pop("self")
+        logger.debug(f"Running {self.func_name} with *{pargs} **{funcargs}")
         # we capture and log whatever is produced on STDOUT
         capture = StringIO()
         with redirect_stdout(capture):
