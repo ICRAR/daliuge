@@ -1,22 +1,319 @@
 [
     {
-        "oid": "2022-05-06T08:43:26_-1_0",
+        "oid": "2023-04-27T14:44:39_-1_0",
+        "categoryType": "Data",
+        "category": "File",
+        "dataclass": "dlg.data.drops.file.FileDROP",
+        "storage": "File",
+        "rank": [
+            0
+        ],
+        "reprodata": {
+            "rmode": "0",
+            "NOTHING": {
+                "rmode": "0",
+                "lgt_data": {
+                    "merkleroot": null
+                },
+                "lg_parenthashes": {},
+                "lg_data": {
+                    "merkleroot": null
+                },
+                "lg_blockhash": "b33f465166e678698582a66db1f75d28949c4bd51a72e6f608c9d124b9196e73"
+            }
+        },
+        "loop_ctx": null,
+        "weight": 5,
+        "check_filepath_exists": false,
+        "nodeAttributes": {
+            "filepath": {
+                "name": "filepath",
+                "value": "",
+                "defaultValue": "",
+                "description": "File path for this file. In many cases this does not need to be specified. If it has a / at the end it will be treated as a directory name and the filename will be generated. If it does not have a /, the last part will be treated as a filename. If filepath does not start with / (relative path) then the session directory will be prepended to make the path absolute.",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "f5fcd28f-f879-425e-8817-d42a1daf6c5a",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            },
+            "check_filepath_exists": {
+                "name": "check_filepath_exists",
+                "value": false,
+                "defaultValue": "False",
+                "description": "Perform a check to make sure the file path exists before proceeding with the application",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "ceb0ebaa-96e9-4a54-b7a3-20c165824942",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "streaming": {
+                "name": "streaming",
+                "value": false,
+                "defaultValue": "False",
+                "description": "Specifies whether this data component streams input and output data",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "13baed4b-503f-4641-96d1-ee6e7df9ded5",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "persist": {
+                "name": "persist",
+                "value": true,
+                "defaultValue": "True",
+                "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "f0c192d9-1ef7-49ff-9ca7-39f45f0e54de",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "delete_parent_directory": {
+                "name": "delete_parent_directory",
+                "value": false,
+                "defaultValue": "False",
+                "description": "Also delete the parent directory of this file when deleting the file itself",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "9e8652fb-e7ba-462f-9831-192a9345353a",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "data_volume": {
+                "name": "data_volume",
+                "value": 5,
+                "defaultValue": "5",
+                "description": "Estimated size of the data contained in this node",
+                "readonly": false,
+                "type": "Float",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "8b0f89db-685a-4807-ad14-26e8a9cb552e",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "group_end": {
+                "name": "group_end",
+                "value": false,
+                "defaultValue": "False",
+                "description": "Is this node the end of a group?",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "7802dab3-7c7f-4f61-beaa-0848aef5b899",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "dummy": {
+                "name": "dummy",
+                "value": "",
+                "defaultValue": "",
+                "description": "Dummy output port",
+                "readonly": false,
+                "type": "Object",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "a14d3e78-2e98-4a85-b3ca-98407945b243",
+                "parameterType": "ApplicationArgument",
+                "usage": "OutputPort"
+            }
+        },
+        "filepath": "",
+        "streaming": false,
+        "persist": true,
+        "delete_parent_directory": false,
+        "data_volume": 5,
+        "group_end": false,
+        "dummy": "",
+        "applicationArgs": {
+            "filepath": {
+                "name": "filepath",
+                "value": "",
+                "defaultValue": "",
+                "description": "File path for this file. In many cases this does not need to be specified. If it has a / at the end it will be treated as a directory name and the filename will be generated. If it does not have a /, the last part will be treated as a filename. If filepath does not start with / (relative path) then the session directory will be prepended to make the path absolute.",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "f5fcd28f-f879-425e-8817-d42a1daf6c5a",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            },
+            "dummy": {
+                "name": "dummy",
+                "value": "",
+                "defaultValue": "",
+                "description": "Dummy output port",
+                "readonly": false,
+                "type": "Object",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "a14d3e78-2e98-4a85-b3ca-98407945b243",
+                "parameterType": "ApplicationArgument",
+                "usage": "OutputPort"
+            }
+        },
+        "iid": "0",
+        "lg_key": -1,
+        "name": "File",
+        "consumers": [
+            {
+                "2023-04-27T14:44:39_-2_0": "dummy"
+            }
+        ],
+        "node": "localhost",
+        "island": "localhost"
+    },
+    {
+        "oid": "2023-04-27T14:44:39_-2_0",
         "categoryType": "Application",
         "appclass": "dlg.apps.pyfunc.PyFuncApp",
         "rank": [
             0
         ],
+        "reprodata": {
+            "rmode": "0",
+            "NOTHING": {
+                "rmode": "0",
+                "lgt_data": {
+                    "merkleroot": null
+                },
+                "lg_parenthashes": {},
+                "lg_data": {
+                    "merkleroot": null
+                },
+                "lg_blockhash": "b33f465166e678698582a66db1f75d28949c4bd51a72e6f608c9d124b9196e73"
+            }
+        },
         "loop_ctx": null,
         "weight": 5,
         "num_cpus": 1,
-        "appclass": "dlg.apps.pyfunc.PyFuncApp",
-        "execution_time": 5,
-        "group_start": false,
-        "input_error_threshold": 0,
-        "n_tries": 1,
-        "applicationArgs": {
+        "nodeAttributes": {
+            "appclass": {
+                "name": "appclass",
+                "value": "dlg.apps.pyfunc.PyFuncApp",
+                "defaultValue": "dlg.apps.pyfunc.PyFuncApp",
+                "description": "Application class",
+                "readonly": true,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "c4e8c33e-ce9c-4871-90c7-866a280adf88",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "execution_time": {
+                "name": "execution_time",
+                "value": 5,
+                "defaultValue": "5",
+                "description": "Estimated execution time",
+                "readonly": true,
+                "type": "Float",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "00521132-192c-44c7-b974-391bbf0dee00",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "num_cpus": {
+                "name": "num_cpus",
+                "value": 1,
+                "defaultValue": "1",
+                "description": "Number of cores used",
+                "readonly": true,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "0b2b5add-9751-46bf-997f-711fe7a3b345",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "group_start": {
+                "name": "group_start",
+                "value": false,
+                "defaultValue": "False",
+                "description": "Is this node the start of a group?",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "e8edbe8c-57d1-4bb2-85d4-813fad80f268",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "input_error_threshold": {
+                "name": "input_error_threshold",
+                "value": 0,
+                "defaultValue": "0",
+                "description": "The allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "77057e52-c1cb-4dbc-b68c-40f7c5d188a0",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "n_tries": {
+                "name": "n_tries",
+                "value": 1,
+                "defaultValue": "1",
+                "description": "Specifies the number of times the 'run' method will be executed before finally giving up",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "cb922832-1237-4486-bcbb-1824ed668037",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
             "func_name": {
-                "name": "Function Name",
+                "name": "func_name",
                 "value": "compile",
                 "defaultValue": "",
                 "description": "Python function name",
@@ -24,85 +321,26 @@
                 "type": "String",
                 "precious": false,
                 "options": [],
-                "positional": false
-            },
-            "func_code": {
-                "name": "Function Code",
-                "value": "",
-                "defaultValue": "",
-                "description": "Python function code, e.g. 'def function_name(args): return args'",
-                "readonly": false,
-                "type": "String",
-                "precious": false,
-                "options": [],
-                "positional": false
-            },
-            "input_parser": {
-                "name": "Input Parser",
-                "value": "eval",
-                "defaultValue": "pickle",
-                "description": "Input port parsing technique",
-                "readonly": false,
-                "type": "Select",
-                "precious": false,
-                "options": [
-                    "pickle",
-                    "eval",
-                    "path",
-                    "dataurl",
-                    "npy"
-                ],
-                "positional": false
-            },
-            "output_parser": {
-                "name": "Output Parser",
-                "value": "eval",
-                "defaultValue": "pickle",
-                "description": "Output port parsing technique",
-                "readonly": false,
-                "type": "Select",
-                "precious": false,
-                "options": [
-                    "pickle",
-                    "eval",
-                    "path",
-                    "dataurl",
-                    "npy"
-                ],
-                "positional": false
-            },
-            "func_defaults": {
-                "name": "Function Defaults",
-                "value": "",
-                "defaultValue": "",
-                "description": "Mapping from argname to default value. Should match only the last part of the argnames list. Values are interpreted as Python code literals and that means string values need to be quoted.",
-                "readonly": false,
-                "type": "String",
-                "precious": false,
-                "options": [],
-                "positional": false
-            },
-            "func_arg_mapping": {
-                "name": "Function Arguments Mapping",
-                "value": "",
-                "defaultValue": "",
-                "description": "Mapping between argument name and input drop uids",
-                "readonly": false,
-                "type": "String",
-                "precious": false,
-                "options": [],
-                "positional": false
+                "positional": false,
+                "keyAttribute": false,
+                "id": "46e02fab-1678-4dca-998d-69fd76d002ac",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
             },
             "source": {
                 "name": "source",
                 "value": "print('Hello')",
-                "defaultValue": "",
+                "defaultValue": "print('Hello')",
                 "description": "",
                 "readonly": false,
                 "type": "String",
                 "precious": false,
                 "options": [],
-                "positional": false
+                "positional": true,
+                "keyAttribute": false,
+                "id": "cf35fdaa-decf-4bdf-9767-dd0714fef787",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
             },
             "filename": {
                 "name": "filename",
@@ -110,10 +348,14 @@
                 "defaultValue": "",
                 "description": "",
                 "readonly": false,
-                "type": "String",
-                "precious": true,
+                "type": "Object",
+                "precious": false,
                 "options": [],
-                "positional": false
+                "positional": false,
+                "keyAttribute": false,
+                "id": "594340db-0508-4058-9e8b-cd279aed5c75",
+                "parameterType": "ComponentParameter",
+                "usage": "InputPort"
             },
             "mode": {
                 "name": "mode",
@@ -124,51 +366,135 @@
                 "type": "String",
                 "precious": false,
                 "options": [],
-                "positional": false
+                "positional": true,
+                "keyAttribute": false,
+                "id": "7e5457c6-04af-4fb3-8ae4-0fa2b4e66a16",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
             },
             "optimize": {
                 "name": "optimize",
                 "value": true,
-                "defaultValue": "",
+                "defaultValue": "false",
                 "description": "",
                 "readonly": false,
                 "type": "Boolean",
                 "precious": false,
                 "options": [],
-                "positional": false
+                "positional": false,
+                "keyAttribute": false,
+                "id": "86241f4a-d949-42b2-8b3b-0b859d2b55a0",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "func_code": {
+                "name": "func_code",
+                "value": "",
+                "defaultValue": "",
+                "description": "Python function code, e.g. 'def function_name(args): return args'",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "f14afbbe-99c1-49cf-bcae-ad2ea6cfb904",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            },
+            "input_parser": {
+                "name": "input_parser",
+                "value": "path",
+                "defaultValue": "path",
+                "description": "Input port parsing technique",
+                "readonly": false,
+                "type": "Select",
+                "precious": false,
+                "options": [
+                    "pickle",
+                    "eval",
+                    "npy",
+                    "path",
+                    "dataurl"
+                ],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "8edc1727-db73-4af5-bb7d-b85d0f680a03",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            }
+        },
+        "execution_time": 5,
+        "group_start": false,
+        "input_error_threshold": 0,
+        "n_tries": 1,
+        "func_name": "compile",
+        "source": "print('Hello')",
+        "filename": "",
+        "mode": "exec",
+        "optimize": true,
+        "func_code": "",
+        "input_parser": "path",
+        "applicationArgs": {
+            "func_name": {
+                "name": "func_name",
+                "value": "compile",
+                "defaultValue": "",
+                "description": "Python function name",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "46e02fab-1678-4dca-998d-69fd76d002ac",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            },
+            "func_code": {
+                "name": "func_code",
+                "value": "",
+                "defaultValue": "",
+                "description": "Python function code, e.g. 'def function_name(args): return args'",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "f14afbbe-99c1-49cf-bcae-ad2ea6cfb904",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            },
+            "input_parser": {
+                "name": "input_parser",
+                "value": "path",
+                "defaultValue": "path",
+                "description": "Input port parsing technique",
+                "readonly": false,
+                "type": "Select",
+                "precious": false,
+                "options": [
+                    "pickle",
+                    "eval",
+                    "npy",
+                    "path",
+                    "dataurl"
+                ],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "8edc1727-db73-4af5-bb7d-b85d0f680a03",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
             }
         },
         "iid": "0",
-        "lg_key": -1,
-        "dt": "PythonApp",
-        "name": "compile",
+        "lg_key": -2,
+        "category": "Component",
+        "name": "PyFuncApp",
         "inputs": [
             {
-                "2022-05-06T08:43:26_-2_0": "filename"
-            }
-        ],
-        "node": "localhost",
-        "island": "localhost"
-    },
-    {
-        "oid": "2022-05-06T08:43:26_-2_0",
-        "categoryType": "Data",
-        "dataclass": "dlg.data.drops.memory.InMemoryDROP",
-        "rank": [
-            0
-        ],
-        "loop_ctx": null,
-        "weight": 0,
-        "data_volume": 0,
-        "group_end": false,
-        "applicationArgs": {},
-        "iid": "0",
-        "lg_key": -2,
-        "dt": "Memory",
-        "name": "NULL",
-        "consumers": [
-            {
-                "2022-05-06T08:43:26_-1_0": "filename"
+                "2023-04-27T14:44:39_-1_0": "filename"
             }
         ],
         "node": "localhost",
