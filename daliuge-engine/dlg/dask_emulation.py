@@ -443,4 +443,5 @@ def delayed(x, *args, **kwargs):
         nout = None
     if callable(x):
         return _AppDrop(x, nout=nout)
+        # return x(*args, **kwargs)
     return _DataDrop(pydata=x)
