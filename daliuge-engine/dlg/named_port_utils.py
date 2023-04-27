@@ -121,6 +121,7 @@ def identify_named_ports(
             value = ""  # make sure we are passing NULL drop events
         if key in posargs:
             pargsDict.update({key: value})
+            # portargs.update({key: value})
             logger.debug("Using %s '%s' for parg %s", mode, value, key)
             posargs.pop(posargs.index(key))
         elif key in keyargs:
@@ -131,9 +132,15 @@ def identify_named_ports(
             )
             _dum = keyargs.pop(key)  # remove from original arg list
         else:
-            logger.debug("No matching argument found for %s key %s", mode, key)
-    logger.debug("Returning kw mapped ports: %s", portargs)
-    return portargs
+            logger.debug(
+                "No matching argument found for %s key %s, %s, %s",
+                mode,
+                key,
+                keyargs,
+                posargs,
+            )
+    logger.debug("Returning kw mapped ports: %s, %s", portargs, pargsDict)
+    return pargsDict
 
 
 def check_ports_dict(ports: list) -> bool:
