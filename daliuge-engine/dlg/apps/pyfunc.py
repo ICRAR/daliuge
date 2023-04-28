@@ -141,6 +141,7 @@ def import_using_code(code):
 
 
 class DropParser(Enum):
+    RAW = "raw"
     PICKLE = "pickle"
     EVAL = "eval"
     NPY = "npy"
@@ -168,8 +169,8 @@ class DropParser(Enum):
 # @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
 # @param func_name Function Name//String/ApplicationArgument/readwrite//False/False/Python function name
 # @param func_code Function Code//String/ApplicationArgument/readwrite//False/False/Python function code, e.g. 'def function_name(args): return args'
-# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 #     \~English Mapping from argname to default value. Should match only the last part of the argnames list.
 #               Values are interpreted as Python code literals and that means string values need to be quoted.
 # @param func_arg_mapping Function Arguments Mapping//String/ApplicationArgument/readwrite//False/False/
@@ -475,7 +476,7 @@ class PyFuncApp(BarrierAppDROP):
         # that match one of the keyword argument names
         # if defaults dict has not been specified at all we'll go ahead anyway
 
-        # Fill arguments with rest of inputs
+        # 1. Fill arguments with rest of inputs
         logger.debug(f"available inputs: {inputs}")
 
         posargs = list(self.posonly.keys()) + list(self.poskw.keys())
@@ -519,7 +520,7 @@ class PyFuncApp(BarrierAppDROP):
             )
             logger.debug("Updated keyargs dictionary: %s", keyargsDict)
 
-            # put all remaining arguments into *args and **kwargs
+            # 2. put all remaining arguments into *args and **kwargs
             # TODO: This should only be done if the function signature allows it
             vparg = []
             vkarg = {}
@@ -544,10 +545,8 @@ class PyFuncApp(BarrierAppDROP):
                     "Adding remaining **kwargs to funcargs: %s", vkarg
                 )
                 funcargs.update(vkarg)
-        else:
-            appArgs = {}
 
-        # replace default argument values with named input ports
+        # 3. replace default argument values with named input ports
         # TODO: investigate performing inputs and outputs in a single call
         if "inputs" in self.parameters and check_ports_dict(
             self.parameters["inputs"]
@@ -575,11 +574,11 @@ class PyFuncApp(BarrierAppDROP):
             for i in range(min(len(inputs), self.fn_nargs)):
                 kwargs.update({self.argnames[i]: list(inputs.values())[i]})
 
-        # replace default argument values with named output ports
+        # 4. replace default argument values with named output ports
         if "outputs" in self.parameters and check_ports_dict(
             self.parameters["outputs"]
         ):
-            check_len = min(len(outputs), self.fn_nargs + len(self.fn_nkw))
+            check_len = min(len(outputs), self.fn_nargs + self.fn_nkw)
             outputs_dict = collections.OrderedDict()
             for outport in self.parameters["outputs"]:
                 key = list(outport.keys())[0]
@@ -604,20 +603,22 @@ class PyFuncApp(BarrierAppDROP):
         funcargs.update(kwargs)
 
         logger.debug(
-            f"Updating funcargs with values from keyargsDict {keyargsDict}"
+            f"Updating funcargs with values from pargsDict {pargsDict}"
         )
-        funcargs.update(keyargsDict)
+        funcargs.update(pargsDict)
 
         self._recompute_data["args"] = funcargs.copy()
 
+        # 5. remove self argument if this is the initializer.
         if (
             self.func_name is not None
             and self.func_name.split(".")[-1] in ["__init__", "__class__"]
             and "self" in funcargs
         ):
-            # remove self if this is the initializer.
             funcargs.pop("self")
-        logger.debug(f"Running {self.func_name} with *{pargs} **{funcargs}")
+        logger.info(f"Running {self.func_name} with *{pargs} **{funcargs}")
+
+        # 6. prepare for execution
         # we capture and log whatever is produced on STDOUT
         capture = StringIO()
         try:
@@ -626,8 +627,11 @@ class PyFuncApp(BarrierAppDROP):
         except TypeError as e:
             logger.error("Binding of arguments failed: %s", e)
             raise
+
+        # Here is where the function is actually executed
         with redirect_stdout(capture):
             result = self.f(*bind.args, **bind.kwargs)
+
         logger.debug("Returned result from %s: %s", self.func_name, result)
         logger.info(
             f"Captured output from function app '{self.func_name}': {capture.getvalue()}"

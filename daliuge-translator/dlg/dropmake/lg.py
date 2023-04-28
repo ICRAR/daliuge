@@ -336,7 +336,6 @@ class LG:
                 ]  # inner most is also the slowest running index
 
             lgn_is_loop = lgn.is_loop
-            logger.debug(">>>>> %d", int(lgn.dop))
             for i in range(lgn.dop):
                 miid = "{0}/{1}".format(iid, i)
                 if multikey_grpby:

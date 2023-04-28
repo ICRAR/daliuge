@@ -96,7 +96,7 @@ def identify_named_ports(
         dict: port arguments
 
     Side effect:
-        modifies the pargsDict OrderedDict
+        modifies pargsDict
     """
     # p_name = [p["name"] for p in port_dict]
     logger.debug(
@@ -127,10 +127,11 @@ def identify_named_ports(
         elif key in keyargs:
             # if not found in appArgs we don't put them into portargs either
             portargs.update({key: value})
+            # pargsDict.update({key: value})
             logger.debug(
                 "Using %s of type %s for kwarg %s", mode, type(value), key
             )
-            _dum = keyargs.pop(key)  # remove from original arg list
+            _ = keyargs.pop(key)  # remove from original arg list
         else:
             logger.debug(
                 "No matching argument found for %s key %s, %s, %s",
@@ -139,8 +140,8 @@ def identify_named_ports(
                 keyargs,
                 posargs,
             )
-    logger.debug("Returning kw mapped ports: %s, %s", portargs, pargsDict)
-    return pargsDict
+    logger.debug("Returning kw mapped ports: %s", portargs)
+    return portargs
 
 
 def check_ports_dict(ports: list) -> bool:
@@ -221,6 +222,8 @@ def replace_named_ports(
         keyargs,
         check_ports_dict(inport_names),
     )
+    ipkeyargs = {}
+    opkeyargs = {}
     if check_ports_dict(inport_names):
         for inport in inport_names:
             key = list(inport.keys())[0]
@@ -257,7 +260,13 @@ def replace_named_ports(
             portkeyargs.update({posargs[i]: list(oitems)[i][1]})
     # now that we have the mapped ports we can cleanup the appArgs
     # and construct the final keyargs and pargs
-    logger.debug("Arguments from ports: %s %s", portkeyargs, portPosargsDict)
+    logger.debug(
+        "Arguments from ports: %s, %s, %s, %s",
+        portkeyargs,
+        portPosargsDict,
+        ipkeyargs,
+        opkeyargs,
+    )
     appArgs = clean_applicationArgs(appArgs)
     # get cleaned positional args
     posargs = {
@@ -272,11 +281,6 @@ def replace_named_ports(
         for arg in appArgs
         if not appArgs[arg]["positional"]
     }
-    # update port dictionaries
-    # portkeyargs.update({key:arg for key, arg in keyargs.items()
-    #     if key not in portkeyargs})
-    # portPosargsDict.update({key:arg for key, arg in posargs.items()
-    #     if key not in portPosargsDict})
     for k, v in portkeyargs.items():
         if v not in [None, ""]:
             keyargs.update({k: v})
