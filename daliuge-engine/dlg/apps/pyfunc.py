@@ -499,8 +499,8 @@ class PyFuncApp(BarrierAppDROP):
                 appArgs.pop(k) for k in self.func_def_keywords if k in appArgs
             ]
             logger.debug(
-                "dlg keyword arguments removed: %s",
-                [i["name"] for i in _dum],
+                "Identified keyword arguments removed: %s",
+                [i for i in _dum],
             )
             pargsDict.update(
                 {
