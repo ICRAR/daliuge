@@ -526,7 +526,7 @@ class PyFuncApp(BarrierAppDROP):
             ]
             logger.debug(
                 "Identified keyword arguments removed: %s",
-                [i["name"] for i in _dum],
+                [i for i in _dum],
             )
             pargsDict.update(
                 {
