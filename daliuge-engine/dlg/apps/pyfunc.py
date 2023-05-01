@@ -598,14 +598,14 @@ class PyFuncApp(BarrierAppDROP):
                 )
             )
         logger.debug(
-            f"Updating funcargs with values from named ports {kwargs}"
-        )
-        funcargs.update(kwargs)
-
-        logger.debug(
             f"Updating funcargs with values from pargsDict {pargsDict}"
         )
         funcargs.update(pargsDict)
+
+        logger.debug(
+            f"Updating funcargs with values from named ports {kwargs}"
+        )
+        funcargs.update(kwargs)
 
         self._recompute_data["args"] = funcargs.copy()
 
