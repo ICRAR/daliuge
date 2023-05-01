@@ -103,6 +103,7 @@ install_requires = [
     "psutil",
     "pyswarm",
     "python-multipart",
+    "parameterized",
     # "ruamel.yaml.clib<=0.2.2",
     "uvicorn==0.18",
     "wheel",
