@@ -88,6 +88,8 @@ class ContainerIpWaiter(object):
 # @param command_line_arguments Command Line Arguments//String/ComponentParameter/readwrite//False/False/Additional command line arguments to be added to the command line to be executed
 # @param paramValueSeparator Param value separator/ /String/ComponentParameter/readwrite//False/False/Separator character(s) between parameters and their respective values on the command line
 # @param argumentPrefix Argument prefix/"--"/String/ComponentParameter/readwrite//False/False/Prefix to each keyed argument on the command line
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
@@ -239,6 +241,8 @@ class DockerApp(BarrierAppDROP):
 
         self._image = self._popArg(kwargs, "image", None)
         self._env = self._popArg(kwargs, "env", None)
+        self._inputRedirect = self._popArg(kwargs, "input_redirection", "")
+        self._outputRedirect = self._popArg(kwargs, "output_redirection", "")
         self._cmdLineArgs = self._popArg(kwargs, "command_line_arguments", "")
         self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
         self._argumentPrefix = self._popArg(kwargs, "argumentPrefix", "--")
@@ -564,6 +568,13 @@ class DockerApp(BarrierAppDROP):
                 cmd = droputils.replace_dataurl_placeholders(
                     cmd, dataURLInputs, dataURLOutputs
                 )
+                # if "output_redirection" in self._applicationArgs:
+                #     logger.debug(">>>> outport_names: %s", outport_names)
+                #     out_name = outport_names["output_redirection"]
+                #     cmd = f"{cmd} > {out_name}"
+                # if "input_redirection" in self._applicationArgs:
+                #     in_name = inport_names["input_redirection"]
+                #     cmd = f"cat {in_name} > {cmd}"
             else:
                 cmd = ""
             ###############
