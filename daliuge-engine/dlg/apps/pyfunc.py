@@ -87,7 +87,7 @@ def serialize_func(f):
 
 
 def import_using_name(app, fname):
-    logger.debug("Import from %s", fname)
+    logger.debug("Importing %s", fname)
     parts = fname.split(".")
     # If only one part check if builtin
     if len(parts) < 2:
