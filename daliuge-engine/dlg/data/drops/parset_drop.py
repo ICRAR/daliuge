@@ -27,10 +27,6 @@ from dlg.drop import DEFAULT_INTERNAL_PARAMETERS
 from dlg.data.io import MemoryIO
 from dlg.meta import dlg_string_param
 
-from logging import Logger
-
-logger = Logger("__main__")
-
 
 ##
 # @brief ParameterSet
@@ -90,7 +86,6 @@ class ParameterSetDROP(DataDROP):
         self.config_data = self.serialize_parameters(
             self.filter_parameters(self.parameters, self.mode), self.mode
         ).encode("utf-8")
-        logger.debug(">>>> config_data: %s", self.config_data)
 
     def getIO(self):
         return MemoryIO(io.BytesIO(self.config_data))
