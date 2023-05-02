@@ -150,6 +150,8 @@ class SleepApp(BarrierAppDROP):
 # @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
 # @param dummy_in dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy_out dummy//Object/OutputPort/readwrite//False/False/Dummy output port
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class CopyApp(BarrierAppDROP):
     """
@@ -203,6 +205,8 @@ class CopyApp(BarrierAppDROP):
 # @param category PythonApp
 # @param tag daliuge
 # @param sleep_time sleep_time/5/Integer/ApplicationArgument/readwrite//False/False/The number of seconds to sleep
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
 # @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
@@ -230,6 +234,8 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 # @param high high/1/Float/ApplicationArgument/readwrite//False/False/High value of range of array [exclusive]
 # @param integer integer/True/Boolean/ApplicationArgument/readwrite//False/False/Generate integer array?
 # @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
@@ -311,6 +317,8 @@ class RandomArrayApp(BarrierAppDROP):
 # @param tag daliuge
 # @param method method/mean/Select/ApplicationArgument/readwrite/mean,median/False/False/The method used for averaging
 # @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
@@ -408,6 +416,8 @@ class AverageArraysApp(BarrierAppDROP):
 # @param tag daliuge
 # @param num_of_inputs num_of_inputs/4/Integer/ConstructParameter/readwrite//False/False/The Gather “width”, stating how many inputs each Gather instance will handle
 # @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
@@ -442,6 +452,8 @@ class GenericGatherApp(BarrierAppDROP):
 # @param function function/sum/Select/ApplicationArgument/readwrite/sum,prod,min,max,add,multiply,maximum,minimum/False/False/The function used for gathering
 # @param reduce_axes reduce_axes/None/String/ApplicationArgument/readonly//False/False/The ndarray axes to reduce, None reduces all axes for sum, prod, max, min functions
 # @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
@@ -550,6 +562,8 @@ class GenericNpyGatherApp(BarrierAppDROP):
 # @param greet greet/World/String/ApplicationArgument/readwrite//False/False/What appears after 'Hello '
 # @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
 # @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @param hello hello/"world"/Object/OutputPort/readwrite//False/False/The port carrying the message produced by the app.
@@ -611,6 +625,8 @@ class HelloWorldApp(BarrierAppDROP):
 # @param url url/"https://eagle.icrar.org"/String/ApplicationArgument/readwrite//False/False/The URL to retrieve
 # @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
 # @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @param content content//String/OutputPort/readwrite//False/False/The port carrying the content read from the URL
@@ -667,6 +683,8 @@ class UrlRetrieveApp(BarrierAppDROP):
 # @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @param n_tries n_tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
 # @param appclass appclass/dlg.apps.simple.GenericScatterApp/String/ComponentParameter/readonly//False/False/Application class
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param array_in array_in//Object.Array/InputPort/readwrite//False/False/A numpy array of arrays, where the first axis is of length <numSplit>
@@ -731,6 +749,8 @@ class GenericScatterApp(BarrierAppDROP):
 # @param scatter_axes scatter_axes//String/ApplicationArgument/readwrite//False/False/The axes to split input ndarrays on, e.g. [0,0,0], length must match the number of input ports
 # @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @param appclass appclass/dlg.apps.simple.GenericNpyScatterApp/String/ComponentParameter/readonly//False/False/Application class
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param array_in array_in//Object.Array/InputPort/readwrite//False/False/A numpy array of arrays
@@ -808,6 +828,8 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 # @param category PythonApp
 # @param tag daliuge
 # @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
@@ -871,6 +893,8 @@ class PickOne(BarrierAppDROP):
 # @param tag daliuge
 # @param size size/100/Integer/ApplicationArgument/readwrite//False/False/the size of the array
 # @param appclass appclass/dlg.apps.simple.RandomArrayApp/String/ComponentParameter/readonly//False/False/Application class
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
