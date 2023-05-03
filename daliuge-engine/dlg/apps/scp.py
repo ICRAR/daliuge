@@ -43,6 +43,8 @@ from dlg.meta import (
 # @param category PythonApp
 # @param tag daliuge
 # @param appclass Application Class/dlg.apps.scp.ScpApp/String/ComponentParameter/readonly//False/False/Application class
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
@@ -110,7 +112,6 @@ class ScpApp(BarrierAppDROP):
         BarrierAppDROP.initialize(self, **kwargs)
 
     def run(self):
-
         # Check inputs/outputs are of a valid type
         for i in self.inputs + self.outputs:
             # The current only way to check if we are handling a FileDROP
