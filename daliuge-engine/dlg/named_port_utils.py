@@ -287,6 +287,10 @@ def replace_named_ports(
     for k, v in portPosargsDict.items():
         logger.debug("port posarg %s has value %s", k, v)
         # logger.debug("default posarg %s has value %s", k, posargs[k])
+        if k == "input_redirection":
+            v = f"cat {v} > "
+        if k == "output_redirection":
+            v = f"> {v}"
         if v not in [None, ""]:
             posargs.update({k: v})
     keyargs = (
