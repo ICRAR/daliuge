@@ -469,17 +469,17 @@ class LG:
                     "weight": 0,
                 }
             )
-            sdrop.addOutput(dropSpec_null, IdText="stream")
-            dropSpec_null.addProducer(sdrop, IdText="stream")
-            dropSpec_null.addStreamingConsumer(tdrop, IdText="stream")
-            tdrop.addStreamingInput(dropSpec_null, IdText="stream")
+            sdrop.addOutput(dropSpec_null, name="stream")
+            dropSpec_null.addProducer(sdrop, name="stream")
+            dropSpec_null.addStreamingConsumer(tdrop, name="stream")
+            tdrop.addStreamingInput(dropSpec_null, name="stream")
             self._drop_dict["new_added"].append(dropSpec_null)
         elif s_type in ["Application", "Control"]:
-            sIdText = slgn._getIdText("outputPorts")
-            tIdText = tlgn._getIdText("inputPorts")
-            logger.debug("Found port names: IN: %s, OUT: %s", sIdText, tIdText)
-            sdrop.addOutput(tdrop, IdText=sIdText)
-            tdrop.addProducer(sdrop, IdText=tIdText)
+            sname = slgn._getPortName("outputPorts")
+            tname = tlgn._getPortName("inputPorts")
+            logger.debug("Found port names: IN: %s, OUT: %s", sname, tname)
+            sdrop.addOutput(tdrop, name=sname)
+            tdrop.addProducer(sdrop, name=tname)
             if Categories.BASH_SHELL_APP == s_type:
                 bc = src_drop["command"]
                 bc.add_output_param(tlgn.id, tgt_drop["oid"])
@@ -494,17 +494,15 @@ class LG:
             else:  # sdrop is a data drop
                 # there should be only one port, get the name
                 portId = llink["fromPort"] if "fromPort" in llink else None
-                sIdText = slgn._getIdText("outputPorts", portId=portId)
+                sname = slgn._getPortName("outputPorts", portId=portId)
                 # could be multiple ports, need to identify
                 portId = llink["toPort"] if "toPort" in llink else None
-                tIdText = tlgn._getIdText("inputPorts", portId=portId)
-                logger.debug(
-                    "Found port names: IN: %s, OUT: %s", sIdText, tIdText
-                )
+                tname = tlgn._getPortName("inputPorts", portId=portId)
+                logger.debug("Found port names: IN: %s, OUT: %s", sname, tname)
                 # logger.debug(
                 #     ">>> link from %s to %s (%s) (%s)",
-                #     sIdText,
-                #     tIdText,
+                #     sname,
+                #     tname,
                 #     llink,
                 #     portId,
                 # )
@@ -514,16 +512,16 @@ class LG:
                         sdrop["oid"],
                         tdrop["oid"],
                     )
-                    sdrop.addStreamingConsumer(tdrop, IdText=sIdText)
-                    tdrop.addStreamingInput(sdrop, IdText=sIdText)
+                    sdrop.addStreamingConsumer(tdrop, name=sname)
+                    tdrop.addStreamingInput(sdrop, name=sname)
                 else:
                     # logger.debug(
                     #     ">>> adding consumer %s to %s",
                     #     tdrop["categoryType"],
                     #     sdrop["categoryType"],
                     # )
-                    sdrop.addConsumer(tdrop, IdText=sIdText)
-                    tdrop.addInput(sdrop, IdText=tIdText)
+                    sdrop.addConsumer(tdrop, name=sname)
+                    tdrop.addInput(sdrop, name=tname)
             if Categories.BASH_SHELL_APP == t_type:
                 bc = tgt_drop["command"]
                 bc.add_input_param(slgn.id, src_drop["oid"])
@@ -582,10 +580,10 @@ class LG:
                             ][1]
                             # TODO merge this code into the function
                             # def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink)
-                            tIdText = tlgn._getIdText(port="inputPorts")
+                            tname = tlgn._getPortName(port="inputPorts")
                             for gddrop in gather_input_list:
-                                gddrop.addConsumer(tdrops[j], IdText=tIdText)
-                                tdrops[j].addInput(gddrop, IdText=tIdText)
+                                gddrop.addConsumer(tdrops[j], name=tname)
+                                tdrops[j].addInput(gddrop, name=tname)
                                 j += 1
 
                             # if 'gather-data_drop' in ga_drop:
@@ -790,18 +788,18 @@ class LG:
             for data_drop in input_list:
                 # TODO merge this code into the function
                 # def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink)
-                sIdText = slgn._getIdText(ports="outputPorts")
+                sname = slgn._getPortName(ports="outputPorts")
                 if llink.get("is_stream", False):
                     logger.debug(
                         "link stream connection %s to %s",
                         data_drop["oid"],
                         output_drop["oid"],
                     )
-                    data_drop.addStreamingConsumer(output_drop, IdText=sIdText)
-                    output_drop.addStreamingInput(data_drop, IdText=sIdText)
+                    data_drop.addStreamingConsumer(output_drop, name=sname)
+                    output_drop.addStreamingInput(data_drop, name=sname)
                 else:
-                    data_drop.addConsumer(output_drop, IdText=sIdText)
-                    output_drop.addInput(data_drop, IdText=sIdText)
+                    data_drop.addConsumer(output_drop, name=sname)
+                    output_drop.addInput(data_drop, name=sname)
                 # print(data_drop['nm'], data_drop['oid'], '-->', output_drop['nm'], output_drop['oid'])
 
         logger.info(

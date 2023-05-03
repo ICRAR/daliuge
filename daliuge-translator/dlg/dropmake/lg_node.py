@@ -533,7 +533,7 @@ class LGNode:
 
     @inputPorts.setter
     def inputPorts(self, port="inputPorts"):
-        self._inputPorts = self._getIdText(ports="inputPorts", index=0)
+        self._inputPorts = self._getPortName(ports="inputPorts", index=0)
 
     @property
     def outputPorts(self):
@@ -541,7 +541,7 @@ class LGNode:
 
     @outputPorts.setter
     def outputPorts(self, port="outputPorts"):
-        self._outputPorts = self._getIdText(ports="outputPorts", index=0)
+        self._outputPorts = self._getPortName(ports="outputPorts", index=0)
 
     @property
     def gather_width(self):
@@ -807,20 +807,18 @@ class LGNode:
                 kwargs["applicationArgs"].update({k: na})
         # NOTE: drop Argxx keywords
 
-    def _getIdText(self, ports="outputPorts", index=0, portId=None):
+    def _getPortName(
+        self, ports: str = "outputPorts", index: int = 0, portId=None
+    ):
         """
-        Return IdText of port if it exists
-
-        NOTE: This has now been changed to use the 'name' rather than idText, in anticipation
-        of removing idText completely.
-        TODO: only returns the first one!!
+        Return name of port if it exists
         """
         port_selector = {
             "inputPorts": ["InputPort", "InputOutput"],
             "outputPorts": ["OutputPort", "InputOutput"],
         }
         ports_dict = {}
-        idText = None
+        name = None
         # if portId is None and index >= 0:
         if index >= 0:
             if ports in port_selector:
@@ -829,26 +827,26 @@ class LGNode:
                         continue
                     if field["usage"] in port_selector[ports]:
                         if portId is None:
-                            idText = field["name"]
+                            name = field["name"]
                         elif field["id"] == portId:
-                            idText = field["name"]
+                            name = field["name"]
                         # can't be sure that name is unique
-                        if idText not in ports_dict:
-                            ports_dict[idText] = [field["id"]]
+                        if name not in ports_dict:
+                            ports_dict[name] = [field["id"]]
                         else:
-                            ports_dict[idText].append(field["id"])
+                            ports_dict[name].append(field["id"])
         else:
             # TODO: This is not really correct, but maybe not needed at all?
             for port in port_selector[ports]:
-                idText = [
+                name = [
                     p["name"]
                     for p in self.jd[port]
                     if port in self.jd and p["Id"] == portId
                 ]
-                idText = idText[0] if len(idText) > 0 else None
-                if idText is not None:
+                name = name[0] if len(name) > 0 else None
+                if name is not None:
                     break
-        return idText if index >= 0 else ports_dict
+        return name if index >= 0 else ports_dict
 
     def create_drop_spec(self, oid, rank, kwargs) -> dropdict:
         """
@@ -882,13 +880,13 @@ class LGNode:
         self.nodetype = drop_type
         if self.is_data:
             kwargs["weight"] = self.weight
-            iIdText = self._getIdText(ports="inputPorts")
-            oIdText = self._getIdText(ports="outputPorts")
+            iname = self._getPortName(ports="inputPorts")
+            oname = self._getPortName(ports="outputPorts")
             logger.debug(
                 "Found port names for %s: IN: %s, OUT: %s",
                 oid,
-                iIdText,
-                oIdText,
+                iname,
+                oname,
             )
             if self.is_start_listener:
                 # create socket listener DROP first
@@ -919,7 +917,7 @@ class LGNode:
                 # tw -- task weight
                 dropSpec_socket["autostart"] = 1
                 kwargs["listener_drop"] = dropSpec_socket
-                dropSpec_socket.addOutput(drop_spec, IdText=oIdText)
+                dropSpec_socket.addOutput(drop_spec, name=oname)
             else:
                 drop_spec = dropdict(
                     {
@@ -1133,8 +1131,8 @@ class LGNode:
                 "weight"
             ] = 1  # barrier literarlly takes no time for its own computation
             kwargs["sleep_time"] = 1
-            drop_spec.addOutput(dropSpec_grp, IdText="grpdata")
-            dropSpec_grp.addProducer(drop_spec, IdText="grpdata")
+            drop_spec.addOutput(dropSpec_grp, name="grpdata")
+            dropSpec_grp.addProducer(drop_spec, name="grpdata")
         elif drop_type == Categories.GATHER:
             drop_spec = dropdict(
                 {
@@ -1169,8 +1167,8 @@ class LGNode:
             kwargs["gather-data_drop"] = dropSpec_gather
             kwargs["weight"] = 1
             kwargs["sleep_time"] = 1
-            drop_spec.addOutput(dropSpec_gather, IdText="gthrdata")
-            dropSpec_gather.addProducer(drop_spec, IdText="gthrdata")
+            drop_spec.addOutput(dropSpec_gather, name="gthrdata")
+            dropSpec_gather.addProducer(drop_spec, name="gthrdata")
         elif drop_class == Categories.SERVICE:
             raise GraphException(
                 f"DROP type: {drop_class} should not appear in physical graph"

@@ -78,35 +78,35 @@ class dropdict(dict):
     DROPManager.
     """
 
-    def _addSomething(self, other, key, IdText=None):
+    def _addSomething(self, other, key, name=None):
         if key not in self:
             self[key] = []
         if other["oid"] not in self[key]:
             # TODO: Returning just the other drop OID instead of the named
             #       port list is not a good solution. Required for the dask
             #       tests.
-            append = {other["oid"]: IdText} if IdText else other["oid"]
-            # if IdText is None:
+            append = {other["oid"]: name} if name else other["oid"]
+            # if name is None:
             # raise ValueError
             self[key].append(append)
 
-    def addConsumer(self, other, IdText=None):
-        self._addSomething(other, "consumers", IdText=IdText)
+    def addConsumer(self, other, name=None):
+        self._addSomething(other, "consumers", name=name)
 
-    def addStreamingConsumer(self, other, IdText=None):
-        self._addSomething(other, "streamingConsumers", IdText=IdText)
+    def addStreamingConsumer(self, other, name=None):
+        self._addSomething(other, "streamingConsumers", name=name)
 
-    def addInput(self, other, IdText=None):
-        self._addSomething(other, "inputs", IdText=IdText)
+    def addInput(self, other, name=None):
+        self._addSomething(other, "inputs", name=name)
 
-    def addStreamingInput(self, other, IdText=None):
-        self._addSomething(other, "streamingInputs", IdText=IdText)
+    def addStreamingInput(self, other, name=None):
+        self._addSomething(other, "streamingInputs", name=name)
 
-    def addOutput(self, other, IdText=None):
-        self._addSomething(other, "outputs", IdText=IdText)
+    def addOutput(self, other, name=None):
+        self._addSomething(other, "outputs", name=name)
 
-    def addProducer(self, other, IdText=None):
-        self._addSomething(other, "producers", IdText=IdText)
+    def addProducer(self, other, name=None):
+        self._addSomething(other, "producers", name=name)
 
 
 def _sanitize_links(links):

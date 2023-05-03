@@ -427,10 +427,9 @@ class PyFuncApp(BarrierAppDROP):
         somewhat risky, since the order is relevant and in this code derived from the
         order defined in the graph (same order as defined in the component description).
 
-        Input ports will NOT be used by order (anymore), but by the IdText (name field
-        in EAGLE) of the port. Since each input port requires an associated data drop,
-        this provides a unique mapping. This also allows to pass values to any function
-        argument through a port.
+        Input ports will NOT be used by order (anymore), but by the name of the port.
+        Since each input port requires an associated data drop, this provides a unique
+        mapping. This also allows to pass values to any function argument through a port.
 
         Function argument values as well as the function code can be provided in
         serialised (pickle) form by setting the 'pickle' flag. Note that this flag

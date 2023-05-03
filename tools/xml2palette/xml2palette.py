@@ -295,7 +295,7 @@ def create_port(
 
     :return dict: {
                     'Id':uuid,
-                    'IdText': internal_name,
+                    'name': internal_name,
                     'text': external_name,
                     'event': event,
                     'type': value_type,
@@ -316,7 +316,7 @@ def create_port(
 
     return {
         "Id": str(port_uuid),
-        "IdText": internal_name,
+        "name": internal_name,
         "name": external_name,
         "event": event,
         "type": value_type,
@@ -1645,7 +1645,7 @@ def _process_grandchild(gchild: dict, hold_name: str, language: str) -> dict:
         return_type = "Unknown"
 
         # some defaults
-        # param string format is (idText name/value/value_type/param_type/access_restriction/options/precious/positional/description)
+        # param string format is (name name/value/value_type/param_type/access_restriction/options/precious/positional/description)
         if language == Language.C:
             member["params"].append(
                 {"key": "category", "direction": None, "value": "DynlibApp"}
