@@ -953,6 +953,7 @@ class LGNode:
 
     def _create_app_drop(self, drop_spec):
         # default generic component becomes "sleep and copy"
+        kwargs = {}
         if "appclass" in self.jd:
             app_class = self.jd["appclass"]
         elif self.dropclass is None or self.dropclass == "":
@@ -965,6 +966,7 @@ class LGNode:
                 app_class = "dlg.apps.bash_shell_app.BashShellApp"
             elif self.category == "Docker":
                 app_class = "dlg.apps.dockerapp.DockerApp"
+                drop_spec["name"] = self.jd["command"]
             else:
                 logger.debug("Might be a problem with this node: %s", self.jd)
 
@@ -972,7 +974,11 @@ class LGNode:
         execTime = self.weight
         self.jd["dropclass"] = app_class
         self.dropclass = app_class
-        logger.debug("Creating app drop using class: %s", app_class)
+        logger.debug(
+            "Creating app drop using class: %s, %s",
+            app_class,
+            drop_spec["name"],
+        )
         if self.dropclass is None or self.dropclass == "":
             logger.warning(f"Something wrong with this node: {self.jd}")
         if self.weight is not None:
@@ -984,16 +990,11 @@ class LGNode:
                 )
         else:
             execTime = random.randint(3, 8)
-        kwargs = {}
         kwargs["weight"] = execTime
         if app_class == "dlg.apps.simple.SleepApp":
             kwargs["sleep_time"] = execTime
 
-        drop_spec.update(
-            {
-                "dropclass": app_class,
-            }
-        )
+        kwargs["dropclass"] = app_class
         kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
         if "mkn" in self.jd:
             kwargs["mkn"] = self.jd["mkn"]
@@ -1003,6 +1004,7 @@ class LGNode:
 
     def _create_data_drop(self, drop_spec):
         # backwards compatibility
+        kwargs = {}
         if "dataclass" in self.jd:
             self.dropclass = self.jd["dataclass"]
         if (
@@ -1011,6 +1013,9 @@ class LGNode:
         ):
             if self.category == "File":
                 self.dropclass = "dlg.data.drops.file.FileDROP"
+                fp = self.jd.get("filepath", None)
+                if fp:
+                    kwargs["filepath"] = fp
             elif self.category == "Memory":
                 self.dropclass = "dlg.data.drops.memory.InMemoryDROP"
             elif self.category == "SharedMemory":
@@ -1018,7 +1023,6 @@ class LGNode:
             else:
                 raise TypeError("Unknown data class for drop: %s", self.jd)
         logger.debug("Creating data drop using class: %s", self.dropclass)
-        kwargs = {}
         kwargs["dropclass"] = self.dropclass
         kwargs["weight"] = self.weight
         if self.is_start_listener:
