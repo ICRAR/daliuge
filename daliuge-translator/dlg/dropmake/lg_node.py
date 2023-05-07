@@ -75,7 +75,6 @@ class LGNode:
         self.outputPorts = "outputPorts"
         logger.debug("%s input_ports: %s", self.name, self.inputPorts)
         logger.debug("%s output_ports: %s", self.name, self.outputPorts)
-        self.nodetype = ""  # e.g. Data or Application
         self.dropclass = ""  # e.g. dlg.apps.simple.HelloWorldAPP
         self.reprodata = jd.get("reprodata", {}).copy()
         if "isGroup" in jd and jd["isGroup"] is True:
@@ -847,211 +846,145 @@ class LGNode:
                     break
         return name if index >= 0 else ports_dict
 
-    def create_drop_spec(self, oid, rank, kwargs) -> dropdict:
-        """
-        New implementation of drop_spec generation method.
-        """
-        mem_drop_spec = dropdict(
+    def _create_groupby_drops(self, drop_spec):
+        drop_spec.update(
             {
-                "oid": oid,
+                "dropclass": "dlg.apps.simple.SleepApp",
+                "categoryType": "Application",
+            }
+        )
+        sij = self.inputs[0]
+        if not sij.is_data:
+            raise GInvalidNode(
+                "GroupBy should be connected to a DataDrop, not '%s'"
+                % sij.category
+            )
+        dw = sij.weight * self.groupby_width
+
+        # additional generated drop
+        dropSpec_grp = dropdict(
+            {
+                "oid": "{0}-grp-data".format(drop_spec["oid"]),
                 "categoryType": CategoryType.DATA,
-                "category": "Data",
                 "dropclass": "dlg.data.drops.memory.InMemoryDROP",
-                "storage": "Data",
-                "rank": rank,
+                "name": "grpdata",
+                "weight": dw,
+                "rank": drop_spec["rank"],
                 "reprodata": self.jd.get("reprodata", {}),
             }
         )
-        drop_spec = mem_drop_spec
+        kwargs = {}
+        kwargs["grp-data_drop"] = dropSpec_grp
+        kwargs[
+            "weight"
+        ] = 1  # barrier literarlly takes no time for its own computation
+        kwargs["sleep_time"] = 1
+        drop_spec.update(kwargs)
+        drop_spec.addOutput(dropSpec_grp, name="grpdata")
+        dropSpec_grp.addProducer(drop_spec, name="grpdata")
         return drop_spec
 
-    def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
-        """
-        NOTE: This IS the main function right now, still called 'test' and still should be replaced!!!
-        TODO
-        This is a test function only
-        should be replaced by LGNode class specific methods
-        """
-        drop_type = self.category
-        drop_class = self.category if self.category else self.categoryType
-
-        # backwards compatibility
-        if self.categoryType == "Unknown" and "type" in self.jd:
-            drop_type = self.jd["type"]
-            if drop_type in DATA_TYPES:
-                drop_class = "Data"
-            elif drop_type in APP_TYPES:
-                drop_class = "Application"
-            else:
-                drop_class = "Unknown"
-
-        # this is just the template. For some created drops
-        # this will be updated.
-        drop_spec = dropdict(
+    def _create_gather_drops(self, drop_spec):
+        drop_spec.update(
             {
-                "oid": oid,
-                "categoryType": self.categoryType,
-                "category": drop_type,
-                "dropclass": self.dropclass,
-                "storage": drop_type,
-                "rank": rank,
+                "dropclass": "dlg.apps.simple.SleepApp",
+                "categoryType": "Application",
+            }
+        )
+        gi = self.inputs[0]
+        if gi.is_groupby:
+            gii = gi.inputs[0]
+            dw = (
+                int(gii.jd["data_volume"])
+                * gi.groupby_width
+                * self.gather_width
+            )
+        else:  # data
+            dw = gi.weight * self.gather_width
+
+            # additional generated drop
+        dropSpec_gather = dropdict(
+            {
+                "oid": "{0}-gather-data".format(drop_spec["oid"]),
+                "categoryType": CategoryType.DATA,
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+                "name": "gthrdt",
+                "weight": dw,
+                "rank": drop_spec["rank"],
                 "reprodata": self.jd.get("reprodata", {}),
             }
         )
+        kwargs = {}
+        kwargs["gather-data_drop"] = dropSpec_gather
+        kwargs["weight"] = 1
+        kwargs["sleep_time"] = 1
+        drop_spec.update(kwargs)
+        drop_spec.addOutput(dropSpec_gather, name="gthrdata")
+        dropSpec_gather.addProducer(drop_spec, name="gthrdata")
+        return drop_spec
 
-        self.nodetype = drop_type
-        if self.is_data:
-            kwargs["weight"] = self.weight
-            iname = self._getPortName(ports="inputPorts")
-            oname = self._getPortName(ports="outputPorts")
-            logger.debug(
-                "Found port names for %s: IN: %s, OUT: %s",
-                oid,
-                iname,
-                oname,
-            )
-            if self.is_start_listener:
-                # create socket listener DROP first
-                drop_spec.update(
-                    {
-                        "oid": oid,
-                        "categoryType": CategoryType.DATA,
-                        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
-                    }
+    def _create_listener_drops(self, drop_spec):
+        # create socket listener DROP first
+        drop_spec.update(
+            {
+                "oid": drop_spec["oid"],
+                "categoryType": CategoryType.DATA,
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+            }
+        )
+
+        # additional generated drop
+        dropSpec_socket = dropdict(
+            {
+                "oid": "{0}-s".format(drop_spec["oid"]),
+                "categoryType": CategoryType.APPLICATION,
+                "category": "PythonApp",
+                "dropclass": "dlg.apps.simple.SleepApp",
+                "name": "lstnr",
+                "weigth": 5,
+                "sleep_time": 1,
+                "reprodata": self.jd.get("reprodata", {}),
+            }
+        )
+        # tw -- task weight
+        dropSpec_socket["autostart"] = 1
+        drop_spec.update({"listener_drop": dropSpec_socket})
+        dropSpec_socket.addOutput(
+            drop_spec, name=self._getPortName(ports="outputPorts")
+        )
+        return drop_spec
+
+    def _create_app_drop(self, drop_spec):
+        # default generic component becomes "sleep and copy"
+        if self.dropclass is None or self.dropclass == "":
+            app_class = "dlg.apps.simple.SleepApp"
+        else:
+            app_class = self.dropclass
+            execTime = self.weight
+        if self.weight is not None:
+            execTime = self.weight
+            if execTime < 0:
+                raise GraphException(
+                    "Execution_time must be greater"
+                    " than 0 for Node '%s'" % self.name
                 )
+        else:
+            execTime = random.randint(3, 8)
+        kwargs = {}
+        kwargs["weight"] = execTime
+        if app_class == "dlg.apps.simple.SleepApp":
+            kwargs["sleep_time"] = execTime
 
-                # additional generated drop
-                dropSpec_socket = dropdict(
-                    {
-                        "oid": "{0}-s".format(oid),
-                        "categoryType": CategoryType.APPLICATION,
-                        "category": "PythonApp",
-                        "dropclass": "dlg.apps.simple.SleepApp",
-                        "name": "lstnr",
-                        "weigth": 5,
-                        "sleep_time": 1,
-                        "reprodata": self.jd.get("reprodata", {}),
-                    }
-                )
-                # tw -- task weight
-                dropSpec_socket["autostart"] = 1
-                kwargs["listener_drop"] = dropSpec_socket
-                dropSpec_socket.addOutput(drop_spec, name=oname)
-        elif self.is_app:
-            # default generic component becomes "sleep and copy"
-            if self.dropclass is None or self.dropclass == "":
-                app_class = "dlg.apps.simple.SleepApp"
-            else:
-                app_class = self.dropclass
-                execTime = self.weight
-            if self.weight is not None:
-                execTime = self.weight
-                if execTime < 0:
-                    raise GraphException(
-                        "Execution_time must be greater"
-                        " than 0 for Node '%s'" % self.name
-                    )
-            else:
-                execTime = random.randint(3, 8)
-
-            kwargs["weight"] = execTime
-            if app_class == "dlg.apps.simple.SleepApp":
-                kwargs["sleep_time"] = execTime
-
-            drop_spec.update(
-                {
-                    "dropclass": app_class,
-                }
-            )
-
-            kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
-            if "mkn" in self.jd:
-                kwargs["mkn"] = self.jd["mkn"]
-            self._update_key_value_attributes(kwargs)
-            drop_spec.update(kwargs)
-
-        elif drop_type == Categories.GROUP_BY:
-            drop_spec.update(
-                {
-                    "dropclass": "dlg.apps.simple.SleepApp",
-                }
-            )
-            sij = self.inputs[0]
-            if not sij.is_data:
-                raise GInvalidNode(
-                    "GroupBy should be connected to a DataDrop, not '%s'"
-                    % sij.category
-                )
-            dw = sij.weight * self.groupby_width
-
-            # additional generated drop
-            dropSpec_grp = dropdict(
-                {
-                    "oid": "{0}-grp-data".format(oid),
-                    "categoryType": CategoryType.DATA,
-                    "dropclass": "dlg.data.drops.memory.InMemoryDROP",
-                    "name": "grpdata",
-                    "weight": dw,
-                    "rank": rank,
-                    "reprodata": self.jd.get("reprodata", {}),
-                }
-            )
-            kwargs["grp-data_drop"] = dropSpec_grp
-            kwargs[
-                "weight"
-            ] = 1  # barrier literarlly takes no time for its own computation
-            kwargs["sleep_time"] = 1
-            drop_spec.addOutput(dropSpec_grp, name="grpdata")
-            dropSpec_grp.addProducer(drop_spec, name="grpdata")
-        elif drop_type == Categories.GATHER:
-            drop_spec.update(
-                {
-                    "dropclass": "dlg.apps.simple.SleepApp",
-                }
-            )
-            gi = self.inputs[0]
-            if gi.is_groupby:
-                gii = gi.inputs[0]
-                dw = (
-                    int(gii.jd["data_volume"])
-                    * gi.groupby_width
-                    * self.gather_width
-                )
-            else:  # data
-                dw = gi.weight * self.gather_width
-
-            # additional generated drop
-            dropSpec_gather = dropdict(
-                {
-                    "oid": "{0}-gather-data".format(oid),
-                    "categoryType": CategoryType.DATA,
-                    "dropclass": "dlg.data.drops.memory.InMemoryDROP",
-                    "name": "gthrdt",
-                    "weight": dw,
-                    "rank": rank,
-                    "reprodata": self.jd.get("reprodata", {}),
-                }
-            )
-            kwargs["gather-data_drop"] = dropSpec_gather
-            kwargs["weight"] = 1
-            kwargs["sleep_time"] = 1
-            drop_spec.addOutput(dropSpec_gather, name="gthrdata")
-            dropSpec_gather.addProducer(drop_spec, name="gthrdata")
-        elif drop_class == Categories.SERVICE:
-            raise GraphException(
-                f"DROP type: {drop_class} should not appear in physical graph"
-            )
-        elif drop_type in [Categories.START, Categories.END]:
-            # this is at least suspicious in terms of implementation....
-            drop_spec.update(
-                {
-                    "categoryType": CategoryType.DATA,
-                    "dropclass": "dlg.data.drops.data_base.NullDROP",
-                    "weight": 0,
-                }
-            )
-        elif drop_type in Categories.LOOP:
-            drop_spec = {}
+        drop_spec.update(
+            {
+                "dropclass": app_class,
+            }
+        )
+        kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
+        if "mkn" in self.jd:
+            kwargs["mkn"] = self.jd["mkn"]
+        self._update_key_value_attributes(kwargs)
+        drop_spec.update(kwargs)
         return drop_spec
 
     def make_single_drop(self, iid="0", **kwargs):
@@ -1061,34 +994,47 @@ class LGNode:
 
         Dummy implementation as of 09/12/15
         """
+        if self.is_loop:
+            return {}
+
         oid, rank = self.make_oid(iid)
-        dropSpec = self._create_test_drop_spec(oid, rank, kwargs)
-        if dropSpec is None:
-            logger.error(
-                ">>>> Unsuccessful creating dropSpec!!%s, %s, %s",
-                oid,
-                rank,
-                kwargs,
-            )
-            raise ValueError
+        # default spec
+        drop_spec = dropdict(
+            {
+                "oid": oid,
+                "name": self.name,
+                "categoryType": self.categoryType,
+                "category": self.category,
+                "dropclass": self.dropclass,
+                "storage": self.category,
+                "rank": rank,
+                "reprodata": self.jd.get("reprodata", {}),
+            }
+        )
+        drop_spec.update(kwargs)
+        if self.is_data:
+            # almost nothing special for data drops
+            kwargs["weight"] = self.weight
+            if self.is_start_listener:
+                drop_spec = self._create_listener_drops(drop_spec)
+        elif self.is_app:
+            drop_spec = self._create_app_drop(drop_spec)
+        elif self.category == Categories.GROUP_BY:
+            drop_spec = self._create_groupby_drops(drop_spec)
+        elif self.category == Categories.GATHER:
+            drop_spec = self._create_gather_drops(drop_spec)
+        elif self.is_service or self.is_branch:
+            kwargs["categoryType"] = "Application"
         kwargs["iid"] = iid
         kwargs["lg_key"] = self.id
-        # kwargs["dt"] = self.category
-        kwargs["category"] = self.category
-        if "categoryType" in kwargs:
-            kwargs["categoryType"] = self.categoryType
-        elif self.jd["category"] in DATA_TYPES:
-            kwargs["categoryType"] = "Data"
-        else:
+        if self.is_branch:
             kwargs["categoryType"] = "Application"
         kwargs["name"] = self.name
         # Behaviour is that child-nodes inherit reproducibility data from their parents.
         if self._reprodata is not None:
             kwargs["reprodata"] = self._reprodata.copy()
-        if self.is_service:
-            kwargs["categoryType"] = "Application"
-        dropSpec.update(kwargs)
-        return dropSpec
+        drop_spec.update(kwargs)
+        return drop_spec
 
     @staticmethod
     def str_to_bool(value, default_value=False):
