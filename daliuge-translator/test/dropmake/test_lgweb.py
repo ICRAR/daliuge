@@ -58,15 +58,20 @@ class TestLGWeb(unittest.TestCase):
             # "-l",
             # self.temp_dir,
         ]
-        # # self.logfile = open(f"{self.temp_dir}/dlgTrans.log", "wb")
-        with open("/dev/null", "wb") as logfile:
+        # uncomment to capture local logs, but reverse before
+        # push to github.
+        # lf = f"{self.temp_dir}/dlgTrans.log"
+        lf = "/dev/null"
+        with open(lf, "wb") as self.logfile:
             self.web_proc = tool.start_process(
-                "lgweb", args, stdout=logfile, stderr=logfile
+                "lgweb", args, stdout=self.logfile, stderr=self.logfile
             )
 
     def tearDown(self):
-        shutil.rmtree(self.temp_dir)
-        # self.logfile.close()
+        if self.logfile.name == "/dev/null":
+            shutil.rmtree(self.temp_dir)
+        else:
+            logger.info("Kept logfile in: %s", self.logfile.name)
         common.terminate_or_kill(self.web_proc, 10)
         unittest.TestCase.tearDown(self)
 
@@ -463,8 +468,8 @@ class TestLGWeb(unittest.TestCase):
         form_data = {"lg_content": json_data, "default_app": "test.app"}
         pgt = self._test_post_request(c, test_url, form_data, False)
         for dropspec in pgt:
-            if "appclass" in dropspec:
-                self.assertEqual(dropspec["appclass"], "test.app")
+            if "dropclass" in dropspec:
+                self.assertEqual(dropspec["dropclass"], "test.app")
 
     def test_pgt_partition(self):
         c = RestClient("localhost", lgweb_port, timeout=10)

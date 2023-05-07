@@ -44,7 +44,7 @@ class TestGraphLoader(unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             }
         ]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
@@ -57,7 +57,7 @@ class TestGraphLoader(unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.SharedMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.SharedMemoryDROP",
             }
         ]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
@@ -70,9 +70,14 @@ class TestGraphLoader(unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             },
-            {"oid": "B", "categoryType": "container", "children": ["A"]},
+            {
+                "oid": "B",
+                "categoryType": "container",
+                "dropclass": "dlg.data.drops.container.ContainerDROP",
+                "children": ["A"],
+            },
         ]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         self.assertIsInstance(a, InMemoryDROP)
@@ -89,13 +94,13 @@ class TestGraphLoader(unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.file.FileDROP",
+                "dropclass": "dlg.data.drops.file.FileDROP",
                 "dirname": ".",
             },
             {
                 "oid": "B",
                 "categoryType": "Container",
-                "container": "dlg.data.drops.DirectoryContainer",
+                "dropclass": "dlg.data.drops.DirectoryContainer",
                 "children": ["A"],
                 "dirname": ".",
             },
@@ -109,13 +114,13 @@ class TestGraphLoader(unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "consumers": ["B"],
             },
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "appclass": "test.test_graph_loader.DummyApp",
+                "dropclass": "test.test_graph_loader.DummyApp",
             },
         ]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
@@ -234,7 +239,7 @@ class TestGraphLoader(unittest.TestCase):
                 dropSpec = {
                     "oid": "A",
                     "categoryType": "Data",
-                    "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                    "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 }
                 if key is not None:
                     dropSpec[key] = value

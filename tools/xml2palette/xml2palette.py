@@ -373,7 +373,7 @@ def _check_required_fields_for_category(
         alert_if_missing(text, fields, "libpath")
 
     if category in ["PythonApp", "Branch"]:
-        alert_if_missing(text, fields, "appclass")
+        alert_if_missing(text, fields, "dropclass")
 
     if category in [
         "File",
@@ -1663,7 +1663,7 @@ def _process_grandchild(gchild: dict, hold_name: str, language: str) -> dict:
             )
             member["params"].append(
                 {
-                    "key": "appclass",
+                    "key": "dropclass",
                     "direction": None,
                     "value": "Application Class/dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/readwrite//False/False/The python class that implements this application",
                 }

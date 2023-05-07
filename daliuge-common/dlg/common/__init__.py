@@ -19,25 +19,19 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+from enum import Enum
+from dataclasses import dataclass, field, asdict
+import logging
+
 """Common utilities used by daliuge packages"""
 from .osutils import terminate_or_kill, wait_or_kill
 from .network import check_port, connect_to, portIsClosed, portIsOpen, write_to
 from .streams import ZlibCompressedStream, JSONStream
 
-
-class DropType:
-    """
-    Class defining the LG keyword to be used to load the module defining the Drop.
-    """
-
-    DATACLASS = "dataclass"
-    APPCLASS = "appclass"
-    SOCKETCLASS = "socket"
-    SERVICECLASS = "serviceapp"  # App drop that runs continously
-    CONTAINERCLASS = "container"  # Drop that contains other drops
+logger = logging.getLogger(__name__)
 
 
-class CategoryType:
+class CategoryType(str, Enum):
     DATA = "Data"
     APPLICATION = "Application"
     CONSTRUCT = "Construct"
@@ -77,6 +71,18 @@ class dropdict(dict):
     repositories where graph templates are expected to be found by the
     DROPManager.
     """
+
+    def __init__(self, init_dict=None):
+        if init_dict is None:
+            init_dict = {
+                "oid": None,
+                "categoryType": "Unknown",
+            }
+
+        self.update(init_dict)
+        if "oid" not in self:
+            self.update({"oid": None})
+        return super().__init_subclass__()
 
     def _addSomething(self, other, key, name=None):
         if key not in self:

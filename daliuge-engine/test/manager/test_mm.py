@@ -85,7 +85,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "island": hostname,
                 "node": hostname,
                 "consumers": ["B"],
@@ -93,7 +93,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.simple.SleepAndCopyApp",
+                "dropclass": "dlg.apps.simple.SleepAndCopyApp",
                 "sleep_time": sleepTime,
                 "outputs": ["C"],
                 "node": hostname,
@@ -102,7 +102,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
             {
                 "oid": "C",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "island": hostname,
                 "node": hostname,
             },
@@ -125,7 +125,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             }
         ]
         self.assertRaises(
@@ -137,7 +137,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": "unknown_host",
             }
         ]
@@ -150,7 +150,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
             }
         ]
@@ -163,7 +163,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
                 "island": "unknown_host",
             }
@@ -177,7 +177,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
                 "island": hostname,
             }
@@ -196,7 +196,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         self.assertEqual("A", dropSpec["oid"])
         self.assertEqual("Data", dropSpec["categoryType"])
         self.assertEqual(
-            "dlg.data.drops.memory.InMemoryDROP", dropSpec["dataclass"]
+            "dlg.data.drops.memory.InMemoryDROP", dropSpec["dropclass"]
         )
 
     def test_deployGraph(self):

@@ -1356,7 +1356,7 @@ class DAGUtil(object):
                 {
                     "oid": "-92",
                     "categoryType": CategoryType.DATA,
-                    "dataclass": "dlg.data.drops.data_base.NullDROP",
+                    "dropclass": "dlg.data.drops.data_base.NullDROP",
                 }
             )
             super_k = len(drop_list) + 1
