@@ -924,7 +924,7 @@ class LGNode:
                         "oid": oid,
                         "categoryType": CategoryType.DATA,
                         "category": drop_type,
-                        "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                         "storage": drop_type,
                         "rank": rank,
                         "reprodata": self.jd.get("reprodata", {}),
@@ -1119,7 +1119,7 @@ class LGNode:
                 {
                     "oid": "{0}-grp-data".format(oid),
                     "categoryType": CategoryType.DATA,
-                    "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                    "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                     "name": "grpdata",
                     "weight": dw,
                     "rank": rank,
@@ -1157,7 +1157,7 @@ class LGNode:
                 {
                     "oid": "{0}-gather-data".format(oid),
                     "categoryType": CategoryType.DATA,
-                    "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                    "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                     "name": "gthrdt",
                     "weight": dw,
                     "rank": rank,
@@ -1179,7 +1179,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "categoryType": CategoryType.DATA,
-                    "dataclass": "dlg.data.drops.data_base.NullDROP",
+                    "dropclass": "dlg.data.drops.data_base.NullDROP",
                     "weight": 0,
                     "rank": rank,
                     "reprodata": self.jd.get("reprodata", {}),
