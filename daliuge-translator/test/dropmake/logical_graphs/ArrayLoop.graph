@@ -98,6 +98,19 @@
             "expanded": true,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
+                {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
                     "id": "b10651ef-fdb8-48d3-bb13-eda510eaea7a",
@@ -490,6 +503,19 @@
             "expanded": true,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.file.FileDROP"
+                },
+                {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
                     "id": "8bf58c5f-6aae-4e08-9dbe-19d84668098d",
@@ -652,6 +678,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
@@ -1380,6 +1419,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",

@@ -216,7 +216,6 @@ class LGNode:
                 "dropclass",
                 "Application Class",
                 "Application class",
-                "dropclass",
             ]
             self.is_app = True
         elif self.jd["categoryType"] in [
@@ -852,7 +851,18 @@ class LGNode:
         """
         New implementation of drop_spec generation method.
         """
-        drop_spec = dropdict()
+        mem_drop_spec = dropdict(
+            {
+                "oid": oid,
+                "categoryType": CategoryType.DATA,
+                "category": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+                "storage": "Data",
+                "rank": rank,
+                "reprodata": self.jd.get("reprodata", {}),
+            }
+        )
+        drop_spec = mem_drop_spec
         return drop_spec
 
     def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
@@ -862,7 +872,6 @@ class LGNode:
         This is a test function only
         should be replaced by LGNode class specific methods
         """
-        drop_spec = None
         drop_type = self.category
         drop_class = self.category if self.category else self.categoryType
 
@@ -876,7 +885,20 @@ class LGNode:
             else:
                 drop_class = "Unknown"
 
-        self.dropclass = drop_class
+        # this is just the template. For some created drops
+        # this will be updated.
+        drop_spec = dropdict(
+            {
+                "oid": oid,
+                "categoryType": self.categoryType,
+                "category": drop_type,
+                "dropclass": self.dropclass,
+                "storage": drop_type,
+                "rank": rank,
+                "reprodata": self.jd.get("reprodata", {}),
+            }
+        )
+
         self.nodetype = drop_type
         if self.is_data:
             kwargs["weight"] = self.weight
@@ -890,17 +912,15 @@ class LGNode:
             )
             if self.is_start_listener:
                 # create socket listener DROP first
-                drop_spec = dropdict(
+                drop_spec.update(
                     {
                         "oid": oid,
                         "categoryType": CategoryType.DATA,
-                        "category": drop_type,
                         "dropclass": "dlg.data.drops.memory.InMemoryDROP",
-                        "storage": drop_type,
-                        "rank": rank,
-                        "reprodata": self.jd.get("reprodata", {}),
                     }
                 )
+
+                # additional generated drop
                 dropSpec_socket = dropdict(
                     {
                         "oid": "{0}-s".format(oid),
@@ -910,7 +930,6 @@ class LGNode:
                         "name": "lstnr",
                         "weigth": 5,
                         "sleep_time": 1,
-                        "rank": rank,
                         "reprodata": self.jd.get("reprodata", {}),
                     }
                 )
@@ -918,39 +937,6 @@ class LGNode:
                 dropSpec_socket["autostart"] = 1
                 kwargs["listener_drop"] = dropSpec_socket
                 dropSpec_socket.addOutput(drop_spec, name=oname)
-            else:
-                drop_spec = dropdict(
-                    {
-                        "oid": oid,
-                        "categoryType": CategoryType.DATA,
-                        "category": drop_type,
-                        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
-                        "storage": drop_type,
-                        "rank": rank,
-                        "reprodata": self.jd.get("reprodata", {}),
-                    }
-                )
-            if drop_type == Categories.FILE:
-                dn = self.jd.get("dirname", None)
-                if dn:
-                    kwargs["dirname"] = dn
-                cfe = str(self.jd.get("check_filepath_exists", "0"))
-                cfeb = True if cfe in ["1", "true", "yes"] else False
-                kwargs["check_filepath_exists"] = cfeb
-                fp = self.jd.get("filepath", None)
-                if fp:
-                    kwargs["filepath"] = fp
-                kwargs["dropclass"] = str(
-                    self.jd.get("dropclass", "dlg.data.drops.file.FileDROP")
-                )
-            if drop_type == Categories.MEMORY:
-                kwargs["dropclass"] = str(
-                    self.jd.get(
-                        "dropclass", "dlg.data.drops.memory.InMemoryDROP"
-                    )
-                )
-            self._update_key_value_attributes(kwargs)
-            drop_spec.update(kwargs)
         elif self.nodetype in [
             Categories.COMPONENT,
             Categories.PYTHON_APP,
@@ -960,8 +946,6 @@ class LGNode:
             # default generic component becomes "sleep and copy"
             if self.dropclass is None or self.dropclass == "":
                 app_class = "dlg.apps.simple.SleepApp"
-                self.jd["dropclass"] = app_class
-                self.jd["category"] = Categories.PYTHON_APP
             else:
                 app_class = self.dropclass
                 execTime = self.weight
@@ -976,17 +960,12 @@ class LGNode:
                 execTime = random.randint(3, 8)
 
             kwargs["weight"] = execTime
-            self.jd["execution_time"] = self.weight = execTime
             if app_class == "dlg.apps.simple.SleepApp":
                 kwargs["sleep_time"] = execTime
 
-            drop_spec = dropdict(
+            drop_spec.update(
                 {
-                    "oid": oid,
-                    "categoryType": CategoryType.APPLICATION,
                     "dropclass": app_class,
-                    "rank": rank,
-                    "reprodata": self.jd.get("reprodata", {}),
                 }
             )
 
@@ -996,116 +975,10 @@ class LGNode:
             self._update_key_value_attributes(kwargs)
             drop_spec.update(kwargs)
 
-        elif drop_type in [Categories.DYNLIB_APP, Categories.DYNLIB_PROC_APP]:
-            if "libpath" not in self.jd or len(self.jd["libpath"]) == 0:
-                raise GraphException(
-                    "Missing 'libpath' in Drop {0}".format(self.name)
-                )
-            drop_spec = dropdict(
-                {
-                    "oid": oid,
-                    "categoryType": CategoryType.APPLICATION,
-                    "dropclass": "dlg.apps.dynlib.{}".format(drop_type),
-                    "rank": rank,
-                    "reprodata": self.jd.get("reprodata", {}),
-                }
-            )
-            kwargs["lib"] = self.jd["libpath"]
-            kwargs["weight"] = self.weight
-            if "mkn" in self.jd:
-                kwargs["mkn"] = self.jd["mkn"]
-
-            self._update_key_value_attributes(kwargs)
-
-            drop_spec.update(kwargs)
-        elif drop_type in [Categories.BASH_SHELL_APP, Categories.MPI]:
-            if drop_type == Categories.MPI:
-                app_str = "dlg.apps.mpi.MPIApp"
-                kwargs["maxprocs"] = int(self.jd.get("num_of_procs", 4))
-            else:
-                app_str = "dlg.apps.bash_shell_app.BashShellApp"
-            drop_spec = dropdict(
-                {
-                    "oid": oid,
-                    "categoryType": CategoryType.APPLICATION,
-                    "dropclass": app_str,
-                    "rank": rank,
-                    "reprodata": self.jd.get("reprodata", {}),
-                }
-            )
-            self._update_key_value_attributes(kwargs)
-            # add more arguments (support for Arg0x dropped!)
-            cmds = []
-            for k in [
-                "command",
-                "input_redirection",
-                "output_redirection",
-                "command_line_arguments",
-            ]:
-                if k in self.jd:
-                    cmds.append(self.jd[k])
-            # kwargs['command'] = ' '.join(cmds)
-            if drop_type == Categories.MPI:
-                kwargs["command"] = BashCommand(cmds).to_real_command()
-            else:
-                kwargs["command"] = BashCommand(
-                    cmds
-                )  # TODO: Check if this actually solves a problem.
-            try:
-                kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
-            except TypeError:
-                kwargs["num_cpus"] = int(self.jd["num_cpus"]["value"])
-            drop_spec.update(kwargs)
-
-        elif drop_type == Categories.DOCKER:
-            # Docker application.
-            app_class = "dlg.apps.dockerapp.DockerApp"
-            typ = CategoryType.APPLICATION
-            drop_spec = dropdict(
-                {
-                    "oid": oid,
-                    "categoryType": typ,
-                    "dropclass": app_class,
-                    "rank": rank,
-                    "reprodata": self.jd.get("reprodata", {}),
-                }
-            )
-
-            image = str(self.jd.get("image"))
-            if image == "":
-                raise GraphException("Missing image for Node '%s'" % self.name)
-
-            command = str(self.jd.get("command"))
-            # There ARE containers which don't need/want a command
-            # if command == "":
-            #     raise GraphException("Missing command for Construct '%s'" % self.name)
-
-            kwargs["weight"] = self.weight
-            kwargs["image"] = image
-            kwargs["command"] = command
-            kwargs["user"] = str(self.jd.get("user", ""))
-            kwargs["ensureUserAndSwitch"] = self.str_to_bool(
-                str(self.jd.get("ensureUserAndSwitch", "0"))
-            )
-            kwargs["removeContainer"] = self.str_to_bool(
-                str(self.jd.get("removeContainer", "1"))
-            )
-            kwargs["additionalBindings"] = str(
-                self.jd.get("additionalBindings", "")
-            )
-            kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
-            kwargs["shmSize"] = str(self.jd.get("shmSize", ""))
-            self._update_key_value_attributes(kwargs)
-            drop_spec.update(kwargs)
-
         elif drop_type == Categories.GROUP_BY:
-            drop_spec = dropdict(
+            drop_spec.update(
                 {
-                    "oid": oid,
-                    "categoryType": CategoryType.APPLICATION,
                     "dropclass": "dlg.apps.simple.SleepApp",
-                    "rank": rank,
-                    "reprodata": self.jd.get("reprodata", {}),
                 }
             )
             sij = self.inputs[0]
@@ -1115,6 +988,8 @@ class LGNode:
                     % sij.category
                 )
             dw = sij.weight * self.groupby_width
+
+            # additional generated drop
             dropSpec_grp = dropdict(
                 {
                     "oid": "{0}-grp-data".format(oid),
@@ -1134,13 +1009,9 @@ class LGNode:
             drop_spec.addOutput(dropSpec_grp, name="grpdata")
             dropSpec_grp.addProducer(drop_spec, name="grpdata")
         elif drop_type == Categories.GATHER:
-            drop_spec = dropdict(
+            drop_spec.update(
                 {
-                    "oid": oid,
-                    "categoryType": CategoryType.APPLICATION,
                     "dropclass": "dlg.apps.simple.SleepApp",
-                    "rank": rank,
-                    "reprodata": self.jd.get("reprodata", {}),
                 }
             )
             gi = self.inputs[0]
@@ -1153,6 +1024,8 @@ class LGNode:
                 )
             else:  # data
                 dw = gi.weight * self.gather_width
+
+            # additional generated drop
             dropSpec_gather = dropdict(
                 {
                     "oid": "{0}-gather-data".format(oid),
@@ -1175,22 +1048,15 @@ class LGNode:
             )
         elif drop_type in [Categories.START, Categories.END]:
             # this is at least suspicious in terms of implementation....
-            drop_spec = dropdict(
+            drop_spec.update(
                 {
-                    "oid": oid,
                     "categoryType": CategoryType.DATA,
                     "dropclass": "dlg.data.drops.data_base.NullDROP",
                     "weight": 0,
-                    "rank": rank,
-                    "reprodata": self.jd.get("reprodata", {}),
                 }
             )
         elif drop_type in Categories.LOOP:
             drop_spec = {}
-        else:
-            raise GraphException(
-                "Unknown DROP type: '{0} {1}'".format(drop_type, drop_class)
-            )
         return drop_spec
 
     def make_single_drop(self, iid="0", **kwargs):

@@ -153,6 +153,19 @@
             "expanded": true,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.file.FileDROP"
+                },
+                {
                     "defaultValue": "5",
                     "description": "Estimated size of the data contained in this node",
                     "id": "4f8ef10b-24d0-494d-b88e-af808fb85607",

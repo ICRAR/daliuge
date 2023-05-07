@@ -836,14 +836,6 @@ class LG:
         for drop_list in self._drop_dict.values():
             ret += drop_list
 
-        for drop in ret:
-            if (
-                drop["categoryType"] in [CategoryType.APPLICATION, "app"]
-                and "dropclass" in drop
-                and drop["dropclass"].endswith(Categories.BASH_SHELL_APP)
-            ):
-                bc = drop["command"]
-                drop["command"] = bc.to_real_command()
         return ret
 
     @property
