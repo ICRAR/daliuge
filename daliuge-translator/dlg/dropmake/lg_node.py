@@ -209,12 +209,17 @@ class LGNode:
             default_value = "dlg.apps.simple.SleepApp"
         if self.jd["categoryType"] == CategoryType.DATA:
             self.is_data = True
-            keys = ["dropclass", "Data class"]
+            keys = [
+                "dropclass",
+                "Data class",
+                "dataclass",
+            ]
         elif self.jd["categoryType"] == CategoryType.APPLICATION:
             keys = [
                 "dropclass",
                 "Application Class",
                 "Application class",
+                "appclass",
             ]
             self.is_app = True
         elif self.jd["categoryType"] in [
@@ -558,9 +563,6 @@ class LGNode:
             TODO: use OO style to replace all type-related statements!
             """
             return None
-            # raise GraphException(
-            #     "Non-Gather LGN {0} does not have gather_width".format(self.id)
-            # )
 
     @property
     def groupby_width(self):
@@ -579,11 +581,6 @@ class LGNode:
             return self._grpw
         else:
             return None
-            # raise GraphException(
-            #     "Non-GroupBy LGN {0} does not have groupby_width".format(
-            #         self.id
-            #     )
-            # )
 
     @property
     def group_by_scatter_layers(self):
@@ -956,7 +953,12 @@ class LGNode:
 
     def _create_app_drop(self, drop_spec):
         # default generic component becomes "sleep and copy"
+        if "appclass" in self.jd:
+            self.dropclass = self.jd["appclass"]
+            app_class = self.dropclass
+            logger.debug("Creating app drop using class: %s", self.dropclass)
         if self.dropclass is None or self.dropclass == "":
+            logger.debug("No dropclass found in: %s", self)
             app_class = "dlg.apps.simple.SleepApp"
         else:
             app_class = self.dropclass
@@ -987,6 +989,29 @@ class LGNode:
         drop_spec.update(kwargs)
         return drop_spec
 
+    def _create_data_drop(self, drop_spec):
+        # backwards compatibility
+        if "dataclass" in self.jd:
+            self.dropclass = self.jd["dataclass"]
+        if (
+            not hasattr(self, "dropclass")
+            or self.dropclass == "dlg.apps.simple.SleepApp"
+        ):
+            if self.category == "File":
+                self.dropclass = "dlg.data.drops.file.FileDROP"
+            elif self.category == "Memory":
+                self.dropclass = "dlg.data.drops.memory.InMemoryDROP"
+            else:
+                raise TypeError("Unknown data class for drop: %s", self.jd)
+        logger.debug("Creating data drop using class: %s", self.dropclass)
+        kwargs = {}
+        kwargs["dropclass"] = self.dropclass
+        kwargs["weight"] = self.weight
+        if self.is_start_listener:
+            drop_spec = self._create_listener_drops(drop_spec)
+        drop_spec.update(kwargs)
+        return drop_spec
+
     def make_single_drop(self, iid="0", **kwargs):
         """
         make only one drop from a LG nodes
@@ -1013,10 +1038,7 @@ class LGNode:
         )
         drop_spec.update(kwargs)
         if self.is_data:
-            # almost nothing special for data drops
-            kwargs["weight"] = self.weight
-            if self.is_start_listener:
-                drop_spec = self._create_listener_drops(drop_spec)
+            drop_spec = self._create_data_drop(drop_spec)
         elif self.is_app:
             drop_spec = self._create_app_drop(drop_spec)
         elif self.category == Categories.GROUP_BY:
