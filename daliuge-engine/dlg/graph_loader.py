@@ -311,7 +311,6 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
         if not droputils.getUpstreamObjects(drop):
             roots.append(drop)
     logger.info("%d graph roots found, bye-bye!", len(roots))
-    logger.debug("Graph spec: %s", drops.values())
 
     return roots
 
