@@ -131,7 +131,7 @@ class TestRest(unittest.TestCase):
                 {
                     "oid": "a",
                     "categoryType": "Application",
-                    "appclass": "doesnt.exist",
+                    "dropclass": "doesnt.exist",
                     "reprodata": default_repro.copy(),
                 },
                 default_graph_repro.copy(),
@@ -156,7 +156,7 @@ class TestRest(unittest.TestCase):
                 {
                     "oid": "b",
                     "categoryType": "Data",
-                    "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                    "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                     "reprodata": default_repro.copy(),
                 },
                 default_graph_repro.copy(),
@@ -175,7 +175,7 @@ class TestRest(unittest.TestCase):
             [
                 {
                     "categoryType": "Data",
-                    "dataclass": "dlg.data.drops.file.FileDROP",
+                    "dropclass": "dlg.data.drops.file.FileDROP",
                     "oid": "a",
                     "filepath": fname,
                     "check_filepath_exists": True,
@@ -203,7 +203,7 @@ class TestRest(unittest.TestCase):
                     {
                         "oid": "a",
                         "categoryType": "Application",
-                        "appclass": "doesnt.exist",
+                        "dropclass": "doesnt.exist",
                         "node": hostname,
                         "reprodata": default_repro.copy(),
                     },
@@ -226,7 +226,7 @@ class TestRest(unittest.TestCase):
         graph_spec = [
             {
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "oid": "a",
                 "reprodata": default_repro.copy(),
             },
@@ -253,7 +253,7 @@ class TestRest(unittest.TestCase):
             {
                 "a": {
                     "oid": "a",
-                    "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                    "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                     "categoryType": "Data",
                 }
             },
@@ -268,7 +268,7 @@ class TestRest(unittest.TestCase):
         graph_spec = [
             {
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "oid": "a",
                 "reprodata": default_repro.copy(),
             },

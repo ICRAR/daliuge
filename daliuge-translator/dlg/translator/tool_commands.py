@@ -281,6 +281,7 @@ def dlg_unroll(parser, args):
     pgt = unroll(
         opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app]
     )
+    logger.debug(">>> pgt: %s", pgt)
     dump(init_pgt_unroll_repro_data(pgt))
 
 

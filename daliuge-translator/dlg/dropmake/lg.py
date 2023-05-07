@@ -33,9 +33,10 @@ import datetime
 import logging
 import time
 from itertools import product
+from dataclasses import asdict
 
 import numpy as np
-from dlg.common import CategoryType, DropType
+from dlg.common import CategoryType
 from dlg.common import dropdict
 from dlg.dropmake.dm_utils import (
     LG_APPREF,
@@ -464,7 +465,7 @@ class LG:
                         tdrop["oid"].replace(self._session_id, ""),
                     ),
                     "categoryType": CategoryType.DATA,
-                    "dataclass": "dlg.data.drops.data_base.NullDROP",
+                    "dropclass": "dlg.data.drops.data_base.NullDROP",
                     "name": "StreamNull",
                     "weight": 0,
                 }
@@ -769,8 +770,8 @@ class LG:
                     # Only the service node's inputApplication will be translated
                     # to the physical graph as a node of type SERVICE_APP instead of APP
                     # per compute instance
-                    tlgn["categoryType"] = DropType.APPCLASS
-                    tlgn["category"] = DropType.SERVICECLASS
+                    tlgn["categoryType"] = "Application"
+                    tlgn["category"] = "PythonApp"
                 else:
                     raise GraphException(
                         "Unsupported target group {0}".format(tlgn.jd.category)
@@ -838,8 +839,8 @@ class LG:
         for drop in ret:
             if (
                 drop["categoryType"] in [CategoryType.APPLICATION, "app"]
-                and "appclass" in drop
-                and drop["appclass"].endswith(Categories.BASH_SHELL_APP)
+                and "dropclass" in drop
+                and drop["dropclass"].endswith(Categories.BASH_SHELL_APP)
             ):
                 bc = drop["command"]
                 drop["command"] = bc.to_real_command()

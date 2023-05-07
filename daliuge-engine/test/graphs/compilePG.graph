@@ -3,7 +3,7 @@
         "oid": "2023-04-27T14:44:39_-1_0",
         "categoryType": "Data",
         "category": "File",
-        "dataclass": "dlg.data.drops.file.FileDROP",
+        "dropclass": "dlg.data.drops.file.FileDROP",
         "storage": "File",
         "rank": [
             0
@@ -200,7 +200,7 @@
     {
         "oid": "2023-04-27T14:44:39_-2_0",
         "categoryType": "Application",
-        "appclass": "dlg.apps.pyfunc.PyFuncApp",
+        "dropclass": "dlg.apps.pyfunc.PyFuncApp",
         "rank": [
             0
         ],
@@ -222,8 +222,8 @@
         "weight": 5,
         "num_cpus": 1,
         "nodeAttributes": {
-            "appclass": {
-                "name": "appclass",
+            "dropclass": {
+                "name": "dropclass",
                 "value": "dlg.apps.pyfunc.PyFuncApp",
                 "defaultValue": "dlg.apps.pyfunc.PyFuncApp",
                 "description": "Application class",

@@ -142,14 +142,14 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             }
         ]
         g2 = [
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "appclass": self.app,
+                "dropclass": self.app,
                 "lib": _libpath,
                 "print_stats": print_stats,
                 "bufsize": bufsize,
@@ -157,7 +157,7 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
             {
                 "oid": "C",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "producers": ["B"],
             },
         ]
@@ -179,13 +179,13 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "consumers": ["B"],
             },
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "appclass": self.app,
+                "dropclass": self.app,
                 "lib": _libpath,
                 "print_stats": print_stats,
                 "bufsize": bufsize,
@@ -195,7 +195,7 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
             {
                 "oid": "C",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             }
         ]
         rels = [DROPRel("B", DROPLinkType.PRODUCER, "C")]
@@ -217,19 +217,19 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             },
             {
                 "oid": "B",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             },
         ]
         g2 = [
             {
                 "oid": "C",
                 "categoryType": "Application",
-                "appclass": self.app,
+                "dropclass": self.app,
                 "lib": _libpath,
                 "print_stats": print_stats,
                 "bufsize": bufsize,
@@ -237,7 +237,7 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
             {
                 "oid": "D",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "producers": ["C"],
             },
         ]
@@ -278,19 +278,19 @@ class IntraNMDynlibProcAppTest(IntraNMMixIng, unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             },
             {
                 "oid": "B",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             },
         ]
         g2 = [
             {
                 "oid": "C",
                 "categoryType": "Application",
-                "appclass": self.app,
+                "dropclass": self.app,
                 "lib": _libpath,
                 "print_stats": print_stats,
                 "bufsize": bufsize,
@@ -299,7 +299,7 @@ class IntraNMDynlibProcAppTest(IntraNMMixIng, unittest.TestCase):
             {
                 "oid": "D",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "producers": ["C"],
             },
         ]

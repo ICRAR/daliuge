@@ -53,7 +53,7 @@ from dlg.event import EventFirer, EventHandler
 from dlg.exceptions import InvalidDropException, InvalidRelationshipException
 
 DEFAULT_INTERNAL_PARAMETERS = {
-    "dataclass",
+    "dropclass",
     "category",
     "storage",
     "nodeAttributes",

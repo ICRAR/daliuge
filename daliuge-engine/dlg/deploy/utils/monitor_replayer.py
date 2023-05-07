@@ -210,7 +210,7 @@ class GraphPlayer(object):
                         pass
 
     def get_downstream_drop_ids(self, dropspec):
-        if dropspec["categoryType"] in ["Application", "appclass"]:
+        if dropspec["categoryType"] in ["Application", "dropclass"]:
             ds_kw = "outputs"  # down stream key word
         elif dropspec["categoryType"] in ["Data", "data"]:
             ds_kw = "consumers"

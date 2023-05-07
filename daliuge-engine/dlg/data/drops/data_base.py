@@ -55,11 +55,11 @@ logger = logging.getLogger(__name__)
 
 ##
 # @brief Data
-# @details A generic Data drop, whose functionality can be provided by an arbitrary class, as specified in the 'dataclass' component parameter
+# @details A generic Data drop, whose functionality can be provided by an arbitrary class, as specified in the 'dropclass' component parameter
 # @par EAGLE_START
 # @param category Data
 # @param tag template
-# @param dataclass Data Class/my.awesome.data.Component/String/ComponentParameter/readonly//False/False/The python class that implements this data component
+# @param dropclass Data Class/my.awesome.data.Component/String/ComponentParameter/readonly//False/False/The python class that implements this data component
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
 # @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data

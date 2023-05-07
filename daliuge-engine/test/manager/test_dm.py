@@ -72,7 +72,7 @@ def memory(uid, **kwargs):
         {
             "oid": uid,
             "categoryType": "Data",
-            "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+            "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             "reprodata": default_repro.copy(),
         }
     )
@@ -85,7 +85,7 @@ def sleepAndCopy(uid, **kwargs):
         {
             "oid": uid,
             "categoryType": "Application",
-            "appclass": "dlg.apps.simple.SleepAndCopyApp",
+            "dropclass": "dlg.apps.simple.SleepAndCopyApp",
             "reprodata": default_repro.copy(),
         }
     )
@@ -201,7 +201,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "appclass": "test.manager.test_dm.ErroneousApp",
+                "dropclass": "test.manager.test_dm.ErroneousApp",
                 "inputs": ["A"],
             },
             memory("C", producers=["B"]),
@@ -250,7 +250,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.crc.CRCApp",
+                "dropclass": "dlg.apps.crc.CRCApp",
             },
             memory("C", producers=["B"]),
         ]
@@ -318,7 +318,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
             {
                 "oid": "C",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.crc.CRCApp",
+                "dropclass": "dlg.apps.crc.CRCApp",
             },
             memory("D", producers=["C"]),
         ]
@@ -326,7 +326,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
             {
                 "oid": "E",
                 "categoryType": "Application",
-                "appclass": "test.test_drop.SumupContainerChecksum",
+                "dropclass": "test.test_drop.SumupContainerChecksum",
             },
             memory("F", producers=["E"]),
         ]
@@ -555,7 +555,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
             {
                 "oid": "C",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.crc.CRCApp",
+                "dropclass": "dlg.apps.crc.CRCApp",
                 "consumers": ["D"],
             },
             memory("D", producers=["C"]),
@@ -564,13 +564,13 @@ class NodeManagerTestsBase(NMTestsMixIn):
             {
                 "oid": "E",
                 "categoryType": "Application",
-                "appclass": "test.test_drop.SumupContainerChecksum",
+                "dropclass": "test.test_drop.SumupContainerChecksum",
                 "node": ip_addr_1,
             },
             {
                 "oid": "F",
                 "categoryType": "Application",
-                "appclass": "test.test_drop.SumupContainerChecksum",
+                "dropclass": "test.test_drop.SumupContainerChecksum",
                 "node": ip_addr_2,
             },
         ]
@@ -613,7 +613,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.simple.CopyApp",
+                "dropclass": "dlg.apps.simple.CopyApp",
                 "inputs": ["A"],
                 "outputs": ["C"],
             },
@@ -623,7 +623,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
             {
                 "oid": "D",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.crc.CRCStreamApp",
+                "dropclass": "dlg.apps.crc.CRCStreamApp",
                 "outputs": ["E"],
             },
             memory("E"),
@@ -643,7 +643,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.simple.CopyApp",
+                "dropclass": "dlg.apps.simple.CopyApp",
                 "inputs": ["A"],
             },
         ]
@@ -652,7 +652,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
             {
                 "oid": "D",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.crc.CRCStreamApp",
+                "dropclass": "dlg.apps.crc.CRCStreamApp",
                 "streamingInputs": ["C"],
                 "outputs": ["E"],
             },
@@ -678,7 +678,7 @@ class TestDM(NodeManagerTestsBase, unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.SharedMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.SharedMemoryDROP",
             }
         ]
         graph = add_test_reprodata(graph)

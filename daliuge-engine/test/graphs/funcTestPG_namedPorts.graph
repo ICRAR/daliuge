@@ -8,7 +8,7 @@
         "loop_ctx": null,
         "weight": 5,
         "num_cpus": 1,
-        "appclass": "dlg.apps.pyfunc.PyFuncApp",
+        "dropclass": "dlg.apps.pyfunc.PyFuncApp",
         "execution_time": 5,
         "group_start": false,
         "input_error_threshold": 0,
@@ -112,7 +112,7 @@
     {
         "oid": "2022-03-20T04:33:27_-2_0",
         "categoryType": "Application",
-        "appclass": "dlg.apps.bash_shell_app.BashShellApp",
+        "dropclass": "dlg.apps.bash_shell_app.BashShellApp",
         "rank": [
             0
         ],
@@ -144,7 +144,7 @@
     {
         "oid": "2022-03-20T04:33:27_-3_0",
         "categoryType": "Data",
-        "dataclass": "dlg.data.drops.file.FileDROP",
+        "dropclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0
         ],
@@ -207,7 +207,7 @@
     {
         "oid": "2022-03-20T04:33:27_-4_0",
         "categoryType": "Application",
-        "appclass": "dlg.apps.bash_shell_app.BashShellApp",
+        "dropclass": "dlg.apps.bash_shell_app.BashShellApp",
         "rank": [
             0
         ],
@@ -239,7 +239,7 @@
     {
         "oid": "2022-03-20T04:33:27_-5_0",
         "categoryType": "Data",
-        "dataclass": "dlg.data.drops.file.FileDROP",
+        "dropclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0
         ],

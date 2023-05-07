@@ -33,7 +33,7 @@ import math
 import random
 import re
 
-from dlg.common import CategoryType, DropType
+from dlg.common import CategoryType
 from dlg.common import dropdict
 from dlg.dropmake.dm_utils import (
     GraphException,
@@ -76,7 +76,7 @@ class LGNode:
         logger.debug("%s input_ports: %s", self.name, self.inputPorts)
         logger.debug("%s output_ports: %s", self.name, self.outputPorts)
         self.nodetype = ""  # e.g. Data or Application
-        self.nodeclass = ""  # e.g. dlg.apps.simple.HelloWorldAPP
+        self.dropclass = ""  # e.g. dlg.apps.simple.HelloWorldAPP
         self.reprodata = jd.get("reprodata", {}).copy()
         if "isGroup" in jd and jd["isGroup"] is True:
             self.is_group = True
@@ -197,11 +197,11 @@ class LGNode:
         self._nodetype = value
 
     @property
-    def nodeclass(self):
-        return self._nodeclass
+    def dropclass(self):
+        return self._dropclass
 
-    @nodeclass.setter
-    def nodeclass(self, default_value):
+    @dropclass.setter
+    def dropclass(self, default_value):
         self.is_data = False
         self.is_app = False
         keys = []
@@ -210,13 +210,13 @@ class LGNode:
             default_value = "dlg.apps.simple.SleepApp"
         if self.jd["categoryType"] == CategoryType.DATA:
             self.is_data = True
-            keys = ["dataclass", "Data class"]
+            keys = ["dropclass", "Data class"]
         elif self.jd["categoryType"] == CategoryType.APPLICATION:
             keys = [
-                "appclass",
+                "dropclass",
                 "Application Class",
                 "Application class",
-                "Appclass",
+                "dropclass",
             ]
             self.is_app = True
         elif self.jd["categoryType"] in [
@@ -238,7 +238,7 @@ class LGNode:
             if value is None or value == "":
                 value = default_value
 
-        self._nodeclass = value
+        self._dropclass = value
 
     @property
     def name(self):
@@ -852,7 +852,7 @@ class LGNode:
         """
         New implementation of drop_spec generation method.
         """
-        drop_spec = {}
+        drop_spec = dropdict()
         return drop_spec
 
     def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
@@ -876,7 +876,7 @@ class LGNode:
             else:
                 drop_class = "Unknown"
 
-        self.nodeclass = drop_class
+        self.dropclass = drop_class
         self.nodetype = drop_type
         if self.is_data:
             kwargs["weight"] = self.weight
@@ -895,7 +895,7 @@ class LGNode:
                         "oid": oid,
                         "categoryType": CategoryType.DATA,
                         "category": drop_type,
-                        "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                         "storage": drop_type,
                         "rank": rank,
                         "reprodata": self.jd.get("reprodata", {}),
@@ -906,7 +906,7 @@ class LGNode:
                         "oid": "{0}-s".format(oid),
                         "categoryType": CategoryType.APPLICATION,
                         "category": "PythonApp",
-                        "appclass": "dlg.apps.simple.SleepApp",
+                        "dropclass": "dlg.apps.simple.SleepApp",
                         "name": "lstnr",
                         "weigth": 5,
                         "sleep_time": 1,
@@ -940,13 +940,13 @@ class LGNode:
                 fp = self.jd.get("filepath", None)
                 if fp:
                     kwargs["filepath"] = fp
-                kwargs["dataclass"] = str(
-                    self.jd.get("dataclass", "dlg.data.drops.file.FileDROP")
+                kwargs["dropclass"] = str(
+                    self.jd.get("dropclass", "dlg.data.drops.file.FileDROP")
                 )
             if drop_type == Categories.MEMORY:
-                kwargs["dataclass"] = str(
+                kwargs["dropclass"] = str(
                     self.jd.get(
-                        "dataclass", "dlg.data.drops.memory.InMemoryDROP"
+                        "dropclass", "dlg.data.drops.memory.InMemoryDROP"
                     )
                 )
             self._update_key_value_attributes(kwargs)
@@ -958,12 +958,12 @@ class LGNode:
             Categories.PLASMA,
         ]:
             # default generic component becomes "sleep and copy"
-            if self.nodeclass is None or self.nodeclass == "":
+            if self.dropclass is None or self.dropclass == "":
                 app_class = "dlg.apps.simple.SleepApp"
-                self.jd[DropType.APPCLASS] = app_class
+                self.jd["dropclass"] = app_class
                 self.jd["category"] = Categories.PYTHON_APP
             else:
-                app_class = self.nodeclass
+                app_class = self.dropclass
                 execTime = self.weight
             if self.weight is not None:
                 execTime = self.weight
@@ -984,7 +984,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "categoryType": CategoryType.APPLICATION,
-                    "appclass": app_class,
+                    "dropclass": app_class,
                     "rank": rank,
                     "reprodata": self.jd.get("reprodata", {}),
                 }
@@ -1005,7 +1005,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "categoryType": CategoryType.APPLICATION,
-                    "appclass": "dlg.apps.dynlib.{}".format(drop_type),
+                    "dropclass": "dlg.apps.dynlib.{}".format(drop_type),
                     "rank": rank,
                     "reprodata": self.jd.get("reprodata", {}),
                 }
@@ -1028,7 +1028,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "categoryType": CategoryType.APPLICATION,
-                    "appclass": app_str,
+                    "dropclass": app_str,
                     "rank": rank,
                     "reprodata": self.jd.get("reprodata", {}),
                 }
@@ -1065,7 +1065,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "categoryType": typ,
-                    "appclass": app_class,
+                    "dropclass": app_class,
                     "rank": rank,
                     "reprodata": self.jd.get("reprodata", {}),
                 }
@@ -1103,7 +1103,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "categoryType": CategoryType.APPLICATION,
-                    "appclass": "dlg.apps.simple.SleepApp",
+                    "dropclass": "dlg.apps.simple.SleepApp",
                     "rank": rank,
                     "reprodata": self.jd.get("reprodata", {}),
                 }
@@ -1138,7 +1138,7 @@ class LGNode:
                 {
                     "oid": oid,
                     "categoryType": CategoryType.APPLICATION,
-                    "appclass": "dlg.apps.simple.SleepApp",
+                    "dropclass": "dlg.apps.simple.SleepApp",
                     "rank": rank,
                     "reprodata": self.jd.get("reprodata", {}),
                 }
@@ -1225,7 +1225,7 @@ class LGNode:
         if self._reprodata is not None:
             kwargs["reprodata"] = self._reprodata.copy()
         if self.is_service:
-            kwargs["categoryType"] = DropType.SERVICECLASS
+            kwargs["categoryType"] = "Application"
         dropSpec.update(kwargs)
         return dropSpec
 
