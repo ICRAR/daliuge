@@ -437,6 +437,8 @@ def _getKwargs(dropSpec):
         "uid",
         "Application",
         "dropclass",
+        "appclass",
+        "dataclass",
         "data",
         "Data",
     ]

@@ -954,15 +954,27 @@ class LGNode:
     def _create_app_drop(self, drop_spec):
         # default generic component becomes "sleep and copy"
         if "appclass" in self.jd:
-            self.dropclass = self.jd["appclass"]
-            app_class = self.dropclass
-            logger.debug("Creating app drop using class: %s", self.dropclass)
-        if self.dropclass is None or self.dropclass == "":
+            app_class = self.jd["appclass"]
+        elif self.dropclass is None or self.dropclass == "":
             logger.debug("No dropclass found in: %s", self)
             app_class = "dlg.apps.simple.SleepApp"
         else:
             app_class = self.dropclass
-            execTime = self.weight
+        if self.dropclass == "dlg.apps.simple.SleepApp":
+            if self.category == "BashShellApp":
+                app_class = "dlg.apps.bash_shell_app.BashShellApp"
+            elif self.category == "Docker":
+                app_class = "dlg.apps.dockerapp.DockerApp"
+            else:
+                logger.debug("Might be a problem with this node: %s", self.jd)
+
+        self.dropclass = app_class
+        execTime = self.weight
+        self.jd["dropclass"] = app_class
+        self.dropclass = app_class
+        logger.debug("Creating app drop using class: %s", app_class)
+        if self.dropclass is None or self.dropclass == "":
+            logger.warning(f"Something wrong with this node: {self.jd}")
         if self.weight is not None:
             execTime = self.weight
             if execTime < 0:
@@ -1001,6 +1013,8 @@ class LGNode:
                 self.dropclass = "dlg.data.drops.file.FileDROP"
             elif self.category == "Memory":
                 self.dropclass = "dlg.data.drops.memory.InMemoryDROP"
+            elif self.category == "SharedMemory":
+                self.dropclass = "dlg.data.drops.memory.SharedMemoryDROP"
             else:
                 raise TypeError("Unknown data class for drop: %s", self.jd)
         logger.debug("Creating data drop using class: %s", self.dropclass)
@@ -1047,6 +1061,8 @@ class LGNode:
             drop_spec = self._create_gather_drops(drop_spec)
         elif self.is_service or self.is_branch:
             kwargs["categoryType"] = "Application"
+            self.jd["categoryType"] = "Application"
+            drop_spec = self._create_app_drop(drop_spec)
         kwargs["iid"] = iid
         kwargs["lg_key"] = self.id
         if self.is_branch:
