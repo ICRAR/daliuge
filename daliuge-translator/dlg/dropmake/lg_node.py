@@ -937,12 +937,7 @@ class LGNode:
                 dropSpec_socket["autostart"] = 1
                 kwargs["listener_drop"] = dropSpec_socket
                 dropSpec_socket.addOutput(drop_spec, name=oname)
-        elif self.nodetype in [
-            Categories.COMPONENT,
-            Categories.PYTHON_APP,
-            Categories.BRANCH,
-            Categories.PLASMA,
-        ]:
+        elif self.is_app:
             # default generic component becomes "sleep and copy"
             if self.dropclass is None or self.dropclass == "":
                 app_class = "dlg.apps.simple.SleepApp"
