@@ -185,6 +185,19 @@
             "fields": [
                 {
                     "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
+                {
+                    "defaultValue": "",
                     "description": "",
                     "id": "ac43c8c8-a9c3-4a9f-803f-a3b6fac466f1",
                     "keyAttribute": false,
@@ -675,6 +688,19 @@
             "fields": [
                 {
                     "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
+                {
+                    "defaultValue": "",
                     "description": "",
                     "id": "650edc62-78b7-4756-a74e-92449168692c",
                     "keyAttribute": false,
@@ -756,6 +782,19 @@
             "drawOrderHint": 0,
             "expanded": false,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "",
                     "description": "",
@@ -1343,6 +1382,19 @@
             "fields": [
                 {
                     "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
+                {
+                    "defaultValue": "",
                     "description": "",
                     "id": "574e742a-a84c-4cc6-ba87-eedc2d1b735d",
                     "keyAttribute": false,
@@ -1883,6 +1935,19 @@
             "drawOrderHint": 0,
             "expanded": false,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "",
                     "description": "",

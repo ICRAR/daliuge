@@ -308,6 +308,19 @@
             "fields": [
                 {
                     "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.file.FileDROP"
+                },
+                {
+                    "defaultValue": "",
                     "description": "Estimated size of the data contained in this node",
                     "id": "bb5e3fd4-6b00-46a7-be25-f2658e98b1b2",
                     "keyAttribute": false,
@@ -569,6 +582,19 @@
             "drawOrderHint": 0,
             "expanded": false,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.file.FileDROP"
+                },
                 {
                     "defaultValue": "",
                     "description": "Estimated size of the data contained in this node",
