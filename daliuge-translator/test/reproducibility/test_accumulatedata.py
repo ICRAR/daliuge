@@ -645,7 +645,7 @@ class AccumulateLGRepeatData(unittest.TestCase):
         self.assertEqual(expected, hash_data.keys())
 
     def _component(self, drop):
-        expected = {"execution_time", "num_cpus", "appclass"}
+        expected = {"execution_time", "num_cpus", "dropclass"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
@@ -1080,7 +1080,7 @@ class AccumulateLGRecomputeData(unittest.TestCase):
         self.assertEqual(expected, hash_data.keys())
 
     def _component(self, drop):
-        expected = {"execution_time", "num_cpus", "appclass"}
+        expected = {"execution_time", "num_cpus", "dropclass"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
@@ -2293,7 +2293,7 @@ class AccumulateLGReplicateCompData(unittest.TestCase):
         self.assertEqual(expected, hash_data.keys())
 
     def _component(self, drop):
-        expected = {"execution_time", "num_cpus", "appclass"}
+        expected = {"execution_time", "num_cpus", "dropclass"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 
@@ -2732,7 +2732,7 @@ class AccumulateLGReplicateTotalData(unittest.TestCase):
         self.assertEqual(expected, hash_data.keys())
 
     def _component(self, drop):
-        expected = {"execution_time", "num_cpus", "appclass"}
+        expected = {"execution_time", "num_cpus", "dropclass"}
         hash_data = accumulate_lg_drop_data(drop, self.rmode)
         self.assertEqual(expected, hash_data.keys())
 

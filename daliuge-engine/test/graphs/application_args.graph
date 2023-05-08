@@ -2,14 +2,14 @@
   {
     "oid": "a",
     "categoryType": "Application",
-    "appclass": "dlg.apps.simple.RandomArrayApp",
+    "dropclass": "dlg.apps.simple.RandomArrayApp",
     "rank": [
       0
     ],
     "loop_ctx": null,
     "weight": 5,
     "num_cpus": 1,
-    "appclass": "dlg.apps.simple.RandomArrayApp",
+    "dropclass": "dlg.apps.simple.RandomArrayApp",
     "execution_time": 5,
     "group_start": false,
     "input_error_threshold": 0,
@@ -75,7 +75,7 @@
   {
     "oid": "b",
     "categoryType": "Data",
-    "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+    "dropclass": "dlg.data.drops.memory.InMemoryDROP",
     "rank": [
       0
     ],

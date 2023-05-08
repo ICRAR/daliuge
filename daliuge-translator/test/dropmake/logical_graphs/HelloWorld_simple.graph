@@ -64,13 +64,13 @@
                     "description": "Application class",
                     "id": "44bc9b98-aceb-4650-bea7-34de6dd533bf",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "appclass",
+                    "text": "dropclass",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.apps.simple.HelloWorldApp"
@@ -173,6 +173,19 @@
             "drawOrderHint": 0,
             "expanded": false,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.file.FileDROP"
+                },
                 {
                     "defaultValue": "",
                     "description": "",

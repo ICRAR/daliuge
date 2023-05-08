@@ -2,14 +2,14 @@
     {
         "oid": "2022-03-30T03:46:01_-1_0",
         "categoryType": "Application",
-        "appclass": "dlg.apps.pyfunc.PyFuncApp",
+        "dropclass": "dlg.apps.pyfunc.PyFuncApp",
         "rank": [
             0
         ],
         "loop_ctx": null,
         "weight": 5,
         "num_cpus": 1,
-        "appclass": "dlg.apps.pyfunc.PyFuncApp",
+        "dropclass": "dlg.apps.pyfunc.PyFuncApp",
         "execution_time": 5,
         "group_start": false,
         "input_error_threshold": 0,
@@ -116,7 +116,7 @@
     {
         "oid": "2022-03-30T03:46:01_-2_0",
         "categoryType": "Application",
-        "appclass": "dlg.apps.bash_shell_app.BashShellApp",
+        "dropclass": "dlg.apps.bash_shell_app.BashShellApp",
         "rank": [
             0
         ],
@@ -148,7 +148,7 @@
     {
         "oid": "2022-03-30T03:46:01_-3_0",
         "categoryType": "Data",
-        "dataclass": "dlg.data.drops.file.FileDROP",
+        "dropclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0
         ],
@@ -211,7 +211,7 @@
     {
         "oid": "2022-03-30T03:46:01_-4_0",
         "categoryType": "Application",
-        "appclass": "dlg.apps.bash_shell_app.BashShellApp",
+        "dropclass": "dlg.apps.bash_shell_app.BashShellApp",
         "rank": [
             0
         ],
@@ -243,7 +243,7 @@
     {
         "oid": "2022-03-30T03:46:01_-5_0",
         "categoryType": "Data",
-        "dataclass": "dlg.data.drops.file.FileDROP",
+        "dropclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0
         ],
@@ -306,7 +306,7 @@
     {
         "oid": "2022-03-30T03:46:01_-6_0",
         "categoryType": "Application",
-        "appclass": "dlg.apps.bash_shell_app.BashShellApp",
+        "dropclass": "dlg.apps.bash_shell_app.BashShellApp",
         "rank": [
             0
         ],
@@ -338,7 +338,7 @@
     {
         "oid": "2022-03-30T03:46:01_-7_0",
         "categoryType": "Data",
-        "dataclass": "dlg.data.drops.file.FileDROP",
+        "dropclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0
         ],

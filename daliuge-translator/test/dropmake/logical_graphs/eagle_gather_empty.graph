@@ -108,6 +108,19 @@
             "fields": [
                 {
                     "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
+                {
+                    "defaultValue": "",
                     "description": "",
                     "id": "f9eae2bc-7065-481c-82be-c76ce87d6006",
                     "keyAttribute": false,
@@ -316,7 +329,7 @@
                     "description": "Application class",
                     "id": "112b82a7-a0fb-416f-bca1-d33d8408dbc7",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -534,7 +547,6 @@
         },
         {
             "category": "File",
-            "category": "File",
             "categoryType": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
@@ -544,6 +556,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.file.FileDROP"
+                },
                 {
                     "defaultValue": "",
                     "description": "",
@@ -647,6 +672,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "",
                     "description": "",
@@ -854,6 +892,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.file.FileDROP"
+                },
                 {
                     "defaultValue": "",
                     "description": "",
@@ -1072,7 +1123,7 @@
                     "description": "Application class",
                     "id": "df548c09-6fed-4116-9594-0b5604077bdb",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -1266,8 +1317,20 @@
             "description": "",
             "drawOrderHint": 0,
             "expanded": true,
-            "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "",
                     "description": "",
@@ -1275,7 +1338,6 @@
                     "keyAttribute": false,
                     "name": "data_volume",
                     "options": [],
-                    "parameterType": "ComponentParameter",
                     "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,

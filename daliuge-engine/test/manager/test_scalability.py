@@ -64,7 +64,7 @@ def memory_drop(uid):
             "oid": uid,
             "uid": uid,
             "categoryType": "Data",
-            "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+            "dropclass": "dlg.data.drops.memory.InMemoryDROP",
         }
     )
 
@@ -84,7 +84,7 @@ def create_graph(branches, drops_per_branch):
                     "oid": app_uid,
                     "uid": app_uid,
                     "categoryType": "Application",
-                    "appclass": "dlg.apps.simple.SleepAndCopyApp",
+                    "dropclass": "dlg.apps.simple.SleepAndCopyApp",
                     "sleep_time": 0,
                 }
             )

@@ -19,25 +19,19 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+from enum import Enum
+from dataclasses import dataclass, field, asdict
+import logging
+
 """Common utilities used by daliuge packages"""
 from .osutils import terminate_or_kill, wait_or_kill
 from .network import check_port, connect_to, portIsClosed, portIsOpen, write_to
 from .streams import ZlibCompressedStream, JSONStream
 
-
-class DropType:
-    """
-    Class defining the LG keyword to be used to load the module defining the Drop.
-    """
-
-    DATACLASS = "dataclass"
-    APPCLASS = "appclass"
-    SOCKETCLASS = "socket"
-    SERVICECLASS = "serviceapp"  # App drop that runs continously
-    CONTAINERCLASS = "container"  # Drop that contains other drops
+logger = logging.getLogger(__name__)
 
 
-class CategoryType:
+class CategoryType(str, Enum):
     DATA = "Data"
     APPLICATION = "Application"
     CONSTRUCT = "Construct"
@@ -78,35 +72,47 @@ class dropdict(dict):
     DROPManager.
     """
 
-    def _addSomething(self, other, key, IdText=None):
+    def __init__(self, init_dict=None):
+        if init_dict is None:
+            init_dict = {
+                "oid": None,
+                "categoryType": "Unknown",
+            }
+
+        self.update(init_dict)
+        if "oid" not in self:
+            self.update({"oid": None})
+        return super().__init_subclass__()
+
+    def _addSomething(self, other, key, name=None):
         if key not in self:
             self[key] = []
         if other["oid"] not in self[key]:
             # TODO: Returning just the other drop OID instead of the named
             #       port list is not a good solution. Required for the dask
             #       tests.
-            append = {other["oid"]: IdText} if IdText else other["oid"]
-            # if IdText is None:
+            append = {other["oid"]: name} if name else other["oid"]
+            # if name is None:
             # raise ValueError
             self[key].append(append)
 
-    def addConsumer(self, other, IdText=None):
-        self._addSomething(other, "consumers", IdText=IdText)
+    def addConsumer(self, other, name=None):
+        self._addSomething(other, "consumers", name=name)
 
-    def addStreamingConsumer(self, other, IdText=None):
-        self._addSomething(other, "streamingConsumers", IdText=IdText)
+    def addStreamingConsumer(self, other, name=None):
+        self._addSomething(other, "streamingConsumers", name=name)
 
-    def addInput(self, other, IdText=None):
-        self._addSomething(other, "inputs", IdText=IdText)
+    def addInput(self, other, name=None):
+        self._addSomething(other, "inputs", name=name)
 
-    def addStreamingInput(self, other, IdText=None):
-        self._addSomething(other, "streamingInputs", IdText=IdText)
+    def addStreamingInput(self, other, name=None):
+        self._addSomething(other, "streamingInputs", name=name)
 
-    def addOutput(self, other, IdText=None):
-        self._addSomething(other, "outputs", IdText=IdText)
+    def addOutput(self, other, name=None):
+        self._addSomething(other, "outputs", name=name)
 
-    def addProducer(self, other, IdText=None):
-        self._addSomething(other, "producers", IdText=IdText)
+    def addProducer(self, other, name=None):
+        self._addSomething(other, "producers", name=name)
 
 
 def _sanitize_links(links):

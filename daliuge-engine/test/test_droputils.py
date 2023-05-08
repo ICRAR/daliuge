@@ -229,7 +229,7 @@ class DropUtilsTest(unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "consumers": ["B"],
             },
             {
@@ -250,12 +250,12 @@ class DropUtilsTest(unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             },
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "appclass": "test.test_graph_loader.DummyApp",
+                "dropclass": "test.test_graph_loader.DummyApp",
                 "inputs": ["A"],
             },
         ]
@@ -272,35 +272,35 @@ class DropUtilsTest(unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             },
             {
                 "oid": "B",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             },
             {
                 "oid": "C",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.crc.CRCApp",
+                "dropclass": "dlg.apps.crc.CRCApp",
                 "inputs": ["A"],
             },
             {
                 "oid": "D",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "producers": ["C"],
             },
             {
                 "oid": "E",
                 "categoryType": "Application",
-                "appclass": "test.test_drop.SumupContainerChecksum",
+                "dropclass": "test.test_drop.SumupContainerChecksum",
                 "inputs": ["D"],
             },
             {
                 "oid": "F",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "producers": ["E"],
             },
         ]

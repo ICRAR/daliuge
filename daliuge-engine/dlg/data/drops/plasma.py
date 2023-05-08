@@ -36,11 +36,13 @@ from dlg.meta import dlg_string_param, dlg_bool_param
 # @par EAGLE_START
 # @param category Plasma
 # @param tag daliuge
+# @param plasma_path Plasma Path//String/ApplicationArgument/readwrite//False/False/Path to the local plasma store
+# @param object_id Object Id//String/ApplicationArgument/readwrite//False/False/PlasmaId of the object for all compute nodes
+# @param dropclass dropclass/dlg.data.drops.plasma.PlasmaDROP/String/ComponentParameter/readwrite//False/False/Drop class
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
-# @param plasma_path Plasma Path//String/ComponentParameter/readwrite//False/False/Path to the local plasma store
-# @param object_id Object Id//String/ComponentParameter/readwrite//False/False/PlasmaId of the object for all compute nodes
 # @param use_staging Use Staging/False/Boolean/ComponentParameter/readwrite//False/False/Enables writing to a dynamically resizeable staging buffer
+# @param dropclass dropclass/dlg.data.drops.plasma.PlasmaDROP/String/ComponentParameter/readwrite//False/False/Drop class
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
@@ -87,10 +89,11 @@ class PlasmaDROP(DataDROP):
 # @par EAGLE_START
 # @param category PlasmaFlight
 # @param tag daliuge
+# @param plasma_path Plasma Path//String/ApplicationArgument/readwrite//False/False/Path to the local plasma store
+# @param object_id Object Id//String/ApplicationArgument/readwrite//False/False/PlasmaId of the object for all compute nodes
+# @param dropclass dropclass/dlg.data.drops.plasma.PlasmaFlightDROP/String/ComponentParameter/readwrite//False/False/Drop class
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
-# @param plasma_path Plasma Path//String/ComponentParameter/readwrite//False/False/Path to the local plasma store
-# @param object_id Object Id//String/ComponentParameter/readwrite//False/False/PlasmaId of the object for all compute nodes
 # @param flight_path Flight Path//String/ComponentParameter/readwrite//False/False/IP and flight port of the drop owner
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port

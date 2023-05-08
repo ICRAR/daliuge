@@ -64,19 +64,19 @@ class TestHelmClient(unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             },
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.simple.SleepApp",
+                "dropclass": "dlg.apps.simple.SleepApp",
                 "inputs": ["A"],
                 "outputs": ["C"],
             },
             {
                 "oid": "C",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             },
         ]
         for drop in pg:
@@ -95,14 +95,14 @@ class TestHelmClient(unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": "localhost",
                 "island": "localhost",
             },
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.simple.SleepApp",
+                "dropclass": "dlg.apps.simple.SleepApp",
                 "inputs": ["A"],
                 "outputs": ["C"],
                 "node": "localhost",
@@ -111,7 +111,7 @@ class TestHelmClient(unittest.TestCase):
             {
                 "oid": "D",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.simple.SleepApp",
+                "dropclass": "dlg.apps.simple.SleepApp",
                 "inputs": ["A"],
                 "outputs": ["E"],
                 "node": "127.0.0.2",
@@ -120,14 +120,14 @@ class TestHelmClient(unittest.TestCase):
             {
                 "oid": "C",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": "localhost",
                 "island": "localhost",
             },
             {
                 "oid": "E",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": "127.0.0.2",
                 "island": "127.0.0.2",
             },

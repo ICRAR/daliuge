@@ -41,6 +41,7 @@ from typing import Union
 # @param tag daliuge
 # @param filepath File Path//String/ApplicationArgument/readwrite//False/False/File path for this file. In many cases this does not need to be specified. If it has a \/ at the end it will be treated as a directory name and the filename will be generated. If it does not have a \/, the last part will be treated as a filename. If filepath does not start with \/ (relative path) then the session directory will be prepended to make the path absolute.
 # @param check_filepath_exists Check existence/False/Boolean/ComponentParameter/readwrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
+# @param dropclass dropclass/dlg.data.drops.file.FileDROP/String/ComponentParameter/readwrite//False/False/Drop class
 # @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
 # @param persist Persist/True/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
@@ -147,7 +148,9 @@ class FileDROP(DataDROP, PathBasedDrop):
             if self.filename
             else self.dirname
         )
-        logger.debug(f"Set path of drop {self._uid}: {self._path}")
+        logger.debug(
+            f"Set path of drop {self._uid}: {self._path} check: {check} {os.path.isfile(self._path)}"
+        )
         if check and not os.path.isfile(self._path):
             raise InvalidDropException(
                 self, "File does not exist or is not a file: %s" % self._path

@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 # @par EAGLE_START
 # @param category Directory
 # @param tag future
+# @param dropclass dropclass/dlg.data.drops.directorycontainer.DirectoryContainer/String/ComponentParameter/readwrite//False/False/Drop class
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
 # @param check_exists Check path exists/True/Boolean/ApplicationArgument/readwrite//False/False/Perform a check to make sure the file path exists before proceeding with the application

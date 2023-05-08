@@ -45,6 +45,7 @@ logger = logging.getLogger(__name__)
 # @param command_line_arguments Command Line Arguments//String/ComponentParameter/readwrite//False/False/Additional command line arguments to be added to the command line to be executed
 # @param paramValueSeparator Param value separator/ /String/ComponentParameter/readwrite//False/False/Separator character(s) between parameters on the command line
 # @param argumentPrefix Argument prefix/"--"/String/ComponentParameter/readwrite//False/False/Prefix to each keyed argument on the command line
+# @param dropclass dropclass/dlg.apps.mpi.MPIApp/String/ComponentParameter/readwrite//False/False/Drop class
 # @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
 # @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time

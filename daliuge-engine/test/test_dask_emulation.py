@@ -129,7 +129,6 @@ class _TestDelayed(object):
         division = delayed(divide)(the_sum, the_sub)
         parts = delayed(partition, nout=2)(division)
         logger.debug(f"partitions: {type(parts)}")
-        result = 3.0
         result = compute(delayed(add)(*parts))
         self.assertEqual(3.0, result)
 

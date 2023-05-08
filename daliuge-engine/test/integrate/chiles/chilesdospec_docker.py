@@ -52,7 +52,7 @@ def fileDropSpec(uid, **kwargs):
         {
             "oid": str(uid),
             "categoryType": "Data",
-            "dataclass": dlg.data.drops.file.FileDROP",
+            "dropclass": "dlg.data.drops.file.FileDROP",
             "node": "localhost",
             "island": "localhost",
         }
@@ -85,7 +85,7 @@ def casapyDockerAppSpec(uid, script):
         {
             "oid": str(uid),
             "categoryType": "Application",
-            "appclass": "dlg.apps.dockerapp.DockerApp",
+            "dropclass": "dlg.apps.dockerapp.DockerApp",
             "image": "dfms/casapy_centos7_dfms:0.1",
             "command": cmd,
             "user": "dfms",
@@ -129,7 +129,6 @@ def cleanSpec(uid, **kwargs):
 
 if __name__ == "__main__":
     try:
-
         sessionId = "Chiles-Docker-%s" % (time.time(),)
         droplist = []
 

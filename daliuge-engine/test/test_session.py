@@ -121,7 +121,7 @@ class TestSession(unittest.TestCase):
                         {
                             "oid": "D",
                             "categoryType": "Data",
-                            "dataclass": "invalid",
+                            "dropclass": "invalid",
                         }
                     ]
                 ),
@@ -139,7 +139,7 @@ class TestSession(unittest.TestCase):
                         {
                             "oid": "D",
                             "categoryType": "Application",
-                            "dataclass": "dlg.data.drops.NullDROP",
+                            "dropclass": "dlg.data.drops.NullDROP",
                             "outputs": ["X"],
                         }
                     ]
@@ -167,8 +167,8 @@ class TestSession(unittest.TestCase):
                         {
                             "oid": "B",
                             "categoryType": "Application",
-                            # "dataclass": "dlg.data.drops.data_base.NullDROP",
-                            "appclass": "dlg.apps.crc.CRCApp",
+                            # "dropclass": "dlg.data.drops.data_base.NullDROP",
+                            "dropclass": "dlg.apps.crc.CRCApp",
                         }
                     ]
                 )
@@ -203,19 +203,19 @@ class TestSession(unittest.TestCase):
                         {
                             "oid": "A",
                             "categoryType": "Data",
-                            "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                            "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                             "consumers": ["B"],
                         },
                         {
                             "oid": "B",
                             "categoryType": "Application",
-                            "appclass": "dlg.apps.simple.SleepApp",
+                            "dropclass": "dlg.apps.simple.SleepApp",
                             "sleep_time": 2,
                         },
                         {
                             "oid": "C",
                             "categoryType": "Data",
-                            "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                            "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                             "producers": ["B"],
                         },
                     ]
@@ -238,32 +238,32 @@ class TestSession(unittest.TestCase):
                         {
                             "oid": "A",
                             "categoryType": "Data",
-                            "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                            "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                             "consumers": ["B"],
                         },
                         {
                             "oid": "B",
                             "categoryType": "Application",
-                            "appclass": "dlg.apps.simple.SleepApp",
+                            "dropclass": "dlg.apps.simple.SleepApp",
                             "sleep_time": 0,
                         },
                         {
                             "oid": "C",
                             "categoryType": "Data",
-                            "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                            "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                             "producers": ["B"],
                             "consumers": ["D"],
                         },
                         {
                             "oid": "D",
                             "categoryType": "Application",
-                            "appclass": "dlg.apps.simple.SleepApp",
+                            "dropclass": "dlg.apps.simple.SleepApp",
                             "sleep_time": 10,
                         },
                         {
                             "oid": "E",
                             "categoryType": "Data",
-                            "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                            "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                             "producers": ["D"],
                         },
                     ]

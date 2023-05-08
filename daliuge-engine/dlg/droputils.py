@@ -37,7 +37,6 @@ import numpy as np
 from dlg.ddap_protocol import DROPStates
 from dlg.data.io import IOForURL, OpenMode
 from dlg import common
-from dlg.common import DropType
 from dlg.apps.app_base import AppDROP
 
 from typing import TYPE_CHECKING
@@ -236,8 +235,7 @@ def getLeafNodes(drops):
     return [
         drop
         for drop, _ in breadFirstTraverse(drops)
-        if not getDownstreamObjects(drop)
-        and drop.type != DropType.SERVICECLASS
+        if not getDownstreamObjects(drop) and drop.type != "dropclass"
     ]
 
 

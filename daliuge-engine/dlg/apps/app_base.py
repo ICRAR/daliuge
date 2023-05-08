@@ -219,7 +219,9 @@ class AppDROP(ContainerDROP):
         else:
             self.status = DROPStates.COMPLETED
         logger.debug(
-            "Moving %r to %s", self, "FINISHED" if not is_error else "ERROR"
+            "Moving %r to %s",
+            self.oid,
+            "FINISHED" if not is_error else "ERROR",
         )
         self._fire(
             "producerFinished", status=self.status, execStatus=self.execStatus
@@ -424,7 +426,7 @@ class InputFiredAppDROP(AppDROP):
         #       applications, for the time being they follow their execState.
 
         # Run at most self._n_tries if there are errors during the execution
-        logger.debug("Executing %r", self)
+        logger.debug("Executing %r", self.oid)
         tries = 0
         drop_state = DROPStates.COMPLETED
         self.execStatus = AppDROPStates.RUNNING

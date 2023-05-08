@@ -83,14 +83,14 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
                 "consumers": ["B"],
             },
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.simple.SleepAndCopyApp",
+                "dropclass": "dlg.apps.simple.SleepAndCopyApp",
                 "sleep_time": sleepTime,
                 "outputs": ["C"],
                 "node": hostname,
@@ -98,7 +98,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             {
                 "oid": "C",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
             },
         ]
@@ -122,7 +122,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             }
         ]
         self.assertRaises(
@@ -134,7 +134,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": "unknown_host",
             }
         ]
@@ -148,7 +148,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
             }
         ]
@@ -163,7 +163,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         self.assertEqual("A", dropSpec["oid"])
         self.assertEqual("Data", dropSpec["categoryType"])
         self.assertEqual(
-            "dlg.data.drops.memory.InMemoryDROP", dropSpec["dataclass"]
+            "dlg.data.drops.memory.InMemoryDROP", dropSpec["dropclass"]
         )
 
     def test_deployGraph(self):
@@ -289,14 +289,14 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
                 "consumers": ["B"],
             },
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.simple.SleepAndCopyApp",
+                "dropclass": "dlg.apps.simple.SleepAndCopyApp",
                 "sleep_time": 1,
                 "outputs": ["C"],
                 "node": hostname,
@@ -304,7 +304,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             {
                 "oid": "C",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
             },
             {},  # A dummy empty reprodata (the default if absolutely nothing is specified)
@@ -323,14 +323,14 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
                 "consumers": ["B"],
             },
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.simple.SleepAndCopyApp",
+                "dropclass": "dlg.apps.simple.SleepAndCopyApp",
                 "sleep_time": 1,
                 "outputs": ["C"],
                 "node": hostname,
@@ -338,7 +338,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
             {
                 "oid": "C",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
             },
         ]

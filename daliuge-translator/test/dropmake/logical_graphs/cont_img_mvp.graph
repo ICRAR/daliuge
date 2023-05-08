@@ -552,7 +552,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "050a42a5-eb93-4715-9a2e-f0115c979163",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -692,7 +692,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "d3bc43a4-6bc6-4e99-b755-9cc066738866",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -817,7 +817,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "ab6bcd7f-3954-47f4-935b-341080466f7c",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -942,7 +942,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "b522620b-6b96-4c8c-b217-06c42a8b8c3a",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -1082,7 +1082,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "b9e5189b-b3a0-4ad2-b393-0ff2cfe1dca1",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -1222,7 +1222,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "d960904f-3052-4b64-82ee-944e7fc4af51",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -1362,7 +1362,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "8a2a938e-d236-4709-993a-fcd6c5a4152c",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -1517,7 +1517,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "a0fe1f9b-15ac-4714-af11-d166545d5c8f",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -1627,7 +1627,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "a62f86c4-e002-4564-92d1-72fc5b420dde",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -1752,7 +1752,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "63ea369b-5148-4993-b599-7439c82672e6",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -1892,7 +1892,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "aae2de76-733d-487f-9f4a-2dc241da13ef",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -2017,7 +2017,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "96839ec3-ba4a-4d34-aea2-b3518cddaa88",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -2157,7 +2157,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "3197695c-c42e-4b83-968f-24d71f6c32dc",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -2267,7 +2267,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "28dc8cad-1e30-4971-8278-2872694fc4b6",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -2392,7 +2392,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "6723bde7-3737-4102-bed2-13c248834f2f",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -2452,6 +2452,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
@@ -2562,6 +2575,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
@@ -2688,6 +2714,19 @@
             "expanded": true,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
+                {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
                     "id": "c4bbf997-e98a-4bed-9e20-3a6a34bb77d7",
@@ -2812,6 +2851,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
@@ -2938,6 +2990,19 @@
             "expanded": true,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
+                {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
                     "id": "8e2327f5-5fe3-4f1a-8ada-2bf332e15db7",
@@ -3062,6 +3127,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
@@ -3188,6 +3266,19 @@
             "expanded": true,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
+                {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
                     "id": "fae7d9d5-722e-40ab-b1ef-109a074fd079",
@@ -3312,6 +3403,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
@@ -3582,7 +3686,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "fead648e-c565-48dd-ab3d-df9867039001",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -3642,6 +3746,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
@@ -3767,6 +3884,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
@@ -4003,6 +4133,19 @@
             "expanded": true,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
+                {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
                     "id": "2d3c4ba0-7adc-481a-a918-a55c2335bf04",
@@ -4127,6 +4270,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
@@ -4253,6 +4409,19 @@
             "expanded": true,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
+                {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
                     "id": "8b23187d-f847-41f0-a175-5bb25404c985",
@@ -4378,6 +4547,19 @@
             "expanded": true,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
+                {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
                     "id": "5d19891a-82c4-4861-bd50-e845e72854c7",
@@ -4502,6 +4684,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
@@ -4722,7 +4917,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "4a093c12-4f0e-48df-8f82-7e72a3c3bd2d",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -4782,6 +4977,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
@@ -4908,6 +5116,19 @@
             "expanded": true,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
+                {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
                     "id": "03a0a48f-fb0d-46ac-9cd6-ef87aab17cd8",
@@ -5031,6 +5252,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
@@ -5220,6 +5454,19 @@
             "expanded": true,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
+                {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
                     "id": "9229bf10-5ce7-451f-bd5e-487645ad840e",
@@ -5359,6 +5606,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
@@ -5578,7 +5838,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "29668fcc-3088-4647-ab6f-0f0461fdf24c",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -5623,6 +5883,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
@@ -5813,7 +6086,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "e65e0da5-a46a-481d-b536-b7e0024f43f4",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
@@ -5873,6 +6146,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "false",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
@@ -6077,7 +6363,7 @@
                     "description": "The python class that implements this branch construct",
                     "id": "e6be3693-bbd0-47bd-bf2a-57351177d34b",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,

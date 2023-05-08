@@ -46,11 +46,10 @@ from dlg.data.drops.parset_drop import ParameterSetDROP
 from .exceptions import InvalidGraphException
 from dlg.data.drops.json_drop import JsonDROP
 from dlg.data.drops import *
-from .common import DropType
 
 
 class CategoryType:
-    DATA = "dataclass"
+    DATA = "dropclass"
 
     # Dictionary for the key used to store 1-to-N relationships between DROPs
 
@@ -208,8 +207,7 @@ def loadDropSpecs(dropSpecList):
     for n, dropSpec in enumerate(dropSpecList):
         # "categoryType" and 'oid' are mandatory
         check_dropspec(n, dropSpec)
-        # backwards compatibility
-        dropType = dropSpec["categoryType"]
+        dropType = dropSpec["categoryType"].lower()
 
         cf = __CREATION_FUNCTIONS[dropType]
         cf(dropSpec, dryRun=True)
@@ -255,10 +253,10 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
         #        dropType = dropSpec.pop("categoryType")
         # backwards compatibility
         dropType = dropSpec["categoryType"]
-        if dropType.lower() in ["application", "app"]:
-            dropType = "appclass"
-        if dropType.lower() == "data":
-            dropType = "dataclass"
+        # if dropType.lower() in ["application", "app"]:
+        #     dropType = "dropclass"
+        # if dropType.lower() == "data":
+        #     dropType = "dropclass"
 
         cf = __CREATION_FUNCTIONS[dropType.lower()]
         drop = cf(dropSpec, session=session)
@@ -313,7 +311,6 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
         if not droputils.getUpstreamObjects(drop):
             roots.append(drop)
     logger.info("%d graph roots found, bye-bye!", len(roots))
-    logger.debug("Graph spec: %s", drops.values())
 
     return roots
 
@@ -322,13 +319,11 @@ def _createData(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
-    if DropType.DATACLASS in dropSpec:
-        dataClassName = dropSpec[DropType.DATACLASS]
+    if dropSpec["categoryType"] == "Data":
+        dataClassName = dropSpec["dropclass"]
         parts = dataClassName.split(".")
-        # we don't need to support dfms here
         module = importlib.import_module(".".join(parts[:-1]))
         storageType = getattr(module, parts[-1])
-        # logger.debug(">>>>: %s", dropSpec)
     else:
         # STORAGE_TYPES are deprecated, but here for backwards compatibility
 
@@ -370,8 +365,8 @@ def _createContainer(dropSpec, dryRun=False, session=None):
     kwargs = _getKwargs(dropSpec)
 
     # if no 'container' is specified, we default to ContainerDROP
-    if DropType.CONTAINERCLASS in dropSpec:
-        containerTypeName = dropSpec[DropType.CONTAINERCLASS]
+    if "dropclass" in dropSpec:
+        containerTypeName = dropSpec["dropclass"]
         parts = containerTypeName.split(".")
 
         # Support old "dfms..." package names (pre-Oct2017)
@@ -402,8 +397,8 @@ def _createApp(dropSpec, dryRun=False, session=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
-    if DropType.APPCLASS in dropSpec:
-        appName = dropSpec[DropType.APPCLASS]
+    if "dropclass" in dropSpec:
+        appName = dropSpec["dropclass"]
     elif "Application" in dropSpec:
         appName = dropSpec["Application"]
     parts = appName.split(".")
@@ -441,6 +436,7 @@ def _getKwargs(dropSpec):
         "oid",
         "uid",
         "Application",
+        "dropclass",
         "appclass",
         "dataclass",
         "data",
@@ -465,13 +461,9 @@ def _getKwargs(dropSpec):
 
 
 __CREATION_FUNCTIONS = {
-    DropType.CONTAINERCLASS: _createContainer,
-    DropType.SERVICECLASS: _createApp,
-    DropType.SOCKETCLASS: _createSocket,
-    DropType.DATACLASS: _createData,
-    DropType.APPCLASS: _createApp,
-    "Data": _createData,
+    "socket": _createSocket,
     "data": _createData,
-    "Application": _createApp,
+    "application": _createApp,
     "app": _createApp,
+    "container": _createContainer,
 }

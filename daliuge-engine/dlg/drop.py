@@ -53,7 +53,7 @@ from dlg.event import EventFirer, EventHandler
 from dlg.exceptions import InvalidDropException, InvalidRelationshipException
 
 DEFAULT_INTERNAL_PARAMETERS = {
-    "dataclass",
+    "dropclass",
     "category",
     "storage",
     "nodeAttributes",
@@ -870,7 +870,7 @@ class AbstractDROP(EventFirer, EventHandler):
         if self._parent and parent:
             logger.warning(
                 "A parent is already set in %r, overwriting with new value",
-                self,
+                self.oid,
             )
         if parent:
             prevParent = self._parent
@@ -927,7 +927,7 @@ class AbstractDROP(EventFirer, EventHandler):
         # Add the reverse reference too automatically
         if cuid in self._consumers_uids:
             return
-        logger.debug("Adding new consumer %r to %r", consumer, self)
+        # logger.debug("Adding new consumer %r to %r", consumer.oid, self.oid)
         self._consumers.append(consumer)
 
         # Subscribe the consumer to events sent when this DROP moves to
@@ -941,7 +941,7 @@ class AbstractDROP(EventFirer, EventHandler):
 
         # Automatic back-reference
         if back and hasattr(consumer, "addInput"):
-            logger.debug("Adding back %r as input of %r", self, consumer)
+            logger.debug("Adding back %r as input of %r", self.oid, consumer)
             consumer.addInput(self, False)
 
         # Add reproducibility subscription

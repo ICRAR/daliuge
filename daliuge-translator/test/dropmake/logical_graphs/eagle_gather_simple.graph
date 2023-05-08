@@ -153,6 +153,19 @@
             "fields": [
                 {
                     "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
+                {
+                    "defaultValue": "",
                     "description": "",
                     "id": "1d40051d-ff2e-4783-9e71-2d2093abf2f4",
                     "keyAttribute": false,
@@ -291,13 +304,13 @@
                     "description": "Application class",
                     "id": "66be9e0a-f39e-4f9e-9c2f-eb26a7f3ef0d",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "Unknown",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "appclass",
+                    "text": "dropclass",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.apps.simple.SleepApp"
@@ -447,6 +460,19 @@
             "fields": [
                 {
                     "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
+                {
+                    "defaultValue": "",
                     "description": "",
                     "id": "69e41de1-af97-4bdf-9c56-65021a63cc4d",
                     "keyAttribute": false,
@@ -530,6 +556,19 @@
             "fields": [
                 {
                     "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.file.FileDROP"
+                },
+                {
+                    "defaultValue": "",
                     "description": "",
                     "id": "c385a733-6d84-483b-96e8-eedf1f7b34bc",
                     "keyAttribute": false,
@@ -611,6 +650,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.file.FileDROP"
+                },
                 {
                     "defaultValue": "",
                     "description": "",
@@ -846,13 +898,13 @@
                     "description": "The python class that implements this application",
                     "id": "3a6d5c1e-c6f5-466e-8690-379e1318f9fc",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "Unknown",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Appclass",
+                    "text": "dropclass",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.apps.simple.SleepApp"
@@ -954,6 +1006,19 @@
             "fields": [
                 {
                     "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
+                {
+                    "defaultValue": "",
                     "description": "",
                     "id": "21bd1f2d-fd75-439a-bdb8-190982724bbc",
                     "keyAttribute": false,
@@ -1035,6 +1100,19 @@
             "drawOrderHint": 0,
             "expanded": false,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.file.FileDROP"
+                },
                 {
                     "defaultValue": "",
                     "description": "",
@@ -1314,6 +1392,19 @@
             "expanded": false,
             "fields": [
                 {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.file.FileDROP"
+                },
+                {
                     "defaultValue": "0",
                     "description": "Estimated size of the data contained in this node",
                     "id": "df5bf59e-27e1-4010-ad6a-3b12a69f19c2",
@@ -1481,13 +1572,13 @@
                     "description": "Application class",
                     "id": "77f636a4-88d8-422d-bebb-4eaab243815c",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "appclass",
+                    "text": "dropclass",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.apps.simple.SleepApp"
@@ -1612,13 +1703,13 @@
                     "description": "Application class",
                     "id": "37ad7398-1fdb-4f00-90f3-b3c355e407d7",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "appclass",
+                    "text": "dropclass",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.apps.simple.SleepApp"
@@ -1949,6 +2040,19 @@
             "drawOrderHint": 0,
             "expanded": false,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.file.FileDROP"
+                },
                 {
                     "defaultValue": "0",
                     "description": "Estimated size of the data contained in this node",
