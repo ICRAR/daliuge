@@ -41,6 +41,7 @@ from dlg.meta import dlg_string_param, dlg_bool_param
 # @param plasma_path Plasma Path//String/ComponentParameter/readwrite//False/False/Path to the local plasma store
 # @param object_id Object Id//String/ComponentParameter/readwrite//False/False/PlasmaId of the object for all compute nodes
 # @param use_staging Use Staging/False/Boolean/ComponentParameter/readwrite//False/False/Enables writing to a dynamically resizeable staging buffer
+# @param dropclass dropclass/dlg.data.drops.plasma.PlasmaDROP/String/ComponentParameter/readwrite//False/False/Drop class
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
