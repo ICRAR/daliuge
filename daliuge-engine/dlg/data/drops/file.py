@@ -148,7 +148,9 @@ class FileDROP(DataDROP, PathBasedDrop):
             if self.filename
             else self.dirname
         )
-        logger.debug(f"Set path of drop {self._uid}: {self._path}")
+        logger.debug(
+            f"Set path of drop {self._uid}: {self._path} check: {check} {os.path.isfile(self._path)}"
+        )
         if check and not os.path.isfile(self._path):
             raise InvalidDropException(
                 self, "File does not exist or is not a file: %s" % self._path
