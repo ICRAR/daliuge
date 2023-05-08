@@ -34,8 +34,6 @@ def clean_applicationArgs(applicationArgs: dict) -> dict:
     cleanedArgs = {}
     if not isinstance(applicationArgs, dict):
         logger.info("applicationArgs are not passed as a dict. Ignored!")
-    else:
-        logger.debug("ApplicationArgs found %s", applicationArgs)
     for name, vdict in applicationArgs.items():
         if vdict in [None, False, ""]:
             continue
