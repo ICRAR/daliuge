@@ -36,7 +36,6 @@ import math
 from dlg.dropmake.lg import GraphException
 from dlg.dropmake.scheduler import DAGUtil
 from dlg.common import CategoryType, dropdict
-from dlg.common import DropType
 
 logger = logging.getLogger(__name__)
 
@@ -392,7 +391,7 @@ class PGT(object):
                                 {
                                     "oid": extra_oid,
                                     "categoryType": CategoryType.APPLICATION,
-                                    "appclass": "dlg.drop.BarrierAppDROP",
+                                    "dropclass": "dlg.drop.BarrierAppDROP",
                                     "name": "go_app",
                                     "weight": 1,
                                 }
@@ -410,7 +409,7 @@ class PGT(object):
                                 {
                                     "oid": extra_oid,
                                     "categoryType": CategoryType.DATA,
-                                    "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                                    "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                                     "name": "go_data",
                                     "weight": 1,
                                 }
@@ -475,7 +474,7 @@ class PGT(object):
             tt = drop["categoryType"]
             if tt == CategoryType.DATA:
                 node["category"] = "Data"
-            elif tt == DropType.APPCLASS:
+            elif tt == CategoryType.APPLICATION:
                 node["category"] = "PythonApp"  # might not be correct
             node["name"] = drop["name"]
             nodes.append(node)

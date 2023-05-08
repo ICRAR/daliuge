@@ -161,14 +161,14 @@ class DropParser(Enum):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag template
-# @param appclass Application Class/dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/readonly//False/False/Application class
+# @param func_name Function Name//String/ApplicationArgument/readwrite//False/False/Python function name
+# @param func_code Function Code//String/ApplicationArgument/readwrite//False/False/Python function code, e.g. 'def function_name(args): return args'
+# @param dropclass Application Class/dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/readonly//False/False/Application class
 # @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/The allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param func_name Function Name//String/ApplicationArgument/readwrite//False/False/Python function name
-# @param func_code Function Code//String/ApplicationArgument/readwrite//False/False/Python function code, e.g. 'def function_name(args): return args'
 # @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
 # @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 #     \~English Mapping from argname to default value. Should match only the last part of the argnames list.
@@ -427,10 +427,9 @@ class PyFuncApp(BarrierAppDROP):
         somewhat risky, since the order is relevant and in this code derived from the
         order defined in the graph (same order as defined in the component description).
 
-        Input ports will NOT be used by order (anymore), but by the IdText (name field
-        in EAGLE) of the port. Since each input port requires an associated data drop,
-        this provides a unique mapping. This also allows to pass values to any function
-        argument through a port.
+        Input ports will NOT be used by order (anymore), but by the name of the port.
+        Since each input port requires an associated data drop, this provides a unique
+        mapping. This also allows to pass values to any function argument through a port.
 
         Function argument values as well as the function code can be provided in
         serialised (pickle) form by setting the 'pickle' flag. Note that this flag

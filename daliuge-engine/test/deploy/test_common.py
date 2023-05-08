@@ -61,19 +61,19 @@ class CommonTestsBase(ManagerStarter):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             },
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.simple.SleepApp",
+                "dropclass": "dlg.apps.simple.SleepApp",
                 "inputs": ["A"],
                 "outputs": ["C"],
             },
             {
                 "oid": "C",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             },
         ]
         pg = add_test_reprodata(pg)

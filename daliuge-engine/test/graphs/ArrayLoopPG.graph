@@ -2,7 +2,7 @@
     {
         "oid": "2022-06-22T09:13:53_-5_0",
         "categoryType": "Data",
-        "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
         "rank": [
             0
         ],
@@ -30,7 +30,7 @@
     {
         "oid": "2022-06-22T09:13:53_-1_0",
         "categoryType": "Application",
-        "appclass": "dlg.apps.simple.RandomArrayApp",
+        "dropclass": "dlg.apps.simple.RandomArrayApp",
         "rank": [
             0
         ],
@@ -41,7 +41,7 @@
         "integer": false,
         "low": "0",
         "high": "100",
-        "appclass": "dlg.apps.simple.RandomArrayApp",
+        "dropclass": "dlg.apps.simple.RandomArrayApp",
         "execution_time": 5,
         "group_start": false,
         "applicationArgs": {},
@@ -59,7 +59,7 @@
     {
         "oid": "2022-06-22T09:13:53_-3_0/0/0",
         "categoryType": "Application",
-        "appclass": "dlg.apps.simple.PickOne",
+        "dropclass": "dlg.apps.simple.PickOne",
         "rank": [
             0,
             0,
@@ -70,7 +70,7 @@
         "num_cpus": 1,
         "execution_time": 5,
         "group_start": true,
-        "appclass": "dlg.apps.simple.PickOne",
+        "dropclass": "dlg.apps.simple.PickOne",
         "applicationArgs": {},
         "iid": "0/0/0",
         "lg_key": -3,
@@ -94,7 +94,7 @@
     {
         "oid": "2022-06-22T09:13:53_-3_0/0/1",
         "categoryType": "Application",
-        "appclass": "dlg.apps.simple.PickOne",
+        "dropclass": "dlg.apps.simple.PickOne",
         "rank": [
             0,
             0,
@@ -105,7 +105,7 @@
         "num_cpus": 1,
         "execution_time": 5,
         "group_start": true,
-        "appclass": "dlg.apps.simple.PickOne",
+        "dropclass": "dlg.apps.simple.PickOne",
         "applicationArgs": {},
         "iid": "0/0/1",
         "lg_key": -3,
@@ -132,7 +132,7 @@
     {
         "oid": "2022-06-22T09:13:53_-3_0/1/0",
         "categoryType": "Application",
-        "appclass": "dlg.apps.simple.PickOne",
+        "dropclass": "dlg.apps.simple.PickOne",
         "rank": [
             0,
             1,
@@ -143,7 +143,7 @@
         "num_cpus": 1,
         "execution_time": 5,
         "group_start": true,
-        "appclass": "dlg.apps.simple.PickOne",
+        "dropclass": "dlg.apps.simple.PickOne",
         "applicationArgs": {},
         "iid": "0/1/0",
         "lg_key": -3,
@@ -167,7 +167,7 @@
     {
         "oid": "2022-06-22T09:13:53_-3_0/1/1",
         "categoryType": "Application",
-        "appclass": "dlg.apps.simple.PickOne",
+        "dropclass": "dlg.apps.simple.PickOne",
         "rank": [
             0,
             1,
@@ -178,7 +178,7 @@
         "num_cpus": 1,
         "execution_time": 5,
         "group_start": true,
-        "appclass": "dlg.apps.simple.PickOne",
+        "dropclass": "dlg.apps.simple.PickOne",
         "applicationArgs": {},
         "iid": "0/1/1",
         "lg_key": -3,
@@ -205,7 +205,7 @@
     {
         "oid": "2022-06-22T09:13:53_-4_0/0/0",
         "categoryType": "Data",
-        "dataclass": "dlg.data.drops.file.FileDROP",
+        "dropclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0,
             0,
@@ -233,7 +233,7 @@
     {
         "oid": "2022-06-22T09:13:53_-4_0/0/1",
         "categoryType": "Data",
-        "dataclass": "dlg.data.drops.file.FileDROP",
+        "dropclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0,
             0,
@@ -261,7 +261,7 @@
     {
         "oid": "2022-06-22T09:13:53_-4_0/1/0",
         "categoryType": "Data",
-        "dataclass": "dlg.data.drops.file.FileDROP",
+        "dropclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0,
             1,
@@ -289,7 +289,7 @@
     {
         "oid": "2022-06-22T09:13:53_-4_0/1/1",
         "categoryType": "Data",
-        "dataclass": "dlg.data.drops.file.FileDROP",
+        "dropclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0,
             1,
@@ -317,7 +317,7 @@
     {
         "oid": "2022-06-22T09:13:53_-6_0/0/0",
         "categoryType": "Data",
-        "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
         "rank": [
             0,
             0,
@@ -350,7 +350,7 @@
     {
         "oid": "2022-06-22T09:13:53_-6_0/0/1",
         "categoryType": "Data",
-        "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
         "rank": [
             0,
             0,
@@ -375,7 +375,7 @@
     {
         "oid": "2022-06-22T09:13:53_-6_0/1/0",
         "categoryType": "Data",
-        "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
         "rank": [
             0,
             1,
@@ -408,7 +408,7 @@
     {
         "oid": "2022-06-22T09:13:53_-6_0/1/1",
         "categoryType": "Data",
-        "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
         "rank": [
             0,
             1,
@@ -433,7 +433,7 @@
     {
         "oid": "2022-06-22T09:13:53_-9_0/0",
         "categoryType": "Data",
-        "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
         "rank": [
             0,
             0
@@ -460,7 +460,7 @@
     {
         "oid": "2022-06-22T09:13:53_-9_0/1",
         "categoryType": "Data",
-        "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
         "rank": [
             0,
             1
@@ -487,14 +487,14 @@
     {
         "oid": "2022-06-22T09:13:53_-7_0",
         "categoryType": "Application",
-        "appclass": "dlg.apps.simple.GenericScatterApp",
+        "dropclass": "dlg.apps.simple.GenericScatterApp",
         "rank": [
             0
         ],
         "loop_ctx": null,
         "weight": 5,
         "num_cpus": 1,
-        "appclass": "dlg.apps.simple.GenericScatterApp",
+        "dropclass": "dlg.apps.simple.GenericScatterApp",
         "execution_time": 5,
         "group_start": false,
         "array": "",

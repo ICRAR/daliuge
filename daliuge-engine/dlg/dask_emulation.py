@@ -54,7 +54,11 @@ class ResultTransmitter(BarrierAppDROP):
         def read_result(x):
             if x.status == DROPStates.ERROR:
                 return "Error"
-            return pickle.loads(droputils.allDropContents(x))
+            try:
+                content = pickle.loads(droputils.allDropContents(x))
+            except EOFError:
+                content = None
+            return content
 
         results = map(read_result, self.inputs)  # @UndefinedVariable
         results = list(results)
@@ -112,7 +116,7 @@ def compute(value, **kwargs):
             "categoryType": "Application",
             #            "categoryType": CategoryType.APPLICATION,
             # "Application": "dlg.dask_emulation.ResultTransmitter",
-            "appclass": "dlg.dask_emulation.ResultTransmitter",
+            "dropclass": "dlg.dask_emulation.ResultTransmitter",
             "oid": transmitter_oid,
             "uid": transmitter_oid,
             "port": port,
@@ -284,8 +288,9 @@ class _DelayedDrops(_DelayedDrop):
     def make_dropdict(self):
         return dropdict(
             {
+                # "oid": uuid.uuid1(),
                 "categoryType": "Application",
-                "appclass": "dlg.dask_emulation._Listifier",
+                "dropclass": "dlg.dask_emulation._Listifier",
                 "name": "listifier",
             }
         )
@@ -313,8 +318,9 @@ class _AppDrop(_DelayedDrop):
         self.kwarg_names.reverse()
         my_dropdict = dropdict(
             {
+                # "oid": uuid.uuid1(),
                 "categoryType": "Application",
-                "appclass": "dlg.apps.pyfunc.PyFuncApp",
+                "dropclass": "dlg.apps.pyfunc.PyFuncApp",
                 "func_arg_mapping": {},
             }
         )
@@ -394,8 +400,9 @@ class _DataDrop(_DelayedDrop):
     def make_dropdict(self):
         my_dropdict = dropdict(
             {
+                # "oid": uuid.uuid1(),
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             }
         )
         if not self.producer:

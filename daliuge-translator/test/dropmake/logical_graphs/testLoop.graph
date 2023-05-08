@@ -194,6 +194,19 @@
             "fields": [
                 {
                     "defaultValue": "",
+                    "description": "Application class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.apps.bash_shell_app.BashShellApp"
+                },
+                {
+                    "defaultValue": "",
                     "description": "",
                     "id": "20a89dc2-06f3-46ba-92a2-ceded21bd646",
                     "keyAttribute": false,
@@ -331,6 +344,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Application class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.apps.bash_shell_app.BashShellApp"
+                },
                 {
                     "defaultValue": "",
                     "description": "",
@@ -471,6 +497,19 @@
             "drawOrderHint": 0,
             "expanded": true,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.file.FileDROP"
+                },
                 {
                     "defaultValue": "5",
                     "description": "Estimated size of the data contained in this node",

@@ -83,7 +83,7 @@ class ExternalStoreApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param appclass Application Class/dlg.apps.archiving.NgasArchivingApp/String/ComponentParameter/readonly//False/False/Application class
+# @param dropclass Application Class/dlg.apps.archiving.NgasArchivingApp/String/ComponentParameter/readonly//False/False/Application class
 # @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
 # @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time

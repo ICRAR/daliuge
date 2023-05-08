@@ -80,8 +80,8 @@ def unroll(lg, oid_prefix=None, zerorun=False, app=None):
     if app:
         logger.info("Replacing apps with %s", app)
         for dropspec in drop_list:
-            if "appclass" in dropspec:
-                dropspec["appclass"] = app
+            if "dropclass" in dropspec:
+                dropspec["dropclass"] = app
                 dropspec["sleep_time"] = (
                     dropspec["execution_time"]
                     if "execution_time" in dropspec

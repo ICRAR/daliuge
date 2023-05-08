@@ -69,7 +69,7 @@ def fileSpec(uid, **kwargs):
         {
             "oid": str(uid),
             "categoryType": "Data",
-            "dataclass": "dlg.data.drops.file.FileDROP",
+            "dropclass": "dlg.data.drops.file.FileDROP",
         }
     )
     dropSpec.update(kwargs)
@@ -93,7 +93,7 @@ def fluxSpec(uid, **kwargs):
         {
             "oid": str(uid),
             "categoryType": "Application",
-            "appclass": "test.integrate.chiles.chilesdo.SourceFlux",
+            "dropclass": "test.integrate.chiles.chilesdo.SourceFlux",
         }
     )
     dropSpec.update(kwargs)
@@ -105,7 +105,7 @@ def splitSpec(uid, **kwargs):
         {
             "oid": str(uid),
             "categoryType": "Application",
-            "appclass": "test.integrate.chiles.chilesdo.Split",
+            "dropclass": "test.integrate.chiles.chilesdo.Split",
         }
     )
     dropSpec.update(kwargs)
@@ -117,7 +117,7 @@ def scpSpec(uid, **kwargs):
         {
             "oid": str(uid),
             "categoryType": "Application",
-            "appclass": "dlg.apps.scp.ScpApp",
+            "dropclass": "dlg.apps.scp.ScpApp",
         }
     )
     dropSpec.update(kwargs)
@@ -129,7 +129,7 @@ def cleanSpec(uid, **kwargs):
         {
             "oid": str(uid),
             "categoryType": "Application",
-            "appclass": "test.integrate.chiles.chilesdo.Clean",
+            "dropclass": "test.integrate.chiles.chilesdo.Clean",
         }
     )
     dropSpec.update(kwargs)

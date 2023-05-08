@@ -440,20 +440,20 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             }
         ]
         g2 = [
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.pyfunc.PyFuncApp",
+                "dropclass": "dlg.apps.pyfunc.PyFuncApp",
                 "func_name": __name__ + ".func1",
             },
             {
                 "oid": "C",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "producers": ["B"],
             },
         ]
@@ -478,13 +478,13 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
             {
                 "oid": "A",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "consumers": ["B"],
             },
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "appclass": "dlg.apps.pyfunc.PyFuncApp",
+                "dropclass": "dlg.apps.pyfunc.PyFuncApp",
                 "func_name": __name__ + ".func1",
             },
         ]
@@ -492,7 +492,7 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
             {
                 "oid": "C",
                 "categoryType": "Data",
-                "dataclass": "dlg.data.drops.memory.InMemoryDROP",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             }
         ]
         rels = [DROPRel("B", DROPLinkType.PRODUCER, "C")]
