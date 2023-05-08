@@ -37,7 +37,14 @@ except ImportError:
 
 from .data_base import DataDROP
 from dlg.data.io import ErrorIO, OpenMode, DataIO
-from dlg.meta import dlg_string_param, dlg_list_param
+from dlg.meta import (
+    dlg_component,
+    dlg_batch_input,
+    dlg_batch_output,
+    dlg_streaming_input,
+    dlg_string_param,
+    dlg_list_param,
+)
 
 from dlg.named_port_utils import identify_named_ports, check_ports_dict
 
@@ -54,6 +61,7 @@ from dlg.named_port_utils import identify_named_ports, check_ports_dict
 # @param Key Key//String/ComponentParameter/readwrite//False/False/The S3 object key
 # @param profile_name Profile Name//String/ComponentParameter/readwrite//False/False/The S3 profile name
 # @param endpoint_url Endpoint URL//String/ComponentParameter/readwrite//False/False/The URL exposing the S3 REST API
+# @param dropclass dropclass/dlg.data.drops.s3_drop.S3DROP/String/ComponentParameter/readwrite//False/False/The URL exposing the S3 REST API
 # @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
 # @param persist Persist/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
@@ -63,6 +71,14 @@ class S3DROP(DataDROP):
     """
     A DROP that points to data stored in S3
     """
+
+    component_meta = dlg_component(
+        "S3DROP",
+        "S3 Data Drop",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
 
     Bucket = dlg_string_param("Bucket", None)
     Key = dlg_string_param("Key", None)
