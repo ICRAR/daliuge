@@ -1007,6 +1007,7 @@ class LGNode:
         kwargs = {}
         if "dataclass" in self.jd:
             self.dropclass = self.jd["dataclass"]
+        # Backwards compatibility
         if (
             not hasattr(self, "dropclass")
             or self.dropclass == "dlg.apps.simple.SleepApp"
@@ -1020,8 +1021,14 @@ class LGNode:
                 self.dropclass = "dlg.data.drops.memory.InMemoryDROP"
             elif self.category == "SharedMemory":
                 self.dropclass = "dlg.data.drops.memory.SharedMemoryDROP"
+            elif self.category == "S3":
+                self.dropclass = "dlg.data.drops.s3_drop.S3DROP"
+                kwargs["key"] = self.jd.get("Key", None)
+            elif self.category == "NGAS":
+                self.dropclass = "dlg.data.drops.ngas.NgasDROP"
+                kwargs["key"] = self.jd.get("Key", None)
             else:
-                raise TypeError("Unknown data class for drop: %s", self.jd)
+                raise TypeError("Unknown dropclass for drop: %s", self.jd)
         logger.debug("Creating data drop using class: %s", self.dropclass)
         kwargs["dropclass"] = self.dropclass
         kwargs["weight"] = self.weight
