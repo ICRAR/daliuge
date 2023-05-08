@@ -998,7 +998,6 @@ class LGNode:
         kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
         if "mkn" in self.jd:
             kwargs["mkn"] = self.jd["mkn"]
-        self._update_key_value_attributes(kwargs)
         drop_spec.update(kwargs)
         return drop_spec
 
@@ -1014,19 +1013,14 @@ class LGNode:
         ):
             if self.category == "File":
                 self.dropclass = "dlg.data.drops.file.FileDROP"
-                fp = self.jd.get("filepath", None)
-                if fp:
-                    kwargs["filepath"] = fp
             elif self.category == "Memory":
                 self.dropclass = "dlg.data.drops.memory.InMemoryDROP"
             elif self.category == "SharedMemory":
                 self.dropclass = "dlg.data.drops.memory.SharedMemoryDROP"
             elif self.category == "S3":
                 self.dropclass = "dlg.data.drops.s3_drop.S3DROP"
-                kwargs["key"] = self.jd.get("Key", None)
             elif self.category == "NGAS":
                 self.dropclass = "dlg.data.drops.ngas.NgasDROP"
-                kwargs["key"] = self.jd.get("Key", None)
             else:
                 raise TypeError("Unknown dropclass for drop: %s", self.jd)
         logger.debug("Creating data drop using class: %s", self.dropclass)
@@ -1074,6 +1068,7 @@ class LGNode:
             kwargs["categoryType"] = "Application"
             self.jd["categoryType"] = "Application"
             drop_spec = self._create_app_drop(drop_spec)
+        self._update_key_value_attributes(kwargs)
         kwargs["iid"] = iid
         kwargs["lg_key"] = self.id
         if self.is_branch:
