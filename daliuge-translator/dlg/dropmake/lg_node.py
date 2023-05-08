@@ -774,7 +774,9 @@ class LGNode:
         return "{0}_{1}_{2}".format(self._ssid, self.id, iid), rank
 
     def _update_key_value_attributes(self, kwargs):
-        # get the arguments from new fields dictionary in a backwards compatible way
+        """
+        get all the arguments from new fields dictionary in a backwards compatible way
+        """
         if "fields" in self.jd:
             self.jd.update({"nodeAttributes": {}})
             kwargs.update({"nodeAttributes": {}})
