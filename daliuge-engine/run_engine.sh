@@ -2,7 +2,7 @@
 DOCKER_OPTS="\
 --shm-size=2g --ipc=shareable \
 --rm \
-$([[ $(nvidia-docker version) ]] && echo '--gpus=all' || echo '') \
+$([[ $(command -v nvidia-docker version) ]] && echo '--gpus=all' || echo '') \
 --name daliuge-engine \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -p 5555:5555 -p 6666:6666 \
@@ -71,6 +71,13 @@ case "$1" in
         exit 0;;
     "local")
         common_prep
+        res="$(dlg nm -h| grep -c 'Unknown command')"
+        if [[ $res == 1 ]]
+        then
+            echo "dlg command could not be found!"
+            echo "Please install daliuge-engine."
+            exit
+        fi
         echo "Starting managers locally in background.."
         dlg nm -vvd -H 0.0.0.0 --dlg-path=$DLG_ROOT --dlm-cleanup-period=10
         dlg dim -vvd -H 0.0.0.0 -N localhost
