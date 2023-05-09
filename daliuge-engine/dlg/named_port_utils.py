@@ -100,7 +100,7 @@ def identify_named_ports(
     logger.debug(
         "Using named ports to remove %s from arguments port_dict: %s, check_len: %d)",
         mode,
-        port_dict,
+        port_dict.keys(),
         check_len,
     )
     logger.debug("Checking against keyargs: %s", keyargs)

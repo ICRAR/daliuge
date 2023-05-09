@@ -476,7 +476,7 @@ class PyFuncApp(BarrierAppDROP):
         # if defaults dict has not been specified at all we'll go ahead anyway
 
         # 1. Fill arguments with rest of inputs
-        logger.debug(f"available inputs: {inputs}")
+        logger.debug(f"available inputs: {len(inputs)}")
 
         posargs = list(self.posonly.keys()) + list(self.poskw.keys())
         kwargs = {}
@@ -509,14 +509,31 @@ class PyFuncApp(BarrierAppDROP):
                 }
             )
             # if defined in both we use AppArgs values
-            pargsDict.update(
-                {k: appArgs[k]["value"] for k in pargsDict if k in appArgs}
-            )
+            for k in pargsDict:
+                if k in appArgs:
+                    arg = appArgs.pop(k)
+                    if arg["type"] in ["Json", "Complex"]:
+                        value = ast.literal_eval(arg["value"])
+                    else:
+                        value = arg["value"]
+                    pargsDict.update({k: value})
+            for k in keyargsDict:
+                if k in appArgs:
+                    arg = appArgs.pop(k)
+                    if arg["type"] in ["Json", "Complex"]:
+                        value = ast.literal_eval(arg["value"])
+                    else:
+                        value = arg["value"]
+                    keyargsDict.update({k: value})
+
+            # pargsDict.update(
+            # {k: appArgs.pop(k) for k in pargsDict if k in appArgs}
+            # )
             logger.debug("Updated posargs dictionary: %s", pargsDict)
 
-            keyargsDict.update(
-                {k: appArgs[k]["value"] for k in keyargsDict if k in appArgs}
-            )
+            # keyargsDict.update(
+            # {k: appArgs.pop(k) for k in keyargsDict if k in appArgs}
+            # )
             logger.debug("Updated keyargs dictionary: %s", keyargsDict)
 
             # 2. put all remaining arguments into *args and **kwargs
@@ -527,6 +544,11 @@ class PyFuncApp(BarrierAppDROP):
             for arg in appArgs:
                 if appArgs[arg]["type"] in ["Json", "Complex"]:
                     value = ast.literal_eval(appArgs[arg]["value"])
+                    logger.debug(
+                        "Converted %s to literal: %s",
+                        appArgs[arg]["value"],
+                        value,
+                    )
                 else:
                     value = appArgs[arg]["value"]
                 if appArgs[arg]["positional"]:
@@ -631,7 +653,7 @@ class PyFuncApp(BarrierAppDROP):
         with redirect_stdout(capture):
             result = self.f(*bind.args, **bind.kwargs)
 
-        logger.debug("Returned result from %s: %s", self.func_name, result)
+        # logger.debug("Returned result from %s: %s", self.func_name, result)
         logger.info(
             f"Captured output from function app '{self.func_name}': {capture.getvalue()}"
         )
