@@ -40,7 +40,7 @@ class GatherDrop(BarrierAppDROP):
 # @par EAGLE_START
 # @param category Loop
 # @param tag template
-# @param num_of_iter No. of iterations/2/Integer/ApplicationArguments/readwrite//False/False/Number of iterations
+# @param num_of_iter No. of iterations/2/Integer/ApplicationArgument/readwrite//False/False/Number of iterations
 # @par EAGLE_END
 class LoopDrop(BarrierAppDROP):
     """
