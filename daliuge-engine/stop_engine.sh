@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # This utlity script stops a locally running docker-engine container
 case "$1" in
     "docker")
