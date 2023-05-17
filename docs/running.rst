@@ -13,7 +13,7 @@ As a developer the following two commands will start both the translator and the
     cd daliuge-translator ; ./run_translator dev ; cd ..
     cd daliuge-engine ; ./run_engine dev ; cd ..
 
-This is the quickest way to start deploying workflows. Obviously this is limited to a single computer, but certainly useful for testing out the system and developing new components. You can use EAGLE on the URL: https://eagle.icrar.org and point your EAGLE configuration for the translator to http://localhost:8084. Now you have access to a complete |daliuge| system! 
+This is the quickest way to start deploying workflows. Obviously this is limited to a single computer, but certainly useful for testing out the system and developing new components. You can use EAGLE on the URL: https://eagle.icrar.org and point your EAGLE configuration for the translator to http://localhost:8084. In the translator settings you have to set the address of the engine to the IP address of the docker host machine, i.e. http://<IP-address>:8001. Now you have access to a complete |daliuge| system!
 
 The following paragraphs are providing more detailed guidelines to enable people to start the system on multiple nodes to cover the specific local requirements.
 
@@ -30,6 +30,69 @@ Similarly starting the engine::
    ./run_engine.sh dev|dep
 
 The main difference between the development and the deployment version is that the development version is automatically strating a data island manager, while the deployment version is not doing that. Both are starting a Node Manager by default (see below).
+
+Starting and stopping using CLI
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If |daliuge| had been installed in a virtual environment of the host system it is possible to start the managers from the command line::
+
+    dlg dim -H 0.0.0.0 -N localhost -d
+
+and a node manager::
+
+    dlg nm -H 0.0.0.0 -d 
+
+To stop the managers use::
+
+    dlg dim -s 
+
+and::
+
+    dlg nm -s 
+
+respectively.
+
+The other options of the CLI are available on the command line::
+ 
+    ❯ dlg daemon -h
+    Usage: daemon [options]
+
+    Starts a DALiuGE Daemon process
+
+    Options:
+    -h, --help     show this help message and exit
+    -m, --master   Start this DALiuGE daemon as the master daemon
+    --no-nm        Don't start a NodeDropManager by default
+    --no-zeroconf  Don't enable zeroconf on this DALiuGE daemon
+    -v, --verbose  Become more verbose. The more flags, the more verbose
+    -q, --quiet    Be less verbose. The more flags, the quieter
+
+The CLI allows to control the whole system::
+
+    ❯ dlg
+    Usage: /home/awicenec/.pyenv/versions/dlg/bin/dlg [command] [options]
+
+    Commands are:
+        daemon                   Starts a DALiuGE Daemon process
+        dim                      Starts a Drop Island Manager
+        fill                     Fill a Logical Graph with parameters
+        include_dir              Print the directory where C header files can be found
+        lgweb                    A Web server for the Logical Graph Editor
+        map                      Maps a Physical Graph Template to resources and produces a Physical Graph
+        mm                       Starts a Master Manager
+        monitor                  A proxy to be used in conjunction with the dlg proxy in restricted environments
+        nm                       Starts a Node Manager
+        partition                Divides a Physical Graph Template into N logical partitions
+        proxy                    A reverse proxy to be used in restricted environments to contact the Drop Managers
+        replay                   Starts a Replay Manager
+        submit                   Submits a Physical Graph to a Drop Manager
+        unroll                   Unrolls a Logical Graph into a Physical Graph Template
+        unroll-and-partition     unroll + partition
+        version                  Reports the DALiuGE version and exits
+
+    Try $PATH/bin/dlg [command] --help for more details
+
+More details about the usage of the CLI can be found in the :ref:`cli` chapter.
+
 
 Starting and stopping the managers
 ----------------------------------
@@ -77,53 +140,6 @@ This will start the EAGLE docker image built in the previous step and try to ope
 
 (NOTE: The usage of the EAGLE visual graph editor is covered in its own `documentation <https://eagle-dlg.readthedocs.io>`_).
 
-Starting and stopping using CLI
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-If |daliuge| had been installed in a virtual environment of the host system it is possible to start the daemon from the command line and then use the same curl commands as above to start the required managers::
-
-    dlg daemon &
-
-This will also start a NM by default. The other options are available on the command line::
- 
-    ❯ dlg daemon -h
-    Usage: daemon [options]
-
-    Starts a DALiuGE Daemon process
-
-    Options:
-    -h, --help     show this help message and exit
-    -m, --master   Start this DALiuGE daemon as the master daemon
-    --no-nm        Don't start a NodeDropManager by default
-    --no-zeroconf  Don't enable zeroconf on this DALiuGE daemon
-    -v, --verbose  Become more verbose. The more flags, the more verbose
-    -q, --quiet    Be less verbose. The more flags, the quieter
-
-The CLI allows to control the whole system::
-
-    ❯ dlg
-    Usage: /home/awicenec/.pyenv/versions/dlg/bin/dlg [command] [options]
-
-    Commands are:
-        daemon                   Starts a DALiuGE Daemon process
-        dim                      Starts a Drop Island Manager
-        fill                     Fill a Logical Graph with parameters
-        include_dir              Print the directory where C header files can be found
-        lgweb                    A Web server for the Logical Graph Editor
-        map                      Maps a Physical Graph Template to resources and produces a Physical Graph
-        mm                       Starts a Master Manager
-        monitor                  A proxy to be used in conjunction with the dlg proxy in restricted environments
-        nm                       Starts a Node Manager
-        partition                Divides a Physical Graph Template into N logical partitions
-        proxy                    A reverse proxy to be used in restricted environments to contact the Drop Managers
-        replay                   Starts a Replay Manager
-        submit                   Submits a Physical Graph to a Drop Manager
-        unroll                   Unrolls a Logical Graph into a Physical Graph Template
-        unroll-and-partition     unroll + partition
-        version                  Reports the DALiuGE version and exits
-
-    Try $PATH/bin/dlg [command] --help for more details
-
-More details about the usage of the CLI can be found in the :ref:`cli` chapter.
 
 Zeroconf
 ^^^^^^^^
