@@ -325,7 +325,6 @@ class DynlibAppBase(object):
         self._c_outputs_setting_lock = threading.Lock()
 
     def _ensure_c_outputs_are_set(self):
-
         with self._c_outputs_setting_lock:
             if self._c_outputs_set:
                 return
@@ -383,6 +382,7 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
 # @param category DynlibApp
 # @param tag template
 # @param libpath Library Path//String/ComponentParameter/readwrite//False/False/The location of the shared object/DLL that implements this application
+# @param dropclass dropclass/dlg.apps.dynlib.DynlibApp/String/ComponentParameter/readwrite//False/False/Drop class
 # @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
@@ -497,7 +497,6 @@ class DynlibProcApp(BarrierAppDROP):
         self.proc = None
 
     def run(self):
-
         if not hasattr(self, "_rpc_server"):
             raise Exception("DynlibProcApp can only run within an RPC server")
 

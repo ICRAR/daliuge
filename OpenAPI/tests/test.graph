@@ -96,12 +96,12 @@
                     "defaultValue": "",
                     "description": "",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Appclass",
+                    "text": "dropclass",
                     "type": "Unknown",
                     "value": "dlg.apps.simple.SleepAndCopyApp"
                 },
@@ -285,7 +285,7 @@
         {
             "applicationArgs": [],
             "category": "File",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -409,7 +409,7 @@
         {
             "applicationArgs": [],
             "category": "File",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",

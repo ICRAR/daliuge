@@ -17,6 +17,7 @@ The recommended and easiest way to get started is to use the docker container in
 #. *icrar/daliuge-engine* is built on top of the :base image and includes the installation of the DALiuGE execution engine.
 #. *icrar/daliuge-translator* is also built on top of the :base image and includes the installation of the DALiuGE translator.
 
+There are also pre-build images available on dockerHub.
 
 This way we are trying to separate the requirements of the daliuge engine and translator from the rest of the framework, which has a less dynamic development cycle.
 

@@ -19,90 +19,22 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+from enum import Enum
+from dataclasses import dataclass, field, asdict
+import logging
+
 """Common utilities used by daliuge packages"""
 from .osutils import terminate_or_kill, wait_or_kill
 from .network import check_port, connect_to, portIsClosed, portIsOpen, write_to
 from .streams import ZlibCompressedStream, JSONStream
 
-
-class Categories:
-    START = "Start"
-    END = "End"
-
-    MEMORY = "Memory"
-    SHMEM = "SharedMemory"
-    FILE = "File"
-    NGAS = "NGAS"
-    NULL = "null"
-    JSON = "json"
-    S3 = "S3"
-    PLASMA = "Plasma"
-    PLASMAFLIGHT = "PlasmaFlight"
-    PARSET = "ParameterSet"
-    ENVIRONMENTVARS = "EnvironmentVariables"
-
-    MKN = "MKN"
-    SCATTER = "Scatter"
-    GATHER = "Gather"
-    GROUP_BY = "GroupBy"
-    LOOP = "Loop"
-    VARIABLES = "Variables"
-
-    BRANCH = "Branch"
-    DATA = "Data"
-    COMPONENT = "Component"
-    PYTHON_APP = "PythonApp"
-    BASH_SHELL_APP = "BashShellApp"
-    MPI = "Mpi"
-    DYNLIB_APP = "DynlibApp"
-    DOCKER = "Docker"
-    DYNLIB_PROC_APP = "DynlibProcApp"
-    SERVICE = "Service"
-
-    COMMENT = "Comment"
-    DESCRIPTION = "Description"
+logger = logging.getLogger(__name__)
 
 
-STORAGE_TYPES = {
-    Categories.MEMORY,
-    Categories.SHMEM,
-    Categories.FILE,
-    Categories.NGAS,
-    Categories.NULL,
-    Categories.END,
-    Categories.JSON,
-    Categories.PLASMA,
-    Categories.PLASMAFLIGHT,
-    Categories.PARSET,
-    Categories.ENVIRONMENTVARS,
-    Categories.S3,
-}
-APP_DROP_TYPES = [
-    Categories.COMPONENT,
-    Categories.PYTHON_APP,
-    Categories.BRANCH,
-    Categories.BASH_SHELL_APP,
-    Categories.MPI,
-    Categories.DYNLIB_APP,
-    Categories.DOCKER,
-    Categories.DYNLIB_PROC_APP,
-    Categories.SERVICE,
-]
-
-
-class DropType:
-    # this gives the mapping to fields containing class paths
-    DATA = "data" # TODO: need to drop this one
-    DATACLASS = "dataclass"
-    APPCLASS = "appclass"
-    SOCKET = "socket"
-    APP = "app"  # TODO: need to drop this one
-    SERVICE_APP = "serviceapp"  # App drop that runs continously
-    CONTAINER = "container"  # Drop that contains other drops
-
-class CategoryType:
+class CategoryType(str, Enum):
     DATA = "Data"
     APPLICATION = "Application"
+    CONSTRUCT = "Construct"
     GROUP = "Group"
     UNKNOWN = "Unknown"
     SERVICE = "Service"
@@ -110,6 +42,7 @@ class CategoryType:
     SOCKET = "Socket"
     CONTROL = "Control"
     OTHER = "Other"
+
 
 def b2s(b, enc="utf8"):
     "Converts bytes into a string"
@@ -139,30 +72,47 @@ class dropdict(dict):
     DROPManager.
     """
 
-    def _addSomething(self, other, key, IdText=None):
+    def __init__(self, init_dict=None):
+        if init_dict is None:
+            init_dict = {
+                "oid": None,
+                "categoryType": "Unknown",
+            }
+
+        self.update(init_dict)
+        if "oid" not in self:
+            self.update({"oid": None})
+        return super().__init_subclass__()
+
+    def _addSomething(self, other, key, name=None):
         if key not in self:
             self[key] = []
         if other["oid"] not in self[key]:
-            append = {other["oid"]: IdText} if IdText else other["oid"]
+            # TODO: Returning just the other drop OID instead of the named
+            #       port list is not a good solution. Required for the dask
+            #       tests.
+            append = {other["oid"]: name} if name else other["oid"]
+            # if name is None:
+            # raise ValueError
             self[key].append(append)
 
-    def addConsumer(self, other, IdText=None):
-        self._addSomething(other, "consumers", IdText=IdText)
+    def addConsumer(self, other, name=None):
+        self._addSomething(other, "consumers", name=name)
 
-    def addStreamingConsumer(self, other, IdText=None):
-        self._addSomething(other, "streamingConsumers", IdText=IdText)
+    def addStreamingConsumer(self, other, name=None):
+        self._addSomething(other, "streamingConsumers", name=name)
 
-    def addInput(self, other, IdText=None):
-        self._addSomething(other, "inputs", IdText=IdText)
+    def addInput(self, other, name=None):
+        self._addSomething(other, "inputs", name=name)
 
-    def addStreamingInput(self, other, IdText=None):
-        self._addSomething(other, "streamingInputs", IdText=IdText)
+    def addStreamingInput(self, other, name=None):
+        self._addSomething(other, "streamingInputs", name=name)
 
-    def addOutput(self, other, IdText=None):
-        self._addSomething(other, "outputs", IdText=IdText)
+    def addOutput(self, other, name=None):
+        self._addSomething(other, "outputs", name=name)
 
-    def addProducer(self, other, IdText=None):
-        self._addSomething(other, "producers", IdText=IdText)
+    def addProducer(self, other, name=None):
+        self._addSomething(other, "producers", name=name)
 
 
 def _sanitize_links(links):
@@ -193,7 +143,6 @@ def get_roots(pg_spec):
     all_oids = set()
     nonroots = set()
     for dropspec in pg_spec:
-
         # Assumed to be reprodata / other non-drop elements
         #
         # TODO (rtobar): Note that this should be a temporary measure.
@@ -207,14 +156,24 @@ def get_roots(pg_spec):
 
         oid = dropspec["oid"]
         all_oids.add(oid)
-
-        if dropspec["type"] in (DropType.APP, DropType.SOCKET):
-            if dropspec.get("inputs", None) or dropspec.get("streamingInputs", None):
+        ctype = (
+            dropspec["categoryType"]
+            if "categoryType" in dropspec
+            else dropspec["type"]
+        )
+        if ctype in (
+            CategoryType.APPLICATION,
+            CategoryType.SOCKET,
+            "app",
+        ):
+            if dropspec.get("inputs", None) or dropspec.get(
+                "streamingInputs", None
+            ):
                 nonroots.add(oid)
             if dropspec.get("outputs", None):
                 do = _sanitize_links(dropspec["outputs"])
                 nonroots |= set(do)
-        elif dropspec["type"] == DropType.DATA:
+        elif ctype == CategoryType.DATA:
             if dropspec.get("producers", None):
                 nonroots.add(oid)
             if dropspec.get("consumers", None):
@@ -238,11 +197,15 @@ def get_leaves(pg_spec):
     all_oids = set()
     nonleaves = set()
     for dropspec in pg_spec:
-
         oid = dropspec["oid"]
         all_oids.add(oid)
+        ctype = (
+            dropspec["categoryType"]
+            if "categoryType" in dropspec
+            else dropspec["type"]
+        )
 
-        if dropspec["type"] == DropType.APP:
+        if ctype in [CategoryType.APPLICATION, "app"]:
             if dropspec.get("outputs", None):
                 nonleaves.add(oid)
             if dropspec.get("streamingInputs", None):
@@ -251,7 +214,7 @@ def get_leaves(pg_spec):
             if dropspec.get("inputs", None):
                 di = _sanitize_links(dropspec["inputs"])
                 nonleaves |= set(di)
-        if dropspec["type"] == DropType.SERVICE_APP:
+        if ctype in [CategoryType.SERVICE, "socket"]:
             nonleaves.add(oid)  # services are never leaves
             if dropspec.get("streamingInputs", None):
                 dsi = _sanitize_links(dropspec["streamingInputs"])
@@ -259,7 +222,7 @@ def get_leaves(pg_spec):
             if dropspec.get("inputs", None):
                 di = _sanitize_links(dropspec["inputs"])
                 nonleaves |= set(di)
-        elif dropspec["type"] == DropType.DATA:
+        elif ctype in [CategoryType.DATA, "data"]:
             if dropspec.get("producers", None):
                 dp = _sanitize_links(dropspec["producers"])
                 nonleaves |= set(dp)

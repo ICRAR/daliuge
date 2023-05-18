@@ -55,8 +55,11 @@ from dlg.manager.constants import (
     ISLAND_DEFAULT_REST_PORT,
     MASTER_DEFAULT_REST_PORT,
 )
-from dlg.common.reproducibility.reproducibility import init_pgt_unroll_repro_data, \
-    init_pgt_partition_repro_data, init_pg_repro_data
+from dlg.common.reproducibility.reproducibility import (
+    init_pgt_unroll_repro_data,
+    init_pgt_partition_repro_data,
+    init_pg_repro_data,
+)
 
 DIM_WAIT_TIME = 60
 MM_WAIT_TIME = DIM_WAIT_TIME
@@ -64,7 +67,11 @@ GRAPH_SUBMIT_WAIT_TIME = 10
 GRAPH_MONITOR_INTERVAL = 5
 VERBOSITY = "5"
 LOGGER = logging.getLogger("deploy.dlg.cluster")
-APPS = (None, "test.graphsRepository.SleepApp", "test.graphsRepository.SleepAndCopyApp")
+APPS = (
+    None,
+    "test.graphsRepository.SleepApp",
+    "test.graphsRepository.SleepAndCopyApp",
+)
 
 
 def check_host(host, port, timeout=5, check_with_session=False):
@@ -97,7 +104,10 @@ def check_hosts(ips, port, timeout=None, check_with_session=False, retry=1):
         ntries = retry
         while ntries:
             if check_host(
-                ip_addr, port, timeout=timeout, check_with_session=check_with_session
+                ip_addr,
+                port,
+                timeout=timeout,
+                check_with_session=check_with_session,
             ):
                 LOGGER.info("Host %s:%d is running", ip_addr, port)
                 return ip_addr
@@ -117,7 +127,9 @@ def check_hosts(ips, port, timeout=None, check_with_session=False, retry=1):
 def get_ip_via_ifconfig(iface_index):
     out = subprocess.check_output("ifconfig")
     ifaces_info = list(filter(None, out.split(b"\n\n")))
-    LOGGER.info("Found %d interfaces, getting %d", len(ifaces_info), iface_index)
+    LOGGER.info(
+        "Found %d interfaces, getting %d", len(ifaces_info), iface_index
+    )
     for line in ifaces_info[iface_index].splitlines():
         line = line.strip()
         if line.startswith(b"inet"):
@@ -137,7 +149,13 @@ def get_workspace_dir(log_dir):
 
 
 def start_node_mgr(
-    log_dir, my_ip, logv=1, max_threads=0, host=None, event_listeners="", use_tool=True
+    log_dir,
+    my_ip,
+    logv=1,
+    max_threads=0,
+    host=None,
+    event_listeners="",
+    use_tool=True,
 ):
     """
     Start node manager
@@ -164,7 +182,8 @@ def start_node_mgr(
 
     if use_tool:
         # This returns immediately
-        proc = tool.start_process("nm", args)
+        # proc = tool.start_process("nm", args)
+        proc = tool.start_process("name", args)
         LOGGER.info("Node manager process started with pid %d", proc.pid)
         return proc
     else:
@@ -177,7 +196,9 @@ def start_dim(node_list, log_dir, origin_ip, logv=1):
     Start data island manager
     """
     LOGGER.info(
-        "Starting island manager on host %s for node managers %r", origin_ip, node_list
+        "Starting island manager on host %s for node managers %r",
+        origin_ip,
+        node_list,
     )
     log_level = "v" * logv
     args = [
@@ -266,15 +287,22 @@ def submit_and_monitor(physical_graph, opts, host, port, submit=True):
         else:
             session_id = opts.ssid
 
-        LOGGER.info(f"Start monitoring session(s) '{session_id}' on host {host}:{port}")
+        LOGGER.info(
+            f"Start monitoring session(s) '{session_id}' on host {host}:{port}"
+        )
         while True:
             try:
                 common.monitor_sessions(
-                    session_id, host=host, port=port, status_dump_path=dump_path
+                    session_id,
+                    host=host,
+                    port=port,
+                    status_dump_path=dump_path,
                 )
                 break
             except:
-                LOGGER.exception(f"Monitoring {host}:{port} failed, restarting it")
+                LOGGER.exception(
+                    f"Monitoring {host}:{port} failed, restarting it"
+                )
                 time.sleep(5)
 
     threads = threading.Thread(target=_task)
@@ -304,7 +332,9 @@ def modify_pg(pgt, modifier):
     parts = modifier.split(",")
     func = utils.get_symbol(parts[0])
     args = list(filter(lambda x: "=" not in x, parts[1:]))
-    kwargs = dict(map(lambda x: x.split("="), filter(lambda x: "=" in x, parts[1:])))
+    kwargs = dict(
+        map(lambda x: x.split("="), filter(lambda x: "=" in x, parts[1:]))
+    )
     return func(pgt, *args, **kwargs)
 
 
@@ -317,9 +347,11 @@ def get_pg(opts, nms, dims):
     num_nms = len(nms)
     num_dims = len(dims)
     if opts.logical_graph:
-        unrolled = init_pgt_unroll_repro_data(pg_generator.unroll(
-            opts.logical_graph, opts.ssid, opts.zerorun, APPS[opts.app]
-        ))
+        unrolled = init_pgt_unroll_repro_data(
+            pg_generator.unroll(
+                opts.logical_graph, opts.ssid, opts.zerorun, APPS[opts.app]
+            )
+        )
         reprodata = {}
         if not unrolled[-1].get("oid"):
             reprodata = unrolled.pop()
@@ -351,10 +383,14 @@ def get_pg(opts, nms, dims):
         timeout=MM_WAIT_TIME,
         retry=3,
     )
-    LOGGER.info(f"Mapping graph to available resources: nms {nms}, dims {dims}")
-    physical_graph = init_pg_repro_data(pg_generator.resource_map(
-        pgt, dims + nms, num_islands=num_dims, co_host_dim=opts.co_host_dim
-    ))
+    LOGGER.info(
+        f"Mapping graph to available resources: nms {nms}, dims {dims}"
+    )
+    physical_graph = init_pg_repro_data(
+        pg_generator.resource_map(
+            pgt, dims + nms, num_islands=num_dims, co_host_dim=opts.co_host_dim
+        )
+    )
     graph_name = os.path.basename(opts.log_dir)
     graph_name = f"{graph_name.split('_')[0]}.json"  # get just the graph name
     with open(os.path.join(opts.log_dir, graph_name), "wt") as pg_file:
@@ -363,7 +399,9 @@ def get_pg(opts, nms, dims):
 
 
 def get_ip(opts):
-    find_ip = get_ip_via_ifconfig if opts.use_ifconfig else get_ip_via_netifaces
+    find_ip = (
+        get_ip_via_ifconfig if opts.use_ifconfig else get_ip_via_netifaces
+    )
     return find_ip(opts.interface)
 
 
@@ -502,7 +540,7 @@ def main():
         action="append",
         dest="algo_params",
         help="Extra name=value parameters used by the algorithms (algorithm-specific)",
-        default=[]
+        default=[],
     )
 
     parser.add_option(
@@ -595,7 +633,9 @@ def main():
 
     if options.check_interfaces:
         try:
-            print("From netifaces: %s" % get_ip_via_netifaces(options.interface))
+            print(
+                "From netifaces: %s" % get_ip_via_netifaces(options.interface)
+            )
         except:
             LOGGER.exception("Failed to get information via netifaces")
         try:
@@ -618,7 +658,9 @@ def main():
         )
     for graph_file_name in (options.logical_graph, options.physical_graph):
         if graph_file_name and not os.path.exists(graph_file_name):
-            parser.error("Cannot locate graph file at '{0}'".format(graph_file_name))
+            parser.error(
+                "Cannot locate graph file at '{0}'".format(graph_file_name)
+            )
 
     if options.monitor_host is not None and options.num_islands > 1:
         parser.error("We do not support proxy monitor multiple islands yet")
@@ -635,7 +677,9 @@ def main():
         "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] "
         "%(name)s#%(funcName)s:%(lineno)s %(message)s"
     )
-    logging.basicConfig(filename=logfile, level=logging.DEBUG, format=log_format)
+    logging.basicConfig(
+        filename=logfile, level=logging.DEBUG, format=log_format
+    )
 
     LOGGER.info("This node has IP address: %s", remote.my_ip)
 
@@ -649,7 +693,9 @@ def main():
 
     # need to dump nodes file first
     if remote.is_highest_level_manager:
-        LOGGER.info(f"Node {remote.my_ip} is hosting the highest level manager")
+        LOGGER.info(
+            f"Node {remote.my_ip} is hosting the highest level manager"
+        )
         nodesfile = os.path.join(log_dir, "nodes.txt")
         LOGGER.debug("Dumping list of nodes to %s", nodesfile)
         with open(nodesfile, "wt") as env_file:
@@ -675,7 +721,9 @@ def main():
 
         if remote.is_proxy:
             # Wait until the Island Manager is open
-            if utils.portIsOpen(remote.hl_mgr_ip, ISLAND_DEFAULT_REST_PORT, 100):
+            if utils.portIsOpen(
+                remote.hl_mgr_ip, ISLAND_DEFAULT_REST_PORT, 100
+            ):
                 start_proxy(
                     remote.hl_mgr_ip,
                     ISLAND_DEFAULT_REST_PORT,
@@ -688,12 +736,18 @@ def main():
                 )
         elif remote.my_ip in remote.dim_ips:
             LOGGER.info(f"Starting island managers on nodes: {remote.dim_ips}")
-            dim_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
+            dim_proc = start_dim(
+                remote.nm_ips, log_dir, remote.my_ip, logv=logv
+            )
             # whichever way we came from, now we have to wait until session is finished
             # we always monitor the island, else we will have race conditions
             physical_graph = get_pg(options, remote.nm_ips, remote.dim_ips)
             monitoring_thread = submit_and_monitor(
-                physical_graph, options, remote.dim_ips[0], REST_PORT, submit=co_hosted
+                physical_graph,
+                options,
+                remote.dim_ips[0],
+                REST_PORT,
+                submit=co_hosted,
             )
             monitoring_thread.join()
             # now the session is finished
@@ -717,7 +771,10 @@ def main():
 
         # 7. make sure all DIMs are up running
         dim_ips_up = check_hosts(
-            remote.dim_ips, ISLAND_DEFAULT_REST_PORT, timeout=MM_WAIT_TIME, retry=10
+            remote.dim_ips,
+            ISLAND_DEFAULT_REST_PORT,
+            timeout=MM_WAIT_TIME,
+            retry=10,
         )
         if len(dim_ips_up) < len(remote.dim_ips):
             LOGGER.warning(

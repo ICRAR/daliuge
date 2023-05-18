@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # script builds the daliuge-translator docker container either with a tag referring to the current
 # branch name or with a release tag depending whether this is a development or deployment
 # version.

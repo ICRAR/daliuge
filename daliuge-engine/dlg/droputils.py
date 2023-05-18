@@ -37,7 +37,6 @@ import numpy as np
 from dlg.ddap_protocol import DROPStates
 from dlg.data.io import IOForURL, OpenMode
 from dlg import common
-from dlg.common import DropType
 from dlg.apps.app_base import AppDROP
 
 from typing import TYPE_CHECKING
@@ -154,7 +153,7 @@ def copyDropContents(
     st = time.time()
     ssize = source.size if source.size is not None else -1
     logger.debug(
-        "Source size: %d; Source checksum: %d", ssize, source.checksum
+        "Source size: %s; Source checksum: %s", ssize, source.checksum
     )
     tot_w = 0
     ofl = True
@@ -236,7 +235,7 @@ def getLeafNodes(drops):
     return [
         drop
         for drop, _ in breadFirstTraverse(drops)
-        if not getDownstreamObjects(drop) and drop.type != DropType.SERVICE_APP
+        if not getDownstreamObjects(drop) and drop.type != "dropclass"
     ]
 
 

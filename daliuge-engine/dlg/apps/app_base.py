@@ -147,7 +147,7 @@ class AppDROP(ContainerDROP):
         else:
             for key, field in self.parameters["applicationArgs"].items():
                 if field["usage"] in ["InputPort", "InputOutput"]:
-                    named_inputs[field["text"]] = field
+                    named_inputs[field["name"]] = field
         return named_inputs
 
     def _generateNamedOutputs(self):
@@ -167,7 +167,7 @@ class AppDROP(ContainerDROP):
         else:
             for key, field in self.parameters["applicationArgs"].items():
                 if field["usage"] in ["OutputPort", "InputOutput"]:
-                    named_outputs[field["text"]] = field
+                    named_outputs[field["name"]] = field
         return named_outputs
 
     def handleEvent(self, e):
@@ -219,7 +219,9 @@ class AppDROP(ContainerDROP):
         else:
             self.status = DROPStates.COMPLETED
         logger.debug(
-            "Moving %r to %s", self, "FINISHED" if not is_error else "ERROR"
+            "Moving %r to %s",
+            self.oid,
+            "FINISHED" if not is_error else "ERROR",
         )
         self._fire(
             "producerFinished", status=self.status, execStatus=self.execStatus
@@ -424,7 +426,7 @@ class InputFiredAppDROP(AppDROP):
         #       applications, for the time being they follow their execState.
 
         # Run at most self._n_tries if there are errors during the execution
-        logger.debug("Executing %r", self)
+        logger.debug("Executing %r", self.oid)
         tries = 0
         drop_state = DROPStates.COMPLETED
         self.execStatus = AppDROPStates.RUNNING
@@ -452,7 +454,7 @@ class InputFiredAppDROP(AppDROP):
                     return
                 tries += 1
                 logger.exception(
-                    "Error while executing %r (try %d/%d)",
+                    "Error while executing %r (try %s/%s)",
                     self,
                     tries,
                     self.n_tries,

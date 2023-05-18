@@ -29,7 +29,7 @@ import unittest
 import pkg_resources
 from dlg import droputils
 from dlg import utils
-from dlg.common import tool, Categories
+from dlg.common import tool
 from dlg.ddap_protocol import DROPStates
 from dlg.manager.composite_manager import MasterManager
 from dlg.manager.session import SessionStates
@@ -45,7 +45,7 @@ default_repro = {
         "lg_blockhash": "x",
         "pgt_blockhash": "y",
         "pg_blockhash": "z",
-    }
+    },
 }
 default_graph_repro = {
     "rmode": "1",
@@ -53,7 +53,7 @@ default_graph_repro = {
     "merkleroot": "a",
     "RERUN": {
         "signature": "b",
-    }
+    },
 }
 
 
@@ -84,25 +84,25 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         graphSpec = [
             {
                 "oid": "A",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "island": hostname,
                 "node": hostname,
                 "consumers": ["B"],
             },
             {
                 "oid": "B",
-                "type": "app",
-                "app": "dlg.apps.simple.SleepAndCopyApp",
-                "sleepTime": sleepTime,
+                "categoryType": "Application",
+                "dropclass": "dlg.apps.simple.SleepAndCopyApp",
+                "sleep_time": sleepTime,
                 "outputs": ["C"],
                 "node": hostname,
                 "island": hostname,
             },
             {
                 "oid": "C",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "island": hostname,
                 "node": hostname,
             },
@@ -118,53 +118,66 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         self.assertEqual(sessionId, self.nm.getSessionIds()[0])
 
     def test_addGraphSpec(self):
-
         sessionId = "lalo"
 
         # No node specified
-        graphSpec = [{"oid": "A", "type": "data", "storage": Categories.MEMORY}]
-        self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
+        graphSpec = [
+            {
+                "oid": "A",
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+            }
+        ]
+        self.assertRaises(
+            Exception, self.mm.addGraphSpec, sessionId, graphSpec
+        )
 
         # Wrong node specified
         graphSpec = [
             {
                 "oid": "A",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": "unknown_host",
             }
         ]
-        self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
+        self.assertRaises(
+            Exception, self.mm.addGraphSpec, sessionId, graphSpec
+        )
 
         # No island specified
         graphSpec = [
             {
                 "oid": "A",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
             }
         ]
-        self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
+        self.assertRaises(
+            Exception, self.mm.addGraphSpec, sessionId, graphSpec
+        )
 
         # Wrong island specified
         graphSpec = [
             {
                 "oid": "A",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
                 "island": "unknown_host",
             }
         ]
-        self.assertRaises(Exception, self.mm.addGraphSpec, sessionId, graphSpec)
+        self.assertRaises(
+            Exception, self.mm.addGraphSpec, sessionId, graphSpec
+        )
 
         # OK
         graphSpec = [
             {
                 "oid": "A",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
                 "island": hostname,
             }
@@ -181,11 +194,12 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         self.assertEqual(1, len(graphFromMM))
         dropSpec = list(graphFromMM.values())[0]
         self.assertEqual("A", dropSpec["oid"])
-        self.assertEqual("data", dropSpec["type"])
-        self.assertEqual("Memory", dropSpec["storage"])
+        self.assertEqual("Data", dropSpec["categoryType"])
+        self.assertEqual(
+            "dlg.data.drops.memory.InMemoryDROP", dropSpec["dropclass"]
+        )
 
     def test_deployGraph(self):
-
         sessionId = "lalo"
         self.createSessionAndAddTypicalGraph(sessionId)
 
@@ -201,16 +215,15 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         self.assertEqual(data, droputils.allDropContents(c))
 
     def test_deployGraphWithCompletedDOs(self):
-
         sessionId = "lalo"
-        self.createSessionAndAddTypicalGraph(sessionId, sleepTime=1)
+        self.createSessionAndAddTypicalGraph(sessionId, sleepTime=2)
 
         # Deploy now and get A
         self.mm.deploySession(sessionId, completedDrops=["A"])
         c = self.nm._sessions[sessionId].drops["C"]
 
         # This should be happening before the sleepTime expires
-        with droputils.DROPWaiterCtx(self, c, 2):
+        with droputils.DROPWaiterCtx(self, c, 5):
             pass
 
         self.assertEqual(DROPStates.COMPLETED, c.status)
@@ -223,7 +236,9 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
             self.assertEqual(1, len(sessionStatusMM))
             self.assertIn(hostname, sessionStatusMM)
             self.assertDictEqual(sessionStatusDIM, sessionStatusMM[hostname])
-            self.assertEqual(sessionStatusNM, sessionStatusMM[hostname][hostname])
+            self.assertEqual(
+                sessionStatusNM, sessionStatusMM[hostname][hostname]
+            )
             self.assertEqual(sessionStatusNM, status)
 
         sessionId = "lala"
@@ -246,7 +261,6 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         assertSessionStatus(sessionId, SessionStates.FINISHED)
 
     def test_getGraph(self):
-
         sessionId = "lalo"
         self.createSessionAndAddTypicalGraph(sessionId)
 
@@ -296,7 +310,6 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
         mmProcess = tool.start_process("mm", args)
 
         with testutils.terminating(mmProcess, 10):
-
             # Wait until the REST server becomes alive
             self.assertTrue(
                 utils.portIsOpen("localhost", restPort, timeout=10),
@@ -319,7 +332,8 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             self.assertEqual(1, len(sessions))
             self.assertEqual(sessionId, sessions[0]["sessionId"])
             self.assertDictEqual(
-                {hostname: {hostname: SessionStates.PRISTINE}}, sessions[0]["status"]
+                {hostname: {hostname: SessionStates.PRISTINE}},
+                sessions[0]["status"],
             )
 
             # Add this complex graph spec to the session
@@ -342,7 +356,9 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             )
             self.assertEqual(
                 {hostname: {hostname: SessionStates.BUILDING}},
-                testutils.get(self, "/sessions/%s/status" % (sessionId), restPort),
+                testutils.get(
+                    self, "/sessions/%s/status" % (sessionId), restPort
+                ),
             )
 
             # Now we deploy the graph...
@@ -355,7 +371,9 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             )
             self.assertEqual(
                 {hostname: {hostname: SessionStates.RUNNING}},
-                testutils.get(self, "/sessions/%s/status" % (sessionId), restPort),
+                testutils.get(
+                    self, "/sessions/%s/status" % (sessionId), restPort
+                ),
             )
 
             # ...and write to all 5 root nodes that are listening in ports
@@ -370,15 +388,17 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             # it finished by polling the status of the session
             while (
                 SessionStates.RUNNING
-                in testutils.get(self, "/sessions/%s/status" % (sessionId), restPort)[
-                    hostname
-                ].values()
+                in testutils.get(
+                    self, "/sessions/%s/status" % (sessionId), restPort
+                )[hostname].values()
             ):
                 time.sleep(0.2)
 
             self.assertEqual(
                 {hostname: {hostname: SessionStates.FINISHED}},
-                testutils.get(self, "/sessions/%s/status" % (sessionId), restPort),
+                testutils.get(
+                    self, "/sessions/%s/status" % (sessionId), restPort
+                ),
             )
             testutils.delete(self, "/sessions/%s" % (sessionId), restPort)
             sessions = testutils.get(self, "/sessions", restPort)

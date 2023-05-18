@@ -27,7 +27,6 @@ import unittest
 
 from dlg import droputils
 from dlg.apps.dynlib import DynlibApp, DynlibStreamApp, DynlibProcApp
-from dlg.common import Categories
 from dlg.ddap_protocol import DROPRel, DROPLinkType, DROPStates
 from dlg.data.drops.data_base import NullDROP
 from dlg.data.drops.memory import InMemoryDROP
@@ -139,20 +138,26 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
         | A --|----|-> B --> C |
         =======    =============
         """
-        g1 = [{"oid": "A", "type": "data", "storage": Categories.MEMORY}]
+        g1 = [
+            {
+                "oid": "A",
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+            }
+        ]
         g2 = [
             {
                 "oid": "B",
-                "type": "app",
-                "app": self.app,
+                "categoryType": "Application",
+                "dropclass": self.app,
                 "lib": _libpath,
                 "print_stats": print_stats,
                 "bufsize": bufsize,
             },
             {
                 "oid": "C",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "producers": ["B"],
             },
         ]
@@ -173,20 +178,26 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
         g1 = [
             {
                 "oid": "A",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "consumers": ["B"],
             },
             {
                 "oid": "B",
-                "type": "app",
-                "app": self.app,
+                "categoryType": "Application",
+                "dropclass": self.app,
                 "lib": _libpath,
                 "print_stats": print_stats,
                 "bufsize": bufsize,
             },
         ]
-        g2 = [{"oid": "C", "type": "data", "storage": Categories.MEMORY}]
+        g2 = [
+            {
+                "oid": "C",
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+            }
+        ]
         rels = [DROPRel("B", DROPLinkType.PRODUCER, "C")]
         a_data = os.urandom(32)
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, a_data)
@@ -203,22 +214,30 @@ class IntraNMMixIng(test_dm.NMTestsMixIn):
         =======    ===============
         """
         g1 = [
-            {"oid": "A", "type": "data", "storage": Categories.MEMORY},
-            {"oid": "B", "type": "data", "storage": Categories.MEMORY},
+            {
+                "oid": "A",
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+            },
+            {
+                "oid": "B",
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+            },
         ]
         g2 = [
             {
                 "oid": "C",
-                "type": "app",
-                "app": self.app,
+                "categoryType": "Application",
+                "dropclass": self.app,
                 "lib": _libpath,
                 "print_stats": print_stats,
                 "bufsize": bufsize,
             },
             {
                 "oid": "D",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "producers": ["C"],
             },
         ]
@@ -256,14 +275,22 @@ class IntraNMDynlibProcAppTest(IntraNMMixIng, unittest.TestCase):
     def test_crashing_dynlib(self):
         """Like test_multiple_inputs_in_remote_nm, but C crashes"""
         g1 = [
-            {"oid": "A", "type": "data", "storage": Categories.MEMORY},
-            {"oid": "B", "type": "data", "storage": Categories.MEMORY},
+            {
+                "oid": "A",
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+            },
+            {
+                "oid": "B",
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+            },
         ]
         g2 = [
             {
                 "oid": "C",
-                "type": "app",
-                "app": self.app,
+                "categoryType": "Application",
+                "dropclass": self.app,
                 "lib": _libpath,
                 "print_stats": print_stats,
                 "bufsize": bufsize,
@@ -271,8 +298,8 @@ class IntraNMDynlibProcAppTest(IntraNMMixIng, unittest.TestCase):
             },
             {
                 "oid": "D",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "producers": ["C"],
             },
         ]

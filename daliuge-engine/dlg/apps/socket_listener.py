@@ -56,7 +56,7 @@ logger = logging.getLogger(__name__)
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param appclass Application Class/dlg.apps.socket_listener.SocketListener/String/ComponentParameter/readonly//False/False/Application class
+# @param dropclass Application Class/dlg.apps.socket_listener.SocketListener/String/ComponentParameter/readonly//False/False/Application class
 # @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?

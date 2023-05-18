@@ -1,13 +1,13 @@
 [
     {
         "oid": "2022-02-11T08:05:47_-1_0",
-        "type": "app",
-        "app": "dlg.apps.bash_shell_app.BashShellApp",
+        "categoryType": "Application",
+        "dropclass": "dlg.apps.bash_shell_app.BashShellApp",
         "rank": [
             0
         ],
-        "loop_cxt": null,
-        "tw": 5,
+        "loop_ctx": null,
+        "weight": 5,
         "execution_time": 5,
         "num_cpus": 1,
         "group_start": false,
@@ -66,7 +66,7 @@
         "iid": "0",
         "lg_key": -1,
         "dt": "BashShellApp",
-        "nm": "dd",
+        "name": "dd",
         "outputs": [
             "2022-02-11T08:05:47_-3_0"
         ],
@@ -78,13 +78,13 @@
     },
     {
         "oid": "2022-02-11T08:05:47_-3_0",
-        "type": "data",
-        "storage": "File",
+        "categoryType": "Data",
+        "dropclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0
         ],
-        "loop_cxt": null,
-        "dw": 5,
+        "loop_ctx": null,
+        "weight": 5,
         "check_filepath_exists": false,
         "data_volume": 5,
         "group_end": false,
@@ -94,7 +94,7 @@
         "iid": "0",
         "lg_key": -3,
         "dt": "File",
-        "nm": "OutputFile",
+        "name": "OutputFile",
         "producers": [
             "2022-02-11T08:05:47_-1_0"
         ],
@@ -103,13 +103,13 @@
     },
     {
         "oid": "2022-02-11T08:05:47_-5_0",
-        "type": "data",
-        "storage": "File",
+        "categoryType": "Data",
+        "dropclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0
         ],
-        "loop_cxt": null,
-        "dw": 5,
+        "loop_ctx": null,
+        "weight": 5,
         "check_filepath_exists": false,
         "data_volume": 5,
         "group_end": false,
@@ -151,7 +151,7 @@
         "iid": "0",
         "lg_key": -5,
         "dt": "File",
-        "nm": "content",
+        "name": "content",
         "consumers": [
             "2022-02-11T08:05:47_-1_0"
         ],

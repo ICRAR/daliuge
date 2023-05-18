@@ -44,7 +44,7 @@
         {
             "applicationArgs": [],
             "category": "NGAS",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -158,7 +158,7 @@
         {
             "applicationArgs": [],
             "category": "NGAS",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -272,12 +272,12 @@
                     "defaultValue": "",
                     "description": "Application class",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "appclass",
+                    "text": "dropclass",
                     "type": "String",
                     "value": "dlg.apps.simple.CopyApp"
                 },

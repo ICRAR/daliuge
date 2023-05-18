@@ -42,6 +42,7 @@ from dlg.utils import prepare_sql
 # @param vals Values dictionary/{}/Json/ComponentParameter/readwrite//False/False/Json encoded values dictionary used for INSERT. The keys of ``vals`` are used as the column names.
 # @param condition Whats used after WHERE//String/ComponentParameter/readwrite//False/False/Condition for SELECT. For this the WHERE statement must be written using the "{X}" or "{}" placeholders
 # @param selectVals values for WHERE/{}/Json/ComponentParameter/readwrite//False/False/Values for the WHERE statement
+# @param dropclass dropclass/dlg.data.drops.rdbms.RDBMSDrop/String/ComponentParameter/readwrite//False/False/Drop class
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
@@ -117,7 +118,6 @@ class RDBMSDrop(DataDROP):
         """
         with self._connection() as c:
             with self._cursor(c) as cur:
-
                 # Build up SQL with optional columns and conditions
                 columns = columns or ("*",)
                 sql = [

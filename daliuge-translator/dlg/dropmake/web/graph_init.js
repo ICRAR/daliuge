@@ -210,7 +210,7 @@ function _addNode(g, node) {
 
     var typeClass = node.category;
     var typeShape = TYPE_SHAPES[node.category];
-    var notes = node.text;
+    var notes = node.name;
 
     var oid = node.oid;
     var html = '<div class="drop-label ' + typeShape + '" id="id_' + oid + '">';
@@ -254,9 +254,9 @@ function echartsGraphInit(type, data) {
         newElement = {};
         if (!element.hasOwnProperty("isGroup")) {
             // helper map to fix the links later
-            keyIndex.set(element.key, element.text + '-' + element.key.toString());
+            keyIndex.set(element.key, element.name + '-' + element.key.toString());
             //data options
-            newElement.name = element.text + '-' + element.key.toString();
+            newElement.name = element.name + '-' + element.key.toString();
 
             newElement.label = {
                 'rotate': 45,

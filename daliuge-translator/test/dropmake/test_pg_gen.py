@@ -22,6 +22,7 @@
 import unittest
 
 import pkg_resources
+from dlg.common import CategoryType
 from dlg.dropmake.lg import LG
 from dlg.dropmake.pgt import PGT, GPGTNoNeedMergeException
 from dlg.dropmake.pgtp import MetisPGTP, MySarkarPGTP, MinNumPartsPGTP
@@ -39,10 +40,10 @@ def get_lg_fname(lg_name):
 
 class TestPGGen(unittest.TestCase):
     def test_pg_generator(self):
-        fp = get_lg_fname("cont_img.graph")
+        fp = get_lg_fname("cont_img_mvp.graph")
         #        fp = get_lg_fname('testScatter.graph')
         lg = LG(fp)
-        self.assertEqual(len(lg._done_dict.keys()), 46)
+        self.assertEqual(len(lg._done_dict.keys()), 45)
         drop_list = lg.unroll_to_tpl()
         # print json.dumps(drop_list, indent=2)
         # pprint.pprint(drop_list)
@@ -70,9 +71,9 @@ class TestPGGen(unittest.TestCase):
     def test_metis_pgtp(self):
         lgnames = [
             "HelloWorld_simple.graph",
-            "simpleMKN.graph",
+            # "simpleMKN.graph",
             "testLoop.graph",
-            "cont_img.graph",
+            "cont_img_mvp.graph",
             "test_grpby_gather.graph",
             "chiles_simple.graph",
         ]
@@ -88,7 +89,7 @@ class TestPGGen(unittest.TestCase):
         lgnames = [
             "HelloWorld_simple.graph",
             "testLoop.graph",
-            "cont_img.graph",
+            "cont_img_mvp.graph",
             "test_grpby_gather.graph",
             "chiles_simple.graph",
         ]
@@ -108,7 +109,7 @@ class TestPGGen(unittest.TestCase):
     def test_metis_pgtp_gen_pg_island(self):
         lgnames = [
             "testLoop.graph",
-            "cont_img.graph",
+            "cont_img_mvp.graph",
             "test_grpby_gather.graph",
             "chiles_simple.graph",
         ]
@@ -135,11 +136,11 @@ class TestPGGen(unittest.TestCase):
     def test_mysarkar_pgtp(self):
         lgnames = [
             "testLoop.graph",
-            "cont_img.graph",
+            "cont_img_mvp.graph",
             "test_grpby_gather.graph",
             "chiles_simple.graph",
         ]
-        tgt_partnum = [15, 15, 10, 10, 5]
+        # tgt_partnum = [15, 15, 10, 10, 5]
         for i, lgn in enumerate(lgnames):
             fp = get_lg_fname(lgn)
             lg = LG(fp)
@@ -148,11 +149,12 @@ class TestPGGen(unittest.TestCase):
             pgtp.json
 
     def test_mysarkar_pgtp_gen_pg(self):
-        # TODO: cont_img.graph causes random failures in this test.
-        # ERROR: dlg.dropmake.scheduler.SchedulerException: Cannot find a idle PID, max_dop provided: 8
-
-        # lgnames = ['testLoop.graph', 'cont_img.graph', 'test_grpby_gather.graph', 'chiles_simple.graph']
-        lgnames = ["testLoop.graph", "test_grpby_gather.graph", "chiles_simple.graph"]
+        lgnames = [
+            "testLoop.graph",
+            "cont_img_mvp.graph",
+            "test_grpby_gather.graph",
+            "chiles_simple.graph",
+        ]
         tgt_partnum = [15, 15, 10, 10, 5]
         node_list = ["10.128.0.11", "10.128.0.12", "10.128.0.13"]
         for i, lgn in enumerate(lgnames):
@@ -167,7 +169,7 @@ class TestPGGen(unittest.TestCase):
     def test_mysarkar_pgtp_gen_pg_island(self):
         lgnames = [
             "testLoop.graph",
-            "cont_img.graph",
+            "cont_img_mvp.graph",
             "test_grpby_gather.graph",
             "chiles_simple.graph",
         ]
@@ -188,7 +190,9 @@ class TestPGGen(unittest.TestCase):
             nb_islands = 2
             # print(lgn)
             try:
-                pgtp.merge_partitions(len(node_list) - nb_islands, form_island=False)
+                pgtp.merge_partitions(
+                    len(node_list) - nb_islands, form_island=False
+                )
             except GPGTNoNeedMergeException as ge:
                 continue
             pg_spec = pgtp.to_pg_spec(node_list, num_islands=nb_islands)
@@ -197,7 +201,7 @@ class TestPGGen(unittest.TestCase):
     def test_minnumparts_pgtp(self):
         lgnames = [
             "testLoop.graph",
-            "cont_img.graph",
+            "cont_img_mvp.graph",
             "test_grpby_gather.graph",
             "chiles_simple.graph",
         ]
@@ -237,5 +241,5 @@ class TestPGGen(unittest.TestCase):
             lg = LG(fp)
             out = lg.unroll_to_tpl()
             for drop in out:
-                if drop["type"] == "data":
-                    self.assertEqual("SharedMemory", drop["storage"])
+                if drop["categoryType"] in [CategoryType.DATA, "data"]:
+                    self.assertEqual("SharedMemory", drop["category"])

@@ -53,15 +53,22 @@ from dlg.event import EventFirer, EventHandler
 from dlg.exceptions import InvalidDropException, InvalidRelationshipException
 
 DEFAULT_INTERNAL_PARAMETERS = {
+    "dropclass",
+    "category",
     "storage",
+    "nodeAttributes",
+    "streaming",
+    "persist",
     "rank",
-    "loop_cxt",
-    "dw",
+    "loop_ctx",
+    "weight",
     "iid",
-    "dt",
     "consumers",
     "config_data",
     "mode",
+    "group_end",
+    "applicationArgs",
+    "reprodata",
 }
 
 if sys.version_info >= (3, 8):
@@ -184,7 +191,7 @@ class AbstractDROP(EventFirer, EventHandler):
 
         # The physical graph drop type. This is determined
         # by the drop category when generating the drop spec
-        self._type = self._popArg(kwargs, "type", None)
+        self._type = self._popArg(kwargs, "categoryType", None)
 
         # The Session owning this drop, if any
         # In most real-world situations this attribute will be set, but in
@@ -195,7 +202,7 @@ class AbstractDROP(EventFirer, EventHandler):
         # A simple name that the Drop might receive
         # This is usually set in the Logical Graph Editor,
         # but is not necessarily always there
-        self.name = self._popArg(kwargs, "nm", "")
+        self.name = self._popArg(kwargs, "name", "")
 
         # The key of this drop in the original Logical Graph
         # This information might or might not be present depending on how the
@@ -388,10 +395,20 @@ class AbstractDROP(EventFirer, EventHandler):
             if has_component_param:
                 param = kwargs.get(attr_name)
             elif has_app_param:
-                param = kwargs["applicationArgs"].get(attr_name).value
+                if kwargs["applicationArgs"].get(attr_name).usage in [
+                    "InputPort",
+                    "OutputPort",
+                    "InputOutput",
+                ]:
+                    # inp = kwargs["input"]
+                    # param = pickle.loads(
+                    #     droputils.allDropContents()
+                    #     )
+                    pass
+                else:
+                    param = kwargs["applicationArgs"].get(attr_name).value
             else:
                 param = default_value
-            logger.debug(">>>!!! param extracted: %s; %s", attr_name, param)
             return param
 
         # Take a class dlg defined parameter class attribute and create an instanced attribute on object
@@ -853,7 +870,7 @@ class AbstractDROP(EventFirer, EventHandler):
         if self._parent and parent:
             logger.warning(
                 "A parent is already set in %r, overwriting with new value",
-                self,
+                self.oid,
             )
         if parent:
             prevParent = self._parent
@@ -910,7 +927,7 @@ class AbstractDROP(EventFirer, EventHandler):
         # Add the reverse reference too automatically
         if cuid in self._consumers_uids:
             return
-        logger.debug("Adding new consumer %r to %r", consumer, self)
+        # logger.debug("Adding new consumer %r to %r", consumer.oid, self.oid)
         self._consumers.append(consumer)
 
         # Subscribe the consumer to events sent when this DROP moves to
@@ -924,7 +941,7 @@ class AbstractDROP(EventFirer, EventHandler):
 
         # Automatic back-reference
         if back and hasattr(consumer, "addInput"):
-            logger.debug("Adding back %r as input of %r", self, consumer)
+            logger.debug("Adding back %r as input of %r", self.oid, consumer)
             consumer.addInput(self, False)
 
         # Add reproducibility subscription

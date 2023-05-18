@@ -33,7 +33,7 @@ def create_std_env_vars(name="env_vars"):
     return EnvironmentVarDROP(
         oid="a",
         uid="a",
-        nm=name,
+        name=name,
         dir_var="/HOME/",
         int_var=3,
         bool_var=False,
@@ -44,7 +44,7 @@ def create_std_env_vars(name="env_vars"):
 
 
 def create_empty_env_vars(name="env_vars"):
-    return EnvironmentVarDROP(oid="b", uid="b", nm=name)
+    return EnvironmentVarDROP(oid="b", uid="b", name=name)
 
 
 class TestEnvironmentVarDROP(unittest.TestCase):
@@ -200,7 +200,7 @@ class TestEnvironmentVarDROP(unittest.TestCase):
         env2_name = "more_vars"
         env1_drop = create_std_env_vars(name=env1_name)
         env2_drop = EnvironmentVarDROP(
-            oid="d", uid="d", nm=env2_name, dir_var="/DIFFERENT/", int_var=4
+            oid="d", uid="d", name=env2_name, dir_var="/DIFFERENT/", int_var=4
         )
         test_drop = AbstractDROP(uid="c", oid="c")
         test_drop.addProducer(env1_drop)

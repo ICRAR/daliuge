@@ -69,7 +69,7 @@
                     "key": {
                         "type": "integer"
                     },
-                    "text": {
+                    "name": {
                         "type": "string"
                     },
                     "description": {
@@ -216,7 +216,6 @@
                             "required": [
                                 "description",
                                 "name",
-                                "text",
                                 "value"
                             ]
                         }
@@ -242,7 +241,6 @@
                             "required": [
                                 "description",
                                 "name",
-                                "text",
                                 "value"
                             ]
                         }
@@ -268,7 +266,6 @@
                             "required": [
                                 "description",
                                 "name",
-                                "text",
                                 "value"
                             ]
                         }
@@ -308,7 +305,7 @@
                     "showPorts",
                     "streaming",
                     "subject",
-                    "text",
+                    "name",
                     "width",
                     "x",
                     "y"

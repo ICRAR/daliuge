@@ -45,7 +45,8 @@ class ThreadingWSGIServer(
 
 class LoggingWSGIRequestHandler(wsgiref.simple_server.WSGIRequestHandler):
     def log_message(self, fmt, *args):
-        logger.debug(fmt, *args)
+        pass
+        # logger.debug(fmt, *args)
 
 
 class RestServerWSGIServer:
@@ -143,7 +144,9 @@ class RestClient(object):
     def _post_form(self, url, content=None):
         if content is not None:
             content = urllib.parse.urlencode(content)
-        ret = self._POST(url, content, content_type="application/x-www-form-urlencoded")
+        ret = self._POST(
+            url, content, content_type="application/x-www-form-urlencoded"
+        )
         return json.load(ret) if ret else None
 
     def _post_json(self, url, content, compress=False):
@@ -177,10 +180,11 @@ class RestClient(object):
         return stream
 
     def _request(self, url, method, content=None, headers={}):
-
         # Do the HTTP stuff...
         url = self.url_prefix + url
-        logger.debug("Sending %s request to %s:%d%s", method, self.host, self.port, url)
+        logger.debug(
+            "Sending %s request to %s:%d%s", method, self.host, self.port, url
+        )
 
         if not common.portIsOpen(self.host, self.port, self.timeout):
             raise RestClientException(
@@ -198,7 +202,6 @@ class RestClient(object):
 
         # Server errors are encoded in the body as json content
         if self._resp.status != http.HTTPStatus.OK:
-
             msg = "Error on remote %s@%s:%s%s (status %d): " % (
                 method,
                 self.host,

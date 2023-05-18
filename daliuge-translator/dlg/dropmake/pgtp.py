@@ -33,7 +33,7 @@ from dlg.dropmake.scheduler import (
     MinNumPartsScheduler,
     PSOScheduler,
 )
-from dlg.common import DropType
+from dlg.common import CategoryType
 
 logger = logging.getLogger(__name__)
 
@@ -100,15 +100,15 @@ class MetisPGTP(PGT):
 
         G = nx.Graph()
         G.graph["edge_weight_attr"] = "weight"
-        G.graph["node_weight_attr"] = "tw"
-        G.graph["node_size_attr"] = "sz"
+        G.graph["node_weight_attr"] = "weight"
+        G.graph["node_size_attr"] = "size"
 
         for i, drop in enumerate(droplist):
             try:
                 oid = drop["oid"]
             except KeyError:
                 logger.debug("Drop does not have oid: %s", drop)
-                continue
+                droplist.pop(i)
             key_dict[oid] = i + 1  # METIS index starts from 1
 
         logger.info("Metis partition input progress - dropdict is built")
@@ -124,18 +124,18 @@ class MetisPGTP(PGT):
         for i, drop in enumerate(droplist):
             oid = drop["oid"]
             myk = i + 1
-            tt = drop["type"]
-            if DropType.DATA == tt:
+            tt = drop["categoryType"]
+            if tt in [CategoryType.DATA, "data"]:
                 dst = "consumers"  # outbound keyword
                 ust = "producers"
                 tw = 1  # task weight is zero for a Data DROP
-                sz = drop.get("dw", 1)  # size
-            elif DropType.APP == tt:
+                sz = drop.get("weight", 1)  # size
+            elif tt in [CategoryType.APPLICATION, "app"]:
                 dst = "outputs"
                 ust = "inputs"
-                tw = drop["tw"]
+                tw = drop.get("weight", 1)
                 sz = 1
-            G.add_node(myk, tw=tw, sz=sz, oid=oid)
+            G.add_node(myk, weight=tw, size=sz, oid=oid)
             adj_drops = []  # adjacent drops (all neighbours)
             if dst in drop:
                 adj_drops += drop[dst]
@@ -144,11 +144,11 @@ class MetisPGTP(PGT):
 
             for inp in adj_drops:
                 key = list(inp.keys())[0] if isinstance(inp, dict) else inp
-                if DropType.DATA == tt:
-                    lw = drop["dw"]
-                elif DropType.APP == tt:
-                    # lw = drop_dict[inp].get('dw', 1)
-                    lw = droplist[key_dict[key] - 1].get("dw", 1)
+                if tt in [CategoryType.DATA, "data"]:
+                    lw = drop["weight"]
+                elif tt in [CategoryType.APPLICATION, "app"]:
+                    # get the weight of the previous drop
+                    lw = droplist[key_dict[key] - 1].get("weight", 1)
                 if lw <= 0:
                     lw = 1
                 G.add_edge(myk, key_dict[key], weight=lw)
@@ -212,8 +212,12 @@ class MetisPGTP(PGT):
                 group_weight[gid] = [0, 0]
             for gnode in G.nodes(data=True):
                 tt = group_weight[gnode[1]["gid"]]
-                tt[0] += gnode[1]["tw"]
-                tt[1] += gnode[1]["sz"]
+                try:
+                    tt[0] += int(gnode[1]["weight"])
+                    tt[1] += int(gnode[1]["size"])
+                except ValueError:
+                    tt[0] = 1
+                    tt[1] = 1
         # the following is for visualisation using GOJS
         if jsobj is not None:
             node_list = jsobj["nodeDataArray"]
@@ -227,7 +231,7 @@ class MetisPGTP(PGT):
                 gn = dict()
                 gn["key"] = start_k + gid
                 gn["isGroup"] = True
-                gn["text"] = "{1}_{0}".format(gid + 1, self._par_label)
+                gn["name"] = "{1}_{0}".format(gid + 1, self._par_label)
                 node_list.append(gn)
                 inner_parts.append(gn)
 
@@ -327,13 +331,13 @@ class MetisPGTP(PGT):
         # with each partition being a node
         G = nx.Graph()
         G.graph["edge_weight_attr"] = "weight"
-        G.graph["node_weight_attr"] = "tw"
-        G.graph["node_size_attr"] = "sz"
+        G.graph["node_weight_attr"] = "weight"
+        G.graph["node_size_attr"] = "size"
         for gid, v in self._group_workloads.items():
             # for compute islands, we need to count the # of nodes instead of
             # the actual workload
             twv = 1 if (island_type == 1) else v[0]
-            G.add_node(gid, tw=twv, sz=v[1])
+            G.add_node(gid, weight=twv, size=v[1])
         for glinks, v in part_edges.items():
             gl = glinks.split("**")
             G.add_edge(int(gl[0]), int(gl[1]), weight=v)
@@ -390,7 +394,7 @@ class MetisPGTP(PGT):
                     gn = dict()
                     gn["key"] = island_id + start_i
                     gn["isGroup"] = True
-                    gn["text"] = "{1}_{0}".format(island_id + 1, island_label)
+                    gn["name"] = "{1}_{0}".format(island_id + 1, island_label)
                     node_list.append(gn)
                 inner_parts = self._inner_parts
                 for ip in inner_parts:
@@ -536,7 +540,7 @@ class MySarkarPGTP(PGT):
                     gn = dict()
                     gn["key"] = island_id + start_i
                     gn["isGroup"] = True
-                    gn["text"] = "{1}_{0}".format(island_id + 1, island_label)
+                    gn["name"] = "{1}_{0}".format(island_id + 1, island_label)
                     node_list.append(gn)
 
                 for ip in inner_parts:
@@ -620,7 +624,7 @@ class MySarkarPGTP(PGT):
                 gn["isGroup"] = True
                 # gojs group_id label starts from 1
                 # so "gid - leng" instead of "gid - start_k"
-                gn["text"] = "{1}_{0}".format(
+                gn["name"] = "{1}_{0}".format(
                     (gid - start_k + 1), self._par_label
                 )
                 node_list.append(gn)

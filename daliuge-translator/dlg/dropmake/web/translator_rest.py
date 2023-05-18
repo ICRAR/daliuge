@@ -65,6 +65,8 @@ from dlg.common.reproducibility.reproducibility import (
     init_pgt_unroll_repro_data,
     init_pg_repro_data,
 )
+
+from dlg import utils
 from dlg.common.deployment_methods import DeploymentMethods
 from dlg.common.k8s_utils import check_k8s_env
 from dlg.dropmake.lg import GraphException
@@ -607,7 +609,6 @@ def gen_pg(
 
     pgtpj = pgtp._gojs_json_obj
     reprodata = pgtp.reprodata
-    logger.info("PGTP: %s", pgtpj)
     num_partitions = len(
         list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"]))
     )
@@ -1191,6 +1192,15 @@ def run(_, args):
         default=False,
         help="Enable more logging",
     )
+    parser.add_argument(
+        "-l",
+        "--log-dir",
+        action="store",
+        type=str,
+        dest="logdir",
+        help="The directory where the logging files will be stored",
+        default=utils.getDlgLogsDir(),
+    )
 
     options = parser.parse_args(args)
 
@@ -1199,16 +1209,25 @@ def run(_, args):
     elif not os.path.exists(options.lg_path):
         parser.error(f"{options.lg_path} does not exist")
 
-    if options.verbose:
+    if options.verbose or options.logdir:
         fmt = logging.Formatter(
             "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] "
             "%(name)s#%(funcName)s:%(lineno)s %(message)s"
         )
         fmt.converter = time.gmtime
-        stream_handler = logging.StreamHandler(sys.stdout)
-        stream_handler.setFormatter(fmt)
-        logging.root.addHandler(stream_handler)
-        logging.root.setLevel(logging.DEBUG)
+        if options.verbose:
+            stream_handler = logging.StreamHandler(sys.stdout)
+            stream_handler.setFormatter(fmt)
+            logging.root.addHandler(stream_handler)
+            logging.root.setLevel(logging.DEBUG)
+        if options.logdir:
+            # This is the logfile we'll use from now on
+            logdir = options.logdir
+            utils.createDirIfMissing(logdir)
+            logfile = os.path.join(logdir, "dlgTranslator.log")
+            fileHandler = logging.FileHandler(logfile)
+            fileHandler.setFormatter(fmt)
+            logging.root.addHandler(fileHandler)
 
     try:
         os.makedirs(options.pgt_path, exist_ok=True)
@@ -1229,7 +1248,11 @@ def run(_, args):
     signal.signal(signal.SIGTERM, handler)
     signal.signal(signal.SIGINT, handler)
 
-    uvicorn.run(app=app, host=options.host, port=options.port)
+    uvicorn.run(
+        app=app,
+        host=options.host,
+        port=options.port,
+    )
 
 
 if __name__ == "__main__":

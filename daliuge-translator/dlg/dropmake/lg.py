@@ -30,17 +30,13 @@ if __name__ == "__main__":
 
 import collections
 import datetime
-import json
 import logging
-import math
-import os
-import random
 import time
 from itertools import product
+from dataclasses import asdict
 
 import numpy as np
-from dlg.common import Categories, CategoryType, DropType
-from dlg.common import STORAGE_TYPES, APP_DROP_TYPES
+from dlg.common import CategoryType
 from dlg.common import dropdict
 from dlg.dropmake.dm_utils import (
     LG_APPREF,
@@ -51,935 +47,23 @@ from dlg.dropmake.dm_utils import (
     convert_mkn,
     LG_VER_EAGLE,
     LG_VER_EAGLE_CONVERTED,
+    GraphException,
+    GInvalidLink,
+    GInvalidNode,
+    load_lg,
 )
-from dlg.dropmake.utils.bash_parameter import BashCommand
+from .definition_classes import Categories
+from .lg_node import LGNode
 
 logger = logging.getLogger(__name__)
 
 
-class GraphException(Exception):
-    pass
-
-
-class GInvalidLink(GraphException):
-    pass
-
-
-class GInvalidNode(GraphException):
-    pass
-
-
-class LGNode:
-    def __init__(self, jd, group_q, done_dict, ssid):
-        """
-        jd: json_dict (dict)
-        group_q: group queue (defaultdict)
-        done_dict: LGNode that have been processed (Dict)
-        ssid:   session id (string)
-        """
-        self._jd = jd
-        self._children = []
-        self._outs = []  # event flow target
-        self._inputs = []  # event flow source
-        self.group = None
-        self._id = jd["key"]
-        self._ssid = ssid
-        self._isgrp = False
-        self._converted = False
-        self._h_level = None
-        self._g_h = None
-        self._dop = None
-        self._gaw = None
-        self._grpw = None
-        self._reprodata = jd.get("reprodata", {}).copy()
-        if "isGroup" in jd and jd["isGroup"] is True:
-            self._isgrp = True
-            for wn in group_q[self.id]:
-                wn.group = self
-                self.add_child(wn)
-            group_q.pop(self.id)  # not thread safe
-
-        if "group" in jd:
-            grp_id = jd["group"]
-            if grp_id in done_dict:
-                grp_nd = done_dict[grp_id]
-                self.group = grp_nd
-                grp_nd.add_child(self)
-            else:
-                group_q[grp_id].append(self)
-
-        done_dict[self.id] = self
-
-    @property
-    def jd(self):
-        return self._jd
-
-    @property
-    def id(self):
-        return self._id
-
-    @property
-    def text(self):
-        return self.jd.get("text", "")
-
-    @property
-    def group(self):
-        return self._grp
-
-    @group.setter
-    def group(self, value):
-        self._grp = value
-
-    def has_group(self):
-        return self.group is not None
-
-    def has_converted(self):
-        return self._converted
-
-    def complete_conversion(self):
-        self._converted = True
-
-    @property
-    def gid(self):
-        if self.group is None:
-            return 0
-        else:
-            return self.group.id
-
-    def add_output(self, lg_node):
-        if lg_node not in self._outs:
-            self._outs.append(lg_node)
-
-    def add_input(self, lg_node):
-        # only add if not already there
-        # this may happen in nested constructs
-        if lg_node not in self._inputs:
-            self._inputs.append(lg_node)
-
-    def add_child(self, lg_node):
-        """
-        Add a group member
-        """
-        if (
-            lg_node.is_group()
-            and not (lg_node.is_scatter())
-            and not (lg_node.is_loop())
-            and not (lg_node.is_groupby())
-        ):
-            raise GInvalidNode(
-                "Only Scatters, Loops and GroupBys can be nested, but {0} is neither".format(
-                    lg_node.id
-                )
-            )
-        self._children.append(lg_node)
-
-    @property
-    def children(self):
-        return self._children
-
-    @property
-    def outputs(self):
-        return self._outs
-
-    @property
-    def inputs(self):
-        return self._inputs
-
-    @property
-    def h_level(self):
-        if self._h_level is None:
-            _level = 0
-            cg = self
-            while cg.has_group():
-                cg = cg.group
-                _level += 1
-            if self.is_mpi():
-                _level += 1
-            self._h_level = _level
-        return self._h_level
-
-    @property
-    def group_hierarchy(self):
-        if self._g_h is None:
-            glist = []
-            cg = self
-            while cg.has_group():
-                glist.append(str(cg.gid))
-                cg = cg.group
-            glist.append("0")
-            self._g_h = "/".join(reversed(glist))
-        return self._g_h
-
-    def dop_diff(self, that_lgn):
-        """
-        dop difference between inner node/group and outer group
-        e.g for each outer group, how many instances of inner nodes/groups
-        """
-        # if (self.is_group() or that_lgn.is_group()):
-        #     raise GraphException("Cannot compute dop diff between groups.")
-        # don't check h_related for efficiency since it should have been checked
-        # if (self.h_related(that_lgn)):
-        il = self.h_level
-        al = that_lgn.h_level
-        if il == al:
-            return 1
-        elif il > al:
-            oln = that_lgn
-            iln = self
-        else:
-            iln = that_lgn
-            oln = self
-        re_dop = 1
-        cg = iln
-        init_cond = cg.gid != oln.gid and cg.has_group()
-        while init_cond or cg.is_mpi():
-            if cg.is_mpi():
-                re_dop *= cg.dop
-            # else:
-            if init_cond:
-                re_dop *= cg.group.dop
-            cg = cg.group
-            if cg is None:
-                break
-            init_cond = cg.gid != oln.gid and cg.has_group()
-        return re_dop
-        # else:
-        #     pass
-        # raise GInvalidLink("{0} and {1} are not hierarchically related".format(self.id, that_lgn.id))
-
-    def h_related(self, that_lgn):
-        that_gh = that_lgn.group_hierarchy
-        this_gh = self.group_hierarchy
-        if len(that_gh) + len(this_gh) <= 1:
-            # at least one is at the root level
-            return True
-
-        return that_gh.find(this_gh) > -1 or this_gh.find(that_gh) > -1
-
-    def has_child(self):
-        return len(self._children) > 0
-
-    def has_output(self):
-        return len(self._outs) > 0
-
-    def is_start_node(self):
-        return self.jd["category"] == Categories.START
-
-    def is_end_node(self):
-        return self.jd["category"] == Categories.END
-
-    def is_start(self):
-        return not self.has_group()
-
-    def is_dag_root(self):
-        leng = len(self.inputs)
-        if leng > 1:
-            return False
-        elif leng == 0:
-            if self.is_start_node():
-                return False
-            else:
-                return True
-        elif self.inputs[0].jd["category"] == Categories.START:
-            return True
-        else:
-            return False
-
-    def is_start_listener(self):
-        return (
-            len(self.inputs) == 1
-            and self.inputs[0].jd["category"] == Categories.START
-            and self.jd["category"] in STORAGE_TYPES
-        )
-
-    def is_group_start(self):
-        result = False
-        if self.has_group() and "group_start" in self.jd:
-            gs = self.jd["group_start"]
-            if type(gs) == type(True):
-                result = gs
-            elif type(gs) in [type(1), type(1.0)]:
-                result = 1 == gs
-            elif type(gs) == type("s"):
-                result = gs.lower() in ("true", "1")
-        return result
-
-    def is_group_end(self):
-        result = False
-        if self.has_group() and "group_end" in self.jd:
-            ge = self.jd["group_end"]
-            if type(ge) == type(True):
-                result = ge
-            elif type(ge) in [type(1), type(1.0)]:
-                result = 1 == ge
-            elif type(ge) == type("s"):
-                result = ge.lower() in ("true", "1")
-        return result
-
-    def is_group(self):
-        return self._isgrp
-
-    def is_scatter(self):
-        return self.is_group() and self._jd["category"] == Categories.SCATTER
-
-    def is_gather(self):
-        return self._jd["category"] == Categories.GATHER
-
-    def is_loop(self):
-        return self.is_group() and self._jd["category"] == Categories.LOOP
-
-    def is_service(self):
-        """
-        Determines whether a node the parent service node (not the input application)
-        """
-        return self._jd["category"] == Categories.SERVICE
-
-    def is_groupby(self):
-        return self._jd["category"] == Categories.GROUP_BY
-
-    def is_mpi(self):
-        return self._jd["category"] == Categories.MPI
-
-    @property
-    def group_keys(self):
-        """
-        Return:
-            None or a list of keys (each key is an integer)
-        """
-        if not self.is_groupby():
-            return None
-        val = str(self.jd.get("group_key", "None"))
-        if val in ["None", "-1", ""]:
-            return None
-        else:
-            try:
-                return [int(x) for x in val.split(",")]
-            except ValueError as ve:
-                raise GraphException(
-                    "group_key must be an integer or comma-separated integers: {0}".format(
-                        ve
-                    )
-                )
-
-    def is_branch(self):
-        # This is the only special thing required for a branch
-        return self._jd["category"] == Categories.BRANCH
-
-    @property
-    def gather_width(self):
-        """
-        Gather width
-        """
-        if self.is_gather():
-            if self._gaw is None:
-                try:
-                    self._gaw = int(self.jd["num_of_inputs"])
-                except:
-                    self._gaw = 1
-            return self._gaw
-        else:
-            """
-            TODO: use OO style to replace all type-related statements!
-            """
-            raise GraphException(
-                "Non-Gather LGN {0} does not have gather_width".format(self.id)
-            )
-
-    @property
-    def groupby_width(self):
-        """
-        GroupBy count
-        """
-        if self.is_groupby():
-            if self._grpw is None:
-                tlgn = self.inputs[0]
-                re_dop = 1
-                cg = tlgn.group  # exclude its own group
-                while cg.has_group():
-                    re_dop *= cg.group.dop
-                    cg = cg.group
-                self._grpw = re_dop
-            return self._grpw
-        else:
-            raise GraphException(
-                "Non-GroupBy LGN {0} does not have groupby_width".format(
-                    self.id
-                )
-            )
-
-    @property
-    def group_by_scatter_layers(self):
-        """
-        Return:
-            scatter layers info associated with this group by logical node
-            A tuple of three items:
-                (1) DoP
-                (2) layer indexes (list) from innser scatter to outer scatter
-                (3) layers (list)
-        """
-        if not self.is_groupby():
-            return None
-
-        tlgn = self.inputs[0]
-        grpks = self.group_keys
-        ret_dop = 1
-        layer_index = []  # from inner to outer
-        layers = []  # from inner to outer
-        c = 0
-        if tlgn.group.is_groupby():
-            # group by followed by another group by
-            if grpks is None or len(grpks) < 1:
-                raise GInvalidNode(
-                    "Must specify group_key for Group By '{0}'".format(
-                        self.text
-                    )
-                )
-            # find the "root" groupby and get all of its scatters
-            inputgrp = self
-            while (inputgrp is not None) and inputgrp.inputs[
-                0
-            ].group.is_groupby():
-                inputgrp = inputgrp.inputs[0].group
-            # inputgrp now is the "root" groupby that follows Scatter immiately
-            # move it to Scatter
-            inputgrp = inputgrp.inputs[0].group
-            # go thru all the scatters
-            while (inputgrp is not None) and inputgrp.is_scatter():
-                if inputgrp.id in grpks:
-                    ret_dop *= inputgrp.dop
-                    layer_index.append(c)
-                    layers.append(inputgrp)
-                inputgrp = inputgrp.group
-                c += 1
-        else:
-            if grpks is None or len(grpks) < 1:
-                ret_dop = tlgn.group.dop
-                layer_index.append(0)
-                layers.append(tlgn.group)
-            else:
-                if len(grpks) == 1:
-                    if grpks[0] == tlgn.group.id:
-                        ret_dop = tlgn.group.dop
-                        layer_index.append(0)
-                        layers.append(tlgn.group)
-                    else:
-                        raise GInvalidNode(
-                            "Wrong single group_key for {0}".format(self.text)
-                        )
-                else:
-                    inputgrp = tlgn.group
-                    # find the "groupby column list" from all layers of scatter loops
-                    while (inputgrp is not None) and inputgrp.is_scatter():
-                        if inputgrp.id in grpks:
-                            ret_dop *= inputgrp.dop
-                            layer_index.append(c)
-                            layers.append(inputgrp)
-                        inputgrp = inputgrp.group
-                        c += 1
-
-        return ret_dop, layer_index, layers
-
-    @property
-    def dop(self):
-        """
-        Degree of Parallelism:  integer
-        default:    1
-        """
-        if self._dop is None:
-            if self.is_group():
-                if self.is_scatter():
-                    for kw in ["num_of_copies", "num_of_splits"]:
-                        if kw in self.jd:
-                            self._dop = int(self.jd[kw])
-                            break
-                    if self._dop is None:
-                        self._dop = 4  # dummy impl. TODO: Why is this here?
-                elif self.is_gather():
-                    try:
-                        tlgn = self.inputs[0]
-                    except IndexError:
-                        raise GInvalidLink(
-                            "Gather '{0}' does not have input!".format(self.id)
-                        )
-                    if tlgn.is_groupby():
-                        tt = tlgn.dop
-                    else:
-                        tt = self.dop_diff(tlgn)
-                    self._dop = int(math.ceil(tt / float(self.gather_width)))
-                elif self.is_groupby():
-                    self._dop = self.group_by_scatter_layers[0]
-                elif self.is_loop():
-                    self._dop = int(self.jd.get("num_of_iter", 1))
-                elif self.is_service():
-                    self._dop = 1  # TODO: number of compute nodes
-                else:
-                    raise GInvalidNode(
-                        "Unrecognised (Group) Logical Graph Node: '{0}'".format(
-                            self._jd["category"]
-                        )
-                    )
-            elif self.is_mpi():
-                self._dop = int(self.jd["num_of_procs"])
-            else:
-                self._dop = 1
-        return self._dop
-
-    def make_oid(self, iid="0"):
-        """
-        return:
-            ssid_id_iid (string), where
-            ssid:   session id
-            id:     logical graph node key
-            iid:    instance id (for the physical graph node)
-        """
-        # TODO: This is rather ugly, but a quick and dirty fix. The iid is the rank data we need
-        rank = [int(x) for x in iid.split("/")]
-        return "{0}_{1}_{2}".format(self._ssid, self.id, iid), rank
-
-    def _update_key_value_attributes(self, kwargs):
-        # get the arguments from new fields dictionary in a backwards compatible way
-        if "fields" in self.jd:
-            self.jd.update({"nodeAttributes": {}})
-            kwargs.update({"nodeAttributes": {}})
-            for je in self.jd["fields"]:
-                # The field to be used is not the text, but the name field
-                self.jd[je["text"]] = je["value"]
-                kwargs[je["text"]] = je["value"]
-                self.jd["nodeAttributes"].update({je["text"]: je})
-                kwargs["nodeAttributes"].update({je["text"]: je})
-        kwargs[
-            "applicationArgs"
-        ] = {}  # make sure the dict always exists downstream
-        if "applicationArgs" in self.jd:  # and fill it if provided
-            for je in self.jd["applicationArgs"]:
-                j = {je["text"]: {k: je[k] for k in je if k not in ["text"]}}
-                self.jd.update(j)
-                kwargs["applicationArgs"].update(j)
-        if "nodeAttributes" not in kwargs:
-            kwargs.update({"nodeAttributes": {}})
-        for k, na in kwargs["nodeAttributes"].items():
-            if (
-                "parameterType" in na
-                and na["parameterType"] == "ApplicationArgument"
-            ):
-                kwargs["applicationArgs"].update({k: na})
-        # NOTE: drop Argxx keywords
-
-    def _getIdText(self, port="inputPorts", index=0, portId=None):
-        """
-        Return IdText of port if it exists
-
-        NOTE: This has now been changed to use the 'text' rather than idText, in anticipation
-        of removing idText completely.
-        TODO: only returns the first one!!
-        """
-        port_selector = {
-            "inputPorts": ["InputPort", "InputOutput"],
-            "outputPorts": ["OutpuPort", "InputOutput"],
-        }
-        idText = None
-        if not portId:
-            if (
-                port in self.jd
-                and len(self.jd[port]) > index
-                and "text" in self.jd[port][index]
-            ):
-                idText = self.jd[port][index]["text"]
-        else:
-            if port in self.jd:
-                idText = [
-                    p["text"] for p in self.jd[port] if p["Id"] == portId
-                ][0]
-            else:  # everything in 'fields'
-                if port == "inputPorts":
-                    for field in self.jd["fields"]:
-                        if "usage" not in field:  # fixes manual graphs
-                            continue
-                        if field["usage"] in port_selector[port]:
-                            idText = field["text"]
-                            break
-        logger.debug("%s names found: %s", port, idText)
-        return idText
-
-    def _create_test_drop_spec(self, oid, rank, kwargs) -> dropdict:
-        """
-        NOTE: This IS the main function right now, still called 'test' and still should be replaced!!!
-        TODO
-        This is a test function only
-        should be replaced by LGNode class specific methods
-        """
-        drop_spec = None
-        drop_type = self.jd["category"]
-        if drop_type in STORAGE_TYPES:
-            logger.debug("Storage node spec: %s", json.dumps(kwargs))
-            if "data_volume" in self.jd:
-                kwargs["dw"] = int(self.jd["data_volume"])  # dw -- data weight
-            else:
-                kwargs["dw"] = 1
-            iIdText = self._getIdText(port="inputPorts")
-            oIdText = self._getIdText(port="outputPorts")
-            logger.debug("Found port names: IN: %s, OUT: %s", iIdText, oIdText)
-            if self.is_start_listener():
-                # create socket listener DROP first
-                drop_spec = dropdict(
-                    {
-                        "oid": oid,
-                        "type": DropType.DATA,
-                        "categoryType": CategoryType.DATA,
-                        "storage": drop_type,
-                        "rank": rank,
-                    }
-                )
-                dropSpec_socket = dropdict(
-                    {
-                        "oid": "{0}-s".format(oid),
-                        "type": DropType.APP,
-                        "categoryType": CategoryType.APPLICATION,
-                        "app": "dlg.apps.simple.SleepApp",
-                        "nm": "lstnr",
-                        "text": "lstnr",
-                        "tw": 5,
-                        "sleepTime": 5,
-                        "rank": rank,
-                    }
-                )
-                # tw -- task weight
-                dropSpec_socket["autostart"] = 1
-                kwargs["listener_drop"] = dropSpec_socket
-                dropSpec_socket.addOutput(drop_spec, IdText=oIdText)
-            else:
-                drop_spec = dropdict(
-                    {
-                        "oid": oid,
-                        "type": DropType.DATA,
-                        "categoryType": CategoryType.DATA,
-                        "storage": drop_type,
-                        "rank": rank,
-                    }
-                )
-            if drop_type == Categories.FILE:
-                dn = self.jd.get("dirname", None)
-                if dn:
-                    kwargs["dirname"] = dn
-                cfe = str(self.jd.get("check_filepath_exists", "0"))
-                cfeb = True if cfe in ["1", "true", "yes"] else False
-                kwargs["check_filepath_exists"] = cfeb
-                fp = self.jd.get("filepath", None)
-                if fp:
-                    kwargs["filepath"] = fp
-            self._update_key_value_attributes(kwargs)
-            drop_spec.update(kwargs)
-        elif drop_type in [
-            Categories.COMPONENT,
-            Categories.PYTHON_APP,
-            Categories.BRANCH,
-        ]:
-            # default generic component becomes "sleep and copy"
-            if "appclass" not in self.jd or len(self.jd["appclass"]) == 0:
-                app_class = "dlg.apps.simple.SleepApp"
-            else:
-                app_class = self.jd["appclass"]
-
-            if "execution_time" in self.jd:
-                execTime = int(self.jd["execution_time"])
-                if execTime < 0:
-                    raise GraphException(
-                        "Execution_time must be greater"
-                        " than 0 for Construct '%s'" % self.text
-                    )
-            elif app_class != "dlg.apps.simple.SleepApp":
-                raise GraphException(
-                    "Missing execution_time for Construct '%s'" % self.text
-                )
-            else:
-                execTime = random.randint(3, 8)
-
-            if app_class == "dlg.apps.simple.SleepApp":
-                kwargs["sleepTime"] = execTime
-
-            kwargs["tw"] = execTime
-            drop_spec = dropdict(
-                {
-                    "oid": oid,
-                    "type": DropType.APP,
-                    "categoryType": CategoryType.APPLICATION,
-                    "app": app_class,
-                    "rank": rank,
-                }
-            )
-
-            kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
-            if "mkn" in self.jd:
-                kwargs["mkn"] = self.jd["mkn"]
-            self._update_key_value_attributes(kwargs)
-            drop_spec.update(kwargs)
-
-        elif drop_type in [Categories.DYNLIB_APP, Categories.DYNLIB_PROC_APP]:
-            if "libpath" not in self.jd or len(self.jd["libpath"]) == 0:
-                raise GraphException(
-                    "Missing 'libpath' in Drop {0}".format(self.text)
-                )
-            drop_spec = dropdict(
-                {
-                    "oid": oid,
-                    "type": DropType.APP,
-                    "categoryType": CategoryType.APPLICATION,
-                    "app": "dlg.apps.dynlib.{}".format(drop_type),
-                    "rank": rank,
-                }
-            )
-            kwargs["lib"] = self.jd["libpath"]
-            kwargs["tw"] = int(self.jd["execution_time"])
-            if "mkn" in self.jd:
-                kwargs["mkn"] = self.jd["mkn"]
-
-            self._update_key_value_attributes(kwargs)
-
-            drop_spec.update(kwargs)
-        elif drop_type in [Categories.BASH_SHELL_APP, Categories.MPI]:
-            if drop_type == Categories.MPI:
-                app_str = "dlg.apps.mpi.MPIApp"
-                kwargs["maxprocs"] = int(self.jd.get("num_of_procs", 4))
-            else:
-                app_str = "dlg.apps.bash_shell_app.BashShellApp"
-            drop_spec = dropdict(
-                {
-                    "oid": oid,
-                    "type": DropType.APP,
-                    "categoryType": CategoryType.APPLICATION,
-                    "app": app_str,
-                    "rank": rank,
-                }
-            )
-            self._update_key_value_attributes(kwargs)
-            if "execution_time" in self.jd:
-                try:
-                    kwargs["tw"] = int(self.jd["execution_time"])
-                except TypeError:
-                    kwargs["tw"] = int(self.jd["execution_time"]["value"])
-            else:
-                # kwargs['tw'] = random.randint(3, 8)
-                raise GraphException(
-                    "Missing execution_time for Construct '%s'" % self.text
-                )
-            # add more arguments (support for Arg0x dropped!)
-            cmds = []
-            for k in [
-                "command",
-                "input_redirection",
-                "output_redirection",
-                "command_line_arguments",
-            ]:
-                if k in self.jd:
-                    cmds.append(self.jd[k])
-            # kwargs['command'] = ' '.join(cmds)
-            if drop_type == Categories.MPI:
-                kwargs["command"] = BashCommand(cmds).to_real_command()
-            else:
-                kwargs["command"] = BashCommand(
-                    cmds
-                )  # TODO: Check if this actually solves a problem.
-            try:
-                kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
-            except TypeError:
-                kwargs["num_cpus"] = int(self.jd["num_cpus"]["value"])
-            drop_spec.update(kwargs)
-
-        elif drop_type == Categories.DOCKER:
-            # Docker application.
-            app_class = "dlg.apps.dockerapp.DockerApp"
-            typ = DropType.APP
-            drop_spec = dropdict(
-                {
-                    "oid": oid,
-                    "type": typ,
-                    "categoryType": CategoryType.APPLICATION,
-                    "app": app_class,
-                    "rank": rank,
-                }
-            )
-
-            image = str(self.jd.get("image"))
-            if image == "":
-                raise GraphException(
-                    "Missing image for Construct '%s'" % self.text
-                )
-
-            command = str(self.jd.get("command"))
-            # There ARE containers which don't need/want a command
-            # if command == "":
-            #     raise GraphException("Missing command for Construct '%s'" % self.text)
-
-            kwargs["tw"] = int(self.jd.get("execution_time", "5"))
-            kwargs["image"] = image
-            kwargs["command"] = command
-            kwargs["user"] = str(self.jd.get("user", ""))
-            kwargs["ensureUserAndSwitch"] = self.str_to_bool(
-                str(self.jd.get("ensureUserAndSwitch", "0"))
-            )
-            kwargs["removeContainer"] = self.str_to_bool(
-                str(self.jd.get("removeContainer", "1"))
-            )
-            kwargs["additionalBindings"] = str(
-                self.jd.get("additionalBindings", "")
-            )
-            kwargs["portMappings"] = str(self.jd.get("portMappings", ""))
-            kwargs["shmSize"] = str(self.jd.get("shmSize", ""))
-            self._update_key_value_attributes(kwargs)
-            drop_spec.update(kwargs)
-
-        elif drop_type == Categories.GROUP_BY:
-            drop_spec = dropdict(
-                {
-                    "oid": oid,
-                    "type": DropType.APP,
-                    "categoryType": CategoryType.APPLICATION,
-                    "app": "dlg.apps.simple.SleepApp",
-                    "rank": rank,
-                }
-            )
-            sij = self.inputs[0].jd
-            if not "data_volume" in sij:
-                raise GInvalidNode(
-                    "GroupBy should be connected to a DataDrop, not '%s'"
-                    % sij["category"]
-                )
-            dw = int(sij["data_volume"]) * self.groupby_width
-            dropSpec_grp = dropdict(
-                {
-                    "oid": "{0}-grp-data".format(oid),
-                    "type": DropType.DATA,
-                    "categoryType": CategoryType.DATA,
-                    "storage": Categories.MEMORY,
-                    "nm": "grpdata",
-                    "text": "grpdata",
-                    "dw": dw,
-                    "rank": rank,
-                }
-            )
-            kwargs["grp-data_drop"] = dropSpec_grp
-            kwargs[
-                "tw"
-            ] = 1  # barrier literarlly takes no time for its own computation
-            kwargs["sleepTime"] = 1
-            drop_spec.addOutput(dropSpec_grp, IdText="grpdata")
-            dropSpec_grp.addProducer(drop_spec, IdText="grpdata")
-        elif drop_type == Categories.GATHER:
-            drop_spec = dropdict(
-                {
-                    "oid": oid,
-                    "type": DropType.APP,
-                    "categoryType": CategoryType.APPLICATION,
-                    "app": "dlg.apps.simple.SleepApp",
-                    "rank": rank,
-                }
-            )
-            gi = self.inputs[0]
-            if gi.is_groupby():
-                gii = gi.inputs[0]
-                dw = (
-                    int(gii.jd["data_volume"])
-                    * gi.groupby_width
-                    * self.gather_width
-                )
-            else:  # data
-                dw = int(gi.jd["data_volume"]) * self.gather_width
-            dropSpec_gather = dropdict(
-                {
-                    "oid": "{0}-gather-data".format(oid),
-                    "type": DropType.DATA,
-                    "categoryType": CategoryType.DATA,
-                    "storage": Categories.MEMORY,
-                    "nm": "gthrdt",
-                    "text": "gthrdt",
-                    "dw": dw,
-                    "rank": rank,
-                }
-            )
-            kwargs["gather-data_drop"] = dropSpec_gather
-            kwargs["tw"] = 1
-            kwargs["sleepTime"] = 1
-            drop_spec.addOutput(dropSpec_gather, IdText="gthrdata")
-            dropSpec_gather.addProducer(drop_spec, IdText="gthrdata")
-        elif drop_type == Categories.SERVICE:
-            raise GraphException(
-                f"DROP type: {drop_type} should not appear in physical graph"
-            )
-        elif drop_type in [Categories.START, Categories.END]:
-            # this is at least suspicious in terms of implementation....
-            drop_spec = dropdict(
-                {
-                    "oid": oid,
-                    "type": DropType.DATA,
-                    "categoryType": CategoryType.DATA,
-                    "storage": Categories.NULL,
-                    "rank": rank,
-                }
-            )
-        elif drop_type in Categories.LOOP:
-            pass
-        else:
-            raise GraphException("Unknown DROP type: '{0}'".format(drop_type))
-        return drop_spec
-
-    def make_single_drop(self, iid="0", **kwargs):
-        """
-        make only one drop from a LG nodes
-        one-one mapping
-
-        Dummy implementation as of 09/12/15
-        """
-        oid, rank = self.make_oid(iid)
-        dropSpec = self._create_test_drop_spec(oid, rank, kwargs)
-        kwargs["iid"] = iid
-        kwargs["lg_key"] = self.id
-        kwargs["dt"] = self.jd["category"]
-        kwargs["category"] = self.jd["category"]
-        if "categoryType" in kwargs:
-            kwargs["categoryType"] = self.jd["categoryType"]
-        kwargs["nm"] = self.text
-        kwargs["text"] = self.text
-        # Behaviour is that child-nodes inherit reproducibility data from their parents.
-        if self._reprodata is not None:
-            kwargs["reprodata"] = self._reprodata.copy()
-        if "isService" in self.jd and self.jd["isService"]:
-            kwargs["type"] = DropType.SERVICE_APP
-        dropSpec.update(kwargs)
-        return dropSpec
-
-    @staticmethod
-    def str_to_bool(value, default_value=False):
-        res = True if value in ["1", "true", "True", "yes"] else default_value
-        return res
-
-    @staticmethod
-    def _mkn_substitution(mkn, value):
-        if "%m" in value:
-            value = value.replace("%m", str(mkn[0]))
-        if "%k" in value:
-            value = value.replace("%k", str(mkn[1]))
-        if "%n" in value:
-            value = value.replace("%n", str(mkn[2]))
-
-        return value
-
-
-def load_lg(f):
-    if isinstance(f, str):
-        if not os.path.exists(f):
-            raise GraphException("Logical graph {0} not found".format(f))
-        with open(f) as f:
-            lg = json.load(f)
-    elif hasattr(f, "read"):
-        lg = json.load(f)
-    else:
-        lg = f
-    return lg
-
-
 class LG:
     """
-    An object representation of Logical Graph
+    An object representation of a Logical Graph
+
+    TODO: This is a lot more than just a LG class,
+    it is doing all the conversion inside __init__
     """
 
     def __init__(self, f, ssid=None):
@@ -1001,6 +85,7 @@ class LG:
         self._gather_cache = dict()
 
         lgver = get_lg_ver_type(lg)
+        logger.info("Loading graph: %s", lg["modelData"]["filePath"])
         logger.info("Found LG version: %s", lgver)
 
         if LG_VER_EAGLE == lgver:
@@ -1021,30 +106,24 @@ class LG:
         self._group_q = collections.defaultdict(list)
         self._output_q = collections.defaultdict(list)
         self._start_list = []
-        all_list = []
+        self._lgn_list = []
         stream_output_ports = dict()  # key - port_id, value - construct key
         for jd in lg["nodeDataArray"]:
-            if (
-                jd["category"] == Categories.COMMENT
-                or jd["category"] == Categories.DESCRIPTION
-            ):
-                continue
             lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
-            all_list.append(lgn)
+            self._lgn_list.append(lgn)
             node_ouput_ports = jd.get("outputPorts", [])
             node_ouput_ports += jd.get("outputLocalPorts", [])
             # check all the outports of this node, and store "stream" output
             if len(node_ouput_ports) > 0:
                 for out_port in node_ouput_ports:
-                    if out_port.get("IdText", "").lower().endswith("stream"):
+                    if out_port.get("name", "").lower().endswith("stream"):
                         stream_output_ports[out_port["Id"]] = jd["key"]
-
-        for lgn in all_list:
-            if (
-                lgn.is_start()
-                and lgn.jd["category"] != Categories.COMMENT
-                and lgn.jd["category"] != Categories.DESCRIPTION
-            ):
+        # Need to go through the list again, since done_dict is recursive
+        for lgn in self._lgn_list:
+            if lgn.is_start and lgn.jd["category"] not in [
+                Categories.COMMENT,
+                Categories.DESCRIPTION,
+            ]:
                 if lgn.jd["category"] == Categories.VARIABLES:
                     self._g_var.append(lgn)
                 else:
@@ -1072,32 +151,31 @@ class LG:
 
         # key - lgn id, val - a list of pgns associated with this lgn
         self._drop_dict = collections.defaultdict(list)
-        self._lgn_list = all_list
         self._reprodata = lg.get("reprodata", {})
 
     def validate_link(self, src, tgt):
         # print("validate_link()", src.id, src.is_scatter(), tgt.id, tgt.is_scatter())
-        if src.is_scatter() or tgt.is_scatter():
+        if src.is_scatter or tgt.is_scatter:
             prompt = (
                 "Remember to specify Input App Type for the Scatter construct!"
             )
             raise GInvalidLink(
                 "Scatter construct {0} or {1} cannot be linked. {2}".format(
-                    src.text, tgt.text, prompt
+                    src.name, tgt.name, prompt
                 )
             )
 
-        if src.is_loop() or tgt.is_loop():
+        if src.is_loop or tgt.is_loop:
             raise GInvalidLink(
                 "Loop construct {0} or {1} cannot be linked".format(
-                    src.text, tgt.text
+                    src.name, tgt.name
                 )
             )
 
-        if src.is_gather():
+        if src.is_gather:
             if not (
-                tgt.jd["category"] in APP_DROP_TYPES
-                and tgt.is_group_start()
+                tgt.jd["categoryType"] in ["app", "application", "Application"]
+                and tgt.is_group_start
                 and src.inputs[0].h_level == tgt.h_level
             ):
                 raise GInvalidLink(
@@ -1106,8 +184,8 @@ class LG:
                     )
                 )
             # raise GInvalidLink("Gather {0} cannot be the input".format(src.id))
-        if tgt.is_groupby():
-            if src.is_group():
+        if tgt.is_groupby:
+            if src.is_group:
                 raise GInvalidLink(
                     "GroupBy {0} input must not be a group {1}".format(
                         tgt.id, src.id
@@ -1125,18 +203,20 @@ class LG:
                         tgt.id, src.id
                     )
                 )
-        elif tgt.is_gather():
+        elif tgt.is_gather:
+            if "categoryType" not in src.jd:
+                src.jd["categoryType"] = "Data"
             if (
-                not src.jd["category"] in STORAGE_TYPES
-                and not src.is_groupby()
+                not src.jd["categoryType"].lower() == "data"
+                and not src.is_groupby
             ):
                 raise GInvalidLink(
-                    "Gather {0}'s input {1} should be either a GroupBy or Data".format(
-                        tgt.id, src.id
+                    "Gather {0}'s input {1} should be either a GroupBy or Data. {2}".format(
+                        tgt.id, src.id, src.jd
                     )
                 )
 
-        if src.is_groupby() and not tgt.is_gather():
+        if src.is_groupby and not tgt.is_gather:
             raise GInvalidLink(
                 "Output {1} from GroupBy {0} must be Gather, otherwise embbed {1} inside GroupBy {0}".format(
                     src.id, tgt.id
@@ -1146,12 +226,12 @@ class LG:
         if not src.h_related(tgt):
             ll = src.group
             rl = tgt.group
-            if ll.is_loop() and rl.is_loop():
+            if ll.is_loop and rl.is_loop:
                 valid_loop_link = True
                 while True:
                     if ll is None or rl is None:
                         break
-                    if ll.is_loop() and rl.is_loop():
+                    if ll.is_loop and rl.is_loop:
                         if ll.dop != rl.dop:
                             valid_loop_link = False
                             break
@@ -1173,22 +253,33 @@ class LG:
                         tgt.id,
                         src.group_hierarchy,
                         tgt.group_hierarchy,
-                        src.text,
-                        tgt.text,
+                        src.name,
+                        tgt.name,
                     )
                 )
 
+    def get_child_lp_ctx(self, lgn, lpcxt, idx):
+        if lgn.is_loop:
+            if lpcxt is None:
+                return "{0}".format(idx)
+            else:
+                return "{0}/{1}".format(lpcxt, idx)
+        else:
+            return None
+
     def lgn_to_pgn(self, lgn, iid="0", lpcxt=None):
         """
-        convert logical graph node to physical graph node
-        without considering pg links
+        convert a logical graph node to physical graph node(s)
+        without considering pg links. This is a recursive method, creating also
+        all child nodes required by constructs.
 
         iid:    instance id (string)
         lpcxt:  Loop context
         """
-        if lgn.is_group():
-            # services nodes are replaced with the input application in the logical graph
-            extra_links_drops = not lgn.is_scatter()
+        if lgn.is_group:
+            # group nodes are replaced with the input application of the
+            # construct
+            extra_links_drops = not lgn.is_scatter
             if extra_links_drops:
                 non_inputs = []
                 grp_starts = []
@@ -1196,25 +287,24 @@ class LG:
                 for child in lgn.children:
                     if len(child.inputs) == 0:
                         non_inputs.append(child)
-                    if child.is_group_start():
+                    if child.is_group_start:
                         grp_starts.append(child)
-                    elif child.is_group_end():
+                    elif child.is_group_end:
                         grp_ends.append(child)
                 if len(grp_starts) == 0:
                     gs_list = non_inputs
                 else:
                     gs_list = grp_starts
-                if lgn.is_loop():
+                if lgn.is_loop:
                     if len(grp_starts) == 0 or len(grp_ends) == 0:
                         raise GInvalidNode(
-                            "Loop '{0}' should have at least one Start Component and one End Data".format(
-                                lgn.text
-                            )
+                            "Loop '{0}' should have at least one Start "
+                            + "Component and one End Data".format(lgn.name)
                         )
                     for ge in grp_ends:
                         for gs in grp_starts:  # make an artificial circle
                             lk = dict()
-                            if gs not in ge._outs:
+                            if gs not in ge._outputs:
                                 ge.add_output(gs)
                             if ge not in gs._inputs:
                                 gs.add_input(ge)
@@ -1246,17 +336,7 @@ class LG:
                     x.dop for x in scatters
                 ]  # inner most is also the slowest running index
 
-            lgn_is_loop = lgn.is_loop()
-
-            def get_child_lp_ctx(idx):
-                if lgn_is_loop:
-                    if lpcxt is None:
-                        return "{0}".format(idx)
-                    else:
-                        return "{0}/{1}".format(lpcxt, idx)
-                else:
-                    return None
-
+            lgn_is_loop = lgn.is_loop
             for i in range(lgn.dop):
                 miid = "{0}/{1}".format(iid, i)
                 if multikey_grpby:
@@ -1266,33 +346,35 @@ class LG:
                     grp_h = [str(x) for x in grp_h]
                     miid += "${0}".format("-".join(grp_h))
 
-                if extra_links_drops and not lgn.is_loop():
+                if extra_links_drops and not lgn.is_loop:
                     # make GroupBy and Gather drops
                     src_drop = lgn.make_single_drop(miid)
                     self._drop_dict[lgn.id].append(src_drop)
-                    if lgn.is_groupby():
+                    if lgn.is_groupby:
                         self._drop_dict["new_added"].append(
                             src_drop["grp-data_drop"]
                         )
-                    elif lgn.is_gather():
+                    elif lgn.is_gather:
                         pass
                         # self._drop_dict['new_added'].append(src_drop['gather-data_drop'])
                 for child in lgn.children:
-                    self.lgn_to_pgn(child, miid, get_child_lp_ctx(i))
-        elif lgn.is_mpi():
+                    self.lgn_to_pgn(
+                        child, miid, self.get_child_lp_ctx(lgn, lpcxt, i)
+                    )
+        elif lgn.is_mpi:
             for i in range(lgn.dop):
                 miid = "{0}/{1}".format(iid, i)
                 src_drop = lgn.make_single_drop(
-                    miid, loop_cxt=lpcxt, proc_index=i
+                    miid, loop_ctx=lpcxt, proc_index=i
                 )
                 self._drop_dict[lgn.id].append(src_drop)
-        elif lgn.is_service():
+        elif lgn.is_service:
             # no action required, inputapp node aleady created and marked with "isService"
             pass
         else:
-            src_drop = lgn.make_single_drop(iid, loop_cxt=lpcxt)
+            src_drop = lgn.make_single_drop(iid, loop_ctx=lpcxt)
             self._drop_dict[lgn.id].append(src_drop)
-            if lgn.is_start_listener():
+            if lgn.is_start_listener:
                 self._drop_dict["new_added"].append(src_drop["listener_drop"])
 
     @staticmethod
@@ -1322,9 +404,9 @@ class LG:
         Assumption:
         s or t cannot be Scatter as Scatter does not convert into DROPs
         """
-        if t.is_gather():
+        if t.is_gather:
             ret = t.gather_width
-        elif t.is_groupby():
+        elif t.is_groupby:
             ret = t.groupby_width
         else:
             ret = s.dop_diff(t)
@@ -1346,15 +428,15 @@ class LG:
     def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink):
         """ """
         sdrop = None
-        if slgn.is_gather():
+        if slgn.is_gather:
             # sdrop = src_drop['gather-data_drop']
             pass
-        elif slgn.is_groupby():
+        elif slgn.is_groupby:
             sdrop = src_drop["grp-data_drop"]
         else:
             sdrop = src_drop
 
-        if tlgn.is_gather():
+        if tlgn.is_gather:
             gather_oid = tgt_drop["oid"]
             if gather_oid not in self._gather_cache:
                 # [self, input_list, output_list]
@@ -1367,8 +449,8 @@ class LG:
             return
 
         tdrop = tgt_drop
-        s_type = slgn.jd["category"]
-        t_type = tlgn.jd["category"]
+        s_type = slgn.jd["categoryType"]
+        t_type = tlgn.jd["categoryType"]
 
         if self._is_stream_link(s_type, t_type):
             """
@@ -1382,31 +464,28 @@ class LG:
                         sdrop["oid"],
                         tdrop["oid"].replace(self._session_id, ""),
                     ),
-                    "type": DropType.DATA,
                     "categoryType": CategoryType.DATA,
-                    "storage": Categories.NULL,
-                    "nm": "StreamNull",
-                    "text": "StreamNull",
-                    "dw": 0,
+                    "dropclass": "dlg.data.drops.data_base.NullDROP",
+                    "name": "StreamNull",
+                    "weight": 0,
                 }
             )
-            sdrop.addOutput(dropSpec_null, IdText="stream")
-            dropSpec_null.addProducer(sdrop, IdText="stream")
-            dropSpec_null.addStreamingConsumer(tdrop, IdText="stream")
-            tdrop.addStreamingInput(dropSpec_null, IdText="stream")
+            sdrop.addOutput(dropSpec_null, name="stream")
+            dropSpec_null.addProducer(sdrop, name="stream")
+            dropSpec_null.addStreamingConsumer(tdrop, name="stream")
+            tdrop.addStreamingInput(dropSpec_null, name="stream")
             self._drop_dict["new_added"].append(dropSpec_null)
-        elif s_type in APP_DROP_TYPES:
-            # use name from source and ID from target
-            sIdText = slgn._getIdText("outputPorts")
-            tIdText = tlgn._getIdText("inputPorts")
-            logger.debug("Found port names: IN: %s, OUT: %s", sIdText, tIdText)
-            sdrop.addOutput(tdrop, IdText=sIdText)
-            tdrop.addProducer(sdrop, IdText=tIdText)
+        elif s_type in ["Application", "Control"]:
+            sname = slgn._getPortName("outputPorts")
+            tname = tlgn._getPortName("inputPorts")
+            logger.debug("Found port names: IN: %s, OUT: %s", sname, tname)
+            sdrop.addOutput(tdrop, name=sname)
+            tdrop.addProducer(sdrop, name=tname)
             if Categories.BASH_SHELL_APP == s_type:
                 bc = src_drop["command"]
                 bc.add_output_param(tlgn.id, tgt_drop["oid"])
         else:
-            if slgn.is_gather():  # don't really add them
+            if slgn.is_gather:  # don't really add them
                 gather_oid = src_drop["oid"]
                 if gather_oid not in self._gather_cache:
                     # [self, input_list, output_list]
@@ -1415,22 +494,35 @@ class LG:
                 tup[2].append(tgt_drop)
             else:  # sdrop is a data drop
                 # there should be only one port, get the name
-                sIdText = slgn._getIdText("outputPorts")
+                portId = llink["fromPort"] if "fromPort" in llink else None
+                sname = slgn._getPortName("outputPorts", portId=portId)
                 # could be multiple ports, need to identify
                 portId = llink["toPort"] if "toPort" in llink else None
-                tIdText = tlgn._getIdText("inputPorts", portId=portId)
+                tname = tlgn._getPortName("inputPorts", portId=portId)
+                logger.debug("Found port names: IN: %s, OUT: %s", sname, tname)
+                # logger.debug(
+                #     ">>> link from %s to %s (%s) (%s)",
+                #     sname,
+                #     tname,
+                #     llink,
+                #     portId,
+                # )
                 if llink.get("is_stream", False):
                     logger.debug(
                         "link stream connection %s to %s",
                         sdrop["oid"],
                         tdrop["oid"],
                     )
-                    sdrop.addStreamingConsumer(tdrop, IdText=sIdText)
-                    tdrop.addStreamingInput(sdrop, IdText=sIdText)
+                    sdrop.addStreamingConsumer(tdrop, name=sname)
+                    tdrop.addStreamingInput(sdrop, name=sname)
                 else:
-                    # print("not a stream from %s to %s" % (llink['from'], llink['to']))
-                    sdrop.addConsumer(tdrop, IdText=sIdText)
-                    tdrop.addInput(sdrop, IdText=tIdText)
+                    # logger.debug(
+                    #     ">>> adding consumer %s to %s",
+                    #     tdrop["categoryType"],
+                    #     sdrop["categoryType"],
+                    # )
+                    sdrop.addConsumer(tdrop, name=sname)
+                    tdrop.addInput(sdrop, name=tname)
             if Categories.BASH_SHELL_APP == t_type:
                 bc = tgt_drop["command"]
                 bc.add_input_param(slgn.id, src_drop["oid"])
@@ -1447,7 +539,7 @@ class LG:
         for lgn in self._start_list:
             self.lgn_to_pgn(lgn)
 
-        logger.info(
+        logger.debug(
             "Unroll progress - lgn_to_pgn done %d for session %s",
             len(self._start_list),
             self._session_id,
@@ -1461,13 +553,13 @@ class LG:
             sdrops = self._drop_dict[sid]
             tdrops = self._drop_dict[tid]
             chunk_size = self._get_chunk_size(slgn, tlgn)
-            if slgn.is_group() and not tlgn.is_group():
+            if slgn.is_group and not tlgn.is_group:
                 # this link must be artifically added (within group link)
                 # since
                 # 1. GroupBy's "natural" output must be a Scatter (i.e. group)
                 # 2. Scatter "naturally" does not have output
                 if (
-                    slgn.is_gather() and tlgn.gid != sid
+                    slgn.is_gather and tlgn.gid != sid
                 ):  # not the artifical link between gather and its own start child
                     # gather iteration case, tgt must be a Group-Start Component
                     # this is a way to manually sequentialise a Scatter that has a high DoP
@@ -1475,7 +567,7 @@ class LG:
                         if ga_drop["oid"] not in self._gather_cache:
                             logger.warning(
                                 "Gather %s Drop not yet in cache, sequentialisation may fail!",
-                                slgn.text,
+                                slgn.name,
                             )
                             continue
                         j = (i + 1) * slgn.gather_width
@@ -1489,10 +581,10 @@ class LG:
                             ][1]
                             # TODO merge this code into the function
                             # def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink)
-                            tIdText = tlgn._getIdText("inputPorts")
+                            tname = tlgn._getPortName(port="inputPorts")
                             for gddrop in gather_input_list:
-                                gddrop.addConsumer(tdrops[j], IdText=tIdText)
-                                tdrops[j].addInput(gddrop, IdText=tIdText)
+                                gddrop.addConsumer(tdrops[j], name=tname)
+                                tdrops[j].addInput(gddrop, name=tname)
                                 j += 1
 
                             # if 'gather-data_drop' in ga_drop:
@@ -1508,27 +600,27 @@ class LG:
                         raise GraphException(err_info)
                     for i, sdrop in enumerate(sdrops):
                         self._link_drops(slgn, tlgn, sdrop, tdrops[i], lk)
-            elif slgn.is_group() and tlgn.is_group():
+            elif slgn.is_group and tlgn.is_group:
                 # slgn must be GroupBy and tlgn must be Gather
                 self._unroll_gather_as_output(
                     slgn, tlgn, sdrops, tdrops, chunk_size, lk
                 )
-            elif not slgn.is_group() and (not tlgn.is_group()):
-                if slgn.is_start_node():
+            elif not slgn.is_group and (not tlgn.is_group):
+                if slgn.is_start_node:
                     continue
                 elif (
                     (slgn.group is not None)
-                    and slgn.group.is_loop()
+                    and slgn.group.is_loop
                     and slgn.gid == tlgn.gid
-                    and slgn.is_group_end()
-                    and tlgn.is_group_start()
+                    and slgn.is_group_end
+                    and tlgn.is_group_start
                 ):
                     # Re-link to the next iteration's start
                     lsd = len(sdrops)
                     if lsd != len(tdrops):
                         raise GraphException(
                             "# of sdrops '{0}' != # of tdrops '{1}'for Loop '{2}'".format(
-                                slgn.text, tlgn.text, slgn.group.text
+                                slgn.name, tlgn.name, slgn.group.name
                             )
                         )
                     # first add the outer construct (scatter, gather, group-by) boundary
@@ -1539,9 +631,7 @@ class LG:
                     for i, chunk in enumerate(
                         self._split_list(sdrops, loop_chunk_size)
                     ):
-                        # logger.debug("{0} ** {1}".format(i, loop_chunk_size))
                         for j, sdrop in enumerate(chunk):
-                            # logger.debug("{0} -- {1}".format(j, loop_chunk_size))
                             if j < loop_chunk_size - 1:
                                 self._link_drops(
                                     slgn,
@@ -1550,27 +640,26 @@ class LG:
                                     tdrops[i * loop_chunk_size + j + 1],
                                     lk,
                                 )
-                                # logger.debug("{0} --> {1}".format(i * loop_chunk_size + j, i * loop_chunk_size + j + 1))
 
                     # for i, sdrop in enumerate(sdrops):
                     #     if (i < lsd - 1):
                     #         self._link_drops(slgn, tlgn, sdrop, tdrops[i + 1])
                 elif (
                     slgn.group is not None
-                    and slgn.group.is_loop()
+                    and slgn.group.is_loop
                     and tlgn.group is not None
-                    and tlgn.group.is_loop()
+                    and tlgn.group.is_loop
                     and (not slgn.h_related(tlgn))
                 ):
                     # stepwise locking for links between two Loops
                     for sdrop, tdrop in product(sdrops, tdrops):
-                        if sdrop["loop_cxt"] == tdrop["loop_cxt"]:
+                        if sdrop["loop_ctx"] == tdrop["loop_ctx"]:
                             self._link_drops(slgn, tlgn, sdrop, tdrop, lk)
                 else:
                     lpaw = ("%s-%s" % (sid, tid)) in self_loop_aware_set
                     if (
                         slgn.group is not None
-                        and slgn.group.is_loop()
+                        and slgn.group.is_loop
                         and lpaw
                         and slgn.h_level > tlgn.h_level
                     ):
@@ -1586,7 +675,7 @@ class LG:
                                     )
                     elif (
                         tlgn.group is not None
-                        and tlgn.group.is_loop()
+                        and tlgn.group.is_loop
                         and lpaw
                         and slgn.h_level < tlgn.h_level
                     ):
@@ -1620,7 +709,7 @@ class LG:
                                     slgn, tlgn, sdrops[i], tdrop, lk
                                 )
             else:  # slgn is not group, but tlgn is group
-                if tlgn.is_groupby():
+                if tlgn.is_groupby:
                     grpby_dict = collections.defaultdict(list)
                     layer_index = tlgn.group_by_scatter_layers[1]
                     for gdd in sdrops:
@@ -1638,7 +727,7 @@ class LG:
                         else:
                             # find the "group by" scatter level
                             gbylist = []
-                            if slgn.group.is_groupby():  # a chain of group bys
+                            if slgn.group.is_groupby:  # a chain of group bys
                                 try:
                                     src_ctx = (
                                         gdd["iid"].split("$")[1].split("-")
@@ -1646,7 +735,7 @@ class LG:
                                 except IndexError:
                                     raise GraphException(
                                         "The group by hiearchy in the multi-key group by '{0}' is not specified for node '{1}'".format(
-                                            slgn.group.text, slgn.text
+                                            slgn.group.name, slgn.name
                                         )
                                     )
                             else:
@@ -1673,20 +762,19 @@ class LG:
                             drp.addOutput(grpby_drop)
                             grpby_drop.addInput(drp)
                             """
-                elif tlgn.is_gather():
+                elif tlgn.is_gather:
                     self._unroll_gather_as_output(
                         slgn, tlgn, sdrops, tdrops, chunk_size, lk
                     )
-                elif tlgn.is_service():
+                elif tlgn.is_service:
                     # Only the service node's inputApplication will be translated
                     # to the physical graph as a node of type SERVICE_APP instead of APP
                     # per compute instance
-                    tlgn["type"] = DropType.SERVICE_APP
+                    tlgn["categoryType"] = "Application"
+                    tlgn["category"] = "PythonApp"
                 else:
                     raise GraphException(
-                        "Unsupported target group {0}".format(
-                            tlgn.jd["category"]
-                        )
+                        "Unsupported target group {0}".format(tlgn.jd.category)
                     )
 
         for _, v in self._gather_cache.items():
@@ -1701,39 +789,39 @@ class LG:
             for data_drop in input_list:
                 # TODO merge this code into the function
                 # def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink)
-                sIdText = slgn._getIdText("outputPorts")
+                sname = slgn._getPortName(ports="outputPorts")
                 if llink.get("is_stream", False):
                     logger.debug(
                         "link stream connection %s to %s",
                         data_drop["oid"],
                         output_drop["oid"],
                     )
-                    data_drop.addStreamingConsumer(output_drop, IdText=sIdText)
-                    output_drop.addStreamingInput(data_drop, IdText=sIdText)
+                    data_drop.addStreamingConsumer(output_drop, name=sname)
+                    output_drop.addStreamingInput(data_drop, name=sname)
                 else:
-                    data_drop.addConsumer(output_drop, IdText=sIdText)
-                    output_drop.addInput(data_drop, IdText=sIdText)
+                    data_drop.addConsumer(output_drop, name=sname)
+                    output_drop.addInput(data_drop, name=sname)
                 # print(data_drop['nm'], data_drop['oid'], '-->', output_drop['nm'], output_drop['oid'])
 
         logger.info(
-            "Unroll progress - links done %d for session %s",
+            "Unroll progress - %d links done for session %s",
             len(self._lg_links),
             self._session_id,
         )
 
         # clean up extra drops
         for lid, lgn in self._done_dict.items():
-            if (lgn.is_start_node()) and lid in self._drop_dict:
+            if (lgn.is_start_node) and lid in self._drop_dict:
                 del self._drop_dict[lid]
-            elif lgn.is_start_listener():
+            elif lgn.is_start_listener:
                 for sl_drop in self._drop_dict[lid]:
                     if "listener_drop" in sl_drop:
                         del sl_drop["listener_drop"]
-            elif lgn.is_groupby():
+            elif lgn.is_groupby:
                 for sl_drop in self._drop_dict[lid]:
                     if "grp-data_drop" in sl_drop:
                         del sl_drop["grp-data_drop"]
-            elif lgn.is_gather():
+            elif lgn.is_gather:
                 # lid_sub = "{0}-gather-data".format(lid)
                 del self._drop_dict[lid]
                 # for sl_drop in self._drop_dict[lid]:
@@ -1747,13 +835,6 @@ class LG:
         ret = []
         for drop_list in self._drop_dict.values():
             ret += drop_list
-
-        for drop in ret:
-            if drop["type"] == DropType.APP and drop["app"].endswith(
-                Categories.BASH_SHELL_APP
-            ):
-                bc = drop["command"]
-                drop["command"] = bc.to_real_command()
 
         return ret
 
