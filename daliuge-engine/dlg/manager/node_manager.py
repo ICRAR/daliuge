@@ -69,7 +69,7 @@ class LogEvtListener(object):
     def handleEvent(self, event):
         if event.type == "status":
             logger.debug(
-                "Drop uid=%s, oid=%s changed to state %s",
+                "Data Drop uid=%s, oid=%s changed to state %s",
                 event.uid,
                 event.oid,
                 event.status,
@@ -139,7 +139,6 @@ class NodeManagerBase(DROPManager):
         max_threads=0,
         logdir=utils.getDlgLogsDir(),
     ):
-
         self._dlm = DataLifecycleManager(
             check_period=dlm_check_period,
             cleanup_period=dlm_cleanup_period,
@@ -340,14 +339,12 @@ class NodeManagerBase(DROPManager):
         t.start()
 
     def add_node_subscriptions(self, sessionId, relationships):
-
         logger.debug("Received subscription information: %r", relationships)
         self._check_session_id(sessionId)
         self._sessions[sessionId].add_node_subscriptions(relationships)
 
         # Set up event channels subscriptions
         for nodesub in relationships:
-
             host = nodesub
             events_port = constants.NODE_DEFAULT_EVENTS_PORT
             if type(nodesub) is tuple:
@@ -471,7 +468,6 @@ class ZMQPubSubMixIn(object):
         sock_created.set()
 
         while self._pubsub_running:
-
             try:
                 obj = self._events_out.get_nowait()
             except queue.Empty:
@@ -510,7 +506,6 @@ class ZMQPubSubMixIn(object):
 
         pending_connections = {}
         while self._pubsub_running:
-
             # A new subscription has been requested
             try:
                 subscription = self._subscriptions.get_nowait()

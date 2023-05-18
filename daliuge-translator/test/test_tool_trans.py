@@ -32,19 +32,45 @@ class TestTool(unittest.TestCase):
     def test_pipeline(self):
         """A pipeline from an LG all the way to a finished graph execution"""
         lg = pkg_resources.resource_filename(  # @UndefinedVariable
-            "test.dropmake", "logical_graphs/cont_img.graph"
+            "test.dropmake", "logical_graphs/ArrayLoop.graph"
         )
 
-        fill = tool.start_process("fill", ["-L", lg], stdout=subprocess.PIPE)
-        unroll = tool.start_process(
-            "unroll", ["-z", "--app", "1"], stdin=fill.stdout, stdout=subprocess.PIPE
+        # first fill the LGT parameters
+        fill = tool.start_process(
+            "fill",
+            [
+                "-vv",
+                "-L",
+                lg,
+                "-p",
+                "param1=hello",
+                "-p",
+                "param2=1",
+                "-p",
+                "param1.param2=hi",
+                "-p",
+                "param4.what=False",
+            ],
+            stdout=subprocess.PIPE,
         )
+
+        # unroll the resulting LG
+        unroll = tool.start_process(
+            "unroll",
+            ["-z", "--app", "1", "-vv"],
+            stdin=fill.stdout,
+            stdout=subprocess.PIPE,
+        )
+
+        # partition the PGT
         partition = tool.start_process(
             "partition", stdin=unroll.stdout, stdout=subprocess.PIPE
         )
+
+        # map PGT to resources to construct PG
         map_ = tool.start_process(
             "map",
-            ["-N", "localhost,localhost"],
+            ["-vv", "-N", "localhost,localhost"],
             stdin=partition.stdout,
             stdout=subprocess.PIPE,
         )

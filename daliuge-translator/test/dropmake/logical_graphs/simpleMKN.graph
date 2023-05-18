@@ -62,7 +62,7 @@
         {
             "applicationArgs": [],
             "category": "MKN",
-            "categoryType": "Construct",
+            "type": "Construct",
             "collapsed": false,
             "color": "rgb(211 165 0)",
             "commitHash": "",
@@ -157,12 +157,12 @@
                     "defaultValue": "",
                     "description": "",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Appclass",
+                    "text": "dropclass",
                     "type": "Unknown",
                     "value": "dlg.apps.simple.SleepApp"
                 },
@@ -260,12 +260,12 @@
                     "defaultValue": "",
                     "description": "",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Appclass",
+                    "text": "dropclass",
                     "type": "Unknown",
                     "value": "dlg.apps.simple.SleepApp"
                 },
@@ -380,12 +380,12 @@
                     "defaultValue": "",
                     "description": "",
                     "keyAttribute": false,
-                    "name": "appclass",
+                    "name": "dropclass",
                     "options": [],
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Appclass",
+                    "text": "dropclass",
                     "type": "Unknown",
                     "value": "dlg.apps.simple.SleepApp"
                 },
@@ -451,7 +451,7 @@
         {
             "applicationArgs": [],
             "category": "Memory",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -460,6 +460,19 @@
             "drawOrderHint": 0,
             "expanded": false,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "",
                     "description": "",
@@ -525,7 +538,7 @@
         {
             "applicationArgs": [],
             "category": "Memory",
-            "categoryType": "Data",
+            "type": "Data",
             "collapsed": true,
             "color": "#2c2c2c",
             "commitHash": "",
@@ -534,6 +547,19 @@
             "drawOrderHint": 0,
             "expanded": false,
             "fields": [
+                {
+                    "defaultValue": "",
+                    "description": "Data class",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "positional": false,
+                    "precious": false,
+                    "readonly": true,
+                    "text": "dropclass",
+                    "type": "String",
+                    "value": "dlg.data.drops.memory.InMemoryDROP"
+                },
                 {
                     "defaultValue": "",
                     "description": "",

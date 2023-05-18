@@ -1,23 +1,23 @@
 [
     {
         "oid": "2022-03-24T11:40:15_-1_0",
-        "type": "app",
-        "app": "dlg.apps.simple.HelloWorldApp",
+        "categoryType": "Application",
+        "dropclass": "dlg.apps.simple.HelloWorldApp",
         "rank": [
             0
         ],
-        "loop_cxt": null,
-        "tw": 1,
+        "loop_ctx": null,
+        "weight": 1,
         "num_cpus": 1,
         "greet": "Everybody",
-        "appclass": "dlg.apps.simple.HelloWorldApp",
+        "dropclass": "dlg.apps.simple.HelloWorldApp",
         "execution_time": 1,
         "group_start": false,
         "applicationArgs": {},
         "iid": "0",
         "lg_key": -1,
         "dt": "PythonApp",
-        "nm": "HelloWorldApp",
+        "name": "HelloWorldApp",
         "outputs": [
             {
                 "2022-03-24T11:40:15_-2_0": "hello"
@@ -28,13 +28,13 @@
     },
     {
         "oid": "2022-03-24T11:40:15_-2_0",
-        "type": "data",
-        "storage": "File",
+        "categoryType": "Data",
+        "dropclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0
         ],
-        "loop_cxt": null,
-        "dw": 5,
+        "loop_ctx": null,
+        "weight": 5,
         "check_filepath_exists": "1",
         "filepath": "hello.txt",
         "data_volume": "5",
@@ -44,7 +44,7 @@
         "iid": "0",
         "lg_key": -2,
         "dt": "File",
-        "nm": "hello",
+        "name": "hello",
         "producers": [
             {
                 "2022-03-24T11:40:15_-1_0": "hello"

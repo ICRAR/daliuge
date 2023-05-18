@@ -60,7 +60,9 @@ def unroll(lg_path, oid_prefix, zerorun=False, app=None):
     from ..dropmake.pg_generator import unroll
 
     logger.info("Start to unroll %s", lg_path)
-    return unroll(_open_i(lg_path), oid_prefix=oid_prefix, zerorun=zerorun, app=app)
+    return unroll(
+        _open_i(lg_path), oid_prefix=oid_prefix, zerorun=zerorun, app=app
+    )
 
 
 _param_types = {
@@ -119,16 +121,25 @@ def submit(pg, opts):
     )
     if opts.wait:
         common.monitor_sessions(
-            session_id, host=opts.host, port=opts.port, poll_interval=opts.poll_interval
+            session_id,
+            host=opts.host,
+            port=opts.port,
+            poll_interval=opts.poll_interval,
         )
 
     if opts.reproducibility:
         dump = _setup_output(opts)
         common.monitor_sessions_repro(
-            session_id, host=opts.host, port=opts.port, poll_interval=opts.poll_interval
+            session_id,
+            host=opts.host,
+            port=opts.port,
+            poll_interval=opts.poll_interval,
         )
         repro_data = common.fetch_reproducibility(
-            session_id, host=opts.host, port=opts.port, poll_interval=opts.poll_interval
+            session_id,
+            host=opts.host,
+            port=opts.port,
+            poll_interval=opts.poll_interval,
         )
         dump(repro_data["graph"])
 
@@ -198,8 +209,12 @@ def dlg_fill(parser, args):
     # putting all parameters together in a single dictionary
     for p in opts.parameter:
         if param_spec_type(p) is None:
-            parser.error("Parameter %s is neither JSON nor has it key=value form" % p)
-    params = [p.split("=") for p in opts.parameter if param_spec_type(p) == "kv"]
+            parser.error(
+                "Parameter %s is neither JSON nor has it key=value form" % p
+            )
+    params = [
+        p.split("=") for p in opts.parameter if param_spec_type(p) == "kv"
+    ]
     params = dict(params)
     for json_param in (
         json.loads(p) for p in opts.parameter if param_spec_type(p) == "json"
@@ -247,7 +262,11 @@ def _add_unroll_options(parser):
         help="Force an app to be used in the Physical Graph. 0=Don't force, 1=SleepApp, 2=SleepAndCopy",
         default=0,
     )
-    apps = (None, "dlg.apps.simple.SleepApp", "dlg.apps.simple.SleepAndCopyApp")
+    apps = (
+        None,
+        "dlg.apps.simple.SleepApp",
+        "dlg.apps.simple.SleepAndCopyApp",
+    )
     return apps
 
 
@@ -262,6 +281,7 @@ def dlg_unroll(parser, args):
     pgt = unroll(
         opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app]
     )
+    logger.debug(">>> pgt: %s", pgt)
     dump(init_pgt_unroll_repro_data(pgt))
 
 
@@ -521,19 +541,25 @@ def register_commands():
         "A Web server for the Logical Graph Editor",
         "dlg.dropmake.web.translator_rest:run",
     )
-    tool.cmdwrap("submit", "Submits a Physical Graph to a Drop Manager", dlg_submit)
+    tool.cmdwrap(
+        "submit", "Submits a Physical Graph to a Drop Manager", dlg_submit
+    )
     tool.cmdwrap(
         "map",
         "Maps a Physical Graph Template to resources and produces a Physical Graph",
         dlg_map,
     )
     tool.cmdwrap(
-        "unroll", "Unrolls a Logical Graph into a Physical Graph Template", dlg_unroll
+        "unroll",
+        "Unrolls a Logical Graph into a Physical Graph Template",
+        dlg_unroll,
     )
     tool.cmdwrap(
         "partition",
         "Divides a Physical Graph Template into N logical partitions",
         dlg_partition,
     )
-    tool.cmdwrap("unroll-and-partition", "unroll + partition", dlg_unroll_and_partition)
+    tool.cmdwrap(
+        "unroll-and-partition", "unroll + partition", dlg_unroll_and_partition
+    )
     tool.cmdwrap("fill", "Fill a Logical Graph with parameters", dlg_fill)

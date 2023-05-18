@@ -80,12 +80,14 @@ def daliuge_aware(func):
                 origin = bottle.request.headers.raw("Origin")
                 if origin is None:
                     origin = "http://localhost:8084"
-                elif not re.match(r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin):
+                elif not re.match(
+                    r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin
+                ):
                     origin = "http://localhost:8084"
+                bottle.response.headers["Access-Control-Allow-Origin"] = origin
                 bottle.response.headers[
-                    "Access-Control-Allow-Origin"
-                ] = origin
-                bottle.response.headers["Access-Control-Allow-Credentials"] = "true"
+                    "Access-Control-Allow-Credentials"
+                ] = "true"
                 bottle.response.headers[
                     "Access-Control-Allow-Methods"
                 ] = "GET, POST, PUT, OPTIONS"
@@ -118,7 +120,10 @@ def daliuge_aware(func):
                 eargs = {}
                 # args[1] is a dictionary of host:exception
                 for host, subex in e.args[1].items():
-                    eargs[host] = {"type": subex.__class__.__name__, "args": subex.args}
+                    eargs[host] = {
+                        "type": subex.__class__.__name__,
+                        "args": subex.args,
+                    }
             elif isinstance(e, DaliugeException):
                 status, eargs = 555, e.args
             else:
@@ -142,7 +147,6 @@ class ManagerRestServer(RestServer):
     """
 
     def __init__(self, dm, maxreqsize=10):
-
         super(ManagerRestServer, self).__init__()
 
         # Increase maximum file sizes
@@ -156,25 +160,44 @@ class ManagerRestServer(RestServer):
         app.post("/api/stop", callback=self.stop_manager)
         app.post("/api/sessions", callback=self.createSession)
         app.get("/api/sessions", callback=self.getSessions)
-        app.get("/api/sessions/<sessionId>", callback=self.getSessionInformation)
+        app.get(
+            "/api/sessions/<sessionId>", callback=self.getSessionInformation
+        )
         app.delete("/api/sessions/<sessionId>", callback=self.destroySession)
         app.get("/api/sessions/<sessionId>/logs", callback=self.getLogFile)
-        app.get("/api/sessions/<sessionId>/status", callback=self.getSessionStatus)
-        app.post("/api/sessions/<sessionId>/deploy", callback=self.deploySession)
-        app.post("/api/sessions/<sessionId>/cancel", callback=self.cancelSession)
-        app.get("/api/sessions/<sessionId>/graph", callback=self.getGraph)
-        app.get("/api/sessions/<sessionId>/graph/size", callback=self.getGraphSize)
-        app.get("/api/sessions/<sessionId>/graph/status", callback=self.getGraphStatus)
-        app.post("/api/sessions/<sessionId>/graph/append", callback=self.addGraphParts)
         app.get(
-            "/api/sessions/<sessionId>/repro/data", callback=self.getSessionReproData
+            "/api/sessions/<sessionId>/status", callback=self.getSessionStatus
+        )
+        app.post(
+            "/api/sessions/<sessionId>/deploy", callback=self.deploySession
+        )
+        app.post(
+            "/api/sessions/<sessionId>/cancel", callback=self.cancelSession
+        )
+        app.get("/api/sessions/<sessionId>/graph", callback=self.getGraph)
+        app.get(
+            "/api/sessions/<sessionId>/graph/size", callback=self.getGraphSize
+        )
+        app.get(
+            "/api/sessions/<sessionId>/graph/status",
+            callback=self.getGraphStatus,
+        )
+        app.post(
+            "/api/sessions/<sessionId>/graph/append",
+            callback=self.addGraphParts,
+        )
+        app.get(
+            "/api/sessions/<sessionId>/repro/data",
+            callback=self.getSessionReproData,
         )
         app.get(
             "/api/sessions/<sessionId>/repro/status",
             callback=self.getSessionReproStatus,
         )
 
-        app.route("/api/sessions", method="OPTIONS", callback=self.acceptPreflight)
+        app.route(
+            "/api/sessions", method="OPTIONS", callback=self.acceptPreflight
+        )
         app.route(
             "/api/sessions/<sessionId>/graph/append",
             method="OPTIONS",
@@ -204,7 +227,7 @@ class ManagerRestServer(RestServer):
         self.stop()
         logger.info(
             "Thanks for using our %s, come back again :-)",
-            self.dm.__class__.__name__
+            self.dm.__class__.__name__,
         )
 
     @daliuge_aware
@@ -368,12 +391,17 @@ class NMRestServer(ManagerRestServer):
 
     def initializeSpecifics(self, app):
         app.get("/api", callback=self.getNMStatus)
-        app.post("/api/sessions/<sessionId>/graph/link", callback=self.linkGraphParts)
+        app.post(
+            "/api/sessions/<sessionId>/graph/link",
+            callback=self.linkGraphParts,
+        )
         app.post(
             "/api/sessions/<sessionId>/subscriptions",
             callback=self.add_node_subscriptions,
         )
-        app.post("/api/sessions/<sessionId>/trigger", callback=self.trigger_drops)
+        app.post(
+            "/api/sessions/<sessionId>/trigger", callback=self.trigger_drops
+        )
         # The non-REST mappings that serve HTML-related content
         app.get("/", callback=self.visualizeDM)
         app.get("/api/shutdown", callback=self.shutdown_node_manager)
@@ -398,7 +426,9 @@ class NMRestServer(ManagerRestServer):
         if not os.path.isfile(logfile):
             raise NoSessionException(sessionId, "Log file not found.")
         return static_file(
-            os.path.basename(logfile), root=logdir, download=os.path.basename(logfile)
+            os.path.basename(logfile),
+            root=logdir,
+            download=os.path.basename(logfile),
         )
 
     @daliuge_aware
@@ -433,7 +463,10 @@ class NMRestServer(ManagerRestServer):
         urlparts = bottle.request.urlparts
         serverUrl = urlparts.scheme + "://" + urlparts.netloc
         return bottle.template(
-            tpl, serverUrl=serverUrl, dmType=self.dm.__class__.__name__, reset="false"
+            tpl,
+            serverUrl=serverUrl,
+            dmType=self.dm.__class__.__name__,
+            reset="false",
         )
 
 
@@ -460,7 +493,8 @@ class CompositeManagerRestServer(ManagerRestServer):
             callback=self.getNodeSessionStatus,
         )
         app.get(
-            "/api/node/<node>/sessions/<sessionId>/graph", callback=self.getNodeGraph
+            "/api/node/<node>/sessions/<sessionId>/graph",
+            callback=self.getNodeGraph,
         )
         app.get(
             "/api/node/<node>/sessions/<sessionId>/graph/status",
@@ -472,7 +506,10 @@ class CompositeManagerRestServer(ManagerRestServer):
 
     @daliuge_aware
     def getCMStatus(self):
-        return {"hosts": self.dm.dmHosts, "sessionIds": self.dm.getSessionIds()}
+        return {
+            "hosts": self.dm.dmHosts,
+            "sessionIds": self.dm.getSessionIds(),
+        }
 
     @daliuge_aware
     def getCMNodes(self):
@@ -571,7 +608,9 @@ class CompositeManagerRestServer(ManagerRestServer):
         tpl = file_as_string("web/dim.html")
         urlparts = bottle.request.urlparts
         selectedNode = (
-            bottle.request.params["node"] if "node" in bottle.request.params else ""
+            bottle.request.params["node"]
+            if "node" in bottle.request.params
+            else ""
         )
         serverUrl = urlparts.scheme + "://" + urlparts.netloc
         return bottle.template(
@@ -650,7 +689,9 @@ class MasterManagerRestServer(CompositeManagerRestServer):
     def addNM(self, host, node):
         port = constants.ISLAND_DEFAULT_REST_PORT
         logger.debug("Adding NM %s to DIM %s", node, host)
-        with RestClient(host=host, port=port, timeout=10, url_prefix="/api") as c:
+        with RestClient(
+            host=host, port=port, timeout=10, url_prefix="/api"
+        ) as c:
             return json.loads(
                 c._POST(
                     f"/node/{node}",
@@ -661,7 +702,9 @@ class MasterManagerRestServer(CompositeManagerRestServer):
     def removeNM(self, host, node):
         port = constants.ISLAND_DEFAULT_REST_PORT
         logger.debug("Removing NM %s from DIM %s", node, host)
-        with RestClient(host=host, port=port, timeout=10, url_prefix="/api") as c:
+        with RestClient(
+            host=host, port=port, timeout=10, url_prefix="/api"
+        ) as c:
             return json.loads(c._DELETE(f"/node/{node}").read())
 
     @daliuge_aware

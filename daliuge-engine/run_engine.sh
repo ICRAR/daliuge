@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 DOCKER_OPTS="\
 --shm-size=2g --ipc=shareable \
 --rm \
-$([[ $(command -v nvidia-docker version) ]] && echo '--gpus=all' || echo '') \
+$([[ $(nvidia-docker version) ]] && echo '--gpus=all' || echo '') \
 --name daliuge-engine \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -p 5555:5555 -p 6666:6666 \
@@ -23,9 +23,14 @@ common_prep ()
     DOCKER_OPTS=${DOCKER_OPTS}" -v ${DLG_ROOT}/workspace/settings/group:/etc/group"
     DOCKER_OPTS=${DOCKER_OPTS}" -v ${DLG_ROOT}:${DLG_ROOT} --env DLG_ROOT=${DLG_ROOT}"
 }
-
-export VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
-export C_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
+if [ $2 ]
+then
+	export VCS_TAG=$2
+	export C_TAG=$VCS_TAG
+else
+	export VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
+	export C_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
+fi
 case "$1" in
     "dep")
         DLG_ROOT="/var/dlg_home"
@@ -71,13 +76,6 @@ case "$1" in
         exit 0;;
     "local")
         common_prep
-        res="$(dlg nm -h| grep -c 'Unknown command')"
-        if [[ $res == 1 ]]
-        then
-            echo "dlg command could not be found!"
-            echo "Please install daliuge-engine."
-            exit
-        fi
         echo "Starting managers locally in background.."
         dlg nm -vvd -H 0.0.0.0 --dlg-path=$DLG_ROOT --dlm-cleanup-period=10
         dlg dim -vvd -H 0.0.0.0 -N localhost

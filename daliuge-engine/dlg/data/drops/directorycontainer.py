@@ -32,6 +32,7 @@ from dlg.meta import dlg_bool_param
 
 logger = logging.getLogger(__name__)
 
+
 ##
 # TODO: This needs some more work
 # @brief Directory
@@ -42,11 +43,12 @@ logger = logging.getLogger(__name__)
 # @par EAGLE_START
 # @param category Directory
 # @param tag future
+# @param dropclass dropclass/dlg.data.drops.directorycontainer.DirectoryContainer/String/ComponentParameter/readwrite//False/False/Drop class
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
-# @param check_exists Check path exists/True/Boolean/ComponentParameter/readwrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
-# @param dirname Directory name//String/ComponentParameter/readwrite//False/False/"Directory name/path"
-# @param dummy dummy//String/OutputPort/readwrite//False/False/Dummy output port
+# @param check_exists Check path exists/True/Boolean/ApplicationArgument/readwrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
+# @param dirname Directory name//String/ApplicationArgument/readwrite//False/False/"Directory name/path"
+# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
 class DirectoryContainer(PathBasedDrop, ContainerDROP):
     """

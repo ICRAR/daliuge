@@ -295,7 +295,7 @@ def create_port(
 
     :return dict: {
                     'Id':uuid,
-                    'IdText': internal_name,
+                    'name': internal_name,
                     'text': external_name,
                     'event': event,
                     'type': value_type,
@@ -316,8 +316,8 @@ def create_port(
 
     return {
         "Id": str(port_uuid),
-        "IdText": internal_name,
-        "text": external_name,
+        "name": internal_name,
+        "name": external_name,
         "event": event,
         "type": value_type,
         "description": description,
@@ -373,7 +373,7 @@ def _check_required_fields_for_category(
         alert_if_missing(text, fields, "libpath")
 
     if category in ["PythonApp", "Branch"]:
-        alert_if_missing(text, fields, "appclass")
+        alert_if_missing(text, fields, "dropclass")
 
     if category in [
         "File",
@@ -438,7 +438,6 @@ def create_field(
     :returns field: dict
     """
     return {
-        "text": external_name,
         "name": internal_name,
         "value": value,
         "defaultValue": value,
@@ -639,7 +638,7 @@ def create_palette_node_from_params(params) -> tuple:
             construct = value
         elif key == "tag" and not any(s in value for s in KNOWN_FIELD_TYPES):
             tag = value
-        elif key == "text":
+        elif key == "name":
             text = value
         elif key == "description":
             comp_description = value
@@ -745,7 +744,7 @@ def create_palette_node_from_params(params) -> tuple:
             "category": category,
             "drawOrderHint": 0,
             "key": get_next_key(),
-            "text": text,
+            "name": text,
             "description": comp_description,
             "collapsed": False,
             "showPorts": False,
@@ -1171,7 +1170,7 @@ class greatgrandchild:
                 ggchild.text if self.func_name == "Unknown" else self.func_name
             )
             self.member["params"].append(
-                {"key": "text", "direction": None, "value": self.func_name}
+                {"key": "name", "direction": None, "value": self.func_name}
             )
         if ggchild.tag == "argsstring":
             args = ggchild.text[1:-1]  # get rid of parantheses
@@ -1468,11 +1467,11 @@ def process_compounddef(compounddef: dict) -> list:
         if len(briefdescription) > 0:
             if briefdescription[0].text is None:
                 logger.warning("No brief description text")
-                result.append({"key": "text", "direction": None, "value": ""})
+                result.append({"key": "name", "direction": None, "value": ""})
             else:
                 result.append(
                     {
-                        "key": "text",
+                        "key": "name",
                         "direction": None,
                         "value": briefdescription[0].text.strip(" ."),
                     }
@@ -1646,7 +1645,7 @@ def _process_grandchild(gchild: dict, hold_name: str, language: str) -> dict:
         return_type = "Unknown"
 
         # some defaults
-        # param string format is (idText name/value/value_type/param_type/access_restriction/options/precious/positional/description)
+        # param string format is (name name/value/value_type/param_type/access_restriction/options/precious/positional/description)
         if language == Language.C:
             member["params"].append(
                 {"key": "category", "direction": None, "value": "DynlibApp"}
@@ -1664,7 +1663,7 @@ def _process_grandchild(gchild: dict, hold_name: str, language: str) -> dict:
             )
             member["params"].append(
                 {
-                    "key": "appclass",
+                    "key": "dropclass",
                     "direction": None,
                     "value": "Application Class/dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/readwrite//False/False/The python class that implements this application",
                 }
@@ -1768,7 +1767,7 @@ def create_construct_node(node_type: str, node: dict) -> dict:
     if node_type not in KNOWN_CONSTRUCT_TYPES:
         logger.warning(
             " construct for node'"
-            + node["text"]
+            + node["name"]
             + "' has unknown type: "
             + node_type
         )
@@ -1779,7 +1778,7 @@ def create_construct_node(node_type: str, node: dict) -> dict:
         "description": "A default "
         + node_type
         + " construct for the "
-        + node["text"]
+        + node["name"]
         + " component.",
         "fields": [],
         "applicationArgs": [],
@@ -1788,7 +1787,7 @@ def create_construct_node(node_type: str, node: dict) -> dict:
         "paletteDownloadUrl": "",
         "dataHash": "",
         "key": get_next_key(),
-        "text": node_type + "/" + node["text"],
+        "name": node_type + "/" + node["name"],
     }
 
     if node_type == "Scatter" or node_type == "Gather":
@@ -1796,7 +1795,7 @@ def create_construct_node(node_type: str, node: dict) -> dict:
         construct_node["inputAppFields"] = node["fields"]
         construct_node["inputAppArgs"] = node["applicationArgs"]
         construct_node["inputApplicationKey"] = node["key"]
-        construct_node["inputApplicationName"] = node["text"]
+        construct_node["inputApplicationName"] = node["name"]
         construct_node["inputApplicationType"] = node["category"]
         construct_node["inputApplicationDescription"] = node["description"]
         construct_node["inputLocalPorts"] = node["outputPorts"]
@@ -1833,7 +1832,7 @@ def params_to_nodes(params: dict) -> list:
 
         # if the node tag matches the command line tag, or no tag was specified on the command line, add the node to the list to output
         if data["tag"] == tag or tag == "":
-            logger.info("Adding component: " + node["text"])
+            logger.info("Adding component: " + node["name"])
             result.append(node)
 
             # if a construct is found, add to nodes
@@ -1842,7 +1841,7 @@ def params_to_nodes(params: dict) -> list:
                     "Adding construct component: "
                     + data["construct"]
                     + "/"
-                    + node["text"]
+                    + node["name"]
                 )
                 construct_node = create_construct_node(data["construct"], node)
                 result.append(construct_node)
@@ -2045,7 +2044,7 @@ if __name__ == "__main__":
             logger.debug("Number of functions in compound: %d", len(functions))
             for f in functions:
                 f_name = [
-                    k["value"] for k in f["params"] if k["key"] == "text"
+                    k["value"] for k in f["params"] if k["key"] == "name"
                 ]
                 logger.debug("Function names: %s", f_name)
                 if f_name == [".Unknown"]:
@@ -2056,10 +2055,10 @@ if __name__ == "__main__":
                 for n in ns:
                     alreadyPresent = False
                     for node in nodes:
-                        if node["text"] == n["text"]:
+                        if node["name"] == n["name"]:
                             alreadyPresent = True
 
-                    # print("component " + n["text"] + " alreadyPresent " + str(alreadyPresent))
+                    # print("component " + n["name"] + " alreadyPresent " + str(alreadyPresent))
 
                     if not alreadyPresent:
                         nodes.append(n)

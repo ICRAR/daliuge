@@ -73,22 +73,16 @@ def unroll(lg, oid_prefix=None, zerorun=False, app=None):
     start = time.time()
     lg = LG(lg, ssid=oid_prefix)
     drop_list = lg.unroll_to_tpl()
-    logger.info(
-        "Logical Graph unroll completed in %.3f [s]. # of Drops: %d",
-        (time.time() - start),
-        len(drop_list),
-    )
-    # Optionally set sleepTimes to 0 and apps to a specific type
     if zerorun:
         for dropspec in drop_list:
-            if "sleepTime" in dropspec:
-                dropspec["sleepTime"] = 0
+            if "sleep_time" in dropspec:
+                dropspec["sleep_time"] = 0
     if app:
         logger.info("Replacing apps with %s", app)
         for dropspec in drop_list:
-            if "app" in dropspec:
-                dropspec["app"] = app
-                dropspec["sleepTime"] = (
+            if "dropclass" in dropspec:
+                dropspec["dropclass"] = app
+                dropspec["sleep_time"] = (
                     dropspec["execution_time"]
                     if "execution_time" in dropspec
                     else 2
@@ -119,6 +113,14 @@ _known_algos = {
 
 def known_algorithms():
     return [x for x in _known_algos.keys() if isinstance(x, str)]
+
+
+def _get_algo_param(algo_params, param_name, default):
+    """
+    Make sure that default is set even if value has been passed as None.
+    """
+    param = algo_params.get(param_name)
+    return param if param is not None else default
 
 
 def partition(
@@ -159,15 +161,15 @@ def partition(
     # Not all algorithms use them, but makes the coding easier
     # do_merge = num_islands > 1
     could_merge = True
-    min_goal = algo_params.get("min_goal", 0)
-    ptype = algo_params.get("ptype", 0)
-    max_load_imb = algo_params.get("max_load_imb", 90)
-    max_cpu = algo_params.get("max_cpu", 8)
-    max_mem = algo_params.get("max_mem", 1000)
-    time_greedy = algo_params.get("time_greedy", 50)
-    deadline = algo_params.get("deadline", None)
-    topk = algo_params.get("topk", 30)
-    swarm_size = algo_params.get("swarm_size", 40)
+    min_goal = _get_algo_param(algo_params, "min_goal", 0)
+    ptype = _get_algo_param(algo_params, "ptype", 0)
+    max_load_imb = _get_algo_param(algo_params, "max_load_imb", 90)
+    max_cpu = _get_algo_param(algo_params, "max_cpu", 8)
+    max_mem = _get_algo_param(algo_params, "max_mem", 1000)
+    time_greedy = _get_algo_param(algo_params, "time_greedy", 50)
+    deadline = _get_algo_param(algo_params, "deadline", None)
+    topk = _get_algo_param(algo_params, "topk", 30)
+    swarm_size = _get_algo_param(algo_params, "swarm_size", 40)
 
     max_dop = {"num_cpus": max_cpu, "mem_usage": max_mem}
 

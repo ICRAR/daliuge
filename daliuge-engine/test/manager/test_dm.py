@@ -29,7 +29,7 @@ import multiprocessing
 import random
 
 from dlg import droputils
-from dlg.common import dropdict, Categories
+from dlg.common import dropdict
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.manager.node_manager import NodeManager
@@ -71,8 +71,8 @@ def memory(uid, **kwargs):
     dropSpec = dropdict(
         {
             "oid": uid,
-            "type": "data",
-            "storage": Categories.MEMORY,
+            "categoryType": "Data",
+            "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             "reprodata": default_repro.copy(),
         }
     )
@@ -84,8 +84,8 @@ def sleepAndCopy(uid, **kwargs):
     dropSpec = dropdict(
         {
             "oid": uid,
-            "type": "app",
-            "app": "dlg.apps.simple.SleepAndCopyApp",
+            "categoryType": "Application",
+            "dropclass": "dlg.apps.simple.SleepAndCopyApp",
             "reprodata": default_repro.copy(),
         }
     )
@@ -200,8 +200,8 @@ class NodeManagerTestsBase(NMTestsMixIn):
             memory("A"),
             {
                 "oid": "B",
-                "type": "app",
-                "app": "test.manager.test_dm.ErroneousApp",
+                "categoryType": "Application",
+                "dropclass": "test.manager.test_dm.ErroneousApp",
                 "inputs": ["A"],
             },
             memory("C", producers=["B"]),
@@ -213,7 +213,6 @@ class NodeManagerTestsBase(NMTestsMixIn):
         dm.deploySession(sessionId, ["A"])
 
     def test_error_listener(self):
-
         evt = threading.Event()
         erroneous_drops = []
 
@@ -248,7 +247,11 @@ class NodeManagerTestsBase(NMTestsMixIn):
     def _test_runGraphOneDOPerDOM(self, repeats=1):
         g1 = [memory("A")]
         g2 = [
-            {"oid": "B", "type": "app", "app": "dlg.apps.crc.CRCApp"},
+            {
+                "oid": "B",
+                "categoryType": "Application",
+                "dropclass": "dlg.apps.crc.CRCApp",
+            },
             memory("C", producers=["B"]),
         ]
         rels = [DROPRel("B", DROPLinkType.CONSUMER, "A")]
@@ -312,14 +315,18 @@ class NodeManagerTestsBase(NMTestsMixIn):
         g1 = [
             memory("A", consumers=["C"]),
             memory("B"),
-            {"oid": "C", "type": "app", "app": "dlg.apps.crc.CRCApp"},
+            {
+                "oid": "C",
+                "categoryType": "Application",
+                "dropclass": "dlg.apps.crc.CRCApp",
+            },
             memory("D", producers=["C"]),
         ]
         g2 = [
             {
                 "oid": "E",
-                "type": "app",
-                "app": "test.test_drop.SumupContainerChecksum",
+                "categoryType": "Application",
+                "dropclass": "test.test_drop.SumupContainerChecksum",
             },
             memory("F", producers=["E"]),
         ]
@@ -547,8 +554,8 @@ class NodeManagerTestsBase(NMTestsMixIn):
             memory("A", consumers=["C"]),
             {
                 "oid": "C",
-                "type": "app",
-                "app": "dlg.apps.crc.CRCApp",
+                "categoryType": "Application",
+                "dropclass": "dlg.apps.crc.CRCApp",
                 "consumers": ["D"],
             },
             memory("D", producers=["C"]),
@@ -556,14 +563,14 @@ class NodeManagerTestsBase(NMTestsMixIn):
         g2 = [
             {
                 "oid": "E",
-                "type": "app",
-                "app": "test.test_drop.SumupContainerChecksum",
+                "categoryType": "Application",
+                "dropclass": "test.test_drop.SumupContainerChecksum",
                 "node": ip_addr_1,
             },
             {
                 "oid": "F",
-                "type": "app",
-                "app": "test.test_drop.SumupContainerChecksum",
+                "categoryType": "Application",
+                "dropclass": "test.test_drop.SumupContainerChecksum",
                 "node": ip_addr_2,
             },
         ]
@@ -605,8 +612,8 @@ class NodeManagerTestsBase(NMTestsMixIn):
             memory("A"),
             {
                 "oid": "B",
-                "type": "app",
-                "app": "dlg.apps.simple.CopyApp",
+                "categoryType": "Application",
+                "dropclass": "dlg.apps.simple.CopyApp",
                 "inputs": ["A"],
                 "outputs": ["C"],
             },
@@ -615,8 +622,8 @@ class NodeManagerTestsBase(NMTestsMixIn):
         g2 = [
             {
                 "oid": "D",
-                "type": "app",
-                "app": "dlg.apps.crc.CRCStreamApp",
+                "categoryType": "Application",
+                "dropclass": "dlg.apps.crc.CRCStreamApp",
                 "outputs": ["E"],
             },
             memory("E"),
@@ -635,8 +642,8 @@ class NodeManagerTestsBase(NMTestsMixIn):
             memory("A"),
             {
                 "oid": "B",
-                "type": "app",
-                "app": "dlg.apps.simple.CopyApp",
+                "categoryType": "Application",
+                "dropclass": "dlg.apps.simple.CopyApp",
                 "inputs": ["A"],
             },
         ]
@@ -644,8 +651,8 @@ class NodeManagerTestsBase(NMTestsMixIn):
             memory("C"),
             {
                 "oid": "D",
-                "type": "app",
-                "app": "dlg.apps.crc.CRCStreamApp",
+                "categoryType": "Application",
+                "dropclass": "dlg.apps.crc.CRCStreamApp",
                 "streamingInputs": ["C"],
                 "outputs": ["E"],
             },
@@ -658,7 +665,6 @@ class NodeManagerTestsBase(NMTestsMixIn):
 
 
 class TestDM(NodeManagerTestsBase, unittest.TestCase):
-
     nm_threads = 0
 
     def test_run_invalid_shmem_graph(self):
@@ -668,7 +674,13 @@ class TestDM(NodeManagerTestsBase, unittest.TestCase):
         in python < 3.8, and that it *does* run with python >= 3.8
         """
 
-        graph = [{"oid": "A", "type": "data", "storage": Categories.SHMEM}]
+        graph = [
+            {
+                "oid": "A",
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.SharedMemoryDROP",
+            }
+        ]
         graph = add_test_reprodata(graph)
         dm = self._start_dm()
         sessionID = "s1"

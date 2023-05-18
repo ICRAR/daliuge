@@ -1,20 +1,19 @@
 [
     {
         "oid": "2022-06-22T09:13:53_-5_0",
-        "type": "data",
-        "storage": "Memory",
+        "categoryType": "Data",
+        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
         "rank": [
             0
         ],
-        "loop_cxt": null,
-        "dw": 5,
+        "loop_ctx": null,
+        "weight": 5,
         "data_volume": 5,
         "group_end": false,
         "applicationArgs": {},
         "iid": "0",
         "lg_key": -5,
-        "dt": "Memory",
-        "nm": "array",
+        "name": "array",
         "producers": [
             {
                 "2022-06-22T09:13:53_-1_0": "array"
@@ -30,26 +29,25 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-1_0",
-        "type": "app",
-        "app": "dlg.apps.simple.RandomArrayApp",
+        "categoryType": "Application",
+        "dropclass": "dlg.apps.simple.RandomArrayApp",
         "rank": [
             0
         ],
-        "loop_cxt": null,
-        "tw": 5,
+        "loop_ctx": null,
+        "weight": 5,
         "num_cpus": 1,
         "size": 8000,
         "integer": false,
         "low": "0",
         "high": "100",
-        "appclass": "dlg.apps.simple.RandomArrayApp",
+        "dropclass": "dlg.apps.simple.RandomArrayApp",
         "execution_time": 5,
         "group_start": false,
         "applicationArgs": {},
         "iid": "0",
         "lg_key": -1,
-        "dt": "PythonApp",
-        "nm": "RandomArrayApp",
+        "name": "RandomArrayApp",
         "outputs": [
             {
                 "2022-06-22T09:13:53_-5_0": "array"
@@ -60,24 +58,23 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-3_0/0/0",
-        "type": "app",
-        "app": "dlg.apps.simple.PickOne",
+        "categoryType": "Application",
+        "dropclass": "dlg.apps.simple.PickOne",
         "rank": [
             0,
             0,
             0
         ],
-        "loop_cxt": "0",
-        "tw": 5,
+        "loop_ctx": "0",
+        "weight": 5,
         "num_cpus": 1,
         "execution_time": 5,
         "group_start": true,
-        "appclass": "dlg.apps.simple.PickOne",
+        "dropclass": "dlg.apps.simple.PickOne",
         "applicationArgs": {},
         "iid": "0/0/0",
         "lg_key": -3,
-        "dt": "PythonApp",
-        "nm": "PickOne",
+        "name": "PickOne",
         "outputs": [
             {
                 "2022-06-22T09:13:53_-4_0/0/0": "data"
@@ -96,24 +93,23 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-3_0/0/1",
-        "type": "app",
-        "app": "dlg.apps.simple.PickOne",
+        "categoryType": "Application",
+        "dropclass": "dlg.apps.simple.PickOne",
         "rank": [
             0,
             0,
             1
         ],
-        "loop_cxt": "1",
-        "tw": 5,
+        "loop_ctx": "1",
+        "weight": 5,
         "num_cpus": 1,
         "execution_time": 5,
         "group_start": true,
-        "appclass": "dlg.apps.simple.PickOne",
+        "dropclass": "dlg.apps.simple.PickOne",
         "applicationArgs": {},
         "iid": "0/0/1",
         "lg_key": -3,
-        "dt": "PythonApp",
-        "nm": "PickOne",
+        "name": "PickOne",
         "outputs": [
             {
                 "2022-06-22T09:13:53_-4_0/0/1": "data"
@@ -135,24 +131,23 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-3_0/1/0",
-        "type": "app",
-        "app": "dlg.apps.simple.PickOne",
+        "categoryType": "Application",
+        "dropclass": "dlg.apps.simple.PickOne",
         "rank": [
             0,
             1,
             0
         ],
-        "loop_cxt": "0",
-        "tw": 5,
+        "loop_ctx": "0",
+        "weight": 5,
         "num_cpus": 1,
         "execution_time": 5,
         "group_start": true,
-        "appclass": "dlg.apps.simple.PickOne",
+        "dropclass": "dlg.apps.simple.PickOne",
         "applicationArgs": {},
         "iid": "0/1/0",
         "lg_key": -3,
-        "dt": "PythonApp",
-        "nm": "PickOne",
+        "name": "PickOne",
         "outputs": [
             {
                 "2022-06-22T09:13:53_-4_0/1/0": "data"
@@ -171,24 +166,23 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-3_0/1/1",
-        "type": "app",
-        "app": "dlg.apps.simple.PickOne",
+        "categoryType": "Application",
+        "dropclass": "dlg.apps.simple.PickOne",
         "rank": [
             0,
             1,
             1
         ],
-        "loop_cxt": "1",
-        "tw": 5,
+        "loop_ctx": "1",
+        "weight": 5,
         "num_cpus": 1,
         "execution_time": 5,
         "group_start": true,
-        "appclass": "dlg.apps.simple.PickOne",
+        "dropclass": "dlg.apps.simple.PickOne",
         "applicationArgs": {},
         "iid": "0/1/1",
         "lg_key": -3,
-        "dt": "PythonApp",
-        "nm": "PickOne",
+        "name": "PickOne",
         "outputs": [
             {
                 "2022-06-22T09:13:53_-4_0/1/1": "data"
@@ -210,15 +204,15 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-4_0/0/0",
-        "type": "data",
-        "storage": "File",
+        "categoryType": "Data",
+        "dropclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0,
             0,
             0
         ],
-        "loop_cxt": "0",
-        "dw": 5,
+        "loop_ctx": "0",
+        "weight": 5,
         "check_filepath_exists": false,
         "data_volume": 5,
         "group_end": false,
@@ -227,8 +221,7 @@
         "applicationArgs": {},
         "iid": "0/0/0",
         "lg_key": -4,
-        "dt": "File",
-        "nm": "File",
+        "name": "File",
         "producers": [
             {
                 "2022-06-22T09:13:53_-3_0/0/0": "data"
@@ -239,15 +232,15 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-4_0/0/1",
-        "type": "data",
-        "storage": "File",
+        "categoryType": "Data",
+        "dropclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0,
             0,
             1
         ],
-        "loop_cxt": "1",
-        "dw": 5,
+        "loop_ctx": "1",
+        "weight": 5,
         "check_filepath_exists": false,
         "data_volume": 5,
         "group_end": false,
@@ -256,8 +249,7 @@
         "applicationArgs": {},
         "iid": "0/0/1",
         "lg_key": -4,
-        "dt": "File",
-        "nm": "File",
+        "name": "File",
         "producers": [
             {
                 "2022-06-22T09:13:53_-3_0/0/1": "data"
@@ -268,15 +260,15 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-4_0/1/0",
-        "type": "data",
-        "storage": "File",
+        "categoryType": "Data",
+        "dropclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0,
             1,
             0
         ],
-        "loop_cxt": "0",
-        "dw": 5,
+        "loop_ctx": "0",
+        "weight": 5,
         "check_filepath_exists": false,
         "data_volume": 5,
         "group_end": false,
@@ -285,8 +277,7 @@
         "applicationArgs": {},
         "iid": "0/1/0",
         "lg_key": -4,
-        "dt": "File",
-        "nm": "File",
+        "name": "File",
         "producers": [
             {
                 "2022-06-22T09:13:53_-3_0/1/0": "data"
@@ -297,15 +288,15 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-4_0/1/1",
-        "type": "data",
-        "storage": "File",
+        "categoryType": "Data",
+        "dropclass": "dlg.data.drops.file.FileDROP",
         "rank": [
             0,
             1,
             1
         ],
-        "loop_cxt": "1",
-        "dw": 5,
+        "loop_ctx": "1",
+        "weight": 5,
         "check_filepath_exists": false,
         "data_volume": 5,
         "group_end": false,
@@ -314,8 +305,7 @@
         "applicationArgs": {},
         "iid": "0/1/1",
         "lg_key": -4,
-        "dt": "File",
-        "nm": "File",
+        "name": "File",
         "producers": [
             {
                 "2022-06-22T09:13:53_-3_0/1/1": "data"
@@ -326,22 +316,21 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-6_0/0/0",
-        "type": "data",
-        "storage": "Memory",
+        "categoryType": "Data",
+        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
         "rank": [
             0,
             0,
             0
         ],
-        "loop_cxt": "0",
-        "dw": 5,
+        "loop_ctx": "0",
+        "weight": 5,
         "data_volume": 5,
         "group_end": true,
         "applicationArgs": {},
         "iid": "0/0/0",
         "lg_key": -6,
-        "dt": "Memory",
-        "nm": "rest_array",
+        "name": "rest_array",
         "producers": [
             {
                 "2022-06-22T09:13:53_-3_0/0/0": "rest_array"
@@ -360,22 +349,21 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-6_0/0/1",
-        "type": "data",
-        "storage": "Memory",
+        "categoryType": "Data",
+        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
         "rank": [
             0,
             0,
             1
         ],
-        "loop_cxt": "1",
-        "dw": 5,
+        "loop_ctx": "1",
+        "weight": 5,
         "data_volume": 5,
         "group_end": true,
         "applicationArgs": {},
         "iid": "0/0/1",
         "lg_key": -6,
-        "dt": "Memory",
-        "nm": "rest_array",
+        "name": "rest_array",
         "producers": [
             {
                 "2022-06-22T09:13:53_-3_0/0/1": "rest_array"
@@ -386,22 +374,21 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-6_0/1/0",
-        "type": "data",
-        "storage": "Memory",
+        "categoryType": "Data",
+        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
         "rank": [
             0,
             1,
             0
         ],
-        "loop_cxt": "0",
-        "dw": 5,
+        "loop_ctx": "0",
+        "weight": 5,
         "data_volume": 5,
         "group_end": true,
         "applicationArgs": {},
         "iid": "0/1/0",
         "lg_key": -6,
-        "dt": "Memory",
-        "nm": "rest_array",
+        "name": "rest_array",
         "producers": [
             {
                 "2022-06-22T09:13:53_-3_0/1/0": "rest_array"
@@ -420,22 +407,21 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-6_0/1/1",
-        "type": "data",
-        "storage": "Memory",
+        "categoryType": "Data",
+        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
         "rank": [
             0,
             1,
             1
         ],
-        "loop_cxt": "1",
-        "dw": 5,
+        "loop_ctx": "1",
+        "weight": 5,
         "data_volume": 5,
         "group_end": true,
         "applicationArgs": {},
         "iid": "0/1/1",
         "lg_key": -6,
-        "dt": "Memory",
-        "nm": "rest_array",
+        "name": "rest_array",
         "producers": [
             {
                 "2022-06-22T09:13:53_-3_0/1/1": "rest_array"
@@ -446,19 +432,18 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-9_0/0",
-        "type": "data",
-        "storage": "Memory",
+        "categoryType": "Data",
+        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
         "rank": [
             0,
             0
         ],
-        "loop_cxt": null,
-        "dw": 1,
+        "loop_ctx": null,
+        "weight": 1,
         "applicationArgs": {},
         "iid": "0/0",
         "lg_key": -9,
-        "dt": "Memory",
-        "nm": "rest_array",
+        "name": "rest_array",
         "consumers": [
             {
                 "2022-06-22T09:13:53_-3_0/0/0": "rest_array"
@@ -474,19 +459,18 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-9_0/1",
-        "type": "data",
-        "storage": "Memory",
+        "categoryType": "Data",
+        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
         "rank": [
             0,
             1
         ],
-        "loop_cxt": null,
-        "dw": 1,
+        "loop_ctx": null,
+        "weight": 1,
         "applicationArgs": {},
         "iid": "0/1",
         "lg_key": -9,
-        "dt": "Memory",
-        "nm": "rest_array",
+        "name": "rest_array",
         "consumers": [
             {
                 "2022-06-22T09:13:53_-3_0/1/0": "rest_array"
@@ -502,15 +486,15 @@
     },
     {
         "oid": "2022-06-22T09:13:53_-7_0",
-        "type": "app",
-        "app": "dlg.apps.simple.GenericScatterApp",
+        "categoryType": "Application",
+        "dropclass": "dlg.apps.simple.GenericScatterApp",
         "rank": [
             0
         ],
-        "loop_cxt": null,
-        "tw": 5,
+        "loop_ctx": null,
+        "weight": 5,
         "num_cpus": 1,
-        "appclass": "dlg.apps.simple.GenericScatterApp",
+        "dropclass": "dlg.apps.simple.GenericScatterApp",
         "execution_time": 5,
         "group_start": false,
         "array": "",
@@ -519,8 +503,7 @@
         "applicationArgs": {},
         "iid": "0",
         "lg_key": -7,
-        "dt": "PythonApp",
-        "nm": "Scatter",
+        "name": "Scatter",
         "inputs": [
             "2022-06-22T09:13:53_-5_0"
         ],

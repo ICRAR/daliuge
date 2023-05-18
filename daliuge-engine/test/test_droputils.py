@@ -31,8 +31,8 @@ import unittest
 import numpy
 
 from dlg import droputils
-from dlg.common import dropdict, Categories
-from dlg.apps.app_base import AppDROP, BarrierAppDROP
+from dlg.common import dropdict
+from dlg.apps.app_base import BarrierAppDROP
 from dlg.data.drops.plasma import PlasmaDROP
 from dlg.data.drops.memory import InMemoryDROP
 from dlg.data.drops.file import FileDROP
@@ -228,14 +228,14 @@ class DropUtilsTest(unittest.TestCase):
         pg_spec = [
             {
                 "oid": "A",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "consumers": ["B"],
             },
             {
                 "oid": "B",
-                "type": "app",
-                "app": "test.test_graph_loader.DummyApp",
+                "categoryType": "Application",
+                "Application": "test.test_graph_loader.DummyApp",
             },
         ]
         roots = droputils.get_roots(pg_spec)
@@ -247,11 +247,15 @@ class DropUtilsTest(unittest.TestCase):
         The same, but now B references A
         """
         pg_spec = [
-            {"oid": "A", "type": "data", "storage": Categories.MEMORY},
+            {
+                "oid": "A",
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+            },
             {
                 "oid": "B",
-                "type": "app",
-                "app": "test.test_graph_loader.DummyApp",
+                "categoryType": "Application",
+                "dropclass": "test.test_graph_loader.DummyApp",
                 "inputs": ["A"],
             },
         ]
@@ -265,30 +269,38 @@ class DropUtilsTest(unittest.TestCase):
         B --------------|
         """
         pg_spec = [
-            {"oid": "A", "type": "data", "storage": Categories.MEMORY},
-            {"oid": "B", "type": "data", "storage": Categories.MEMORY},
+            {
+                "oid": "A",
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+            },
+            {
+                "oid": "B",
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+            },
             {
                 "oid": "C",
-                "type": "app",
-                "app": "dlg.apps.crc.CRCApp",
+                "categoryType": "Application",
+                "dropclass": "dlg.apps.crc.CRCApp",
                 "inputs": ["A"],
             },
             {
                 "oid": "D",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "producers": ["C"],
             },
             {
                 "oid": "E",
-                "type": "app",
-                "app": "test.test_drop.SumupContainerChecksum",
+                "categoryType": "Application",
+                "dropclass": "test.test_drop.SumupContainerChecksum",
                 "inputs": ["D"],
             },
             {
                 "oid": "F",
-                "type": "data",
-                "storage": Categories.MEMORY,
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "producers": ["E"],
             },
         ]

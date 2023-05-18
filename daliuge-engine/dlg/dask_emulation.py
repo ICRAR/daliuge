@@ -29,11 +29,9 @@ import socket
 import struct
 import time
 
-from dlg.common import CategoryType, DropType
-
 from . import utils, droputils
 from .apps import pyfunc
-from .common import dropdict, Categories
+from .common import dropdict
 from .ddap_protocol import DROPStates
 from .apps.app_base import BarrierAppDROP
 from .exceptions import InvalidDropException
@@ -56,7 +54,11 @@ class ResultTransmitter(BarrierAppDROP):
         def read_result(x):
             if x.status == DROPStates.ERROR:
                 return "Error"
-            return pickle.loads(droputils.allDropContents(x))
+            try:
+                content = pickle.loads(droputils.allDropContents(x))
+            except EOFError:
+                content = None
+            return content
 
         results = map(read_result, self.inputs)  # @UndefinedVariable
         results = list(results)
@@ -76,7 +78,6 @@ class ResultTransmitter(BarrierAppDROP):
 
 
 def _get_client(**kwargs):
-
     if "client" in kwargs:
         return kwargs["client"]
 
@@ -112,14 +113,14 @@ def compute(value, **kwargs):
     transmitter_oid = "-1"
     transmitter = dropdict(
         {
-            "type": "app",
+            "categoryType": "Application",
             #            "categoryType": CategoryType.APPLICATION,
-            "app": "dlg.dask_emulation.ResultTransmitter",
-            "appclass": "dlg.dask_emulation.ResultTransmitter",
+            # "Application": "dlg.dask_emulation.ResultTransmitter",
+            "dropclass": "dlg.dask_emulation.ResultTransmitter",
             "oid": transmitter_oid,
+            "uid": transmitter_oid,
             "port": port,
-            "nm": "result transmitter",
-            "text": "result transmitter",
+            "name": "result transmitter",
         }
     )
     for leaf_oid in droputils.get_leaves(graph.values()):
@@ -198,7 +199,6 @@ class _DelayedDrop(object):
         logger.debug("Appended %r/%s to the Physical Graph", self, oid)
 
     def _to_physical_graph(self, visited, graph):
-
         self._append_to_graph(visited, graph)
 
         dependencies = list(self.inputs)
@@ -288,11 +288,10 @@ class _DelayedDrops(_DelayedDrop):
     def make_dropdict(self):
         return dropdict(
             {
-                "type": "app",
-                "categoryType": CategoryType.APPLICATION,
-                "app": "dlg.dask_emulation._Listifier",
-                "nm": "listifier",
-                "text": "listifier",
+                # "oid": uuid.uuid1(),
+                "categoryType": "Application",
+                "dropclass": "dlg.dask_emulation._Listifier",
+                "name": "listifier",
             }
         )
 
@@ -315,23 +314,20 @@ class _AppDrop(_DelayedDrop):
         logger.debug("Created %r", self)
 
     def make_dropdict(self):
-
         self.kwarg_names = list(self.original_kwarg_names)
         self.kwarg_names.reverse()
         my_dropdict = dropdict(
             {
-                "type": "app",
-                "categoryType": CategoryType.APPLICATION,
-                "app": "dlg.apps.pyfunc.PyFuncApp",
-                "appclass": "dlg.apps.pyfunc.PyFuncApp",
+                # "oid": uuid.uuid1(),
+                "categoryType": "Application",
+                "dropclass": "dlg.apps.pyfunc.PyFuncApp",
                 "func_arg_mapping": {},
             }
         )
         if self.fname is not None:
             simple_fname = self.fname.split(".")[-1]
             my_dropdict["func_name"] = self.fname
-            my_dropdict["nm"] = simple_fname
-            my_dropdict["text"] = simple_fname
+            my_dropdict["name"] = simple_fname
         if self.fcode is not None:
             my_dropdict["func_code"] = utils.b2s(base64.b64encode(self.fcode))
         if self.fdefaults:
@@ -352,7 +348,6 @@ class _AppDrop(_DelayedDrop):
                 self.dropdict["func_arg_mapping"][name] = dep.oid
 
     def _to_delayed_arg(self, arg):
-
         logger.info("Turning into delayed arg for %r: %r", self, arg)
         if isinstance(arg, _DelayedDrop):
             return arg
@@ -365,7 +360,6 @@ class _AppDrop(_DelayedDrop):
         return _DataDrop(pydata=arg)
 
     def __call__(self, *args, **kwargs):
-
         logger.debug(
             "Delayed function %s called with %d args and %d kwargs",
             self.fname,
@@ -406,9 +400,9 @@ class _DataDrop(_DelayedDrop):
     def make_dropdict(self):
         my_dropdict = dropdict(
             {
-                "type": "data",
-                "categoryType": CategoryType.DATA,
-                "storage": Categories.MEMORY,
+                # "oid": uuid.uuid1(),
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             }
         )
         if not self.producer:
@@ -456,4 +450,5 @@ def delayed(x, *args, **kwargs):
         nout = None
     if callable(x):
         return _AppDrop(x, nout=nout)
+        # return x(*args, **kwargs)
     return _DataDrop(pydata=x)

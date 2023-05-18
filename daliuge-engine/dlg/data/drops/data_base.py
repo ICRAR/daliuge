@@ -26,6 +26,7 @@ import logging
 from typing import Union
 
 from dlg.ddap_protocol import DROPStates
+
 from dlg.drop import AbstractDROP, track_current_drop
 from dlg.data.io import (
     DataIO,
@@ -54,11 +55,11 @@ logger = logging.getLogger(__name__)
 
 ##
 # @brief Data
-# @details A generic Data drop, whose functionality can be provided by an arbitrary class, as specified in the 'dataclass' component parameter
+# @details A generic Data drop, whose functionality can be provided by an arbitrary class, as specified in the 'dropclass' component parameter. It is not useful without additional development.
 # @par EAGLE_START
 # @param category Data
 # @param tag template
-# @param dataclass Data Class/my.awesome.data.Component/String/ComponentParameter/readonly//False/False/The python class that implements this data component
+# @param dropclass Data Class/my.awesome.data.Component/String/ComponentParameter/readonly//False/False/The python class that implements this data component
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
 # @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
@@ -408,7 +409,7 @@ class PathBasedDrop(object):
 # @par EAGLE_START
 # @param category Memory
 # @param tag daliuge
-# @param data_volume Data volume/0/Float/ComponentParameter/readonly//False/False/This never stores any data
+# @param dropclass dropclass/dlg.data.drops.data_base.NullDROP/String/ComponentParameter/readwrite//False/False/Drop class
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
 # @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
 # @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port

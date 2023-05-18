@@ -66,7 +66,8 @@ def _filter_parameters(parameters: dict):
 # @par EAGLE_START
 # @param category EnvironmentVariables
 # @param tag daliuge
-# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data 
+# @param dropclass dropclass/dlg.data.drops.environmentvar_drop.EnvironmentVarDROP/String/ComponentParameter/readwrite//False/False/Drop class
+# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
 # @param persist Persist/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
 # @par EAGLE_END
@@ -85,7 +86,9 @@ class EnvironmentVarDROP(AbstractDROP, KeyValueDROP):
         self._variables.update(_filter_parameters(self.parameters))
 
     def getIO(self):
-        return MemoryIO(io.BytesIO(json.dumps(self._variables).encode("utf-8")))
+        return MemoryIO(
+            io.BytesIO(json.dumps(self._variables).encode("utf-8"))
+        )
 
     def get(self, key):
         """

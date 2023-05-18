@@ -35,8 +35,13 @@ import sys
 import time
 import os
 
-from dlg.deploy.configs import ConfigFactory  # get all available configurations
-from dlg.deploy.deployment_constants import DEFAULT_AWS_MON_PORT, DEFAULT_AWS_MON_HOST
+from dlg.deploy.configs import (
+    ConfigFactory,
+)  # get all available configurations
+from dlg.deploy.deployment_constants import (
+    DEFAULT_AWS_MON_PORT,
+    DEFAULT_AWS_MON_HOST,
+)
 from dlg.deploy.slurm_client import SlurmClient
 
 FACILITIES = ConfigFactory.available()
@@ -50,7 +55,10 @@ def get_timestamp(line):
     date_time = "{0}T{1}".format(split[0], split[1])
     pattern = "%Y-%m-%dT%H:%M:%S,%f"
     epoch = time.mktime(time.strptime(date_time, pattern))
-    return datetime.datetime.strptime(date_time, pattern).microsecond / 1e6 + epoch
+    return (
+        datetime.datetime.strptime(date_time, pattern).microsecond / 1e6
+        + epoch
+    )
 
 
 class LogEntryPair:
@@ -137,7 +145,8 @@ def build_nm_log_entry_pairs():
 def construct_catchall_pattern(node_type):
     pattern_strs = LogParser.kwords.get(node_type)
     patterns = [
-        x.format(".*").replace("(", r"\(").replace(")", r"\)") for x in pattern_strs
+        x.format(".*").replace("(", r"\(").replace(")", r"\)")
+        for x in pattern_strs
     ]
     catchall = "|".join(["(%s)" % (s,) for s in patterns])
     catchall = ".*(%s).*" % (catchall,)
@@ -205,15 +214,20 @@ class LogParser:
 
     kwords = dict()
     kwords["dim"] = dim_kl
-    kwords["nm"] = nm_kl
+    kwords["name"] = nm_kl
 
     def __init__(self, log_dir):
         self._dim_log_f = None
         if not self.check_log_dir(log_dir):
             raise Exception("No DIM log found at: {0}".format(log_dir))
         self._log_dir = log_dir
-        self._dim_catchall_pattern = construct_catchall_pattern(node_type="dim")
-        self._nm_catchall_pattern = construct_catchall_pattern(node_type="nm")
+        self._dim_catchall_pattern = construct_catchall_pattern(
+            node_type="dim"
+        )
+        # self._nm_catchall_pattern = construct_catchall_pattern(node_type="nm")
+        self._nm_catchall_pattern = construct_catchall_pattern(
+            node_type="name"
+        )
 
     def parse(self, out_csv=None):
         """
@@ -271,11 +285,14 @@ class LogParser:
 
         num_dims = 0
         for log_directory_file_name in os.listdir(self._log_dir):
-
             # Check this is a dir and contains the NM log
-            if not os.path.isdir(os.path.join(self._log_dir, log_directory_file_name)):
+            if not os.path.isdir(
+                os.path.join(self._log_dir, log_directory_file_name)
+            ):
                 continue
-            nm_logf = os.path.join(self._log_dir, log_directory_file_name, "dlgNM.log")
+            nm_logf = os.path.join(
+                self._log_dir, log_directory_file_name, "dlgNM.log"
+            )
             nm_dim_logf = os.path.join(
                 self._log_dir, log_directory_file_name, "dlgDIM.log"
             )
@@ -303,7 +320,6 @@ class LogParser:
 
             # Looking for the deployment times and counting for finished sessions
             for lep in nm_log_pairs:
-
                 # Consider only valid durations
                 dur = lep.get_duration()
                 if dur is None:
@@ -339,7 +355,6 @@ class LogParser:
         # effect
         max_exec_time = 0
         for log_entry_pairs in nm_logs:
-
             indexed_leps = {lep.name: lep for lep in log_entry_pairs}
             deploy_time = indexed_leps["node_deploy_time"].get_duration()
             if deploy_time is None:  # since some node managers failed to start
@@ -366,7 +381,9 @@ class LogParser:
             git_commit,
         ]
         ret = [str(x) for x in ret]
-        num_dims = num_dims if num_dims == 1 else num_dims - 1  # exclude master manager
+        num_dims = (
+            num_dims if num_dims == 1 else num_dims - 1
+        )  # exclude master manager
         add_line = ",".join(ret + temp_dim + temp_nm + [str(int(num_dims))])
         if out_csv is not None:
             with open(out_csv, "a") as out_file:
@@ -384,7 +401,9 @@ class LogParser:
             if os.path.exists(dim_log_f):
                 self._dim_log_f = [dim_log_f]
                 if dim_log_f == possible_logs[0]:
-                    cluster_log = os.path.join(log_dir, "0", "start_dlg_cluster.log")
+                    cluster_log = os.path.join(
+                        log_dir, "0", "start_dlg_cluster.log"
+                    )
                     if os.path.exists(cluster_log):
                         self._dim_log_f.append(cluster_log)
                 return True
@@ -585,7 +604,9 @@ def main():
     if not (opts.action and opts.facility) and not opts.configs:
         parser.error("Missing required parameters!")
     if opts.facility not in FACILITIES:
-        parser.error(f"Unknown facility provided. Please choose from {FACILITIES}")
+        parser.error(
+            f"Unknown facility provided. Please choose from {FACILITIES}"
+        )
 
     if opts.action == 2:
         if opts.log_dir is None:
@@ -609,12 +630,13 @@ def main():
                             log_parser = LogParser(log_dir)
                             log_parser.parse(out_csv=opts.csv_output)
                         except Exception as exp:
-                            print("Fail to parse {0}: {1}".format(log_dir, exp))
+                            print(
+                                "Fail to parse {0}: {1}".format(log_dir, exp)
+                            )
         else:
             log_parser = LogParser(opts.log_dir)
             log_parser.parse(out_csv=opts.csv_output)
     elif opts.action == 1:
-
         if opts.logical_graph and opts.physical_graph:
             parser.error(
                 "Either a logical graph or physical graph filename must be specified"
@@ -622,7 +644,9 @@ def main():
         for path_to_graph_file in (opts.logical_graph, opts.physical_graph):
             if path_to_graph_file and not os.path.exists(path_to_graph_file):
                 parser.error(
-                    "Cannot locate graph file at '{0}'".format(path_to_graph_file)
+                    "Cannot locate graph file at '{0}'".format(
+                        path_to_graph_file
+                    )
                 )
 
         client = SlurmClient(

@@ -1,15 +1,15 @@
 [
   {
     "oid": "a",
-    "type": "app",
-    "app": "dlg.apps.simple.RandomArrayApp",
+    "categoryType": "Application",
+    "dropclass": "dlg.apps.simple.RandomArrayApp",
     "rank": [
       0
     ],
-    "loop_cxt": null,
-    "tw": 5,
+    "loop_ctx": null,
+    "weight": 5,
     "num_cpus": 1,
-    "appclass": "dlg.apps.simple.RandomArrayApp",
+    "dropclass": "dlg.apps.simple.RandomArrayApp",
     "execution_time": 5,
     "group_start": false,
     "input_error_threshold": 0,
@@ -63,7 +63,7 @@
     "iid": "0",
     "lg_key": -2,
     "dt": "PythonApp",
-    "nm": "RandomArrayApp",
+    "name": "RandomArrayApp",
     "outputs": [
       {
         "b": "array"
@@ -74,20 +74,20 @@
   },
   {
     "oid": "b",
-    "type": "data",
-    "storage": "Memory",
+    "categoryType": "Data",
+    "dropclass": "dlg.data.drops.memory.InMemoryDROP",
     "rank": [
       0
     ],
-    "loop_cxt": null,
-    "dw": 5,
+    "loop_ctx": null,
+    "weight": 5,
     "data_volume": 5,
     "group_end": false,
     "applicationArgs": {},
     "iid": "0",
     "lg_key": -3,
     "dt": "Memory",
-    "nm": "Memory",
+    "name": "Memory",
     "producers": [
       {
         "a": "array"
