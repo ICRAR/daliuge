@@ -8,12 +8,12 @@ Depending on how you are intending to run the system startup and shutdown is sli
 
 For the impatient: Single node |daliuge|
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-As a developer the following two commands will start both the translator and the engine, including a DIM and a NM::
+As a developer the following two commands will start both the translator and the engine, including a data island manager (DIM) and a node manager (NM)::
 
     cd daliuge-translator ; ./run_translator dev ; cd ..
     cd daliuge-engine ; ./run_engine dev ; cd ..
 
-This is the quickest way to start deploying workflows. Obviously this is limited to a single computer, but certainly useful for testing out the system and developing new components. You can use EAGLE on the URL: https://eagle.icrar.org and point your EAGLE configuration for the translator to http://localhost:8084. In the translator settings you have to set the address of the engine to the IP address of the docker host machine, i.e. http://<IP-address>:8001. Now you have access to a complete |daliuge| system!
+This is the quickest way to start deploying workflows. Obviously this is limited to a single computer, but certainly useful for testing out the system and developing new components. You can use EAGLE on the URL: https://eagle.icrar.org and point the EAGLE setting (keyboard shortcut 'O') for the translator URL to http://localhost:8084. After submitting your graph to the translator, the translator web interface will be opened in a new tab and you need to adjust the translator settings to point to the URL of the engine you've just started. Since the system is running across docker containers, you need to specify the IP address of the docker host machine, i.e. http://<IP-address>:8001 not localhost. These settings are saved in browser storage, that means that you will have the same settings when coming back. Now you have access to a complete |daliuge| system!
 
 The following paragraphs are providing more detailed guidelines to enable people to start the system on multiple nodes to cover the specific local requirements.
 
@@ -29,7 +29,7 @@ Similarly starting the engine::
    cd daliuge-engine
    ./run_engine.sh dev|dep
 
-The main difference between the development and the deployment version is that the development version is automatically strating a data island manager, while the deployment version is not doing that. Both are starting a Node Manager by default (see below).
+The main difference between the development and the deployment version is that the development version is automatically strating a data island manager, while the deployment version is not doing that. Both are starting a Node Manager by default (see below). Using the shell scripts is not strictly necessary, but the docker command line is a bit complex.
 
 Starting and stopping using CLI
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -49,24 +49,7 @@ and::
 
     dlg nm -s 
 
-respectively.
-
-The other options of the CLI are available on the command line::
- 
-    ❯ dlg daemon -h
-    Usage: daemon [options]
-
-    Starts a DALiuGE Daemon process
-
-    Options:
-    -h, --help     show this help message and exit
-    -m, --master   Start this DALiuGE daemon as the master daemon
-    --no-nm        Don't start a NodeDropManager by default
-    --no-zeroconf  Don't enable zeroconf on this DALiuGE daemon
-    -v, --verbose  Become more verbose. The more flags, the more verbose
-    -q, --quiet    Be less verbose. The more flags, the quieter
-
-The CLI allows to control the whole system::
+respectively. The help for the complete CLI is available by just entering dlg at the prompt::
 
     ❯ dlg
     Usage: /home/awicenec/.pyenv/versions/dlg/bin/dlg [command] [options]
@@ -102,7 +85,13 @@ Starting and stopping the managers
 #. Data Island Manager (DIM), which is manageing a (sub-)set of nodes in the cluster. There could be minimum one or maximum as many as NMs Data Island Managers in a deployment. The DIM is also the entity receiving the workflow description from the translator and is then distributing the sections to the NMs.
 #. Master Manager (MM), which has the information about all nodes and islands in the deployment. In many deployments the master manager is optional and not really required. If it is necessary, then there is only a single master manager running on the cluster.
 
-The managers are spawned off (as processes) from a daemon process, which  exposes a REST interface allowing the user to start and stop managers. The start and stop commands follow the same URL pattern [1]_::
+Starting a master manager can be done using the dlg command::
+
+    dlg daemon
+
+by default this will also start a NM, but not a DIM. 
+
+The managers are spawned off (as processes) from the daemon process, which  also exposes a REST interface allowing the user to start and stop managers. The start and stop commands follow the URL pattern [1]_::
 
    curl -X POST http://localhost:9000/managers/<type>/start
 
@@ -126,7 +115,7 @@ In this example there is just a Node Manager running with process ID 18.
 
 For the independent: Build and run EAGLE
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-If necessary, it is also possible to start the EAGLE locally in addition as well. This requires to clone and build the EAGLE repo into a directory separate from the |daliuge| repo::
+It is also possible to start the EAGLE locally in addition as well. This requires to clone and build the EAGLE repo into a directory separate from the |daliuge| repo::
 
     git clone https://github.com/ICRAR/EAGLE
     cd EAGLE
@@ -134,7 +123,7 @@ If necessary, it is also possible to start the EAGLE locally in addition as well
 
 To start EAGLE::
 
-    ./run_eagle dep dep
+    ./run_eagle dep
 
 This will start the EAGLE docker image built in the previous step and try to open a browser tab.
 
