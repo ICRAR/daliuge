@@ -285,9 +285,11 @@ def replace_named_ports(
     for k, v in portPosargsDict.items():
         logger.debug("port posarg %s has value %s", k, v)
         # logger.debug("default posarg %s has value %s", k, posargs[k])
-        if k == "input_redirection":
+        if k == "stdin":
             v = f"cat {v} > "
-        if k == "output_redirection":
+        if k == "stdout":
+            v = f"> {v}"
+        if k == "stderr":
             v = f"> {v}"
         if v not in [None, ""]:
             posargs.update({k: v})

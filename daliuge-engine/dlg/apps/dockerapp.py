@@ -83,8 +83,8 @@ class ContainerIpWaiter(object):
 # @param tag Tag/1.0/String/ComponentParameter/readwrite//False/False/The tag of the docker image to be used for this application
 # @param digest Digest//String/ComponentParameter/readwrite//False/False/The hexadecimal hash (long version) of the docker image to be used for this application
 # @param command Command//String/ComponentParameter/readwrite//False/False/The command line to run within the docker instance. The specified command will be executed in a bash shell. That means that images will need a bash shell.
-# @param input_redirection Input Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the input into this application
-# @param output_redirection Output Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the output from this application
+# @param stdin Input Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the input into this application
+# @param stdout Output Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the output from this application
 # @param command_line_arguments Command Line Arguments//String/ComponentParameter/readwrite//False/False/Additional command line arguments to be added to the command line to be executed
 # @param paramValueSeparator Param value separator/ /String/ComponentParameter/readwrite//False/False/Separator character(s) between parameters and their respective values on the command line
 # @param argumentPrefix Argument prefix/"--"/String/ComponentParameter/readwrite//False/False/Prefix to each keyed argument on the command line
@@ -242,8 +242,8 @@ class DockerApp(BarrierAppDROP):
 
         self._image = self._popArg(kwargs, "image", None)
         self._env = self._popArg(kwargs, "env", None)
-        self._inputRedirect = self._popArg(kwargs, "input_redirection", "")
-        self._outputRedirect = self._popArg(kwargs, "output_redirection", "")
+        self._inputRedirect = self._popArg(kwargs, "stdin", "")
+        self._outputRedirect = self._popArg(kwargs, "stdout", "")
         self._cmdLineArgs = self._popArg(kwargs, "command_line_arguments", "")
         self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
         self._argumentPrefix = self._popArg(kwargs, "argumentPrefix", "--")
@@ -569,12 +569,12 @@ class DockerApp(BarrierAppDROP):
                 cmd = droputils.replace_dataurl_placeholders(
                     cmd, dataURLInputs, dataURLOutputs
                 )
-                # if "output_redirection" in self._applicationArgs:
+                # if "stdout" in self._applicationArgs:
                 #     logger.debug(">>>> outport_names: %s", outport_names)
-                #     out_name = outport_names["output_redirection"]
+                #     out_name = outport_names["stdout"]
                 #     cmd = f"{cmd} > {out_name}"
-                # if "input_redirection" in self._applicationArgs:
-                #     in_name = inport_names["input_redirection"]
+                # if "stdin" in self._applicationArgs:
+                #     in_name = inport_names["stdin"]
                 #     cmd = f"cat {in_name} > {cmd}"
             else:
                 cmd = ""
@@ -679,6 +679,12 @@ class DockerApp(BarrierAppDROP):
                     stdout,
                     stderr,
                 )
+                # logger.debug(
+                #     "Container %s finished successfully, output follows.\n==STDOUT==\n%s==STDERR==\n%s",
+                #     cId,
+                #     stdout,
+                #     stderr,
+                # )
             elif self._exitCode != 0:
                 msg = f"Container {cId} didn't finish successfully (exit code {self._exitCode})"
                 if (

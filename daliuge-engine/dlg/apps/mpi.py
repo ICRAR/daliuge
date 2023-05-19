@@ -40,8 +40,8 @@ logger = logging.getLogger(__name__)
 # @param tag template
 # @param num_of_procs Num procs/1/Integer/ComponentParameter/readwrite//False/False/Number of processes used for this application
 # @param command Command//String/ComponentParameter/readwrite//False/False/The command to be executed
-# @param input_redirection Input Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the input into this application
-# @param output_redirection Output Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the output from this application
+# @param stdin Input Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the input into this application
+# @param stdout Output Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the output from this application
 # @param command_line_arguments Command Line Arguments//String/ComponentParameter/readwrite//False/False/Additional command line arguments to be added to the command line to be executed
 # @param paramValueSeparator Param value separator/ /String/ComponentParameter/readwrite//False/False/Separator character(s) between parameters on the command line
 # @param argumentPrefix Argument prefix/"--"/String/ComponentParameter/readwrite//False/False/Prefix to each keyed argument on the command line

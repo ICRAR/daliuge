@@ -170,8 +170,8 @@ class BashShellBase(object):
         super(BashShellBase, self).initialize(**kwargs)
 
         self.proc = None
-        self._inputRedirect = self._popArg(kwargs, "input_redirection", "")
-        self._outputRedirect = self._popArg(kwargs, "output_redirection", "")
+        self._inputRedirect = self._popArg(kwargs, "stdin", "")
+        self._outputRedirect = self._popArg(kwargs, "stdout", "")
         self._cmdLineArgs = self._popArg(kwargs, "command_line_arguments", "")
         self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
         self._argumentPrefix = self._popArg(kwargs, "argumentPrefix", "--")
@@ -240,9 +240,9 @@ class BashShellBase(object):
             cmd = f"{self.command} {argumentString} "
         else:
             cmd = f"{self.command} {argumentString} {self._cmdLineArgs} "
-        if self._outputRedirect:
+        if self._outputRedirect and self._outputRedirect != subprocess.PIPE:
             cmd = f"{cmd} > {self._outputRedirect}"
-        if self._inputRedirect:
+        if self._inputRedirect and self._inputRedirect != subprocess.PIPE:
             cmd = f"cat {self._inputRedirect} > {cmd}"
         cmd = cmd.strip()
 
@@ -382,8 +382,8 @@ class StreamingInputBashAppBase(BashShellBase, AppDROP):
 # @param category BashShellApp
 # @param tag template
 # @param command Command//String/ComponentParameter/readwrite//False/False/The command to be executed
-# @param input_redirection Input Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the input into this application
-# @param output_redirection Output Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the output from this application
+# @param stdin Input Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the input into this application
+# @param stdout Output Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the output from this application
 # @param command_line_arguments Command Line Arguments//String/ComponentParameter/readwrite//False/False/Additional command line arguments to be added to the command line to be executed
 # @param paramValueSeparator Param value separator/ /String/ComponentParameter/readwrite//False/False/Separator character(s) between parameters on the command line
 # @param argumentPrefix Argument prefix/"--"/String/ComponentParameter/readwrite//False/False/Prefix to each keyed argument on the command line
