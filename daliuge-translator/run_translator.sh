@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 case "$1" in
     "dep")
         VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 DOCKER_OPTS="\
 --shm-size=2g --ipc=shareable \
 --rm \
