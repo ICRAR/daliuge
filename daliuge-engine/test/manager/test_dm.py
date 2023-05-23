@@ -692,11 +692,3 @@ class TestDM(NodeManagerTestsBase, unittest.TestCase):
             quickDeploy(dm, sessionID, graph)
             self.assertEqual(1, len(dm._sessions[sessionID].drops))
             dm.destroySession(sessionID)
-
-
-@unittest.skipUnless(
-    os.environ.get("DALIUGE_RUN_MP_TESTS", "0") == "1",
-    "Unstable multiprocessing tests not run by default",
-)
-class TestDMParallel(NodeManagerTestsBase, unittest.TestCase):
-    nm_threads = multiprocessing.cpu_count()

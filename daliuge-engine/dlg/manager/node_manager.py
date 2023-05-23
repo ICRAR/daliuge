@@ -34,17 +34,15 @@ import queue
 import sys
 import threading
 import time
+import typing
 
 from . import constants
 from .drop_manager import DROPManager
 from .session import Session
 
-if sys.version_info >= (3, 8):
-    from .shared_memory_manager import DlgSharedMemoryManager
 from .. import rpc, utils
 from ..ddap_protocol import DROPStates
-from ..apps.app_base import AppDROP
-from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
+from ..apps.app_base import AppDROP, SimpleWorkerPool
 from ..exceptions import (
     NoSessionException,
     SessionAlreadyExistsException,
@@ -112,6 +110,33 @@ def _load(obj, callable_attr):
     return obj
 
 
+class NodeManagerWorkerPool(SimpleWorkerPool):
+
+    _pool: typing.Optional[multiprocessing.Pool]
+
+    def __init__(self, max_workers):
+        self._pool = None
+        if max_workers <= 0:
+            max_workers = cpu_count(logical=False)
+        self._max_workers = max_workers
+
+    def start(self):
+        logger.info(
+            "Initializing thread pool with %d workers",
+            self._max_workers
+        )
+        self._pool = multiprocessing.pool.ThreadPool(processes=self._max_workers)
+
+    def async_execute(self, app_drop):
+        return self._pool.apply_async(app_drop._execute_and_log_exception)
+
+    def run_app_drop(self, app_drop):
+        return app_drop.run()
+
+    def close(self):
+        self._pool.close()
+        self._pool.join()
+
 class NodeManagerBase(DROPManager):
     """
     Base class for a DROPManager that creates and holds references to DROPs.
@@ -172,21 +197,7 @@ class NodeManagerBase(DROPManager):
             _load(l, "handleEvent") for l in event_listeners
         ]
 
-        # Start thread pool
-        self._threadpool = None
-        if max_threads == -1:  # default use all CPU cores
-            max_threads = cpu_count(logical=False)
-        else:  # never more than 200
-            max_threads = max(min(max_threads, 200), 1)
-        if sys.version_info >= (3, 8):
-            self._memoryManager = DlgSharedMemoryManager()
-            if max_threads > 1:
-                logger.info(
-                    "Initializing thread pool with %d threads", max_threads
-                )
-                self._threadpool = multiprocessing.pool.ThreadPool(
-                    processes=max_threads
-                )
+        self._worker_pool = NodeManagerWorkerPool(max_threads)
 
         # Event handler that only logs status changes
         debugging = logger.isEnabledFor(logging.DEBUG)
@@ -194,13 +205,12 @@ class NodeManagerBase(DROPManager):
 
     def start(self):
         super().start()
+        self._worker_pool.start()
         self._dlm.startup()
 
     def shutdown(self):
         self._dlm.cleanup()
-        if self._threadpool:
-            self._threadpool.close()
-            self._threadpool.join()
+        self._worker_pool.close()
         super().shutdown()
 
     def deliver_event(self, evt):
@@ -265,18 +275,7 @@ class NodeManagerBase(DROPManager):
 
         def foreach(drop):
             drop.autofill_environment_variables()
-            if self._threadpool is not None:
-                drop._tp = self._threadpool
-                if isinstance(drop, InMemoryDROP):
-                    drop._sessID = sessionId
-                    self._memoryManager.register_drop(drop.uid, sessionId)
-            elif isinstance(drop, SharedMemoryDROP):
-                if sys.version_info < (3, 8):
-                    raise NotImplementedError(
-                        "Shared memory is not implemented when using Python < 3.8"
-                    )
-                drop._sessID = sessionId
-                self._memoryManager.register_drop(drop.uid, sessionId)
+            drop._worker_pool = self._worker_pool
             self._dlm.addDrop(drop)
 
             # Remote event forwarding
