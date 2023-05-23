@@ -413,7 +413,7 @@ def dlgNM(parser, args):
         action="store",
         type="int",
         dest="max_threads",
-        help="Max thread pool size used for executing drops. -1 means use all CPUs. 0 (default) means no threads.",
+        help="Max thread pool size used for executing drops. <= 0 means use all (physical) CPUs. Default is 0.",
         default=0,
     )
     (options, args) = parser.parse_args(args)
