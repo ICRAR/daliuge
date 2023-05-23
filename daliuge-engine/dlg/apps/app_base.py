@@ -1,5 +1,7 @@
+from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import List
+from concurrent.futures import Future
+from typing import List, Callable
 import logging
 import math
 import threading
@@ -15,7 +17,6 @@ from dlg.ddap_protocol import (
 from dlg.utils import object_tracking
 from dlg.exceptions import InvalidDropException, InvalidRelationshipException
 
-from dlg.process import DlgProcess
 from dlg.meta import (
     dlg_int_param,
 )
@@ -23,6 +24,56 @@ from dlg.meta import (
 logger = logging.getLogger(__name__)
 
 track_current_drop = object_tracking("drop")
+
+
+class DropRunner(ABC):
+    """An executor for `run()`-ing an AppDROP"""
+
+    @abstractmethod
+    def run_drop(self, app_drop: "AppDROP") -> Future:
+        """Executes `app_drop.run()`, returning a future with the result."""
+        raise NotImplementedError
+
+
+class SyncDropRunner(DropRunner):
+    """
+    A simple runner that executes synchronously.
+    """
+
+    def run_drop(self, app_drop: "AppDROP") -> Future:
+        """Run drop synchronously."""
+        future = Future()
+
+        try:
+            res = app_drop.run()
+            future.set_result(res)
+        except BaseException as e:
+            future.set_exception(e)
+
+        return future
+
+
+def run_on_daemon_thread(func: Callable, *args, **kwargs) -> Future:
+    """Runs a callable on a daemon thread, meaning it will be
+    ungracefully terminated if the process ends."""
+    future = Future()
+
+    def thread_target():
+        try:
+            res = func(*args, **kwargs)
+            future.set_result(res)
+        except BaseException as e:
+            future.set_exception(e)
+
+    t = threading.Thread(target=thread_target)
+    t.daemon = True
+    t.start()
+
+    return future
+
+
+_SYNC_DROP_RUNNER = SyncDropRunner()
+
 
 # ===============================================================================
 # AppDROP classes follow
@@ -75,6 +126,9 @@ class AppDROP(ContainerDROP):
         # An AppDROP has a second, separate state machine indicating its
         # execution status.
         self._execStatus = AppDROPStates.NOT_RUN
+
+        # by default run drops synchronously
+        self._drop_runner: DropRunner = _SYNC_DROP_RUNNER
 
     @track_current_drop
     def addInput(self, inputDrop, back=True):
@@ -393,15 +447,10 @@ class InputFiredAppDROP(AppDROP):
                 self.async_execute()
 
     def async_execute(self):
-        # Return immediately, but schedule the execution of this app
-        # If we have been given a thread pool use that
-        if hasattr(self, "_tp"):
-            self._tp.apply_async(self._execute_and_log_exception)
-        else:
-            t = threading.Thread(target=self._execute_and_log_exception)
-            t.daemon = 1
-            t.start()
-            return t
+        # TODO Do we need another thread pool for this?
+        # Careful, trying to run this on the same threadpool as the
+        # DropRunner can cause deadlocks
+        return run_on_daemon_thread(self._execute_and_log_exception)
 
     def _execute_and_log_exception(self):
         try:
@@ -410,8 +459,6 @@ class InputFiredAppDROP(AppDROP):
             logger.exception(
                 "Unexpected exception during drop (%r) execution", self
             )
-
-    _dlg_proc_lock = threading.Lock()
 
     @track_current_drop
     def execute(self, _send_notifications=True):
@@ -432,19 +479,9 @@ class InputFiredAppDROP(AppDROP):
         self.execStatus = AppDROPStates.RUNNING
         while tries < self.n_tries:
             try:
-                if hasattr(self, "_tp"):
-                    proc = DlgProcess(target=self.run, daemon=True)
-                    # see YAN-975 for why this is happening
-                    lock = InputFiredAppDROP._dlg_proc_lock
-                    with lock:
-                        proc.start()
-                    with lock:
-                        proc.join()
-                    proc.close()
-                    if proc.exception:
-                        raise proc.exception
-                else:
-                    self.run()
+                fut = self._drop_runner.run_drop(self)
+                fut.result()
+
                 if self.execStatus == AppDROPStates.CANCELLED:
                     return
                 self.execStatus = AppDROPStates.FINISHED
