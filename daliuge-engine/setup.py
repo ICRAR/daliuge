@@ -110,7 +110,9 @@ class lib64_path(install):
         lp = sysconfig.get_path("stdlib")
         with open(PTH_FILE, "w") as f:
             f.write("{0}/dist-packages".format(lp))
-        install.copy_file(self, PTH_FILE, os.path.join(self.install_lib, PTH_FILE))
+        install.copy_file(
+            self, PTH_FILE, os.path.join(self.install_lib, PTH_FILE)
+        )
 
 
 # Core requirements of DALiuGE
@@ -118,6 +120,7 @@ class lib64_path(install):
 install_requires = [
     "wheel",  # need to get wheel first...
     "bottle",
+    "urllib3<1.27,>=1.25.4",
     "boto3",
     "configobj",
     "crc32c",
@@ -159,7 +162,7 @@ extra_requires = {
 setup(
     name="daliuge-engine",
     version=get_version_info()[0],
-    description=u"Data Activated \uF9CA (flow) Graph Engine - Execution Engine",
+    description="Data Activated \uF9CA (flow) Graph Engine - Execution Engine",
     long_description="""
         The element of the DALiuGE system executing the workflows. This replaces
         the former 'runtime' package (up to version 1.0). For more information 

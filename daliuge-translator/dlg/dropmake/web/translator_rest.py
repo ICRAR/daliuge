@@ -594,24 +594,7 @@ def gen_pg(
     RESTful interface to convert a PGT(P) into PG by mapping
     PGT(P) onto a given set of available resources
     """
-    # if the 'deploy' checkbox is not checked,
-    # then the form submission will NOT contain a 'dlg_mgr_deploy' field
-    deploy = dlg_mgr_deploy is not None
     mprefix = ""
-    pgtp = pg_mgr.get_pgt(pgt_id)
-    if pgtp is None:
-        raise HTTPException(
-            status_code=404,
-            detail="PGT(P) with id {0} not found in the Physical Graph Manager".format(
-                pgt_id
-            ),
-        )
-
-    pgtpj = pgtp._gojs_json_obj
-    reprodata = pgtp.reprodata
-    num_partitions = len(
-        list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"]))
-    )
     mport = 443
     if dlg_mgr_url is not None:
         mparse = urlparse(dlg_mgr_url)
@@ -637,6 +620,23 @@ def gen_pg(
     logger.debug("Manager host: %s", mhost)
     logger.debug("Manager port: %s", mport)
     logger.debug("Manager prefix: %s", mprefix)
+    # if the 'deploy' checkbox is not checked,
+    # then the form submission will NOT contain a 'dlg_mgr_deploy' field
+    deploy = dlg_mgr_deploy is not None
+    pgtp = pg_mgr.get_pgt(pgt_id)
+    if pgtp is None:
+        raise HTTPException(
+            status_code=404,
+            detail="PGT(P) with id {0} not found in the Physical Graph Manager".format(
+                pgt_id
+            ),
+        )
+
+    pgtpj = pgtp._gojs_json_obj
+    reprodata = pgtp.reprodata
+    num_partitions = len(
+        list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"]))
+    )
 
     if mhost is None:
         if tpl_nodes_len > 0:
@@ -696,7 +696,7 @@ def gen_pg(
         )
 
 
-@app.get("/gen_pg_spec", tags=["Original"])
+@app.post("/gen_pg_spec", tags=["Original"])
 def gen_pg_spec(
     pgt_id: str = Body(
         description="The pgt_id used to internally reference this graph"
@@ -708,6 +708,10 @@ def gen_pg_spec(
     manager_host: str = Body(
         description="The address of the manager host where the graph will be deployed to."
     ),
+    tpl_nodes_len: int = Body(
+        default=1,
+        description="The number of nodes requested by the graph",
+    ),
 ):
     """
     Interface to convert a PGT(P) into pg_spec
@@ -716,7 +720,7 @@ def gen_pg_spec(
         if manager_host == "localhost":
             manager_host = "localhost"
         logger.debug("pgt_id: %s", str(pgt_id))
-        logger.debug("node_list: %s", str(node_list))
+        # logger.debug("node_list: %s", str(node_list))
     except Exception as ex:
         logger.error("%s", traceback.format_exc())
         raise HTTPException(
@@ -739,12 +743,18 @@ def gen_pg_spec(
         )
 
     try:
-        pg_spec = pgtp.to_pg_spec([manager_host] + node_list, ret_str=False)
-        root_uids = common.get_roots(pg_spec)
-        response = StreamingResponse(
-            json.dumps({"pg_spec": pg_spec, "root_uids": list(root_uids)})
+        pg_spec = pgtp.to_pg_spec(
+            [manager_host] + node_list,
+            tpl_nodes_len=tpl_nodes_len,
+            ret_str=False,
         )
-        response.content_type = "application/json"
+        root_uids = common.get_roots(pg_spec)
+        logger.debug("Root UIDs: %s", list(root_uids))
+        response = JSONResponse(
+            json.dumps(
+                {"pg_spec": pg_spec, "root_uids": list(root_uids)},
+            ),
+        )
         return response
     except Exception as ex:
         logger.error("%s", traceback.format_exc())
@@ -1116,6 +1126,7 @@ def get_submission_method(
         )
         if DeploymentMethods.BROWSER in host_available_methods:
             available_methods.append(DeploymentMethods.SERVER)
+    logger.debug("Methods available: %s", available_methods)
     return {"methods": available_methods}
 
 
@@ -1248,10 +1259,9 @@ def run(_, args):
     signal.signal(signal.SIGTERM, handler)
     signal.signal(signal.SIGINT, handler)
 
+    logging.debug("Starting uvicorn verbose %s", options.verbose)
     uvicorn.run(
-        app=app,
-        host=options.host,
-        port=options.port,
+        app=app, host=options.host, port=options.port, debug=options.verbose
     )
 
 
