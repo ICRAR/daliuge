@@ -28,23 +28,21 @@ import abc
 import collections
 import logging
 from psutil import cpu_count
-import multiprocessing.pool
 import os
 import queue
 import sys
 import threading
 import time
+import typing
+from concurrent.futures import ThreadPoolExecutor, Future
 
 from . import constants
 from .drop_manager import DROPManager
 from .session import Session
 
-if sys.version_info >= (3, 8):
-    from .shared_memory_manager import DlgSharedMemoryManager
 from .. import rpc, utils
 from ..ddap_protocol import DROPStates
-from ..apps.app_base import AppDROP
-from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
+from ..apps.app_base import AppDROP, DropRunner
 from ..exceptions import (
     NoSessionException,
     SessionAlreadyExistsException,
@@ -111,6 +109,31 @@ def _load(obj, callable_attr):
         )
     return obj
 
+class NodeManagerDropRunner(DropRunner):
+    @abc.abstractmethod
+    def start(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def close(self):
+        raise NotImplementedError
+
+
+class NodeManagerThreadDropRunner(NodeManagerDropRunner):
+    def __init__(self, max_workers: int):
+        self._max_workers = max_workers
+        self._thread_pool: ThreadPoolExecutor | None = None
+
+    def start(self):
+        logger.info("Initializing thread pool with %d workers", self._max_workers)
+        self._thread_pool = ThreadPoolExecutor(max_workers=self._max_workers)
+
+    def run_drop(self, app_drop: AppDROP) -> Future:
+        return self._thread_pool.submit(app_drop.run)
+
+    def close(self):
+        self._thread_pool.shutdown(wait=True)
+
 
 class NodeManagerBase(DROPManager):
     """
@@ -172,21 +195,10 @@ class NodeManagerBase(DROPManager):
             _load(l, "handleEvent") for l in event_listeners
         ]
 
-        # Start thread pool
-        self._threadpool = None
-        if max_threads == -1:  # default use all CPU cores
+        if max_threads <= 0:
             max_threads = cpu_count(logical=False)
-        else:  # never more than 200
-            max_threads = max(min(max_threads, 200), 1)
-        if sys.version_info >= (3, 8):
-            self._memoryManager = DlgSharedMemoryManager()
-            if max_threads > 1:
-                logger.info(
-                    "Initializing thread pool with %d threads", max_threads
-                )
-                self._threadpool = multiprocessing.pool.ThreadPool(
-                    processes=max_threads
-                )
+
+        self._drop_runner = NodeManagerThreadDropRunner(max_threads)
 
         # Event handler that only logs status changes
         debugging = logger.isEnabledFor(logging.DEBUG)
@@ -194,13 +206,12 @@ class NodeManagerBase(DROPManager):
 
     def start(self):
         super().start()
+        self._drop_runner.start()
         self._dlm.startup()
 
     def shutdown(self):
         self._dlm.cleanup()
-        if self._threadpool:
-            self._threadpool.close()
-            self._threadpool.join()
+        self._drop_runner.close()
         super().shutdown()
 
     def deliver_event(self, evt):
@@ -265,18 +276,7 @@ class NodeManagerBase(DROPManager):
 
         def foreach(drop):
             drop.autofill_environment_variables()
-            if self._threadpool is not None:
-                drop._tp = self._threadpool
-                if isinstance(drop, InMemoryDROP):
-                    drop._sessID = sessionId
-                    self._memoryManager.register_drop(drop.uid, sessionId)
-            elif isinstance(drop, SharedMemoryDROP):
-                if sys.version_info < (3, 8):
-                    raise NotImplementedError(
-                        "Shared memory is not implemented when using Python < 3.8"
-                    )
-                drop._sessID = sessionId
-                self._memoryManager.register_drop(drop.uid, sessionId)
+            drop._drop_runner = self._drop_runner
             self._dlm.addDrop(drop)
 
             # Remote event forwarding
@@ -556,7 +556,7 @@ class ZMQPubSubMixIn(object):
 EventMixIn = ZMQPubSubMixIn
 
 
-# Load the corresponding RPC classes and finish the construciton of NodeManager
+# Load the corresponding RPC classes and finish the construction of NodeManager
 class RpcMixIn(rpc.RPCClient, rpc.RPCServer):
     pass
 
