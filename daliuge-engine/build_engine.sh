@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # script builds the daliuge-engine docker container either with a tag referring to the current
 # branch name or with a release tag depending whether this is a development or deployment
 # version.
@@ -46,7 +46,7 @@ case "$1" in
         docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock dslim/docker-slim build --include-shell \
             --include-path /etc --include-path /usr/local/lib --include-path /usr/local/bin --include-path /usr/lib/python3.8 \
             --include-path /usr/lib/python3 --include-path /dlg --include-path /daliuge --publish-exposed-ports=true \
-            --http-probe-exec start_local_managers.sh --http-probe=false --tag=icrar/daliuge-engine:${VCS_TAG}\
+            --http-probe=true --tag=icrar/daliuge-engine:${VCS_TAG}\
             icrar/daliuge-engine.big:${VCS_TAG} \
 	    ;;
     *)

@@ -84,16 +84,22 @@ def daliuge_aware(func):
                     r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin
                 ):
                     origin = "http://localhost:8084"
-                bottle.response.headers["Access-Control-Allow-Origin"] = origin
-                bottle.response.headers[
-                    "Access-Control-Allow-Credentials"
-                ] = "true"
+                bottle.response.headers["Access-Control-Allow-Origin"] = "*"
+                # bottle.response.headers[
+                # "Access-Control-Allow-Credentials"
+                # ] = True
                 bottle.response.headers[
                     "Access-Control-Allow-Methods"
                 ] = "GET, POST, PUT, OPTIONS"
                 bottle.response.headers[
                     "Access-Control-Allow-Headers"
                 ] = "Origin, Accept, Content-Type, Content-Encoding, X-Requested-With, X-CSRF-Token"
+            jres = (
+                json.dumps(res) if res else json.dumps({"Status": "Success"})
+            )
+            logger.debug(
+                "Bottle sending back result: %s", jres[: min(len(jres), 80)]
+            )
             return json.dumps(res)
         except Exception as e:
             logger.exception("Error while fulfilling request")
@@ -220,7 +226,9 @@ class ManagerRestServer(RestServer):
 
     @daliuge_aware
     def submit_methods(self):
-        return {"methods": [DeploymentMethods.BROWSER]}
+        return {
+            "methods": [DeploymentMethods.BROWSER, DeploymentMethods.SERVER]
+        }
 
     def _stop_manager(self):
         self.dm.shutdown()
@@ -313,8 +321,8 @@ class ManagerRestServer(RestServer):
         completedDrops = []
         if "completed" in bottle.request.forms:
             completedDrops = bottle.request.forms["completed"].split(",")
-        self.dm.deploySession(sessionId, completedDrops=completedDrops)
-        return {}
+        return self.dm.deploySession(sessionId, completedDrops=completedDrops)
+        # return {"Status": "Success"}
 
     @daliuge_aware
     def cancelSession(self, sessionId):
@@ -336,7 +344,7 @@ class ManagerRestServer(RestServer):
     @daliuge_aware
     def addGraphParts(self, sessionId):
         # WARNING: TODO: Somehow, the content_type can be overwritten to 'text/plain'
-        logger.debug(bottle.request.content_type)
+        logger.debug("Graph content type: %s", bottle.request.content_type)
         if (
             "application/json" not in bottle.request.content_type
             and "text/plain" not in bottle.request.content_type
@@ -346,6 +354,7 @@ class ManagerRestServer(RestServer):
 
         # We also accept gzipped content
         hdrs = bottle.request.headers
+        logger.debug("Graph hdr: %s", {k: v for k, v in hdrs.items()})
         if hdrs.get("Content-Encoding", None) == "gzip":
             json_content = utils.ZlibUncompressedStream(bottle.request.body)
         else:
@@ -353,8 +362,8 @@ class ManagerRestServer(RestServer):
 
         graph_parts = bottle.json_loads(json_content.read())
 
-        self.dm.addGraphSpec(sessionId, graph_parts)
-        return {"graph_parts": graph_parts}
+        return self.dm.addGraphSpec(sessionId, graph_parts)
+        # return {"graph_parts": graph_parts}
 
     # ===========================================================================
     # non-REST methods

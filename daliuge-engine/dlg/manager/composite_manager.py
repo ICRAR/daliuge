@@ -490,7 +490,8 @@ class CompositeManager(DROPManager):
                     "UIDs for completed drops not found: %r", not_found
                 )
             logger.info(
-                "Moving Drops to COMPLETED right away: %r", completedDrops
+                "Moving graph root Drops to COMPLETED right away: %r",
+                completedDrops,
             )
             completed_by_host = group_by_node(completedDrops, self._graph)
             self.replicate(
