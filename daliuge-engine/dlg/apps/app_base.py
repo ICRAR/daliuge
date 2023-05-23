@@ -15,7 +15,6 @@ from dlg.ddap_protocol import (
 from dlg.utils import object_tracking
 from dlg.exceptions import InvalidDropException, InvalidRelationshipException
 
-from dlg.process import DlgProcess
 from dlg.meta import (
     dlg_int_param,
 )
@@ -23,6 +22,38 @@ from dlg.meta import (
 logger = logging.getLogger(__name__)
 
 track_current_drop = object_tracking("drop")
+
+
+class WorkerPool:
+    """Schedules app drops for asynchronous execution, and executes them."""
+
+    def async_execute(self, app_drop):
+        """Schedules the execution of that given app drop."""
+
+    def run_app_drop(self, app_drop):
+        """Executes the app drop's run method"""
+
+
+class SimpleWorkerPool(WorkerPool):
+    """
+    A simple pool-like object that creates a new thread for each app invocation
+    and runs the drop's run method when requested to execute the drop.
+    """
+
+    def async_execute(self, app_drop):
+        t = threading.Thread(target=app_drop._execute_and_log_exception)
+        t.daemon = True
+        t.start()
+        # TODO: warp in an mp.pool.AsyncResult or otherwise make the result type
+        # the same across both WorkerPools so we can use it on the caller site.
+        return t
+
+    def run_app_drop(self, app_drop):
+        return app_drop.run()
+
+
+_SIMPLE_WORKER_POOL = SimpleWorkerPool()
+
 
 # ===============================================================================
 # AppDROP classes follow
@@ -75,6 +106,9 @@ class AppDROP(ContainerDROP):
         # An AppDROP has a second, separate state machine indicating its
         # execution status.
         self._execStatus = AppDROPStates.NOT_RUN
+
+        # by default spawn threads to execution drops asynchronously
+        self._worker_pool: WorkerPool = _SIMPLE_WORKER_POOL
 
     @track_current_drop
     def addInput(self, inputDrop, back=True):
@@ -393,15 +427,7 @@ class InputFiredAppDROP(AppDROP):
                 self.async_execute()
 
     def async_execute(self):
-        # Return immediately, but schedule the execution of this app
-        # If we have been given a thread pool use that
-        if hasattr(self, "_tp"):
-            self._tp.apply_async(self._execute_and_log_exception)
-        else:
-            t = threading.Thread(target=self._execute_and_log_exception)
-            t.daemon = 1
-            t.start()
-            return t
+        return self._worker_pool.async_execute(self)
 
     def _execute_and_log_exception(self):
         try:
@@ -410,8 +436,6 @@ class InputFiredAppDROP(AppDROP):
             logger.exception(
                 "Unexpected exception during drop (%r) execution", self
             )
-
-    _dlg_proc_lock = threading.Lock()
 
     @track_current_drop
     def execute(self, _send_notifications=True):
@@ -432,19 +456,7 @@ class InputFiredAppDROP(AppDROP):
         self.execStatus = AppDROPStates.RUNNING
         while tries < self.n_tries:
             try:
-                if hasattr(self, "_tp"):
-                    proc = DlgProcess(target=self.run, daemon=True)
-                    # see YAN-975 for why this is happening
-                    lock = InputFiredAppDROP._dlg_proc_lock
-                    with lock:
-                        proc.start()
-                    with lock:
-                        proc.join()
-                    proc.close()
-                    if proc.exception:
-                        raise proc.exception
-                else:
-                    self.run()
+                self._worker_pool.run_app_drop(self)
                 if self.execStatus == AppDROPStates.CANCELLED:
                     return
                 self.execStatus = AppDROPStates.FINISHED
