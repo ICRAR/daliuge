@@ -184,7 +184,7 @@ class CompositeManager(DROPManager):
         self._dmCheckerThread.start()
 
     def stopDMChecker(self):
-        if not self._dmCheckerEvt.isSet():
+        if not self._dmCheckerEvt.is_set():
             self._dmCheckerEvt.set()
             self._dmCheckerThread.join()
 
