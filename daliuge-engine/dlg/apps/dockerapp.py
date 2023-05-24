@@ -364,9 +364,7 @@ class DockerApp(BarrierAppDROP):
             "WorkingDir", None
         )
         # self.workdir = None
-        self._sessionId = (
-            self._dlg_session.sessionId if self._dlg_session else ""
-        )
+        self._sessionId = self._dlg_session_id
         if not self.workdir:
             default_workingdir = os.path.join(
                 utils.getDlgWorkDir(), self._sessionId
@@ -492,8 +490,8 @@ class DockerApp(BarrierAppDROP):
             # deal with environment variables
             env = {}
             env.update({"DLG_UID": self._uid})
-            if self._dlg_session:
-                env.update({"DLG_SESSION_ID": self._dlg_session.sessionId})
+            if self._dlg_session_id:
+                env.update({"DLG_SESSION_ID": self._dlg_session_id})
             if self._user is not None:
                 env.update({"USER": self._user, "DLG_ROOT": utils.getDlgDir()})
             if self._env is not None:

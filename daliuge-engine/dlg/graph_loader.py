@@ -259,7 +259,8 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
         #     dropType = "dropclass"
 
         cf = __CREATION_FUNCTIONS[dropType.lower()]
-        drop = cf(dropSpec, session=session)
+        session_id = session.sessionId if session else ""
+        drop = cf(dropSpec, session_id=session_id)
         if session is not None:
             # Now using per-drop reproducibility setting.
             drop.reproducibility_level = ReproducibilityFlags(
@@ -315,7 +316,7 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
     return roots
 
 
-def _createData(dropSpec, dryRun=False, session=None):
+def _createData(dropSpec, dryRun=False, session_id=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
@@ -357,10 +358,10 @@ def _createData(dropSpec, dryRun=False, session=None):
         return
     if "self" in kwargs:
         kwargs.pop("self")
-    return storageType(oid, uid, dlg_session=session, **kwargs)
+    return storageType(oid, uid, dlg_session_id=session_id, **kwargs)
 
 
-def _createContainer(dropSpec, dryRun=False, session=None):
+def _createContainer(dropSpec, dryRun=False, session_id=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
@@ -381,19 +382,19 @@ def _createContainer(dropSpec, dryRun=False, session=None):
     if dryRun:
         return
 
-    return containerType(oid, uid, dlg_session=session, **kwargs)
+    return containerType(oid, uid, dlg_session_id=session_id, **kwargs)
 
 
-def _createSocket(dropSpec, dryRun=False, session=None):
+def _createSocket(dropSpec, dryRun=False, session_id=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
     if dryRun:
         return
-    return SocketListenerApp(oid, uid, dlg_session=session, **kwargs)
+    return SocketListenerApp(oid, uid, dlg_session_id=session_id, **kwargs)
 
 
-def _createApp(dropSpec, dryRun=False, session=None):
+def _createApp(dropSpec, dryRun=False, session_id=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
@@ -417,7 +418,7 @@ def _createApp(dropSpec, dryRun=False, session=None):
 
     if dryRun:
         return
-    return appType(oid, uid, dlg_session=session, **kwargs)
+    return appType(oid, uid, dlg_session_id=session_id, **kwargs)
 
 
 def _getIds(dropSpec):

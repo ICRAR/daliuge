@@ -293,7 +293,7 @@ class ProxyInfo:
         rpc_server = drop._rpc_server
         host, port = rpc_server._rpc_host, rpc_server._rpc_port
         host = utils.to_externally_contactable_host(host, prefer_local=True)
-        return cls(host, port, drop._dlg_session.sessionId, drop.uid)
+        return cls(host, port, drop._dlg_session_id, drop.uid)
 
     def __repr__(self):
         return (
