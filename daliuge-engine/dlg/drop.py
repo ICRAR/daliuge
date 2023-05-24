@@ -197,11 +197,11 @@ class AbstractDROP(EventFirer, EventHandler):
         # by the drop category when generating the drop spec
         self._type = self._popArg(kwargs, "categoryType", None)
 
-        # The Session owning this drop, if any
+        # The ID of the session owning this drop, if any
         # In most real-world situations this attribute will be set, but in
         # general it cannot be assumed it will (e.g., unit tests create drops
         # directly outside the context of a session).
-        self._dlg_session = self._popArg(kwargs, "dlg_session", None)
+        self._dlg_session_id = self._popArg(kwargs, "dlg_session_id", "")
 
         # A simple name that the Drop might receive
         # This is usually set in the Logical Graph Editor,
@@ -775,9 +775,7 @@ class AbstractDROP(EventFirer, EventHandler):
         """
         kwargs["oid"] = self.oid
         kwargs["uid"] = self.uid
-        kwargs["session_id"] = (
-            self._dlg_session.sessionId if self._dlg_session else ""
-        )
+        kwargs["session_id"] = self._dlg_session_id
         kwargs["name"] = self.name
         kwargs["lg_key"] = self.lg_key
         self._fireEvent(eventType, **kwargs)
