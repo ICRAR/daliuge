@@ -164,6 +164,10 @@ class AbstractDROP(EventFirer, EventHandler):
     #  - Subclasses implement methods decorated with @abstractmethod
     __metaclass__ = ABCMeta
 
+    # Matcher used to validate environment_variable_syntax
+    _env_var_matcher = re.compile(r"\$[A-z|\d]+\..+")
+    _dlg_var_matcher = re.compile(r"\$DLG_.+")
+
     @track_current_drop
     def __init__(self, oid, uid, **kwargs):
         """
@@ -220,10 +224,6 @@ class AbstractDROP(EventFirer, EventHandler):
         self._consumers = ListAsDict(self._consumers_uids)
         self._producers_uids = set()
         self._producers = ListAsDict(self._producers_uids)
-
-        # Matcher used to validate environment_variable_syntax
-        self._env_var_matcher = re.compile(r"\$[A-z|\d]+\..+")
-        self._dlg_var_matcher = re.compile(r"\$DLG_.+")
 
         # Set holding the state of the producers that have finished their
         # execution. Once all producers have finished, this DROP moves
