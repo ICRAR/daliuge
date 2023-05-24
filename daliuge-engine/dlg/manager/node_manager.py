@@ -31,6 +31,7 @@ from psutil import cpu_count
 import multiprocessing.pool
 import os
 import queue
+import signal
 import sys
 import threading
 import time
@@ -112,30 +113,119 @@ def _load(obj, callable_attr):
 
 class NodeManagerWorkerPool(SimpleWorkerPool):
 
-    _pool: typing.Optional[multiprocessing.Pool]
+    _rpc_client: typing.Optional[rpc.RPCClient]
+    _rpc_endpoint: typing.Tuple[str, int]
+    _process_pool: typing.Tuple[multiprocessing.Process]
+    _manager: typing.Optional[multiprocessing.Manager]
 
-    def __init__(self, max_workers):
-        self._pool = None
+    def __init__(self, max_workers, use_processes):
+        self._execution_pool = None
+        self._process_pool = []
         if max_workers <= 0:
             max_workers = cpu_count(logical=False)
         self._max_workers = max_workers
+        self._use_processes = use_processes
 
-    def start(self):
+    def start(self, rpc_endpoint):
+        NodeManagerWorkerPool._rpc_endpoint = rpc_endpoint
         logger.info(
             "Initializing thread pool with %d workers",
             self._max_workers
         )
-        self._pool = multiprocessing.pool.ThreadPool(processes=self._max_workers)
+        self._execution_pool = multiprocessing.pool.ThreadPool(processes=self._max_workers)
+        if self._use_processes:
+            self._manager = multiprocessing.Manager()
+            logger.info(
+                "Initializing process pool with %d workers",
+                self._max_workers
+            )
+            self._input_queue = multiprocessing.Queue()
+            self._process_pool = [
+                multiprocessing.Process(
+                    target=NodeManagerWorkerPool._app_drop_runner,
+                    args=(self._input_queue,)
+                )
+                for _ in range(self._max_workers)
+            ]
+            for process in self._process_pool:
+                process.start()
 
     def async_execute(self, app_drop):
-        return self._pool.apply_async(app_drop._execute_and_log_exception)
+        return self._execution_pool.apply_async(app_drop._execute_and_log_exception)
 
     def run_app_drop(self, app_drop):
+        if self._process_pool:
+            inputs_proxy_info, outputs_proxy_info = NodeManagerWorkerPool._get_proxy_infos(app_drop)
+            inputs, outputs = app_drop._inputs, app_drop._outputs
+            app_drop._inputs = {}
+            app_drop._outputs = {}
+            done_evt = self._manager.Event()
+            try:
+                self._input_queue.put((app_drop, inputs_proxy_info, outputs_proxy_info, done_evt))
+                done_evt.wait()
+            finally:
+                app_drop._inputs = inputs
+                app_drop._outputs = outputs
         return app_drop.run()
 
+    @classmethod
+    def _app_drop_runner(cls, input_queue):
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        rpc_client = rpc.RPCClient()
+        rpc_client.start()
+        try:
+            for work in iter(input_queue.get, None):
+                if work is None:
+                    return
+                app_drop, inputs_proxy_info, outputs_proxy_info, done_evt = work
+                try:
+                    NodeManagerWorkerPool._run_app_drop(app_drop, inputs_proxy_info, outputs_proxy_info)
+                except:
+                    # TODO: log failure properly up to parent process
+                    pass
+                finally:
+                    done_evt.set()
+        finally:
+            rpc_client.shutdown()
+
+    @classmethod
+    def _run_app_drop(cls, app_drop, inputs_proxy_info, outputs_proxy_info):
+        cls._setup_drop_proxies(app_drop, inputs_proxy_info, outputs_proxy_info)
+        return app_drop.run()
+
+    @classmethod
+    def _setup_drop_proxies(cls, app_drop, inputs_proxy_info, outputs_proxy_info):
+        app_drop._rpc_endpoint = cls._rpc_endpoint
+        for input_proxy_info in inputs_proxy_info:
+            app_drop.addInput(rpc.DropProxy(cls._rpc_client, input_proxy_info), back=False)
+        for output_proxy_info in outputs_proxy_info:
+            app_drop.addOutput(rpc.DropProxy(cls._rpc_client, output_proxy_info), back=False)
+
+
+    @classmethod
+    def _get_proxy_infos(cls, app_drop):
+        inputs = [
+            rpc.ProxyInfo.from_data_drop(i)
+            for i in app_drop.inputs
+        ]
+        outputs = [
+            rpc.ProxyInfo.from_data_drop(o)
+            for o in app_drop.outputs
+        ]
+        return inputs, outputs
+
     def close(self):
-        self._pool.close()
-        self._pool.join()
+        self._execution_pool.close()
+        self._execution_pool.join()
+        logger.info("Thread pool closed")
+        if self._process_pool:
+            for _ in self._process_pool:
+                self._input_queue.put(None)
+            for process in self._process_pool:
+                process.join()
+                process.close()
+            logger.info("Process pool closed")
 
 class NodeManagerBase(DROPManager):
     """
@@ -162,6 +252,7 @@ class NodeManagerBase(DROPManager):
         error_listener=None,
         event_listeners=[],
         max_threads=0,
+        use_processes=False,
         logdir=utils.getDlgLogsDir(),
     ):
         self._dlm = DataLifecycleManager(
@@ -197,7 +288,7 @@ class NodeManagerBase(DROPManager):
             _load(l, "handleEvent") for l in event_listeners
         ]
 
-        self._worker_pool = NodeManagerWorkerPool(max_threads)
+        self._worker_pool = NodeManagerWorkerPool(max_threads, use_processes)
 
         # Event handler that only logs status changes
         debugging = logger.isEnabledFor(logging.DEBUG)
@@ -205,7 +296,7 @@ class NodeManagerBase(DROPManager):
 
     def start(self):
         super().start()
-        self._worker_pool.start()
+        self._worker_pool.start(self.rpc_endpoint)
         self._dlm.startup()
 
     def shutdown(self):
