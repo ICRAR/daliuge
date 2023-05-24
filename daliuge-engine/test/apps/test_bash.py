@@ -97,13 +97,10 @@ class BashAppTests(unittest.TestCase):
         class dummy(object):
             pass
 
-        session = dummy()
-        session.sessionId = session_id
-
         def assert_envvar_is_there(varname, value):
             command = "echo -n $%s > %%o0" % (varname)
             a = BashShellApp(
-                app_uid, app_uid, dlg_session=session, command=command
+                app_uid, app_uid, dlg_session_id=session_id, command=command
             )
             b = FileDROP("b", "b")
             a.addOutput(b)
