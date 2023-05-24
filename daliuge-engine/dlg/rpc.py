@@ -223,6 +223,10 @@ class ZeroRPCServer(RPCServerBase):
         # This import can take a long time in big HPC deployments
         return zerorpc.Context()
 
+    @property
+    def rpc_endpoint(self):
+        return self._rpc_host, self._rpc_port
+
     def start(self):
         super(ZeroRPCServer, self).start()
 
@@ -287,13 +291,13 @@ class ProxyInfo:
         if isinstance(drop, DropProxy):
             return drop._proxy_info
 
-        # TODO: we can't use the NodeManager's host directly here, as that
+        # TODO: we can't use the RPC endpoint's host directly here, as that
         #       indicates the address the different servers *bind* to
         #       (and, for example, can be 0.0.0.0)
-        rpc_server = drop._rpc_server
-        host, port = rpc_server._rpc_host, rpc_server._rpc_port
-        host = utils.to_externally_contactable_host(host, prefer_local=True)
-        return cls(host, port, drop._dlg_session_id, drop.uid)
+        assert drop._rpc_endpoint
+        rpc_host, rpc_port = drop._rpc_endpoint
+        rpc_host = utils.to_externally_contactable_host(rpc_host, prefer_local=True)
+        return cls(rpc_host, rpc_port, drop._dlg_session_id, drop.uid)
 
     def __repr__(self):
         return (
