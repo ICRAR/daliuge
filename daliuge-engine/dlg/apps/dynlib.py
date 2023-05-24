@@ -26,9 +26,8 @@ import logging
 import multiprocessing
 import queue
 import threading
-import six
 
-from .. import rpc, utils
+from .. import rpc
 from ..ddap_protocol import AppDROPStates
 from ..apps.app_base import AppDROP, BarrierAppDROP
 from ..exceptions import InvalidDropException
