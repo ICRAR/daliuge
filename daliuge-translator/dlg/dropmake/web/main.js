@@ -220,6 +220,7 @@ async function checkUrlStatus(url) {
 async function checkUrlSubmissionMethods(url) {
     return new Promise((resolve) => {
         $.ajax({
+            credentials: 'include',
             url: url,
             type: 'GET',
             success: function (response) {
@@ -632,7 +633,7 @@ async function directRestDeploy() {
     console.debug("SessionId:", sessionId);
     const create_session_url = manager_url + "/api/sessions";
     const create_session = await fetch(create_session_url, {
-        // credentials: 'include',
+        credentials: 'include',
         cache: 'no-cache',
         method: 'POST',
         // mode: request_mode,
@@ -657,7 +658,7 @@ async function directRestDeploy() {
     // append graph to session on engine
     const append_graph_url = manager_url + "/api/sessions/" + sessionId + "/graph/append";
     const append_graph = await fetch(append_graph_url, {
-        // credentials: 'include',
+        credentials: 'include',
         method: 'POST',
         mode: "no-cors",
         referrerPolicy: 'origin',
@@ -676,6 +677,10 @@ async function directRestDeploy() {
     })
     const mgr_url = manager_url + "/session?sessionId=" + sessionId;
     window.open(mgr_url, '_blank').focus();
+}
+
+function jsonEscape(str) {
+    return str.replace(/\n/g, "\\\\n").replace(/\r/g, "\\\\r").replace(/\t/g, "\\\\t");
 }
 
 async function restDeploy() {
@@ -720,13 +725,16 @@ async function restDeploy() {
         .catch(function (error) {
             showMessageModal('Error', error + "\nGetting PGT unsuccessful: Unable to continue!");
         });
-    pgt = JSON.parse(pgt);
+    if (typeof pgt == "String") {
+        pgt = JSON.parse(jsonEscape(toString(pgt)));
+    }
     // This is for a deferred start of daliuge, e.g. on SLURM
     console.debug("sending request to ", create_slurm_url);
     var body = [pgtName, pgt]; // we send the name in the body with the pgt
+    console.debug("Submission PGT:", JSON.stringify(body));
     await fetch(create_slurm_url, {
         method: 'POST',
-        // credentials: 'include',
+        credentials: 'include',
         cache: 'no-cache',
         mode: request_mode,
         referrerPolicy: 'no-referrer',
