@@ -84,10 +84,10 @@ def daliuge_aware(func):
                     r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin
                 ):
                     origin = "http://localhost:8084"
-                bottle.response.headers["Access-Control-Allow-Origin"] = "*"
-                # bottle.response.headers[
-                # "Access-Control-Allow-Credentials"
-                # ] = True
+                bottle.response.headers["Access-Control-Allow-Origin"] = origin
+                bottle.response.headers[
+                    "Access-Control-Allow-Credentials"
+                ] = "true"
                 bottle.response.headers[
                     "Access-Control-Allow-Methods"
                 ] = "GET, POST, PUT, OPTIONS"
