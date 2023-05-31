@@ -478,7 +478,7 @@ class LG:
         elif s_type in ["Application", "Control"]:
             sname = slgn._getPortName("outputPorts")
             tname = tlgn._getPortName("inputPorts")
-            logger.debug("Found port names: IN: %s, OUT: %s", sname, tname)
+            # logger.debug("Found port names: IN: %s, OUT: %s", sname, tname)
             sdrop.addOutput(tdrop, name=sname)
             tdrop.addProducer(sdrop, name=tname)
             if Categories.BASH_SHELL_APP == s_type:
@@ -499,7 +499,7 @@ class LG:
                 # could be multiple ports, need to identify
                 portId = llink["toPort"] if "toPort" in llink else None
                 tname = tlgn._getPortName("inputPorts", portId=portId)
-                logger.debug("Found port names: IN: %s, OUT: %s", sname, tname)
+                # logger.debug("Found port names: IN: %s, OUT: %s", sname, tname)
                 # logger.debug(
                 #     ">>> link from %s to %s (%s) (%s)",
                 #     sname,

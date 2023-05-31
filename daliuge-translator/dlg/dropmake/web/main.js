@@ -220,13 +220,14 @@ async function checkUrlStatus(url) {
 async function checkUrlSubmissionMethods(url) {
     return new Promise((resolve) => {
         $.ajax({
+            credentials: 'include',
             url: url,
             type: 'GET',
             success: function (response) {
                 resolve(response)
             },
             error: function (jqXHR, textStatus, errorThrown) {
-                resolve({"methods": []})
+                resolve({ "methods": [] })
             },
             timeout: 2000
         });
@@ -332,12 +333,12 @@ function saveSettings() {
         let deployMethod;
         if (!errorFillingOut) {
             deployMethod =
-                {
-                    name: $(this).find(".deployMethodName").val(),
-                    url: $(this).find(".deployMethodUrl").val(),
-                    deployMethod: $(this).find(".deployMethodMethod option:selected").val(),
-                    active: $(this).find(".deployMethodActive").val()
-                }
+            {
+                name: $(this).find(".deployMethodName").val(),
+                url: $(this).find(".deployMethodUrl").val(),
+                deployMethod: $(this).find(".deployMethodMethod option:selected").val(),
+                active: $(this).find(".deployMethodActive").val()
+            }
             console.debug($(this).find(".deployMethodMethod option:selected").val())
             deployMethodsArray.push(deployMethod)
         }
@@ -386,7 +387,7 @@ function buildDeployMethodEntry(method, selected) {
 
 function fillOutSettings() {
     let deployMethodsArray;
-//get setting values from local storage
+    //get setting values from local storage
     const manager_url = window.localStorage.getItem("manager_url");
     $("#settingsModalErrorMessage").html('')
 
@@ -509,7 +510,7 @@ function makePNG() {
             asArray[i] = data.charCodeAt(i);
         }
 
-        const blob = new Blob([asArray.buffer], {type: "image/png"});
+        const blob = new Blob([asArray.buffer], { type: "image/png" });
         saveAs(blob, pgtName + "_Template.png");
     });
 }
@@ -577,19 +578,20 @@ async function directRestDeploy() {
 
     // sessionId must be unique or the request will fail
     const lgName = pgtName.substring(0, pgtName.lastIndexOf("_pgt.graph"));
-    const sessionId = lgName + "-" + Date.now();
+    const dateId = new Date();
+    const sessionId = lgName + "-" + dateId.toISOString().replace(/\:/gi, "-");
     console.debug("sessionId:", sessionId);
 
     const nodes_url = manager_url + "/api/nodes";
 
     const nodes = await fetch(nodes_url, {
         method: 'GET',
-        mode: request_mode
+        // mode: request_mode
     })
         .then(handleFetchErrors)
         .then(response => response.json())
         .catch(function (error) {
-            showMessageModal(`Error ${error}\nGetting nodes unsuccessful`);
+            showMessageModal(`Error ${error}! Getting nodes unsuccessful`);
         })
 
     const pgt_url = "/gen_pg?tpl_nodes_len=" + nodes.length.toString() + "&pgt_id=" + pgtName;
@@ -613,9 +615,10 @@ async function directRestDeploy() {
 
     // request pg_spec from translator
     const pg_spec_url = "/gen_pg_spec";
+    console.debug("pg_spec_request", pg_spec_request_data);
     const pg_spec_response = await fetch(pg_spec_url, {
         method: 'POST',
-        mode: request_mode,
+        mode: 'cors',
         headers: {
             'Content-Type': 'application/json',
         },
@@ -626,13 +629,14 @@ async function directRestDeploy() {
         .catch(function (error) {
             showMessageModal('Error', error + "\nGetting pg_spec unsuccessful: Unable to continue!");
         });
-    const session_data = {"sessionId": sessionId};
+    const session_data = { "sessionId": sessionId };
+    console.debug("SessionId:", sessionId);
     const create_session_url = manager_url + "/api/sessions";
     const create_session = await fetch(create_session_url, {
         credentials: 'include',
         cache: 'no-cache',
         method: 'POST',
-        mode: request_mode,
+        // mode: request_mode,
         referrerPolicy: 'no-referrer',
         headers: {
             'Content-Type': 'application/json',
@@ -646,50 +650,37 @@ async function directRestDeploy() {
         });
     console.debug("create session response", create_session);
     // gzip the pg_spec
-    const buf = fflate.strToU8(JSON.stringify(pg_spec_response.pg_spec));
+    const buf = fflate.strToU8(JSON.stringify(JSON.parse(pg_spec_response).pg_spec));
     const compressed_pg_spec = fflate.zlibSync(buf);
-    console.debug("compressed_pg_spec", compressed_pg_spec);
+    // console.debug("compressed_pg_spec", compressed_pg_spec);
+    // console.debug("pg_spec", compressed_pg_spec);
 
     // append graph to session on engine
     const append_graph_url = manager_url + "/api/sessions/" + sessionId + "/graph/append";
     const append_graph = await fetch(append_graph_url, {
         credentials: 'include',
         method: 'POST',
-        mode: request_mode,
-        headers: {
-            'Content-Type': 'application/json',
-            'Content-Encoding': 'gzip'
-        },
+        mode: "no-cors",
         referrerPolicy: 'origin',
-        //body: JSON.stringify(pg_spec_response.pg_spec)
-        body: new Blob([compressed_pg_spec], {type: 'application/json'})
-        // body: new Blob([buf])
+        // body: JSON.stringify(pg_spec_response.pg_spec)
+        // body: new Blob(compressed_pg_spec, { type: 'application/json' })
+        body: new Blob([buf], { type: 'application/json' })
     })
-        .then(handleFetchErrors)
-        .then(response => response.json())
-        .catch(function (error) {
-            showMessageModal('Error', error + "\nUnable to continue!");
-        });
-    console.debug("append graph response", append_graph);
-    // deploy graph
-    // NOTE: URLSearchParams here turns the object into a x-www-form-urlencoded form
     const deploy_graph_url = manager_url + "/api/sessions/" + sessionId + "/deploy";
     const deploy_graph = await fetch(deploy_graph_url, {
-        credentials: 'include',
+        // credentials: 'include',
         method: 'POST',
-        mode: request_mode,
+        mode: "no-cors",
         body: new URLSearchParams({
-            'completed': pg_spec_response.root_uids,
+            'completed': JSON.parse(pg_spec_response).root_uids,
         })
     })
-        .then(handleFetchErrors)
-        .then(response => response.json())
-        .catch(function (error) {
-            showMessageModal('Error', error + "\nUnable to continue!");
-        });
-    //showMessageModal("Chart deployed" , "Check the dashboard of your k8s cluster for status updates.");
     const mgr_url = manager_url + "/session?sessionId=" + sessionId;
     window.open(mgr_url, '_blank').focus();
+}
+
+function jsonEscape(str) {
+    return str.replace(/\n/g, "\\\\n").replace(/\r/g, "\\\\r").replace(/\t/g, "\\\\t");
 }
 
 async function restDeploy() {
@@ -706,7 +697,7 @@ async function restDeploy() {
     let manager_url = new URL(murl);
     console.info("In REST Deploy")
 
-    const request_mode = "cors";
+    const request_mode = "no-cors";
     manager_url = manager_url.toString();
     if (manager_url.endsWith('/')) {
         manager_url = manager_url.substring(0, manager_url.length - 1);
@@ -734,10 +725,13 @@ async function restDeploy() {
         .catch(function (error) {
             showMessageModal('Error', error + "\nGetting PGT unsuccessful: Unable to continue!");
         });
-    pgt = JSON.parse(pgt);
+    if (typeof pgt == "String") {
+        pgt = JSON.parse(jsonEscape(toString(pgt)));
+    }
     // This is for a deferred start of daliuge, e.g. on SLURM
     console.debug("sending request to ", create_slurm_url);
     var body = [pgtName, pgt]; // we send the name in the body with the pgt
+    console.debug("Submission PGT:", JSON.stringify(body));
     await fetch(create_slurm_url, {
         method: 'POST',
         credentials: 'include',

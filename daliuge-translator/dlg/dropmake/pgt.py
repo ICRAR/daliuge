@@ -240,10 +240,17 @@ class PGT(object):
             where the daliuge system is started up afer submission (e.g. SLURM)
         """
         logger.debug(
-            "tpl_nodes_len: %s, node_list: %s", tpl_nodes_len, node_list
+            "# worker nodes: %s, node_list(incl. DIM): %s",
+            tpl_nodes_len,
+            node_list,
         )
-        if tpl_nodes_len > 0:  # generate pg_spec template
+        if (
+            len(node_list) == 0 and tpl_nodes_len > 0
+        ):  # generate pg_spec template
             node_list = range(tpl_nodes_len)  # create a fake list for now
+            tpl_fl = True
+        else:
+            tpl_fl = False
 
         if 0 == self._num_parts_done:
             raise GPGTException("The graph has not been partitioned yet")
@@ -314,7 +321,7 @@ class PGT(object):
         # values = dict(zip(values,range(len(values)))) # dict with new values
         # lm = {k:values[v] for (k, v) in lm.items()} # replace old values with new
 
-        if tpl_nodes_len:
+        if tpl_fl:
             nm_list = [
                 "#%s" % x for x in range(nm_len)
             ]  # so that nm_list[i] == '#i'
