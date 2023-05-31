@@ -471,14 +471,11 @@ class TestLGWeb(unittest.TestCase):
         }
         pgt = self._test_post_request(c, test_url, form_data, False)
         for dropspec in pgt:
-            if "dropclass" in dropspec:
-                self.assertIn(
-                    dropspec["dropclass"],
-                    [
-                        "dlg.data.drops.memory.InMemoryDROP",
-                        "dlg.data.drops.file.FileDROP",
-                    ],
-                )
+            if (
+                "dropclass" in dropspec
+                and dropspec["category"] == "Application"
+            ):
+                self.assertEqual(dropspec["dropclass"], "test.app")
 
     def test_pgt_partition(self):
         c = RestClient("localhost", lgweb_port, timeout=10)
