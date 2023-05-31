@@ -468,7 +468,10 @@ class TestLGWeb(unittest.TestCase):
         form_data = {"lg_content": json_data, "default_app": "test.app"}
         pgt = self._test_post_request(c, test_url, form_data, False)
         for dropspec in pgt:
-            if "dropclass" in dropspec:
+            if (
+                "dropclass" in dropspec
+                and dropspec["category"] == "Application"
+            ):
                 self.assertEqual(dropspec["dropclass"], "test.app")
 
     def test_pgt_partition(self):
