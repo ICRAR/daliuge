@@ -43,8 +43,7 @@ from dlg.utils import prepare_sql
 # @param condition Whats used after WHERE//String/ComponentParameter/readwrite//False/False/Condition for SELECT. For this the WHERE statement must be written using the "{X}" or "{}" placeholders
 # @param selectVals values for WHERE/{}/Json/ComponentParameter/readwrite//False/False/Values for the WHERE statement
 # @param dropclass dropclass/dlg.data.drops.rdbms.RDBMSDrop/String/ComponentParameter/readwrite//False/False/Drop class
-# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
-# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
+# @param dummy dummy//Object/InputOutput/readwrite//False/False/Dummy port
 # @par EAGLE_END
 class RDBMSDrop(DataDROP):
     """
