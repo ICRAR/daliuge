@@ -147,8 +147,7 @@ class SleepApp(BarrierAppDROP):
 # @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param dummy_in dummy//Object/InputPort/readwrite//False/False/Dummy input port
-# @param dummy_out dummy//Object/OutputPort/readwrite//False/False/Dummy output port
+# @param dummy dummy//Object/InputOutput/readwrite//False/False/Dummy port
 # @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
 # @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
@@ -321,8 +320,7 @@ class RandomArrayApp(BarrierAppDROP):
 # @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
 # @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
 # @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param array_in Array//Object.Array/InputPort/readwrite//False/False/Port for the input array(s)
-# @param array_out Array//Object.Array/OutputPort/readwrite//False/False/Port carrying the averaged array
+# @param array Array//Object.Array/InputOutput/readwrite//False/False/Port for the array(s)
 # @par EAGLE_END
 class AverageArraysApp(BarrierAppDROP):
     """
