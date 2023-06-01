@@ -141,15 +141,15 @@ class SleepApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param bufsize 65536/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/Buffer size
-# @param dropclass dlg.apps.simple.CopyApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
-# @param execution_time 5/Float/ComponentParameter/NoPort/ReadOnly//False/False/Estimated execution time
-# @param num_cpus 1/Integer/ComponentParameter/NoPort/ReadOnly//False/False/Number of cores used
-# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
-# @param input_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
+# @param bufsize buffer size/65536/Integer/ApplicationArgument/readwrite//False/False/Buffer size
+# @param dropclass dropclass/dlg.apps.simple.CopyApp/String/ComponentParameter/readonly//False/False/Application class
+# @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param dummy dummy//Object/InputOutput/readwrite//False/False/Dummy port
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class CopyApp(BarrierAppDROP):
     """
@@ -313,14 +313,14 @@ class RandomArrayApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param method mean/Select/ApplicationArgument/NoPort/ReadWrite/mean,median/False/False/The method used for averaging
-# @param dropclass dlg.apps.simple.AverageArraysApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
-# @param input_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
-# @param execution_time 5/Float/ComponentParameter/NoPort/ReadOnly//False/False/Estimated execution time
-# @param num_cpus 1/Integer/ComponentParameter/NoPort/ReadOnly//False/False/Number of cores used
-# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @param array /Object.Array/ApplicationArgument/InputOutput/ReadWrite//False/False/Port for the array(s)
+# @param method method/mean/Select/ApplicationArgument/readwrite/mean,median/False/False/The method used for averaging
+# @param dropclass dropclass/dlg.apps.simple.AverageArraysApp/String/ComponentParameter/readonly//False/False/Application class
+# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
+# @param execution_time execution_time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
+# @param num_cpus num_cpus/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
+# @param group_start group_start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
+# @param array Array//Object.Array/InputOutput/readwrite//False/False/Port for the array(s)
 # @par EAGLE_END
 class AverageArraysApp(BarrierAppDROP):
     """
