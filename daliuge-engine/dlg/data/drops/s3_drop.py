@@ -55,16 +55,16 @@ from dlg.named_port_utils import identify_named_ports, check_ports_dict
 # @par EAGLE_START
 # @param category S3
 # @param tag daliuge
-# @param data_volume 5/Float/ComponentParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
-# @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
-# @param Bucket /String/ComponentParameter/NoPort/ReadWrite//False/False/The S3 Bucket
-# @param Key /String/ComponentParameter/NoPort/ReadWrite//False/False/The S3 object key
-# @param profile_name /String/ComponentParameter/NoPort/ReadWrite//False/False/The S3 profile name
-# @param endpoint_url /String/ComponentParameter/NoPort/ReadWrite//False/False/The URL exposing the S3 REST API
-# @param dropclass dlg.data.drops.s3_drop.S3DROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
-# @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
-# @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
+# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
+# @param Bucket Bucket//String/ComponentParameter/readwrite//False/False/The S3 Bucket
+# @param Key Key//String/ComponentParameter/readwrite//False/False/The S3 object key
+# @param profile_name Profile Name//String/ComponentParameter/readwrite//False/False/The S3 profile name
+# @param endpoint_url Endpoint URL//String/ComponentParameter/readwrite//False/False/The URL exposing the S3 REST API
+# @param dropclass dropclass/dlg.data.drops.s3_drop.S3DROP/String/ComponentParameter/readwrite//False/False/Drop class
+# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
+# @param persist Persist/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
+# @param dummy dummy//Object/InputOutput/readwrite//False/False/Dummy port
 # @par EAGLE_END
 class S3DROP(DataDROP):
     """
