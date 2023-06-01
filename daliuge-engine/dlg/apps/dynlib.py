@@ -482,6 +482,7 @@ def get_from_subprocess(proc, q):
 # @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
 # @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param dropclass dropclass/dlg.apps.dynlib.DynlibProcApp/String/ComponentParameter/readwrite//False/False/Drop class
 # @par EAGLE_END
 class DynlibProcApp(BarrierAppDROP):
     """Loads a dynamic library in a different process and runs it"""

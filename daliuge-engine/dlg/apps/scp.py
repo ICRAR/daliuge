@@ -53,8 +53,7 @@ from dlg.meta import (
 # @param remoteUser Remote User//String/ApplicationArgument/readwrite//False/False/Remote user address
 # @param pkeyPath Private Key Path//String/ApplicationArgument/readwrite//False/False/Private key path
 # @param timeout Timeout/60/Float/ApplicationArgument/readwrite//False/False/Connection timeout in seconds
-# @param file File//Object.PathBasedDrop/InputPort/readwrite//False/False/Input file path
-# @param file File//Object.PathBasedDrop/OutputPort/readwrite//False/False/Output file path
+# @param file File//Object.PathBasedDrop/InputOutput/readwrite//False/False/File path
 # @par EAGLE_END
 class ScpApp(BarrierAppDROP):
     """

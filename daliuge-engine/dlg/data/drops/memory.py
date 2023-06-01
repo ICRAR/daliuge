@@ -42,8 +42,7 @@ from dlg.data.io import SharedMemoryIO, MemoryIO
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
 # @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
 # @param persist Persist/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
-# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
+# @param dummy dummy//Object/InputOutput/readwrite//False/False/Dummy port
 # @par EAGLE_END
 class InMemoryDROP(DataDROP):
     """
@@ -107,8 +106,7 @@ class InMemoryDROP(DataDROP):
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
 # @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
 # @param persist Persist/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
-# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
+# @param dummy dummy//Object/InputOutput/readwrite//False/False/Dummy port
 # @par EAGLE_END
 class SharedMemoryDROP(DataDROP):
     """

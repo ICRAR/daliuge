@@ -42,9 +42,7 @@ from dlg.meta import dlg_string_param, dlg_bool_param
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
 # @param use_staging Use Staging/False/Boolean/ComponentParameter/readwrite//False/False/Enables writing to a dynamically resizeable staging buffer
-# @param dropclass dropclass/dlg.data.drops.plasma.PlasmaDROP/String/ComponentParameter/readwrite//False/False/Drop class
-# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
-# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
+# @param dummy dummy//Object/InputOutput/readwrite//False/False/Dummy port
 # @par EAGLE_END
 class PlasmaDROP(DataDROP):
     """
@@ -95,8 +93,7 @@ class PlasmaDROP(DataDROP):
 # @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
 # @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
 # @param flight_path Flight Path//String/ComponentParameter/readwrite//False/False/IP and flight port of the drop owner
-# @param dummy dummy//Object/InputPort/readwrite//False/False/Dummy input port
-# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
+# @param dummy dummy//Object/InputOutput/readwrite//False/False/Dummy port
 # @par EAGLE_END
 class PlasmaFlightDROP(DataDROP):
     """
