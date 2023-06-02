@@ -39,8 +39,6 @@ jobs:
 
       - name: Create palettes
         run: |
-          # python3 tools/xml2palette/xml2palette.py -t daliuge -r ./ $OUTPUT_FILENAME.palette
-          # python3 tools/xml2palette/xml2palette.py -t template -r ./ $OUTPUT_FILENAME-template.palette
           dlg_paletteGen -r -t daliuge ./ $OUTPUT_FILENAME.palette
           dlg_paletteGen -r -t template ./ $OUTPUT_FILENAME-template.palette
 
