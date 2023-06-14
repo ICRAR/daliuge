@@ -79,28 +79,28 @@ class ContainerIpWaiter(object):
 # @par EAGLE_START
 # @param category Docker
 # @param tag template
-# @param image Image//String/ComponentParameter/readwrite//False/False/The name of the docker image to be used for this application
-# @param tag Tag/1.0/String/ComponentParameter/readwrite//False/False/The tag of the docker image to be used for this application
-# @param digest Digest//String/ComponentParameter/readwrite//False/False/The hexadecimal hash (long version) of the docker image to be used for this application
-# @param command Command//String/ComponentParameter/readwrite//False/False/The command line to run within the docker instance. The specified command will be executed in a bash shell. That means that images will need a bash shell.
-# @param input_redirection Input Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the input into this application
-# @param output_redirection Output Redirection//String/ComponentParameter/readwrite//False/False/The command line argument that specifies the output from this application
-# @param command_line_arguments Command Line Arguments//String/ComponentParameter/readwrite//False/False/Additional command line arguments to be added to the command line to be executed
-# @param paramValueSeparator Param value separator/ /String/ComponentParameter/readwrite//False/False/Separator character(s) between parameters and their respective values on the command line
-# @param argumentPrefix Argument prefix/"--"/String/ComponentParameter/readwrite//False/False/Prefix to each keyed argument on the command line
-# @param dropclass dropclass/dlg.apps.dockerapp.DockerApp/String/ComponentParameter/readwrite//False/False/Drop class
-# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param user User//String/ComponentParameter/readwrite//False/False/Username of the user who will run the application within the docker image
-# @param ensureUserAndSwitch Ensure User And Switch/False/Boolean/ComponentParameter/readwrite//False/False/Make sure the user specified in the User parameter exists and then run the docker container as that user
-# @param removeContainer Remove Container/True/Boolean/ComponentParameter/readwrite//False/False/Instruct Docker engine to delete the container after execution is complete
-# @param additionalBindings Additional Bindings//String/ComponentParameter/readwrite//False/False/Directories which will be visible inside the container during run-time. Format is srcdir_on_host:trgtdir_on_container. Multiple entries can be separated by commas.
-# @param portMappings Port Mappings//String/ComponentParameter/readwrite//False/False/Port mappings on the host machine
+# @param image /String/ComponentParameter/NoPort/ReadWrite//False/False/The name of the docker image to be used for this application
+# @param tag 1.0/String/ComponentParameter/NoPort/ReadWrite//False/False/The tag of the docker image to be used for this application
+# @param digest /String/ComponentParameter/NoPort/ReadWrite//False/False/The hexadecimal hash (long version) of the docker image to be used for this application
+# @param command /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line to run within the docker instance. The specified command will be executed in a bash shell. That means that images will need a bash shell.
+# @param input_redirection /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line argument that specifies the input into this application
+# @param output_redirection /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line argument that specifies the output from this application
+# @param command_line_arguments /String/ComponentParameter/NoPort/ReadWrite//False/False/Additional command line arguments to be added to the command line to be executed
+# @param paramValueSeparator " "/String/ComponentParameter/NoPort/ReadWrite//False/False/Separator character(s) between parameters and their respective values on the command line
+# @param argumentPrefix "--"/String/ComponentParameter/NoPort/ReadWrite//False/False/Prefix to each keyed argument on the command line
+# @param dropclass dlg.apps.dockerapp.DockerApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param input_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
+# @param execution_time 5/Float/ComponentParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ComponentParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param user /String/ComponentParameter/NoPort/ReadWrite//False/False/Username of the user who will run the application within the docker image
+# @param ensureUserAndSwitch False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Make sure the user specified in the User parameter exists and then run the docker container as that user
+# @param removeContainer True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Instruct Docker engine to delete the container after execution is complete
+# @param additionalBindings /String/ComponentParameter/NoPort/ReadWrite//False/False/Directories which will be visible inside the container during run-time. Format is srcdir_on_host:trgtdir_on_container. Multiple entries can be separated by commas.
+# @param portMappings /String/ComponentParameter/NoPort/ReadWrite//False/False/Port mappings on the host machine
 # @par EAGLE_END
 class DockerApp(BarrierAppDROP):
     """

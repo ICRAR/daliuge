@@ -34,15 +34,14 @@ from dlg.meta import dlg_string_param
 # @par EAGLE_START
 # @param category ParameterSet
 # @param tag daliuge
-# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
-# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
-# @param mode Parset mode/"YANDA"/String/ComponentParameter/readonly//False/False/To what standard DALiuGE should filter and serialize the parameters.
-# @param config_data ConfigData/""/String/ComponentParameter/readwrite//False/False/Additional configuration information to be mixed in with the initial data
-# @param dropclass dropclass/dlg.data.drops.parset_drop.ParameterSetDROP/String/ComponentParameter/readwrite//False/False/Drop class
-# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
-# @param persist Persist/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param dropclass dropclass//dlg.data.drops.parset_drop.ParameterSetDROP//readonly//False/False/default class for this DROP
-# @param Config ConfigFile//Object.File/OutputPort/readwrite//False/False/The output configuration file
+# @param data_volume 5/Float/ComponentParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
+# @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
+# @param mode "YANDA"/String/ComponentParameter/NoPort/ReadOnly//False/False/To what standard DALiuGE should filter and serialize the parameters.
+# @param config_data ""/String/ComponentParameter/NoPort/ReadWrite//False/False/Additional configuration information to be mixed in with the initial data
+# @param dropclass dlg.data.drops.parset_drop.ParameterSetDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
+# @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
+# @param Config /Object.File/ApplicationArgument/OutputPort/ReadWrite//False/False/The output configuration file
 # @par EAGLE_END
 class ParameterSetDROP(DataDROP):
     """

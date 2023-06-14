@@ -7,8 +7,8 @@ from dlg.apps.app_base import BarrierAppDROP
 # @par EAGLE_START
 # @param category Scatter
 # @param tag template
-# @param num_of_copies Scatter dimension/4/Integer/ConstructParameter/readwrite//False/False/Specifies the number of replications of the content of the scatter construct
-# @param dropclass dropclass/dlg.apps.constructs.ScatterDrop/String/ComponentParameter/readwrite//False/False/Drop class
+# @param num_of_copies 4/Integer/ConstructParameter/NoPort/ReadWrite//False/False/Specifies the number of replications of the content of the scatter construct
+# @param dropclass dlg.apps.constructs.ScatterDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @par EAGLE_END
 class ScatterDrop(BarrierAppDROP):
     """
@@ -24,9 +24,9 @@ class ScatterDrop(BarrierAppDROP):
 # @par EAGLE_START
 # @param category Gather
 # @param tag template
-# @param num_of_inputs No. of inputs/2/Integer/ConstructParameter/readwrite//False/False/Number of inputs
-# @param gather_axis Index of gather axis/0/Integer/ApplicationArgument/readwrite//False/False/Index of gather axis
-# @param dropclass dropclass/dlg.apps.constructs.GatherDrop/String/ComponentParameter/readwrite//False/False/Drop class
+# @param num_of_inputs 2/Integer/ConstructParameter/NoPort/ReadWrite//False/False/Number of inputs
+# @param gather_axis 0/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/Index of gather axis
+# @param dropclass dlg.apps.constructs.GatherDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @par EAGLE_END
 class GatherDrop(BarrierAppDROP):
     """
@@ -42,8 +42,8 @@ class GatherDrop(BarrierAppDROP):
 # @par EAGLE_START
 # @param category Loop
 # @param tag template
-# @param num_of_iter No. of iterations/2/Integer/ConstructParameter/readwrite//False/False/Number of iterations
-# @param dropclass dropclass/dlg.apps.constructs.LoopDrop/String/ComponentParameter/readwrite//False/False/Drop class
+# @param num_of_iter 2/Integer/ConstructParameter/NoPort/ReadWrite//False/False/Number of iterations
+# @param dropclass dlg.apps.constructs.LoopDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @par EAGLE_END
 class LoopDrop(BarrierAppDROP):
     """
@@ -59,8 +59,8 @@ class LoopDrop(BarrierAppDROP):
 # @par EAGLE_START
 # @param category MKN
 # @param tag template
-# @param k K/1/Integer/ConstructParameter/readwrite//False/False/Internal multiplicity
-# @param dropclass dropclass/dlg.apps.constructs.MKNDrop/String/ComponentParameter/readwrite//False/False/Drop class
+# @param k 1/Integer/ConstructParameter/NoPort/ReadWrite//False/False/Internal multiplicity
+# @param dropclass dlg.apps.constructs.MKNDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @par EAGLE_END
 class MKNDrop(BarrierAppDROP):
     """
@@ -76,9 +76,9 @@ class MKNDrop(BarrierAppDROP):
 # @par EAGLE_START
 # @param category GroupBy
 # @param tag template
-# @param num_of_inputs No. of inputs/2/Integer/ConstructParameter/readwrite//False/False/Number of inputs
-# @param gather_axis Index of gather axis/0/Integer/ApplicationArgument/readwrite//False/False/Index of gather axis
-# @param dropclass dropclass/dlg.apps.constructs.GroupByDrop/String/ComponentParameter/readwrite//False/False/Drop class
+# @param num_of_inputs 2/Integer/ConstructParameter/NoPort/ReadWrite//False/False/Number of inputs
+# @param gather_axis 0/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/Index of gather axis
+# @param dropclass dlg.apps.constructs.GroupByDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @par EAGLE_END
 class GroupByDrop(BarrierAppDROP):
     """
@@ -93,7 +93,7 @@ class GroupByDrop(BarrierAppDROP):
 # @details A SubGraph template drop
 # @par EAGLE_START
 # @param category SubGraph
-# @param dropclass dropclass/dlg.apps.constructs.SubGraphDrop/String/ComponentParameter/readwrite//False/False/Drop class
+# @param dropclass dlg.apps.constructs.SubGraphDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param tag template
 # @par EAGLE_END
 class SubGraphDrop(BarrierAppDROP):
@@ -109,7 +109,7 @@ class SubGraphDrop(BarrierAppDROP):
 # @details A comment template drop
 # @par EAGLE_START
 # @param category Comment
-# @param dropclass dropclass/dlg.apps.constructs.CommentDrop/String/ComponentParameter/readwrite//False/False/Drop class
+# @param dropclass dlg.apps.constructs.CommentDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param tag template
 # @par EAGLE_END
 class CommentDrop(BarrierAppDROP):
@@ -125,7 +125,7 @@ class CommentDrop(BarrierAppDROP):
 # @details A description template drop
 # @par EAGLE_START
 # @param category Description
-# @param dropclass dropclass/dlg.apps.constructs.DescriptionDrop/String/ComponentParameter/readwrite//False/False/Drop class
+# @param dropclass dlg.apps.constructs.DescriptionDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param tag template
 # @par EAGLE_END
 class DescriptionDrop(BarrierAppDROP):
@@ -141,7 +141,7 @@ class DescriptionDrop(BarrierAppDROP):
 # @details An Exclusive Force Node
 # @par EAGLE_START
 # @param category ExclusiveForceNode
-# @param dropclass dropclass/dlg.apps.constructs.ExclusiveForceDrop/String/ComponentParameter/readwrite//False/False/Drop class
+# @param dropclass dlg.apps.constructs.ExclusiveForceDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param tag template
 # @par EAGLE_END
 class ExclusiveForceDrop(BarrierAppDROP):
