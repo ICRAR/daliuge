@@ -17,6 +17,7 @@ from dlg.exceptions import InvalidDropException
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param dummy_input /Object/ApplicationArgument/InputPort/ReadWrite//False/False/Dummy input port
 # @param dummy0 /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/Dummy output port
 # @param dummy1 /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/Dummy output port
 # @par EAGLE_END
