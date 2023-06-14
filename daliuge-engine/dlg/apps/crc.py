@@ -86,15 +86,15 @@ class CRCApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param dropclass Application Class/dlg.apps.crc.CRCStreamApp/String/ComponentParameter/readonly//False/False/Application class
-# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param data Data//String/OutputPort/readwrite//False/False/Input data stream
+# @param dropclass dlg.apps.crc.CRCStreamApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param input_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
+# @param execution_time 5/Float/ComponentParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ComponentParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param data /String/ApplicationArgument/OutputPort/ReadWrite//False/False/Input data stream
 # @par EAGLE_END
 class CRCStreamApp(AppDROP):
     """
