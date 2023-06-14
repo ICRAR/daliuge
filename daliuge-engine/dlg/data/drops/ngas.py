@@ -31,18 +31,18 @@ from dlg.meta import dlg_string_param, dlg_int_param
 # @par EAGLE_START
 # @param category NGAS
 # @param tag daliuge
-# @param ngasSrv NGAS Server/localhost/String/ComponentParameter/readwrite//False/False/The URL of the NGAS Server
-# @param ngasPort NGAS Port/7777/Integer/ComponentParameter/readwrite//False/False/The port of the NGAS Server
-# @param ngasFileId File ID//String/ComponentParameter/readwrite//False/False/File ID on NGAS (for retrieval only)
-# @param ngasConnectTimeout Connection timeout/2/Integer/ComponentParameter/readwrite//False/False/Timeout for connecting to the NGAS server
-# @param ngasMime NGAS mime-type/"text/ascii"/String/ComponentParameter/readwrite//False/False/Mime-type to be used for archiving
-# @param ngasTimeout NGAS timeout/2/Integer/ComponentParameter/readwrite//False/False/Timeout for receiving responses for NGAS
-# @param dropclass dropclass/dlg.data.drops.ngas.NgasDROP/String/ComponentParameter/readwrite//False/False/Drop class
-# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
-# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
-# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
-# @param persist Persist/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param dummy dummy//Object/InputOutput/readwrite//False/False/Dummy port
+# @param ngasSrv localhost/String/ComponentParameter/NoPort/ReadWrite//False/False/The URL of the NGAS Server
+# @param ngasPort 7777/Integer/ComponentParameter/NoPort/ReadWrite//False/False/The port of the NGAS Server
+# @param ngasFileId /String/ComponentParameter/NoPort/ReadWrite//False/False/File ID on NGAS (for retrieval only)
+# @param ngasConnectTimeout 2/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Timeout for connecting to the NGAS server
+# @param ngasMime "text/ascii"/String/ComponentParameter/NoPort/ReadWrite//False/False/Mime-type to be used for archiving
+# @param ngasTimeout 2/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Timeout for receiving responses for NGAS
+# @param dropclass dlg.data.drops.ngas.NgasDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param data_volume 5/Float/ComponentParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
+# @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
+# @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
+# @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
+# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @par EAGLE_END
 class NgasDROP(DataDROP):
     """
