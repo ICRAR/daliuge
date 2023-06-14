@@ -80,8 +80,8 @@ class ContainerIpWaiter(object):
 # @param category Docker
 # @param tag template
 # @param image /String/ComponentParameter/NoPort/ReadWrite//False/False/The name of the docker image to be used for this application
-# @param docker_tag 1.0/String/ComponentParameter/NoPort/ReadWrite//False/False/The tag of the docker image to be used for this application
-# @param docker_digest /String/ComponentParameter/NoPort/ReadWrite//False/False/The hexadecimal hash (long version) of the docker image to be used for this application
+# @param tag 1.0/String/ComponentParameter/NoPort/ReadWrite//False/False/The tag of the docker image to be used for this application
+# @param digest /String/ComponentParameter/NoPort/ReadWrite//False/False/The hexadecimal hash (long version) of the docker image to be used for this application
 # @param command /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line to run within the docker instance. The specified command will be executed in a bash shell. That means that images will need a bash shell.
 # @param input_redirection /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line argument that specifies the input into this application
 # @param output_redirection /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line argument that specifies the output from this application
