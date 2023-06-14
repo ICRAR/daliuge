@@ -35,15 +35,15 @@ from dlg.utils import prepare_sql
 # @par EAGLE_START
 # @param category RDBMS
 # @param tag daliuge
-# @param data_volume Data volume/5/Float/ComponentParameter/readwrite//False/False/Estimated size of the data contained in this node
-# @param group_end Group end/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the end of a group?
-# @param dbmodule Python DB module//String/ComponentParameter/readwrite//False/False/Load path for python DB module
-# @param dbtable DB table name//String/ComponentParameter/readwrite//False/False/The name of the table to use
-# @param vals Values dictionary/{}/Json/ComponentParameter/readwrite//False/False/Json encoded values dictionary used for INSERT. The keys of ``vals`` are used as the column names.
-# @param condition Whats used after WHERE//String/ComponentParameter/readwrite//False/False/Condition for SELECT. For this the WHERE statement must be written using the "{X}" or "{}" placeholders
-# @param selectVals values for WHERE/{}/Json/ComponentParameter/readwrite//False/False/Values for the WHERE statement
-# @param dropclass dropclass/dlg.data.drops.rdbms.RDBMSDrop/String/ComponentParameter/readwrite//False/False/Drop class
-# @param dummy dummy//Object/InputOutput/readwrite//False/False/Dummy port
+# @param data_volume 5/Float/ComponentParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
+# @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
+# @param dbmodule /String/ComponentParameter/NoPort/ReadWrite//False/False/Load path for python DB module
+# @param dbtable /String/ComponentParameter/NoPort/ReadWrite//False/False/The name of the table to use
+# @param vals {}/Json/ComponentParameter/NoPort/ReadWrite//False/False/Json encoded values dictionary used for INSERT. The keys of ``vals`` are used as the column names.
+# @param condition /String/ComponentParameter/NoPort/ReadWrite//False/False/Condition for SELECT. For this the WHERE statement must be written using the "{X}" or "{}" placeholders
+# @param selectVals {}/Json/ComponentParameter/NoPort/ReadWrite//False/False/Values for the WHERE statement
+# @param dropclass dlg.data.drops.rdbms.RDBMSDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @par EAGLE_END
 class RDBMSDrop(DataDROP):
     """
