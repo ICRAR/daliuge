@@ -351,7 +351,7 @@ def save_numpy(drop: "DataDROP", ndarray: np.ndarray):
     save_npy(drop, ndarray)
 
 
-def load_npy(drop: "DataDROP", allow_pickle=False) -> np.ndarray:
+def load_npy(drop: "DataDROP", allow_pickle=True) -> np.ndarray:
     """
     Loads a numpy ndarray from a drop in npy format
     """
@@ -362,8 +362,8 @@ def load_npy(drop: "DataDROP", allow_pickle=False) -> np.ndarray:
     return res
 
 
-def load_numpy(drop: "DataDROP"):
-    return load_npy(drop)
+def load_numpy(drop: "DataDROP", allow_pickle=True):
+    return load_npy(drop, allow_pickle=allow_pickle)
 
 
 # def save_jsonp(drop: PathBasedDrop, data: Dict[str, object]):
