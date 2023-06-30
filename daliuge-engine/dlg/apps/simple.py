@@ -525,12 +525,11 @@ class GenericNpyGatherApp(BarrierAppDROP):
             data = droputils.load_numpy(input)
             # skip gather for the first input
             result = (
-                reduce(data, axis=self.reduce_axes, allow_pickle=True)
+                reduce(data, axis=self.reduce_axes)
                 if result is None
                 else gather(
                     result,
-                    reduce(data, axis=self.reduce_axes, allow_pickle=True),
-                    allow_pickle=True,
+                    reduce(data, axis=self.reduce_axes),
                 )
             )
         return result
@@ -542,11 +541,7 @@ class GenericNpyGatherApp(BarrierAppDROP):
         for input in self.inputs:
             data = droputils.load_numpy(input)
             # assign instead of gather for the first input
-            result = (
-                data
-                if result is None
-                else gather(result, data, allow_pickle=True)
-            )
+            result = data if result is None else gather(result, data)
         return result
 
 
