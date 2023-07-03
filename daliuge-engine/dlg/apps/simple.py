@@ -121,7 +121,7 @@ class SleepApp(BarrierAppDROP):
         if self.sleep_time is None:
             if len(self.inputs) > 0:
                 for inp in self.inputs:
-                    if inp.name == self.pname:
+                    if inp.name == self.sleep_time:
                         self.sleep_time = pickle.loads(
                             droputils.allDropContents(inp)
                         )
