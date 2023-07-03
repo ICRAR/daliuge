@@ -136,7 +136,7 @@ install_requires = [
     "psutil",
     "pyarrow<10",
     "python-daemon",
-    "pyzmq ~= 22.3.0",
+    "pyzmq ~= 25.1.0",
     "scp",
     "pyyaml",
     # 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
