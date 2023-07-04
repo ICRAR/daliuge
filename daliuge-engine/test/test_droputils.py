@@ -30,7 +30,7 @@ import unittest
 
 import numpy
 
-from dlg import droputils
+from dlg import droputils, drop_loaders
 from dlg.common import dropdict
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.data.drops.plasma import PlasmaDROP
