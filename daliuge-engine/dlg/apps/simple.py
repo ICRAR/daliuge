@@ -29,10 +29,9 @@ import urllib.error
 import urllib.request
 import logging
 import time
-import ast
 import numpy as np
 
-from dlg import droputils, utils
+from dlg import droputils, drop_loaders
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.data.drops.container import ContainerDROP
 from dlg.apps.branch import BranchAppDrop
@@ -47,8 +46,7 @@ from dlg.meta import (
     dlg_batch_output,
     dlg_streaming_input,
 )
-from dlg.exceptions import DaliugeException, DropChecksumException
-from dlg.apps.pyfunc import serialize_data, deserialize_data
+from dlg.exceptions import DaliugeException
 
 
 logger = logging.getLogger(__name__)
@@ -111,23 +109,18 @@ class SleepApp(BarrierAppDROP):
         [dlg_batch_output("binary/*", [])],
         [dlg_streaming_input("binary/*")],
     )
-    pname = "sleep_time"
-    sleep_time = dlg_float_param(pname, 0)
+    sleep_time = dlg_float_param("sleep_time", 0)
 
     def initialize(self, **kwargs):
         super(SleepApp, self).initialize(**kwargs)
 
     def run(self):
-        if self.sleep_time is None:
-            if len(self.inputs) > 0:
-                for inp in self.inputs:
-                    if inp.name == self.sleep_time:
-                        self.sleep_time = pickle.loads(
-                            droputils.allDropContents(inp)
-                        )
         try:
             time.sleep(self.sleep_time)
         except (TypeError, ValueError):
+            logger.debug(
+                "Found invalid sleep_time: %s. Resetting to 0", self.sleep_time
+            )
             self.sleep_time = 0
             time.sleep(self.sleep_time)
         logger.debug("%s slept for %s s", self.name, self.sleep_time)
@@ -514,7 +507,7 @@ class GenericNpyGatherApp(BarrierAppDROP):
         )
 
         for o in self.outputs:
-            droputils.save_numpy(o, result)
+            drop_loaders.save_numpy(o, result)
 
     def reduce_gather_inputs(self):
         """reduces then gathers each input drop interpreted as an npy drop"""
@@ -522,7 +515,7 @@ class GenericNpyGatherApp(BarrierAppDROP):
         reduce = getattr(np, f"{self.function}")
         gather = getattr(np, f"{self.functions[self.function]}")
         for input in self.inputs:
-            data = droputils.load_numpy(input)
+            data = drop_loaders.load_numpy(input)
             # skip gather for the first input
             result = (
                 reduce(data, axis=self.reduce_axes)
@@ -539,7 +532,7 @@ class GenericNpyGatherApp(BarrierAppDROP):
         result: Optional[Number] = None
         gather = getattr(np, f"{self.function}")
         for input in self.inputs:
-            data = droputils.load_numpy(input)
+            data = drop_loaders.load_numpy(input)
             # assign instead of gather for the first input
             result = data if result is None else gather(result, data)
         return result
@@ -785,7 +778,7 @@ class GenericNpyScatterApp(BarrierAppDROP):
         self.num_of_copies = self.num_of_copies
 
         for in_index in range(len(self.inputs)):
-            nObj = droputils.load_numpy(self.inputs[in_index])
+            nObj = drop_loaders.load_numpy(self.inputs[in_index])
             try:
                 result = np.array_split(
                     nObj, self.num_of_copies, axis=self.scatter_axes[in_index]
@@ -794,7 +787,7 @@ class GenericNpyScatterApp(BarrierAppDROP):
                 raise err
             for split_index in range(self.num_of_copies):
                 out_index = in_index * self.num_of_copies + split_index
-                droputils.save_numpy(
+                drop_loaders.save_numpy(
                     self.outputs[out_index], result[split_index]
                 )
 

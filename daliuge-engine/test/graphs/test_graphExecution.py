@@ -25,6 +25,7 @@ import unittest
 
 from asyncio.log import logger
 import pkg_resources
+import base64, pickle, time
 
 from dlg.data.drops.memory import InMemoryDROP
 from dlg import droputils
@@ -91,9 +92,9 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
 
         self.assertEqual(data, droputils.allDropContents(c))
 
-    def test_namedPorts(self):
+    def test_namedPorts_funcs(self):
         """
-        Use a graph with named ports and check whether it is runnning
+        Use a graph with named ports on a function and check whether it is runnning
         """
         init_oid = "2022-03-20T04:33:27_-2_0"  # first drop in graph
         sessionId = "lalo"
@@ -114,8 +115,35 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         for i in fd.parameters["inputs"]:
             logger.debug(f"PyfuncAPPDrop input names:{i}")
 
-        with droputils.DROPWaiterCtx(self, init_drop, 3):
+        with droputils.DROPWaiterCtx(self, init_drop, 300):
             a.setCompleted()
+
+    def test_namedPorts_apps(self):
+        """
+        Use a graph with named ports on an app and check whether it is runnning
+        """
+        translate = lambda x: base64.b64encode(pickle.dumps(x))
+        init_oid = "2023-07-04T00:13:32_-1_0"  # first drop in graph
+        sessionId = "lalo"
+        with pkg_resources.resource_stream(
+            "test", "graphs/appTestPG_namedPorts.graph"
+        ) as f:  # @UndefinedVariable
+            graphSpec = json.load(f)
+        # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
+        self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
+
+        # Deploy now and get OIDs
+        self.dim.deploySession(sessionId)
+        fd = self.dm._sessions[sessionId].drops["2023-07-04T00:13:32_-5_0"]
+        init_drop = self.dm._sessions[sessionId].drops[init_oid]
+        logger.debug(f"PyfuncAPPDrop: {dir(fd)}")
+        for i in fd.parameters["inputs"]:
+            logger.debug(f"PyfuncAPPDrop input names:{i}")
+
+        st = time.time()
+        with droputils.DROPWaiterCtx(self, fd, 300):
+            init_drop.execute()
+        self.assertAlmostEqual(0.6, time.time() - st, 1)
 
     def test_namedPorts_with_kwonlyargs(self):
         """

@@ -27,7 +27,8 @@
                 "type": "String",
                 "precious": false,
                 "options": [],
-                "positional": false
+                "positional": false,
+                "usage": "NoPort"
             },
             "of": {
                 "text": "of",
@@ -38,7 +39,8 @@
                 "type": "String",
                 "precious": false,
                 "options": [],
-                "positional": false
+                "positional": false,
+                "usage": "NoPort"
             },
             "bs": {
                 "text": "bs",
@@ -49,7 +51,8 @@
                 "type": "Integer",
                 "precious": false,
                 "options": [],
-                "positional": false
+                "positional": false,
+                "usage": "NoPort"
             },
             "count": {
                 "text": "count",
@@ -60,7 +63,8 @@
                 "type": "Integer",
                 "precious": false,
                 "options": [],
-                "positional": false
+                "positional": false,
+                "usage": "NoPort"
             }
         },
         "iid": "0",
@@ -123,7 +127,8 @@
                 "type": "Boolean",
                 "precious": false,
                 "options": [],
-                "positional": false
+                "positional": false,
+                "usage": "NoPort"
             },
             "filepath": {
                 "text": "File Path",
@@ -134,7 +139,8 @@
                 "type": "String",
                 "precious": false,
                 "options": [],
-                "positional": false
+                "positional": false,
+                "usage": "NoPort"
             },
             "dirname": {
                 "text": "Directory name",
@@ -145,7 +151,8 @@
                 "type": "String",
                 "precious": false,
                 "options": [],
-                "positional": false
+                "positional": false,
+                "usage": "NoPort"
             }
         },
         "iid": "0",
