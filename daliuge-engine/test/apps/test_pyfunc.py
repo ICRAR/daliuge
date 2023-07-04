@@ -27,7 +27,7 @@ import random
 import unittest
 import numpy
 
-from dlg import droputils
+from dlg import droputils, drop_loaders
 from dlg.apps import pyfunc
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.data.drops.memory import InMemoryDROP
@@ -140,11 +140,11 @@ class TestPyFuncApp(unittest.TestCase):
         b.addOutput(c)
 
         with DROPWaiterCtx(self, c, 5):
-            droputils.save_pickle(a, input_data)
+            drop_loaders.save_pickle(a, input_data)
             a.setCompleted()
         for drop in a, b, c:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
-        self.assertEqual(output_data, droputils.load_pickle(c))
+        self.assertEqual(output_data, drop_loaders.load_pickle(c))
 
     def test_eval_func(self, f=lambda x: x, input_data=None, output_data=None):
         input_data = [2, 2] if input_data is None else input_data
@@ -193,11 +193,11 @@ class TestPyFuncApp(unittest.TestCase):
         b.addOutput(c)
 
         with DROPWaiterCtx(self, c, 5):
-            droputils.save_npy(a, input_data)
+            drop_loaders.save_npy(a, input_data)
             a.setCompleted()
         for drop in a, b, c:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
-        numpy.testing.assert_equal(output_data, droputils.load_npy(c))
+        numpy.testing.assert_equal(output_data, drop_loaders.load_npy(c))
 
     def _test_simple_functions(self, f, input_data, output_data):
         a, c = [InMemoryDROP(x, x) for x in ("a", "c")]

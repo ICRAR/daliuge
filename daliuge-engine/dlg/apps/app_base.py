@@ -4,6 +4,7 @@ import logging
 import math
 import threading
 
+from dlg.drop_loaders import load_pickle
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.data_base import DataDROP
 from dlg.ddap_protocol import (
@@ -135,8 +136,10 @@ class AppDROP(ContainerDROP):
         Generates a named mapping of input data drops. Can only be called during run().
         """
         named_inputs: OrderedDict[str, DataDROP] = OrderedDict()
-        if "inputs" in self.parameters and isinstance(
-            self.parameters["inputs"][0], dict
+        if (
+            "inputs" in self.parameters
+            and len(self.parameters["inputs"]) > 0
+            and isinstance(self.parameters["inputs"][0], dict)
         ):
             for i in range(len(self._inputs)):
                 key = list(self.parameters["inputs"][i].values())[0]
@@ -144,7 +147,7 @@ class AppDROP(ContainerDROP):
                     list(self.parameters["inputs"][i].keys())[0]
                 ]
                 named_inputs[key] = value
-        else:
+        elif "applicationArgs" in self.parameters:
             for key, field in self.parameters["applicationArgs"].items():
                 if field["usage"] in ["InputPort", "InputOutput"]:
                     named_inputs[field["name"]] = field
@@ -444,7 +447,7 @@ class InputFiredAppDROP(AppDROP):
                     if proc.exception:
                         raise proc.exception
                 else:
-                    self.run()
+                    self._run()
                 if self.execStatus == AppDROPStates.CANCELLED:
                     return
                 self.execStatus = AppDROPStates.FINISHED
@@ -469,11 +472,23 @@ class InputFiredAppDROP(AppDROP):
         if _send_notifications:
             self._notifyAppIsFinished()
 
-    def run(self):
+    def _run(self):
         """
         Run this application. It can be safely assumed that at this point all
         the required inputs are COMPLETED.
+
+        This will first set the named input params and then call the run method
+        provided by the implementation.
         """
+        named_inputs = self._generateNamedInputs()
+        for attr_name in named_inputs:
+            self.__setattr__(attr_name, load_pickle(named_inputs[attr_name]))
+
+        named_outputs = self._generateNamedInputs()
+        for attr_name in named_outputs:
+            self.__setattr__(attr_name, load_pickle(named_outputs[attr_name]))
+        if "run" in dir(self):  # we might not have implemented the run method
+            self.run()
 
     # TODO: another thing we need to check
     def exists(self):

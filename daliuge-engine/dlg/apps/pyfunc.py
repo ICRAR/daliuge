@@ -37,7 +37,7 @@ import dill
 from io import StringIO
 from contextlib import redirect_stdout
 
-from dlg import droputils, utils
+from dlg import droputils, utils, drop_loaders
 from dlg.named_port_utils import check_ports_dict, identify_named_ports
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import InvalidDropException
@@ -440,7 +440,7 @@ class PyFuncApp(BarrierAppDROP):
         # Their order must be preserved, so we use an OrderedDict
         if self.input_parser is DropParser.PICKLE:
             # all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
-            all_contents = droputils.load_pickle
+            all_contents = drop_loaders.load_pickle
         elif self.input_parser is DropParser.EVAL:
 
             def optionalEval(x):
@@ -451,7 +451,7 @@ class PyFuncApp(BarrierAppDROP):
 
             all_contents = optionalEval
         elif self.input_parser is DropParser.NPY:
-            all_contents = droputils.load_npy
+            all_contents = drop_loaders.load_npy
         elif self.input_parser is DropParser.PATH:
             all_contents = lambda x: x.path
         elif self.input_parser is DropParser.DATAURL:
@@ -654,7 +654,7 @@ class PyFuncApp(BarrierAppDROP):
                 elif self.output_parser is DropParser.EVAL:
                     o.write(repr(r).encode("utf-8"))
                 elif self.output_parser is DropParser.NPY:
-                    droputils.save_npy(o, r)
+                    drop_loaders.save_npy(o, r)
                 else:
                     ValueError(self.output_parser.__repr__())
 

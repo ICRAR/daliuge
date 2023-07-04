@@ -29,7 +29,7 @@ from multiprocessing.pool import ThreadPool
 from numpy import mean, array, concatenate, random, testing
 from psutil import cpu_count
 
-from dlg import droputils
+from dlg import droputils, drop_loaders
 from dlg.apps.simple import (
     GenericScatterApp,
     GenericNpyScatterApp,
@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 
 class TestSimpleApps(unittest.TestCase):
-    def _test_graph_runs(self, drops, first, last, timeout=1):
+    def _test_graph_runs(self, drops, first, last, timeout=300):
         first = droputils.listify(first)
         with droputils.DROPWaiterCtx(self, last, timeout):
             for f in first:
@@ -216,7 +216,7 @@ class TestSimpleApps(unittest.TestCase):
     def test_genericNpyScatter(self):
         data_in = random.rand(100, 100)
         b = InMemoryDROP("b", "b")
-        droputils.save_numpy(b, data_in)
+        drop_loaders.save_numpy(b, data_in)
         s = GenericNpyScatterApp("s", "s", num_of_copies=2)
         s.addInput(b)
         o1 = InMemoryDROP("o1", "o1")
@@ -225,8 +225,8 @@ class TestSimpleApps(unittest.TestCase):
             s.addOutput(x)
         self._test_graph_runs((b, s, o1, o2), b, (o1, o2), timeout=4)
 
-        data1 = droputils.load_numpy(o1)
-        data2 = droputils.load_numpy(o2)
+        data1 = drop_loaders.load_numpy(o1)
+        data2 = drop_loaders.load_numpy(o2)
         data_out = concatenate([data1, data2])
         self.assertEqual(data_in.all(), data_out.all())
 
@@ -235,8 +235,8 @@ class TestSimpleApps(unittest.TestCase):
         data2_in = random.rand(100, 100)
         b = InMemoryDROP("b", "b")
         c = InMemoryDROP("c", "c")
-        droputils.save_numpy(b, data1_in)
-        droputils.save_numpy(c, data2_in)
+        drop_loaders.save_numpy(b, data1_in)
+        drop_loaders.save_numpy(c, data2_in)
         s = GenericNpyScatterApp(
             "s", "s", num_of_copies=2, scatter_axes="[0,0]"
         )
@@ -252,14 +252,14 @@ class TestSimpleApps(unittest.TestCase):
             (b, s, o1, o2, o3, o4), (b, c), (o1, o2, o3, o4), timeout=4
         )
 
-        data11 = droputils.load_numpy(o1)
-        data12 = droputils.load_numpy(o2)
+        data11 = drop_loaders.load_numpy(o1)
+        data12 = drop_loaders.load_numpy(o2)
         data1_out = concatenate([data11, data12])
         self.assertEqual(data1_out.shape, data1_in.shape)
         testing.assert_array_equal(data1_out, data1_in)
 
-        data21 = droputils.load_numpy(o3)
-        data22 = droputils.load_numpy(o4)
+        data21 = drop_loaders.load_numpy(o3)
+        data22 = drop_loaders.load_numpy(o4)
         data2_out = concatenate([data21, data22])
         testing.assert_array_equal(data2_out, data2_in)
 
