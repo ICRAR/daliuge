@@ -381,13 +381,13 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
 # @par EAGLE_START
 # @param category DynlibApp
 # @param tag template
-# @param libpath Library Path//String/ComponentParameter/readwrite//False/False/The location of the shared object/DLL that implements this application
-# @param dropclass dropclass/dlg.apps.dynlib.DynlibApp/String/ComponentParameter/readwrite//False/False/Drop class
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param libpath /String/ComponentParameter/NoPort/ReadWrite//False/False/"The location of the shared object/DLL that implements this application"
+# @param dropclass dlg.apps.dynlib.DynlibApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param execution_time 5/Float/ComponentParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ComponentParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
 # @par EAGLE_END
 class DynlibApp(DynlibAppBase, BarrierAppDROP):
     """Loads a dynamic library into the current process and runs it"""
@@ -476,12 +476,13 @@ def get_from_subprocess(proc, q):
 # @par EAGLE_START
 # @param category DynlibProcApp
 # @param tag template
-# @param libpath Library Path//String/ComponentParameter/readwrite//False/False/The location of the shared object/DLL that implements this application
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param libpath /String/ComponentParameter/NoPort/ReadWrite//False/False/"The location of the shared object/DLL that implements this application"
+# @param execution_time 5/Float/ComponentParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ComponentParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param dropclass dlg.apps.dynlib.DynlibProcApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @par EAGLE_END
 class DynlibProcApp(BarrierAppDROP):
     """Loads a dynamic library in a different process and runs it"""
