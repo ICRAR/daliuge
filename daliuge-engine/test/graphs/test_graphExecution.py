@@ -109,14 +109,12 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         self.dim.deploySession(sessionId)
         fd = self.dm._sessions[sessionId].drops["2022-03-20T04:33:27_-1_0"]
         init_drop = self.dm._sessions[sessionId].drops[init_oid]
-        a = InMemoryDROP("a", "a")
-        init_drop.addInput(a)
         logger.debug(f"PyfuncAPPDrop: {dir(fd)}")
         for i in fd.parameters["inputs"]:
             logger.debug(f"PyfuncAPPDrop input names:{i}")
 
-        with droputils.DROPWaiterCtx(self, init_drop, 300):
-            a.setCompleted()
+        with droputils.DROPWaiterCtx(self, fd, 10):
+            init_drop.execute()
 
     def test_namedPorts_apps(self):
         """
@@ -141,7 +139,7 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
             logger.debug(f"PyfuncAPPDrop input names:{i}")
 
         st = time.time()
-        with droputils.DROPWaiterCtx(self, fd, 300):
+        with droputils.DROPWaiterCtx(self, fd, 10):
             init_drop.execute()
         self.assertAlmostEqual(0.6, time.time() - st, 1)
 
@@ -200,14 +198,14 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         logger.debug(f"PyfuncAPPDrop status: {fd.status}")
         self.assertEqual(2, fd.status)
 
-    def test_ArrayLoop(self):
+    def test_HelloWorld(self):
         """
         Use a graph with compile function to test positional only arguments
         """
+        init_oid = "2023-07-05T10:59:43_-5_0"  # first drop in graph
         sessionId = "lalo"
-        start_drop = InMemoryDROP("a", "a")
         with pkg_resources.resource_stream(
-            "test", "graphs/ArrayLoopPG.graph"
+            "test", "graphs/HelloWorld_universePG.graph"
         ) as f:  # @UndefinedVariable
             graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
@@ -215,12 +213,13 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
 
         # Deploy now and get OIDs
         self.dim.deploySession(sessionId)
-        sd = self.dm._sessions[sessionId].drops["2022-06-22T09:13:53_-1_0"]
-        sd.addInput(start_drop)
-        fd = self.dm._sessions[sessionId].drops["2022-06-22T09:13:53_-4_0/0/0"]
-        with droputils.DROPWaiterCtx(self, fd, 3):
-            start_drop.setCompleted()
+        fd = self.dm._sessions[sessionId].drops["2023-07-05T10:59:43_-11_0/0"]
+        init_drop = self.dm._sessions[sessionId].drops[init_oid]
+        logger.debug(f"PyfuncAPPDrop: {dir(fd)}")
+        for i in fd.parameters["producers"]:
+            logger.debug(f"PyfuncAPPDrop producer names:{i}")
 
-        # logger.debug(f'PyfuncAPPDrop signature: {dir(fd)}')
-        logger.debug(f"PyfuncAPPDrop status: {fd.status}")
-        self.assertEqual(2, fd.status)
+        st = time.time()
+        with droputils.DROPWaiterCtx(self, fd, 300):
+            init_drop.execute()
+        # self.assertAlmostEqual(0.6, time.time() - st, 1)
