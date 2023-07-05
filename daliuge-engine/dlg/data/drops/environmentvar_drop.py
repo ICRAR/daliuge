@@ -66,10 +66,10 @@ def _filter_parameters(parameters: dict):
 # @par EAGLE_START
 # @param category EnvironmentVariables
 # @param tag daliuge
-# @param dropclass dropclass/dlg.data.drops.environmentvar_drop.EnvironmentVarDROP/String/ComponentParameter/readwrite//False/False/Drop class
-# @param streaming Streaming/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component streams input and output data
-# @param persist Persist/False/Boolean/ComponentParameter/readwrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param dummy dummy//Object/OutputPort/readwrite//False/False/Dummy output port
+# @param dropclass dlg.data.drops.environmentvar_drop.EnvironmentVarDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
+# @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
+# @param dummy /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/Dummy output port
 # @par EAGLE_END
 class EnvironmentVarDROP(AbstractDROP, KeyValueDROP):
     """

@@ -9,16 +9,17 @@ from dlg.exceptions import InvalidDropException
 # @par EAGLE_START
 # @param category Branch
 # @param tag template
-# @param dropclass Application Class/dlg.apps.simple.SimpleBranch/String/ComponentParameter/readonly//False/False/Application class
-# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param dummy0 dummy0//Object/OutputPort/readwrite//False/False/Dummy output port
-# @param dummy1 dummy1//Object/OutputPort/readwrite//False/False/Dummy output port
+# @param dropclass dlg.apps.simple.SimpleBranch/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param input_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
+# @param execution_time 5/Float/ComponentParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ComponentParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param dummy_input /Object/ApplicationArgument/InputPort/ReadWrite//False/False/Dummy input port
+# @param dummy0 /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/Dummy output port
+# @param dummy1 /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/Dummy output port
 # @par EAGLE_END
 class BranchAppDrop(BarrierAppDROP):
     """

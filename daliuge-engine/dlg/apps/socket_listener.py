@@ -56,17 +56,17 @@ logger = logging.getLogger(__name__)
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param dropclass Application Class/dlg.apps.socket_listener.SocketListener/String/ComponentParameter/readonly//False/False/Application class
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param host Host/localhost/String/ApplicationArgument/readwrite//False/False/Host address
-# @param port Port/1111/Integer/ApplicationArgument/readwrite//False/False/Host port
-# @param bufsize Buffer Size/4096/String/ApplicationArgument/readwrite//False/False/Receive buffer size
-# @param reuseAddr Reuse Address/False/Boolean/ApplicationArgument/readwrite//False/False/
-# @param data Data//String/OutputPort/readwrite//False/False/
+# @param dropclass dlg.apps.socket_listener.SocketListener/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param execution_time 5/Float/ComponentParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ComponentParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param host localhost/String/ApplicationArgument/NoPort/ReadWrite//False/False/Host address
+# @param port 1111/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/Host port
+# @param bufsize 4096/String/ApplicationArgument/NoPort/ReadWrite//False/False/Receive buffer size
+# @param reuseAddr False/Boolean/ApplicationArgument/NoPort/ReadWrite//False/False/
+# @param data /String/ApplicationArgument/OutputPort/ReadWrite//False/False/
 # @par EAGLE_END
 class SocketListenerApp(BarrierAppDROP):
     """

@@ -42,19 +42,18 @@ from dlg.meta import (
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param dropclass Application Class/dlg.apps.scp.ScpApp/String/ComponentParameter/readonly//False/False/Application class
-# @param input_parser Input Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser Output Parser/pickle/Select/ApplicationArgument/readwrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
-# @param execution_time Execution Time/5/Float/ComponentParameter/readonly//False/False/Estimated execution time
-# @param num_cpus No. of CPUs/1/Integer/ComponentParameter/readonly//False/False/Number of cores used
-# @param group_start Group start/False/Boolean/ComponentParameter/readwrite//False/False/Is this node the start of a group?
-# @param input_error_threshold "Input error rate (%)"/0/Integer/ComponentParameter/readwrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
-# @param n_tries Number of tries/1/Integer/ComponentParameter/readwrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param remoteUser Remote User//String/ApplicationArgument/readwrite//False/False/Remote user address
-# @param pkeyPath Private Key Path//String/ApplicationArgument/readwrite//False/False/Private key path
-# @param timeout Timeout/60/Float/ApplicationArgument/readwrite//False/False/Connection timeout in seconds
-# @param file File//Object.PathBasedDrop/InputPort/readwrite//False/False/Input file path
-# @param file File//Object.PathBasedDrop/OutputPort/readwrite//False/False/Output file path
+# @param dropclass dlg.apps.scp.ScpApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param input_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
+# @param execution_time 5/Float/ComponentParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ComponentParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param remoteUser /String/ApplicationArgument/NoPort/ReadWrite//False/False/Remote user address
+# @param pkeyPath /String/ApplicationArgument/NoPort/ReadWrite//False/False/Private key path
+# @param timeout 60/Float/ApplicationArgument/NoPort/ReadWrite//False/False/Connection timeout in seconds
+# @param file /Object.PathBasedDrop/ApplicationArgument/InputOutput/ReadWrite//False/False/File path
 # @par EAGLE_END
 class ScpApp(BarrierAppDROP):
     """

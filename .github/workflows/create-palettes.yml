@@ -24,19 +24,23 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y doxygen xsltproc
           pip install BlockDAG
+          pip install dlg_paletteGen
 
       - name: Configure git
         run: |
           git config --global user.name $GITHUB_USERNAME
           git config --global user.email $GITHUB_USERNAME@gmail.com
+
+      - name: Environment variables
+        run: |
           OUTPUT_FILENAME=$PROJECT_NAME-${GITHUB_REF_NAME/\//_}
           echo "PROJECT_VERSION=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "OUTPUT_FILENAME=$OUTPUT_FILENAME" >> $GITHUB_ENV
 
       - name: Create palettes
         run: |
-          python3 tools/xml2palette/xml2palette.py -t daliuge -r ./ $OUTPUT_FILENAME.palette
-          python3 tools/xml2palette/xml2palette.py -t template -r ./ $OUTPUT_FILENAME-template.palette
+          dlg_paletteGen -r -t daliuge ./ $OUTPUT_FILENAME.palette
+          dlg_paletteGen -r -t template ./ $OUTPUT_FILENAME-template.palette
 
       - name: Commit palettes to EAGLE
         env:
