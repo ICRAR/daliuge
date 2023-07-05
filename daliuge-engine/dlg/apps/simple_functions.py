@@ -20,6 +20,8 @@
 #    MA 02111-1307  USA
 #
 """Functions used as examples, for testing, or in simple situations"""
+import json
+import pickle
 
 
 def readLines(fileName: str) -> list:
@@ -60,3 +62,16 @@ def createMultiOut(v1=1, v2=7):
     out1 = v1
     out2 = v2
     return out1, out2
+
+
+def string2json(string: str, pickle_flag=False) -> json:
+    """
+    Simple function to convert a string to a JSON object
+
+    Inputs:
+        string: string containing a JSON representation
+    """
+    if not pickle_flag:
+        return json.loads(string)
+    else:
+        return pickle.dumps(json.loads(string))

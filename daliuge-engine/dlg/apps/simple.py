@@ -34,6 +34,7 @@ import numpy as np
 from dlg import droputils, drop_loaders
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.data.drops.container import ContainerDROP
+from dlg.data.drops import InMemoryDROP, FileDROP
 from dlg.apps.branch import BranchAppDrop
 from dlg.meta import (
     dlg_float_param,
@@ -116,10 +117,15 @@ class SleepApp(BarrierAppDROP):
 
     def run(self):
         try:
+            # If data is coming through a named port we load it from there.
+            if isinstance(self.sleep_time, (InMemoryDROP, FileDROP)):
+                self.sleep_time = drop_loaders.load_pickle(self.sleep_time)
             time.sleep(self.sleep_time)
         except (TypeError, ValueError):
             logger.debug(
-                "Found invalid sleep_time: %s. Resetting to 0", self.sleep_time
+                "Found invalid sleep_time: %s. Resetting to 0. %s",
+                self.sleep_time,
+                type(self.sleep_time),
             )
             self.sleep_time = 0
             time.sleep(self.sleep_time)
@@ -404,8 +410,8 @@ class AverageArraysApp(BarrierAppDROP):
 # passing it on.
 #
 # @par EAGLE_START
-# @param category PythonApp
 # @param construct Gather
+# @param category PythonApp
 # @param tag daliuge
 # @param num_of_inputs num_of_inputs/4/Integer/ConstructParameter/readwrite//False/False/The Gather “width”, stating how many inputs each Gather instance will handle
 # @param dropclass dropclass/dlg.apps.simple.GenericGatherApp/String/ComponentParameter/readonly//False/False/Application class
@@ -418,6 +424,20 @@ class AverageArraysApp(BarrierAppDROP):
 # @param output output//Object/OutputPort/readwrite//False/False/Placeholder port for outputs
 # @par EAGLE_END
 class GenericGatherApp(BarrierAppDROP):
+    component_meta = dlg_component(
+        "GenericGatherApp",
+        "Gather multiple inputs",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    # automatically populated by scatter node
+    num_of_inputs: int = dlg_int_param("num_of_inputs", 1)
+
+    def initialize(self, **kwargs):
+        super(GenericGatherApp, self).initialize(**kwargs)
+
     def readWriteData(self):
         inputs = self.inputs
         outputs = self.outputs

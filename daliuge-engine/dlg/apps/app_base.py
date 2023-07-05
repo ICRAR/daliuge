@@ -131,47 +131,40 @@ class AppDROP(ContainerDROP):
         """
         return list(self._streamingInputs.values())
 
-    def _generateNamedInputs(self):
+    def _generateNamedPorts(self, ports):
         """
-        Generates a named mapping of input data drops. Can only be called during run().
+        Generates a named mapping of ports to data drops. Can only be called during run().
         """
-        named_inputs: OrderedDict[str, DataDROP] = OrderedDict()
+        port_type = {"inputs": "InputPort", "outputs": "OutputPort"}
+        named_ports: OrderedDict[str, DataDROP] = OrderedDict()
+        port_dict = self.__getattribute__(f"_{ports}")
         if (
-            "inputs" in self.parameters
-            and len(self.parameters["inputs"]) > 0
-            and isinstance(self.parameters["inputs"][0], dict)
+            ports in self.parameters
+            and len(self.parameters[ports]) > 0
+            and isinstance(self.parameters[ports][0], dict)
         ):
-            for i in range(len(self._inputs)):
-                key = list(self.parameters["inputs"][i].values())[0]
-                value = self._inputs[
-                    list(self.parameters["inputs"][i].keys())[0]
-                ]
-                named_inputs[key] = value
+            for i in range(len(port_dict)):
+                key = list(self.parameters[ports][i].values())[0]
+                value = port_dict[list(self.parameters[ports][i].keys())[0]]
+                if key not in named_ports:
+                    named_ports[key] = value
+                else:
+                    if isinstance(named_ports[key], list):
+                        named_ports[key].append(value)
+                    else:
+                        named_ports[key] = [named_ports[key], value]
+        elif (
+            ports in self.parameters
+            and len(self.parameters[ports]) > 0
+            and isinstance(self.parameters[ports], list)
+        ):
+            # This enablkes the gather to work
+            return {}
         elif "applicationArgs" in self.parameters:
             for key, field in self.parameters["applicationArgs"].items():
-                if field["usage"] in ["InputPort", "InputOutput"]:
-                    named_inputs[field["name"]] = field
-        return named_inputs
-
-    def _generateNamedOutputs(self):
-        """
-        Generates a named mapping of output data drops. Can only be called during run().
-        """
-        named_outputs: OrderedDict[str, DataDROP] = OrderedDict()
-        if "outputs" in self.parameters and isinstance(
-            self.parameters["outputs"][0], dict
-        ):
-            for i in range(len(self._outputs)):
-                key = list(self.parameters["outputs"][i].values())[0]
-                value = self._outputs[
-                    list(self.parameters["outputs"][i].keys())[0]
-                ]
-                named_outputs[key] = value
-        else:
-            for key, field in self.parameters["applicationArgs"].items():
-                if field["usage"] in ["OutputPort", "InputOutput"]:
-                    named_outputs[field["name"]] = field
-        return named_outputs
+                if field["usage"] in [port_type[ports], "InputOutput"]:
+                    named_ports[field["name"]] = field
+        return named_ports
 
     def handleEvent(self, e):
         """
@@ -480,13 +473,21 @@ class InputFiredAppDROP(AppDROP):
         This will first set the named input params and then call the run method
         provided by the implementation.
         """
-        named_inputs = self._generateNamedInputs()
+        named_inputs = self._generateNamedPorts("inputs")
+        logger.debug("named inputs identified: %s", named_inputs)
         for attr_name in named_inputs:
-            self.__setattr__(attr_name, load_pickle(named_inputs[attr_name]))
+            # if not isinstance(named_inputs[attr_name], list):
+            #     self.__setattr__(
+            #         attr_name, load_pickle(named_inputs[attr_name])
+            #     )
+            # else:
+            self.__setattr__(attr_name, named_inputs[attr_name])
 
-        named_outputs = self._generateNamedInputs()
+        named_outputs = self._generateNamedPorts("outputs")
+        logger.debug("named outputs identified: %s", named_outputs)
         for attr_name in named_outputs:
-            self.__setattr__(attr_name, load_pickle(named_outputs[attr_name]))
+            if not isinstance(named_outputs[attr_name], list):
+                self.__setattr__(attr_name, named_outputs[attr_name])
         if "run" in dir(self):  # we might not have implemented the run method
             self.run()
 
