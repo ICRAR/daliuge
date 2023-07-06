@@ -628,7 +628,7 @@ class HelloWorldApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param url "https://eagle.icrar.org"/String/ApplicationArgument/NoPort/ReadWrite//False/False/The URL to retrieve
+# @param url/"https://eagle.icrar.org"/String/ApplicationArgument/NoPort/ReadWrite//False/False/The URL to retrieve
 # @param dropclass dlg.apps.simple.UrlRetrieveApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param execution_time 5/Float/ComponentParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param input_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
