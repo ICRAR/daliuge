@@ -20,29 +20,22 @@
 #    MA 02111-1307  USA
 #
 """
-Utility methods and classes to be used when interacting with DROPs
+Utility functions for DROP I/O. This has been factored out from droputils
+to avoid cyclic imports.
 """
 
-import collections
 import io
-import time
 import logging
 import pickle
 import re
-import threading
-import traceback
-from typing import Any, Tuple
+from typing import Any
 import numpy as np
 
-from dlg.ddap_protocol import DROPStates
-from dlg.data.io import IOForURL, OpenMode
-from dlg import common
+from dlg.data.io import OpenMode
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from dlg.drop import AbstractDROP
-    from dlg.apps.app_base import AppDROP
     from dlg.data.drops.data_base import DataDROP
 
 logger = logging.getLogger(__name__)
@@ -73,17 +66,6 @@ def load_pickle(drop: "DataDROP") -> Any:
         buf.write(data)
     drop.close(desc)
     return pickle.loads(buf.getbuffer())
-
-
-# async def save_pickle_iter(drop: DataDROP, data: Iterable[Any]):
-#     for obj in data:
-#         yield drop.write(obj)
-
-
-# async def load_pickle_iter(drop: PathBasedDrop) -> AsyncIterable:
-#     with open(drop.path, 'rb') as p:
-#         while p.peek(1):
-#             yield pickle.load(p)
 
 
 def save_npy(drop: "DataDROP", ndarray: np.ndarray, allow_pickle=False):
@@ -117,22 +99,3 @@ def load_npy(drop: "DataDROP", allow_pickle=False) -> np.ndarray:
 
 def load_numpy(drop: "DataDROP", allow_pickle=True):
     return load_npy(drop, allow_pickle=allow_pickle)
-
-
-# def save_jsonp(drop: PathBasedDrop, data: Dict[str, object]):
-#     with open(drop.path, 'r') as f:
-#         json.dump(data, f)
-
-
-# def save_json(drop: DataDROP, data: Dict[str, object]):
-#     # TODO: support BinaryIO or TextIO interface from DataIO?
-#     json_string = json.dumps(data)
-#     drop.write(json_string.encode('UTF-8'))
-
-
-# def load_json(drop: DataDROP) -> dict:
-#     dropio = drop.getIO()
-#     dropio.open(OpenMode.OPEN_READ)
-#     data = json.loads(dropio.buffer())
-#     dropio.close()
-#     return data
