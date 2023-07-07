@@ -21,7 +21,9 @@
 #
 import base64
 import io
+import json
 import os
+import pickle
 import random
 import string
 import sys
@@ -63,9 +65,16 @@ class InMemoryDROP(DataDROP):
         args = []
         if "pydata" in kwargs:
             pydata = kwargs.pop("pydata")
+            # TODO: We are just guessing here, but should really use the type
+            # of the pydata parameter passed in
             if isinstance(pydata, str):
-                pydata = pydata.encode("utf8")
-            args.append(base64.b64decode(pydata))
+                try:
+                    pydata = pickle.dumps(json.loads(pydata))
+                except:
+                    pydata = bytes(pydata.encode("UTF-8"))
+            else:
+                pydata = base64.b64decode(pydata)
+            args.append(pydata)
         self._buf = io.BytesIO(*args)
 
     def getIO(self):
