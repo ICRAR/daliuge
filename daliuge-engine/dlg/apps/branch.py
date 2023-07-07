@@ -10,8 +10,6 @@ from dlg.exceptions import InvalidDropException
 # @param category Branch
 # @param tag template
 # @param dropclass dlg.apps.simple.SimpleBranch/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
-# @param input_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param execution_time 5/Float/ComponentParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ComponentParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?

@@ -87,7 +87,6 @@ class CRCApp(BarrierAppDROP):
 # @param category PythonApp
 # @param tag daliuge
 # @param dropclass dlg.apps.crc.CRCStreamApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
-# @param input_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
 # @param output_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param execution_time 5/Float/ComponentParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ComponentParameter/NoPort/ReadOnly//False/False/Number of cores used
