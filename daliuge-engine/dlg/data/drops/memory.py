@@ -65,16 +65,18 @@ class InMemoryDROP(DataDROP):
         args = []
         if "pydata" in kwargs:
             pydata = kwargs.pop("pydata")
-            # TODO: We are just guessing here, but should really use the type
-            # of the pydata parameter passed in
+            # TODO: Should be able to pass in data without base64, but
+            # currently this is blocking the dask delayed tests.
+            # if isinstance(pydata, str):
+            #     try:
+            #         pydata = pickle.dumps(json.loads(pydata))
+            #     except:
+            #         pydata = pydata.encode("utf8")
+            # else:
+            #     pydata = base64.b64decode(pydata)
             if isinstance(pydata, str):
-                try:
-                    pydata = pickle.dumps(json.loads(pydata))
-                except:
-                    pydata = bytes(pydata.encode("UTF-8"))
-            else:
-                pydata = base64.b64decode(pydata)
-            args.append(pydata)
+                pydata = pydata.encode("utf8")
+            args.append(base64.b64decode(pydata))
         self._buf = io.BytesIO(*args)
 
     def getIO(self):
