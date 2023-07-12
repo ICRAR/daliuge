@@ -189,7 +189,7 @@ class PyFuncApp(BarrierAppDROP):
     being written to its corresponding output.
 
     Users indicate the function to be wrapped via the ``func_name`` parameter.
-    In this case func_name needs to specify a funtion in the standard form
+    In this case func_name needs to specify a function in the standard form
 
     ``module.function``
 
