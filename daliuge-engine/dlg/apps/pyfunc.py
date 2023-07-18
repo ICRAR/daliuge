@@ -134,7 +134,7 @@ def import_using_name(app, fname):
                         raise InvalidDropException(
                             app, "Problem importing module %s, %s" % (mod, e)
                         )
-
+            logger.debug("Loaded module: %s", mod)
             return mod
 
 
@@ -467,11 +467,10 @@ class PyFuncApp(BarrierAppDROP):
 
         outputs = collections.OrderedDict()
         for uid, drop in self._outputs.items():
-            outputs[uid] = (
-                all_contents(drop)
-                if self.output_parser is DropParser.PATH
-                else None
-            )
+            if self.output_parser is DropParser.PATH:
+                outputs[uid] = drop.path
+            else:
+                outputs[uid] = None
 
         # Keyword arguments are made up of the default values plus the inputs
         # that match one of the keyword argument names
@@ -511,9 +510,21 @@ class PyFuncApp(BarrierAppDROP):
                 }
             )
             # if defined in both we use AppArgs values
-            pargsDict.update(
-                {k: appArgs[k]["value"] for k in pargsDict if k in appArgs}
-            )
+            for k in appArgs:
+                # check value type and interpret
+                if appArgs[k]["type"] in ["Json", "Complex"]:
+                    value = ast.literal_eval(appArgs[k]["value"])
+                    logger.debug(
+                        f"Evaluated %s to %s",
+                        appArgs[k]["value"],
+                        type(value),
+                    )
+                    appArgs[k]["value"] = value
+                else:
+                    value = appArgs[k]["value"]
+                if k in pargsDict:
+                    pargsDict.update({k: value})
+
             logger.debug("Updated posargs dictionary: %s", pargsDict)
 
             keyargsDict.update(
@@ -527,16 +538,12 @@ class PyFuncApp(BarrierAppDROP):
             vkarg = {}
             logger.debug(f"Remaining AppArguments {appArgs}")
             for arg in appArgs:
-                if appArgs[arg]["type"] in ["Json", "Complex"]:
-                    value = ast.literal_eval(appArgs[arg]["value"])
-                else:
-                    value = appArgs[arg]["value"]
                 if appArgs[arg]["positional"]:
                     vparg.append(value)
                 else:
                     vkarg.update({arg: value})
 
-            # TODO: check where this is defined in signiture
+            # TODO: check where this is defined in signature
             self.arguments = inspect.getfullargspec(self.f)
             if self.arguments.varargs:
                 logger.debug("Adding remaining *args to pargs %s", vparg)
