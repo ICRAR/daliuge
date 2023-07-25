@@ -499,9 +499,10 @@ class PyFuncApp(BarrierAppDROP):
                 appArgs.pop(k) for k in self.func_def_keywords if k in appArgs
             ]
             logger.debug(
-                "Identified keyword arguments removed: %s",
+                "Default keyword arguments removed: %s",
                 [i for i in _dum],
             )
+            # update the positional args
             pargsDict.update(
                 {
                     k: self.parameters[k]
@@ -513,13 +514,18 @@ class PyFuncApp(BarrierAppDROP):
             for k in appArgs:
                 # check value type and interpret
                 if appArgs[k]["type"] in ["Json", "Complex"]:
-                    value = ast.literal_eval(appArgs[k]["value"])
-                    logger.debug(
-                        f"Evaluated %s to %s",
-                        appArgs[k]["value"],
-                        type(value),
-                    )
-                    appArgs[k]["value"] = value
+                    try:
+                        value = ast.literal_eval(appArgs[k]["value"])
+                        logger.debug(
+                            f"Evaluated %s to %s",
+                            appArgs[k]["value"],
+                            type(value),
+                        )
+                        appArgs[k]["value"] = value
+                    except ValueError:
+                        logger.error(
+                            "Unable to evaluate %s", appArgs[k]["value"]
+                        )
                 else:
                     value = appArgs[k]["value"]
                 if k in pargsDict:
@@ -538,6 +544,10 @@ class PyFuncApp(BarrierAppDROP):
             vkarg = {}
             logger.debug(f"Remaining AppArguments {appArgs}")
             for arg in appArgs:
+                if appArgs[arg]["type"] in ["Json", "Complex"]:
+                    value = ast.literal_eval(appArgs[arg]["value"])
+                else:
+                    value = appArgs[arg]["value"]
                 if appArgs[arg]["positional"]:
                     vparg.append(value)
                 else:
