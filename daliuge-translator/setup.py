@@ -108,8 +108,6 @@ install_requires = [
     # "ruamel.yaml.clib<=0.2.2",
     "uvicorn==0.18",
     "wheel",
-    "pyzmq~=25.1.0",
-    "pydantic~=1.10.7",
 ]
 
 setup(

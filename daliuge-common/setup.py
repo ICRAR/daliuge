@@ -47,12 +47,17 @@ def do_versioning():
     return _globals["write_version_info"](VERSION, VERSION_FILE, RELEASE)
 
 
-install_requires = ["gputil>=1.4.0", "merklelib>=1.0"]
+install_requires = [
+    "gputil>=1.4.0",
+    "merklelib>=1.0",
+    "pyzmq~=25.1.0",
+    "pydantic~=1.10.7",
+]
 
 setup(
     name="daliuge-common",
     version=do_versioning(),
-    description=u"Data Activated \uF9CA (flow) Graph Engine - Common functionality",
+    description="Data Activated \uF9CA (flow) Graph Engine - Common functionality",
     long_description="The SKA-SDK prototype for the Execution Framework component",
     author="ICRAR DIA Group",
     author_email="dfms_prototype@googlegroups.com",
