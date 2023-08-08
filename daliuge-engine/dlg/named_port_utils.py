@@ -170,7 +170,7 @@ def replace_named_ports(
     separator: str = " ",
 ) -> Tuple[str, str]:
     """
-    Function attempts to identify component arguments that match port names.
+    Function attempts to identify CLI component arguments that match port names.
 
     Inputs:
         iitems: itemized input port dictionary
@@ -213,13 +213,13 @@ def replace_named_ports(
     portPosargsDict = collections.OrderedDict(
         zip(posargs, [None] * len(posargs))
     )
-    portkeyargs = {}
     logger.debug(
         "posargs: %s; keyargs: %s, %s",
         posargs,
         keyargs,
         check_ports_dict(inport_names),
     )
+    portkeyargs = {}
     ipkeyargs = {}
     opkeyargs = {}
     if check_ports_dict(inport_names):
