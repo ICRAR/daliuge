@@ -84,7 +84,7 @@ write_version_info()
 
 def package_files(directory):
     paths = []
-    for (path, directories, filenames) in os.walk(directory):
+    for path, directories, filenames in os.walk(directory):
         for filename in filenames:
             paths.append(os.path.join("..", path, filename))
     return paths
@@ -115,7 +115,7 @@ install_requires = [
 setup(
     name="daliuge-translator",
     version=get_version_info()[0],
-    description=u"Data Activated \uF9CA (flow) Graph Engine - Graph Translation",
+    description="Data Activated \uF9CA (flow) Graph Engine - Graph Translation",
     long_description="The SKA-SDK prototype for the Execution Framework component",
     author="ICRAR DIA Group",
     author_email="rtobar@icrar.org",
@@ -124,6 +124,8 @@ setup(
     install_requires=install_requires,
     packages=find_packages(),
     package_data={"dlg": src_files},
-    entry_points={"dlg.tool_commands": ["translator=dlg.translator.tool_commands"]},
+    entry_points={
+        "dlg.tool_commands": ["translator=dlg.translator.tool_commands"]
+    },
     test_suite="test",
 )
