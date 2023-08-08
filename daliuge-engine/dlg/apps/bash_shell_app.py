@@ -57,7 +57,7 @@ from ..meta import (
 logger = logging.getLogger(__name__)
 
 
-def mesage_stdouts(prefix, stdout, stderr, enc="utf8"):
+def message_stdouts(prefix, stdout, stderr, enc="utf8"):
     msg = prefix
     if not stdout and not stderr:
         return msg
@@ -300,7 +300,7 @@ class BashShellBase(object):
         self._recompute_data["status"] = str(pcode)
         if pcode == 0 and logger.isEnabledFor(logging.DEBUG):
             logger.debug(
-                mesage_stdouts(
+                message_stdouts(
                     "Command finished successfully", pstdout, pstderr
                 )
             )
@@ -308,7 +308,7 @@ class BashShellBase(object):
             message = "Command didn't finish successfully (exit code %d)" % (
                 pcode,
             )
-            logger.error(mesage_stdouts(message, pstdout, pstderr))
+            logger.error(message_stdouts(message, pstdout, pstderr))
             raise Exception(message)
 
     def dataURL(self) -> str:
