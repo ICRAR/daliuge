@@ -22,6 +22,7 @@
 """Functions used as examples, for testing, or in simple situations"""
 import json
 import pickle
+from typing import Any
 
 
 def readLines(fileName: str) -> list:
@@ -48,7 +49,7 @@ def createRange(low: int, high: int, step: int) -> range:
     return range(low, high, step)
 
 
-def createMultiOut(v1=1, v2=7):
+def createMultiOut(v1: Any = 1, v2: Any = 7) -> tuple:
     """
     Create two outputs with different values.
 
