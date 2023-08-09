@@ -43,6 +43,7 @@ case "$1" in
             echo "Running Engine deployment version in background..."
             echo "docker run -td "${DOCKER_OPTS}"  icrar/daliuge-engine:${VCS_TAG}"
             docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
+            echo "Engine IP address: "`docker exec daliuge-engine sh -c "hostname --ip-address"`
             exit 0
         fi;;
     "dev")
@@ -52,7 +53,10 @@ case "$1" in
         echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${C_TAG}"
         docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${C_TAG}
         sleep 3
-        curl -X POST http://localhost:9000/managers/island/start
+        ENGINE_IP=`docker exec daliuge-engine sh -c "hostname --ip-address"`
+        curl -X POST http://${ENGINE_IP}:9000/managers/island/start
+        echo
+        echo "Engine IP address: ${ENGINE_IP}"
         exit 0;;
     "casa")
         DLG_ROOT="/tmp/dlg"
@@ -63,7 +67,10 @@ case "$1" in
         echo "docker run -td ${DOCKER_OPTS}  ${CONTAINER_NM}"
         docker run -td ${DOCKER_OPTS}  ${CONTAINER_NM}
         sleep 3
-        curl -X POST http://localhost:9000/managers/island/start
+        ENGINE_IP=`docker exec daliuge-engine sh -c "hostname --ip-address"`
+        curl -X POST http://${ENGIONE_IP}:9000/managers/island/start
+        echo
+        echo "Engine IP address: ${ENGINE_IP}"
         exit 0;;
     "slim")
         export DLG_ROOT="$HOME/dlg"
@@ -72,7 +79,10 @@ case "$1" in
         echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}"
         docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
         sleep 3
-        curl -X POST http://localhost:9000/managers/island/start
+        ENGINE_IP=`docker exec daliuge-engine sh -c "hostname --ip-address"`
+        curl -X POST http://${ENGINE_IP}:9000/managers/island/start
+        echo
+        echo "Engine IP address: ${ENGINE_IP}"
         exit 0;;
     "local")
         common_prep
