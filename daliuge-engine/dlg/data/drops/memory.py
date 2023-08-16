@@ -192,7 +192,9 @@ class SharedMemoryDROP(DataDROP):
                 pydata = base64.b64decode(pydata.encode("latin1"))
             except:
                 pydata = None
-        elif "pydata" in kwargs["nodeAttributes"]:
+        elif (
+            "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]
+        ):
             pydata = parse_pydata(kwargs["nodeAttributes"]["pydata"])
         args.append(pydata)
         self._buf = io.BytesIO(*args)
