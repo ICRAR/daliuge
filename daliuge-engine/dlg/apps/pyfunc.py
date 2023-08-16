@@ -37,7 +37,8 @@ import dill
 from io import StringIO
 from contextlib import redirect_stdout
 
-from dlg import droputils, utils, drop_loaders
+from dlg import droputils, drop_loaders
+from dlg.utils import serialize_data, deserialize_data
 from dlg.named_port_utils import check_ports_dict, identify_named_ports
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import InvalidDropException
@@ -52,16 +53,6 @@ from dlg.meta import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def serialize_data(d):
-    # return pickle.dumps(d)
-    return utils.b2s(base64.b64encode(pickle.dumps(d)))
-
-
-def deserialize_data(d):
-    # return pickle.loads()
-    return pickle.loads(base64.b64decode(d.encode("latin1")))
 
 
 def serialize_func(f):
