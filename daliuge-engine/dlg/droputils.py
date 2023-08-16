@@ -23,6 +23,7 @@
 Utility methods and classes to be used when interacting with DROPs
 """
 
+import base64
 import collections
 import io
 import time
@@ -31,8 +32,6 @@ import pickle
 import re
 import threading
 import traceback
-from typing import Any, Tuple
-import numpy as np
 
 from dlg.ddap_protocol import DROPStates
 from dlg.data.io import IOForURL, OpenMode
