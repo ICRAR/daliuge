@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 # @param category Directory
 # @param tag future
 # @param dropclass dlg.data.drops.directorycontainer.DirectoryContainer/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
-# @param data_volume 5/Float/ComponentParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
+# @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param check_exists True/Boolean/ApplicationArgument/NoPort/ReadWrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
 # @param dirname /String/ApplicationArgument/NoPort/ReadWrite//False/False/"Directory name/path"
