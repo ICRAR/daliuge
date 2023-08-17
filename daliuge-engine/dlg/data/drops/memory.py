@@ -116,8 +116,8 @@ class InMemoryDROP(DataDROP):
             pydata = kwargs.pop("pydata")
             logger.debug("pydata value provided: %s", pydata)
             try:  # test whether given value is valid
-                _ = pickle.loads(base64.b64decode(pydata.encode("latin1")))
-                pydata = base64.b64decode(pydata.encode("latin1"))
+                _ = pickle.loads(base64.b64decode(pydata))
+                pydata = base64.b64decode(pydata)
             except:
                 pydata = None
         elif (
