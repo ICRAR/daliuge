@@ -84,7 +84,7 @@ def parse_pydata(pd_dict: dict) -> bytes:
 # @param pydata None/String/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param data_volume 5/Float/ComponentParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
+# @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param dropclass dlg.data.drops.memory.SharedMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class
@@ -165,7 +165,7 @@ class InMemoryDROP(DataDROP):
 # @param pydata None/String/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param data_volume 5/Float/ComponentParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
+# @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param dropclass dlg.data.drops.memory.SharedMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class

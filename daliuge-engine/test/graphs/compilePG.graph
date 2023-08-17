@@ -113,7 +113,7 @@
                 "positional": false,
                 "keyAttribute": false,
                 "id": "8b0f89db-685a-4807-ad14-26e8a9cb552e",
-                "parameterType": "ComponentParameter",
+                "parameterType": "ConstraintParameter",
                 "usage": "NoPort"
             },
             "group_end": {
