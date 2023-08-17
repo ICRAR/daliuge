@@ -35,7 +35,7 @@ from dlg.utils import prepare_sql
 # @par EAGLE_START
 # @param category RDBMS
 # @param tag daliuge
-# @param data_volume 5/Float/ComponentParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
+# @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param dbmodule /String/ComponentParameter/NoPort/ReadWrite//False/False/Load path for python DB module
 # @param dbtable /String/ComponentParameter/NoPort/ReadWrite//False/False/The name of the table to use
