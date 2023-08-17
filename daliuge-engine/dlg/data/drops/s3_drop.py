@@ -55,7 +55,7 @@ from dlg.named_port_utils import identify_named_ports, check_ports_dict
 # @par EAGLE_START
 # @param category S3
 # @param tag daliuge
-# @param data_volume 5/Float/ComponentParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
+# @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param Bucket /String/ComponentParameter/NoPort/ReadWrite//False/False/The S3 Bucket
 # @param Key /String/ComponentParameter/NoPort/ReadWrite//False/False/The S3 object key

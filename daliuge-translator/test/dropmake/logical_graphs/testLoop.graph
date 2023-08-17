@@ -517,7 +517,7 @@
                     "keyAttribute": false,
                     "name": "data_volume",
                     "options": [],
-                    "parameterType": "ComponentParameter",
+                    "parameterType": "ConstraintParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
