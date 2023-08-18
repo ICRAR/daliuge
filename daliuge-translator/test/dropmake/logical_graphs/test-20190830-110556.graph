@@ -50,7 +50,7 @@
                     "keyAttribute": false,
                     "name": "execution_time",
                     "options": [],
-                    "parameterType": "ComponentParameter",
+                    "parameterType": "ConstraintParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
