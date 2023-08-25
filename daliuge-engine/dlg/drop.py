@@ -56,7 +56,7 @@ DEFAULT_INTERNAL_PARAMETERS = {
     "dropclass",
     "category",
     "storage",
-    "nodeAttributes",
+    "fields",
     "streaming",
     "persist",
     "rank",
