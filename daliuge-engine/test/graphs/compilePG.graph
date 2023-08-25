@@ -113,7 +113,7 @@
                 "positional": false,
                 "keyAttribute": false,
                 "id": "8b0f89db-685a-4807-ad14-26e8a9cb552e",
-                "parameterType": "ComponentParameter",
+                "parameterType": "ConstraintParameter",
                 "usage": "NoPort"
             },
             "group_end": {
@@ -249,7 +249,7 @@
                 "positional": false,
                 "keyAttribute": false,
                 "id": "00521132-192c-44c7-b974-391bbf0dee00",
-                "parameterType": "ComponentParameter",
+                "parameterType": "ConstraintParameter",
                 "usage": "NoPort"
             },
             "num_cpus": {
@@ -264,7 +264,7 @@
                 "positional": false,
                 "keyAttribute": false,
                 "id": "0b2b5add-9751-46bf-997f-711fe7a3b345",
-                "parameterType": "ComponentParameter",
+                "parameterType": "ConstraintParameter",
                 "usage": "NoPort"
             },
             "group_start": {
