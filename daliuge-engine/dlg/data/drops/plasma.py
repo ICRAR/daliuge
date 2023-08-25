@@ -39,7 +39,7 @@ from dlg.meta import dlg_string_param, dlg_bool_param
 # @param plasma_path /String/ApplicationArgument/NoPort/ReadWrite//False/False/Path to the local plasma store
 # @param object_id /String/ApplicationArgument/NoPort/ReadWrite//False/False/PlasmaId of the object for all compute nodes
 # @param dropclass dlg.data.drops.plasma.PlasmaDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
-# @param data_volume 5/Float/ComponentParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
+# @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param use_staging False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Enables writing to a dynamically resizeable staging buffer
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
@@ -90,7 +90,7 @@ class PlasmaDROP(DataDROP):
 # @param plasma_path /String/ApplicationArgument/NoPort/ReadWrite//False/False/Path to the local plasma store
 # @param object_id /String/ApplicationArgument/NoPort/ReadWrite//False/False/PlasmaId of the object for all compute nodes
 # @param dropclass dlg.data.drops.plasma.PlasmaFlightDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
-# @param data_volume 5/Float/ComponentParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
+# @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param flight_path /String/ComponentParameter/NoPort/ReadWrite//False/False/IP and flight port of the drop owner
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port

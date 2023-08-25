@@ -34,7 +34,7 @@ from dlg.meta import dlg_string_param
 # @par EAGLE_START
 # @param category ParameterSet
 # @param tag daliuge
-# @param data_volume 5/Float/ComponentParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
+# @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param mode "YANDA"/String/ComponentParameter/NoPort/ReadOnly//False/False/To what standard DALiuGE should filter and serialize the parameters.
 # @param config_data ""/String/ComponentParameter/NoPort/ReadWrite//False/False/Additional configuration information to be mixed in with the initial data

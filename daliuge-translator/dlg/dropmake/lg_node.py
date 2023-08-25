@@ -354,6 +354,10 @@ class LGNode:
 
     @weight.setter
     def weight(self, default_value):
+        """
+        The weight of a data drop is its volume.
+        The weight of an app drop is the execution time.
+        """
         key = []
         if self.is_app:
             key = [
@@ -777,31 +781,20 @@ class LGNode:
         """
         get all the arguments from new fields dictionary in a backwards compatible way
         """
+        kwargs["applicationArgs"] = {}
+        kwargs["constraintParams"] = {}
         if "fields" in self.jd:
-            self.jd.update({"nodeAttributes": {}})
-            kwargs.update({"nodeAttributes": {}})
+            kwargs["fields"] = self.jd["fields"]
             for je in self.jd["fields"]:
                 # The field to be used is not the text, but the name field
                 self.jd[je["name"]] = je["value"]
                 kwargs[je["name"]] = je["value"]
-                self.jd["nodeAttributes"].update({je["name"]: je})
-                kwargs["nodeAttributes"].update({je["name"]: je})
-        kwargs[
-            "applicationArgs"
-        ] = {}  # make sure the dict always exists downstream
-        if "applicationArgs" in self.jd:  # and fill it if provided
-            for je in self.jd["applicationArgs"]:
-                j = {je["name"]: {k: je[k] for k in je if k not in ["name"]}}
-                self.jd.update(j)
-                kwargs["applicationArgs"].update(j)
-        if "nodeAttributes" not in kwargs:
-            kwargs.update({"nodeAttributes": {}})
-        for k, na in kwargs["nodeAttributes"].items():
-            if (
-                "parameterType" in na
-                and na["parameterType"] == "ApplicationArgument"
-            ):
-                kwargs["applicationArgs"].update({k: na})
+                if "parameterType" in je:
+                    if je["parameterType"] == "ApplicationArgument":
+                        kwargs["applicationArgs"].update({je["name"]: je})
+                    elif je["parameterType"] == "ConstraintParameter":
+                        kwargs["constraintParams"].update({je["name"]: je})
+
         # NOTE: drop Argxx keywords
 
     def _getPortName(
@@ -973,7 +966,6 @@ class LGNode:
                 logger.debug("Might be a problem with this node: %s", self.jd)
 
         self.dropclass = app_class
-        execTime = self.weight
         self.jd["dropclass"] = app_class
         self.dropclass = app_class
         logger.debug(
@@ -984,17 +976,17 @@ class LGNode:
         if self.dropclass is None or self.dropclass == "":
             logger.warning(f"Something wrong with this node: {self.jd}")
         if self.weight is not None:
-            execTime = self.weight
-            if execTime < 0:
+            if self.weight < 0:
                 raise GraphException(
                     "Execution_time must be greater"
                     " than 0 for Node '%s'" % self.name
                 )
+            else:
+                kwargs["weight"] = self.weight
         else:
-            execTime = random.randint(3, 8)
-        kwargs["weight"] = execTime
+            kwargs["weight"] = random.randint(3, 8)
         if app_class == "dlg.apps.simple.SleepApp":
-            kwargs["sleep_time"] = execTime
+            kwargs["sleep_time"] = self.weight
 
         kwargs["dropclass"] = app_class
         kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
