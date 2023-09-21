@@ -121,6 +121,10 @@ def import_using_name(app, fname):
                         )
                         mod = getattr(mod, parts[-1])
                         break
+                    except ModuleNotFoundError:
+                        # try again, sometimes fixes the namespace
+                        mod = import_using_name(app, fname)
+                        break
                     except Exception as e:
                         raise InvalidDropException(
                             app, "Problem importing module %s, %s" % (mod, e)
@@ -519,6 +523,7 @@ class PyFuncApp(BarrierAppDROP):
                 if k in pargsDict:
                     pargsDict.update({k: value})
 
+            _ = [appArgs.pop(k) for k in pargsDict if k in appArgs]
             logger.debug("Updated posargs dictionary: %s", pargsDict)
 
             keyargsDict.update(
