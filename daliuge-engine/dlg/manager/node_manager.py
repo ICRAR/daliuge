@@ -26,6 +26,7 @@ thus represents the bottom of the DROP management hierarchy.
 
 import abc
 import collections
+import contextlib
 import logging
 from psutil import cpu_count
 import multiprocessing.pool
@@ -111,6 +112,17 @@ def _load(obj, callable_attr):
     return obj
 
 
+@contextlib.contextmanager
+def _no_inputs_outputs(app_drop):
+    inputs = app_drop._inputs
+    outputs = app_drop._outputs
+    app_drop._inputs = {}
+    app_drop._outputs = {}
+    yield
+    app_drop._inputs = inputs
+    app_drop._outputs = outputs
+
+
 class NodeManagerWorkerPool(SimpleWorkerPool):
 
     _rpc_client: typing.Optional[rpc.RPCClient]
@@ -156,16 +168,11 @@ class NodeManagerWorkerPool(SimpleWorkerPool):
     def run_app_drop(self, app_drop):
         if self._process_pool:
             inputs_proxy_info, outputs_proxy_info = NodeManagerWorkerPool._get_proxy_infos(app_drop)
-            inputs, outputs = app_drop._inputs, app_drop._outputs
-            app_drop._inputs = {}
-            app_drop._outputs = {}
-            done_evt = self._manager.Event()
-            try:
+            with _no_inputs_outputs(app_drop):
+                done_evt = self._manager.Event()
                 self._input_queue.put((app_drop, inputs_proxy_info, outputs_proxy_info, done_evt))
                 done_evt.wait()
-            finally:
-                app_drop._inputs = inputs
-                app_drop._outputs = outputs
+            return
         return app_drop.run()
 
     @classmethod
