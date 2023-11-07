@@ -14,7 +14,10 @@ opportunities that are previously masked by "artificial" control flow imposed by
 applications or programmers. A similar example is the ``make`` tool, where the
 programmer focuses on defining each target and its dependencies. The burden of
 exploring parallelism to efficiently execute many individual compiling tasks in
-a correct order lies within the responsibility of the ``make`` utility.
+a correct order lies within the responsibility of the ``make`` utility. |daliuge|
+follows the dataflow concept quite rigorously in that any data item along 
+the directed graph can only be written by upstream tasks and, once finished, is
+stricly immutable. In addition it also means that 
 
 Graph
 ^^^^^
