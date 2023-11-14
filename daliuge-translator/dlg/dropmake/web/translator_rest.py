@@ -655,7 +655,8 @@ def gen_pg(
             host=mhost, port=mport, url_prefix=mprefix, timeout=30
         )
         # 1. get a list of nodes
-        node_list = mgr_client.nodes()
+        node_list = mgr_client.nodes()["nodes"]
+
         # 2. mapping PGTP to resources (node list)
         pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
 
@@ -812,15 +813,15 @@ class AlgoParams(BaseModel):
     Refer to main documentation for more information.
     """
 
-    min_goal: Union[int, None]
-    ptype: Union[int, None]
-    max_load_imb: Union[int, None]
-    max_cpu: Union[int, None]
-    time_greedy: Union[int, None]
-    deadline: Union[int, None]
-    topk: Union[int, None]
-    swarm_size: Union[int, None]
-    max_mem: Union[int, None]
+    min_goal: Union[int, None] = None
+    ptype: Union[int, None] = None
+    max_load_imb: Union[int, None] = None
+    max_cpu: Union[int, None] = None
+    time_greedy: Union[int, None] = None
+    deadline: Union[int, None] = None
+    topk: Union[int, None] = None
+    swarm_size: Union[int, None] = None
+    max_mem: Union[int, None] = None
 
 
 class KnownAlgorithms(str, Enum):
