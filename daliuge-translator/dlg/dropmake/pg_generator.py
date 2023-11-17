@@ -255,7 +255,7 @@ def resource_map(pgt, nodes, num_islands=1, co_host_dim=True):
     if type(pgt[0]) is str:
         pgt = pgt[1]  # remove the graph name TODO: we may want to retain that
     for drop_spec in pgt:
-        if drop_spec != {}:
+        if drop_spec != {} and "node" in drop_spec:
             nidx = int(drop_spec["node"][1:])  # skip '#'
             drop_spec["node"] = nm_list[nidx]
             iidx = int(drop_spec["island"][1:])  # skip '#'
