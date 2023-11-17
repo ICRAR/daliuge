@@ -38,19 +38,21 @@ init_tpl = string.Template(__sub_tpl_str)
 
 
 class DefaultConfig(object):
+    ACCOUNT = ""
+    HOME_DIR = ""
+    DLG_ROOT = f"{HOME_DIR}/dlg"
+    LOG_DIR = f"{DLG_ROOT}/log"
     MODULES = ""
-    VENV = ""
+    VENV = f"{DLG_ROOT}/venv"
 
     def __init__(self):
         self._dict = dict()
-        l = self.init_list()
-        self.setpar("acc", l[0])
-        self.setpar("log_root", l[1])
-        self.setpar("modules", l[2].strip())
-        self.setpar("venv", l[3].strip())
-
-    def init_list(self):
-        pass
+        self.setpar("acc", self.ACCOUNT)
+        self.setpar("home_dir", self.HOME_DIR.strip())
+        self.setpar("dlg_root", self.DLG_ROOT.strip())
+        self.setpar("log_root", self.LOG_DIR)
+        self.setpar("modules", self.MODULES.strip())
+        self.setpar("venv", self.VENV.strip())
 
     def setpar(self, k, v):
         self._dict[k] = v
@@ -70,7 +72,8 @@ class ICRARoodConfig(DefaultConfig):
     # requires the user to have a venv exectly in that place
     ACCOUNT = os.environ["USER"]
     HOME_DIR = os.environ["HOME"]
-    LOG_DIR = f"{HOME_DIR}/dlg/runs"
+    DLG_ROOT = f"{HOME_DIR}/dlg"
+    LOG_DIR = f"{DLG_ROOT}/log"
     VENV = f"source {HOME_DIR}/dlg/venv/bin/activate"
 
     def __init__(self):
@@ -85,8 +88,8 @@ class ICRARoodCldConfig(DefaultConfig):
     # requires the user to have a venv exectly in that place
     ACCOUNT = os.environ["USER"]
     HOME_DIR = os.environ["HOME"]
-    DLG_ROOT =f"{HOME_DIR}/dlg"
-    LOG_DIR = f"{DLG_ROOT}/runs"
+    DLG_ROOT = f"{HOME_DIR}/dlg"
+    LOG_DIR = f"{DLG_ROOT}/log"
     # The compute nodes have have required python and DALiuGE but just in case....
     VENV = f"source {DLG_ROOT}/venv/bin/activate"
 
@@ -117,7 +120,11 @@ module load mpi4py
         super(GalaxyASKAPConfig, self).__init__()
 
     def init_list(self):
-        return ["astronomy856", "/group/astronomy856/cwu/dfms/logs", self.MODULES]
+        return [
+            "astronomy856",
+            "/group/astronomy856/cwu/dfms/logs",
+            self.MODULES,
+        ]
 
 
 class MagnusConfig(DefaultConfig):
@@ -126,6 +133,20 @@ class MagnusConfig(DefaultConfig):
 
     def init_list(self):
         return ["pawsey0129", "/group/pawsey0129/daliuge_logs"]
+
+
+class Setonix411Config(DefaultConfig):
+    """
+    Cofiguration for project 0411 on Setonix.
+    """
+
+    MODULES = ""
+
+    def __init__(self):
+        super(Setonix411Config, self).__init__()
+
+    def init_list(self):
+        return ["pawsey0411", "/scratch/pawsey0411/daliuge_logs"]
 
 
 class TianHe2Config(DefaultConfig):
@@ -145,6 +166,7 @@ class ConfigFactory:
         "galaxy_askap": GalaxyASKAPConfig,
         "magnus": MagnusConfig,
         "galaxy": GalaxyASKAPConfig,
+        "setonix": Setonix411Config,
         "shao": TianHe2Config,
         "hyades.icrar.org": ICRARoodConfig,
         "ood_cloud": ICRARoodCldConfig,
