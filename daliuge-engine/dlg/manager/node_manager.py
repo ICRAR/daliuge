@@ -26,15 +26,17 @@ thus represents the bottom of the DROP management hierarchy.
 
 import abc
 import collections
+import copy
 import logging
 from psutil import cpu_count
 import os
 import queue
+import signal
 import sys
 import threading
 import time
 import typing
-from concurrent.futures import ThreadPoolExecutor, Future
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, Future
 
 from . import constants
 from .drop_manager import DROPManager
@@ -111,7 +113,7 @@ def _load(obj, callable_attr):
 
 class NodeManagerDropRunner(DropRunner):
     @abc.abstractmethod
-    def start(self):
+    def start(self, rpc_endpoint):
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -124,7 +126,7 @@ class NodeManagerThreadDropRunner(NodeManagerDropRunner):
         self._max_workers = max_workers
         self._thread_pool: ThreadPoolExecutor | None = None
 
-    def start(self):
+    def start(self, _rpc_endpoint):
         logger.info("Initializing thread pool with %d workers", self._max_workers)
         self._thread_pool = ThreadPoolExecutor(max_workers=self._max_workers)
 
@@ -133,6 +135,83 @@ class NodeManagerThreadDropRunner(NodeManagerDropRunner):
 
     def close(self):
         self._thread_pool.shutdown(wait=True)
+
+
+class NodeManagerProcessDropRunner(NodeManagerDropRunner):
+    # Process isolated properties - should only be accessed in @classmethods
+    # to ensure that they are global to a single process only
+    _rpc_client: typing.Optional[rpc.RPCClient]
+    _rpc_endpoint: typing.Tuple[str, int]
+
+    def __init__(self, max_workers: int):
+        self._max_workers = max_workers
+        self._process_pool: typing.Optional[ProcessPoolExecutor] = None
+
+    def start(self, rpc_endpoint):
+        logger.info("Initializing process pool with %d workers", self._max_workers)
+
+        self._process_pool = ProcessPoolExecutor(
+            max_workers=self._max_workers,
+            initializer=NodeManagerProcessDropRunner._setup_process,
+            initargs=(rpc_endpoint,),
+        )
+
+    @classmethod
+    def _setup_process(cls, rpc_endpoint):
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+        cls._rpc_endpoint = rpc_endpoint
+        cls._rpc_client = rpc.RPCClient()
+
+        # We'll just let this be cleaned up when the process terminates
+        # (instead of the normal `shutdown()`)
+        cls._rpc_client.start()
+
+    def run_drop(self, app_drop: AppDROP):
+        inputs_proxy_info, outputs_proxy_info = NodeManagerProcessDropRunner._get_proxy_infos(app_drop)
+
+        # MP Queues pickle on a background thread - we need to ensure that we don't
+        # modify the input app_drop reference outside of the scope of this method
+        # so we create a shallow copy that can be pickled at an indeterminate point in the future
+        # See https://github.com/python/cpython/blob/v3.10.13/Lib/multiprocessing/queues.py#L95
+        copied_drop = copy.copy(app_drop)
+        copied_drop._inputs = collections.OrderedDict()
+        copied_drop._outputs = collections.OrderedDict()
+
+        return self._process_pool.submit(
+            NodeManagerProcessDropRunner._run_app_drop,
+            copied_drop, inputs_proxy_info, outputs_proxy_info,
+        )
+
+    @classmethod
+    def _run_app_drop(cls, app_drop, inputs_proxy_info, outputs_proxy_info):
+        cls._setup_drop_proxies(app_drop, inputs_proxy_info, outputs_proxy_info)
+        return app_drop.run()
+
+    @classmethod
+    def _setup_drop_proxies(
+        cls, app_drop: AppDROP, inputs_proxy_info, outputs_proxy_info
+    ):
+        app_drop._rpc_endpoint = cls._rpc_endpoint
+        for input_proxy_info in inputs_proxy_info:
+            app_drop.addInput(
+                rpc.DropProxy(cls._rpc_client, input_proxy_info), back=False
+            )
+        for output_proxy_info in outputs_proxy_info:
+            app_drop.addOutput(
+                rpc.DropProxy(cls._rpc_client, output_proxy_info), back=False
+            )
+
+    @classmethod
+    def _get_proxy_infos(cls, app_drop):
+        inputs = [rpc.ProxyInfo.from_data_drop(i) for i in app_drop.inputs]
+        outputs = [rpc.ProxyInfo.from_data_drop(o) for o in app_drop.outputs]
+        return inputs, outputs
+
+    def close(self):
+        self._process_pool.shutdown(wait=True)
+        logger.info("Process pool closed")
 
 
 class NodeManagerBase(DROPManager):
@@ -160,6 +239,7 @@ class NodeManagerBase(DROPManager):
         error_listener=None,
         event_listeners=[],
         max_threads=0,
+        use_processes=False,
         logdir=utils.getDlgLogsDir(),
     ):
         self._dlm = DataLifecycleManager(
@@ -198,15 +278,19 @@ class NodeManagerBase(DROPManager):
         if max_threads <= 0:
             max_threads = cpu_count(logical=False)
 
-        self._drop_runner = NodeManagerThreadDropRunner(max_threads)
+        self._drop_runner: NodeManagerDropRunner
+        if use_processes:
+            self._drop_runner = NodeManagerProcessDropRunner(max_threads)
+        else:
+            self._drop_runner = NodeManagerThreadDropRunner(max_threads)
 
         # Event handler that only logs status changes
         debugging = logger.isEnabledFor(logging.DEBUG)
         self._logging_event_listener = LogEvtListener() if debugging else None
 
-    def start(self):
+    def start(self, rpc_endpoint):
         super().start()
-        self._drop_runner.start()
+        self._drop_runner.start(rpc_endpoint)
         self._dlm.startup()
 
     def shutdown(self):
@@ -581,7 +665,7 @@ class NodeManager(NodeManagerBase, EventMixIn, RpcMixIn):
         # We "just know" that our RpcMixIn will have a create_context static
         # method, which in reality means we are using the ZeroRPCServer class
         self._context = RpcMixIn.create_context()
-        super().start()
+        super().start(self.rpc_endpoint)
 
     def shutdown(self):
         super(NodeManager, self).shutdown()
