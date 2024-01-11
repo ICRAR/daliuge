@@ -113,6 +113,7 @@ class NMTestsMixIn(object):
     def __init__(self, *args, **kwargs):
         super(NMTestsMixIn, self).__init__(*args, **kwargs)
         self._dms = []
+        self.use_processes = False
 
     def _start_dm(self, threads=0, **kwargs):
         host, events_port, rpc_port = nm_conninfo(len(self._dms))
@@ -121,6 +122,7 @@ class NMTestsMixIn(object):
             events_port=events_port,
             rpc_port=rpc_port,
             max_threads=threads,
+            use_processes=self.use_processes,
             **kwargs,
         )
         self._dms.append(nm)
@@ -664,7 +666,10 @@ class NodeManagerTestsBase(NMTestsMixIn):
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
 
 
-class TestDM(NodeManagerTestsBase, unittest.TestCase):
+class TestDMMultiThreading(NodeManagerTestsBase, unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.use_processes = False
 
     def test_run_invalid_shmem_graph(self):
         """
@@ -691,3 +696,8 @@ class TestDM(NodeManagerTestsBase, unittest.TestCase):
             quickDeploy(dm, sessionID, graph)
             self.assertEqual(1, len(dm._sessions[sessionID].drops))
             dm.destroySession(sessionID)
+
+class TestDMMultiProcessing(NodeManagerTestsBase, unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.use_processes = True

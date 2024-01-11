@@ -105,6 +105,15 @@ class AppDROP(ContainerDROP):
     an streaming input); for these cases see the `BarrierAppDROP`.
     """
 
+    def __getstate__(self):
+        state = super().__getstate__()
+        del state["_drop_runner"]
+        return state
+
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        self._drop_runner = _SYNC_DROP_RUNNER
+
     def initialize(self, **kwargs):
         super(AppDROP, self).initialize(**kwargs)
 
