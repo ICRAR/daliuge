@@ -26,9 +26,8 @@ import logging
 import multiprocessing
 import queue
 import threading
-import six
 
-from .. import rpc, utils
+from .. import rpc
 from ..ddap_protocol import AppDROPStates
 from ..apps.app_base import AppDROP, BarrierAppDROP
 from ..exceptions import InvalidDropException
@@ -496,7 +495,7 @@ class DynlibProcApp(BarrierAppDROP):
         self.proc = None
 
     def run(self):
-        if not hasattr(self, "_rpc_endpoint"):
+        if self._rpc_endpoint is None:
             raise Exception("DynlibProcApp can only run within an RPC server")
 
         # On the sub-process we create DropProxy objects, so we need to extract
