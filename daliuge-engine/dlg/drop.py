@@ -168,6 +168,28 @@ class AbstractDROP(EventFirer, EventHandler):
     _env_var_matcher = re.compile(r"\$[A-z|\d]+\..+")
     _dlg_var_matcher = re.compile(r"\$DLG_.+")
 
+    _known_locks = ('_finishedProducersLock', '_refLock')
+    _known_rlocks = ('_statusLock',)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        for attr_name in AbstractDROP._known_locks + AbstractDROP._known_rlocks:
+            del state[attr_name]
+        del state["_listeners"]
+        return state
+
+    def __setstate__(self, state):
+        for attr_name in AbstractDROP._known_locks:
+            state[attr_name] = threading.Lock()
+        for attr_name in AbstractDROP._known_rlocks:
+            state[attr_name] = threading.RLock()
+
+        self.__dict__.update(state)
+
+        import collections
+        self._listeners = collections.defaultdict(list)
+
+
     @track_current_drop
     def __init__(self, oid, uid, **kwargs):
         """
