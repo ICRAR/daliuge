@@ -90,7 +90,7 @@ from dlg.dropmake.web.translator_utils import (
 APP_DESCRIPTION = """
 DALiuGE LG Web interface translates and deploys logical graphs.
 
-The interface is split into two parts, refer to the main DALiuGE documentation 
+The interface is split into two parts, refer to the main DALiuGE documentation
 [DALiuGE documentation](https://daliuge.readthedocs.io/) for more information
 
 ### Original API
@@ -812,15 +812,15 @@ class AlgoParams(BaseModel):
     Refer to main documentation for more information.
     """
 
-    min_goal: Union[int, None]
-    ptype: Union[int, None]
-    max_load_imb: Union[int, None]
-    max_cpu: Union[int, None]
-    time_greedy: Union[int, None]
-    deadline: Union[int, None]
-    topk: Union[int, None]
-    swarm_size: Union[int, None]
-    max_mem: Union[int, None]
+    min_goal: Union[int, None] = None
+    ptype: Union[int, None] = None
+    max_load_imb: Union[int, None] = None
+    max_cpu: Union[int, None] = None
+    time_greedy: Union[int, None] = None
+    deadline: Union[int, None] = None
+    topk: Union[int, None] = None
+    swarm_size: Union[int, None] = None
+    max_mem: Union[int, None] = None
 
 
 class KnownAlgorithms(str, Enum):
