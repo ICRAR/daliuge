@@ -113,6 +113,7 @@ class NMTestsMixIn(object):
     def __init__(self, *args, **kwargs):
         super(NMTestsMixIn, self).__init__(*args, **kwargs)
         self._dms = []
+        self.use_processes = False
 
     def _start_dm(self, threads=0, **kwargs):
         host, events_port, rpc_port = nm_conninfo(len(self._dms))
@@ -121,6 +122,7 @@ class NMTestsMixIn(object):
             events_port=events_port,
             rpc_port=rpc_port,
             max_threads=threads,
+            use_processes=self.use_processes,
             **kwargs,
         )
         self._dms.append(nm)
@@ -207,7 +209,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
             memory("C", producers=["B"]),
         ]
         add_test_reprodata(g)
-        dm = self._start_dm(threads=self.nm_threads, **kwargs)
+        dm = self._start_dm(**kwargs)
         dm.createSession(sessionId)
         dm.addGraphSpec(sessionId, g)
         dm.deploySession(sessionId, ["A"])
@@ -258,7 +260,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
         a_data = os.urandom(32)
         c_data = str(crc32c(a_data, 0)).encode("utf8")
         node_managers = [
-            self._start_dm(threads=self.nm_threads) for _ in range(2)
+            self._start_dm() for _ in range(2)
         ]
         ids = [0] * repeats
         for n in range(repeats):
@@ -309,7 +311,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
 
         :see: `self.test_runGraphSingleDOPerDOM`
         """
-        dm1, dm2 = [self._start_dm(threads=self.nm_threads) for _ in range(2)]
+        dm1, dm2 = [self._start_dm() for _ in range(2)]
 
         sessionId = "s1"
         g1 = [
@@ -395,7 +397,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
         """
 
         dm1, dm2, dm3, dm4 = [
-            self._start_dm(threads=self.nm_threads) for _ in range(4)
+            self._start_dm() for _ in range(4)
         ]
 
         sessionId = f"s{random.randint(0, 1000)}"
@@ -496,7 +498,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
         =======    ====================
         """
 
-        dm1, dm2 = [self._start_dm(threads=self.nm_threads) for _ in range(2)]
+        dm1, dm2 = [self._start_dm() for _ in range(2)]
 
         sessionId = f"s{random.randint(0, 1000)}"
         N = 100
@@ -547,7 +549,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
         ip_addr_1 = "8.8.8.8"
         ip_addr_2 = "8.8.8.9"
 
-        dm1, dm2 = [self._start_dm(threads=self.nm_threads) for _ in range(2)]
+        dm1, dm2 = [self._start_dm() for _ in range(2)]
 
         sessionId = f"s{random.randint(0, 1000)}"
         g1 = [
@@ -664,8 +666,10 @@ class NodeManagerTestsBase(NMTestsMixIn):
         self._test_runGraphInTwoNMs(g1, g2, rels, a_data, e_data, leaf_oid="E")
 
 
-class TestDM(NodeManagerTestsBase, unittest.TestCase):
-    nm_threads = 0
+class TestDMMultiThreading(NodeManagerTestsBase, unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.use_processes = False
 
     def test_run_invalid_shmem_graph(self):
         """
@@ -693,10 +697,7 @@ class TestDM(NodeManagerTestsBase, unittest.TestCase):
             self.assertEqual(1, len(dm._sessions[sessionID].drops))
             dm.destroySession(sessionID)
 
-
-@unittest.skipUnless(
-    os.environ.get("DALIUGE_RUN_MP_TESTS", "0") == "1",
-    "Unstable multiprocessing tests not run by default",
-)
-class TestDMParallel(NodeManagerTestsBase, unittest.TestCase):
-    nm_threads = multiprocessing.cpu_count()
+class TestDMMultiProcessing(NodeManagerTestsBase, unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.use_processes = True

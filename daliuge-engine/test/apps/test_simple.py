@@ -175,14 +175,14 @@ class TestSimpleApps(unittest.TestCase):
                 droputils.allDropContents(f[i]),
             )
 
-    # @unittest.skip
+    @unittest.skip
     def test_ngasio(self):
         nd_in = NgasDROP("HelloWorld_out.txt", "HelloWorld_out.txt")
-        nd_in.ngasSrv = "ngas.ddns.net"
+        nd_in.ngasSrv = "ngas.icrar.org"
         b = CopyApp("b", "b")
         did = "HelloWorld-%f" % time.time()
         nd_out = NgasDROP(did, did, len=11)
-        nd_out.ngasSrv = "ngas.ddns.net"
+        nd_out.ngasSrv = "ngas.icrar.org"
         nd_out.len = nd_in.size
         d = CopyApp("d", "d")
         i = InMemoryDROP("i", "i")
