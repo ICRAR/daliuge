@@ -27,6 +27,7 @@ technologies we support.
 """
 
 import collections
+import dataclasses
 import logging
 import queue
 import threading
@@ -222,6 +223,10 @@ class ZeroRPCServer(RPCServerBase):
         # This import can take a long time in big HPC deployments
         return zerorpc.Context()
 
+    @property
+    def rpc_endpoint(self):
+        return self._rpc_host, self._rpc_port
+
     def start(self):
         super(ZeroRPCServer, self).start()
 
@@ -272,6 +277,35 @@ class ZeroRPCServer(RPCServerBase):
 RPCServer, RPCClient = ZeroRPCServer, ZeroRPCClient
 
 
+@dataclasses.dataclass(frozen=True)
+class ProxyInfo:
+    """Information needed to create a DropProxy"""
+
+    hostname: str
+    port: int
+    session_id: str
+    uid: str
+
+    @classmethod
+    def from_data_drop(cls, drop):
+        if isinstance(drop, DropProxy):
+            return drop._proxy_info
+
+        # TODO: we can't use the RPC endpoint's host directly here, as that
+        #       indicates the address the different servers *bind* to
+        #       (and, for example, can be 0.0.0.0)
+        assert drop._rpc_endpoint
+        rpc_host, rpc_port = drop._rpc_endpoint
+        rpc_host = utils.to_externally_contactable_host(rpc_host, prefer_local=True)
+        return cls(rpc_host, rpc_port, drop._dlg_session_id, drop.uid)
+
+    def __repr__(self):
+        return (
+            f"<ProxyInfo {self.uid}, session {self.session_id} "
+            f"@{self.hostname}:{self.port}>"
+        )
+
+
 class DropProxy(object):
     """
     A proxy to a remote drop.
@@ -279,50 +313,26 @@ class DropProxy(object):
     It forwards attribute requests and procedure calls through the given RPC client.
     """
 
-    def __init__(self, rpc_client, hostname, port, sessionId, uid):
-        # The current version of multiprocessing support creates an RPCClient
-        # per DropProxy, disregarding the rpc_client parameter given here.
-        # This uses too many resources though, but is only needed if the NM is
-        # instructed to use multiprocessing support. To avoid this resource
-        # over-usage we then detect if the given rpc_client (an instance of
-        # NodeManagerBase) has been started with multiprocessing support (which
-        # is confusingly bound to there being a *thread* pool too) and only if
-        # we detect the situation we create our own RPCClient; otherwise we use
-        # the given rpc_client as is.
-        if hasattr(rpc_client, "_threadpool") and rpc_client._threadpool:
-            self.rpc_client = ZeroRPCClient()
-            self._own_rpc_client = True
-        else:
-            self.rpc_client = rpc_client
-            self._own_rpc_client = False
-        self.hostname = hostname
-        self.port = port
-        self.session_id = sessionId
-        self.uid = uid
+    def __init__(self, rpc_client, proxy_info: ProxyInfo):
+        self.rpc_client = rpc_client
+        self._proxy_info: ProxyInfo = proxy_info
         logger.debug("Created %r", self)
-        if self._own_rpc_client:
-            self.rpc_client.start()
 
     def handleEvent(self, evt):
         pass
 
     def __getattr__(self, name):
         if name == "uid":
-            return self.uid
+            return self._proxy_info.uid
         elif name in ("inputs", "streamingInputs", "outputs", "consumers", "producers"):
             return []
         return self.rpc_client.get_drop_attribute(
-            self.hostname, self.port, self.session_id, self.uid, name
+            self._proxy_info.hostname,
+            self._proxy_info.port,
+            self._proxy_info.session_id,
+            self.uid,
+            name
         )
 
     def __repr__(self):
-        return "<DropProxy %s, session %s @%s:%d>" % (
-            self.uid,
-            self.session_id,
-            self.hostname,
-            self.port,
-        )
-
-    def __del__(self):
-        if self._own_rpc_client:
-            self.rpc_client.shutdown()
+        return f"<DropProxy with {self._proxy_info}"

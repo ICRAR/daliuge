@@ -387,11 +387,12 @@ class Session(object):
             # Register them
             self._drops[drop.uid] = drop
 
-            # Add a reference to the RPC server that exposes this drop,
+            # Add a reference to the RPC server endpoint that exposes this drop,
             # which is our containing Node Manager.
             # This information is usually not necessary, but there are cases in
             # which we actually need it (like in the DynlibProcApp)
-            drop._rpc_server = self._nm
+            if self._nm:
+                drop._rpc_endpoint = self._nm.rpc_endpoint
 
             # Register them with the error handler
             for l in event_listeners:
@@ -437,7 +438,7 @@ class Session(object):
         )
         for host, port, local_uid, relname, remote_uid in self._proxyinfo:
             proxy = rpc.DropProxy(
-                self._nm, host, port, self._sessionId, remote_uid
+                self._nm, rpc.ProxyInfo(host, port, self._sessionId, remote_uid)
             )
             logger.debug(
                 "Attaching proxy to local %r via %s(proxy, False)",
