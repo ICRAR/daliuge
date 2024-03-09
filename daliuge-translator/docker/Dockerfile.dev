@@ -19,7 +19,7 @@ RUN . /dlg/bin/activate && \
     pip3 install . 
 
 # Second stage build taking what's required from first stage
-FROM icrar/daliuge-common:${VCS_TAG}
+FROM icrar/daliuge-engine:${VCS_TAG}
 COPY --from=0 /daliuge/. /daliuge/.
 COPY --from=0 /dlg /dlg
 # RUN apt-get update && apt-get install -y libmetis-dev python3
