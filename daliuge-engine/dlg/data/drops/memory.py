@@ -72,7 +72,7 @@ def parse_pydata(pd_dict: dict) -> bytes:
             pydata = pickle.loads(pydata)
         except:
             raise
-    return pickle.dump(pydata)
+    return pickle.dumps(pydata)
 
 
 ##
@@ -110,20 +110,22 @@ class InMemoryDROP(DataDROP):
         """
         args = []
         pydata = None
+        field_names = (
+            [f["name"] for f in kwargs["fields"]] if "fields" in kwargs else []
+        )
         if "pydata" in kwargs and not (
-            "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]
+            "fields" in kwargs and "pydata" in field_names
         ):  # means that is was passed directly
             pydata = kwargs.pop("pydata")
-            logger.debug("pydata value provided: %s", pydata)
+            logger.debug("pydata value provided: %s, %s", pydata, kwargs)
             try:  # test whether given value is valid
                 _ = pickle.loads(base64.b64decode(pydata))
                 pydata = base64.b64decode(pydata)
             except:
                 pydata = None
-        elif (
-            "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]
-        ):
-            pydata = parse_pydata(kwargs["nodeAttributes"]["pydata"])
+        elif "fields" in kwargs and "pydata" in field_names:
+            data_pos = field_names.index("pydata")
+            pydata = parse_pydata(kwargs["fields"][data_pos])
         args.append(pydata)
         logger.debug("Loaded into memory: %s", pydata)
         self._buf = io.BytesIO(*args)
@@ -192,9 +194,7 @@ class SharedMemoryDROP(DataDROP):
                 pydata = base64.b64decode(pydata.encode("latin1"))
             except:
                 pydata = None
-        elif (
-            "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]
-        ):
+        elif "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]:
             pydata = parse_pydata(kwargs["nodeAttributes"]["pydata"])
         args.append(pydata)
         self._buf = io.BytesIO(*args)
@@ -206,9 +206,7 @@ class SharedMemoryDROP(DataDROP):
             else:
                 # Using Drop without manager, just generate a random name.
                 sess_id = "".join(
-                    random.choices(
-                        string.ascii_uppercase + string.digits, k=10
-                    )
+                    random.choices(string.ascii_uppercase + string.digits, k=10)
                 )
                 return SharedMemoryIO(self.oid, sess_id)
         else:

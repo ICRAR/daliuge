@@ -120,9 +120,7 @@ class DockerTests(unittest.TestCase):
             image="ubuntu:14.04",
             command="cat %i0 > /dev/tcp/%containerIp[c]%/8000",
         )
-        c = DockerApp(
-            "c", "c", image="ubuntu:14.04", command="nc -l 8000 > %o0"
-        )
+        c = DockerApp("c", "c", image="ubuntu:14.04", command="nc -l 8000 > %o0")
         d = FileDROP("d", "d")
 
         b.addInput(a)
@@ -181,16 +179,15 @@ class DockerTests(unittest.TestCase):
         a = NgasDROP(
             "HelloWorld_out.txt", "HelloWorld_out.txt"
         )  # not a filesystem-related DROP, we can reference its URL in the command-line
-        a.ngasSrv = "ngas.ddns.net"
+        a.ngasSrv = "ngas.icrar.org"
+        a.ngasPort = 443
         b = DockerApp("b", "b", image="ubuntu:14.04", command=command)
         c = FileDROP("c", "c")
         b.addInput(a)
         b.addOutput(c)
         with DROPWaiterCtx(self, c, 100):
             a.setCompleted()
-        self.assertEqual(
-            a.dataURL.encode("utf8"), droputils.allDropContents(c)
-        )
+        self.assertEqual(a.dataURL.encode("utf8"), droputils.allDropContents(c))
 
     def test_additional_bindings(self):
         # Some additional stuff to bind into docker

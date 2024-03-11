@@ -31,6 +31,7 @@ still need to access NGAS from time to time.
 import http.client
 import logging
 import urllib.request
+import requests
 from xml.dom.minidom import parseString
 
 logger = logging.getLogger(__name__)
@@ -44,12 +45,13 @@ def open(
     mode=1,
     mimeType="application/octet-stream",
     length=-1,
+    chunksize=65536,
 ):
     logger.debug(
         "Opening NGAS drop %s with mode %d and length %s", fileId, mode, length
     )
     if mode == 1:
-        return retrieve(host, fileId, port=port, timeout=timeout)
+        return retrieve(host, fileId, port=port, timeout=timeout, chunksize=chunksize)
     elif mode == 0:
         return beginArchive(
             host, fileId, port=port, timeout=timeout, mimeType=mimeType, length=length
@@ -60,22 +62,25 @@ def open(
         return stat
 
 
-def retrieve(host, fileId, port=7777, timeout=None):
+def retrieve(host, fileId, port=7777, timeout=None, chunksize=65536):
     """
     Retrieve the given fileId from the NGAS server located at `host`:`port`
 
     This method returns a file-like object that supports the `read` operation,
     and over which `close` must be invoked once no more data is read from it.
     """
-    url = "http://%s:%d/RETRIEVE?file_id=%s" % (host, port, fileId)
+    scheme = "http" if port != 443 else "https"
+    url = "%s://%s:%d/RETRIEVE?file_id=%s" % (scheme, host, port, fileId)
     logger.debug("Issuing RETRIEVE request: %s", url)
-    conn = urllib.request.urlopen(url)
-    if conn.getcode() != http.HTTPStatus.OK:
+    resp = requests.request("GET", url, stream=True)
+    # conn = urllib.request.urlopen(url)
+    if resp.status_code != http.HTTPStatus.OK:
         raise Exception(
             "Error while RETRIEVE-ing %s from %s:%d: %d %s"
-            % (fileId, host, port, conn.getcode(), conn.msg)
+            % (fileId, host, port, resp.status_code, resp.msg)
         )
-    return conn
+    read_gen = resp.iter_content(chunksize)
+    return read_gen
 
 
 def beginArchive(
@@ -123,18 +128,20 @@ def fileStatus(host, port, fileId, timeout=10):
     TODO: This needs to use file_version as well, else it might
     return a value for a previous version.
     """
-    url = "http://%s:%d/STATUS?file_id=%s" % (host, port, fileId)
+    scheme = "http" if port != 443 else "https"
+    url = "%s://%s:%d/STATUS?file_id=%s" % (scheme, host, port, fileId)
     logger.debug("Issuing STATUS request: %s", url)
     try:
-        conn = urllib.request.urlopen(url, timeout=timeout)
-    except urllib.error.HTTPError:
+        conn = requests.request("GET", url)
+        # conn = urllib.request.urlopen(url, timeout=timeout)
+    except ConnectionError:
         raise FileNotFoundError
-    if conn.getcode() != http.HTTPStatus.OK:
+    if conn.status_code != http.HTTPStatus.OK:
         raise Exception(
             "Error while getting STATUS %s from %s:%d: %d %s"
-            % (fileId, host, port, conn.getcode(), conn.msg)
+            % (fileId, host, port, conn.status_code, conn.text)
         )
-    dom = parseString(conn.read().decode())
+    dom = parseString(conn.content.decode())
     stat = dict(
         dom.getElementsByTagName("NgamsStatus")[0]
         .getElementsByTagName("DiskStatus")[0]
