@@ -144,9 +144,7 @@ class TestSimpleApps(unittest.TestCase):
         h.addOutput(b)
         b.addProducer(h)
         h.execute()
-        self.assertEqual(
-            h.greeting.encode("utf8"), droputils.allDropContents(b)
-        )
+        self.assertEqual(h.greeting.encode("utf8"), droputils.allDropContents(b))
 
     def test_parallelHelloWorld(self):
         m0 = InMemoryDROP("m0", "m0")
@@ -178,11 +176,13 @@ class TestSimpleApps(unittest.TestCase):
     # @unittest.skip
     def test_ngasio(self):
         nd_in = NgasDROP("HelloWorld_out.txt", "HelloWorld_out.txt")
-        nd_in.ngasSrv = "ngas.ddns.net"
+        nd_in.ngasSrv = "ngas.icrar.org"
+        nd_in.ngasPort = 443
         b = CopyApp("b", "b")
         did = "HelloWorld-%f" % time.time()
         nd_out = NgasDROP(did, did, len=11)
-        nd_out.ngasSrv = "ngas.ddns.net"
+        nd_out.ngasSrv = "ngas.icrar.org"
+        nd_out.ngasPort = 443
         nd_out.len = nd_in.size
         d = CopyApp("d", "d")
         i = InMemoryDROP("i", "i")
@@ -193,7 +193,7 @@ class TestSimpleApps(unittest.TestCase):
         d.addInput(nd_out)
         i.addProducer(d)
         # b.addOutput(i)
-        self._test_graph_runs((nd_in, b, nd_out, i, d), nd_in, i, timeout=10)
+        self._test_graph_runs((nd_in, b, nd_out, i, d), nd_in, i, timeout=60)
         self.assertEqual(b"Hello World", droputils.allDropContents(i))
 
     def test_genericScatter(self):
@@ -237,9 +237,7 @@ class TestSimpleApps(unittest.TestCase):
         c = InMemoryDROP("c", "c")
         drop_loaders.save_numpy(b, data1_in)
         drop_loaders.save_numpy(c, data2_in)
-        s = GenericNpyScatterApp(
-            "s", "s", num_of_copies=2, scatter_axes="[0,0]"
-        )
+        s = GenericNpyScatterApp("s", "s", num_of_copies=2, scatter_axes="[0,0]")
         s.addInput(b)
         s.addInput(c)
         o1 = InMemoryDROP("o1", "o1")
@@ -289,18 +287,13 @@ class TestSimpleApps(unittest.TestCase):
         X = AverageArraysApp("X", "X")
         Z = InMemoryDROP("Z", "Z")
         drops = [ListAppendThrashingApp(x, x, size=size) for x in drop_ids]
-        mdrops = [
-            InMemoryDROP(chr(65 + x), chr(65 + x)) for x in range(max_threads)
-        ]
+        mdrops = [InMemoryDROP(chr(65 + x), chr(65 + x)) for x in range(max_threads)]
         if parallel:
             # a bit of magic to get the app drops using the processes
             _ = [drop.__setattr__("_tp", threadpool) for drop in drops]
             _ = [drop.__setattr__("_tp", threadpool) for drop in mdrops]
             _ = [drop.__setattr__("_sessID", session_id) for drop in mdrops]
-            _ = [
-                memory_manager.register_drop(drop.uid, session_id)
-                for drop in mdrops
-            ]
+            _ = [memory_manager.register_drop(drop.uid, session_id) for drop in mdrops]
             X.__setattr__("_tp", threadpool)
             Z.__setattr__("_tp", threadpool)
             Z.__setattr__("_sessID", session_id)
@@ -310,9 +303,7 @@ class TestSimpleApps(unittest.TestCase):
         _ = [d.addOutput(m) for d, m in zip(drops, mdrops)]
         _ = [X.addInput(m) for m in mdrops]
         X.addOutput(Z)
-        logger.info(
-            f"Number of inputs/outputs: {len(X.inputs)}, {len(X.outputs)}"
-        )
+        logger.info(f"Number of inputs/outputs: {len(X.inputs)}, {len(X.outputs)}")
         self._test_graph_runs([S, X, Z] + drops + mdrops, S, Z, timeout=200)
         # Need to run our 'copy' of the averaging APP
         num_array = []
@@ -348,9 +339,7 @@ class TestSimpleApps(unittest.TestCase):
         st = time.time()
         self.test_multi_listappendthrashing(size=size, parallel=True)
         t2 = time.time() - st
-        logger.info(
-            f"Speedup: {t1 / t2:.2f} from {cpu_count(logical=False)} cores"
-        )
+        logger.info(f"Speedup: {t1 / t2:.2f} from {cpu_count(logical=False)} cores")
         # TODO: This is unpredictable, but maybe we can do something meaningful.
         # self.assertAlmostEqual(t1/cpu_count(logical=False), t2, 1)
         # How about this? We only need to see some type of speedup
