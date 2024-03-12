@@ -27,12 +27,10 @@ import pickle
 import random
 import string
 import sys
-from typing import Any
 
 from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.data.drops.data_base import DataDROP, logger
 from dlg.data.io import SharedMemoryIO, MemoryIO
-from dlg.utils import serialize_data
 
 
 def parse_pydata(pd_dict: dict) -> bytes:
@@ -67,7 +65,7 @@ def parse_pydata(pd_dict: dict) -> bytes:
         except:
             pydata = pydata.encode()
     elif pd_dict["type"].lower() == "object":
-        pydata = pydata.encode()
+        pydata = base64.b64decode(pydata.encode())
         try:
             pydata = pickle.loads(pydata)
         except:

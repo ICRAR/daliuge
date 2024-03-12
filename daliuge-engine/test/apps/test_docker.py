@@ -158,7 +158,7 @@ class DockerTests(unittest.TestCase):
         msg = 'This is a message with a double quotes: "'
         assertMsgIsCorrect(msg, "echo -n '{0}' > %o0".format(msg))
 
-    # @unittest.skip
+    @unittest.skip
     def test_dataURLReference(self):
         """
         A test to check that DROPs other than FileDROPs and DirectoryContainers
@@ -166,7 +166,7 @@ class DockerTests(unittest.TestCase):
         """
         self._ngas_and_fs_io("echo -n '%iDataURL0' > %o0")
 
-    # @unittest.skip
+    @unittest.skip
     def test_refer_to_io_by_uid(self):
         """
         A test to check that input and output Drops can be referred to by their

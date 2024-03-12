@@ -22,6 +22,7 @@
 import http.client  #
 import json
 import threading
+import sys
 import time
 import unittest
 
@@ -94,9 +95,7 @@ class TestDaemon(unittest.TestCase):
         # in the daemon's hand
         # self.assertTrue(utils.portIsOpen('localhost', 9000, _TIMEOUT))
         try:
-            restutils.RestClient("localhost", 9000, timeout=_TIMEOUT)._GET(
-                "/anything"
-            )
+            restutils.RestClient("localhost", 9000, timeout=_TIMEOUT)._GET("/anything")
         except restutils.RestClientException:
             # We don't care about the result
             pass
@@ -117,6 +116,7 @@ class TestDaemon(unittest.TestCase):
 
     def test_nm_starts(self):
         # Simplest case...
+        print(f"Python interpreter: {sys.executable}")
         self.create_daemon(master=False, noNM=False, disable_zeroconf=True)
 
     def test_mm_starts(self):
@@ -127,15 +127,11 @@ class TestDaemon(unittest.TestCase):
         # Nothing should start now
         self.create_daemon(master=False, noNM=True, disable_zeroconf=True)
         self.assertTrue(
-            utils.portIsClosed(
-                "localhost", constants.NODE_DEFAULT_REST_PORT, 0
-            ),
+            utils.portIsClosed("localhost", constants.NODE_DEFAULT_REST_PORT, 0),
             "NM started but it should not have",
         )
         self.assertTrue(
-            utils.portIsClosed(
-                "localhost", constants.MASTER_DEFAULT_REST_PORT, 0
-            ),
+            utils.portIsClosed("localhost", constants.MASTER_DEFAULT_REST_PORT, 0),
             "NM started but it should not have",
         )
 
@@ -157,9 +153,7 @@ class TestDaemon(unittest.TestCase):
 
     def _test_zeroconf_dim_mm(self, disable_zeroconf=False):
         # Start an empty daemon, then a DIM and a Master on their own
-        self.create_daemon(
-            master=False, noNM=True, disable_zeroconf=disable_zeroconf
-        )
+        self.create_daemon(master=False, noNM=True, disable_zeroconf=disable_zeroconf)
         self._start("island", http.HTTPStatus.OK, {"nodes": []})
         self._start("master", http.HTTPStatus.OK)
 
@@ -221,9 +215,7 @@ class TestDaemon(unittest.TestCase):
         def _test_nodes(nodes):
             return not nodes["nodes"]
 
-        new_nodes = _get_nodes_from_client(mc, test_condition=_test_nodes)[
-            "nodes"
-        ]
+        new_nodes = _get_nodes_from_client(mc, test_condition=_test_nodes)["nodes"]
         self.assertEqual(0, len(new_nodes))
 
     def test_start_dataisland_via_rest(self):
@@ -245,9 +237,7 @@ class TestDaemon(unittest.TestCase):
         # Check that the DataIsland starts with the given nodes
         self._start("island", http.HTTPStatus.OK, {"nodes": nodes})
         self.assertTrue(
-            utils.portIsOpen(
-                "localhost", constants.ISLAND_DEFAULT_REST_PORT, _TIMEOUT
-            ),
+            utils.portIsOpen("localhost", constants.ISLAND_DEFAULT_REST_PORT, _TIMEOUT),
             "The DIM did not start successfully",
         )
 
@@ -300,18 +290,14 @@ class TestDaemon(unittest.TestCase):
         # Check that the NM stops
         self._stop("node", http.HTTPStatus.OK, "")
         self.assertTrue(
-            utils.portIsClosed(
-                "localhost", constants.NODE_DEFAULT_REST_PORT, _TIMEOUT
-            ),
+            utils.portIsClosed("localhost", constants.NODE_DEFAULT_REST_PORT, _TIMEOUT),
             "The node did not stop successfully",
         )
 
         # Check that the NM starts
         self._start("node", http.HTTPStatus.OK, {"pid": nodes})
         self.assertTrue(
-            utils.portIsOpen(
-                "localhost", constants.NODE_DEFAULT_REST_PORT, _TIMEOUT
-            ),
+            utils.portIsOpen("localhost", constants.NODE_DEFAULT_REST_PORT, _TIMEOUT),
             "The node did not start successfully",
         )
 
@@ -322,9 +308,7 @@ class TestDaemon(unittest.TestCase):
         # Check that the MM starts
         self._start("master", http.HTTPStatus.OK)
         self.assertTrue(
-            utils.portIsOpen(
-                "localhost", constants.MASTER_DEFAULT_REST_PORT, _TIMEOUT
-            ),
+            utils.portIsOpen("localhost", constants.MASTER_DEFAULT_REST_PORT, _TIMEOUT),
             "The MM did not start successfully",
         )
 
