@@ -20,12 +20,17 @@
 #    MA 02111-1307  USA
 #
 import io
+import logging
 import os
+
+from benedict import benedict
 
 from dlg.data.drops.data_base import DataDROP
 from dlg.drop import DEFAULT_INTERNAL_PARAMETERS
 from dlg.data.io import MemoryIO
 from dlg.meta import dlg_string_param
+
+logger = logging.getLogger(__name__)
 
 
 ##
@@ -36,7 +41,7 @@ from dlg.meta import dlg_string_param
 # @param tag daliuge
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
-# @param mode "YANDA"/String/ComponentParameter/NoPort/ReadOnly//False/False/To what standard DALiuGE should filter and serialize the parameters.
+# @param mode "YANDA"/Select/ComponentParameter/NoPort/ReadWrite/YANDA,ini,yaml,json,toml/False/False/Serialisation method.
 # @param config_data ""/String/ComponentParameter/NoPort/ReadWrite//False/False/Additional configuration information to be mixed in with the initial data
 # @param dropclass dlg.data.drops.parset_drop.ParameterSetDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
@@ -58,17 +63,27 @@ class ParameterSetDROP(DataDROP):
         """
         Returns a string representing a serialization of the parameters.
         """
+        if mode not in ["ini", "yaml", "json", "toml", "YANDA"]:
+            mode = "yaml"
         if mode == "YANDA":
             # TODO: Add more complex value checking
-            return "\n".join(f"{x}={y}" for x, y in parameters.items())
+            serialp = "\n".join(f"{x}={y.value}" for x, y in parameters.items())
         # Add more formats (.ini for example)
-        return "\n".join(f"{x}={y}" for x, y in parameters.items())
+        elif mode == "ini":
+            serialp = parameters.to_ini()
+        elif mode == "yaml":
+            serialp = parameters.to_yaml()
+        elif mode == "json":
+            serialp = parameters.to_json()
+        elif mode == "toml":
+            serialp = parameters.to_toml()
+        return serialp
 
     def filter_parameters(self, parameters: dict, mode):
         """
         Returns a dictionary of parameters, with daliuge-internal or other parameters filtered out
         """
-        if mode == "YANDA":
+        if mode == "YANDA_DEPRECATED":  # we now return all applicationArgs
             forbidden_params = list(DEFAULT_INTERNAL_PARAMETERS)
             if parameters["config_data"] == "":
                 forbidden_params.append("configData")
@@ -77,12 +92,23 @@ class ParameterSetDROP(DataDROP):
                 for key, val in parameters.items()
                 if key not in DEFAULT_INTERNAL_PARAMETERS
             }
-        return parameters
+        # we use benedict to get access to the serializers.
+        return benedict(
+            {
+                k: benedict(
+                    {"value": v.value, "description": v.description, "type": v.type}
+                )
+                for k, v in benedict(parameters["applicationArgs"]).items()
+            }
+        )
 
     def initialize(self, **kwargs):
         """
         TODO: Open input file
         """
+        logger.debug(
+            "Application arguments found: %s", self.parameters["applicationArgs"]
+        )
         self.config_data = self.serialize_parameters(
             self.filter_parameters(self.parameters, self.mode), self.mode
         ).encode("utf-8")

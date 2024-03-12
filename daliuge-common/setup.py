@@ -52,6 +52,7 @@ install_requires = [
     "merklelib>=1.0",
     "pyzmq~=25.1.0",
     "pydantic==1.10.7",
+    "python-benedict[all]",
 ]
 
 setup(
