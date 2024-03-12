@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 ##
 # @brief ParameterSet
-# @details A set of parameters, wholly specified in EAGLE
+# @details A set of parameters, which can be set and modified in EAGLE and thus is part of the graph. Multiple serialisation formats are available.
 # @par EAGLE_START
 # @param category ParameterSet
 # @param tag daliuge
