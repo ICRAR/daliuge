@@ -7,3 +7,4 @@ myst-parser
 ipython
 merklelib >= 1.0
 gputil >= 1.4.0
+python-benedict[all]
