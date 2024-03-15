@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 # @par EAGLE_END
 class ParameterSetDROP(DataDROP):
     """
-    A generic configuration file template wrapper
+    A generic configuration drop template wrapper
     This drop opens an (optional) file containing some initial configuration information, then
     appends any additional specified parameters to it, finally serving it as a data object.
     """
