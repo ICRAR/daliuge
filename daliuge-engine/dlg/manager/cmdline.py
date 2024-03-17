@@ -413,8 +413,15 @@ def dlgNM(parser, args):
         action="store",
         type="int",
         dest="max_threads",
-        help="Max thread pool size used for executing drops. -1 means use all CPUs. 0 (default) means no threads.",
+        help="Max thread pool size used for executing drops. <= 0 means use all (physical) CPUs. Default is 0.",
         default=0,
+    )
+    parser.add_option(
+        "-p",
+        "--processes",
+        action="store_true",
+        dest="use_processes",
+        help="Use processes instead of threads to execute app drops, defaults to False",
     )
     (options, args) = parser.parse_args(args)
 
@@ -443,6 +450,7 @@ def dlgNM(parser, args):
             filter(None, options.event_listeners.split(":"))
         ),
         "max_threads": options.max_threads,
+        "use_processes": options.use_processes,
         "logdir": options.logdir,
     }
     options.dmAcronym = "NM"

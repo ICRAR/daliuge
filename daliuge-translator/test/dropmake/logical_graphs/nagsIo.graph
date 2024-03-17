@@ -90,7 +90,7 @@
                     "readonly": false,
                     "text": "NGAS Server",
                     "type": "Unknown",
-                    "value": "ngas.ddns.net"
+                    "value": "ngas.icrar.org"
                 },
                 {
                     "defaultValue": "",
@@ -204,7 +204,7 @@
                     "readonly": false,
                     "text": "NGAS Server",
                     "type": "Unknown",
-                    "value": "ngas.ddns.net"
+                    "value": "ngas.icrar.org"
                 },
                 {
                     "defaultValue": "",

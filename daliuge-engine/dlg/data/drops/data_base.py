@@ -385,7 +385,7 @@ class PathBasedDrop(object):
             return dirname
 
         parts = []
-        if self._dlg_session:
+        if self._dlg_session_id:
             parts.append(".")
         else:
             parts.append("/tmp/daliuge_tfiles")

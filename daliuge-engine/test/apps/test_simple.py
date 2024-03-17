@@ -177,12 +177,10 @@ class TestSimpleApps(unittest.TestCase):
     def test_ngasio(self):
         nd_in = NgasDROP("HelloWorld_out.txt", "HelloWorld_out.txt")
         nd_in.ngasSrv = "ngas.icrar.org"
-        nd_in.ngasPort = 443
         b = CopyApp("b", "b")
         did = "HelloWorld-%f" % time.time()
         nd_out = NgasDROP(did, did, len=11)
         nd_out.ngasSrv = "ngas.icrar.org"
-        nd_out.ngasPort = 443
         nd_out.len = nd_in.size
         d = CopyApp("d", "d")
         i = InMemoryDROP("i", "i")
