@@ -64,8 +64,8 @@ def setup_logger_class():
             # Do the same with the session_id, which can be found via the drop (if any)
             # or checking if there is a session currently executing something
             session_id = ""
-            if drop and hasattr(drop, "_dlg_session") and drop._dlg_session:
-                session_id = drop._dlg_session.sessionId
+            if drop:
+                session_id = drop._dlg_session_id
             else:
                 try:
                     session_id = session.track_current_session.tlocal.session.sessionId

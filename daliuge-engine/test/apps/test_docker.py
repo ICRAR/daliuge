@@ -180,7 +180,6 @@ class DockerTests(unittest.TestCase):
             "HelloWorld_out.txt", "HelloWorld_out.txt"
         )  # not a filesystem-related DROP, we can reference its URL in the command-line
         a.ngasSrv = "ngas.icrar.org"
-        a.ngasPort = 443
         b = DockerApp("b", "b", image="ubuntu:14.04", command=command)
         c = FileDROP("c", "c")
         b.addInput(a)

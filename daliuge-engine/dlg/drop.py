@@ -164,6 +164,32 @@ class AbstractDROP(EventFirer, EventHandler):
     #  - Subclasses implement methods decorated with @abstractmethod
     __metaclass__ = ABCMeta
 
+    # Matcher used to validate environment_variable_syntax
+    _env_var_matcher = re.compile(r"\$[A-z|\d]+\..+")
+    _dlg_var_matcher = re.compile(r"\$DLG_.+")
+
+    _known_locks = ('_finishedProducersLock', '_refLock')
+    _known_rlocks = ('_statusLock',)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        for attr_name in AbstractDROP._known_locks + AbstractDROP._known_rlocks:
+            del state[attr_name]
+        del state["_listeners"]
+        return state
+
+    def __setstate__(self, state):
+        for attr_name in AbstractDROP._known_locks:
+            state[attr_name] = threading.Lock()
+        for attr_name in AbstractDROP._known_rlocks:
+            state[attr_name] = threading.RLock()
+
+        self.__dict__.update(state)
+
+        import collections
+        self._listeners = collections.defaultdict(list)
+
+
     @track_current_drop
     def __init__(self, oid, uid, **kwargs):
         """
@@ -193,11 +219,11 @@ class AbstractDROP(EventFirer, EventHandler):
         # by the drop category when generating the drop spec
         self._type = self._popArg(kwargs, "categoryType", None)
 
-        # The Session owning this drop, if any
+        # The ID of the session owning this drop, if any
         # In most real-world situations this attribute will be set, but in
         # general it cannot be assumed it will (e.g., unit tests create drops
         # directly outside the context of a session).
-        self._dlg_session = self._popArg(kwargs, "dlg_session", None)
+        self._dlg_session_id = self._popArg(kwargs, "dlg_session_id", "")
 
         # A simple name that the Drop might receive
         # This is usually set in the Logical Graph Editor,
@@ -220,10 +246,6 @@ class AbstractDROP(EventFirer, EventHandler):
         self._consumers = ListAsDict(self._consumers_uids)
         self._producers_uids = set()
         self._producers = ListAsDict(self._producers_uids)
-
-        # Matcher used to validate environment_variable_syntax
-        self._env_var_matcher = re.compile(r"\$[A-z|\d]+\..+")
-        self._dlg_var_matcher = re.compile(r"\$DLG_.+")
 
         # Set holding the state of the producers that have finished their
         # execution. Once all producers have finished, this DROP moves
@@ -775,9 +797,7 @@ class AbstractDROP(EventFirer, EventHandler):
         """
         kwargs["oid"] = self.oid
         kwargs["uid"] = self.uid
-        kwargs["session_id"] = (
-            self._dlg_session.sessionId if self._dlg_session else ""
-        )
+        kwargs["session_id"] = self._dlg_session_id
         kwargs["name"] = self.name
         kwargs["lg_key"] = self.lg_key
         self._fireEvent(eventType, **kwargs)

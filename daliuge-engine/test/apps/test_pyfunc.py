@@ -235,11 +235,11 @@ class TestPyFuncApp(unittest.TestCase):
 
     def test_func2(self):
         """Checks that func2 in this module works when wrapped"""
-        n = random.randint(0, 1e6)
+        n = random.randint(0, 1_000_000)
         self._test_simple_functions("func2", n, 2 * n)
 
     def test_inner_func(self):
-        n = random.randint(0, 1e6)
+        n = random.randint(0, 1_000_000)
 
         def f(x):
             return x + 2
@@ -247,11 +247,11 @@ class TestPyFuncApp(unittest.TestCase):
         self._test_simple_functions(f, n, n + 2)
 
     def test_lambda(self):
-        n = random.randint(0, 1e6)
+        n = random.randint(0, 1_000_000)
         self._test_simple_functions(lambda x: x / 2, n, n / 2)
 
     def test_inner_func_with_closure(self):
-        n = random.randint(0, 1e6)
+        n = random.randint(0, 1_000_000)
 
         def f(x):
             return x + n
@@ -259,7 +259,7 @@ class TestPyFuncApp(unittest.TestCase):
         self._test_simple_functions(f, n, n + n)
 
     def test_lambda_with_closure(self):
-        n = random.randint(0, 1e6)
+        n = random.randint(0, 1_000_000)
         self._test_simple_functions(lambda x: (x + n) / 2, n, (n + n) / 2)
 
     def _test_func3(self, output_drops, expected_outputs):
