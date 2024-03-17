@@ -28,14 +28,21 @@ class test_ParameterSetDROP(unittest.TestCase):
     kwargs = {
         "mode": None,
         "applicationArgs": {
-            "Cimager": {"value": 2, "type": "int", "description": ""},
+            "Cimager": {
+                "value": 2,
+                "defaultValue": 2,
+                "type": "int",
+                "description": "",
+            },
             "StringParam": {
                 "value": "param",
+                "defaultValue": "param",
                 "type": "string",
                 "description": "",
             },
             "Boolparam": {
                 "value": True,
+                "defaultValue": False,
                 "type": "boolean",
                 "description": "",
             },
@@ -60,7 +67,7 @@ class test_ParameterSetDROP(unittest.TestCase):
         json_parset = ParameterSetDROP(oid="b", uid="b", **yanda_kwargs)
 
         yanda_output = "Cimager=2\nStringParam=param\nBoolparam=True"
-        json_output = '{"Cimager": {"value": 2, "description": "", "type": "int"}, "StringParam": {"value": "param", "description": "", "type": "string"}, "Boolparam": {"value": true, "description": "", "type": "boolean"}}'
+        json_output = '{"Cimager": {"value": 2, "description": "", "type": "int", "default": 2}, "StringParam": {"value": "param", "description": "", "type": "string", "default": "param"}, "Boolparam": {"value": true, "description": "", "type": "boolean", "default": false}}'
 
         yanda_parset.setCompleted()
         json_parset.setCompleted()

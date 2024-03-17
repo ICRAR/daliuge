@@ -422,12 +422,13 @@ class GenericGatherApp(BarrierAppDROP):
         total_len = 0
         # for input in inputs:
         #     total_len += input.size
+        # logger.debug(f">>>> writing {inputs} to {outputs}")
         for output in outputs:
             for input in inputs:
                 d = droputils.allDropContents(input)
                 output.write(d)
 
-                # logger.debug(f">>> written {pickle.loads(d)} to {output}")
+                # logger.debug(f">>> written {d} to {output}")
 
     def run(self):
         self.readWriteData()
