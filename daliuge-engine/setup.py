@@ -36,7 +36,7 @@ from setuptools.command.install import install
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
 MAJOR = 3
-MINOR = 0
+MINOR = 1
 PATCH = 0
 RELEASE = True
 VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
@@ -110,9 +110,7 @@ class lib64_path(install):
         lp = sysconfig.get_path("stdlib")
         with open(PTH_FILE, "w") as f:
             f.write("{0}/dist-packages".format(lp))
-        install.copy_file(
-            self, PTH_FILE, os.path.join(self.install_lib, PTH_FILE)
-        )
+        install.copy_file(self, PTH_FILE, os.path.join(self.install_lib, PTH_FILE))
 
 
 # Core requirements of DALiuGE
