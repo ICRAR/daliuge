@@ -132,10 +132,10 @@ class InMemoryDROP(DataDROP):
     def getIO(self):
         if (
             hasattr(self, "_tp")
-            and hasattr(self, "_sessID")
+            and hasattr(self, "_sessionId")
             and sys.version_info >= (3, 8)
         ):
-            return SharedMemoryIO(self.oid, self._sessID)
+            return SharedMemoryIO(self.oid, self._sessionId)
         else:
             return MemoryIO(self._buf)
 
@@ -199,8 +199,8 @@ class SharedMemoryDROP(DataDROP):
 
     def getIO(self):
         if sys.version_info >= (3, 8):
-            if hasattr(self, "_sessID"):
-                return SharedMemoryIO(self.oid, self._sessID)
+            if hasattr(self, "_sessionId"):
+                return SharedMemoryIO(self.oid, self._sessionId)
             else:
                 # Using Drop without manager, just generate a random name.
                 sess_id = "".join(

@@ -26,6 +26,7 @@ import ast
 import inspect
 import logging
 import os
+import pickle
 import threading
 import time
 import re
@@ -168,8 +169,8 @@ class AbstractDROP(EventFirer, EventHandler):
     _env_var_matcher = re.compile(r"\$[A-z|\d]+\..+")
     _dlg_var_matcher = re.compile(r"\$DLG_.+")
 
-    _known_locks = ('_finishedProducersLock', '_refLock')
-    _known_rlocks = ('_statusLock',)
+    _known_locks = ("_finishedProducersLock", "_refLock")
+    _known_rlocks = ("_statusLock",)
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -187,8 +188,8 @@ class AbstractDROP(EventFirer, EventHandler):
         self.__dict__.update(state)
 
         import collections
-        self._listeners = collections.defaultdict(list)
 
+        self._listeners = collections.defaultdict(list)
 
     @track_current_drop
     def __init__(self, oid, uid, **kwargs):
@@ -207,6 +208,8 @@ class AbstractDROP(EventFirer, EventHandler):
 
         super(AbstractDROP, self).__init__()
 
+        if "_dlg_session_id" not in kwargs and "dlg_session_id" in kwargs:
+            kwargs["_dlg_session_id"] = kwargs["dlg_session_id"]
         self._extract_attributes(**kwargs)
 
         # Copy it since we're going to modify it
@@ -322,9 +325,7 @@ class AbstractDROP(EventFirer, EventHandler):
         # in the state they currently are. In this case an external entity must
         # listen to the events and decide when to trigger the execution of the
         # applications.
-        self._executionMode = self._popArg(
-            kwargs, "executionMode", ExecutionMode.DROP
-        )
+        self._executionMode = self._popArg(kwargs, "executionMode", ExecutionMode.DROP)
 
         # The physical node where this DROP resides.
         # This piece of information is mandatory when submitting the physical
@@ -406,29 +407,26 @@ class AbstractDROP(EventFirer, EventHandler):
         def get_param_value(attr_name, default_value):
             has_component_param = attr_name in kwargs
             has_app_param = (
-                "applicationArgs" in kwargs
-                and attr_name in kwargs["applicationArgs"]
+                "applicationArgs" in kwargs and attr_name in kwargs["applicationArgs"]
             )
 
             if has_component_param and has_app_param:
                 logger.warning(
-                    f"Drop has both component and app param {attr_name}. Using component param."
+                    f"Drop has both component and app param {attr_name}. Using app param param."
                 )
-            if has_component_param:
-                param = kwargs.get(attr_name)
-            elif has_app_param:
-                if kwargs["applicationArgs"].get(attr_name).usage in [
+            if has_app_param:
+                logger.warning(">>>> kwargs: %s", kwargs)
+                if kwargs["applicationArgs"].get(attr_name)["usage"] in [
                     "InputPort",
                     "OutputPort",
                     "InputOutput",
                 ]:
                     # inp = kwargs["input"]
-                    # param = pickle.loads(
-                    #     droputils.allDropContents()
-                    #     )
-                    pass
+                    param = kwargs["applicationArgs"].get(attr_name)["usage"]
                 else:
-                    param = kwargs["applicationArgs"].get(attr_name).value
+                    param = kwargs["applicationArgs"].get(attr_name)["value"]
+            elif has_component_param:
+                param = kwargs.get(attr_name)
             else:
                 param = default_value
             return param
@@ -521,9 +519,7 @@ class AbstractDROP(EventFirer, EventHandler):
         """
         for param_key, param_val in self.parameters.items():
             if self._env_var_matcher.fullmatch(str(param_val)):
-                self.parameters[param_key] = self.get_environment_variable(
-                    param_val
-                )
+                self.parameters[param_key] = self.get_environment_variable(param_val)
             if self._dlg_var_matcher.fullmatch(str(param_val)):
                 self.parameters[param_key] = getDlgVariable(param_val)
 
@@ -546,9 +542,7 @@ class AbstractDROP(EventFirer, EventHandler):
         for producer in self._producers:
             if producer.name == env_var_ref:
                 env_var_drop = producer
-        if (
-            env_var_drop is not None
-        ):  # TODO: Check for KeyValueDROP interface support
+        if env_var_drop is not None:  # TODO: Check for KeyValueDROP interface support
             ret_val = env_var_drop.get(env_var_key)
             if ret_val is None:
                 return key
@@ -578,9 +572,7 @@ class AbstractDROP(EventFirer, EventHandler):
     def reproducibility_level(self, new_flag):
         if type(new_flag) != ReproducibilityFlags:
             raise TypeError("new_flag must be a reproducibility flag enum.")
-        elif rmode_supported(
-            new_flag
-        ):  # TODO: Support custom checkers for repro-level
+        elif rmode_supported(new_flag):  # TODO: Support custom checkers for repro-level
             self._reproducibility = new_flag
             if new_flag == ReproducibilityFlags.ALL:
                 self._committed = False
@@ -594,9 +586,7 @@ class AbstractDROP(EventFirer, EventHandler):
                 self._merkleTree = None
                 self._merkleData = []
         else:
-            raise NotImplementedError(
-                "new_flag %d is not supported", new_flag.value
-            )
+            raise NotImplementedError("new_flag %d is not supported", new_flag.value)
 
     def generate_rerun_data(self):
         """
@@ -701,9 +691,7 @@ class AbstractDROP(EventFirer, EventHandler):
                 ReproducibilityFlags.REPLICATE_TOTAL.name: self.generate_replicate_total_data(),
             }
         else:
-            raise NotImplementedError(
-                "Currently other levels are not in development."
-            )
+            raise NotImplementedError("Currently other levels are not in development.")
 
     def commit(self):
         """
@@ -723,16 +711,12 @@ class AbstractDROP(EventFirer, EventHandler):
                     ].merkle_root
             else:
                 # Fill MerkleTree, add data and set the MerkleRoot Value
-                self._merkleTree = MerkleTree(
-                    self._merkleData.items(), common_hash
-                )
+                self._merkleTree = MerkleTree(self._merkleData.items(), common_hash)
                 self._merkleRoot = self._merkleTree.merkle_root
                 # Set as committed
             self._committed = True
         else:
-            logger.debug(
-                "Trying to re-commit DROP %s, cannot overwrite.", self
-            )
+            logger.debug("Trying to re-commit DROP %s, cannot overwrite.", self)
 
     @property
     def oid(self):
@@ -1078,9 +1062,7 @@ class AbstractDROP(EventFirer, EventHandler):
         scuid = streamingConsumer.uid
         if scuid in self._consumers_uids:
             raise InvalidRelationshipException(
-                DROPRel(
-                    streamingConsumer, DROPLinkType.STREAMING_CONSUMER, self
-                ),
+                DROPRel(streamingConsumer, DROPLinkType.STREAMING_CONSUMER, self),
                 "Consumer is already registered as a normal consumer",
             )
 

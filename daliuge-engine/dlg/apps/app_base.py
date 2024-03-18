@@ -46,7 +46,7 @@ class SyncDropRunner(DropRunner):
         future = Future()
 
         try:
-            res = app_drop.run()
+            res = app_drop._run()
             future.set_result(res)
         except BaseException as e:
             future.set_exception(e)
@@ -345,6 +345,8 @@ class InputFiredAppDROP(AppDROP):
 
     def initialize(self, **kwargs):
         super(InputFiredAppDROP, self).initialize(**kwargs)
+        if "_dlg_session_id" in kwargs:
+            self._dlg_session_id = kwargs["_dlg_session_id"]
         self._completedInputs = []
         self._errorInputs = []
         self._skippedInputs = []

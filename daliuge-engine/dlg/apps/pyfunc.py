@@ -90,9 +90,7 @@ def import_using_name(app, fname):
         if fname in b:
             return b[fname]
         else:
-            msg = (
-                "%s is not builtin and does not contain a module name" % fname
-            )
+            msg = "%s is not builtin and does not contain a module name" % fname
             raise InvalidDropException(app, msg)
     else:
         if len(parts) > 1:
@@ -116,9 +114,7 @@ def import_using_name(app, fname):
                             "Trying to load backwards: %s",
                             ".".join(parts[:-1]),
                         )
-                        mod = importlib.import_module(
-                            ".".join(parts[:-1]), __name__
-                        )
+                        mod = importlib.import_module(".".join(parts[:-1]), __name__)
                         mod = getattr(mod, parts[-1])
                         break
                     except ModuleNotFoundError:
@@ -224,9 +220,7 @@ class PyFuncApp(BarrierAppDROP):
         and its parameters might be computed on a different host than the where the delayed
         function is called and thus the function needs to be serialized.
         """
-        logger.debug(
-            f"Starting evaluation of func_defaults: {self.func_defaults}"
-        )
+        logger.debug(f"Starting evaluation of func_defaults: {self.func_defaults}")
         if (
             isinstance(self.func_defaults, dict)
             and len(self.func_defaults) > 0
@@ -303,9 +297,7 @@ class PyFuncApp(BarrierAppDROP):
                     self.fn_ndef += 1
 
         logger.debug("Got signature for function %s %s", self.f, self.argsig)
-        logger.debug(
-            "Got default values for arguments %s", self.arguments_defaults
-        )
+        logger.debug("Got default values for arguments %s", self.arguments_defaults)
         self.fn_defaults = self.arguments_defaults
         logger.debug(f"initialized fn_defaults with {self.fn_defaults}")
 
@@ -358,6 +350,9 @@ class PyFuncApp(BarrierAppDROP):
         env = os.environ.copy()
         env.update({"DLG_UID": self._uid})
         if self._dlg_session_id:
+            env.update({"DLG_SESSION_ID": self._dlg_session_id})
+        elif "dlg_session_id" in kwargs:
+            self._dlg_session_id = kwargs["dlg_session_id"]
             env.update({"DLG_SESSION_ID": self._dlg_session_id})
 
         self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
@@ -487,20 +482,14 @@ class PyFuncApp(BarrierAppDROP):
             appArgs = self.parameters[
                 "applicationArgs"
             ]  # we'll pop the identified ones
-            _dum = [
-                appArgs.pop(k) for k in self.func_def_keywords if k in appArgs
-            ]
+            _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
             logger.debug(
                 "Default keyword arguments removed: %s",
                 [i for i in _dum],
             )
             # update the positional args
             pargsDict.update(
-                {
-                    k: self.parameters[k]
-                    for k in pargsDict
-                    if k in self.parameters
-                }
+                {k: self.parameters[k] for k in pargsDict if k in self.parameters}
             )
             # if defined in both we use AppArgs values
             for k in appArgs:
@@ -515,9 +504,7 @@ class PyFuncApp(BarrierAppDROP):
                         )
                         appArgs[k]["value"] = value
                     except ValueError:
-                        logger.error(
-                            "Unable to evaluate %s", appArgs[k]["value"]
-                        )
+                        logger.error("Unable to evaluate %s", appArgs[k]["value"])
                 else:
                     value = appArgs[k]["value"]
                 if k in pargsDict:
@@ -552,16 +539,12 @@ class PyFuncApp(BarrierAppDROP):
                 logger.debug("Adding remaining *args to pargs %s", vparg)
                 pargs.extend(vparg)
             if self.arguments.varkw:
-                logger.debug(
-                    "Adding remaining **kwargs to funcargs: %s", vkarg
-                )
+                logger.debug("Adding remaining **kwargs to funcargs: %s", vkarg)
                 funcargs.update(vkarg)
 
         # 3. replace default argument values with named input ports
         # TODO: investigate performing inputs and outputs in a single call
-        if "inputs" in self.parameters and check_ports_dict(
-            self.parameters["inputs"]
-        ):
+        if "inputs" in self.parameters and check_ports_dict(self.parameters["inputs"]):
             check_len = min(
                 len(inputs),
                 self.fn_nargs + self.fn_nkw,
@@ -608,14 +591,10 @@ class PyFuncApp(BarrierAppDROP):
                     mode="outputs",
                 )
             )
-        logger.debug(
-            f"Updating funcargs with values from pargsDict {pargsDict}"
-        )
+        logger.debug(f"Updating funcargs with values from pargsDict {pargsDict}")
         funcargs.update(pargsDict)
 
-        logger.debug(
-            f"Updating funcargs with values from named ports {kwargs}"
-        )
+        logger.debug(f"Updating funcargs with values from named ports {kwargs}")
         funcargs.update(kwargs)
 
         self._recompute_data["args"] = funcargs.copy()
