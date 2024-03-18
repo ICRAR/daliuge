@@ -122,7 +122,7 @@ class SleepApp(BarrierAppDROP):
         self._run()
         try:
             # If data is coming through a named port we load it from there.
-            if isinstance(self.sleep_time, (InMemoryDROP, FileDROP, DropProxy, Any)):
+            if isinstance(self.sleep_time, (InMemoryDROP, FileDROP, DropProxy)):
                 logger.debug("Trying to read from %s", self.sleep_time)
                 self.sleep_time = drop_loaders.load_pickle(self.sleep_time)
             time.sleep(self.sleep_time)
