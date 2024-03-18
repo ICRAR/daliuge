@@ -24,7 +24,7 @@ import _pickle
 from numbers import Number
 import pickle
 import random
-from typing import List, Optional
+from typing import List, Optional, Any
 import urllib.error
 import urllib.request
 import logging
@@ -48,6 +48,7 @@ from dlg.meta import (
     dlg_streaming_input,
 )
 from dlg.exceptions import DaliugeException
+from dlg.rpc import DropProxy
 
 
 logger = logging.getLogger(__name__)
@@ -121,7 +122,8 @@ class SleepApp(BarrierAppDROP):
         self._run()
         try:
             # If data is coming through a named port we load it from there.
-            if isinstance(self.sleep_time, (InMemoryDROP, FileDROP)):
+            if isinstance(self.sleep_time, (InMemoryDROP, FileDROP, DropProxy, Any)):
+                logger.debug("Trying to read from %s", self.sleep_time)
                 self.sleep_time = drop_loaders.load_pickle(self.sleep_time)
             time.sleep(self.sleep_time)
         except (TypeError, ValueError):
