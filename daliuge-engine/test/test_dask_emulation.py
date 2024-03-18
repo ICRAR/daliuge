@@ -24,7 +24,7 @@ import functools
 import json
 import os
 import pytest
-from time import sleep
+import shutil
 import unittest
 
 import numpy as np
@@ -106,6 +106,12 @@ except:
 
 def sum_with_user_defined_default(a, b=MyType(10)):
     return a + b.x
+
+
+@pytest.fixture(scope="function", autouse=True)
+def change_test_dir(request, monkeypatch):
+    print(f">>>>> path: {request.fspath.dirname}")
+    monkeypatch.chdir(request.fspath.dirname)
 
 
 class _TestDelayed(object):
@@ -257,12 +263,17 @@ class TestNoDelayed(unittest.TestCase, _TestDelayed):
 class TestDlgDelayed(_TestDelayed, unittest.TestCase):
     """dlg-base tests, they start/stop the node manager and use dlg_delayed"""
 
+    # @pytest.fixture(autouse=True)
+    # def change_test_dir(self, request, monkeypatch):
+    #     print(f">>>>> path: {request.fspath.dirname}")
+    #     monkeypatch.chdir(request.fspath.dirname)
+
     def delayed(self, f, *args, **kwargs):
         return dlg_delayed(f, *args, **kwargs)
 
     def setUp(self):
         env = os.environ.copy()
-        env["PYTHONPATH"] = f"{env.get('PYTHONPATH', '')}:{os.getcwd()}"
+        env["PYTHONPATH"] = f"{env.get('PYTHONPATH', '')}:{os.path.abspath('.')}/.."
         print(f">>>> env: {env['PYTHONPATH']}")
         unittest.TestCase.setUp(self)
         self.dmProcess = tool.start_process("nm", ["-vvv"], env=env)
