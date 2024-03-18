@@ -24,7 +24,7 @@ import threading
 
 from six.moves import queue as Queue  # @UnresolvedImport
 
-from dlg.drop import BarrierAppDROP
+from dlg.apps.app_base import BarrierAppDROP
 
 
 logger = logging.getLogger(__name__)
