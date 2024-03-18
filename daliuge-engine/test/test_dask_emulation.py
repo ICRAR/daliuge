@@ -24,7 +24,6 @@ import functools
 import json
 import os
 import pytest
-import shutil
 import unittest
 
 import numpy as np
@@ -195,10 +194,6 @@ class _TestDelayed(object):
         compute = self.compute
 
         self.assertEqual(compute(delayed(sum_with_kwargs)(1)), 1)
-        # self.assertEqual(compute(delayed(sum_with_kwargs)(1, b=20)), 21)
-        # self.assertEqual(
-        # compute(delayed(sum_with_kwargs)(1, b=20, x=-111)), 21
-        # )
 
     def test_with_args_and_kwargs(self):
         """Tests that delayed() works correctly with kwargs"""
@@ -206,12 +201,6 @@ class _TestDelayed(object):
         compute = self.compute
 
         self.assertEqual(compute(delayed(sum_with_args_and_kwarg)(1)), 1)
-        # self.assertEqual(
-        #     compute(delayed(sum_with_args_and_kwarg)(1, 20, b=100, x=-1000)), 121
-        # )
-        # self.assertEqual(
-        #     compute(delayed(sum_with_args_and_kwarg)(1, 20, 30, b=100, x=-2000)), 151
-        # )
 
     def test_with_user_defined_default(self):
         """Tests that delayed() works with default values that are not json-dumpable"""
@@ -262,11 +251,6 @@ class TestNoDelayed(unittest.TestCase, _TestDelayed):
 
 class TestDlgDelayed(_TestDelayed, unittest.TestCase):
     """dlg-base tests, they start/stop the node manager and use dlg_delayed"""
-
-    # @pytest.fixture(autouse=True)
-    # def change_test_dir(self, request, monkeypatch):
-    #     print(f">>>>> path: {request.fspath.dirname}")
-    #     monkeypatch.chdir(request.fspath.dirname)
 
     def delayed(self, f, *args, **kwargs):
         return dlg_delayed(f, *args, **kwargs)
