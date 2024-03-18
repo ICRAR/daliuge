@@ -6,6 +6,7 @@ import logging
 import math
 import threading
 
+from dlg.drop_loaders import load_pickle
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.data_base import DataDROP
 from dlg.ddap_protocol import (
@@ -37,7 +38,7 @@ class DropRunner(ABC):
 
 class SyncDropRunner(DropRunner):
     """
-    A simple runner that executes synchronously.
+    A simple pool-like object that creates a new thread for each invocation.
     """
 
     def run_drop(self, app_drop: "AppDROP") -> Future:
@@ -193,45 +194,40 @@ class AppDROP(ContainerDROP):
         """
         return list(self._streamingInputs.values())
 
-    def _generateNamedInputs(self):
+    def _generateNamedPorts(self, ports):
         """
-        Generates a named mapping of input data drops. Can only be called during run().
+        Generates a named mapping of ports to data drops. Can only be called during run().
         """
-        named_inputs: OrderedDict[str, DataDROP] = OrderedDict()
-        if "inputs" in self.parameters and isinstance(
-            self.parameters["inputs"][0], dict
+        port_type = {"inputs": "InputPort", "outputs": "OutputPort"}
+        named_ports: OrderedDict[str, DataDROP] = OrderedDict()
+        port_dict = self.__getattribute__(f"_{ports}")
+        if (
+            ports in self.parameters
+            and len(self.parameters[ports]) > 0
+            and isinstance(self.parameters[ports][0], dict)
         ):
-            for i in range(len(self._inputs)):
-                key = list(self.parameters["inputs"][i].values())[0]
-                value = self._inputs[
-                    list(self.parameters["inputs"][i].keys())[0]
-                ]
-                named_inputs[key] = value
-        else:
-            for key, field in self.parameters["applicationArgs"].items():
-                if field["usage"] in ["InputPort", "InputOutput"]:
-                    named_inputs[field["name"]] = field
-        return named_inputs
-
-    def _generateNamedOutputs(self):
-        """
-        Generates a named mapping of output data drops. Can only be called during run().
-        """
-        named_outputs: OrderedDict[str, DataDROP] = OrderedDict()
-        if "outputs" in self.parameters and isinstance(
-            self.parameters["outputs"][0], dict
+            for i in range(len(port_dict)):
+                key = list(self.parameters[ports][i].values())[0]
+                value = port_dict[list(self.parameters[ports][i].keys())[0]]
+                if key not in named_ports:
+                    named_ports[key] = value
+                else:
+                    if isinstance(named_ports[key], list):
+                        named_ports[key].append(value)
+                    else:
+                        named_ports[key] = [named_ports[key], value]
+        elif (
+            ports in self.parameters
+            and len(self.parameters[ports]) > 0
+            and isinstance(self.parameters[ports], list)
         ):
-            for i in range(len(self._outputs)):
-                key = list(self.parameters["outputs"][i].values())[0]
-                value = self._outputs[
-                    list(self.parameters["outputs"][i].keys())[0]
-                ]
-                named_outputs[key] = value
-        else:
+            # This enablkes the gather to work
+            return {}
+        elif "applicationArgs" in self.parameters:
             for key, field in self.parameters["applicationArgs"].items():
-                if field["usage"] in ["OutputPort", "InputOutput"]:
-                    named_outputs[field["name"]] = field
-        return named_outputs
+                if field["usage"] in [port_type[ports], "InputOutput"]:
+                    named_ports[field["name"]] = field
+        return named_ports
 
     def handleEvent(self, e):
         """
@@ -286,9 +282,7 @@ class AppDROP(ContainerDROP):
             self.oid,
             "FINISHED" if not is_error else "ERROR",
         )
-        self._fire(
-            "producerFinished", status=self.status, execStatus=self.execStatus
-        )
+        self._fire("producerFinished", status=self.status, execStatus=self.execStatus)
         self.completedrop()
 
     def cancel(self):
@@ -345,14 +339,14 @@ class InputFiredAppDROP(AppDROP):
     run but moved to the ERROR state itself instead.
     """
 
-    input_error_threshold = dlg_int_param(
-        "Input error threshold (0 and 100)", 0
-    )
+    input_error_threshold = dlg_int_param("Input error threshold (0 and 100)", 0)
     n_effective_inputs = dlg_int_param("Number of effective inputs", -1)
     n_tries = dlg_int_param("Number of tries", 1)
 
     def initialize(self, **kwargs):
         super(InputFiredAppDROP, self).initialize(**kwargs)
+        if "_dlg_session_id" in kwargs:
+            self._dlg_session_id = kwargs["_dlg_session_id"]
         self._completedInputs = []
         self._errorInputs = []
         self._skippedInputs = []
@@ -416,9 +410,7 @@ class InputFiredAppDROP(AppDROP):
         elif drop_state == DROPStates.SKIPPED:
             self._skippedInputs.append(uid)
         else:
-            raise Exception(
-                "Invalid DROP state in dropCompleted: %s" % drop_state
-            )
+            raise Exception("Invalid DROP state in dropCompleted: %s" % drop_state)
 
         error_len = len(self._errorInputs)
         ok_len = len(self._completedInputs)
@@ -427,9 +419,7 @@ class InputFiredAppDROP(AppDROP):
         # We have enough inputs to proceed
         if (skipped_len + error_len + ok_len) == n_eff_inputs:
             # calculate the number of errors that have already occurred
-            percent_failed = math.floor(
-                (error_len / float(n_eff_inputs)) * 100
-            )
+            percent_failed = math.floor((error_len / float(n_eff_inputs)) * 100)
             if percent_failed > 0:
                 logger.debug(
                     "Error rate on inputs for %r: %d/%d",
@@ -465,9 +455,7 @@ class InputFiredAppDROP(AppDROP):
         try:
             self.execute()
         except:
-            logger.exception(
-                "Unexpected exception during drop (%r) execution", self
-            )
+            logger.exception("Unexpected exception during drop (%r) execution", self)
 
     @track_current_drop
     def execute(self, _send_notifications=True):
@@ -515,11 +503,31 @@ class InputFiredAppDROP(AppDROP):
         if _send_notifications:
             self._notifyAppIsFinished()
 
-    def run(self):
+    def _run(self):
         """
         Run this application. It can be safely assumed that at this point all
         the required inputs are COMPLETED.
+
+        This will first set the named input params and then call the run method
+        provided by the implementation.
         """
+        named_inputs = self._generateNamedPorts("inputs")
+        logger.debug("named inputs identified: %s", named_inputs)
+        for attr_name in named_inputs:
+            # if not isinstance(named_inputs[attr_name], list):
+            #     self.__setattr__(
+            #         attr_name, load_pickle(named_inputs[attr_name])
+            #     )
+            # else:
+            self.__setattr__(attr_name, named_inputs[attr_name])
+
+        named_outputs = self._generateNamedPorts("outputs")
+        logger.debug("named outputs identified: %s", named_outputs)
+        for attr_name in named_outputs:
+            if not isinstance(named_outputs[attr_name], list):
+                self.__setattr__(attr_name, named_outputs[attr_name])
+        # if "run" in dir(self):  # we might not have implemented the run method
+        #     self.run()
 
     # TODO: another thing we need to check
     def exists(self):

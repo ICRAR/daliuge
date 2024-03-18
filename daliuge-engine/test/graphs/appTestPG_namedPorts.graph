@@ -1,0 +1,994 @@
+[
+    {
+        "oid": "2023-07-04T00:13:32_-3_0",
+        "name": "sleep1",
+        "categoryType": "Application",
+        "category": "PythonApp",
+        "dropclass": "dlg.apps.simple.SleepApp",
+        "storage": "PythonApp",
+        "rank": [
+            0
+        ],
+        "reprodata": {
+            "rmode": "0",
+            "NOTHING": {
+                "rmode": "0",
+                "lgt_data": {
+                    "merkleroot": null
+                },
+                "lg_parenthashes": {},
+                "lg_data": {
+                    "merkleroot": null
+                },
+                "lg_blockhash": "b33f465166e678698582a66db1f75d28949c4bd51a72e6f608c9d124b9196e73"
+            }
+        },
+        "loop_ctx": null,
+        "weight": 5,
+        "sleep_time": null,
+        "num_cpus": 1,
+        "nodeAttributes": {
+            "sleep_time": {
+                "name": "sleep_time",
+                "value": null,
+                "defaultValue": "",
+                "description": "The number of seconds to sleep",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "d70329fb-db44-43f1-b795-820f5a7bad40",
+                "parameterType": "ApplicationArgument",
+                "usage": "InputPort"
+            },
+            "dropclass": {
+                "name": "dropclass",
+                "value": "dlg.apps.simple.SleepApp",
+                "defaultValue": "dlg.apps.simple.SleepApp",
+                "description": "Application class",
+                "readonly": true,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "d0839af9-ecbb-459a-b91f-096ebe0dd28f",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "execution_time": {
+                "name": "execution_time",
+                "value": 5,
+                "defaultValue": "5",
+                "description": "Estimated execution time",
+                "readonly": true,
+                "type": "Float",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "8b5ec23b-165c-473e-b968-2bb06ad28524",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "num_cpus": {
+                "name": "num_cpus",
+                "value": 1,
+                "defaultValue": "1",
+                "description": "Number of cores used",
+                "readonly": true,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "cf07b089-c4ac-4c36-8fd2-5a3eaafcb30d",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "group_start": {
+                "name": "group_start",
+                "value": false,
+                "defaultValue": "False",
+                "description": "Is this node the start of a group?",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "41c4972c-3d89-48ef-b662-d1154b1bae27",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            }
+        },
+        "execution_time": 5,
+        "group_start": false,
+        "applicationArgs": {
+            "sleep_time": {
+                "name": "sleep_time",
+                "value": null,
+                "defaultValue": "",
+                "description": "The number of seconds to sleep",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "d70329fb-db44-43f1-b795-820f5a7bad40",
+                "parameterType": "ApplicationArgument",
+                "usage": "InputPort"
+            }
+        },
+        "iid": "0",
+        "lg_key": -3,
+        "inputs": [
+            {
+                "2023-07-04T00:13:32_-2_0": "sleep_time"
+            }
+        ],
+        "node": "localhost",
+        "island": "localhost"
+    },
+    {
+        "oid": "2023-07-04T00:13:32_-1_0",
+        "name": "createMulti",
+        "categoryType": "Application",
+        "category": "PythonApp",
+        "dropclass": "dlg.apps.pyfunc.PyFuncApp",
+        "storage": "PythonApp",
+        "rank": [
+            0
+        ],
+        "reprodata": {
+            "rmode": "0",
+            "NOTHING": {
+                "rmode": "0",
+                "lgt_data": {
+                    "merkleroot": null
+                },
+                "lg_parenthashes": {},
+                "lg_data": {
+                    "merkleroot": null
+                },
+                "lg_blockhash": "b33f465166e678698582a66db1f75d28949c4bd51a72e6f608c9d124b9196e73"
+            }
+        },
+        "loop_ctx": null,
+        "weight": 5,
+        "num_cpus": 1,
+        "nodeAttributes": {
+            "func_name": {
+                "name": "func_name",
+                "value": "simple_functions.createMultiOut",
+                "defaultValue": "",
+                "description": "Python function name",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "ee6fcfaa-d2a0-4291-bc3a-bfd445e93afe",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            },
+            "out1": {
+                "name": "out1",
+                "value": null,
+                "defaultValue": "0",
+                "description": "",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "3df116c1-69e5-49b9-b1e0-9f043d872343",
+                "parameterType": "ApplicationArgument",
+                "usage": "OutputPort"
+            },
+            "out2": {
+                "name": "out2",
+                "value": null,
+                "defaultValue": "0",
+                "description": "",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "cfe583b6-a7f2-4bea-bcaa-e5d9e46202c6",
+                "parameterType": "ApplicationArgument",
+                "usage": "OutputPort"
+            },
+            "v1": {
+                "name": "v1",
+                "value": 2,
+                "defaultValue": "2",
+                "description": "",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "e2762df0-7d33-4e1a-a002-7169f7391fe1",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            },
+            "v2": {
+                "name": "v2",
+                "value": 8,
+                "defaultValue": "8",
+                "description": "",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "583fbab8-79f9-4df9-927c-433bbce9b0e1",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            },
+            "dropclass": {
+                "name": "dropclass",
+                "value": "dlg.apps.pyfunc.PyFuncApp",
+                "defaultValue": "dlg.apps.pyfunc.PyFuncApp",
+                "description": "Application class",
+                "readonly": true,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "17a35c1d-400b-4ad8-8d79-08d8655a6624",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "execution_time": {
+                "name": "execution_time",
+                "value": 5,
+                "defaultValue": "5",
+                "description": "Estimated execution time",
+                "readonly": true,
+                "type": "Float",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "93941283-6a86-4609-a83e-1127e267847d",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "num_cpus": {
+                "name": "num_cpus",
+                "value": 1,
+                "defaultValue": "1",
+                "description": "Number of cores used",
+                "readonly": true,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "aac36563-a7bc-426a-84e1-2af3cdf13cb2",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "group_start": {
+                "name": "group_start",
+                "value": false,
+                "defaultValue": "False",
+                "description": "Is this node the start of a group?",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "438f3c3a-424a-4c2b-b939-d84830fda531",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "input_error_threshold": {
+                "name": "input_error_threshold",
+                "value": 0,
+                "defaultValue": "0",
+                "description": "The allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "126cb93f-753e-4a01-890b-095fd450c702",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "n_tries": {
+                "name": "n_tries",
+                "value": 1,
+                "defaultValue": "1",
+                "description": "Specifies the number of times the 'run' method will be executed before finally giving up",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "8c36bfdc-721c-46ac-bdaf-c8ba3f00d245",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "input_parser": {
+                "name": "input_parser",
+                "value": "pickle",
+                "defaultValue": "pickle",
+                "description": "Input port parsing technique",
+                "readonly": false,
+                "type": "Select",
+                "precious": false,
+                "options": [
+                    "raw",
+                    "pickle",
+                    "eval",
+                    "npy",
+                    "path",
+                    "dataurl"
+                ],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "b1d5f587-bd1f-4086-a10a-af5878422092",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            },
+            "output_parser": {
+                "name": "output_parser",
+                "value": "pickle",
+                "defaultValue": "pickle",
+                "description": "Output port parsing technique Mapping from argname to default value. Should match only the last part of the argnames list. Values are interpreted as Python code literals and that means string values need to be quoted.",
+                "readonly": false,
+                "type": "Select",
+                "precious": false,
+                "options": [
+                    "raw",
+                    "pickle",
+                    "eval",
+                    "npy",
+                    "path",
+                    "dataurl"
+                ],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "5b1ad970-ecdb-4a02-95fc-c0fa9cfb4ba6",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            },
+            "func_arg_mapping": {
+                "name": "func_arg_mapping",
+                "value": "",
+                "defaultValue": "",
+                "description": " Mapping between argument name and input drop uids",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "690014f1-7c44-4958-b77a-17f8f8d65faf",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            }
+        },
+        "func_name": "dlg.apps.simple_functions.createMultiOut",
+        "out1": null,
+        "out2": null,
+        "v1": 0.5,
+        "v2": 0.5,
+        "execution_time": 5,
+        "group_start": false,
+        "input_error_threshold": 0,
+        "n_tries": 1,
+        "input_parser": "pickle",
+        "output_parser": "pickle",
+        "func_arg_mapping": "",
+        "applicationArgs": {
+            "func_name": {
+                "name": "func_name",
+                "value": "dlg.apps.simple_functions.createMultiOut",
+                "defaultValue": "",
+                "description": "Python function name",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "ee6fcfaa-d2a0-4291-bc3a-bfd445e93afe",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            },
+            "out1": {
+                "name": "out1",
+                "value": null,
+                "defaultValue": "0",
+                "description": "",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "3df116c1-69e5-49b9-b1e0-9f043d872343",
+                "parameterType": "ApplicationArgument",
+                "usage": "OutputPort"
+            },
+            "out2": {
+                "name": "out2",
+                "value": null,
+                "defaultValue": "0",
+                "description": "",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "cfe583b6-a7f2-4bea-bcaa-e5d9e46202c6",
+                "parameterType": "ApplicationArgument",
+                "usage": "OutputPort"
+            },
+            "v1": {
+                "name": "v1",
+                "value": 0.5,
+                "defaultValue": "2",
+                "description": "",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "e2762df0-7d33-4e1a-a002-7169f7391fe1",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            },
+            "v2": {
+                "name": "v2",
+                "value": 0.6,
+                "defaultValue": "8",
+                "description": "",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "583fbab8-79f9-4df9-927c-433bbce9b0e1",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            },
+            "input_parser": {
+                "name": "input_parser",
+                "value": "pickle",
+                "defaultValue": "pickle",
+                "description": "Input port parsing technique",
+                "readonly": false,
+                "type": "Select",
+                "precious": false,
+                "options": [
+                    "raw",
+                    "pickle",
+                    "eval",
+                    "npy",
+                    "path",
+                    "dataurl"
+                ],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "b1d5f587-bd1f-4086-a10a-af5878422092",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            },
+            "output_parser": {
+                "name": "output_parser",
+                "value": "pickle",
+                "defaultValue": "pickle",
+                "description": "Output port parsing technique Mapping from argname to default value. Should match only the last part of the argnames list. Values are interpreted as Python code literals and that means string values need to be quoted.",
+                "readonly": false,
+                "type": "Select",
+                "precious": false,
+                "options": [
+                    "raw",
+                    "pickle",
+                    "eval",
+                    "npy",
+                    "path",
+                    "dataurl"
+                ],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "5b1ad970-ecdb-4a02-95fc-c0fa9cfb4ba6",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            },
+            "func_arg_mapping": {
+                "name": "func_arg_mapping",
+                "value": "",
+                "defaultValue": "",
+                "description": " Mapping between argument name and input drop uids",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "690014f1-7c44-4958-b77a-17f8f8d65faf",
+                "parameterType": "ApplicationArgument",
+                "usage": "NoPort"
+            }
+        },
+        "iid": "0",
+        "lg_key": -1,
+        "outputs": [
+            {
+                "2023-07-04T00:13:32_-2_0": "out2"
+            },
+            {
+                "2023-07-04T00:13:32_-4_0": "out2"
+            }
+        ],
+        "node": "localhost",
+        "island": "localhost"
+    },
+    {
+        "oid": "2023-07-04T00:13:32_-2_0",
+        "name": "sleep_time1",
+        "categoryType": "Data",
+        "category": "Memory",
+        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+        "storage": "Memory",
+        "rank": [
+            0
+        ],
+        "reprodata": {
+            "rmode": "0",
+            "NOTHING": {
+                "rmode": "0",
+                "lgt_data": {
+                    "merkleroot": null
+                },
+                "lg_parenthashes": {},
+                "lg_data": {
+                    "merkleroot": null
+                },
+                "lg_blockhash": "b33f465166e678698582a66db1f75d28949c4bd51a72e6f608c9d124b9196e73"
+            }
+        },
+        "loop_ctx": null,
+        "weight": 5,
+        "nodeAttributes": {
+            "dropclass": {
+                "name": "dropclass",
+                "value": "dlg.data.drops.memory.InMemoryDROP",
+                "defaultValue": "dlg.data.drops.memory.InMemoryDROP",
+                "description": "Drop class",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "cb13df6c-d046-4066-8c56-f0d3354047b2",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "data_volume": {
+                "name": "data_volume",
+                "value": 5,
+                "defaultValue": "5",
+                "description": "Estimated size of the data contained in this node",
+                "readonly": false,
+                "type": "Float",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "68631451-7562-4c52-a6d0-5a38eb7f14dc",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "group_end": {
+                "name": "group_end",
+                "value": false,
+                "defaultValue": "False",
+                "description": "Is this node the end of a group?",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "92e12f0a-0ccd-4693-bbf0-3f0aaed5309e",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "streaming": {
+                "name": "streaming",
+                "value": false,
+                "defaultValue": "False",
+                "description": "Specifies whether this data component streams input and output data",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "7f526f25-d1d3-4429-8acb-b794c110e665",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "persist": {
+                "name": "persist",
+                "value": false,
+                "defaultValue": "False",
+                "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "0e2cd7b1-2a5e-4107-850f-c3553e12e7f5",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "out1": {
+                "name": "out1",
+                "value": null,
+                "defaultValue": "0",
+                "description": "",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "680b2a35-0faf-422e-857e-7f65f6cd9b05",
+                "parameterType": "ApplicationArgument",
+                "usage": "InputOutput"
+            }
+        },
+        "data_volume": 5,
+        "group_end": false,
+        "streaming": false,
+        "persist": false,
+        "out1": null,
+        "applicationArgs": {
+            "out1": {
+                "name": "out1",
+                "value": null,
+                "defaultValue": "0",
+                "description": "",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "680b2a35-0faf-422e-857e-7f65f6cd9b05",
+                "parameterType": "ApplicationArgument",
+                "usage": "InputOutput"
+            }
+        },
+        "iid": "0",
+        "lg_key": -2,
+        "producers": [
+            {
+                "2023-07-04T00:13:32_-1_0": "out1"
+            }
+        ],
+        "consumers": [
+            {
+                "2023-07-04T00:13:32_-3_0": "out1"
+            }
+        ],
+        "node": "localhost",
+        "island": "localhost"
+    },
+    {
+        "oid": "2023-07-04T00:13:32_-4_0",
+        "name": "sleep_time",
+        "categoryType": "Data",
+        "category": "Memory",
+        "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+        "storage": "Memory",
+        "rank": [
+            0
+        ],
+        "reprodata": {
+            "rmode": "0",
+            "NOTHING": {
+                "rmode": "0",
+                "lgt_data": {
+                    "merkleroot": null
+                },
+                "lg_parenthashes": {},
+                "lg_data": {
+                    "merkleroot": null
+                },
+                "lg_blockhash": "b33f465166e678698582a66db1f75d28949c4bd51a72e6f608c9d124b9196e73"
+            }
+        },
+        "loop_ctx": null,
+        "weight": 5,
+        "nodeAttributes": {
+            "dropclass": {
+                "name": "dropclass",
+                "value": "dlg.data.drops.memory.InMemoryDROP",
+                "defaultValue": "dlg.data.drops.memory.InMemoryDROP",
+                "description": "Drop class",
+                "readonly": false,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "cb13df6c-d046-4066-8c56-f0d3354047b2",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "data_volume": {
+                "name": "data_volume",
+                "value": 5,
+                "defaultValue": "5",
+                "description": "Estimated size of the data contained in this node",
+                "readonly": false,
+                "type": "Float",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "68631451-7562-4c52-a6d0-5a38eb7f14dc",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "group_end": {
+                "name": "group_end",
+                "value": false,
+                "defaultValue": "False",
+                "description": "Is this node the end of a group?",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "92e12f0a-0ccd-4693-bbf0-3f0aaed5309e",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "streaming": {
+                "name": "streaming",
+                "value": false,
+                "defaultValue": "False",
+                "description": "Specifies whether this data component streams input and output data",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "7f526f25-d1d3-4429-8acb-b794c110e665",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "persist": {
+                "name": "persist",
+                "value": false,
+                "defaultValue": "False",
+                "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "0e2cd7b1-2a5e-4107-850f-c3553e12e7f5",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "out2": {
+                "name": "out2",
+                "value": null,
+                "defaultValue": "0",
+                "description": "",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "448b283b-49c8-43c4-ae7e-76a11fa7bac3",
+                "parameterType": "ApplicationArgument",
+                "usage": "InputOutput"
+            }
+        },
+        "data_volume": 5,
+        "group_end": false,
+        "streaming": false,
+        "persist": false,
+        "out2": null,
+        "applicationArgs": {
+            "out2": {
+                "name": "out2",
+                "value": null,
+                "defaultValue": "0",
+                "description": "",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "448b283b-49c8-43c4-ae7e-76a11fa7bac3",
+                "parameterType": "ApplicationArgument",
+                "usage": "InputOutput"
+            }
+        },
+        "iid": "0",
+        "lg_key": -4,
+        "producers": [
+            {
+                "2023-07-04T00:13:32_-1_0": "out2"
+            }
+        ],
+        "consumers": [
+            {
+                "2023-07-04T00:13:32_-5_0": "out2"
+            }
+        ],
+        "node": "localhost",
+        "island": "localhost"
+    },
+    {
+        "oid": "2023-07-04T00:13:32_-5_0",
+        "name": "sleep2",
+        "categoryType": "Application",
+        "category": "PythonApp",
+        "dropclass": "dlg.apps.simple.SleepApp",
+        "storage": "PythonApp",
+        "rank": [
+            0
+        ],
+        "reprodata": {
+            "rmode": "0",
+            "NOTHING": {
+                "rmode": "0",
+                "lgt_data": {
+                    "merkleroot": null
+                },
+                "lg_parenthashes": {},
+                "lg_data": {
+                    "merkleroot": null
+                },
+                "lg_blockhash": "b33f465166e678698582a66db1f75d28949c4bd51a72e6f608c9d124b9196e73"
+            }
+        },
+        "loop_ctx": null,
+        "weight": 5,
+        "sleep_time": null,
+        "num_cpus": 1,
+        "nodeAttributes": {
+            "dropclass": {
+                "name": "dropclass",
+                "value": "dlg.apps.simple.SleepApp",
+                "defaultValue": "dlg.apps.simple.SleepApp",
+                "description": "Application class",
+                "readonly": true,
+                "type": "String",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "d0839af9-ecbb-459a-b91f-096ebe0dd28f",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "execution_time": {
+                "name": "execution_time",
+                "value": 5,
+                "defaultValue": "5",
+                "description": "Estimated execution time",
+                "readonly": true,
+                "type": "Float",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "8b5ec23b-165c-473e-b968-2bb06ad28524",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "num_cpus": {
+                "name": "num_cpus",
+                "value": 1,
+                "defaultValue": "1",
+                "description": "Number of cores used",
+                "readonly": true,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "cf07b089-c4ac-4c36-8fd2-5a3eaafcb30d",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "group_start": {
+                "name": "group_start",
+                "value": false,
+                "defaultValue": "False",
+                "description": "Is this node the start of a group?",
+                "readonly": false,
+                "type": "Boolean",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "41c4972c-3d89-48ef-b662-d1154b1bae27",
+                "parameterType": "ComponentParameter",
+                "usage": "NoPort"
+            },
+            "sleep_time": {
+                "name": "sleep_time",
+                "value": null,
+                "defaultValue": "",
+                "description": "",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "0bfe3974-50af-4e5f-ac94-87a454d3015a",
+                "parameterType": "ApplicationArgument",
+                "usage": "InputPort"
+            }
+        },
+        "execution_time": 5,
+        "group_start": false,
+        "applicationArgs": {
+            "sleep_time": {
+                "name": "sleep_time",
+                "value": null,
+                "defaultValue": "",
+                "description": "",
+                "readonly": false,
+                "type": "Integer",
+                "precious": false,
+                "options": [],
+                "positional": false,
+                "keyAttribute": false,
+                "id": "0bfe3974-50af-4e5f-ac94-87a454d3015a",
+                "parameterType": "ApplicationArgument",
+                "usage": "InputPort"
+            }
+        },
+        "iid": "0",
+        "lg_key": -5,
+        "inputs": [
+            {
+                "2023-07-04T00:13:32_-4_0": "sleep_time"
+            }
+        ],
+        "node": "localhost",
+        "island": "localhost"
+    }
+]

@@ -22,7 +22,7 @@
 import json
 import os
 
-from dlg.drop import dropdict
+from dlg.common import dropdict
 
 
 # Directories and paths
@@ -202,9 +202,7 @@ if __name__ == "__main__":
             check_exists=False,
             node=node,
         )
-        scp = scpSpec(
-            "Scp_%d" % (i), node=node, pkeyPath=KEY_PATH, timeout=3600
-        )
+        scp = scpSpec("Scp_%d" % (i), node=node, pkeyPath=KEY_PATH, timeout=3600)
         scpOut = directorySpec(
             "SplitOutput_%d_Copy" % (i),
             dirname=splitCopyDir,

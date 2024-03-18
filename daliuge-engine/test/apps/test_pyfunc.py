@@ -27,8 +27,9 @@ import random
 import unittest
 import numpy
 
-from dlg import droputils
+from dlg import droputils, drop_loaders
 from dlg.apps import pyfunc
+from dlg.apps.simple_functions import string2json
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.data.drops.memory import InMemoryDROP
 from dlg.droputils import DROPWaiterCtx
@@ -69,14 +70,10 @@ def _PyFuncApp(oid, uid, f, **kwargs):
     if isinstance(f, str):
         fname = f = "test.apps.test_pyfunc." + f
     fw_kwargs = {
-        k: v
-        for k, v in kwargs.items()
-        if k in ["input_parser", "output_parser"]
+        k: v for k, v in kwargs.items() if k in ["input_parser", "output_parser"]
     }
     input_kws = [
-        {k: v}
-        for k, v in kwargs.items()
-        if k not in ["input_parser", "output_parser"]
+        {k: v} for k, v in kwargs.items() if k not in ["input_parser", "output_parser"]
     ]
     fcode, fdefaults = pyfunc.serialize_func(f)
     return pyfunc.PyFuncApp(
@@ -129,9 +126,7 @@ class TestPyFuncApp(unittest.TestCase):
 
         _PyFuncApp("a", "a", inner_function)
 
-    def test_pickle_func(
-        self, f=lambda x: x, input_data="hello", output_data="hello"
-    ):
+    def test_pickle_func(self, f=lambda x: x, input_data="hello", output_data="hello"):
         a = InMemoryDROP("a", "a")
         b = _PyFuncApp("b", "b", f)
         c = InMemoryDROP("c", "c")
@@ -140,11 +135,11 @@ class TestPyFuncApp(unittest.TestCase):
         b.addOutput(c)
 
         with DROPWaiterCtx(self, c, 5):
-            droputils.save_pickle(a, input_data)
+            drop_loaders.save_pickle(a, input_data)
             a.setCompleted()
         for drop in a, b, c:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
-        self.assertEqual(output_data, droputils.load_pickle(c))
+        self.assertEqual(output_data, drop_loaders.load_pickle(c))
 
     def test_eval_func(self, f=lambda x: x, input_data=None, output_data=None):
         input_data = [2, 2] if input_data is None else input_data
@@ -173,11 +168,31 @@ class TestPyFuncApp(unittest.TestCase):
             eval(droputils.allDropContents(c).decode("utf-8"), {}, {}),
         )
 
+    def test_string2json_func(self, f=string2json, input_data=None, output_data=None):
+        input_data = '["a", "b", "c"]' if input_data is None else input_data
+        output_data = ["a", "b", "c"] if output_data is None else output_data
+
+        a = InMemoryDROP("a", "a")
+        b = _PyFuncApp(
+            "b",
+            "b",
+            f,
+        )
+        c = InMemoryDROP("c", "c")
+
+        b.addInput(a)
+        b.addOutput(c)
+
+        with DROPWaiterCtx(self, c, 5):
+            drop_loaders.save_pickle(a, input_data)
+            a.setCompleted()
+        for drop in a, b, c:
+            self.assertEqual(DROPStates.COMPLETED, drop.status)
+        numpy.testing.assert_equal(output_data, drop_loaders.load_pickle(c))
+
     def test_npy_func(self, f=lambda x: x, input_data=None, output_data=None):
         input_data = numpy.ones([2, 2]) if input_data is None else input_data
-        output_data = (
-            numpy.ones([2, 2]) if output_data is None else output_data
-        )
+        output_data = numpy.ones([2, 2]) if output_data is None else output_data
 
         a = InMemoryDROP("a", "a")
         b = _PyFuncApp(
@@ -193,11 +208,11 @@ class TestPyFuncApp(unittest.TestCase):
         b.addOutput(c)
 
         with DROPWaiterCtx(self, c, 5):
-            droputils.save_npy(a, input_data)
+            drop_loaders.save_npy(a, input_data)
             a.setCompleted()
         for drop in a, b, c:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
-        numpy.testing.assert_equal(output_data, droputils.load_npy(c))
+        numpy.testing.assert_equal(output_data, drop_loaders.load_npy(c))
 
     def _test_simple_functions(self, f, input_data, output_data):
         a, c = [InMemoryDROP(x, x) for x in ("a", "c")]
@@ -211,9 +226,7 @@ class TestPyFuncApp(unittest.TestCase):
 
         for drop in a, b, c:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
-        self.assertEqual(
-            output_data, pickle.loads(droputils.allDropContents(c))
-        )
+        self.assertEqual(output_data, pickle.loads(droputils.allDropContents(c)))
 
     def test_func1(self):
         """Checks that func1 in this module works when wrapped"""
@@ -300,9 +313,7 @@ class TestPyFuncApp(unittest.TestCase):
             for i in range(n_args):
                 logger.debug(f"adding arg input: {args[i]}")
                 si = arg_names[i]
-                arg_inputs.append(
-                    InMemoryDROP(si, si, pydata=translate(args[i]))
-                )
+                arg_inputs.append(InMemoryDROP(si, si, pydata=translate(args[i])))
             i = n_args
             for name, value in kwargs.items():
                 si = name  # use keyword name
@@ -315,9 +326,7 @@ class TestPyFuncApp(unittest.TestCase):
             a = InMemoryDROP("a", "a", pydata=translate(1))
             output = InMemoryDROP("o", "o")
             kwargs = {inp.uid: inp.oid for inp in arg_inputs}
-            kwargs.update(
-                {name: vals[0] for name, vals in kwarg_inputs.items()}
-            )
+            kwargs.update({name: vals[0] for name, vals in kwarg_inputs.items()})
             kwargs["a"] = a.oid
             app = _PyFuncApp(
                 "f",
@@ -459,9 +468,7 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("A", DROPLinkType.INPUT, "B")]
         a_data = os.urandom(32)
-        c_data = self._test_runGraphInTwoNMs(
-            g1, g2, rels, pickle.dumps(a_data), None
-        )
+        c_data = self._test_runGraphInTwoNMs(g1, g2, rels, pickle.dumps(a_data), None)
         self.assertEqual(a_data, pickle.loads(c_data))
 
     def test_output_in_remote_nm(self):
@@ -497,7 +504,5 @@ class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("B", DROPLinkType.PRODUCER, "C")]
         a_data = os.urandom(32)
-        c_data = self._test_runGraphInTwoNMs(
-            g1, g2, rels, pickle.dumps(a_data), None
-        )
+        c_data = self._test_runGraphInTwoNMs(g1, g2, rels, pickle.dumps(a_data), None)
         self.assertEqual(a_data, pickle.loads(c_data))

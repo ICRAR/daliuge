@@ -729,28 +729,29 @@ async function restDeploy() {
         pgt = JSON.parse(jsonEscape(toString(pgt)));
     }
     // This is for a deferred start of daliuge, e.g. on SLURM
-    console.debug("sending request to ", create_slurm_url);
     var body = [pgtName, pgt]; // we send the name in the body with the pgt
     console.debug("Submission PGT:", JSON.stringify(body));
+    console.debug("sending request to ", create_slurm_url);
     await fetch(create_slurm_url, {
         method: 'POST',
         credentials: 'include',
         cache: 'no-cache',
-        mode: request_mode,
+        mode: "cors",
         referrerPolicy: 'no-referrer',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify(body),
-        redirect: 'follow'
     })
         .then(handleFetchErrors)
         .then(response => {
-            if (response.redirected) {
-                window.open(response.url, 'deploy_target').focus();
-            }
+            console.log(response);
+            console.log(response.url);
+            window.open(response.url, 'deploy_target').focus();
         })
         .catch(function (error) {
+            console.log(error);
+            // window.open("https://ood.icrar.org/pun/sys/dashboard/activejobs", 'deploy_target').focus();
             showMessageModal(`Error ${error}\nSending PGT to backend unsuccessful!`);
         });
 }

@@ -37,7 +37,8 @@ import dill
 from io import StringIO
 from contextlib import redirect_stdout
 
-from dlg import droputils, utils
+from dlg import droputils, drop_loaders
+from dlg.utils import serialize_data, deserialize_data
 from dlg.named_port_utils import check_ports_dict, identify_named_ports
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import InvalidDropException
@@ -52,14 +53,6 @@ from dlg.meta import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def serialize_data(d):
-    return utils.b2s(base64.b64encode(pickle.dumps(d)))
-
-
-def deserialize_data(d):
-    return pickle.loads(base64.b64decode(d.encode("latin1")))
 
 
 def serialize_func(f):
@@ -97,9 +90,7 @@ def import_using_name(app, fname):
         if fname in b:
             return b[fname]
         else:
-            msg = (
-                "%s is not builtin and does not contain a module name" % fname
-            )
+            msg = "%s is not builtin and does not contain a module name" % fname
             raise InvalidDropException(app, msg)
     else:
         if len(parts) > 1:
@@ -123,16 +114,18 @@ def import_using_name(app, fname):
                             "Trying to load backwards: %s",
                             ".".join(parts[:-1]),
                         )
-                        mod = importlib.import_module(
-                            ".".join(parts[:-1]), __name__
-                        )
+                        mod = importlib.import_module(".".join(parts[:-1]), __name__)
                         mod = getattr(mod, parts[-1])
+                        break
+                    except ModuleNotFoundError:
+                        # try again, sometimes fixes the namespace
+                        mod = import_using_name(app, fname)
                         break
                     except Exception as e:
                         raise InvalidDropException(
                             app, "Problem importing module %s, %s" % (mod, e)
                         )
-
+            logger.debug("Loaded module: %s", mod)
             return mod
 
 
@@ -161,20 +154,18 @@ class DropParser(Enum):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag template
-# @param func_name /String/ApplicationArgument/NoPort/ReadWrite//False/False/Python function name
-# @param func_code /String/ApplicationArgument/NoPort/ReadWrite//False/False/Python function code, e.g. 'def function_name(args): return args'
+# @param func_name /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function name
+# @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code, e.g. 'def function_name(args): return args'
 # @param dropclass dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/The allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param input_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 #     \~English Mapping from argname to default value. Should match only the last part of the argnames list.
 #               Values are interpreted as Python code literals and that means string values need to be quoted.
-# @param func_arg_mapping /String/ApplicationArgument/NoPort/ReadWrite//False/False/
-#     \~English Mapping between argument name and input drop uids
 # @par EAGLE_END
 class PyFuncApp(BarrierAppDROP):
     """
@@ -187,7 +178,7 @@ class PyFuncApp(BarrierAppDROP):
     being written to its corresponding output.
 
     Users indicate the function to be wrapped via the ``func_name`` parameter.
-    In this case func_name needs to specify a funtion in the standard form
+    In this case func_name needs to specify a function in the standard form
 
     ``module.function``
 
@@ -227,9 +218,7 @@ class PyFuncApp(BarrierAppDROP):
         and its parameters might be computed on a different host than the where the delayed
         function is called and thus the function needs to be serialized.
         """
-        logger.debug(
-            f"Starting evaluation of func_defaults: {self.func_defaults}"
-        )
+        logger.debug(f"Starting evaluation of func_defaults: {self.func_defaults}")
         if (
             isinstance(self.func_defaults, dict)
             and len(self.func_defaults) > 0
@@ -306,9 +295,7 @@ class PyFuncApp(BarrierAppDROP):
                     self.fn_ndef += 1
 
         logger.debug("Got signature for function %s %s", self.f, self.argsig)
-        logger.debug(
-            "Got default values for arguments %s", self.arguments_defaults
-        )
+        logger.debug("Got default values for arguments %s", self.arguments_defaults)
         self.fn_defaults = self.arguments_defaults
         logger.debug(f"initialized fn_defaults with {self.fn_defaults}")
 
@@ -362,6 +349,9 @@ class PyFuncApp(BarrierAppDROP):
         env.update({"DLG_UID": self._uid})
         if self._dlg_session_id:
             env.update({"DLG_SESSION_ID": self._dlg_session_id})
+        elif "dlg_session_id" in kwargs:
+            self._dlg_session_id = kwargs["dlg_session_id"]
+            env.update({"DLG_SESSION_ID": self._dlg_session_id})
 
         self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
 
@@ -412,7 +402,7 @@ class PyFuncApp(BarrierAppDROP):
         """
         Function positional and keyword argument treatment:
 
-        Function arguments can be provided in four different ways:
+        Function arguments can be provided in three different ways:
         1) Through an input port
         2) By specifying ApplicationArgs (one for each argument)
         3) Through defaults at the time of function definition
@@ -427,20 +417,17 @@ class PyFuncApp(BarrierAppDROP):
         somewhat risky, since the order is relevant and in this code derived from the
         order defined in the graph (same order as defined in the component description).
 
-        Input ports will NOT be used by order (anymore), but by the name of the port.
+        Input ports will NOT be used by index (anymore), but by using the name of the port.
         Since each input port requires an associated data drop, this provides a unique
         mapping. This also allows to pass values to any function argument through a port.
 
-        Function argument values as well as the function code can be provided in
-        serialised (pickle) form by setting the 'pickle' flag. Note that this flag
-        is valid for all arguments and the code (if specified) in a global way.
         """
         funcargs = {}
         # Inputs are un-pickled and treated as the arguments of the function
         # Their order must be preserved, so we use an OrderedDict
         if self.input_parser is DropParser.PICKLE:
             # all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
-            all_contents = droputils.load_pickle
+            all_contents = drop_loaders.load_pickle
         elif self.input_parser is DropParser.EVAL:
 
             def optionalEval(x):
@@ -451,7 +438,7 @@ class PyFuncApp(BarrierAppDROP):
 
             all_contents = optionalEval
         elif self.input_parser is DropParser.NPY:
-            all_contents = droputils.load_npy
+            all_contents = drop_loaders.load_npy
         elif self.input_parser is DropParser.PATH:
             all_contents = lambda x: x.path
         elif self.input_parser is DropParser.DATAURL:
@@ -465,11 +452,10 @@ class PyFuncApp(BarrierAppDROP):
 
         outputs = collections.OrderedDict()
         for uid, drop in self._outputs.items():
-            outputs[uid] = (
-                all_contents(drop)
-                if self.output_parser is DropParser.PATH
-                else None
-            )
+            if self.output_parser is DropParser.PATH:
+                outputs[uid] = drop.path
+            else:
+                outputs[uid] = None
 
         # Keyword arguments are made up of the default values plus the inputs
         # that match one of the keyword argument names
@@ -494,24 +480,35 @@ class PyFuncApp(BarrierAppDROP):
             appArgs = self.parameters[
                 "applicationArgs"
             ]  # we'll pop the identified ones
-            _dum = [
-                appArgs.pop(k) for k in self.func_def_keywords if k in appArgs
-            ]
+            _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
             logger.debug(
-                "Identified keyword arguments removed: %s",
+                "Default keyword arguments removed: %s",
                 [i for i in _dum],
             )
+            # update the positional args
             pargsDict.update(
-                {
-                    k: self.parameters[k]
-                    for k in pargsDict
-                    if k in self.parameters
-                }
+                {k: self.parameters[k] for k in pargsDict if k in self.parameters}
             )
             # if defined in both we use AppArgs values
-            pargsDict.update(
-                {k: appArgs[k]["value"] for k in pargsDict if k in appArgs}
-            )
+            for k in appArgs:
+                # check value type and interpret
+                if appArgs[k]["type"] in ["Json", "Complex"]:
+                    try:
+                        value = ast.literal_eval(appArgs[k]["value"])
+                        logger.debug(
+                            f"Evaluated %s to %s",
+                            appArgs[k]["value"],
+                            type(value),
+                        )
+                        appArgs[k]["value"] = value
+                    except ValueError:
+                        logger.error("Unable to evaluate %s", appArgs[k]["value"])
+                else:
+                    value = appArgs[k]["value"]
+                if k in pargsDict:
+                    pargsDict.update({k: value})
+
+            _ = [appArgs.pop(k) for k in pargsDict if k in appArgs]
             logger.debug("Updated posargs dictionary: %s", pargsDict)
 
             keyargsDict.update(
@@ -534,22 +531,18 @@ class PyFuncApp(BarrierAppDROP):
                 else:
                     vkarg.update({arg: value})
 
-            # TODO: check where this is defined in signiture
+            # TODO: check where this is defined in signature
             self.arguments = inspect.getfullargspec(self.f)
             if self.arguments.varargs:
                 logger.debug("Adding remaining *args to pargs %s", vparg)
                 pargs.extend(vparg)
             if self.arguments.varkw:
-                logger.debug(
-                    "Adding remaining **kwargs to funcargs: %s", vkarg
-                )
+                logger.debug("Adding remaining **kwargs to funcargs: %s", vkarg)
                 funcargs.update(vkarg)
 
         # 3. replace default argument values with named input ports
         # TODO: investigate performing inputs and outputs in a single call
-        if "inputs" in self.parameters and check_ports_dict(
-            self.parameters["inputs"]
-        ):
+        if "inputs" in self.parameters and check_ports_dict(self.parameters["inputs"]):
             check_len = min(
                 len(inputs),
                 self.fn_nargs + self.fn_nkw,
@@ -596,14 +589,10 @@ class PyFuncApp(BarrierAppDROP):
                     mode="outputs",
                 )
             )
-        logger.debug(
-            f"Updating funcargs with values from pargsDict {pargsDict}"
-        )
+        logger.debug(f"Updating funcargs with values from pargsDict {pargsDict}")
         funcargs.update(pargsDict)
 
-        logger.debug(
-            f"Updating funcargs with values from named ports {kwargs}"
-        )
+        logger.debug(f"Updating funcargs with values from named ports {kwargs}")
         funcargs.update(kwargs)
 
         self._recompute_data["args"] = funcargs.copy()
@@ -654,7 +643,7 @@ class PyFuncApp(BarrierAppDROP):
                 elif self.output_parser is DropParser.EVAL:
                     o.write(repr(r).encode("utf-8"))
                 elif self.output_parser is DropParser.NPY:
-                    droputils.save_npy(o, r)
+                    drop_loaders.save_npy(o, r)
                 else:
                     ValueError(self.output_parser.__repr__())
 

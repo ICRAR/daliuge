@@ -21,7 +21,9 @@
 #
 import base64
 import io
+import json
 import os
+import pickle
 import random
 import string
 import sys
@@ -31,18 +33,59 @@ from dlg.data.drops.data_base import DataDROP, logger
 from dlg.data.io import SharedMemoryIO, MemoryIO
 
 
+def parse_pydata(pd_dict: dict) -> bytes:
+    """
+    Parse and evaluate the pydata argument to populate memory during initialization
+
+    :param pd_dict: the pydata dictionary from the graph node
+
+    :returns a byte encoded value
+    """
+    pydata = pd_dict["value"]
+    logger.debug(f"pydata value provided: {pydata}, {type(pydata)}")
+
+    if pd_dict["type"].lower() == "json":
+        try:
+            pydata = json.loads(pydata)
+        except:
+            pydata = pydata.encode()
+    elif pd_dict["type"].lower() == "int":
+        try:
+            pydata = int(pydata)
+        except:
+            pydata = pydata.encode()
+    elif pd_dict["type"].lower() == "float":
+        try:
+            pydata = float(pydata)
+        except:
+            pydata = pydata.encode()
+    elif pd_dict["type"].lower() == "boolean":
+        try:
+            pydata = bool(pydata)
+        except:
+            pydata = pydata.encode()
+    elif pd_dict["type"].lower() == "object":
+        pydata = base64.b64decode(pydata.encode())
+        try:
+            pydata = pickle.loads(pydata)
+        except:
+            raise
+    return pickle.dumps(pydata)
+
+
 ##
 # @brief Memory
 # @details In-memory storage of intermediate data products
 # @par EAGLE_START
 # @param category Memory
 # @param tag daliuge
-# @param dropclass dlg.data.drops.memory.InMemoryDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param pydata None/String/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
+# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
-# @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param dropclass dlg.data.drops.memory.InMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class
 # @par EAGLE_END
 class InMemoryDROP(DataDROP):
     """
@@ -60,21 +103,39 @@ class InMemoryDROP(DataDROP):
         super().__init__(*args, **kwargs)
 
     def initialize(self, **kwargs):
+        """
+        If there is a pydata argument use that to populate the DROP
+        """
         args = []
-        if "pydata" in kwargs:
+        pydata = None
+        field_names = (
+            [f["name"] for f in kwargs["fields"]] if "fields" in kwargs else []
+        )
+        if "pydata" in kwargs and not (
+            "fields" in kwargs and "pydata" in field_names
+        ):  # means that is was passed directly
             pydata = kwargs.pop("pydata")
-            if isinstance(pydata, str):
-                pydata = pydata.encode("utf8")
-            args.append(base64.b64decode(pydata))
+            logger.debug("pydata value provided: %s, %s", pydata, kwargs)
+            try:  # test whether given value is valid
+                _ = pickle.loads(base64.b64decode(pydata))
+                pydata = base64.b64decode(pydata)
+            except:
+                pydata = None
+        elif "fields" in kwargs and "pydata" in field_names:
+            data_pos = field_names.index("pydata")
+            pydata = parse_pydata(kwargs["fields"][data_pos])
+        args.append(pydata)
+        logger.debug("Loaded into memory: %s", pydata)
         self._buf = io.BytesIO(*args)
+        self.size = len(pydata) if pydata else 0
 
     def getIO(self):
         if (
             hasattr(self, "_tp")
-            and hasattr(self, "_sessID")
+            and hasattr(self, "_sessionId")
             and sys.version_info >= (3, 8)
         ):
-            return SharedMemoryIO(self.oid, self._sessID)
+            return SharedMemoryIO(self.oid, self._sessionId)
         else:
             return MemoryIO(self._buf)
 
@@ -101,12 +162,13 @@ class InMemoryDROP(DataDROP):
 # @par EAGLE_START
 # @param category SharedMemory
 # @param tag daliuge
-# @param dropclass dlg.data.drops.memory.SharedMemoryDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param pydata None/String/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
+# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
-# @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param dropclass dlg.data.drops.memory.SharedMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class
 # @par EAGLE_END
 class SharedMemoryDROP(DataDROP):
     """
@@ -119,23 +181,30 @@ class SharedMemoryDROP(DataDROP):
 
     def initialize(self, **kwargs):
         args = []
-        if "pydata" in kwargs:
+        pydata = None
+        if "pydata" in kwargs and not (
+            "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]
+        ):  # means that is was passed directly
             pydata = kwargs.pop("pydata")
-            if isinstance(pydata, str):
-                pydata = pydata.encode("utf8")
-            args.append(base64.b64decode(pydata))
+            logger.debug("pydata value provided: %s", pydata)
+            try:  # test whether given value is valid
+                _ = pickle.loads(base64.b64decode(pydata.encode("latin1")))
+                pydata = base64.b64decode(pydata.encode("latin1"))
+            except:
+                pydata = None
+        elif "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]:
+            pydata = parse_pydata(kwargs["nodeAttributes"]["pydata"])
+        args.append(pydata)
         self._buf = io.BytesIO(*args)
 
     def getIO(self):
         if sys.version_info >= (3, 8):
-            if hasattr(self, "_sessID"):
-                return SharedMemoryIO(self.oid, self._sessID)
+            if hasattr(self, "_sessionId"):
+                return SharedMemoryIO(self.oid, self._sessionId)
             else:
                 # Using Drop without manager, just generate a random name.
                 sess_id = "".join(
-                    random.choices(
-                        string.ascii_uppercase + string.digits, k=10
-                    )
+                    random.choices(string.ascii_uppercase + string.digits, k=10)
                 )
                 return SharedMemoryIO(self.oid, sess_id)
         else:

@@ -10,8 +10,6 @@ from dlg.exceptions import InvalidDropException
 # @param category Branch
 # @param tag template
 # @param dropclass dlg.apps.simple.SimpleBranch/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
-# @param input_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ApplicationArgument/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
@@ -20,6 +18,8 @@ from dlg.exceptions import InvalidDropException
 # @param dummy_input /Object/ApplicationArgument/InputPort/ReadWrite//False/False/Dummy input port
 # @param dummy0 /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/Dummy output port
 # @param dummy1 /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/Dummy output port
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class BranchAppDrop(BarrierAppDROP):
     """
