@@ -26,7 +26,6 @@ import ast
 import inspect
 import logging
 import os
-import pickle
 import threading
 import time
 import re
@@ -412,21 +411,23 @@ class AbstractDROP(EventFirer, EventHandler):
 
             if has_component_param and has_app_param:
                 logger.warning(
-                    f"Drop has both component and app param {attr_name}. Using app param param."
+                    f"Drop has both component and app param {attr_name}. Using component param."
                 )
-            if has_app_param:
-                logger.warning(">>>> kwargs: %s", kwargs)
-                if kwargs["applicationArgs"].get(attr_name)["usage"] in [
+            if has_component_param:
+                param = kwargs.get(attr_name)
+            elif has_app_param:
+                if kwargs["applicationArgs"].get(attr_name).usage in [
                     "InputPort",
                     "OutputPort",
                     "InputOutput",
                 ]:
                     # inp = kwargs["input"]
-                    param = kwargs["applicationArgs"].get(attr_name)["usage"]
+                    # param = pickle.loads(
+                    #     droputils.allDropContents()
+                    #     )
+                    pass
                 else:
-                    param = kwargs["applicationArgs"].get(attr_name)["value"]
-            elif has_component_param:
-                param = kwargs.get(attr_name)
+                    param = kwargs["applicationArgs"].get(attr_name).value
             else:
                 param = default_value
             return param

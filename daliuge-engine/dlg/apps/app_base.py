@@ -46,7 +46,7 @@ class SyncDropRunner(DropRunner):
         future = Future()
 
         try:
-            res = app_drop._run()
+            res = app_drop.run()
             future.set_result(res)
         except BaseException as e:
             future.set_exception(e)
