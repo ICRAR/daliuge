@@ -24,7 +24,7 @@ import _pickle
 from numbers import Number
 import pickle
 import random
-from typing import List, Optional, Any
+from typing import List, Optional
 import urllib.error
 import urllib.request
 import logging
