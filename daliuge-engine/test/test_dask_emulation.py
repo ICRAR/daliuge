@@ -261,10 +261,10 @@ class TestDlgDelayed(_TestDelayed, unittest.TestCase):
         return dlg_delayed(f, *args, **kwargs)
 
     def setUp(self):
-        unittest.TestCase.setUp(self)
         env = os.environ.copy()
         env["PYTHONPATH"] = f"{env.get('PYTHONPATH', '')}:{os.getcwd()}"
         print(f">>>> env: {env['PYTHONPATH']}")
+        unittest.TestCase.setUp(self)
         self.dmProcess = tool.start_process("nm", ["-vvv"], env=env)
 
     def compute(self, val):
