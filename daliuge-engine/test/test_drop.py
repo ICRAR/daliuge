@@ -799,10 +799,9 @@ class TestDROP(unittest.TestCase):
         """
 
         # Prepare our playground
-        cwd = os.getcwd()
-        os.chdir("/tmp")
-        dirname = "/tmp/.hidden"
-        dirname2 = "/tmp/.hidden/inside"
+        tmpdir = tempfile.mkdtemp()
+        dirname = f"{tmpdir}/.hidden"
+        dirname2 = f"{tmpdir}/.hidden/inside"
         if not os.path.exists(dirname2):
             os.makedirs(dirname2)
 
@@ -815,9 +814,11 @@ class TestDROP(unittest.TestCase):
         cont2 = DirectoryContainer("f", "f", dirname=dirname2)
 
         # Paths are absolutely reported
-        self.assertEqual(os.path.realpath("/tmp/.hidden"), os.path.realpath(cont1.path))
         self.assertEqual(
-            os.path.realpath("/tmp/.hidden/inside"),
+            os.path.realpath(f"{tmpdir}/.hidden"), os.path.realpath(cont1.path)
+        )
+        self.assertEqual(
+            os.path.realpath(f"{tmpdir}/.hidden/inside"),
             os.path.realpath(cont2.path),
         )
 
@@ -838,7 +839,6 @@ class TestDROP(unittest.TestCase):
 
         # Revert to previous state
         shutil.rmtree(dirname, True)
-        os.chdir(cwd)
 
     def test_multipleProducers(self):
         """
@@ -947,7 +947,7 @@ class TestDROP(unittest.TestCase):
         self.assertEqual(AppDROPStates.FINISHED, a.execStatus)
 
     def test_rdbms_drop(self):
-        dbfile = "test_rdbms_drop.db"
+        dbfile = f"{tempfile.mkdtemp()}/test_rdbms_drop.db"
         if os.path.isfile(dbfile):
             os.unlink(dbfile)
 
@@ -1137,7 +1137,8 @@ class TestDROPReproducibility(unittest.TestCase):
         )
 
     def test_rdbms_reproducibility(self):
-        dbfile = "test_rdbms_drop.db"
+
+        dbfile = f"{tempfile.mkdtemp()}/test_rdbms_drop.db"
         if os.path.isfile(dbfile):
             os.unlink(dbfile)
 

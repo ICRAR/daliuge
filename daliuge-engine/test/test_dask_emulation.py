@@ -23,6 +23,7 @@ from asyncio.log import logger
 import functools
 import json
 import os
+import pytest
 from time import sleep
 import unittest
 
@@ -161,9 +162,7 @@ class _TestDelayed(object):
             delayed(3.0),
             delayed(4.0),
         )
-        doubles = [
-            delayed(lambda i: i * 2)(x) for x in (one, two, three, four)
-        ]
+        doubles = [delayed(lambda i: i * 2)(x) for x in (one, two, three, four)]
         result = compute(doubles)
         self.assertEqual([2.0, 4.0, 6.0, 8.0], result)
 
@@ -213,9 +212,7 @@ class _TestDelayed(object):
         delayed = self.delayed
         compute = self.compute
 
-        self.assertEqual(
-            compute(delayed(sum_with_user_defined_default)(1)), 11
-        )
+        self.assertEqual(compute(delayed(sum_with_user_defined_default)(1)), 11)
         self.assertEqual(
             compute(delayed(sum_with_user_defined_default)(1, MyType(20))), 21
         )
@@ -266,9 +263,8 @@ class TestDlgDelayed(_TestDelayed, unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
         env = os.environ.copy()
-        env["PYTHONPATH"] = (
-            env.get("PYTHONPATH", "") + ":" + os.getcwd() + "/daliuge-engine"
-        )
+        env["PYTHONPATH"] = f"{env.get('PYTHONPATH', '')}:{os.getcwd()}"
+        print(f">>>> env: {env['PYTHONPATH']}")
         self.dmProcess = tool.start_process("nm", ["-vvv"], env=env)
 
     def compute(self, val):
