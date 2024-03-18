@@ -290,11 +290,11 @@ class TestSimpleApps(unittest.TestCase):
             # a bit of magic to get the app drops using the processes
             _ = [drop.__setattr__("_tp", threadpool) for drop in drops]
             _ = [drop.__setattr__("_tp", threadpool) for drop in mdrops]
-            _ = [drop.__setattr__("_sessID", session_id) for drop in mdrops]
+            _ = [drop.__setattr__("_sessionId", session_id) for drop in mdrops]
             _ = [memory_manager.register_drop(drop.uid, session_id) for drop in mdrops]
             X.__setattr__("_tp", threadpool)
             Z.__setattr__("_tp", threadpool)
-            Z.__setattr__("_sessID", session_id)
+            Z.__setattr__("_sessionId", session_id)
             memory_manager.register_drop(Z.uid, session_id)
 
         _ = [d.addInput(S) for d in drops]

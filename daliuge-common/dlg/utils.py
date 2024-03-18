@@ -51,9 +51,7 @@ def timed_import(module_name):
     """Imports `module_name` and log how long it took to import it"""
     start = time.time()
     module = importlib.import_module(module_name)
-    logger.info(
-        "Imported %s in %.3f seconds", module_name, time.time() - start
-    )
+    logger.info("Imported %s in %.3f seconds", module_name, time.time() - start)
     return module
 
 
@@ -64,9 +62,7 @@ def get_local_ip_addr():
     PROTO = netifaces.AF_INET
     ifaces = netifaces.interfaces()
     if_addrs = [(netifaces.ifaddresses(iface), iface) for iface in ifaces]
-    if_inet_addrs = [
-        (tup[0][PROTO], tup[1]) for tup in if_addrs if PROTO in tup[0]
-    ]
+    if_inet_addrs = [(tup[0][PROTO], tup[1]) for tup in if_addrs if PROTO in tup[0]]
     iface_addrs = [
         (s["addr"], tup[1])
         for tup in if_inet_addrs
@@ -89,9 +85,7 @@ def get_all_ipv4_addresses():
     ]
 
 
-def register_service(
-    zc, service_type_name, service_name, ipaddr, port, protocol="tcp"
-):
+def register_service(zc, service_type_name, service_name, ipaddr, port, protocol="tcp"):
     """
     ZeroConf: Register service type, protocol, ipaddr and port
 
@@ -405,9 +399,7 @@ class ZlibUncompressedStream(object):
             if not decompressed:
                 break
             response.write(decompressed)
-            to_decompress = decompressor.unconsumed_tail + content.read(
-                blocksize
-            )
+            to_decompress = decompressor.unconsumed_tail + content.read(blocksize)
 
         response.write(decompressor.flush())
         self.decompressor = None
@@ -519,17 +511,13 @@ def prepareUser(DLG_ROOT=getDlgDir()):
     gr = grp.getgrgid(pw.pw_gid)
     dgr = grp.getgrnam("docker")
     with open(os.path.join(workdir, "passwd"), "wt") as file:
-        file.write(
-            open(os.path.join(template_dir, "passwd.template"), "rt").read()
-        )
+        file.write(open(os.path.join(template_dir, "passwd.template"), "rt").read())
         file.write(
             f"{pw.pw_name}:x:{pw.pw_uid}:{pw.pw_gid}:{pw.pw_gecos}:{DLG_ROOT}:/bin/bash\n"
         )
         logger.debug(f"passwd file written {file.name}")
     with open(os.path.join(workdir, "group"), "wt") as file:
-        file.write(
-            open(os.path.join(template_dir, "group.template"), "rt").read()
-        )
+        file.write(open(os.path.join(template_dir, "group.template"), "rt").read())
         file.write(f"{gr.gr_name}:x:{gr.gr_gid}:\n")
         file.write(f"docker:x:{dgr.gr_gid}\n")
         logger.debug(f"Group file written {file.name}")

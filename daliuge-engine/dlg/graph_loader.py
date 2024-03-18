@@ -94,16 +94,13 @@ def addLink(linkType, lhDropSpec, rhOID, force=False):
         if rhOID not in relList:
             relList.append(rhOID)
         else:
-            raise Exception(
-                "DROP %s is already part of %s's %s" % (rhOID, lhOID, rel)
-            )
+            raise Exception("DROP %s is already part of %s's %s" % (rhOID, lhOID, rel))
     # N-1 relationship, overwrite existing relationship only if `force` is specified
     elif linkType in __TOONE:
         rel = __TOONE[linkType]
         if rel and not force:
             raise Exception(
-                "DROP %s already has a '%s', use 'force' to override"
-                % (lhOID, rel)
+                "DROP %s already has a '%s', use 'force' to override" % (lhOID, rel)
             )
         lhDropSpec[rel] = rhOID
     else:
@@ -115,9 +112,7 @@ def addLink(linkType, lhDropSpec, rhOID, force=False):
 def removeUnmetRelationships(dropSpecList):
     unmetRelationships = []
 
-    normalise_oid = (
-        lambda oid: next(iter(oid)) if isinstance(oid, dict) else oid
-    )
+    normalise_oid = lambda oid: next(iter(oid)) if isinstance(oid, dict) else oid
 
     # Step #1: Get all OIDs
     oids = set()
