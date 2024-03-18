@@ -190,15 +190,11 @@ def run(lib, c_app, input_closers):
                 raise result
             if result:
                 raise Exception(
-                    "Invocation of {}:run2 returned with status {}".format(
-                        lib, result
-                    )
+                    "Invocation of {}:run2 returned with status {}".format(lib, result)
                 )
 
         elif lib.run(ctypes.pointer(c_app)):
-            raise Exception(
-                "Invocation of %r:run returned with status != 0" % lib
-            )
+            raise Exception("Invocation of %r:run returned with status != 0" % lib)
     finally:
         for closer in input_closers:
             closer()
@@ -232,9 +228,7 @@ def load_and_init(libname, oid, uid, params):
 
         if not found_one:
             raise InvalidLibrary(
-                "{} doesn't have one of the functions {}".format(
-                    libname, functions
-                )
+                "{} doesn't have one of the functions {}".format(libname, functions)
             )
 
     # Create the initial contents of the C dlg_app_info structure
@@ -276,12 +270,9 @@ def load_and_init(libname, oid, uid, params):
         # We need to keep them in a local variable so when we expose them to
         # the app later on via pointers we still have their contents
         local_params = [
-            (str(k).encode("utf8"), str(v).encode("utf8"))
-            for k, v in params.items()
+            (str(k).encode("utf8"), str(v).encode("utf8")) for k, v in params.items()
         ]
-        logger.debug(
-            "Extra parameters passed to application: %r", local_params
-        )
+        logger.debug("Extra parameters passed to application: %r", local_params)
 
         # Wrap in ctypes
         str_ptr_type = ctypes.POINTER(ctypes.c_char_p)
@@ -361,9 +352,7 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
         self._c_app.n_inputs += 1
 
     def addStreamingInput(self, streamingInputDrop, back=True):
-        super(DynlibStreamApp, self).addStreamingInput(
-            streamingInputDrop, back
-        )
+        super(DynlibStreamApp, self).addStreamingInput(streamingInputDrop, back)
         self._c_app.n_streaming_inputs += 1
 
     def generate_recompute_data(self):
@@ -387,6 +376,8 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class DynlibApp(DynlibAppBase, BarrierAppDROP):
     """Loads a dynamic library into the current process and runs it"""
@@ -480,6 +471,8 @@ def get_from_subprocess(proc, q):
 # @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
 # @param dropclass dlg.apps.dynlib.DynlibProcApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class DynlibProcApp(BarrierAppDROP):
     """Loads a dynamic library in a different process and runs it"""

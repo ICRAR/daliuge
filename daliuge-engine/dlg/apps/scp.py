@@ -52,6 +52,8 @@ from dlg.meta import (
 # @param pkeyPath /String/ApplicationArgument/NoPort/ReadWrite//False/False/Private key path
 # @param timeout 60/Float/ApplicationArgument/NoPort/ReadWrite//False/False/Connection timeout in seconds
 # @param file /Object.PathBasedDrop/ApplicationArgument/InputOutput/ReadWrite//False/False/File path
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class ScpApp(BarrierAppDROP):
     """
