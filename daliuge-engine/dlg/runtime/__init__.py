@@ -24,6 +24,7 @@ This package contains the modules implementing the core functionality of
 the system.
 """
 
+
 # It is of utmost importance that this is the *first* thing we do any time
 # we load daliuge up. Most modules in daliuge that have a logger create it at
 # import time, so we need to perform this setup before doing any other imports
@@ -64,7 +65,7 @@ def setup_logger_class():
             # Do the same with the session_id, which can be found via the drop (if any)
             # or checking if there is a session currently executing something
             session_id = ""
-            if drop:
+            if drop and hasattr(drop, "_dlg_session_id"):
                 session_id = drop._dlg_session_id
             else:
                 try:

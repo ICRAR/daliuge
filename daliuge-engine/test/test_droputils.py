@@ -30,7 +30,7 @@ import unittest
 
 import numpy
 
-from dlg import droputils
+from dlg import droputils, drop_loaders
 from dlg.common import dropdict
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.data.drops.plasma import PlasmaDROP
@@ -167,9 +167,9 @@ class DropUtilsTest(unittest.TestCase):
 
     def _test_save_load_pickle(self, drop_type, data):
         drop = drop_type("a", "a")
-        droputils.save_pickle(drop, data)
+        drop_loaders.save_pickle(drop, data)
         drop.setCompleted()
-        output_data = droputils.load_pickle(drop)
+        output_data = drop_loaders.load_pickle(drop)
         self.assertEqual(data, output_data)
 
     def test_save_load_pickle(self):
@@ -178,8 +178,8 @@ class DropUtilsTest(unittest.TestCase):
 
     def _test_save_load_npy(self, drop_type, data):
         drop = drop_type("a", "a")
-        droputils.save_npy(drop, data)
-        output_data = droputils.load_npy(drop)
+        drop_loaders.save_npy(drop, data)
+        output_data = drop_loaders.load_npy(drop)
         numpy.testing.assert_equal(data, output_data)
 
     def test_save_load_npy(self):

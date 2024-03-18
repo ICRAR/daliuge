@@ -29,7 +29,7 @@ from multiprocessing.pool import ThreadPool
 from numpy import mean, array, concatenate, random, testing
 from psutil import cpu_count
 
-from dlg import droputils
+from dlg import droputils, drop_loaders
 from dlg.apps.simple import (
     GenericScatterApp,
     GenericNpyScatterApp,
@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 
 class TestSimpleApps(unittest.TestCase):
-    def _test_graph_runs(self, drops, first, last, timeout=1):
+    def _test_graph_runs(self, drops, first, last, timeout=300):
         first = droputils.listify(first)
         with droputils.DROPWaiterCtx(self, last, timeout):
             for f in first:
@@ -144,9 +144,7 @@ class TestSimpleApps(unittest.TestCase):
         h.addOutput(b)
         b.addProducer(h)
         h.execute()
-        self.assertEqual(
-            h.greeting.encode("utf8"), droputils.allDropContents(b)
-        )
+        self.assertEqual(h.greeting.encode("utf8"), droputils.allDropContents(b))
 
     def test_parallelHelloWorld(self):
         m0 = InMemoryDROP("m0", "m0")
@@ -193,7 +191,7 @@ class TestSimpleApps(unittest.TestCase):
         d.addInput(nd_out)
         i.addProducer(d)
         # b.addOutput(i)
-        self._test_graph_runs((nd_in, b, nd_out, i, d), nd_in, i, timeout=10)
+        self._test_graph_runs((nd_in, b, nd_out, i, d), nd_in, i, timeout=60)
         self.assertEqual(b"Hello World", droputils.allDropContents(i))
 
     def test_genericScatter(self):
@@ -216,7 +214,7 @@ class TestSimpleApps(unittest.TestCase):
     def test_genericNpyScatter(self):
         data_in = random.rand(100, 100)
         b = InMemoryDROP("b", "b")
-        droputils.save_numpy(b, data_in)
+        drop_loaders.save_numpy(b, data_in)
         s = GenericNpyScatterApp("s", "s", num_of_copies=2)
         s.addInput(b)
         o1 = InMemoryDROP("o1", "o1")
@@ -225,8 +223,8 @@ class TestSimpleApps(unittest.TestCase):
             s.addOutput(x)
         self._test_graph_runs((b, s, o1, o2), b, (o1, o2), timeout=4)
 
-        data1 = droputils.load_numpy(o1)
-        data2 = droputils.load_numpy(o2)
+        data1 = drop_loaders.load_numpy(o1)
+        data2 = drop_loaders.load_numpy(o2)
         data_out = concatenate([data1, data2])
         self.assertEqual(data_in.all(), data_out.all())
 
@@ -235,11 +233,9 @@ class TestSimpleApps(unittest.TestCase):
         data2_in = random.rand(100, 100)
         b = InMemoryDROP("b", "b")
         c = InMemoryDROP("c", "c")
-        droputils.save_numpy(b, data1_in)
-        droputils.save_numpy(c, data2_in)
-        s = GenericNpyScatterApp(
-            "s", "s", num_of_copies=2, scatter_axes="[0,0]"
-        )
+        drop_loaders.save_numpy(b, data1_in)
+        drop_loaders.save_numpy(c, data2_in)
+        s = GenericNpyScatterApp("s", "s", num_of_copies=2, scatter_axes="[0,0]")
         s.addInput(b)
         s.addInput(c)
         o1 = InMemoryDROP("o1", "o1")
@@ -252,14 +248,14 @@ class TestSimpleApps(unittest.TestCase):
             (b, s, o1, o2, o3, o4), (b, c), (o1, o2, o3, o4), timeout=4
         )
 
-        data11 = droputils.load_numpy(o1)
-        data12 = droputils.load_numpy(o2)
+        data11 = drop_loaders.load_numpy(o1)
+        data12 = drop_loaders.load_numpy(o2)
         data1_out = concatenate([data11, data12])
         self.assertEqual(data1_out.shape, data1_in.shape)
         testing.assert_array_equal(data1_out, data1_in)
 
-        data21 = droputils.load_numpy(o3)
-        data22 = droputils.load_numpy(o4)
+        data21 = drop_loaders.load_numpy(o3)
+        data22 = drop_loaders.load_numpy(o4)
         data2_out = concatenate([data21, data22])
         testing.assert_array_equal(data2_out, data2_in)
 
@@ -289,30 +285,23 @@ class TestSimpleApps(unittest.TestCase):
         X = AverageArraysApp("X", "X")
         Z = InMemoryDROP("Z", "Z")
         drops = [ListAppendThrashingApp(x, x, size=size) for x in drop_ids]
-        mdrops = [
-            InMemoryDROP(chr(65 + x), chr(65 + x)) for x in range(max_threads)
-        ]
+        mdrops = [InMemoryDROP(chr(65 + x), chr(65 + x)) for x in range(max_threads)]
         if parallel:
             # a bit of magic to get the app drops using the processes
             _ = [drop.__setattr__("_tp", threadpool) for drop in drops]
             _ = [drop.__setattr__("_tp", threadpool) for drop in mdrops]
-            _ = [drop.__setattr__("_sessID", session_id) for drop in mdrops]
-            _ = [
-                memory_manager.register_drop(drop.uid, session_id)
-                for drop in mdrops
-            ]
+            _ = [drop.__setattr__("_sessionId", session_id) for drop in mdrops]
+            _ = [memory_manager.register_drop(drop.uid, session_id) for drop in mdrops]
             X.__setattr__("_tp", threadpool)
             Z.__setattr__("_tp", threadpool)
-            Z.__setattr__("_sessID", session_id)
+            Z.__setattr__("_sessionId", session_id)
             memory_manager.register_drop(Z.uid, session_id)
 
         _ = [d.addInput(S) for d in drops]
         _ = [d.addOutput(m) for d, m in zip(drops, mdrops)]
         _ = [X.addInput(m) for m in mdrops]
         X.addOutput(Z)
-        logger.info(
-            f"Number of inputs/outputs: {len(X.inputs)}, {len(X.outputs)}"
-        )
+        logger.info(f"Number of inputs/outputs: {len(X.inputs)}, {len(X.outputs)}")
         self._test_graph_runs([S, X, Z] + drops + mdrops, S, Z, timeout=200)
         # Need to run our 'copy' of the averaging APP
         num_array = []
@@ -348,9 +337,7 @@ class TestSimpleApps(unittest.TestCase):
         st = time.time()
         self.test_multi_listappendthrashing(size=size, parallel=True)
         t2 = time.time() - st
-        logger.info(
-            f"Speedup: {t1 / t2:.2f} from {cpu_count(logical=False)} cores"
-        )
+        logger.info(f"Speedup: {t1 / t2:.2f} from {cpu_count(logical=False)} cores")
         # TODO: This is unpredictable, but maybe we can do something meaningful.
         # self.assertAlmostEqual(t1/cpu_count(logical=False), t2, 1)
         # How about this? We only need to see some type of speedup

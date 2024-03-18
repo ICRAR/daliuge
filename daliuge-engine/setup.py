@@ -36,7 +36,7 @@ from setuptools.command.install import install
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
 MAJOR = 3
-MINOR = 0
+MINOR = 1
 PATCH = 0
 RELEASE = True
 VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
@@ -110,9 +110,7 @@ class lib64_path(install):
         lp = sysconfig.get_path("stdlib")
         with open(PTH_FILE, "w") as f:
             f.write("{0}/dist-packages".format(lp))
-        install.copy_file(
-            self, PTH_FILE, os.path.join(self.install_lib, PTH_FILE)
-        )
+        install.copy_file(self, PTH_FILE, os.path.join(self.install_lib, PTH_FILE))
 
 
 # Core requirements of DALiuGE
@@ -136,12 +134,13 @@ install_requires = [
     "psutil",
     "pyarrow<10",
     "python-daemon",
+    "pyzmq == 25.1.0",
     "scp",
     "pyyaml",
     # 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
-    "zeroconf ~= 0.38.4",
+    "zeroconf == 0.38.4",
     # 0.6 brings python3 support plus other fixes
-    "zerorpc ~= 0.6.3",
+    "zerorpc == 0.6.3",
 ]
 # Keep alpha-sorted PLEASE!
 
@@ -181,18 +180,6 @@ setup(
             "web/static/fonts/*",
             "web/static/js/*.js",
             "web/static/js/d3/*",
-            "web/static/icons/*",
-        ],
-        "dlg.dropmake": [
-            "web/lg_editor.html",
-            "web/*.css",
-            "web/*.js",
-            "web/*.json",
-            "web/*.map",
-            "web/img/jsoneditor-icons.png",
-            "web/pg_viewer.html",
-            "web/matrix_vis.html",
-            "lib/libmetis.*",
             "web/static/icons/*",
         ],
         "test.dropmake": ["logical_graphs/*.json"],

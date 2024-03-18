@@ -183,7 +183,7 @@ def start_node_mgr(
     if use_tool:
         # This returns immediately
         # proc = tool.start_process("nm", args)
-        proc = tool.start_process("name", args)
+        proc = tool.start_process("nm", args)
         LOGGER.info("Node manager process started with pid %d", proc.pid)
         return proc
     else:

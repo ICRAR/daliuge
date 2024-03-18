@@ -113,7 +113,7 @@ def _load(obj, callable_attr):
 
 class NodeManagerDropRunner(DropRunner):
     @abc.abstractmethod
-    def start(self):
+    def start(self, rpc_endpoint):
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -126,7 +126,7 @@ class NodeManagerThreadDropRunner(NodeManagerDropRunner):
         self._max_workers = max_workers
         self._thread_pool: ThreadPoolExecutor | None = None
 
-    def start(self):
+    def start(self, _rpc_endpoint):
         logger.info("Initializing thread pool with %d workers", self._max_workers)
         self._thread_pool = ThreadPoolExecutor(max_workers=self._max_workers)
 
@@ -141,24 +141,27 @@ class NodeManagerProcessDropRunner(NodeManagerDropRunner):
     # Process isolated properties - should only be accessed in @classmethods
     # to ensure that they are global to a single process only
     _rpc_client: typing.Optional[rpc.RPCClient]
+    _rpc_endpoint: typing.Tuple[str, int]
 
     def __init__(self, max_workers: int):
         self._max_workers = max_workers
         self._process_pool: typing.Optional[ProcessPoolExecutor] = None
 
-    def start(self):
+    def start(self, rpc_endpoint):
         logger.info("Initializing process pool with %d workers", self._max_workers)
 
         self._process_pool = ProcessPoolExecutor(
             max_workers=self._max_workers,
             initializer=NodeManagerProcessDropRunner._setup_process,
+            initargs=(rpc_endpoint,),
         )
 
     @classmethod
-    def _setup_process(cls):
+    def _setup_process(cls, rpc_endpoint):
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
+        cls._rpc_endpoint = rpc_endpoint
         cls._rpc_client = rpc.RPCClient()
 
         # We'll just let this be cleaned up when the process terminates
@@ -190,6 +193,7 @@ class NodeManagerProcessDropRunner(NodeManagerDropRunner):
     def _setup_drop_proxies(
         cls, app_drop: AppDROP, inputs_proxy_info, outputs_proxy_info
     ):
+        app_drop._rpc_endpoint = cls._rpc_endpoint
         for input_proxy_info in inputs_proxy_info:
             app_drop.addInput(
                 rpc.DropProxy(cls._rpc_client, input_proxy_info), back=False
@@ -284,9 +288,9 @@ class NodeManagerBase(DROPManager):
         debugging = logger.isEnabledFor(logging.DEBUG)
         self._logging_event_listener = LogEvtListener() if debugging else None
 
-    def start(self):
+    def start(self, rpc_endpoint):
         super().start()
-        self._drop_runner.start()
+        self._drop_runner.start(rpc_endpoint)
         self._dlm.startup()
 
     def shutdown(self):
@@ -661,7 +665,7 @@ class NodeManager(NodeManagerBase, EventMixIn, RpcMixIn):
         # We "just know" that our RpcMixIn will have a create_context static
         # method, which in reality means we are using the ZeroRPCServer class
         self._context = RpcMixIn.create_context()
-        super().start()
+        super().start(self.rpc_endpoint)
 
     def shutdown(self):
         super(NodeManager, self).shutdown()

@@ -367,13 +367,13 @@ class FileIO(DataIO):
     A file-based implementation of DataIO
     """
 
-    _desc: io.BufferedReader
+    _desc: io.BufferedRWPair
 
     def __init__(self, filename, **kwargs):
         super().__init__()
         self._fnm = filename
 
-    def _open(self, **kwargs) -> io.BufferedReader:
+    def _open(self, **kwargs) -> io.BufferedRWPair:
         flag = "r" if self._mode is OpenMode.OPEN_READ else "w"
         flag += "b"
         return open(self._fnm, flag)
@@ -588,7 +588,11 @@ class NgasLiteIO(DataIO):
                 # when finishArchive is called.
                 self._buf = b""
                 self._writtenDataSize = 0
-        return self._getClient()
+            client = self._getClient()
+        else:
+            client = self._getClient()
+            self._read_gen = client
+        return client
 
     def _close(self, **kwargs):
         if self._mode == OpenMode.OPEN_WRITE:
@@ -611,7 +615,11 @@ class NgasLiteIO(DataIO):
             response.close()
 
     def _read(self, count=65536, **kwargs):
-        return self._desc.read(count)
+        try:
+            buf = self._read_gen.__next__()
+        except StopIteration:
+            buf = b""
+        return buf
 
     def _write(self, data, **kwargs) -> int:
         if self._is_length_unknown():
