@@ -526,8 +526,8 @@ class InputFiredAppDROP(AppDROP):
         for attr_name in named_outputs:
             if not isinstance(named_outputs[attr_name], list):
                 self.__setattr__(attr_name, named_outputs[attr_name])
-        if "run" in dir(self):  # we might not have implemented the run method
-            self.run()
+        # if "run" in dir(self):  # we might not have implemented the run method
+        #     self.run()
 
     # TODO: another thing we need to check
     def exists(self):

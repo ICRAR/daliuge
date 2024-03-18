@@ -116,6 +116,7 @@ class SleepApp(BarrierAppDROP):
         super(SleepApp, self).initialize(**kwargs)
 
     def run(self):
+        self._run()
         try:
             # If data is coming through a named port we load it from there.
             if isinstance(self.sleep_time, (InMemoryDROP, FileDROP)):
