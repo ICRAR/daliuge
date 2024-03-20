@@ -86,6 +86,7 @@ class ContainerIpWaiter(object):
 # @param input_redirection /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line argument that specifies the input into this application
 # @param output_redirection /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line argument that specifies the output from this application
 # @param command_line_arguments /String/ComponentParameter/NoPort/ReadWrite//False/False/Additional command line arguments to be added to the command line to be executed
+# @param entrypoint /String/ComponentParameter/NoPort/ReadWrite//False/False/Alternate entrypoint
 # @param paramValueSeparator " "/String/ComponentParameter/NoPort/ReadWrite//False/False/Separator character(s) between parameters and their respective values on the command line
 # @param argumentPrefix "--"/String/ComponentParameter/NoPort/ReadWrite//False/False/Prefix to each keyed argument on the command line
 # @param dropclass dlg.apps.dockerapp.DockerApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
@@ -248,6 +249,7 @@ class DockerApp(BarrierAppDROP):
         self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
         self._argumentPrefix = self._popArg(kwargs, "argumentPrefix", "--")
         self._paramValueSeparator = self._popArg(kwargs, "paramValueSeparator", " ")
+        self._entryPoint = self._popArg(kwargs, "entrypoint", " ")
         if not self._image:
             raise InvalidDropException(
                 self, "No docker image specified, cannot create DockerApp"
@@ -265,7 +267,7 @@ class DockerApp(BarrierAppDROP):
         self._noBash = False
         if not self._command or self._command.strip()[:2] == "%%":
             logger.warning("Assume a default command is executed in the container")
-            self._command = self._command.strip().strip()[:2] if self._command else ""
+            self._command = self._command.strip().strip()[2:] if self._command else ""
             self._noBash = True
             # This makes sure that we can retain any command defined in the image, but still be
             # able to add any arguments straight after. This requires to use the placeholder string
@@ -580,6 +582,7 @@ class DockerApp(BarrierAppDROP):
                 # TODO: daliuge will handle automatic removal (otherwise check before stopping container)
                 # auto_remove=self._removeContainer,
                 detach=True,
+                entrypoint=f"{self._entryPoint}",
             )
 
         if not self.container:
