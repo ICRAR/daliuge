@@ -389,7 +389,6 @@
                     "drawOrderHint",
                     "expanded",
                     "fields",
-                    "height",
                     "inputAppFields",
                     "inputApplicationName",
                     "inputApplicationType",
@@ -401,7 +400,6 @@
                     "paletteDownloadUrl",
                     "repositoryUrl",
                     "subject",
-                    "width",
                     "x",
                     "y"
                 ]
