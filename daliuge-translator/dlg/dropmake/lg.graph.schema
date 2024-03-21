@@ -123,12 +123,6 @@
                     "y": {
                         "type": "number"
                     },
-                    "width": {
-                        "type": "number"
-                    },
-                    "height": {
-                        "type": "number"
-                    },
                     "collapsed": {
                         "type": "boolean"
                     },
