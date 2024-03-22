@@ -77,3 +77,36 @@ def string2json(string: str, pickle_flag: bool = False) -> list:
         return json.loads(string)
     else:
         return pickle.dumps(json.loads(string))
+
+
+def value_from_dict(dict_in: dict, dict_key: str) -> Any:
+    """
+    Select a value from a dictionary.
+
+    Parameters:
+    -----------
+    dict_in: input dictionary
+    dict_key: keyword to select
+
+    Returns:
+    --------
+    The value referred to by key.
+    """
+    # We deliberatly let this fail if the type is not str or array like
+    dict_key = dict_key if isinstance(dict_key, str) else dict_key[0]
+    return dict_in[dict_key]
+
+
+def keys_from_dict(dict_in: dict) -> list:
+    """
+    Return key list of dictionary.
+
+    Parameters:
+    -----------
+    dict_in: input dictionary
+
+    Returns:
+    --------
+    The list of keys
+    """
+    return list(dict_in.keys())
