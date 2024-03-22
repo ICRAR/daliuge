@@ -93,6 +93,9 @@
                     "category": {
                         "type": "string"
                     },
+                    "categoryType": {
+                        "type": "string"
+                    },
                     "isGroup": {
                        "type": "boolean"
                     },
@@ -111,7 +114,7 @@
                     "key": {
                         "type": "integer"
                     },
-                    "text": {
+                    "name": {
                         "type": "string"
                     },
                     "description": {
@@ -123,6 +126,9 @@
                     "y": {
                         "type": "number"
                     },
+                    "radius": {
+                        "type": "number"
+                    },
                     "collapsed": {
                         "type": "boolean"
                     },
@@ -132,7 +138,6 @@
                     "expanded": {
                         "type": "boolean"
                     },
-
                     "inputApplicationName": {
                         "type": "string"
                     },
@@ -278,9 +283,6 @@
                         "items": {
                             "type": "object",
                             "properties": {
-                                "text": {
-                                    "type": "string"
-                                },
                                 "name": {
                                     "type": "string"
                                 },
@@ -311,6 +313,15 @@
                                 },
                                 "keyAttribute": {
                                     "type": "boolean"
+                                },
+                                "id": {
+                                    "type": "string"
+                                },
+                                "parameterType": {
+                                    "type": "string"
+                                },
+                                "usage": {
+                                    "type": "string
                                 }
                             },
                             "required": [
@@ -320,7 +331,11 @@
                                 "type",
                                 "precious",
                                 "options",
-                                "positional"
+                                "positional",
+                                "keyAttribute",
+                                "id",
+                                "parameterType",
+                                "usage"
                             ]
                         }
                     },
@@ -394,6 +409,7 @@
                     "inputApplicationType",
                     "isGroup",
                     "key",
+                    "name",
                     "outputAppFields",
                     "outputApplicationName",
                     "outputApplicationType",
