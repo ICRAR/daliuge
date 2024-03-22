@@ -321,7 +321,7 @@
                                     "type": "string"
                                 },
                                 "usage": {
-                                    "type": "string
+                                    "type": "string"
                                 }
                             },
                             "required": [
