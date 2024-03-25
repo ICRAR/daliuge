@@ -107,6 +107,10 @@ class TestPyFuncApp(unittest.TestCase):
             func_name="doesnt_exist.func1",
         )
 
+    def test_function_builtin_module(self):
+        # The function lives in an unknown module/package
+        pyfunc.PyFuncApp("a", "a", func_name="object.__init__")
+
     def test_function_invalid_fname(self):
         # The function lives in an unknown module/package
         self.assertRaises(
