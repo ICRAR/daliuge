@@ -32,8 +32,8 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "5d9153e898ae56bd7efb8d62694c7187836b9d79",
-        "eagleVersion": "v5.0.2",
+        "eagleCommitHash": "183ba0391bca8e8629a4e59aded4e4956334e4e7",
+        "eagleVersion": "v6.2.0:eagle-1179",
         "filePath": "HelloWorldBash.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -72,7 +72,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -88,7 +87,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -104,7 +102,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Check file path exists",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -120,7 +117,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "File path",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "result.in"
@@ -136,7 +132,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Directory name",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -152,7 +147,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -168,7 +162,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Object.undefined",
                     "usage": "InputPort",
                     "value": ""
@@ -184,14 +177,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Object.undefined",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -199,18 +189,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -1,
+            "name": "File",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "File",
-            "width": 200,
-            "x": 538,
-            "y": 309
+            "x": 550.5,
+            "y": 321.5
         },
         {
             "category": "File",
@@ -234,7 +224,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -250,7 +239,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -266,7 +254,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Check file path exists",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -282,7 +269,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "File path",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "result.out"
@@ -298,7 +284,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Directory name",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -314,7 +299,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -330,14 +314,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Object.undefined",
                     "usage": "InputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -345,18 +326,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -2,
+            "name": "File",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "File",
-            "width": 200,
-            "x": 814,
-            "y": 477
+            "x": 826.5,
+            "y": 489.5
         },
         {
             "category": "BashShellApp",
@@ -380,7 +361,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -396,7 +376,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -412,7 +391,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -428,7 +406,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg01",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "echo -en 'Hello world' > %o0"
@@ -444,7 +421,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Streaming",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": true
@@ -460,14 +436,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Object.undefined",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -475,18 +448,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -3,
+            "name": "Bash Shell App",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Bash Shell App",
-            "width": 200,
-            "x": 222,
-            "y": 343
+            "x": 234.5,
+            "y": 355.5
         },
         {
             "category": "BashShellApp",
@@ -510,7 +483,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -526,7 +498,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -542,7 +513,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -558,7 +528,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg01",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "cp %i0 %o0"
@@ -574,7 +543,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Object.undefined",
                     "usage": "InputPort",
                     "value": ""
@@ -590,14 +558,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Object.undefined",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -605,18 +570,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -4,
+            "name": "Bash Shell App",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Bash Shell App",
-            "width": 200,
-            "x": 684,
-            "y": 176
+            "x": 696.5,
+            "y": 188.5
         }
     ]
 }

@@ -59,8 +59,8 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "aa407afe88f8874c948ebc551b18411bcbd84c4f",
-        "eagleVersion": "v5.0.2:eagle-1022",
+        "eagleCommitHash": "183ba0391bca8e8629a4e59aded4e4956334e4e7",
+        "eagleVersion": "v6.2.0:eagle-1179",
         "filePath": "Plasma_test.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -149,8 +149,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -158,24 +156,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -1,
+            "name": "Plasma",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Plasma",
-            "width": 200,
-            "x": 886,
-            "y": 464
+            "x": 898.5,
+            "y": 476.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": false,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "Component reading an MS and writing to a Plasma store",
@@ -273,8 +271,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -282,18 +278,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -2,
+            "name": "MS-plasma-writer",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "MS-plasma-writer",
-            "width": 200,
-            "x": 664.335,
-            "y": 454.66499999999996
+            "x": 676.835,
+            "y": 467.16499999999996
         },
         {
             "category": "File",
@@ -309,14 +305,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "6e939b25-a844-49ba-b466-803d71ca7658",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.file.FileDROP"
                 },
                 {
@@ -425,8 +423,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -434,24 +430,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -3,
+            "name": "MS-in",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "MS-in",
-            "width": 200,
-            "x": 404.33500000000004,
-            "y": 449.66499999999996
+            "x": 416.83500000000004,
+            "y": 462.16499999999996
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "Component reading an MS from a Plasma store and writing to a MS on disk",
@@ -549,8 +545,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -558,18 +552,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -4,
+            "name": "MS-plasma-reader",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "MS-plasma-reader",
-            "width": 200,
-            "x": 1102.335,
-            "y": 454.66499999999996
+            "x": 1114.835,
+            "y": 467.16499999999996
         },
         {
             "category": "File",
@@ -585,14 +579,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "45cbffb4-96d8-44d0-8f94-0049398cb4b1",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.file.FileDROP"
                 },
                 {
@@ -716,8 +712,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -725,24 +719,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -5,
+            "name": "MS-out",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "MS-out",
-            "width": 200,
-            "x": 1392.335,
-            "y": 474.66499999999996
+            "x": 1404.835,
+            "y": 487.16499999999996
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "Compare the input and output MS, return 0 if the same 1 otherwise.",
@@ -855,8 +849,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -864,18 +856,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -6,
+            "name": "Compare",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Compare",
-            "width": 200,
-            "x": 965.335,
-            "y": 690.665
+            "x": 977.835,
+            "y": 703.165
         }
     ]
 }

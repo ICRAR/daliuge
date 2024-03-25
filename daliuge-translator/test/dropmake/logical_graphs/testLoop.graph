@@ -23,8 +23,8 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "aa407afe88f8874c948ebc551b18411bcbd84c4f",
-        "eagleVersion": "v5.0.2:eagle-1022",
+        "eagleCommitHash": "183ba0391bca8e8629a4e59aded4e4956334e4e7",
+        "eagleVersion": "v6.2.0:eagle-1179",
         "filePath": "testLoop.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -45,7 +45,7 @@
             "category": "Loop",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "Placeholder 'loop' description",
@@ -68,8 +68,6 @@
                     "value": "5"
                 }
             ],
-            "flipPorts": false,
-            "height": 378.12856316963075,
             "inputAppFields": [
                 {
                     "defaultValue": "",
@@ -168,18 +166,18 @@
             "inputApplicationType": "UnknownApplication",
             "isGroup": true,
             "key": -1,
+            "name": "Loop",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 126.2476851648355,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Loop",
-            "width": 385.98717625064404,
-            "x": 606.4859101595122,
-            "y": 337.06816127722925
+            "x": 721.2595305080395,
+            "y": 537.1446742753435
         },
         {
             "category": "BashShellApp",
@@ -195,14 +193,16 @@
                 {
                     "defaultValue": "",
                     "description": "Application class",
+                    "id": "65b985fd-e1e6-40d9-9bdb-7c71a83c89f4",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.apps.bash_shell_app.BashShellApp"
                 },
                 {
@@ -311,8 +311,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -320,18 +318,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -2,
+            "name": "SleepExternal",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "SleepExternal",
-            "width": 200,
-            "x": 736.1530259962292,
-            "y": 855.7366246240957
+            "x": 748.6530259962292,
+            "y": 868.2366246240957
         },
         {
             "category": "BashShellApp",
@@ -347,14 +345,16 @@
                 {
                     "defaultValue": "",
                     "description": "Application class",
+                    "id": "fd3f862d-3f5b-445a-8d2a-4eceed74e5f4",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.apps.bash_shell_app.BashShellApp"
                 },
                 {
@@ -463,9 +463,7 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -1,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -473,18 +471,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -4,
+            "name": "SleepInternal",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "SleepInternal",
-            "width": 200,
-            "x": 693.977220992636,
-            "y": 454.94735749242614
+            "x": 706.477220992636,
+            "y": 467.44735749242614
         },
         {
             "category": "File",
@@ -500,14 +498,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "493f6624-cb40-4ffe-a81c-30a1a9434fd6",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.file.FileDROP"
                 },
                 {
@@ -631,9 +631,7 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -1,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -641,18 +639,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -3,
+            "name": "event",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "event",
-            "width": 200,
-            "x": 723.5418400234428,
-            "y": 594.3419910582609
+            "x": 736.0418400234428,
+            "y": 606.8419910582609
         }
     ]
 }

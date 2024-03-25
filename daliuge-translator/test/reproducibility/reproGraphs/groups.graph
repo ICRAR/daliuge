@@ -41,8 +41,8 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "5d9153e898ae56bd7efb8d62694c7187836b9d79",
-        "eagleVersion": "v5.0.2",
+        "eagleCommitHash": "183ba0391bca8e8629a4e59aded4e4956334e4e7",
+        "eagleVersion": "v6.2.0:eagle-1179",
         "filePath": "groups.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -63,7 +63,7 @@
             "category": "Gather",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "Placeholder 'gather' description",
@@ -81,7 +81,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Number of inputs",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 2
@@ -97,14 +96,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Gather axis",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "frequency"
                 }
             ],
-            "flipPorts": false,
-            "height": 200,
             "inputAppFields": [
                 {
                     "defaultValue": "",
@@ -117,7 +113,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "Application Class",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.apps.simple.SleepApp"
@@ -133,7 +128,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "Execution Time",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -149,7 +143,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -165,7 +158,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Sleep Time",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 5
@@ -181,7 +173,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "in",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -197,7 +188,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "in",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -213,7 +203,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "in",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -229,7 +218,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "in",
                     "type": "String",
                     "usage": "InputPort",
                     "value": ""
@@ -241,16 +229,16 @@
             "inputApplicationType": "PythonApp",
             "isGroup": true,
             "key": -2,
+            "name": "Gather",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 44,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Gather",
-            "width": 200,
             "x": 662.321482449737,
             "y": 20.56226824598862
         },
@@ -258,7 +246,7 @@
             "category": "Scatter",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "Placeholder 'scatter' description",
@@ -276,7 +264,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Number of copies",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 4
@@ -292,14 +279,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Scatter axis",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "time"
                 }
             ],
-            "flipPorts": false,
-            "height": 200,
             "inputAppFields": [
                 {
                     "defaultValue": "",
@@ -312,7 +296,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "Application Class",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.apps.simple.SleepApp"
@@ -328,7 +311,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "Execution Time",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -344,7 +326,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -360,7 +341,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Sleep Time",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 5
@@ -376,7 +356,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "in",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -392,7 +371,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "in",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -408,7 +386,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "in",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -424,7 +401,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "in",
                     "type": "String",
                     "usage": "InputPort",
                     "value": ""
@@ -436,16 +412,16 @@
             "inputApplicationType": "PythonApp",
             "isGroup": true,
             "key": -3,
+            "name": "Scatter",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 44,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Scatter",
-            "width": 200,
             "x": 261.8983639752229,
             "y": -6.493347867154186
         },
@@ -453,7 +429,7 @@
             "category": "Loop",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "Placeholder 'loop' description",
@@ -471,14 +447,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Number loops",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 5
                 }
             ],
-            "flipPorts": false,
-            "height": 273.3278599501599,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -486,18 +459,18 @@
             "inputApplicationType": "None",
             "isGroup": true,
             "key": -4,
+            "name": "Loop",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 147.49264438564614,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Loop",
-            "width": 493.31143980063956,
-            "x": 78.71430966031251,
-            "y": 361.2019395283714
+            "x": 244.55216977821192,
+            "y": 481.2327532636476
         },
         {
             "category": "Memory",
@@ -521,7 +494,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -537,7 +509,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -553,14 +524,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "in",
                     "type": "String",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -568,24 +536,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -7,
+            "name": "Memory",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Memory",
-            "width": 200,
-            "x": -259.78701560776597,
-            "y": 127.99555475268865
+            "x": -247.28701560776597,
+            "y": 140.49555475268863
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": false,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "A simple APP that sleeps the specified amount of time (0 by default). This is mainly useful (and used) to test graph translation and structure without executing real algorithms. Very useful for debugging.",
@@ -603,7 +571,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "Application Class",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.apps.simple.SleepApp"
@@ -619,7 +586,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "Execution Time",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -635,7 +601,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": true
@@ -651,7 +616,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Sleep Time",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 5
@@ -667,15 +631,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "dummy",
                     "type": "Object",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -4,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -683,18 +644,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -1,
+            "name": "SleepApp",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "SleepApp",
-            "width": 200,
-            "x": 140.0328945466387,
-            "y": 459.3870456229409
+            "x": 152.5328945466387,
+            "y": 471.8870456229409
         },
         {
             "category": "Memory",
@@ -718,7 +679,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -734,7 +694,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": true
@@ -750,7 +709,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "dummy",
                     "type": "Object",
                     "usage": "InputPort",
                     "value": ""
@@ -766,15 +724,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "dummy",
                     "type": "Object",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -4,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -782,24 +737,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -5,
+            "name": "Memory",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Memory",
-            "width": 200,
-            "x": 324.0714450097852,
-            "y": 478.0784609043544
+            "x": 336.5714450097852,
+            "y": 490.5784609043544
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": false,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "A simple APP that sleeps the specified amount of time (0 by default). This is mainly useful (and used) to test graph translation and structure without executing real algorithms. Very useful for debugging.",
@@ -817,7 +772,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "Application Class",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.apps.simple.SleepApp"
@@ -833,7 +787,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "Execution Time",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -849,7 +802,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -865,7 +817,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Sleep Time",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 5
@@ -881,14 +832,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "dummy",
                     "type": "Object",
                     "usage": "InputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -896,18 +844,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -8,
+            "name": "SleepApp",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "SleepApp",
-            "width": 200,
-            "x": 776.9788152901838,
-            "y": 488.1430691328078
+            "x": 789.4788152901838,
+            "y": 500.6430691328078
         }
     ]
 }
