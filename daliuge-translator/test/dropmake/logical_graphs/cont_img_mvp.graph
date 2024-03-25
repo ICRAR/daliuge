@@ -428,8 +428,8 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "7418fc2f9b5e98fa470978a45da299c1a84fe807",
-        "eagleVersion": "v5.1.0:eagle-1022",
+        "eagleCommitHash": "183ba0391bca8e8629a4e59aded4e4956334e4e7",
+        "eagleVersion": "v6.2.0:eagle-1179",
         "filePath": "cont_img_mvp.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -448,9 +448,9 @@
     "nodeDataArray": [
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -593,9 +593,7 @@
                     "value": true
                 }
             ],
-            "flipPorts": true,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -610,17 +608,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 525,
-            "y": 489.9999694824219
+            "x": 537.5,
+            "y": 502.4999694824219
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -718,9 +716,7 @@
                     "value": 5
                 }
             ],
-            "flipPorts": false,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -735,17 +731,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 550,
-            "y": 648
+            "x": 562.5,
+            "y": 660.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -843,9 +839,7 @@
                     "value": 5
                 }
             ],
-            "flipPorts": true,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -860,17 +854,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 543,
-            "y": 824
+            "x": 555.5,
+            "y": 836.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -968,9 +962,7 @@
                     "value": 5
                 }
             ],
-            "flipPorts": true,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -985,17 +977,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 556,
-            "y": 1009
+            "x": 568.5,
+            "y": 1021.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -1108,9 +1100,7 @@
                     "value": 5
                 }
             ],
-            "flipPorts": false,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1125,17 +1115,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 875,
-            "y": 253
+            "x": 887.5,
+            "y": 265.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -1263,9 +1253,7 @@
                     "value": "~param1"
                 }
             ],
-            "flipPorts": false,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1280,17 +1268,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1178,
-            "y": 190
+            "x": 1190.5,
+            "y": 202.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -1388,9 +1376,7 @@
                     "value": 5
                 }
             ],
-            "flipPorts": false,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1405,17 +1391,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1487,
-            "y": 307
+            "x": 1499.5,
+            "y": 319.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -1528,9 +1514,7 @@
                     "value": "dlg.apps.simple.SimpleBranch"
                 }
             ],
-            "flipPorts": false,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1545,17 +1529,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1851,
-            "y": 276.99999237060547
+            "x": 1863.5,
+            "y": 289.49999237060547
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -1653,9 +1637,7 @@
                     "value": 1
                 }
             ],
-            "flipPorts": true,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1670,17 +1652,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 2024,
-            "y": 402
+            "x": 2036.5,
+            "y": 414.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -1778,9 +1760,7 @@
                     "value": 5
                 }
             ],
-            "flipPorts": true,
             "group": -46,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1795,17 +1775,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 887,
-            "y": 817
+            "x": 899.5,
+            "y": 829.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -1918,9 +1898,7 @@
                     "value": 5
                 }
             ],
-            "flipPorts": false,
             "group": -46,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1935,17 +1913,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 989,
-            "y": 610
+            "x": 1001.5,
+            "y": 622.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "Subtract residual model visibilities from raw visibilities",
@@ -2043,9 +2021,7 @@
                     "value": 5
                 }
             ],
-            "flipPorts": false,
             "group": -46,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2060,17 +2036,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1286,
-            "y": 597
+            "x": 1298.5,
+            "y": 609.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -2183,9 +2159,7 @@
                     "value": 1
                 }
             ],
-            "flipPorts": false,
             "group": -46,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2200,17 +2174,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1572,
-            "y": 607
+            "x": 1584.5,
+            "y": 619.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -2293,9 +2267,7 @@
                     "value": 5
                 }
             ],
-            "flipPorts": true,
             "group": -46,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2310,17 +2282,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1866,
-            "y": 817
+            "x": 1878.5,
+            "y": 829.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "Subtract component from image plane",
@@ -2418,9 +2390,7 @@
                     "value": 5
                 }
             ],
-            "flipPorts": true,
             "group": -43,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2435,11 +2405,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1241,
-            "y": 908
+            "x": 1253.5,
+            "y": 920.5
         },
         {
             "category": "Memory",
@@ -2455,14 +2425,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "9c11d2cb-9614-498e-afc6-bbe36998bbff",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -2541,9 +2513,7 @@
                     "value": ""
                 }
             ],
-            "flipPorts": true,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2558,11 +2528,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1098,
-            "y": 398
+            "x": 1110.5,
+            "y": 410.5
         },
         {
             "category": "Memory",
@@ -2578,14 +2548,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "4acf24b3-b342-4c30-8650-b98aa3500fe1",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -2679,9 +2651,7 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2696,11 +2666,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 438,
-            "y": 745
+            "x": 450.5,
+            "y": 757.5
         },
         {
             "category": "Memory",
@@ -2716,14 +2686,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "593f9645-ebf6-4285-a9a5-78fe2cc0fffb",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -2817,9 +2789,7 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2834,11 +2804,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 530,
-            "y": 918
+            "x": 542.5,
+            "y": 930.5
         },
         {
             "category": "Memory",
@@ -2854,14 +2824,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "2a176042-47c3-431f-85e9-bb0d70d933e6",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -2955,9 +2927,7 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2972,11 +2942,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1029,
-            "y": 260
+            "x": 1041.5,
+            "y": 272.5
         },
         {
             "category": "Memory",
@@ -2992,14 +2962,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "66284956-47b7-4c56-9846-9a237aed4a2e",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -3093,9 +3065,7 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -3110,11 +3080,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1343,
-            "y": 216
+            "x": 1355.5,
+            "y": 228.5
         },
         {
             "category": "Memory",
@@ -3130,14 +3100,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "bd105f0f-42f6-4621-af1f-9fe065428048",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -3231,9 +3203,7 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -3248,11 +3218,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1669,
-            "y": 313
+            "x": 1681.5,
+            "y": 325.5
         },
         {
             "category": "Memory",
@@ -3268,14 +3238,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "89f018aa-9ef2-4b51-9874-5021e9243b42",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -3369,9 +3341,7 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -3386,11 +3356,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 2125,
-            "y": 269
+            "x": 2137.5,
+            "y": 281.5
         },
         {
             "category": "Memory",
@@ -3406,14 +3376,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "82266591-d5ae-4b1f-bb98-d9b5d8f0ef3a",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -3492,9 +3464,7 @@
                     "value": ""
                 }
             ],
-            "flipPorts": true,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -3509,17 +3479,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1852,
-            "y": 405
+            "x": 1864.5,
+            "y": 417.5
         },
         {
             "category": "Loop",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -3572,9 +3542,7 @@
                     "value": "3"
                 }
             ],
-            "flipPorts": false,
             "group": -46,
-            "height": 270,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -3589,17 +3557,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 267.8966885604377,
             "repositoryUrl": "",
             "subject": null,
-            "width": 698,
-            "x": 1118,
-            "y": 773
+            "x": 1356.5,
+            "y": 889.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -3712,9 +3680,7 @@
                     "value": true
                 }
             ],
-            "flipPorts": true,
             "group": -43,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -3729,11 +3695,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1554,
-            "y": 842
+            "x": 1566.5,
+            "y": 854.5
         },
         {
             "category": "Memory",
@@ -3749,14 +3715,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "fff971f3-e1b1-482a-aeb6-4a4fae56801e",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -3850,9 +3818,7 @@
                     "value": true
                 }
             ],
-            "flipPorts": true,
             "group": -43,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -3867,11 +3833,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1134,
-            "y": 912
+            "x": 1146.5,
+            "y": 924.5
         },
         {
             "category": "Memory",
@@ -3887,14 +3853,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "ddd94100-a21e-4f4b-a2dd-14de94e9f83c",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -4018,9 +3986,7 @@
                     "value": "~param1.param2"
                 }
             ],
-            "flipPorts": true,
             "group": -46,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -4035,17 +4001,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1802,
-            "y": 992
+            "x": 1814.5,
+            "y": 1004.5
         },
         {
             "category": "Loop",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -4098,9 +4064,7 @@
                     "value": "2"
                 }
             ],
-            "flipPorts": false,
             "group": -57,
-            "height": 599,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -4115,11 +4079,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 625.4054843090343,
             "repositoryUrl": "",
             "subject": null,
-            "width": 1217,
-            "x": 872,
-            "y": 536
+            "x": 1377,
+            "y": 870.9483442802189
         },
         {
             "category": "Memory",
@@ -4135,14 +4099,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "61d1c72b-da5b-45f1-ac6d-01260110c7cd",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -4236,9 +4202,7 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -46,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -4253,11 +4217,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 839,
-            "y": 683
+            "x": 851.5,
+            "y": 695.5
         },
         {
             "category": "Memory",
@@ -4273,14 +4237,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "0c9e3f1c-9403-4d88-b888-a061cdc17447",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -4374,9 +4340,7 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -46,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -4391,11 +4355,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1140,
-            "y": 684
+            "x": 1152.5,
+            "y": 696.5
         },
         {
             "category": "Memory",
@@ -4411,14 +4375,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "4d16bcfe-e7f4-4047-aec4-695988288c42",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -4512,9 +4478,7 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -46,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -4529,11 +4493,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1428,
-            "y": 686
+            "x": 1440.5,
+            "y": 698.5
         },
         {
             "category": "Memory",
@@ -4549,14 +4513,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "706a3afe-14f8-4b6e-999a-8c72688750bd",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -4650,9 +4616,7 @@
                     "value": true
                 }
             ],
-            "flipPorts": false,
             "group": -46,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -4667,11 +4631,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1762,
-            "y": 617
+            "x": 1774.5,
+            "y": 629.5
         },
         {
             "category": "Memory",
@@ -4687,14 +4651,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "bf9d8370-252b-4a8b-9085-8b5ca62d9ea8",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -4788,9 +4754,7 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -46,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -4805,17 +4769,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1890,
-            "y": 716
+            "x": 1902.5,
+            "y": 728.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -4943,9 +4907,7 @@
                     "value": true
                 }
             ],
-            "flipPorts": false,
             "group": -46,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -4960,11 +4922,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1876,
-            "y": 606
+            "x": 1888.5,
+            "y": 618.5
         },
         {
             "category": "Memory",
@@ -4980,14 +4942,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "5356a546-3a8c-4933-9dd4-cb96b039ebb0",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -5081,9 +5045,7 @@
                     "value": "~param4.what"
                 }
             ],
-            "flipPorts": true,
             "group": -43,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -5098,11 +5060,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1400,
-            "y": 886
+            "x": 1412.5,
+            "y": 898.5
         },
         {
             "category": "Memory",
@@ -5118,14 +5080,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "2d452777-47cb-41ad-8bbb-d649a977e2e5",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -5219,8 +5183,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": true,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -5235,11 +5197,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 227,
-            "y": 433
+            "x": 239.5,
+            "y": 445.5
         },
         {
             "category": "Memory",
@@ -5255,14 +5217,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "e98a290b-e4fc-4e96-bdbf-7edd1fa0fe28",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -5341,8 +5305,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -5357,17 +5319,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1323,
-            "y": 0
+            "x": 1335.5,
+            "y": 12.5
         },
         {
             "category": "Loop",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -5420,8 +5382,6 @@
                     "value": "2"
                 }
             ],
-            "flipPorts": false,
-            "height": 1147,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -5436,11 +5396,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 1064.9461902115631,
             "repositoryUrl": "",
             "subject": null,
-            "width": 1885,
-            "x": 419,
-            "y": 100
+            "x": 1294,
+            "y": 836.9269142946266
         },
         {
             "category": "Memory",
@@ -5456,14 +5416,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "ca26f41e-3b6b-4016-bfb6-a07dddd5cb25",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -5572,9 +5534,7 @@
                     "value": true
                 }
             ],
-            "flipPorts": false,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -5589,11 +5549,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 637,
-            "y": 571
+            "x": 649.5,
+            "y": 583.5
         },
         {
             "category": "Memory",
@@ -5609,14 +5569,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "edf122c1-3685-41e5-9150-4758fc615e86",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -5710,8 +5672,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -5726,17 +5686,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 244,
-            "y": 219
+            "x": 256.5,
+            "y": 231.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "A class sources",
@@ -5849,9 +5809,7 @@
                     "value": "dlg.apps.simple.SimpleBranch"
                 }
             ],
-            "flipPorts": false,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -5866,11 +5824,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1576,
-            "y": 210
+            "x": 1588.5,
+            "y": 222.5
         },
         {
             "category": "Memory",
@@ -5886,14 +5844,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "ab00cbf2-ca81-4ca4-a3b8-d9c02cd52b1b",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -5987,9 +5947,7 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -6004,17 +5962,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 717,
-            "y": 379
+            "x": 729.5,
+            "y": 391.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -6112,9 +6070,7 @@
                     "value": 5
                 }
             ],
-            "flipPorts": false,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -6129,11 +6085,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 459,
-            "y": 377.9999694824219
+            "x": 471.5,
+            "y": 390.4999694824219
         },
         {
             "category": "Memory",
@@ -6149,14 +6105,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "f61c9ca3-1696-4f7a-952e-44129fc4bced",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -6250,8 +6208,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -6266,17 +6222,17 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 221,
-            "y": 346
+            "x": 233.5,
+            "y": 358.5
         },
         {
             "category": "Branch",
             "categoryType": "Control",
             "collapsed": true,
-            "color": "rgb(88 167 94)",
+            "color": "rgb(46 161 55)",
             "commitHash": "",
             "dataHash": "",
             "description": "A conditional branch to control flow.",
@@ -6419,9 +6375,7 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -57,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -6436,11 +6390,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 44,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 557.5,
-            "y": 218.5
+            "x": 579.5,
+            "y": 240.5
         }
     ]
 }

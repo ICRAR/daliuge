@@ -32,8 +32,8 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "5d9153e898ae56bd7efb8d62694c7187836b9d79",
-        "eagleVersion": "v5.0.2",
+        "eagleCommitHash": "183ba0391bca8e8629a4e59aded4e4956334e4e7",
+        "eagleVersion": "v6.2.0:eagle-1179",
         "filePath": "HelloSPython.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -52,9 +52,9 @@
     "nodeDataArray": [
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": false,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "An application component in the form of a Python app",
@@ -72,7 +72,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -88,7 +87,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -104,7 +102,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -120,7 +117,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "dropclass",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "dlg.common.reproducibility.apps.HelloWorldPythonIn"
@@ -136,14 +132,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Object.undefined",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -151,18 +144,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -1,
+            "name": "Python App",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Python App",
-            "width": 200,
-            "x": 369,
-            "y": 109
+            "x": 381.5,
+            "y": 121.5
         },
         {
             "category": "File",
@@ -186,7 +179,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -202,7 +194,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -218,7 +209,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Check file path exists",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -234,7 +224,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "File path",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "result.in"
@@ -250,7 +239,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Directory name",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -266,7 +254,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -282,7 +269,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Object.undefined",
                     "usage": "InputPort",
                     "value": ""
@@ -298,14 +284,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Object.undefined",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -313,24 +296,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -2,
+            "name": "File",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "File",
-            "width": 200,
-            "x": 688,
-            "y": 109
+            "x": 700.5,
+            "y": 121.5
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": false,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "An application component in the form of a Python app",
@@ -348,7 +331,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -364,7 +346,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -380,7 +361,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -396,7 +376,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "dropclass",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "dlg.common.reproducibility.apps.HelloWorldPythonOut"
@@ -412,7 +391,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Object.undefined",
                     "usage": "InputPort",
                     "value": ""
@@ -428,14 +406,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Object.undefined",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -443,18 +418,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -3,
+            "name": "Python App",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Python App",
-            "width": 200,
-            "x": 977,
-            "y": 110
+            "x": 989.5,
+            "y": 122.5
         },
         {
             "category": "File",
@@ -478,7 +453,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -494,7 +468,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -510,7 +483,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Check file path exists",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -526,7 +498,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "File path",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "result.out"
@@ -542,7 +513,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Directory name",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -558,7 +528,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -574,14 +543,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Object.undefined",
                     "usage": "InputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -589,18 +555,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -4,
+            "name": "File",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "File",
-            "width": 200,
-            "x": 1291,
-            "y": 111
+            "x": 1303.5,
+            "y": 123.5
         }
     ]
 }
