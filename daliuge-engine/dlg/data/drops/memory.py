@@ -157,6 +157,27 @@ class InMemoryDROP(DataDROP):
 
 
 ##
+# @brief PythonObject
+# @details A Python object stored in memory
+# @par EAGLE_START
+# @param category PythonObject
+# @param tag daliuge
+# @param object /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/object
+# @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Object should be serialized
+# @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in the object
+# @param dropclass dlg.data.drops.memory.InMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class
+# @par EAGLE_END
+class PythonObjectDROP(InMemoryDROP):
+    """
+    A python object is an InMemoryDROP but has a special category of PythonObject.
+
+    This is only here to force the creation of the component for the palette.
+    """
+
+    pass
+
+
+##
 # @brief SharedMemory
 # @details Data stored in shared memory
 # @par EAGLE_START
