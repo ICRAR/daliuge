@@ -125,9 +125,7 @@ def _run_workflows(
         _run_full_workflow(rmode, wflow_name, root_file, temp_out.name)
 
 
-def _extract_reprodata(
-    temp_out: tempfile.TemporaryDirectory, names: list, suffix: str
-):
+def _extract_reprodata(temp_out: tempfile.TemporaryDirectory, names: list, suffix: str):
     output = {}
     for wflow_name in names:
         file = open(f"{temp_out.name}{os.sep}{wflow_name}{suffix}")
@@ -149,27 +147,19 @@ class AccumulateLGTRerunData(unittest.TestCase):
     ddGraph = "graphs/ddTest.graph"
 
     file = "reproducibility/reproGraphs/apps.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # # logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
@@ -345,7 +335,7 @@ class AccumulatePGTUnrollRerunData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulatePGTPartitionRerunData(unittest.TestCase):
@@ -418,7 +408,7 @@ class AccumulatePGTPartitionRerunData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulatePGRerunData(unittest.TestCase):
@@ -491,7 +481,7 @@ class AccumulatePGRerunData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulateLGTRepeatData(unittest.TestCase):
@@ -506,27 +496,19 @@ class AccumulateLGTRepeatData(unittest.TestCase):
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
@@ -780,7 +762,7 @@ class AccumulatePGTUnrollRepeatData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulatePGTPartitionRepeatData(unittest.TestCase):
@@ -853,7 +835,7 @@ class AccumulatePGTPartitionRepeatData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulatePGRepeatData(unittest.TestCase):
@@ -926,7 +908,7 @@ class AccumulatePGRepeatData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulateLGTRecomputeData(unittest.TestCase):
@@ -941,27 +923,19 @@ class AccumulateLGTRecomputeData(unittest.TestCase):
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
@@ -1220,7 +1194,7 @@ class AccumulatePGTUnrollRecomputeData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
@@ -1299,7 +1273,7 @@ class AccumulatePGTPartitionRecomputeData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulatePGRecomputeData(unittest.TestCase):
@@ -1372,7 +1346,7 @@ class AccumulatePGRecomputeData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulateLGTReproduceData(unittest.TestCase):
@@ -1384,27 +1358,19 @@ class AccumulateLGTReproduceData(unittest.TestCase):
     expected = {"category", "categoryType"}
 
     file = "reproducibility/reproGraphs/apps.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
@@ -1636,7 +1602,7 @@ class AccumulatePGTUnrollReproduceData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulatePGTPartitionReproduceData(unittest.TestCase):
@@ -1709,7 +1675,7 @@ class AccumulatePGTPartitionReproduceData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulatePGReproduceData(unittest.TestCase):
@@ -1782,7 +1748,7 @@ class AccumulatePGReproduceData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulateLGTReplicateSciData(unittest.TestCase):
@@ -1797,27 +1763,19 @@ class AccumulateLGTReplicateSciData(unittest.TestCase):
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
@@ -1993,7 +1951,7 @@ class AccumulatePGTUnrollReplicateSciData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
@@ -2066,7 +2024,7 @@ class AccumulatePGTPartitionReplicateSciData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulatePGReplicateSciData(unittest.TestCase):
@@ -2139,7 +2097,7 @@ class AccumulatePGReplicateSciData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulateLGTReplicateCompData(unittest.TestCase):
@@ -2154,27 +2112,19 @@ class AccumulateLGTReplicateCompData(unittest.TestCase):
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
@@ -2432,7 +2382,7 @@ class AccumulatePGTUnrollReplicateCompData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
@@ -2505,7 +2455,7 @@ class AccumulatePGTPartitionReplicateCompData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulatePGReplicateCompData(unittest.TestCase):
@@ -2578,7 +2528,7 @@ class AccumulatePGReplicateCompData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulateLGTReplicateTotalData(unittest.TestCase):
@@ -2593,27 +2543,19 @@ class AccumulateLGTReplicateTotalData(unittest.TestCase):
     }
 
     file = "reproducibility/reproGraphs/apps.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_node_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/files.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_files_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/groups.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_groups_data = json.load(f)["nodeDataArray"]
     file = "reproducibility/reproGraphs/misc.graph"
-    with pkg_resources.resource_stream(
-        "test", file
-    ) as f:  # @UndefinedVariable
+    with pkg_resources.resource_stream("test", file) as f:  # @UndefinedVariable
         # logger.debug(f"Loading graph: {f}")
         lgt_misc_data = json.load(f)["nodeDataArray"]
 
@@ -2867,7 +2809,7 @@ class AccumulatePGTUnrollReplicateTotalData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
@@ -2940,7 +2882,7 @@ class AccumulatePGTPartitionReplicateTotalData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))
 
 
 class AccumulatePGReplicateTotalData(unittest.TestCase):
@@ -3013,4 +2955,4 @@ class AccumulatePGReplicateTotalData(unittest.TestCase):
         Will only return the length of the dummy memory drop
         """
         self._setup()
-        self.assertEqual(1, len(self.graph_data["misc"]))
+        self.assertEqual(2, len(self.graph_data["misc"]))

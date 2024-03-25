@@ -123,8 +123,8 @@
     },
     "nodeDataArray": [
         {
-            "category": "Unknown",
-            "categoryType": "Unknown",
+            "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#FF66CC",
             "commitHash": "",
@@ -403,7 +403,7 @@
         },
         {
             "category": "Component",
-            "categoryType": "Unknown",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#FF66CC",
             "commitHash": "",
@@ -877,7 +877,7 @@
         },
         {
             "category": "Component",
-            "categoryType": "Unknown",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#FF66CC",
             "commitHash": "",
@@ -1090,7 +1090,7 @@
         },
         {
             "category": "Component",
-            "categoryType": "Unknown",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#FF66CC",
             "commitHash": "",
@@ -1536,7 +1536,7 @@
         },
         {
             "category": "Component",
-            "categoryType": "Unknown",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#FF66CC",
             "commitHash": "",
@@ -2060,7 +2060,7 @@
         },
         {
             "category": "Component",
-            "categoryType": "Unknown",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#FF66CC",
             "commitHash": "",

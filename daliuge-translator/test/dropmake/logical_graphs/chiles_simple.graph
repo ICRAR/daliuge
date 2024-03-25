@@ -305,10 +305,10 @@
             "y": 176.5
         },
         {
-            "category": "Component",
-            "categoryType": "Unknown",
+            "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": true,
-            "color": "#FF66CC",
+            "color": "#0059a5",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -731,10 +731,10 @@
             "y": 449.5
         },
         {
-            "category": "Component",
-            "categoryType": "Unknown",
+            "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": true,
-            "color": "#FF66CC",
+            "color": "#0059a5",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -1416,10 +1416,10 @@
             "y": 623.5
         },
         {
-            "category": "Component",
-            "categoryType": "Unknown",
+            "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": true,
-            "color": "#FF66CC",
+            "color": "#0059a5",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -1673,10 +1673,10 @@
             "y": 318.5
         },
         {
-            "category": "Component",
-            "categoryType": "Unknown",
+            "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": true,
-            "color": "#FF66CC",
+            "color": "#0059a5",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -1930,10 +1930,10 @@
             "y": 415.5
         },
         {
-            "category": "Component",
-            "categoryType": "Unknown",
+            "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": true,
-            "color": "#FF66CC",
+            "color": "#0059a5",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -2187,10 +2187,10 @@
             "y": 526.5
         },
         {
-            "category": "Component",
-            "categoryType": "Unknown",
+            "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": true,
-            "color": "#FF66CC",
+            "color": "#0059a5",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -2812,10 +2812,10 @@
             "y": 628.5
         },
         {
-            "category": "Component",
-            "categoryType": "Unknown",
+            "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": true,
-            "color": "#FF66CC",
+            "color": "#0059a5",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -3069,10 +3069,10 @@
             "y": 112.5
         },
         {
-            "category": "Component",
-            "categoryType": "Unknown",
+            "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": true,
-            "color": "#FF66CC",
+            "color": "#0059a5",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -3326,10 +3326,10 @@
             "y": 227.5
         },
         {
-            "category": "Component",
-            "categoryType": "Unknown",
+            "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": true,
-            "color": "#FF66CC",
+            "color": "#0059a5",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -3583,10 +3583,10 @@
             "y": 341.5
         },
         {
-            "category": "Component",
-            "categoryType": "Unknown",
+            "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": true,
-            "color": "#FF66CC",
+            "color": "#0059a5",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -3840,10 +3840,10 @@
             "y": 457.5
         },
         {
-            "category": "Component",
-            "categoryType": "Unknown",
+            "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": true,
-            "color": "#FF66CC",
+            "color": "#0059a5",
             "commitHash": "",
             "dataHash": "",
             "description": "",

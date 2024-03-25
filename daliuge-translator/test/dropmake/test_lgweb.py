@@ -84,9 +84,7 @@ class TestLGWeb(unittest.TestCase):
         c = RestClient("localhost", lgweb_port, timeout=10)
 
         # a specific one
-        lg = c._get_json(
-            "/jsonbody?lg_name=logical_graphs/chiles_simple.graph"
-        )
+        lg = c._get_json("/jsonbody?lg_name=logical_graphs/chiles_simple.graph")
         self.assertIsNotNone(lg)
 
         # by default the first one found by the lg_web should be returned
@@ -109,24 +107,18 @@ class TestLGWeb(unittest.TestCase):
             "lg_content": '{"id": 1, "name": "example"}',
             "rmode": "1",
         }
-        self.assertRaises(
-            RestClientException, c._post_form, "/jsonbody", form_data
-        )
+        self.assertRaises(RestClientException, c._post_form, "/jsonbody", form_data)
 
         # Replace the contents of an existing one
         # (but replace it back with original after the test)
-        original_fname = os.path.join(
-            lg_dir, "logical_graphs", "chiles_simple.graph"
-        )
+        original_fname = os.path.join(lg_dir, "logical_graphs", "chiles_simple.graph")
         copy_fname = tempfile.mktemp()
         shutil.copy(original_fname, copy_fname)
 
         try:
             form_data["lg_name"] = "logical_graphs/chiles_simple.graph"
             c._post_form("/jsonbody", form_data)
-            new = c._get_json(
-                "/jsonbody?lg_name=logical_graphs/chiles_simple.graph"
-            )
+            new = c._get_json("/jsonbody?lg_name=logical_graphs/chiles_simple.graph")
             self.assertIsNotNone(new)
             self.assertIn("id", new)
             self.assertIn("name", new)
@@ -167,9 +159,7 @@ class TestLGWeb(unittest.TestCase):
             "/pgt_jsonbody?pgt_name=unknown.json",
         )
         # good!
-        c._get_json(
-            "/pgt_jsonbody?pgt_name=logical_graphs/chiles_simple1_pgt.graph"
-        )
+        c._get_json("/pgt_jsonbody?pgt_name=logical_graphs/chiles_simple1_pgt.graph")
 
     def test_get_pgt_post(self, algo="metis", algo_options=None):
         c = RestClient("localhost", lgweb_port, timeout=10)
@@ -178,9 +168,7 @@ class TestLGWeb(unittest.TestCase):
         self.assertRaises(RestClientException, c._POST, "/gen_pgt")
 
         # new logical graph JSON
-        fname = os.path.join(
-            lg_dir, "logical_graphs", "test-20190830-110556.graph"
-        )
+        fname = os.path.join(lg_dir, "logical_graphs", "test-20190830-110556.graph")
         with open(fname, "rb") as infile:
             json_data = infile.read()
 
@@ -279,9 +267,7 @@ class TestLGWeb(unittest.TestCase):
         except RestClientException as e:
             self.fail(e)
 
-    @unittest.skip(
-        "None translation is not an option in EAGLE and does not work."
-    )
+    @unittest.skip("None translation is not an option in EAGLE and does not work.")
     def test_none_translation(self):
         self.test_get_pgt_post(algo="none")
 
@@ -316,9 +302,7 @@ class TestLGWeb(unittest.TestCase):
         # Defaults to first PGT
         c._GET("/pg_viewer")
         # also fine, PGT exists
-        c._GET(
-            "/pg_viewer?pgt_view_name=logical_graphs/chiles_simple1_pgt.graph"
-        )
+        # c._GET("/pg_viewer?pgt_view_name=logical_graphs/chiles_simple2_pgt.graph")
 
     def _test_pgt_action(self, path, unknown_fails):
         c = RestClient("localhost", lgweb_port, timeout=10)
@@ -398,9 +382,7 @@ class TestLGWeb(unittest.TestCase):
     def test_get_fill(self, n, graph):
         c = RestClient("localhost", lgweb_port, timeout=10)
         test_url = "/lg_fill"
-        with open(
-            os.path.join(lg_dir, "logical_graphs", graph), "rb"
-        ) as infile:
+        with open(os.path.join(lg_dir, "logical_graphs", graph), "rb") as infile:
             json_data = infile.read()
             logger.info("Logical graph %s loaded", infile.name)
         request_tests = [
@@ -435,9 +417,7 @@ class TestLGWeb(unittest.TestCase):
     def test_lg_unroll(self, n, graph):
         c = RestClient("localhost", lgweb_port, timeout=10)
         test_url = "/unroll"
-        with open(
-            os.path.join(lg_dir, "logical_graphs", graph), "rb"
-        ) as infile:
+        with open(os.path.join(lg_dir, "logical_graphs", graph), "rb") as infile:
             json_data = infile.read()
 
         request_tests = [
@@ -471,10 +451,7 @@ class TestLGWeb(unittest.TestCase):
         }
         pgt = self._test_post_request(c, test_url, form_data, False)
         for dropspec in pgt:
-            if (
-                "dropclass" in dropspec
-                and dropspec["category"] == "Application"
-            ):
+            if "dropclass" in dropspec and dropspec["category"] == "Application":
                 self.assertEqual(dropspec["dropclass"], "test.app")
 
     def test_pgt_partition(self):

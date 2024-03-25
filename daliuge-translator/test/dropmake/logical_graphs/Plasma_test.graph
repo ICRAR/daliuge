@@ -170,8 +170,8 @@
             "y": 476.5
         },
         {
-            "category": "Component",
-            "categoryType": "Unknown",
+            "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": false,
             "color": "#FF66CC",
             "commitHash": "",
@@ -444,8 +444,8 @@
             "y": 462.16499999999996
         },
         {
-            "category": "Component",
-            "categoryType": "Unknown",
+            "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#FF66CC",
             "commitHash": "",
@@ -733,8 +733,8 @@
             "y": 487.16499999999996
         },
         {
-            "category": "Component",
-            "categoryType": "Unknown",
+            "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#FF66CC",
             "commitHash": "",
