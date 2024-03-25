@@ -586,8 +586,8 @@
             "y": -135.5
         },
         {
-            "category": "Component",
-            "categoryType": "Unknown",
+            "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": false,
             "color": "#FF66CC",
             "commitHash": "",

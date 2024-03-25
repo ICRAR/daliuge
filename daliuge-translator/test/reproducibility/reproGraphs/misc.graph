@@ -55,7 +55,7 @@
         },
         {
             "category": "Unknown",
-            "categoryType": "Unknown",
+            "categoryType": "Application",
             "collapsed": true,
             "color": "#FF66CC",
             "commitHash": "",
