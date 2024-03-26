@@ -104,8 +104,8 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "4af0ebaf63e777c367b16bd8c03a0da5004891d5",
-        "eagleVersion": "v5.0.2",
+        "eagleCommitHash": "183ba0391bca8e8629a4e59aded4e4956334e4e7",
+        "eagleVersion": "v6.2.0:eagle-1179",
         "filePath": "test_grpby_gather.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -123,10 +123,10 @@
     },
     "nodeDataArray": [
         {
-            "category": "Start",
-            "categoryType": "Control",
+            "category": "PythonApp",
+            "categoryType": "Application",
             "collapsed": true,
-            "color": "rgb(88 167 94)",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -144,14 +144,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "B-T",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -159,18 +156,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -1,
+            "name": "Start",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Start",
-            "width": 200,
-            "x": 336.7723785166237,
-            "y": 566.4398976982102
+            "x": 349.2723785166237,
+            "y": 578.9398976982102
         },
         {
             "category": "Memory",
@@ -186,14 +183,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "f6f33bde-6317-4c07-90ba-64825029326f",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -207,7 +206,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data Volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -223,14 +221,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "R-L",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -238,24 +233,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -3,
+            "name": "Data2",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Data2",
-            "width": 200,
-            "x": 359.67774936061363,
-            "y": 377.4219948849107
+            "x": 372.17774936061363,
+            "y": 389.9219948849107
         },
         {
             "category": "Scatter",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -273,7 +268,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Number of Splits",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -289,7 +283,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Scatter Axis",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "time"
@@ -305,14 +298,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Number of copies",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
                 }
             ],
-            "flipPorts": false,
-            "height": 485.9616075598674,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -320,24 +310,24 @@
             "inputApplicationType": "None",
             "isGroup": true,
             "key": -12,
+            "name": "Scatter1",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 301.39610963097294,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Scatter1",
-            "width": 504.4296967879587,
-            "x": 601.4910485933502,
-            "y": 314.0588235294118
+            "x": 715.808788512848,
+            "y": 548.4092071611253
         },
         {
             "category": "Scatter",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -355,7 +345,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Number of Splits",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "4"
@@ -371,7 +360,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Scatter Axis",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "frequency"
@@ -387,15 +375,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Number of copies",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
                 }
             ],
-            "flipPorts": false,
             "group": -12,
-            "height": 283.5907928388748,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -403,24 +388,24 @@
             "inputApplicationType": "None",
             "isGroup": true,
             "key": -5,
+            "name": "Scatter2",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 204.43868895895866,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Scatter2",
-            "width": 343.90791375435856,
-            "x": 622.590792838874,
-            "y": 388.4526854219948
+            "x": 706.08567774936,
+            "y": 548.4092071611253
         },
         {
             "category": "Component",
             "categoryType": "Application",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -438,7 +423,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution Time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -454,7 +438,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 01",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -470,7 +453,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 02",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -486,7 +468,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 03",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -502,7 +483,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 04",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -518,7 +498,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 05",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -534,7 +513,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 06",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -550,7 +528,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 07",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -566,7 +543,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 08",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -582,7 +558,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 09",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -598,7 +573,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 10",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -614,7 +588,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "R-L",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
@@ -630,7 +603,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "B-T",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
@@ -646,15 +618,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "B-T",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -5,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -662,18 +631,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -2,
+            "name": "Component1",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Component1",
-            "width": 200,
-            "x": 678.2404092071607,
-            "y": 466.5217391304349
+            "x": 690.7404092071607,
+            "y": 479.0217391304349
         },
         {
             "category": "Memory",
@@ -689,14 +658,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "93aea2b3-b604-4012-8bd7-113632567458",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -710,7 +681,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data Volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -726,7 +696,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "B-T",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
@@ -742,15 +711,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "B-T",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -5,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -758,18 +724,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -8,
+            "name": "Data1",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Data1",
-            "width": 200,
-            "x": 561.2327365728893,
-            "y": 605.2966751918157
+            "x": 573.7327365728893,
+            "y": 617.7966751918157
         },
         {
             "category": "Memory",
@@ -785,14 +751,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "010540dd-e519-4077-9865-b9870048668a",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -806,7 +774,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data Volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -822,7 +789,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "B-T",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
@@ -838,7 +804,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "R-T",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
@@ -854,7 +819,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "L-R",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
@@ -870,7 +834,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "B-T",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
@@ -886,15 +849,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "R-L",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -5,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -902,24 +862,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -10,
+            "name": "Data3",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Data3",
-            "width": 200,
-            "x": 825.9386189258306,
-            "y": 547.6214833759581
+            "x": 838.4386189258306,
+            "y": 560.1214833759581
         },
         {
             "category": "Component",
             "categoryType": "Application",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -937,7 +897,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution Time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -953,7 +912,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 01",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -969,7 +927,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 02",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -985,7 +942,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 03",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1001,7 +957,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 04",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1017,7 +972,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 05",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1033,7 +987,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 06",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1049,7 +1002,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 07",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1065,7 +1017,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 08",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1081,7 +1032,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 09",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1097,7 +1047,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 10",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1113,15 +1062,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "B-T",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -24,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1129,24 +1075,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -21,
+            "name": "Component4",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Component4",
-            "width": 200,
-            "x": 1170.9258312020463,
-            "y": 849.2225063938623
+            "x": 1183.4258312020463,
+            "y": 861.7225063938623
         },
         {
             "category": "Component",
             "categoryType": "Application",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -1164,7 +1110,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution Time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -1180,7 +1125,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 01",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1196,7 +1140,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 02",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1212,7 +1155,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 03",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1228,7 +1170,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 04",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1244,7 +1185,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 05",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1260,7 +1200,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 06",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1276,7 +1215,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 07",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1292,7 +1230,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 08",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1308,7 +1245,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 09",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1324,7 +1260,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 10",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1340,15 +1275,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "R-T",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -12,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1356,18 +1288,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -22,
+            "name": "Component",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Component",
-            "width": 200,
-            "x": 892.4705882352947,
-            "y": 693.7979539641935
+            "x": 904.9705882352947,
+            "y": 706.2979539641935
         },
         {
             "category": "Memory",
@@ -1383,14 +1315,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "1cc4c201-d93b-40ef-967a-6eac1a9aaeed",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -1404,7 +1338,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data Volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -1420,15 +1353,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "B-T",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -24,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1436,24 +1366,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -23,
+            "name": "Data5",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Data5",
-            "width": 200,
-            "x": 1317.5831202046038,
-            "y": 848.8823529411765
+            "x": 1330.0831202046038,
+            "y": 861.3823529411765
         },
         {
             "category": "Gather",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -1471,7 +1401,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Number of Inputs",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "2"
@@ -1487,14 +1416,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Gather Axis",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "frequency"
                 }
             ],
-            "flipPorts": false,
-            "height": 197.06393861892587,
             "inputAppFields": [
                 {
                     "defaultValue": "",
@@ -1507,7 +1433,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "L-R",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1523,7 +1448,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "L-R",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
@@ -1535,32 +1459,30 @@
             "inputApplicationType": "UnknownApplication",
             "isGroup": true,
             "key": -24,
+            "name": "Gather",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 128.32884173698488,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Gather",
-            "width": 343.0307051714729,
-            "x": 1144.925831202046,
-            "y": 753.2225063938625
+            "x": 1256.7544757033252,
+            "y": 861.5524296675194
         },
         {
             "category": "GroupBy",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "",
             "drawOrderHint": 0,
             "expanded": false,
             "fields": [],
-            "flipPorts": false,
-            "height": 160,
             "inputAppFields": [
                 {
                     "defaultValue": "",
@@ -1573,7 +1495,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "B-T",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1589,7 +1510,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "B-T",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
@@ -1601,24 +1521,24 @@
             "inputApplicationType": "UnknownApplication",
             "isGroup": true,
             "key": -14,
+            "name": "Group By 2",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 55,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Group By 2",
-            "width": 248,
-            "x": 1135.69820971867,
-            "y": 548.6547314578
+            "x": 1172.1982097186694,
+            "y": 657.1547314578
         },
         {
             "category": "Component",
             "categoryType": "Application",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -1636,7 +1556,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution Time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -1652,7 +1571,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 01",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1668,7 +1586,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 02",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1684,7 +1601,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 03",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1700,7 +1616,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 04",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1716,7 +1631,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 05",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1732,7 +1646,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 06",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1748,7 +1661,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 07",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1764,7 +1676,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 08",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1780,7 +1691,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 09",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1796,15 +1706,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 10",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -14,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1812,24 +1719,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -20,
+            "name": "Component 2",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Component 2",
-            "width": 200,
-            "x": 1159.6982097186694,
-            "y": 644.6547314578
+            "x": 1172.1982097186694,
+            "y": 657.1547314578
         },
         {
             "category": "Gather",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -1847,7 +1754,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Number of Inputs",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "2"
@@ -1863,14 +1769,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Gather Axis",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "frequency"
                 }
             ],
-            "flipPorts": false,
-            "height": 193.6368286445012,
             "inputAppFields": [
                 {
                     "defaultValue": "",
@@ -1883,7 +1786,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "B-L",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -1899,7 +1801,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "B-L",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
@@ -1911,18 +1812,18 @@
             "inputApplicationType": "UnknownApplication",
             "isGroup": true,
             "key": -25,
+            "name": "Gather",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 133.31839986311138,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Gather",
-            "width": 345.521739130435,
-            "x": 1390.0818414322243,
-            "y": 318.89769820971856
+            "x": 1488.2902813299224,
+            "y": 424.0754475703322
         },
         {
             "category": "Memory",
@@ -1938,14 +1839,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "e4b184e7-25fe-4f25-a8b9-794c2c02720d",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -1959,7 +1862,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data Volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -1975,15 +1877,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "B-T",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -25,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1991,32 +1890,30 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -27,
+            "name": "Data4",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Data4",
-            "width": 200,
-            "x": 1554.107416879794,
-            "y": 411.1304347826084
+            "x": 1566.607416879794,
+            "y": 423.6304347826084
         },
         {
             "category": "GroupBy",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "",
             "drawOrderHint": 0,
             "expanded": false,
             "fields": [],
-            "flipPorts": false,
-            "height": 200,
             "inputAppFields": [
                 {
                     "defaultValue": "",
@@ -2029,7 +1926,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "R-L",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -2045,7 +1941,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "R-L",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
@@ -2057,6 +1952,7 @@
             "inputApplicationType": "UnknownApplication",
             "isGroup": true,
             "key": -28,
+            "name": "Group By 1",
             "outputAppFields": [
                 {
                     "defaultValue": "",
@@ -2069,7 +1965,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "B-L",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -2085,7 +1980,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "B-L",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
@@ -2096,10 +1990,9 @@
             "outputApplicationName": "B-L",
             "outputApplicationType": "UnknownApplication",
             "paletteDownloadUrl": "",
+            "radius": 44,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Group By 1",
-            "width": 200,
             "x": 1156.296675191816,
             "y": 316.8005115089512
         },
@@ -2114,8 +2007,6 @@
             "drawOrderHint": 0,
             "expanded": false,
             "fields": [],
-            "flipPorts": false,
-            "height": 200,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2123,18 +2014,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -16,
+            "name": "",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "",
-            "width": 200,
-            "x": 345.1560102301789,
-            "y": 691.6854219948848
+            "x": 357.6560102301789,
+            "y": 704.1854219948848
         },
         {
             "category": "Comment",
@@ -2147,8 +2038,6 @@
             "drawOrderHint": 0,
             "expanded": false,
             "fields": [],
-            "flipPorts": false,
-            "height": 200,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2156,24 +2045,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -19,
+            "name": "",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "",
-            "width": 200,
-            "x": 1519.1994884910487,
-            "y": 760.2787723785168
+            "x": 1531.6994884910487,
+            "y": 772.7787723785168
         },
         {
             "category": "Component",
             "categoryType": "Application",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -2191,7 +2080,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution Time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -2207,7 +2095,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group Start",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -2223,7 +2110,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 01",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -2239,7 +2125,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 02",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -2255,7 +2140,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 03",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -2271,7 +2155,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 04",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -2287,7 +2170,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 05",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -2303,7 +2185,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 06",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -2319,7 +2200,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 07",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -2335,7 +2215,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 08",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -2351,7 +2230,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 09",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -2367,7 +2245,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg 10",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -2383,15 +2260,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "B-T",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -25,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2399,18 +2273,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -29,
+            "name": "Component3",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Component3",
-            "width": 200,
-            "x": 1397.4731457800508,
-            "y": 412.02046035805597
+            "x": 1409.9731457800508,
+            "y": 424.52046035805597
         },
         {
             "category": "Comment",
@@ -2423,8 +2297,6 @@
             "drawOrderHint": 0,
             "expanded": false,
             "fields": [],
-            "flipPorts": false,
-            "height": 200,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2432,18 +2304,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -26,
+            "name": "",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "",
-            "width": 200,
-            "x": 1361.731457800511,
-            "y": 28.271099744245454
+            "x": 1374.231457800511,
+            "y": 40.771099744245454
         },
         {
             "category": "Comment",
@@ -2456,8 +2328,6 @@
             "drawOrderHint": 0,
             "expanded": false,
             "fields": [],
-            "flipPorts": false,
-            "height": 200,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2465,18 +2335,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -17,
+            "name": "",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "",
-            "width": 200,
-            "x": 315.63171355498724,
-            "y": -14.130434782608743
+            "x": 328.13171355498724,
+            "y": -1.6304347826087433
         }
     ]
 }

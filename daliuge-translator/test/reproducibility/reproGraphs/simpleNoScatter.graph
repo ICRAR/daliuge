@@ -59,8 +59,8 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "5d9153e898ae56bd7efb8d62694c7187836b9d79",
-        "eagleVersion": "v5.0.2",
+        "eagleCommitHash": "183ba0391bca8e8629a4e59aded4e4956334e4e7",
+        "eagleVersion": "v6.2.0:eagle-1179",
         "filePath": "simpleNoScatter.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -99,7 +99,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -115,7 +114,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -131,7 +129,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Check file path exists",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -147,7 +144,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "File path",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -163,7 +159,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Directory name",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -179,7 +174,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -195,14 +189,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "in",
                     "type": "String",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -210,24 +201,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -1,
+            "name": "File",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "File",
-            "width": 200,
-            "x": 708,
-            "y": 264
+            "x": 720.5,
+            "y": 276.5
         },
         {
             "category": "Scatter",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "Placeholder 'scatter' description",
@@ -245,7 +236,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Number of copies",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 1
@@ -261,14 +251,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Scatter axis",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "time"
                 }
             ],
-            "flipPorts": false,
-            "height": 337,
             "inputAppFields": [
                 {
                     "defaultValue": "",
@@ -281,7 +268,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -297,7 +283,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 1
@@ -313,7 +298,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -329,7 +313,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg01",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -345,7 +328,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "in",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -361,7 +343,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "scatter",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -377,7 +358,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "in",
                     "type": "String",
                     "usage": "InputPort",
                     "value": ""
@@ -393,29 +373,29 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "scatter",
                     "type": "String",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
+            "inputApplicationDescription": "",
             "inputApplicationKey": -4,
             "inputApplicationName": "Bash Shell App",
             "inputApplicationType": "BashShellApp",
             "isGroup": true,
             "key": -2,
+            "name": "Scatter",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 178.78863033413046,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Scatter",
-            "width": 461,
-            "x": 925,
-            "y": 305
+            "x": 1078.75,
+            "y": 485.25
         },
         {
             "category": "BashShellApp",
@@ -439,7 +419,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -455,7 +434,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 1
@@ -471,7 +449,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -487,7 +464,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg01",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -503,7 +479,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "scatter",
                     "type": "String",
                     "usage": "InputPort",
                     "value": ""
@@ -519,15 +494,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "intermediate",
                     "type": "String",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -2,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -535,18 +507,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -3,
+            "name": "Bash Shell App",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Bash Shell App",
-            "width": 200,
-            "x": 973,
-            "y": 526
+            "x": 985.5,
+            "y": 538.5
         },
         {
             "category": "File",
@@ -570,7 +542,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -586,7 +557,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -602,7 +572,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Check file path exists",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -618,7 +587,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "File path",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -634,7 +602,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Directory name",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -650,7 +617,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -666,7 +632,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "scatter",
                     "type": "String",
                     "usage": "InputPort",
                     "value": ""
@@ -682,15 +647,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "scatter",
                     "type": "String",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -2,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -698,18 +660,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -5,
+            "name": "scatter",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "scatter",
-            "width": 200,
-            "x": 954.5,
-            "y": 419.5
+            "x": 967,
+            "y": 432
         },
         {
             "category": "File",
@@ -733,7 +695,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -749,7 +710,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -765,7 +725,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Check file path exists",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -781,7 +740,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "File path",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -797,7 +755,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Directory name",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -813,7 +770,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -829,7 +785,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "intermediate",
                     "type": "String",
                     "usage": "InputPort",
                     "value": ""
@@ -845,15 +800,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "result",
                     "type": "String",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -2,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -861,24 +813,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -6,
+            "name": "File",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "File",
-            "width": 200,
-            "x": 1178,
-            "y": 433
+            "x": 1190.5,
+            "y": 445.5
         },
         {
             "category": "Gather",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "Placeholder 'gather' description",
@@ -896,7 +848,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Number of inputs",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 2
@@ -912,14 +863,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Gather axis",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "frequency"
                 }
             ],
-            "flipPorts": false,
-            "height": 300,
             "inputAppFields": [
                 {
                     "defaultValue": "",
@@ -932,7 +880,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -948,7 +895,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 1
@@ -964,7 +910,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -980,7 +925,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg01",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -996,7 +940,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "result",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -1012,7 +955,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "result",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -1028,7 +970,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "result",
                     "type": "String",
                     "usage": "InputPort",
                     "value": ""
@@ -1044,29 +985,29 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "result",
                     "type": "String",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
+            "inputApplicationDescription": "",
             "inputApplicationKey": -8,
             "inputApplicationName": "Bash Shell App",
             "inputApplicationType": "BashShellApp",
             "isGroup": true,
             "key": -7,
+            "name": "Gather",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 55,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Gather",
-            "width": 286,
-            "x": 1474,
-            "y": 336
+            "x": 1552.5,
+            "y": 484.5
         },
         {
             "category": "File",
@@ -1090,7 +1031,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -1106,7 +1046,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -1122,7 +1061,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Check file path exists",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -1138,7 +1076,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "File path",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -1154,7 +1091,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Directory name",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -1170,7 +1106,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -1186,15 +1121,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "result",
                     "type": "String",
                     "usage": "InputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -7,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1202,18 +1134,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -9,
+            "name": "File",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "File",
-            "width": 200,
-            "x": 1540,
-            "y": 472
+            "x": 1552.5,
+            "y": 484.5
         }
     ]
 }

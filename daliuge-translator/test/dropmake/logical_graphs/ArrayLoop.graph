@@ -68,8 +68,8 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "7d0ae821e5e620324a1735bfe513eb85f44ae956",
-        "eagleVersion": "v5.0.2",
+        "eagleCommitHash": "183ba0391bca8e8629a4e59aded4e4956334e4e7",
+        "eagleVersion": "v6.2.0:eagle-1179",
         "filePath": "ArrayLoop.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -100,14 +100,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "dd207754-79f5-4518-bdc4-c7c065cfa670",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -121,7 +123,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -137,7 +138,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Streaming",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -153,7 +153,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -169,7 +168,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -185,7 +183,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "array",
                     "type": "Object",
                     "usage": "InputPort",
                     "value": ""
@@ -201,14 +198,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "array",
                     "type": "Object",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -216,24 +210,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -5,
+            "name": "array",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "array",
-            "width": 200,
-            "x": 646.3293254308712,
-            "y": -180.01429065746868
+            "x": 658.8293254308712,
+            "y": -167.51429065746868
         },
         {
             "category": "Loop",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "Components inside a Loop will be repeatedly executed for a fixed number of times",
@@ -251,7 +245,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -267,7 +260,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Streaming",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -283,15 +275,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Number loops",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 2
                 }
             ],
-            "flipPorts": false,
             "group": -7,
-            "height": 228.73251431122588,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -299,24 +288,24 @@
             "inputApplicationType": "None",
             "isGroup": true,
             "key": -2,
+            "name": "Loop",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 134.70381349046056,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Loop",
-            "width": 236.88851027824222,
-            "x": 980.4194016426504,
-            "y": -140.2154548423919
+            "x": 1018.1721964877247,
+            "y": -21.154919345655784
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "App that picks the first element of an input list, passes that to all outputs, except the first one. The first output is used to pass the remaining array on. This app is useful for a loop.",
@@ -334,7 +323,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -350,7 +338,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Streaming",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -366,7 +353,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -382,7 +368,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 1
@@ -398,7 +383,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": true
@@ -414,7 +398,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.apps.simple.PickOne"
@@ -430,7 +413,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "rest_array",
                     "type": "Object",
                     "usage": "InputPort",
                     "value": ""
@@ -446,7 +428,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data",
                     "type": "Object",
                     "usage": "OutputPort",
                     "value": ""
@@ -462,15 +443,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "rest_array",
                     "type": "Object",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -2,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -478,18 +456,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -3,
+            "name": "PickOne",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "PickOne",
-            "width": 200,
-            "x": 936.8276604171807,
-            "y": -51.42450187960627
+            "x": 949.3276604171807,
+            "y": -38.92450187960627
         },
         {
             "category": "File",
@@ -505,14 +483,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "d6afc79d-a18c-4971-bec1-b7d218c969f0",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.file.FileDROP"
                 },
                 {
@@ -526,7 +506,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -542,7 +521,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Streaming",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -558,7 +536,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -574,7 +551,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -590,7 +566,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Check file path exists",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -606,7 +581,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "File path",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -622,7 +596,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Directory name",
                     "type": "String",
                     "usage": "NoPort",
                     "value": ""
@@ -638,15 +611,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data",
                     "type": "Object",
                     "usage": "InputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -2,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -654,18 +624,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -4,
+            "name": "File",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "File",
-            "width": 200,
-            "x": 1074.5167325582688,
-            "y": -73.8186808496991
+            "x": 1087.0167325582688,
+            "y": -61.318680849699106
         },
         {
             "category": "Memory",
@@ -681,14 +651,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "6a0075ac-2d62-41aa-a79e-d42287110719",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -702,7 +674,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -718,7 +689,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Streaming",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -734,7 +704,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -750,7 +719,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": true
@@ -766,7 +734,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "rest_array",
                     "type": "Object",
                     "usage": "InputPort",
                     "value": ""
@@ -782,15 +749,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "rest_array",
                     "type": "Object",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -2,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -798,24 +762,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -6,
+            "name": "rest_array",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "rest_array",
-            "width": 200,
-            "x": 1064.2046085241898,
-            "y": 6.508842158387546
+            "x": 1076.7046085241898,
+            "y": 19.008842158387544
         },
         {
             "category": "Component",
-            "categoryType": "Application",
+            "categoryType": "Unknown",
             "collapsed": true,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "A testing APP that does not take any input and produces a random array of type int64, if integer is set to True, else of type float64. size indicates the number of elements ranging between the values low and high. The resulting array will be send to all connected output apps. \ninteger: bool [True], generate integer array low: float, lower boundary (will be converted to int for integer arrays) high: float, upper boundary (will be converted to int for integer arrays) size: int, number of array elements",
@@ -833,7 +797,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -849,7 +812,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Streaming",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -865,7 +827,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "Application class",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.apps.simple.RandomArrayApp"
@@ -881,7 +842,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 1
@@ -897,7 +857,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 1
@@ -913,7 +872,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -929,7 +887,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Size",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 80000
@@ -945,7 +902,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Integer",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": true
@@ -961,7 +917,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Low",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 0
@@ -977,7 +932,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "High",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 1000
@@ -993,14 +947,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Array",
                     "type": "Object",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1008,24 +959,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -1,
+            "name": "RandomArrayApp",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "RandomArrayApp",
-            "width": 200,
-            "x": 544.5097087503365,
-            "y": -179.86737951936044
+            "x": 557.0097087503365,
+            "y": -167.36737951936044
         },
         {
             "category": "Scatter",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "A construct that splits inputs into multiple parallel processing instances",
@@ -1043,7 +994,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -1059,7 +1009,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Streaming",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -1075,14 +1024,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Number of copies",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 10
                 }
             ],
-            "flipPorts": false,
-            "height": 331,
             "inputAppFields": [
                 {
                     "defaultValue": "",
@@ -1095,7 +1041,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "Application Class",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.apps.simple.GenericScatterApp"
@@ -1111,7 +1056,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -1127,7 +1071,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 1
@@ -1143,7 +1086,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -1159,7 +1101,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "array",
                     "type": "Object",
                     "usage": "NoPort",
                     "value": ""
@@ -1175,7 +1116,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "rest_array",
                     "type": "Object",
                     "usage": "NoPort",
                     "value": ""
@@ -1191,7 +1131,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "array",
                     "type": "Object",
                     "usage": "NoPort",
                     "value": ""
@@ -1207,7 +1146,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "rest_array",
                     "type": "Object",
                     "usage": "NoPort",
                     "value": ""
@@ -1223,7 +1161,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "array",
                     "type": "Object",
                     "usage": "NoPort",
                     "value": ""
@@ -1239,7 +1176,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "rest_array",
                     "type": "Object",
                     "usage": "NoPort",
                     "value": ""
@@ -1255,7 +1191,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "array",
                     "type": "Object",
                     "usage": "NoPort",
                     "value": ""
@@ -1271,7 +1206,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "rest_array",
                     "type": "Object",
                     "usage": "NoPort",
                     "value": ""
@@ -1287,7 +1221,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "array",
                     "type": "Object",
                     "usage": "NoPort",
                     "value": ""
@@ -1303,7 +1236,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "rest_array",
                     "type": "Object",
                     "usage": "NoPort",
                     "value": ""
@@ -1319,7 +1251,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 2
@@ -1335,7 +1266,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "array",
                     "type": "Object",
                     "usage": "NoPort",
                     "value": ""
@@ -1351,7 +1281,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "rest_array",
                     "type": "Object",
                     "usage": "NoPort",
                     "value": ""
@@ -1367,7 +1296,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "array",
                     "type": "Object",
                     "usage": "InputPort",
                     "value": ""
@@ -1383,7 +1311,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "rest_array",
                     "type": "Object",
                     "usage": "OutputPort",
                     "value": ""
@@ -1395,18 +1322,18 @@
             "inputApplicationType": "PythonApp",
             "isGroup": true,
             "key": -7,
+            "name": "Scatter",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 230.6770930418203,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Scatter",
-            "width": 415,
-            "x": 820.5549615739166,
-            "y": -215.85316647586936
+            "x": 961.6428903576543,
+            "y": -21.1549193456558
         },
         {
             "category": "Memory",
@@ -1422,14 +1349,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "d299fff9-1814-432b-8564-6bbdd8bd5b74",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -1443,7 +1372,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -1459,7 +1387,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Streaming",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -1475,7 +1402,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "rest_array",
                     "type": "Object",
                     "usage": "InputPort",
                     "value": ""
@@ -1491,15 +1417,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "rest_array",
                     "type": "Object",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -7,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1507,18 +1430,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -9,
+            "name": "rest_array",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "rest_array",
-            "width": 200,
-            "x": 782.9097707371235,
-            "y": -90.47913039033881
+            "x": 795.4097707371235,
+            "y": -77.97913039033881
         }
     ]
 }
