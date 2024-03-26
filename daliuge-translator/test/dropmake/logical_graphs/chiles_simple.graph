@@ -194,8 +194,8 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "433af03ecb7a364dc7900c7a3745981e056a2a12",
-        "eagleVersion": "v5.1.0:eagle-1022",
+        "eagleCommitHash": "183ba0391bca8e8629a4e59aded4e4956334e4e7",
+        "eagleVersion": "v6.2.0:eagle-1179",
         "filePath": "chiles_simple.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -226,14 +226,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "37a8af10-badf-4e9d-aba7-cf9dd8725eb9",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -282,8 +284,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -298,14 +298,14 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 472,
-            "y": 164
+            "x": 484.5,
+            "y": 176.5
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
@@ -541,8 +541,6 @@
                     "value": "dlg.apps.simple.SleepApp"
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -557,11 +555,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 663,
-            "y": 164
+            "x": 675.5,
+            "y": 176.5
         },
         {
             "category": "Memory",
@@ -577,14 +575,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "ca951e82-85d3-44bb-b959-e44ba5d164cd",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -633,8 +633,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -649,11 +647,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 903,
-            "y": 164
+            "x": 915.5,
+            "y": 176.5
         },
         {
             "category": "Memory",
@@ -669,14 +667,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "89960b32-1544-4ae7-a7c9-9f7b488edf75",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -710,8 +710,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -726,14 +724,14 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1274,
-            "y": 437
+            "x": 1286.5,
+            "y": 449.5
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
@@ -1029,8 +1027,6 @@
                     "value": "dlg.apps.simple.SleepApp"
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1045,11 +1041,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 1127,
-            "y": 442
+            "x": 1139.5,
+            "y": 454.5
         },
         {
             "category": "Memory",
@@ -1065,14 +1061,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "bd7915d9-e2e5-4822-a29d-b15250095feb",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -1121,8 +1119,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1137,11 +1133,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 465,
-            "y": 302
+            "x": 477.5,
+            "y": 314.5
         },
         {
             "category": "Memory",
@@ -1157,14 +1153,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "c556d8da-dcab-409a-9829-13dced20c5ef",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -1213,8 +1211,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1229,11 +1225,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 463,
-            "y": 411
+            "x": 475.5,
+            "y": 423.5
         },
         {
             "category": "Memory",
@@ -1249,14 +1245,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "4a16365e-7e85-4118-92ee-10ea48582168",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -1305,8 +1303,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1321,11 +1317,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 458,
-            "y": 527
+            "x": 470.5,
+            "y": 539.5
         },
         {
             "category": "Memory",
@@ -1341,14 +1337,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "e967b96a-7bbf-4720-82c6-b774044abfa5",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -1397,8 +1395,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1413,14 +1409,14 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 465,
-            "y": 611
+            "x": 477.5,
+            "y": 623.5
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
@@ -1656,8 +1652,6 @@
                     "value": "dlg.apps.simple.SleepApp"
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1672,14 +1666,14 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 660,
-            "y": 306
+            "x": 672.5,
+            "y": 318.5
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
@@ -1915,8 +1909,6 @@
                     "value": "dlg.apps.simple.SleepApp"
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1931,14 +1923,14 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 653,
-            "y": 403
+            "x": 665.5,
+            "y": 415.5
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
@@ -2174,8 +2166,6 @@
                     "value": "dlg.apps.simple.SleepApp"
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2190,14 +2180,14 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 658,
-            "y": 514
+            "x": 670.5,
+            "y": 526.5
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
@@ -2433,8 +2423,6 @@
                     "value": "dlg.apps.simple.SleepApp"
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2449,11 +2437,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 646,
-            "y": 613
+            "x": 658.5,
+            "y": 625.5
         },
         {
             "category": "Memory",
@@ -2469,14 +2457,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "6faf1d27-e260-436d-9c0f-433053df7663",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -2525,8 +2515,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2541,11 +2529,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 906,
-            "y": 317
+            "x": 918.5,
+            "y": 329.5
         },
         {
             "category": "Memory",
@@ -2561,14 +2549,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "68d77192-ad04-4be5-be70-38014c99d1d8",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -2617,8 +2607,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2633,11 +2621,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 909,
-            "y": 422
+            "x": 921.5,
+            "y": 434.5
         },
         {
             "category": "Memory",
@@ -2653,14 +2641,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "b828a8bf-a00e-4788-a84c-7e434fef4633",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -2709,8 +2699,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2725,11 +2713,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 900,
-            "y": 521
+            "x": 912.5,
+            "y": 533.5
         },
         {
             "category": "Memory",
@@ -2745,14 +2733,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "fde49861-f06d-4bf1-b179-bd7a41523f1a",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -2801,8 +2791,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -2817,14 +2805,14 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 898,
-            "y": 616
+            "x": 910.5,
+            "y": 628.5
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
@@ -3060,8 +3048,6 @@
                     "value": "dlg.apps.simple.SleepApp"
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -3076,14 +3062,14 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 351,
-            "y": 100
+            "x": 363.5,
+            "y": 112.5
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
@@ -3319,8 +3305,6 @@
                     "value": "dlg.apps.simple.SleepApp"
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -3335,14 +3319,14 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 353,
-            "y": 215
+            "x": 365.5,
+            "y": 227.5
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
@@ -3578,8 +3562,6 @@
                     "value": "dlg.apps.simple.SleepApp"
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -3594,14 +3576,14 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 355,
-            "y": 329
+            "x": 367.5,
+            "y": 341.5
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
@@ -3837,8 +3819,6 @@
                     "value": "dlg.apps.simple.SleepApp"
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -3853,14 +3833,14 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 373,
-            "y": 445
+            "x": 385.5,
+            "y": 457.5
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
@@ -4096,8 +4076,6 @@
                     "value": "dlg.apps.simple.SleepApp"
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -4112,11 +4090,11 @@
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "width": 200,
-            "x": 371,
-            "y": 550
+            "x": 383.5,
+            "y": 562.5
         }
     ]
 }

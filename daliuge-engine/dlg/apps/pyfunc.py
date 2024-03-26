@@ -83,8 +83,9 @@ def import_using_name(app, fname):
     logger.debug("Importing %s", fname)
     parts = fname.split(".")
     # If only one part check if builtin
+    b = globals()["__builtins__"]
+    logger.debug(f"Function: {parts[0]}: {hasattr(b, parts[0])}")
     if len(parts) < 2:
-        b = globals()["__builtins__"]
         logger.debug(f"Builtins: {type(b)}")
         logger.debug(f"Function {fname}: {hasattr(b, fname)}")
         if fname in b:
@@ -92,6 +93,8 @@ def import_using_name(app, fname):
         else:
             msg = "%s is not builtin and does not contain a module name" % fname
             raise InvalidDropException(app, msg)
+    elif parts[0] in b.keys():
+        return b[parts[0]]
     else:
         if len(parts) > 1:
             if parts[-1] in ["__init__", "__class__"]:
@@ -141,6 +144,33 @@ class DropParser(Enum):
     # JSON = "json"
     PATH = "path"  # input only
     DATAURL = "dataurl"  # input only
+
+
+##
+# @brief PythonMemberFunction
+# @details A placeholder APP to aid construction of new class member function applications.
+# This is mainly useful (and used) when starting a new workflow from scratch.
+# @par EAGLE_START
+# @param category PythonMemberFunction
+# @param tag daliuge
+# @param func_name object.__init__/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function name
+# @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code, e.g. 'def function_name(args): return args'
+# @param dropclass dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param object /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/object port
+# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/The allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
+#     \~English Mapping from argname to default value. Should match only the last part of the argnames list.
+#               Values are interpreted as Python code literals and that means string values need to be quoted.
+# @par EAGLE_END
+class PyMemberApp(BarrierAppDROP):
+    """A placeholder member function that just aids the generation of the palette component"""
+
+    pass
 
 
 ##
