@@ -80,7 +80,10 @@ def daliuge_aware(func):
                 origin = bottle.request.headers.raw("Origin")
                 if origin is None:
                     origin = "http://localhost:8084"
-                elif origin != "http://dlg-trans.icrar.org" and not re.match(
+                elif origin not in [
+                    "http://dlg-trans.icrar.org",
+                    "https://dlg-trans.icrar.org",
+                ] and not re.match(
                     r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin
                 ):
                     origin = "http://localhost:8084"
