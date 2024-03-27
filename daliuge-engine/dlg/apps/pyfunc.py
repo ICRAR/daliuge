@@ -349,6 +349,151 @@ class PyFuncApp(BarrierAppDROP):
                     # only transfer if there is a value or precious is True
                     self._applicationArgs.pop(kw)
 
+    def _init_appArgs(self, pargsDict, keyargsDict, inputs, outputs, posargs) -> list:
+        """
+        Identify and fill application arguments.
+
+        Deals with positional and keyword arguments.
+
+        Returns:
+        --------
+        list, [funcargs, pargs]
+        """
+        pargs = []
+        funcargs = {}
+        if "applicationArgs" in self.parameters:
+            appArgs = self.parameters["applicationArgs"]  # we'll pop the default ones
+            _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
+            logger.debug(
+                "Default keyword arguments removed: %s",
+                [i for i in _dum],
+            )
+            # update the positional args
+            pargsDict.update(
+                {k: self.parameters[k] for k in pargsDict if k in self.parameters}
+            )
+            # if defined in both we use AppArgs values
+            for arg in appArgs:
+                # check value type and interpret
+                if appArgs[arg]["type"] in ["Json", "Complex"]:
+                    try:
+                        value = ast.literal_eval(appArgs[arg]["value"])
+                        logger.debug(
+                            f"Evaluated %s to %s",
+                            appArgs[arg]["value"],
+                            type(value),
+                        )
+                        appArgs[arg]["value"] = value
+                    except ValueError:
+                        logger.error("Unable to evaluate %s", appArgs[arg]["value"])
+                else:
+                    value = appArgs[arg]["value"]
+                if arg in pargsDict:
+                    pargsDict.update({arg: value})
+
+            _ = [appArgs.pop(k) for k in pargsDict if k in appArgs]
+            logger.debug("Updated posargs dictionary: %s", pargsDict)
+
+            keyargsDict.update(
+                {k: appArgs[k]["value"] for k in keyargsDict if k in appArgs}
+            )
+            logger.debug("Updated keyargs dictionary: %s", keyargsDict)
+
+            # 2. put all remaining arguments into *args and **kwargs
+            # TODO: This should only be done if the function signature allows it
+            vparg = []
+            vkarg = {}
+            logger.debug(f"Remaining AppArguments {appArgs}")
+            for arg in appArgs:
+                if appArgs[arg]["type"] in ["Json", "Complex"]:
+                    value = ast.literal_eval(appArgs[arg]["value"])
+                else:
+                    value = appArgs[arg]["value"]
+                if appArgs[arg]["positional"]:
+                    vparg.append(value)
+                else:
+                    vkarg.update({arg: value})
+
+            # TODO: check where this is defined in signature
+            self.arguments = inspect.getfullargspec(self.f)
+            if self.arguments.varargs:
+                logger.debug("Adding remaining *args to pargs %s", vparg)
+                pargs.extend(vparg)
+            if self.arguments.varkw:
+                logger.debug("Adding remaining **kwargs to funcargs: %s", vkarg)
+                funcargs.update(vkarg)
+
+        logger.debug(f"Updating funcargs with values from pargsDict {pargsDict}")
+        funcargs.update(pargsDict)
+
+        # Mixin the values from named ports
+        portargs = self._ports2args(inputs, outputs, posargs, pargsDict, keyargsDict)
+
+        logger.debug(f"Updating funcargs with values from named ports {portargs}")
+        funcargs.update(portargs)
+
+        return [funcargs, pargs]
+
+    def _ports2args(self, inputs, outputs, posargs, pargsDict, keyargsDict) -> dict:
+        """
+        Replace arguments with values from ports.
+
+        Returns:
+        --------
+        portargs dictionary
+        """
+        portargs = {}
+        # 3. replace default argument values with named input ports
+        # TODO: investigate performing inputs and outputs in a single call
+        if "inputs" in self.parameters and check_ports_dict(self.parameters["inputs"]):
+            check_len = min(
+                len(inputs),
+                self.fn_nargs + self.fn_nkw,
+            )
+            inputs_dict = collections.OrderedDict()
+            for inport in self.parameters["inputs"]:
+                key = list(inport.keys())[0]
+                inputs_dict[key] = {"name": inport[key], "path": inputs[key]}
+            portargs.update(
+                identify_named_ports(
+                    inputs_dict,
+                    posargs,
+                    pargsDict,
+                    keyargsDict,
+                    check_len=check_len,
+                    mode="inputs",
+                )
+            )
+        else:
+            # Just as a fallback using the index, but this is risky!
+            for i in range(min(len(inputs), self.fn_nargs)):
+                portargs.update({self.argnames[i]: list(inputs.values())[i]})
+
+        # 4. replace default argument values with named output ports
+        if "outputs" in self.parameters and check_ports_dict(
+            self.parameters["outputs"]
+        ):
+            check_len = min(len(outputs), self.fn_nargs + self.fn_nkw)
+            outputs_dict = collections.OrderedDict()
+            for outport in self.parameters["outputs"]:
+                key = list(outport.keys())[0]
+                outputs_dict[key] = {
+                    "name": outport[key],
+                    "path": outputs[key],
+                }
+
+            portargs.update(
+                identify_named_ports(
+                    outputs_dict,
+                    posargs,
+                    pargsDict,
+                    keyargsDict,
+                    check_len=check_len,
+                    mode="outputs",
+                )
+            )
+        return portargs
+
     def initialize_with_func_code(self):
         """
         This function takes over if code is passed in through an argument.
@@ -468,8 +613,6 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(f"available inputs: {inputs}")
 
         posargs = list(self.posonly.keys()) + list(self.poskw.keys())
-        kwargs = {}
-        pargs = []
         # fill the pargsDict with positional and poskw arguments and defaults
         pargsDict = {k: v.default for k, v in self.posonly.items()}
         pargsDict.update({k: v.default for k, v in self.poskw.items()})
@@ -478,125 +621,10 @@ class PyFuncApp(BarrierAppDROP):
         keyargsDict = {k: v.default for k, v in self.kwonly.items()}
         logger.debug("Initial kwonly dictionary: %s", self.kwonly)
 
-        # replace default argument values with provided values
-        if "applicationArgs" in self.parameters:
-            appArgs = self.parameters[
-                "applicationArgs"
-            ]  # we'll pop the identified ones
-            _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
-            logger.debug(
-                "Default keyword arguments removed: %s",
-                [i for i in _dum],
-            )
-            # update the positional args
-            pargsDict.update(
-                {k: self.parameters[k] for k in pargsDict if k in self.parameters}
-            )
-            # if defined in both we use AppArgs values
-            for k in appArgs:
-                # check value type and interpret
-                if appArgs[k]["type"] in ["Json", "Complex"]:
-                    try:
-                        value = ast.literal_eval(appArgs[k]["value"])
-                        logger.debug(
-                            f"Evaluated %s to %s",
-                            appArgs[k]["value"],
-                            type(value),
-                        )
-                        appArgs[k]["value"] = value
-                    except ValueError:
-                        logger.error("Unable to evaluate %s", appArgs[k]["value"])
-                else:
-                    value = appArgs[k]["value"]
-                if k in pargsDict:
-                    pargsDict.update({k: value})
-
-            _ = [appArgs.pop(k) for k in pargsDict if k in appArgs]
-            logger.debug("Updated posargs dictionary: %s", pargsDict)
-
-            keyargsDict.update(
-                {k: appArgs[k]["value"] for k in keyargsDict if k in appArgs}
-            )
-            logger.debug("Updated keyargs dictionary: %s", keyargsDict)
-
-            # 2. put all remaining arguments into *args and **kwargs
-            # TODO: This should only be done if the function signature allows it
-            vparg = []
-            vkarg = {}
-            logger.debug(f"Remaining AppArguments {appArgs}")
-            for arg in appArgs:
-                if appArgs[arg]["type"] in ["Json", "Complex"]:
-                    value = ast.literal_eval(appArgs[arg]["value"])
-                else:
-                    value = appArgs[arg]["value"]
-                if appArgs[arg]["positional"]:
-                    vparg.append(value)
-                else:
-                    vkarg.update({arg: value})
-
-            # TODO: check where this is defined in signature
-            self.arguments = inspect.getfullargspec(self.f)
-            if self.arguments.varargs:
-                logger.debug("Adding remaining *args to pargs %s", vparg)
-                pargs.extend(vparg)
-            if self.arguments.varkw:
-                logger.debug("Adding remaining **kwargs to funcargs: %s", vkarg)
-                funcargs.update(vkarg)
-
-        # 3. replace default argument values with named input ports
-        # TODO: investigate performing inputs and outputs in a single call
-        if "inputs" in self.parameters and check_ports_dict(self.parameters["inputs"]):
-            check_len = min(
-                len(inputs),
-                self.fn_nargs + self.fn_nkw,
-            )
-            inputs_dict = collections.OrderedDict()
-            for inport in self.parameters["inputs"]:
-                key = list(inport.keys())[0]
-                inputs_dict[key] = {"name": inport[key], "path": inputs[key]}
-            kwargs.update(
-                identify_named_ports(
-                    inputs_dict,
-                    posargs,
-                    pargsDict,
-                    keyargsDict,
-                    check_len=check_len,
-                    mode="inputs",
-                )
-            )
-        else:
-            # Just as a fallback using the index, but this is risky!
-            for i in range(min(len(inputs), self.fn_nargs)):
-                kwargs.update({self.argnames[i]: list(inputs.values())[i]})
-
-        # 4. replace default argument values with named output ports
-        if "outputs" in self.parameters and check_ports_dict(
-            self.parameters["outputs"]
-        ):
-            check_len = min(len(outputs), self.fn_nargs + self.fn_nkw)
-            outputs_dict = collections.OrderedDict()
-            for outport in self.parameters["outputs"]:
-                key = list(outport.keys())[0]
-                outputs_dict[key] = {
-                    "name": outport[key],
-                    "path": outputs[key],
-                }
-
-            kwargs.update(
-                identify_named_ports(
-                    outputs_dict,
-                    posargs,
-                    pargsDict,
-                    keyargsDict,
-                    check_len=check_len,
-                    mode="outputs",
-                )
-            )
-        logger.debug(f"Updating funcargs with values from pargsDict {pargsDict}")
-        funcargs.update(pargsDict)
-
-        logger.debug(f"Updating funcargs with values from named ports {kwargs}")
-        funcargs.update(kwargs)
+        # deal with arguments of any sort
+        funcargs, pargs = self._init_appArgs(
+            pargsDict, keyargsDict, inputs, outputs, posargs
+        )
 
         self._recompute_data["args"] = funcargs.copy()
 
