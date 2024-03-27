@@ -45,7 +45,7 @@ case "$1" in
         echo ">>>>> docker-slim output <<<<<<<<<"
         docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock dslim/docker-slim build --include-shell \
             --include-path /etc --include-path /usr/local/lib --include-path /usr/local/bin --include-path /usr/lib/python3.8 \
-            --include-path /usr/lib/python3 --include-path /dlg --include-path /daliuge --publish-exposed-ports=true \
+            --include-path /usr/lib/python3 --include-path /usr/bin/hostname --include-path /dlg --include-path /daliuge --publish-exposed-ports=true \
             --http-probe=true --tag=icrar/daliuge-engine:${VCS_TAG}\
             icrar/daliuge-engine.big:${VCS_TAG} \
 	    ;;

@@ -52,6 +52,16 @@ install_requires = [
     "merklelib>=1.0",
     "pyzmq==25.1.0",
     "pydantic==1.10.7",
+    "boto3",
+    "phonenumbers",
+    "mailchecker",
+    "ftfy",
+    "toml",
+    "pyyaml",
+    "beautifulsoup4",
+    "openpyxl",
+    "xlrd",
+    "xmltodict",
     "python-benedict[all]",
 ]
 
