@@ -119,7 +119,7 @@ def identify_named_ports(
     portargs = {}
     posargs = list(posargs)
     keys = list(port_dict.keys())
-    logger.debug("Checking ports: %s", keys)
+    logger.debug("Checking ports: %s against %s %s", keys, posargs, keyargs)
     for i in range(check_len):
         try:
             key = port_dict[keys[i]]["name"]
@@ -134,16 +134,16 @@ def identify_named_ports(
                 logger.debug("Reading from port using %s", parser.__repr__())
                 value = parser(port_dict[keys[i]]["drop"])
             pargsDict.update({key: value})
-            # portargs.update({key: value})
             logger.debug("Using %s '%s' for parg %s", mode, value, key)
+            portargs.update({key: value})
             posargs.pop(posargs.index(key))
         elif key in keyargs:
             if parser:
                 logger.debug("Reading from port using %s", parser.__repr__())
                 value = parser(port_dict[keys[i]]["drop"])
             # if not found in appArgs we don't put them into portargs either
-            portargs.update({key: value})
             # pargsDict.update({key: value})
+            portargs.update({key: value})
             logger.debug("Using %s of type %s for kwarg %s", mode, type(value), key)
             _ = keyargs.pop(key)  # remove from original arg list
         else:
@@ -154,6 +154,7 @@ def identify_named_ports(
                 keyargs,
                 posargs,
             )
+
     logger.debug("Returning kw mapped ports: %s", portargs)
     return portargs
 
