@@ -200,6 +200,8 @@ def replace_named_ports(
         separator: character used between keyword and value
         parser: reader function for ports
 
+
+
     Returns:
         tuple of serialized keyword arguments and positional arguments
     """
@@ -218,10 +220,7 @@ def replace_named_ports(
 
     outputs_dict = collections.OrderedDict()
     for uid, drop in oitems:
-        outputs_dict[uid] = {
-            "drop": drop,
-            "path": drop.path if hasattr(drop, "path") else "",
-        }
+        outputs_dict[uid] = {"path": drop.path if hasattr(drop, "path") else ""}
     # logger.debug("appArgs: %s", appArgs)
     # get positional args
     posargs = [arg for arg in appArgs if appArgs[arg]["positional"]]
