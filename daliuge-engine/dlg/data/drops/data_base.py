@@ -168,15 +168,13 @@ class DataDROP(AbstractDROP):
     def _checkStateAndDescriptor(self, descriptor):
         if self.status != DROPStates.COMPLETED:
             raise Exception(
-                "%r is in state %s (!=COMPLETED), cannot be read"
-                % (self, self.status)
+                "%r is in state %s (!=COMPLETED), cannot be read" % (self, self.status)
             )
         if descriptor is None:
             raise ValueError("Illegal empty descriptor given")
         if descriptor not in self._rios:
             raise Exception(
-                "Illegal descriptor %d given, remember to open() first"
-                % (descriptor)
+                "Illegal descriptor %d given, remember to open() first" % (descriptor)
             )
 
     def isBeingRead(self):
@@ -200,10 +198,8 @@ class DataDROP(AbstractDROP):
         if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("No more writing expected")
 
-        if not isinstance(data, (bytes, memoryview)):
-            raise Exception(
-                "Data type not of binary type: %s", type(data).__name__
-            )
+        if not isinstance(data, (bytes, memoryview, str)):
+            raise Exception("Data type not of binary type: ", type(data).__name__)
 
         # We lazily initialize our writing IO instance because the data of this
         # DROP might not be written through this DROP

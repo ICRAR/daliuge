@@ -702,6 +702,8 @@ class PyFuncApp(BarrierAppDROP):
                     o.write(repr(r).encode("utf-8"))
                 elif self.output_parser is DropParser.NPY:
                     drop_loaders.save_npy(o, r)
+                elif self.output_parser is DropParser.RAW:
+                    o.write(r)
                 else:
                     ValueError(self.output_parser.__repr__())
 
