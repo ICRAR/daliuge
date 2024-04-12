@@ -78,28 +78,24 @@ def daliuge_aware(func):
                 bottle.response.content_type = "application/json"
                 # set CORS headers
                 origin = bottle.request.headers.raw("Origin")
-                if origin is None:
-                    origin = "http://localhost:8084"
-                elif not re.match(
-                    r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin
+                logger.debug("CORS request comming from: %s", origin)
+                if origin is None or re.match(
+                    r"http://dlg-trans.local:80[0-9][0-9]", origin
                 ):
+                    origin = "http://dlg-trans.local:8084"
+                elif re.match(r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin):
                     origin = "http://localhost:8084"
                 bottle.response.headers["Access-Control-Allow-Origin"] = origin
-                bottle.response.headers[
-                    "Access-Control-Allow-Credentials"
-                ] = "true"
-                bottle.response.headers[
-                    "Access-Control-Allow-Methods"
-                ] = "GET, POST, PUT, OPTIONS"
-                bottle.response.headers[
-                    "Access-Control-Allow-Headers"
-                ] = "Origin, Accept, Content-Type, Content-Encoding, X-Requested-With, X-CSRF-Token"
-            jres = (
-                json.dumps(res) if res else json.dumps({"Status": "Success"})
-            )
-            logger.debug(
-                "Bottle sending back result: %s", jres[: min(len(jres), 80)]
-            )
+                bottle.response.headers["Access-Control-Allow-Credentials"] = "true"
+                bottle.response.headers["Access-Control-Allow-Methods"] = (
+                    "GET, POST, PUT, OPTIONS"
+                )
+                bottle.response.headers["Access-Control-Allow-Headers"] = (
+                    "Origin, Accept, Content-Type, Content-Encoding, X-Requested-With, X-CSRF-Token"
+                )
+                logger.debug("CORS headers set to allow from: %s", origin)
+            jres = json.dumps(res) if res else json.dumps({"Status": "Success"})
+            logger.debug("Bottle sending back result: %s", jres[: min(len(jres), 80)])
             return json.dumps(res)
         except Exception as e:
             logger.exception("Error while fulfilling request")
@@ -166,24 +162,14 @@ class ManagerRestServer(RestServer):
         app.post("/api/stop", callback=self.stop_manager)
         app.post("/api/sessions", callback=self.createSession)
         app.get("/api/sessions", callback=self.getSessions)
-        app.get(
-            "/api/sessions/<sessionId>", callback=self.getSessionInformation
-        )
+        app.get("/api/sessions/<sessionId>", callback=self.getSessionInformation)
         app.delete("/api/sessions/<sessionId>", callback=self.destroySession)
         app.get("/api/sessions/<sessionId>/logs", callback=self.getLogFile)
-        app.get(
-            "/api/sessions/<sessionId>/status", callback=self.getSessionStatus
-        )
-        app.post(
-            "/api/sessions/<sessionId>/deploy", callback=self.deploySession
-        )
-        app.post(
-            "/api/sessions/<sessionId>/cancel", callback=self.cancelSession
-        )
+        app.get("/api/sessions/<sessionId>/status", callback=self.getSessionStatus)
+        app.post("/api/sessions/<sessionId>/deploy", callback=self.deploySession)
+        app.post("/api/sessions/<sessionId>/cancel", callback=self.cancelSession)
         app.get("/api/sessions/<sessionId>/graph", callback=self.getGraph)
-        app.get(
-            "/api/sessions/<sessionId>/graph/size", callback=self.getGraphSize
-        )
+        app.get("/api/sessions/<sessionId>/graph/size", callback=self.getGraphSize)
         app.get(
             "/api/sessions/<sessionId>/graph/status",
             callback=self.getGraphStatus,
@@ -201,9 +187,7 @@ class ManagerRestServer(RestServer):
             callback=self.getSessionReproStatus,
         )
 
-        app.route(
-            "/api/sessions", method="OPTIONS", callback=self.acceptPreflight
-        )
+        app.route("/api/sessions", method="OPTIONS", callback=self.acceptPreflight)
         app.route(
             "/api/sessions/<sessionId>/graph/append",
             method="OPTIONS",
@@ -226,9 +210,7 @@ class ManagerRestServer(RestServer):
 
     @daliuge_aware
     def submit_methods(self):
-        return {
-            "methods": [DeploymentMethods.BROWSER, DeploymentMethods.SERVER]
-        }
+        return {"methods": [DeploymentMethods.BROWSER, DeploymentMethods.SERVER]}
 
     def _stop_manager(self):
         self.dm.shutdown()
@@ -408,9 +390,7 @@ class NMRestServer(ManagerRestServer):
             "/api/sessions/<sessionId>/subscriptions",
             callback=self.add_node_subscriptions,
         )
-        app.post(
-            "/api/sessions/<sessionId>/trigger", callback=self.trigger_drops
-        )
+        app.post("/api/sessions/<sessionId>/trigger", callback=self.trigger_drops)
         # The non-REST mappings that serve HTML-related content
         app.get("/", callback=self.visualizeDM)
         app.get("/api/shutdown", callback=self.shutdown_node_manager)
@@ -617,9 +597,7 @@ class CompositeManagerRestServer(ManagerRestServer):
         tpl = file_as_string("web/dim.html")
         urlparts = bottle.request.urlparts
         selectedNode = (
-            bottle.request.params["node"]
-            if "node" in bottle.request.params
-            else ""
+            bottle.request.params["node"] if "node" in bottle.request.params else ""
         )
         serverUrl = urlparts.scheme + "://" + urlparts.netloc
         return bottle.template(
@@ -698,9 +676,7 @@ class MasterManagerRestServer(CompositeManagerRestServer):
     def addNM(self, host, node):
         port = constants.ISLAND_DEFAULT_REST_PORT
         logger.debug("Adding NM %s to DIM %s", node, host)
-        with RestClient(
-            host=host, port=port, timeout=10, url_prefix="/api"
-        ) as c:
+        with RestClient(host=host, port=port, timeout=10, url_prefix="/api") as c:
             return json.loads(
                 c._POST(
                     f"/node/{node}",
@@ -711,9 +687,7 @@ class MasterManagerRestServer(CompositeManagerRestServer):
     def removeNM(self, host, node):
         port = constants.ISLAND_DEFAULT_REST_PORT
         logger.debug("Removing NM %s from DIM %s", node, host)
-        with RestClient(
-            host=host, port=port, timeout=10, url_prefix="/api"
-        ) as c:
+        with RestClient(host=host, port=port, timeout=10, url_prefix="/api") as c:
             return json.loads(c._DELETE(f"/node/{node}").read())
 
     @daliuge_aware

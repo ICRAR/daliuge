@@ -1,9 +1,21 @@
+import ast
+from enum import Enum
 import logging
 import collections
 from typing import Tuple
-import dlg.common as common
+from dlg import droputils, drop_loaders
 
 logger = logging.getLogger(__name__)
+
+
+class DropParser(Enum):
+    RAW = "raw"
+    PICKLE = "pickle"
+    EVAL = "eval"
+    NPY = "npy"
+    # JSON = "json"
+    PATH = "path"  # input only
+    DATAURL = "dataurl"  # input only
 
 
 def serialize_kwargs(keyargs, prefix="--", separator=" "):
@@ -12,9 +24,7 @@ def serialize_kwargs(keyargs, prefix="--", separator=" "):
         if prefix == "--" and len(name) == 1:
             kwargs += [f"-{name} {value}"]
         else:
-            kwargs += [
-                f"{prefix.strip()}{name.strip()}{separator}{str(value).strip()}"
-            ]
+            kwargs += [f"{prefix.strip()}{name.strip()}{separator}{str(value).strip()}"]
     logger.debug("kwargs after serialization: %s", kwargs)
     return kwargs
 
@@ -78,6 +88,7 @@ def identify_named_ports(
     keyargs: dict,
     check_len: int = 0,
     mode: str = "inputs",
+    parser: callable = None,
 ) -> dict:
     """
     Checks port names for matches with arguments and returns mapped ports.
@@ -89,6 +100,7 @@ def identify_named_ports(
         keyargs (dict): keyword arguments
         check_len (int): number of of ports to be checked
         mode (str ["inputs"]): mode, used just for logging messages
+        parser (function): parser function for this port
 
     Returns:
         dict: port arguments
@@ -118,17 +130,21 @@ def identify_named_ports(
         if value is None:
             value = ""  # make sure we are passing NULL drop events
         if key in posargs:
+            if parser:
+                logger.debug("Reading from port using %s", parser.__repr__())
+                value = parser(port_dict[keys[i]]["drop"])
             pargsDict.update({key: value})
             # portargs.update({key: value})
             logger.debug("Using %s '%s' for parg %s", mode, value, key)
             posargs.pop(posargs.index(key))
         elif key in keyargs:
+            if parser:
+                logger.debug("Reading from port using %s", parser.__repr__())
+                value = parser(port_dict[keys[i]]["drop"])
             # if not found in appArgs we don't put them into portargs either
             portargs.update({key: value})
             # pargsDict.update({key: value})
-            logger.debug(
-                "Using %s of type %s for kwarg %s", mode, type(value), key
-            )
+            logger.debug("Using %s of type %s for kwarg %s", mode, type(value), key)
             _ = keyargs.pop(key)  # remove from original arg list
         else:
             logger.debug(
@@ -168,6 +184,7 @@ def replace_named_ports(
     appArgs: dict,
     argumentPrefix: str = "--",
     separator: str = " ",
+    parser: callable = None,
 ) -> Tuple[str, str]:
     """
     Function attempts to identify CLI component arguments that match port names.
@@ -180,6 +197,7 @@ def replace_named_ports(
         appArgs: dictionary of all arguments
         argumentPrefix: prefix for keyword arguments
         separator: character used between keyword and value
+        parser: reader function for ports
 
     Returns:
         tuple of serialized keyword arguments and positional arguments
@@ -192,27 +210,27 @@ def replace_named_ports(
     )
     inputs_dict = collections.OrderedDict()
     for uid, drop in iitems:
-        inputs_dict[uid] = {"path": drop.path if hasattr(drop, "path") else ""}
+        inputs_dict[uid] = {
+            "drop": drop,
+            "path": drop.path if hasattr(drop, "path") else "",
+        }
 
     outputs_dict = collections.OrderedDict()
     for uid, drop in oitems:
         outputs_dict[uid] = {
-            "path": drop.path if hasattr(drop, "path") else ""
+            "drop": drop,
+            "path": drop.path if hasattr(drop, "path") else "",
         }
     # logger.debug("appArgs: %s", appArgs)
     # get positional args
     posargs = [arg for arg in appArgs if appArgs[arg]["positional"]]
     # get kwargs
     keyargs = {
-        arg: appArgs[arg]["value"]
-        for arg in appArgs
-        if not appArgs[arg]["positional"]
+        arg: appArgs[arg]["value"] for arg in appArgs if not appArgs[arg]["positional"]
     }
     # we will need an ordered dict for all positional arguments
     # thus we create it here and fill it with values
-    portPosargsDict = collections.OrderedDict(
-        zip(posargs, [None] * len(posargs))
-    )
+    portPosargsDict = collections.OrderedDict(zip(posargs, [None] * len(posargs)))
     logger.debug(
         "posargs: %s; keyargs: %s, %s",
         posargs,
@@ -234,6 +252,7 @@ def replace_named_ports(
             keyargs,
             check_len=len(iitems),
             mode="inputs",
+            parser=parser,
         )
         portkeyargs.update(ipkeyargs)
     else:
@@ -268,16 +287,12 @@ def replace_named_ports(
     appArgs = clean_applicationArgs(appArgs)
     # get cleaned positional args
     posargs = {
-        arg: appArgs[arg]["value"]
-        for arg in appArgs
-        if appArgs[arg]["positional"]
+        arg: appArgs[arg]["value"] for arg in appArgs if appArgs[arg]["positional"]
     }
     logger.debug("posargs: %s", posargs)
     # get cleaned kwargs
     keyargs = {
-        arg: appArgs[arg]["value"]
-        for arg in appArgs
-        if not appArgs[arg]["positional"]
+        arg: appArgs[arg]["value"] for arg in appArgs if not appArgs[arg]["positional"]
     }
     for k, v in portkeyargs.items():
         if v not in [None, ""]:
@@ -298,7 +313,34 @@ def replace_named_ports(
     )
     pargs = list(posargs.values())
     pargs = [""] if len(pargs) == 0 or None in pargs else pargs
-    logger.debug(
-        "After port replacement: pargs: %s; keyargs: %s", pargs, keyargs
-    )
+    logger.debug("After port replacement: pargs: %s; keyargs: %s", pargs, keyargs)
     return keyargs, pargs
+
+
+def get_port_reader_function(input_parser: DropParser):
+    """
+    Return the function used to read input from a named port
+    """
+    # Inputs are un-pickled and treated as the arguments of the function
+    # Their order must be preserved, so we use an OrderedDict
+    if input_parser is DropParser.PICKLE:
+        # all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
+        reader = drop_loaders.load_pickle
+    elif input_parser is DropParser.EVAL:
+
+        def optionalEval(x):
+            # Null and Empty Drops will return an empty byte string
+            # which should propogate back to None
+            content: str = droputils.allDropContents(x).decode("utf-8")
+            return ast.literal_eval(content) if len(content) > 0 else None
+
+        reader = optionalEval
+    elif input_parser is DropParser.NPY:
+        reader = drop_loaders.load_npy
+    elif input_parser is DropParser.PATH:
+        reader = lambda x: x.path
+    elif input_parser is DropParser.DATAURL:
+        reader = lambda x: x.dataurl
+    else:
+        raise ValueError(input_parser.__repr__())
+    return reader

@@ -18,3 +18,4 @@ gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/usr/sbin/nologi
 nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
 _apt:x:100:65534::/nonexistent:/usr/sbin/nologin
 messagebus:x:101:102::/nonexistent:/usr/sbin/nologin
+avahi:x:102:103:Avahi mDNS daemon,,,:/var/run/avahi-daemon:/usr/sbin/nologin

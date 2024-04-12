@@ -190,6 +190,7 @@ class RestClient(object):
 
         if content and hasattr(content, "read"):
             headers["Transfer-Encoding"] = "chunked"
+            headers["Origin"] = "http://dlg-trans.local:8084"
             content = chunked(content)
 
         self._conn = http.client.HTTPConnection(self.host, self.port)
