@@ -37,9 +37,14 @@ import dill
 from io import StringIO
 from contextlib import redirect_stdout
 
-from dlg import droputils, drop_loaders
+from dlg import drop_loaders
 from dlg.utils import serialize_data, deserialize_data
-from dlg.named_port_utils import check_ports_dict, identify_named_ports
+from dlg.named_port_utils import (
+    DropParser,
+    check_ports_dict,
+    get_port_reader_function,
+    identify_named_ports,
+)
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import InvalidDropException
 from dlg.meta import (
@@ -134,16 +139,6 @@ def import_using_name(app, fname):
 
 def import_using_code(code):
     return dill.loads(code)
-
-
-class DropParser(Enum):
-    RAW = "raw"
-    PICKLE = "pickle"
-    EVAL = "eval"
-    NPY = "npy"
-    # JSON = "json"
-    PATH = "path"  # input only
-    DATAURL = "dataurl"  # input only
 
 
 ##
@@ -597,30 +592,8 @@ class PyFuncApp(BarrierAppDROP):
         mapping. This also allows to pass values to any function argument through a port.
 
         """
-
-        # Inputs are un-pickled and treated as the arguments of the function
-        # Their order must be preserved, so we use an OrderedDict
-        if self.input_parser is DropParser.PICKLE:
-            # all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
-            all_contents = drop_loaders.load_pickle
-        elif self.input_parser is DropParser.EVAL:
-
-            def optionalEval(x):
-                # Null and Empty Drops will return an empty byte string
-                # which should propogate back to None
-                content: str = droputils.allDropContents(x).decode("utf-8")
-                return ast.literal_eval(content) if len(content) > 0 else None
-
-            all_contents = optionalEval
-        elif self.input_parser is DropParser.NPY:
-            all_contents = drop_loaders.load_npy
-        elif self.input_parser is DropParser.PATH:
-            all_contents = lambda x: x.path
-        elif self.input_parser is DropParser.DATAURL:
-            all_contents = lambda x: x.dataurl
-        else:
-            raise ValueError(self.input_parser.__repr__())
-
+        funcargs = {}
+        all_contents = get_port_reader_function(self.input_parser)
         inputs = collections.OrderedDict()
         for uid, drop in self._inputs.items():
             inputs[uid] = all_contents(drop)

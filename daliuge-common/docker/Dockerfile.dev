@@ -7,8 +7,9 @@ FROM ubuntu:20.04
 ARG BUILD_ID
 LABEL stage=builder
 LABEL build=$BUILD_ID
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get update && \
-    apt-get install -y gcc python3 python3.8-venv python3-pip python3-distutils python3-appdirs libmetis-dev curl git sudo && \
+    apt-get install -y avahi-utils gcc python3 python3.8-venv python3-pip python3-distutils python3-appdirs libmetis-dev curl git sudo && \
     apt-get clean
 
 COPY / /daliuge

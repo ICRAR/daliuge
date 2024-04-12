@@ -78,14 +78,12 @@ def daliuge_aware(func):
                 bottle.response.content_type = "application/json"
                 # set CORS headers
                 origin = bottle.request.headers.raw("Origin")
-                if origin is None:
-                    origin = "http://localhost:8084"
-                elif origin not in [
-                    "http://dlg-trans.icrar.org",
-                    "https://dlg-trans.icrar.org",
-                ] and not re.match(
-                    r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin
+                logger.debug("CORS request comming from: %s", origin)
+                if origin is None or re.match(
+                    r"http://dlg-trans.local:80[0-9][0-9]", origin
                 ):
+                    origin = "http://dlg-trans.local:8084"
+                elif re.match(r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin):
                     origin = "http://localhost:8084"
                 bottle.response.headers["Access-Control-Allow-Origin"] = origin
                 bottle.response.headers["Access-Control-Allow-Credentials"] = "true"
@@ -95,6 +93,7 @@ def daliuge_aware(func):
                 bottle.response.headers["Access-Control-Allow-Headers"] = (
                     "Origin, Accept, Content-Type, Content-Encoding, X-Requested-With, X-CSRF-Token"
                 )
+                logger.debug("CORS headers set to allow from: %s", origin)
             jres = json.dumps(res) if res else json.dumps({"Status": "Success"})
             logger.debug("Bottle sending back result: %s", jres[: min(len(jres), 80)])
             return json.dumps(res)

@@ -28,6 +28,7 @@ import unittest
 import numpy
 
 from dlg import droputils, drop_loaders
+from dlg.named_port_utils import DropParser
 from dlg.apps import pyfunc
 from dlg.apps.simple_functions import string2json
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
@@ -154,8 +155,8 @@ class TestPyFuncApp(unittest.TestCase):
             "b",
             "b",
             f,
-            input_parser=pyfunc.DropParser.EVAL,
-            output_parser=pyfunc.DropParser.EVAL,
+            input_parser=DropParser.EVAL,
+            output_parser=DropParser.EVAL,
         )
         c = InMemoryDROP("c", "c")
 
@@ -203,8 +204,8 @@ class TestPyFuncApp(unittest.TestCase):
             "b",
             "b",
             f,
-            input_parser=pyfunc.DropParser.NPY,
-            output_parser=pyfunc.DropParser.NPY,
+            input_parser=DropParser.NPY,
+            output_parser=DropParser.NPY,
         )
         c = InMemoryDROP("c", "c")
 
