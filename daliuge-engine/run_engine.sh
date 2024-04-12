@@ -56,7 +56,7 @@ case "$1" in
         echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${C_TAG}"
         docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${C_TAG}
         sleep 3
-        docker exec -u root daliuge-engine bash -c "service avahi-daemon stop && service dbus restart && service avahi-daemon start"
+        docker exec -u root daliuge-engine bash -c "service avahi-daemon stop > /dev/null 2>&1 && service dbus restart > /dev/null 2>&1 && service avahi-daemon start > /dev/null 2>&1"
         ENGINE_NAME=`docker exec daliuge-engine sh -c "hostname"`
         ENGINE_IP=`docker exec daliuge-engine sh -c "hostname --ip-address"`
         curl -X POST http://${ENGINE_IP}:9000/managers/island/start
