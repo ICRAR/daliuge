@@ -7,12 +7,11 @@ ARG BUILD_ID
 FROM icrar/daliuge-common:${VCS_TAG:-latest}
 LABEL stage=builder
 LABEL build=$BUILD_ID
-# all dependencies are already installed in daliuge-common
-# RUN apt-get update && \
-#     apt-get clean && \
-#     apt install -y gcc python3-venv python3-distutils
 
-RUN service avahi-daemon stop && service dbus start && service avahi-daemon start && avahi-set-host-name dlg-engine
+RUN service avahi-daemon stop && \
+    service dbus start && \
+    service avahi-daemon start && \
+    avahi-set-host-name dlg-trans
 COPY / /daliuge
 RUN . /dlg/bin/activate && \
     cd /daliuge && \

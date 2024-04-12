@@ -6,8 +6,10 @@ case "$1" in
         docker run -h dlg-trans --name daliuge-translator --rm -td -p 8084:8084 icrar/daliuge-translator:${VCS_TAG};;
     "dev")
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD| tr '[:upper:]' '[:lower:]'`
-        echo "Running Translator development version in foreground..."
-        docker run -h dlg-trans --volume $PWD/dlg/dropmake:/dlg/lib/python3.8/site-packages/dlg/dropmake --name daliuge-translator --rm -t -p 8084:8084 icrar/daliuge-translator:${VCS_TAG};;
+        echo "Running Translator development version in background..."
+        docker run -d -h dlg-trans --volume $PWD/dlg/dropmake:/dlg/lib/python3.8/site-packages/dlg/dropmake --name daliuge-translator --rm -t -p 8084:8084 icrar/daliuge-translator:${VCS_TAG}
+        sleep 3
+        docker exec -u root daliuge-translator bash -c "service avahi-daemon stop > /dev/null 2>&1 && service dbus restart > /dev/null 2>&1 && service avahi-daemon start > /dev/null 2>&1";;
     "casa")
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD| tr '[:upper:]' '[:lower:]'`-casa
         echo "Running Translator development version in foreground..."
