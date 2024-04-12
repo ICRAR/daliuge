@@ -138,17 +138,13 @@ gen_pgt_sem = threading.Semaphore(1)
 global lg_dir
 global pgt_dir
 global pg_mgr
-LG_SCHEMA = json.loads(
-    file_as_string("lg.graph.schema", package="dlg.dropmake")
-)
+LG_SCHEMA = json.loads(file_as_string("lg.graph.schema", package="dlg.dropmake"))
 
 
 @app.post("/jsonbody", tags=["Original"])
 def jsonbody_post_lg(
     lg_name: str = Form(description="The name of the lg to use"),
-    lg_content: str = Form(
-        description="The content of the lg to save to file"
-    ),
+    lg_content: str = Form(description="The content of the lg to save to file"),
     rmode: str = Form(default=str(REPRO_DEFAULT.value)),
 ):
     """
@@ -172,9 +168,7 @@ def jsonbody_post_lg(
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail="Failed to save logical graph {0}:{1}".format(
-                lg_name, str(e)
-            ),
+            detail="Failed to save logical graph {0}:{1}".format(lg_name, str(e)),
         )
     finally:
         post_sem.release()
@@ -303,9 +297,7 @@ def get_gantt_chart(
     except GraphException as ge:
         raise HTTPException(
             status_code=500,
-            detail="Failed to generate Gantt chart for {0}: {1}".format(
-                pgt_id, ge
-            ),
+            detail="Failed to generate Gantt chart for {0}: {1}".format(pgt_id, ge),
         )
 
 
@@ -345,9 +337,7 @@ def get_schedule_matrices(
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail="Failed to get schedule matrices for {0}: {1}".format(
-                pgt_id, e
-            ),
+            detail="Failed to get schedule matrices for {0}: {1}".format(pgt_id, e),
         )
 
 
@@ -429,18 +419,14 @@ def gen_pgt(
         logger.info("Schedule Exception")
         raise HTTPException(
             status_code=500,
-            detail="Graph scheduling exception {1}: {0}".format(
-                str(se), lg_name
-            ),
+            detail="Graph scheduling exception {1}: {0}".format(str(se), lg_name),
         )
     except Exception:
         logger.info("Partition / Other exception")
         trace_msg = traceback.format_exc()
         raise HTTPException(
             status_code=500,
-            detail="Graph partition exception {1}: {0}".format(
-                trace_msg, lg_name
-            ),
+            detail="Graph partition exception {1}: {0}".format(trace_msg, lg_name),
         )
 
 
@@ -450,9 +436,7 @@ async def gen_pgt_post(
     lg_name: str = Form(
         description="If present, translator will attempt to load this lg from file"
     ),
-    json_data: str = Form(
-        description="The graph data used as the graph if supplied"
-    ),
+    json_data: str = Form(description="The graph data used as the graph if supplied"),
     rmode: str = Form(
         str(REPRO_DEFAULT.value),
         description="Reproducibility mode setting level of provenance tracking. Refer to main documentation for more information",
@@ -549,18 +533,14 @@ async def gen_pgt_post(
         logger.info("SCHEDULE EXCEPTION")
         raise HTTPException(
             status_code=500,
-            detail="Graph scheduling exception {1}: {0}".format(
-                str(se), lg_name
-            ),
+            detail="Graph scheduling exception {1}: {0}".format(str(se), lg_name),
         )
     except Exception:
         logger.info("OTHER EXCEPTION")
         trace_msg = traceback.format_exc()
         raise HTTPException(
             status_code=500,
-            detail="Graph partition exception {1}: {0}".format(
-                trace_msg, lg_name
-            ),
+            detail="Graph partition exception {1}: {0}".format(trace_msg, lg_name),
         )
 
 
@@ -634,9 +614,7 @@ def gen_pg(
 
     pgtpj = pgtp._gojs_json_obj
     reprodata = pgtp.reprodata
-    num_partitions = len(
-        list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"]))
-    )
+    num_partitions = len(list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"])))
 
     if mhost is None:
         if tpl_nodes_len > 0:
@@ -684,9 +662,7 @@ def gen_pg(
     except restutils.RestClientException as re:
         raise HTTPException(
             status_code=500,
-            detail="Failed to interact with DALiUGE Drop Manager: {0}".format(
-                re
-            ),
+            detail="Failed to interact with DALiUGE Drop Manager: {0}".format(re),
         )
     except Exception as ex:
         logger.error(traceback.format_exc())
@@ -725,9 +701,7 @@ def gen_pg_spec(
         logger.error("%s", traceback.format_exc())
         raise HTTPException(
             status_code=500,
-            detail="Unable to parse json body of request for pg_spec: {0}".format(
-                ex
-            ),
+            detail="Unable to parse json body of request for pg_spec: {0}".format(ex),
         )
     pgtp = pg_mgr.get_pgt(pgt_id)
     if pgtp is None:
@@ -738,9 +712,7 @@ def gen_pg_spec(
             ),
         )
     if node_list is None:
-        raise HTTPException(
-            status_code=500, detail="Must specify DALiuGE nodes list"
-        )
+        raise HTTPException(status_code=500, detail="Must specify DALiuGE nodes list")
 
     try:
         pg_spec = pgtp.to_pg_spec(
@@ -787,9 +759,7 @@ def gen_pg_helm(
 
     pgtpj = pgtp._gojs_json_obj
     logger.info("PGTP: %s", pgtpj)
-    num_partitions = len(
-        list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"]))
-    )
+    num_partitions = len(list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"])))
     # Send pgt_data to helm_start
     try:
         start_helm(pgtp, num_partitions, pgt_dir)
@@ -845,17 +815,13 @@ def load_graph(graph_content: str, graph_name: str):
         )
     if not lg_exists(lg_dir, graph_name):
         if not graph_content:
-            raise HTTPException(
-                status_code=400, detail="LG content is nonexistent"
-            )
+            raise HTTPException(status_code=400, detail="LG content is nonexistent")
         else:
             try:
                 out_graph = json.loads(graph_content)
             except JSONDecodeError as jerror:
                 logger.error(jerror)
-                raise HTTPException(
-                    status_code=400, detail="LG content is malformed"
-                )
+                raise HTTPException(status_code=400, detail="LG content is malformed")
     else:
         lgp = lg_path(lg_dir, graph_name)
         with open(lgp, "r") as f:
@@ -884,10 +850,7 @@ def lg_fill(
     ),
     rmode: str = Form(
         REPRO_DEFAULT.name,
-        enum=[
-            roption.name
-            for roption in [ReproducibilityFlags.NOTHING] + ALL_RMODES
-        ],
+        enum=[roption.name for roption in [ReproducibilityFlags.NOTHING] + ALL_RMODES],
         description="Reproducibility mode setting level of provenance tracking. Refer to main documentation for more information",
     ),
 ):
@@ -901,9 +864,7 @@ def lg_fill(
         params = json.loads(parameters)
     except JSONDecodeError as jerror:
         logger.error(jerror)
-        raise HTTPException(
-            status_code=400, detail="Parameter string is invalid"
-        )
+        raise HTTPException(status_code=400, detail="Parameter string is invalid")
     output_graph = dlg.dropmake.pg_generator.fill(lg_graph, params)
     output_graph = init_lg_repro_data(init_lgt_repro_data(output_graph, rmode))
     return JSONResponse(output_graph)
@@ -937,9 +898,7 @@ def lg_unroll(
     One of lg_name or lg_content, but not both, needs to be specified.
     """
     lg_graph = load_graph(lg_content, lg_name)
-    pgt = dlg.dropmake.pg_generator.unroll(
-        lg_graph, oid_prefix, zero_run, default_app
-    )
+    pgt = dlg.dropmake.pg_generator.unroll(lg_graph, oid_prefix, zero_run, default_app)
     pgt = init_pgt_unroll_repro_data(pgt)
     return JSONResponse(pgt)
 
@@ -986,9 +945,7 @@ def pgt_partition(
     return JSONResponse(pgt)
 
 
-@app.post(
-    "/unroll_and_partition", response_class=JSONResponse, tags=["Updated"]
-)
+@app.post("/unroll_and_partition", response_class=JSONResponse, tags=["Updated"])
 def lg_unroll_and_partition(
     lg_name: str = Form(
         default=None,
@@ -1030,9 +987,7 @@ def lg_unroll_and_partition(
     One of lg_name and lg_content, but not both, must be specified.
     """
     lg_graph = load_graph(lg_content, lg_name)
-    pgt = dlg.dropmake.pg_generator.unroll(
-        lg_graph, oid_prefix, zero_run, default_app
-    )
+    pgt = dlg.dropmake.pg_generator.unroll(lg_graph, oid_prefix, zero_run, default_app)
     pgt = init_pgt_unroll_repro_data(pgt)
     reprodata = pgt.pop()
     pgt = dlg.dropmake.pg_generator.partition(
@@ -1090,9 +1045,7 @@ def pgt_map(
     if not pgt[-1].get("oid"):
         reprodata = pgt.pop()
     logger.info(nodes)
-    pg = dlg.dropmake.pg_generator.resource_map(
-        pgt, nodes, num_islands, co_host_dim
-    )
+    pg = dlg.dropmake.pg_generator.resource_map(pgt, nodes, num_islands, co_host_dim)
     pg.append(reprodata)
     pg = init_pg_repro_data(pg)
     return JSONResponse(pg)
@@ -1121,11 +1074,7 @@ def get_submission_method(
     if check_k8s_env():
         available_methods.append(DeploymentMethods.HELM)
     if mhost is not None:
-        host_available_methods = get_mgr_deployment_methods(
-            mhost, mport, mprefix
-        )
-        if DeploymentMethods.BROWSER in host_available_methods:
-            available_methods.append(DeploymentMethods.SERVER)
+        available_methods = get_mgr_deployment_methods(mhost, mport, mprefix)
     logger.debug("Methods available: %s", available_methods)
     return {"methods": available_methods}
 
@@ -1260,9 +1209,7 @@ def run(_, args):
     signal.signal(signal.SIGINT, handler)
 
     logging.debug("Starting uvicorn verbose %s", options.verbose)
-    uvicorn.run(
-        app=app, host=options.host, port=options.port, debug=options.verbose
-    )
+    uvicorn.run(app=app, host=options.host, port=options.port, debug=options.verbose)
 
 
 if __name__ == "__main__":

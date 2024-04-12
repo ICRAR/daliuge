@@ -243,7 +243,7 @@ class NodeManagerClient(BaseDROPManagerClient):
         return self._request(f"/sessions/{sessionId}/logs", "GET")
 
     def get_submission_method(self):
-        return self._get_json("/submission_method")
+        return self._get_json("submission_method")
 
 
 class CompositeManagerClient(BaseDROPManagerClient):
@@ -257,7 +257,7 @@ class CompositeManagerClient(BaseDROPManagerClient):
         self._DELETE(f"/node/{node}")
 
     def get_submission_method(self):
-        return self._get_json("/submission_method")
+        return self._get_json("submission_method")
 
 
 class DataIslandManagerClient(CompositeManagerClient):

@@ -4,6 +4,7 @@ DOCKER_OPTS="\
 --rm \
 $([[ $(nvidia-docker version) ]] && echo '--gpus=all' || echo '') \
 --name daliuge-engine \
+-h dlg-engine \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -p 5555:5555 -p 6666:6666 \
 -p 8000:8000 -p 8001:8001 \
@@ -43,8 +44,10 @@ case "$1" in
             echo "Running Engine deployment version in background..."
             echo "docker run -td "${DOCKER_OPTS}"  icrar/daliuge-engine:${VCS_TAG}"
             docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
-            echo "Engine IP address: "`docker exec daliuge-engine sh -c "hostname --ip-address"`
-            exit 0
+            sleep 3
+            ENGINE_NAME=`docker exec daliuge-engine sh -c "hostname"`
+            ENGINE_IP=`docker exec daliuge-engine sh -c "hostname --ip-address"`
+            # exit 0
         fi;;
     "dev")
         export DLG_ROOT="$HOME/dlg"
@@ -53,11 +56,12 @@ case "$1" in
         echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${C_TAG}"
         docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${C_TAG}
         sleep 3
+        docker exec -u root daliuge-engine bash -c "service avahi-daemon stop && service dbus restart && service avahi-daemon start"
+        ENGINE_NAME=`docker exec daliuge-engine sh -c "hostname"`
         ENGINE_IP=`docker exec daliuge-engine sh -c "hostname --ip-address"`
         curl -X POST http://${ENGINE_IP}:9000/managers/island/start
-        echo
-        echo "Engine IP address: ${ENGINE_IP}"
-        exit 0;;
+        curl -X POST http://${ENGINE_IP}:8001/api/node/dlg-engine.local;;
+        # exit 0;;
     "casa")
         DLG_ROOT="/tmp/dlg"
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
@@ -67,11 +71,10 @@ case "$1" in
         echo "docker run -td ${DOCKER_OPTS}  ${CONTAINER_NM}"
         docker run -td ${DOCKER_OPTS}  ${CONTAINER_NM}
         sleep 3
+        ENGINE_NAME=`docker exec daliuge-engine sh -c "hostname"`
         ENGINE_IP=`docker exec daliuge-engine sh -c "hostname --ip-address"`
-        curl -X POST http://${ENGIONE_IP}:9000/managers/island/start
-        echo
-        echo "Engine IP address: ${ENGINE_IP}"
-        exit 0;;
+        curl -X POST http://${ENGIONE_IP}:9000/managers/island/start;;
+        # exit 0;;
     "slim")
         export DLG_ROOT="$HOME/dlg"
         common_prep
@@ -79,11 +82,10 @@ case "$1" in
         echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}"
         docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
         sleep 3
+        ENGINE_NAME=`docker exec daliuge-engine sh -c "hostname"`
         ENGINE_IP=`docker exec daliuge-engine sh -c "hostname --ip-address"`
-        curl -X POST http://${ENGINE_IP}:9000/managers/island/start
-        echo
-        echo "Engine IP address: ${ENGINE_IP}"
-        exit 0;;
+        curl -X POST http://${ENGINE_IP}:9000/managers/island/start;;
+        # exit 0;;
     "local")
         common_prep
         echo "Starting managers locally in background.."
@@ -92,8 +94,13 @@ case "$1" in
         echo
         echo "Use any of the following URLs to access the DIM:"
         python -c "from dlg.utils import get_local_ip_addr; print([f'http://{addr}:8001' for addr,name in get_local_ip_addr() if not name.startswith('docker')])"
-        echo "Log files can be found in ${DLG_ROOT}/log";;
+        echo "Log files can be found in ${DLG_ROOT}/log"
+        ENGINE_NAME="localhost"
+        ENGINE_IP=`hostname --ip-address`;;
     *)
         echo "Usage run_engine.sh <dep|dev|slim|local>"
         exit 0;;
 esac
+echo
+echo "Engine NAME/IP address: ${ENGINE_NAME}/${ENGINE_IP}"
+

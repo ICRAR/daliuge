@@ -25,8 +25,7 @@ from numbers import Number
 import pickle
 import random
 from typing import List, Optional
-import urllib.error
-import urllib.request
+import requests
 import logging
 import time
 import numpy as np
@@ -647,18 +646,17 @@ class UrlRetrieveApp(BarrierAppDROP):
 
     def run(self):
         try:
-            u = urllib.request.urlopen(self.url)
-        except urllib.error.URLError as e:
+            logger.info("Accessing URL %s", self.url)
+            u = requests.get(self.url)
+        except requests.exceptions.RequestException as e:
             raise e.reason
-
-        content = u.read()
 
         outs = self.outputs
         if len(outs) < 1:
             raise Exception("At least one output should have been added to %r" % self)
         for o in outs:
-            o.len = len(content)
-            o.write(content)  # send content to all outputs
+            o.len = len(u.content)
+            o.write(u.content)  # send content to all outputs
 
 
 ##

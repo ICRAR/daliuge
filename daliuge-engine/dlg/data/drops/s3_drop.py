@@ -46,7 +46,7 @@ from dlg.meta import (
     dlg_list_param,
 )
 
-from dlg.named_port_utils import identify_named_ports, check_ports_dict
+# from dlg.named_port_utils import identify_named_ports, check_ports_dict
 
 
 ##
@@ -128,10 +128,10 @@ class S3DROP(DataDROP):
         :return:
         """
         logger.debug("S3DROP producers: %s", self._producers)
-        if check_ports_dict(self._producers):
-            self.mapped_inputs = identify_named_ports(
-                self._producers, {}, self.keyargs, mode="inputs"
-            )
+        # if check_ports_dict(self._producers):
+        #     self.mapped_inputs = identify_named_ports(
+        #         self._producers, {}, self.keyargs, mode="inputs"
+        #     )
         logger.debug("Parameters found: {}", self.parameters)
         return S3IO(
             self.aws_access_key_id,
@@ -309,8 +309,7 @@ class S3IO(DataIO):
                 Bucket=self._bucket, Key=self._key, UploadId=self._uploadId
             )
             parts = [
-                {"ETag": p["ETag"], "PartNumber": p["PartNumber"]}
-                for p in res["Parts"]
+                {"ETag": p["ETag"], "PartNumber": p["PartNumber"]} for p in res["Parts"]
             ]
             # TODO: Check checksum!
             res = self._s3.complete_multipart_upload(

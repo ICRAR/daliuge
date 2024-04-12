@@ -41,7 +41,11 @@ import types
 import json
 
 from .. import droputils, utils
-from dlg.named_port_utils import replace_named_ports
+from dlg.named_port_utils import (
+    DropParser,
+    get_port_reader_function,
+    replace_named_ports,
+)
 from ..ddap_protocol import AppDROPStates, DROPStates
 from ..apps.app_base import BarrierAppDROP, AppDROP
 from ..exceptions import InvalidDropException
@@ -51,6 +55,7 @@ from ..meta import (
     dlg_batch_input,
     dlg_batch_output,
     dlg_streaming_input,
+    dlg_enum_param,
 )
 
 
@@ -163,6 +168,7 @@ class BashShellBase(object):
     # TODO: use the shlex module for most of the construction of the
     # command line to get a proper and safe shell syntax
     command = dlg_string_param("Bash command", None)
+    input_parser: DropParser = dlg_enum_param(DropParser, "input_parser", DropParser.PICKLE)  # type: ignore
 
     def initialize(self, **kwargs):
         super(BashShellBase, self).initialize(**kwargs)
@@ -214,6 +220,7 @@ class BashShellBase(object):
         outport_names = (
             self.parameters["outputs"] if "outputs" in self.parameters else []
         )
+        reader = get_port_reader_function(self.input_parser)
         keyargs, pargs = replace_named_ports(
             inputs.items(),
             outputs.items(),
@@ -222,6 +229,7 @@ class BashShellBase(object):
             self.appArgs,
             argumentPrefix=self._argumentPrefix,
             separator=self._paramValueSeparator,
+            parser=reader,
         )
         argumentString = (
             f"{' '.join(map(str,pargs + keyargs))}"  # add kwargs to end of pargs

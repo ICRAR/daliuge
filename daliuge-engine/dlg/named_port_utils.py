@@ -1,9 +1,21 @@
+import ast
+from enum import Enum
 import logging
 import collections
 from typing import Tuple
-import dlg.common as common
+from dlg import droputils, drop_loaders
 
 logger = logging.getLogger(__name__)
+
+
+class DropParser(Enum):
+    RAW = "raw"
+    PICKLE = "pickle"
+    EVAL = "eval"
+    NPY = "npy"
+    # JSON = "json"
+    PATH = "path"  # input only
+    DATAURL = "dataurl"  # input only
 
 
 def serialize_kwargs(keyargs, prefix="--", separator=" "):
@@ -76,6 +88,7 @@ def identify_named_ports(
     keyargs: dict,
     check_len: int = 0,
     mode: str = "inputs",
+    parser: callable = None,
 ) -> dict:
     """
     Checks port names for matches with arguments and returns mapped ports.
@@ -87,6 +100,7 @@ def identify_named_ports(
         keyargs (dict): keyword arguments
         check_len (int): number of of ports to be checked
         mode (str ["inputs"]): mode, used just for logging messages
+        parser (function): parser function for this port
 
     Returns:
         dict: port arguments
@@ -116,11 +130,17 @@ def identify_named_ports(
         if value is None:
             value = ""  # make sure we are passing NULL drop events
         if key in posargs:
+            if parser:
+                logger.debug("Reading from port using %s", parser.__repr__())
+                value = parser(port_dict[keys[i]]["drop"])
             pargsDict.update({key: value})
             logger.debug("Using %s '%s' for parg %s", mode, value, key)
             portargs.update({key: value})
             posargs.pop(posargs.index(key))
         elif key in keyargs:
+            if parser:
+                logger.debug("Reading from port using %s", parser.__repr__())
+                value = parser(port_dict[keys[i]]["drop"])
             # if not found in appArgs we don't put them into portargs either
             # pargsDict.update({key: value})
             portargs.update({key: value})
@@ -165,6 +185,7 @@ def replace_named_ports(
     appArgs: dict,
     argumentPrefix: str = "--",
     separator: str = " ",
+    parser: callable = None,
 ) -> Tuple[str, str]:
     """
     Function attempts to identify CLI component arguments that match port names.
@@ -177,6 +198,7 @@ def replace_named_ports(
         appArgs: dictionary of all arguments
         argumentPrefix: prefix for keyword arguments
         separator: character used between keyword and value
+        parser: reader function for ports
 
 
     Returns:
@@ -190,11 +212,17 @@ def replace_named_ports(
     )
     inputs_dict = collections.OrderedDict()
     for uid, drop in iitems:
-        inputs_dict[uid] = {"path": drop.path if hasattr(drop, "path") else ""}
+        inputs_dict[uid] = {
+            "drop": drop,
+            "path": drop.path if hasattr(drop, "path") else "",
+        }
 
     outputs_dict = collections.OrderedDict()
     for uid, drop in oitems:
-        outputs_dict[uid] = {"path": drop.path if hasattr(drop, "path") else ""}
+        outputs_dict[uid] = {
+            "drop": drop,
+            "path": drop.path if hasattr(drop, "path") else "",
+        }
     # logger.debug("appArgs: %s", appArgs)
     # get positional args
     posargs = [arg for arg in appArgs if appArgs[arg]["positional"]]
@@ -226,6 +254,7 @@ def replace_named_ports(
             keyargs,
             check_len=len(iitems),
             mode="inputs",
+            parser=parser,
         )
         portkeyargs.update(ipkeyargs)
     else:
@@ -288,3 +317,32 @@ def replace_named_ports(
     pargs = [""] if len(pargs) == 0 or None in pargs else pargs
     logger.debug("After port replacement: pargs: %s; keyargs: %s", pargs, keyargs)
     return keyargs, pargs
+
+
+def get_port_reader_function(input_parser: DropParser):
+    """
+    Return the function used to read input from a named port
+    """
+    # Inputs are un-pickled and treated as the arguments of the function
+    # Their order must be preserved, so we use an OrderedDict
+    if input_parser is DropParser.PICKLE:
+        # all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
+        reader = drop_loaders.load_pickle
+    elif input_parser is DropParser.EVAL:
+
+        def optionalEval(x):
+            # Null and Empty Drops will return an empty byte string
+            # which should propogate back to None
+            content: str = droputils.allDropContents(x).decode("utf-8")
+            return ast.literal_eval(content) if len(content) > 0 else None
+
+        reader = optionalEval
+    elif input_parser is DropParser.NPY:
+        reader = drop_loaders.load_npy
+    elif input_parser is DropParser.PATH:
+        reader = lambda x: x.path
+    elif input_parser is DropParser.DATAURL:
+        reader = lambda x: x.dataurl
+    else:
+        raise ValueError(input_parser.__repr__())
+    return reader
