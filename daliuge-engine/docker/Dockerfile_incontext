@@ -4,6 +4,7 @@ FROM icrar/daliuge-base:latest
 # Get the local DALiuGE sources and install them in the system
 COPY / /daliuge
 RUN pip install wheel && cd ~/daliuge && pip install .
+RUN service dbus start && service avahi-daemon start && avahi-set-host-name dlg-engine
 
 # Second stage build taking what's required from first stage
 FROM icrar/daliuge-base:latest
