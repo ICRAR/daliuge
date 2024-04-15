@@ -248,6 +248,8 @@ class CompositeManager(DROPManager):
 
     def check_dm(self, host, port=None, timeout=10):
         port = port or self._dmPort
+        if ":" in host:
+            host, port = host.split(":")
         logger.debug("Checking DM presence at %s:%d", host, port)
         dm_is_there = portIsOpen(host, port, timeout)
         return dm_is_there

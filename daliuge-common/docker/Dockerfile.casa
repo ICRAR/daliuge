@@ -7,7 +7,8 @@ FROM kernsuite/base:7
 ARG BUILD_ID
 LABEL stage=builder
 LABEL build=$BUILD_ID
-RUN apt-get update && apt-get install -y gcc python3-pip python3-venv wget && \
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN apt-get update && apt-get install -y avahi-utils gcc python3-pip python3-venv wget && \
     pip3 install -U pip
 
 # add_arrow_repo: 
@@ -38,4 +39,3 @@ RUN cd /daliuge && \
     . ~/dlg/bin/activate && \
     pip3 install numpy && \
     pip3 install .
-    

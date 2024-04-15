@@ -8,6 +8,7 @@ FROM icrar/daliuge-common:master-casa
 
 RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends tzdata \
     gnupg2 software-properties-common wget git git-lfs gcc g++ make tmux python3-pip cmake libboost1.71-all-dev
+RUN service dbus start && service avahi-daemon start && avahi-set-host-name dlg-engine
 
 # install casacore
 RUN mkdir -p /code && cd /code &&\
