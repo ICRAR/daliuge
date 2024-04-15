@@ -80,15 +80,10 @@ def unroll(lg, oid_prefix=None, zerorun=False, app=None):
     if app:
         logger.info("Replacing apps with %s", app)
         for dropspec in drop_list:
-            if (
-                "dropclass" in dropspec
-                and dropspec["categoryType"] == "Application"
-            ):
+            if "dropclass" in dropspec and dropspec["categoryType"] == "Application":
                 dropspec["dropclass"] = app
                 dropspec["sleep_time"] = (
-                    dropspec["execution_time"]
-                    if "execution_time" in dropspec
-                    else 2
+                    dropspec["execution_time"] if "execution_time" in dropspec else 2
                 )
     drop_list.append(lg.reprodata)
     return drop_list
@@ -259,6 +254,9 @@ def resource_map(pgt, nodes, num_islands=1, co_host_dim=True):
             nidx = int(drop_spec["node"][1:])  # skip '#'
             drop_spec["node"] = nm_list[nidx]
             iidx = int(drop_spec["island"][1:])  # skip '#'
-            drop_spec["island"] = dim_list[iidx]
+            drop_spec["island"] = (
+                dim_list[iidx].split(":")[0] + ":8001"
+            )  # TODO: just for test
+            logger.debug("Island: %s", drop_spec["island"])
 
     return pgt  # now it's a PG
