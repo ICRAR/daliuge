@@ -276,7 +276,6 @@ class PGT(object):
                     "Insufficient number of nodes: {0}".format(nodes_len)
                 )
             is_list = node_list
-            logger.debug(">>>>> node_list: %s", node_list)
             nm_list = (
                 [node_list[1]] + node_list[1:]
                 if isinstance(node_list, list) and len(node_list) > 1
