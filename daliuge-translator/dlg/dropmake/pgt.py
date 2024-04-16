@@ -227,41 +227,42 @@ class PGT(object):
             The pg_spec template is what needs to be send to a deferred deployemnt
             where the daliuge system is started up afer submission (e.g. SLURM)
         """
+        if num_islands < 1:
+            num_islands = 1  # need at least one island manager
         logger.debug(
             ">>>>>> node_list type: %s, %d, %d",
             type(node_list),
             len(node_list),
-            tpl_nodes_len,
+            num_islands,
         )
         if len(node_list) == 0 and tpl_nodes_len > 0:  # generate pg_spec template
-            node_list = range(tpl_nodes_len)  # create a fake list for now
+            node_list = range(tpl_nodes_len + num_islands)  # create a fake list for now
             tpl_fl = True
         else:
             tpl_fl = False
         logger.debug(
-            "# worker nodes: %s, node_list(incl. DIM), tpl_fl: %s, %s",
+            "# worker nodes: %s, node_list(incl. DIM): %s, tpl_fl: %s",
             tpl_nodes_len,
             node_list,
             tpl_fl,
         )
-
-        if 0 == self._num_parts_done:
-            raise GPGTException("The graph has not been partitioned yet")
-
-        if node_list is None or 0 == len(node_list):
-            raise GPGTException("Node list is empty!")
         nodes_len = len(node_list)
 
         try:
             num_islands = int(num_islands)
         except:
             raise GPGTException("Invalid num_islands spec: {0}".format(num_islands))
-        if num_islands < 1:
-            num_islands = 1  # need at least one island manager
         if num_islands > nodes_len:
             raise GPGTException(
                 "Number of islands must be <= number of specified nodes!"
             )
+
+        if 0 == self._num_parts_done:
+            raise GPGTException("The graph has not been partitioned yet")
+
+        if node_list is None or 0 == len(node_list):
+            raise GPGTException("Node list is empty!")
+
         form_island = num_islands > 1
         if nodes_len < 1:  # we allow to run everything on a single node now!
             raise GPGTException("Too few nodes: {0}".format(nodes_len))
@@ -284,7 +285,7 @@ class PGT(object):
                 )
             is_list = node_list[0:num_islands]
             nm_list = node_list[num_islands:]
-            logger.debug("NM list: %s", node_list)
+            logger.debug("NM list: %s", nm_list)
         nm_len = len(nm_list)
         logger.info(
             "Drops count: %d, partitions count: %d, NM count: %d, island count: %d %s",
