@@ -220,9 +220,9 @@ class CompositeManager(DROPManager):
     def addDmHost(self, host):
         if ":" not in host:
             if self._subDmId == "node":
-                host += constants.NODE_DEFAULT_REST_PORT
+                host += f":{constants.NODE_DEFAULT_REST_PORT}"
             elif self._subDmId == "island":
-                host += constants.ISLAND_DEFAULT_REST_PORT
+                host += f":{constants.ISLAND_DEFAULT_REST_PORT}"
         if host not in self._dmHosts:
             self._dmHosts.append(host)
         else:
@@ -304,6 +304,7 @@ class CompositeManager(DROPManager):
         thrExs = {}
         iterable = iterable or self._dmHosts
         port = port or self._dmPort
+        logger.debug("Hosts: %s", iterable)
         self._tp.map(
             functools.partial(
                 self._do_in_host, action, sessionId, thrExs, f, collect, port

@@ -228,15 +228,22 @@ class PGT(object):
             where the daliuge system is started up afer submission (e.g. SLURM)
         """
         logger.debug(
-            "# worker nodes: %s, node_list(incl. DIM): %s",
+            ">>>>>> node_list type: %s, %d, %d",
+            type(node_list),
+            len(node_list),
             tpl_nodes_len,
-            node_list,
         )
         if len(node_list) == 0 and tpl_nodes_len > 0:  # generate pg_spec template
             node_list = range(tpl_nodes_len)  # create a fake list for now
             tpl_fl = True
         else:
             tpl_fl = False
+        logger.debug(
+            "# worker nodes: %s, node_list(incl. DIM), tpl_fl: %s, %s",
+            tpl_nodes_len,
+            node_list,
+            tpl_fl,
+        )
 
         if 0 == self._num_parts_done:
             raise GPGTException("The graph has not been partitioned yet")
@@ -275,20 +282,17 @@ class PGT(object):
                 raise GPGTException(
                     "Insufficient number of nodes: {0}".format(nodes_len)
                 )
-            is_list = node_list
-            nm_list = (
-                [node_list[1]] + node_list[1:]
-                if isinstance(node_list, list) and len(node_list) > 1
-                else node_list
-            )
+            is_list = node_list[0:num_islands]
+            nm_list = node_list[num_islands:]
+            logger.debug("NM list: %s", node_list)
         nm_len = len(nm_list)
         logger.info(
-            "Drops count: %d, partitions count: %d, nodes count: %d, island count: %d %s",
+            "Drops count: %d, partitions count: %d, NM count: %d, island count: %d %s",
             len(drop_list),
             num_parts,
-            nodes_len,
+            len(nm_list),
             len(is_list),
-            co_host_dim,
+            form_island,
         )
 
         if form_island:
