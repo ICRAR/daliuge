@@ -304,7 +304,7 @@ class CompositeManager(DROPManager):
         thrExs = {}
         iterable = iterable or self._dmHosts
         port = port or self._dmPort
-        logger.debug("Hosts: %s", iterable)
+        # logger.debug("Hosts: %s", iterable)
         self._tp.map(
             functools.partial(
                 self._do_in_host, action, sessionId, thrExs, f, collect, port

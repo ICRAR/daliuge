@@ -103,6 +103,7 @@ class TestPGGen(unittest.TestCase):
             # pgtp.json
             pgtp.to_gojs_json(visual=False)
             pg_spec = pgtp.to_pg_spec(node_list)
+
             # with open('/tmp/met_{0}_pgspec.graph'.format(lgn.split('.')[0]), 'w') as f:
             #     f.write(pg_spec)
 
