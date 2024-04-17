@@ -55,6 +55,8 @@ class RPCClientBase(RPCObject):
 
     def get_drop_attribute(self, hostname, port, session_id, uid, name):
 
+        hostname = hostname.split(":")[0]
+
         logger.debug(
             "Getting attribute %s for drop %s of session %s at %s:%d",
             name,
@@ -63,6 +65,7 @@ class RPCClientBase(RPCObject):
             hostname,
             port,
         )
+        hostname = hostname.split(":")[0]
 
         client, closer = self.get_rpc_client(hostname, port)
 
@@ -93,7 +96,7 @@ class RPCServerBase(RPCObject):
     """Base class for all RPC server"""
 
     def __init__(self, host, port):
-        self._rpc_host = host
+        self._rpc_host = host.split(":")[0]
         self._rpc_port = port
 
 
@@ -137,10 +140,11 @@ class ZeroRPCClient(RPCClientBase):
 
     def get_client_for_endpoint(self, host, port):
 
+        host = host.split(":")[0]
         endpoint = (host, port)
 
         with self._zrpcclient_acquisition_lock:
-            if endpoint in self._zrpcclients:
+            if endpoint in self._zrpcclinents:
                 return self._zrpcclients[endpoint]
 
             # We start the new client on its own thread so it uses gevent, etc.
@@ -179,6 +183,7 @@ class ZeroRPCClient(RPCClientBase):
             return client
 
     def run_zrpcclient(self, host, port, req_queue):
+        host = host.split(":")[0]
         client = zerorpc.Client("tcp://%s:%d" % (host, port), context=self._context)
 
         forwarder = gevent.spawn(self.forward_requests, req_queue, client)
@@ -210,6 +215,7 @@ class ZeroRPCClient(RPCClientBase):
         async_result.rawlink(lambda x: self.process_response(req, x))
 
     def get_rpc_client(self, hostname, port):
+        # hostname = hostname.split(":")[0] 
         client = self.get_client_for_endpoint(hostname, port)
         # No closing function since clients are long-lived
         return client, lambda: None

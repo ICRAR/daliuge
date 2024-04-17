@@ -141,7 +141,7 @@ def zmq_safe(host_or_addr):
     # The catch-all IP address, ZMQ needs a *
     if host_or_addr == "0.0.0.0":
         return "*"
-
+    host_or_addr = host_or_addr.split(":")[0]
     # Return otherwise always an IP address
     return socket.gethostbyname(host_or_addr)
 

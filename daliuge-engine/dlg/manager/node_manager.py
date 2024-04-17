@@ -435,6 +435,8 @@ class NodeManagerBase(DROPManager):
                 host, events_port, _ = nodesub
 
             # TODO: we also have to unsubscribe from them at some point
+            host = host.split(":")[0]
+            logger.debug("Sending subscription to %s", f"{host}:{events_port}")
             self.subscribe(host, events_port)
 
     def has_method(self, sessionId, uid, mname):
