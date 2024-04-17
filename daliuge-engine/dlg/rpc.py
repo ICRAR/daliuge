@@ -144,7 +144,7 @@ class ZeroRPCClient(RPCClientBase):
         endpoint = (host, port)
 
         with self._zrpcclient_acquisition_lock:
-            if endpoint in self._zrpcclinents:
+            if endpoint in self._zrpcclients:
                 return self._zrpcclients[endpoint]
 
             # We start the new client on its own thread so it uses gevent, etc.
@@ -215,7 +215,7 @@ class ZeroRPCClient(RPCClientBase):
         async_result.rawlink(lambda x: self.process_response(req, x))
 
     def get_rpc_client(self, hostname, port):
-        # hostname = hostname.split(":")[0] 
+        # hostname = hostname.split(":")[0]
         client = self.get_client_for_endpoint(hostname, port)
         # No closing function since clients are long-lived
         return client, lambda: None
@@ -337,7 +337,7 @@ class DropProxy(object):
             self._proxy_info.port,
             self._proxy_info.session_id,
             self.uid,
-            name
+            name,
         )
 
     def __repr__(self):
