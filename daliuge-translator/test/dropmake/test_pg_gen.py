@@ -94,7 +94,7 @@ class TestPGGen(unittest.TestCase):
             "chiles_simple.graph",
         ]
         tgt_partnum = [15, 15, 10, 10, 5]
-        node_list = ["10.128.0.11", "10.128.0.12", "10.128.0.13"]
+        node_list = ["10.128.0.11", "10.128.0.11", "10.128.0.12", "10.128.0.13"]
         for i, lgn in enumerate(lgnames):
             fp = get_lg_fname(lgn)
             lg = LG(fp)
@@ -190,9 +190,7 @@ class TestPGGen(unittest.TestCase):
             nb_islands = 2
             # print(lgn)
             try:
-                pgtp.merge_partitions(
-                    len(node_list) - nb_islands, form_island=False
-                )
+                pgtp.merge_partitions(len(node_list) - nb_islands, form_island=False)
             except GPGTNoNeedMergeException as ge:
                 continue
             pg_spec = pgtp.to_pg_spec(node_list, num_islands=nb_islands)
