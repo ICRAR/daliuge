@@ -63,14 +63,21 @@ class ManagerStarter(object):
         return self._start_manager_in_thread(port, NodeManager, NMRestServer, False)
 
     def start_dim_in_thread(
-        self, nm_hosts=["localhost"], port=constants.ISLAND_DEFAULT_REST_PORT
+        self,
+        nm_hosts=[f"localhost:{constants.NODE_DEFAULT_REST_PORT}"],
+        port=constants.ISLAND_DEFAULT_REST_PORT,
     ):
         return self._start_manager_in_thread(
             port, DataIslandManager, CompositeManagerRestServer, nm_hosts
         )
 
     def start_mm_in_thread(
-        self, nm_hosts=["localhost"], port=constants.MASTER_DEFAULT_REST_PORT
+        self,
+        nm_hosts=[
+            f"localhost:{constants.ISLAND_DEFAULT_REST_PORT}",
+            f"localhost:{constants.NODE_DEFAULT_REST_PORT}",
+        ],
+        port=constants.MASTER_DEFAULT_REST_PORT,
     ):
         return self._start_manager_in_thread(
             port, MasterManager, CompositeManagerRestServer, nm_hosts
