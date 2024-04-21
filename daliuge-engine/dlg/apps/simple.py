@@ -475,6 +475,7 @@ class DictGatherApp(BarrierAppDROP):
 
     def initialize(self, **kwargs):
         super(DictGatherApp, self).initialize(**kwargs)
+        self.kwargs = kwargs
 
     def readWriteData(self):
         inputs = self.inputs
@@ -487,7 +488,14 @@ class DictGatherApp(BarrierAppDROP):
             for input in inputs:
                 value = droputils.allDropContents(input)
                 self.value_dict[input.name] = pickle.loads(value)
-            logger.debug("Writing %s to %s", self.value_dict, output.name)
+                for aa_key, aa_dict in self.kwargs["applicationArgs"].items():
+                    if aa_key not in self.value_dict and aa_dict["value"]:
+                        self.value_dict[aa_key] = aa_dict["value"]
+            logger.debug(
+                "Writing %s to %s",
+                self.value_dict,
+                output.name,
+            )
             output.write(pickle.dumps(self.value_dict))
 
             # logger.debug(f">>> written {d} to {output}")
