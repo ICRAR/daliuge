@@ -49,6 +49,11 @@ def parse_pydata(pd_dict: dict) -> bytes:
             pydata = json.loads(pydata)
         except:
             pydata = pydata.encode()
+    if pd_dict["type"].lower() == "eval":
+        # try:
+        pydata = eval(pydata)
+        # except:
+        #     pydata = pydata.encode()
     elif pd_dict["type"].lower() == "int":
         try:
             pydata = int(pydata)

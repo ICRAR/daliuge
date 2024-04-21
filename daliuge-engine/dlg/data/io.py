@@ -626,7 +626,7 @@ class NgasLiteIO(DataIO):
             self._buf += data
         else:
             self._desc.send(data)
-        logger.debug("Wrote %s bytes", len(data))
+        # logger.debug("Wrote %s bytes", len(data))
         return len(data)
 
     def exists(self) -> bool:
