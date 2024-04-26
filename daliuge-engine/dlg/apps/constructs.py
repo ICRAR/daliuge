@@ -115,22 +115,6 @@ class CommentDrop(BarrierAppDROP):
 
 
 ##
-# @brief Description
-# @details A description template drop
-# @par EAGLE_START
-# @param category Description
-# @param dropclass dlg.apps.constructs.DescriptionDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
-# @param tag template
-# @par EAGLE_END
-class DescriptionDrop(BarrierAppDROP):
-    """
-    This only exists to make sure we have a description in the template palette
-    """
-
-    pass
-
-
-##
 # @brief Exclusive Force Node
 # @details An Exclusive Force Node
 # @par EAGLE_START
