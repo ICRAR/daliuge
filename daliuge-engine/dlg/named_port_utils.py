@@ -221,6 +221,8 @@ def replace_named_ports(
     outputs_dict = collections.OrderedDict()
     for uid, drop in oitems:
         outputs_dict[uid] = {"path": drop.path if hasattr(drop, "path") else ""}
+    # logger.debug("appArgs: %s", appArgs)
+    # get positional args
     posargs = [arg for arg in appArgs if appArgs[arg]["positional"]]
     # get kwargs
     keyargs = {
@@ -229,7 +231,6 @@ def replace_named_ports(
     # we will need an ordered dict for all positional arguments
     # thus we create it here and fill it with values
     portPosargsDict = collections.OrderedDict(zip(posargs, [None] * len(posargs)))
-    print(portPosargsDict)
     logger.debug(
         "posargs: %s; keyargs: %s, %s",
         posargs,
@@ -293,11 +294,9 @@ def replace_named_ports(
     keyargs = {
         arg: appArgs[arg]["value"] for arg in appArgs if not appArgs[arg]["positional"]
     }
-    logger.debug("keyargs: %s", keyargs)
     for k, v in portkeyargs.items():
         if v not in [None, ""]:
             keyargs.update({k: v})
-    logger.debug("keyargs: %s", keyargs)
     for k, v in portPosargsDict.items():
         logger.debug("port posarg %s has value %s", k, v)
         # logger.debug("default posarg %s has value %s", k, posargs[k])
