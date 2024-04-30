@@ -633,7 +633,8 @@ def gen_pg(
             host=mhost, port=mport, url_prefix=mprefix, timeout=30
         )
         # 1. get a list of nodes
-        node_list = mgr_client.nodes()
+        node_list = mgr_client.nodes()["nodes"]
+
         # 2. mapping PGTP to resources (node list)
         pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
 
