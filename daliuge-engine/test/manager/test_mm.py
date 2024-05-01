@@ -226,8 +226,16 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
             sessionStatusNM = self.nm.getSessionStatus(sessionId)
             self.assertEqual(1, len(sessionStatusMM))
             self.assertIn(hostname, sessionStatusMM)
-            self.assertDictEqual(sessionStatusDIM, sessionStatusMM[hostname])
-            self.assertEqual(sessionStatusNM, sessionStatusMM[hostname][hostname])
+            self.assertDictEqual(
+                sessionStatusDIM,
+                sessionStatusMM[f"{hostname}"],
+            )
+            self.assertEqual(
+                sessionStatusNM,
+                sessionStatusMM[f"{hostname}"][
+                    f"{hostname}:{constants.NODE_DEFAULT_REST_PORT}"
+                ],
+            )
             self.assertEqual(sessionStatusNM, status)
 
         sessionId = "lala"
@@ -316,9 +324,11 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             self.assertEqual(0, len(sessions))
             # nm_host = "localhost:{restPort}"
             dimStatus = testutils.get(self, "", restPort)
-            host = f"{dimStatus["hosts"][0].split(':', 1)[0]}:{restPort}"
+            host = f"{dimStatus['hosts'][0].split(':', 1)[0]}:{restPort}"
             self.assertEqual(1, len(dimStatus["hosts"]))
-            self.assertEqual(f"{hostname}:{restPort}", dimStatus["hosts"][0])
+            self.assertEqual(
+                f"{hostname}:{constants.NODE_DEFAULT_REST_PORT}", dimStatus["hosts"][0]
+            )
             self.assertEqual(0, len(dimStatus["sessionIds"]))
 
             # Create a session and check it exists
@@ -330,9 +340,7 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             self.assertEqual(sessionId, sessions[0]["sessionId"])
             self.assertDictEqual(
                 {
-                    f"{hostname}:{constants.NODE_DEFAULT_REST_PORT}": {
-                        f"{hostname}:{constants.NODE_DEFAULT_REST_PORT}": SessionStates.PRISTINE
-                    }
+                    f"{hostname}:{constants.NODE_DEFAULT_REST_PORT}": SessionStates.PRISTINE
                 },
                 sessions[0]["status"],
             )
@@ -348,7 +356,7 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
                 complexGraphSpec = json.load(codecs.getreader("utf-8")(f))
             for dropSpec in complexGraphSpec:
                 dropSpec["node"] = f"{hostname}:{constants.NODE_DEFAULT_REST_PORT}"
-                dropSpec["island"] = f"{hostname}"
+                dropSpec["island"] = f"{hostname}:{constants.NODE_DEFAULT_REST_PORT}"
             testutils.post(
                 self,
                 "/sessions/%s/graph/append" % (sessionId),
@@ -356,7 +364,7 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
                 json.dumps(complexGraphSpec),
             )
             self.assertEqual(
-                {hostname: {hostname: SessionStates.BUILDING}},
+                {f"{hostname}:8000": SessionStates.BUILDING},
                 testutils.get(self, "/sessions/%s/status" % (sessionId), restPort),
             )
 
@@ -369,7 +377,7 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
                 mimeType="application/x-www-form-urlencoded",
             )
             self.assertEqual(
-                {hostname: {hostname: SessionStates.RUNNING}},
+                {f"{hostname}:8000": SessionStates.RUNNING},
                 testutils.get(self, "/sessions/%s/status" % (sessionId), restPort),
             )
 
@@ -383,16 +391,17 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
 
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session
-            while (
-                SessionStates.RUNNING
-                in testutils.get(self, "/sessions/%s/status" % (sessionId), restPort)[
-                    hostname
-                ].values()
-            ):
+            while SessionStates.RUNNING in [
+                testutils.get(self, "/sessions/%s/status" % (sessionId), restPort)[
+                    f"{hostname}:{constants.NODE_DEFAULT_REST_PORT}"
+                ]
+            ]:
                 time.sleep(0.2)
 
             self.assertEqual(
-                {hostname: {hostname: SessionStates.FINISHED}},
+                {
+                    f"{hostname}:{constants.NODE_DEFAULT_REST_PORT}": SessionStates.FINISHED
+                },
                 testutils.get(self, "/sessions/%s/status" % (sessionId), restPort),
             )
             testutils.delete(self, "/sessions/%s" % (sessionId), restPort)
