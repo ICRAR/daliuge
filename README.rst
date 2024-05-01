@@ -1,8 +1,6 @@
 Data Activated 流 Graph Engine
 ==============================
 
-.. [![Generate component palettes](https://github.com/ICRAR/daliuge/actions/workflows/create-palettes.yml/badge.svg)](https://github.com/ICRAR/daliuge/actions/workflows/create-palettes.yml)
-
 .. image:: https://github.com/ICRAR/daliuge/actions/workflows/run-unit-tests.yml/badge.svg?branch=master
    :target: https://github.com/ICRAR/daliuge/actions/workflows/run-unit-tests.yml
 
