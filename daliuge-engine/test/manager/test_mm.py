@@ -314,9 +314,11 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             # The DIM is still empty
             sessions = testutils.get(self, "/sessions", restPort)
             self.assertEqual(0, len(sessions))
+            # nm_host = "localhost:{restPort}"
             dimStatus = testutils.get(self, "", restPort)
+            host = f"{dimStatus["hosts"][0].split(':', 1)[0]}:{restPort}"
             self.assertEqual(1, len(dimStatus["hosts"]))
-            self.assertEqual(hostname, dimStatus["hosts"][0])
+            self.assertEqual(f"{hostname}:{restPort}", dimStatus["hosts"][0])
             self.assertEqual(0, len(dimStatus["sessionIds"]))
 
             # Create a session and check it exists

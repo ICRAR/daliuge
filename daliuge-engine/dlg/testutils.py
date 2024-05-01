@@ -75,7 +75,6 @@ class ManagerStarter(object):
         self,
         nm_hosts=[
             f"localhost:{constants.ISLAND_DEFAULT_REST_PORT}",
-            f"localhost:{constants.NODE_DEFAULT_REST_PORT}",
         ],
         port=constants.MASTER_DEFAULT_REST_PORT,
     ):

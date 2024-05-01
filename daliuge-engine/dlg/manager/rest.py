@@ -123,9 +123,11 @@ def daliuge_aware(func):
                 eargs = {}
                 # args[1] is a dictionary of host:exception
                 for host, subex in e.args[1].items():
+                    logger.debug(">>>> Error class name: %s", subex.__class__.__name__)
                     eargs[host] = {
                         "type": subex.__class__.__name__,
-                        "args": subex.args,
+                        # "args": subex.args,
+                        "args": "dummy",
                     }
             elif isinstance(e, DaliugeException):
                 status, eargs = 555, e.args
