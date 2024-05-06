@@ -145,8 +145,8 @@ class TestDataLifecycleManager(unittest.TestCase):
             a = DirectoryContainer(
                 "a",
                 "a",
-                persist=True,  # Persist should have no effect on expireAfterUse
-                expireAfterUse=True,
+                persist=False,
+                expireAfterUse=False, # Marking persist as False should lead to expiry regardless of this flag
                 dirname=tempfile.mkdtemp(),
             )
             b_dirname = tempfile.mkdtemp()
