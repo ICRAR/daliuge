@@ -286,8 +286,7 @@ class DataLifecycleManager:
         Drops that have 'expireAfterUse' argument specified should be removed
         when the drop has completed execution.
 
-        Note: This operation occurs independently of the 'persist' argument
-        that will also be used
+        Note: This operation occurs independently of the 'persist' argument.
 
         Returns:
             None
