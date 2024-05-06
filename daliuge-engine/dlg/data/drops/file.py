@@ -168,7 +168,7 @@ class FileDROP(DataDROP, PathBasedDrop):
         self._wio = None
 
     def getIO(self):
-            return FileIO(self._path)
+        return FileIO(self._path)
 
     def delete(self):
         super().delete()
