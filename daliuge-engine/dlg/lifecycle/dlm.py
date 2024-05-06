@@ -281,7 +281,17 @@ class DataLifecycleManager:
             if drop.status == DROPStates.EXPIRED:
                 self._deleteDrop(drop)
 
-    def expireCompletedDrops(self):
+    def expireCompletedDrops(self) -> None:
+        """
+        Drops that have 'expireAfterUse' argument specified should be removed
+        when the drop has completed execution.
+
+        Note: This operation occurs independently of the 'persist' argument
+        that will also be used
+
+        Returns:
+            None
+        """
         now = time.time()
         for drop in self._drops.values():
 
@@ -290,7 +300,7 @@ class DataLifecycleManager:
 
             # Expire-after-use: mark as expired if all consumers
             # are finished using this DROP
-            if not drop.persist and drop.expireAfterUse:
+            if drop.expireAfterUse:
                 allDone = all(
                     c.execStatus
                     in [AppDROPStates.FINISHED, AppDROPStates.ERROR]
