@@ -56,7 +56,7 @@ jobs:
           echo "COVFILES=$COVFILES" >> $GITHUB_ENV
           cd daliuge-translator
           pip install -r test-requirements.txt
-          py.test --cov --show-coverage=no
+          py.test --cov --show-capture=no
 
       - name: Run daliuge-engine tests
         if: ${{ matrix.engine == 'yes' }}
@@ -64,7 +64,7 @@ jobs:
           COVFILES="$COVFILES daliuge-engine/.coverage"
           echo "COVFILES=$COVFILES" >> $GITHUB_ENV
           cd daliuge-engine
-          py.test --cov --show-coverage=no
+          py.test --cov --show-capture=no
 
       - name: Combine coverage
         run: coverage combine $COVFILES
