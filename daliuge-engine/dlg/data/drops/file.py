@@ -75,18 +75,15 @@ class FileDROP(DataDROP, PathBasedDrop):
         """
         Initialise default drop behaviour when it is completed with the following rules:
 
-            - "persist": Replicate and store the data in the specified persistent store
-            Files should be persistent by default.
+        - "expireAfterUse": Remove the data from the workspace once it has been used
+        by all consumers. This is independent of the "persist" flag. This is false
+       by default for FileDrops.
 
-            - "expireAfterUse": Remove the data from the workspace once it has been used
-            by all consumers. This is independent of the "persist" flag.
-
-            Use the default behaviour for expireAfterUse in AbstractDROP,
-            unless specified otherwise.
         """
 
-        if "persist" not in kwargs:
-            kwargs["persist"] = True
+        # 'lifespan' and 'expireAfterUse' are mutually exclusive
+        if "lifespan" not in kwargs and "expireAfterUse" not in kwargs:
+            kwargs["expireAfterUse"] = False
         self.is_dir = False
         super().__init__(*args, **kwargs)
 
