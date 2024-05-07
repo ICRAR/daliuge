@@ -373,11 +373,6 @@ class AbstractDROP(EventFirer, EventHandler):
         # No DROP should be persisted unless stated otherwise; used for replication
         self._persist: bool = self._popArg(kwargs, "persist", False)
 
-        # Non-persistent drops should expire after they are used
-        # If expirationDate is set, the drops will expire so we do not need to update
-        if not self._persist and self._expirationDate == -1:
-            self._expireAfterUse = True
-
         # Useful to have access to all EAGLE parameters without a prior knowledge
         self._parameters = dict(kwargs)
         self.autofill_environment_variables()
