@@ -2,7 +2,6 @@
     "linkDataArray": [
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -12,
             "fromPort": "cb8581ec-e420-4106-9ad5-c9220558b955",
             "loop_aware": "0",
@@ -11,7 +10,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -7,
             "fromPort": "ef57d9fb-a205-4293-9ac1-5ed269abe06e",
             "loop_aware": "0",
@@ -20,7 +18,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -23,
             "fromPort": "7ed2490f-7988-49cb-b7df-702503da2311",
             "loop_aware": "0",
@@ -29,7 +26,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -14,
             "fromPort": "ed5bc263-51f1-48d7-89f6-7319d982dd8a",
             "loop_aware": "0",
@@ -38,7 +34,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -11,
             "fromPort": "c774d44e-1f9c-40bb-90c0-cbfe0b9dff2b",
             "loop_aware": "0",
@@ -47,7 +42,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -12,
             "fromPort": "06b2f477-fc2a-4e8c-9082-ea77fd4196da",
             "loop_aware": "0",
@@ -56,7 +50,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -4,
             "fromPort": "1edf16b8-aff7-41fd-9cb2-211684eef474",
             "loop_aware": "0",
@@ -65,7 +58,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -6,
             "fromPort": "06b6d8bb-575b-4785-a667-1e510d7545fb",
             "loop_aware": "0",
@@ -74,7 +66,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -20,
             "fromPort": "e9fc2e55-5af7-42fe-8051-19f7e088c299",
             "loop_aware": "0",
@@ -83,7 +74,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -15,
             "fromPort": "7cd7efc8-48f6-4f33-9896-5183cea43026",
             "loop_aware": "0",
@@ -92,7 +82,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Complex",
             "from": -13,
             "fromPort": "c5dbe8c7-13d9-43e7-bef3-886a9994094a",
             "loop_aware": "0",
@@ -101,7 +90,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -8,
             "fromPort": "d5653abf-b12f-4d97-ac15-d26702b20748",
             "loop_aware": "0",
@@ -110,7 +98,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -3,
             "fromPort": "24dc87c6-7b35-40a5-acdb-741c949b7909",
             "loop_aware": "0",

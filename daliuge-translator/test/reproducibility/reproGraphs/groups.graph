@@ -2,7 +2,6 @@
     "linkDataArray": [
         {
             "closesLoop": false,
-            "dataType": "String",
             "from": -7,
             "fromPort": "01c127af-3de3-4ba0-8d4d-d86872703639",
             "loop_aware": "0",
@@ -11,7 +10,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "String",
             "from": -7,
             "fromPort": "01c127af-3de3-4ba0-8d4d-d86872703639",
             "loop_aware": "0",
@@ -20,7 +18,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -1,
             "fromPort": "b2f574bd-934f-4d90-ae54-bd5f37265320",
             "loop_aware": "0",
@@ -29,7 +26,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -5,
             "fromPort": "70f32d75-be8b-43c3-9b4e-b5412d25d682",
             "loop_aware": "1",
