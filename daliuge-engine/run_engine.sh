@@ -45,6 +45,7 @@ case "$1" in
             echo "docker run -td "${DOCKER_OPTS}"  icrar/daliuge-engine:${VCS_TAG}"
             docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
             sleep 3
+            docker exec -u root daliuge-engine bash -c "service avahi-daemon stop > /dev/null 2>&1 && service dbus restart > /dev/null 2>&1 && service avahi-daemon start > /dev/null 2>&1"
             ENGINE_NAME=`docker exec daliuge-engine sh -c "hostname"`
             ENGINE_IP=`docker exec daliuge-engine sh -c "hostname --ip-address"`
             # exit 0
@@ -60,7 +61,7 @@ case "$1" in
         ENGINE_NAME=`docker exec daliuge-engine sh -c "hostname"`
         ENGINE_IP=`docker exec daliuge-engine sh -c "hostname --ip-address"`
         curl -X POST http://${ENGINE_IP}:9000/managers/island/start
-        curl -X POST http://${ENGINE_IP}:8001/api/node/dlg-engine.local;;
+        curl -X POST http://${ENGINE_IP}:8001/api/node/dlg-engine.local:8000;;
         # exit 0;;
     "casa")
         DLG_ROOT="/tmp/dlg"
@@ -71,6 +72,7 @@ case "$1" in
         echo "docker run -td ${DOCKER_OPTS}  ${CONTAINER_NM}"
         docker run -td ${DOCKER_OPTS}  ${CONTAINER_NM}
         sleep 3
+        docker exec -u root daliuge-engine bash -c "service avahi-daemon stop > /dev/null 2>&1 && service dbus restart > /dev/null 2>&1 && service avahi-daemon start > /dev/null 2>&1"
         ENGINE_NAME=`docker exec daliuge-engine sh -c "hostname"`
         ENGINE_IP=`docker exec daliuge-engine sh -c "hostname --ip-address"`
         curl -X POST http://${ENGIONE_IP}:9000/managers/island/start;;
@@ -79,12 +81,14 @@ case "$1" in
         export DLG_ROOT="$HOME/dlg"
         common_prep
         echo "Running Engine development version in background..."
-        echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}"
-        docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
+        echo "docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine.slim:${VCS_TAG}"
+        docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine.slim:${VCS_TAG}
         sleep 3
+        docker exec -u root daliuge-engine bash -c "service avahi-daemon stop > /dev/null 2>&1 && service dbus restart > /dev/null 2>&1 && service avahi-daemon start > /dev/null 2>&1"
         ENGINE_NAME=`docker exec daliuge-engine sh -c "hostname"`
         ENGINE_IP=`docker exec daliuge-engine sh -c "hostname --ip-address"`
-        curl -X POST http://${ENGINE_IP}:9000/managers/island/start;;
+        curl -X POST http://${ENGINE_IP}:9000/managers/island/start
+        curl -X POST http://${ENGINE_IP}:8001/api/node/dlg-engine.local:8000;;
         # exit 0;;
     "local")
         common_prep
@@ -102,5 +106,5 @@ case "$1" in
         exit 0;;
 esac
 echo
-echo "Engine NAME/IP address: ${ENGINE_NAME}/${ENGINE_IP}"
+echo "Engine NAME/IP address: http://${ENGINE_NAME}.local:8000 / ${ENGINE_IP}"
 

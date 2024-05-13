@@ -80,7 +80,7 @@ def daliuge_aware(func):
                 origin = bottle.request.headers.raw("Origin")
                 logger.debug("CORS request comming from: %s", origin)
                 if origin is None or re.match(
-                    r"http://dlg-trans.local:80[0-9][0-9]", origin
+                    r"http://(dlg-trans.local:80[0-9][0-9]|dlg-trans.icrar.org)", origin
                 ):
                     origin = "http://dlg-trans.local:8084"
                 elif re.match(r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin):

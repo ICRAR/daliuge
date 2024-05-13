@@ -221,7 +221,10 @@ def loadDropSpecs(dropSpecList):
                 # relationship list but doesn't exist in the list of DROPs
                 for oid in dropSpec[rel]:
                     oid = list(oid.keys())[0] if isinstance(oid, dict) else oid
-                    dropSpecs[oid]
+                    if oid in dropSpecs:
+                        dropSpecs[oid]
+                    else:
+                        continue
 
             # N-1 relationships
             elif rel in __TOONE:
@@ -277,7 +280,10 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
                 link = __TOMANY[attr]
                 for rel in dropSpec[attr]:
                     oid = list(rel.keys())[0] if isinstance(rel, dict) else rel
-                    lhDrop = drops[oid]
+                    if oid in drops:
+                        lhDrop = drops[oid]
+                    else:
+                        continue
                     relFuncName = LINKTYPE_1TON_APPEND_METHOD[link]
                     try:
                         relFunc = getattr(drop, relFuncName)

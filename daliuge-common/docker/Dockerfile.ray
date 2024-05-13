@@ -7,7 +7,8 @@ FROM rayproject/ray:74cbf0-py38
 ARG BUILD_ID
 LABEL stage=builder
 LABEL build=$BUILD_ID
-RUN sudo apt-get update && sudo apt-get install -y gcc
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN sudo apt-get update && sudo apt-get install -y avahi-utils gcc
 
 COPY / /daliuge
 

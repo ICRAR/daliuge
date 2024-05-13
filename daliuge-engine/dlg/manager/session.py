@@ -287,6 +287,7 @@ class Session(object):
         self.status = SessionStates.BUILDING
 
         # This will check the consistency of each dropSpec
+        logger.debug("Trying to add graphSpec: %s", [[x['oid'],x['node']] for x in graphSpec])
         graphSpecDict, self._graphreprodata = graph_loader.loadDropSpecs(
             graphSpec
         )
