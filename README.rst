@@ -1,11 +1,14 @@
 Data Activated 流 Graph Engine
 ==============================
 
-.. image:: https://travis-ci.com/ICRAR/daliuge.svg?branch=master
-    :target: https://travis-ci.com/github/ICRAR/daliuge
+.. image:: https://github.com/ICRAR/daliuge/actions/workflows/run-unit-tests.yml/badge.svg?branch=master
+   :target: https://github.com/ICRAR/daliuge/actions/workflows/run-unit-tests.yml
 
 .. image:: https://coveralls.io/repos/github/ICRAR/daliuge/badge.svg?branch=master
     :target: https://coveralls.io/github/ICRAR/daliuge?branch=master
+
+.. image:: https://github.com/ICRAR/daliuge/actions/workflows/create-palettes.yml/badge.svg?branch=master
+   :target: https://github.com/ICRAR/daliuge/actions/workflows/create-palettes.yml
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/psf/black
