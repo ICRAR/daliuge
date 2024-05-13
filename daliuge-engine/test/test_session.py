@@ -80,9 +80,7 @@ class TestSession(unittest.TestCase):
             self.assertEqual(SessionStates.FINISHED, s.status)
 
         with Session("2") as s:
-            self.assertRaises(
-                InvalidGraphException, s.deploy, completedDrops=["a"]
-            )
+            self.assertRaises(InvalidGraphException, s.deploy, completedDrops=["a"])
 
     def test_addGraphSpec(self):
         with Session("1") as s:
@@ -100,18 +98,14 @@ class TestSession(unittest.TestCase):
             self.assertRaises(
                 Exception,
                 s.addGraphSpec,
-                add_test_reprodata(
-                    [{"oid": "A", "categoryType": "container"}]
-                ),
+                add_test_reprodata([{"oid": "A", "categoryType": "container"}]),
             )
 
             # Adding invalid specs
             self.assertRaises(
                 Exception,
                 s.addGraphSpec,
-                add_test_reprodata(
-                    [{"oid": "D", "categoryType": "Application"}]
-                ),
+                add_test_reprodata([{"oid": "D", "categoryType": "Application"}]),
             )  # missing "storage"
             self.assertRaises(
                 Exception,
@@ -131,6 +125,18 @@ class TestSession(unittest.TestCase):
                 s.addGraphSpec,
                 add_test_reprodata([{"oid": "D", "categoryType": "invalid"}]),
             )  # invalid "categoryType"
+            # s.addGraphSpec(
+            #     add_test_reprodata(
+            #         [
+            #             {
+            #                 "oid": "D",
+            #                 "categoryType": "Application",
+            #                 "dropclass": "dlg.data.drops.NullDROP",
+            #                 "outputs": ["X"],
+            #             }
+            #         ]
+            #     ),
+            # )
             self.assertRaises(
                 Exception,
                 s.addGraphSpec,

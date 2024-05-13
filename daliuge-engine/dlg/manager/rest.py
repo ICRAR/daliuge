@@ -80,9 +80,10 @@ def daliuge_aware(func):
                 origin = bottle.request.headers.raw("Origin")
                 logger.debug("CORS request comming from: %s", origin)
                 if origin is None or re.match(
-                    r"http://(dlg-trans.local:80[0-9][0-9]|dlg-trans.icrar.org)", origin
+                    r"(http://dlg-trans.local:80[0-9][0-9]|https://dlg-trans.icrar.org)",
+                    origin,
                 ):
-                    origin = "http://dlg-trans.local:8084"
+                    pass
                 elif re.match(r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin):
                     origin = "http://localhost:8084"
                 bottle.response.headers["Access-Control-Allow-Origin"] = origin
@@ -122,9 +123,11 @@ def daliuge_aware(func):
                 eargs = {}
                 # args[1] is a dictionary of host:exception
                 for host, subex in e.args[1].items():
+                    logger.debug(">>>> Error class name: %s", subex.__class__.__name__)
                     eargs[host] = {
                         "type": subex.__class__.__name__,
-                        "args": subex.args,
+                        # "args": subex.args,
+                        "args": "dummy",
                     }
             elif isinstance(e, DaliugeException):
                 status, eargs = 555, e.args

@@ -224,7 +224,7 @@ def loadDropSpecs(dropSpecList):
                     if oid in dropSpecs:
                         dropSpecs[oid]
                     else:
-                        continue
+                        raise KeyError
 
             # N-1 relationships
             elif rel in __TOONE:
