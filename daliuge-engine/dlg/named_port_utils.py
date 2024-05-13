@@ -135,7 +135,7 @@ def identify_named_ports(
                 value = parser(port_dict[keys[i]]["drop"])
             pargsDict.update({key: value})
             logger.debug("Using %s '%s' for parg %s", mode, value, key)
-            portargs.update({key: value})
+            # portargs.update({key: value}) # TODO identify more permanent fix for updating portargs
             posargs.pop(posargs.index(key))
         elif key in keyargs:
             if parser:
