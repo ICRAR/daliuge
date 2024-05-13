@@ -45,8 +45,9 @@ jobs:
       - name: Commit palettes to EAGLE
         env:
           EAGLE_UPDATER_TOKEN: ${{ secrets.EAGLE_UPDATER_TOKEN }}
+          PALETTE_TOKEN: ${{ secrets.PALETTE_TOKEN }}
         run: |
-          git clone https://$EAGLE_UPDATER_TOKEN@github.com/ICRAR/EAGLE_test_repo
+          git clone https://$PALETTE_TOKEN@github.com/ICRAR/EAGLE_test_repo
           mkdir -p EAGLE_test_repo/$PROJECT_NAME
           mv $OUTPUT_FILENAME.palette EAGLE_test_repo/$PROJECT_NAME/
           mv $OUTPUT_FILENAME-template.palette EAGLE_test_repo/$PROJECT_NAME/
