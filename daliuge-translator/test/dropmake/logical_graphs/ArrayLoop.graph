@@ -2,7 +2,6 @@
     "linkDataArray": [
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -3,
             "fromPort": "bd47bacb-cfcc-48c7-8f72-c32e02d631da",
             "loop_aware": "0",
@@ -11,7 +10,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -1,
             "fromPort": "fb4ad016-a5cc-43e0-8272-9cf894ea4687",
             "loop_aware": "0",
@@ -20,7 +18,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -9,
             "fromPort": "ac25b2d6-954d-4348-a85e-f4b056c62623",
             "loop_aware": "1",
@@ -29,7 +26,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -5,
             "fromPort": "6c0b1c42-556a-4651-b05b-2d6fbdd7c692",
             "loop_aware": "0",
@@ -38,7 +34,6 @@
         },
         {
             "closesLoop": true,
-            "dataType": "Object",
             "from": -6,
             "fromPort": "46ebbd1a-a092-442a-b096-ad025df480b9",
             "loop_aware": "0",
@@ -47,7 +42,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -7,
             "fromPort": "ef7bb4e2-e75b-493d-938b-81215fa10256",
             "loop_aware": "1",
@@ -56,7 +50,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -3,
             "fromPort": "bb1fe1ca-63d8-48bc-a555-bed760fec172",
             "loop_aware": "0",

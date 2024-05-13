@@ -2,7 +2,6 @@
     "linkDataArray": [
         {
             "closesLoop": false,
-            "dataType": "Unknown",
             "from": -1,
             "fromPort": "a2dc769f-9745-4440-851d-c8a9f7f66720",
             "loop_aware": "0",
@@ -11,7 +10,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Unknown",
             "from": -4,
             "fromPort": "a2dc769f-9745-4440-851d-c8a9f7f66720",
             "loop_aware": "0",
@@ -20,7 +18,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Unknown",
             "from": -2,
             "fromPort": "a2dc769f-9745-4440-851d-c8a9f7f66720",
             "loop_aware": "0",
@@ -29,7 +26,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Unknown",
             "from": -3,
             "fromPort": "a2dc769f-9745-4440-851d-c8a9f7f66720",
             "loop_aware": "0",
