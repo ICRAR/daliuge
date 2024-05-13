@@ -51,7 +51,7 @@ install_requires = [
     "gputil>=1.4.0",
     "merklelib@git+https://github.com/pritchardn/merklelib",
     "pyzmq==25.1.0",
-    "pydantic==1.10.7",
+    "pydantic==1.10.13",
     "boto3",
     "phonenumbers",
     "mailchecker",
