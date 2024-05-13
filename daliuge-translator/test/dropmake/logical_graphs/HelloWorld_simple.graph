@@ -2,7 +2,6 @@
     "linkDataArray": [
         {
             "closesLoop": false,
-            "dataType": "String",
             "from": -1,
             "fromPort": "09b9f140-837d-40eb-99b9-060a5559ce15",
             "loop_aware": "0",
