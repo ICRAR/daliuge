@@ -312,7 +312,7 @@ class CompositeManager(DROPManager):
             iterable,
         )
         if thrExs:
-            msg = f"More than one error occurred while {action} on session {sessionId}"
+            msg = f"ERRROR(s) occurred while {action} for session {sessionId}"
             raise SubManagerException(msg, thrExs)
 
     #
@@ -606,4 +606,4 @@ class MasterManager(CompositeManager):
             pkeyPath=pkeyPath,
             dmCheckTimeout=dmCheckTimeout,
         )
-        logger.info("Created MasterManager for hosts: %r", self._dmHosts)
+        logger.info("Created MasterManager for DIM hosts: %r", self._dmHosts)
