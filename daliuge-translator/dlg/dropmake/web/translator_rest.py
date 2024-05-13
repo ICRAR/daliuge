@@ -86,6 +86,7 @@ from dlg.dropmake.web.translator_utils import (
     get_mgr_deployment_methods,
     parse_mgr_url,
 )
+from dlg import constants
 
 APP_DESCRIPTION = """
 DALiuGE LG Web interface translates and deploys logical graphs.
@@ -582,6 +583,7 @@ def gen_pg(
             (mhost, mport) = mparse.netloc.split(":")
             mport = int(mport)
         except:
+            logger.debug("URL parsing error of: %s", dlg_mgr_url)
             mhost = mparse.netloc
             if mparse.scheme == "http":
                 mport = 80
@@ -634,6 +636,7 @@ def gen_pg(
         )
         # 1. get a list of nodes
         node_list = mgr_client.nodes()
+        logger.debug("Calling mapping to nodes: %s", node_list)
         # 2. mapping PGTP to resources (node list)
         pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)
 
@@ -694,7 +697,7 @@ def gen_pg_spec(
     """
     try:
         if manager_host == "localhost":
-            manager_host = "localhost"
+            manager_host = f"localhost:{constants.ISLAND_DEFAULT_REST_PORT}"
         logger.debug("pgt_id: %s", str(pgt_id))
         # logger.debug("node_list: %s", str(node_list))
     except Exception as ex:
@@ -715,6 +718,7 @@ def gen_pg_spec(
         raise HTTPException(status_code=500, detail="Must specify DALiuGE nodes list")
 
     try:
+        logger.debug("Calling mapping to host: %s", [manager_host] + node_list)
         pg_spec = pgtp.to_pg_spec(
             [manager_host] + node_list,
             tpl_nodes_len=tpl_nodes_len,

@@ -1,5 +1,4 @@
 ARG VCS_TAG
-ARG USER
 # We need the base image we build with the other Dockerfile
 FROM icrar/daliuge-common:${VCS_TAG:-latest}
 
@@ -9,7 +8,8 @@ FROM icrar/daliuge-common:${VCS_TAG:-latest}
 RUN apt-get update &&\
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc curl python3-pip python3-numpy
 
-USER ${USER}
+RUN service dbus start && service avahi-daemon start && avahi-set-host-name dlg-engine
+# USER ${USER}
 COPY / /daliuge
 RUN . /dlg/bin/activate && pip install wheel && cd /daliuge && \
     pip install .

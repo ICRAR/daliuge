@@ -8,6 +8,10 @@ LABEL stage=builder
 LABEL build=$BUILD_ID
 RUN sudo apt-get update && sudo apt-get install -y python3-pip gcc && sudo apt-get clean
 
+RUN service avahi-daemon stop && \
+    service dbus start && \
+    service avahi-daemon start && \
+    avahi-set-host-name dlg-trans
 COPY / /daliuge
 
 RUN . ~/dlg/bin/activate && \

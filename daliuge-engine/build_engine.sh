@@ -43,12 +43,17 @@ case "$1" in
         docker build --build-arg USER=${USER} --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-engine.big:${VCS_TAG} -f docker/Dockerfile .
         echo "Build finished! Slimming the image now"
         echo ">>>>> docker-slim output <<<<<<<<<"
-        docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock dslim/docker-slim build --include-shell \
+        # docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock dslim/docker-slim build --include-shell \
+        #     --include-path /etc --include-path /usr/local/lib --include-path /usr/local/bin --include-path /usr/lib/python3.8 \
+        #     --include-path /usr/lib/python3 --include-path /usr/bin/hostname --include-path /dlg --include-path /daliuge --publish-exposed-ports=true \
+        #     --http-probe=true --tag=icrar/daliuge-engine:${VCS_TAG}\
+        #     icrar/daliuge-engine.big:${VCS_TAG} \
+        slim build --include-shell \
             --include-path /etc --include-path /usr/local/lib --include-path /usr/local/bin --include-path /usr/lib/python3.8 \
-            --include-path /usr/lib/python3 --include-path /usr/bin/hostname --include-path /dlg --include-path /daliuge --publish-exposed-ports=true \
-            --http-probe=true --tag=icrar/daliuge-engine:${VCS_TAG}\
-            icrar/daliuge-engine.big:${VCS_TAG} \
-	    ;;
+            --include-path /usr/lib/python3 --include-bin /usr/bin/hostname --include-path /dlg --include-path /daliuge \
+            --include-bin /usr/sbin/service --publish-exposed-ports=true \
+            --http-probe=false --tag=icrar/daliuge-engine.slim:${VCS_TAG}\
+            icrar/daliuge-engine.big:${VCS_TAG};;
     *)
         echo "Usage: build_engine.sh <dep|dev|devall|slim>"
         exit 0;;
