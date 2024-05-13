@@ -41,6 +41,7 @@ from dlg.meta import (
     dlg_bool_param,
     dlg_int_param,
     dlg_list_param,
+    dlg_dict_param,
     dlg_component,
     dlg_batch_input,
     dlg_batch_output,
@@ -436,15 +437,68 @@ class GenericGatherApp(BarrierAppDROP):
         inputs = self.inputs
         outputs = self.outputs
         total_len = 0
+        for output in outputs:
+            for input in inputs:
+                value = droputils.allDropContents(input)
+                output.write(value)
+
+    def run(self):
+        self.readWriteData()
+
+
+##
+# @brief DictGatherApp
+# @details App packs all data on input into a dictionary using the input drop's names as keys and the reading the
+# dict values from the input drops. This app can be used stand-alone without a gather construct.
+# @par EAGLE_START
+# @param category PythonApp
+# @param tag daliuge
+# @param value_dict value_dict/Jasom/ApplicationArgument/NoPort/ReadWrite//False/False/The value dictionary can be initialized here
+# @param dropclass dlg.apps.simple.DictGatherApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param input /Object/ApplicationArgument/InputPort/ReadWrite//False/False/0-base placeholder port for inputs
+# @param output /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/Placeholder port for outputs
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
+# @par EAGLE_END
+class DictGatherApp(BarrierAppDROP):
+    component_meta = dlg_component(
+        "DictGatherApp",
+        "Collect multiple inputs into a dictionary",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+    value_dict = dlg_dict_param("value_dict", {})
+
+    def initialize(self, **kwargs):
+        super(DictGatherApp, self).initialize(**kwargs)
+        self.kwargs = kwargs
+
+    def readWriteData(self):
+        inputs = self.inputs
+        outputs = self.outputs
+        total_len = 0
         # for input in inputs:
         #     total_len += input.size
         # logger.debug(f">>>> writing {inputs} to {outputs}")
         for output in outputs:
             for input in inputs:
-                d = droputils.allDropContents(input)
-                output.write(d)
+                value = droputils.allDropContents(input)
+                self.value_dict[input.name] = pickle.loads(value)
+                for aa_key, aa_dict in self.kwargs["applicationArgs"].items():
+                    if aa_key not in self.value_dict and aa_dict["value"]:
+                        self.value_dict[aa_key] = aa_dict["value"]
+            logger.debug(
+                "Writing %s to %s",
+                self.value_dict,
+                output.name,
+            )
+            output.write(pickle.dumps(self.value_dict))
 
-                # logger.debug(f">>> written {d} to {output}")
+            # logger.debug(f">>> written {d} to {output}")
 
     def run(self):
         self.readWriteData()

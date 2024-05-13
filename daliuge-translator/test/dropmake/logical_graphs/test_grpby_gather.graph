@@ -2,7 +2,6 @@
     "linkDataArray": [
         {
             "closesLoop": false,
-            "dataType": "Unknown",
             "from": -1,
             "fromPort": "78ed45a3-6799-4d2b-bc3e-22885a91092b",
             "loop_aware": "0",
@@ -11,7 +10,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Unknown",
             "from": -3,
             "fromPort": "5801c229-f580-4704-abf5-c15a7139901a",
             "loop_aware": "0",
@@ -20,7 +18,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Unknown",
             "from": -8,
             "fromPort": "fa7d16ea-116c-49f5-a807-5fb04ae2c275",
             "loop_aware": "0",
@@ -29,7 +26,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Unknown",
             "from": -2,
             "fromPort": "29af1f72-b58a-48a2-810a-30a27f8d5ae5",
             "loop_aware": "0",
@@ -38,7 +34,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Unknown",
             "from": -21,
             "fromPort": "a3a49415-bef4-4095-a23c-40c63db7af7a",
             "loop_aware": "0",
@@ -47,7 +42,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Unknown",
             "from": -10,
             "fromPort": "fd25d411-9f3e-4f6c-815b-3c3d6df21cd3",
             "loop_aware": "0",
@@ -56,7 +50,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Unknown",
             "from": -10,
             "fromPort": "7b2151d1-d0b6-40bf-bdd2-7c5aca2e268f",
             "loop_aware": "0",
@@ -65,7 +58,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Unknown",
             "from": -10,
             "fromPort": "d48ba845-0613-4103-b9a7-74f85a5e1254",
             "loop_aware": "0",
@@ -74,7 +66,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Unknown",
             "from": -10,
             "fromPort": "3f4e8bce-566b-4668-8af5-a9255ba37592",
             "loop_aware": "0",
@@ -83,7 +74,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Unknown",
             "from": -28,
             "fromPort": "3c2bbbac-8806-49ef-8858-eceda6a0c80d",
             "loop_aware": "0",
@@ -92,7 +82,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Unknown",
             "from": -29,
             "fromPort": "aa55f675-f141-4ae2-b834-38a8ebbbb7d5",
             "loop_aware": "0",

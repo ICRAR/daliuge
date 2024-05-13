@@ -429,9 +429,6 @@
                     "closesLoop": {
                         "type": "boolean"
                     },
-                    "dataType": {
-                        "type": "string"
-                    },
                     "from": {
                         "type": "integer"
                     },
@@ -450,7 +447,6 @@
                 },
                 "required": [
                     "closesLoop",
-                    "dataType",
                     "from",
                     "fromPort",
                     "to",

@@ -2,7 +2,6 @@
     "linkDataArray": [
         {
             "closesLoop": false,
-            "dataType": "Object.",
             "from": -4,
             "fromPort": "1765f421-782c-4972-ab76-ac0c23bd95e3",
             "loop_aware": "1",
@@ -11,7 +10,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object.event",
             "from": -3,
             "fromPort": "b8739916-45c0-41e1-b38d-afede242bcfd",
             "loop_aware": "1",

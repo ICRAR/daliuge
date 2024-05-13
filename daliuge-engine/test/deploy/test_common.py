@@ -78,8 +78,8 @@ class CommonTestsBase(ManagerStarter):
         ]
         pg = add_test_reprodata(pg)
         for drop in pg:
-            drop["node"] = "localhost"
-            drop["island"] = "localhost"
+            drop["node"] = f"localhost:{constants.NODE_DEFAULT_REST_PORT}"
+            drop["island"] = f"localhost:{constants.ISLAND_DEFAULT_REST_PORT}"
         return common.submit(pg, "localhost", self.port)
 
     def assert_sessions_finished(self, status, *session_ids):
@@ -91,9 +91,7 @@ class CommonTestsBase(ManagerStarter):
 
     def test_monitor(self):
         session_id = self._submit()
-        status = common.monitor_sessions(
-            session_id, port=self.port, poll_interval=0.1
-        )
+        status = common.monitor_sessions(session_id, port=self.port, poll_interval=0.1)
         self.assert_session_finished(status)
 
     def test_monitor_all(self):
