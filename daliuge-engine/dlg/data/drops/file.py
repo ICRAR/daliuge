@@ -38,16 +38,52 @@ from typing import Union
 # @details A standard file on a filesystem mounted to the deployment machine
 # @par EAGLE_START
 # @param category File
+# @param categoryType Data
 # @param tag daliuge
-# @param filepath /String/ApplicationArgument/NoPort/ReadWrite//False/False/"File path for this file. In many cases this does not need to be specified. If it has a \/ at the end it will be treated as a directory name and the filename will be generated. If it does not have a \/, the last part will be treated as a filename. If filepath does not start with \/ (relative path) then the session directory will be prepended to make the path absolute.""
-# @param check_filepath_exists False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
-# @param dropclass dlg.data.drops.file.FileDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
-# @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
-# @param persist True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param expireAfterUse True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
-# @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param filepath
+#   /String/ApplicationArgument/NoPort/ReadWrite//False/False/
+#   File path for this file. In many cases this does not need to be specified.
+#   If it has a \/ at the end it will be treated as a directory name and the
+#   filename will be generated. If it does not have a \/, the last part will
+#   be treated as a filename. If filepath does not start with \/ (relative
+#   path) then the session directory will be prepended to make the path
+#   absolute.
+# @param check_filepath_exists
+#   False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/
+#   Perform a check to make sure the file path exists before proceeding with
+#   the application
+# @param dropclass
+#   dlg.data.drops.file.FileDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/
+#   Drop class
+# @param streaming
+# False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/
+#   Specifies whether this data component streams input and output data
+# @param persist
+#   False/Boolean/ComponentParameter/NoPort/ReadWrite
+#   //False/False/
+#   Specifies whether this data component contains data that should not be
+#   deleted after execution
+# @param persistentStoreType
+#   directory/Select/ComponentParameter/NoPort/ReadWrite
+#   /directory,filesystem
+#   //False/False/
+#   Specifies where the data will persist after drop has completed
+# @param persistentStorePath
+#   String/ComponentParameter/NoPort/ReadWrite//False/False/
+#   Where in the persistent storage location we want to persist the data
+# @param expireAfterUse
+#   False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/
+#   Specifies whether this data component contains data that should not be
+#   deleted after execution
+# @param data_volume
+#   5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/
+#   Estimated size of the data contained in this node
+# @param group_end
+#   False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/
+#   Is this node the end of a group?
+# @param dummy
+#   /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/
+#   Dummy port
 # @par EAGLE_END
 class FileDROP(DataDROP, PathBasedDrop):
     """
@@ -73,17 +109,19 @@ class FileDROP(DataDROP, PathBasedDrop):
 
     def __init__(self, *args, **kwargs):
         """
-        Initialise default drop behaviour when it is completed with the following rules:
+        Initialise default drop completion behaviour:
 
-        - "expireAfterUse": Remove the data from the workspace once it has been used
-        by all consumers. This is independent of the "persist" flag. This is false
-       by default for FileDrops.
-
+        - "expireAfterUse": Remove the  data from the workspace once it has
+        been used by all consumers. This is independent of the "persist"
+        flag. This is false by default for FileDrops.
+        - Ensure we do not set expireAfterUse in the event 'lifespan' has
+        been specified in the Drop arguments, as the two are mutually
+        exclusive.
         """
 
-        # 'lifespan' and 'expireAfterUse' are mutually exclusive
         if "lifespan" not in kwargs and "expireAfterUse" not in kwargs:
             kwargs["expireAfterUse"] = False
+
         self.is_dir = False
         super().__init__(*args, **kwargs)
 
@@ -163,6 +201,25 @@ class FileDROP(DataDROP, PathBasedDrop):
             )
 
         self._wio = None
+
+    def _initializePersistStore(self):
+        """
+        Setup the File drop to be able to persist
+        """
+        self._persistStoreType = "directory"
+        if self._persist and 'persistStoreType' in self.parameters:
+            self._persistType = self._popArg(
+                self.parameters, "persistStoreType", "directory")
+
+        if "persistStorePath" in self.parameters:
+            self._persistStorePath = self._popArg(
+                self.parameters, "persistStorePath", self.filename
+            )
+        else:
+            logger.warning("Persistent drop %s will be stored in working "
+                           "directory", self.uid)
+            self._persistStorePath = self._root
+
 
     def getIO(self):
         return FileIO(self._path)

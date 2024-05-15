@@ -125,6 +125,7 @@ class MetisPGTP(PGT):
             oid = drop["oid"]
             myk = i + 1
             tt = drop["categoryType"]
+            tw = 0
             if tt in [CategoryType.DATA, "data"]:
                 dst = "consumers"  # outbound keyword
                 ust = "producers"
@@ -135,6 +136,13 @@ class MetisPGTP(PGT):
                 ust = "inputs"
                 tw = drop.get("weight", 1)
                 sz = 1
+            elif tt in [CategoryType.SERVICE, "service"]:
+                dst = "outputs"
+                ust = "inputs"
+                tw = drop.get("weight", 1)
+                sz = 1
+            else:
+                raise RuntimeWarning("Category %s is currently unsupported in the translator.", tt)
             G.add_node(myk, weight=tw, size=sz, oid=oid)
             adj_drops = []  # adjacent drops (all neighbours)
             if dst in drop:

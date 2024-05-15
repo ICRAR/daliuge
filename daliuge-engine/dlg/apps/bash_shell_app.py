@@ -370,6 +370,7 @@ class StreamingInputBashAppBase(BashShellBase, AppDROP):
 # @details An application component able to run an arbitrary command within the Bash Shell
 # @par EAGLE_START
 # @param category BashShellApp
+# @param categorytype Application
 # @param tag template
 # @param command /String/ComponentParameter/NoPort/ReadWrite//False/False/The command to be executed
 # @param input_redirection /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line argument that specifies the input into this application

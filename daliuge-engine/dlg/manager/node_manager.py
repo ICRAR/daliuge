@@ -352,7 +352,7 @@ class NodeManagerBase(DROPManager):
     def getLogDir(self):
         return self.logdir
 
-    def deploySession(self, sessionId, completedDrops=[]):
+    def deploySession(self, sessionId, completedDrops=None):
         self._check_session_id(sessionId)
         session = self._sessions[sessionId]
         if hasattr(self, "_memoryManager"):
@@ -361,6 +361,7 @@ class NodeManagerBase(DROPManager):
         def foreach(drop):
             drop.autofill_environment_variables()
             drop._drop_runner = self._drop_runner
+
             self._dlm.addDrop(drop)
 
             # Remote event forwarding

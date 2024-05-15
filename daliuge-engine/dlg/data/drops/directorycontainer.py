@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 # TODO: This needs some more work
 ##
-# @brief Directory
+# @brief DirectoryContainer
 # @details A ContainerDROP that represents a filesystem directory. It only allows
 # FileDROPs and DirectoryContainers to be added as children. Children
 # can only be added if they are placed directly within the directory

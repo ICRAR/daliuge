@@ -228,11 +228,11 @@ def getLeafNodes(drops):
     return [
         drop
         for drop, _ in breadFirstTraverse(drops)
-        if not getDownstreamObjects(drop) and drop.type != "dropclass"
+        if not getDownstreamObjects(drop) and drop.CategoryType != "dropclass"
     ]
 
 
-def depthFirstTraverse(node: "AbstractDROP", visited=[]):
+def depthFirstTraverse(node: "AbstractDROP", visited=None):
     """
     Depth-first iterator for a DROP graph.
 
