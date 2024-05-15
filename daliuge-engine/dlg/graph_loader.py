@@ -48,12 +48,6 @@ from dlg.data.drops.json_drop import JsonDROP
 from dlg.data.drops import *
 
 
-class CategoryType:
-    DATA = "dropclass"
-
-    # Dictionary for the key used to store 1-to-N relationships between DROPs
-
-
 # in the the DROP specification format
 __TOMANY = {
     DROPLinkType.CONSUMER: "consumers",
@@ -276,6 +270,8 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
 
         for attr in dropSpec:
             # 1-N relationships
+            # TODO Look here to see if we can add event relationships to
+            #  prevent things from running if there are services in the graph.
             if attr in __TOMANY:
                 link = __TOMANY[attr]
                 for rel in dropSpec[attr]:
@@ -468,4 +464,5 @@ __CREATION_FUNCTIONS = {
     "application": _createApp,
     "app": _createApp,
     "container": _createContainer,
+    "service": _createContainer,
 }

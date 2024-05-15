@@ -65,6 +65,7 @@ def _filter_parameters(parameters: dict):
 # @details A set of environment variables, wholly specified in EAGLE and accessible to all drops.
 # @par EAGLE_START
 # @param category EnvironmentVariables
+# @param categorytype Data
 # @param tag daliuge
 # @param dropclass dlg.data.drops.environmentvar_drop.EnvironmentVarDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data

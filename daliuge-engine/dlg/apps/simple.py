@@ -75,6 +75,7 @@ class NullBarrierApp(BarrierAppDROP):
 # This is mainly useful (and used) when starting a new workflow from scratch.
 # @par EAGLE_START
 # @param category PythonApp
+# @param categorytype Application
 # @param tag template
 # @param dropclass PythonApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
@@ -94,6 +95,7 @@ class PythonApp(BarrierAppDROP):
 # without executing real algorithms. Very useful for debugging.
 # @par EAGLE_START
 # @param category PythonApp
+# @param categorytype Application
 # @param tag daliuge
 # @param sleep_time 5/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The number of seconds to sleep
 # @param dropclass dlg.apps.simple.SleepApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class

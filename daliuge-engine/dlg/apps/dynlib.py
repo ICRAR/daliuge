@@ -368,6 +368,7 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
 # @details An application component run from a dynamic library
 # @par EAGLE_START
 # @param category DynlibApp
+# @param categorytype Application
 # @param tag template
 # @param libpath /String/ComponentParameter/NoPort/ReadWrite//False/False/"The location of the shared object/DLL that implements this application"
 # @param dropclass dlg.apps.dynlib.DynlibApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
@@ -463,6 +464,7 @@ def get_from_subprocess(proc, q):
 # @details An application component run from a dynamic library in a different process
 # @par EAGLE_START
 # @param category DynlibProcApp
+# @param categorytype Application
 # @param tag template
 # @param libpath /String/ComponentParameter/NoPort/ReadWrite//False/False/"The location of the shared object/DLL that implements this application"
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time

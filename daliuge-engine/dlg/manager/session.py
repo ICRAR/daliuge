@@ -32,6 +32,9 @@ import threading
 import time
 import socket
 
+from typing import List
+
+from dlg.common import CategoryType
 from dlg.common.reproducibility.reproducibility import init_runtime_repro_data
 from dlg.utils import createDirIfMissing
 
@@ -330,7 +333,7 @@ class Session(object):
         graph_loader.addLink(linkType, lhDropSpec, rhOID, force=force)
 
     @track_current_session
-    def deploy(self, completedDrops=[], event_listeners=[], foreach=None):
+    def deploy(self, completedDrops=None, event_listeners=None, foreach=None):
         """
         Creates the DROPs represented by all the graph specs contained in
         this session, effectively deploying them.
@@ -376,7 +379,8 @@ class Session(object):
         #  Add listeners for reproducibility information
         repro_listener = ReproFinishedListener(self._graph, self)
 
-        for drop, _ in droputils.breadFirstTraverse(self._roots):
+        self._roots = self._create_service_drop_dependency(self._roots)
+        for drop, _ in droputils.breadFirstTraverse(self._roots):  # type: AbstractDROP
 
             # Register them
             self._drops[drop.uid] = drop
@@ -388,7 +392,7 @@ class Session(object):
             if self._nm:
                 drop._rpc_endpoint = self._nm.rpc_endpoint
 
-            # Register them with the error handler
+            # Register them   error handler
             for l in event_listeners:
                 drop.subscribe(l)
             #  Register each drop for reproducibility listening
@@ -424,7 +428,7 @@ class Session(object):
                 foreach(drop)
             logger.info("'foreach' invoked for each drop")
 
-        # Append proxies
+        # Append proxie
         logger.info(
             "Creating %d drop proxies: %r",
             len(self._proxyinfo),
@@ -459,6 +463,8 @@ class Session(object):
         self.finish()
 
     def trigger_drops(self, uids):
+        # TODO LOOK HERE
+
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [
                 dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
@@ -468,6 +474,24 @@ class Session(object):
                     drop.async_execute()
                 else:
                     drop.setCompleted()
+
+    def _create_service_drop_dependency(self, drops: List[AbstractDROP]):
+        """
+        Iterate through a list of drops and identify any drops that have the
+        'Service' type, and all other roots as Consumers of that drop.
+        """
+        serviceDrops = []
+        for d in drops:
+            if d.CategoryType == CategoryType.SERVICE:
+                serviceDrops.append(d)
+        nonServiceDrops = [d for d in drops if d not in serviceDrops]
+
+        for s in serviceDrops:
+            for ns in nonServiceDrops:
+                s.addConsumer(ns)
+
+        return serviceDrops + nonServiceDrops
+
 
     @track_current_session
     def deliver_event(self, evt):

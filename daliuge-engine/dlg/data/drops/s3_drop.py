@@ -54,6 +54,7 @@ from dlg.meta import (
 # @details An object available in a bucket on a S3 (Simple Storage Service) object storage platform
 # @par EAGLE_START
 # @param category S3
+# @param categorytype Data
 # @param tag daliuge
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?

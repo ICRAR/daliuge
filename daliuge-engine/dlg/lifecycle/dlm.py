@@ -124,9 +124,11 @@ import string
 import threading
 import time
 
+from dlg.common import CategoryType
 from . import registry
 from .hsm import manager
-from .hsm.store import AbstractStore
+from ..data.drops import store
+from dlg.data.drops.store import AbstractStore
 from .. import droputils
 from ..ddap_protocol import DROPStates, DROPPhases, AppDROPStates
 from ..drop import AbstractDROP
@@ -216,6 +218,7 @@ class DataLifecycleManager:
     ):
         self._reg = registry.InMemoryRegistry()
         self._listener = DropEventListener(self)
+        # TODO Remove this approach
         self._enable_drop_replication = enable_drop_replication
         if enable_drop_replication:
             self._hsm = manager.HierarchicalStorageManager()
@@ -455,12 +458,23 @@ class DataLifecycleManager:
             if lastAccess != -1 and timeUnread > 10:
                 self.moveDropDown(drop)
 
-    def addDrop(self, drop):
+    def addDrop(self, drop: AbstractDROP):
 
         # Keep track of the DROP and subscribe to the events it generates
         self._drops[drop.uid] = drop
         drop.phase = DROPPhases.GAS
         drop.subscribe(self._listener)
+
+        # if drop.CategoryType == CategoryType.SERVICE:
+        #     connection = drop.getIO().exists()
+        #     continue
+        #TODO LOOK HERE FOR SETTING UP SERVICES BASED ON THE DROP
+        # if drop.persist:
+        #     self._updatePersistentStore(drop)
+
+        if drop.CategoryType == CategoryType.SERVICE:
+            self._hsm.addStore(drop.createStore())
+
         self._reg.addDrop(drop)
 
         # TODO: We currently use a background thread that scans
@@ -573,3 +587,13 @@ class DataLifecycleManager:
         logger.debug("%r successfully replicated to %r", drop, newDrop)
 
         return newDrop, newUid
+
+    def _addPersistentStore(self, drop: AbstractDROP):
+        """
+        For a given Drop, identify what type of AbstractStore we want to
+        add to the HierarchicalStorageManager.
+        """
+
+        # if drop.persistStoreType not in store.VALID_STORE_PARAMS:
+        #     raise RuntimeError()
+        # args = drop.persistStoreArgs

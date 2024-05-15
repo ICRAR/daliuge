@@ -8,6 +8,7 @@ from dlg.exceptions import InvalidDropException
 # @details A conditional branch to control flow
 # @par EAGLE_START
 # @param category Branch
+# @param categorytype Control
 # @param tag template
 # @param dropclass dlg.apps.simple.SimpleBranch/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time

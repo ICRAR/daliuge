@@ -30,6 +30,7 @@ from dlg.meta import dlg_string_param, dlg_int_param
 # @details An archive on the Next Generation Archive System (NGAS).
 # @par EAGLE_START
 # @param category NGAS
+# @param categorytype Data
 # @param tag daliuge
 # @param ngasSrv localhost/String/ComponentParameter/NoPort/ReadWrite//False/False/The URL of the NGAS Server
 # @param ngasPort 7777/Integer/ComponentParameter/NoPort/ReadWrite//False/False/The port of the NGAS Server

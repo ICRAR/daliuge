@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 # @details A set of parameters, which can be set and modified in EAGLE and thus is part of the graph. Multiple serialisation formats are available.
 # @par EAGLE_START
 # @param category ParameterSet
+# @param categorytype Data
 # @param tag daliuge
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
