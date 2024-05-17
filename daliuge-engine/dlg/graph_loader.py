@@ -122,26 +122,28 @@ def removeUnmetRelationships(dropSpecList):
 
         for rel in dropSpec:
             # 1-N relationships
+            print(rel)
             if rel in __TOMANY:
                 link = __TOMANY[rel]
-
+                print(dropSpec)
                 # Find missing OIDs in this relationship and keep track of them,
                 # removing them from the current DROP spec
                 ds = dropSpec[rel]
                 # TODO: In principle all of the ds should be dicts, but they are not
                 # in a loop. Need to check the generation
                 # ds = [next(iter(d)) if isinstance(d, dict) else d for d in ds]
-                if isinstance(ds[0], dict):
-                    ds = [next(iter(d)) for d in ds]
+                if ds:
+                    if isinstance(ds[0], dict):
+                        ds = [next(iter(d)) for d in ds]
                 #                ds = [normalise_oid(d) for d in ds]
                 missingOids = [oid for oid in ds if oid not in oids]
                 for oid in missingOids:
                     unmetRelationships.append(DROPRel(oid, link, this_oid))
                     ds.remove(oid)
-
                 # Remove the relationship list entirely if it has no elements
                 if not ds:
                     to_delete.append(rel)
+
 
             # N-1 relationships
             elif rel in __TOONE:

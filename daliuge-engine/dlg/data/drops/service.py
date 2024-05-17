@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 import logging
+import os.path
 from abc import abstractmethod
 from dlg.data.drops.data_base import DataDROP
 from dlg.data.drops.container import ContainerDROP
@@ -34,30 +35,34 @@ logger = logging.getLogger(__name__)
 class ServiceDROP(BarrierAppDROP):
     def initialize(self, **kwargs):
         super().initialize(**kwargs)
-        self._storeclass = None
+        self._store = None
 
     @abstractmethod
-    def connectService(self):
+    def setup(self):
         """
 
         """
         pass
 
     @abstractmethod
-    def disconnectService(self):
+    def tearDown(self):
         """
 
         """
 
-    @abstractmethod
-    def isPersist(self) -> bool:
-        """
+    # @abstractmethod
+    # def isPersist(self) -> bool:
+    #     """
+    #
+    #     """
+    #
+    # @property
+    # @abstractmethod
+    # def store(self)->str:
+    #     """
+    #
+    #     """
 
-        """
-
-    @abstractmethod
-    def createStore(self)->str:
-        return self._storeclass
 
 ##
 # @brief DirectoryService
@@ -74,22 +79,35 @@ class ServiceDROP(BarrierAppDROP):
 # @param storeargs
 # @par EAGLE_END
 class DirectoryServiceDROP(ServiceDROP):
+    """
+
+    """
 
     def initialize(self, **kwargs):
         super().initialize(**kwargs)
         # self._storeclass = kwargs['storeclass']
         # self._storeargs = kwargs['dirname']
 
-    def connectService(self):
-        pass
+    def setup(self):
+        print("Running the setup for the service drop...")
+        sleep(5)
+        self.setCompleted()
+        # try:
+        #     self._store =  DirectoryStore("/tmp/")
 
-    def disconnectService(self):
+        # except Exception as err:
+        #     logger.warning("%s occurred when constructing DirectoryStore", err
+        #     pass
+
+    def tearDown(self):
         pass
 
     def isPersist(self) -> bool:
+
         return self._persist
 
-    def createStore(self):
+    @property
+    def store(self):
         try:
             dir = DirectoryStore("/tmp/")
             # self.setCompleted()
@@ -98,17 +116,3 @@ class DirectoryServiceDROP(ServiceDROP):
             logger.warning("%s occurred when constructing DirectoryStore", err)
     def run(self):
         sleep(15)
-
-#
-# ##
-# # @brief Scatter
-# # @details A Scatter template drop
-# # @par EAGLE_START
-# # @param category Scatter
-# # @param categorytype Construct
-# # @param tag template
-# # @param num_of_copies 4/Integer/ConstructParameter/NoPort/ReadWrite//False/False/Specifies the number of replications of the content of the scatter construct
-# # @par EAGLE_END
-# class NGASServiceDrop(ServiceDrop):
-#     pass
-#

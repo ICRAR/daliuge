@@ -472,8 +472,9 @@ class DataLifecycleManager:
         # if drop.persist:
         #     self._updatePersistentStore(drop)
 
-        if drop.CategoryType == CategoryType.SERVICE:
-            self._hsm.addStore(drop.createStore())
+        if drop.CategoryType == CategoryType.SERVICE: # and self._hsm:
+            print("We are in the DLM!")
+            # self._hsm.addStore(drop.store)
 
         self._reg.addDrop(drop)
 

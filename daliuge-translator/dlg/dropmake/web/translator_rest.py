@@ -647,6 +647,7 @@ def gen_pg(
             )
             mgr_client.create_session(ssid)
             # print "session created"
+            # TODO I FOUND YOUUUUUUUUU
             completed_uids = common.get_roots(pg_spec)
             pg_spec.append(reprodata)
             mgr_client.append_graph(ssid, pg_spec)
