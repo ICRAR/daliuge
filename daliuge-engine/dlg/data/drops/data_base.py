@@ -64,6 +64,7 @@ logger = logging.getLogger(__name__)
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
+# @param expireAfterUse True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution#
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @par EAGLE_END
 class DataDROP(AbstractDROP):

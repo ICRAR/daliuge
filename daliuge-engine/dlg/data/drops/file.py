@@ -44,6 +44,7 @@ from typing import Union
 # @param dropclass dlg.data.drops.file.FileDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param persist True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
+# @param expireAfterUse True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
@@ -70,12 +71,18 @@ class FileDROP(DataDROP, PathBasedDrop):
     check_filepath_exists = dlg_bool_param("check_filepath_exists", False)
     # is_dir = dlg_bool_param("is_dir", False)
 
-    # Make sure files are not deleted by default and certainly not if they are
-    # marked to be persisted no matter what expireAfterUse said
     def __init__(self, *args, **kwargs):
-        if "persist" not in kwargs:
-            kwargs["persist"] = True
-        if kwargs["persist"] and "lifespan" not in kwargs:
+        """
+        Initialise default drop behaviour when it is completed with the following rules:
+
+        - "expireAfterUse": Remove the data from the workspace once it has been used
+        by all consumers. This is independent of the "persist" flag. This is false
+       by default for FileDrops.
+
+        """
+
+        # 'lifespan' and 'expireAfterUse' are mutually exclusive
+        if "lifespan" not in kwargs and "expireAfterUse" not in kwargs:
             kwargs["expireAfterUse"] = False
         self.is_dir = False
         super().__init__(*args, **kwargs)

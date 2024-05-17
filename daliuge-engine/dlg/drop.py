@@ -352,9 +352,14 @@ class AbstractDROP(EventFirer, EventHandler):
                 "but they are mutually exclusive" % (self,),
             )
 
-        self._expireAfterUse = self._popArg(kwargs, "expireAfterUse", False)
+        # If expireAfterUse is set by the user to be False, we do not want to initiate
+        # a timeout using lifespan, so we set the default for expireAfterUse to None
+        self._expireAfterUse = self._popArg(kwargs, "expireAfterUse", None)
+
+        # We only initiate the lifespan if the expireAfterUse flag has not been specified
+        # as an argument on the Drop.
         self._expirationDate = -1
-        if not self._expireAfterUse:
+        if self._expireAfterUse is None:
             lifespan = float(self._popArg(kwargs, "lifespan", -1))
             if lifespan != -1:
                 self._expirationDate = time.time() + lifespan
@@ -367,9 +372,6 @@ class AbstractDROP(EventFirer, EventHandler):
 
         # No DROP should be persisted unless stated otherwise; used for replication
         self._persist: bool = self._popArg(kwargs, "persist", False)
-        # If DROP should be persisted, don't expire (delete) it.
-        if self._persist:
-            self._expireAfterUse = False
 
         # Useful to have access to all EAGLE parameters without a prior knowledge
         self._parameters = dict(kwargs)

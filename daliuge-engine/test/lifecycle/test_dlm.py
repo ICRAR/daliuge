@@ -35,6 +35,7 @@ from dlg.ddap_protocol import DROPStates, DROPPhases
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.data.drops.directorycontainer import DirectoryContainer
 from dlg.data.drops.file import FileDROP
+from dlg.data.drops.memory import InMemoryDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.lifecycle import dlm
 
@@ -61,7 +62,15 @@ class TestDataLifecycleManager(unittest.TestCase):
 
     def test_dropCompleteTriggersReplication(self):
         with dlm.DataLifecycleManager(enable_drop_replication=True) as manager:
-            drop = FileDROP("oid:A", "uid:A1", expectedSize=1)
+
+            # By default a file is non-persistent
+            drop = FileDROP("oid:B", "uid:B1", expectedSize=1)
+            manager.addDrop(drop)
+            self._writeAndClose(drop)
+            self.assertEqual(DROPPhases.GAS, drop.phase)
+            self.assertEqual(1, len(manager.getDropUids(drop)))
+
+            drop = FileDROP("oid:A", "uid:A1", expectedSize=1, persist=True)
             manager.addDrop(drop)
             self._writeAndClose(drop)
 
@@ -70,12 +79,6 @@ class TestDataLifecycleManager(unittest.TestCase):
             self.assertEqual(DROPPhases.SOLID, drop.phase)
             self.assertEqual(2, len(manager.getDropUids(drop)))
 
-            # Try the same with a non-persisted data object, it shouldn't be replicated
-            drop = FileDROP("oid:B", "uid:B1", expectedSize=1, persist=False)
-            manager.addDrop(drop)
-            self._writeAndClose(drop)
-            self.assertEqual(DROPPhases.GAS, drop.phase)
-            self.assertEqual(1, len(manager.getDropUids(drop)))
 
     def test_expiringNormalDrop(self):
         with dlm.DataLifecycleManager(check_period=0.5) as manager:
@@ -130,11 +133,15 @@ class TestDataLifecycleManager(unittest.TestCase):
             self.assertEqual(DROPStates.DELETED, drop.status)
             self.assertFalse(drop.exists())
 
-    def test_expireAfterUse(self):
+    def test_expireAfterUseForFile(self):
         """
-        Simple test for the expireAfterUse flag. Two DROPs are created with
-        different values, and after they are used we check whether their data
-        is still there or not
+        Test default and non-default behaviour for the expireAfterUse flag
+        for file drops.
+
+        Default: expireAfterUse=False, so the drop should still exist after it
+        has been consumed.
+        Non-default: expiredAfterUse=True, so the drop will be expired and
+        deleted after it is consumed.
         """
 
         class MyApp(BarrierAppDROP):
@@ -142,43 +149,97 @@ class TestDataLifecycleManager(unittest.TestCase):
                 pass
 
         with dlm.DataLifecycleManager(check_period=0.5, cleanup_period=2) as manager:
-            a = DirectoryContainer(
+
+            # Check default
+            default_fp, default_name = tempfile.mkstemp()
+            default = FileDROP(
                 "a",
                 "a",
-                persist=False,
-                expireAfterUse=True,
-                dirname=tempfile.mkdtemp(),
+                filepath=default_name
             )
-            b_dirname = tempfile.mkdtemp()
-            b = DirectoryContainer(
+
+            expired_fp, expired_name = tempfile.mkstemp()
+            expired = FileDROP(
                 "b",
                 "b",
-                persist=False,
-                expireAfterUse=False,
-                dirname=b_dirname,
+                filepath=expired_name,
+                expireAfterUse=True  # Remove the file after use
             )
             c = MyApp("c", "c")
             d = MyApp("d", "d")
-            a.addConsumer(c)
-            a.addConsumer(d)
-            b.addConsumer(c)
-            b.addConsumer(d)
+            default.addConsumer(c)
+            default.addConsumer(d)
+            expired.addConsumer(c)
+            expired.addConsumer(d)
 
-            manager.addDrop(a)
-            manager.addDrop(b)
-            manager.addDrop(b)
+            manager.addDrop(default)
+            manager.addDrop(expired)
+            manager.addDrop(expired)
             manager.addDrop(c)
 
             # Make sure all consumers are done
             with DROPWaiterCtx(self, [c, d], 1):
-                a.setCompleted()
-                b.setCompleted()
+                default.setCompleted()
+                expired.setCompleted()
 
-            # Both directories should be there, but after cleanup A's shouldn't
+            # Both directories should be there, but after cleanup B's shouldn't
             # be there anymore
-            self.assertTrue(a.exists())
-            self.assertTrue(b.exists())
+            self.assertTrue(default.exists())
+            self.assertTrue(expired.exists())
             time.sleep(2.5)
-            self.assertFalse(a.exists())
-            self.assertTrue(b.exists())
-            b.delete()
+            self.assertTrue(default.exists())
+            self.assertFalse(expired.exists())
+            default.delete()
+
+    def test_expireAfterUseForMemory(self):
+        """
+        Default: expireAfterUse=True, so the drop should not exist after it
+        has been consumed.
+        Non-default: expiredAfterUse=False, so the drop will be not be expired
+        after it is consumed.
+        """
+
+        class MyApp(BarrierAppDROP):
+            def run(self):
+                pass
+
+        with dlm.DataLifecycleManager(check_period=0.5, cleanup_period=2) as manager:
+
+            # Check default behaviour - deleted for memory drops
+            default = InMemoryDROP(
+                "a",
+                "a",
+            )
+
+            # Non-default behaviour - memory is not deleted
+            non_expired = InMemoryDROP(
+                "b",
+                "b",
+                expireAfterUse=False
+            )
+            c = MyApp("c", "c")
+            d = MyApp("d", "d")
+            default.addConsumer(c)
+            default.addConsumer(d)
+            non_expired.addConsumer(c)
+            non_expired.addConsumer(d)
+
+            manager.addDrop(default)
+            manager.addDrop(non_expired)
+            manager.addDrop(non_expired)
+            manager.addDrop(c)
+
+            # Make sure all consumers are done
+            with DROPWaiterCtx(self, [c, d], 1):
+                default.setCompleted()
+                non_expired.setCompleted()
+
+            # Both directories should be there, but after cleanup B's shouldn't
+            # be there anymore
+            self.assertTrue(default.exists())
+            self.assertTrue(non_expired.exists())
+            time.sleep(2.5)
+            self.assertFalse(default.exists())
+            self.assertTrue(non_expired.exists())
+            non_expired.delete()
+
