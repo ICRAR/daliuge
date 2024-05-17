@@ -121,7 +121,6 @@ class FileDROP(DataDROP, PathBasedDrop):
 
         if "lifespan" not in kwargs and "expireAfterUse" not in kwargs:
             kwargs["expireAfterUse"] = False
-
         self.is_dir = False
         super().__init__(*args, **kwargs)
 
@@ -201,25 +200,6 @@ class FileDROP(DataDROP, PathBasedDrop):
             )
 
         self._wio = None
-
-    def _initializePersistStore(self):
-        """
-        Setup the File drop to be able to persist
-        """
-        self._persistStoreType = "directory"
-        if self._persist and 'persistStoreType' in self.parameters:
-            self._persistType = self._popArg(
-                self.parameters, "persistStoreType", "directory")
-
-        if "persistStorePath" in self.parameters:
-            self._persistStorePath = self._popArg(
-                self.parameters, "persistStorePath", self.filename
-            )
-        else:
-            logger.warning("Persistent drop %s will be stored in working "
-                           "directory", self.uid)
-            self._persistStorePath = self._root
-
 
     def getIO(self):
         return FileIO(self._path)

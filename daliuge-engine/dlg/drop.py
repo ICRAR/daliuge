@@ -325,8 +325,7 @@ class AbstractDROP(EventFirer, EventHandler):
         # in the state they currently are. In this case an external entity must
         # listen to the events and decide when to trigger the execution of the
         # applications.
-        self._executionMode = self._popArg(kwargs, "executionMode",
-                                           ExecutionMode.DROP)
+        self._executionMode = self._popArg(kwargs, "executionMode", ExecutionMode.DROP)
 
         # The physical node where this DROP resides.
         # This piece of information is mandatory when submitting the physical
@@ -354,14 +353,9 @@ class AbstractDROP(EventFirer, EventHandler):
                 "but they are mutually exclusive" % (self,),
             )
 
-        # If expireAfterUse is set by the user to be False, we do not want to initiate
-        # a timeout using lifespan, so we set the default for expireAfterUse to None
-        self._expireAfterUse = self._popArg(kwargs, "expireAfterUse", None)
-
-        # We only initiate the lifespan if the expireAfterUse flag has not been specified
-        # as an argument on the Drop.
+        self._expireAfterUse = self._popArg(kwargs, "expireAfterUse", False)
         self._expirationDate = -1
-        if self._expireAfterUse is None:
+        if not self._expireAfterUse:
             lifespan = float(self._popArg(kwargs, "lifespan", -1))
             if lifespan != -1:
                 self._expirationDate = time.time() + lifespan
@@ -374,8 +368,9 @@ class AbstractDROP(EventFirer, EventHandler):
 
         # No DROP should be persisted unless stated otherwise; used for replication
         self._persist: bool = self._popArg(kwargs, "persist", False)
-        self._persistStoreType = None
-        self._persistStoreArgs = None
+        # If DROP should be persisted, don't expire (delete) it.
+        if self._persist:
+            self._expireAfterUse = False
 
         # Useful to have access to all EAGLE parameters without a prior knowledge
         self._parameters = dict(kwargs)
@@ -412,8 +407,7 @@ class AbstractDROP(EventFirer, EventHandler):
         def get_param_value(attr_name, default_value):
             has_component_param = attr_name in kwargs
             has_app_param = (
-                    "applicationArgs" in kwargs and attr_name in kwargs[
-                "applicationArgs"]
+                "applicationArgs" in kwargs and attr_name in kwargs["applicationArgs"]
             )
 
             if has_component_param and has_app_param:
@@ -527,8 +521,7 @@ class AbstractDROP(EventFirer, EventHandler):
         """
         for param_key, param_val in self.parameters.items():
             if self._env_var_matcher.fullmatch(str(param_val)):
-                self.parameters[param_key] = self.get_environment_variable(
-                    param_val)
+                self.parameters[param_key] = self.get_environment_variable(param_val)
             if self._dlg_var_matcher.fullmatch(str(param_val)):
                 self.parameters[param_key] = getDlgVariable(param_val)
 
@@ -581,8 +574,7 @@ class AbstractDROP(EventFirer, EventHandler):
     def reproducibility_level(self, new_flag):
         if type(new_flag) != ReproducibilityFlags:
             raise TypeError("new_flag must be a reproducibility flag enum.")
-        elif rmode_supported(
-                new_flag):  # TODO: Support custom checkers for repro-level
+        elif rmode_supported(new_flag):  # TODO: Support custom checkers for repro-level
             self._reproducibility = new_flag
             if new_flag == ReproducibilityFlags.ALL:
                 self._committed = False
@@ -596,8 +588,7 @@ class AbstractDROP(EventFirer, EventHandler):
                 self._merkleTree = None
                 self._merkleData = []
         else:
-            raise NotImplementedError("new_flag %d is not supported",
-                                      new_flag.value)
+            raise NotImplementedError("new_flag %d is not supported", new_flag.value)
 
     def generate_rerun_data(self):
         """
@@ -702,8 +693,7 @@ class AbstractDROP(EventFirer, EventHandler):
                 ReproducibilityFlags.REPLICATE_TOTAL.name: self.generate_replicate_total_data(),
             }
         else:
-            raise NotImplementedError(
-                "Currently other levels are not in development.")
+            raise NotImplementedError("Currently other levels are not in development.")
 
     def commit(self):
         """
@@ -723,8 +713,7 @@ class AbstractDROP(EventFirer, EventHandler):
                     ].merkle_root
             else:
                 # Fill MerkleTree, add data and set the MerkleRoot Value
-                self._merkleTree = MerkleTree(self._merkleData.items(),
-                                              common_hash)
+                self._merkleTree = MerkleTree(self._merkleData.items(), common_hash)
                 self._merkleRoot = self._merkleTree.merkle_root
                 # Set as committed
             self._committed = True
@@ -853,7 +842,6 @@ class AbstractDROP(EventFirer, EventHandler):
         Whether this DROP should be considered persisted after completion
         """
         return self._persist
-
 
     @property
     def status(self):
@@ -1076,8 +1064,7 @@ class AbstractDROP(EventFirer, EventHandler):
         scuid = streamingConsumer.uid
         if scuid in self._consumers_uids:
             raise InvalidRelationshipException(
-                DROPRel(streamingConsumer, DROPLinkType.STREAMING_CONSUMER,
-                        self),
+                DROPRel(streamingConsumer, DROPLinkType.STREAMING_CONSUMER, self),
                 "Consumer is already registered as a normal consumer",
             )
 
