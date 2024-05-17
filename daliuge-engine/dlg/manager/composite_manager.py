@@ -479,12 +479,14 @@ class CompositeManager(DROPManager):
             )
 
         logger.info("Deploying Session %s in all hosts", sessionId)
+        print("Deploying sessions...")
         self.replicate(sessionId, self._deploySession, "deploying session")
         logger.info("Successfully deployed session %s in all hosts", sessionId)
 
         # Now that everything is wired up we move the requested DROPs to COMPLETED
         # (instead of doing it at the DM-level deployment time, in which case
         # we would certainly miss most of the events)
+        print("Session is deployed, now we are starting root drops.")
         if completedDrops:
             not_found = set(completedDrops) - set(self._graph)
             if not_found:

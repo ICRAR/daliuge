@@ -355,7 +355,7 @@ class Session(object):
         # in reality this particular session is managing nothing
         status = self.status
         if (self._graph and status != SessionStates.BUILDING) or (
-            not self._graph and status != SessionStates.PRISTINE
+                not self._graph and status != SessionStates.PRISTINE
         ):
             raise InvalidSessionState(
                 "Can't deploy this session in its current status: %d"
@@ -385,8 +385,7 @@ class Session(object):
         #  Add listeners for reproducibility information
         repro_listener = ReproFinishedListener(self._graph, self)
 
-        self._roots = self._create_service_drop_dependency(self._roots)
-        for drop, _ in droputils.breadFirstTraverse(self._roots):  # type: AbstractDROP
+        for drop, _ in droputils.breadFirstTraverse(self._roots):
 
             # Register them
             self._drops[drop.uid] = drop
@@ -398,7 +397,7 @@ class Session(object):
             if self._nm:
                 drop._rpc_endpoint = self._nm.rpc_endpoint
 
-            # Register them   error handler
+            # Register them  error handler
             for l in event_listeners:
                 drop.subscribe(l)
             #  Register each drop for reproducibility listening
@@ -434,7 +433,7 @@ class Session(object):
                 foreach(drop)
             logger.info("'foreach' invoked for each drop")
 
-        # Append proxie
+        # Append proxies
         logger.info(
             "Creating %d drop proxies: %r",
             len(self._proxyinfo),
@@ -469,7 +468,38 @@ class Session(object):
         self.finish()
 
     def trigger_drops(self, uids):
-        # TODO LOOK HERE
+        """
+        Start the root nodes of the graph sending the 'setCompleted' event.
+
+        This method is invoked by the DIM (or possibly the NM) at the beginning of the
+        session to trigger the initial set of nodes. The UIDs are cross-compared to the
+        roots of the graph that we have as being roots of our graph; the
+        'completedDrops' are global roots, whereas the self_roots are local to our
+        graph (i.e. it is possible that our graph's roots are not the actual roots of
+        the global graph).
+
+        This is done because apart from the global roots, all drops will start based
+        on the completion event of it's predecessor in the graph; this predecessor
+        will either be a data drop or an applicaiton drop, so the 'completion' event
+        may differ.
+        """
+        serviceDrops = []
+        for drop in self._roots:  # type: AbstractDROP
+            if drop.uid in uids and drop.CategoryType == CategoryType.SERVICE:
+                print("Running service drops...")
+                drop.setup()
+                serviceDrops.append(drop)
+
+        cancelSession = False
+        for sd in serviceDrops:
+            if not sd.isCompleted():
+                cancelSession = True
+            else:
+                self._roots.remove(sd)
+
+        if cancelSession:
+            self.cancel()
+            return
 
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [
@@ -478,28 +508,12 @@ class Session(object):
                 if isinstance(dsDrop, AbstractDROP)
             ]
             if drop.uid in uids:
+                if drop.CategoryType == serviceDrops:  # We have already reviewed these
+                    continue
                 if isinstance(drop, InputFiredAppDROP):
                     drop.async_execute()
                 else:
                     drop.setCompleted()
-
-    def _create_service_drop_dependency(self, drops: List[AbstractDROP]):
-        """
-        Iterate through a list of drops and identify any drops that have the
-        'Service' type, and all other roots as Consumers of that drop.
-        """
-        serviceDrops = []
-        for d in drops:
-            if d.CategoryType == CategoryType.SERVICE:
-                serviceDrops.append(d)
-        nonServiceDrops = [d for d in drops if d not in serviceDrops]
-
-        for s in serviceDrops:
-            for ns in nonServiceDrops:
-                s.addConsumer(ns)
-
-        return serviceDrops + nonServiceDrops
-
 
     @track_current_session
     def deliver_event(self, evt):
@@ -554,7 +568,7 @@ class Session(object):
 
                 # We are in the event receiver side
                 if (rel.rel in evt_consumer and rel.lhs is local_uid) or (
-                    rel.rel in evt_producer and rel.rhs is local_uid
+                        rel.rel in evt_producer and rel.rhs is local_uid
                 ):
                     dropsubs[remote_uid].add(local_uid)
 
@@ -584,20 +598,18 @@ class Session(object):
                 drop_reprodata = reprodata.get("data", {})
                 drop_hashes = reprodata.get("merkleroot", {})
                 for rmode in ALL_RMODES:
-                    self._graph[oid]["reprodata"][rmode.name][
-                        "rg_data"
-                    ] = drop_reprodata[rmode.name]
+                    self._graph[oid]["reprodata"][rmode.name]["rg_data"] = (
+                        drop_reprodata[rmode.name]
+                    )
                     self._graph[oid]["reprodata"][rmode.name]["rg_data"][
                         "merkleroot"
                     ] = drop_hashes.get(rmode.name, b"")
 
             else:
-                self._graph[oid]["reprodata"]["rg_data"] = reprodata.get(
-                    "data", {}
+                self._graph[oid]["reprodata"]["rg_data"] = reprodata.get("data", {})
+                self._graph[oid]["reprodata"]["rg_data"]["merkleroot"] = reprodata.get(
+                    "merkleroot", b""
                 )
-                self._graph[oid]["reprodata"]["rg_data"][
-                    "merkleroot"
-                ] = reprodata.get("merkleroot", b"")
 
     @track_current_session
     def finish(self):
@@ -605,9 +617,7 @@ class Session(object):
         logger.info("Session %s finished", self._sessionId)
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [
-                dsDrop
-                for dsDrop in downStreamDrops
-                if isinstance(dsDrop, AbstractDROP)
+                dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
             ]
             if drop.status in (DROPStates.INITIALIZED, DROPStates.WRITING):
                 drop.setCompleted()
@@ -618,9 +628,7 @@ class Session(object):
         logger.info("Session %s ended", self._sessionId)
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [
-                dsDrop
-                for dsDrop in downStreamDrops
-                if isinstance(dsDrop, AbstractDROP)
+                dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
             ]
             if drop.status in (DROPStates.INITIALIZED, DROPStates.WRITING):
                 drop.skip()
@@ -644,9 +652,7 @@ class Session(object):
         statusDict = collections.defaultdict(dict)
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [
-                dsDrop
-                for dsDrop in downStreamDrops
-                if isinstance(dsDrop, AbstractDROP)
+                dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
             ]
             if isinstance(drop, AppDROP):
                 statusDict[drop.oid]["execStatus"] = drop.execStatus
@@ -659,14 +665,11 @@ class Session(object):
         status = self.status
         if status != SessionStates.RUNNING:
             raise InvalidSessionState(
-                "Can't cancel this session in its current status: %d"
-                % (status)
+                "Can't cancel this session in its current status: %d" % (status)
             )
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [
-                dsDrop
-                for dsDrop in downStreamDrops
-                if isinstance(dsDrop, AbstractDROP)
+                dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
             ]
             if drop.status not in (
                 DROPStates.ERROR,
@@ -705,9 +708,7 @@ class Session(object):
             drop = self._drops[uid]
             return getattr(drop, prop_name)
         except AttributeError:
-            raise DaliugeException(
-                "%r has no property called %s" % (drop, prop_name)
-            )
+            raise DaliugeException("%r has no property called %s" % (drop, prop_name))
 
     def call_drop(self, uid, method, *args):
         if uid not in self._drops:
@@ -716,9 +717,7 @@ class Session(object):
             drop = self._drops[uid]
             m = getattr(drop, method)
         except AttributeError:
-            raise DaliugeException(
-                "%r has no method called %s" % (drop, method)
-            )
+            raise DaliugeException("%r has no method called %s" % (drop, method))
         return m(*args)
 
     # Support for the 'with' keyword
