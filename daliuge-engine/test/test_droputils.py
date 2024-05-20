@@ -313,5 +313,3 @@ class DropUtilsTest(unittest.TestCase):
         roots = droputils.get_roots(pg_spec_dropdicts)
         self.assertEqual(2, len(roots))
         self.assertListEqual(["A", "B"], sorted(roots))
-
-        Add another here that has CategoryType of Service.

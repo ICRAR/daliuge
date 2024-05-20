@@ -348,6 +348,10 @@ class Session(object):
         # In those cases we still want to be able to "deploy" this session
         # to keep a consistent state across all NM sessions, even though
         # in reality this particular session is managing nothing
+
+        if not event_listeners:
+            event_listeners = []
+
         status = self.status
         if (self._graph and status != SessionStates.BUILDING) or (
                 not self._graph and status != SessionStates.PRISTINE
@@ -478,6 +482,8 @@ class Session(object):
         may differ.
         """
         serviceDrops = []
+        if not uids:
+            return
         for drop in self._roots:  # type: AbstractDROP
             if drop.uid in uids and drop.CategoryType == CategoryType.SERVICE:
                 print("Running service drops...")
@@ -583,7 +589,7 @@ class Session(object):
             if self._graph[oid].get("reprodata") is None:
                 return
             if self._graph[oid]["reprodata"]["rmode"] == str(
-                ReproducibilityFlags.ALL.value
+                    ReproducibilityFlags.ALL.value
             ):
                 drop_reprodata = reprodata.get("data", {})
                 drop_hashes = reprodata.get("merkleroot", {})
@@ -625,9 +631,9 @@ class Session(object):
 
     def getGraphStatus(self):
         if self.status not in (
-            SessionStates.RUNNING,
-            SessionStates.FINISHED,
-            SessionStates.CANCELLED,
+                SessionStates.RUNNING,
+                SessionStates.FINISHED,
+                SessionStates.CANCELLED,
         ):
             raise InvalidSessionState(
                 "The session is currently not running, cannot get graph status"
@@ -662,9 +668,9 @@ class Session(object):
                 dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
             ]
             if drop.status not in (
-                DROPStates.ERROR,
-                DROPStates.COMPLETED,
-                DROPStates.CANCELLED,
+                    DROPStates.ERROR,
+                    DROPStates.COMPLETED,
+                    DROPStates.CANCELLED,
             ):
                 drop.cancel()
         self.status = SessionStates.CANCELLED

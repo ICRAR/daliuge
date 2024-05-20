@@ -352,7 +352,7 @@ class NodeManagerBase(DROPManager):
     def getLogDir(self):
         return self.logdir
 
-    def deploySession(self, sessionId, completedDrops=None):
+    def deploySession(self, sessionId, completedDrops=[]):
         self._check_session_id(sessionId)
         session = self._sessions[sessionId]
         if hasattr(self, "_memoryManager"):

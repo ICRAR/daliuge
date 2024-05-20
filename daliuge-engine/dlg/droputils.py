@@ -243,7 +243,8 @@ def depthFirstTraverse(node: "AbstractDROP", visited=None):
 
     This implementation is recursive.
     """
-
+    if not visited:
+        visited = []
     dependencies = getDownstreamObjects(node)
     yield node, dependencies
     visited.append(node)
