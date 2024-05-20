@@ -82,14 +82,14 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
 
 
 def identify_named_ports(
-        port_dict: dict,
-        positionalArgs: list,
-        positionalPortArgs: dict,
-        keywordArgs: dict,
-        check_len: int = 0,
-        mode: str = "inputs",
-        parser: callable = None,
-        addPositionalToKeyword=False
+    port_dict: dict,
+    positionalArgs: list,
+    positionalPortArgs: dict,
+    keywordArgs: dict,
+    check_len: int = 0,
+    mode: str = "inputs",
+    parser: callable = None,
+    addPositionalToKeyword=False
 ) -> dict:
     """
     Checks port names for matches with arguments and returns mapped ports.
@@ -103,15 +103,15 @@ def identify_named_ports(
         mode (str ["inputs"]): mode, used just for logging messages
         parser (function): parser function for this port
         addPositionalToKeyword (bool): Adds a positional argument to the keyword
-        argument dictionary. Necessary where you have the optional of a
-        keyword-positional argument, such as in a python function.
+            argument dictionary. Necessary where you have the option of a
+            keyword-positional argument, such as in a python function.
 
     Returns:
-        dict: port arguments
+        keywordPortArgs: dict of keyword arguments from named ports
 
     Side effect:
         Modifies:
-            - positionalArgus
+            - positionalArgs
             - positionalPortArgs
             - keywordArgs
     """
@@ -186,14 +186,14 @@ def check_ports_dict(ports: list) -> bool:
 
 
 def replace_named_ports(
-        iitems: dict,
-        oitems: dict,
-        inport_names: dict,
-        outport_names: dict,
-        appArgs: dict,
-        argumentPrefix: str = "--",
-        separator: str = " ",
-        parser: callable = None,
+    iitems: dict,
+    oitems: dict,
+    inport_names: dict,
+    outport_names: dict,
+    appArgs: dict,
+    argumentPrefix: str = "--",
+    separator: str = " ",
+    parser: callable = None,
 ) -> Tuple[str, str]:
     """
     Function attempts to identify CLI component arguments that match port names.
