@@ -142,7 +142,10 @@ class MetisPGTP(PGT):
                 tw = drop.get("weight", 1)
                 sz = 1
             else:
-                raise RuntimeWarning("Category %s is currently unsupported in the translator.", tt)
+                 logger.warning(
+                     "Category %s is currently unsupported in the translator.",
+                     tt
+                 )
             G.add_node(myk, weight=tw, size=sz, oid=oid)
             adj_drops = []  # adjacent drops (all neighbours)
             if dst in drop:

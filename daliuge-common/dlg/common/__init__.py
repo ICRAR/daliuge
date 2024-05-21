@@ -195,8 +195,8 @@ def get_roots(pg_spec):
                 dsc = _sanitize_links(dropspec["streamingConsumers"])
                 nonroots |= set(dsc)
 
-        elif cypte == CategoryType.SERVICE:
-            nonroots = all_oids
+        # elif  == CategoryType.SERVICE:
+        #     nonroots = all_oids
 
     return all_oids - nonroots
 
