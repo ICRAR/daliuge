@@ -124,6 +124,7 @@ import string
 import threading
 import time
 
+from typing import Dict
 from dlg.common import CategoryType
 from . import registry
 from .hsm import manager
@@ -229,8 +230,8 @@ class DataLifecycleManager:
         # instead of _drops.itervalues() to get a full, thread-safe copy of the
         # dictionary values. Maybe there's a better approach for thread-safety
         # here
-        self._drops: dict[str, AbstractDROP] = {}
-
+        self._drops: Dict[str, AbstractDROP] = {}
+        self._serviceDrops: Dict[str, AbstractDROP] = {}
         self._check_period = check_period
         self._cleanup_period = cleanup_period
         self._drop_checker = None
@@ -333,6 +334,12 @@ class DataLifecycleManager:
         return drop.status != DROPStates.DELETED and not drop.exists()
 
     def deleteLostDrops(self):
+
+        for sd in self._serviceDrops.values():
+            if sd.status == DROPStates.INITIALIZED:
+                logger.info("No need to delete lost drops whilst Service Drops are "
+                            "starting up...")
+                return
 
         toRemove = []
         for drop in self._drops.values():
@@ -465,15 +472,9 @@ class DataLifecycleManager:
         drop.phase = DROPPhases.GAS
         drop.subscribe(self._listener)
 
-        # if drop.CategoryType == CategoryType.SERVICE:
-        #     connection = drop.getIO().exists()
-        #     continue
-        #TODO LOOK HERE FOR SETTING UP SERVICES BASED ON THE DROP
-        # if drop.persist:
-        #     self._updatePersistentStore(drop)
-
-        if drop.CategoryType == CategoryType.SERVICE: # and self._hsm:
-            print("We are in the DLM!")
+        if drop.CategoryType == CategoryType.SERVICE:  # and self._hsm:
+            print("Tracking ServiceDROPS in the DLM...")
+            self._serviceDrops[drop.uid] = drop
             # self._hsm.addStore(drop.store)
 
         self._reg.addDrop(drop)
@@ -509,16 +510,18 @@ class DataLifecycleManager:
 
         if not self._enable_drop_replication:
             return
-
-        drop = self._drops[uid]
-        if drop.persist and self.isReplicable(drop):
-            logger.debug(
-                "Replicating %r because it's marked to be persisted", drop
-            )
-            try:
-                self.replicateDrop(drop)
-            except:
-                logger.exception("Problem while replicating %r", drop)
+        try:
+            drop = self._drops[uid]
+            if drop.persist and self.isReplicable(drop):
+                logger.debug(
+                    "Replicating %r because it's marked to be persisted", drop
+                )
+                try:
+                    self.replicateDrop(drop)
+                except:
+                    logger.exception("Problem while replicating %r", drop)
+        except KeyError:
+            logger.warning("Drop %s was removed from DLM early!", uid)
 
     def isReplicable(self, drop):
         return not isinstance(drop, ContainerDROP)

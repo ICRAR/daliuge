@@ -228,7 +228,8 @@ def getLeafNodes(drops):
     return [
         drop
         for drop, _ in breadFirstTraverse(drops)
-        if not getDownstreamObjects(drop) and drop.CategoryType != "dropclass"
+        if not getDownstreamObjects(drop) and (drop.CategoryType != "dropclass" and
+                                               drop.CategoryType != "Service")
     ]
 
 
