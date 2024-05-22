@@ -124,9 +124,12 @@ import string
 import threading
 import time
 
+from typing import Dict
+from dlg.common import CategoryType
 from . import registry
 from .hsm import manager
-from .hsm.store import AbstractStore
+from ..data.drops import store
+from dlg.data.drops.store import AbstractStore
 from .. import droputils
 from ..ddap_protocol import DROPStates, DROPPhases, AppDROPStates
 from ..drop import AbstractDROP
@@ -216,6 +219,7 @@ class DataLifecycleManager:
     ):
         self._reg = registry.InMemoryRegistry()
         self._listener = DropEventListener(self)
+        # TODO Remove this approach
         self._enable_drop_replication = enable_drop_replication
         if enable_drop_replication:
             self._hsm = manager.HierarchicalStorageManager()
@@ -226,8 +230,8 @@ class DataLifecycleManager:
         # instead of _drops.itervalues() to get a full, thread-safe copy of the
         # dictionary values. Maybe there's a better approach for thread-safety
         # here
-        self._drops: dict[str, AbstractDROP] = {}
-
+        self._drops: Dict[str, AbstractDROP] = {}
+        self._serviceDrops: Dict[str, AbstractDROP] = {}
         self._check_period = check_period
         self._cleanup_period = cleanup_period
         self._drop_checker = None
@@ -330,6 +334,12 @@ class DataLifecycleManager:
         return drop.status != DROPStates.DELETED and not drop.exists()
 
     def deleteLostDrops(self):
+
+        for sd in self._serviceDrops.values():
+            if sd.status == DROPStates.INITIALIZED:
+                logger.info("No need to delete lost drops whilst Service Drops are "
+                            "starting up...")
+                return
 
         toRemove = []
         for drop in self._drops.values():
@@ -455,12 +465,18 @@ class DataLifecycleManager:
             if lastAccess != -1 and timeUnread > 10:
                 self.moveDropDown(drop)
 
-    def addDrop(self, drop):
+    def addDrop(self, drop: AbstractDROP):
 
         # Keep track of the DROP and subscribe to the events it generates
         self._drops[drop.uid] = drop
         drop.phase = DROPPhases.GAS
         drop.subscribe(self._listener)
+
+        if drop.CategoryType == CategoryType.SERVICE:  # and self._hsm:
+            print("Tracking ServiceDROPS in the DLM...")
+            self._serviceDrops[drop.uid] = drop
+            # self._hsm.addStore(drop.store)
+
         self._reg.addDrop(drop)
 
         # TODO: We currently use a background thread that scans
@@ -494,16 +510,18 @@ class DataLifecycleManager:
 
         if not self._enable_drop_replication:
             return
-
-        drop = self._drops[uid]
-        if drop.persist and self.isReplicable(drop):
-            logger.debug(
-                "Replicating %r because it's marked to be persisted", drop
-            )
-            try:
-                self.replicateDrop(drop)
-            except:
-                logger.exception("Problem while replicating %r", drop)
+        try:
+            drop = self._drops[uid]
+            if drop.persist and self.isReplicable(drop):
+                logger.debug(
+                    "Replicating %r because it's marked to be persisted", drop
+                )
+                try:
+                    self.replicateDrop(drop)
+                except:
+                    logger.exception("Problem while replicating %r", drop)
+        except KeyError:
+            logger.warning("Drop %s was removed from DLM early!", uid)
 
     def isReplicable(self, drop):
         return not isinstance(drop, ContainerDROP)
@@ -573,3 +591,13 @@ class DataLifecycleManager:
         logger.debug("%r successfully replicated to %r", drop, newDrop)
 
         return newDrop, newUid
+
+    def _addPersistentStore(self, drop: AbstractDROP):
+        """
+        For a given Drop, identify what type of AbstractStore we want to
+        add to the HierarchicalStorageManager.
+        """
+
+        # if drop.persistStoreType not in store.VALID_STORE_PARAMS:
+        #     raise RuntimeError()
+        # args = drop.persistStoreArgs

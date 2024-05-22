@@ -32,6 +32,9 @@ import threading
 import time
 import socket
 
+from typing import List
+
+from dlg.common import CategoryType
 from dlg.common.reproducibility.reproducibility import init_runtime_repro_data
 from dlg.utils import createDirIfMissing
 
@@ -330,7 +333,7 @@ class Session(object):
         graph_loader.addLink(linkType, lhDropSpec, rhOID, force=force)
 
     @track_current_session
-    def deploy(self, completedDrops=[], event_listeners=[], foreach=None):
+    def deploy(self, completedDrops=None, event_listeners=None, foreach=None):
         """
         Creates the DROPs represented by all the graph specs contained in
         this session, effectively deploying them.
@@ -345,9 +348,13 @@ class Session(object):
         # In those cases we still want to be able to "deploy" this session
         # to keep a consistent state across all NM sessions, even though
         # in reality this particular session is managing nothing
+
+        if not event_listeners:
+            event_listeners = []
+
         status = self.status
         if (self._graph and status != SessionStates.BUILDING) or (
-            not self._graph and status != SessionStates.PRISTINE
+                not self._graph and status != SessionStates.PRISTINE
         ):
             raise InvalidSessionState(
                 "Can't deploy this session in its current status: %d" % (status)
@@ -388,7 +395,7 @@ class Session(object):
             if self._nm:
                 drop._rpc_endpoint = self._nm.rpc_endpoint
 
-            # Register them with the error handler
+            # Register them  error handler
             for l in event_listeners:
                 drop.subscribe(l)
             #  Register each drop for reproducibility listening
@@ -459,11 +466,48 @@ class Session(object):
         self.finish()
 
     def trigger_drops(self, uids):
+        """
+        Start the root nodes of the graph sending the 'setCompleted' event.
+
+        This method is invoked by the DIM (or possibly the NM) at the beginning of the
+        session to trigger the initial set of nodes. The UIDs are cross-compared to the
+        roots of the graph that we have as being roots of our graph; the
+        'completedDrops' are global roots, whereas the self_roots are local to our
+        graph (i.e. it is possible that our graph's roots are not the actual roots of
+        the global graph).
+
+        This is done because apart from the global roots, all drops will start based
+        on the completion event of it's predecessor in the graph; this predecessor
+        will either be a data drop or an applicaiton drop, so the 'completion' event
+        may differ.
+        """
+        serviceDrops = []
+        if not uids:
+            return
+        for drop in self._roots:  # type: AbstractDROP
+            if drop.uid in uids and drop.CategoryType == CategoryType.SERVICE:
+                print("Running service drops...")
+                drop.setup()
+                serviceDrops.append(drop)
+
+        cancelSession = False
+        for sd in serviceDrops:
+            if not sd.isCompleted():
+                cancelSession = True
+            else:
+                self._roots.remove(sd)
+
+        if cancelSession:
+            self.cancel()
+            return
+
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [
                 dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
             ]
             if drop.uid in uids:
+                if drop.CategoryType == serviceDrops:  # We have already reviewed these
+                    continue
                 if isinstance(drop, InputFiredAppDROP):
                     drop.async_execute()
                 else:
@@ -522,7 +566,7 @@ class Session(object):
 
                 # We are in the event receiver side
                 if (rel.rel in evt_consumer and rel.lhs is local_uid) or (
-                    rel.rel in evt_producer and rel.rhs is local_uid
+                        rel.rel in evt_producer and rel.rhs is local_uid
                 ):
                     dropsubs[remote_uid].add(local_uid)
 
@@ -545,7 +589,7 @@ class Session(object):
             if self._graph[oid].get("reprodata") is None:
                 return
             if self._graph[oid]["reprodata"]["rmode"] == str(
-                ReproducibilityFlags.ALL.value
+                    ReproducibilityFlags.ALL.value
             ):
                 drop_reprodata = reprodata.get("data", {})
                 drop_hashes = reprodata.get("merkleroot", {})
@@ -587,9 +631,9 @@ class Session(object):
 
     def getGraphStatus(self):
         if self.status not in (
-            SessionStates.RUNNING,
-            SessionStates.FINISHED,
-            SessionStates.CANCELLED,
+                SessionStates.RUNNING,
+                SessionStates.FINISHED,
+                SessionStates.CANCELLED,
         ):
             raise InvalidSessionState(
                 "The session is currently not running, cannot get graph status"
@@ -624,9 +668,9 @@ class Session(object):
                 dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
             ]
             if drop.status not in (
-                DROPStates.ERROR,
-                DROPStates.COMPLETED,
-                DROPStates.CANCELLED,
+                    DROPStates.ERROR,
+                    DROPStates.COMPLETED,
+                    DROPStates.CANCELLED,
             ):
                 drop.cancel()
         self.status = SessionStates.CANCELLED

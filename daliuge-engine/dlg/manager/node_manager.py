@@ -361,6 +361,7 @@ class NodeManagerBase(DROPManager):
         def foreach(drop):
             drop.autofill_environment_variables()
             drop._drop_runner = self._drop_runner
+
             self._dlm.addDrop(drop)
 
             # Remote event forwarding

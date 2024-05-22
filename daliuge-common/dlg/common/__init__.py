@@ -32,6 +32,18 @@ logger = logging.getLogger(__name__)
 
 
 class CategoryType(str, Enum):
+    """
+    CategoryType provides specific rules to the translation and usability of a
+    given drop.
+
+    The  relationship between Drop CategoryType and Categories is
+    one-to-many: there will be many categories to a given Category Type.
+
+    New components will potentially introduce a new Category of drop to
+    DALiuGE/EAGLE, but will need to select from an existing CategoryType
+    supported by the engine.
+    """
+
     DATA = "Data"
     APPLICATION = "Application"
     CONSTRUCT = "Construct"
@@ -182,6 +194,9 @@ def get_roots(pg_spec):
             if dropspec.get("streamingConsumers", None):
                 dsc = _sanitize_links(dropspec["streamingConsumers"])
                 nonroots |= set(dsc)
+
+        # elif  == CategoryType.SERVICE:
+        #     nonroots = all_oids
 
     return all_oids - nonroots
 

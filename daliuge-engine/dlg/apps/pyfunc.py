@@ -147,6 +147,7 @@ def import_using_code(code):
 # This is mainly useful (and used) when starting a new workflow from scratch.
 # @par EAGLE_START
 # @param category PythonMemberFunction
+# @param categorytype Application
 # @param tag daliuge
 # @param func_name object.__init__/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function name
 # @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code, e.g. 'def function_name(args): return args'
@@ -178,6 +179,7 @@ class PyMemberApp(BarrierAppDROP):
 # being written to its corresponding output.
 # @par EAGLE_START
 # @param category PythonApp
+# @param categorytype Application
 # @param tag template
 # @param func_name /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function name
 # @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code, e.g. 'def function_name(args): return args'

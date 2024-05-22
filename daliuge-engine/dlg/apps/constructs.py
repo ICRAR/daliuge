@@ -6,6 +6,7 @@ from dlg.apps.app_base import BarrierAppDROP
 # @details A Scatter template drop
 # @par EAGLE_START
 # @param category Scatter
+# @param categorytype Construct
 # @param tag template
 # @param num_of_copies 4/Integer/ConstructParameter/NoPort/ReadWrite//False/False/Specifies the number of replications of the content of the scatter construct
 # @par EAGLE_END
@@ -22,6 +23,7 @@ class ScatterDrop(BarrierAppDROP):
 # @details A Gather template drop
 # @par EAGLE_START
 # @param category Gather
+# @param categorytype Construct
 # @param tag template
 # @param num_of_inputs 2/Integer/ConstructParameter/NoPort/ReadWrite//False/False/Number of inputs
 # @param gather_axis 0/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/Index of gather axis
@@ -39,6 +41,7 @@ class GatherDrop(BarrierAppDROP):
 # @details A loop template drop
 # @par EAGLE_START
 # @param category Loop
+# @param categorytype Construct
 # @param tag template
 # @param num_of_iter 2/Integer/ConstructParameter/NoPort/ReadWrite//False/False/Number of iterations
 # @par EAGLE_END
@@ -55,6 +58,7 @@ class LoopDrop(BarrierAppDROP):
 # @details A MKN template drop
 # @par EAGLE_START
 # @param category MKN
+# @param categorytype Construct
 # @param tag template
 # @param k 1/Integer/ConstructParameter/NoPort/ReadWrite//False/False/Internal multiplicity
 # @par EAGLE_END
@@ -71,6 +75,7 @@ class MKNDrop(BarrierAppDROP):
 # @details A GroupBy template drop
 # @par EAGLE_START
 # @param category GroupBy
+# @param categorytype Construct
 # @param tag template
 # @param num_of_inputs 2/Integer/ConstructParameter/NoPort/ReadWrite//False/False/Number of inputs
 # @param gather_axis 0/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/Index of gather axis
@@ -88,6 +93,7 @@ class GroupByDrop(BarrierAppDROP):
 # @details A SubGraph template drop
 # @par EAGLE_START
 # @param category SubGraph
+# @param categorytype Construct
 # @param tag template
 # @par EAGLE_END
 class SubGraphDrop(BarrierAppDROP):
@@ -103,6 +109,7 @@ class SubGraphDrop(BarrierAppDROP):
 # @details A comment template drop
 # @par EAGLE_START
 # @param category Comment
+# @param categorytype Other
 # @param dropclass dlg.apps.constructs.CommentDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param tag template
 # @par EAGLE_END
@@ -119,6 +126,7 @@ class CommentDrop(BarrierAppDROP):
 # @details An Exclusive Force Node
 # @par EAGLE_START
 # @param category ExclusiveForceNode
+# @param categorytype Control
 # @param dropclass dlg.apps.constructs.ExclusiveForceDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param tag template
 # @par EAGLE_END
