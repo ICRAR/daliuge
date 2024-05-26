@@ -10,14 +10,6 @@ build:
   tools:
     python: "3.10"
 
-  python:
-    install:
-      - requirements: docs/requirements.txt
-    # You can also specify other tool versions:
-    # nodejs: "20"
-    # rust: "1.70"
-    # golang: "1.20"
-
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
   configuration: docs/conf.py
@@ -37,3 +29,7 @@ sphinx:
 # python:
 #   install:
 #     - requirements: docs/requirements.txt
+
+python:
+  install:
+    - requirements: docs/requirements.txt
