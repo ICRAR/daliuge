@@ -89,7 +89,7 @@ def identify_named_ports(
     check_len: int = 0,
     mode: str = "inputs",
     parser: callable = None,
-    addPositionalToKeyword=False
+    addPositionalToKeyword: bool =False
 ) -> dict:
     """
     Checks port names for matches with arguments and returns mapped ports.
@@ -103,17 +103,20 @@ def identify_named_ports(
         mode (str ["inputs"]): mode, used just for logging messages
         parser (function): parser function for this port
         addPositionalToKeyword (bool): Adds a positional argument to the keyword
-            argument dictionary. Necessary where you have the option of a
-            keyword-positional argument, such as in a python function.
+            argument dictionary. This is useful when you have arguments
+            that can be specified both positionally and as keywords. For example,
+            in a Python function, you might have `func(a, b=2)`, where `a` can be
+            passed positionally or as a keyword.
 
     Returns:
         keywordPortArgs: dict of keyword arguments from named ports
 
     Side effect:
         Modifies:
-            - positionalArgs
-            - positionalPortArgs
-            - keywordArgs
+        - positionalArgs
+        - positionalPortArgs
+        - keywordArgs
+
     """
     # p_name = [p["name"] for p in port_dict]
     logger.debug(
@@ -280,7 +283,7 @@ def replace_named_ports(
         else [""]
     )
     pargs = list(positionalArgs.values())
-    if not pargs:
+    if not pargs or None in pargs:
         pargs = [""]
 
     logger.debug("After port replacement: pargs: %s; keyargs: %s", pargs, keywordArgs)
@@ -326,9 +329,7 @@ def _get_args(appArgs, positional=False):
         if (appArgs[arg]["positional"] == positional)
     }
 
-    argType = 'Keyword'
-    if positional:
-        argType = 'Positional'
+    argType = 'Positional' if positional else 'Keyword'
     logger.debug("%s arguments: %s", argType, args)
     return args
 
