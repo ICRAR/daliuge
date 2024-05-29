@@ -20,101 +20,197 @@
 #    MA 02111-1307  USA
 
 import unittest
+import json
+import pickle
 
 import pkg_resources
 from dlg.common import CategoryType
 from dlg.dropmake.lg import LG
 from dlg.dropmake.pgt import PGT, GPGTNoNeedMergeException
 from dlg.dropmake.pgtp import MetisPGTP, MySarkarPGTP, MinNumPartsPGTP
+from ..dropmake import (SARKAR_PARTITION_RESULTS, SARKAR_PARTITION_RESULTS_GEN_ISLAND,
+                        MINPARTS_RESULTS)
 
 """
 python -m unittest test.dropmake.test_pg_gen
 """
+TEST_SSID = 'test_pg_gen'
 
 
-def get_lg_fname(lg_name):
+def get_lg_fname(type, f_name):
+    f_dir = 'logical_graphs'
+    if type == 'pickle':
+        f_name = f_name.split('.')[0] + '.pkl'
+        f_dir = type
+    if type == 'pg_spec':
+        f_name = f_name.split('.')[0] + '.json'
+        f_dir = type
+
     return pkg_resources.resource_filename(
-        __name__, "logical_graphs/{0}".format(lg_name)
-    )  # @UndefinedVariable
+        __name__, f"{f_dir}/{f_name}"
+    )
+
+
+class TestLGUnroll(unittest.TestCase):
+    """
+    Test that the LG unrolls as expected
+
+    Uses test/dropmake/pickles as test data
+
+    Note: This is a regression testing class. These tests are based on graphs that were
+    generated using the code they are testing. If the LG class and it's methods change
+    in the future, test data may need to be re-generated (provided test failures are
+    caused by known-breaking changes, as opposed to legitimate bugs!).
+    """
+
+    def test_lg_unroll(self):
+        """
+        Basic verification that we can unroll a list of dropdicts from a logical graph
+
+        lg_names = { "logical_graph_file.graph": num_keys_in_drop_list, ...}
+        """
+
+        lg_names = {
+            "HelloWorld_simple.graph": 2,
+            "eagle_gather_empty_update.graph": 11,
+            "eagle_gather_simple_update.graph": 18,
+            "eagle_gather_update.graph": 14,
+            "testLoop.graph": 4,
+            "cont_img_mvp.graph": 45,
+            "test_grpby_gather.graph": 21,
+            "chiles_simple.graph": 22,
+            "Plasma_test.graph": 6,
+            "SharedMemoryTest_update.graph": 8,
+        }
+
+        for lgn, num_keys in lg_names.items():
+            fp = get_lg_fname("logical_graphs", lgn)
+            lg = LG(fp, ssid=TEST_SSID)
+            self.assertEqual(len(lg._done_dict.keys()), num_keys)
+
+            drop_list = lg.unroll_to_tpl()
+            with open(get_lg_fname('pickle', lgn), 'rb') as pk_fp:
+                test_unroll = pickle.load(pk_fp)
+
+            self.assertEqual(test_unroll, drop_list)
+            if lgn == "SharedMemoryTest_update.graph":
+                for drop in drop_list:
+                    if drop["categoryType"] in [CategoryType.DATA, "data"]:
+                        self.assertEqual("SharedMemory", drop["category"])
 
 
 class TestPGGen(unittest.TestCase):
-    def test_pg_generator(self):
-        fp = get_lg_fname("cont_img_mvp.graph")
-        #        fp = get_lg_fname('testScatter.graph')
-        lg = LG(fp)
-        self.assertEqual(len(lg._done_dict.keys()), 45)
-        drop_list = lg.unroll_to_tpl()
-        # print json.dumps(drop_list, indent=2)
-        # pprint.pprint(drop_list)
-        # pprint.pprint(dict(lg._drop_dict))
-        # input_dict = defaultdict(list)
-        # lg.to_pg_tpl(input_dict)
+    """
+    Test that the PhysicalGraph template constructor and supporting methods work.
 
-    def test_pg_test(self):
-        fp = get_lg_fname("test_grpby_gather.graph")
-        lg = LG(fp)
-        lg.unroll_to_tpl()
-        # input_dict = defaultdict(list)
-        # lg.to_pg_tpl(input_dict)
-        # pprint.pprint(dict(lg._drop_dict))
+    Uses test/dropmake/pg_spec as test data
+
+    Note: This is a regression testing class. These tests are based on graphs that were
+    generated using the code they are testing. If the PGT (sub)class and it's methods
+    change in the future, test data may need to be re-generated (provided test
+    failures are caused by known-breaking changes, as opposed to legitimate bugs!).
+    """
 
     def test_pgt_to_json(self):
-        fp = get_lg_fname("HelloWorld_simple.graph")
-        lg = LG(fp)
-        drop_list = lg.unroll_to_tpl()
-        pgt = PGT(drop_list)
-        pg_json = pgt.to_gojs_json()
-        _dum = pg_json
-        # we should really check the output here
-
-    def test_metis_pgtp(self):
         lgnames = [
             "HelloWorld_simple.graph",
-            # "simpleMKN.graph",
+            "eagle_gather_empty_update.graph",
+            "eagle_gather_simple_update.graph",
+            "eagle_gather_update.graph",
             "testLoop.graph",
             "cont_img_mvp.graph",
             "test_grpby_gather.graph",
             "chiles_simple.graph",
+            "Plasma_test.graph",
+            "SharedMemoryTest_update.graph",
+            # "simpleMKN_update.graph", # Currently broken
         ]
-        tgt_partnum = [15, 15, 10, 10, 5]
-        for i, lgn in enumerate(lgnames):
-            fp = get_lg_fname(lgn)
+
+        for lgn in lgnames:
+            fp = get_lg_fname('logical_graphs', lgn)
+            lg = LG(fp, ssid=TEST_SSID)
+            drop_list = lg.unroll_to_tpl()
+            pgt = PGT(drop_list)
+            pg_json = pgt.to_gojs_json(visual=True, string_rep=False)
+            with open(get_lg_fname('pg_spec', lgn), 'r') as json_fp:
+                test_json = json.load(json_fp)
+            self.assertEqual(test_json, pg_json)
+
+class TestPGPartition(unittest.TestCase):
+    """
+    Test that the PhysicalGraph subclass partitioning methods work, and that there is
+    support for
+
+    Uses test.dropmake.__init__ as reference partition result test data.
+    Files in test/dropmake/pg_spec are not used as test data.
+
+    Note: This is a regression testing class. These tests are based on graphs that were
+    generated using the code they are testing. If the PGT (sub)class and it's methods
+    change in the future, test data may need to be re-generated (provided test
+    failures are caused by known-breaking changes, as opposed to legitimate bugs!).
+    """
+
+    def setUp(self):
+        self.partitionMethodLGs = [
+            "testLoop.graph",
+            "cont_img_mvp.graph",
+            "test_grpby_gather.graph",
+            "chiles_simple.graph",
+            # "simpleMKN.graph", # Broken
+        ]
+
+    def test_metis_pgtp(self):
+        """
+        Confirm that basic Sarkar paritioning has not regressed
+        """
+        expected = {'algo': 'METIS_LB91',
+                    'min_exec_time': None,
+                    'total_data_movement': None, 'exec_time': None,
+                    'num_parts': 1}
+
+        for i, lgn in enumerate(self.partitionMethodLGs):
+            fp = get_lg_fname('logical_graphs', lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MetisPGTP(drop_list)
-            pgtp.json
+            self.assertEqual(expected, pgtp.result())
 
     def test_metis_pgtp_gen_pg(self):
-        lgnames = [
-            "HelloWorld_simple.graph",
-            "testLoop.graph",
-            "cont_img_mvp.graph",
-            "test_grpby_gather.graph",
-            "chiles_simple.graph",
-        ]
-        tgt_partnum = [15, 15, 10, 10, 5]
+        """
+        Regression testing to confirm that basic METIS partitioning works,
+        then generating a PGT spec works when using multiple nodes.
+
+        We check that the partition result before differs from the result achieved
+        after translating to the pg_spec, as this involves partitioning and should
+        result in speed up.
+        """
         node_list = ["10.128.0.11", "10.128.0.11", "10.128.0.12", "10.128.0.13"]
-        for i, lgn in enumerate(lgnames):
-            fp = get_lg_fname(lgn)
+        total_data_movement_pgspec = {
+            "testLoop.graph": 10,
+            "cont_img_mvp.graph": 45,
+            "test_grpby_gather.graph": 20,
+            "chiles_simple.graph": 20,
+        }
+        for i, lgn in enumerate(self.partitionMethodLGs):
+            fp = get_lg_fname('logical_graphs', lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MetisPGTP(drop_list, 3, merge_parts=True)
-            # pgtp.json
+            result = pgtp.result()
+            self.assertEqual(None,
+                             result['total_data_movement'])
+            self.assertEqual(3, result['num_parts'])
             pgtp.to_gojs_json(visual=False)
-            pg_spec = pgtp.to_pg_spec(node_list)
-
-            # with open('/tmp/met_{0}_pgspec.graph'.format(lgn.split('.')[0]), 'w') as f:
-            #     f.write(pg_spec)
+            pgtp.to_pg_spec(node_list)
+            result = pgtp.result()
+            self.assertEqual(total_data_movement_pgspec[lgn],
+                             result['total_data_movement'])
 
     def test_metis_pgtp_gen_pg_island(self):
-        lgnames = [
-            "testLoop.graph",
-            "cont_img_mvp.graph",
-            "test_grpby_gather.graph",
-            "chiles_simple.graph",
-        ]
-        tgt_partnum = [15, 15, 10, 10, 5]
+        """
+        Regression testing to confirm that partitioning, then generating a PGT spec works
+        when using multiple nodes and 2 data islands.
+        """
         node_list = [
             "10.128.0.11",
             "10.128.0.12",
@@ -125,55 +221,55 @@ class TestPGGen(unittest.TestCase):
         ]
         nb_islands = 2
         nb_nodes = len(node_list) - nb_islands
-        for i, lgn in enumerate(lgnames):
-            fp = get_lg_fname(lgn)
+        for i, lgn in enumerate(self.partitionMethodLGs):
+            fp = get_lg_fname('logical_graphs', lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MetisPGTP(drop_list, nb_nodes, merge_parts=True)
+            self.assertFalse('num_islands' in pgtp.result())
             pgtp.to_gojs_json(visual=False)
-            pg_spec = pgtp.to_pg_spec(node_list, num_islands=nb_islands)
-            pgtp.result(lazy=False)
+            pgtp.to_pg_spec(node_list, num_islands=nb_islands)
+            self.assertTrue('num_islands' in pgtp.result())
+            self.assertEqual(2, pgtp.result()['num_islands'])
 
     def test_mysarkar_pgtp(self):
-        lgnames = [
-            "testLoop.graph",
-            "cont_img_mvp.graph",
-            "test_grpby_gather.graph",
-            "chiles_simple.graph",
-        ]
-        # tgt_partnum = [15, 15, 10, 10, 5]
-        for i, lgn in enumerate(lgnames):
-            fp = get_lg_fname(lgn)
+        """
+        Confirm that basic Sarkar paritioning has not regressed
+        """
+
+        for i, lgn in enumerate(self.partitionMethodLGs):
+            fp = get_lg_fname('logical_graphs', lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MySarkarPGTP(drop_list)
-            pgtp.json
+            self.assertEqual(SARKAR_PARTITION_RESULTS[lgn], pgtp.result())
 
     def test_mysarkar_pgtp_gen_pg(self):
-        lgnames = [
-            "testLoop.graph",
-            "cont_img_mvp.graph",
-            "test_grpby_gather.graph",
-            "chiles_simple.graph",
-        ]
-        tgt_partnum = [15, 15, 10, 10, 5]
+        """
+        Regression testing to confirm that basic Sarkar partitioning, then generating a
+        PGT spec works when using multiple nodes.
+
+        We check that the partition result before differs from the result achieved
+        after translating to the pg_spec, as this involves partitioning and should
+        result in speed up.
+        """
         node_list = ["10.128.0.11", "10.128.0.12", "10.128.0.13"]
-        for i, lgn in enumerate(lgnames):
-            fp = get_lg_fname(lgn)
+        for i, lgn in enumerate(self.partitionMethodLGs):
+            fp = get_lg_fname('logical_graphs', lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MySarkarPGTP(drop_list, 3, merge_parts=True)
-            # pgtp.json
+            pre_spec_result = pgtp.result()
             pgtp.to_gojs_json(visual=False)
-            pg_spec = pgtp.to_pg_spec(node_list)
+            pgtp.to_pg_spec(node_list)
+            # Confirm that partitioning improves the execution speed.
+            self.assertGreater(pre_spec_result['exec_time'], pgtp.result()['exec_time'])
 
     def test_mysarkar_pgtp_gen_pg_island(self):
-        lgnames = [
-            "testLoop.graph",
-            "cont_img_mvp.graph",
-            "test_grpby_gather.graph",
-            "chiles_simple.graph",
-        ]
+        """
+        Regression testing to confirm that partitioning, then generating a PGT spec works
+        when using multiple nodes and 2 data islands.
+        """
         node_list = [
             "10.128.0.11",
             "10.128.0.12",
@@ -182,63 +278,99 @@ class TestPGGen(unittest.TestCase):
             "10.128.0.15",
             "10.128.0.16",
         ]
-        for i, lgn in enumerate(lgnames):
-            fp = get_lg_fname(lgn)
-            lg = LG(fp)
+        for i, lgn in enumerate(self.partitionMethodLGs):
+            fp = get_lg_fname('logical_graphs', lgn)
+            lg = LG(fp, ssid=TEST_SSID)
             drop_list = lg.unroll_to_tpl()
             pgtp = MySarkarPGTP(drop_list, None, merge_parts=True)
-            pgtp.to_gojs_json(visual=False)
+            pgtp.to_gojs_json(visual=True, string_rep=False)
             nb_islands = 2
-            # print(lgn)
-            try:
+            new_num_parts = len(node_list) - nb_islands
+
+            if lgn != "cont_img_mvp.graph":
+                self.assertRaises(
+                    GPGTNoNeedMergeException,
+                    pgtp.merge_partitions,
+                    new_num_parts=new_num_parts,
+                    form_island=False)
+                partition_results = pgtp.result()
+                self.assertEqual(SARKAR_PARTITION_RESULTS_GEN_ISLAND[lgn],
+                                 partition_results)
+            else:
                 pgtp.merge_partitions(len(node_list) - nb_islands, form_island=False)
-            except GPGTNoNeedMergeException as ge:
-                continue
-            pg_spec = pgtp.to_pg_spec(node_list, num_islands=nb_islands)
-            pgtp.result()
+                pgtp.to_pg_spec(node_list, num_islands=nb_islands)
+                self.assertEqual(SARKAR_PARTITION_RESULTS_GEN_ISLAND[lgn],
+                                 pgtp.result())
 
     def test_minnumparts_pgtp(self):
-        lgnames = [
-            "testLoop.graph",
-            "cont_img_mvp.graph",
-            "test_grpby_gather.graph",
-            "chiles_simple.graph",
-        ]
-        # tgt_partnum = [15, 15, 10, 10, 5]
         tgt_deadline = [200, 300, 90, 80, 160]
-        for i, lgn in enumerate(lgnames):
-            fp = get_lg_fname(lgn)
+        for i, lgn in enumerate(self.partitionMethodLGs):
+            fp = get_lg_fname('logical_graphs', lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MinNumPartsPGTP(drop_list, tgt_deadline[i])
-            pgtp.json
+            self.assertEqual(MINPARTS_RESULTS[lgn], pgtp.result())
 
-    def test_pg_eagle(self):
-        lgs = [
-            "eagle_gather_simple.graph",
-            "eagle_gather_empty.graph",
-            "eagle_gather.graph",
-        ]
-        for lg in lgs:
-            fp = get_lg_fname(lg)
-            lg = LG(fp)
-            lg.unroll_to_tpl()
 
-    def test_plasma_graph(self):
-        # test loading of Plasma graph
-        lgs = ["Plasma_test.graph"]
-        for lg in lgs:
-            fp = get_lg_fname(lg)
-            lg = LG(fp)
-            lg.unroll_to_tpl()
+if __name__ == '__main__':
+    import sys
 
-    def test_shmem_graph(self):
-        # Test loading of shared memory graph
-        lgs = ["SharedMemoryTest.graph"]
-        for lg in lgs:
-            fp = get_lg_fname(lg)
-            lg = LG(fp)
-            out = lg.unroll_to_tpl()
-            for drop in out:
-                if drop["categoryType"] in [CategoryType.DATA, "data"]:
-                    self.assertEqual("SharedMemory", drop["category"])
+    try:
+        arg = sys.argv[1]
+        if arg.lower() == "test-gen":
+            print("\nRunning test dataset generator on following logical graphs:")
+    except IndexError:
+        print("You have run the test dataset generator for this test suite.\n"
+              "\n"
+              "This may have been done by accident: if so, double check the unitttest "
+              "directive is used when running the file.\n"
+              "\n"
+              "If this was a deliberate effort to update the test cases due to a known "
+              "change in the translator, please use the 'test-gen' argument. "
+              "Ensure that the changes are necessary, as this suite provides essential "
+              "regression testing for translator behaviour.")
+        exit()
+
+    """
+    Used to generate the pickle and logical graph files used for testing.
+    
+    IMPORTANT: Run this _only_ when the expected output of unroll_to_tpl has been 
+    _knowingly_ changed. 
+    """
+    pickle_dir = "pickle"
+    physical_graph_spec = "pg_spec"
+    lgnames = [
+        "HelloWorld_simple.graph",
+        "eagle_gather_empty_update.graph",
+        "eagle_gather_simple_update.graph",
+        "eagle_gather_update.graph",
+        "testLoop.graph",
+        "cont_img_mvp.graph",
+        "test_grpby_gather.graph",
+        "chiles_simple.graph",
+        "Plasma_test.graph",
+        "SharedMemoryTest_update.graph",
+        # "simpleMKN_update.graph", # Currently broken
+    ]
+
+    for lgn in lgnames:
+        print('\t', lgn)
+        fp = get_lg_fname('logical_graphs', lgn)
+        lg = LG(fp, ssid=TEST_SSID)
+
+        lg_unroll = lg.unroll_to_tpl()
+        fn_pkl = lgn.split('.')[0] + '.pkl'
+        pkl_path = pkg_resources.resource_filename(
+            __name__, f"{pickle_dir}/{fn_pkl}"
+        )
+        with open(pkl_path, 'wb') as fp:
+            pickle.dump(lg_unroll, fp)
+
+        pgt = PGT(lg_unroll)
+        pg_json = pgt.to_gojs_json(visual=True, string_rep=False)
+        fn_json = lgn.split('.')[0] + '.json'
+        pg_path = pkg_resources.resource_filename(
+            __name__, f"{physical_graph_spec}/{fn_json}"
+        )
+        with open(pg_path, 'w') as fp:
+            json.dump(pg_json, fp)
