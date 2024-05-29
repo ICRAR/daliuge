@@ -52,6 +52,7 @@ class Categories:
     GATHER = "Gather"
     GROUP_BY = "GroupBy"
     LOOP = "Loop"
+    SUBGRAPH = "SubGraph"
     VARIABLES = "Variables"
 
     BRANCH = "Branch"
@@ -117,3 +118,4 @@ class ConstructTypes:
     LOOP = Categories.LOOP
     MKN = Categories.MKN
     SERVICE = Categories.SERVICE
+    SUBGRAPH = Categories.SUBGRAPH
