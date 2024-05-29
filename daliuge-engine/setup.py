@@ -141,6 +141,7 @@ install_requires = [
     "zeroconf == 0.38.4",
     # 0.6 brings python3 support plus other fixes
     "zerorpc == 0.6.3",
+    "pyext == 0.7",
 ]
 # Keep alpha-sorted PLEASE!
 
