@@ -503,9 +503,12 @@ class PyFuncApp(BarrierAppDROP):
         This function takes over if code is passed in through an argument.
         """
         if not isinstance(self.func_code, bytes):
-            self.f = import_using_code(self.func_code, serialized=False)
-        else:
-            self.f = import_using_code(self.func_code, serialized=True)
+            try:
+                self.f = import_using_code(self.func_code, serialized=False)
+            except (SyntaxError, NameError):
+                # check whether input is serialized
+                self.func_code = base64.b64decode(self.func_code.encode("utf8"))
+                self.f = import_using_code(self.func_code, serialized=True)
 
         self._init_fn_defaults()
         # make sure defaults are dicts
