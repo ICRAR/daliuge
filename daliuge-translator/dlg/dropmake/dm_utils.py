@@ -195,9 +195,7 @@ def convert_mkn(lgo):
         for ak in app_keywords:
             if ak not in node:
                 raise Exception(
-                    "MKN construct {0} must specify {1}".format(
-                        node["key"], ak
-                    )
+                    "MKN construct {0} must specify {1}".format(node["key"], ak)
                 )
         mknv_dict = dict()
         for mknv in node["fields"]:
@@ -358,9 +356,7 @@ def convert_mkn_all_share_m(lgo):
         for ak in app_keywords:
             if ak not in node:
                 raise Exception(
-                    "MKN construct {0} must specify {1}".format(
-                        node["key"], ak
-                    )
+                    "MKN construct {0} must specify {1}".format(node["key"], ak)
                 )
         mknv_dict = dict()
         for mknv in node["fields"]:
@@ -467,6 +463,7 @@ def convert_construct(lgo):
             ConstructTypes.SCATTER,
             ConstructTypes.GATHER,
             ConstructTypes.SERVICE,
+            ConstructTypes.SUBGRAPH,
         ]:
             continue
         has_app = None
@@ -474,11 +471,7 @@ def convert_construct(lgo):
         # try to find a application using several app_keywords
         # disregard app_keywords that are not present, or have value "None"
         for ak in app_keywords:
-            if (
-                ak in node
-                and node[ak] != "None"
-                and node[ak] != "UnknownApplication"
-            ):
+            if ak in node and node[ak] != "None" and node[ak] != "UnknownApplication":
                 has_app = ak
                 break
         if has_app is None:
@@ -533,9 +526,7 @@ def convert_construct(lgo):
             dup_app_node = dict()
             dup_app_node["key"] = dup_app_node_k
             dup_app_node["category"] = node[has_app]  # node['application']
-            dup_app_node["name"] = (
-                node["text"] if "text" in node else node["name"]
-            )
+            dup_app_node["name"] = node["text"] if "text" in node else node["name"]
 
             if "mkn" in node:
                 dup_app_node["mkn"] = node["mkn"]
@@ -593,10 +584,7 @@ def convert_construct(lgo):
                     k_new = old_new_gather_map[k_old]
                     to_node = node_index[link["to"]]
                     gather_construct = node_index[k_new]
-                    if (
-                        "group" not in to_node
-                        and "group" not in gather_construct
-                    ):
+                    if "group" not in to_node and "group" not in gather_construct:
                         cond1 = True
                     elif (
                         "group" in to_node
@@ -712,9 +700,7 @@ def convert_eagle_to_daliuge_json(lg_name):
             json.dump(logical_graph, outfile, sort_keys=True, indent=4)
     except Exception as exp:
         raise Exception(
-            "Failed to save a pretranslated graph {0}:{1}".format(
-                lg_name, str(exp)
-            )
+            "Failed to save a pretranslated graph {0}:{1}".format(lg_name, str(exp))
         )
     finally:
         pass

@@ -636,6 +636,7 @@ def gen_pg(
         )
         # 1. get a list of nodes
         node_list = mgr_client.nodes()
+        node_list = [f"{mhost}:{mport}"] + node_list
         logger.debug("Calling mapping to nodes: %s", node_list)
         # 2. mapping PGTP to resources (node list)
         pg_spec = pgtp.to_pg_spec(node_list, ret_str=False)

@@ -106,9 +106,9 @@ class LGNode:
 
     @inputPorts.setter
     def inputPorts(self, value):
-        if (
-            "categoryType" in value and value["categoryType"] == "Construct"
-        ) or ("type" in value and value["type"] == "Construct"):
+        if ("categoryType" in value and value["categoryType"] == "Construct") or (
+            "type" in value and value["type"] == "Construct"
+        ):
             self._inputPorts = []
         elif not "inputPorts" in value:
             self._inputPorts = [
@@ -129,15 +129,13 @@ class LGNode:
 
     @outputPorts.setter
     def outputPorts(self, value):
-        if (
-            "categoryType" in value and value["categoryType"] == "Construct"
-        ) or ("type" in value and value["type"] == "Construct"):
+        if ("categoryType" in value and value["categoryType"] == "Construct") or (
+            "type" in value and value["type"] == "Construct"
+        ):
             self._outputPorts = []
         elif not "outputPorts" in value:
             self._outputPorts = [
-                f
-                for f in value["fields"]
-                if f["usage"] in ["OutputPort", "InOutPort"]
+                f for f in value["fields"] if f["usage"] in ["OutputPort", "InOutPort"]
             ]
             # we need this as long as the fields are still using "name"
             if len(self._outputPorts) > 0 and "name" in self._outputPorts[0]:
@@ -230,9 +228,7 @@ class LGNode:
         elif self.jd["categoryType"] in ["Other"]:
             value = "Other"
         else:
-            logger.error(
-                "Found unknown categoryType: %s", self.jd["categoryType"]
-            )
+            logger.error("Found unknown categoryType: %s", self.jd["categoryType"])
             # raise ValueError
         for key in keys:
             if key in self.jd:
@@ -360,15 +356,9 @@ class LGNode:
         """
         key = []
         if self.is_app:
-            key = [
-                k
-                for k in self.jd
-                if re.match(r"execution[\s\_]time", k.lower())
-            ]
+            key = [k for k in self.jd if re.match(r"execution[\s\_]time", k.lower())]
         elif self.is_data:
-            key = [
-                k for k in self.jd if re.match(r"data[\s\_]volume", k.lower())
-            ]
+            key = [k for k in self.jd if re.match(r"data[\s\_]volume", k.lower())]
         try:
             self._weight = int(self.jd[key[0]])
         except (KeyError, ValueError, IndexError):
@@ -464,9 +454,7 @@ class LGNode:
         """
         result = False
         if self.has_group() and (
-            "group_end" in self.jd
-            or "Group end" in self.jd
-            or "Group End" in self.jd
+            "group_end" in self.jd or "Group end" in self.jd or "Group End" in self.jd
         ):
             ge = (
                 self.jd.get("group_end", False)
@@ -503,6 +491,10 @@ class LGNode:
     @property
     def is_groupby(self):
         return self._jd["category"] == Categories.GROUP_BY
+
+    @property
+    def is_subgraph(self):
+        return self._jd["category"] == Categories.SUBGRAPH
 
     @property
     def is_branch(self):
@@ -609,15 +601,11 @@ class LGNode:
             # group by followed by another group by
             if grpks is None or len(grpks) < 1:
                 raise GInvalidNode(
-                    "Must specify group_key for Group By '{0}'".format(
-                        self.name
-                    )
+                    "Must specify group_key for Group By '{0}'".format(self.name)
                 )
             # find the "root" groupby and get all of its scatters
             inputgrp = self
-            while (inputgrp is not None) and inputgrp.inputs[
-                0
-            ].group.is_groupby:
+            while (inputgrp is not None) and inputgrp.inputs[0].group.is_groupby:
                 inputgrp = inputgrp.inputs[0].group
             # inputgrp now is the "root" groupby that follows Scatter immiately
             # move it to Scatter
@@ -702,6 +690,8 @@ class LGNode:
                             break
                 elif self.is_service:
                     self._dop = 1  # TODO: number of compute nodes
+                elif self.is_subgraph:
+                    self._dop = 1  # subgraph will be replaced with single node
                 else:
                     raise GInvalidNode(
                         "Unrecognised (Group) Logical Graph Node: '{0}'".format(
@@ -797,9 +787,7 @@ class LGNode:
 
         # NOTE: drop Argxx keywords
 
-    def _getPortName(
-        self, ports: str = "outputPorts", index: int = 0, portId=None
-    ):
+    def _getPortName(self, ports: str = "outputPorts", index: int = 0, portId=None):
         """
         Return name of port if it exists
         """
@@ -848,8 +836,7 @@ class LGNode:
         sij = self.inputs[0]
         if not sij.is_data:
             raise GInvalidNode(
-                "GroupBy should be connected to a DataDrop, not '%s'"
-                % sij.category
+                "GroupBy should be connected to a DataDrop, not '%s'" % sij.category
             )
         dw = sij.weight * self.groupby_width
 
@@ -867,9 +854,7 @@ class LGNode:
         )
         kwargs = {}
         kwargs["grp-data_drop"] = dropSpec_grp
-        kwargs[
-            "weight"
-        ] = 1  # barrier literarlly takes no time for its own computation
+        kwargs["weight"] = 1  # barrier literarlly takes no time for its own computation
         kwargs["sleep_time"] = 1
         drop_spec.update(kwargs)
         drop_spec.addOutput(dropSpec_grp, name="grpdata")
@@ -886,11 +871,7 @@ class LGNode:
         gi = self.inputs[0]
         if gi.is_groupby:
             gii = gi.inputs[0]
-            dw = (
-                int(gii.jd["data_volume"])
-                * gi.groupby_width
-                * self.gather_width
-            )
+            dw = int(gii.jd["data_volume"]) * gi.groupby_width * self.gather_width
         else:  # data
             dw = gi.weight * self.gather_width
 
@@ -978,8 +959,7 @@ class LGNode:
         if self.weight is not None:
             if self.weight < 0:
                 raise GraphException(
-                    "Execution_time must be greater"
-                    " than 0 for Node '%s'" % self.name
+                    "Execution_time must be greater" " than 0 for Node '%s'" % self.name
                 )
             else:
                 kwargs["weight"] = self.weight
