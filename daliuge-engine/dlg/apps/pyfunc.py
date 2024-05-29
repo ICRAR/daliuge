@@ -31,6 +31,7 @@ import json
 import logging
 import os
 import pickle
+import pyext
 
 from typing import Callable
 import dill
@@ -137,8 +138,11 @@ def import_using_name(app, fname):
             return mod
 
 
-def import_using_code(code):
-    return dill.loads(code)
+def import_using_code(code, serialized=True):
+    if not serialized:
+        return pyext.RuntimeModule.from_string("m", "My test function", code).f
+    else:
+        return dill.loads(code)
 
 
 ##
@@ -149,7 +153,7 @@ def import_using_code(code):
 # @param category PythonMemberFunction
 # @param tag daliuge
 # @param func_name object.__init__/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function name
-# @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code, e.g. 'def function_name(args): return args'
+# @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code, e.g. 'def f(args): return args'. Function name has to be 'f'!
 # @param dropclass dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param object /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/object port
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -499,8 +503,10 @@ class PyFuncApp(BarrierAppDROP):
         This function takes over if code is passed in through an argument.
         """
         if not isinstance(self.func_code, bytes):
-            self.func_code = base64.b64decode(self.func_code.encode("utf8"))
-        self.f = import_using_code(self.func_code)
+            self.f = import_using_code(self.func_code, serialized=False)
+        else:
+            self.f = import_using_code(self.func_code, serialized=True)
+
         self._init_fn_defaults()
         # make sure defaults are dicts
         self._mixin_func_defaults()
