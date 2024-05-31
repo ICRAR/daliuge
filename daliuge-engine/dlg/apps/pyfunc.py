@@ -31,7 +31,6 @@ import json
 import logging
 import os
 import pickle
-import pyext
 
 from typing import Callable
 import dill
@@ -138,11 +137,8 @@ def import_using_name(app, fname):
             return mod
 
 
-def import_using_code(code, serialized=True):
-    if not serialized:
-        return pyext.RuntimeModule.from_string("m", "My test function", code).f
-    else:
-        return dill.loads(code)
+def import_using_code(code):
+    return dill.loads(code)
 
 
 ##
@@ -153,9 +149,9 @@ def import_using_code(code, serialized=True):
 # @param category PythonMemberFunction
 # @param tag daliuge
 # @param func_name object.__init__/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function name
-# @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code, e.g. 'def f(args): return args'. Function name has to be 'f'!
+# @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code, e.g. 'def function_name(args): return args'
 # @param dropclass dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
-# @param object /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/object port
+# @param self /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Port exposing the object
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
@@ -502,17 +498,9 @@ class PyFuncApp(BarrierAppDROP):
         """
         This function takes over if code is passed in through an argument.
         """
-        serialized = False
         if not isinstance(self.func_code, bytes):
-            try:
-                self.f = import_using_code(self.func_code, serialized=False)
-            except (SyntaxError, NameError):
-                serialized = True
-        if isinstance(self.func_code, bytes) or serialized:
-            if isinstance(self.func_code, str):
-                self.func_code = base64.b64decode(self.func_code.encode("utf8"))
-            self.f = import_using_code(self.func_code, serialized=True)
-
+            self.func_code = base64.b64decode(self.func_code.encode("utf8"))
+        self.f = import_using_code(self.func_code)
         self._init_fn_defaults()
         # make sure defaults are dicts
         self._mixin_func_defaults()
