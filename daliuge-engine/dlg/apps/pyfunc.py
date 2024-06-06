@@ -462,6 +462,7 @@ class PyFuncApp(BarrierAppDROP):
                     keyargsDict,
                     check_len=check_len,
                     mode="inputs",
+                    addPositionalToKeyword=True
                 )
             )
         else:
@@ -490,6 +491,7 @@ class PyFuncApp(BarrierAppDROP):
                     keyargsDict,
                     check_len=check_len,
                     mode="outputs",
+                    addPositionalToKeyword=True
                 )
             )
         return portargs
