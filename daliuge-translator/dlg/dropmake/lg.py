@@ -45,6 +45,7 @@ from dlg.dropmake.dm_utils import (
     convert_construct,
     convert_fields,
     convert_mkn,
+    convert_subgraphs,
     LG_VER_EAGLE,
     LG_VER_EAGLE_CONVERTED,
     GraphException,
@@ -92,6 +93,7 @@ class LG:
             lg = convert_mkn(lg)
             lg = convert_fields(lg)
             lg = convert_construct(lg)
+            lg = convert_subgraphs(lg)
         elif LG_VER_EAGLE_CONVERTED == lgver:
             lg = convert_construct(lg)
         elif LG_APPREF == lgver:
