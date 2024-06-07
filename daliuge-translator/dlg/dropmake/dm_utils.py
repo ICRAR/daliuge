@@ -448,7 +448,7 @@ def convert_construct(lgo):
     2. reset the key of the scatter/gather construct to 'k_new'
     3. reset the "group" keyword of each drop inside the construct to 'k_new'
     """
-    print('%d nodes in lg' % len(lgo['nodeDataArray']))
+    # print('%d nodes in lg' % len(lgo['nodeDataArray']))
     keyset = get_keyset(lgo)
     old_new_grpk_map = dict()
     old_new_gather_map = dict()
@@ -743,7 +743,7 @@ def convert_construct(lgo):
     # print()
     # for link in lgo['linkDataArray']:
     #     print(keyNameMap[link['from']], ' to ', keyNameMap[link['to']])
-    print('%d nodes in lg after construct conversion' % len(lgo['nodeDataArray']))
+    # print('%d nodes in lg after construct conversion' % len(lgo['nodeDataArray']))
     return lgo
 
 
