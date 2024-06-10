@@ -21,6 +21,11 @@
 
 import unittest
 
+try:
+    from importlib.resources import files, as_file
+except (ImportError, ModuleNotFoundError):
+    from importlib_resources import files
+
 import pkg_resources
 from dlg.common import CategoryType
 from dlg.dropmake.lg import LG
@@ -33,9 +38,7 @@ python -m unittest test.dropmake.test_pg_gen
 
 
 def get_lg_fname(lg_name):
-    return pkg_resources.resource_filename(
-        __name__, "logical_graphs/{0}".format(lg_name)
-    )  # @UndefinedVariable
+    return str(files(__package__) / f"logical_graphs/{lg_name}")
 
 
 class TestPGGen(unittest.TestCase):
