@@ -489,14 +489,8 @@ def convert_construct(lgo):
         app_node["reprodata"] = node.get("reprodata", {}).copy()
         app_node["key"] = node["key"]
         app_node["category"] = node[has_app]  # node['application']
+        app_node["name"] = node["text"] if "text" in node else node['name']
 
-        if has_app[0] == "i":
-            app_node["name"] = node["text"] if "text" in node else str(node['name'] +
-                                                                       node[
-                                                                           "inputApplicationName"])
-        else:
-            app_node["name"] = node["text"] if "text" in node else node[
-                "inputApplicationName"]
         if "mkn" in node:
             app_node["mkn"] = node["mkn"]
 
@@ -555,7 +549,7 @@ def convert_construct(lgo):
                     break
             duplicated_gather_app[k_new] = dup_app_node
 
-    if len(new_nodes) > 0:
+    if new_nodes:
         lgo["nodeDataArray"].extend(new_nodes)
 
         node_index = _build_node_index(lgo)
@@ -567,7 +561,7 @@ def convert_construct(lgo):
                 node["group"] = old_new_grpk_map[k_old]
 
         # step 4
-        if len(old_new_gather_map) > 0:
+        if old_new_gather_map:
             for link in lgo["linkDataArray"]:
                 if link["to"] in old_new_gather_map:
                     k_old = link["to"]
@@ -621,18 +615,19 @@ def convert_construct(lgo):
 
 def convert_subgraphs(lgo):
     """
+    Identify any first-order SubGraph constructs in the Logical Graph, and exctract the
+    InputApp and OutputApp fields.
 
+    Note: This modifies the Logical Graph (lgo) in-place.
+
+    :param lgo: dict, logical Graph
+    :return: dict, modified Logical Graph
     """
     # print('%d nodes in lg' % len(lgo['nodeDataArray']))
     keyset = get_keyset(lgo)
     old_new_grpk_map = dict()
     old_new_subgraph_map = {}
     new_nodes = []
-
-    # For debugging purposes
-    # keyNameMap = {}
-    # for node in lgo["nodeDataArray"]:
-    #     keyNameMap[node['key']] = node['name'] + '_' + node['category']
 
     # CAUTION: THIS IS VERY LIKELY TO CAUSE ISSUES, SINCE IT IS PICKING THE FIRST ONE FOUND!
     #    app_keywords = ["application", "inputApplicationType", "outputApplicationType"]
@@ -642,14 +637,16 @@ def convert_subgraphs(lgo):
     #  there is not both. From there, we can iterate over each and apply functionally
     #  the same logic, with differences.
     app_keywords = ["inputApplicationType", "outputApplicationType"]
+    input_app_str = "inputApplicationType"
+    output_app_str = "outputApplicationType"
     for node in lgo["nodeDataArray"]:
         if node["category"] != ConstructTypes.SUBGRAPH:
             continue
         has_app = None
-
         create_outnode = False
         # try to find a application using several app_keywords
         # disregard app_keywords that are not present, or have value "None"
+
         for ak in app_keywords:
             if (
                     ak in node
@@ -660,15 +657,13 @@ def convert_subgraphs(lgo):
                 break
 
         if has_app is None:
-            if node["category"] == ConstructTypes.SUBGRAPH:
-                node["isSubGraphConstruct"] = True
-                node["hasInputApp"] = False
-                continue
+            node["isSubGraphConstruct"] = True
+            node["hasInputApp"] = False
+            continue
         else:
-            if node["category"] == ConstructTypes.SUBGRAPH:
-                node["isSubGraphConstruct"] = True
-                node["hasInputApp"] = True
-                create_outnode = True
+            node["isSubGraphConstruct"] = True
+            node["hasInputApp"] = True
+            create_outnode = True
 
         # step 1
         app_node = dict()
@@ -775,7 +770,6 @@ def convert_subgraphs(lgo):
         keyset.add(k_new)
         old_new_grpk_map[app_node["key"]] = k_new
 
-        # app_node["subGraphKey"] = node['key']
         # Make the input app link to a data drop that then links to the output app
         subgraphNodes = {}
         subgraphLinks = []
