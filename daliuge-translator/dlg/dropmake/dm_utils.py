@@ -66,9 +66,9 @@ def get_lg_ver_type(lgo):
 
     # First check whether modelData and schemaVersion is in graph
     if (
-        "modelData" in lgo
-        and len(lgo["modelData"]) > 0
-        and "schemaVersion" in lgo["modelData"]
+            "modelData" in lgo
+            and len(lgo["modelData"]) > 0
+            and "schemaVersion" in lgo["modelData"]
     ):
         if lgo["modelData"]["schemaVersion"] != "OJS":
             return lgo["modelData"]["schemaVersion"]
@@ -459,8 +459,8 @@ def convert_construct(lgo):
     # application drop if a gather has internal input, which will result in
     # a cycle that is not allowed in DAG during graph translation
 
-    # CAUTION: THIS IS VERY LIKELY TO CAUSE ISSUES, SINCE IT IS PICKING THE FIRST ONE FOUND!
-    #    app_keywords = ["application", "inputApplicationType", "outputApplicationType"]
+    # CAUTION: THIS IS VERY LIKELY TO CAUSE ISSUES,
+    # SINCE IT IS PICKING THE FIRST ONE FOUND!
     app_keywords = ["inputApplicationType", "outputApplicationType"]
     for node in lgo["nodeDataArray"]:
         if node["category"] not in [
@@ -485,35 +485,14 @@ def convert_construct(lgo):
             continue
 
         # step 1
-        app_node = dict()
-        app_node["reprodata"] = node.get("reprodata", {}).copy()
-        app_node["key"] = node["key"]
-        app_node["category"] = node[has_app]  # node['application']
-        app_node["name"] = node["text"] if "text" in node else node['name']
-
-        if "mkn" in node:
-            app_node["mkn"] = node["mkn"]
-
-        if "group" in node:
-            app_node["group"] = node["group"]
-
-        INPUT_APP_FIELDS = "inputAppFields"
-        if INPUT_APP_FIELDS in node:
-            # inputAppFields are converted to fields to be processed like
-            # regular application drops
-            app_node["fields"] = list(node[INPUT_APP_FIELDS])
-            app_node["fields"] += node["fields"]
-            # TODO: remove, use fields list
-            for afd in node[INPUT_APP_FIELDS]:
-                app_node[afd["name"]] = afd["value"]
-
+        app_args = {"fields": "inputAppFields"}
         if node["category"] == ConstructTypes.GATHER:
-            app_node["group_start"] = 1
+            app_args['group_start'] = 1
 
         if node["category"] == ConstructTypes.SERVICE:
-            app_node["isService"] = True
+            app_args['isService'] = True
 
-        new_nodes.append(app_node)
+        app_node = _create_from_node(node, node[has_app], app_args)
 
         # step 2
         k_new = min(keyset) - 1
@@ -526,28 +505,19 @@ def convert_construct(lgo):
             app_node["group"] = k_new
             app_node["group_start"] = 1
 
-            # extra step to deal with "internal output" fromo within Gather
+            # extra step to deal with "internal output" from within Gather
             dup_app_node_k = min(keyset) - 1
             keyset.add(dup_app_node_k)
-            dup_app_node = dict()
-            dup_app_node["key"] = dup_app_node_k
-            dup_app_node["category"] = node[has_app]  # node['application']
-            dup_app_node["name"] = (
-                node["text"] if "text" in node else node["name"]
-            )
+            dup_app_args = {
+                "key": dup_app_node_k,
+                "fields": "appFields" if "appFields" in node else "inputAppFields"
+            }
+            tmp_node = _create_from_node(node, node[has_app], dup_app_args)
+            redundant_keys = ['fields', 'reprodata']
+            tmp_node = {k: v for k, v in tmp_node.items() if k not in redundant_keys}
+            duplicated_gather_app[k_new] = tmp_node
 
-            if "mkn" in node:
-                dup_app_node["mkn"] = node["mkn"]
-
-            if "group" in node:
-                dup_app_node["group"] = node["group"]
-
-            for app_fd_name in ["appFields", "inputAppFields"]:
-                if app_fd_name in node:
-                    for afd in node[app_fd_name]:
-                        dup_app_node[afd["name"]] = afd["value"]
-                    break
-            duplicated_gather_app[k_new] = dup_app_node
+        new_nodes.append(app_node)
 
     if new_nodes:
         lgo["nodeDataArray"].extend(new_nodes)
@@ -613,6 +583,76 @@ def convert_construct(lgo):
     return lgo
 
 
+def _create_from_node(node, category, app_params):
+    """
+    Create a new dictionary from the node based on the category of the new drop, and any
+    specific attributes for the application
+
+    The follow node attributes will be setup by default for new nodes:
+    - 'reprodata'
+    - 'key'
+    - mkn (conditional)
+    - group (conditional)
+    - fields (conditional)
+
+    Conditional attributes will be based on their existence in the existing node.
+
+    Any alternatives to the defaults above, or non-default attributes, can be addressed
+    by the app_params.
+
+    :param node: The node from which we are deriving the new application
+    :param category: The category of the new dictionary
+    :param app_params: dict, any non-generic
+    :return: new_node: dict, node based on the existing node
+    """
+    new_node = dict()
+    new_node["reprodata"] = node.get("reprodata", {}).copy()
+    new_node["key"] = node["key"]
+    new_node["category"] = category
+
+    if 'text' in node:
+        new_node["name"] = node["text"]
+    else:
+        new_node["name"] = node["name"]
+
+    if "mkn" in node:
+        new_node["mkn"] = node["mkn"]
+
+    if "group" in node:
+        new_node["group"] = node["group"]
+
+    if 'fields' in app_params:
+        field_name = app_params.pop("fields")
+        if field_name in node:
+            new_node['fields'] = list(node[field_name])
+            new_node['fields'] += node["fields"]
+            for afd in node[field_name]:
+                new_node[afd["name"]] = afd["value"]
+
+    # Construct-specific mapping behaviour
+    for key, value in app_params.items():
+        new_node[key] = value
+
+    return new_node
+
+
+def _has_app_keywords(node, keywords):
+    """
+    # TODO LIU-385
+    :param node:
+    :param keywords:
+    :return:
+    """
+    for ak in keywords:
+        if (
+                ak not in node
+                or node[ak] == "None"
+                or node[ak] == "UnknownApplication"
+        ):
+            return False
+    return True
+
+
 def convert_subgraphs(lgo):
     """
     Identify any first-order SubGraph constructs in the Logical Graph, and exctract the
@@ -629,121 +669,52 @@ def convert_subgraphs(lgo):
     old_new_subgraph_map = {}
     new_nodes = []
 
-    # CAUTION: THIS IS VERY LIKELY TO CAUSE ISSUES, SINCE IT IS PICKING THE FIRST ONE FOUND!
-    #    app_keywords = ["application", "inputApplicationType", "outputApplicationType"]
-    # TODO LIU-385: Consolidate how we check for app keywords, as we want both input
-    #  and output application for SubGraphs; it is likely that we can remove the
-    #  conditional check for one or the other and instead check for both, leaving if
-    #  there is not both. From there, we can iterate over each and apply functionally
-    #  the same logic, with differences.
     app_keywords = ["inputApplicationType", "outputApplicationType"]
-    input_app_str = "inputApplicationType"
-    output_app_str = "outputApplicationType"
     for node in lgo["nodeDataArray"]:
         if node["category"] != ConstructTypes.SUBGRAPH:
             continue
-        has_app = None
-        create_outnode = False
-        # try to find a application using several app_keywords
-        # disregard app_keywords that are not present, or have value "None"
 
+        node["isSubGraphConstruct"] = True
+        node["hasInputApp"] = True
         for ak in app_keywords:
             if (
-                    ak in node
-                    and node[ak] != "None"
-                    and node[ak] != "UnknownApplication"
+                    ak not in node
+                    or node[ak] == "None"
+                    or node[ak] == "UnknownApplication"
             ):
-                has_app = ak
-                break
-
-        if has_app is None:
-            node["isSubGraphConstruct"] = True
-            node["hasInputApp"] = False
+                node["hasInputApp"] = False
             continue
-        else:
-            node["isSubGraphConstruct"] = True
-            node["hasInputApp"] = True
-            create_outnode = True
 
-        # step 1
-        app_node = dict()
-        app_node["reprodata"] = node.get("reprodata", {}).copy()
-        app_node["key"] = node["key"]
-        app_node["category"] = node[has_app]  # node['application']
+        if not node["hasInputApp"]:
+            continue
 
-        out_node = dict()
-        if (
-                'outputApplicationType' in node
-                and create_outnode
-                and node['outputApplicationType'] != "None"
-                and node['outputApplicationType'] != "UnknownApplication"
-        ):
-            out_node["key"] = node['outputApplicationKey']
-            out_node["category"] = node['outputApplicationType']
+        input_app_args = {
+            "isSubGraphApp": True,
+            "isSubGraphConstruct": False,
+            "SubGraphGroupKey": node['key'],
+            "group": node['key'],
+            "group_start": 1,
+            "fields": 'inputAppFields',
+        }
+        app_node = _create_from_node(node, node["inputApplicationType"], input_app_args)
 
-        if has_app[0] == "i":
-            app_node["name"] = node["text"] if "text" in node else str(node['name'] +
-                                                                       node[
-                                                                           "inputApplicationName"])
-            if out_node:
-                out_node["name"] = node["text"] if "text" in node else (node['name'] +
-                                                                        node[
-                                                                            "outputApplicationName"])
-        else:
-            app_node["name"] = node["text"] if "text" in node else node[
-                "inputApplicationName"]
-            if out_node:
-                out_node["name"] = node["text"] if "text" in node else (node['name'] +
-                                                                        node[
-                                                                            "outputApplicationName"])
-        if "mkn" in node:
-            app_node["mkn"] = node["mkn"]
+        output_app_args = {
+            "key": node['outputApplicationKey'],
+            "isSubGraphApp": True,
+            "isSubGraphConstruct": False,
+            "SubGraphGroupKey": app_node['key'],
+            "group": app_node['key'],
+            "group_start": 1,
+            "fields": 'outputAppFields'
+        }
 
-        if "group" in node:
-            app_node["group"] = node["group"]
-            if out_node:
-                out_node["group"] = node["group"]
-
-        INPUT_APP_FIELDS = "inputAppFields"
-        OUTPUT_APP_FIELDS = "outputAppFields"
-        if INPUT_APP_FIELDS in node:
-            # inputAppFields are converted to fields to be processed like
-            # regular application drops
-            app_node["fields"] = list(node[INPUT_APP_FIELDS])
-            app_node["fields"] += node["fields"]
-            # TODO: remove, use fields list
-            for afd in node[INPUT_APP_FIELDS]:
-                app_node[afd["name"]] = afd["value"]
-
-        if OUTPUT_APP_FIELDS in node and create_outnode:
-            # inputAppFields are converted to fields to be processed like
-            # regular application drops
-            out_node["fields"] = list(node[OUTPUT_APP_FIELDS])
-            out_node["fields"] += node["fields"]
-            # TODO: remove, use fields list
-            for afd in node[OUTPUT_APP_FIELDS]:
-                out_node[afd["name"]] = afd["value"]
-
-        app_node["isSubGraphApp"] = True
-        app_node["isSubGraphConstruct"] = False
-        out_node["isSubGraphApp"] = True
-        out_node["isSubGraphConstruct"] = False
-        app_node["SubGraphGroupKey"] = app_node['key']
-        app_node["group"] = app_node['key']
-        app_node["group_start"] = 1
-
-        # for link in lgo['linkDataArray']:
-        #     print(keyNameMap[link['from']], ' to ', keyNameMap[link['to']])
-        # keyNameMap[app_node['key']] = app_node['name'] + '_' + app_node['category']
-        # keyNameMap[out_node['key']] = out_node['name'] + '_' + out_node['category']
-
+        out_node = _create_from_node(node, node["outputApplicationType"], output_app_args)
         # Search through links and nodes to identify the Subgraph Output app link to
         # the data, instead of the subgraph construct app link
+
         for link in lgo['linkDataArray']:
             if link["from"] == app_node['key']:
                 for n in lgo['nodeDataArray']:
-                    # if n == node:
-                    #     continue
                     # If the link is from the subgraph to a node that _isn't_ in the group
                     # then it is an output node,  so check that group is either
                     # non-existent, or not equal to the subgraph group.
@@ -756,13 +727,9 @@ def convert_subgraphs(lgo):
                                     link["from"] = out_node
                         except KeyError:
                             link["from"] = out_node['key']
-
         out_node["group"] = app_node['key']
 
-        if out_node:
-            new_nodes.extend([app_node, out_node])
-        else:
-            new_nodes.append(app_node)
+        new_nodes.extend([app_node, out_node])
 
         # step 2
         k_new = min(keyset) - 1
@@ -796,13 +763,18 @@ def convert_subgraphs(lgo):
         node_data["categoryType"] = Categories.DATA
         node_data["fields"] = node['fields']
         node_data["name"] = "SubGraph_Data"
+        node_data["subgraph"] = {
+            "nodeDataArray": subgraphNodes.values(),
+            "linkDataArray": subgraphLinks,
+            "modelData": lgo['modelData']
+        }
         # node_mk["fields"]["isSubgraph"] = True
         old_new_subgraph_map[app_node["key"]] = k_new
         old_new_subgraph_map[k_new] = out_node['key']
         # keyNameMap[node_data['key']] = node_data['name'] + '_' + node_data['category']
         new_nodes.append(node_data)
 
-    if len(new_nodes) > 0:
+    if new_nodes:
         lgo["nodeDataArray"].extend(new_nodes)
         for node in lgo["nodeDataArray"]:
             if "group" in node and node["group"] in old_new_grpk_map:
