@@ -151,7 +151,7 @@ def import_using_code(code):
 # @param func_name object.__init__/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function name
 # @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code, e.g. 'def function_name(args): return args'
 # @param dropclass dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
-# @param object /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/object port
+# @param self /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Port exposing the object
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
@@ -462,6 +462,7 @@ class PyFuncApp(BarrierAppDROP):
                     keyargsDict,
                     check_len=check_len,
                     mode="inputs",
+                    addPositionalToKeyword=True
                 )
             )
         else:
@@ -490,6 +491,7 @@ class PyFuncApp(BarrierAppDROP):
                     keyargsDict,
                     check_len=check_len,
                     mode="outputs",
+                    addPositionalToKeyword=True
                 )
             )
         return portargs
