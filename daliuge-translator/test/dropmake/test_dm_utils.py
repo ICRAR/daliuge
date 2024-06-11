@@ -117,6 +117,9 @@ class TestConvertSubGraphConstruct(unittest.TestCase):
         self.assertEqual("PythonApp", nSubGraphApp['category'])
         # We remove links from the Subgraph children
         self.assertEqual(4, len(lg[LINKS]))
+        subgraphDataNode = getNodeFromKey(lg, -10)
+        self.assertIsNotNone(subgraphDataNode['subgraph'])
+
 
 class TestConvertScatterGatherConstruct(unittest.TestCase):
     def test_convert_construct(self):

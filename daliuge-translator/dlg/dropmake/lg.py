@@ -777,7 +777,6 @@ class LG:
                     tlgn["categoryType"] = "Application"
                     tlgn["category"] = "PythonApp"
                 elif tlgn.is_subgraph:
-                    # TODO LIU-385: Add behaviour for when we have an SubGraphInputApp
                     pass
                 else:
                     raise GraphException(
