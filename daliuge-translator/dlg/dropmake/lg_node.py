@@ -96,7 +96,10 @@ class LGNode:
                 group_q[grp_id].append(self)
 
         done_dict[self.id] = self
-        self.subgraph = None
+        if 'subgraph' in jd:
+            self.subgraph = jd['subgraph']
+        else:
+            self.subgraph = None
 
     def __str__(self):
         return self.name
