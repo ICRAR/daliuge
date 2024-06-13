@@ -21,6 +21,7 @@
 #
 from unittest.case import skipIf
 
+# pylint: disable=possibly-used-before-assignment
 """
 Test the S3 Drop
 """

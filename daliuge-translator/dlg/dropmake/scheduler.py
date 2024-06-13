@@ -513,7 +513,7 @@ class Scheduler(object):
         else:
             self._dag = dag
         self._max_dop = max_dop
-        self._parts = None  # partitions
+        self._parts = []  # partitions
         self._part_dict = dict()  # {gid : part}
         self._part_edges = []  # edges amongst all partitions
 

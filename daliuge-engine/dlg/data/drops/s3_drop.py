@@ -132,7 +132,7 @@ class S3DROP(DataDROP):
         #     self.mapped_inputs = identify_named_ports(
         #         self._producers, {}, self.keyargs, mode="inputs"
         #     )
-        logger.debug("Parameters found: {}", self.parameters)
+        logger.debug("Parameters found: %s", self.parameters)
         return S3IO(
             self.aws_access_key_id,
             self.aws_secret_access_key,
@@ -369,7 +369,7 @@ class S3IO(DataIO):
                 logger.info("Object: %s does not exist", self._key)
                 return True, False
             else:
-                raise ErrorIO()
+                raise RuntimeError("Error occured in Client: %s", e.response)
 
     @overrides
     def exists(self) -> bool:

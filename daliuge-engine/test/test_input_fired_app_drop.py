@@ -5,7 +5,7 @@ import pytest
 
 
 class MockThrowingDrop(InputFiredAppDROP):
-    def run():
+    def run(self):
         raise RuntimeError("Drop throw")
 
 
