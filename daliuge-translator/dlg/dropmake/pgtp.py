@@ -120,7 +120,10 @@ class MetisPGTP(PGT):
                 "self._drop_list, max RSS: %.2f GB",
                 resource.getrusage(resource.RUSAGE_SELF)[2] / 1024.0**2,
             )
-
+        tw = 1
+        sz = 1
+        dst = "outputs"
+        ust = "inputs"
         for i, drop in enumerate(droplist):
             oid = drop["oid"]
             myk = i + 1

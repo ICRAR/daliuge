@@ -101,52 +101,6 @@ class LGNode:
     #     return json.dumps(self.jd)
 
     @property
-    def inputPorts(self):
-        return self._inputPorts
-
-    @inputPorts.setter
-    def inputPorts(self, value):
-        if (
-            "categoryType" in value and value["categoryType"] == "Construct"
-        ) or ("type" in value and value["type"] == "Construct"):
-            self._inputPorts = []
-        elif not "inputPorts" in value:
-            self._inputPorts = [
-                f
-                for f in value["fields"]
-                if "usage" in f and f["usage"] in ["InputPort", "InOutPort"]
-            ]
-            # we need this as long as the fields are still using "name"
-            if len(self._inputPorts) > 0 and "name" in self._inputPorts[0]:
-                for p in self._inputPorts:
-                    p["name"] = p["name"]
-        else:
-            self._inputPorts = value["inputPorts"]
-
-    @property
-    def outputPorts(self):
-        return self._outputPorts
-
-    @outputPorts.setter
-    def outputPorts(self, value):
-        if (
-            "categoryType" in value and value["categoryType"] == "Construct"
-        ) or ("type" in value and value["type"] == "Construct"):
-            self._outputPorts = []
-        elif not "outputPorts" in value:
-            self._outputPorts = [
-                f
-                for f in value["fields"]
-                if f["usage"] in ["OutputPort", "InOutPort"]
-            ]
-            # we need this as long as the fields are still using "name"
-            if len(self._outputPorts) > 0 and "name" in self._outputPorts[0]:
-                for p in self._outputPorts:
-                    p["name"] = p["name"]
-        else:
-            self._outputPorts = value["outputPorts"]
-
-    @property
     def jd(self):
         return self._jd
 

@@ -28,6 +28,7 @@ import collections
 import importlib
 import logging
 
+from typing import List
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 
 from . import droputils
@@ -308,7 +309,7 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
 
     # We're done! Return the roots of the graph to the caller
     logger.info("Calculating graph roots")
-    roots: list[AbstractDROP] = []
+    roots: List[AbstractDROP] = []
     for drop in drops.values():
         if not droputils.getUpstreamObjects(drop):
             roots.append(drop)
@@ -398,11 +399,9 @@ def _createSocket(dropSpec, dryRun=False, session_id=None):
 def _createApp(dropSpec, dryRun=False, session_id=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
-
-    if "dropclass" in dropSpec:
-        appName = dropSpec["dropclass"]
-    elif "Application" in dropSpec:
-        appName = dropSpec["Application"]
+    appName = dropSpec.get("dropclass", "")
+    if not appName:
+        dropSpec.get("Application", "")
     parts = appName.split(".")
 
     # Support old "dfms..." package names (pre-Oct2017)

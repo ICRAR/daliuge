@@ -42,7 +42,7 @@ def measure(n, droptype):
     mem1 = p.memory_info()[0]
     uTime1, sTime1 = p.cpu_times()
     drops = []
-    for i in xrange(n):
+    for i in range(n):
         uid = str(i)
         drops.append(droptype(uid, uid))
     mem2 = p.memory_info()[0]

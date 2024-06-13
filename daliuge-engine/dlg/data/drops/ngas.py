@@ -133,7 +133,7 @@ class NgasDROP(DataDROP):
 
     @property
     def dataURL(self) -> str:
-        return "ngas://%s:%d/%s" % (self.ngasSrv, self.ngasPort, self.fileId)
+        return "ngas://%s:%s/%s" % (self.ngasSrv, self.ngasPort, self.fileId)
 
     # Override
     def generate_reproduce_data(self):
