@@ -91,6 +91,7 @@ def _parse_list_tokens(token_iter):
             finish_element(sub_values, range_start)
             return values
         if token == ListTokens.MULTICASE_START:
+            prefix = ""
             if values:
                 prefix = values.pop()
             sub_values = _parse_list_tokens(token_iter)
