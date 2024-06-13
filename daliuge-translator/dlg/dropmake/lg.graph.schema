@@ -314,6 +314,9 @@
                                 "keyAttribute": {
                                     "type": "boolean"
                                 },
+                                "encoding": {
+                                    "type": "string"
+                                },
                                 "id": {
                                     "type": "string"
                                 },
