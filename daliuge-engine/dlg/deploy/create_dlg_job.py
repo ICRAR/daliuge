@@ -663,7 +663,7 @@ def main():
             all_nics=opts.all_nics,
             check_with_session=opts.check_with_session,
             logical_graph=opts.logical_graph,
-            physical_graph=opts.physical_graph,
+            physical_graph_template_data=opts.physical_graph,
             submit=opts.submit in ["True", "true"],
         )
         client._visualise_graph = opts.visualise_graph

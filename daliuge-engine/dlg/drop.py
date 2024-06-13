@@ -408,7 +408,7 @@ class AbstractDROP(EventFirer, EventHandler):
             has_app_param = (
                 "applicationArgs" in kwargs and attr_name in kwargs["applicationArgs"]
             )
-
+            param = default_value
             if has_component_param and has_app_param:
                 logger.warning(
                     f"Drop has both component and app param {attr_name}. Using component param."
@@ -428,8 +428,6 @@ class AbstractDROP(EventFirer, EventHandler):
                     pass
                 else:
                     param = kwargs["applicationArgs"].get(attr_name).value
-            else:
-                param = default_value
             return param
 
         # Take a class dlg defined parameter class attribute and create an instanced attribute on object
@@ -496,8 +494,8 @@ class AbstractDROP(EventFirer, EventHandler):
     def __repr__(self):
         return "<%s oid=%s, uid=%s>" % (
             self.__class__.__name__,
-            self.oid,
-            self.uid,
+            "self.oid",
+            "self.uid",
         )
 
     def initialize(self, **kwargs):
