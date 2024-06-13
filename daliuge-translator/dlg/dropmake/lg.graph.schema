@@ -338,7 +338,6 @@
                                 "options",
                                 "positional",
                                 "keyAttribute",
-                                "encoding",
                                 "id",
                                 "parameterType",
                                 "usage"
