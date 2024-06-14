@@ -95,8 +95,7 @@ def _parse_list_tokens(token_iter):
             if values:
                 prefix = values.pop()
             sub_values = _parse_list_tokens(token_iter)
-            if prefix:
-                sub_values = [prefix + s for s in sub_values]
+            sub_values = [prefix + s for s in sub_values]
         if token == ListTokens.RANGE_SEP:
             range_start = values.pop()
         elif token == ListTokens.COMMA:

@@ -398,7 +398,7 @@ class InputFiredAppDROP(AppDROP):
 
         # More effective inputs than inputs, this is a horror
         if n_eff_inputs > n_inputs:
-            raise Exception(
+            raise RuntimeError(
                 "%r: More effective inputs (%s) than inputs (%d)"
                 % (self, self.n_effective_inputs, n_inputs)
             )
