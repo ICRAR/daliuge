@@ -494,8 +494,8 @@ class AbstractDROP(EventFirer, EventHandler):
     def __repr__(self):
         return "<%s oid=%s, uid=%s>" % (
             self.__class__.__name__,
-            "self.oid",
-            "self.uid",
+            self.oid,
+            self.uid,
         )
 
     def initialize(self, **kwargs):

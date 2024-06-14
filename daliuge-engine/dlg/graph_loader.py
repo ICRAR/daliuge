@@ -309,10 +309,10 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
 
     # We're done! Return the roots of the graph to the caller
     logger.info("Calculating graph roots")
-    roots: List[AbstractDROP] = []
-    for drop in drops.values():
-        if not droputils.getUpstreamObjects(drop):
-            roots.append(drop)
+    roots: List[AbstractDROP] = [
+        drop for drop in drops.values()
+        if not droputils.getUpstreamObjects(drop)
+    ]
     logger.info("%d graph roots found, bye-bye!", len(roots))
 
     return roots

@@ -22,6 +22,7 @@
 
 import contextlib
 import io
+import logging
 import os, unittest
 import random
 import shutil
@@ -153,41 +154,73 @@ class TestDROP(unittest.TestCase):
         """
         Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
         """
-        store = subprocess.Popen(
-            ["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"]
-        )
-        self._test_write_withDropType(PlasmaDROP)
-        store.terminate()
+        store = None
+        try:
+            store = subprocess.Popen(
+                ["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"]
+            )
+            self._test_write_withDropType(PlasmaDROP)
+        except FileNotFoundError:
+            logging.info(f"plasma_store not found when running test.")
+        except subprocess.SubprocessError as e:
+            self.fail(f"Test failed with {repr(e)}")
+        finally:
+            if store:
+                store.terminate()
 
     def test_dynamic_write_plasmaDROP(self):
         """
         Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
         """
-        store = subprocess.Popen(
-            ["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"]
-        )
-        self._test_dynamic_write_withDropType(PlasmaDROP)
-        store.terminate()
+        store = None
+        try:
+            store = subprocess.Popen(
+                ["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"]
+            )
+            self._test_dynamic_write_withDropType(PlasmaDROP)
+        except FileNotFoundError:
+            logging.info(f"plasma_store not found when running test.")
+        except subprocess.SubprocessError as e:
+            self.fail(f"Test failed with {repr(e)}")
+        finally:
+            if store:
+                store.terminate()
 
     def test_write_plasmaFlightDROP(self):
         """
         Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
         """
-        store = subprocess.Popen(
-            ["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"]
-        )
-        self._test_write_withDropType(PlasmaFlightDROP)
-        store.terminate()
+        store = None
+        try:
+            store = subprocess.Popen(
+                ["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"]
+            )
+            self._test_write_withDropType(PlasmaFlightDROP)
+        except FileNotFoundError:
+            logging.info(f"plasma_store not found when running test.")
+        except subprocess.SubprocessError as e:
+            self.fail(f"Test failed with {repr(e)}")
+        finally:
+            if store:
+                store.terminate()
 
     def test_dynamic_write_plasmaFlightDROP(self):
         """
         Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
         """
-        store = subprocess.Popen(
-            ["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"]
-        )
-        self._test_dynamic_write_withDropType(PlasmaFlightDROP)
-        store.terminate()
+        store = None
+        try:
+            store = subprocess.Popen(
+                ["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"]
+            )
+            self._test_dynamic_write_withDropType(PlasmaFlightDROP)
+        except FileNotFoundError:
+            logging.info(f"plasma_store not found when running test.")
+        except subprocess.SubprocessError as e:
+            self.fail(f"Test failed with {repr(e)}")
+        finally:
+            if store:
+                store.terminate()
 
     def _test_write_withDropType(self, dropType):
         """
