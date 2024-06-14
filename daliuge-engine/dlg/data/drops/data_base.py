@@ -333,7 +333,7 @@ class DataDROP(AbstractDROP):
 
     def _map_input_ports_to_params(self):
         """
-        Map the input ports that are on this FileDrop to the Drop parameters
+        Map the input ports that are on the drop to the its parameters
 
         This method performs the following steps:
 
@@ -345,6 +345,10 @@ class DataDROP(AbstractDROP):
 
             - Finally, match the value of the named input drop with a DROP parameter (
             if it exists).
+
+        It is expected that this method be used within the child DataDrop class that is
+        inheriting this method; see the FileDrop class implemenetation for an example
+        use case.
         """
 
         try:
