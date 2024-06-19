@@ -37,7 +37,6 @@ from dlg.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
 from dlg.apps.app_base import AppDROP, BarrierAppDROP, InputFiredAppDROP
 from dlg.data.drops.data_base import NullDROP
 from dlg.data.drops.container import ContainerDROP
-from dlg.data.drops.plasma import PlasmaDROP, PlasmaFlightDROP
 from dlg.data.drops.rdbms import RDBMSDrop
 from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
 from dlg.data.drops.directorycontainer import DirectoryContainer
@@ -148,54 +147,6 @@ class TestDROP(unittest.TestCase):
         Test a SharedMemoryDROP with simple AppDROP (for checksum calculation)
         """
         self._test_dynamic_write_withDropType(SharedMemoryDROP)
-
-    def test_write_plasmaDROP(self):
-        """
-        Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
-        """
-        try:
-            store = subprocess.Popen(
-                ["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"]
-            )
-            self._test_write_withDropType(PlasmaDROP)
-        finally:
-            store.terminate()
-
-    def test_dynamic_write_plasmaDROP(self):
-        """
-        Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
-        """
-        try:
-            store = subprocess.Popen(
-                ["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"]
-            )
-            self._test_dynamic_write_withDropType(PlasmaDROP)
-        finally:
-            store.terminate()
-
-    def test_write_plasmaFlightDROP(self):
-        """
-        Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
-        """
-        try:
-            store = subprocess.Popen(
-                ["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"]
-            )
-            self._test_write_withDropType(PlasmaFlightDROP)
-        finally:
-            store.terminate()
-
-    def test_dynamic_write_plasmaFlightDROP(self):
-        """
-        Test an PlasmaDrop and a simple AppDROP (for checksum calculation)
-        """
-        try:
-            store = subprocess.Popen(
-                ["plasma_store", "-m", "100000000", "-s", "/tmp/plasma"]
-            )
-            self._test_dynamic_write_withDropType(PlasmaFlightDROP)
-        finally:
-            store.terminate()
 
     def _test_write_withDropType(self, dropType):
         """
