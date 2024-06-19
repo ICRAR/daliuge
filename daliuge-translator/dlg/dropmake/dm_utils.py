@@ -473,14 +473,7 @@ def convert_construct(lgo):
 
         # try to find a application using several app_keywords
         # disregard app_keywords that are not present, or have value "None"
-        for ak in app_keywords:
-            if (
-                ak in node
-                and node[ak] != "None"
-                and node[ak] != "UnknownApplication"
-            ):
-                has_app = ak
-                break
+        has_app = _has_app_keywords(node, app_keywords)
         if has_app is None:
             continue
 
@@ -636,21 +629,29 @@ def _create_from_node(node, category, app_params):
     return new_node
 
 
-def _has_app_keywords(node, keywords):
+def _has_app_keywords(node, keywords, requires_all=False):
     """
-    # TODO LIU-385
-    :param node:
-    :param keywords:
+    Check if a single or all keywords exist in the Logical Graph node.
+
+    Default behaviour will return the first keyword that exists in the keywords list.
+
+    :param node: dict, Logical Graph node
+    :param keywords: list, keywords we want to check
+    :param requires_all: bool, If True, this will return the last keyword if it is exists,
+    otherwise it will return None.
     :return:
     """
+
+    has_app = None
     for ak in keywords:
-        if (
-                ak not in node
-                or node[ak] == "None"
-                or node[ak] == "UnknownApplication"
-        ):
-            return False
-    return True
+        if ak in node and node[ak] != "None" and node[ak] != "UnknownApplication":
+            if not requires_all:
+                return ak
+            has_app = ak
+        else:
+            if requires_all:
+                return None
+    return has_app
 
 
 def convert_subgraphs(lgo):
@@ -676,16 +677,8 @@ def convert_subgraphs(lgo):
 
         node["isSubGraphConstruct"] = True
         node["hasInputApp"] = True
-        for ak in app_keywords:
-            if (
-                    ak not in node
-                    or node[ak] == "None"
-                    or node[ak] == "UnknownApplication"
-            ):
-                node["hasInputApp"] = False
-            continue
-
-        if not node["hasInputApp"]:
+        if not _has_app_keywords(node, app_keywords, requires_all=True):
+            node['hasInputApp'] = False
             continue
 
         input_app_args = {
@@ -757,21 +750,18 @@ def convert_subgraphs(lgo):
         # drop
         k_new = min(keyset) - 1
         keyset.add(k_new)
-        node_data = dict()
-        node_data["key"] = k_new
-        node_data["category"] = "Memory"
-        node_data["categoryType"] = Categories.DATA
-        node_data["fields"] = node['fields']
-        node_data["name"] = "SubGraph_Data"
-        node_data["subgraph"] = {
-            "nodeDataArray": subgraphNodes.values(),
-            "linkDataArray": subgraphLinks,
-            "modelData": lgo['modelData']
-        }
-        # node_mk["fields"]["isSubgraph"] = True
+        node_data_params = {"categoryType": Categories.DATA,
+                            "key": k_new,
+                            "name": "SubGraph_Data",
+                            "fields": "inputAppFields",
+                            "subgraph": {
+                                "nodeDataArray": subgraphNodes.values(),
+                                "linkDataArray": subgraphLinks,
+                                "modelData": lgo['modelData']
+                            }}
+        node_data = _create_from_node(node, "Memory", node_data_params)
         old_new_subgraph_map[app_node["key"]] = k_new
         old_new_subgraph_map[k_new] = out_node['key']
-        # keyNameMap[node_data['key']] = node_data['name'] + '_' + node_data['category']
         new_nodes.append(node_data)
 
     if new_nodes:
@@ -783,14 +773,9 @@ def convert_subgraphs(lgo):
 
         if old_new_subgraph_map:
             for key, value in old_new_subgraph_map.items():
-                link = {}
-                link["from"] = key
-                link["to"] = value
+                link = {"from": key, "to": value}
                 lgo['linkDataArray'].append(link)
-    # print()
-    # for link in lgo['linkDataArray']:
-    #     print(keyNameMap[link['from']], ' to ', keyNameMap[link['to']])
-    # print('%d nodes in lg after construct conversion' % len(lgo['nodeDataArray']))
+
     return lgo
 
 
