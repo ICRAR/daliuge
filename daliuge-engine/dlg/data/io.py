@@ -33,8 +33,6 @@ from typing import Optional, Union
 
 from dlg import ngaslite
 
-import pyarrow
-
 if sys.version_info >= (3, 8):
     from dlg.shared_memory import DlgSharedMemory
 
@@ -140,7 +138,7 @@ class DataIO:
         Deletes the data represented by this DataIO
         """
 
-    def buffer(self) -> Union[memoryview, bytes, bytearray, pyarrow.Buffer]:
+    def buffer(self) -> Union[memoryview, bytes, bytearray]:
         """
         Gets a buffer protocol compatible object of the drop data.
         This may be a zero-copy view of the data or a copy depending
