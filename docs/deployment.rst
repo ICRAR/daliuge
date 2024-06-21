@@ -140,7 +140,7 @@ Docker components
 
 |daliuge| is a workflow development and management system and a workflow execution framework. Workflows rely on components and algorithmic code to perform the actual data reduction. The |daliuge| system does include only a few basic components, everything else needs to be provided and made available to the system externally. The JSON based component descriptions are being used by EAGLE and the translator, the engine needs access to the actual executable code. The most straight forward way to give the |daliuge| engine access to code is to refer to docker images. The engine will pull the images, if not available already and execute them internally as containers. This works even if the |daliuge| managers are launched as docker containers themselfes. Currently we are only supporting docker containers as workflow components. We have tested running the managers as Singularity containers and they internally can still launch docker containers. |daliuge| allows a quite flexible configuration of docker components and the way they are executed. However, there are still a number of restrictions:
 
-  (1) Memory Data Components can't be used directly as input or output of Docker components. However, it is possible to use Plasma/Flight as a shared memory mechansim.
+  (1) Memory Data Components can't be used directly as input or output of Docker components.
 
   (2) Care has to be taken when using files to exchange data between docker components and other components. In particular any usage of absolute path names is quite tricky to get working and requires cross-mounting of additional volumes. Although this is possible it is not recommended. The |daliuge| workspace directory is mounted by default in the container components as well.
 
