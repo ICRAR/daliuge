@@ -36,11 +36,6 @@ dlg.data.drops.ngas
 .. automodule:: dlg.data.drops.ngas
         :members:
 
-dlg.data.drops.plasma
-^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: dlg.data.drops.plasma
-        :members:
-
 dlg.data.drops.rdbms
 ^^^^^^^^^^^^^^^^^^^^
 .. automodule:: dlg.data.drops.rdbms

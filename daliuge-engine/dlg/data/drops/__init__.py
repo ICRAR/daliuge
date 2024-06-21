@@ -32,8 +32,6 @@ __all__ = [
     "SharedMemoryDROP",
     "NgasDROP",
     "RDBMSDrop",
-    "PlasmaDROP",
-    "PlasmaFlightDROP",
     "ParameterSetDROP",
     "EnvironmentVarDROP",
     "S3DROP",
@@ -45,7 +43,6 @@ from dlg.data.drops.directorycontainer import DirectoryContainer
 from dlg.data.drops.file import FileDROP
 from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
 from dlg.data.drops.ngas import NgasDROP
-from dlg.data.drops.plasma import PlasmaDROP, PlasmaFlightDROP
 from dlg.data.drops.rdbms import RDBMSDrop
 from dlg.data.drops.parset_drop import ParameterSetDROP
 from dlg.data.drops.environmentvar_drop import EnvironmentVarDROP
