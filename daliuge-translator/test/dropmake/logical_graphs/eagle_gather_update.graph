@@ -104,7 +104,7 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "80717598c275f0e9b15a46e15e79383e0434e85f",
+        "generatorCommitHash": "80717598c275f0e9b15a46e15e79383e0434e85f",
         "generatorVersion": "v6.2.8",
         "filePath": "eagle_gather.graph",
         "fileType": "Graph",
