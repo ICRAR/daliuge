@@ -467,6 +467,7 @@ def convert_construct(lgo):
             ConstructTypes.SCATTER,
             ConstructTypes.GATHER,
             ConstructTypes.SERVICE,
+            ConstructTypes.SUBGRAPH
         ]:
             continue
         has_app = None
@@ -482,6 +483,8 @@ def convert_construct(lgo):
                 has_app = ak
                 break
         if has_app is None:
+            if node["category"] == ConstructTypes.SUBGRAPH:
+                node["hasInputApp"] = False
             continue
         # step 1
         app_node = dict()
@@ -513,6 +516,9 @@ def convert_construct(lgo):
 
         if node["category"] == ConstructTypes.SERVICE:
             app_node["isService"] = True
+
+        if node["category"] == ConstructTypes.SUBGRAPH:
+            app_node["hasInputApp"] = True
 
         new_nodes.append(app_node)
 
