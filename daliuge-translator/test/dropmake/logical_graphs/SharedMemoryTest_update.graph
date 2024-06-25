@@ -69,7 +69,7 @@
         "detailedDescription": "",
         "downloadUrl": "",
         "eagleCommitHash": "80717598c275f0e9b15a46e15e79383e0434e85f",
-        "eagleVersion": "v6.2.8",
+        "generatorVersion": "v6.2.8",
         "filePath": "SharedMemoryTest.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
