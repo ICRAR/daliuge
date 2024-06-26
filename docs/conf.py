@@ -65,6 +65,7 @@ MOCK_MODULES = (
     "scp",
     "zeroconf",
     "zerorpc",
+    "pyext",
 )
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
@@ -83,9 +84,9 @@ source_suffix = [".rst", ".md"]
 master_doc = "index"
 
 # General information about the project.
-project = u"daliuge"
-copyright = u"2016-{0}, ICRAR".format(datetime.now().year)
-author = u"ICRAR"
+project = "daliuge"
+copyright = "2016-{0}, ICRAR".format(datetime.now().year)
+author = "ICRAR"
 
 try:
     from dlg.common.version import version, full_version as release
@@ -122,12 +123,12 @@ latex_elements = {}
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "daliuge.tex", u"daliuge Documentation", u"ICRAR", "manual")
+    (master_doc, "daliuge.tex", "daliuge Documentation", "ICRAR", "manual")
 ]
 
 # -- Options for manual page output ---------------------------------------
 
-man_pages = [(master_doc, "daliuge", u"daliuge Documentation", [author], 1)]
+man_pages = [(master_doc, "daliuge", "daliuge Documentation", [author], 1)]
 
 # -- Options for Texinfo output -------------------------------------------
 
@@ -135,7 +136,7 @@ texinfo_documents = [
     (
         master_doc,
         "daliuge",
-        u"daliuge Documentation",
+        "daliuge Documentation",
         author,
         "daliuge",
         "One line description of project.",
