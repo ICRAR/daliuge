@@ -91,6 +91,7 @@ def parse_pydata(pd_dict: dict) -> bytes:
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param dropclass dlg.data.drops.memory.InMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class
+# @param base_name memory/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @par EAGLE_END
 class InMemoryDROP(DataDROP):
     """
@@ -196,6 +197,7 @@ class PythonObjectDROP(InMemoryDROP):
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param dropclass dlg.data.drops.memory.SharedMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class
+# @param base_name memory/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @par EAGLE_END
 class SharedMemoryDROP(DataDROP):
     """
