@@ -556,14 +556,14 @@ def convert_construct(lgo):
                     to_node = node_index[link["to"]]
                     gather_construct = node_index[k_new]
                     if (
-                        "group" not in to_node
-                        and "group" not in gather_construct
+                            "group" not in to_node
+                            and "group" not in gather_construct
                     ):
                         cond1 = True
                     elif (
-                        "group" in to_node
-                        and "group" in gather_construct
-                        and to_node["group"] == gather_construct["group"]
+                            "group" in to_node
+                            and "group" in gather_construct
+                            and to_node["group"] == gather_construct["group"]
                     ):
                         cond1 = True
                     else:
@@ -659,12 +659,20 @@ def convert_subgraphs(lgo):
     Identify any first-order SubGraph constructs in the Logical Graph, and exctract the
     InputApp and OutputApp fields.
 
+    The steps involved in converting subgraphs are:
+    1. Identify and extract the input and output applications from the subgraph construct
+    2. Create nodes for both
+    3. Extract the subgraph from the current graph LGT and store in a separate input data
+        node to the Input Python Application (SubGraph dropclass)
+    4. Draw link to the File drop which will store information associated with the data
+    drop input to the Output Python Application
+
     Note: This modifies the Logical Graph (lgo) in-place.
 
     :param lgo: dict, logical Graph
     :return: dict, modified Logical Graph
     """
-    # print('%d nodes in lg' % len(lgo['nodeDataArray']))
+
     keyset = get_keyset(lgo)
     old_new_grpk_map = dict()
     old_new_subgraph_map = {}
@@ -688,6 +696,7 @@ def convert_subgraphs(lgo):
             "group": node['key'],
             "group_start": 1,
             "fields": 'inputAppFields',
+            'inputApp' : True
         }
         app_node = _create_from_node(node, node["inputApplicationType"], input_app_args)
 
@@ -698,28 +707,37 @@ def convert_subgraphs(lgo):
             "SubGraphGroupKey": app_node['key'],
             "group": app_node['key'],
             "group_start": 1,
-            "fields": 'outputAppFields'
+            "fields": 'outputAppFields',
+            "outputApp": True
         }
 
         out_node = _create_from_node(node, node["outputApplicationType"], output_app_args)
+
+        # Connect OutputApplication
         # Search through links and nodes to identify the Subgraph Output app link to
         # the data, instead of the subgraph construct app link
-
         for link in lgo['linkDataArray']:
-            if link["from"] == app_node['key']:
+            if link["to"] == app_node['key']:
                 for n in lgo['nodeDataArray']:
-                    # If the link is from the subgraph to a node that _isn't_ in the group
+                    # If the link is to a node that _isn't_ in the subgraph group
                     # then it is an output node,  so check that group is either
                     # non-existent, or not equal to the subgraph group.
-                    if n['key'] == link["to"]:
+                    if n['key'] == link["from"]:
                         try:
                             if n['group'] == app_node['group']:
-                                link["from"] = app_node['key']
-                            else:
-                                if n['group'] != app_node['group']:
-                                    link["from"] = out_node
+                                link["to"] = out_node['key']
                         except KeyError:
-                            link["from"] = out_node['key']
+                            pass
+                            # link["from"] = out_node['key']
+            if link["from"] == app_node['key']:
+                for n in lgo['nodeDataArray']:
+                    if n['key'] == link["to"]:
+                        try:
+                            if n['group'] != app_node['group']:
+                                link['from'] = out_node['key']
+                        except KeyError:
+                            link['from'] = out_node['key']
+
         out_node["group"] = app_node['key']
 
         new_nodes.extend([app_node, out_node])
@@ -730,24 +748,64 @@ def convert_subgraphs(lgo):
         keyset.add(k_new)
         old_new_grpk_map[app_node["key"]] = k_new
 
-        # Make the input app link to a data drop that then links to the output app
+
+
+        # Rearange the keys based on new input and output apps.
+        if new_nodes:
+            old_new_subgraph_map[app_node["key"]] = k_new
+            old_new_subgraph_map[k_new] = out_node['key']
+
+            lgo["nodeDataArray"].extend(new_nodes)
+            for n in lgo["nodeDataArray"]:
+                if "group" in n and n["group"] in old_new_grpk_map:
+                    k_old = n["group"]
+                    n["group"] = old_new_grpk_map[k_old]
+
+            if old_new_subgraph_map:
+                for key, value in old_new_subgraph_map.items():
+                    link = {"from": key, "to": value}
+                    lgo['linkDataArray'].append(link)
+
+        # Manage SubGraph nodes and links
+        # 1. Identify the SubGraph nodes that are not from the Construct
+        # 2. Mark out the final data for the subgraph->to->outputApp links
+        # 3. Remove the subgraph nodes (besides the input into the outputapp) from the
+        #    main graph
+
         subgraphNodes = {}
         subgraphLinks = []
+        construct_apps = {app_node['key'], out_node['key']}
+
         for n in lgo['nodeDataArray']:
-            if 'group' in n and n['group'] == app_node['group']:
+            if ('group' in n
+                    and n['group'] == app_node['group']
+                    and n['key'] not in construct_apps):
                 subgraphNodes[n['key']] = n
+
+        output_links = {}
         for link in lgo['linkDataArray']:
-            if link['from'] in subgraphNodes.keys():
+            if link['from'] in subgraphNodes:
+                if link['to'] in construct_apps:
+                    key = subgraphNodes[link['from']]
+                    output_links[key['key']] = key
+                    # del subgraphNodes[key['key']]
+                    # continue
                 subgraphLinks.append(link)
             if link['to'] in subgraphNodes.keys() and link not in subgraphLinks:
                 subgraphLinks.append(link)
 
         for e in subgraphNodes.values():
-            lgo['nodeDataArray'].remove(e)
+            if e['key'] not in output_links:
+                lgo['nodeDataArray'].remove(e)
         for e in subgraphLinks:
             lgo['linkDataArray'].remove(e)
+        for n in output_links.values():
+            # lgo['nodeDataArray'].append(n)
+            lgo['linkDataArray'].append({'to': n['key'], 'from':app_node['key']})
+            lgo['linkDataArray'].append({'from': n['key'], 'to':out_node['key']})
 
-        # drop
+
+        # Create SubGraph as InputData to the SubGraph Input App
         k_new = min(keyset) - 1
         keyset.add(k_new)
         node_data_params = {"categoryType": Categories.DATA,
@@ -760,21 +818,9 @@ def convert_subgraphs(lgo):
                                 "modelData": lgo['modelData']
                             }}
         node_data = _create_from_node(node, "Memory", node_data_params)
-        old_new_subgraph_map[app_node["key"]] = k_new
-        old_new_subgraph_map[k_new] = out_node['key']
-        new_nodes.append(node_data)
+        lgo["nodeDataArray"].append(node_data)
+        lgo["linkDataArray"].append({'to': app_node['key'], 'from': node_data['key']})
 
-    if new_nodes:
-        lgo["nodeDataArray"].extend(new_nodes)
-        for node in lgo["nodeDataArray"]:
-            if "group" in node and node["group"] in old_new_grpk_map:
-                k_old = node["group"]
-                node["group"] = old_new_grpk_map[k_old]
-
-        if old_new_subgraph_map:
-            for key, value in old_new_subgraph_map.items():
-                link = {"from": key, "to": value}
-                lgo['linkDataArray'].append(link)
 
     return lgo
 
@@ -833,8 +879,8 @@ def convert_eagle_to_daliuge_json(lg_name):
                 group_category = group_node.get("category", "")
 
                 if (
-                    group_category == ConstructTypes.GATHER
-                    or group_category == ConstructTypes.GROUP_BY
+                        group_category == ConstructTypes.GATHER
+                        or group_category == ConstructTypes.GROUP_BY
                 ):
                     # Check if the node is first in that group.
                     fields = node["fields"]
