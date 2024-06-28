@@ -16,7 +16,7 @@
 #
 #    You should have received a copy of the GNU Lesser General Public
 #    License along with this library; if not, write to the Free Software
-#    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+#    Foundation, Inc., 59 Temple Place, Suite `3`30, Boston,
 #    MA 02111-1307  USA
 #
 """
@@ -121,7 +121,7 @@ def check_hosts(ips, port, timeout=None, check_with_session=False, retry=1):
     thread_pool.close()
     thread_pool.join()
 
-    return [ip for ip in result_pool if ip]
+    return [f"{ip}:{port}" for ip in result_pool if ip]
 
 
 def get_ip_via_ifconfig(iface_index):
