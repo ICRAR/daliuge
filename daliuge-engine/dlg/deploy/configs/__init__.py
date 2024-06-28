@@ -71,7 +71,7 @@ class ICRARoodConfig(DefaultConfig):
     # The following is more a workaround than a solution
     # requires the user to have a venv exectly in that place
     ACCOUNT = os.environ["USER"]
-    HOME_DIR = os.environ["HOME"] if "HOME" in os.environ else """HOME"""
+    HOME_DIR = os.environ["HOME"] if "HOME" in os.environ else ""
     DLG_ROOT = f"{HOME_DIR}/dlg"
     LOG_DIR = f"{DLG_ROOT}/log"
     VENV = f"source {HOME_DIR}/dlg/venv/bin/activate"
@@ -141,8 +141,9 @@ class Setonix411Config(DefaultConfig):
     """
 
     ACCOUNT = "pawsey0411"
+    USER = os.environ["USER"] if "USER" in os.environ else ""
     HOME_DIR = f"/scratch/{ACCOUNT}"
-    DLG_ROOT = f"{HOME_DIR}/dlg"
+    DLG_ROOT = f"{HOME_DIR}/{USER}/dlg"
     LOG_DIR = f"{DLG_ROOT}/log"
     MODULES = ""
     VENV = f"source /software/projects/{ACCOUNT}/venv/bin/activate"
