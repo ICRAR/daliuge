@@ -681,11 +681,14 @@ def main():
             env_file.write("\n".join(remote.sorted_peers))
     dim_proc = None
     # start the NM
+    LOGGER.debug(
+        f"my_ip:{remote.my_ip}; dim_ips:{remote.dim_ips}, node_ips: {remote.nm_ips}"
+    )
     if options.num_islands == 1:
         submit = True
         REST_PORT = ISLAND_DEFAULT_REST_PORT
 
-        # need to check for NM first and go on of co-hosted
+        # need to check for NM first and go on if co-hosted
         if remote.is_nm:
             co_hosted = remote.my_ip in remote.dim_ips
             nm_proc = start_node_mgr(
