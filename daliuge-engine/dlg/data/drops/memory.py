@@ -91,6 +91,7 @@ def parse_pydata(pd_dict: dict) -> bytes:
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param dropclass dlg.data.drops.memory.InMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class
+# @param base_name memory/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @par EAGLE_END
 class InMemoryDROP(DataDROP):
     """
@@ -171,6 +172,7 @@ class InMemoryDROP(DataDROP):
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Object should be serialized
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in the object
 # @param dropclass dlg.data.drops.memory.InMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class
+# @param base_name Object/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of class
 # @par EAGLE_END
 class PythonObjectDROP(InMemoryDROP):
     """
@@ -195,6 +197,7 @@ class PythonObjectDROP(InMemoryDROP):
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param dropclass dlg.data.drops.memory.SharedMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class
+# @param base_name memory/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @par EAGLE_END
 class SharedMemoryDROP(DataDROP):
     """
