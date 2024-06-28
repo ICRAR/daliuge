@@ -73,8 +73,7 @@ def _parse_list_tokens(token_iter):
             str_len = max(len(range_start), len(range_end))
             str_format = "%%0%dd" % str_len
             num_vals = [
-                str_format % num
-                for num in range(int(range_start), int(range_end) + 1)
+                str_format % num for num in range(int(range_start), int(range_end) + 1)
             ]
             values.extend(num_vals)
 
@@ -129,14 +128,14 @@ def find_numislands(physical_graph_template_file):
         (pgt_name, pgt) = pgt_data
     except:
         raise ValueError(type(pgt_data))
-    # nodes = list(map(lambda x: x["node"], pgt))
-    nodes = [
-        "queue1-dy-t3medium-1",
-    ]
-    # islands = list(map(lambda x: x["island"], pgt))
-    islands = [
-        "mab_island",
-    ]
+    nodes = list(map(lambda x: x["node"], pgt))
+    # nodes = [
+    #     "queue1-dy-t3medium-1",
+    # ]
+    islands = list(map(lambda x: x["island"], pgt))
+    # islands = [
+    #     "mab_island",
+    # ]
     num_islands = len(dict(zip(islands, range(len(islands)))))
     num_nodes = len(dict(zip(nodes, range(len(nodes)))))
     pip_name = pgt_name
@@ -162,9 +161,7 @@ def num_daliuge_nodes(num_nodes: int, run_proxy: bool):
     else:
         ret = num_nodes - 0  # exclude the data island node?
     if ret <= 0:
-        raise Exception(
-            "Not enough nodes {0} to run DALiuGE.".format(num_nodes)
-        )
+        raise Exception("Not enough nodes {0} to run DALiuGE.".format(num_nodes))
     return ret
 
 
@@ -205,9 +202,9 @@ def find_pod_ips(num_expected, retries=3, timeout=10):
     while len(ips) < num_expected and attempts < retries:
         ips = []
         query = str(
-            subprocess.check_output(
-                [r"kubectl get pods -o wide"], shell=True
-            ).decode(encoding="utf-8")
+            subprocess.check_output([r"kubectl get pods -o wide"], shell=True).decode(
+                encoding="utf-8"
+            )
         )
         pattern = r"^daliuge-daemon.*"
         ip_pattern = r"\d+\.\d+\.\d+\.\d+"
@@ -235,9 +232,9 @@ def wait_for_pods(num_expected, retries=18, timeout=10):
     attempts = 0
     while not all_running and attempts < retries:
         query = str(
-            subprocess.check_output(
-                [r"kubectl get pods -o wide"], shell=True
-            ).decode(encoding="utf-8")
+            subprocess.check_output([r"kubectl get pods -o wide"], shell=True).decode(
+                encoding="utf-8"
+            )
         )
         logger.info(query)
         pattern = r"^daliuge-daemon.*"
