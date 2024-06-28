@@ -24,30 +24,6 @@ RUN mkdir -p /code && cd /code &&\
 RUN apt install -y python3-dev wcslib-dev libcfitsio-dev &&\
     pip3 install --no-binary python-casacore python-casacore
 
-# build and install arrow-plasma
-# NOTE: nvidia-docker requires using newer cuda packages than ones included with arrow-plasma that do not overwrite the the docker cuda drivers
-RUN mkdir -p /code && cd /code &&\
-    git clone --recursive -b apache-arrow-4.0.0 https://github.com/apache/arrow.git &&\
-    cd arrow/cpp &&\
-    cmake -B build . -DCMAKE_BUILD_TYPE=Release -DARROW_PLASMA=ON -DARROW_TESTING=OFF &&\
-    cmake --build build/ --target all -j2 &&\
-    cmake --build build/ --target install &&\
-    ldconfig &&\
-    cd ../..
-
-# build and install plasmastman
-RUN mkdir -p /code && cd /code &&\
-    git clone --recursive https://gitlab.com/ska-telescope/plasma-storage-manager.git &&\
-    cd plasma-storage-manager &&\
-    cmake -B build . -DCMAKE_BUILD_TYPE=Release -DPlasma_DIR=/usr/local/lib/cmake/arrow -DArrow_DIR=/usr/local/lib/cmake/arrow -DBUILD_TESTING=OFF &&\
-    cmake --build build/ --target all -j2 &&\
-    cmake --build build/ --target install &&\
-    ldconfig &&\
-    cd ..
-
-# install pyarrow
-RUN pip3 install pyarrow==3.0.0
-
 # build and install cbf-sdp-emulator TODO: use master branch
 RUN mkdir -p /code && cd /code &&\
     git clone --recursive https://gitlab.com/ska-telescope/cbf-sdp-emulator.git &&\
