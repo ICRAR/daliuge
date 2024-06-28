@@ -148,6 +148,7 @@ class SlurmClient:
         pardict["ALL_NICS"] = "-u" if self._all_nics else ""
         pardict["CHECK_WITH_SESSION"] = "-S" if self._check_with_session else ""
         pardict["MODULES"] = self.modules
+        pardict["DLG_ROOT"] = self.dlg_root
 
         job_desc = init_tpl.safe_substitute(pardict)
         return job_desc
