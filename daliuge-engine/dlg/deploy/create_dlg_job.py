@@ -673,14 +673,6 @@ def main():
                     pgt.append(reprodata)
                     pgt = init_pgt_partition_repro_data(pgt)
                     pg_graph = json.dumps((graph_name, pgt))
-                    # pg_graph = unroll_and_partition_with_params(
-                    #     lgt=lg_graph,
-                    #     test=opts.zerorun,
-                    #     algorithm=opts.algorithm,
-                    #     algorithm_parameters=opts.algorithm_params,
-                    #     num_partitions=opts.num_nodes,
-                    #     num_islands=opts.num_islands,
-                    # )
                     lg_graph = ""
                 else:
                     lg_graph = ""
