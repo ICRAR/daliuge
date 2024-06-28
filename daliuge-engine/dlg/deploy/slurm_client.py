@@ -159,7 +159,9 @@ class SlurmClient:
         """
         Submits the slurm script to the cluster
         """
-        session_dir = "{0}/{1}".format(self.dlg_root, self.get_session_dirname())
+        session_dir = "{0}/workspace/{1}".format(
+            self.dlg_root, self.get_session_dirname()
+        )
         if not os.path.exists(session_dir):
             os.makedirs(session_dir)
 
