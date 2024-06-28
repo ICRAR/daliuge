@@ -107,7 +107,7 @@ class SlurmClient:
             self._physical_graph_template_data
         )
 
-    def get_log_dirname(self):
+    def get_session_dirname(self):
         """
         (pipeline name_)[Nnum_of_daliuge_nodes]_[time_stamp]
         """
@@ -121,16 +121,16 @@ class SlurmClient:
         """
         Creates the slurm script from a physical graph
         """
-        log_dir = "{0}/{1}".format(self._log_root, self.get_log_dirname())
+        session_dir = "{0}/{1}".format(self.dlg_root, self.get_session_dirname())
         pardict = dict()
         pardict["VENV"] = self.venv
         pardict["NUM_NODES"] = str(self._num_nodes)
         pardict["PIP_NAME"] = self._pip_name
-        pardict["SESSION_ID"] = os.path.split(log_dir)[-1]
+        pardict["SESSION_ID"] = os.path.split(session_dir)[-1]
         pardict["JOB_DURATION"] = label_job_dur(self._job_dur)
         pardict["ACCOUNT"] = self._acc
         pardict["PY_BIN"] = "python3" if pardict["VENV"] else sys.executable
-        pardict["LOG_DIR"] = log_dir
+        pardict["LOG_DIR"] = session_dir
         pardict["GRAPH_PAR"] = (
             '-L "{0}"'.format(self._logical_graph)
             if self._logical_graph
@@ -157,24 +157,24 @@ class SlurmClient:
         """
         Submits the slurm script to the cluster
         """
-        log_dir = "{0}/{1}".format(self._log_root, self.get_log_dirname())
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
+        session_dir = "{0}/{1}".format(self.dlg_root, self.get_session_dirname())
+        if not os.path.exists(session_dir):
+            os.makedirs(session_dir)
 
-        physical_graph_file_name = "{0}/{1}".format(log_dir, self._pip_name)
+        physical_graph_file_name = "{0}/{1}".format(session_dir, self._pip_name)
         with open(physical_graph_file_name, "w") as physical_graph_file:
             physical_graph_file.write(self._physical_graph_template_data)
             physical_graph_file.close()
 
-        job_file_name = "{0}/jobsub.sh".format(log_dir)
+        job_file_name = "{0}/jobsub.sh".format(session_dir)
         job_desc = self.create_job_desc(physical_graph_file_name)
         with open(job_file_name, "w") as job_file:
             job_file.write(job_desc)
 
-        with open(os.path.join(log_dir, "git_commit.txt"), "w") as git_file:
+        with open(os.path.join(session_dir, "git_commit.txt"), "w") as git_file:
             git_file.write(git_commit)
         if self._submit:
-            os.chdir(log_dir)  # so that slurm logs will be dumped here
+            os.chdir(session_dir)  # so that slurm logs will be dumped here
             print(subprocess.check_output(["sbatch", job_file_name]))
         else:
             print(f"Created job submission script {job_file_name}")
