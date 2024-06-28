@@ -585,6 +585,9 @@ def main():
     )
 
     (opts, _) = parser.parse_args(sys.argv)
+    if opts.configs:
+        print(f"Available facilities: {FACILITIES}")
+        sys.exit(1)
     if not (opts.action and opts.facility) and not opts.configs:
         parser.error("Missing required parameters!")
     if opts.facility not in FACILITIES:
@@ -621,19 +624,21 @@ def main():
             parser.error(
                 "Either a logical graph XOR physical graph filename must be specified"
             )
-        for path_to_graph_file in (opts.logical_graph, opts.physical_graph):
-            if path_to_graph_file and not os.path.exists(path_to_graph_file):
-                parser.error(
-                    "Cannot locate graph file at '{0}'".format(path_to_graph_file)
-                )
-            else:
-                with open(path_to_graph_file) as f:
-                    if opts.logical_graph:
-                        lg_graph = f.read()
-                        pg_graph = ""
-                    else:
-                        lg_graph = ""
-                        pg_graph = f.read()
+        elif opts.logical_graph:
+            path_to_graph_file = opts.logical_graph
+        elif opts.physical_graph:
+            path_to_graph_file = opts.physical_graph
+        if path_to_graph_file and not os.path.exists(path_to_graph_file):
+            parser.error("Cannot locate graph file at '{0}'".format(path_to_graph_file))
+        else:
+            with open(path_to_graph_file) as f:
+                if opts.logical_graph:
+                    lg_graph = f.read()
+                    # TODO: call translator
+                    pg_graph = ""
+                else:
+                    lg_graph = ""
+                    pg_graph = f.read()
 
         client = SlurmClient(
             facility=opts.facility,
@@ -654,8 +659,6 @@ def main():
         )
         client._visualise_graph = opts.visualise_graph
         client.submit_job()
-    elif opts.configs:
-        print(f"Available facilities: {FACILITIES}")
     else:
         parser.print_help()
         parser.error("Invalid input!")
