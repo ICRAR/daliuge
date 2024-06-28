@@ -144,7 +144,7 @@ def get_workspace_dir(log_dir):
     Common workspace dir for all nodes just underneath main session directory
     """
     if "DLG_ROOT" in os.environ:
-        workspace = f"{os.environ["DLG_ROOT"]}/workspace"
+        workspace = f"{os.environ['DLG_ROOT']}/workspace"
     else:
         f"{os.path.split(log_dir)[0]}/workspace"
     return workspace
