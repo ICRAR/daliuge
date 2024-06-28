@@ -372,6 +372,8 @@ class LG:
         elif lgn.is_service:
             # no action required, inputapp node aleady created and marked with "isService"
             pass
+        elif lgn.is_subgraph:
+            pass
         else:
             src_drop = lgn.make_single_drop(iid, loop_ctx=lpcxt)
             self._drop_dict[lgn.id].append(src_drop)
@@ -773,6 +775,9 @@ class LG:
                     # per compute instance
                     tlgn["categoryType"] = "Application"
                     tlgn["category"] = "PythonApp"
+                elif tlgn.is_subgraph:
+                    # TODO LIU-385: Add behaviour for when we have an SubGraphInputApp
+                    pass
                 else:
                     raise GraphException(
                         "Unsupported target group {0}".format(tlgn.jd.category)
@@ -828,6 +833,10 @@ class LG:
                 # for sl_drop in self._drop_dict[lid]:
                 #     if 'gather-data_drop' in sl_drop:
                 #         del sl_drop['gather-data_drop']
+            elif lgn.is_subgraph:
+                if not lgn.jd['hasInputApp']:
+                    del self._drop_dict[lid]
+                # TODO LIU-385: Add support for SubGraphs with InputApps
 
         logger.info(
             "Unroll progress - extra drops done for session %s",

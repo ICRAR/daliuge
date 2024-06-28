@@ -339,8 +339,6 @@ def _createData(dropSpec, dryRun=False, session_id=None):
             "NGAS": NgasDROP,
             "null": NullDROP,
             "json": JsonDROP,
-            "Plasma": PlasmaDROP,
-            "PlasmaFlight": PlasmaFlightDROP,
             "ParameterSet": ParameterSetDROP,
             "EnvironmentVariables": EnvironmentVarDROP,
         }

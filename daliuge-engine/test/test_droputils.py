@@ -33,7 +33,6 @@ import numpy
 from dlg import droputils, drop_loaders
 from dlg.common import dropdict
 from dlg.apps.app_base import BarrierAppDROP
-from dlg.data.drops.plasma import PlasmaDROP
 from dlg.data.drops.memory import InMemoryDROP
 from dlg.data.drops.file import FileDROP
 from dlg.droputils import DROPFile
@@ -153,17 +152,6 @@ class DropUtilsTest(unittest.TestCase):
         # basic datadrop
         for drop_type in (InMemoryDROP, FileDROP):
             test_function(drop_type, input_data)
-
-        # plasma datadrop
-        store = None
-        try:
-            store = subprocess.Popen(
-                ["plasma_store", "-m", "1000000", "-s", "/tmp/plasma"]
-            )
-            test_function(PlasmaDROP, input_data)
-        finally:
-            if store:
-                store.terminate()
 
     def _test_save_load_pickle(self, drop_type, data):
         drop = drop_type("a", "a")

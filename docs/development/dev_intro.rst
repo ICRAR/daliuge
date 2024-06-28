@@ -13,7 +13,7 @@ The following chapters and sections will use some terms in a specific meaning. T
 #. Component: *Component* refers to a |daliuge| compliant implementation of some functionality used in the execution of a workflow. A component consists of the |daliuge| interface wrapper and the code implementing the desired functionality. In some cases the actual functional code is not integrated with the interface, but just executed by the interface. There are three main types of components:
 
    * Application Component: |daliuge| interface wrapper and application code.
-   * Data Component: |daliuge| interface wrapper around an I/O channel. Examples are standard files, memory, S3 and Apache Plasma.
+   * Data Component: |daliuge| interface wrapper around an I/O channel. Examples are standard files, memory, and S3.
    * Service Component: A *Service Component* is a special component, providing access to services like a database or some other client/server system used within a workflow.
 
 #. Construct: A *Construct* is a complex *Component*, which may contain other *Components*.
