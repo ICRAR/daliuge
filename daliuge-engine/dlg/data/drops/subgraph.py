@@ -25,7 +25,6 @@ from dlg.data.drops.data_base import DataDROP, logger
 from dlg.data.io import DataIO
 
 
-
 ##
 # @brief SubGraphApp
 # @par EAGLE_START
@@ -40,12 +39,17 @@ from dlg.data.io import DataIO
 # @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class SubGraphApp(BarrierAppDROP):
-    """A combination of the SleepApp and the CopyApp. It sleeps, then copies"""
+
+    def initialize(self, **kwargs):
+        super(SubGraphApp, self).initialize(**kwargs)
 
     def run(self):
         """
-        Use the output application to get the subgraph data, then use that to launch a
-        new session for the engine.
+        Use the subgraph data application to get the subgraph data, then use that to
+        launch a new session for the engine.
+        1. need the 'subgraph' named port
+        2. Need to duplicate the input data for the subgraph
+
         :return:
         """
 
@@ -71,7 +75,7 @@ class SubGraphDataDrop(DataDROP):
 
 
     def initialize(self, **kwargs):
-        pass
+        super(SubGraphDataDrop, self).initialize(**kwargs)
 
     def getIO(self) -> DataIO:
         """
