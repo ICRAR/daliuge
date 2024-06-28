@@ -679,7 +679,7 @@ def main():
                     pg_graph = f.read()
 
         client = SlurmClient(
-            log_root=".",
+            log_root=opts.log_root,
             facility=opts.facility,
             job_dur=opts.job_dur,
             num_nodes=opts.num_nodes,
