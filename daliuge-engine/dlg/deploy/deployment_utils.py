@@ -128,18 +128,20 @@ def find_numislands(physical_graph_template_file):
         (pgt_name, pgt) = pgt_data
     except:
         raise ValueError(type(pgt_data))
-    nodes = list(map(lambda x: x["node"], pgt))
-    # nodes = [
-    #     "queue1-dy-t3medium-1",
-    # ]
-    islands = list(map(lambda x: x["island"], pgt))
+    try:
+        nodes = list(map(lambda x: x["node"], pgt))
+        # nodes = [
+        #     "queue1-dy-t3medium-1",
+        # ]
+        islands = list(map(lambda x: x["island"], pgt))
     # islands = [
     #     "mab_island",
     # ]
+    except KeyError:
+        return None, None, pgt_name
     num_islands = len(dict(zip(islands, range(len(islands)))))
     num_nodes = len(dict(zip(nodes, range(len(nodes)))))
-    pip_name = pgt_name
-    return num_islands, num_nodes, pip_name
+    return num_islands, num_nodes, pgt_name
 
 
 def label_job_dur(job_dur):
