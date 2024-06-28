@@ -39,7 +39,7 @@ init_tpl = string.Template(__sub_tpl_str)
 
 class DefaultConfig(object):
     ACCOUNT = ""
-    HOME_DIR = ""
+    HOME_DIR = os.environ["HOME"] if "HOME" in os.environ else ""
     DLG_ROOT = f"{HOME_DIR}/dlg"
     LOG_DIR = f"{DLG_ROOT}/log"
     MODULES = ""
@@ -71,7 +71,7 @@ class ICRARoodConfig(DefaultConfig):
     # The following is more a workaround than a solution
     # requires the user to have a venv exectly in that place
     ACCOUNT = os.environ["USER"]
-    HOME_DIR = os.environ["HOME"]
+    HOME_DIR = os.environ["HOME"] if "HOME" in os.environ else """HOME"""
     DLG_ROOT = f"{HOME_DIR}/dlg"
     LOG_DIR = f"{DLG_ROOT}/log"
     VENV = f"source {HOME_DIR}/dlg/venv/bin/activate"
@@ -140,13 +140,20 @@ class Setonix411Config(DefaultConfig):
     Cofiguration for project 0411 on Setonix.
     """
 
+    ACCOUNT = "pawsey0411"
+    HOME_DIR = f"/scratch/{ACCOUNT}"
+    DLG_ROOT = f"{HOME_DIR}/dlg"
+    LOG_DIR = f"{DLG_ROOT}/log"
+    MODULES = ""
+    VENV = f"source /software/projects/{ACCOUNT}/venv/bin/activate"
+
     MODULES = ""
 
     def __init__(self):
         super(Setonix411Config, self).__init__()
 
     def init_list(self):
-        return ["pawsey0411", "/scratch/pawsey0411/daliuge_logs"]
+        return [self.ACCOUNT, f"{self.HOME_DIR}/logs"]
 
 
 class TianHe2Config(DefaultConfig):
