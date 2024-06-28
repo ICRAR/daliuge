@@ -59,7 +59,8 @@ logger = logging.getLogger(__name__)
 # @par EAGLE_START
 # @param category Data
 # @param tag template
-# @param dropclass my.awesome.data.Component/String/ComponentParameter/NoPort/ReadOnly//False/False/The python class that implements this data component
+# @param dropclass dlg.data.drops.data_base.DataDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/The python class that implements this data component
+# @param base_name data_base/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
@@ -405,6 +406,7 @@ class PathBasedDrop(object):
 # @param category Memory
 # @param tag daliuge
 # @param dropclass dlg.data.drops.data_base.NullDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param base_name data_base/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
