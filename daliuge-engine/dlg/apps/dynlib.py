@@ -26,9 +26,8 @@ import logging
 import multiprocessing
 import queue
 import threading
-import six
 
-from .. import rpc, utils
+from .. import rpc
 from ..ddap_protocol import AppDROPStates
 from ..apps.app_base import AppDROP, BarrierAppDROP
 from ..exceptions import InvalidDropException
@@ -191,15 +190,11 @@ def run(lib, c_app, input_closers):
                 raise result
             if result:
                 raise Exception(
-                    "Invocation of {}:run2 returned with status {}".format(
-                        lib, result
-                    )
+                    "Invocation of {}:run2 returned with status {}".format(lib, result)
                 )
 
         elif lib.run(ctypes.pointer(c_app)):
-            raise Exception(
-                "Invocation of %r:run returned with status != 0" % lib
-            )
+            raise Exception("Invocation of %r:run returned with status != 0" % lib)
     finally:
         for closer in input_closers:
             closer()
@@ -233,9 +228,7 @@ def load_and_init(libname, oid, uid, params):
 
         if not found_one:
             raise InvalidLibrary(
-                "{} doesn't have one of the functions {}".format(
-                    libname, functions
-                )
+                "{} doesn't have one of the functions {}".format(libname, functions)
             )
 
     # Create the initial contents of the C dlg_app_info structure
@@ -277,12 +270,9 @@ def load_and_init(libname, oid, uid, params):
         # We need to keep them in a local variable so when we expose them to
         # the app later on via pointers we still have their contents
         local_params = [
-            (str(k).encode("utf8"), str(v).encode("utf8"))
-            for k, v in params.items()
+            (str(k).encode("utf8"), str(v).encode("utf8")) for k, v in params.items()
         ]
-        logger.debug(
-            "Extra parameters passed to application: %r", local_params
-        )
+        logger.debug("Extra parameters passed to application: %r", local_params)
 
         # Wrap in ctypes
         str_ptr_type = ctypes.POINTER(ctypes.c_char_p)
@@ -362,9 +352,7 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
         self._c_app.n_inputs += 1
 
     def addStreamingInput(self, streamingInputDrop, back=True):
-        super(DynlibStreamApp, self).addStreamingInput(
-            streamingInputDrop, back
-        )
+        super(DynlibStreamApp, self).addStreamingInput(streamingInputDrop, back)
         self._c_app.n_streaming_inputs += 1
 
     def generate_recompute_data(self):
@@ -383,11 +371,14 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
 # @param tag template
 # @param libpath /String/ComponentParameter/NoPort/ReadWrite//False/False/"The location of the shared object/DLL that implements this application"
 # @param dropclass dlg.apps.dynlib.DynlibApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param base_name dynlib/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class DynlibApp(DynlibAppBase, BarrierAppDROP):
     """Loads a dynamic library into the current process and runs it"""
@@ -440,9 +431,7 @@ def _do_run_in_proc(queue, libname, oid, uid, params, inputs, outputs):
         client.start()
 
         def setup_drop_proxies(inputs, outputs):
-            to_drop_proxy = lambda x: rpc.DropProxy(
-                client, x[0], x[1], x[2], x[3]
-            )
+            to_drop_proxy = lambda proxy_info: rpc.DropProxy(client, proxy_info)
             inputs = [to_drop_proxy(i) for i in inputs]
             outputs = [to_drop_proxy(o) for o in outputs]
             return inputs, outputs
@@ -483,6 +472,9 @@ def get_from_subprocess(proc, q):
 # @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
 # @param dropclass dlg.apps.dynlib.DynlibProcApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param base_name dynlib/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class DynlibProcApp(BarrierAppDROP):
     """Loads a dynamic library in a different process and runs it"""
@@ -498,15 +490,15 @@ class DynlibProcApp(BarrierAppDROP):
         self.proc = None
 
     def run(self):
-        if not hasattr(self, "_rpc_server"):
+        if not hasattr(self, "_rpc_endpoint"):
             raise Exception("DynlibProcApp can only run within an RPC server")
 
         # On the sub-process we create DropProxy objects, so we need to extract
         # from our inputs/outputs their contact point (RPC-wise) information.
         # If one of our inputs/outputs is a DropProxy we already have this
         # information; otherwise we must figure it out.
-        inputs = [self._get_proxy_info(i) for i in self.inputs]
-        outputs = [self._get_proxy_info(o) for o in self.outputs]
+        inputs = [rpc.ProxyInfo.from_data_drop(i) for i in self.inputs]
+        outputs = [rpc.ProxyInfo.from_data_drop(o) for o in self.outputs]
 
         logger.info("Starting new process to run the dynlib on")
         queue = multiprocessing.Queue()
@@ -536,18 +528,6 @@ class DynlibProcApp(BarrierAppDROP):
                     raise error
         finally:
             self.proc.join(self.timeout)
-
-    def _get_proxy_info(self, x):
-        if isinstance(x, rpc.DropProxy):
-            return x.hostname, x.port, x.session_id, x.uid
-
-        # TODO: we can't use the NodeManager's host directly here, as that
-        #       indicates the address the different servers *bind* to
-        #       (and, for example, can be 0.0.0.0)
-        rpc_server = x._rpc_server
-        host, port = rpc_server._rpc_host, rpc_server._rpc_port
-        host = utils.to_externally_contactable_host(host, prefer_local=True)
-        return (host, port, x._dlg_session.sessionId, x.uid)
 
     def cancel(self):
         BarrierAppDROP.cancel(self)

@@ -60,9 +60,7 @@ class ExternalStoreApp(BarrierAppDROP):
     def run(self):
         # Check that the constrains are correct
         if self.outputs:
-            raise Exception(
-                "No outputs should be declared for this application"
-            )
+            raise Exception("No outputs should be declared for this application")
         if len(self.inputs) != 1:
             raise Exception("Only one input is expected by this application")
 
@@ -84,6 +82,7 @@ class ExternalStoreApp(BarrierAppDROP):
 # @param category PythonApp
 # @param tag daliuge
 # @param dropclass dlg.apps.archiving.NgasArchivingApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name archiving/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
@@ -95,6 +94,8 @@ class ExternalStoreApp(BarrierAppDROP):
 # @param ngasTimeout 2/Integer/ApplicationArgument/NoPort/ReadOnly//False/False/Archiving request timeout
 # @param ngasConnectTimeout 2/Integer/ApplicationArgument/NoPort/ReadOnly//False/False/NGAS Server connection timeout
 # @param fileObject /Object.File/ApplicationArgument/InputPort/ReadWrite//False/False/Input File Object
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class NgasArchivingApp(ExternalStoreApp):
     """
@@ -152,9 +153,7 @@ class NgasArchivingApp(ExternalStoreApp):
                 mimeType=self.ngasMime,
             )
         except ImportError:
-            logger.warning(
-                "NgasIO library not available, falling back to NgasLiteIO."
-            )
+            logger.warning("NgasIO library not available, falling back to NgasLiteIO.")
             ngasIO = NgasLiteIO(
                 self.ngasSrv,
                 inDrop.uid,

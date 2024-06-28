@@ -32,9 +32,9 @@ from setuptools import setup
 # dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
-MAJOR = 3
+MAJOR = 4
 MINOR = 0
-PATCH = 0
+PATCH = 1
 RELEASE = True
 VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
 VERSION_FILE = "dlg/translator/version.py"
@@ -122,8 +122,6 @@ setup(
     install_requires=install_requires,
     packages=find_packages(),
     package_data={"dlg": src_files},
-    entry_points={
-        "dlg.tool_commands": ["translator=dlg.translator.tool_commands"]
-    },
+    entry_points={"dlg.tool_commands": ["translator=dlg.translator.tool_commands"]},
     test_suite="test",
 )

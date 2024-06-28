@@ -23,12 +23,10 @@
 Utility methods and classes to be used when interacting with DROPs
 """
 
-import base64
 import collections
 import io
 import time
 import logging
-import pickle
 import re
 import threading
 import traceback
@@ -139,9 +137,7 @@ def allDropContents(drop, bufsize=65536) -> bytes:
     return buf.getvalue()
 
 
-def copyDropContents(
-    source: "DataDROP", target: "DataDROP", bufsize: int = 65536
-):
+def copyDropContents(source: "DataDROP", target: "DataDROP", bufsize: int = 65536):
     """
     Manually copies data from one DROP into another, in bufsize steps
     """
@@ -151,9 +147,7 @@ def copyDropContents(
     logger.debug("Read %d bytes from %s", len(buf), repr(source))
     st = time.time()
     ssize = source.size if source.size is not None else -1
-    logger.debug(
-        "Source size: %s; Source checksum: %s", ssize, source.checksum
-    )
+    logger.debug("Source size: %s; Source checksum: %s", ssize, source.checksum)
     tot_w = 0
     ofl = True
     # target._expectedSize = ssize

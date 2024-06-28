@@ -7,7 +7,8 @@ FROM kernsuite/base:7
 ARG BUILD_ID
 LABEL stage=builder
 LABEL build=$BUILD_ID
-RUN apt-get update && apt-get install -y gcc python3-pip python3-venv wget && \
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN apt-get update && apt-get install -y avahi-utils gcc python3-pip python3-venv wget && \
     pip3 install -U pip
 
 # add_arrow_repo: 
@@ -27,7 +28,7 @@ RUN apt install -y casacore-dev cmake g++ git libarrow-dev libplasma-dev python3
 RUN git clone https://gitlab.com/ska-telescope/cbf-sdp-emulator.git && \
     cd && python3 -m venv dlg && . ~/dlg/bin/activate && \
     pip3 install -U https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-2.0.0.dev0-cp38-cp38-manylinux2014_x86_64.whl && \
-    pip install pyarrow==3.0.0 wheel python-casacore && \
+    pip install wheel python-casacore && \
     cd cbf-sdp-emulator; pip3 install --extra-index-url=https://nexus.engageska-portugal.pt/repository/pypi/simple .[plasma] && \
     cd data/; tar xf sim-vis.ms.tar.gz; cd ..
 
@@ -38,4 +39,3 @@ RUN cd /daliuge && \
     . ~/dlg/bin/activate && \
     pip3 install numpy && \
     pip3 install .
-    

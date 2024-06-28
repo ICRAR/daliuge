@@ -11,6 +11,7 @@ dist
 .pytest_cache
 .vscode
 .venv
+*.code-workspace
 daliuge-translator/dlg/translator/dropmake/web/VERSION
 daliuge-translator/dlg/translator/dropmake/web/LICENSE
 daliuge-engine/dlg/runtime/version.py

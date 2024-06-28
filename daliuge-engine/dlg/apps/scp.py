@@ -43,6 +43,7 @@ from dlg.meta import (
 # @param category PythonApp
 # @param tag daliuge
 # @param dropclass dlg.apps.scp.ScpApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name scp/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
@@ -52,6 +53,8 @@ from dlg.meta import (
 # @param pkeyPath /String/ApplicationArgument/NoPort/ReadWrite//False/False/Private key path
 # @param timeout 60/Float/ApplicationArgument/NoPort/ReadWrite//False/False/Connection timeout in seconds
 # @param file /Object.PathBasedDrop/ApplicationArgument/InputOutput/ReadWrite//False/False/File path
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class ScpApp(BarrierAppDROP):
     """

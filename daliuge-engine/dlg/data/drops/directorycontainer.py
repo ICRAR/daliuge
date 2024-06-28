@@ -44,6 +44,7 @@ logger = logging.getLogger(__name__)
 # @param category Directory
 # @param tag future
 # @param dropclass dlg.data.drops.directorycontainer.DirectoryContainer/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param base_name directoryContainer/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param check_exists True/Boolean/ApplicationArgument/NoPort/ReadWrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
@@ -70,14 +71,10 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
 
         directory = kwargs["dirname"]
 
-        logger.debug(
-            "Checking existence of %s %s", directory, self.check_exists
-        )
+        logger.debug("Checking existence of %s %s", directory, self.check_exists)
         if "check_exists" in kwargs and kwargs["check_exists"] is True:
             if not os.path.isdir(directory):
-                raise InvalidDropException(
-                    self, "%s is not a directory" % (directory)
-                )
+                raise InvalidDropException(self, "%s is not a directory" % (directory))
 
         self._path = self.get_dir(directory)
 
@@ -91,9 +88,7 @@ class DirectoryContainer(PathBasedDrop, ContainerDROP):
                 )
             ContainerDROP.addChild(self, child)
         else:
-            raise TypeError(
-                "Child DROP is not of type FileDROP or DirectoryContainer"
-            )
+            raise TypeError("Child DROP is not of type FileDROP or DirectoryContainer")
 
     def delete(self):
         shutil.rmtree(self._path)

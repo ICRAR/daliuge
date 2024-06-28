@@ -68,9 +68,7 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         """
         sessionId = "lalo"
         ddGraph = "graphs/ddTest.graph"
-        with pkg_resources.resource_stream(
-            "test", ddGraph
-        ) as f:  # @UndefinedVariable
+        with pkg_resources.resource_stream("test", ddGraph) as f:  # @UndefinedVariable
             logger.debug(f"Loading graph: {f}")
             graphSpec = json.load(f)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)

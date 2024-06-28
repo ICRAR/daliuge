@@ -27,12 +27,10 @@ import pickle
 import random
 import string
 import sys
-from typing import Any
 
 from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.data.drops.data_base import DataDROP, logger
 from dlg.data.io import SharedMemoryIO, MemoryIO
-from dlg.utils import serialize_data
 
 
 def parse_pydata(pd_dict: dict) -> bytes:
@@ -51,6 +49,11 @@ def parse_pydata(pd_dict: dict) -> bytes:
             pydata = json.loads(pydata)
         except:
             pydata = pydata.encode()
+    if pd_dict["type"].lower() == "eval":
+        # try:
+        pydata = eval(pydata)
+        # except:
+        #     pydata = pydata.encode()
     elif pd_dict["type"].lower() == "int":
         try:
             pydata = int(pydata)
@@ -67,12 +70,12 @@ def parse_pydata(pd_dict: dict) -> bytes:
         except:
             pydata = pydata.encode()
     elif pd_dict["type"].lower() == "object":
-        pydata = pydata.encode()
+        pydata = base64.b64decode(pydata.encode())
         try:
             pydata = pickle.loads(pydata)
         except:
             raise
-    return pickle.dump(pydata)
+    return pickle.dumps(pydata)
 
 
 ##
@@ -87,7 +90,8 @@ def parse_pydata(pd_dict: dict) -> bytes:
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
-# @param dropclass dlg.data.drops.memory.SharedMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class
+# @param dropclass dlg.data.drops.memory.InMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class
+# @param base_name memory/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @par EAGLE_END
 class InMemoryDROP(DataDROP):
     """
@@ -110,20 +114,22 @@ class InMemoryDROP(DataDROP):
         """
         args = []
         pydata = None
+        field_names = (
+            [f["name"] for f in kwargs["fields"]] if "fields" in kwargs else []
+        )
         if "pydata" in kwargs and not (
-            "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]
+            "fields" in kwargs and "pydata" in field_names
         ):  # means that is was passed directly
             pydata = kwargs.pop("pydata")
-            logger.debug("pydata value provided: %s", pydata)
+            logger.debug("pydata value provided: %s, %s", pydata, kwargs)
             try:  # test whether given value is valid
                 _ = pickle.loads(base64.b64decode(pydata))
                 pydata = base64.b64decode(pydata)
             except:
                 pydata = None
-        elif (
-            "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]
-        ):
-            pydata = parse_pydata(kwargs["nodeAttributes"]["pydata"])
+        elif "fields" in kwargs and "pydata" in field_names:
+            data_pos = field_names.index("pydata")
+            pydata = parse_pydata(kwargs["fields"][data_pos])
         args.append(pydata)
         logger.debug("Loaded into memory: %s", pydata)
         self._buf = io.BytesIO(*args)
@@ -132,10 +138,10 @@ class InMemoryDROP(DataDROP):
     def getIO(self):
         if (
             hasattr(self, "_tp")
-            and hasattr(self, "_sessID")
+            and hasattr(self, "_sessionId")
             and sys.version_info >= (3, 8)
         ):
-            return SharedMemoryIO(self.oid, self._sessID)
+            return SharedMemoryIO(self.oid, self._sessionId)
         else:
             return MemoryIO(self._buf)
 
@@ -157,6 +163,28 @@ class InMemoryDROP(DataDROP):
 
 
 ##
+# @brief PythonObject
+# @details A Python object stored in memory
+# @par EAGLE_START
+# @param category PythonObject
+# @param tag daliuge
+# @param self /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Reference to object
+# @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Object should be serialized
+# @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in the object
+# @param dropclass dlg.data.drops.memory.InMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class
+# @param base_name Object/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of class
+# @par EAGLE_END
+class PythonObjectDROP(InMemoryDROP):
+    """
+    A python object is an InMemoryDROP but has a special category of PythonObject.
+
+    This is only here to force the creation of the component for the palette.
+    """
+
+    pass
+
+
+##
 # @brief SharedMemory
 # @details Data stored in shared memory
 # @par EAGLE_START
@@ -169,6 +197,7 @@ class InMemoryDROP(DataDROP):
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param dropclass dlg.data.drops.memory.SharedMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class
+# @param base_name memory/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @par EAGLE_END
 class SharedMemoryDROP(DataDROP):
     """
@@ -192,23 +221,19 @@ class SharedMemoryDROP(DataDROP):
                 pydata = base64.b64decode(pydata.encode("latin1"))
             except:
                 pydata = None
-        elif (
-            "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]
-        ):
+        elif "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]:
             pydata = parse_pydata(kwargs["nodeAttributes"]["pydata"])
         args.append(pydata)
         self._buf = io.BytesIO(*args)
 
     def getIO(self):
         if sys.version_info >= (3, 8):
-            if hasattr(self, "_sessID"):
-                return SharedMemoryIO(self.oid, self._sessID)
+            if hasattr(self, "_sessionId"):
+                return SharedMemoryIO(self.oid, self._sessionId)
             else:
                 # Using Drop without manager, just generate a random name.
                 sess_id = "".join(
-                    random.choices(
-                        string.ascii_uppercase + string.digits, k=10
-                    )
+                    random.choices(string.ascii_uppercase + string.digits, k=10)
                 )
                 return SharedMemoryIO(self.oid, sess_id)
         else:

@@ -108,9 +108,7 @@ class TestDataLifecycleManager(unittest.TestCase):
             self.assertEqual(DROPPhases.LOST, drop.phase)
 
     def test_cleanupExpiredDrops(self):
-        with dlm.DataLifecycleManager(
-            check_period=0.5, cleanup_period=2
-        ) as manager:
+        with dlm.DataLifecycleManager(check_period=0.5, cleanup_period=2) as manager:
             drop = FileDROP(
                 "oid:A", "uid:A1", expectedSize=1, lifespan=1, persist=False
             )
@@ -138,9 +136,12 @@ class TestDataLifecycleManager(unittest.TestCase):
         different values, and after they are used we check whether their data
         is still there or not
         """
-        with dlm.DataLifecycleManager(
-            check_period=0.5, cleanup_period=2
-        ) as manager:
+
+        class MyApp(BarrierAppDROP):
+            def run(self):
+                pass
+
+        with dlm.DataLifecycleManager(check_period=0.5, cleanup_period=2) as manager:
             a = DirectoryContainer(
                 "a",
                 "a",
@@ -156,8 +157,8 @@ class TestDataLifecycleManager(unittest.TestCase):
                 expireAfterUse=False,
                 dirname=b_dirname,
             )
-            c = BarrierAppDROP("c", "c")
-            d = BarrierAppDROP("d", "d")
+            c = MyApp("c", "c")
+            d = MyApp("d", "d")
             a.addConsumer(c)
             a.addConsumer(d)
             b.addConsumer(c)

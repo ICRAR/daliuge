@@ -4,8 +4,8 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "5d9153e898ae56bd7efb8d62694c7187836b9d79",
-        "eagleVersion": "v5.0.2",
+        "eagleCommitHash": "183ba0391bca8e8629a4e59aded4e4956334e4e7",
+        "eagleVersion": "v6.2.0:eagle-1179",
         "filePath": "apps.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -44,7 +44,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -60,7 +59,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -76,7 +74,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -92,7 +89,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg01",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -108,7 +104,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
@@ -124,14 +119,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -139,18 +131,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -1,
+            "name": "Bash Shell App",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Bash Shell App",
-            "width": 200,
-            "x": 226,
-            "y": 79
+            "x": 238.5,
+            "y": 91.5
         },
         {
             "category": "DynlibApp",
@@ -174,7 +166,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -190,7 +181,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -206,7 +196,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -222,7 +211,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Library path",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "/usr/bin/example"
@@ -238,7 +226,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
@@ -254,14 +241,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -269,18 +253,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -2,
+            "name": "Dynlib App",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Dynlib App",
-            "width": 200,
-            "x": 352,
-            "y": -21
+            "x": 364.5,
+            "y": -8.5
         },
         {
             "category": "Mpi",
@@ -304,7 +288,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -320,7 +303,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -336,7 +318,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -352,7 +333,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num procs",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "4"
@@ -368,7 +348,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
@@ -384,14 +363,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -399,18 +375,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -3,
+            "name": "MPI",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "MPI",
-            "width": 200,
-            "x": 57,
-            "y": -42
+            "x": 69.5,
+            "y": -29.5
         },
         {
             "category": "Docker",
@@ -434,7 +410,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -450,7 +425,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -466,7 +440,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -482,7 +455,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Image",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "dockerimage"
@@ -498,7 +470,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Command",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "docker up"
@@ -514,7 +485,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "User",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -530,7 +500,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Ensure User And Switch",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -546,7 +515,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Remove Container",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -562,7 +530,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Additional Bindings",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -578,7 +545,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
@@ -594,14 +560,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -609,24 +572,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -4,
+            "name": "Docker",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Docker",
-            "width": 200,
-            "x": 518,
-            "y": -148
+            "x": 530.5,
+            "y": -135.5
         },
         {
-            "category": "Component",
+            "category": "PythonApp",
             "categoryType": "Application",
             "collapsed": false,
-            "color": "#0059a5",
+            "color": "#FF66CC",
             "commitHash": "",
             "dataHash": "",
             "description": "An application component in the form of a Python app",
@@ -644,7 +607,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -660,7 +622,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -676,7 +637,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -692,7 +652,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "dropclass",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "test.graphsRepository"
@@ -708,7 +667,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
@@ -724,14 +682,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -739,18 +694,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -5,
+            "name": "Python App",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Python App",
-            "width": 200,
-            "x": 160,
-            "y": -208
+            "x": 172.5,
+            "y": -195.5
         }
     ]
 }

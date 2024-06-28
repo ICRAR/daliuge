@@ -2,7 +2,6 @@
     "linkDataArray": [
         {
             "closesLoop": false,
-            "dataType": "Object.",
             "from": -2,
             "fromPort": "c12aa833-43a9-4c1e-abaa-c77396010a31",
             "loop_aware": "0",
@@ -14,8 +13,8 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "3892206c37e16795b0f0b2d10b8da8e065b77a59",
-        "eagleVersion": "v5.0.2:eagle-994",
+        "eagleCommitHash": "183ba0391bca8e8629a4e59aded4e4956334e4e7",
+        "eagleVersion": "v6.2.0:eagle-1179",
         "filePath": "test-20190830-110556.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -119,8 +118,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -128,18 +125,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -2,
+            "name": "Enter label",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "name": "Enter label",
-            "width": 200,
-            "x": 457,
-            "y": 349
+            "x": 469.5,
+            "y": 361.5
         },
         {
             "category": "File",
@@ -155,14 +152,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "7a9a651c-4cc3-42e0-8fa6-1b43e383fd19",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.file.FileDROP"
                 },
                 {
@@ -256,8 +255,6 @@
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -265,18 +262,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -1,
+            "name": "File",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "name": "File",
-            "width": 200,
-            "x": 789,
-            "y": 299
+            "x": 801.5,
+            "y": 311.5
         }
     ]
 }

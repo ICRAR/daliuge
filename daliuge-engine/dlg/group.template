@@ -39,3 +39,6 @@ nogroup:x:65534:
 crontab:x:101:
 messagebus:x:102:
 ssh:x:103:
+avahi:x:103:
+netdev:x:104:
+

@@ -23,7 +23,7 @@ from asyncio.log import logger
 import functools
 import json
 import os
-from time import sleep
+import pytest
 import unittest
 
 import numpy as np
@@ -107,6 +107,12 @@ def sum_with_user_defined_default(a, b=MyType(10)):
     return a + b.x
 
 
+@pytest.fixture(scope="function", autouse=True)
+def change_test_dir(request, monkeypatch):
+    print(f">>>>> path: {request.fspath.dirname}")
+    monkeypatch.chdir(request.fspath.dirname)
+
+
 class _TestDelayed(object):
     """Test definitions run under non-delayed, dlg_delayed and possibly dask_delayed contexts"""
 
@@ -161,9 +167,7 @@ class _TestDelayed(object):
             delayed(3.0),
             delayed(4.0),
         )
-        doubles = [
-            delayed(lambda i: i * 2)(x) for x in (one, two, three, four)
-        ]
+        doubles = [delayed(lambda i: i * 2)(x) for x in (one, two, three, four)]
         result = compute(doubles)
         self.assertEqual([2.0, 4.0, 6.0, 8.0], result)
 
@@ -190,10 +194,6 @@ class _TestDelayed(object):
         compute = self.compute
 
         self.assertEqual(compute(delayed(sum_with_kwargs)(1)), 1)
-        # self.assertEqual(compute(delayed(sum_with_kwargs)(1, b=20)), 21)
-        # self.assertEqual(
-        # compute(delayed(sum_with_kwargs)(1, b=20, x=-111)), 21
-        # )
 
     def test_with_args_and_kwargs(self):
         """Tests that delayed() works correctly with kwargs"""
@@ -201,21 +201,13 @@ class _TestDelayed(object):
         compute = self.compute
 
         self.assertEqual(compute(delayed(sum_with_args_and_kwarg)(1)), 1)
-        # self.assertEqual(
-        #     compute(delayed(sum_with_args_and_kwarg)(1, 20, b=100, x=-1000)), 121
-        # )
-        # self.assertEqual(
-        #     compute(delayed(sum_with_args_and_kwarg)(1, 20, 30, b=100, x=-2000)), 151
-        # )
 
     def test_with_user_defined_default(self):
         """Tests that delayed() works with default values that are not json-dumpable"""
         delayed = self.delayed
         compute = self.compute
 
-        self.assertEqual(
-            compute(delayed(sum_with_user_defined_default)(1)), 11
-        )
+        self.assertEqual(compute(delayed(sum_with_user_defined_default)(1)), 11)
         self.assertEqual(
             compute(delayed(sum_with_user_defined_default)(1, MyType(20))), 21
         )
@@ -264,11 +256,10 @@ class TestDlgDelayed(_TestDelayed, unittest.TestCase):
         return dlg_delayed(f, *args, **kwargs)
 
     def setUp(self):
-        unittest.TestCase.setUp(self)
         env = os.environ.copy()
-        env["PYTHONPATH"] = (
-            env.get("PYTHONPATH", "") + ":" + os.getcwd() + "/daliuge-engine"
-        )
+        env["PYTHONPATH"] = f"{env.get('PYTHONPATH', '')}:{os.path.abspath('.')}/.."
+        print(f">>>> env: {env['PYTHONPATH']}")
+        unittest.TestCase.setUp(self)
         self.dmProcess = tool.start_process("nm", ["-vvv"], env=env)
 
     def compute(self, val):

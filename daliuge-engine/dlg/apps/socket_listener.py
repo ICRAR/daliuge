@@ -57,6 +57,7 @@ logger = logging.getLogger(__name__)
 # @param category PythonApp
 # @param tag daliuge
 # @param dropclass dlg.apps.socket_listener.SocketListener/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name socket_listener/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
@@ -67,6 +68,8 @@ logger = logging.getLogger(__name__)
 # @param bufsize 4096/String/ApplicationArgument/NoPort/ReadWrite//False/False/Receive buffer size
 # @param reuseAddr False/Boolean/ApplicationArgument/NoPort/ReadWrite//False/False/
 # @param data /String/ApplicationArgument/OutputPort/ReadWrite//False/False/
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class SocketListenerApp(BarrierAppDROP):
     """
@@ -102,9 +105,7 @@ class SocketListenerApp(BarrierAppDROP):
         # At least one output should have been added
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                "At least one output should have been added to %r" % self
-            )
+            raise Exception("At least one output should have been added to %r" % self)
 
         # Don't really listen for data if running dry
         if self._dryRun:
@@ -114,18 +115,14 @@ class SocketListenerApp(BarrierAppDROP):
         serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         with contextlib.closing(serverSocket):
             if self.reuseAddr:
-                serverSocket.setsockopt(
-                    socket.SOL_SOCKET, socket.SO_REUSEADDR, 1
-                )
+                serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             serverSocket.bind((self.host, self.port))
             serverSocket.listen(1)
             logger.debug(
                 "Listening for a TCP connection on %s:%d", self.host, self.port
             )
             clientSocket, address = serverSocket.accept()
-            logger.info(
-                "Accepted connection from %s:%d", address[0], address[1]
-            )
+            logger.info("Accepted connection from %s:%d", address[0], address[1])
 
         # Simply write the data we receive into our outputs
         n = 0
@@ -148,8 +145,6 @@ class SocketListenerApp(BarrierAppDROP):
 
     def addStreamingInput(self, streamingInputDrop, back=True):
         raise InvalidRelationshipException(
-            DROPRel(
-                streamingInputDrop.uid, DROPLinkType.STREAMING_INPUT, self.uid
-            ),
+            DROPRel(streamingInputDrop.uid, DROPLinkType.STREAMING_INPUT, self.uid),
             "SocketListenerApp should have no inputs",
         )
