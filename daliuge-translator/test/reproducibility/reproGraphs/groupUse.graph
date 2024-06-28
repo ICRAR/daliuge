@@ -4,8 +4,8 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "5d9153e898ae56bd7efb8d62694c7187836b9d79",
-        "eagleVersion": "v5.0.2",
+        "eagleCommitHash": "183ba0391bca8e8629a4e59aded4e4956334e4e7",
+        "eagleVersion": "v6.2.0:eagle-1179",
         "filePath": "groupUse.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -26,7 +26,7 @@
             "category": "GroupBy",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "Placeholder 'group by' description",
@@ -44,7 +44,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group key",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "None"
@@ -60,14 +59,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group axis",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "frequency"
                 }
             ],
-            "flipPorts": false,
-            "height": 200,
             "inputAppFields": [
                 {
                     "defaultValue": "",
@@ -80,7 +76,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
@@ -96,7 +91,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
@@ -108,6 +102,7 @@
             "inputApplicationType": "UnknownApplication",
             "isGroup": true,
             "key": -1,
+            "name": "Group By",
             "outputAppFields": [
                 {
                     "defaultValue": "",
@@ -120,7 +115,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
@@ -136,7 +130,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
@@ -147,10 +140,9 @@
             "outputApplicationName": "event",
             "outputApplicationType": "UnknownApplication",
             "paletteDownloadUrl": "",
+            "radius": 44,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Group By",
-            "width": 200,
             "x": 300,
             "y": 100
         },
@@ -176,7 +168,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -192,7 +183,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -208,7 +198,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -224,7 +213,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Arg01",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -240,7 +228,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "InputPort",
                     "value": ""
@@ -256,14 +243,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -271,18 +255,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -2,
+            "name": "Bash Shell App",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Bash Shell App",
-            "width": 200,
-            "x": 386,
-            "y": 444
+            "x": 398.5,
+            "y": 456.5
         }
     ]
 }

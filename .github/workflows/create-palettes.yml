@@ -13,9 +13,9 @@ jobs:
       GITHUB_USERNAME: eagle.updater
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v5
         name: Install Python
         with:
           python-version: '3.9'
@@ -45,8 +45,9 @@ jobs:
       - name: Commit palettes to EAGLE
         env:
           EAGLE_UPDATER_TOKEN: ${{ secrets.EAGLE_UPDATER_TOKEN }}
+          PALETTE_TOKEN: ${{ secrets.PALETTE_TOKEN }}
         run: |
-          git clone https://$EAGLE_UPDATER_TOKEN@github.com/ICRAR/EAGLE_test_repo
+          git clone https://$PALETTE_TOKEN@github.com/ICRAR/EAGLE_test_repo
           mkdir -p EAGLE_test_repo/$PROJECT_NAME
           mv $OUTPUT_FILENAME.palette EAGLE_test_repo/$PROJECT_NAME/
           mv $OUTPUT_FILENAME-template.palette EAGLE_test_repo/$PROJECT_NAME/

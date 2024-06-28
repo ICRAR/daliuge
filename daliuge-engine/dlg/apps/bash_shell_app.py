@@ -41,7 +41,11 @@ import types
 import json
 
 from .. import droputils, utils
-from dlg.named_port_utils import replace_named_ports
+from dlg.named_port_utils import (
+    DropParser,
+    get_port_reader_function,
+    replace_named_ports,
+)
 from ..ddap_protocol import AppDROPStates, DROPStates
 from ..apps.app_base import BarrierAppDROP, AppDROP
 from ..exceptions import InvalidDropException
@@ -51,6 +55,7 @@ from ..meta import (
     dlg_batch_input,
     dlg_batch_output,
     dlg_streaming_input,
+    dlg_enum_param,
 )
 
 
@@ -139,9 +144,7 @@ def prepare_input_channel(data):
         chan = lambda: None  # a simple object where attributes can be set!
         chan.read = pipe.read
         chan.fileno = pipe.fileno
-        chan.close = types.MethodType(
-            lambda s: close_and_remove(pipe, pipe_name), chan
-        )
+        chan.close = types.MethodType(lambda s: close_and_remove(pipe, pipe_name), chan)
         return chan
 
     elif data.startswith(b"tcp://"):
@@ -165,6 +168,7 @@ class BashShellBase(object):
     # TODO: use the shlex module for most of the construction of the
     # command line to get a proper and safe shell syntax
     command = dlg_string_param("Bash command", None)
+    input_parser: DropParser = dlg_enum_param(DropParser, "input_parser", DropParser.PICKLE)  # type: ignore
 
     def initialize(self, **kwargs):
         super(BashShellBase, self).initialize(**kwargs)
@@ -175,9 +179,7 @@ class BashShellBase(object):
         self._cmdLineArgs = self._popArg(kwargs, "command_line_arguments", "")
         self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
         self._argumentPrefix = self._popArg(kwargs, "argumentPrefix", "--")
-        self._paramValueSeparator = self._popArg(
-            kwargs, "paramValueSeparator", " "
-        )
+        self._paramValueSeparator = self._popArg(kwargs, "paramValueSeparator", " ")
 
         if not self.command:
             self.command = self._popArg(kwargs, "command", None)
@@ -205,12 +207,8 @@ class BashShellBase(object):
         logger.debug("Parameters found: %s", json.dumps(self.parameters))
         logger.debug("Bash Inputs: %s; Bash Outputs: %s", inputs, outputs)
         # we only support passing a path for bash apps
-        fsInputs = {
-            uid: i for uid, i in inputs.items() if droputils.has_path(i)
-        }
-        fsOutputs = {
-            uid: o for uid, o in outputs.items() if droputils.has_path(o)
-        }
+        fsInputs = {uid: i for uid, i in inputs.items() if droputils.has_path(i)}
+        fsOutputs = {uid: o for uid, o in outputs.items() if droputils.has_path(o)}
         dataURLInputs = {
             uid: i for uid, i in inputs.items() if not droputils.has_path(i)
         }
@@ -218,12 +216,11 @@ class BashShellBase(object):
             uid: o for uid, o in outputs.items() if not droputils.has_path(o)
         }
         # deal with named ports
-        inport_names = (
-            self.parameters["inputs"] if "inputs" in self.parameters else []
-        )
+        inport_names = self.parameters["inputs"] if "inputs" in self.parameters else []
         outport_names = (
             self.parameters["outputs"] if "outputs" in self.parameters else []
         )
+        reader = get_port_reader_function(self.input_parser)
         keyargs, pargs = replace_named_ports(
             inputs.items(),
             outputs.items(),
@@ -232,8 +229,11 @@ class BashShellBase(object):
             self.appArgs,
             argumentPrefix=self._argumentPrefix,
             separator=self._paramValueSeparator,
+            parser=reader,
         )
-        argumentString = f"{' '.join(map(str,pargs + keyargs))}"  # add kwargs to end of pargs
+        argumentString = (
+            f"{' '.join(map(str,pargs + keyargs))}"  # add kwargs to end of pargs
+        )
         # complete command including all additional parameters and optional redirects
         if len(argumentString.strip()) > 0:
             # the _cmdLineArgs would very likely make the command line invalid
@@ -251,15 +251,13 @@ class BashShellBase(object):
         # Replace inputs/outputs in command line with paths or data URLs
         cmd = droputils.replace_path_placeholders(cmd, fsInputs, fsOutputs)
 
-        cmd = droputils.replace_dataurl_placeholders(
-            cmd, dataURLInputs, dataURLOutputs
-        )
+        cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
 
         # Pass down daliuge-specific information to the subprocesses as environment variables
         env = os.environ.copy()
         env.update({"DLG_UID": self._uid})
-        if self._dlg_session:
-            env.update({"DLG_SESSION_ID": self._dlg_session.sessionId})
+        if self._dlg_session_id:
+            env.update({"DLG_SESSION_ID": self._dlg_session_id})
 
         env.update({"DLG_ROOT": utils.getDlgDir()})
 
@@ -288,26 +286,18 @@ class BashShellBase(object):
             pstdout = b"<piped-out>"
         pcode = process.returncode
         end = time.time()
-        logger.info(
-            "Finished in %.3f [s] with exit code %d", (end - start), pcode
-        )
+        logger.info("Finished in %.3f [s] with exit code %d", (end - start), pcode)
 
-        logger.info(
-            "Finished in %.3f [s] with exit code %d", (end - start), pcode
-        )
+        logger.info("Finished in %.3f [s] with exit code %d", (end - start), pcode)
         self._recompute_data["stdout"] = str(pstdout)
         self._recompute_data["stderr"] = str(pstderr)
         self._recompute_data["status"] = str(pcode)
         if pcode == 0 and logger.isEnabledFor(logging.DEBUG):
             logger.debug(
-                message_stdouts(
-                    "Command finished successfully", pstdout, pstderr
-                )
+                message_stdouts("Command finished successfully", pstdout, pstderr)
             )
         elif pcode != 0:
-            message = "Command didn't finish successfully (exit code %d)" % (
-                pcode,
-            )
+            message = "Command didn't finish successfully (exit code %d)" % (pcode,)
             logger.error(message_stdouts(message, pstdout, pstderr))
             raise Exception(message)
 
@@ -388,11 +378,14 @@ class StreamingInputBashAppBase(BashShellBase, AppDROP):
 # @param paramValueSeparator " "/String/ComponentParameter/NoPort/ReadWrite//False/False/Separator character(s) between parameters on the command line
 # @param argumentPrefix "--"/String/ComponentParameter/NoPort/ReadWrite//False/False/Prefix to each keyed argument on the command line
 # @param dropclass dlg.apps.bash_shell_app.BashShellApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param base_name bash_shell_app/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class BashShellApp(BashShellBase, BarrierAppDROP):
     """

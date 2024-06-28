@@ -46,9 +46,12 @@ case "$1" in
         echo ""
         echo ""
         echo ">>>>> docker-slim output <<<<<<<<<"
-        docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock dslim/docker-slim build --include-shell \
-        --include-path /usr/local/lib --include-path /usr/local/bin --include-path /daliuge --include-path /dlg \
-        --http-probe=false --tag=icrar/daliuge-translator:${VCS_TAG} icrar/daliuge-translator.big:${VCS_TAG}
+        # docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock dslim/docker-slim build --include-shell \
+        # --include-path /usr/bin/hostname --include-path /usr/local/lib --include-path /usr/local/bin --include-path /daliuge --include-path /dlg \
+        # --http-probe=false --tag=icrar/daliuge-translator:${VCS_TAG} icrar/daliuge-translator.big:${VCS_TAG}
+        slim build --include-shell \
+        --include-path /usr/bin/hostname --include-path /usr/local/lib --include-path /usr/local/bin --include-path /daliuge --include-path /dlg \
+        --include-bin /usr/sbin/service --include-bin /usr/bin/hostname --http-probe=false --tag=icrar/daliuge-translator.slim:${VCS_TAG} icrar/daliuge-translator.big:${VCS_TAG}
 	    ;;
     *)
         echo "Usage: build_translator.sh <dep|dev|slim>"

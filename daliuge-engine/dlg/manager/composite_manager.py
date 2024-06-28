@@ -184,7 +184,7 @@ class CompositeManager(DROPManager):
         self._dmCheckerThread.start()
 
     def stopDMChecker(self):
-        if not self._dmCheckerEvt.isSet():
+        if not self._dmCheckerEvt.is_set():
             self._dmCheckerEvt.set()
             self._dmCheckerThread.join()
 
@@ -198,9 +198,14 @@ class CompositeManager(DROPManager):
     def _checkDM(self):
         while True:
             for host in self._dmHosts:
+                if ":" in host:
+                    host, port = host.split(":")
+                    port = int(port)
+                else:
+                    port = constants.NODE_DEFAULT_REST_PORT
                 if self._dmCheckerEvt.is_set():
                     break
-                if not self.check_dm(host, timeout=self._dmCheckTimeout):
+                if not self.check_dm(host, port, timeout=self._dmCheckTimeout):
                     logger.error(
                         "Couldn't contact manager for host %s, will try again later",
                         host,
@@ -213,7 +218,15 @@ class CompositeManager(DROPManager):
         return self._dmHosts[:]
 
     def addDmHost(self, host):
-        self._dmHosts.append(host)
+        if ":" not in host:
+            if self._subDmId == "node":
+                host += f":{constants.NODE_DEFAULT_REST_PORT}"
+            elif self._subDmId == "island":
+                host += f":{constants.ISLAND_DEFAULT_REST_PORT}"
+        if host not in self._dmHosts:
+            self._dmHosts.append(host)
+        else:
+            logger.warning("Host %s already registered.", host)
 
     def removeDmHost(self, host):
         if host in self._dmHosts:
@@ -235,6 +248,8 @@ class CompositeManager(DROPManager):
 
     def check_dm(self, host, port=None, timeout=10):
         port = port or self._dmPort
+        if ":" in host:
+            host, port = host.split(":")
         logger.debug("Checking DM presence at %s:%d", host, port)
         dm_is_there = portIsOpen(host, port, timeout)
         return dm_is_there
@@ -256,12 +271,13 @@ class CompositeManager(DROPManager):
     # If "collect" is given, then individual results are also kept in the given
     # structure, which is either a dictionary or a list
     #
-    def _do_in_host(
-        self, action, sessionId, exceptions, f, collect, port, iterable
-    ):
+    def _do_in_host(self, action, sessionId, exceptions, f, collect, port, iterable):
         host = iterable
         if isinstance(iterable, (list, tuple)):
             host = iterable[0]
+        if ":" in host:
+            host, port = host.split(":")
+            port = int(port)
 
         try:
             with self.dmAt(host, port) as dm:
@@ -281,15 +297,14 @@ class CompositeManager(DROPManager):
                 sessionId,
             )
 
-    def replicate(
-        self, sessionId, f, action, collect=None, iterable=None, port=None
-    ):
+    def replicate(self, sessionId, f, action, collect=None, iterable=None, port=None):
         """
         Replicates the given function call on each of the underlying drop managers
         """
         thrExs = {}
         iterable = iterable or self._dmHosts
         port = port or self._dmPort
+        # logger.debug("Hosts: %s", iterable)
         self._tp.map(
             functools.partial(
                 self._do_in_host, action, sessionId, thrExs, f, collect, port
@@ -297,7 +312,7 @@ class CompositeManager(DROPManager):
             iterable,
         )
         if thrExs:
-            msg = f"More than one error occurred while {action} on session {sessionId}"
+            msg = f"ERRROR(s) occurred while {action} for session {sessionId}"
             raise SubManagerException(msg, thrExs)
 
     #
@@ -318,9 +333,7 @@ class CompositeManager(DROPManager):
 
     def _cancelSession(self, dm, host, sessionId):
         dm.cancelSession(sessionId)
-        logger.debug(
-            "Successfully cancelled session %s on %s", sessionId, host
-        )
+        logger.debug("Successfully cancelled session %s on %s", sessionId, host)
 
     def cancelSession(self, sessionId):
         """
@@ -331,9 +344,7 @@ class CompositeManager(DROPManager):
 
     def _destroySession(self, dm, host, sessionId):
         dm.destroySession(sessionId)
-        logger.debug(
-            "Successfully destroyed session %s on %s", sessionId, host
-        )
+        logger.debug("Successfully destroyed session %s on %s", sessionId, host)
 
     def destroySession(self, sessionId):
         """
@@ -355,9 +366,7 @@ class CompositeManager(DROPManager):
     def _addGraphSpec(self, dm, host_and_graphspec, sessionId):
         host, graphSpec = host_and_graphspec
         dm.addGraphSpec(sessionId, graphSpec)
-        logger.info(
-            "Successfully appended graph to session %s on %s", sessionId, host
-        )
+        logger.info("Successfully appended graph to session %s on %s", sessionId, host)
 
     def addGraphSpec(self, sessionId, graphSpec):
         # The first step is to break down the graph into smaller graphs that
@@ -404,9 +413,7 @@ class CompositeManager(DROPManager):
         logger.info("Graph split into %r", perPartition.keys())
         inter_partition_rels = []
         for dropSpecs in perPartition.values():
-            inter_partition_rels += graph_loader.removeUnmetRelationships(
-                dropSpecs
-            )
+            inter_partition_rels += graph_loader.removeUnmetRelationships(dropSpecs)
         sanitize_relations(inter_partition_rels, self._graph)
         logger.info(
             "Removed (and sanitized) %d inter-dm relationships",
@@ -429,9 +436,7 @@ class CompositeManager(DROPManager):
 
         # Create the individual graphs on each DM now that they are correctly
         # separated.
-        logger.info(
-            "Adding individual graphSpec of session %s to each DM", sessionId
-        )
+        logger.info("Adding individual graphSpec of session %s to each DM", sessionId)
         for partition in perPartition:
             if self._graph.get("reprodata") is not None:
                 perPartition[partition].append(self._graph["reprodata"])
@@ -601,4 +606,4 @@ class MasterManager(CompositeManager):
             pkeyPath=pkeyPath,
             dmCheckTimeout=dmCheckTimeout,
         )
-        logger.info("Created MasterManager for hosts: %r", self._dmHosts)
+        logger.info("Created MasterManager for DIM hosts: %r", self._dmHosts)

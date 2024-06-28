@@ -2,7 +2,6 @@
     "linkDataArray": [
         {
             "closesLoop": false,
-            "dataType": "String",
             "from": -1,
             "fromPort": "09b9f140-837d-40eb-99b9-060a5559ce15",
             "loop_aware": "0",
@@ -14,8 +13,8 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "4af0ebaf63e777c367b16bd8c03a0da5004891d5",
-        "eagleVersion": "v5.0.2",
+        "eagleCommitHash": "183ba0391bca8e8629a4e59aded4e4956334e4e7",
+        "eagleVersion": "v6.2.0:eagle-1179",
         "filePath": "HelloWorld_simple.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -54,7 +53,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "greet",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "Everybody"
@@ -70,7 +68,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.apps.simple.HelloWorldApp"
@@ -86,7 +83,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 1
@@ -102,7 +98,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 1
@@ -118,7 +113,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -134,14 +128,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "hello",
                     "type": "String",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -149,18 +140,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -1,
+            "name": "HelloWorldApp",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "HelloWorldApp",
-            "width": 200,
-            "x": 79.15975327762027,
-            "y": 157.58665007965354
+            "x": 91.65975327762027,
+            "y": 170.08665007965354
         },
         {
             "category": "File",
@@ -176,14 +167,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "a1594e7b-b8f3-4ab3-b751-9de6164cc553",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.file.FileDROP"
                 },
                 {
@@ -197,7 +190,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -213,7 +205,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -229,7 +220,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Check file path exists",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -245,7 +235,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "File path",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "hello.txt"
@@ -261,7 +250,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Directory name",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -277,7 +265,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -293,14 +280,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "hello",
                     "type": "String",
                     "usage": "InputOutput",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -308,18 +292,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -2,
+            "name": "hello",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "hello",
-            "width": 200,
-            "x": 343.61809816257795,
-            "y": 163.98988923310688
+            "x": 356.11809816257795,
+            "y": 176.48988923310688
         }
     ]
 }

@@ -60,9 +60,7 @@ def unroll(lg_path, oid_prefix, zerorun=False, app=None):
     from ..dropmake.pg_generator import unroll
 
     logger.info("Start to unroll %s", lg_path)
-    return unroll(
-        _open_i(lg_path), oid_prefix=oid_prefix, zerorun=zerorun, app=app
-    )
+    return unroll(_open_i(lg_path), oid_prefix=oid_prefix, zerorun=zerorun, app=app)
 
 
 _param_types = {
@@ -209,12 +207,8 @@ def dlg_fill(parser, args):
     # putting all parameters together in a single dictionary
     for p in opts.parameter:
         if param_spec_type(p) is None:
-            parser.error(
-                "Parameter %s is neither JSON nor has it key=value form" % p
-            )
-    params = [
-        p.split("=") for p in opts.parameter if param_spec_type(p) == "kv"
-    ]
+            parser.error("Parameter %s is neither JSON nor has it key=value form" % p)
+    params = [p.split("=") for p in opts.parameter if param_spec_type(p) == "kv"]
     params = dict(params)
     for json_param in (
         json.loads(p) for p in opts.parameter if param_spec_type(p) == "json"
@@ -281,7 +275,7 @@ def dlg_unroll(parser, args):
     pgt = unroll(
         opts.lg_path, opts.oid_prefix, zerorun=opts.zerorun, app=apps[opts.app]
     )
-    logger.debug(">>> pgt: %s", pgt)
+    # logger.debug(">>> pgt: %s", pgt)
     dump(init_pgt_unroll_repro_data(pgt))
 
 
@@ -541,9 +535,7 @@ def register_commands():
         "A Web server for the Logical Graph Editor",
         "dlg.dropmake.web.translator_rest:run",
     )
-    tool.cmdwrap(
-        "submit", "Submits a Physical Graph to a Drop Manager", dlg_submit
-    )
+    tool.cmdwrap("submit", "Submits a Physical Graph to a Drop Manager", dlg_submit)
     tool.cmdwrap(
         "map",
         "Maps a Physical Graph Template to resources and produces a Physical Graph",
@@ -559,7 +551,5 @@ def register_commands():
         "Divides a Physical Graph Template into N logical partitions",
         dlg_partition,
     )
-    tool.cmdwrap(
-        "unroll-and-partition", "unroll + partition", dlg_unroll_and_partition
-    )
+    tool.cmdwrap("unroll-and-partition", "unroll + partition", dlg_unroll_and_partition)
     tool.cmdwrap("fill", "Fill a Logical Graph with parameters", dlg_fill)

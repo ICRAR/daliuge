@@ -4,8 +4,8 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "5d9153e898ae56bd7efb8d62694c7187836b9d79",
-        "eagleVersion": "v5.0.2",
+        "eagleCommitHash": "183ba0391bca8e8629a4e59aded4e4956334e4e7",
+        "eagleVersion": "v6.2.0:eagle-1179",
         "filePath": "files.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -44,7 +44,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -60,7 +59,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -76,7 +74,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
@@ -92,14 +89,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "dropclass",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -107,18 +101,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -1,
+            "name": "Memory",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Memory",
-            "width": 200,
-            "x": 345,
-            "y": 76
+            "x": 357.5,
+            "y": 88.5
         },
         {
             "category": "File",
@@ -142,7 +136,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -158,7 +151,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -174,7 +166,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Check file path exists",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -190,7 +181,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "File path",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -206,7 +196,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Directory name",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -222,7 +211,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -238,7 +226,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
@@ -254,14 +241,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "dropclass",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.data.drops.file.FileDROP"
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -269,18 +253,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -2,
+            "name": "File",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "File",
-            "width": 200,
-            "x": 282,
-            "y": 155
+            "x": 294.5,
+            "y": 167.5
         },
         {
             "category": "NGAS",
@@ -304,7 +288,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -320,7 +303,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -336,7 +318,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "event",
                     "type": "Unknown",
                     "usage": "OutputPort",
                     "value": ""
@@ -352,14 +333,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "dropclass",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.data.drops.ngas.NgasDROP"
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -367,18 +345,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -4,
+            "name": "NGAS",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "NGAS",
-            "width": 200,
-            "x": 323,
-            "y": 255
+            "x": 335.5,
+            "y": 267.5
         }
     ]
 }

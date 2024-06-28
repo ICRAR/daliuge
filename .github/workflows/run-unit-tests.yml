@@ -26,9 +26,9 @@ jobs:
             translator: yes
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v5
         name: Install Python
         with:
           python-version: ${{ matrix.python-version }}
@@ -56,15 +56,15 @@ jobs:
           echo "COVFILES=$COVFILES" >> $GITHUB_ENV
           cd daliuge-translator
           pip install -r test-requirements.txt
-          py.test --cov
+          py.test --cov --show-capture=no
 
-      - name: Run daliugen-engine tests
+      - name: Run daliuge-engine tests
         if: ${{ matrix.engine == 'yes' }}
         run: |
           COVFILES="$COVFILES daliuge-engine/.coverage"
           echo "COVFILES=$COVFILES" >> $GITHUB_ENV
           cd daliuge-engine
-          py.test --cov
+          py.test --cov --show-capture=no
 
       - name: Combine coverage
         run: coverage combine $COVFILES

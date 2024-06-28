@@ -5,8 +5,12 @@ from urllib.parse import urlparse
 
 from dlg import common
 from dlg.clients import CompositeManagerClient
-from dlg.common.reproducibility.reproducibility import init_lg_repro_data, init_lgt_repro_data, \
-    init_pgt_unroll_repro_data, init_pgt_partition_repro_data
+from dlg.common.reproducibility.reproducibility import (
+    init_lg_repro_data,
+    init_lgt_repro_data,
+    init_pgt_unroll_repro_data,
+    init_pgt_partition_repro_data,
+)
 from dlg.dropmake.lg import load_lg
 from dlg.dropmake.pg_generator import unroll, partition
 from dlg.restutils import RestClientException
@@ -117,7 +121,17 @@ def parse_mgr_url(mgr_url):
     return mparse.hostname, mport, mprefix
 
 
-def make_algo_param_dict(min_goal, ptype, max_load_imb, max_cpu, time_greedy, deadline, topk, swam_size, max_mem):
+def make_algo_param_dict(
+    min_goal,
+    ptype,
+    max_load_imb,
+    max_cpu,
+    time_greedy,
+    deadline,
+    topk,
+    swam_size,
+    max_mem,
+):
     return {
         "min_goal": min_goal,
         "ptype": ptype,
@@ -127,13 +141,19 @@ def make_algo_param_dict(min_goal, ptype, max_load_imb, max_cpu, time_greedy, de
         "deadline": deadline,
         "topk": topk,
         "swarm_size": swam_size,
-        "max_mem": max_mem
+        "max_mem": max_mem,
     }
 
 
-def unroll_and_partition_with_params(lgt: dict, test: bool, algorithm: str = "none",
-                                     num_partitions: int = 1, num_islands: int = 0,
-                                     par_label: str = "Partition", algorithm_parameters=None):
+def unroll_and_partition_with_params(
+    lgt: dict,
+    test: bool,
+    algorithm: str = "none",
+    num_partitions: int = 1,
+    num_islands: int = 0,
+    par_label: str = "Partition",
+    algorithm_parameters=None,
+):
     if algorithm_parameters is None:
         algorithm_parameters = {}
     app = "dlg.apps.simple.SleepApp" if test else None

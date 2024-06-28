@@ -16,7 +16,7 @@
             "fromPort": "6e7b4f87-1a46-40bd-95ca-835249392af0",
             "loop_aware": "0",
             "to": -20,
-            "toPort": "eab5f4bd-f279-428a-9cc1-cb30ff5e0d2c"
+            "toPort": "153420d8-21f9-4e39-bd9b-5ed487aa907c"
         },
         {
             "closesLoop": false,
@@ -67,7 +67,7 @@
             "closesLoop": false,
             "dataType": "Object.Array",
             "from": -23,
-            "fromPort": "3702e5b8-36d1-403e-94f7-a9352d10b84b",
+            "fromPort": "7b6b475f-3bc8-4fb8-bfd5-10ccf381a61b",
             "loop_aware": "0",
             "to": -10,
             "toPort": "e53d93aa-2141-4d1b-b126-c21d204e9989"
@@ -77,8 +77,8 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "7d0ae821e5e620324a1735bfe513eb85f44ae956",
-        "eagleVersion": "v5.0.2",
+        "eagleCommitHash": "80717598c275f0e9b15a46e15e79383e0434e85f",
+        "eagleVersion": "v6.2.8",
         "filePath": "eagle_gather_empty.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
@@ -109,14 +109,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "ad162680-1899-4115-999f-f3c76b9df352",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -130,7 +132,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -146,7 +147,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -162,7 +162,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "string",
                     "type": "Object.Array",
                     "usage": "InputPort",
                     "value": ""
@@ -178,15 +177,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "string",
                     "type": "Object.Array",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -20,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -194,24 +190,24 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -7,
+            "name": "image per freq",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "image per freq",
-            "width": 200,
-            "x": 808,
-            "y": 473
+            "x": 820.5,
+            "y": 485.5
         },
         {
             "category": "Scatter",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "",
@@ -225,13 +221,11 @@
                     "keyAttribute": false,
                     "name": "num_of_copies",
                     "options": [],
-                    "parameterType": "ApplicationArgument",
+                    "parameterType": "ConstructParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Number of copies",
                     "type": "Unknown",
-                    "usage": "NoPort",
                     "usage": "NoPort",
                     "value": "4"
                 },
@@ -246,15 +240,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Scatter axis",
                     "type": "Unknown",
-                    "usage": "NoPort",
                     "usage": "NoPort",
                     "value": "time"
                 }
             ],
-            "flipPorts": false,
-            "height": 475.3533398520922,
             "inputAppFields": [
                 {
                     "defaultValue": "4",
@@ -267,7 +257,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Scatter dimension",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 4
@@ -283,7 +272,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -299,7 +287,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Input error rate (%)",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 0
@@ -315,7 +302,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Number of tries",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 1
@@ -331,7 +317,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "Application Class",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.apps.simple.GenericScatterApp"
@@ -347,7 +332,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "Execution Time",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -363,7 +347,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "No. of CPUs",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 1
@@ -379,25 +362,8 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Array",
                     "type": "Object.Array",
-                    "usage": "OutputPort",
-                    "value": ""
-                },
-                {
-                    "defaultValue": "",
-                    "description": "A numpy array of arrays, where the first axis is of length <numSplit>",
-                    "id": "eab5f4bd-f279-428a-9cc1-cb30ff5e0d2c",
-                    "keyAttribute": false,
-                    "name": "array",
-                    "options": [],
-                    "parameterType": "ApplicationArgument",
-                    "positional": false,
-                    "precious": false,
-                    "readonly": false,
-                    "text": "Array",
-                    "type": "Object.",
-                    "usage": "InputPort",
+                    "usage": "InputOutput",
                     "value": ""
                 }
             ],
@@ -407,18 +373,18 @@
             "inputApplicationType": "PythonApp",
             "isGroup": true,
             "key": -20,
+            "name": "ms-transform",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 223.08032512549525,
             "repositoryUrl": "",
             "subject": null,
-            "text": "ms-transform",
-            "width": 475.0600195562764,
-            "x": 547,
-            "y": 354
+            "x": 709.9481123062169,
+            "y": 599.2225556642015
         },
         {
             "category": "BashShellApp",
@@ -442,7 +408,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -458,7 +423,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -474,7 +438,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -490,7 +453,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "string",
                     "type": "Object.Array",
                     "usage": "InputPort",
                     "value": ""
@@ -506,15 +468,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "string",
                     "type": "Object.Array",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -20,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -522,18 +481,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -22,
+            "name": "Clean",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Clean",
-            "width": 200,
-            "x": 668,
-            "y": 605
+            "x": 680.5,
+            "y": 617.5
         },
         {
             "category": "File",
@@ -549,14 +508,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "0a791548-629e-4896-9cdc-a30808cbc021",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.file.FileDROP"
                 },
                 {
@@ -570,7 +531,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -586,7 +546,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -602,7 +561,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "string",
                     "type": "Object.Array",
                     "usage": "InputPort",
                     "value": ""
@@ -618,15 +576,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "string",
                     "type": "Object.Array",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -20,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -634,18 +589,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -4,
+            "name": "buffer",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "buffer",
-            "width": 200,
-            "x": 586.8962246124338,
-            "y": 460.1157792988215
+            "x": 599.3962246124338,
+            "y": 472.6157792988215
         },
         {
             "category": "Memory",
@@ -661,14 +616,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "2a6c6290-1a7c-402d-b3c0-9f058ca0b5d8",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -682,7 +639,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -698,7 +654,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -714,7 +669,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "string",
                     "type": "Object.Array",
                     "usage": "InputPort",
                     "value": ""
@@ -730,15 +684,12 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "string",
                     "type": "Object.Array",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
             "group": -20,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -746,18 +697,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -8,
+            "name": "clean statistics",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "clean statistics",
-            "width": 200,
-            "x": 804.1037753875664,
-            "y": 713.3293320295816
+            "x": 816.6037753875664,
+            "y": 725.8293320295816
         },
         {
             "category": "BashShellApp",
@@ -781,7 +732,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Execution time",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -797,7 +747,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Num CPUs",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -813,7 +762,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -829,14 +777,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "string",
                     "type": "Object.",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -844,18 +789,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -5,
+            "name": "Clean",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Clean",
-            "width": 200,
-            "x": 252.31132616269866,
-            "y": 95.86621483429562
+            "x": 264.81132616269866,
+            "y": 108.36621483429562
         },
         {
             "category": "File",
@@ -871,14 +816,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "8a178a05-3dbb-413b-be51-80e261cb0d38",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.file.FileDROP"
                 },
                 {
@@ -892,7 +839,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -908,7 +854,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -924,7 +869,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Check file path exists",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "1"
@@ -940,7 +884,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "File path",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -956,7 +899,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Directory name",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": ""
@@ -972,7 +914,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Persist",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -988,7 +929,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "string",
                     "type": "Object.",
                     "usage": "InputPort",
                     "value": ""
@@ -1004,14 +944,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "string",
                     "type": "Object.",
                     "usage": "OutputPort",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1019,29 +956,28 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -6,
+            "name": "MeasurementSet",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "MeasurementSet",
-            "width": 200,
-            "x": 374,
-            "y": 268
+            "x": 386.5,
+            "y": 280.5
         },
         {
             "category": "Gather",
             "categoryType": "Construct",
             "collapsed": false,
-            "color": "rgb(211 165 0)",
+            "color": "rgb(227 189 100)",
             "commitHash": "",
             "dataHash": "",
             "description": "",
             "drawOrderHint": 0,
-            "expanded": true,
             "expanded": true,
             "fields": [
                 {
@@ -1051,13 +987,11 @@
                     "keyAttribute": false,
                     "name": "num_of_inputs",
                     "options": [],
-                    "parameterType": "ApplicationArgument",
+                    "parameterType": "ConstructParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Number of inputs",
                     "type": "Unknown",
-                    "usage": "NoPort",
                     "usage": "NoPort",
                     "value": "2"
                 },
@@ -1072,15 +1006,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Gather axis",
                     "type": "Unknown",
-                    "usage": "NoPort",
                     "usage": "NoPort",
                     "value": "frequency"
                 }
             ],
-            "flipPorts": false,
-            "height": 200,
             "inputAppFields": [
                 {
                     "defaultValue": "dlg.apps.simple.GenericNpyGatherApp",
@@ -1093,7 +1023,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "Application Class",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "dlg.apps.simple.GenericNpyGatherApp"
@@ -1109,7 +1038,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "Execution Time",
                     "type": "Float",
                     "usage": "NoPort",
                     "value": 5
@@ -1125,7 +1053,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "No. of CPUs",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 1
@@ -1141,7 +1068,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group start",
                     "type": "Boolean",
                     "usage": "NoPort",
                     "value": false
@@ -1157,7 +1083,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Input error rate (%)",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 0
@@ -1173,7 +1098,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Number of tries",
                     "type": "Integer",
                     "usage": "NoPort",
                     "value": 1
@@ -1198,7 +1122,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Function",
                     "type": "Select",
                     "usage": "NoPort",
                     "value": "sum"
@@ -1214,7 +1137,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "Reduce Axes",
                     "type": "String",
                     "usage": "NoPort",
                     "value": "None"
@@ -1230,25 +1152,8 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Array",
                     "type": "Object.Array",
-                    "usage": "InputPort",
-                    "value": ""
-                },
-                {
-                    "defaultValue": "",
-                    "description": "Port carrying the reduced array",
-                    "id": "3702e5b8-36d1-403e-94f7-a9352d10b84b",
-                    "keyAttribute": false,
-                    "name": "array",
-                    "options": [],
-                    "parameterType": "ApplicationArgument",
-                    "positional": false,
-                    "precious": false,
-                    "readonly": false,
-                    "text": "Array",
-                    "type": "Object.Array",
-                    "usage": "OutputPort",
+                    "usage": "InputOutput",
                     "value": ""
                 }
             ],
@@ -1258,16 +1163,16 @@
             "inputApplicationType": "PythonApp",
             "isGroup": true,
             "key": -23,
+            "name": "ImageConcat",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 44,
             "repositoryUrl": "",
             "subject": null,
-            "text": "ImageConcat",
-            "width": 200,
             "x": 1136,
             "y": 258
         },
@@ -1285,14 +1190,16 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "id": "88c71461-5ac9-43fa-a081-487cedb3babb",
                     "keyAttribute": false,
                     "name": "dropclass",
                     "options": [],
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": true,
-                    "text": "dropclass",
                     "type": "String",
+                    "usage": "NoPort",
                     "value": "dlg.data.drops.memory.InMemoryDROP"
                 },
                 {
@@ -1306,7 +1213,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Data volume",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "5"
@@ -1322,7 +1228,6 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "Group end",
                     "type": "Unknown",
                     "usage": "NoPort",
                     "value": "0"
@@ -1338,14 +1243,11 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "text": "string",
                     "type": "Object.Array",
                     "usage": "InputOutput",
                     "value": ""
                 }
             ],
-            "flipPorts": false,
-            "height": 72,
             "inputAppFields": [],
             "inputApplicationDescription": "",
             "inputApplicationKey": null,
@@ -1353,18 +1255,18 @@
             "inputApplicationType": "None",
             "isGroup": false,
             "key": -10,
+            "name": "Cube",
             "outputAppFields": [],
             "outputApplicationDescription": "",
             "outputApplicationKey": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
+            "radius": 25,
             "repositoryUrl": "",
             "subject": null,
-            "text": "Cube",
-            "width": 200,
-            "x": 1389.908228523689,
-            "y": 356.7804453136123
+            "x": 1402.408228523689,
+            "y": 369.2804453136123
         }
     ]
 }

@@ -94,16 +94,13 @@ def addLink(linkType, lhDropSpec, rhOID, force=False):
         if rhOID not in relList:
             relList.append(rhOID)
         else:
-            raise Exception(
-                "DROP %s is already part of %s's %s" % (rhOID, lhOID, rel)
-            )
+            raise Exception("DROP %s is already part of %s's %s" % (rhOID, lhOID, rel))
     # N-1 relationship, overwrite existing relationship only if `force` is specified
     elif linkType in __TOONE:
         rel = __TOONE[linkType]
         if rel and not force:
             raise Exception(
-                "DROP %s already has a '%s', use 'force' to override"
-                % (lhOID, rel)
+                "DROP %s already has a '%s', use 'force' to override" % (lhOID, rel)
             )
         lhDropSpec[rel] = rhOID
     else:
@@ -115,9 +112,7 @@ def addLink(linkType, lhDropSpec, rhOID, force=False):
 def removeUnmetRelationships(dropSpecList):
     unmetRelationships = []
 
-    normalise_oid = (
-        lambda oid: next(iter(oid)) if isinstance(oid, dict) else oid
-    )
+    normalise_oid = lambda oid: next(iter(oid)) if isinstance(oid, dict) else oid
 
     # Step #1: Get all OIDs
     oids = set()
@@ -226,7 +221,10 @@ def loadDropSpecs(dropSpecList):
                 # relationship list but doesn't exist in the list of DROPs
                 for oid in dropSpec[rel]:
                     oid = list(oid.keys())[0] if isinstance(oid, dict) else oid
-                    dropSpecs[oid]
+                    if oid in dropSpecs:
+                        dropSpecs[oid]
+                    else:
+                        raise KeyError
 
             # N-1 relationships
             elif rel in __TOONE:
@@ -259,7 +257,8 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
         #     dropType = "dropclass"
 
         cf = __CREATION_FUNCTIONS[dropType.lower()]
-        drop = cf(dropSpec, session=session)
+        session_id = session.sessionId if session else ""
+        drop = cf(dropSpec, session_id=session_id)
         if session is not None:
             # Now using per-drop reproducibility setting.
             drop.reproducibility_level = ReproducibilityFlags(
@@ -281,7 +280,10 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
                 link = __TOMANY[attr]
                 for rel in dropSpec[attr]:
                     oid = list(rel.keys())[0] if isinstance(rel, dict) else rel
-                    lhDrop = drops[oid]
+                    if oid in drops:
+                        lhDrop = drops[oid]
+                    else:
+                        continue
                     relFuncName = LINKTYPE_1TON_APPEND_METHOD[link]
                     try:
                         relFunc = getattr(drop, relFuncName)
@@ -315,7 +317,7 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
     return roots
 
 
-def _createData(dropSpec, dryRun=False, session=None):
+def _createData(dropSpec, dryRun=False, session_id=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
@@ -336,8 +338,6 @@ def _createData(dropSpec, dryRun=False, session=None):
             "NGAS": NgasDROP,
             "null": NullDROP,
             "json": JsonDROP,
-            "Plasma": PlasmaDROP,
-            "PlasmaFlight": PlasmaFlightDROP,
             "ParameterSet": ParameterSetDROP,
             "EnvironmentVariables": EnvironmentVarDROP,
         }
@@ -357,10 +357,10 @@ def _createData(dropSpec, dryRun=False, session=None):
         return
     if "self" in kwargs:
         kwargs.pop("self")
-    return storageType(oid, uid, dlg_session=session, **kwargs)
+    return storageType(oid, uid, dlg_session_id=session_id, **kwargs)
 
 
-def _createContainer(dropSpec, dryRun=False, session=None):
+def _createContainer(dropSpec, dryRun=False, session_id=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
@@ -381,19 +381,19 @@ def _createContainer(dropSpec, dryRun=False, session=None):
     if dryRun:
         return
 
-    return containerType(oid, uid, dlg_session=session, **kwargs)
+    return containerType(oid, uid, dlg_session_id=session_id, **kwargs)
 
 
-def _createSocket(dropSpec, dryRun=False, session=None):
+def _createSocket(dropSpec, dryRun=False, session_id=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
     if dryRun:
         return
-    return SocketListenerApp(oid, uid, dlg_session=session, **kwargs)
+    return SocketListenerApp(oid, uid, dlg_session_id=session_id, **kwargs)
 
 
-def _createApp(dropSpec, dryRun=False, session=None):
+def _createApp(dropSpec, dryRun=False, session_id=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
 
@@ -417,7 +417,7 @@ def _createApp(dropSpec, dryRun=False, session=None):
 
     if dryRun:
         return
-    return appType(oid, uid, dlg_session=session, **kwargs)
+    return appType(oid, uid, dlg_session_id=session_id, **kwargs)
 
 
 def _getIds(dropSpec):

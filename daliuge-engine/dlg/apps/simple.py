@@ -25,8 +25,7 @@ from numbers import Number
 import pickle
 import random
 from typing import List, Optional
-import urllib.error
-import urllib.request
+import requests
 import logging
 import time
 import numpy as np
@@ -42,12 +41,14 @@ from dlg.meta import (
     dlg_bool_param,
     dlg_int_param,
     dlg_list_param,
+    dlg_dict_param,
     dlg_component,
     dlg_batch_input,
     dlg_batch_output,
     dlg_streaming_input,
 )
 from dlg.exceptions import DaliugeException
+from dlg.rpc import DropProxy
 
 
 logger = logging.getLogger(__name__)
@@ -75,7 +76,8 @@ class NullBarrierApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag template
-# @param dropclass PythonApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param dropclass dlg.apps.simple.PythonApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
@@ -96,10 +98,15 @@ class PythonApp(BarrierAppDROP):
 # @param tag daliuge
 # @param sleep_time 5/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The number of seconds to sleep
 # @param dropclass dlg.apps.simple.SleepApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
+
+
 class SleepApp(BarrierAppDROP):
     """A BarrierAppDrop that sleeps the specified amount of time (0 by default)"""
 
@@ -116,9 +123,11 @@ class SleepApp(BarrierAppDROP):
         super(SleepApp, self).initialize(**kwargs)
 
     def run(self):
+        self._run()
         try:
             # If data is coming through a named port we load it from there.
-            if isinstance(self.sleep_time, (InMemoryDROP, FileDROP)):
+            if isinstance(self.sleep_time, (InMemoryDROP, FileDROP, DropProxy)):
+                logger.debug("Trying to read from %s", self.sleep_time)
                 self.sleep_time = drop_loaders.load_pickle(self.sleep_time)
             time.sleep(self.sleep_time)
         except (TypeError, ValueError):
@@ -143,11 +152,14 @@ class SleepApp(BarrierAppDROP):
 # @param tag daliuge
 # @param bufsize 65536/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/Buffer size
 # @param dropclass dlg.apps.simple.CopyApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class CopyApp(BarrierAppDROP):
     """
@@ -190,9 +202,7 @@ class CopyApp(BarrierAppDROP):
                 self.copyRecursive(child)
         else:
             for outputDrop in self.outputs:
-                droputils.copyDropContents(
-                    inputDrop, outputDrop, bufsize=self.bufsize
-                )
+                droputils.copyDropContents(inputDrop, outputDrop, bufsize=self.bufsize)
 
 
 ##
@@ -202,9 +212,12 @@ class CopyApp(BarrierAppDROP):
 # @param tag daliuge
 # @param sleep_time 5/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The number of seconds to sleep
 # @param dropclass dlg.apps.simple.SleepAndCopyApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class SleepAndCopyApp(SleepApp, CopyApp):
     """A combination of the SleepApp and the CopyApp. It sleeps, then copies"""
@@ -228,10 +241,13 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 # @param high 1/Float/ApplicationArgument/NoPort/ReadWrite//False/False/High value of range of array [exclusive]
 # @param integer True/Boolean/ApplicationArgument/NoPort/ReadWrite//False/False/Generate integer array?
 # @param dropclass dlg.apps.simple.RandomArrayApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @param array /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/Port carrying the averaged array
+# @param array /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/random array
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class RandomArrayApp(BarrierAppDROP):
     """
@@ -270,9 +286,7 @@ class RandomArrayApp(BarrierAppDROP):
         # At least one output should have been added
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                "At least one output should have been added to %r" % self
-            )
+            raise Exception("At least one output should have been added to %r" % self)
         marray = self.generateRandomArray()
         if self._keep_array:
             self.marray = marray
@@ -285,9 +299,7 @@ class RandomArrayApp(BarrierAppDROP):
         if self.integer:
             # generate an array of self.size integers with numbers between
             # slef.low and self.high
-            marray = np.random.randint(
-                int(self.low), int(self.high), size=(self.size)
-            )
+            marray = np.random.randint(int(self.low), int(self.high), size=(self.size))
         else:
             # generate an array of self.size floats with numbers between
             # self.low and self.high
@@ -309,10 +321,13 @@ class RandomArrayApp(BarrierAppDROP):
 # @param tag daliuge
 # @param method mean/Select/ApplicationArgument/NoPort/ReadWrite/mean,median/False/False/The method used for averaging
 # @param dropclass dlg.apps.simple.AverageArraysApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param array /Object.Array/ApplicationArgument/InputOutput/ReadWrite//False/False/Port for the array(s)
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class AverageArraysApp(BarrierAppDROP):
     """
@@ -353,9 +368,7 @@ class AverageArraysApp(BarrierAppDROP):
 
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                "At least one output should have been added to %r" % self
-            )
+            raise Exception("At least one output should have been added to %r" % self)
         self.getInputArrays()
         self._avg = self.averageArray()
         for o in outs:
@@ -371,9 +384,7 @@ class AverageArraysApp(BarrierAppDROP):
         """
         ins = self.inputs
         if len(ins) < 1:
-            raise Exception(
-                "At least one input should have been added to %r" % self
-            )
+            raise Exception("At least one input should have been added to %r" % self)
         marray = []
         for inp in ins:
             sarray = droputils.allDropContents(inp)
@@ -405,11 +416,14 @@ class AverageArraysApp(BarrierAppDROP):
 # @param tag daliuge
 # @param num_of_inputs 4/Integer/ConstructParameter/NoPort/ReadWrite//False/False/The Gather width, stating how many inputs each Gather instance will handle
 # @param dropclass dlg.apps.simple.GenericGatherApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input /Object/ApplicationArgument/InputPort/ReadWrite//False/False/0-base placeholder port for inputs
 # @param output /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/Placeholder port for outputs
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class GenericGatherApp(BarrierAppDROP):
     component_meta = dlg_component(
@@ -430,13 +444,69 @@ class GenericGatherApp(BarrierAppDROP):
         inputs = self.inputs
         outputs = self.outputs
         total_len = 0
-        for input in inputs:
-            total_len += input.len
         for output in outputs:
-            output.len = total_len
             for input in inputs:
-                d = droputils.allDropContents(input)
-                output.write(d)
+                value = droputils.allDropContents(input)
+                output.write(value)
+
+    def run(self):
+        self.readWriteData()
+
+
+##
+# @brief DictGatherApp
+# @details App packs all data on input into a dictionary using the input drop's names as keys and the reading the
+# dict values from the input drops. This app can be used stand-alone without a gather construct.
+# @par EAGLE_START
+# @param category PythonApp
+# @param tag daliuge
+# @param value_dict value_dict/Jasom/ApplicationArgument/NoPort/ReadWrite//False/False/The value dictionary can be initialized here
+# @param dropclass dlg.apps.simple.DictGatherApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param input /Object/ApplicationArgument/InputPort/ReadWrite//False/False/0-base placeholder port for inputs
+# @param output /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/Placeholder port for outputs
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
+# @par EAGLE_END
+class DictGatherApp(BarrierAppDROP):
+    component_meta = dlg_component(
+        "DictGatherApp",
+        "Collect multiple inputs into a dictionary",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+    value_dict = dlg_dict_param("value_dict", {})
+
+    def initialize(self, **kwargs):
+        super(DictGatherApp, self).initialize(**kwargs)
+        self.kwargs = kwargs
+
+    def readWriteData(self):
+        inputs = self.inputs
+        outputs = self.outputs
+        total_len = 0
+        # for input in inputs:
+        #     total_len += input.size
+        # logger.debug(f">>>> writing {inputs} to {outputs}")
+        for output in outputs:
+            for input in inputs:
+                value = droputils.allDropContents(input)
+                self.value_dict[input.name] = pickle.loads(value)
+                for aa_key, aa_dict in self.kwargs["applicationArgs"].items():
+                    if aa_key not in self.value_dict and aa_dict["value"]:
+                        self.value_dict[aa_key] = aa_dict["value"]
+            logger.debug(
+                "Writing %s to %s",
+                self.value_dict,
+                output.name,
+            )
+            output.write(pickle.dumps(self.value_dict))
+
+            # logger.debug(f">>> written {d} to {output}")
 
     def run(self):
         self.readWriteData()
@@ -453,11 +523,14 @@ class GenericGatherApp(BarrierAppDROP):
 # @param function sum/Select/ApplicationArgument/NoPort/ReadWrite/sum,prod,min,max,add,multiply,maximum,minimum/False/False/The function used for gathering
 # @param reduce_axes None/String/ApplicationArgument/NoPort/ReadOnly//False/False/The array axes to reduce, None reduces all axes for sum, prod, max, min functions
 # @param dropclass dlg.apps.simple.GenericNpyGatherApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param array_in /Object.Array/ApplicationArgument/InputPort/ReadWrite//False/False/Port for the input array(s)
-# @param array_out /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/Port carrying the reduced array
+# @param array_out /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/reduced array
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class GenericNpyGatherApp(BarrierAppDROP):
     """
@@ -494,17 +567,11 @@ class GenericNpyGatherApp(BarrierAppDROP):
 
     def run(self):
         if len(self.inputs) < 1:
-            raise Exception(
-                f"At least one input should have been added to {self}"
-            )
+            raise Exception(f"At least one input should have been added to {self}")
         if len(self.outputs) < 1:
-            raise Exception(
-                f"At least one output should have been added to {self}"
-            )
+            raise Exception(f"At least one output should have been added to {self}")
         if self.function not in self.functions:
-            raise Exception(
-                f"Function {self.function} not supported by {self}"
-            )
+            raise Exception(f"Function {self.function} not supported by {self}")
 
         result = (
             self.reduce_gather_inputs()
@@ -542,11 +609,8 @@ class GenericNpyGatherApp(BarrierAppDROP):
         for input in self.inputs:
             data = drop_loaders.load_numpy(input)
             # assign instead of gather for the first input
-            result = (
-                data
-                if result is None
-                else gather(result, data, allow_pickle=True)
-            )
+            # result = data if result is None else gather(result, data, allow_pickle=True)
+            result = data if result is None else gather(result, data)
         return result
 
 
@@ -561,10 +625,13 @@ class GenericNpyGatherApp(BarrierAppDROP):
 # @param tag daliuge
 # @param greet World/String/ApplicationArgument/NoPort/ReadWrite//False/False/What appears after 'Hello '
 # @param dropclass dlg.apps.simple.HelloWorldApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @param hello "world"/Object/ApplicationArgument/OutputPort/ReadWrite//False/False/The port carrying the message produced by the app.
+# @param hello "world"/Object/ApplicationArgument/OutputPort/ReadWrite//False/False/message
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class HelloWorldApp(BarrierAppDROP):
     """
@@ -594,20 +661,14 @@ class HelloWorldApp(BarrierAppDROP):
             raise Exception("Only one input expected for %r" % self)
         else:  # the input is expected to be a vector. We'll use the first element
             try:
-                phrase = str(
-                    pickle.loads(droputils.allDropContents(ins[0]))[0]
-                )
+                phrase = str(pickle.loads(droputils.allDropContents(ins[0]))[0])
             except _pickle.UnpicklingError:
-                phrase = str(
-                    droputils.allDropContents(ins[0]), encoding="utf-8"
-                )
+                phrase = str(droputils.allDropContents(ins[0]), encoding="utf-8")
             self.greeting = f"Hello {phrase}"
 
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                "At least one output should have been added to %r" % self
-            )
+            raise Exception("At least one output should have been added to %r" % self)
         for o in outs:
             o.len = len(self.greeting.encode())
             o.write(self.greeting.encode())  # greet across all outputs
@@ -622,10 +683,13 @@ class HelloWorldApp(BarrierAppDROP):
 # @param tag daliuge
 # @param url None/String/ApplicationArgument/NoPort/ReadWrite//False/False/The URL to retrieve
 # @param dropclass dlg.apps.simple.UrlRetrieveApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @param content /String/ApplicationArgument/OutputPort/ReadWrite//False/False/The port carrying the content read from the URL
+# @param content /String/ApplicationArgument/OutputPort/ReadWrite//False/False/content read from URL
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class UrlRetrieveApp(BarrierAppDROP):
     """
@@ -647,20 +711,17 @@ class UrlRetrieveApp(BarrierAppDROP):
 
     def run(self):
         try:
-            u = urllib.request.urlopen(self.url)
-        except urllib.error.URLError as e:
+            logger.info("Accessing URL %s", self.url)
+            u = requests.get(self.url)
+        except requests.exceptions.RequestException as e:
             raise e.reason
-
-        content = u.read()
 
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                "At least one output should have been added to %r" % self
-            )
+            raise Exception("At least one output should have been added to %r" % self)
         for o in outs:
-            o.len = len(content)
-            o.write(content)  # send content to all outputs
+            o.len = len(u.content)
+            o.write(u.content)  # send content to all outputs
 
 
 ##
@@ -679,10 +740,13 @@ class UrlRetrieveApp(BarrierAppDROP):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
 # @param dropclass dlg.apps.simple.GenericScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param array_in /Object.Array/ApplicationArgument/InputPort/ReadWrite//False/False/A numpy array of arrays, where the first axis is of length <numSplit>
-# @param array_out /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/Port carrying the reduced array
+# @param array_out /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/reduced array
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class GenericScatterApp(BarrierAppDROP):
     """
@@ -743,10 +807,13 @@ class GenericScatterApp(BarrierAppDROP):
 # @param scatter_axes /String/ApplicationArgument/NoPort/ReadWrite//False/False/The axes to split input ndarrays on, e.g. [0,0,0], length must match the number of input ports
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param dropclass dlg.apps.simple.GenericNpyScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param array_in /Object.Array/ApplicationArgument/InputPort/ReadWrite//False/False/A numpy array of arrays
-# @param array_out /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/Port carrying the reduced array
+# @param array_out /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/reduced array
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class GenericNpyScatterApp(BarrierAppDROP):
     """
@@ -791,9 +858,7 @@ class GenericNpyScatterApp(BarrierAppDROP):
                 raise err
             for split_index in range(self.num_of_copies):
                 out_index = in_index * self.num_of_copies + split_index
-                drop_loaders.save_numpy(
-                    self.outputs[out_index], result[split_index]
-                )
+                drop_loaders.save_numpy(self.outputs[out_index], result[split_index])
 
 
 class SimpleBranch(BranchAppDrop, NullBarrierApp):
@@ -820,11 +885,14 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 # @param category PythonApp
 # @param tag daliuge
 # @param dropclass dlg.apps.simple.PickOne/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param rest_array /Object.array/ApplicationArgument/InputOutput/ReadWrite//False/False/List of elements
-# @param element /Object.element/ApplicationArgument/OutputPort/ReadWrite//False/False/Port carrying the first element of input array
+# @param element /Object.element/ApplicationArgument/OutputPort/ReadWrite//False/False/first element
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class PickOne(BarrierAppDROP):
     """
@@ -839,9 +907,7 @@ class PickOne(BarrierAppDROP):
         data = pickle.loads(droputils.allDropContents(input))
 
         # make sure we always have a ndarray with at least 1dim.
-        if type(data) not in (list, tuple) and not isinstance(
-            data, (np.ndarray)
-        ):
+        if type(data) not in (list, tuple) and not isinstance(data, (np.ndarray)):
             raise TypeError
         if isinstance(data, np.ndarray) and data.ndim == 0:
             data = np.array([data])
@@ -882,10 +948,13 @@ class PickOne(BarrierAppDROP):
 # @param tag daliuge
 # @param size 100/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/the size of the array
 # @param dropclass dlg.apps.simple.ListAppendThrashingApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @param array /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/Port carrying the random array.
+# @param array /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/random array
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class ListAppendThrashingApp(BarrierAppDROP):
     """
@@ -915,9 +984,7 @@ class ListAppendThrashingApp(BarrierAppDROP):
         # At least one output should have been added
         outs = self.outputs
         if len(outs) < 1:
-            raise Exception(
-                "At least one output should have been added to %r" % self
-            )
+            raise Exception("At least one output should have been added to %r" % self)
         self.marray = self.generateArray()
         for o in outs:
             d = pickle.dumps(self.marray)

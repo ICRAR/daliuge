@@ -31,7 +31,8 @@ compress = os.environ.get("DALIUGE_COMPRESSED_JSON", True)
 
 quote = urllib.parse.quote
 
-default_host = "localhost" # localhost now binds to IPv6 address on some distros
+default_host = "localhost"  # localhost now binds to IPv6 address on some distros
+
 
 class BaseDROPManagerClient(RestClient):
     """
@@ -137,7 +138,7 @@ class BaseDROPManagerClient(RestClient):
             "Successfully read %d sessions from %s:%s",
             len(sessions),
             self.host,
-            self.port
+            self.port,
         )
         return sessions
 
@@ -223,7 +224,7 @@ class NodeManagerClient(BaseDROPManagerClient):
     """
 
     def __init__(
-            self, host=default_host, port=constants.NODE_DEFAULT_REST_PORT, timeout=10
+        self, host=default_host, port=constants.NODE_DEFAULT_REST_PORT, timeout=10
     ):
         super(NodeManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
@@ -242,7 +243,7 @@ class NodeManagerClient(BaseDROPManagerClient):
         return self._request(f"/sessions/{sessionId}/logs", "GET")
 
     def get_submission_method(self):
-        return self._get_json("/submission_method")
+        return self._get_json("submission_method")
 
 
 class CompositeManagerClient(BaseDROPManagerClient):
@@ -256,7 +257,7 @@ class CompositeManagerClient(BaseDROPManagerClient):
         self._DELETE(f"/node/{node}")
 
     def get_submission_method(self):
-        return self._get_json("/submission_method")
+        return self._get_json("submission_method")
 
 
 class DataIslandManagerClient(CompositeManagerClient):
@@ -265,7 +266,7 @@ class DataIslandManagerClient(CompositeManagerClient):
     """
 
     def __init__(
-            self, host=default_host, port=constants.ISLAND_DEFAULT_REST_PORT, timeout=10
+        self, host=default_host, port=constants.ISLAND_DEFAULT_REST_PORT, timeout=10
     ):
         super(DataIslandManagerClient, self).__init__(
             host=host, port=port, timeout=timeout
@@ -278,14 +279,12 @@ class MasterManagerClient(CompositeManagerClient):
     """
 
     def __init__(
-            self, host=default_host, port=constants.MASTER_DEFAULT_REST_PORT, timeout=10
+        self, host=default_host, port=constants.MASTER_DEFAULT_REST_PORT, timeout=10
     ):
         super(MasterManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
     def create_island(self, island_host, nodes):
-        self._post_json(
-            f"/managers/{quote(island_host)}/island", {"nodes": nodes}
-        )
+        self._post_json(f"/managers/{quote(island_host)}/island", {"nodes": nodes})
 
     def dims(self):
         return self._get_json("/islands")
@@ -301,7 +300,9 @@ class MasterManagerClient(CompositeManagerClient):
         Adds a nm to a dim
         """
         self._POST(
-            f"/managers/{dim}/node/{nm}", content=None, )
+            f"/managers/{dim}/node/{nm}",
+            content=None,
+        )
 
     def remove_node_from_dim(self, dim, nm):
         """

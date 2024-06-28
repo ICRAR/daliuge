@@ -57,11 +57,7 @@ class PGT(object):
         self._drop_list = drop_list
         self._drop_list_len = len(drop_list)
         self._extra_drops = []  # artifacts DROPs produced during L2G mapping
-        self._dag = (
-            DAGUtil.build_dag_from_drops(self._drop_list)
-            if build_dag
-            else None
-        )
+        self._dag = DAGUtil.build_dag_from_drops(self._drop_list) if build_dag else None
         self._json_str = None
         self._oid_gid_map = dict()
         self._gid_island_id_map = dict()
@@ -78,14 +74,10 @@ class PGT(object):
 
     def _can_merge(self, new_num_parts):
         if new_num_parts <= 0:
-            raise GPGTException(
-                "Invalid new_num_parts {0}".format(new_num_parts)
-            )
+            raise GPGTException("Invalid new_num_parts {0}".format(new_num_parts))
         if not self._merge_parts:
             raise GPGTException(
-                "This {0} PGTP is not made for merging".format(
-                    self.__class__.__name__
-                )
+                "This {0} PGTP is not made for merging".format(self.__class__.__name__)
             )
         if self._num_parts_done <= new_num_parts:
             raise GPGTNoNeedMergeException(
@@ -164,14 +156,10 @@ class PGT(object):
             return self._data_movement
         elif self.dag is not None:
             G = self.dag
-            self._data_movement = sum(
-                e[2].get("weight", 0) for e in G.edges(data=True)
-            )
+            self._data_movement = sum(e[2].get("weight", 0) for e in G.edges(data=True))
         return self._data_movement
 
-    def pred_exec_time(
-        self, app_drop_only=False, wk="weight", force_answer=False
-    ):
+    def pred_exec_time(self, app_drop_only=False, wk="weight", force_answer=False):
         """
         Predict execution time using the longest path length
         """
@@ -239,38 +227,42 @@ class PGT(object):
             The pg_spec template is what needs to be send to a deferred deployemnt
             where the daliuge system is started up afer submission (e.g. SLURM)
         """
+        if num_islands < 1:
+            num_islands = 1  # need at least one island manager
         logger.debug(
-            "# worker nodes: %s, node_list(incl. DIM): %s",
-            tpl_nodes_len,
-            node_list,
+            ">>>>>> node_list type: %s, %d, %d",
+            type(node_list),
+            len(node_list),
+            num_islands,
         )
-        if (
-            len(node_list) == 0 and tpl_nodes_len > 0
-        ):  # generate pg_spec template
-            node_list = range(tpl_nodes_len)  # create a fake list for now
+        if len(node_list) == 0 and tpl_nodes_len > 0:  # generate pg_spec template
+            node_list = range(tpl_nodes_len + num_islands)  # create a fake list for now
             tpl_fl = True
         else:
             tpl_fl = False
+        logger.debug(
+            "# worker nodes: %s, node_list(incl. DIM): %s, tpl_fl: %s",
+            tpl_nodes_len,
+            node_list,
+            tpl_fl,
+        )
+        nodes_len = len(node_list)
+
+        try:
+            num_islands = int(num_islands)
+        except:
+            raise GPGTException("Invalid num_islands spec: {0}".format(num_islands))
+        if num_islands > nodes_len:
+            raise GPGTException(
+                "Number of islands must be <= number of specified nodes!"
+            )
 
         if 0 == self._num_parts_done:
             raise GPGTException("The graph has not been partitioned yet")
 
         if node_list is None or 0 == len(node_list):
             raise GPGTException("Node list is empty!")
-        nodes_len = len(node_list)
 
-        try:
-            num_islands = int(num_islands)
-        except:
-            raise GPGTException(
-                "Invalid num_islands spec: {0}".format(num_islands)
-            )
-        if num_islands < 1:
-            num_islands = 1  # need at least one island manager
-        if num_islands > nodes_len:
-            raise GPGTException(
-                "Number of islands must be <= number of specified nodes!"
-            )
         form_island = num_islands > 1
         if nodes_len < 1:  # we allow to run everything on a single node now!
             raise GPGTException("Too few nodes: {0}".format(nodes_len))
@@ -291,15 +283,17 @@ class PGT(object):
                 raise GPGTException(
                     "Insufficient number of nodes: {0}".format(nodes_len)
                 )
-            is_list = node_list
-            nm_list = node_list
+            is_list = node_list[0:num_islands]
+            nm_list = node_list[num_islands:]
+            logger.debug("NM list: %s", nm_list)
         nm_len = len(nm_list)
         logger.info(
-            "Drops count: %d, partitions count: %d, nodes count: %d, island count: %d",
+            "Drops count: %d, partitions count: %d, NM count: %d, island count: %d %s",
             len(drop_list),
             num_parts,
-            nodes_len,
+            len(nm_list),
             len(is_list),
+            form_island,
         )
 
         if form_island:
@@ -322,9 +316,7 @@ class PGT(object):
         # lm = {k:values[v] for (k, v) in lm.items()} # replace old values with new
 
         if tpl_fl:
-            nm_list = [
-                "#%s" % x for x in range(nm_len)
-            ]  # so that nm_list[i] == '#i'
+            nm_list = ["#%s" % x for x in range(nm_len)]  # so that nm_list[i] == '#i'
             is_list = [
                 "#%s" % x for x in range(len(is_list))
             ]  # so that is_list[i] == '#i'
@@ -384,9 +376,7 @@ class PGT(object):
                     link = dict()
                     link["from"] = myk
                     from_dt = (
-                        0
-                        if drop["categoryType"] in [CategoryType.DATA, "data"]
-                        else 1
+                        0 if drop["categoryType"] in [CategoryType.DATA, "data"] else 1
                     )
                     to_dt = G.nodes[oup]["drop_type"]
                     if from_dt == to_dt:

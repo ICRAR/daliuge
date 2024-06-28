@@ -1,4 +1,4 @@
-import threading
+from concurrent.futures import Future
 from dlg.apps.app_base import InputFiredAppDROP
 from dlg.event import Event, EventHandler
 import pytest
@@ -21,9 +21,9 @@ def test_async_execute_catches_and_logs_unexpected_exception(
     handler = MockThrowingHandler()
     drop.subscribe(handler)
 
-    thread = drop.async_execute()
-    assert isinstance(thread, threading.Thread)
-    thread.join()
+    fut = drop.async_execute()
+    assert isinstance(fut, Future)
+    fut.result()
 
     assert "Handler throw" in caplog.text
     # execute should handle exceptions in the run method

@@ -28,7 +28,7 @@ import os
 import sys
 import time
 
-from dlg.drop import dropdict
+from dlg.common import dropdict
 from dlg.manager.client import DataIslandManagerClient
 
 LOCAL_FILES = os.path.dirname(os.path.realpath(__file__))
@@ -164,9 +164,7 @@ if __name__ == "__main__":
         flux.addOutput(flux_out)
 
         for i, v in enumerate(VIS):
-            vis_in = directorySpec(
-                "vis%d" % (i), dirname=v[0], check_exists=False
-            )
+            vis_in = directorySpec("vis%d" % (i), dirname=v[0], check_exists=False)
             split_out = directorySpec(
                 "SplitOutput_%d" % (i), dirname=v[1], check_exists=False
             )

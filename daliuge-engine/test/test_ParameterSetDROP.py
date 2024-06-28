@@ -27,9 +27,26 @@ from dlg.droputils import allDropContents
 class test_ParameterSetDROP(unittest.TestCase):
     kwargs = {
         "mode": None,
-        "Cimager": 2,
-        "StringParam": "param",
-        "Boolparam": True,
+        "applicationArgs": {
+            "Cimager": {
+                "value": 2,
+                "defaultValue": 2,
+                "type": "int",
+                "description": "",
+            },
+            "StringParam": {
+                "value": "param",
+                "defaultValue": "param",
+                "type": "string",
+                "description": "",
+            },
+            "Boolparam": {
+                "value": True,
+                "defaultValue": False,
+                "type": "boolean",
+                "description": "",
+            },
+        },
         "config_data": "",
         "iid": -1,
         "rank": 0,
@@ -40,20 +57,23 @@ class test_ParameterSetDROP(unittest.TestCase):
         yanda_kwargs = dict(self.kwargs)
         yanda_kwargs["mode"] = "YANDA"
 
-        yanda_parset = ParameterSetDROP(oid="a", uid="a", **yanda_kwargs)
-        standard_parset = ParameterSetDROP(oid="b", uid="b", **self.kwargs)
+        yanda_parset = ParameterSetDROP(
+            oid="a",
+            uid="a",
+            **yanda_kwargs,
+        )
+
+        yanda_kwargs["mode"] = "json"
+        json_parset = ParameterSetDROP(oid="b", uid="b", **yanda_kwargs)
 
         yanda_output = "Cimager=2\nStringParam=param\nBoolparam=True"
-        standard_output = (
-            "mode=None\n"
-            + yanda_output
-            + "\nconfig_data=\niid=-1\nrank=0\nconsumers=['drop-1', 'drop-2']"
-        )
+        json_output = '{"Cimager": {"value": 2, "description": "", "type": "int", "default": 2}, "StringParam": {"value": "param", "description": "", "type": "string", "default": "param"}, "Boolparam": {"value": true, "description": "", "type": "boolean", "default": false}}'
 
         yanda_parset.setCompleted()
-        standard_parset.setCompleted()
+        json_parset.setCompleted()
 
-        self.assertEqual(yanda_output, allDropContents(yanda_parset).decode("utf-8"))
-        self.assertEqual(
-            standard_output, allDropContents(standard_parset).decode("utf-8")
-        )
+        yanda_serialised = allDropContents(yanda_parset).decode("utf-8")
+        self.assertEqual(yanda_output, yanda_serialised)
+
+        json_serialised = allDropContents(json_parset).decode("utf-8")
+        self.assertEqual(json_output, json_serialised)

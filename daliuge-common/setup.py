@@ -30,9 +30,9 @@ from setuptools import setup
 # dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
-MAJOR = 3
+MAJOR = 4
 MINOR = 0
-PATCH = 0
+PATCH = 1
 VERSION = (MAJOR, MINOR, PATCH)
 VERSION_FILE = "dlg/common/version.py"
 RELEASE = True
@@ -49,9 +49,20 @@ def do_versioning():
 
 install_requires = [
     "gputil>=1.4.0",
-    "merklelib>=1.0",
-    "pyzmq~=25.1.0",
-    "pydantic~=1.10.7",
+    "merklelib@git+https://github.com/pritchardn/merklelib",
+    "pyzmq==25.1.0",
+    "pydantic==1.10.13",
+    "boto3",
+    "phonenumbers",
+    "mailchecker",
+    "ftfy",
+    "toml",
+    "pyyaml",
+    "beautifulsoup4",
+    "openpyxl",
+    "xlrd",
+    "xmltodict",
+    "python-benedict[all]",
 ]
 
 setup(

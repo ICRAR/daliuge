@@ -104,6 +104,7 @@ class SubGraphDrop(BarrierAppDROP):
 # @par EAGLE_START
 # @param category Comment
 # @param dropclass dlg.apps.constructs.CommentDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param base_name constructs/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param tag template
 # @par EAGLE_END
 class CommentDrop(BarrierAppDROP):
@@ -115,27 +116,12 @@ class CommentDrop(BarrierAppDROP):
 
 
 ##
-# @brief Description
-# @details A description template drop
-# @par EAGLE_START
-# @param category Description
-# @param dropclass dlg.apps.constructs.DescriptionDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
-# @param tag template
-# @par EAGLE_END
-class DescriptionDrop(BarrierAppDROP):
-    """
-    This only exists to make sure we have a description in the template palette
-    """
-
-    pass
-
-
-##
 # @brief Exclusive Force Node
 # @details An Exclusive Force Node
 # @par EAGLE_START
 # @param category ExclusiveForceNode
 # @param dropclass dlg.apps.constructs.ExclusiveForceDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param base_name construct/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param tag template
 # @par EAGLE_END
 class ExclusiveForceDrop(BarrierAppDROP):

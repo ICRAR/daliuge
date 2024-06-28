@@ -59,7 +59,8 @@ logger = logging.getLogger(__name__)
 # @par EAGLE_START
 # @param category Data
 # @param tag template
-# @param dropclass my.awesome.data.Component/String/ComponentParameter/NoPort/ReadOnly//False/False/The python class that implements this data component
+# @param dropclass dlg.data.drops.data_base.DataDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/The python class that implements this data component
+# @param base_name data_base/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
@@ -168,15 +169,13 @@ class DataDROP(AbstractDROP):
     def _checkStateAndDescriptor(self, descriptor):
         if self.status != DROPStates.COMPLETED:
             raise Exception(
-                "%r is in state %s (!=COMPLETED), cannot be read"
-                % (self, self.status)
+                "%r is in state %s (!=COMPLETED), cannot be read" % (self, self.status)
             )
         if descriptor is None:
             raise ValueError("Illegal empty descriptor given")
         if descriptor not in self._rios:
             raise Exception(
-                "Illegal descriptor %d given, remember to open() first"
-                % (descriptor)
+                "Illegal descriptor %d given, remember to open() first" % (descriptor)
             )
 
     def isBeingRead(self):
@@ -200,10 +199,8 @@ class DataDROP(AbstractDROP):
         if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             raise Exception("No more writing expected")
 
-        if not isinstance(data, (bytes, memoryview)):
-            raise Exception(
-                "Data type not of binary type: %s", type(data).__name__
-            )
+        if not isinstance(data, (bytes, memoryview, str)):
+            raise Exception("Data type not of binary type: ", type(data).__name__)
 
         # We lazily initialize our writing IO instance because the data of this
         # DROP might not be written through this DROP
@@ -385,7 +382,7 @@ class PathBasedDrop(object):
             return dirname
 
         parts = []
-        if self._dlg_session:
+        if self._dlg_session_id:
             parts.append(".")
         else:
             parts.append("/tmp/daliuge_tfiles")
@@ -409,6 +406,7 @@ class PathBasedDrop(object):
 # @param category Memory
 # @param tag daliuge
 # @param dropclass dlg.data.drops.data_base.NullDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param base_name data_base/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
