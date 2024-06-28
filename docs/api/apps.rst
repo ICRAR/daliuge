@@ -36,11 +36,6 @@ dlg.apps.mpi
 .. automodule:: dlg.apps.mpi
         :members:
 
-dlg.apps.plasmaflight
-^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: dlg.apps.plasmaflight
-        :members:
-
 dlg.apps.pyfunc
 ^^^^^^^^^^^^^^^
 .. automodule:: dlg.apps.pyfunc

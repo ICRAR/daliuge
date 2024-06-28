@@ -22,7 +22,6 @@ Components
 
  filesystem_components
  memory_components
- plasma_components
  ngas_components
  rdbms_components
  cloud_storage_components
