@@ -654,6 +654,141 @@ def _has_app_keywords(node, keywords, requires_all=False):
     return has_app
 
 
+def _update_keys(old_new_subgraph_map, old_new_grpk_map, lgo):
+    for n in lgo["nodeDataArray"]:
+        if "group" in n and n["group"] in old_new_grpk_map:
+            k_old = n["group"]
+            n["group"] = old_new_grpk_map[k_old]
+
+    if old_new_subgraph_map:
+        for key, value in old_new_subgraph_map.items():
+            link = {"from": key, "to": value}
+            lgo['linkDataArray'].append(link)
+    return lgo
+
+
+def identify_and_connect_output_input(app_node, out_node, logical_graph):
+    """
+    # If the link is to a node that _isn't_ in the subgraph group
+    # then it is an output node,  so check that group is either
+    # non-existent, or not equal to the subgraph group.
+
+    :param app_node:
+    :param out_node:
+    :param logical_graph:
+    :return:
+    """
+
+    for link in logical_graph['linkDataArray']:
+        if link["to"] == app_node['key']:
+            for n in logical_graph['nodeDataArray']:
+
+                if n['key'] == link["from"]:
+                    try:
+                        if n['group'] == app_node['group']:
+                            link["to"] = out_node['key']
+                    except KeyError:
+                        pass
+        if link["from"] == app_node['key']:
+            for n in logical_graph['nodeDataArray']:
+                if n['key'] == link["to"]:
+                    try:
+                        if n['group'] != app_node['group']:
+                            link['from'] = out_node['key']
+                    except KeyError:
+                        link['from'] = out_node['key']
+    return logical_graph
+
+
+def _extract_subgraph_nodes(input_node, out_node, logical_graph):
+    """
+    1. Identify the SubGraph nodes that are not from the Construct
+    2. Find the data inputs to the outputApp
+    3. Remove the subgraph nodes (besides the input into the outputapp) from the
+       main graph
+    4. Create links from the subgraph output to input/output applications
+       
+    :param input_node: Input Application node to the subgraph
+    :param out_node: Output Application node to the subgraph
+    :param logical_graph:
+    :return: subgraphNodes: Dictionary of nodes in the subgraph
+             subgraphLinks: List of links in the subgraph
+             logical_graph: The modified logical_graph
+    """
+    subgraphNodes = {}
+    subgraphLinks = []
+    construct_apps = {input_node['key'], out_node['key']}
+
+    # 1. Identifying subgraph nodes that are not the input/ouput app
+    for n in logical_graph['nodeDataArray']:
+        if ('group' in n
+                and n['group'] == input_node['group']
+                and n['key'] not in construct_apps):
+            subgraphNodes[n['key']] = n
+
+    output_links = {}
+
+    for link in logical_graph['linkDataArray']:
+        if link['from'] in subgraphNodes:
+            # Find links from inside the SubGraph to the Output App to preserve
+            if link['to'] in construct_apps:
+                key = subgraphNodes[link['from']]
+                output_links[key['key']] = key
+            subgraphLinks.append(link)
+        if link['to'] in subgraphNodes.keys() and link not in subgraphLinks:
+            subgraphLinks.append(link)
+
+    for e in subgraphNodes.values():
+        if e['key'] not in output_links:
+            logical_graph['nodeDataArray'].remove(e)
+    for e in subgraphLinks:
+        logical_graph['linkDataArray'].remove(e)
+
+    # 4. Create links from the subgraph output data to input/output applications
+    for n in output_links.values():
+        logical_graph['linkDataArray'].append({'to': n['key'], 'from': input_node['key']})
+        logical_graph['linkDataArray'].append({'from': n['key'], 'to': out_node['key']})
+
+    return subgraphNodes, subgraphLinks, logical_graph
+
+
+def _build_apps_from_subgraph_construct(subgraph_node):
+    """
+    Initialise the input and output apps based on the subgraph construct node
+    :param subgraph_node: The SubGraph construct node on the graph, that contains the
+    input and output nodes.
+    :return: The input and output nodes
+    """
+    input_app_args = {
+        "isSubGraphApp": True,
+        "isSubGraphConstruct": False,
+        "SubGraphGroupKey": subgraph_node['key'],
+        "group": subgraph_node['key'],
+        "group_start": 1,
+        "fields": 'inputAppFields',
+        'inputApp': True
+    }
+    input_node = _create_from_node(subgraph_node,
+                                   subgraph_node["inputApplicationType"],
+                                   input_app_args)
+
+    output_app_args = {
+        "key": subgraph_node['outputApplicationKey'],
+        "isSubGraphApp": True,
+        "isSubGraphConstruct": False,
+        "SubGraphGroupKey": input_node['key'],
+        "group": input_node['key'],
+        "group_start": 1,
+        "fields": 'outputAppFields',
+        "outputApp": True
+    }
+    output_node = _create_from_node(subgraph_node,
+                                    subgraph_node["outputApplicationType"],
+                                    output_app_args)
+
+    return input_node, output_node
+
+
 def convert_subgraphs(lgo):
     """
     Identify any first-order SubGraph constructs in the Logical Graph, and exctract the
@@ -662,10 +797,10 @@ def convert_subgraphs(lgo):
     The steps involved in converting subgraphs are:
     1. Identify and extract the input and output applications from the subgraph construct
     2. Create nodes for both
-    3. Extract the subgraph from the current graph LGT and store in a separate input data
+    4. Re-order links to ensure output app is connected to final data output of subgraph
+    5. Extract the subgraph from the current graph LGT and store in a separate input data
         node to the Input Python Application (SubGraph dropclass)
-    4. Draw link to the File drop which will store information associated with the data
-    drop input to the Output Python Application
+    6. Remove subgraph from current graph
 
     Note: This modifies the Logical Graph (lgo) in-place.
 
@@ -689,138 +824,48 @@ def convert_subgraphs(lgo):
             node['hasInputApp'] = False
             continue
 
-        input_app_args = {
-            "isSubGraphApp": True,
-            "isSubGraphConstruct": False,
-            "SubGraphGroupKey": node['key'],
-            "group": node['key'],
-            "group_start": 1,
-            "fields": 'inputAppFields',
-            'inputApp' : True
-        }
-        app_node = _create_from_node(node, node["inputApplicationType"], input_app_args)
+        # Construct nodes
+        app_node, out_node = _build_apps_from_subgraph_construct(node)
 
-        output_app_args = {
-            "key": node['outputApplicationKey'],
-            "isSubGraphApp": True,
-            "isSubGraphConstruct": False,
-            "SubGraphGroupKey": app_node['key'],
-            "group": app_node['key'],
-            "group_start": 1,
-            "fields": 'outputAppFields',
-            "outputApp": True
-        }
-
-        out_node = _create_from_node(node, node["outputApplicationType"], output_app_args)
-
-        # Connect OutputApplication
-        # Search through links and nodes to identify the Subgraph Output app link to
-        # the data, instead of the subgraph construct app link
-        for link in lgo['linkDataArray']:
-            if link["to"] == app_node['key']:
-                for n in lgo['nodeDataArray']:
-                    # If the link is to a node that _isn't_ in the subgraph group
-                    # then it is an output node,  so check that group is either
-                    # non-existent, or not equal to the subgraph group.
-                    if n['key'] == link["from"]:
-                        try:
-                            if n['group'] == app_node['group']:
-                                link["to"] = out_node['key']
-                        except KeyError:
-                            pass
-                            # link["from"] = out_node['key']
-            if link["from"] == app_node['key']:
-                for n in lgo['nodeDataArray']:
-                    if n['key'] == link["to"]:
-                        try:
-                            if n['group'] != app_node['group']:
-                                link['from'] = out_node['key']
-                        except KeyError:
-                            link['from'] = out_node['key']
-
+        # Connect output node to rest of graph
+        lgo = identify_and_connect_output_input(app_node, out_node, lgo)
         out_node["group"] = app_node['key']
-
         new_nodes.extend([app_node, out_node])
 
-        # step 2
+        # Update group mappings and bump key
         k_new = min(keyset) - 1
         node["key"] = k_new
         keyset.add(k_new)
         old_new_grpk_map[app_node["key"]] = k_new
 
-
-
-        # Rearange the keys based on new input and output apps.
+        # Replace the keys based on new input and output apps.
         if new_nodes:
             old_new_subgraph_map[app_node["key"]] = k_new
             old_new_subgraph_map[k_new] = out_node['key']
-
             lgo["nodeDataArray"].extend(new_nodes)
-            for n in lgo["nodeDataArray"]:
-                if "group" in n and n["group"] in old_new_grpk_map:
-                    k_old = n["group"]
-                    n["group"] = old_new_grpk_map[k_old]
 
-            if old_new_subgraph_map:
-                for key, value in old_new_subgraph_map.items():
-                    link = {"from": key, "to": value}
-                    lgo['linkDataArray'].append(link)
+            lgo = _update_keys(old_new_subgraph_map, old_new_grpk_map, lgo)
 
-        # Manage SubGraph nodes and links
-        # 1. Identify the SubGraph nodes that are not from the Construct
-        # 2. Mark out the final data for the subgraph->to->outputApp links
-        # 3. Remove the subgraph nodes (besides the input into the outputapp) from the
-        #    main graph
+            # Manage SubGraph nodes and links
+            subgraphNodes, subgraphLinks, lgo = _extract_subgraph_nodes(app_node,
+                                                                        out_node,
+                                                                        lgo)
 
-        subgraphNodes = {}
-        subgraphLinks = []
-        construct_apps = {app_node['key'], out_node['key']}
-
-        for n in lgo['nodeDataArray']:
-            if ('group' in n
-                    and n['group'] == app_node['group']
-                    and n['key'] not in construct_apps):
-                subgraphNodes[n['key']] = n
-
-        output_links = {}
-        for link in lgo['linkDataArray']:
-            if link['from'] in subgraphNodes:
-                if link['to'] in construct_apps:
-                    key = subgraphNodes[link['from']]
-                    output_links[key['key']] = key
-                    # del subgraphNodes[key['key']]
-                    # continue
-                subgraphLinks.append(link)
-            if link['to'] in subgraphNodes.keys() and link not in subgraphLinks:
-                subgraphLinks.append(link)
-
-        for e in subgraphNodes.values():
-            if e['key'] not in output_links:
-                lgo['nodeDataArray'].remove(e)
-        for e in subgraphLinks:
-            lgo['linkDataArray'].remove(e)
-        for n in output_links.values():
-            # lgo['nodeDataArray'].append(n)
-            lgo['linkDataArray'].append({'to': n['key'], 'from':app_node['key']})
-            lgo['linkDataArray'].append({'from': n['key'], 'to':out_node['key']})
-
-
-        # Create SubGraph as InputData to the SubGraph Input App
-        k_new = min(keyset) - 1
-        keyset.add(k_new)
-        node_data_params = {"categoryType": Categories.DATA,
-                            "key": k_new,
-                            "name": "SubGraph_Data",
-                            "fields": "inputAppFields",
-                            "subgraph": {
-                                "nodeDataArray": subgraphNodes.values(),
-                                "linkDataArray": subgraphLinks,
-                                "modelData": lgo['modelData']
-                            }}
-        node_data = _create_from_node(node, "Memory", node_data_params)
-        lgo["nodeDataArray"].append(node_data)
-        lgo["linkDataArray"].append({'to': app_node['key'], 'from': node_data['key']})
-
+            # Create SubGraph as InputData to the SubGraph Input App
+            k_new = min(keyset) - 1
+            keyset.add(k_new)
+            node_data_params = {"categoryType": Categories.DATA,
+                                "key": k_new,
+                                "name": "SubGraph_Data",
+                                "fields": "inputAppFields",
+                                "subgraph": {
+                                    "nodeDataArray": subgraphNodes.values(),
+                                    "linkDataArray": subgraphLinks,
+                                    "modelData": lgo['modelData']
+                                }}
+            node_data = _create_from_node(node, "Memory", node_data_params)
+            lgo["nodeDataArray"].append(node_data)
+            lgo["linkDataArray"].append({'to': app_node['key'], 'from': node_data['key']})
 
     return lgo
 
