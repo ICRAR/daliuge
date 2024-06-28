@@ -75,10 +75,10 @@ def daliuge_aware(func):
                 return res
 
             if res is not None:
-                bottle.response.content_type = "application/json"
                 # set CORS headers
                 origin = bottle.request.headers.raw("Origin")
                 logger.debug("CORS request comming from: %s", origin)
+                logger.debug("Request method: %s", bottle.request.method)
                 if origin is None or re.match(
                     r"(http://dlg-trans.local:80[0-9][0-9]|https://dlg-trans.icrar.org)",
                     origin,
@@ -86,18 +86,26 @@ def daliuge_aware(func):
                     pass
                 elif re.match(r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin):
                     origin = "http://localhost:8084"
+
                 bottle.response.headers["Access-Control-Allow-Origin"] = origin
                 bottle.response.headers["Access-Control-Allow-Credentials"] = "true"
                 bottle.response.headers["Access-Control-Allow-Methods"] = (
-                    "GET, POST, PUT, OPTIONS"
+                    "GET, POST, PUT, OPTIONS, HEAD"
                 )
                 bottle.response.headers["Access-Control-Allow-Headers"] = (
                     "Origin, Accept, Content-Type, Content-Encoding, X-Requested-With, X-CSRF-Token"
                 )
                 logger.debug("CORS headers set to allow from: %s", origin)
+            bottle.response.content_type = "application/json"
+            logger.debug("REST function called: %s", func.__name__)
             jres = json.dumps(res) if res else json.dumps({"Status": "Success"})
+            jres = (
+                json.dumps(res)
+                if res and not bottle.request.method == "HEAD"
+                else json.dumps({"Status": "Success"})
+            )
             logger.debug("Bottle sending back result: %s", jres[: min(len(jres), 80)])
-            return json.dumps(res)
+            return jres
         except Exception as e:
             logger.exception("Error while fulfilling request")
 
@@ -597,11 +605,7 @@ class CompositeManagerRestServer(ManagerRestServer):
     # non-REST methods
     # ===========================================================================
 
-    @daliuge_aware
     def visualizeDIM(self):
-        """
-        Note: this is marked as 'daliuge_aware' in order to get the CORS headers.
-        """
         tpl = file_as_string("web/dim.html")
         urlparts = bottle.request.urlparts
         selectedNode = (
