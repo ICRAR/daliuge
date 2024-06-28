@@ -73,6 +73,7 @@ class SlurmClient:
     ):
         self._config = ConfigFactory.create_config(facility=facility)
         self._acc = self._config.getpar("acc") if (acc is None) else acc
+        self.dlg_root = self._config.getpar("dlg_root")
         self._log_root = (
             self._config.getpar("log_root") if (log_root is None) else log_root
         )
@@ -133,9 +134,7 @@ class SlurmClient:
         pardict["GRAPH_PAR"] = (
             '-L "{0}"'.format(self._logical_graph)
             if self._logical_graph
-            else '-P "{0}"'.format(physical_graph_file)
-            if physical_graph_file
-            else ""
+            else '-P "{0}"'.format(physical_graph_file) if physical_graph_file else ""
         )
         pardict["PROXY_PAR"] = (
             "-m %s -o %d" % (self._mon_host, self._mon_port) if self._run_proxy else ""
