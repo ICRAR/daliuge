@@ -27,6 +27,7 @@ parse the log result, and produce the plot
 """
 
 import datetime
+import json
 import optparse
 import pwd
 import re
@@ -43,6 +44,12 @@ from dlg.deploy.deployment_constants import (
     DEFAULT_AWS_MON_HOST,
 )
 from dlg.deploy.slurm_client import SlurmClient
+from dlg.dropmake.web.translator_utils import unroll_and_partition_with_params
+from dlg.common.reproducibility.reproducibility import (
+    init_pgt_unroll_repro_data,
+    init_pgt_partition_repro_data,
+)
+from dlg.dropmake import pg_generator
 
 FACILITIES = ConfigFactory.available()
 
@@ -432,6 +439,24 @@ def main():
         default=None,
     )
     parser.add_option(
+        "-A",
+        "--algorithm",
+        action="store",
+        type="string",
+        dest="algorithm",
+        help="The algorithm to be used for the translation",
+        default="metis",
+    )
+    parser.add_option(
+        "-O",
+        "--algorithm-parameters",
+        action="store",
+        type="string",
+        dest="algorithm_params",
+        help="Parameters for the translation algorithm",
+        default=None,
+    )
+    parser.add_option(
         "-P",
         "--physical-graph",
         action="store",
@@ -631,16 +656,38 @@ def main():
         if path_to_graph_file and not os.path.exists(path_to_graph_file):
             parser.error("Cannot locate graph file at '{0}'".format(path_to_graph_file))
         else:
+            graph_name = os.path.basename(path_to_graph_file)
             with open(path_to_graph_file) as f:
                 if opts.logical_graph:
-                    lg_graph = f.read()
-                    # TODO: call translator
-                    pg_graph = ""
+                    lg_graph = json.loads(f.read())
+                    pgt = pg_generator.unroll(lg_graph, zerorun=opts.zerorun)
+                    pgt = init_pgt_unroll_repro_data(pgt)
+                    reprodata = pgt.pop()
+                    pgt = pg_generator.partition(
+                        pgt=pgt,
+                        algo="metis",
+                        algo_params=opts.algorithm_params,
+                        num_islands=opts.num_islands,
+                        num_partitions=opts.num_nodes,
+                    )
+                    pgt.append(reprodata)
+                    pgt = init_pgt_partition_repro_data(pgt)
+                    pg_graph = json.dumps((graph_name, pgt))
+                    # pg_graph = unroll_and_partition_with_params(
+                    #     lgt=lg_graph,
+                    #     test=opts.zerorun,
+                    #     algorithm=opts.algorithm,
+                    #     algorithm_parameters=opts.algorithm_params,
+                    #     num_partitions=opts.num_nodes,
+                    #     num_islands=opts.num_islands,
+                    # )
+                    lg_graph = ""
                 else:
                     lg_graph = ""
                     pg_graph = f.read()
 
         client = SlurmClient(
+            log_root=".",
             facility=opts.facility,
             job_dur=opts.job_dur,
             num_nodes=opts.num_nodes,
