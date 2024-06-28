@@ -121,7 +121,9 @@ class SlurmClient:
         """
         Creates the slurm script from a physical graph
         """
-        session_dir = "{0}/{1}".format(self.dlg_root, self.get_session_dirname())
+        session_dir = "{0}/workspace/{1}".format(
+            self.dlg_root, self.get_session_dirname()
+        )
         pardict = dict()
         pardict["VENV"] = self.venv
         pardict["NUM_NODES"] = str(self._num_nodes)
