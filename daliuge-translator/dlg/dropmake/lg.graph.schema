@@ -314,6 +314,11 @@
                                 "keyAttribute": {
                                     "type": "boolean"
                                 },
+                                "encoding": {
+                                    "type": "string",
+                                    "enum": ["binary", "pickle", "dill", "npy", "base64", "utf-8"],
+                                    "default": "utf-8"
+                                },
                                 "id": {
                                     "type": "string"
                                 },
