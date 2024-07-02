@@ -327,6 +327,7 @@ class LG:
 
             multikey_grpby = False
             lgk = lgn.group_keys
+            shape = []
             if lgk is not None and len(lgk) > 1:
                 multikey_grpby = True
                 scatters = lgn.group_by_scatter_layers[

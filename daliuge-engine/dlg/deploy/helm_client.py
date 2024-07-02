@@ -383,8 +383,8 @@ class HelmClient:
         """
         Combines submission and monitoring steps of a pgt.
         """
-        session_id = self.submit_pgt()
-        monitoring_thread = self._monitor(session_id)
+        self.submit_pgt()
+        monitoring_thread = self._monitor()
         monitoring_thread.join()
 
     def submit_pg(self):
@@ -408,6 +408,6 @@ class HelmClient:
         """
         Combines submission and monitoring steps of a pg.
         """
-        session_id = self.submit_pg()
-        monitoring_thread = self._monitor(session_id)
+        self.submit_pg()
+        monitoring_thread = self._monitor()
         monitoring_thread.join()
