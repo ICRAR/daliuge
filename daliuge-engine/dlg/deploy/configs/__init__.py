@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 import os, string
+from abc import abstractmethod
 
 __sub_tpl_str = """#!/bin/bash --login
 
@@ -49,6 +50,7 @@ class DefaultConfig(object):
         self.setpar("modules", l[2].strip())
         self.setpar("venv", l[3].strip())
 
+    @abstractmethod
     def init_list(self):
         pass
 

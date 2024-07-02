@@ -23,7 +23,7 @@
 from collections import defaultdict
 import logging
 from abc import ABC, abstractmethod
-from typing import Optional, Union
+from typing import Optional, Union, List, DefaultDict
 
 logger = logging.getLogger(__name__)
 
@@ -69,8 +69,8 @@ class EventFirer(object):
 
     def __init__(self):
         # Union string key with object to handle __ALL_EVENTS above
-        self._listeners: defaultdict[
-            Union[str, object], list[EventHandler]
+        self._listeners: DefaultDict[
+            Union[str, object], List[EventHandler]
         ] = defaultdict(list)
 
     def subscribe(
@@ -116,7 +116,7 @@ class EventFirer(object):
         """
 
         # Which listeners should we call?
-        listeners: list[EventHandler] = []
+        listeners: List[EventHandler] = []
         if eventType in self._listeners:
             listeners += self._listeners[eventType]
         if EventFirer.__ALL_EVENTS in self._listeners:

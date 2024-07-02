@@ -202,9 +202,9 @@ class AppDROP(ContainerDROP):
         named_ports: OrderedDict[str, DataDROP] = OrderedDict()
         port_dict = self.__getattribute__(f"_{ports}")
         if (
-            ports in self.parameters
-            and len(self.parameters[ports]) > 0
-            and isinstance(self.parameters[ports][0], dict)
+                ports in self.parameters
+                and len(self.parameters[ports]) > 0
+                and isinstance(self.parameters[ports][0], dict)
         ):
             for i in range(len(port_dict)):
                 key = list(self.parameters[ports][i].values())[0]
@@ -217,9 +217,9 @@ class AppDROP(ContainerDROP):
                     else:
                         named_ports[key] = [named_ports[key], value]
         elif (
-            ports in self.parameters
-            and len(self.parameters[ports]) > 0
-            and isinstance(self.parameters[ports], list)
+                ports in self.parameters
+                and len(self.parameters[ports]) > 0
+                and isinstance(self.parameters[ports], list)
         ):
             # This enablkes the gather to work
             return {}
@@ -398,8 +398,8 @@ class InputFiredAppDROP(AppDROP):
 
         # More effective inputs than inputs, this is a horror
         if n_eff_inputs > n_inputs:
-            raise Exception(
-                "%r: More effective inputs (%d) than inputs (%d)"
+            raise RuntimeError(
+                "%r: More effective inputs (%s) than inputs (%d)"
                 % (self, self.n_effective_inputs, n_inputs)
             )
 
