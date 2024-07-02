@@ -204,7 +204,6 @@ async function checkUrlStatus(url) {
         $.ajax({
             url: url + 'api',
             method: 'HEAD',
-            // dataType: 'jsonp',
             complete: function (jqXHR, textStatus) {
                 if (jqXHR.status === 200) {
                     resolve(true)
