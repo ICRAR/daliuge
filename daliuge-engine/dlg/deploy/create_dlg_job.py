@@ -62,7 +62,9 @@ def get_timestamp(line):
     date_time = "{0}T{1}".format(split[0], split[1])
     pattern = "%Y-%m-%dT%H:%M:%S,%f"
     epoch = time.mktime(time.strptime(date_time, pattern))
-    return datetime.datetime.strptime(date_time, pattern).microsecond / 1e6 + epoch
+    parsed_date = datetime.datetime.strptime(date_time, pattern)
+    microseconds = parsed_date.microsecond / 1e6
+    return microseconds + epoch
 
 
 class LogEntryPair:
@@ -610,7 +612,10 @@ def main():
     )
 
     (opts, _) = parser.parse_args(sys.argv)
-    if opts.configs:
+(opts, _) = parser.parse_args(sys.argv)
+if opts.configs:
+    print(f"Available facilities: {FACILITIES}")
+    sys.exit(1)
         print(f"Available facilities: {FACILITIES}")
         sys.exit(1)
     if not (opts.action and opts.facility) and not opts.configs:
@@ -654,7 +659,7 @@ def main():
         elif opts.physical_graph:
             path_to_graph_file = opts.physical_graph
         if path_to_graph_file and not os.path.exists(path_to_graph_file):
-            parser.error("Cannot locate graph file at '{0}'".format(path_to_graph_file))
+            parser.error(f"Cannot locate graph file at '{path_to_graph_file}'")
         else:
             graph_name = os.path.basename(path_to_graph_file)
             with open(path_to_graph_file) as f:

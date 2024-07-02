@@ -104,7 +104,7 @@ class SlurmClient:
         self._submit = submit
         self._dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
         ni, nn, self._pip_name = find_numislands(self._physical_graph_template_data)
-        if ni and ni >= self._num_islands:
+        if isinstance(ni, int) and ni >= self._num_islands:
             self._num_islands = ni
         if nn and nn >= self._num_nodes:
             self._num_nodes = nn
