@@ -39,9 +39,9 @@ init_tpl = string.Template(__sub_tpl_str)
 
 
 class DefaultConfig(object):
-class DefaultConfig(object):
     def __init__(self, account):
         self.ACCOUNT = account
+
     HOME_DIR = os.environ["HOME"] if "HOME" in os.environ else ""
     DLG_ROOT = f"{HOME_DIR}/dlg"
     HOME_DIR = os.environ["HOME"] if "HOME" in os.environ else ""

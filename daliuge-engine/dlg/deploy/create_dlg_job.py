@@ -612,10 +612,7 @@ def main():
     )
 
     (opts, _) = parser.parse_args(sys.argv)
-(opts, _) = parser.parse_args(sys.argv)
-if opts.configs:
-    print(f"Available facilities: {FACILITIES}")
-    sys.exit(1)
+    if opts.configs:
         print(f"Available facilities: {FACILITIES}")
         sys.exit(1)
     if not (opts.action and opts.facility) and not opts.configs:
@@ -670,7 +667,7 @@ if opts.configs:
                     reprodata = pgt.pop()
                     pgt = pg_generator.partition(
                         pgt=pgt,
-                        algo="metis",
+                        algo=opts.algorithm,
                         algo_params=opts.algorithm_params,
                         num_islands=opts.num_islands,
                         num_partitions=opts.num_nodes,
