@@ -98,10 +98,9 @@ def daliuge_aware(func):
                 logger.debug("CORS headers set to allow from: %s", origin)
             bottle.response.content_type = "application/json"
             logger.debug("REST function called: %s", func.__name__)
-            jres = json.dumps(res) if res else json.dumps({"Status": "Success"})
             jres = (
                 json.dumps(res)
-                if res and not bottle.request.method == "HEAD"
+                if res is not None
                 else json.dumps({"Status": "Success"})
             )
             logger.debug("Bottle sending back result: %s", jres[: min(len(jres), 80)])
