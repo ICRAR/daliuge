@@ -337,7 +337,7 @@ class TestLGWeb(unittest.TestCase):
         c = RestClient("localhost", lgweb_port, timeout=10)
         response = c._GET("/api/submission_method")
         response_content = json.load(response)
-        self.assertEqual(response_content, {"methods": ["HELM"]})
+        self.assertEqual(response_content, {"methods": []})
 
     def _test_post_request(
         self,
@@ -545,4 +545,4 @@ class TestLGWeb(unittest.TestCase):
 
     def test_get_mgr_deployment_methods(self):
         response = get_mgr_deployment_methods("localhost", lgweb_port, "")
-        self.assertEqual(["HELM"], response)
+        self.assertEqual([], response)
