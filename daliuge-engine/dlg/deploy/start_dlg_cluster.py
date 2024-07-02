@@ -146,7 +146,7 @@ def get_workspace_dir(log_dir):
     if "DLG_ROOT" in os.environ:
         workspace = f"{os.environ['DLG_ROOT']}/workspace"
     else:
-        f"{os.path.split(log_dir)[0]}/workspace"
+        workspace = f"{os.path.split(log_dir)[0]}/workspace"
     return workspace
 
 
