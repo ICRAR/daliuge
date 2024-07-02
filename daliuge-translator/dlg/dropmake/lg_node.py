@@ -96,9 +96,13 @@ class LGNode:
                 group_q[grp_id].append(self)
 
         done_dict[self.id] = self
+        if 'subgraph' in jd:
+            self.subgraph = jd['subgraph']
+        else:
+            self.subgraph = None
 
-    # def __str__(self):
-    #     return json.dumps(self.jd)
+    def __str__(self):
+        return self.name
 
     @property
     def jd(self):
@@ -469,7 +473,10 @@ class LGNode:
 
     @property
     def is_subgraph(self):
-        return self._jd["category"] == Categories.SUBGRAPH
+        if 'isSubGraphApp' in self._jd:
+            return self._jd["isSubGraphApp"]
+        else:
+            return self._jd["category"] == Categories.SUBGRAPH
 
     @property
     def group_keys(self):

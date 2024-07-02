@@ -45,6 +45,7 @@ from dlg.dropmake.dm_utils import (
     convert_construct,
     convert_fields,
     convert_mkn,
+    convert_subgraphs,
     LG_VER_EAGLE,
     LG_VER_EAGLE_CONVERTED,
     GraphException,
@@ -92,6 +93,7 @@ class LG:
             lg = convert_mkn(lg)
             lg = convert_fields(lg)
             lg = convert_construct(lg)
+            lg = convert_subgraphs(lg)
         elif LG_VER_EAGLE_CONVERTED == lgver:
             lg = convert_construct(lg)
         elif LG_APPREF == lgver:
@@ -372,8 +374,6 @@ class LG:
         elif lgn.is_service:
             # no action required, inputapp node aleady created and marked with "isService"
             pass
-        elif lgn.is_subgraph:
-            pass
         else:
             src_drop = lgn.make_single_drop(iid, loop_ctx=lpcxt)
             self._drop_dict[lgn.id].append(src_drop)
@@ -595,6 +595,8 @@ class LG:
                             #     gddrop.addConsumer(tdrops[j])
                             #     tdrops[j].addInput(gddrop)
                             #     j += 1
+                elif slgn.is_subgraph or tlgn.is_subgraph:
+                    pass
                 else:
                     if len(sdrops) != len(tdrops):
                         err_info = "For within-group links, # {2} Group Inputs {0} must be the same as # {3} of Component Outputs {1}".format(
@@ -776,7 +778,6 @@ class LG:
                     tlgn["categoryType"] = "Application"
                     tlgn["category"] = "PythonApp"
                 elif tlgn.is_subgraph:
-                    # TODO LIU-385: Add behaviour for when we have an SubGraphInputApp
                     pass
                 else:
                     raise GraphException(
@@ -834,9 +835,9 @@ class LG:
                 #     if 'gather-data_drop' in sl_drop:
                 #         del sl_drop['gather-data_drop']
             elif lgn.is_subgraph:
-                if not lgn.jd['hasInputApp']:
+                # Remove the SubGraph construct drop
+                if lgn.jd['isSubGraphConstruct']:
                     del self._drop_dict[lid]
-                # TODO LIU-385: Add support for SubGraphs with InputApps
 
         logger.info(
             "Unroll progress - extra drops done for session %s",
