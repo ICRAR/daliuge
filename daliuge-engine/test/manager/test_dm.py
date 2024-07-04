@@ -142,7 +142,7 @@ class NMTestsMixIn(object):
         leaf_data,
         root_oids=("A",),
         leaf_oid="C",
-        expected_failures=[],
+        expected_failures: list=None,
         sessionId=f"s{random.randint(0, 1000)}",
         node_managers=None,
         threads=0,
@@ -174,9 +174,11 @@ class NMTestsMixIn(object):
         expected_successes = [
             drops[oid] for oid in drops if oid not in expected_failures
         ]
-        expected_failures = [
-            drops[oid] for oid in drops if oid in expected_failures
-        ]
+        if expected_failures:
+            expected_failures = [drops[oid] for oid in drops if oid in expected_failures]
+        else:
+            expected_failures = []
+
         for drop in expected_successes:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
         for drop in expected_failures:
