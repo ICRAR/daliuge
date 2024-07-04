@@ -23,6 +23,7 @@
 Module containing the logic of a session -- a given graph execution
 """
 
+from __future__ import annotations
 import collections
 import inspect
 import json
@@ -56,6 +57,7 @@ from ..exceptions import (
     NoDropException,
     DaliugeException,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -330,7 +332,8 @@ class Session(object):
         graph_loader.addLink(linkType, lhDropSpec, rhOID, force=force)
 
     @track_current_session
-    def deploy(self, completedDrops=[], event_listeners=[], foreach=None):
+    def deploy(self, completedDrops:list[str]=None,
+               event_listeners:list=None, foreach=None):
         """
         Creates the DROPs represented by all the graph specs contained in
         this session, effectively deploying them.
@@ -389,8 +392,9 @@ class Session(object):
                 drop._rpc_endpoint = self._nm.rpc_endpoint
 
             # Register them with the error handler
-            for l in event_listeners:
-                drop.subscribe(l)
+            if event_listeners:
+                for l in event_listeners:
+                    drop.subscribe(l)
             #  Register each drop for reproducibility listening
             drop.subscribe(repro_listener, "reproducibility")
 

@@ -19,6 +19,8 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+from __future__ import  annotations
+
 import logging
 import os
 import urllib.parse
@@ -61,7 +63,7 @@ class BaseDROPManagerClient(RestClient):
             "Successfully created session %s on %s:%s", sessionId, self.host, self.port
         )
 
-    def deploy_session(self, sessionId, completed_uids=[]):
+    def deploy_session(self, sessionId, completed_uids: list[str] = None):
         """
         Deploys session `sessionId`, effectively creating its DROPs and triggering
         the execution of the graph
