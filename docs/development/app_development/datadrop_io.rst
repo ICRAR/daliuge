@@ -111,4 +111,4 @@ Specialized Serialization
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Data drops such as RDBMSDrop drops manage their own record format and are
-interfaced using relational data objects such `dict`, `pyarrow.RecordBatch` or `pandas.DataFrame`.
+interfaced using relational data objects such `dict`, or `pandas.DataFrame`.

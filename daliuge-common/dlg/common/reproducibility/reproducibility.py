@@ -125,7 +125,7 @@ def accumulate_pgt_unroll_drop_data(drop: dict):
         }
     if drop["reprodata"].get("rmode") is None:
         level = REPRO_DEFAULT
-        drop["reprodata"]["rmode"] = str(level.level)
+        drop["reprodata"]["rmode"] = str(level)
         drop["reprodata"][level.name] = {}
     else:
         level = rflag_caster(drop["reprodata"]["rmode"])

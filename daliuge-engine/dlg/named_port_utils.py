@@ -65,7 +65,7 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     the final command line.
     """
     applicationArgs = clean_applicationArgs(
-        applicationArgs, prefix=prefix, separator=separator
+        applicationArgs
     )
     pargs = []
     kwargs = {}
