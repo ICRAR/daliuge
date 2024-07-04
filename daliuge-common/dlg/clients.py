@@ -41,8 +41,10 @@ class BaseDROPManagerClient(RestClient):
     Base class for REST clients that talk to the DROP managers.
     """
 
-    def _request(self, url, method, content=None, headers={}):
+    def _request(self, url, method, content=None, headers: dict=None, timeout=10):
         # Normalize first
+        if not headers:
+            headers = {}
         if not url.startswith("/"):
             url = "/" + url
         url = "/api" + url

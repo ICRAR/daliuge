@@ -348,6 +348,8 @@ class Session(object):
         # In those cases we still want to be able to "deploy" this session
         # to keep a consistent state across all NM sessions, even though
         # in reality this particular session is managing nothing
+        if not completedDrops:
+            completedDrops = []
         status = self.status
         if (self._graph and status != SessionStates.BUILDING) or (
             not self._graph and status != SessionStates.PRISTINE

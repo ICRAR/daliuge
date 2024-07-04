@@ -274,6 +274,8 @@ class NodeManagerBase(DROPManager):
         self._error_listener = (
             _load(error_listener, "on_error") if error_listener else None
         )
+        if not event_listeners:
+            event_listeners = []
         self._event_listeners = [
             _load(l, "handleEvent") for l in event_listeners
         ]
