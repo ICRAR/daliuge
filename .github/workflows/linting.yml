@@ -22,4 +22,4 @@ jobs:
 
       - name: Run pylint
         run: |
-          pylint daliuge-common daliuge-translator daliuge-engine
+          pylint daliuge-common daliuge-translator daliuge-engine --fail-under=9 --fail-on=E                    

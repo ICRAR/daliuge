@@ -37,7 +37,7 @@ from dlg.data.io import IOForURL, OpenMode
 from dlg import common
 from dlg.apps.app_base import AppDROP
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
     from dlg.drop import AbstractDROP
@@ -191,7 +191,7 @@ def getUpstreamObjects(drop: "AbstractDROP"):
     In practice if A is an upstream DROP of B means that it must be moved
     to the COMPLETED state before B can do so.
     """
-    upObjs: list[AbstractDROP] = []
+    upObjs: List[AbstractDROP] = []
     if isinstance(drop, AppDROP):
         upObjs += drop.inputs
         upObjs += drop.streamingInputs

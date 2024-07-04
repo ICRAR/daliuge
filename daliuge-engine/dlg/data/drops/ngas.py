@@ -38,6 +38,7 @@ from dlg.meta import dlg_string_param, dlg_int_param
 # @param ngasMime "text/ascii"/String/ComponentParameter/NoPort/ReadWrite//False/False/Mime-type to be used for archiving
 # @param ngasTimeout 2/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Timeout for receiving responses for NGAS
 # @param dropclass dlg.data.drops.ngas.NgasDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param base_name ngas/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
@@ -133,7 +134,7 @@ class NgasDROP(DataDROP):
 
     @property
     def dataURL(self) -> str:
-        return "ngas://%s:%d/%s" % (self.ngasSrv, self.ngasPort, self.fileId)
+        return "ngas://%s:%s/%s" % (self.ngasSrv, self.ngasPort, self.fileId)
 
     # Override
     def generate_reproduce_data(self):

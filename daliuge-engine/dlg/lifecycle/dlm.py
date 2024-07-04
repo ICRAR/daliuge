@@ -124,6 +124,7 @@ import string
 import threading
 import time
 
+from typing import Dict
 from . import registry
 from .hsm import manager
 from .hsm.store import AbstractStore
@@ -226,7 +227,7 @@ class DataLifecycleManager:
         # instead of _drops.itervalues() to get a full, thread-safe copy of the
         # dictionary values. Maybe there's a better approach for thread-safety
         # here
-        self._drops: dict[str, AbstractDROP] = {}
+        self._drops: Dict[str, AbstractDROP] = {}
 
         self._check_period = check_period
         self._cleanup_period = cleanup_period
