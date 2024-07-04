@@ -31,6 +31,8 @@ import os
 import os.path as osp
 from .definition_classes import Categories, ConstructTypes
 
+from typing import Dict
+
 logger = logging.getLogger(__name__)
 
 LG_VER_OLD = 1
@@ -576,7 +578,7 @@ def convert_construct(lgo):
     return lgo
 
 
-def _create_from_node(node, category, app_params):
+def _create_from_node(node: Dict, category, app_params):
     """
     Create a new dictionary from the node based on the category of the new drop, and any
     specific attributes for the application

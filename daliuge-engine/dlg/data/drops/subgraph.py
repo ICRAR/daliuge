@@ -20,9 +20,13 @@
 #    MA 02111-1307  USA
 
 
+import threading
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.data.drops.data_base import DataDROP, logger
 from dlg.data.io import DataIO
+from dlg.manager.composite_manager import DataIslandManager, MasterManager
+from dlg.manager.node_manager import NodeManager
+from dlg.manager.rest import NMRestServer
 
 
 ##
@@ -42,6 +46,7 @@ class SubGraphApp(BarrierAppDROP):
 
     def initialize(self, **kwargs):
         super(SubGraphApp, self).initialize(**kwargs)
+        # self._subgraph = drop.subgraph
 
     def run(self):
         """
@@ -52,6 +57,15 @@ class SubGraphApp(BarrierAppDROP):
 
         :return:
         """
+
+        port = 8085
+        manager = NodeManager(False)
+        server = NMRestServer(manager)
+        thread = threading.Thread(target=server.start, args=("localhost", port))
+        thread.start()
+        hostname = 'localhost'
+        self.dim = DataIslandManager([hostname])
+
 
 
 ##
