@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 import errno
+import logging
 import os
 import re
 
@@ -79,6 +80,7 @@ class FileDROP(DataDROP, PathBasedDrop):
         if kwargs["persist"] and "lifespan" not in kwargs:
             kwargs["expireAfterUse"] = False
         self.is_dir = False
+        self._updatedPorts = False
         super().__init__(*args, **kwargs)
 
     def sanitize_paths(self, filepath: str) -> Union[None, str]:
@@ -109,6 +111,10 @@ class FileDROP(DataDROP, PathBasedDrop):
         """
         FileDROP-specific initialization.
         """
+
+        self._setupFilePaths()
+
+    def _setupFilePaths(self):
         filepath = self.parameters.get("filepath", None)
         dirname = None
         filename = None
@@ -157,6 +163,12 @@ class FileDROP(DataDROP, PathBasedDrop):
         self._wio = None
 
     def getIO(self):
+
+        # We need to update named_ports now we have runtime information
+        if not self._updatedPorts:
+            self._map_input_ports_to_params()
+            self._setupFilePaths()
+
         return FileIO(self._path)
 
     def delete(self):
