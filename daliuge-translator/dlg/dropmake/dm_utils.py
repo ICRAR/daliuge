@@ -656,7 +656,7 @@ def _has_app_keywords(node, keywords, requires_all=False):
     return has_app
 
 
-def _update_keys(old_new_subgraph_map, old_new_grpk_map, lgo):
+def _update_keys(old_new_grpk_map, lgo):
 
     for n in lgo["nodeDataArray"]:
         if "group" in n and n["group"] in old_new_grpk_map:
@@ -790,51 +790,6 @@ def _build_apps_from_subgraph_construct(subgraph_node):
 
     return input_node, output_node
 
-
-def create_subgraph_data_node(app_node, node_key, subgraph, lgo):
-    """
-    Create a node containing the subgraph that can be parsed by the SubgraphInput App
-
-    Establishes the node and ensure that it is linked to the 'subgraph' port that is auto-
-    added to the SubGraphInputApp. This ensures that the subgraph dictionary can be read
-    from this drop at run-time.
-
-    :param app_node:
-    :param node_key:
-    :param subgraph:
-    :param lgo:
-    :return:
-    """
-    # Construct the subgraph node
-    node_data_params = {"categoryType": Categories.DATA,
-                        "key": node_key,
-                        "name": "SubGraph_Data",
-                        "subgraph": subgraph}
-    node_data = _create_from_node(app_node, "Memory", node_data_params)
-    app_subgraph_port = None
-
-    # Find the subgraph port to match
-    for nfield in app_node['fields']:
-        if nfield['usage'] == 'InputPort' and nfield['name'] == 'subgraph':
-            app_subgraph_port = nfield['id']
-            break
-    data_subgraph_port = _make_unique_port_key(app_subgraph_port, node_key)
-
-    # Add field information for the port
-    node_data['fields'] = [{'name': "subgraph",
-                            'usage': 'OutputPort',
-                            'id': data_subgraph_port,
-                            'value': ''}]
-    lgo["nodeDataArray"].append(node_data)
-    # Preseve input into the 'subgraph' port on the SubGraph Input App
-    lgo["linkDataArray"].append({'to': app_node['key'],
-                                 'from': node_data['key'],
-                                 'toPort': data_subgraph_port,
-                                 'fromPort': app_subgraph_port})
-
-    return lgo
-
-
 def convert_subgraphs(lgo):
     """
     Identify any first-order SubGraph constructs in the Logical Graph, and exctract the
@@ -890,7 +845,7 @@ def convert_subgraphs(lgo):
             # old_new_subgraph_map[k_new] = out_node['key']
             lgo["nodeDataArray"].extend(new_nodes)
 
-            lgo = _update_keys(old_new_subgraph_map, old_new_grpk_map, lgo)
+            lgo = _update_keys(old_new_grpk_map, lgo)
 
             # Manage SubGraph nodes and links
             subgraphNodes, subgraphLinks, lgo = _extract_subgraph_nodes(app_node,
@@ -905,8 +860,9 @@ def convert_subgraphs(lgo):
                 "linkDataArray": subgraphLinks,
                 "modelData": lgo['modelData']
             }
-            # node_data_field
-            lgo = create_subgraph_data_node(app_node, k_new, subgraph, lgo)
+            for n in lgo['nodeDataArray']:
+                if n['key'] == app_node['key']:
+                    app_node['subgraph'] = subgraph
 
     return lgo
 
