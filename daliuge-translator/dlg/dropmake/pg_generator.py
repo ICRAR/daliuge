@@ -256,6 +256,5 @@ def resource_map(pgt, nodes, num_islands=1, co_host_dim=True):
             drop_spec["node"] = nm_list[nidx]
             iidx = int(drop_spec["island"][1:])  # skip '#'
             drop_spec["island"] = dim_list[iidx]
-            logger.debug("Island: %s", drop_spec["island"])
 
     return pgt  # now it's a PG

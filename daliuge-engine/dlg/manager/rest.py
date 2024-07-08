@@ -77,8 +77,8 @@ def daliuge_aware(func):
             if res is not None:
                 # set CORS headers
                 origin = bottle.request.headers.raw("Origin")
-                logger.debug("CORS request comming from: %s", origin)
-                logger.debug("Request method: %s", bottle.request.method)
+                # logger.debug("CORS request comming from: %s", origin)
+                # logger.debug("Request method: %s", bottle.request.method)
                 if origin is None or re.match(
                     r"(http://dlg-trans.local:80[0-9][0-9]|https://dlg-trans.icrar.org)",
                     origin,
@@ -95,15 +95,15 @@ def daliuge_aware(func):
                 bottle.response.headers["Access-Control-Allow-Headers"] = (
                     "Origin, Accept, Content-Type, Content-Encoding, X-Requested-With, X-CSRF-Token"
                 )
-                logger.debug("CORS headers set to allow from: %s", origin)
+                # logger.debug("CORS headers set to allow from: %s", origin)
             bottle.response.content_type = "application/json"
-            logger.debug("REST function called: %s", func.__name__)
+            # logger.debug("REST function called: %s", func.__name__)
             jres = (
                 json.dumps(res)
                 if res is not None
                 else json.dumps({"Status": "Success"})
             )
-            logger.debug("Bottle sending back result: %s", jres[: min(len(jres), 80)])
+            # logger.debug("Bottle sending back result: %s", jres[: min(len(jres), 80)])
             return jres
         except Exception as e:
             logger.exception("Error while fulfilling request")
@@ -531,7 +531,9 @@ class CompositeManagerRestServer(ManagerRestServer):
     def getNodeSessions(self, node):
         if node not in self.dm.nodes:
             raise Exception(f"{node} not in current list of nodes")
-        with NodeManagerClient(host=node) as dm:
+        if node.find(":") > 0:
+            node, port = node.split(":")
+        with NodeManagerClient(host=node, port=port) as dm:
             return dm.sessions()
 
     def _tarfile_write(self, tar, headers, stream):
@@ -556,7 +558,8 @@ class CompositeManagerRestServer(ManagerRestServer):
         fh = io.BytesIO()
         with tarfile.open(fileobj=fh, mode="w:gz") as tar:
             for node in self.getAllCMNodes():
-                with NodeManagerClient(host=node) as dm:
+                node, port = node.split(":")
+                with NodeManagerClient(host=node, port=port) as dm:
                     try:
                         stream, resp = dm.get_log_file(sessionId)
                         self._tarfile_write(tar, resp, stream)
@@ -576,28 +579,32 @@ class CompositeManagerRestServer(ManagerRestServer):
     def getNodeSessionInformation(self, node, sessionId):
         if node not in self.dm.nodes:
             raise Exception(f"{node} not in current list of nodes")
-        with NodeManagerClient(host=node) as dm:
+        node, port = node.split(":")
+        with NodeManagerClient(host=node, port=port) as dm:
             return dm.session(sessionId)
 
     @daliuge_aware
     def getNodeSessionStatus(self, node, sessionId):
         if node not in self.dm.nodes:
             raise Exception(f"{node} not in current list of nodes")
-        with NodeManagerClient(host=node) as dm:
+        node, port = node.split(":")
+        with NodeManagerClient(host=node, port=port) as dm:
             return dm.session_status(sessionId)
 
     @daliuge_aware
     def getNodeGraph(self, node, sessionId):
         if node not in self.dm.nodes:
             raise Exception(f"{node} not in current list of nodes")
-        with NodeManagerClient(host=node) as dm:
+        node, port = node.split(":")
+        with NodeManagerClient(host=node, port=port) as dm:
             return dm.graph(sessionId)
 
     @daliuge_aware
     def getNodeGraphStatus(self, node, sessionId):
         if node not in self.dm.nodes:
             raise Exception(f"{node} not in current list of nodes")
-        with NodeManagerClient(host=node) as dm:
+        node, port = node.split(":")
+        with NodeManagerClient(host=node, port=port) as dm:
             return dm.graph_status(sessionId)
 
     # ===========================================================================

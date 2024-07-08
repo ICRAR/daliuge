@@ -719,11 +719,12 @@ def main():
                     "Couldn't connect to the main drop manager, proxy not started"
                 )
         elif remote.my_ip in remote.dim_ips:
+            nm_uris = [f"{ip}:{NODE_DEFAULT_REST_PORT}" for ip in remote.nm_ips]
             LOGGER.info(f"Starting island managers on nodes: {remote.dim_ips}")
-            dim_proc = start_dim(remote.nm_ips, log_dir, remote.my_ip, logv=logv)
+            dim_proc = start_dim(nm_uris, log_dir, remote.my_ip, logv=logv)
             # whichever way we came from, now we have to wait until session is finished
             # we always monitor the island, else we will have race conditions
-            physical_graph = get_pg(options, remote.nm_ips, remote.dim_ips)
+            physical_graph = get_pg(options, nm_uris, remote.dim_ips)
             monitoring_thread = submit_and_monitor(
                 physical_graph,
                 options,

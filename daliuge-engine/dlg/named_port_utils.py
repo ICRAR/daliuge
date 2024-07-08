@@ -89,7 +89,7 @@ def identify_named_ports(
     check_len: int = 0,
     mode: str = "inputs",
     parser: callable = None,
-    addPositionalToKeyword: bool =False
+    addPositionalToKeyword: bool = False,
 ) -> dict:
     """
     Checks port names for matches with arguments and returns mapped ports.
@@ -161,7 +161,8 @@ def identify_named_ports(
         else:
             logger.debug(
                 "No matching argument found for %s key %s, %s, %s",
-                mode, key,
+                mode,
+                key,
                 keywordArgs,
                 positionalArgs,
             )
@@ -222,7 +223,9 @@ def replace_named_ports(
     """
     logger.debug(
         "iitems: %s; inport_names: %s; outport_names: %s",
-        iitems, inport_names, outport_names,
+        iitems,
+        inport_names,
+        outport_names,
     )
     inputs_dict = collections.OrderedDict()
     for uid, drop in iitems:
@@ -233,31 +236,54 @@ def replace_named_ports(
 
     outputs_dict = collections.OrderedDict()
     for uid, drop in oitems:
-        outputs_dict[uid] = {"path": drop.path if hasattr(drop, "path") else ""}
+        outputs_dict[uid] = {
+            "drop": drop,
+            "path": drop.path if hasattr(drop, "path") else "",
+        }
 
     positionalArgs = _get_args(appArgs, positional=True)
     keywordArgs = _get_args(appArgs, positional=False)
     # we will need an ordered dict for all positional arguments
     # thus we create it here and fill it with values
     positionalPortArgs = collections.OrderedDict(
-        zip(positionalArgs, [None] * len(positionalArgs)))
+        zip(positionalArgs, [None] * len(positionalArgs))
+    )
 
     logger.debug(
         "posargs: %s; keyargs: %s, %s",
-        positionalArgs, keywordArgs, check_ports_dict(inport_names),
+        positionalArgs,
+        keywordArgs,
+        check_ports_dict(inport_names),
     )
 
     keywordPortArgs = {}
     # Update the argument dictionaries in-place based on the port names.
     # This needs to be done for both the input ports and output ports on the drop.
-    _process_port(inport_names, inputs_dict, keywordPortArgs, positionalArgs,
-                  positionalPortArgs, keywordArgs, iitems, parser, "inputs")
+    _process_port(
+        inport_names,
+        inputs_dict,
+        keywordPortArgs,
+        positionalArgs,
+        positionalPortArgs,
+        keywordArgs,
+        iitems,
+        parser,
+        "inputs",
+    )
 
-    _process_port(outport_names, outputs_dict, keywordPortArgs, positionalArgs,
-                  positionalPortArgs, keywordArgs, oitems, parser, "outputs")
+    _process_port(
+        outport_names,
+        outputs_dict,
+        keywordPortArgs,
+        positionalArgs,
+        positionalPortArgs,
+        keywordArgs,
+        oitems,
+        parser,
+        "outputs",
+    )
 
-    logger.debug("Arguments from ports: %s, %s,",
-                 keywordPortArgs, positionalPortArgs)
+    logger.debug("Arguments from ports: %s, %s,", keywordPortArgs, positionalPortArgs)
 
     # Clean arguments for Docker and Bash applications
     appArgs = clean_applicationArgs(appArgs)
@@ -290,8 +316,17 @@ def replace_named_ports(
     return keywordArgs, pargs
 
 
-def _process_port(port_names, ports, keywordPortArgs, positionalArgs,
-                  positionalPortArgs, keywordArgs, iitems, parser, mode):
+def _process_port(
+    port_names,
+    ports,
+    keywordPortArgs,
+    positionalArgs,
+    positionalPortArgs,
+    keywordArgs,
+    iitems,
+    parser,
+    mode,
+):
     """
     For the set of port names, perform a backwards compatible update of the:
 
@@ -306,15 +341,17 @@ def _process_port(port_names, ports, keywordPortArgs, positionalArgs,
         for port in port_names:
             key = list(port.keys())[0]
             ports[key].update({"name": port[key]})
-        keywordPortArgs.update(identify_named_ports(
-            ports,
-            positionalArgs,
-            positionalPortArgs,
-            keywordArgs,
-            check_len=len(iitems),
-            mode=mode,
-            parser=parser,
-        ))
+        keywordPortArgs.update(
+            identify_named_ports(
+                ports,
+                positionalArgs,
+                positionalPortArgs,
+                keywordArgs,
+                check_len=len(iitems),
+                mode=mode,
+                parser=parser,
+            )
+        )
     else:
         for i in range(min(len(iitems), len(positionalArgs))):
             keywordPortArgs.update({list(positionalArgs)[i]: list(iitems)[i][1]})
@@ -325,11 +362,12 @@ def _get_args(appArgs, positional=False):
     Separate out the arguments dependening on if we want positional or keyword style
     """
     args = {
-        arg: appArgs[arg]["value"] for arg in appArgs
+        arg: appArgs[arg]["value"]
+        for arg in appArgs
         if (appArgs[arg]["positional"] == positional)
     }
 
-    argType = 'Positional' if positional else 'Keyword'
+    argType = "Positional" if positional else "Keyword"
     logger.debug("%s arguments: %s", argType, args)
     return args
 

@@ -224,6 +224,7 @@ def loadDropSpecs(dropSpecList):
                     if oid in dropSpecs:
                         dropSpecs[oid]
                     else:
+                        logger.error("OID: %s not found!", oid)
                         raise KeyError
 
             # N-1 relationships
