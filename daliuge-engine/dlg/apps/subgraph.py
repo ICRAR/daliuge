@@ -26,7 +26,7 @@ from dlg.data.drops.data_base import DataDROP, logger
 from dlg.data.io import DataIO
 from dlg.manager.composite_manager import DataIslandManager, MasterManager
 from dlg.manager.node_manager import NodeManager
-from dlg.manager.rest import NMRestServer
+from dlg.manager.rest import NMRestServer, CompositeManagerRestServer
 
 
 ##
@@ -34,8 +34,9 @@ from dlg.manager.rest import NMRestServer
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param sleep_time 5/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The number of seconds to sleep
-# @param dropclass dlg.apps.simple.SleepAndCopyApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param manager_port_number 8080/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The port number of the SubGraph Node Manager
+# @param hostname localhost/string/ApplicationArgument/NoPort/ReadWrite//False/False/The host name of the SubGraph NodeManager
+# @param dropclass dlg.apps.simple.SleepAndCopyApp/String/ComponentParameter/NoPort/ReadOnly//False/False/
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
@@ -46,7 +47,8 @@ class SubGraphApp(BarrierAppDROP):
 
     def initialize(self, **kwargs):
         super(SubGraphApp, self).initialize(**kwargs)
-        # self._subgraph = drop.subgraph
+        self._managerPort = self._popArg(kwargs, "managerPort", 8080)
+        self._subgraph = self._popArg(kwargs, "subgraph", {})
 
     def run(self):
         """
@@ -58,53 +60,13 @@ class SubGraphApp(BarrierAppDROP):
         :return:
         """
 
-        port = 8085
-        manager = NodeManager(False)
-        server = NMRestServer(manager)
-        thread = threading.Thread(target=server.start, args=("localhost", port))
-        thread.start()
-        hostname = 'localhost'
-        self.dim = DataIslandManager([hostname])
-
-
-
-##
-# @brief Memory
-# @details In-memory storage of intermediate data products
-# @par EAGLE_START
-# @param category Memory
-# @param tag daliuge
-# @param pydata None/String/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
-# @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
-# @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
-# @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
-# @param dropclass dlg.data.drops.memory.InMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class
-# @par EAGLE_END
-class SubGraphDataDrop(DataDROP):
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
-    def initialize(self, **kwargs):
-        super(SubGraphDataDrop, self).initialize(**kwargs)
-
-    def getIO(self) -> DataIO:
-        """
-        Get the SubGraph IO drop
-        :return:
-        """
-
-        return SubGraphIO()
-
-class SubGraphIO(DataIO):
-
-    def __init__(self, **kwargs):
-        super().__init__()
-
-    def _open(self):
-        pass
-
-
+        port = self._managerPort
+        manager = NodeManager('localhost', rpc_port=6667, events_port=5556)
+        nm_server = NMRestServer(manager)
+        nm_thread = threading.Thread(target=nm_server.start, args=("localhost", port))
+        nm_thread.start()
+        dim = DataIslandManager([f"localhost:{port}"])
+        # dim_server = CompositeManagerRestServer(dim)
+        dim.createSession("SubGraphSession")
+        dim.addGraphSpec("SubGraphSession", self._subgraph)
+        dim.deploySession("SubGraphSession")
