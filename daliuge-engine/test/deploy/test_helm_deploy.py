@@ -22,6 +22,8 @@
 """
 Module tests the helm chart translation and deployment functionality.
 """
+# pylint: disable=possibly-used-before-assignment
+
 import json
 import os
 import sys

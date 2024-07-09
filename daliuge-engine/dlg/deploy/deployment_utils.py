@@ -91,11 +91,11 @@ def _parse_list_tokens(token_iter):
             finish_element(sub_values, range_start)
             return values
         if token == ListTokens.MULTICASE_START:
+            prefix = ""
             if values:
                 prefix = values.pop()
             sub_values = _parse_list_tokens(token_iter)
-            if prefix:
-                sub_values = [prefix + s for s in sub_values]
+            sub_values = [prefix + s for s in sub_values]
         if token == ListTokens.RANGE_SEP:
             range_start = values.pop()
         elif token == ListTokens.COMMA:

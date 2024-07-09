@@ -28,6 +28,8 @@ import abc
 import collections
 import copy
 import logging
+from typing import Optional
+
 from psutil import cpu_count
 import os
 import queue
@@ -124,7 +126,7 @@ class NodeManagerDropRunner(DropRunner):
 class NodeManagerThreadDropRunner(NodeManagerDropRunner):
     def __init__(self, max_workers: int):
         self._max_workers = max_workers
-        self._thread_pool: ThreadPoolExecutor | None = None
+        self._thread_pool: Optional[ThreadPoolExecutor] = None
 
     def start(self, _rpc_endpoint):
         logger.info("Initializing thread pool with %d workers", self._max_workers)

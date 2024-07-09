@@ -3,8 +3,9 @@
     "modelData": {
         "commitHash": "",
         "downloadUrl": "",
-        "eagleCommitHash": "Unknown",
-        "eagleVersion": "Unknown",
+        "generatorCommitHash": "Unknown",
+        "generatorVersion": "Unknown",
+        "generatorName": "Unknown",
         "filePath": "testEmpty.graph",
         "fileType": "Graph",
         "lastModifiedDatetime": 0,
