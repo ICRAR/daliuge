@@ -82,7 +82,7 @@ class dropdict(dict):
         self.update(init_dict)
         if "oid" not in self:
             self.update({"oid": None})
-        return super().__init_subclass__()
+        super().__init_subclass__()
 
     def _addSomething(self, other, key, name=None):
         if key not in self:

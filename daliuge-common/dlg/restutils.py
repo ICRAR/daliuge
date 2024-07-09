@@ -139,7 +139,7 @@ class RestClient(object):
 
     def _get_json(self, url):
         ret = self._GET(url)
-        return json.load(ret) if ret else None
+        return json.load(ret) if ret else {}
 
     def _post_form(self, url, content=None):
         if content is not None:

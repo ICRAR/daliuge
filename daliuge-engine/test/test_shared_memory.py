@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+# pylint: disable=possibly-used-before-assignment
 """
 Module tests the shared memory primitive.
 """
@@ -73,7 +74,7 @@ class TestSharedMemory(unittest.TestCase):
         """
         block_a = DlgSharedMemory("A")
         data = pickle.dumps(3)
-        block_a.buf[0 : len(data)] = data
+        block_a.buf[0: len(data)] = data
         block_a.resize(len(data))
         old_size = block_a.size
         block_a.close()
