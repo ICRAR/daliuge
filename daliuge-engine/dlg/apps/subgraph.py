@@ -21,6 +21,8 @@
 
 
 import threading
+import time
+
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.data.drops.data_base import DataDROP, logger
 from dlg.data.io import DataIO
@@ -50,6 +52,19 @@ class SubGraphApp(BarrierAppDROP):
         self._managerPort = self._popArg(kwargs, "managerPort", 8080)
         self._subgraph = self._popArg(kwargs, "subgraph", {})
 
+
+    def _pollRESTInterface(self, pollFrequencyInSeconds: int=30):
+        """
+        :param pollFrequency:
+        :return:
+        """
+        time.sleep(pollFrequencyInSeconds)
+        return True
+
+    def _translateSubGraph(self, subgraph):
+
+        pass
+
     def run(self):
         """
         Use the subgraph data application to get the subgraph data, then use that to
@@ -70,3 +85,10 @@ class SubGraphApp(BarrierAppDROP):
         dim.createSession("SubGraphSession")
         dim.addGraphSpec("SubGraphSession", self._subgraph)
         dim.deploySession("SubGraphSession")
+
+        exit = False
+        while not exit:
+            self._pollRESTInterface()
+
+
+
