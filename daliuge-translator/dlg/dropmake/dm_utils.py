@@ -739,13 +739,21 @@ def _extract_subgraph_nodes(input_node, out_node, logical_graph):
         if link['to'] in subgraphNodes.keys() and link not in subgraphLinks:
             subgraphLinks.append(link)
 
+
     for e in subgraphNodes.values():
         if e['key'] not in output_links:
             logical_graph['nodeDataArray'].remove(e)
     for e in subgraphLinks:
         logical_graph['linkDataArray'].remove(e)
 
+    # Ensure we aren't linking from the Input/Output app into the subgraph
+    # Any nodes outside the subgraph won't exist when it is deployed.
+    subgraphLinks = [link for link in subgraphLinks
+                     if (link['from'] not in construct_apps)]
+    subgraphLinks = [link for link in subgraphLinks
+                     if (link['to'] not in construct_apps)]
     # 4. Create links from the subgraph output data to input/output applications
+
     for n in output_links.values():
         logical_graph['linkDataArray'].append(
             {'to': n['node']['key'], 'from': input_node['key']})
@@ -856,7 +864,7 @@ def convert_subgraphs(lgo):
             k_new = min(keyset) - 1
             keyset.add(k_new)
             subgraph = {
-                "nodeDataArray": subgraphNodes.values(),
+                "nodeDataArray": list(subgraphNodes.values()),
                 "linkDataArray": subgraphLinks,
                 "modelData": lgo['modelData']
             }
