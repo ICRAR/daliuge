@@ -203,12 +203,13 @@ async function checkUrlStatus(url) {
     return new Promise((resolve) => {
         $.ajax({
             url: url + 'api',
-            method: 'HEAD',
+            method: 'GET',
+            mode: 'cors',
             complete: function (jqXHR, textStatus) {
                 if (jqXHR.status === 200) {
                     resolve(true)
                 } else {
-                    console.log("Request url: " + url);
+                    console.log("Request url: " + url + "api");
                     console.log("Request status: " + jqXHR.status);
                     resolve(false);
                 }
