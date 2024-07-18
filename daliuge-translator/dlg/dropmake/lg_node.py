@@ -514,6 +514,10 @@ class LGNode:
         return self._jd["category"] == Categories.MPI
 
     @property
+    def is_subgraph(self):
+        return self._jd["category"] == Categories.SUBGRAPH
+
+    @property
     def group_keys(self):
         """
         Return:
@@ -702,6 +706,8 @@ class LGNode:
                             break
                 elif self.is_service:
                     self._dop = 1  # TODO: number of compute nodes
+                elif self.is_subgraph:
+                    self._dop = 1
                 else:
                     raise GInvalidNode(
                         "Unrecognised (Group) Logical Graph Node: '{0}'".format(
