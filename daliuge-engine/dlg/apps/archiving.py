@@ -82,6 +82,7 @@ class ExternalStoreApp(BarrierAppDROP):
 # @param category PythonApp
 # @param tag daliuge
 # @param dropclass dlg.apps.archiving.NgasArchivingApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name archiving/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?

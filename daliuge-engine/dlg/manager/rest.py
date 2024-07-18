@@ -596,7 +596,12 @@ class CompositeManagerRestServer(ManagerRestServer):
     # ===========================================================================
     # non-REST methods
     # ===========================================================================
+
+    @daliuge_aware
     def visualizeDIM(self):
+        """
+        Note: this is marked as 'daliuge_aware' in order to get the CORS headers.
+        """
         tpl = file_as_string("web/dim.html")
         urlparts = bottle.request.urlparts
         selectedNode = (
