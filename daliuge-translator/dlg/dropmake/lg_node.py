@@ -959,7 +959,6 @@ class LGNode:
         kwargs["num_cpus"] = int(self.jd.get("num_cpus", 1))
         if "mkn" in self.jd:
             kwargs["mkn"] = self.jd["mkn"]
-        kwargs["subgraph"] = self.subgraph
         drop_spec.update(kwargs)
 
         return drop_spec
