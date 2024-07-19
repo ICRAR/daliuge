@@ -109,6 +109,7 @@ class MetisPGTP(PGT):
             except KeyError:
                 logger.debug("Drop does not have oid: %s", drop)
                 droplist.pop(i)
+                continue
             key_dict[oid] = i + 1  # METIS index starts from 1
 
         logger.info("Metis partition input progress - dropdict is built")

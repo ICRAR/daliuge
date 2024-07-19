@@ -353,6 +353,12 @@ class LG:
         elif lgn.is_service:
             # no action required, inputapp node aleady created and marked with "isService"
             pass
+        elif lgn.is_subgraph and lgn.jd["isSubGraphApp"]:
+            src_drop = lgn.make_single_drop(iid, loop_crx=lpcxt)
+            if lgn.subgraph:
+                kwargs = {"subgraph": lgn.subgraph}
+                src_drop.update(kwargs)
+            self._drop_dict[lgn.id].append(src_drop)
         else:
             src_drop = lgn.make_single_drop(iid, loop_ctx=lpcxt)
             self._drop_dict[lgn.id].append(src_drop)
@@ -792,11 +798,7 @@ class LG:
                 # Remove the SubGraph construct drop
                 if lgn.jd["isSubGraphConstruct"]:
                     del self._drop_dict[lid]
-                elif lgn.jd["isSubGraphApp"] and lgn.subgraph:
-                   subgraph = LG(lgn.subgraph)
-                   unrolled_subgraph = subgraph.unroll_to_tpl()
-                   # TODO unrolled subgraph to the drop_dict
-                   # drop_dict[lgn.id]['subgraph']...
+
                 else:
                     pass
 
