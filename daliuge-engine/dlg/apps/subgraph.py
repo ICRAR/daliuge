@@ -94,7 +94,7 @@ class SubGraphLocal(BarrierAppDROP):
             kwargs, "island_manager_port", self.DEFAULT_SUBGRAPH_ISLAND_PORT
         )
         self._subgraph = self._popArg(kwargs, "subgraph", {})
-        # TODO use the node manage and island manager ports
+
         # List of nodes (IP's, str) that are used in
         self._nodeManagerHost = self._popArg(
             kwargs, "node_manager", "localhost"
