@@ -21,6 +21,19 @@
 #
 import os, string
 
+# ===================
+# Deployment defaults
+# ====================
+ACCOUNT = ""
+HOME_DIR = os.environ["HOME"] if "HOME" in os.environ else ""
+DLG_ROOT = f"{HOME_DIR}/dlg"
+LOG_DIR = f"{DLG_ROOT}/log"
+MODULES = ""
+VENV = f"{DLG_ROOT}/venv"
+DEFAULT_MON_HOST = "dlg-mon.icrar.org"  # TODO: need to get this running
+DEFAULT_MON_PORT = 8898
+
+
 __sub_tpl_str = """#!/bin/bash --login
 
 #SBATCH --nodes=$NUM_NODES
@@ -33,31 +46,21 @@ $MODULES
 export DLG_ROOT=$DLG_ROOT
 $VENV
 
-srun -l $PY_BIN -m dlg.deploy.start_dlg_cluster -l $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION --ssid $SESSION_ID
+srun -l $PY_BIN -m dlg.deploy.start_dlg_cluster --log_dir $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION --ssid $SESSION_ID
 """
 init_tpl = string.Template(__sub_tpl_str)
 
 
 class DefaultConfig(object):
-    def __init__(self, account):
-        self.ACCOUNT = account
-
-    HOME_DIR = os.environ["HOME"] if "HOME" in os.environ else ""
-    DLG_ROOT = f"{HOME_DIR}/dlg"
-    HOME_DIR = os.environ["HOME"] if "HOME" in os.environ else ""
-    DLG_ROOT = f"{HOME_DIR}/dlg"
-    LOG_DIR = f"{DLG_ROOT}/log"
-    MODULES = ""
-    VENV = f"{DLG_ROOT}/venv"
 
     def __init__(self):
         self._dict = dict()
-        self.setpar("acc", self.ACCOUNT)
-        self.setpar("home_dir", self.HOME_DIR.strip())
-        self.setpar("dlg_root", self.DLG_ROOT.strip())
-        self.setpar("log_root", self.LOG_DIR)
-        self.setpar("modules", self.MODULES.strip())
-        self.setpar("venv", self.VENV.strip())
+        self.setpar("account", ACCOUNT)
+        self.setpar("home_dir", HOME_DIR.strip())
+        self.setpar("dlg_root", DLG_ROOT.strip())
+        self.setpar("log_root", LOG_DIR)
+        self.setpar("modules", MODULES.strip())
+        self.setpar("venv", VENV.strip())
 
     def setpar(self, k, v):
         self._dict[k] = v
@@ -142,12 +145,13 @@ class MagnusConfig(DefaultConfig):
 
 class Setonix411Config(DefaultConfig):
     """
-    Cofiguration for project 0411 on Setonix.
+    Configuration for project 0411 on Setonix.
     """
 
     ACCOUNT = "pawsey0411"
     USER = os.environ["USER"] if "USER" in os.environ else ""
-    HOME_DIR = f"/scratch/{ACCOUNT}"
+    # TODO: Temporarily switched off for testing!
+    #    HOME_DIR = f"/scratch/{ACCOUNT}"
     DLG_ROOT = f"{HOME_DIR}/{USER}/dlg"
     LOG_DIR = f"{DLG_ROOT}/log"
     MODULES = ""

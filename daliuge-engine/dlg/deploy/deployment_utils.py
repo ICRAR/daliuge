@@ -122,21 +122,15 @@ def find_numislands(physical_graph_template_file):
     init already.
     TODO: We will probably need to do the same with job duration and CPU number
     """
-
-    pgt_data = json.loads(physical_graph_template_file, strict=False)
+    with open(physical_graph_template_file, "r") as f:
+        pgt_data = json.load(f, strict=False)
     try:
         (pgt_name, pgt) = pgt_data
     except:
         raise ValueError(type(pgt_data))
     try:
         nodes = list(map(lambda x: x["node"], pgt))
-        # nodes = [
-        #     "queue1-dy-t3medium-1",
-        # ]
         islands = list(map(lambda x: x["island"], pgt))
-    # islands = [
-    #     "mab_island",
-    # ]
     except KeyError:
         return None, None, pgt_name
     num_islands = len(dict(zip(islands, range(len(islands)))))
