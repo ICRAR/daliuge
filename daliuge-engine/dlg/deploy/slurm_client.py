@@ -27,6 +27,7 @@ import datetime
 import sys
 import os
 import subprocess
+import shutil
 from dlg.runtime import __git_version__ as git_commit
 
 from dlg.deploy.configs import ConfigFactory, init_tpl
@@ -178,7 +179,10 @@ class SlurmClient:
             os.makedirs(session_dir)
 
         physical_graph_file_name = "{0}/{1}".format(session_dir, self._pip_name)
-        os.rename(self._physical_graph_template_file, physical_graph_file_name)
+        if self._physical_graph_template_file:
+            shutil.copyfile(
+                self._physical_graph_template_file, physical_graph_file_name
+            )
 
         job_file_name = "{0}/jobsub.sh".format(session_dir)
         job_desc = self.create_job_desc(physical_graph_file_name)
