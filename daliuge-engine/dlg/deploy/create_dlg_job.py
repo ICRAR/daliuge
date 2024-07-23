@@ -39,12 +39,12 @@ import os
 from dlg.deploy.configs import (
     ConfigFactory,
 )  # get all available configurations
-from dlg.deploy.deployment_constants import (
-    DEFAULT_AWS_MON_PORT,
-    DEFAULT_AWS_MON_HOST,
+
+from dlg.deploy.configs import (
+    DEFAULT_MON_PORT,
+    DEFAULT_MON_HOST,
 )
 from dlg.deploy.slurm_client import SlurmClient
-from dlg.dropmake.web.translator_utils import unroll_and_partition_with_params
 from dlg.common.reproducibility.reproducibility import (
     init_pgt_unroll_repro_data,
     init_pgt_partition_repro_data,
@@ -509,7 +509,7 @@ def main():
         type="string",
         dest="mon_host",
         help="Monitor host IP (optional)",
-        default=DEFAULT_AWS_MON_HOST,
+        default=DEFAULT_MON_HOST,
     )
     parser.add_option(
         "-o",
@@ -518,7 +518,7 @@ def main():
         type="int",
         dest="mon_port",
         help="The port to bind DALiuGE monitor",
-        default=DEFAULT_AWS_MON_PORT,
+        default=DEFAULT_MON_PORT,
     )
     parser.add_option(
         "-v",
@@ -658,9 +658,15 @@ def main():
         if path_to_graph_file and not os.path.exists(path_to_graph_file):
             parser.error(f"Cannot locate graph file at '{path_to_graph_file}'")
         else:
-            graph_name = os.path.basename(path_to_graph_file)
-            with open(path_to_graph_file) as f:
-                if opts.logical_graph:
+            graph_file = os.path.basename(path_to_graph_file)
+            pre, ext = os.path.splitext(graph_file)
+            if os.path.splitext(pre)[-1] != ".pre":
+                pg_graph_file = ".".join([pre, "pg", ext[1:]])
+            else:
+                pg_graph_file = graph_file
+            if opts.logical_graph:
+                with open(path_to_graph_file) as f:
+                    # logical graph provided, translate first
                     lg_graph = json.loads(f.read())
                     pgt = pg_generator.unroll(lg_graph, zerorun=opts.zerorun)
                     pgt = init_pgt_unroll_repro_data(pgt)
@@ -674,11 +680,11 @@ def main():
                     )
                     pgt.append(reprodata)
                     pgt = init_pgt_partition_repro_data(pgt)
-                    pg_graph = json.dumps((graph_name, pgt))
-                    lg_graph = ""
-                else:
-                    lg_graph = ""
-                    pg_graph = f.read()
+                with open(pg_graph_file, "w") as o:
+                    json.dump((pg_graph_file, pgt), o)
+                lg_graph = ""
+            else:
+                pg_graph_file = path_to_graph_file
 
         client = SlurmClient(
             log_root=opts.log_root,
@@ -695,7 +701,7 @@ def main():
             all_nics=opts.all_nics,
             check_with_session=opts.check_with_session,
             logical_graph=lg_graph,
-            physical_graph_template_data=pg_graph,
+            physical_graph_template_file=pg_graph_file,
             submit=opts.submit in ["True", "true"],
         )
         client._visualise_graph = opts.visualise_graph
