@@ -691,7 +691,6 @@ def main():
                     pgt = init_pgt_partition_repro_data(pgt)
                 with open(pg_graph_file, "w") as o:
                     json.dump((pg_graph_file, pgt), o)
-                lg_graph = ""
             else:
                 pg_graph_file = path_to_graph_file
 
@@ -710,7 +709,6 @@ def main():
             num_islands=opts.num_islands,
             all_nics=opts.all_nics,
             check_with_session=opts.check_with_session,
-            logical_graph=lg_graph,
             physical_graph_template_file=pg_graph_file,
             submit=opts.submit in ["True", "true"],
         )
