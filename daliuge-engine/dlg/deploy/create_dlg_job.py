@@ -610,6 +610,15 @@ def main():
         help=f"If set to False, the job is not submitted, but the script is generated",
         default=True,
     )
+    parser.add_option(
+        "-D",
+        "--dlg_root",
+        dest="dlg_root",
+        action="store",
+        type="string",
+        help="Overwrite the DLG_ROOT directory provided by the config",
+        default=False,
+    )
 
     (opts, _) = parser.parse_args(sys.argv)
     if opts.configs:
@@ -687,6 +696,7 @@ def main():
                 pg_graph_file = path_to_graph_file
 
         client = SlurmClient(
+            dlg_root=opts.dlg_root,
             log_root=opts.log_root,
             facility=opts.facility,
             job_dur=opts.job_dur,

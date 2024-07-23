@@ -55,12 +55,12 @@ class DefaultConfig(object):
 
     def __init__(self):
         self._dict = dict()
-        self.setpar("account", ACCOUNT)
-        self.setpar("home_dir", HOME_DIR.strip())
-        self.setpar("dlg_root", DLG_ROOT.strip())
-        self.setpar("log_root", LOG_DIR)
-        self.setpar("modules", MODULES.strip())
-        self.setpar("venv", VENV.strip())
+        self.setpar("account", self.ACCOUNT)
+        self.setpar("home_dir", self.HOME_DIR.strip())
+        self.setpar("dlg_root", self.DLG_ROOT.strip())
+        self.setpar("log_root", self.LOG_DIR)
+        self.setpar("modules", self.MODULES.strip())
+        self.setpar("venv", self.VENV.strip())
 
     def setpar(self, k, v):
         self._dict[k] = v
@@ -150,8 +150,7 @@ class Setonix411Config(DefaultConfig):
 
     ACCOUNT = "pawsey0411"
     USER = os.environ["USER"] if "USER" in os.environ else ""
-    # TODO: Temporarily switched off for testing!
-    #    HOME_DIR = f"/scratch/{ACCOUNT}"
+    HOME_DIR = f"/scratch/{ACCOUNT}"
     DLG_ROOT = f"{HOME_DIR}/{USER}/dlg"
     LOG_DIR = f"{DLG_ROOT}/log"
     MODULES = ""
