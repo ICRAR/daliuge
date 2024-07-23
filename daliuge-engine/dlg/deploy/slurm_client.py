@@ -51,6 +51,7 @@ class SlurmClient:
 
     def __init__(
         self,
+        dlg_root=None,
         log_root=None,
         acc=None,
         physical_graph_template_file=None,  # filename of physical graph template
@@ -73,7 +74,7 @@ class SlurmClient:
     ):
         self._config = ConfigFactory.create_config(facility=facility)
         self._acc = self._config.getpar("account") if (acc is None) else acc
-        self.dlg_root = self._config.getpar("dlg_root")
+        self.dlg_root = self._config.getpar("dlg_root") if not dlg_root else dlg_root
         self._log_root = (
             self._config.getpar("log_root") if (log_root is None) else log_root
         )
