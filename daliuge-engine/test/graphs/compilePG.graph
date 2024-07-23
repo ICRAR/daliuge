@@ -36,7 +36,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "f5fcd28f-f879-425e-8817-d42a1daf6c5a",
                 "parameterType": "ApplicationArgument",
                 "usage": "NoPort"
@@ -51,7 +50,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "ceb0ebaa-96e9-4a54-b7a3-20c165824942",
                 "parameterType": "ComponentParameter",
                 "usage": "NoPort"
@@ -66,7 +64,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "13baed4b-503f-4641-96d1-ee6e7df9ded5",
                 "parameterType": "ComponentParameter",
                 "usage": "NoPort"
@@ -81,7 +78,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "f0c192d9-1ef7-49ff-9ca7-39f45f0e54de",
                 "parameterType": "ComponentParameter",
                 "usage": "NoPort"
@@ -96,7 +92,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "9e8652fb-e7ba-462f-9831-192a9345353a",
                 "parameterType": "ComponentParameter",
                 "usage": "NoPort"
@@ -111,7 +106,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "8b0f89db-685a-4807-ad14-26e8a9cb552e",
                 "parameterType": "ConstraintParameter",
                 "usage": "NoPort"
@@ -126,7 +120,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "7802dab3-7c7f-4f61-beaa-0848aef5b899",
                 "parameterType": "ComponentParameter",
                 "usage": "NoPort"
@@ -141,7 +134,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "a14d3e78-2e98-4a85-b3ca-98407945b243",
                 "parameterType": "ApplicationArgument",
                 "usage": "OutputPort"
@@ -165,7 +157,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "f5fcd28f-f879-425e-8817-d42a1daf6c5a",
                 "parameterType": "ApplicationArgument",
                 "usage": "NoPort"
@@ -180,7 +171,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "a14d3e78-2e98-4a85-b3ca-98407945b243",
                 "parameterType": "ApplicationArgument",
                 "usage": "OutputPort"
@@ -232,7 +222,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "c4e8c33e-ce9c-4871-90c7-866a280adf88",
                 "parameterType": "ComponentParameter",
                 "usage": "NoPort"
@@ -247,7 +236,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "00521132-192c-44c7-b974-391bbf0dee00",
                 "parameterType": "ConstraintParameter",
                 "usage": "NoPort"
@@ -262,7 +250,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "0b2b5add-9751-46bf-997f-711fe7a3b345",
                 "parameterType": "ConstraintParameter",
                 "usage": "NoPort"
@@ -277,7 +264,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "e8edbe8c-57d1-4bb2-85d4-813fad80f268",
                 "parameterType": "ComponentParameter",
                 "usage": "NoPort"
@@ -292,7 +278,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "77057e52-c1cb-4dbc-b68c-40f7c5d188a0",
                 "parameterType": "ComponentParameter",
                 "usage": "NoPort"
@@ -307,7 +292,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "cb922832-1237-4486-bcbb-1824ed668037",
                 "parameterType": "ComponentParameter",
                 "usage": "NoPort"
@@ -322,7 +306,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "46e02fab-1678-4dca-998d-69fd76d002ac",
                 "parameterType": "ApplicationArgument",
                 "usage": "NoPort"
@@ -337,7 +320,6 @@
                 "precious": false,
                 "options": [],
                 "positional": true,
-                "keyAttribute": false,
                 "id": "cf35fdaa-decf-4bdf-9767-dd0714fef787",
                 "parameterType": "ComponentParameter",
                 "usage": "NoPort"
@@ -352,7 +334,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "594340db-0508-4058-9e8b-cd279aed5c75",
                 "parameterType": "ComponentParameter",
                 "usage": "InputPort"
@@ -367,7 +348,6 @@
                 "precious": false,
                 "options": [],
                 "positional": true,
-                "keyAttribute": false,
                 "id": "7e5457c6-04af-4fb3-8ae4-0fa2b4e66a16",
                 "parameterType": "ComponentParameter",
                 "usage": "NoPort"
@@ -382,7 +362,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "86241f4a-d949-42b2-8b3b-0b859d2b55a0",
                 "parameterType": "ComponentParameter",
                 "usage": "NoPort"
@@ -397,7 +376,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "f14afbbe-99c1-49cf-bcae-ad2ea6cfb904",
                 "parameterType": "ApplicationArgument",
                 "usage": "NoPort"
@@ -418,7 +396,6 @@
                     "dataurl"
                 ],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "8edc1727-db73-4af5-bb7d-b85d0f680a03",
                 "parameterType": "ApplicationArgument",
                 "usage": "NoPort"
@@ -446,7 +423,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "46e02fab-1678-4dca-998d-69fd76d002ac",
                 "parameterType": "ApplicationArgument",
                 "usage": "NoPort"
@@ -461,7 +437,6 @@
                 "precious": false,
                 "options": [],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "f14afbbe-99c1-49cf-bcae-ad2ea6cfb904",
                 "parameterType": "ApplicationArgument",
                 "usage": "NoPort"
@@ -482,7 +457,6 @@
                     "dataurl"
                 ],
                 "positional": false,
-                "keyAttribute": false,
                 "id": "8edc1727-db73-4af5-bb7d-b85d0f680a03",
                 "parameterType": "ApplicationArgument",
                 "usage": "NoPort"
