@@ -21,20 +21,19 @@
 
 import threading
 import time
+import datetime
 
-from dlg.common import tool, terminate_or_kill, get_roots
+from typing import List, Dict
+
 from dlg.apps.app_base import BarrierAppDROP
-from dlg.data.drops.data_base import DataDROP, logger
-from dlg.data.io import DataIO
-from dlg.manager.composite_manager import DataIslandManager, MasterManager
-from dlg.manager.node_manager import NodeManager
-from dlg.manager.rest import NMRestServer, CompositeManagerRestServer
+from dlg.common import get_roots
+from dlg.data.drops.data_base import logger
+from dlg.ddap_protocol import AppDROPStates, DROPStates
 from dlg.dropmake.pg_generator import unroll, partition
-
-from dlg.ddap_protocol import (
-    AppDROPStates,
-    DROPStates,
-)
+from dlg.manager.composite_manager import DataIslandManager
+from dlg.manager.node_manager import NodeManager
+from dlg.manager.drop_manager import DROPManager
+from dlg.manager.rest import NMRestServer, CompositeManagerRestServer
 
 
 ##
@@ -42,97 +41,181 @@ from dlg.ddap_protocol import (
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param manager_port_number 8080/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The port number of the SubGraph Node Manager
-# @param hostname localhost/string/ApplicationArgument/NoPort/ReadWrite//False/False/The host name of the SubGraph NodeManager
-# @param dropclass dlg.apps.simple.SleepAndCopyApp/String/ComponentParameter/NoPort/ReadOnly//False/False/
+# @param dropclass dlg.apps.subgraphSubGraphApp/String/ComponentParameter/NoPort/ReadOnly//False/False/
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
-# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
+# @param group_start True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param node_manager_port 8080/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The port number of the SubGraph Node Manager
+# @param island_manager_port 8080/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The port number of the SubGraph Island Manager
+# @param node_manager_host localhost/string/ApplicationArgument/NoPort/ReadWrite//False/False/The node manager host address
+# @param island_manager_host localhost/string/ApplicationArgument/NoPort/ReadWrite//False/False/The island manager host address
+# @param partition_algorithm metis/string/ApplicationArgument/NoPort/ReadWrite//False/False/The island manager host address
 # @par EAGLE_END
-class SubGraphApp(BarrierAppDROP):
+def shutdownManager(managers: Dict):
+    """
+
+    :param managers:
+    :return:
+    """
+    for manager in managers.values():
+        manager['manager'].shutdown()
+        manager['server'].stop()
+
+
+def startupManager(managers: Dict) -> None:
+    """
+
+    :param managers:
+    :return:
+    """
+    for manager in managers.values():
+        thread = threading.Thread(
+            target=manager['server'].start,
+            args=(manager['host'], manager['port'])
+        )
+        thread.start()
+
+
+class SubGraphLocal(BarrierAppDROP):
+    """
+    InputApp for the SubGraph construct, designed to be used on a system with DALiuGE
+    installed locally.
+    """
+
+    DEFAULT_SUBGRAPH_NODE_PORT = 8080
+    DEFAULT_SUBGRAPH_ISLAND_PORT = 8081
 
     def initialize(self, **kwargs):
-        super(SubGraphApp, self).initialize(**kwargs)
-        self._nm = self._popArg(kwargs, "nodeManagerPort", 8080)
-        self._dim = self._popArg(kwargs, "islandManagerPort", 8081)
+        super(SubGraphLocal, self).initialize(**kwargs)
+        self._nm_port = self._popArg(
+            kwargs, "node_manager_port", self.DEFAULT_SUBGRAPH_NODE_PORT
+        )
+        self._dim_port = self._popArg(
+            kwargs, "island_manager_port", self.DEFAULT_SUBGRAPH_ISLAND_PORT
+        )
         self._subgraph = self._popArg(kwargs, "subgraph", {})
         # TODO use the node manage and island manager ports
-        self._nodes = self._popArg(kwargs, "nodes", ['localhost:8080'])
-        self._islands = self._popArg(kwargs, "nodes", ['localhost:8081'])
+        # List of nodes (IP's, str) that are used in
+        self._nodeManagerHost = self._popArg(
+            kwargs, "node_manager", "localhost"
+        )  # :8080"])
+        self._islandManagerHost = self._popArg(kwargs, "island_manager", "localhost")
+        self._partition_algorithm = self._popArg(kwargs, "partition_algorithm", "metis")
+        self._session_prefix = self._popArg(kwargs, "session_prefix", "subgraph")
 
-    def _pollRESTInterface(self, manager, pollFrequencyInSeconds: int = 30):
+    def _pollRESTInterface(
+            self, manager: DROPManager, session: str, pollFrequencyInSeconds: int = 30
+    ):
         """
-        :param pollFrequencyInSeconds:
+        Check the completion status of each drop in the SubGraph.
+
+        If not all have completed, sleep before returning the status
+
+        :param manager: DropManager, the manager that is deploying the subgraph
+        :param pollFrequencyInSeconds: number of times we poll the manager for
         :return:
         """
         finished = True
-        for host, status in manager.getGraphStatus("subgraphsession").items():
-            if (status['status'] != DROPStates.ERROR
-                    and status['status'] != DROPStates.COMPLETED):
+        for host, status in manager.getGraphStatus(session).items():
+            if (
+                    status["status"] != DROPStates.ERROR
+                    and status["status"] != DROPStates.COMPLETED
+            ):
                 finished = False
-        time.sleep(pollFrequencyInSeconds)
+        if not finished:
+            time.sleep(pollFrequencyInSeconds)
         return finished
 
-    def _translateSubGraph(self, node_list=None):
-        algo = "metis"
-        # c = RestClient("localhost", 8090, timeout=10)
+    def _translateSubGraph(self, node_list: list = None):
+        """
+        :param node_list: list of both data island and node managers
+        ------
+
+        Use a local install of the daliuge-translator to convert the LGT into a
+        partitioned pg_spec.
+        """
+        if not list:
+            return {}
         pgt = unroll(self._subgraph)
         pg = partition(
             pgt,
-            algo=algo,
+            algo="metis",
             num_partitions=1,
             num_islands=1,
             partition_label="Partition",
             show_gojs=True,
             max_cpu=8,
-            max_load_imb=100
+            max_load_imb=100,
         )
         return pg.to_pg_spec(node_list, ret_str=False)
 
     def run(self):
         """
-        Use the subgraph data application to get the subgraph data, then use that to
-        launch a new session for the engine.
-        1. need the 'subgraph' named port
-        2. Need to duplicate the input data for the subgraph
+        Start the required DROPManagers and deploy the subgraph
 
-        :return:
+        This method will wait until confirmation from the DROPManager that the DROPs have
+        either successfully completed or failed.
         """
+        managers = {'node': {
+            'manager': NodeManager(self._nodeManagerHost, rpc_port=6667,
+                                   events_port=5556),
+            'port': self._nm_port,
+            'host': self._nodeManagerHost,
+        }}
+        managers['node']['server'] = NMRestServer(managers['node'])
+        managers['dim'] = {
+            'manager': DataIslandManager([self._nodeManagerHost]),
+            'port': self._dim_port,
+            'host': self._islandManagerHost,
+        }
+        managers['dim']['server'] = CompositeManagerRestServer(managers['dim'])
+        startupManager(managers)
 
-        node_manager = NodeManager('localhost', rpc_port=6667, events_port=5556)
-        nm_server = NMRestServer(node_manager)
-        nm_thread = threading.Thread(target=nm_server.start, args=("localhost", self._nm))
-        nm_thread.start()
-        dim = DataIslandManager(self._nodes)
-        dim_server = CompositeManagerRestServer(dim)
-        dim_thread = threading.Thread(target=dim_server.start,
-                                      args=("localhost", self._dim))
-        dim_thread.start()
-
-        graphspec = {}
-        nodes = [i for i in self._islands]
-        nodes.extend(self._nodes)
+        nodes = [self._islandManagerHost, self._nodeManagerHost]
         try:
-            graphspec = self._translateSubGraph(nodes)
+            session = self._translateAndDeploySubGraph(managers['dim']['manager'], nodes)
+            while not self._pollRESTInterface(
+                manager=managers['dim']['manager'],
+                session=session,
+                pollFrequencyInSeconds=10
+            ):
+                logger.info("Running SubGraph externally")
+
         except Exception as e:
-            logger.debug("Exception when translating subgraph: %s", e)
-            node_manager.shutdown()
-            nm_server.stop()
-            dim.shutdown()
+            logger.debug("Exception when deploying subgraph: %s", e)
+            shutdownManager(managers)
             self.execStatus = AppDROPStates.CANCELLED
             self.status = DROPStates.CANCELLED
-            return
-        dim.createSession("subgraphsession")
-        dim.addGraphSpec("subgraphsession", graphspec)
-        # Get roots
-        roots = get_roots(graphspec)
-        dim.deploySession("subgraphsession", completedDrops=roots)
-        while not self._pollRESTInterface(manager=dim):
-            logger.info("Running subgraph externally")
+            return self.status
 
         logger.info("Subgraph finished executing")
-        node_manager.shutdown()
-        nm_server.stop()
-        dim.shutdown()
+        shutdownManager(managers)
+        return self.status
+
+    def _translateAndDeploySubGraph(self, dim, nodes):
+        """
+        Translate the subgraph and prepare it for deployment.
+
+        :param dim: Data Island Manager
+        :param nodes: List of DropManagers used (DIM + NM)
+        :return: None
+        """
+        session_id = self._generate_session_id()
+        graphspec = self._translateSubGraph(nodes)
+        dim.createSession(session_id)
+        dim.addGraphSpec(session_id, graphspec)
+        # Roots are required to 'kick off' the drop execution
+        roots = get_roots(graphspec)
+        dim.deploySession(session_id, completedDrops=roots)
+        return session_id
+
+    def _generate_session_id(self) -> str:
+        """
+        Create a session_id using a prefix + timestamp format
+
+        :param prefix: str, an optionally-configurat session ID prefix
+        :return: A string prefix
+        """
+        ts = time.time()
+        return (f"{self._session_prefix}_"
+                + datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H-%M-%S'))
