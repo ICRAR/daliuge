@@ -2,7 +2,6 @@
     "linkDataArray": [
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -1,
             "fromPort": "628da8c6-71b4-45ab-9268-6b7fe41af272",
             "loop_aware": "0",
@@ -11,7 +10,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object",
             "from": -5,
             "fromPort": "355c4149-d2db-4d12-88a7-a6bca85e65de",
             "loop_aware": "1",
@@ -23,10 +21,11 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "eagleCommitHash": "80717598c275f0e9b15a46e15e79383e0434e85f",
-        "eagleVersion": "v6.2.8",
-        "filePath": "Diagram-2024-06-10-13-59-55.graph",
+        "filePath": "SuperBasicScatterGather.graph",
         "fileType": "Graph",
+        "generatorCommitHash": "38f37575fec4c53859389f75322c578f029ef254",
+        "generatorName": "EAGLE",
+        "generatorVersion": "v6.3.0:eagle-1225",
         "lastModifiedDatetime": 0,
         "lastModifiedEmail": "",
         "lastModifiedName": "",
