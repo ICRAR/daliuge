@@ -70,7 +70,8 @@ class SlurmClient:
         num_islands=None,
         all_nics=False,
         check_with_session=False,
-        submit=True,
+        submit=False,
+        remote=True,
         pip_name=None,
     ):
         self._config = ConfigFactory.create_config(facility=facility)
@@ -104,6 +105,7 @@ class SlurmClient:
         self._all_nics = all_nics
         self._check_with_session = check_with_session
         self._submit = submit
+        self._remote = remote
         self._dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
         ni, nn, self._pip_name = find_numislands(self._physical_graph_template_file)
         if isinstance(ni, int) and ni >= self._num_islands:
@@ -168,16 +170,27 @@ class SlurmClient:
         job_desc = init_tpl.safe_substitute(pardict)
         return job_desc
 
+    def mk_session_dir(self, dlg_root):
+        """
+        Create the session directory
+        """
+        session_dir = "{0}/workspace/{1}".format(dlg_root, self.get_session_dirname())
+        if not os.path.exists(session_dir):
+            os.makedirs(session_dir)
+        return session_dir
+
     def submit_job(self):
         """
         Submits the slurm script to the cluster
         """
-        session_dir = "{0}/workspace/{1}".format(
-            self.dlg_root, self.get_session_dirname()
-        )
-        if not os.path.exists(session_dir):
-            os.makedirs(session_dir)
-
+        if not self._remote:
+            session_dir = self.mk_session_dir(self.dlg_root)
+        else:
+            if os.environ["DLG_ROOT"]:
+                local_dlg_root = os.environ["DLG_ROOT"]
+            else:
+                local_dlg_root = f"{os.environ['HOME']}.dlg"
+            session_dir = self.mk_session_dir(local_dlg_root)
         physical_graph_file_name = "{0}/{1}".format(session_dir, self._pip_name)
         if self._physical_graph_template_file:
             shutil.copyfile(
@@ -192,7 +205,11 @@ class SlurmClient:
         with open(os.path.join(session_dir, "git_commit.txt"), "w") as git_file:
             git_file.write(git_commit)
         if self._submit:
-            os.chdir(session_dir)  # so that slurm logs will be dumped here
-            print(subprocess.check_output(["sbatch", job_file_name]))
+            if not self._remote:
+                os.chdir(session_dir)  # so that slurm logs will be dumped here
+                print(subprocess.check_output(["sbatch", job_file_name]))
+            else:
+                # TODO: use ssh to create session dir, copy job_file and PGT and submit job
+                print("NOTE: Remote submission not yet implemented!")
         else:
             print(f"Created job submission script {job_file_name}")
