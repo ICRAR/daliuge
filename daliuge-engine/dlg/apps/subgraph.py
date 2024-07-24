@@ -36,25 +36,11 @@ from dlg.manager.drop_manager import DROPManager
 from dlg.manager.rest import NMRestServer, CompositeManagerRestServer
 
 
-##
-# @brief SubGraphApp
-# @par EAGLE_START
-# @param category PythonApp
-# @param tag daliuge
-# @param dropclass dlg.apps.subgraphSubGraphApp/String/ComponentParameter/NoPort/ReadOnly//False/False/
-# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
-# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
-# @param group_start True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @param node_manager_port 8080/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The port number of the SubGraph Node Manager
-# @param island_manager_port 8080/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The port number of the SubGraph Island Manager
-# @param node_manager_host localhost/string/ApplicationArgument/NoPort/ReadWrite//False/False/The node manager host address
-# @param island_manager_host localhost/string/ApplicationArgument/NoPort/ReadWrite//False/False/The island manager host address
-# @param partition_algorithm metis/string/ApplicationArgument/NoPort/ReadWrite//False/False/The island manager host address
-# @par EAGLE_END
-def shutdownManager(managers: Dict):
+def shutdownManager(managers: dict) -> None:
     """
-
-    :param managers:
+    Helper function that iterates through a dictionary of managers and stops them and
+    their respective servers.
+    :param managers:dict of dicts, which contain DROPManager objects and information.
     :return:
     """
     for manager in managers.values():
@@ -62,11 +48,12 @@ def shutdownManager(managers: Dict):
         manager['server'].stop()
 
 
-def startupManager(managers: Dict) -> None:
+def startupManagersInThread(managers: dict) -> None:
     """
-
-    :param managers:
-    :return:
+    Helper function that iterates through a dictionary of managers and starts
+    them in separate threads.
+    :param managers: dict of dicts, which contain DROPManager objects and information.
+    :return: None
     """
     for manager in managers.values():
         thread = threading.Thread(
@@ -76,6 +63,21 @@ def startupManager(managers: Dict) -> None:
         thread.start()
 
 
+##
+# @brief SubGraphLocal
+# @par EAGLE_START
+# @param category PythonApp
+# @param tag daliuge
+# @param dropclass dlg.apps.subgraph.SubGraphLocal/String/ComponentParameter/NoPort/ReadOnly//False/False/
+# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param node_manager_port 8080/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The port number of the SubGraph Node Manager
+# @param island_manager_port 8081/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The port number of the SubGraph Island Manager
+# @param node_manager_host localhost/string/ApplicationArgument/NoPort/ReadWrite//False/False/The node manager host address
+# @param island_manager_host localhost/string/ApplicationArgument/NoPort/ReadWrite//False/False/The island manager host address
+# @param partition_algorithm metis/string/ApplicationArgument/NoPort/ReadWrite//False/False/The island manager host address
+# @par EAGLE_END
 class SubGraphLocal(BarrierAppDROP):
     """
     InputApp for the SubGraph construct, designed to be used on a system with DALiuGE
@@ -156,28 +158,31 @@ class SubGraphLocal(BarrierAppDROP):
         This method will wait until confirmation from the DROPManager that the DROPs have
         either successfully completed or failed.
         """
-        managers = {'node': {
-            'manager': NodeManager(self._nodeManagerHost, rpc_port=6667,
-                                   events_port=5556),
-            'port': self._nm_port,
-            'host': self._nodeManagerHost,
-        }}
-        managers['node']['server'] = NMRestServer(managers['node'])
-        managers['dim'] = {
-            'manager': DataIslandManager([self._nodeManagerHost]),
-            'port': self._dim_port,
-            'host': self._islandManagerHost,
+        managers = {
+            'node': {
+                'manager': NodeManager(
+                    self._nodeManagerHost, rpc_port=6667, events_port=5556
+                ),
+                'port': self._nm_port,
+                'host': self._nodeManagerHost
+            },
+            'dim': {
+                'manager': DataIslandManager([self._nodeManagerHost]),
+                'port': self._dim_port,
+                'host': self._islandManagerHost,
+            }
         }
+        managers['node']['server'] = NMRestServer(managers['node'])
         managers['dim']['server'] = CompositeManagerRestServer(managers['dim'])
-        startupManager(managers)
+        startupManagersInThread(managers)
 
         nodes = [self._islandManagerHost, self._nodeManagerHost]
         try:
             session = self._translateAndDeploySubGraph(managers['dim']['manager'], nodes)
             while not self._pollRESTInterface(
-                manager=managers['dim']['manager'],
-                session=session,
-                pollFrequencyInSeconds=10
+                    manager=managers['dim']['manager'],
+                    session=session,
+                    pollFrequencyInSeconds=10
             ):
                 logger.info("Running SubGraph externally")
 
@@ -192,7 +197,7 @@ class SubGraphLocal(BarrierAppDROP):
         shutdownManager(managers)
         return self.status
 
-    def _translateAndDeploySubGraph(self, dim, nodes):
+    def _translateAndDeploySubGraph(self, dim: DROPManager, nodes: list) -> str:
         """
         Translate the subgraph and prepare it for deployment.
 

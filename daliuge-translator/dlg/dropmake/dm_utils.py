@@ -471,12 +471,12 @@ def convert_construct(lgo):
             ConstructTypes.SERVICE,
         ]:
             continue
-        has_app = None
+        has_app = ""
 
         # try to find a application using several app_keywords
         # disregard app_keywords that are not present, or have value "None"
         has_app = _has_app_keywords(node, app_keywords)
-        if has_app is None:
+        if not has_app:
             continue
 
         # step 1
@@ -578,7 +578,7 @@ def convert_construct(lgo):
     return lgo
 
 
-def _create_from_node(node: Dict, category, app_params):
+def _create_from_node(node: dict, category: str, app_params: dict) -> dict:
     """
     Create a new dictionary from the node based on the category of the new drop, and any
     specific attributes for the application
@@ -631,32 +631,45 @@ def _create_from_node(node: Dict, category, app_params):
     return new_node
 
 
-def _has_app_keywords(node, keywords, requires_all=False):
+def _has_app_keywords(node: dict, keywords: list, requires_all: bool = False) -> str:
     """
     Check if a single or all keywords exist in the Logical Graph node.
 
     Default behaviour will return the first keyword that exists in the keywords list.
 
-    :param node: dict, Logical Graph node
-    :param keywords: list, keywords we want to check
+    :param node: Logical Graph construct node
+    :param keywords: keywords we want to check
     :param requires_all: bool, If True, this will return the last keyword if it is exists,
     otherwise it will return None.
-    :return:
+    :return: app: the application name
     """
 
-    has_app = None
+    app = ""
     for ak in keywords:
         if ak in node and node[ak] != "None" and node[ak] != "UnknownApplication":
             if not requires_all:
                 return ak
-            has_app = ak
+            app = ak
         else:
             if requires_all:
-                return None
-    return has_app
+                return ""
+    return app
 
 
-def _update_keys(old_new_grpk_map, lgo):
+def _update_keys(old_new_grpk_map: dict, lgo: dict) -> dict:
+    """
+    Iterate through the group keys and replace them based on updated
+    logical graph structure
+
+    Note: This will update the logical_graph in-place, but we explicitly return
+    the logical_graph to make it clear that it is updated.
+
+    :param old_new_grpk_map: old-new map of group keys, where old is the existing group
+    key from the original logical graph template construct, and new is the new group key
+    based on the InputApp.
+    :param lgo: logical graph template
+    :return: the updated logical graph template
+    """
 
     for n in lgo["nodeDataArray"]:
         if "group" in n and n["group"] in old_new_grpk_map:
@@ -666,40 +679,47 @@ def _update_keys(old_new_grpk_map, lgo):
     return lgo
 
 
-def identify_and_connect_output_input(app_node, out_node, logical_graph):
+def identify_and_connect_output_input(input_node: dict,
+                                      out_node: dict,
+                                      logical_graph: dict) -> dict:
     """
     # If the link is to a node that _isn't_ in the subgraph group
     # then it is an output node,  so check that group is either
     # non-existent, or not equal to the subgraph group.
 
-    :param app_node:
-    :param out_node:
-    :param logical_graph:
-    :return:
+    Note: This will update the logical_graph in-place, but we explicitly return
+    the logical_graph to make it clear that it is updated.
+
+    :param input_node: Input Application node to the subgraph
+    :param out_node: Output Application node to the subgraph
+    :param logical_graph: The input logical graph (template)
+    :return: logical_graph: the updated logical_graph
     """
 
     for link in logical_graph['linkDataArray']:
-        if link["to"] == app_node['key']:
+        if link["to"] == input_node['key']:
             for n in logical_graph['nodeDataArray']:
 
                 if n['key'] == link["from"]:
                     try:
-                        if n['group'] == app_node['group']:
+                        if n['group'] == input_node['group']:
                             link["to"] = out_node['key']
                     except KeyError:
                         pass
-        if link["from"] == app_node['key']:
+        if link["from"] == input_node['key']:
             for n in logical_graph['nodeDataArray']:
                 if n['key'] == link["to"]:
                     try:
-                        if n['group'] != app_node['group']:
+                        if n['group'] != input_node['group']:
                             link['from'] = out_node['key']
                     except KeyError:
                         link['from'] = out_node['key']
     return logical_graph
 
 
-def _extract_subgraph_nodes(input_node, out_node, logical_graph):
+def _extract_subgraph_nodes(input_node: dict,
+                            out_node: dict,
+                            logical_graph: dict) -> (dict, dict, dict):
     """
     1. Identify the SubGraph nodes that are not from the Construct
     2. Find the data inputs to the outputApp
@@ -709,7 +729,7 @@ def _extract_subgraph_nodes(input_node, out_node, logical_graph):
 
     :param input_node: Input Application node to the subgraph
     :param out_node: Output Application node to the subgraph
-    :param logical_graph:
+    :param logical_graph: The input logical graph (template)
     :return: subgraphNodes: Dictionary of nodes in the subgraph
              subgraphLinks: List of links in the subgraph
              logical_graph: The modified logical_graph
@@ -739,7 +759,6 @@ def _extract_subgraph_nodes(input_node, out_node, logical_graph):
         if link['to'] in subgraphNodes.keys() and link not in subgraphLinks:
             subgraphLinks.append(link)
 
-
     for e in subgraphNodes.values():
         if e['key'] not in output_links:
             logical_graph['nodeDataArray'].remove(e)
@@ -762,13 +781,15 @@ def _extract_subgraph_nodes(input_node, out_node, logical_graph):
     return subgraphNodes, subgraphLinks, logical_graph
 
 
-def _build_apps_from_subgraph_construct(subgraph_node):
+def _build_apps_from_subgraph_construct(subgraph_node: dict) -> (dict, dict):
     """
     Initialise the input and output apps based on the subgraph construct node
+
     :param subgraph_node: The SubGraph construct node on the graph, that contains the
     input and output nodes.
     :return: The input and output nodes
     """
+
     input_app_args = {
         "isSubGraphApp": True,
         "isSubGraphConstruct": False,
@@ -798,7 +819,8 @@ def _build_apps_from_subgraph_construct(subgraph_node):
 
     return input_node, output_node
 
-def convert_subgraphs(lgo):
+
+def convert_subgraphs(lgo: dict) -> dict:
     """
     Identify any first-order SubGraph constructs in the Logical Graph, and exctract the
     InputApp and OutputApp fields.
@@ -811,7 +833,8 @@ def convert_subgraphs(lgo):
         node to the Input Python Application (SubGraph dropclass)
     6. Remove subgraph from current graph
 
-    Note: This modifies the Logical Graph (lgo) in-place.
+    Note: This will update the logical_graph in-place, but we explicitly return
+    the logical_graph to make it clear that it is updated.
 
     :param lgo: dict, logical Graph
     :return: dict, modified Logical Graph
