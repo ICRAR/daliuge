@@ -608,7 +608,14 @@ def main():
         dest="submit",
         action="store_true",
         help=f"If set to False, the job is not submitted, but the script is generated",
-        default=True,
+        default=False,
+    )
+    parser.add_option(
+        "--remote",
+        dest="remote",
+        action="store_true",
+        help=f"If set to True, the job is not submitted to the cluster remotely",
+        default=False,
     )
     parser.add_option(
         "-D",
@@ -617,7 +624,6 @@ def main():
         action="store",
         type="string",
         help="Overwrite the DLG_ROOT directory provided by the config",
-        default=False,
     )
 
     (opts, _) = parser.parse_args(sys.argv)
@@ -710,7 +716,8 @@ def main():
             all_nics=opts.all_nics,
             check_with_session=opts.check_with_session,
             physical_graph_template_file=pg_graph_file,
-            submit=opts.submit in ["True", "true"],
+            submit=opts.submit,
+            remote=opts.remote,
         )
         client._visualise_graph = opts.visualise_graph
         client.submit_job()
