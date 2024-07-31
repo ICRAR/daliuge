@@ -117,13 +117,10 @@ class SubGraphLocal(BarrierAppDROP):
         :param pollFrequencyInSeconds: number of times we poll the manager for
         :return:
         """
-        finished = True
-        for host, status in manager.getGraphStatus(session).items():
-            if (
-                    status["status"] != DROPStates.ERROR
-                    and status["status"] != DROPStates.COMPLETED
-            ):
-                finished = False
+        finished = all(
+            status["status"] in [DROPStates.ERROR, DROPStates.COMPLETED]
+            for host, status in manager.getGraphStatus(session).items()
+        )
         if not finished:
             time.sleep(pollFrequencyInSeconds)
         return finished
