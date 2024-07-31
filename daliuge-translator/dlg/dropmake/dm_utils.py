@@ -600,7 +600,7 @@ def _create_from_node(node: dict, category: str, app_params: dict) -> dict:
     :param app_params: dict, any non-generic
     :return: new_node: dict, node based on the existing node
     """
-    new_node = dict()
+    new_node = {}
     new_node["reprodata"] = node.get("reprodata", {}).copy()
     new_node["key"] = node["key"]
     new_node["category"] = category
