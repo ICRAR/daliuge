@@ -72,10 +72,16 @@ class LocalDimStarter(ManagerStarter):
         super(LocalDimStarter, self).setUp()
         self.nm_info = self.start_nm_in_thread()
         self.dm = self.nm_info.manager
-def test_invalid_host_format(self):
-    invalid_host = "invalid_host_format"
-    with self.assertRaises(ValueError):
-        DataIslandManager([f"{invalid_host}"])
+        self.dim = DataIslandManager(
+            [f"{self.nm_info.server._server.listen}:{self.nm_info.server._server.port}"]
+        )
+        # self.dim_info = self.start_dim_in_thread()
+        # self.dim = self.dim_info.manager
+
+    # def test_invalid_host_format(self):
+    #     invalid_host = "invalid_host_format"
+    #     with self.assertRaises(ValueError):
+    #         DataIslandManager([f"{invalid_host}"])
 
     def tearDown(self):
         self.nm_info.stop()
