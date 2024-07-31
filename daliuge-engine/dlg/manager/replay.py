@@ -71,7 +71,7 @@ class ReplayManager(DROPManager):
     def addGraphSpec(self, sessionId, graphSpec):
         raise NotImplementedError()
 
-    def deploySession(self, sessionId, completedDrops: list[str]=None):
+    def deploySession(self, sessionId, completedDrops: Optional[List[str]] = None):
         raise NotImplementedError()
 
     def destroySession(self, sessionId):
