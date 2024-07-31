@@ -605,11 +605,7 @@ def _create_from_node(node: dict, category: str, app_params: dict) -> dict:
     new_node["key"] = node["key"]
     new_node["category"] = category
 
-    if 'text' in node:
-        new_node["name"] = node["text"]
-    else:
-        new_node["name"] = node["name"]
-
+    new_node["name"] = node["text"] if 'text' in node else node["name"]
     if "mkn" in node:
         new_node["mkn"] = node["mkn"]
 
