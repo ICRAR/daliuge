@@ -148,7 +148,7 @@ class TestConvertScatterGatherConstruct(unittest.TestCase):
 
         nScatterConstruct = getConstructNodeFromCategory(lg, 'Scatter')
         nScatterKey = nScatterConstruct['key']
-        nGatherConstruct = getConstructNodeFromCategory(lg, 'Scatter')
+        nGatherConstruct = getConstructNodeFromCategory(lg, 'Gather')
         nGatherKey = nGatherConstruct['key']
 
         convert_construct(lg)
