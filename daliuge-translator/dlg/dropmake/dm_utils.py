@@ -507,7 +507,8 @@ def convert_construct(lgo):
                 "key": dup_app_node_k,
                 "fields": "appFields" if "appFields" in node else "inputAppFields"
             }
-            tmp_node = _create_from_node(node, node[has_app], dup_app_args)
+            tmp_node = _create_from_node(node=node, category=node[has_app],
+                                         app_params=dup_app_args)
             redundant_keys = ['fields', 'reprodata']
             tmp_node = {k: v for k, v in tmp_node.items() if k not in redundant_keys}
             duplicated_gather_app[k_new] = tmp_node
