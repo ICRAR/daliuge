@@ -1,6 +1,10 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+## v4.5.0
+
+    - [Added] Support for Subgraphs and added example SubGraphLocal AppDROP implementation.
+
 ## v4.4.1 
 
     - [Changed] Updated CHANGELOG.md with retroactive version changes from 4.0.2->4.4.0. 
