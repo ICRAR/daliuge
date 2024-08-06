@@ -587,14 +587,6 @@ def main():
         default=False,
     )
     parser.add_option(
-        "-C",
-        "--configs",
-        dest="configs",
-        action="store_true",
-        help="Display the available configurations  and exit",
-        default=False,
-    )
-    parser.add_option(
         "-f",
         "--facility",
         dest="facility",
@@ -614,7 +606,7 @@ def main():
         "--remote",
         dest="remote",
         action="store_true",
-        help=f"If set to True, the job is not submitted to the cluster remotely",
+        help=f"If set to True, the job is submitted/created for a remote submission",
         default=False,
     )
     parser.add_option(
@@ -625,12 +617,20 @@ def main():
         type="string",
         help="Overwrite the DLG_ROOT directory provided by the config",
     )
+    parser.add_option(
+        "-C",
+        "--configs",
+        dest="configs",
+        action="store_true",
+        help="Display the available configurations  and exit",
+        default=False,
+    )
 
     (opts, _) = parser.parse_args(sys.argv)
     if opts.configs:
         print(f"Available facilities: {FACILITIES}")
         sys.exit(1)
-    if not (opts.action and opts.facility) and not opts.configs:
+    if not (opts.action and opts.facility):
         parser.error("Missing required parameters!")
     if opts.facility not in FACILITIES:
         parser.error(f"Unknown facility provided. Please choose from {FACILITIES}")
@@ -676,7 +676,7 @@ def main():
             graph_file = os.path.basename(path_to_graph_file)
             pre, ext = os.path.splitext(graph_file)
             if os.path.splitext(pre)[-1] != ".pre":
-                pg_graph_file = ".".join([pre, "pg", ext[1:]])
+                pg_graph_file = ".".join([pre, "pgt", ext[1:]])
             else:
                 pg_graph_file = graph_file
             if opts.logical_graph:

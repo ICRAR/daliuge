@@ -25,6 +25,7 @@ import os, string
 # Deployment defaults
 # ====================
 ACCOUNT = ""
+LOGIN_NODE = ""
 HOME_DIR = os.environ["HOME"] if "HOME" in os.environ else ""
 DLG_ROOT = f"{HOME_DIR}/dlg"
 LOG_DIR = f"{DLG_ROOT}/log"
@@ -55,6 +56,7 @@ class DefaultConfig(object):
 
     def __init__(self):
         self._dict = dict()
+        self.setpar("host", self.LOGIN_NODE)
         self.setpar("account", self.ACCOUNT)
         self.setpar("home_dir", self.HOME_DIR.strip())
         self.setpar("dlg_root", self.DLG_ROOT.strip())
@@ -148,6 +150,7 @@ class Setonix411Config(DefaultConfig):
     Configuration for project 0411 on Setonix.
     """
 
+    LOGIN_NODE = "setonix.pawsey.org.au"
     ACCOUNT = "pawsey0411"
     USER = os.environ["USER"] if "USER" in os.environ else ""
     HOME_DIR = f"/scratch/{ACCOUNT}"
