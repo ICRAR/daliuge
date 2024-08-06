@@ -28,6 +28,8 @@ import sys
 import os
 import subprocess
 import shutil
+import tempfile
+from dlg import remote
 from dlg.runtime import __git_version__ as git_commit
 
 from dlg.deploy.configs import ConfigFactory, init_tpl
@@ -54,6 +56,7 @@ class SlurmClient:
         self,
         dlg_root=None,
         log_root=None,
+        host=None,
         acc=None,
         physical_graph_template_file=None,  # filename of physical graph template
         logical_graph=None,
@@ -75,6 +78,7 @@ class SlurmClient:
         pip_name=None,
     ):
         self._config = ConfigFactory.create_config(facility=facility)
+        self.host = self._config.getpar("host") if host is None else host
         self._acc = self._config.getpar("account") if (acc is None) else acc
         self.dlg_root = self._config.getpar("dlg_root") if not dlg_root else dlg_root
         self._log_root = (
@@ -170,46 +174,75 @@ class SlurmClient:
         job_desc = init_tpl.safe_substitute(pardict)
         return job_desc
 
-    def mk_session_dir(self, dlg_root):
+    def mk_session_dir(self, dlg_root: str = ""):
         """
-        Create the session directory
+        Create the session directory. If dlg_root is provided it is used,
+        else env var DLG_ROOT is used.
         """
-        session_dir = "{0}/workspace/{1}".format(dlg_root, self.get_session_dirname())
-        if not os.path.exists(session_dir):
+        if dlg_root:  # has always preference
+            self.dlg_root = dlg_root
+        if self._remote and not self.dlg_root:
+            print("Deploying on a remote cluster requires specifying DLG_ROOT!")
+            print("Unable to create session directory!")
+            return ""
+        elif not self._remote:
+            # locally fallback to env var
+            if os.environ["DLG_ROOT"]:
+                dlg_root = os.environ["DLG_ROOT"]
+            else:
+                dlg_root = f"{os.environ['HOME']}.dlg"
+        session_dir = "{0}/workspace/{1}".format(
+            self.dlg_root, self.get_session_dirname()
+        )
+        if not self._remote and not os.path.exists(session_dir):
             os.makedirs(session_dir)
+        if self._remote:
+            command = f"mkdir -p {session_dir}"
+            print(f"Creating remote session directory on {self.host}: {command}")
+            remote.execRemote(self.host, command)
+
         return session_dir
 
     def submit_job(self):
         """
-        Submits the slurm script to the cluster
+        Submits the slurm script to the requested facility
         """
-        if not self._remote:
-            session_dir = self.mk_session_dir(self.dlg_root)
-        else:
-            if os.environ["DLG_ROOT"]:
-                local_dlg_root = os.environ["DLG_ROOT"]
-            else:
-                local_dlg_root = f"{os.environ['HOME']}.dlg"
-            session_dir = self.mk_session_dir(local_dlg_root)
+        session_dir = self.mk_session_dir()
         physical_graph_file_name = "{0}/{1}".format(session_dir, self._pip_name)
         if self._physical_graph_template_file:
-            shutil.copyfile(
-                self._physical_graph_template_file, physical_graph_file_name
-            )
+            if self._remote:
+                print(f"Copying PGT to: {physical_graph_file_name}")
+                remote.copyTo(
+                    self.host,
+                    self._physical_graph_template_file,
+                    physical_graph_file_name,
+                )
+            else:
+                shutil.copyfile(
+                    self._physical_graph_template_file, physical_graph_file_name
+                )
 
         job_file_name = "{0}/jobsub.sh".format(session_dir)
         job_desc = self.create_job_desc(physical_graph_file_name)
-        with open(job_file_name, "w") as job_file:
-            job_file.write(job_desc)
-
-        with open(os.path.join(session_dir, "git_commit.txt"), "w") as git_file:
-            git_file.write(git_commit)
+        if self._remote:
+            print(f"Creating SLURM script remotely: {job_file_name}")
+            tjob = tempfile.mktemp()
+            with open(tjob, "w+t") as t:
+                t.write(job_desc)
+            remote.copyTo(self.host, tjob, job_file_name)
+            os.remove(tjob)
+        else:
+            with open(job_file_name, "w") as job_file:
+                job_file.write(job_desc)
+            with open(os.path.join(session_dir, "git_commit.txt"), "w") as git_file:
+                git_file.write(git_commit)
         if self._submit:
             if not self._remote:
                 os.chdir(session_dir)  # so that slurm logs will be dumped here
                 print(subprocess.check_output(["sbatch", job_file_name]))
             else:
-                # TODO: use ssh to create session dir, copy job_file and PGT and submit job
-                print("NOTE: Remote submission not yet implemented!")
+                command = f"cd {session_dir} && sbatch {job_file_name}"
+                print(f"Submitting sbatch job: {command}")
+                remote.execRemote(self.host, command)
         else:
             print(f"Created job submission script {job_file_name}")

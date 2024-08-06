@@ -74,7 +74,7 @@ APPS = (
 )
 
 
-def check_host(host, port, timeout=5, check_with_session=False):
+def check_host(host, port: int, timeout: int = 5, check_with_session=False):
     """
     Checks if a given host/port is up and running (i.e., it is open).
     If ``check_with_session`` is ``True`` then it is assumed that the
@@ -94,7 +94,13 @@ def check_host(host, port, timeout=5, check_with_session=False):
         return False
 
 
-def check_hosts(ips, port, timeout=None, check_with_session=False, retry=1):
+def check_hosts(
+    ips,
+    port: int = NODE_DEFAULT_REST_PORT,
+    timeout=None,
+    check_with_session=False,
+    retry=1,
+):
     """
     Check that the given list of IPs are all up in the given port within the
     given timeout, and returns the list of IPs that were found to be up.
@@ -102,16 +108,21 @@ def check_hosts(ips, port, timeout=None, check_with_session=False, retry=1):
 
     def check_and_add(ip_addr):
         ntries = retry
+        if ":" in ip_addr:
+            ip, port = ip_addr.split(":")
+            port = int(port)
+        else:
+            ip = ip_addr
         while ntries:
             if check_host(
-                ip_addr,
+                ip,
                 port,
                 timeout=timeout,
                 check_with_session=check_with_session,
             ):
-                LOGGER.info("Host %s:%d is running", ip_addr, port)
-                return ip_addr
-            LOGGER.warning("Failed to contact host %s:%d", ip_addr, port)
+                LOGGER.info("Host %s:%d is running", ip, port)
+                return f"{ip}:{port}"
+            LOGGER.warning("Failed to contact host %s:%d", ip, port)
             ntries -= 1
         return None
 
@@ -121,7 +132,7 @@ def check_hosts(ips, port, timeout=None, check_with_session=False, retry=1):
     thread_pool.close()
     thread_pool.join()
 
-    return [f"{ip}:{port}" for ip in result_pool if ip]
+    return [f"{ip}" for ip in result_pool if ip]
 
 
 def get_ip_via_ifconfig(iface_index):
@@ -373,7 +384,6 @@ def get_pg(opts, nms, dims):
     # Check which NMs are up and use only those form now on
     nms = check_hosts(
         nms,
-        NODE_DEFAULT_REST_PORT,
         check_with_session=opts.check_with_session,
         timeout=MM_WAIT_TIME,
         retry=3,
@@ -385,7 +395,9 @@ def get_pg(opts, nms, dims):
         )
     )
     graph_name = os.path.basename(opts.log_dir)
-    graph_name = f"{graph_name.split('_')[0]}.json"  # get just the graph name
+    graph_name = (
+        f"{graph_name.split('.pgt.graph')[0]}.pg.graph"  # get just the graph name
+    )
     with open(os.path.join(opts.log_dir, graph_name), "wt") as pg_file:
         json.dump(physical_graph, pg_file)
     return physical_graph

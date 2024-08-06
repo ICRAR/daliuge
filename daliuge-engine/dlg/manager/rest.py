@@ -25,6 +25,7 @@ Data Managers (DROPManager and DataIslandManager) to the outside world.
 """
 
 import cgi
+from email.message import Message
 import functools
 import io
 import json
@@ -539,8 +540,11 @@ class CompositeManagerRestServer(ManagerRestServer):
     def _tarfile_write(self, tar, headers, stream):
         file_header = headers.getheader("Content-Disposition")
         length = headers.getheader("Content-Length")
-        _, params = cgi.parse_header(file_header)
-        filename = params["filename"]
+        m = Message()
+        m["content-disposition"] = file_header
+        filename = m.get_params["filename"]
+        # _, params = cgi.parse_header(file_header)
+        # filename = params["filename"]
         info = tarfile.TarInfo(filename)
         info.size = int(length)
 
