@@ -219,6 +219,7 @@ class SlurmClient:
                     self.host,
                     self._physical_graph_template_file,
                     physical_graph_file_name,
+                    username=self.username,
                 )
             else:
                 shutil.copyfile(
@@ -232,7 +233,7 @@ class SlurmClient:
             tjob = tempfile.mktemp()
             with open(tjob, "w+t") as t:
                 t.write(job_desc)
-            remote.copyTo(self.host, tjob, job_file_name)
+            remote.copyTo(self.host, tjob, job_file_name, username=self.username)
             os.remove(tjob)
         else:
             with open(job_file_name, "w") as job_file:
