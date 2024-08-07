@@ -415,7 +415,7 @@ def main():
         action="store",
         type="int",
         dest="action",
-        help="1 - submit job, 2 - analyse log",
+        help="1 - create/submit job, 2 - analyse log",
         default=None,
     )
     parser.add_option(
