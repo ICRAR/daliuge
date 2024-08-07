@@ -246,7 +246,9 @@ class SlurmClient:
             else:
                 command = f"cd {session_dir} && sbatch --parsable {job_file_name}"
                 print(f"Submitting sbatch job: {command}")
-                stdout, stderr, exitStatus = remote.execRemote(self.host, command)
+                stdout, stderr, exitStatus = remote.execRemote(
+                    self.host, command, username=self.username
+                )
                 if exitStatus != 0:
                     print(
                         f"Job submission unsuccessful: {exitStatus.decode()}, {stderr.decode()}"

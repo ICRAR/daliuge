@@ -632,7 +632,7 @@ def main():
         dest="username",
         type="string",
         action="store",
-        help="Remote usernam, if different from local",
+        help="Remote username, if different from local",
         default=None,
     )
 
