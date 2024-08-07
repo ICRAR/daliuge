@@ -33,6 +33,7 @@ import pwd
 import re
 import socket
 import sys
+import tempfile
 import time
 import os
 
@@ -625,6 +626,15 @@ def main():
         help="Display the available configurations  and exit",
         default=False,
     )
+    parser.add_option(
+        "-U",
+        "--username",
+        dest="username",
+        type="string",
+        action="store",
+        help="Remote usernam, if different from local",
+        default=None,
+    )
 
     (opts, _) = parser.parse_args(sys.argv)
     if opts.configs:
@@ -676,9 +686,9 @@ def main():
             graph_file = os.path.basename(path_to_graph_file)
             pre, ext = os.path.splitext(graph_file)
             if os.path.splitext(pre)[-1] != ".pre":
-                pg_graph_file = ".".join([pre, "pgt", ext[1:]])
+                pgt_file = ".".join([pre, "pgt", ext[1:]])
             else:
-                pg_graph_file = graph_file
+                pgt_file = graph_file
             if opts.logical_graph:
                 with open(path_to_graph_file) as f:
                     # logical graph provided, translate first
@@ -695,10 +705,12 @@ def main():
                     )
                     pgt.append(reprodata)
                     pgt = init_pgt_partition_repro_data(pgt)
-                with open(pg_graph_file, "w") as o:
-                    json.dump((pg_graph_file, pgt), o)
+                pgt_name = pgt_file
+                pgt_file = f"/tmp/{pgt_file}"
+                with open(pgt_file, "w") as o:
+                    json.dump((pgt_name, pgt), o)
             else:
-                pg_graph_file = path_to_graph_file
+                pgt_file = path_to_graph_file
 
         client = SlurmClient(
             dlg_root=opts.dlg_root,
@@ -715,9 +727,10 @@ def main():
             num_islands=opts.num_islands,
             all_nics=opts.all_nics,
             check_with_session=opts.check_with_session,
-            physical_graph_template_file=pg_graph_file,
+            physical_graph_template_file=pgt_file,
             submit=opts.submit,
             remote=opts.remote,
+            username=opts.username,
         )
         client._visualise_graph = opts.visualise_graph
         client.submit_job()

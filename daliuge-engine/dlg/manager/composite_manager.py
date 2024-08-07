@@ -426,8 +426,8 @@ class CompositeManager(DROPManager):
             functools.partial(collections.defaultdict, list)
         )
         for rel in inter_partition_rels:
-            rhn = self._graph[rel.rhs]["node"]
-            lhn = self._graph[rel.lhs]["node"]
+            rhn = self._graph[rel.rhs]["node"].split(":")[0]
+            lhn = self._graph[rel.lhs]["node"].split(":")[0]
             drop_rels[lhn][rhn].append(rel)
             drop_rels[rhn][lhn].append(rel)
 
