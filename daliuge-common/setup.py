@@ -20,7 +20,8 @@
 #    MA 02111-1307  USA
 #
 import os
-
+import io
+from pathlib import Path
 from setuptools import find_packages
 from setuptools import setup
 
@@ -30,10 +31,22 @@ from setuptools import setup
 # dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
-MAJOR = 4
-MINOR = 0
-PATCH = 1
-VERSION = (MAJOR, MINOR, PATCH)
+
+def extract_version():
+    """
+    Retrived the current version based on the most recent version tag, stored in daliuge-common/VERSION. 
+    This is then split into the individual major/minor/patch numbers.
+    
+    :return: tuple(int, int, int): major, minor, patch 
+    """
+    TAG_VERSION_FILE = "VERSION"
+    content = ""
+    with (Path(__file__).parent / TAG_VERSION_FILE).open(encoding="utf8") as open_file:
+        major, minor, patch = open_file.read().strip("v").split(".")
+        print("logging details: ", major, minor, patch)
+    return int(major), int(minor), int(patch)
+
+VERSION = extract_version()
 VERSION_FILE = "dlg/common/version.py"
 RELEASE = True
 
@@ -63,12 +76,13 @@ install_requires = [
     "xlrd",
     "xmltodict",
     "python-benedict[all]",
+    "pylint",
 ]
 
 setup(
     name="daliuge-common",
     version=do_versioning(),
-    description="Data Activated \uF9CA (flow) Graph Engine - Common functionality",
+    description="Data Activated \uf9ca (flow) Graph Engine - Common functionality",
     long_description="The SKA-SDK prototype for the Execution Framework component",
     author="ICRAR DIA Group",
     author_email="dfms_prototype@googlegroups.com",
