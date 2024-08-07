@@ -76,6 +76,7 @@ class SlurmClient:
         submit=False,
         remote=True,
         pip_name=None,
+        username=None,
     ):
         self._config = ConfigFactory.create_config(facility=facility)
         self.host = self._config.getpar("host") if host is None else host
@@ -116,6 +117,7 @@ class SlurmClient:
             self._num_islands = ni
         if nn and nn >= self._num_nodes:
             self._num_nodes = nn
+        self.username = username
 
     def get_session_dirname(self):
         """
@@ -125,7 +127,7 @@ class SlurmClient:
         # to ensure it doesn't change for this instance of SlurmClient()
         # dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
         graph_name = self._pip_name.split("_")[0]  # use only the part of the graph name
-        graph_name = graph_name.rsplit(".pg.graph")[0]
+        graph_name = graph_name.rsplit(".pgt.graph")[0]
         return "{0}_{1}".format(graph_name, self._dtstr)
 
     def create_job_desc(self, physical_graph_file):
@@ -199,7 +201,7 @@ class SlurmClient:
         if self._remote:
             command = f"mkdir -p {session_dir}"
             print(f"Creating remote session directory on {self.host}: {command}")
-            remote.execRemote(self.host, command)
+            remote.execRemote(self.host, command, username=self.username)
 
         return session_dir
 
@@ -207,6 +209,7 @@ class SlurmClient:
         """
         Submits the slurm script to the requested facility
         """
+        jobId = None
         session_dir = self.mk_session_dir()
         physical_graph_file_name = "{0}/{1}".format(session_dir, self._pip_name)
         if self._physical_graph_template_file:
@@ -241,8 +244,16 @@ class SlurmClient:
                 os.chdir(session_dir)  # so that slurm logs will be dumped here
                 print(subprocess.check_output(["sbatch", job_file_name]))
             else:
-                command = f"cd {session_dir} && sbatch {job_file_name}"
+                command = f"cd {session_dir} && sbatch --parsable {job_file_name}"
                 print(f"Submitting sbatch job: {command}")
-                remote.execRemote(self.host, command)
+                stdout, stderr, exitStatus = remote.execRemote(self.host, command)
+                if exitStatus != 0:
+                    print(
+                        f"Job submission unsuccessful: {exitStatus.decode()}, {stderr.decode()}"
+                    )
+                else:
+                    jobId = stdout.decode()
+                    print(f"Job with ID {jobId} submitted successfully.")
         else:
             print(f"Created job submission script {job_file_name}")
+        return jobId

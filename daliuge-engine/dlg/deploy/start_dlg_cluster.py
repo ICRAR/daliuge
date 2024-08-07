@@ -394,10 +394,11 @@ def get_pg(opts, nms, dims):
             pgt, dims + nms, num_islands=num_dims, co_host_dim=opts.co_host_dim
         )
     )
-    graph_name = os.path.basename(opts.log_dir)
-    graph_name = (
-        f"{graph_name.split('.pgt.graph')[0]}.pg.graph"  # get just the graph name
-    )
+    if opts.physical_graph:
+        graph_name = f"{opts.physical_graph.split('.pgt.graph')[0]}.pg.graph"
+    else:
+        graph_name = os.path.basename(opts.log_dir)
+        graph_name = f"{graph_name.split('_')[0]}.pg.graph"
     with open(os.path.join(opts.log_dir, graph_name), "wt") as pg_file:
         json.dump(physical_graph, pg_file)
     return physical_graph
