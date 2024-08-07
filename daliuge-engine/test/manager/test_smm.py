@@ -40,7 +40,7 @@ class TestSharedMemoryManager(unittest.TestCase):
         """
         SMM should successfully register a session with no drops
         """
-        manager = DlgSharedMemoryManager()
+        manager = DlgSharedMemoryManager()  # pylint: disable=possibly-used-before-assignment
         manager.register_session("session1")
         self.assertTrue(len(manager.drop_names), 1)
         manager.shutdown_all()
@@ -90,7 +90,7 @@ class TestSharedMemoryManager(unittest.TestCase):
         """
         SMM should be able to remove all sessions and drop references when shutdown
         """
-        manager = DlgSharedMemoryManager()
+        manager = DlgSharedMemoryManager()  # pylint: disable=possibly-used-before-assignment
         manager.register_session("session1")
         manager.register_session("session2")
         self.assertEqual(len(manager.drop_names.keys()), 2)

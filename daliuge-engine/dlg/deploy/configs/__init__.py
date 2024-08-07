@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 import os, string
+from abc import abstractmethod
 
 # ===================
 # Deployment defaults
@@ -63,6 +64,10 @@ class DefaultConfig(object):
         self.setpar("log_root", self.LOG_DIR)
         self.setpar("modules", self.MODULES.strip())
         self.setpar("venv", self.VENV.strip())
+
+    @abstractmethod
+    def init_list(self):
+        pass
 
     def setpar(self, k, v):
         self._dict[k] = v

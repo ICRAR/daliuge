@@ -23,10 +23,13 @@
                 "fileType": {
                     "type": "string"
                 },
-                "eagleVersion": {
+                "generatorVersion": {
                     "type": "string"
                 },
-                "eagleCommitHash": {
+                "generatorCommitHash": {
+                    "type": "string"
+                },
+                "generatorName": {
                     "type": "string"
                 },
                 "schemaVersion": {
@@ -70,8 +73,9 @@
                 "repo",
                 "repoBranch",
                 "repoService",
-                "eagleVersion",
-                "eagleCommitHash",
+                "generatorVersion",
+                "generatorCommitHash",
+                "generatorName",
                 "schemaVersion",
                 "lastModifiedName",
                 "lastModifiedEmail",
