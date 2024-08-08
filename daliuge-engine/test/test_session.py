@@ -21,13 +21,13 @@
 #
 import json
 import logging
+import os
 import time
 import unittest
 import pkg_resources
 import pytest
 
 from pathlib import Path
-
 
 from dlg.runtime import version  # Imported to setup DlgLogger
 
@@ -54,9 +54,11 @@ default_graph_repro = {
     },
 }
 
+
 class MockThrowingDrop(BarrierAppDROP):
     def run(self):
         raise RuntimeError("App drop thrown")
+
 
 def add_test_reprodata(graph: list):
     for drop in graph:
@@ -64,27 +66,6 @@ def add_test_reprodata(graph: list):
     graph.append(default_graph_repro.copy())
     return graph
 
-
-class SessionFilter(logging.Filter):
-    def __init__(self, sessionId):
-        self.sessionId = sessionId
-
-    def filter(self, record):
-        return getattr(record, "session_id", None) == self.sessionId
-
-
-# To avoid 'No handlers could be found for logger' messages during testing
-
-# Use our own logger class, which knows about the currently executing app
-class _TestLogger(logging.Logger):
-    def makeRecord(self, *args, **kwargs):
-        record = super(_TestLogger, self).makeRecord(*args, **kwargs)
-
-        record.drop_uid = "Test"
-        record.session_id = "Session"
-        return record
-
-# logging.setLoggerClass(_TestLogger)
 
 def test_logs(caplog):
     """
@@ -104,7 +85,8 @@ def test_logs(caplog):
     This aims to detect regressions when re-organising class structures or logging in the
     future.
     """
-
+    tmp_root = os.environ["DLG_ROOT"]
+    os.environ["DLG_ROOT"] = str(Path(__file__).cwd())
     with caplog.at_level(logging.INFO):
         with Session("1") as s:
             # caplog.handler.addFilter(SessionFilter("1"))
@@ -140,7 +122,7 @@ def test_logs(caplog):
 
             # Logger needs time to get messages.
             time.sleep(5)
-            logfile = Path(generateLogFileName(s._sessionDir,s.sessionId))
+            logfile = Path(generateLogFileName(s._sessionDir, s.sessionId))
             exception_logged = False
             for record in caplog.records:
                 if record.name == 'dlg.apps.app_base' and record.levelname == 'ERROR':
@@ -151,6 +133,9 @@ def test_logs(caplog):
                         assert 'Traceback' in buffer
                         assert 'App drop thrown' in buffer
             assert exception_logged
+            logfile.unlink(missing_ok=True)
+    os.environ["DLG_ROOT"] = tmp_root
+
 
 class TestSession(unittest.TestCase):
     def test_sessionStates(self):
@@ -165,12 +150,10 @@ class TestSession(unittest.TestCase):
             s.deploy()
             self.assertEqual(SessionStates.RUNNING, s.status)
 
-
             # Now we can't do any of these
             self.assertRaises(Exception, s.deploy)
             self.assertRaises(Exception, s.addGraphSpec, "")
             self.assertRaises(Exception, s.linkGraphParts, "", "", 0)
-
 
     def test_sessionStates_noDrops(self):
         # No drops created, we can deploy right away
@@ -254,7 +237,7 @@ class TestSession(unittest.TestCase):
 
     def test_addGraphSpec_namedPorts(self):
         with pkg_resources.resource_stream(
-            "test", "graphs/funcTestPG_namedPorts.graph"
+                "test", "graphs/funcTestPG_namedPorts.graph"
         ) as f:  # @UndefinedVariable
             graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
