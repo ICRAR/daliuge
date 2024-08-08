@@ -24,6 +24,7 @@ Module containing the NodeManager, which directly manages DROP instances, and
 thus represents the bottom of the DROP management hierarchy.
 """
 
+from __future__ import annotations
 import abc
 import collections
 import copy
@@ -239,7 +240,7 @@ class NodeManagerBase(DROPManager):
         dlm_enable_replication=False,
         dlgPath=None,
         error_listener=None,
-        event_listeners=[],
+        event_listeners: list=None,
         max_threads=0,
         use_processes=False,
         logdir=utils.getDlgLogsDir(),
@@ -273,6 +274,8 @@ class NodeManagerBase(DROPManager):
         self._error_listener = (
             _load(error_listener, "on_error") if error_listener else None
         )
+        if not event_listeners:
+            event_listeners = []
         self._event_listeners = [
             _load(l, "handleEvent") for l in event_listeners
         ]
@@ -354,7 +357,7 @@ class NodeManagerBase(DROPManager):
     def getLogDir(self):
         return self.logdir
 
-    def deploySession(self, sessionId, completedDrops=[]):
+    def deploySession(self, sessionId, completedDrops:list[str]=None):
         self._check_session_id(sessionId)
         session = self._sessions[sessionId]
         if hasattr(self, "_memoryManager"):

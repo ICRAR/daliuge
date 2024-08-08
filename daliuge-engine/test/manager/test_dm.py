@@ -93,7 +93,9 @@ def sleepAndCopy(uid, **kwargs):
     return dropSpec
 
 
-def quickDeploy(nm, sessionId, graphSpec, node_subscriptions={}):
+def quickDeploy(nm, sessionId, graphSpec, node_subscriptions:dict = None):
+    if not node_subscriptions:
+        node_subscriptions = {}
     nm.createSession(sessionId)
     nm.addGraphSpec(sessionId, graphSpec)
     nm.add_node_subscriptions(sessionId, node_subscriptions)
@@ -142,12 +144,13 @@ class NMTestsMixIn(object):
         leaf_data,
         root_oids=("A",),
         leaf_oid="C",
-        expected_failures=[],
+        expected_failures: list=None,
         sessionId=f"s{random.randint(0, 1000)}",
         node_managers=None,
         threads=0,
     ):
         """Utility to run a graph in two Node Managers"""
+
 
         dm1, dm2 = node_managers or [
             self._start_dm(threads=threads) for _ in range(2)
@@ -171,12 +174,13 @@ class NMTestsMixIn(object):
                 drop.write(root_data)
                 drop.setCompleted()
 
+        if not expected_failures:
+            expected_failures = []
         expected_successes = [
             drops[oid] for oid in drops if oid not in expected_failures
         ]
-        expected_failures = [
-            drops[oid] for oid in drops if oid in expected_failures
-        ]
+        expected_failures = [drops[oid] for oid in drops if oid in expected_failures]
+
         for drop in expected_successes:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
         for drop in expected_failures:

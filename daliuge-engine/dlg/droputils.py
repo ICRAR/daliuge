@@ -22,6 +22,7 @@
 """
 Utility methods and classes to be used when interacting with DROPs
 """
+from __future__ import annotations
 
 import collections
 import io
@@ -60,7 +61,7 @@ class EvtConsumer(object):
     until all DROPs of a given graph have executed.
     """
 
-    def __init__(self, evt, expected_states=[]):
+    def __init__(self, evt, expected_states: list[DROPStates] = None):
         self._evt = evt
         self._expected_states = expected_states or (
             DROPStates.COMPLETED,
@@ -87,7 +88,7 @@ class DROPWaiterCtx(object):
          a.setCompleted()
     """
 
-    def __init__(self, test, drops, timeout=1, expected_states=[]):
+    def __init__(self, test, drops, timeout=1, expected_states:list[DROPStates] = None):
         self._drops = listify(drops)
         self._expected_states = expected_states or (
             DROPStates.COMPLETED,
@@ -232,7 +233,7 @@ def getLeafNodes(drops):
     ]
 
 
-def depthFirstTraverse(node: "AbstractDROP", visited=[]):
+def depthFirstTraverse(node: "AbstractDROP", visited: list[AbstractDROP]=None):
     """
     Depth-first iterator for a DROP graph.
 
@@ -243,7 +244,7 @@ def depthFirstTraverse(node: "AbstractDROP", visited=[]):
 
     This implementation is recursive.
     """
-
+    visited = visited if visited else []
     dependencies = getDownstreamObjects(node)
     yield node, dependencies
     visited.append(node)
