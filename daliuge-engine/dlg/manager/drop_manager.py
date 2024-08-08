@@ -22,6 +22,7 @@
 """
 Module containing the base interface for all DROP managers.
 """
+from __future__ import annotations
 import abc
 
 
@@ -103,7 +104,7 @@ class DROPManager(object):
         """
 
     @abc.abstractmethod
-    def deploySession(self, sessionId, completedDrops=[]):
+    def deploySession(self, sessionId, completedDrops:list[str]=None):
         """
         Deploys the graph specification held by session `sessionId`, effectively
         creating all DROPs, linking them together, and moving those whose UID
