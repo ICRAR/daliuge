@@ -289,7 +289,6 @@ class Session(object):
 
         # This will check the consistency of each dropSpec
         logger.debug("Trying to add graphSpec:")
-        logger.exception("Trying to test exception")
         for x in graphSpec:
             logger.debug("%s: %s", x, x.keys())
         try:
