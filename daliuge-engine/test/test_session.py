@@ -20,14 +20,21 @@
 #    MA 02111-1307  USA
 #
 import json
+import logging
+import time
 import unittest
-
 import pkg_resources
+import pytest
 
+from pathlib import Path
+
+
+from dlg.apps.app_base import BarrierAppDROP
 from dlg.ddap_protocol import DROPLinkType, DROPStates, AppDROPStates
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidGraphException
-from dlg.manager.session import SessionStates, Session
+from dlg.manager.session import SessionStates, Session, generateLogFileName
+from dlg.runtime import version  # Imported to setup DlgLogger
 
 default_repro = {
     "rmode": "1",
@@ -46,12 +53,104 @@ default_graph_repro = {
     },
 }
 
+class MockThrowingDrop(BarrierAppDROP):
+    def run(self):
+        raise RuntimeError("App drop thrown")
 
 def add_test_reprodata(graph: list):
     for drop in graph:
         drop["reprodata"] = default_repro.copy()
     graph.append(default_graph_repro.copy())
     return graph
+
+
+class SessionFilter(logging.Filter):
+    def __init__(self, sessionId):
+        self.sessionId = sessionId
+
+    def filter(self, record):
+        return getattr(record, "session_id", None) == self.sessionId
+
+
+# To avoid 'No handlers could be found for logger' messages during testing
+
+# Use our own logger class, which knows about the currently executing app
+class _TestLogger(logging.Logger):
+    def makeRecord(self, *args, **kwargs):
+        record = super(_TestLogger, self).makeRecord(*args, **kwargs)
+
+        record.drop_uid = "Test"
+        record.session_id = "Session"
+        return record
+
+# logging.setLoggerClass(_TestLogger)
+
+def test_logs(caplog):
+    """
+    Confirm that when we run a session in which the AppDrop experiences a runtime error,
+    we produce the trackback for that application in the file.
+
+    This acts as a regression test to make sure changes in the future don't lead to
+    app/data drop tracking no longer adding appropriate attributes to the LogRecords such
+    that they pass the filter setup in the Session constructor. For further information,
+    review the runtime/__init__.py file.
+
+    The test uses the pytest.caplog fixture to first confirm that:
+    1. An exception is logged in the DlgLogger, and
+    2. That the exception passes through the filters setup in the Session constructor, and
+        properly described in the session log file.
+
+    This aims to detect regressions when re-organising class structures or logging in the
+    future.
+    """
+
+    with caplog.at_level(logging.INFO):
+        with Session("1") as s:
+            # caplog.handler.addFilter(SessionFilter("1"))
+            s.addGraphSpec(
+                add_test_reprodata(
+                    [
+                        {
+                            "oid": "A",
+                            "categoryType": "Data",
+                            "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+                            "consumers": ["B"],
+                        },
+                        {
+                            "oid": "B",
+                            "categoryType": "Application",
+                            "dropclass": "test.test_session.MockThrowingDrop",
+                            "sleep_time": 2,
+                        },
+                        {
+                            "oid": "C",
+                            "categoryType": "Data",
+                            "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+                            "producers": ["B"],
+                        },
+                    ]
+                )
+            )
+
+            s.deploy()
+            with DROPWaiterCtx(None, s.drops["C"], 1):
+                s.drops["A"].write(b"x")
+                s.drops["A"].setCompleted()
+
+            # Logger needs time to get messages.
+            time.sleep(5)
+            logfile = Path(generateLogFileName(s._sessionDir,s.sessionId))
+            exception_logged = False
+            for record in caplog.records:
+                if record.name == 'dlg.apps.app_base' and record.levelname == 'ERROR':
+                    exception_logged = True
+                    with logfile.open('r') as f:
+                        buffer = f.read()
+                        assert record.name in buffer
+                        assert 'Traceback' in buffer
+                        assert 'App drop thrown' in buffer
+            assert exception_logged
+            logfile.unlink()
 
 
 class TestSession(unittest.TestCase):
