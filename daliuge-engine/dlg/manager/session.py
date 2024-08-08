@@ -279,27 +279,34 @@ class Session(object):
 
         status = self.status
         if status not in (SessionStates.PRISTINE, SessionStates.BUILDING):
-            raise InvalidSessionState(
-                "Can't add graphs to this session since it isn't in the PRISTINE or BUILDING status: %d"
-                % (status)
-            )
+            logger.exception(
+                "Can't add graphs to this session since it isn't in the PRISTINE or "
+                "BUILDING status: %d",
+                status)
+            raise InvalidSessionState
 
         self.status = SessionStates.BUILDING
 
         # This will check the consistency of each dropSpec
-        # logger.debug("Trying to add graphSpec: %s", [x.keys() for x in graphSpec])
-        logger.debug("Trying to add graphSpec: %s", graphSpec)
-        graphSpecDict, self._graphreprodata = graph_loader.loadDropSpecs(graphSpec)
-        # Check for duplicates
-        duplicates = set(graphSpecDict) & set(self._graph)
-        if duplicates:
-            raise InvalidGraphException(
-                "Trying to add drops with OIDs that already exist: %r" % (duplicates,)
-            )
+        logger.debug("Trying to add graphSpec:")
+        logger.exception("Trying to test exception")
+        for x in graphSpec:
+            logger.debug("%s: %s", x, x.keys())
+        try:
+            graphSpecDict, self._graphreprodata = graph_loader.loadDropSpecs(graphSpec)
+            # Check for duplicates
+            duplicates = set(graphSpecDict) & set(self._graph)
+            if duplicates:
+                logger.exception(
+                    "Trying to add drops with OIDs that already exist: %r", duplicates)
+                raise InvalidGraphException
 
-        self._graph.update(graphSpecDict)
+            self._graph.update(graphSpecDict)
 
-        logger.debug("Added a graph definition with %d DROPs", len(graphSpecDict))
+            logger.debug("Added a graph definition with %d DROPs", len(graphSpecDict))
+        except InvalidGraphException as e:
+            logger.exception(e)
+            raise e
 
     @track_current_session
     def linkGraphParts(self, lhOID, rhOID, linkType, force=False):
@@ -347,16 +354,16 @@ class Session(object):
         # in reality this particular session is managing nothing
         status = self.status
         if (self._graph and status != SessionStates.BUILDING) or (
-            not self._graph and status != SessionStates.PRISTINE
+                not self._graph and status != SessionStates.PRISTINE
         ):
-            raise InvalidSessionState(
-                "Can't deploy this session in its current status: %d" % (status)
-            )
+            logger.exception("Can't deploy this session in its current status: %d",
+                             status)
+            raise InvalidSessionState
 
         if not self._graph and completedDrops:
-            raise InvalidGraphException(
-                "Drops are requested for immediate completion but none will be created"
-            )
+            logger.exception(
+                "Drops are requested for immediate completion but none will be created")
+            raise InvalidGraphException
 
         # Shortchut
         if not self._graph:
@@ -368,9 +375,17 @@ class Session(object):
         # Create the real DROPs from the graph specs
         logger.info("Creating DROPs for session %s", self._sessionId)
 
-        self._roots = graph_loader.createGraphFromDropSpecList(
-            self._graph.values(), session=self
-        )
+        try:
+            self._roots = graph_loader.createGraphFromDropSpecList(
+                self._graph.values(), session=self
+            )
+
+        except KeyError as e:
+            logger.exception(e)
+            raise e
+        except ModuleNotFoundError as e:
+            logger.exception(e)
+            raise e
         logger.info("%d drops successfully created", len(self._graph))
 
         #  Add listeners for reproducibility information
