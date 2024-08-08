@@ -7,6 +7,7 @@ import math
 import threading
 
 from dlg.drop_loaders import load_pickle
+from dlg.drop import track_current_drop
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.data_base import DataDROP
 from dlg.ddap_protocol import (
@@ -15,7 +16,6 @@ from dlg.ddap_protocol import (
     DROPStates,
     DROPRel,
 )
-from dlg.utils import object_tracking
 from dlg.exceptions import InvalidDropException, InvalidRelationshipException
 
 from dlg.meta import (
@@ -23,8 +23,6 @@ from dlg.meta import (
 )
 
 logger = logging.getLogger(__name__)
-
-track_current_drop = object_tracking("drop")
 
 
 class DropRunner(ABC):
