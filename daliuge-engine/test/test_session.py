@@ -29,12 +29,13 @@ import pytest
 from pathlib import Path
 
 
+from dlg.runtime import version  # Imported to setup DlgLogger
+
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.ddap_protocol import DROPLinkType, DROPStates, AppDROPStates
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidGraphException
 from dlg.manager.session import SessionStates, Session, generateLogFileName
-from dlg.runtime import version  # Imported to setup DlgLogger
 
 default_repro = {
     "rmode": "1",
@@ -150,8 +151,6 @@ def test_logs(caplog):
                         assert 'Traceback' in buffer
                         assert 'App drop thrown' in buffer
             assert exception_logged
-            logfile.unlink()
-
 
 class TestSession(unittest.TestCase):
     def test_sessionStates(self):
@@ -166,10 +165,12 @@ class TestSession(unittest.TestCase):
             s.deploy()
             self.assertEqual(SessionStates.RUNNING, s.status)
 
+
             # Now we can't do any of these
             self.assertRaises(Exception, s.deploy)
             self.assertRaises(Exception, s.addGraphSpec, "")
             self.assertRaises(Exception, s.linkGraphParts, "", "", 0)
+
 
     def test_sessionStates_noDrops(self):
         # No drops created, we can deploy right away
