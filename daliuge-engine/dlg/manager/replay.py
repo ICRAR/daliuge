@@ -26,6 +26,7 @@ import logging
 import bottle
 import pkg_resources
 
+from typing import List, Optional
 from .drop_manager import DROPManager
 from .rest import ManagerRestServer
 from .session import SessionStates
