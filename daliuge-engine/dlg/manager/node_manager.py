@@ -437,6 +437,8 @@ class NodeManagerBase(DROPManager):
                 # TODO: we also have to unsubscribe from them at some point
                 if nodesub.find(":") > 0:
                     host, _ = nodesub.split(":")
+                else:
+                    host = nodesub
             logger.debug("Sending subscription to %s", f"{host}:{events_port}")
             self.subscribe(host, events_port)
 
