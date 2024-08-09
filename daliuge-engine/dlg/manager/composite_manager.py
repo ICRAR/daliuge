@@ -154,6 +154,8 @@ class CompositeManager(DROPManager):
         :param: dmCheckTimeout The timeout used before giving up and declaring
                 a sub-DM as not-yet-present in a given host
         """
+        if dmHosts and ":" in dmHosts[0]:
+            dmPort = -1
         self._dmPort = dmPort
         self._partitionAttr = partitionAttr
         self._subDmId = subDmId
@@ -198,14 +200,9 @@ class CompositeManager(DROPManager):
     def _checkDM(self):
         while True:
             for host in self._dmHosts:
-                if ":" in host:
-                    host, port = host.split(":")
-                    port = int(port)
-                else:
-                    port = constants.NODE_DEFAULT_REST_PORT
                 if self._dmCheckerEvt.is_set():
                     break
-                if not self.check_dm(host, port, timeout=self._dmCheckTimeout):
+                if not self.check_dm(host, self._dmPort, timeout=self._dmCheckTimeout):
                     logger.error(
                         "Couldn't contact manager for host %s, will try again later",
                         host,
@@ -218,13 +215,11 @@ class CompositeManager(DROPManager):
         return self._dmHosts[:]
 
     def addDmHost(self, host):
-        if ":" not in host:
-            if self._subDmId == "node":
-                host += f":{constants.NODE_DEFAULT_REST_PORT}"
-            elif self._subDmId == "island":
-                host += f":{constants.ISLAND_DEFAULT_REST_PORT}"
+        if not ":" in host:
+            host += f":{self._dmPort}"
         if host not in self._dmHosts:
             self._dmHosts.append(host)
+            logger.debug("Added sub-manager %s", host)
         else:
             logger.warning("Host %s already registered.", host)
 
@@ -247,10 +242,13 @@ class CompositeManager(DROPManager):
         return self._dmPort
 
     def check_dm(self, host, port=None, timeout=10):
-        port = port or self._dmPort
         if ":" in host:
             host, port = host.split(":")
-        logger.debug("Checking DM presence at %s:%d", host, port)
+            port = int(port)
+        else:
+            port = port or self._dmPort
+
+        logger.debug("Checking DM presence at %s port %d", host, port)
         dm_is_there = portIsOpen(host, port, timeout)
         return dm_is_there
 
@@ -259,8 +257,10 @@ class CompositeManager(DROPManager):
             raise SubManagerException(
                 f"Manager expected but not running in {host}:{port}"
             )
-
-        port = port or self._dmPort
+        if not ":" in host:
+            port = port or self._dmPort
+        else:
+            host, port = host.split(":")
         return NodeManagerClient(host, port, 10)
 
     def getSessionIds(self):
@@ -291,9 +291,10 @@ class CompositeManager(DROPManager):
         except Exception as e:
             exceptions[host] = e
             logger.exception(
-                "Error while %s on host %s, session %s",
+                "Error while %s on host %s:%d, session %s",
                 action,
                 host,
+                port,
                 sessionId,
             )
 
@@ -304,7 +305,7 @@ class CompositeManager(DROPManager):
         thrExs = {}
         iterable = iterable or self._dmHosts
         port = port or self._dmPort
-        # logger.debug("Hosts: %s", iterable)
+        # logger.debug("Replicating command: %s on hosts: %s", f, iterable)
         self._tp.map(
             functools.partial(
                 self._do_in_host, action, sessionId, thrExs, f, collect, port
@@ -374,7 +375,7 @@ class CompositeManager(DROPManager):
         # DMs. For this we need to make sure that our graph has a the correct
         # attribute set
         logger.info(
-            "Separating graph using partition attribute %s",
+            "Separating graph using partition attribute '%s'",
             self._partitionAttr,
         )
         perPartition = collections.defaultdict(list)
@@ -426,8 +427,10 @@ class CompositeManager(DROPManager):
             functools.partial(collections.defaultdict, list)
         )
         for rel in inter_partition_rels:
-            rhn = self._graph[rel.rhs]["node"].split(":")[0]
-            lhn = self._graph[rel.lhs]["node"].split(":")[0]
+            # rhn = self._graph[rel.rhs]["node"].split(":")[0]
+            # lhn = self._graph[rel.lhs]["node"].split(":")[0]
+            rhn = self._graph[rel.rhs]["node"]
+            lhn = self._graph[rel.lhs]["node"]
             drop_rels[lhn][rhn].append(rel)
             drop_rels[rhn][lhn].append(rel)
 

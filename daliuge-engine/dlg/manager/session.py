@@ -426,9 +426,8 @@ class Session(object):
 
         # Append proxies
         logger.info(
-            "Creating %d drop proxies: %r",
+            "Creating %d drop proxies",
             len(self._proxyinfo),
-            self._proxyinfo,
         )
         for host, port, local_uid, relname, remote_uid in self._proxyinfo:
             proxy = rpc.DropProxy(
