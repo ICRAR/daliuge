@@ -672,6 +672,7 @@ def main():
             log_parser = LogParser(opts.log_dir)
             log_parser.parse(out_csv=opts.csv_output)
     elif opts.action == 1:
+        path_to_graph_file = None
         if opts.logical_graph and opts.physical_graph:
             parser.error(
                 "Either a logical graph XOR physical graph filename must be specified"
