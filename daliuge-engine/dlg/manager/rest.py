@@ -530,6 +530,7 @@ class CompositeManagerRestServer(ManagerRestServer):
 
     @daliuge_aware
     def getNodeSessions(self, node):
+        port = None
         if node not in self.dm.nodes:
             raise Exception(f"{node} not in current list of nodes")
         if node.find(":") > 0:
@@ -541,8 +542,8 @@ class CompositeManagerRestServer(ManagerRestServer):
         file_header = headers.getheader("Content-Disposition")
         length = headers.getheader("Content-Length")
         m = Message()
-        m["content-disposition"] = file_header
-        filename = m.get_params["filename"]
+        m.add_header("content-disposition", file_header)
+        filename = m.get_params("filename")
         # _, params = cgi.parse_header(file_header)
         # filename = params["filename"]
         info = tarfile.TarInfo(filename)
