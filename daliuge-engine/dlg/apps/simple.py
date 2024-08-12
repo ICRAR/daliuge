@@ -991,7 +991,7 @@ class PickOne(BarrierAppDROP):
 # The resulting array will be sent to all connected output apps.
 # @par EAGLE_START
 # @param category PythonApp
-# @param tag daliuge
+# @param tag test
 # @param size 100/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/the size of the array
 # @param dropclass dlg.apps.simple.ListAppendThrashingApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
