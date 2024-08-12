@@ -639,7 +639,8 @@ class PyFuncApp(BarrierAppDROP):
             and "self" in funcargs
         ):
             funcargs.pop("self")
-        logger.info(f"Running {self.func_name} with *{pargs} **{funcargs}")
+        logger.info(f"Running {self.func_name}")
+        logger.debug(f"Arguments: *{pargs} **{funcargs}")
 
         # 6. prepare for execution
         # we capture and log whatever is produced on STDOUT
