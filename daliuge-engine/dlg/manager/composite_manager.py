@@ -19,6 +19,8 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+from __future__ import annotations
+
 import abc
 import collections
 import functools
@@ -135,7 +137,7 @@ class CompositeManager(DROPManager):
         dmPort,
         partitionAttr,
         subDmId,
-        dmHosts=[],
+        dmHosts: list[str] = None,
         pkeyPath=None,
         dmCheckTimeout=10,
     ):
@@ -159,7 +161,7 @@ class CompositeManager(DROPManager):
         self._dmPort = dmPort
         self._partitionAttr = partitionAttr
         self._subDmId = subDmId
-        self._dmHosts = dmHosts
+        self._dmHosts = dmHosts if dmHosts else []
         self._graph = {}
         self._drop_rels = {}
         self._sessionIds = (
@@ -467,7 +469,7 @@ class CompositeManager(DROPManager):
             host,
         )
 
-    def deploySession(self, sessionId, completedDrops=[]):
+    def deploySession(self, sessionId, completedDrops: list[str] = None):
         # Indicate the node managers that they have to subscribe to events
         # published by some nodes
         if self._drop_rels.get(sessionId, None):
@@ -580,7 +582,7 @@ class DataIslandManager(CompositeManager):
     The DataIslandManager, which manages a number of NodeManagers.
     """
 
-    def __init__(self, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
+    def __init__(self, dmHosts: list[str]=None,  pkeyPath=None, dmCheckTimeout=10):
         super(DataIslandManager, self).__init__(
             NODE_DEFAULT_REST_PORT,
             "node",
@@ -600,7 +602,7 @@ class MasterManager(CompositeManager):
     The MasterManager, which manages a number of DataIslandManagers.
     """
 
-    def __init__(self, dmHosts=[], pkeyPath=None, dmCheckTimeout=10):
+    def __init__(self, dmHosts: list[str]=None, pkeyPath=None, dmCheckTimeout=10):
         super(MasterManager, self).__init__(
             ISLAND_DEFAULT_REST_PORT,
             "island",
