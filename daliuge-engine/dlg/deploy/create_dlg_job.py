@@ -27,22 +27,30 @@ parse the log result, and produce the plot
 """
 
 import datetime
+import json
 import optparse
 import pwd
 import re
 import socket
 import sys
+import tempfile
 import time
 import os
 
 from dlg.deploy.configs import (
     ConfigFactory,
 )  # get all available configurations
-from dlg.deploy.deployment_constants import (
-    DEFAULT_AWS_MON_PORT,
-    DEFAULT_AWS_MON_HOST,
+
+from dlg.deploy.configs import (
+    DEFAULT_MON_PORT,
+    DEFAULT_MON_HOST,
 )
 from dlg.deploy.slurm_client import SlurmClient
+from dlg.common.reproducibility.reproducibility import (
+    init_pgt_unroll_repro_data,
+    init_pgt_partition_repro_data,
+)
+from dlg.dropmake import pg_generator
 
 FACILITIES = ConfigFactory.available()
 
@@ -55,10 +63,9 @@ def get_timestamp(line):
     date_time = "{0}T{1}".format(split[0], split[1])
     pattern = "%Y-%m-%dT%H:%M:%S,%f"
     epoch = time.mktime(time.strptime(date_time, pattern))
-    return (
-        datetime.datetime.strptime(date_time, pattern).microsecond / 1e6
-        + epoch
-    )
+    parsed_date = datetime.datetime.strptime(date_time, pattern)
+    microseconds = parsed_date.microsecond / 1e6
+    return microseconds + epoch
 
 
 class LogEntryPair:
@@ -145,8 +152,7 @@ def build_nm_log_entry_pairs():
 def construct_catchall_pattern(node_type):
     pattern_strs = LogParser.kwords.get(node_type)
     patterns = [
-        x.format(".*").replace("(", r"\(").replace(")", r"\)")
-        for x in pattern_strs
+        x.format(".*").replace("(", r"\(").replace(")", r"\)") for x in pattern_strs
     ]
     catchall = "|".join(["(%s)" % (s,) for s in patterns])
     catchall = ".*(%s).*" % (catchall,)
@@ -221,13 +227,9 @@ class LogParser:
         if not self.check_log_dir(log_dir):
             raise Exception("No DIM log found at: {0}".format(log_dir))
         self._log_dir = log_dir
-        self._dim_catchall_pattern = construct_catchall_pattern(
-            node_type="dim"
-        )
+        self._dim_catchall_pattern = construct_catchall_pattern(node_type="dim")
         # self._nm_catchall_pattern = construct_catchall_pattern(node_type="nm")
-        self._nm_catchall_pattern = construct_catchall_pattern(
-            node_type="name"
-        )
+        self._nm_catchall_pattern = construct_catchall_pattern(node_type="name")
 
     def parse(self, out_csv=None):
         """
@@ -286,13 +288,9 @@ class LogParser:
         num_dims = 0
         for log_directory_file_name in os.listdir(self._log_dir):
             # Check this is a dir and contains the NM log
-            if not os.path.isdir(
-                os.path.join(self._log_dir, log_directory_file_name)
-            ):
+            if not os.path.isdir(os.path.join(self._log_dir, log_directory_file_name)):
                 continue
-            nm_logf = os.path.join(
-                self._log_dir, log_directory_file_name, "dlgNM.log"
-            )
+            nm_logf = os.path.join(self._log_dir, log_directory_file_name, "dlgNM.log")
             nm_dim_logf = os.path.join(
                 self._log_dir, log_directory_file_name, "dlgDIM.log"
             )
@@ -381,9 +379,7 @@ class LogParser:
             git_commit,
         ]
         ret = [str(x) for x in ret]
-        num_dims = (
-            num_dims if num_dims == 1 else num_dims - 1
-        )  # exclude master manager
+        num_dims = num_dims if num_dims == 1 else num_dims - 1  # exclude master manager
         add_line = ",".join(ret + temp_dim + temp_nm + [str(int(num_dims))])
         if out_csv is not None:
             with open(out_csv, "a") as out_file:
@@ -401,9 +397,7 @@ class LogParser:
             if os.path.exists(dim_log_f):
                 self._dim_log_f = [dim_log_f]
                 if dim_log_f == possible_logs[0]:
-                    cluster_log = os.path.join(
-                        log_dir, "0", "start_dlg_cluster.log"
-                    )
+                    cluster_log = os.path.join(log_dir, "0", "start_dlg_cluster.log")
                     if os.path.exists(cluster_log):
                         self._dim_log_f.append(cluster_log)
                 return True
@@ -421,7 +415,7 @@ def main():
         action="store",
         type="int",
         dest="action",
-        help="1 - submit job, 2 - analyse log",
+        help="1 - create/submit job, 2 - analyse log",
         default=None,
     )
     parser.add_option(
@@ -445,6 +439,24 @@ def main():
         type="string",
         dest="logical_graph",
         help="The filename of the logical graph to deploy",
+        default=None,
+    )
+    parser.add_option(
+        "-A",
+        "--algorithm",
+        action="store",
+        type="string",
+        dest="algorithm",
+        help="The algorithm to be used for the translation",
+        default="metis",
+    )
+    parser.add_option(
+        "-O",
+        "--algorithm-parameters",
+        action="store",
+        type="string",
+        dest="algorithm_params",
+        help="Parameters for the translation algorithm",
         default=None,
     )
     parser.add_option(
@@ -498,7 +510,7 @@ def main():
         type="string",
         dest="mon_host",
         help="Monitor host IP (optional)",
-        default=DEFAULT_AWS_MON_HOST,
+        default=DEFAULT_MON_HOST,
     )
     parser.add_option(
         "-o",
@@ -507,7 +519,7 @@ def main():
         type="int",
         dest="mon_port",
         help="The port to bind DALiuGE monitor",
-        default=DEFAULT_AWS_MON_PORT,
+        default=DEFAULT_MON_PORT,
     )
     parser.add_option(
         "-v",
@@ -576,14 +588,6 @@ def main():
         default=False,
     )
     parser.add_option(
-        "-C",
-        "--configs",
-        dest="configs",
-        action="store_true",
-        help="Display the available configurations  and exit",
-        default=False,
-    )
-    parser.add_option(
         "-f",
         "--facility",
         dest="facility",
@@ -597,16 +601,49 @@ def main():
         dest="submit",
         action="store_true",
         help=f"If set to False, the job is not submitted, but the script is generated",
-        default=True,
+        default=False,
+    )
+    parser.add_option(
+        "--remote",
+        dest="remote",
+        action="store_true",
+        help=f"If set to True, the job is submitted/created for a remote submission",
+        default=False,
+    )
+    parser.add_option(
+        "-D",
+        "--dlg_root",
+        dest="dlg_root",
+        action="store",
+        type="string",
+        help="Overwrite the DLG_ROOT directory provided by the config",
+    )
+    parser.add_option(
+        "-C",
+        "--configs",
+        dest="configs",
+        action="store_true",
+        help="Display the available configurations  and exit",
+        default=False,
+    )
+    parser.add_option(
+        "-U",
+        "--username",
+        dest="username",
+        type="string",
+        action="store",
+        help="Remote username, if different from local",
+        default=None,
     )
 
     (opts, _) = parser.parse_args(sys.argv)
-    if not (opts.action and opts.facility) and not opts.configs:
+    if opts.configs:
+        print(f"Available facilities: {FACILITIES}")
+        sys.exit(1)
+    if not (opts.action and opts.facility):
         parser.error("Missing required parameters!")
     if opts.facility not in FACILITIES:
-        parser.error(
-            f"Unknown facility provided. Please choose from {FACILITIES}"
-        )
+        parser.error(f"Unknown facility provided. Please choose from {FACILITIES}")
 
     if opts.action == 2:
         if opts.log_dir is None:
@@ -630,26 +667,55 @@ def main():
                             log_parser = LogParser(log_dir)
                             log_parser.parse(out_csv=opts.csv_output)
                         except Exception as exp:
-                            print(
-                                "Fail to parse {0}: {1}".format(log_dir, exp)
-                            )
+                            print("Fail to parse {0}: {1}".format(log_dir, exp))
         else:
             log_parser = LogParser(opts.log_dir)
             log_parser.parse(out_csv=opts.csv_output)
     elif opts.action == 1:
+        path_to_graph_file = None
         if opts.logical_graph and opts.physical_graph:
             parser.error(
-                "Either a logical graph or physical graph filename must be specified"
+                "Either a logical graph XOR physical graph filename must be specified"
             )
-        for path_to_graph_file in (opts.logical_graph, opts.physical_graph):
-            if path_to_graph_file and not os.path.exists(path_to_graph_file):
-                parser.error(
-                    "Cannot locate graph file at '{0}'".format(
-                        path_to_graph_file
+        elif opts.logical_graph:
+            path_to_graph_file = opts.logical_graph
+        elif opts.physical_graph:
+            path_to_graph_file = opts.physical_graph
+        if path_to_graph_file and not os.path.exists(path_to_graph_file):
+            parser.error(f"Cannot locate graph file at '{path_to_graph_file}'")
+        else:
+            graph_file = os.path.basename(path_to_graph_file)
+            pre, ext = os.path.splitext(graph_file)
+            if os.path.splitext(pre)[-1] != ".pre":
+                pgt_file = ".".join([pre, "pgt", ext[1:]])
+            else:
+                pgt_file = graph_file
+            if opts.logical_graph:
+                with open(path_to_graph_file) as f:
+                    # logical graph provided, translate first
+                    lg_graph = json.loads(f.read())
+                    pgt = pg_generator.unroll(lg_graph, zerorun=opts.zerorun)
+                    pgt = init_pgt_unroll_repro_data(pgt)
+                    reprodata = pgt.pop()
+                    pgt = pg_generator.partition(
+                        pgt=pgt,
+                        algo=opts.algorithm,
+                        algo_params=opts.algorithm_params,
+                        num_islands=opts.num_islands,
+                        num_partitions=opts.num_nodes,
                     )
-                )
+                    pgt.append(reprodata)
+                    pgt = init_pgt_partition_repro_data(pgt)
+                pgt_name = pgt_file
+                pgt_file = f"/tmp/{pgt_file}"
+                with open(pgt_file, "w") as o:
+                    json.dump((pgt_name, pgt), o)
+            else:
+                pgt_file = path_to_graph_file
 
         client = SlurmClient(
+            dlg_root=opts.dlg_root,
+            log_root=opts.log_root,
             facility=opts.facility,
             job_dur=opts.job_dur,
             num_nodes=opts.num_nodes,
@@ -662,14 +728,13 @@ def main():
             num_islands=opts.num_islands,
             all_nics=opts.all_nics,
             check_with_session=opts.check_with_session,
-            logical_graph=opts.logical_graph,
-            physical_graph=opts.physical_graph,
-            submit=opts.submit in ["True", "true"],
+            physical_graph_template_file=pgt_file,
+            submit=opts.submit,
+            remote=opts.remote,
+            username=opts.username,
         )
         client._visualise_graph = opts.visualise_graph
         client.submit_job()
-    elif opts.configs:
-        print(f"Available facilities: {FACILITIES}")
     else:
         parser.print_help()
         parser.error("Invalid input!")

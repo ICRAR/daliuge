@@ -73,8 +73,7 @@ def _parse_list_tokens(token_iter):
             str_len = max(len(range_start), len(range_end))
             str_format = "%%0%dd" % str_len
             num_vals = [
-                str_format % num
-                for num in range(int(range_start), int(range_end) + 1)
+                str_format % num for num in range(int(range_start), int(range_end) + 1)
             ]
             values.extend(num_vals)
 
@@ -91,11 +90,11 @@ def _parse_list_tokens(token_iter):
             finish_element(sub_values, range_start)
             return values
         if token == ListTokens.MULTICASE_START:
+            prefix = ""
             if values:
                 prefix = values.pop()
             sub_values = _parse_list_tokens(token_iter)
-            if prefix:
-                sub_values = [prefix + s for s in sub_values]
+            sub_values = [prefix + s for s in sub_values]
         if token == ListTokens.RANGE_SEP:
             range_start = values.pop()
         elif token == ListTokens.COMMA:
@@ -123,24 +122,20 @@ def find_numislands(physical_graph_template_file):
     init already.
     TODO: We will probably need to do the same with job duration and CPU number
     """
-
-    pgt_data = json.loads(physical_graph_template_file, strict=False)
+    with open(physical_graph_template_file, "r") as f:
+        pgt_data = json.load(f, strict=False)
     try:
         (pgt_name, pgt) = pgt_data
     except:
         raise ValueError(type(pgt_data))
-    # nodes = list(map(lambda x: x["node"], pgt))
-    nodes = [
-        "queue1-dy-t3medium-1",
-    ]
-    # islands = list(map(lambda x: x["island"], pgt))
-    islands = [
-        "mab_island",
-    ]
+    try:
+        nodes = list(map(lambda x: x["node"], pgt))
+        islands = list(map(lambda x: x["island"], pgt))
+    except KeyError:
+        return None, None, pgt_name
     num_islands = len(dict(zip(islands, range(len(islands)))))
     num_nodes = len(dict(zip(nodes, range(len(nodes)))))
-    pip_name = pgt_name
-    return num_islands, num_nodes, pip_name
+    return num_islands, num_nodes, pgt_name
 
 
 def label_job_dur(job_dur):
@@ -162,9 +157,7 @@ def num_daliuge_nodes(num_nodes: int, run_proxy: bool):
     else:
         ret = num_nodes - 0  # exclude the data island node?
     if ret <= 0:
-        raise Exception(
-            "Not enough nodes {0} to run DALiuGE.".format(num_nodes)
-        )
+        raise Exception("Not enough nodes {0} to run DALiuGE.".format(num_nodes))
     return ret
 
 
@@ -205,9 +198,9 @@ def find_pod_ips(num_expected, retries=3, timeout=10):
     while len(ips) < num_expected and attempts < retries:
         ips = []
         query = str(
-            subprocess.check_output(
-                [r"kubectl get pods -o wide"], shell=True
-            ).decode(encoding="utf-8")
+            subprocess.check_output([r"kubectl get pods -o wide"], shell=True).decode(
+                encoding="utf-8"
+            )
         )
         pattern = r"^daliuge-daemon.*"
         ip_pattern = r"\d+\.\d+\.\d+\.\d+"
@@ -235,9 +228,9 @@ def wait_for_pods(num_expected, retries=18, timeout=10):
     attempts = 0
     while not all_running and attempts < retries:
         query = str(
-            subprocess.check_output(
-                [r"kubectl get pods -o wide"], shell=True
-            ).decode(encoding="utf-8")
+            subprocess.check_output([r"kubectl get pods -o wide"], shell=True).decode(
+                encoding="utf-8"
+            )
         )
         logger.info(query)
         pattern = r"^daliuge-daemon.*"

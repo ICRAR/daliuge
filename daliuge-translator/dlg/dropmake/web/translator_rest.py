@@ -696,8 +696,8 @@ def gen_pg_spec(
     Interface to convert a PGT(P) into pg_spec
     """
     try:
-        if manager_host == "localhost":
-            manager_host = f"localhost:{constants.ISLAND_DEFAULT_REST_PORT}"
+        if manager_host.find(":") == -1:
+            manager_host = f"{manager_host}:{constants.ISLAND_DEFAULT_REST_PORT}"
         logger.debug("pgt_id: %s", str(pgt_id))
         # logger.debug("node_list: %s", str(node_list))
     except Exception as ex:
@@ -1036,7 +1036,7 @@ def pgt_map(
     """
     if not nodes:
         client = CompositeManagerClient(host, port, timeout=10)
-        nodes = [host] + client.nodes()
+        nodes = [f"{host}:{port}"] + client.nodes()
     if len(nodes) <= num_islands:
         logger.error("Not enough nodes to fill all islands")
         HTTPException(

@@ -24,10 +24,13 @@ Module containing the NodeManager, which directly manages DROP instances, and
 thus represents the bottom of the DROP management hierarchy.
 """
 
+from __future__ import annotations
 import abc
 import collections
 import copy
 import logging
+from typing import Optional
+
 from psutil import cpu_count
 import os
 import queue
@@ -102,14 +105,13 @@ def _load(obj, callable_attr):
     """
     if isinstance(obj, str):
         obj = utils.get_symbol(obj)()
-    if not hasattr(obj, callable_attr) or not callable(
-        getattr(obj, callable_attr)
-    ):
+    if not hasattr(obj, callable_attr) or not callable(getattr(obj, callable_attr)):
         raise ValueError(
             "%r doesn't contain an %s attribute that can be called"
             % (obj, callable_attr)
         )
     return obj
+
 
 class NodeManagerDropRunner(DropRunner):
     @abc.abstractmethod
@@ -124,7 +126,7 @@ class NodeManagerDropRunner(DropRunner):
 class NodeManagerThreadDropRunner(NodeManagerDropRunner):
     def __init__(self, max_workers: int):
         self._max_workers = max_workers
-        self._thread_pool: ThreadPoolExecutor | None = None
+        self._thread_pool: Optional[ThreadPoolExecutor] = None
 
     def start(self, _rpc_endpoint):
         logger.info("Initializing thread pool with %d workers", self._max_workers)
@@ -169,7 +171,9 @@ class NodeManagerProcessDropRunner(NodeManagerDropRunner):
         cls._rpc_client.start()
 
     def run_drop(self, app_drop: AppDROP):
-        inputs_proxy_info, outputs_proxy_info = NodeManagerProcessDropRunner._get_proxy_infos(app_drop)
+        inputs_proxy_info, outputs_proxy_info = (
+            NodeManagerProcessDropRunner._get_proxy_infos(app_drop)
+        )
 
         # MP Queues pickle on a background thread - we need to ensure that we don't
         # modify the input app_drop reference outside of the scope of this method
@@ -181,7 +185,9 @@ class NodeManagerProcessDropRunner(NodeManagerDropRunner):
 
         return self._process_pool.submit(
             NodeManagerProcessDropRunner._run_app_drop,
-            copied_drop, inputs_proxy_info, outputs_proxy_info,
+            copied_drop,
+            inputs_proxy_info,
+            outputs_proxy_info,
         )
 
     @classmethod
@@ -237,7 +243,7 @@ class NodeManagerBase(DROPManager):
         dlm_enable_replication=False,
         dlgPath=None,
         error_listener=None,
-        event_listeners=[],
+        event_listeners: list=None,
         max_threads=0,
         use_processes=False,
         logdir=utils.getDlgLogsDir(),
@@ -271,6 +277,8 @@ class NodeManagerBase(DROPManager):
         self._error_listener = (
             _load(error_listener, "on_error") if error_listener else None
         )
+        if not event_listeners:
+            event_listeners = []
         self._event_listeners = [
             _load(l, "handleEvent") for l in event_listeners
         ]
@@ -352,7 +360,7 @@ class NodeManagerBase(DROPManager):
     def getLogDir(self):
         return self.logdir
 
-    def deploySession(self, sessionId, completedDrops=[]):
+    def deploySession(self, sessionId, completedDrops:list[str]=None):
         self._check_session_id(sessionId)
         session = self._sessions[sessionId]
         if hasattr(self, "_memoryManager"):
@@ -381,9 +389,7 @@ class NodeManagerBase(DROPManager):
         # Add user-supplied listeners
         listeners = self._event_listeners[:]
         if self._error_listener:
-            listeners.append(
-                ErrorStatusListener(session, self._error_listener)
-            )
+            listeners.append(ErrorStatusListener(session, self._error_listener))
 
         session.deploy(
             completedDrops=completedDrops,
@@ -429,13 +435,15 @@ class NodeManagerBase(DROPManager):
 
         # Set up event channels subscriptions
         for nodesub in relationships:
-            host = nodesub
             events_port = constants.NODE_DEFAULT_EVENTS_PORT
             if type(nodesub) is tuple:
                 host, events_port, _ = nodesub
-
-            # TODO: we also have to unsubscribe from them at some point
-            host = host.split(":")[0]
+            else:
+                # TODO: we also have to unsubscribe from them at some point
+                if nodesub.find(":") > 0:
+                    host, _ = nodesub.split(":")
+                else:
+                    host = nodesub
             logger.debug("Sending subscription to %s", f"{host}:{events_port}")
             self.subscribe(host, events_port)
 
@@ -478,9 +486,7 @@ class ZMQPubSubMixIn(object):
     handling of ZeroMQ resources simpler.
     """
 
-    subscription = collections.namedtuple(
-        "subscription", "endpoint finished_evt"
-    )
+    subscription = collections.namedtuple("subscription", "endpoint finished_evt")
 
     def __init__(self, host, events_port):
         self._events_host = host
@@ -501,9 +507,7 @@ class ZMQPubSubMixIn(object):
         self._event_receiver = self._start_thread(
             self._receive_events, "Evt recv", timeout
         )
-        self._event_deliverer = self._start_thread(
-            self._deliver_events, "Evt delivery"
-        )
+        self._event_deliverer = self._start_thread(self._deliver_events, "Evt delivery")
 
     def _start_thread(self, target, name, timeout=None):
         evt = threading.Event() if timeout else None
@@ -511,9 +515,7 @@ class ZMQPubSubMixIn(object):
         t = threading.Thread(target=target, name=name, args=args)
         t.start()
         if evt and not evt.wait(timeout):
-            raise Exception(
-                "Failed to start %s thread in %d seconds" % (name, timeout)
-            )
+            raise Exception("Failed to start %s thread in %d seconds" % (name, timeout))
         return t
 
     def shutdown(self):
@@ -531,9 +533,7 @@ class ZMQPubSubMixIn(object):
         timeout = 5
         finished_evt = threading.Event()
         endpoint = "tcp://%s:%d" % (utils.zmq_safe(host), port)
-        self._subscriptions.put(
-            ZMQPubSubMixIn.subscription(endpoint, finished_evt)
-        )
+        self._subscriptions.put(ZMQPubSubMixIn.subscription(endpoint, finished_evt))
         if not finished_evt.wait(timeout):
             raise DaliugeException(
                 "ZMQ subscription not achieved within %d seconds" % (timeout,)
@@ -562,9 +562,7 @@ class ZMQPubSubMixIn(object):
 
             while self._pubsub_running:
                 try:
-                    pub.send_pyobj(
-                        obj, flags=zmq.NOBLOCK
-                    )  # @UndefinedVariable
+                    pub.send_pyobj(obj, flags=zmq.NOBLOCK)  # @UndefinedVariable
                     break
                 except zmq.error.Again:
                     logger.debug("Got an 'Again' when publishing event")
@@ -599,9 +597,9 @@ class ZMQPubSubMixIn(object):
                     subscription.finished_evt.set()
                 else:
                     sub.connect(subscription.endpoint)
-                    pending_connections[
-                        subscription.endpoint
-                    ] = subscription.finished_evt
+                    pending_connections[subscription.endpoint] = (
+                        subscription.finished_evt
+                    )
             except queue.Empty:
                 pass
 

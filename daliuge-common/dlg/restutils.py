@@ -115,7 +115,7 @@ class RestClient(object):
 
     def __init__(self, host, port, url_prefix="", timeout=10):
         self.host = host
-        self.port = port
+        self.port = int(port)
         self.url_prefix = url_prefix
         self.timeout = timeout
         self._conn = None
@@ -139,7 +139,7 @@ class RestClient(object):
 
     def _get_json(self, url):
         ret = self._GET(url)
-        return json.load(ret) if ret else None
+        return json.load(ret) if ret else {}
 
     def _post_form(self, url, content=None):
         if content is not None:
@@ -177,7 +177,9 @@ class RestClient(object):
         stream, _ = self._request(url, "DELETE")
         return stream
 
-    def _request(self, url, method, content=None, headers={}, timeout=10):
+    def _request(self, url, method, content=None, headers: dict=None, timeout=10):
+        if not headers:
+            headers = {}
         # Do the HTTP stuff...
         url = self.url_prefix + url
         logger.debug("Sending %s request to %s:%d%s", method, self.host, self.port, url)

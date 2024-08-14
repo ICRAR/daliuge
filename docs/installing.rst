@@ -40,6 +40,15 @@ and last build the translator::
   cd daliuge-translator && ./build_translator.sh dev && cd ..
 
 
+Using development Docker images: 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Using ``make`` we can simplify building the docker images for a development environment::
+
+  make docker-install
+
+This will install daliuge-common, daliuge-engine, and daliuge-translator based on the
+local development state of the |daliuge| codebase.
+
 Running the images
 ^^^^^^^^^^^^^^^^^^
 Running the engine and the translator is equally simple::
@@ -50,9 +59,15 @@ and::
 
   cd daliuge-translator && ./run_translator.sh dev && cd ..
 
-You can use EAGLE on the URL: https://eagle.icrar.org and point your EAGLE configuration for the translator to http://localhost:8084. Congratulations! You now have access to a complete |daliuge| system on your local computer! 
+
+You can use EAGLE on the URL: https://eagle.icrar.org and point your EAGLE configuration for the translator to http://localhost:8084. Congratulations! You now have access to a complete |daliuge| system on your local computer!
 
 More detailed information about running and controlling the |daliuge| system can be found in the :ref:`running`.
+
+Running the development version of the engine and the translator follows the same logic as above::
+
+    make docker-run
+
 
 Direct Installation
 -------------------
@@ -101,15 +116,12 @@ If you want to have access to the sources you can run the installation in a slig
 
   git clone https://github.com/ICRAR/daliuge
 
-then install the individual parts::
+Then perform the following steps to setup and install |daliuge| into an isolated environment::
 
   cd daliuge
-  cd daliuge-common
-  pip install .
-  cd ../daliuge-engine
-  pip install .
-  cd ../daliuge-translator
-  pip install .
-
-
+  make virtualenv
+  source .venv/bin/activate
+  make show # Optional, use to confirm virtualenv is active
+  make install
+  
 .. include:: README ray.rst

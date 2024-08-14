@@ -20,6 +20,21 @@
 #    MA 02111-1307  USA
 #
 import os, string
+from abc import abstractmethod
+
+# ===================
+# Deployment defaults
+# ====================
+ACCOUNT = ""
+LOGIN_NODE = ""
+HOME_DIR = os.environ["HOME"] if "HOME" in os.environ else ""
+DLG_ROOT = f"{HOME_DIR}/dlg"
+LOG_DIR = f"{DLG_ROOT}/log"
+MODULES = ""
+VENV = f"{DLG_ROOT}/venv"
+DEFAULT_MON_HOST = "dlg-mon.icrar.org"  # TODO: need to get this running
+DEFAULT_MON_PORT = 8898
+
 
 __sub_tpl_str = """#!/bin/bash --login
 
@@ -30,25 +45,27 @@ __sub_tpl_str = """#!/bin/bash --login
 #SBATCH --time=$JOB_DURATION
 #SBATCH --error=err-%j.log
 $MODULES
+export DLG_ROOT=$DLG_ROOT
 $VENV
 
-srun -l $PY_BIN -m dlg.deploy.start_dlg_cluster -l $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION --ssid $SESSION_ID --remote-mechanism slurm
+srun -l $PY_BIN -m dlg.deploy.start_dlg_cluster --log_dir $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION --ssid $SESSION_ID
 """
 init_tpl = string.Template(__sub_tpl_str)
 
 
 class DefaultConfig(object):
-    MODULES = ""
-    VENV = ""
 
     def __init__(self):
         self._dict = dict()
-        l = self.init_list()
-        self.setpar("acc", l[0])
-        self.setpar("log_root", l[1])
-        self.setpar("modules", l[2].strip())
-        self.setpar("venv", l[3].strip())
+        self.setpar("host", self.LOGIN_NODE)
+        self.setpar("account", self.ACCOUNT)
+        self.setpar("home_dir", self.HOME_DIR.strip())
+        self.setpar("dlg_root", self.DLG_ROOT.strip())
+        self.setpar("log_root", self.LOG_DIR)
+        self.setpar("modules", self.MODULES.strip())
+        self.setpar("venv", self.VENV.strip())
 
+    @abstractmethod
     def init_list(self):
         pass
 
@@ -69,8 +86,9 @@ class ICRARoodConfig(DefaultConfig):
     # The following is more a workaround than a solution
     # requires the user to have a venv exectly in that place
     ACCOUNT = os.environ["USER"]
-    HOME_DIR = os.environ["HOME"]
-    LOG_DIR = f"{HOME_DIR}/dlg/runs"
+    HOME_DIR = os.environ["HOME"] if "HOME" in os.environ else ""
+    DLG_ROOT = f"{HOME_DIR}/dlg"
+    LOG_DIR = f"{DLG_ROOT}/log"
     VENV = f"source {HOME_DIR}/dlg/venv/bin/activate"
 
     def __init__(self):
@@ -85,8 +103,8 @@ class ICRARoodCldConfig(DefaultConfig):
     # requires the user to have a venv exectly in that place
     ACCOUNT = os.environ["USER"]
     HOME_DIR = os.environ["HOME"]
-    DLG_ROOT =f"{HOME_DIR}/dlg"
-    LOG_DIR = f"{DLG_ROOT}/runs"
+    DLG_ROOT = f"{HOME_DIR}/dlg"
+    LOG_DIR = f"{DLG_ROOT}/log"
     # The compute nodes have have required python and DALiuGE but just in case....
     VENV = f"source {DLG_ROOT}/venv/bin/activate"
 
@@ -117,7 +135,11 @@ module load mpi4py
         super(GalaxyASKAPConfig, self).__init__()
 
     def init_list(self):
-        return ["astronomy856", "/group/astronomy856/cwu/dfms/logs", self.MODULES]
+        return [
+            "astronomy856",
+            "/group/astronomy856/cwu/dfms/logs",
+            self.MODULES,
+        ]
 
 
 class MagnusConfig(DefaultConfig):
@@ -126,6 +148,29 @@ class MagnusConfig(DefaultConfig):
 
     def init_list(self):
         return ["pawsey0129", "/group/pawsey0129/daliuge_logs"]
+
+
+class Setonix411Config(DefaultConfig):
+    """
+    Configuration for project 0411 on Setonix.
+    """
+
+    LOGIN_NODE = "setonix.pawsey.org.au"
+    ACCOUNT = "pawsey0411"
+    USER = os.environ["USER"] if "USER" in os.environ else ""
+    HOME_DIR = f"/scratch/{ACCOUNT}"
+    DLG_ROOT = f"{HOME_DIR}/{USER}/dlg"
+    LOG_DIR = f"{DLG_ROOT}/log"
+    MODULES = ""
+    VENV = f"source /software/projects/{ACCOUNT}/venv/bin/activate"
+
+    MODULES = ""
+
+    def __init__(self):
+        super(Setonix411Config, self).__init__()
+
+    def init_list(self):
+        return [self.ACCOUNT, f"{self.HOME_DIR}/logs"]
 
 
 class TianHe2Config(DefaultConfig):
@@ -145,6 +190,7 @@ class ConfigFactory:
         "galaxy_askap": GalaxyASKAPConfig,
         "magnus": MagnusConfig,
         "galaxy": GalaxyASKAPConfig,
+        "setonix": Setonix411Config,
         "shao": TianHe2Config,
         "hyades.icrar.org": ICRARoodConfig,
         "ood_cloud": ICRARoodCldConfig,

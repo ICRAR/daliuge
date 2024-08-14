@@ -5,6 +5,8 @@ frequency ranges and widths
 To run it standalone, change the directories, which are now hardcoded
 """
 
+# pylint: skip-file
+
 import datetime
 import os
 import time

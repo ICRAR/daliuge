@@ -96,55 +96,10 @@ class LGNode:
                 group_q[grp_id].append(self)
 
         done_dict[self.id] = self
+        self.subgraph = jd['subgraph'] if 'subgraph' in jd else None
 
-    # def __str__(self):
-    #     return json.dumps(self.jd)
-
-    @property
-    def inputPorts(self):
-        return self._inputPorts
-
-    @inputPorts.setter
-    def inputPorts(self, value):
-        if (
-            "categoryType" in value and value["categoryType"] == "Construct"
-        ) or ("type" in value and value["type"] == "Construct"):
-            self._inputPorts = []
-        elif not "inputPorts" in value:
-            self._inputPorts = [
-                f
-                for f in value["fields"]
-                if "usage" in f and f["usage"] in ["InputPort", "InOutPort"]
-            ]
-            # we need this as long as the fields are still using "name"
-            if len(self._inputPorts) > 0 and "name" in self._inputPorts[0]:
-                for p in self._inputPorts:
-                    p["name"] = p["name"]
-        else:
-            self._inputPorts = value["inputPorts"]
-
-    @property
-    def outputPorts(self):
-        return self._outputPorts
-
-    @outputPorts.setter
-    def outputPorts(self, value):
-        if (
-            "categoryType" in value and value["categoryType"] == "Construct"
-        ) or ("type" in value and value["type"] == "Construct"):
-            self._outputPorts = []
-        elif not "outputPorts" in value:
-            self._outputPorts = [
-                f
-                for f in value["fields"]
-                if f["usage"] in ["OutputPort", "InOutPort"]
-            ]
-            # we need this as long as the fields are still using "name"
-            if len(self._outputPorts) > 0 and "name" in self._outputPorts[0]:
-                for p in self._outputPorts:
-                    p["name"] = p["name"]
-        else:
-            self._outputPorts = value["outputPorts"]
+    def __str__(self):
+        return self.name
 
     @property
     def jd(self):
@@ -515,7 +470,10 @@ class LGNode:
 
     @property
     def is_subgraph(self):
-        return self._jd["category"] == Categories.SUBGRAPH
+        if 'isSubGraphApp' in self._jd:
+            return self._jd["isSubGraphApp"]
+        else:
+            return self._jd["category"] == Categories.SUBGRAPH
 
     @property
     def group_keys(self):
@@ -999,6 +957,7 @@ class LGNode:
         if "mkn" in self.jd:
             kwargs["mkn"] = self.jd["mkn"]
         drop_spec.update(kwargs)
+
         return drop_spec
 
     def _create_data_drop(self, drop_spec):
