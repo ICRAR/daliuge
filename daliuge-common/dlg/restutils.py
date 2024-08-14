@@ -115,7 +115,7 @@ class RestClient(object):
 
     def __init__(self, host, port, url_prefix="", timeout=10):
         self.host = host
-        self.port = port
+        self.port = int(port)
         self.url_prefix = url_prefix
         self.timeout = timeout
         self._conn = None

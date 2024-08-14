@@ -290,7 +290,7 @@ class Session(object):
 
         # This will check the consistency of each dropSpec
         # logger.debug("Trying to add graphSpec: %s", [x.keys() for x in graphSpec])
-        logger.debug("Trying to add graphSpec: %s", graphSpec)
+        # logger.debug("Trying to add graphSpec: %s", graphSpec)
         graphSpecDict, self._graphreprodata = graph_loader.loadDropSpecs(graphSpec)
         # Check for duplicates
         duplicates = set(graphSpecDict) & set(self._graph)
@@ -432,9 +432,8 @@ class Session(object):
 
         # Append proxies
         logger.info(
-            "Creating %d drop proxies: %r",
+            "Creating %d drop proxies",
             len(self._proxyinfo),
-            self._proxyinfo,
         )
         for host, port, local_uid, relname, remote_uid in self._proxyinfo:
             proxy = rpc.DropProxy(
