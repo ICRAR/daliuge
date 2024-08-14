@@ -19,13 +19,13 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from __future__ import  annotations
+from __future__ import annotations
 
 import logging
 import os
 import urllib.parse
 
-from . import constants
+from dlg import constants
 from .restutils import RestClient
 
 logger = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ class BaseDROPManagerClient(RestClient):
     Base class for REST clients that talk to the DROP managers.
     """
 
-    def _request(self, url, method, content=None, headers: dict=None, timeout=10):
+    def _request(self, url, method, content=None, headers: dict = None, timeout=10):
         # Normalize first
         if not headers:
             headers = {}
