@@ -32,6 +32,7 @@ import logging
 import os
 import pickle
 import pyext
+import re
 
 from typing import Callable
 import dill
@@ -138,11 +139,25 @@ def import_using_name(app, fname):
             return mod
 
 
-def import_using_code(code, serialized=True):
+def import_using_code(func_code: str, func_name: str, serialized: bool = True):
+    """
+    Import the function provided as a code string. Plain code as well as serialized code
+    is supported. If the func_name does not match the provided func_name the load will fail.
+    """
     if not serialized:
-        return pyext.RuntimeModule.from_string("m", "My test function", code).f
+        mod = pyext.RuntimeModule.from_string("mod", "My test function", func_code)
+        if func_name:
+            if hasattr(mod, func_name):
+                func = getattr(mod, func_name)
+            else:
+                raise ValueError(f"Function with name '{func_name}' not found!")
     else:
-        return dill.loads(code)
+        func = dill.loads(func_code)
+        if func_name and func_name.split(".")[-1] != func.__name__:
+            raise ValueError(
+                f"Function with name '{func.__name__}' instead of '{func_name}' found!"
+            )
+    return func
 
 
 ##
@@ -175,7 +190,7 @@ class PyMemberApp(BarrierAppDROP):
 
 ##
 # @brief PyFuncApp
-# @details An application that wraps a simple python function.
+# @details An application that wraps a python function.
 # The inputs of the application are treated as the arguments of the function.
 # Conversely, the output of the function is treated as the output of the
 # application. If the application has more than one output, the result of
@@ -185,7 +200,7 @@ class PyMemberApp(BarrierAppDROP):
 # @param category PythonApp
 # @param tag template
 # @param func_name /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function name
-# @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code, e.g. 'def function_name(args): return args'
+# @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code, e.g. 'def func_name(args): return args'. Note that func_name above needs to match the defined name here.
 # @param dropclass dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name pyfunc/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -509,13 +524,15 @@ class PyFuncApp(BarrierAppDROP):
         serialized = False
         if not isinstance(self.func_code, bytes):
             try:
-                self.f = import_using_code(self.func_code, serialized=False)
+                self.f = import_using_code(
+                    self.func_code, self.func_name, serialized=False
+                )
             except (SyntaxError, NameError):
                 serialized = True
         if isinstance(self.func_code, bytes) or serialized:
             if isinstance(self.func_code, str):
                 self.func_code = base64.b64decode(self.func_code.encode("utf8"))
-            self.f = import_using_code(self.func_code, serialized=True)
+            self.f = import_using_code(self.func_code, self.func_name, serialized=True)
 
         self._init_fn_defaults()
         # make sure defaults are dicts
