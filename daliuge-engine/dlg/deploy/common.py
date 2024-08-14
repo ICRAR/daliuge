@@ -25,7 +25,7 @@ import os
 import time
 
 from .. import droputils
-from ..manager import constants
+from .. import constants
 from ..manager.client import BaseDROPManagerClient
 from ..manager.session import SessionStates
 import itertools

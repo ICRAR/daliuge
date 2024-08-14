@@ -40,7 +40,7 @@ import pkg_resources
 
 from bottle import static_file
 
-from . import constants
+from dlg import constants
 from .client import NodeManagerClient, DataIslandManagerClient
 from .. import utils
 from ..exceptions import (

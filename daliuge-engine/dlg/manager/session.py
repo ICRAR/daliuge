@@ -36,7 +36,7 @@ import socket
 from dlg.common.reproducibility.reproducibility import init_runtime_repro_data
 from dlg.utils import createDirIfMissing
 
-from . import constants
+from .. import constants
 from .. import droputils
 from .. import graph_loader
 from .. import rpc
@@ -332,8 +332,12 @@ class Session(object):
         graph_loader.addLink(linkType, lhDropSpec, rhOID, force=force)
 
     @track_current_session
-    def deploy(self, completedDrops:list[str]=None,
-               event_listeners:list=None, foreach=None):
+    def deploy(
+        self,
+        completedDrops: list[str] = None,
+        event_listeners: list = None,
+        foreach=None,
+    ):
         """
         Creates the DROPs represented by all the graph specs contained in
         this session, effectively deploying them.

@@ -22,7 +22,7 @@
 from __future__ import annotations
 import threading
 
-from dlg.manager import constants
+from dlg import constants
 from dlg.manager.composite_manager import DataIslandManager, MasterManager
 from dlg.manager.node_manager import NodeManager
 from dlg.manager.rest import NMRestServer, CompositeManagerRestServer
@@ -51,7 +51,7 @@ class ManagerInfo(object):
 
 class ManagerStarter(object):
     def _start_manager_in_thread(
-            self, port, manager_class, rest_class, *manager_args, **manager_kwargs
+        self, port, manager_class, rest_class, *manager_args, **manager_kwargs
     ):
         manager = manager_class(*manager_args, **manager_kwargs)
         server = rest_class(manager)
@@ -64,9 +64,9 @@ class ManagerStarter(object):
         return self._start_manager_in_thread(port, NodeManager, NMRestServer, False)
 
     def start_dim_in_thread(
-            self,
-            nm_hosts: list[str] = None,
-            port=constants.ISLAND_DEFAULT_REST_PORT,
+        self,
+        nm_hosts: list[str] = None,
+        port=constants.ISLAND_DEFAULT_REST_PORT,
     ):
         if not nm_hosts:
             nm_hosts = [f"localhost:{constants.NODE_DEFAULT_REST_PORT}"]
@@ -75,9 +75,9 @@ class ManagerStarter(object):
         )
 
     def start_mm_in_thread(
-            self,
-            nm_hosts: list[str]=None,
-            port=constants.MASTER_DEFAULT_REST_PORT,
+        self,
+        nm_hosts: list[str] = None,
+        port=constants.MASTER_DEFAULT_REST_PORT,
     ):
         if not nm_hosts:
             nm_hosts = [f"localhost:{constants.ISLAND_DEFAULT_REST_PORT}"]
