@@ -533,7 +533,7 @@ class ArrayGatherApp(BarrierAppDROP):
         [dlg_batch_output("binary/*", [])],
         [dlg_streaming_input("binary/*")],
     )
-    value_list = dlg_list_param("value_list", [])
+    # value_list = dlg_list_param("value_list", [])
 
     def initialize(self, **kwargs):
         super(ArrayGatherApp, self).initialize(**kwargs)
@@ -550,6 +550,7 @@ class ArrayGatherApp(BarrierAppDROP):
             output.write(pickle.dumps(self.value_list))
 
     def run(self):
+        self.value_list = []
         self.readWriteData()
 
 
