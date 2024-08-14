@@ -229,12 +229,6 @@ class PGT(object):
         """
         if num_islands < 1:
             num_islands = 1  # need at least one island manager
-        logger.debug(
-            ">>>>>> node_list type: %s, %d, %d",
-            type(node_list),
-            len(node_list),
-            num_islands,
-        )
         if len(node_list) == 0 and tpl_nodes_len > 0:  # generate pg_spec template
             node_list = range(tpl_nodes_len + num_islands)  # create a fake list for now
             tpl_fl = True
