@@ -23,6 +23,7 @@
 Module containing the logic of a session -- a given graph execution
 """
 
+from __future__ import annotations
 import collections
 import inspect
 import json
@@ -56,6 +57,7 @@ from ..exceptions import (
     NoDropException,
     DaliugeException,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -288,7 +290,7 @@ class Session(object):
 
         # This will check the consistency of each dropSpec
         # logger.debug("Trying to add graphSpec: %s", [x.keys() for x in graphSpec])
-        logger.debug("Trying to add graphSpec: %s", graphSpec)
+        # logger.debug("Trying to add graphSpec: %s", graphSpec)
         graphSpecDict, self._graphreprodata = graph_loader.loadDropSpecs(graphSpec)
         # Check for duplicates
         duplicates = set(graphSpecDict) & set(self._graph)
@@ -330,7 +332,8 @@ class Session(object):
         graph_loader.addLink(linkType, lhDropSpec, rhOID, force=force)
 
     @track_current_session
-    def deploy(self, completedDrops=[], event_listeners=[], foreach=None):
+    def deploy(self, completedDrops:list[str]=None,
+               event_listeners:list=None, foreach=None):
         """
         Creates the DROPs represented by all the graph specs contained in
         this session, effectively deploying them.
@@ -345,6 +348,8 @@ class Session(object):
         # In those cases we still want to be able to "deploy" this session
         # to keep a consistent state across all NM sessions, even though
         # in reality this particular session is managing nothing
+        if not completedDrops:
+            completedDrops = []
         status = self.status
         if (self._graph and status != SessionStates.BUILDING) or (
             not self._graph and status != SessionStates.PRISTINE
@@ -389,8 +394,9 @@ class Session(object):
                 drop._rpc_endpoint = self._nm.rpc_endpoint
 
             # Register them with the error handler
-            for l in event_listeners:
-                drop.subscribe(l)
+            if event_listeners:
+                for l in event_listeners:
+                    drop.subscribe(l)
             #  Register each drop for reproducibility listening
             drop.subscribe(repro_listener, "reproducibility")
 
@@ -426,9 +432,8 @@ class Session(object):
 
         # Append proxies
         logger.info(
-            "Creating %d drop proxies: %r",
+            "Creating %d drop proxies",
             len(self._proxyinfo),
-            self._proxyinfo,
         )
         for host, port, local_uid, relname, remote_uid in self._proxyinfo:
             proxy = rpc.DropProxy(

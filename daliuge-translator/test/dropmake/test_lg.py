@@ -1,6 +1,6 @@
 #
 #    ICRAR - International Centre for Radio Astronomy Research
-#    (c) UWA - The University of Western Australia, 2016
+#    (c) UWA - The University of Western Australia, 2024
 #    Copyright by UWA (in the framework of the ICRAR)
 #    All rights reserved
 #
@@ -19,9 +19,31 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-"""
-Contains deployment constants, that could be changed to easily re-configure deployment.
-"""
 
-DEFAULT_AWS_MON_HOST = "sdp-dfms.ddns.net"  # TODO: need to change this
-DEFAULT_AWS_MON_PORT = 8898
+import json
+import copy
+import unittest
+from dlg.dropmake.lg import LG
+
+try:
+    from importlib.resources import files, as_file
+except (ImportError, ModuleNotFoundError):
+    from importlib_resources import files
+
+NODES = 'nodeDataArray'
+LINKS = 'linkDataArray'
+
+def get_lg_fname(lg_name):
+    return str(files(__package__) / f"logical_graphs/{lg_name}")
+
+class TestLGNodeLoading(unittest.TestCase):
+
+    def test_LGNode_SubgraphData(self):
+        """
+        Test that when we initially construct the logical graph, the SubGraph data node
+        that is added to the graph stores the sub-graph nodes and links.
+        """
+        fname = get_lg_fname("ExampleSubgraphSimple.graph")
+        lg = LG(fname)
+        subgraph_data_node_key = -1
+        self.assertIsNotNone(lg._done_dict[subgraph_data_node_key].subgraph)

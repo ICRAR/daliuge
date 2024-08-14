@@ -28,6 +28,7 @@ import collections
 import importlib
 import logging
 
+from typing import List
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 
 from . import droputils
@@ -139,6 +140,8 @@ def removeUnmetRelationships(dropSpecList):
                 # ds = [next(iter(d)) if isinstance(d, dict) else d for d in ds]
                 if isinstance(ds[0], dict):
                     ds = [next(iter(d)) for d in ds]
+                else:
+                    logger.debug(">>> ds[0] not a dict: %s", ds[0])
                 #                ds = [normalise_oid(d) for d in ds]
                 missingOids = [oid for oid in ds if oid not in oids]
                 for oid in missingOids:
@@ -208,7 +211,7 @@ def loadDropSpecs(dropSpecList):
         cf(dropSpec, dryRun=True)
         dropSpecs[dropSpec["oid"]] = dropSpec
 
-    logger.debug("Found %d DROP definitions", len(dropSpecs))
+    # logger.debug("Found DROP definitions for oids: %s", dropSpecs)
 
     # Step #2: check relationships
     # TODO: shouldn't this loop be done the other way around, going through all __TOMANY
@@ -224,7 +227,9 @@ def loadDropSpecs(dropSpecList):
                     if oid in dropSpecs:
                         dropSpecs[oid]
                     else:
-                        raise KeyError
+                        logger.error("OID: %s not found!", oid)
+                        continue
+                        # raise KeyError
 
             # N-1 relationships
             elif rel in __TOONE:
@@ -308,10 +313,9 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
 
     # We're done! Return the roots of the graph to the caller
     logger.info("Calculating graph roots")
-    roots: list[AbstractDROP] = []
-    for drop in drops.values():
-        if not droputils.getUpstreamObjects(drop):
-            roots.append(drop)
+    roots: List[AbstractDROP] = [
+        drop for drop in drops.values() if not droputils.getUpstreamObjects(drop)
+    ]
     logger.info("%d graph roots found, bye-bye!", len(roots))
 
     return roots
@@ -396,11 +400,9 @@ def _createSocket(dropSpec, dryRun=False, session_id=None):
 def _createApp(dropSpec, dryRun=False, session_id=None):
     oid, uid = _getIds(dropSpec)
     kwargs = _getKwargs(dropSpec)
-
-    if "dropclass" in dropSpec:
-        appName = dropSpec["dropclass"]
-    elif "Application" in dropSpec:
-        appName = dropSpec["Application"]
+    appName = dropSpec.get("dropclass", "")
+    if not appName:
+        dropSpec.get("Application", "")
     parts = appName.split(".")
 
     # Support old "dfms..." package names (pre-Oct2017)

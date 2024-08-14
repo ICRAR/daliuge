@@ -33,6 +33,7 @@ import logging
 import string
 import time
 
+from dlg.constants import ISLAND_DEFAULT_REST_PORT
 from dlg.dropmake.lg import LG, GraphException
 from dlg.dropmake.pgt import PGT
 from dlg.dropmake.pgtp import MetisPGTP, MySarkarPGTP, MinNumPartsPGTP, PSOPGTP
@@ -250,13 +251,10 @@ def resource_map(pgt, nodes, num_islands=1, co_host_dim=True):
     if type(pgt[0]) is str:
         pgt = pgt[1]  # remove the graph name TODO: we may want to retain that
     for drop_spec in pgt:
-        if drop_spec != {}:
+        if "node" in drop_spec and "island" in drop_spec:
             nidx = int(drop_spec["node"][1:])  # skip '#'
             drop_spec["node"] = nm_list[nidx]
             iidx = int(drop_spec["island"][1:])  # skip '#'
-            drop_spec["island"] = (
-                dim_list[iidx].split(":")[0] + ":8001"
-            )  # TODO: just for test
-            logger.debug("Island: %s", drop_spec["island"])
+            drop_spec["island"] = dim_list[iidx]
 
     return pgt  # now it's a PG

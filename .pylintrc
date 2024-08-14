@@ -1,3 +1,4 @@
 [Main]
-disable=all
-enable=logging-not-lazy,logging-format-interpolation
+disable=C, R, W, no-name-in-module, c-extension-no-member, no-member, import-error, unsupported-membership-test
+enable=logging-not-lazy,logging-format-interpolation, dangerous-default-value
+

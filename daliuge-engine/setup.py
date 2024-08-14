@@ -20,14 +20,22 @@
 #    MA 02111-1307  USA
 #
 
+import logging
 import os
 import subprocess
 import sys
 import sysconfig
 
+try:
+    from importlib.metadata import version, PackageNotFoundError
+except ModuleNotFoundError:
+    from importlib_metadata import version, PackageNotFoundError
+
 from setuptools import find_packages
 from setuptools import setup
 from setuptools.command.install import install
+
+logger = logging.getLogger(__name__)
 
 # Version information
 # We do like numpy: we have a major/minor/patch hand-written version written
@@ -35,11 +43,14 @@ from setuptools.command.install import install
 # dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
-MAJOR = 4
-MINOR = 0
-PATCH = 1
+try:
+    VERSION = version('daliuge-common')
+except PackageNotFoundError:
+    logger.warning(
+        "WARNING: daliuge-engine requires daliuge-common to be installed first. "
+        "Stopping installation...")
+    sys.exit(1)
 RELEASE = True
-VERSION = "%d.%d.%d" % (MAJOR, MINOR, PATCH)
 VERSION_FILE = "dlg/runtime/version.py"
 PTH_FILE = "lib64_dist.pth"
 

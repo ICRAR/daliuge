@@ -291,6 +291,7 @@ class MemoryIO(DataIO):
         return self._buf.getbuffer()
 
 
+# pylint: disable=possibly-used-before-assignment
 class SharedMemoryIO(DataIO):
     """
     A DataIO class that writes to a shared memory buffer
@@ -317,10 +318,10 @@ class SharedMemoryIO(DataIO):
         total_size = len(data) + self._written
         if total_size > self._buf.size:
             self._buf.resize(total_size)
-            self._buf.buf[self._written : total_size] = data
+            self._buf.buf[self._written: total_size] = data
             self._written = total_size
         else:
-            self._buf.buf[self._written : total_size] = data
+            self._buf.buf[self._written: total_size] = data
             self._written = total_size
             self._buf.resize(total_size)
             # It may be inefficient to resize many times, but assuming data is written 'once' this is
@@ -357,6 +358,7 @@ class SharedMemoryIO(DataIO):
     def delete(self):
         self._close()
 
+# pylint: enable=possibly-used-before-assignment
 
 class FileIO(DataIO):
     """

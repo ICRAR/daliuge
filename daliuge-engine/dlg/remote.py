@@ -27,9 +27,10 @@ import logging
 import os
 import time
 
-import scp
 from paramiko.client import SSHClient, AutoAddPolicy
 from paramiko.rsakey import RSAKey
+import scp
+from typing import Union
 
 logger = logging.getLogger(__name__)
 
@@ -64,13 +65,33 @@ def execRemoteWithClient(client, command, timeout=None, bufsize=-1):
     return stdout, stderr, exitStatus
 
 
-def execRemote(host, command, username=None, timeout=None, bufsize=-1):
+def execRemote(
+    host: str,
+    command: str,
+    username: str = None,
+    pkeyPath: str = None,
+    timeout: int = None,
+    bufsize: int = -1,
+):
     """
     Executes `command` on `host`. If `username` is provided, the command will
     be run as `username`; otherwise the current user will be used to run the
-    command.
+    command. Returns the tuple (stdout, stderr, exitStatus)
+
+    Parameters:
+    -----------
+    host: str, Name of the host to connect to
+    command: str, Command to execute
+    username: str, Username to be used for connection, if None current user is used
+    pkeyPath: str, Path to private key file for connection
+    timeout: int, Timeout in seconds, None is default
+    bufsize: int, Size of buffer for the return, unlimited by default
+
+    Returns:
+    --------
+    tuple, (stdout, stderr, exitStatus)
     """
-    with createClient(host, username) as client:
+    with createClient(host, username, pkeyPath=pkeyPath) as client:
         return execRemoteWithClient(client, command, timeout, bufsize)
 
 
