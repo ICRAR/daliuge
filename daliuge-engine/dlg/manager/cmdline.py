@@ -40,6 +40,8 @@ from dlg.constants import (
     ISLAND_DEFAULT_REST_PORT,
     MASTER_DEFAULT_REST_PORT,
     REPLAY_DEFAULT_REST_PORT,
+    NODE_DEFAULT_RPC_PORT,
+    NODE_DEFAULT_EVENTS_PORT
 )
 from .node_manager import NodeManager
 from .replay import ReplayManager, ReplayManagerServer
@@ -415,6 +417,23 @@ def dlgNM(parser, args):
         dest="use_processes",
         help="Use processes instead of threads to execute app drops, defaults to False",
     )
+    parser.add_option(
+        "--rpc_port",
+        action="store",
+        type="int",
+        dest="rpc_port",
+        help="Set the port number for the NodeManager RPC client",
+        default=NODE_DEFAULT_RPC_PORT
+    )
+    parser.add_option(
+        "--event_port",
+        action="store",
+        type="int",
+        dest="events_port",
+        help="Set the port number for the NodeManager ZMQ client",
+        default=NODE_DEFAULT_EVENTS_PORT
+    )
+
     (options, args) = parser.parse_args(args)
 
     # No logging setup at this point yet
@@ -435,6 +454,8 @@ def dlgNM(parser, args):
         "dlm_enable_replication": options.dlm_enable_replication,
         "dlgPath": options.dlgPath,
         "host": options.host,
+        "rpc_port": options.rpc_port,
+        "events_port": options.events_port,
         "error_listener": options.errorListener,
         "event_listeners": list(filter(None, options.event_listeners.split(":"))),
         "max_threads": options.max_threads,
