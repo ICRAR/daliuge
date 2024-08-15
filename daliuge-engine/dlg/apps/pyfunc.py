@@ -145,6 +145,7 @@ def import_using_code(func_code: str, func_name: str, serialized: bool = True):
     is supported. If the func_name does not match the provided func_name the load will fail.
     """
     if not serialized:
+        logger.debug(f"Trying to import code from string: {func_code}")
         mod = pyext.RuntimeModule.from_string("mod", "My test function", func_code)
         if func_name:
             if hasattr(mod, func_name):
@@ -522,6 +523,7 @@ class PyFuncApp(BarrierAppDROP):
         This function takes over if code is passed in through an argument.
         """
         serialized = False
+        logger.debug(f"Initializing with func_code of type {type(self.func_code)}")
         if not isinstance(self.func_code, bytes):
             try:
                 self.f = import_using_code(
