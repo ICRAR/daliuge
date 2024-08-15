@@ -20,14 +20,23 @@
 #    MA 02111-1307  USA
 #
 import json
+import logging
+import os
+import time
 import unittest
-
 import pkg_resources
+import pytest
 
+from pathlib import Path
+
+# from dlg.runtime import version  # Imported to setup DlgLogger
+
+from dlg.utils import getDlgWorkDir
+from dlg.apps.app_base import BarrierAppDROP
 from dlg.ddap_protocol import DROPLinkType, DROPStates, AppDROPStates
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidGraphException
-from dlg.manager.session import SessionStates, Session
+from dlg.manager.session import SessionStates, Session, generateLogFileName
 
 default_repro = {
     "rmode": "1",
@@ -45,6 +54,11 @@ default_graph_repro = {
         "signature": "b",
     },
 }
+
+
+class MockThrowingDrop(BarrierAppDROP):
+    def run(self):
+        raise RuntimeError("App drop thrown")
 
 
 def add_test_reprodata(graph: list):
@@ -157,7 +171,7 @@ class TestSession(unittest.TestCase):
 
     def test_addGraphSpec_namedPorts(self):
         with pkg_resources.resource_stream(
-            "test", "graphs/funcTestPG_namedPorts.graph"
+                "test", "graphs/funcTestPG_namedPorts.graph"
         ) as f:  # @UndefinedVariable
             graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)

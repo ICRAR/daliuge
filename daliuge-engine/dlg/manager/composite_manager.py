@@ -28,14 +28,14 @@ import logging
 import multiprocessing.pool
 import threading
 
-from . import constants
+from dlg import constants
 from .client import NodeManagerClient
-from .constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
+from dlg.constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from .drop_manager import DROPManager
 from .. import graph_loader
-from ..common.reproducibility.reproducibility import init_pg_repro_data
+from dlg.common.reproducibility.reproducibility import init_pg_repro_data
 from ..ddap_protocol import DROPRel
-from ..exceptions import (
+from dlg.exceptions import (
     InvalidGraphException,
     DaliugeException,
     SubManagerException,
@@ -206,8 +206,8 @@ class CompositeManager(DROPManager):
                     break
                 if not self.check_dm(host, self._dmPort, timeout=self._dmCheckTimeout):
                     logger.error(
-                        "Couldn't contact manager for host %s, will try again later",
-                        host,
+                        "Couldn't contact manager for host %s:%d, will try again later",
+                        host, self._dmPort,
                     )
             if self._dmCheckerEvt.wait(60):
                 break
@@ -582,7 +582,7 @@ class DataIslandManager(CompositeManager):
     The DataIslandManager, which manages a number of NodeManagers.
     """
 
-    def __init__(self, dmHosts: list[str]=None,  pkeyPath=None, dmCheckTimeout=10):
+    def __init__(self, dmHosts: list[str] = None, pkeyPath=None, dmCheckTimeout=10):
         super(DataIslandManager, self).__init__(
             NODE_DEFAULT_REST_PORT,
             "node",
@@ -602,7 +602,7 @@ class MasterManager(CompositeManager):
     The MasterManager, which manages a number of DataIslandManagers.
     """
 
-    def __init__(self, dmHosts: list[str]=None, pkeyPath=None, dmCheckTimeout=10):
+    def __init__(self, dmHosts: list[str] = None, pkeyPath=None, dmCheckTimeout=10):
         super(MasterManager, self).__init__(
             ISLAND_DEFAULT_REST_PORT,
             "island",

@@ -24,7 +24,7 @@ import tempfile
 import unittest
 
 from dlg.deploy import common
-from dlg.manager import constants
+from dlg import constants
 from dlg.manager.session import SessionStates
 
 

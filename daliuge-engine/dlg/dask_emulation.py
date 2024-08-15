@@ -82,7 +82,7 @@ def _get_client(**kwargs):
         return kwargs["client"]
 
     from .manager.client import NodeManagerClient
-    from .manager import constants
+    from dlg import constants
 
     host = kwargs.get("host", "localhost")
     port = kwargs.get("port", constants.NODE_DEFAULT_REST_PORT)
@@ -91,11 +91,7 @@ def _get_client(**kwargs):
 
 
 def _is_list_of_delayeds(x):
-    return (
-        isinstance(x, (list, tuple))
-        and len(x) > 0
-        and isinstance(x[0], _DataDrop)
-    )
+    return isinstance(x, (list, tuple)) and len(x) > 0 and isinstance(x[0], _DataDrop)
 
 
 def compute(value, **kwargs):
@@ -134,9 +130,7 @@ def compute(value, **kwargs):
     client = _get_client(**kwargs)
     client.create_session(session_id)
     client.append_graph(session_id, graph)
-    client.deploy_session(
-        session_id, completed_uids=droputils.get_roots(graph)
-    )
+    client.deploy_session(session_id, completed_uids=droputils.get_roots(graph))
 
     timeout = kwargs.get("timeout", None)
     s = utils.connect_to("localhost", port, timeout)
@@ -246,10 +240,7 @@ class _Listifier(BarrierAppDROP):
     def run(self):
         self.outputs[0].write(
             pickle.dumps(
-                [
-                    pickle.loads(droputils.allDropContents(x))
-                    for x in self.inputs
-                ]
+                [pickle.loads(droputils.allDropContents(x)) for x in self.inputs]
             )
         )
 

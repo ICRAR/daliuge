@@ -50,7 +50,7 @@ from dlg.dropmake import pg_generator
 from dlg.translator.tool_commands import parse_partition_algo_params
 from dlg.manager import cmdline
 from dlg.manager.client import NodeManagerClient
-from dlg.manager.constants import (
+from dlg.constants import (
     NODE_DEFAULT_REST_PORT,
     ISLAND_DEFAULT_REST_PORT,
     MASTER_DEFAULT_REST_PORT,
