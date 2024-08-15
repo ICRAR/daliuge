@@ -25,6 +25,7 @@ Data Managers (DROPManager and DataIslandManager) to the outside world.
 """
 
 import cgi
+from email.message import Message
 import functools
 import io
 import json
@@ -75,10 +76,10 @@ def daliuge_aware(func):
                 return res
 
             if res is not None:
-                bottle.response.content_type = "application/json"
                 # set CORS headers
                 origin = bottle.request.headers.raw("Origin")
-                logger.debug("CORS request comming from: %s", origin)
+                # logger.debug("CORS request comming from: %s", origin)
+                # logger.debug("Request method: %s", bottle.request.method)
                 if origin is None or re.match(
                     r"(http://dlg-trans.local:80[0-9][0-9]|https://dlg-trans.icrar.org)",
                     origin,
@@ -86,18 +87,25 @@ def daliuge_aware(func):
                     pass
                 elif re.match(r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin):
                     origin = "http://localhost:8084"
+
                 bottle.response.headers["Access-Control-Allow-Origin"] = origin
                 bottle.response.headers["Access-Control-Allow-Credentials"] = "true"
                 bottle.response.headers["Access-Control-Allow-Methods"] = (
-                    "GET, POST, PUT, OPTIONS"
+                    "GET, POST, PUT, OPTIONS, HEAD"
                 )
                 bottle.response.headers["Access-Control-Allow-Headers"] = (
                     "Origin, Accept, Content-Type, Content-Encoding, X-Requested-With, X-CSRF-Token"
                 )
-                logger.debug("CORS headers set to allow from: %s", origin)
-            jres = json.dumps(res) if res else json.dumps({"Status": "Success"})
-            logger.debug("Bottle sending back result: %s", jres[: min(len(jres), 80)])
-            return json.dumps(res)
+                # logger.debug("CORS headers set to allow from: %s", origin)
+            bottle.response.content_type = "application/json"
+            # logger.debug("REST function called: %s", func.__name__)
+            jres = (
+                json.dumps(res)
+                if res is not None
+                else json.dumps({"Status": "Success"})
+            )
+            # logger.debug("Bottle sending back result: %s", jres[: min(len(jres), 80)])
+            return jres
         except Exception as e:
             logger.exception("Error while fulfilling request")
 
@@ -522,16 +530,22 @@ class CompositeManagerRestServer(ManagerRestServer):
 
     @daliuge_aware
     def getNodeSessions(self, node):
+        port = None
         if node not in self.dm.nodes:
             raise Exception(f"{node} not in current list of nodes")
-        with NodeManagerClient(host=node) as dm:
+        if node.find(":") > 0:
+            node, port = node.split(":")
+        with NodeManagerClient(host=node, port=port) as dm:
             return dm.sessions()
 
     def _tarfile_write(self, tar, headers, stream):
         file_header = headers.getheader("Content-Disposition")
         length = headers.getheader("Content-Length")
-        _, params = cgi.parse_header(file_header)
-        filename = params["filename"]
+        m = Message()
+        m.add_header("content-disposition", file_header)
+        filename = m.get_params("filename")
+        # _, params = cgi.parse_header(file_header)
+        # filename = params["filename"]
         info = tarfile.TarInfo(filename)
         info.size = int(length)
 
@@ -549,7 +563,8 @@ class CompositeManagerRestServer(ManagerRestServer):
         fh = io.BytesIO()
         with tarfile.open(fileobj=fh, mode="w:gz") as tar:
             for node in self.getAllCMNodes():
-                with NodeManagerClient(host=node) as dm:
+                node, port = node.split(":")
+                with NodeManagerClient(host=node, port=port) as dm:
                     try:
                         stream, resp = dm.get_log_file(sessionId)
                         self._tarfile_write(tar, resp, stream)
@@ -569,39 +584,39 @@ class CompositeManagerRestServer(ManagerRestServer):
     def getNodeSessionInformation(self, node, sessionId):
         if node not in self.dm.nodes:
             raise Exception(f"{node} not in current list of nodes")
-        with NodeManagerClient(host=node) as dm:
+        node, port = node.split(":")
+        with NodeManagerClient(host=node, port=port) as dm:
             return dm.session(sessionId)
 
     @daliuge_aware
     def getNodeSessionStatus(self, node, sessionId):
         if node not in self.dm.nodes:
             raise Exception(f"{node} not in current list of nodes")
-        with NodeManagerClient(host=node) as dm:
+        node, port = node.split(":")
+        with NodeManagerClient(host=node, port=port) as dm:
             return dm.session_status(sessionId)
 
     @daliuge_aware
     def getNodeGraph(self, node, sessionId):
         if node not in self.dm.nodes:
             raise Exception(f"{node} not in current list of nodes")
-        with NodeManagerClient(host=node) as dm:
+        node, port = node.split(":")
+        with NodeManagerClient(host=node, port=port) as dm:
             return dm.graph(sessionId)
 
     @daliuge_aware
     def getNodeGraphStatus(self, node, sessionId):
         if node not in self.dm.nodes:
             raise Exception(f"{node} not in current list of nodes")
-        with NodeManagerClient(host=node) as dm:
+        node, port = node.split(":")
+        with NodeManagerClient(host=node, port=port) as dm:
             return dm.graph_status(sessionId)
 
     # ===========================================================================
     # non-REST methods
     # ===========================================================================
 
-    @daliuge_aware
     def visualizeDIM(self):
-        """
-        Note: this is marked as 'daliuge_aware' in order to get the CORS headers.
-        """
         tpl = file_as_string("web/dim.html")
         urlparts = bottle.request.urlparts
         selectedNode = (

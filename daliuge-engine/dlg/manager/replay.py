@@ -19,12 +19,14 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+from __future__ import annotations
 import json
 import logging
 
 import bottle
 import pkg_resources
 
+from typing import List, Optional
 from .drop_manager import DROPManager
 from .rest import ManagerRestServer
 from .session import SessionStates
@@ -70,7 +72,7 @@ class ReplayManager(DROPManager):
     def addGraphSpec(self, sessionId, graphSpec):
         raise NotImplementedError()
 
-    def deploySession(self, sessionId, completedDrops=[]):
+    def deploySession(self, sessionId, completedDrops: Optional[List[str]] = None):
         raise NotImplementedError()
 
     def destroySession(self, sessionId):

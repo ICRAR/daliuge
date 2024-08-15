@@ -202,14 +202,16 @@ function updateDeployOptionsDropdown() {
 async function checkUrlStatus(url) {
     return new Promise((resolve) => {
         $.ajax({
-            url: url,
-            type: 'HEAD',
-            dataType: 'jsonp',
+            url: url + 'api',
+            method: 'GET',
+            mode: 'cors',
             complete: function (jqXHR, textStatus) {
                 if (jqXHR.status === 200) {
                     resolve(true)
                 } else {
-                    resolve(false)
+                    console.log("Request url: " + url + "api");
+                    console.log("Request status: " + jqXHR.status);
+                    resolve(false);
                 }
             },
             timeout: 2000
@@ -421,8 +423,8 @@ function fillOutSettings() {
     console.debug("filling out settings, GET Errors and Cors warning from Url check")
     deployMethodsArray.forEach(async element => {
         const urlReachable = await checkUrlStatus(element.url);
-        const directlyAvailableMethods = await checkUrlSubmissionMethods(element.url + '/api/submission_method');
-        const translatorAvailableMethods = await checkUrlSubmissionMethods(getCurrentPageUrl() + '/api/submission_method?dlg_mgr_url=' + element.url);
+        const directlyAvailableMethods = await checkUrlSubmissionMethods(element.url + 'api/submission_method');
+        const translatorAvailableMethods = await checkUrlSubmissionMethods(getCurrentPageUrl() + 'api/submission_method?dlg_mgr_url=' + element.url);
         const allAvailableMethods = directlyAvailableMethods["methods"].concat(translatorAvailableMethods["methods"]);
         if (allAvailableMethods.length === 0) {  // Support backend without submission/method api
             Object.keys(DEFAULT_OPTIONS).forEach(function (key) {

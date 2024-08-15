@@ -508,6 +508,47 @@ class DictGatherApp(BarrierAppDROP):
 
             # logger.debug(f">>> written {d} to {output}")
 
+
+##
+# @brief ArrayGatherApp
+# @details App appends all input daata to a list. This app can be used stand-alone without a gather construct.
+# @par EAGLE_START
+# @param category PythonApp
+# @param tag daliuge
+# @param value_array value_array/array/ApplicationArgument/OutputPort/ReadWrite//False/False/The value array can be initialized here
+# @param dropclass dlg.apps.simple.ArrayGatherApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param input /Object/ComponentParameter/InputPort/ReadWrite//False/False/0-base placeholder port for inputs
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
+# @par EAGLE_END
+class ArrayGatherApp(BarrierAppDROP):
+    component_meta = dlg_component(
+        "ArrayGatherApp",
+        "Collect multiple inputs into an array",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+    value_list = dlg_list_param("value_list", [])
+
+    def initialize(self, **kwargs):
+        super(ArrayGatherApp, self).initialize(**kwargs)
+        self.kwargs = kwargs
+
+    def readWriteData(self):
+        inputs = self.inputs
+        outputs = self.outputs
+        total_len = 0
+        for output in outputs:
+            for input in inputs:
+                value = droputils.allDropContents(input)
+                self.value_list.append(pickle.loads(value))
+            output.write(pickle.dumps(self.value_list))
+
     def run(self):
         self.readWriteData()
 
@@ -737,14 +778,15 @@ class UrlRetrieveApp(BarrierAppDROP):
 # @param construct Scatter
 # @param tag daliuge
 # @param num_of_copies 4/Integer/ConstructParameter/NoPort/ReadWrite//False/False/Specifies the number of replications of the content of the scatter construct
+# @param array_in /Object.Array/ApplicationArgument/InputPort/ReadWrite//False/False/A numpy array of arrays, where the first axis is of length <numSplit>
+# @param object_out /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/reduced array or single element, depending on element flag.
+# @param element False/Boolean/ApplicationArgument/NoPort/ReadWrite//False/False/if True the outputs of each of the splits will be the first element of the split array, rather than the split array.
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
 # @param dropclass dlg.apps.simple.GenericScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
-# @param array_in /Object.Array/ApplicationArgument/InputPort/ReadWrite//False/False/A numpy array of arrays, where the first axis is of length <numSplit>
-# @param array_out /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/reduced array
 # @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
 # @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
@@ -764,6 +806,7 @@ class GenericScatterApp(BarrierAppDROP):
 
     # automatically populated by scatter node
     num_of_copies: int = dlg_int_param("num_of_copies", 1)
+    element: bool = dlg_bool_param("element", False)
 
     def initialize(self, **kwargs):
         super(GenericScatterApp, self).initialize(**kwargs)
@@ -786,7 +829,10 @@ class GenericScatterApp(BarrierAppDROP):
             raise err
         for i in range(numSplit):
             o = self.outputs[i]
-            d = pickle.dumps(result[i])
+            if not self.element:
+                d = pickle.dumps(result[i])
+            else:
+                d = pickle.dumps(result[i][0])
             o.len = len(d)
             o.write(d)  # average across inputs
 
@@ -945,7 +991,7 @@ class PickOne(BarrierAppDROP):
 # The resulting array will be sent to all connected output apps.
 # @par EAGLE_START
 # @param category PythonApp
-# @param tag daliuge
+# @param tag test
 # @param size 100/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/the size of the array
 # @param dropclass dlg.apps.simple.ListAppendThrashingApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
