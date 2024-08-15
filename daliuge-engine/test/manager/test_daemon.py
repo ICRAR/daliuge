@@ -31,7 +31,7 @@ from dlg import constants
 from dlg.manager.client import MasterManagerClient
 from dlg.manager.proc_daemon import DlgDaemon
 
-_TIMEOUT = 3
+_TIMEOUT = 5
 IDENTITY = lambda x: x
 
 
