@@ -1,6 +1,12 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+## v4.6.0
+
+    - [Added] Support for in-line function code in PyFuncApp
+    - [Added] Support to specify ZMQ and event ports on the dlg command line
+    - [Fixed] Session log files now include stdout and stderror
+
 ## v4.5.0
 
     - [Added] Support for Subgraphs and added example SubGraphLocal AppDROP implementation.
