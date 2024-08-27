@@ -24,6 +24,7 @@ The DALiuGE resource manager uses the requested logical graphs, the available re
 the profiling information and turns it into the partitioned physical graph,
 which will then be deployed and monitored by the Physical Graph Manager
 """
+import copy
 
 if __name__ == "__main__":
     __package__ = "dlg.dropmake"
@@ -33,7 +34,6 @@ import datetime
 import logging
 import time
 from itertools import product
-from dataclasses import asdict
 
 import numpy as np
 from dlg.common import CategoryType
@@ -213,26 +213,26 @@ class LG:
             )
 
         if not src.h_related(tgt):
-            ll = src.group
-            rl = tgt.group
-            if ll.is_loop and rl.is_loop:
+            src_group = src.group
+            tgt_group = tgt.group
+            if src_group.is_loop and tgt_group.is_loop:
                 valid_loop_link = True
                 while True:
-                    if ll is None or rl is None:
+                    if src_group is None or tgt_group is None:
                         break
-                    if ll.is_loop and rl.is_loop:
-                        if ll.dop != rl.dop:
+                    if src_group.is_loop and tgt_group.is_loop:
+                        if src_group.dop != tgt_group.dop:
                             valid_loop_link = False
                             break
                         else:
-                            ll = ll.group
-                            rl = rl.group
+                            src_group = src_group.group
+                            tgt_group = tgt_group.group
                     else:
                         break
                 if not valid_loop_link:
                     raise GInvalidLink(
                         "{0} and {1} are not loop synchronised: {2} <> {3}".format(
-                            ll.id, rl.id, ll.dop, rl.dop
+                            src_group.id, tgt_group.id, src_group.dop, tgt_group.dop
                         )
                     )
             else:
@@ -256,7 +256,7 @@ class LG:
         else:
             return None
 
-    def lgn_to_pgn(self, lgn, iid="0", lpcxt=None):
+    def lgn_to_pgn(self, lgn, iid="0", lpcxt=None, recursive=True):
         """
         convert a logical graph node to physical graph node(s)
         without considering pg links. This is a recursive method, creating also
@@ -268,8 +268,7 @@ class LG:
         if lgn.is_group:
             # group nodes are replaced with the input application of the
             # construct
-            extra_links_drops = not lgn.is_scatter
-            if extra_links_drops:
+            if not lgn.is_scatter:
                 non_inputs = []
                 grp_starts = []
                 grp_ends = []
@@ -324,7 +323,6 @@ class LG:
                     x.dop for x in scatters
                 ]  # inner most is also the slowest running index
 
-            lgn_is_loop = lgn.is_loop
             for i in range(lgn.dop):
                 miid = "{0}/{1}".format(iid, i)
                 if multikey_grpby:
@@ -334,7 +332,7 @@ class LG:
                     grp_h = [str(x) for x in grp_h]
                     miid += "${0}".format("-".join(grp_h))
 
-                if extra_links_drops and not lgn.is_loop:
+                if not lgn.is_scatter and not lgn.is_loop:
                     # make GroupBy and Gather drops
                     src_drop = lgn.make_single_drop(miid)
                     self._drop_dict[lgn.id].append(src_drop)
@@ -343,10 +341,24 @@ class LG:
                     elif lgn.is_gather:
                         pass
                         # self._drop_dict['new_added'].append(src_drop['gather-data_drop'])
-                for child in lgn.children:
-                    self.lgn_to_pgn(child, miid, self.get_child_lp_ctx(lgn, lpcxt, i))
+                if recursive:
+                    for child in lgn.children:
+                        self.lgn_to_pgn(child, miid, self.get_child_lp_ctx(lgn, lpcxt, i))
+                else:
+                    for child in lgn.children:
+                    # Approach next 'set' of children
+                        c_copy = copy.deepcopy(child)
+                        c_copy.happy = True
+                        c_copy.loop_ctx = self.get_child_lp_ctx(lgn, lpcxt, i)
+                        c_copy.iid = miid
+                        self._start_list.append(c_copy)
+                    # else:
+                    #     src_drop = lgn.make_single_drop(miid, loop_ctx=lpcxt, proc_index=i)
         elif lgn.is_mpi:
             for i in range(lgn.dop):
+                if lgn.loop_ctx:
+                    lpcxt = lgn.loop_ctx
+                    iid = lgn.iid
                 miid = "{0}/{1}".format(iid, i)
                 src_drop = lgn.make_single_drop(miid, loop_ctx=lpcxt, proc_index=i)
                 self._drop_dict[lgn.id].append(src_drop)
@@ -354,12 +366,18 @@ class LG:
             # no action required, inputapp node aleady created and marked with "isService"
             pass
         elif lgn.is_subgraph and lgn.jd["isSubGraphApp"]:
-            src_drop = lgn.make_single_drop(iid, loop_crx=lpcxt)
+            if lgn.loop_ctx:
+                lpcxt = lpcxt
+                iid = lgn.iid
+            src_drop = lgn.make_single_drop(iid, loop_ctx=lpcxt)
             if lgn.subgraph:
                 kwargs = {"subgraph": lgn.subgraph}
                 src_drop.update(kwargs)
             self._drop_dict[lgn.id].append(src_drop)
         else:
+            if lgn.loop_ctx or lgn.iid:
+                lpcxt = lgn.loop_ctx
+                iid = lgn.iid
             src_drop = lgn.make_single_drop(iid, loop_ctx=lpcxt)
             self._drop_dict[lgn.id].append(src_drop)
             if lgn.is_start_listener:
@@ -427,8 +445,7 @@ class LG:
             if gather_oid not in self._gather_cache:
                 # [self, input_list, output_list]
                 self._gather_cache[gather_oid] = [tgt_drop, [], [], llink]
-            tup = self._gather_cache[gather_oid]
-            tup[1].append(sdrop)
+            self._gather_cache[gather_oid][1].append(sdrop)
             logger.debug(
                 "Hit gather, link is from %s to %s", llink["from"], llink["to"]
             )
@@ -476,8 +493,7 @@ class LG:
                 if gather_oid not in self._gather_cache:
                     # [self, input_list, output_list]
                     self._gather_cache[gather_oid] = [src_drop, [], [], llink]
-                tup = self._gather_cache[gather_oid]
-                tup[2].append(tgt_drop)
+                self._gather_cache[gather_oid][2].append(tgt_drop)
             else:  # sdrop is a data drop
                 # there should be only one port, get the name
                 portId = llink["fromPort"] if "fromPort" in llink else None
@@ -530,7 +546,6 @@ class LG:
             len(self._start_list),
             self._session_id,
         )
-        self_loop_aware_set = self._loop_aware_set
         for lk in self._lg_links:
             sid = lk["from"]  # source key
             tid = lk["to"]  # target key
@@ -562,11 +577,11 @@ class LG:
                         while j < (i + 2) * slgn.gather_width and j < tlgn.group.dop * (
                             i + 1
                         ):
-                            gather_input_list = self._gather_cache[ga_drop["oid"]][1]
                             # TODO merge this code into the function
                             # def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink)
                             tname = tlgn._getPortName(port="inputPorts")
-                            for gddrop in gather_input_list:
+                            # Go through gather cache list
+                            for gddrop in self._gather_cache[ga_drop["oid"]][1]:
                                 gddrop.addConsumer(tdrops[j], name=tname)
                                 tdrops[j].addInput(gddrop, name=tname)
                                 j += 1
@@ -642,7 +657,7 @@ class LG:
                         if sdrop["loop_ctx"] == tdrop["loop_ctx"]:
                             self._link_drops(slgn, tlgn, sdrop, tdrop, lk)
                 else:
-                    lpaw = ("%s-%s" % (sid, tid)) in self_loop_aware_set
+                    lpaw = ("%s-%s" % (sid, tid)) in self._loop_aware_set
                     if (
                         slgn.group is not None
                         and slgn.group.is_loop

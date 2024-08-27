@@ -1006,23 +1006,10 @@ def load_lg(f):
     if isinstance(f, str):
         if not os.path.exists(f):
             raise GraphException("Logical graph {0} not found".format(f))
-        with open(f) as f:
-            lg = json.load(f)
+        with open(f) as fp:
+            lg = json.load(fp)
     elif hasattr(f, "read"):
         lg = json.load(f)
     else:
         lg = f
     return lg
-
-
-if __name__ == "__main__":
-    import pkg_resources
-
-    lg_dir = pkg_resources.resource_filename(
-        __name__, "../../test/dropmake/logical_graphs"
-    )  # @UndefinedVariable
-    lg_name = f"{lg_dir}/lofar_std.graph"
-    # convert_eagle_to_daliuge_json(lg_name)
-    with open(lg_name) as f:
-        lgo = f.read()
-        print(get_lg_ver_type(json.loads(lgo)))

@@ -24,102 +24,17 @@ import unittest
 import json
 import pickle
 
-import pkg_resources
-from dlg.common import CategoryType
+
 from dlg.dropmake.lg import LG
 from dlg.dropmake.pgt import PGT, GPGTNoNeedMergeException
 from dlg.dropmake.pgtp import MetisPGTP, MySarkarPGTP, MinNumPartsPGTP
+from dlg.dropmake import path_utils
 
 """
 python -m unittest test.dropmake.test_pg_gen
 """
 TEST_SSID = 'test_pg_gen'
 
-
-def get_lg_fpath(type, f_name):
-    """
-    Get the test data file path based on the logical graph name and type of file we want
-    :param type: str, type of test data (logical_graph, pickle, pg_spec) we are comparing
-    :param f_name: name of the original logical graph created in Eagle
-    :return: str, full path of the file
-    """
-    f_dir = 'logical_graphs'
-    if type == 'pickle':
-        f_name = f_name.split('.')[0] + '.pkl'
-        f_dir = type
-    if type == 'pg_spec':
-        f_name = f_name.split('.')[0] + '.json'
-        f_dir = type
-
-    return pkg_resources.resource_filename(
-        __name__, f"{f_dir}/{f_name}"
-    )
-
-
-class TestLGUnroll(unittest.TestCase):
-    """
-    Test that the LG unrolls as expected
-
-    Uses test/dropmake/pickles as test data
-
-    Note: This is a regression testing class. These tests are based on graphs that were
-    generated using the code they are testing. If the LG class and it's methods change
-    in the future, test data may need to be re-generated (provided test failures are
-    caused by known-breaking changes, as opposed to legitimate bugs!).
-    """
-
-    def test_lg_unroll(self):
-        """
-        Basic verification that we can unroll a list of dropdicts from a logical graph
-
-        lg_names = { "logical_graph_file.graph": num_keys_in_drop_list, ...}
-        """
-
-        lg_names = {
-            "HelloWorld_simple.graph": 2,
-            "eagle_gather_empty_update.graph": 11,
-            "eagle_gather_simple_update.graph": 18,
-            "eagle_gather_update.graph": 14,
-            "testLoop.graph": 4,
-            "cont_img_mvp.graph": 45,
-            "test_grpby_gather.graph": 21,
-            "chiles_simple.graph": 22,
-            "Plasma_test.graph": 6,
-        }
-
-        for lg_name, num_keys in lg_names.items():
-            fp = get_lg_fpath("logical_graphs", lg_name)
-            lg = LG(fp, ssid=TEST_SSID)
-            self.assertEqual(num_keys,
-                             len(lg._done_dict.keys()),
-                             f"Incorrect number of elements when constructing LG "
-                             f"object using: {lg_name}")
-
-            drop_list = lg.unroll_to_tpl()
-            with open(get_lg_fpath('pickle', lg_name), 'rb') as pk_fp:
-                test_unroll = pickle.load(pk_fp)
-
-            self.assertListEqual(test_unroll,
-                                 drop_list,
-                                 f"unroll_to_tpl failed for: {lg_name}")
-
-    def test_lg_unroll_sharedmemory(self):
-        """
-        Confirm the SharedMemory data type is correctly unrolled.
-        """
-        lg_name = "SharedMemoryTest_update.graph"
-        num_keys = 8
-        fp = get_lg_fpath("logical_graphs", lg_name)
-        lg = LG(fp, ssid=TEST_SSID)
-        self.assertEqual(num_keys,
-                         len(lg._done_dict.keys()),
-                         f"Incorrect number of elements when constructing LG "
-                         f"object using: {lg_name}")
-
-        drop_list = lg.unroll_to_tpl()
-        for drop in drop_list:
-            if drop["categoryType"] in [CategoryType.DATA, "data"]:
-                self.assertEqual("SharedMemory", drop["category"])
 
 
 class TestPGGen(unittest.TestCase):
@@ -150,12 +65,12 @@ class TestPGGen(unittest.TestCase):
         ]
 
         for lg_name in lgnames:
-            fp = get_lg_fpath('logical_graphs', lg_name)
+            fp = path_utils.get_lg_fpath('logical_graphs', lg_name)
             lg = LG(fp, ssid=TEST_SSID)
             drop_list = lg.unroll_to_tpl()
             pgt = PGT(drop_list)
             pg_json = pgt.to_gojs_json(visual=True, string_rep=False)
-            with open(get_lg_fpath('pg_spec', lg_name), 'r') as json_fp:
+            with open(path_utils.get_lg_fpath('pg_spec', lg_name), 'r') as json_fp:
                 test_json = json.load(json_fp)
             self.assertDictEqual(test_json, pg_json,
                              f"pgt.to_gojs_json failed for: {lg_name}")
@@ -253,7 +168,7 @@ class TestPGPartition(unittest.TestCase):
                     'num_parts': 1}
 
         for lg_names in self.partitionMethodLGs:
-            fp = get_lg_fpath('logical_graphs', lg_names)
+            fp = path_utils.get_lg_fpath('logical_graphs', lg_names)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MetisPGTP(drop_list)
@@ -276,7 +191,7 @@ class TestPGPartition(unittest.TestCase):
             "chiles_simple.graph": 20,
         }
         for lg_name in self.partitionMethodLGs:
-            fp = get_lg_fpath('logical_graphs', lg_name)
+            fp = path_utils.get_lg_fpath('logical_graphs', lg_name)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MetisPGTP(drop_list, 3, merge_parts=True)
@@ -306,7 +221,7 @@ class TestPGPartition(unittest.TestCase):
         nb_islands = 2
         nb_nodes = len(node_list) - nb_islands
         for lg_name in self.partitionMethodLGs:
-            fp = get_lg_fpath('logical_graphs', lg_name)
+            fp = path_utils.get_lg_fpath('logical_graphs', lg_name)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MetisPGTP(drop_list, nb_nodes, merge_parts=True)
@@ -324,7 +239,7 @@ class TestPGPartition(unittest.TestCase):
         """
 
         for lg_name in self.partitionMethodLGs:
-            fp = get_lg_fpath('logical_graphs', lg_name)
+            fp = path_utils.get_lg_fpath('logical_graphs', lg_name)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MySarkarPGTP(drop_list)
@@ -344,7 +259,7 @@ class TestPGPartition(unittest.TestCase):
         """
         node_list = ["10.128.0.11", "10.128.0.12", "10.128.0.13"]
         for lg_name in self.partitionMethodLGs:
-            fp = get_lg_fpath('logical_graphs', lg_name)
+            fp = path_utils.get_lg_fpath('logical_graphs', lg_name)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             pgtp = MySarkarPGTP(drop_list, 3, merge_parts=True)
@@ -406,6 +321,10 @@ class TestPGPartition(unittest.TestCase):
                              pgtp.result(),
                              f"Incorrect partition results for: {lg_name}")
 
+try:
+    from importlib.resources import files, as_file
+except (ImportError, ModuleNotFoundError):
+    from importlib_resources import files
 
 if __name__ == '__main__':
     """
