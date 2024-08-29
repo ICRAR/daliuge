@@ -42,7 +42,7 @@
                     "type": "string"
                 },
                 "lastModifiedDatetime": {
-                    "type": "integer"
+                    "type": "number"
                 },
                 "numLGNodes": {
                     "type": "integer"
