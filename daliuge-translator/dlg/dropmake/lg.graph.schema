@@ -115,8 +115,8 @@
                     "drawOrderHint": {
                         "type": "integer"
                     },
-                    "key": {
-                        "type": "integer"
+                    "id": {
+                        "type": "string"
                     },
                     "name": {
                         "type": "string"
@@ -137,7 +137,7 @@
                         "type": "boolean"
                     },
                     "subject": {
-                        "type": "null"
+                        "type": "string"
                     },
                     "expanded": {
                         "type": "boolean"
@@ -395,7 +395,7 @@
                         }
                     },
                     "group": {
-                        "type": "integer"
+                        "type": "string"
                     }
                 },
                 "required": [
@@ -412,7 +412,7 @@
                     "inputApplicationName",
                     "inputApplicationType",
                     "isGroup",
-                    "key",
+                    "id",
                     "name",
                     "outputAppFields",
                     "outputApplicationName",
@@ -434,13 +434,13 @@
                         "type": "boolean"
                     },
                     "from": {
-                        "type": "integer"
+                        "type": "string"
                     },
                     "fromPort": {
                         "type": "string"
                     },
                     "to": {
-                        "type": "integer"
+                        "type": "string"
                     },
                     "toPort": {
                         "type": "string"
