@@ -3,49 +3,49 @@
   "nodeDataArray": [
     {
       "key": 1,
-      "oid": "test_pg_gen_-1_0",
+      "oid": "test_pg_gen_0cca28df-03d1-4e60-9422-d4ff985e5e57_0",
       "category": "Application",
       "name": "Python App"
     },
     {
       "key": 2,
-      "oid": "test_pg_gen_-2_0",
+      "oid": "test_pg_gen_cd274ac6-7e66-4216-adc2-a13799ea46da_0",
       "category": "Data",
       "name": "Shared Memory"
     },
     {
       "key": 3,
-      "oid": "test_pg_gen_-3_0",
+      "oid": "test_pg_gen_6c904754-5fd8-4960-aaf6-c1af72dab142_0",
       "category": "Application",
       "name": "Python App"
     },
     {
       "key": 4,
-      "oid": "test_pg_gen_-4_0",
+      "oid": "test_pg_gen_7e01974d-2611-4358-82e7-c7ef796de0c5_0",
       "category": "Application",
       "name": "Python App"
     },
     {
       "key": 5,
-      "oid": "test_pg_gen_-5_0",
+      "oid": "test_pg_gen_9aa5cc70-c08b-4c99-9607-64e0436c12ce_0",
       "category": "Application",
       "name": "Python App"
     },
     {
       "key": 6,
-      "oid": "test_pg_gen_-6_0",
+      "oid": "test_pg_gen_4c44a7b5-02d0-414a-a089-0af4394486f4_0",
       "category": "Data",
       "name": "Shared Memory"
     },
     {
       "key": 7,
-      "oid": "test_pg_gen_-7_0",
+      "oid": "test_pg_gen_9f1011e5-6e52-42df-810d-861ea0482747_0",
       "category": "Data",
       "name": "Shared Memory"
     },
     {
       "key": 8,
-      "oid": "test_pg_gen_-8_0",
+      "oid": "test_pg_gen_3779f145-e738-46b2-ac9b-cecee40811a9_0",
       "category": "Data",
       "name": "Shared Memory"
     }
