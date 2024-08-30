@@ -45,5 +45,5 @@ class TestLGNodeLoading(unittest.TestCase):
         """
         fname = get_lg_fname("ExampleSubgraphSimple.graph")
         lg = LG(fname)
-        subgraph_data_node_key = -1
+        subgraph_data_node_key = "bb9b78bc-b725-4b61-a12a-413bdcef7690"
         self.assertIsNotNone(lg._done_dict[subgraph_data_node_key].subgraph)
