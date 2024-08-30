@@ -54,7 +54,7 @@ class LGNode:
         done_dict: LGNode that have been processed (Dict)
         ssid:   session id (string)
         """
-        self.id = jd["key"]  # node ID
+        self.id = jd["id"]  # node ID
         self.jd = jd  # JSON TODO: this should be removed
         self.group_q = group_q  # the group hierarchy queue
         self.group = None  # used if node belongs to group
@@ -82,8 +82,8 @@ class LGNode:
         else:
             self.is_group = False
 
-        if "group" in jd:
-            grp_id = jd["group"]
+        if "parentId" in jd:
+            grp_id = jd["parentId"]
             if grp_id in done_dict:
                 grp_nd = done_dict[grp_id]
                 self.group = grp_nd

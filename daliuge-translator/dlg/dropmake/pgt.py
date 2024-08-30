@@ -56,6 +56,7 @@ class PGT(object):
     def __init__(self, drop_list, build_dag=True):
         self._drop_list = drop_list
         self._drop_list_len = len(drop_list)
+        self._links = []
         self._extra_drops = []  # artifacts DROPs produced during L2G mapping
         self._dag = DAGUtil.build_dag_from_drops(self._drop_list) if build_dag else None
         self._json_str = None
@@ -98,6 +99,10 @@ class PGT(object):
             return self._drop_list
         else:
             return self._drop_list + self._extra_drops
+
+    @property
+    def links(self):
+        return self._links
 
     def to_partition_input(self, outf):
         """
@@ -462,7 +467,7 @@ class PGT(object):
                 node["category"] = "PythonApp"  # might not be correct
             node["name"] = drop["name"]
             nodes.append(node)
-
+        self._links = links
         ret["nodeDataArray"] = nodes
         ret["linkDataArray"] = links
         self._gojs_json_obj = ret

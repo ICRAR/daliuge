@@ -44,7 +44,7 @@ def get_lg_fname(lg_name):
 
 def getNodeFromKey(lgo, key):
     for node in lgo[NODES]:
-        if node['key'] == key:
+        if node['id'] == key:
             return node
     return None
 
@@ -108,16 +108,16 @@ class TestConvertSubGraphConstruct(unittest.TestCase):
         self.assertFalse('hasInputApp' in sg_node)
         self.assertEqual(6, len(lg[LINKS]))
         nSubGraphConstruct = getConstructNodeFromCategory(lg, 'SubGraph')
-        nSubGraphKey = nSubGraphConstruct['key']
+        nSubGraphKey = nSubGraphConstruct['id']
         convert_subgraphs(lg)
         self.assertTrue('hasInputApp' in sg_node)
         self.assertTrue(sg_node['hasInputApp'])
         nSubGraphApp = getNodeFromKey(lg, nSubGraphKey)
-        self.assertEqual(nSubGraphKey, nSubGraphApp['key'])
+        self.assertEqual(nSubGraphKey, nSubGraphApp['id'])
         self.assertEqual("PythonApp", nSubGraphApp['category'])
         # We remove links from the Subgraph children
         self.assertEqual(4, len(lg[LINKS]))
-        subgraphDataNode = getNodeFromKey(lg, -1)
+        subgraphDataNode = getNodeFromKey(lg, "bb9b78bc-b725-4b61-a12a-413bdcef7690" )
         self.assertIsNotNone(subgraphDataNode['subgraph'])
 
 
@@ -147,9 +147,9 @@ class TestConvertScatterGatherConstruct(unittest.TestCase):
         self.assertEqual(2, len(lg[LINKS]))
 
         nScatterConstruct = getConstructNodeFromCategory(lg, 'Scatter')
-        nScatterKey = nScatterConstruct['key']
+        nScatterKey = nScatterConstruct['id']
         nGatherConstruct = getConstructNodeFromCategory(lg, 'Gather')
-        nGatherKey = nGatherConstruct['key']
+        nGatherKey = nGatherConstruct['id']
 
         convert_construct(lg)
         self.assertEqual(5, len(lg[NODES]))
@@ -157,8 +157,8 @@ class TestConvertScatterGatherConstruct(unittest.TestCase):
 
         # Confirm that the transition from construct-to-app has occured.
         nScatterApp = getNodeFromKey(lg, nScatterKey)
-        self.assertEqual(nScatterKey, nScatterApp['key'])
+        self.assertEqual(nScatterKey, nScatterApp['id'])
         self.assertEqual("PythonApp", nScatterApp['category'])
         nGatherApp = getNodeFromKey(lg, nGatherKey)
-        self.assertEqual(nGatherKey, nGatherApp['key'])
+        self.assertEqual(nGatherKey, nGatherApp['id'])
         self.assertEqual("PythonApp", nGatherApp['category'])
