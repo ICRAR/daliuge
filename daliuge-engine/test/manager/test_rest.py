@@ -34,31 +34,8 @@ from dlg.manager.node_manager import NodeManager
 from dlg.manager.rest import NMRestServer, CompositeManagerRestServer
 from dlg.restutils import RestClient
 
-default_repro = {
-    "rmode": "1",
-    "RERUN": {
-        "lg_blockhash": "x",
-        "pgt_blockhash": "y",
-        "pg_blockhash": "z",
-    },
-}
-default_graph_repro = {
-    "rmode": "1",
-    "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
-    "merkleroot": "a",
-    "RERUN": {
-        "signature": "b",
-    },
-}
-
-
-def add_test_reprodata(graph: list):
-    for drop in graph:
-        drop["reprodata"] = default_repro.copy()
-    graph.append(default_graph_repro.copy())
-    return graph
-
-
+from test.dlg_engine_testconstants import DEFAULT_TEST_REPRO, DEFAULT_TEST_GRAPH_REPRO
+from test.dlg_engine_testutils import DROPManagerUtils
 hostname = "localhost"
 
 
@@ -106,7 +83,7 @@ class TestRest(unittest.TestCase):
         c = NodeManagerClient(hostname)
         c.createSession(sid)
         gempty = [{}]
-        add_test_reprodata(gempty)
+        DROPManagerUtils.add_test_reprodata(gempty)
         # already exists
         self.assertRaises(
             exceptions.SessionAlreadyExistsException, c.createSession, sid
@@ -132,9 +109,9 @@ class TestRest(unittest.TestCase):
                     "oid": "a",
                     "categoryType": "Application",
                     "dropclass": "doesnt.exist",
-                    "reprodata": default_repro.copy(),
+                    "reprodata": DEFAULT_TEST_REPRO.copy(),
                 },
-                default_graph_repro.copy(),
+                DEFAULT_TEST_GRAPH_REPRO.copy(),
             ],
         )
 
@@ -151,15 +128,15 @@ class TestRest(unittest.TestCase):
                     "categoryType": "socket",
                     "oid": "a",
                     "inputs": ["b"],
-                    "reprodata": default_repro.copy(),
+                    "reprodata": DEFAULT_TEST_REPRO.copy(),
                 },
                 {
                     "oid": "b",
                     "categoryType": "Data",
                     "dropclass": "dlg.data.drops.memory.InMemoryDROP",
-                    "reprodata": default_repro.copy(),
+                    "reprodata": DEFAULT_TEST_REPRO.copy(),
                 },
-                default_graph_repro.copy(),
+                DEFAULT_TEST_GRAPH_REPRO.copy(),
             ],
         )
         self.assertRaises(
@@ -179,9 +156,9 @@ class TestRest(unittest.TestCase):
                     "oid": "a",
                     "filepath": fname,
                     "check_filepath_exists": True,
-                    "reprodata": default_repro.copy(),
+                    "reprodata": DEFAULT_TEST_REPRO.copy(),
                 },
-                default_graph_repro.copy(),
+                DEFAULT_TEST_GRAPH_REPRO.copy(),
             ],
         )
         self.assertRaises(
@@ -205,9 +182,9 @@ class TestRest(unittest.TestCase):
                         "categoryType": "Application",
                         "dropclass": "doesnt.exist",
                         "node": hostname,
-                        "reprodata": default_repro.copy(),
+                        "reprodata": DEFAULT_TEST_REPRO.copy(),
                     },
-                    default_graph_repro.copy(),
+                    DEFAULT_TEST_GRAPH_REPRO.copy(),
                 ],
             )
         ex = cm.exception
@@ -228,9 +205,9 @@ class TestRest(unittest.TestCase):
                 "categoryType": "Data",
                 "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "oid": "a",
-                "reprodata": default_repro.copy(),
+                "reprodata": DEFAULT_TEST_REPRO.copy(),
             },
-            default_graph_repro.copy(),
+            DEFAULT_TEST_GRAPH_REPRO.copy(),
         ]
         # Test with reprodata
         c.createSession(sid)
@@ -270,9 +247,9 @@ class TestRest(unittest.TestCase):
                 "categoryType": "Data",
                 "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "oid": "a",
-                "reprodata": default_repro.copy(),
+                "reprodata": DEFAULT_TEST_REPRO.copy(),
             },
-            default_graph_repro.copy(),
+            DEFAULT_TEST_GRAPH_REPRO.copy(),
         ]
         c.createSession(sid)
         c.addGraphSpec(sid, graph_spec)

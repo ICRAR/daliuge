@@ -187,7 +187,7 @@ class ManagerRestServer(RestServer):
         )
         app.post(
             "/api/sessions/<sessionId>/graph/append",
-            callback=self.addGraphParts,
+            callback=self.addGraphSpec,
         )
         app.get(
             "/api/sessions/<sessionId>/repro/data",
@@ -333,9 +333,8 @@ class ManagerRestServer(RestServer):
     def getGraphStatus(self, sessionId):
         return self.dm.getGraphStatus(sessionId)
 
-    # TODO: addGraphParts v/s addGraphSpec
     @daliuge_aware
-    def addGraphParts(self, sessionId):
+    def addGraphSpec(self, sessionId):
         # WARNING: TODO: Somehow, the content_type can be overwritten to 'text/plain'
         logger.debug("Graph content type: %s", bottle.request.content_type)
         if (

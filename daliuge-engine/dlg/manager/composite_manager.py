@@ -207,7 +207,7 @@ class CompositeManager(DROPManager):
                 if not self.check_dm(host, self._dmPort, timeout=self._dmCheckTimeout):
                     logger.error(
                         "Couldn't contact manager for host %s:%d, will try again later",
-                        host, port,
+                        host, self._dmPort,
                     )
             if self._dmCheckerEvt.wait(60):
                 break
@@ -307,7 +307,7 @@ class CompositeManager(DROPManager):
         thrExs = {}
         iterable = iterable or self._dmHosts
         port = port or self._dmPort
-        # logger.debug("Replicating command: %s on hosts: %s", f, iterable)
+        logger.debug("Replicating command: %s on hosts: %s", f, iterable)
         self._tp.map(
             functools.partial(
                 self._do_in_host, action, sessionId, thrExs, f, collect, port
