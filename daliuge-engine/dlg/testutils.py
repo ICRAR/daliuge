@@ -60,8 +60,12 @@ class ManagerStarter(object):
         self.assertTrue(portIsOpen("localhost", port, 5))
         return ManagerInfo(manager, server, thread, self)
 
-    def start_nm_in_thread(self, port=constants.NODE_DEFAULT_REST_PORT):
-        return self._start_manager_in_thread(port, NodeManager, NMRestServer, False)
+    def start_nm_in_thread(self,
+                           port=constants.NODE_DEFAULT_REST_PORT,
+                           events_port=constants.NODE_DEFAULT_EVENTS_PORT,
+                           rpc_port=constants.NODE_DEFAULT_RPC_PORT):
+        return self._start_manager_in_thread(
+            port, NodeManager, NMRestServer, False, events_port, rpc_port)
 
     def start_dim_in_thread(
             self,
