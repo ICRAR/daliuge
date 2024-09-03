@@ -27,7 +27,7 @@ import time
 import unittest
 
 from dlg import utils, restutils
-from dlg.manager import constants
+from dlg import constants
 from dlg.manager.client import MasterManagerClient
 from dlg.manager.proc_daemon import DlgDaemon
 

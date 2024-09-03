@@ -34,7 +34,7 @@ import threading
 import bottle
 import zeroconf as zc
 
-from . import constants, client
+from dlg import constants
 from .. import utils
 from ..restserver import RestServer
 from dlg.nm_dim_assigner import NMAssigner
@@ -212,13 +212,9 @@ class DlgDaemon(RestServer):
         args += self._verbosity_as_cmdline()
         if nodes:
             args += ["--nodes", ",".join(nodes)]
-        logger.info(
-            "Starting Data Island Drop Manager with args: %s", (" ".join(args))
-        )
+        logger.info("Starting Data Island Drop Manager with args: %s", (" ".join(args)))
         self._dim_proc = tool.start_process("dim", args)
-        logger.info(
-            "Started Data Island Drop Manager with PID %d", self._dim_proc.pid
-        )
+        logger.info("Started Data Island Drop Manager with PID %d", self._dim_proc.pid)
 
         # Registering the new DIM via zeroconf so it gets discovered
         # by the Master Manager
@@ -247,7 +243,9 @@ class DlgDaemon(RestServer):
         if self._zeroconf:
             nm_assigner = NMAssigner()
 
-            def _callback(zeroconf, service_type, name, state_change, adder, remover, accessor):
+            def _callback(
+                zeroconf, service_type, name, state_change, adder, remover, accessor
+            ):
                 info = zeroconf.get_service_info(service_type, name)
                 if state_change is zc.ServiceStateChange.Added:
                     server = socket.inet_ntoa(_get_address(info))
@@ -255,13 +253,17 @@ class DlgDaemon(RestServer):
                     adder(name, server, port)
                     logger.info(
                         "Found a new %s on %s:%d, will add it to the MM",
-                        service_type, server, port
+                        service_type,
+                        server,
+                        port,
                     )
                 elif state_change is zc.ServiceStateChange.Removed:
                     server, port = accessor(name)
                     logger.info(
                         "%s on %s:%d disappeared, removing it from the MM",
-                        service_type, server, port
+                        service_type,
+                        server,
+                        port,
                     )
 
                     # Don't bother to remove it if we're shutting down. This way
@@ -270,13 +272,19 @@ class DlgDaemon(RestServer):
                     if not self._shutting_down:
                         remover(name)
 
-            nm_callback = functools.partial(_callback, adder=nm_assigner.add_nm,
-                                            remover=nm_assigner.remove_nm,
-                                            accessor=nm_assigner.get_nm)
+            nm_callback = functools.partial(
+                _callback,
+                adder=nm_assigner.add_nm,
+                remover=nm_assigner.remove_nm,
+                accessor=nm_assigner.get_nm,
+            )
 
-            dim_callback = functools.partial(_callback, adder=nm_assigner.add_dim,
-                                             remover=nm_assigner.remove_dim,
-                                             accessor=nm_assigner.get_dim)
+            dim_callback = functools.partial(
+                _callback,
+                adder=nm_assigner.add_dim,
+                remover=nm_assigner.remove_dim,
+                accessor=nm_assigner.get_dim,
+            )
 
             self._mm_nm_browser = utils.browse_service(
                 self._zeroconf, "NodeManager", "tcp", nm_callback

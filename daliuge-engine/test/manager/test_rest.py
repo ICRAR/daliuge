@@ -27,7 +27,7 @@ from dlg import exceptions
 from dlg.common.deployment_methods import DeploymentMethods
 from dlg.exceptions import InvalidGraphException
 
-from dlg.manager import constants
+from dlg import constants
 from dlg.manager.client import NodeManagerClient, DataIslandManagerClient
 from dlg.manager.composite_manager import DataIslandManager
 from dlg.manager.node_manager import NodeManager
@@ -72,9 +72,7 @@ class TestRest(unittest.TestCase):
 
     def test_index(self):
         # Just check that the HTML pages load properly
-        with RestClient(
-            hostname, constants.NODE_DEFAULT_REST_PORT, timeout=10
-        ) as c:
+        with RestClient(hostname, constants.NODE_DEFAULT_REST_PORT, timeout=10) as c:
             c._GET("/")
             c._GET("/session")
 
@@ -95,9 +93,7 @@ class TestRest(unittest.TestCase):
         )
 
         # invalid dropspec, it has no oid/type (is completely empty actually)
-        self.assertRaises(
-            exceptions.InvalidGraphException, c.addGraphSpec, sid, gempty
-        )
+        self.assertRaises(exceptions.InvalidGraphException, c.addGraphSpec, sid, gempty)
 
         # invalid dropspec, app doesn't exist
         self.assertRaises(
@@ -116,9 +112,7 @@ class TestRest(unittest.TestCase):
         )
 
         # invalid state, the graph status is only queried when the session is running
-        self.assertRaises(
-            exceptions.InvalidSessionState, c.getGraphStatus, sid
-        )
+        self.assertRaises(exceptions.InvalidSessionState, c.getGraphStatus, sid)
 
         # valid dropspec, but the socket listener app doesn't allow inputs
         c.addGraphSpec(
@@ -139,9 +133,7 @@ class TestRest(unittest.TestCase):
                 DEFAULT_TEST_GRAPH_REPRO.copy(),
             ],
         )
-        self.assertRaises(
-            exceptions.InvalidRelationshipException, c.deploySession, sid
-        )
+        self.assertRaises(exceptions.InvalidRelationshipException, c.deploySession, sid)
 
         # And here we point to an unexisting file, making an invalid drop
         c.destroySession(sid)
@@ -161,9 +153,7 @@ class TestRest(unittest.TestCase):
                 DEFAULT_TEST_GRAPH_REPRO.copy(),
             ],
         )
-        self.assertRaises(
-            exceptions.InvalidDropException, c.deploySession, sid
-        )
+        self.assertRaises(exceptions.InvalidDropException, c.deploySession, sid)
 
     def test_recursive(self):
         sid = "lala"
@@ -189,9 +179,7 @@ class TestRest(unittest.TestCase):
             )
         ex = cm.exception
         self.assertTrue(hostname in ex.args[0])
-        self.assertTrue(
-            isinstance(ex.args[0][hostname], InvalidGraphException)
-        )
+        self.assertTrue(isinstance(ex.args[0][hostname], InvalidGraphException))
 
     def test_reprodata_get(self):
         """
@@ -270,4 +258,6 @@ class TestRest(unittest.TestCase):
     def test_submit_method(self):
         c = NodeManagerClient(hostname)
         response = c.get_submission_method()
-        self.assertEqual({"methods": [DeploymentMethods.BROWSER, DeploymentMethods.SERVER]}, response)
+        self.assertEqual(
+            {"methods": [DeploymentMethods.BROWSER, DeploymentMethods.SERVER]}, response
+        )

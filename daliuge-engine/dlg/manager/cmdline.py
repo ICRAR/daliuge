@@ -35,7 +35,7 @@ import daemon
 from lockfile.pidlockfile import PIDLockFile
 
 from .composite_manager import DataIslandManager, MasterManager
-from .constants import (
+from dlg.constants import (
     NODE_DEFAULT_REST_PORT,
     ISLAND_DEFAULT_REST_PORT,
     MASTER_DEFAULT_REST_PORT,
@@ -73,9 +73,7 @@ def launchServer(opts):
     logger = logging.getLogger(__name__)
     dmName = opts.dmType.__name__
 
-    logger.info(
-        "DALiuGE version %s running at %s", version.full_version, os.getcwd()
-    )
+    logger.info("DALiuGE version %s running at %s", version.full_version, os.getcwd())
     logger.info("Creating %s", dmName)
     try:
         dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
@@ -214,9 +212,7 @@ def commonOptionsCheck(options, parser):
     if options.verbose and options.quiet:
         parser.error("-v and -q cannot be specified together")
     if options.cwd and options.work_dir:
-        parser.error(
-            "--cwd and -w/--work-dir cannot be specified together. Prefer -w"
-        )
+        parser.error("--cwd and -w/--work-dir cannot be specified together. Prefer -w")
 
 
 def start(options, parser):
@@ -255,9 +251,7 @@ def start(options, parser):
         pidfile = os.path.join(pidDir, "dlg%s.pid" % (options.dmAcronym))
         pid = PIDLockFile(pidfile).read_pid()
         if pid is None:
-            sys.stderr.write(
-                "Cannot read PID file, is there an instance running?\n"
-            )
+            sys.stderr.write("Cannot read PID file, is there an instance running?\n")
         else:
             utils.terminate_or_kill(utils.ExistingProcess(pid), 5)
             if os.path.exists(pidfile):
@@ -313,9 +307,7 @@ def setupLogging(opts):
     # 'no_log_ids' option exists (but can be set to True).
     # We also skip logging IDs when stopping a daemon, as the infrastructure
     # won't have been set
-    log_ids = (
-        opts.dmType == NodeManager and not opts.no_log_ids and not opts.stop
-    )
+    log_ids = opts.dmType == NodeManager and not opts.no_log_ids and not opts.stop
     fmt = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] "
     if log_ids:
         fmt += "[%(session_id)10.10s] [%(drop_uid)10.10s] "
@@ -446,9 +438,7 @@ def dlgNM(parser, args):
 
     # No logging setup at this point yet
     if options.noDLM:
-        print(
-            "WARNING: --no-dlm is deprecated, use the --dlm-* options instead"
-        )
+        print("WARNING: --no-dlm is deprecated, use the --dlm-* options instead")
         options.dlm_check_period = 0
         options.dlm_cleanup_period = 0
         options.dlm_enable_replication = False
@@ -467,9 +457,7 @@ def dlgNM(parser, args):
         "rpc_port": options.rpc_port,
         "events_port": options.events_port,
         "error_listener": options.errorListener,
-        "event_listeners": list(
-            filter(None, options.event_listeners.split(":"))
-        ),
+        "event_listeners": list(filter(None, options.event_listeners.split(":"))),
         "max_threads": options.max_threads,
         "use_processes": options.use_processes,
         "logdir": options.logdir,
@@ -495,8 +483,7 @@ def dlgCompositeManager(parser, args, dmType, acronym, dmPort, dmRestServer):
         action="store",
         type="string",
         dest="nodes",
-        help="Comma-separated list of node names managed by this %s"
-        % (acronym),
+        help="Comma-separated list of node names managed by this %s" % (acronym),
         default="",
     )
     parser.add_option(

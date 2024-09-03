@@ -44,11 +44,12 @@ logger = logging.getLogger(__name__)
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
 try:
-    VERSION = version('daliuge-common')
+    VERSION = version("daliuge-common")
 except PackageNotFoundError:
     logger.warning(
         "WARNING: daliuge-engine requires daliuge-common to be installed first. "
-        "Stopping installation...")
+        "Stopping installation..."
+    )
     sys.exit(1)
 RELEASE = True
 VERSION_FILE = "dlg/runtime/version.py"
@@ -146,6 +147,7 @@ install_requires = [
     "python-daemon",
     "pyzmq == 25.1.0",
     "scp",
+    "pyext @ git+https://github.com/itea1001/PyExt",
     "pyyaml",
     # 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
     "zeroconf == 0.38.4",

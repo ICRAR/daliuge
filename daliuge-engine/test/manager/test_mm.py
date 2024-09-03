@@ -31,7 +31,7 @@ from dlg import droputils
 from dlg import utils
 from dlg.common import tool
 from dlg.ddap_protocol import DROPStates
-from dlg.manager import constants
+from dlg import constants
 from dlg.manager.composite_manager import MasterManager
 from dlg.manager.session import SessionStates
 from dlg.testutils import ManagerStarter
