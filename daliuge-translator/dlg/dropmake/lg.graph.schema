@@ -42,7 +42,7 @@
                     "type": "string"
                 },
                 "lastModifiedDatetime": {
-                    "type": "integer"
+                    "type": "number"
                 },
                 "numLGNodes": {
                     "type": "integer"
@@ -115,8 +115,8 @@
                     "drawOrderHint": {
                         "type": "integer"
                     },
-                    "key": {
-                        "type": "integer"
+                    "id": {
+                        "type": "string"
                     },
                     "name": {
                         "type": "string"
@@ -137,7 +137,7 @@
                         "type": "boolean"
                     },
                     "subject": {
-                        "type": "null"
+                        "type": ["string", "null"]
                     },
                     "expanded": {
                         "type": "boolean"
@@ -315,9 +315,6 @@
                                     "type": "boolean",
                                     "default": false
                                 },
-                                "keyAttribute": {
-                                    "type": "boolean"
-                                },
                                 "id": {
                                     "type": "string"
                                 },
@@ -336,7 +333,6 @@
                                 "precious",
                                 "options",
                                 "positional",
-                                "keyAttribute",
                                 "id",
                                 "parameterType",
                                 "usage"
@@ -378,9 +374,6 @@
                                 "positional": {
                                     "type": "boolean",
                                     "default": false
-                                },
-                                "keyAttribute": {
-                                    "type": "boolean"
                                 }
                             },
                             "required": [
@@ -395,7 +388,7 @@
                         }
                     },
                     "group": {
-                        "type": "integer"
+                        "type": "string"
                     }
                 },
                 "required": [
@@ -412,7 +405,7 @@
                     "inputApplicationName",
                     "inputApplicationType",
                     "isGroup",
-                    "key",
+                    "id",
                     "name",
                     "outputAppFields",
                     "outputApplicationName",
@@ -434,13 +427,13 @@
                         "type": "boolean"
                     },
                     "from": {
-                        "type": "integer"
+                        "type": "string"
                     },
                     "fromPort": {
                         "type": "string"
                     },
                     "to": {
-                        "type": "integer"
+                        "type": "string"
                     },
                     "toPort": {
                         "type": "string"
