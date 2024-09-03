@@ -78,8 +78,9 @@ class GraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter):
         dim.deploySession("TestSession", completedDrops=roots)
 
         time.sleep(10)
-
-        self.assertEqual(1, dim.getSessionStatus("TestSession"))
+        from dlg.ddap_protocol import DROPStates
+        for dropstatus in dim.getGraphStatus("TestSession").values():
+            self.assertEqual(DROPStates.COMPLETED, dropstatus['status'])
         ms1_info.stop()
         ms2_info.stop()
         dim.shutdown()
