@@ -315,9 +315,6 @@
                                     "type": "boolean",
                                     "default": false
                                 },
-                                "keyAttribute": {
-                                    "type": "boolean"
-                                },
                                 "id": {
                                     "type": "string"
                                 },
@@ -336,7 +333,6 @@
                                 "precious",
                                 "options",
                                 "positional",
-                                "keyAttribute",
                                 "id",
                                 "parameterType",
                                 "usage"
@@ -378,9 +374,6 @@
                                 "positional": {
                                     "type": "boolean",
                                     "default": false
-                                },
-                                "keyAttribute": {
-                                    "type": "boolean"
                                 }
                             },
                             "required": [
