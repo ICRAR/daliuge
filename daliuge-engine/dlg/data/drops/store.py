@@ -37,6 +37,7 @@ import psutil
 from dlg.data.drops.memory import InMemoryDROP
 from dlg.data.drops.ngas import NgasDROP
 from dlg.data.drops.file import FileDROP
+from dlg.data.drops.directorycontainer import DirectoryContainer
 
 logger = logging.getLogger(__name__)
 
@@ -302,3 +303,14 @@ class DirectoryStore(AbstractStore):
 
     def __str__(self):
         return "dir:%s" % (self._dirName)
+
+
+"""
+Dictionary to map Drop types to their respective data store. 
+"""
+VALID_STORE_PARAMS = {
+    "filesystem": FileSystemStore,
+    "memory": MemoryStore,
+    "ngas": NgasStore,
+    "directory": DirectoryStore
+}

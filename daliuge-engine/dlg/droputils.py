@@ -228,11 +228,12 @@ def getLeafNodes(drops):
     return [
         drop
         for drop, _ in breadFirstTraverse(drops)
-        if not getDownstreamObjects(drop) and drop.type != "dropclass"
+        if not getDownstreamObjects(drop) and (drop.CategoryType != "dropclass" and
+                                               drop.CategoryType != "Service")
     ]
 
 
-def depthFirstTraverse(node: "AbstractDROP", visited=[]):
+def depthFirstTraverse(node: "AbstractDROP", visited=None):
     """
     Depth-first iterator for a DROP graph.
 
@@ -243,7 +244,8 @@ def depthFirstTraverse(node: "AbstractDROP", visited=[]):
 
     This implementation is recursive.
     """
-
+    if not visited:
+        visited = []
     dependencies = getDownstreamObjects(node)
     yield node, dependencies
     visited.append(node)

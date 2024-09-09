@@ -28,7 +28,7 @@ HSMs work and what they actually offer in terms of APIs.
 
 import logging
 
-from ..hsm import store
+from ...data.drops import store
 
 logger = logging.getLogger(__name__)
 

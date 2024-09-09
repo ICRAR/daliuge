@@ -35,6 +35,7 @@ from dlg.meta import dlg_string_param, dlg_bool_param
 # @details An object in a Apache Arrow Plasma in-memory object store
 # @par EAGLE_START
 # @param category Plasma
+# @param categorytype Service
 # @param tag daliuge
 # @param plasma_path /String/ApplicationArgument/NoPort/ReadWrite//False/False/Path to the local plasma store
 # @param object_id /String/ApplicationArgument/NoPort/ReadWrite//False/False/PlasmaId of the object for all compute nodes
@@ -86,6 +87,7 @@ class PlasmaDROP(DataDROP):
 # to a Plasma in-memory object store
 # @par EAGLE_START
 # @param category PlasmaFlight
+# @param categorytype Service
 # @param tag daliuge
 # @param plasma_path /String/ApplicationArgument/NoPort/ReadWrite//False/False/Path to the local plasma store
 # @param object_id /String/ApplicationArgument/NoPort/ReadWrite//False/False/PlasmaId of the object for all compute nodes

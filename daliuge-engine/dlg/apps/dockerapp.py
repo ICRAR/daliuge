@@ -78,6 +78,7 @@ class ContainerIpWaiter(object):
 # @details A component wrapping docker based applications.
 # @par EAGLE_START
 # @param category Docker
+# @param categorytype Application
 # @param tag template
 # @param image /String/ComponentParameter/NoPort/ReadWrite//False/False/The name of the docker image to be used for this application
 # @param docker_tag 1.0/String/ComponentParameter/NoPort/ReadWrite//False/False/The tag of the docker image to be used for this application

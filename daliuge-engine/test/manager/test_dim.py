@@ -22,6 +22,7 @@
 import codecs
 import json
 import os
+import random
 import time
 import unittest
 from asyncio.log import logger
@@ -31,6 +32,7 @@ import pkg_resources
 from dlg import droputils
 from dlg import utils
 from dlg.common import tool
+from dlg.data.drops.service import ServiceDROP
 from dlg.ddap_protocol import DROPStates
 from dlg.manager.composite_manager import DataIslandManager
 from dlg.manager.session import SessionStates
@@ -307,7 +309,8 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
                 "dropclass": "dlg.data.drops.memory.InMemoryDROP",
                 "node": hostname,
             },
-            {},  # A dummy empty reprodata (the default if absolutely nothing is specified)
+            {},
+            # A dummy empty reprodata (the default if absolutely nothing is specified)
         ]
         self.dim.createSession("a")
         self.assertEqual(0, self.dim.getGraphSize("a"))
@@ -346,6 +349,95 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         self.assertEqual(0, self.dim.getGraphSize("a"))
         self.dim.addGraphSpec("a", graphSpec)
         self.assertEqual(len(graphSpec), self.dim.getGraphSize("a"))
+
+
+class BasicServiceDROP(ServiceDROP):
+
+    def initialize(self, **kwargs):
+        super().initialize(**kwargs)
+        self._sleep = kwargs['sleep_time']
+        self._success = kwargs['success']
+
+    def setup(self):
+        time.sleep(self._sleep)
+        self.setCompleted() if self._success else self.setError()
+
+    def tearDown(self):
+        pass
+
+
+
+class TestServiceDropsInDIM(LocalDimStarter, unittest.TestCase):
+    def createSessionAndAddGraphWithRunningServiceDrops(self, sessionId, sleepTime=0,
+                                                        success=True):
+        graphSpec = [
+            {
+                "oid": "S",
+                "categoryType": "Service",
+                "dropclass": "test.manager.test_dim.BasicServiceDROP",
+                "sleep_time": sleepTime,
+                "success": success,
+                "node": hostname,
+                "consumers": [],
+            },
+            {
+                "oid": "A",
+                "categoryType": "Application",
+                "dropclass": "dlg.apps.simple.SleepApp",
+                "sleep_time": sleepTime,
+                "outputs": [],
+                "node": hostname,
+            },
+        ]
+        graphSpec = add_test_reprodata(graphSpec)
+        self.dim.createSession(sessionId)
+        self.assertEqual(0, self.dim.getGraphSize(sessionId))
+        self.dim.addGraphSpec(sessionId, graphSpec)
+        self.assertEqual(len(graphSpec), self.dim.getGraphSize(sessionId))
+
+    def test_deployGraphWithSucessfulService(self):
+        sessionId = "success"
+        sleepTime = random.randint(5, 10)
+        self.createSessionAndAddGraphWithRunningServiceDrops(sessionId, sleepTime=sleepTime)
+
+        self.dim.deploySession(sessionId)
+        s, b = [self.dm._sessions[sessionId].drops[x] for x in ("S", "A")]
+        st = time.time()
+        # Explicitly trigger the start of the sessions which would usually be triggerd
+        # by passing 'completedDrops' to the deploySession call.
+        self.dm._sessions[sessionId].trigger_drops([s.uid, b.uid])
+        self.assertTrue(s.isCompleted())
+        # B will have been started synchrnously after A, so will not be completed.
+        self.assertFalse(b.isCompleted())
+        time.sleep(sleepTime + 0.1)
+        self.assertTrue(b.isCompleted())
+        ft = time.time()
+        self.assertAlmostEqual((ft - st), sleepTime * 2, places=0)
+
+    def test_deployGraphWithUnsuccessfulService(self):
+        sessionId = "failure"
+        sleepTime = random.randint(5, 10)
+        self.createSessionAndAddGraphWithRunningServiceDrops(sessionId,
+                                                             sleepTime=sleepTime,
+                                                             success=False)
+
+        self.dim.deploySession(sessionId)
+        s, b = [self.dm._sessions[sessionId].drops[x] for x in ("S", "A")]
+        st = time.time()
+        # Explicitly trigger the start of the sessions which would usually be triggerd
+        # by passing 'completedDrops' to the deploySession call.
+        self.dm._sessions[sessionId].trigger_drops([s.uid, b.uid])
+        self.assertFalse(s.isCompleted())
+        self.assertTrue(s.status, DROPStates.ERROR)
+        # B will have been started synchrnously after A, so will not be completed.
+        self.assertFalse(b.isCompleted())
+        time.sleep(sleepTime + 0.1)
+        self.assertFalse(b.isCompleted())
+        self.assertEqual(b.status, DROPStates.CANCELLED)
+        self.assertTrue(self.dm._sessions[sessionId].status, SessionStates.CANCELLED)
+        ft = time.time()
+        self.assertAlmostEqual((ft - st), sleepTime * 2, places=0)
+
 
 
 class TestREST(LocalDimStarter, unittest.TestCase):
@@ -392,7 +484,7 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             # we need to add it manually before submitting -- otherwise it will
             # get rejected by the DIM.
             with pkg_resources.resource_stream(
-                "test", "graphs/complex.js"
+                    "test", "graphs/complex.js"
             ) as f:  # @UndefinedVariable
                 complexGraphSpec = json.load(codecs.getreader("utf-8")(f))
                 logger.debug(f"Loaded graph: {f}")
@@ -437,10 +529,10 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session
             while (
-                SessionStates.RUNNING
-                in testutils.get(
-                    self, "/sessions/%s/status" % (sessionId), restPort
-                ).values()
+                    SessionStates.RUNNING
+                    in testutils.get(
+                self, "/sessions/%s/status" % (sessionId), restPort
+            ).values()
             ):
                 time.sleep(0.2)
 

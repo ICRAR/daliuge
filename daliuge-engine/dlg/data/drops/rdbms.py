@@ -34,6 +34,7 @@ from dlg.utils import prepare_sql
 # @details A Drop allowing storage and retrieval from a SQL DB.
 # @par EAGLE_START
 # @param category RDBMS
+# @param categorytype Service
 # @param tag daliuge
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?

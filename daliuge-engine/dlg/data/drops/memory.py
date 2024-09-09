@@ -165,6 +165,7 @@ class InMemoryDROP(DataDROP):
 # @details A Python object stored in memory
 # @par EAGLE_START
 # @param category PythonObject
+# @param categorytype Data
 # @param tag daliuge
 # @param object /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/object
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Object should be serialized
@@ -186,6 +187,7 @@ class PythonObjectDROP(InMemoryDROP):
 # @details Data stored in shared memory
 # @par EAGLE_START
 # @param category SharedMemory
+# @param categorytype Data
 # @param tag daliuge
 # @param pydata None/String/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
