@@ -1,5 +1,5 @@
 .ONESHELL:
-ENV_PREFIX=$(shell python -c "if __import__('pathlib').Path('.venv/bin/pip').exists(): print('.venv/bin/')")
+ENV_PREFIX=$(shell python -c "if __import__('pathlib').Path('.venv/bin/pip').exists(): print('%s/'% __import__('pathlib').Path('.venv/bin').absolute())")
 USING_POETRY=$(shell grep "tool.poetry" pyproject.toml && echo "yes")
 
 .PHONY: help
@@ -51,10 +51,12 @@ lint:             ## Run pylint
 
 .PHONY: test
 test: 		  ## Run tests and generate coverage report.
-	@$(ENV_PREFIX)cd daliuge-translator
-	@$(ENV_PREFXI)py.test --cov --show-capture=no
-	@$(ENV_PREFIX)cd ../daliuge-engine
-	@$(ENV_PREFIX)py.test --cov --show-capture=no
+	@ pip install pytest
+	@ pip install pytest-cov
+	@ cd daliuge-translator
+	@ $(ENV_PREFIX)py.test --cov --show-capture=no
+	@ cd ../daliuge-engine
+	@ $(ENV_PREFIX)py.test --cov --show-capture=no
 
 .PHONY: clean
 clean:            ## Clean unused files.
