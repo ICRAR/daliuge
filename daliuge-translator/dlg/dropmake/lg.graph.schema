@@ -316,7 +316,7 @@
                                 },
                                 "encoding": {
                                     "type": "string",
-                                    "enum": ["binary", "pickle", "dill", "npy", "base64"],
+                                    "enum": ["binary", "pickle", "dill", "npy", "base64", "utf-8"],
                                     "default": "dill"
                                 },
                                 "id": {
