@@ -435,6 +435,7 @@ class NodeManagerBase(DROPManager):
 
         # Set up event channels subscriptions
         for nodesub in relationships:
+            node = Node(nodesub)
             # This needs to be changed
             events_port = constants.NODE_DEFAULT_EVENTS_PORT
             if type(nodesub) is tuple:

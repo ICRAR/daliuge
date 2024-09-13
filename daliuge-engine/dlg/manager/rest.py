@@ -57,6 +57,7 @@ from ..restserver import RestServer
 from ..restutils import RestClient, RestClientException
 from .session import generateLogFileName
 from dlg.common.deployment_methods import DeploymentMethods
+from dlg.manager.manager_data import Node
 
 logger = logging.getLogger(__name__)
 
@@ -355,6 +356,7 @@ class ManagerRestServer(RestServer):
 
         graph_parts = bottle.json_loads(json_content.read())
 
+        # Do something about host Nodes in graph_parts?
         return self.dm.addGraphSpec(sessionId, graph_parts)
         # return {"graph_parts": graph_parts}
 
@@ -442,11 +444,16 @@ class NMRestServer(ManagerRestServer):
 
     @daliuge_aware
     def add_node_subscriptions(self, sessionId):
+        # TODO translate node information here
         logger.debug("NM REST call: add_subscriptions %s", bottle.request.json)
         if bottle.request.content_type != "application/json":
             bottle.response.status = 415
             return
-        self.dm.add_node_subscriptions(sessionId, bottle.request.json)
+        subscriptions = self._parse_subscriptions(bottle.request.json)
+        self.dm.add_node_subscriptions(sessionId, subscriptions)
+
+    def _parse_subscriptions(self, json_request):
+        return [Node(n) for n in json_request]
 
     @daliuge_aware
     def trigger_drops(self, sessionId):
@@ -506,36 +513,62 @@ class CompositeManagerRestServer(ManagerRestServer):
 
     @daliuge_aware
     def getCMStatus(self):
+        """
+            REST (GET): /api/
+
+            Return JSON-compatible list of Composite Manager nodes and sessions
+        """
         return {
-            "hosts": self.dm.dmHosts,
+            "hosts": [str(n) for n in self.dm.dmHosts],
             "sessionIds": self.dm.getSessionIds(),
         }
 
     @daliuge_aware
     def getCMNodes(self):
-        return self.dm.nodes
+        """
+        REST (GET): /api/nodes
 
-    def getAllCMNodes(self):
+        Return JSON-compatible list of Composite Manager nodes
+        """
+        return [str(n) for n in self.dm.nodes]
+
+    def _getAllCMNodes(self):
         return self.dm.nodes
 
     @daliuge_aware
     def addCMNode(self, node):
+        """
+        REST (POST): "/api/node/<node>"
+
+        Add the posted node to the Composite Manager
+
+        Converts from JSON to our ser
+        """
         logger.debug("Adding node %s", node)
-        self.dm.add_node(node)
+        self.dm.add_node(Node(node))
 
     @daliuge_aware
     def removeCMNode(self, node):
+        """
+        REST (DELETE): "/api/node/<node>"
+
+        Add the posted node to the Composite Manager
+
+        """
         logger.debug("Removing node %s", node)
         self.dm.remove_node(node)
 
     @daliuge_aware
     def getNodeSessions(self, node):
-        port = None
-        if node not in self.dm.nodes:
-            raise Exception(f"{node} not in current list of nodes")
-        if node.find(":") > 0:
-            node, port = node.split(":")
-        with NodeManagerClient(host=node, port=port) as dm:
+        """
+        REST (GET): "/api/node/<node>/sessions"
+
+        Retrieve sessions for given node
+        """
+        host_node = Node(node)
+        if host_node not in self.dm.nodes:
+            raise Exception(f"{host_node} not in current list of nodes")
+        with NodeManagerClient(host=host_node.host, port=host_node.port) as dm:
             return dm.sessions()
 
     def _tarfile_write(self, tar, headers, stream):
@@ -562,9 +595,8 @@ class CompositeManagerRestServer(ManagerRestServer):
     def getLogFile(self, sessionId):
         fh = io.BytesIO()
         with tarfile.open(fileobj=fh, mode="w:gz") as tar:
-            for node in self.getAllCMNodes():
-                node, port = node.split(":")
-                with NodeManagerClient(host=node, port=port) as dm:
+            for node in self._getAllCMNodes():
+                with NodeManagerClient(host=node.host, port=node.port) as dm:
                     try:
                         stream, resp = dm.get_log_file(sessionId)
                         self._tarfile_write(tar, resp, stream)
@@ -581,36 +613,42 @@ class CompositeManagerRestServer(ManagerRestServer):
         return data
 
     @daliuge_aware
-    def getNodeSessionInformation(self, node, sessionId):
-        if node not in self.dm.nodes:
-            raise Exception(f"{node} not in current list of nodes")
-        node, port = node.split(":")
-        with NodeManagerClient(host=node, port=port) as dm:
-            return dm.session(sessionId)
+    def getNodeSessionInformation(self, node_str, sessionId):
+        try:
+            node = self.dm.get_node_from_json(node_str)
+            with NodeManagerClient(host=node.host, port=node.port) as dm:
+                return dm.session(sessionId)
+        except ValueError as e:
+            raise Exception(f"{node_str} not in current list of nodes:", e)
+
 
     @daliuge_aware
-    def getNodeSessionStatus(self, node, sessionId):
-        if node not in self.dm.nodes:
-            raise Exception(f"{node} not in current list of nodes")
-        node, port = node.split(":")
-        with NodeManagerClient(host=node, port=port) as dm:
-            return dm.session_status(sessionId)
+    def getNodeSessionStatus(self, node_str, sessionId):
+        try:
+            node = self.dm.get_node_from_json(node_str)
+            with NodeManagerClient(host=node.host, port=node.port) as dm:
+                return dm.session_status(sessionId)
+        except ValueError as e:
+            raise Exception(f"{node_str} not in current list of nodes:", e)
 
     @daliuge_aware
-    def getNodeGraph(self, node, sessionId):
-        if node not in self.dm.nodes:
-            raise Exception(f"{node} not in current list of nodes")
-        node, port = node.split(":")
-        with NodeManagerClient(host=node, port=port) as dm:
-            return dm.graph(sessionId)
+    def getNodeGraph(self, node_str, sessionId):
+        try:
+            node = self.dm.get_node_from_json(node_str)
+            with NodeManagerClient(host=node.host, port=node.port) as dm:
+                return dm.graph(sessionId)
+        except ValueError as e:
+            raise Exception(f"{node_str} not in current list of nodes:", e)
 
     @daliuge_aware
-    def getNodeGraphStatus(self, node, sessionId):
-        if node not in self.dm.nodes:
-            raise Exception(f"{node} not in current list of nodes")
-        node, port = node.split(":")
-        with NodeManagerClient(host=node, port=port) as dm:
-            return dm.graph_status(sessionId)
+    def getNodeGraphStatus(self, node_str, sessionId):
+        try:
+            node = self.dm.get_node_from_json(node_str)
+            with NodeManagerClient(host=node.host, port=node.port) as dm:
+                return dm.graph_status(sessionId)
+
+        except ValueError as e:
+            raise Exception(f"{node_str} not in current list of nodes:", e)
 
     # ===========================================================================
     # non-REST methods
@@ -734,7 +772,7 @@ class MasterManagerRestServer(CompositeManagerRestServer):
         ) as c:
             return json.loads(c._GET("/managers/master").read())
 
-    def getAllCMNodes(self):
+    def _getAllCMNodes(self):
         nodes = []
         for node in self.dm.dmHosts:
             with DataIslandManagerClient(host=node) as dm:

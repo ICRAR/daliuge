@@ -512,6 +512,7 @@ class Session(object):
             drop.handleEvent(evt)
 
     def add_node_subscriptions(self, relationships):
+        # do we translate on the REST side? Probably best to do this actually.
 
         evt_consumer = (
             DROPLinkType.CONSUMER,

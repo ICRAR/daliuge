@@ -178,7 +178,7 @@ class CompositeManager(DROPManager):
         # This list is different from the dmHosts, which are the machines that
         # are directly managed by this manager (which in turn could manage more
         # machines)
-        self._use_dmHosts = False
+        self.use_dm_hosts = False
         self._nodes = []
 
         self.startDMChecker()
@@ -217,7 +217,7 @@ class CompositeManager(DROPManager):
 
     @property
     def dmHosts(self):
-        return [str(n) for n in self._dmHosts[:]]
+        return self._dmHosts[:]
 
     def addDmHost(self, host_str: str):
         host = Node(host_str)
@@ -236,20 +236,31 @@ class CompositeManager(DROPManager):
 
     @property
     def nodes(self):
-        if self._use_dmHosts:
-            return [str(n) for n in self._dmHosts[:]]
+        if self.use_dm_hosts:
+            return self._dmHosts[:]
         else:
             return self._nodes
 
-    def add_node(self, node):
-        if self._use_dmHosts:
-            return self._dmHosts.append(Node(node))
+    def add_node(self, node: Node):
+        if self.use_dm_hosts:
+            return self._dmHosts.append(node)
         else:
             self._nodes.append(node)
 
+    def get_node_from_json(self, node_str):
+        """
+        Given a node str, return the Node we have stored
+
+        Return: Node
+
+        Raises: ValueError if there is no existing Node added to the CompositeManager
+        """
+
+        idx = self.nodes.index(Node(node_str))
+        return self._nodes[idx]
 
     def remove_node(self, node):
-        if self._use_dmHosts:
+        if self.use_dm_hosts:
             self._dmHosts.remove(Node(node))
         else:
             self._nodes.remove(node)
@@ -269,16 +280,13 @@ class CompositeManager(DROPManager):
         dm_is_there = portIsOpen(host_name, port, timeout)
         return dm_is_there
 
-    def dmAt(self, host, port=None):
-        if not self.check_dm(host, port):
+    def dmAt(self, host: Node):
+        if not self.check_dm(host):
             raise SubManagerException(
-                f"Manager expected but not running in {host}:{port}"
+                f"Manager expected but not running in {host.host}:{host.port}"
             )
-        if not ":" in host:
-            port = port or self._dmPort
-        else:
-            host, port = host.split(":")
-        return NodeManagerClient(host, port, 10)
+
+        return NodeManagerClient(host.host, host.port, 10)
 
     def getSessionIds(self):
         return self._sessionIds
@@ -296,7 +304,7 @@ class CompositeManager(DROPManager):
         # if ":" in host:
         #     host, port = host.split(":")
         #     port = int(port)
-
+        print(host)
         try:
             with self.dmAt(host) as dm:
                 res = f(dm, iterable, sessionId)
@@ -322,6 +330,7 @@ class CompositeManager(DROPManager):
         """
         thrExs = {}
         iterable = iterable or self._dmHosts
+        print(iterable)
         port = port or self._dmPort
         # logger.debug("Replicating command: %s on hosts: %s", f, iterable)
         self._tp.map(
@@ -461,6 +470,7 @@ class CompositeManager(DROPManager):
         for partition in perPartition:
             if self._graph.get("reprodata") is not None:
                 perPartition[partition].append(self._graph["reprodata"])
+        logger.debug(f"perPartition: {perPartition.items()}")
         self.replicate(
             sessionId,
             self._addGraphSpec,

@@ -89,8 +89,14 @@ class Node:
         """
         return self.serialize()
 
+    def __repr__(self):
+        return str(self)
+
     def __eq__(self, other):
-        return str(self) == str(other)
+        if isinstance(other, Node):
+            return hash(self) == hash(other)
+        if isinstance(other, str):
+            return hash(self) == hash(other)
 
     def __hash__(self):
         return hash(str(self))
