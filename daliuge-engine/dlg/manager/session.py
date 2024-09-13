@@ -36,14 +36,15 @@ import socket
 from dlg.common.reproducibility.reproducibility import init_runtime_repro_data
 from dlg.utils import createDirIfMissing
 
-from .. import constants
-from .. import droputils
-from .. import graph_loader
-from .. import rpc
-from .. import utils
-from ..common.reproducibility.constants import ReproducibilityFlags, ALL_RMODES
-from ..ddap_protocol import DROPLinkType, DROPRel, DROPStates
-from ..drop import (
+from dlg import constants
+# from .. import constants
+from dlg import droputils
+from dlg import graph_loader
+from dlg import rpc
+from dlg import utils
+from dlg.common.reproducibility.constants import ReproducibilityFlags, ALL_RMODES
+from dlg.ddap_protocol import DROPLinkType, DROPRel, DROPStates
+from dlg.drop import (
     AbstractDROP,
     LINKTYPE_1TON_APPEND_METHOD,
     LINKTYPE_1TON_BACK_APPEND_METHOD,
@@ -51,7 +52,7 @@ from ..drop import (
 from ..apps.app_base import AppDROP, InputFiredAppDROP
 from ..data.drops.data_base import EndDROP
 
-from ..exceptions import (
+from dlg.exceptions import (
     InvalidSessionState,
     InvalidGraphException,
     NoDropException,

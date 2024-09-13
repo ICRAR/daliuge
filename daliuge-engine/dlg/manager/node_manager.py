@@ -238,6 +238,7 @@ class NodeManagerBase(DROPManager):
 
     def __init__(
         self,
+        events_port,
         dlm_check_period=0,
         dlm_cleanup_period=0,
         dlm_enable_replication=False,
@@ -248,6 +249,7 @@ class NodeManagerBase(DROPManager):
         use_processes=False,
         logdir=utils.getDlgLogsDir(),
     ):
+        self._events_port = events_port
         self._dlm = DataLifecycleManager(
             check_period=dlm_check_period,
             cleanup_period=dlm_cleanup_period,
@@ -433,6 +435,7 @@ class NodeManagerBase(DROPManager):
 
         # Set up event channels subscriptions
         for nodesub in relationships:
+            # This needs to be changed
             events_port = constants.NODE_DEFAULT_EVENTS_PORT
             if type(nodesub) is tuple:
                 host, events_port, _ = nodesub
@@ -444,6 +447,18 @@ class NodeManagerBase(DROPManager):
                     host = nodesub
             logger.debug("Sending subscription to %s", f"{host}:{events_port}")
             self.subscribe(host, events_port)
+
+    def _convert_relationships_to_nodes(self, relationships):
+        """
+        Load JSON representation of relationships into Node classes.
+
+        :param relationships: dict, relationships receveived through REST call
+        :return: list of Node classes
+        """
+        nodes = []
+        for nodesub in relationships:
+            relationships
+
 
     def has_method(self, sessionId, uid, mname):
         self._check_session_id(sessionId)
@@ -654,7 +669,7 @@ class NodeManager(NodeManagerBase, EventMixIn, RpcMixIn):
         **kwargs,
     ):
         host = host or "localhost"
-        NodeManagerBase.__init__(self, *args, **kwargs)
+        NodeManagerBase.__init__(self, events_port, *args, **kwargs)
         EventMixIn.__init__(self, host, events_port)
         RpcMixIn.__init__(self, host, rpc_port)
         self.start()

@@ -28,19 +28,21 @@ import logging
 import multiprocessing.pool
 import threading
 
+from dlg.manager.client import NodeManagerClient
+from dlg.manager.drop_manager import DROPManager
+from dlg.manager.manager_data import Node
+
 from dlg import constants
-from .client import NodeManagerClient
 from dlg.constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
-from .drop_manager import DROPManager
-from .. import graph_loader
+from dlg import graph_loader
 from dlg.common.reproducibility.reproducibility import init_pg_repro_data
-from ..ddap_protocol import DROPRel
+from dlg.ddap_protocol import DROPRel
 from dlg.exceptions import (
     InvalidGraphException,
     DaliugeException,
     SubManagerException,
 )
-from ..utils import portIsOpen
+from dlg.utils import portIsOpen
 
 logger = logging.getLogger(__name__)
 
@@ -156,12 +158,12 @@ class CompositeManager(DROPManager):
         :param: dmCheckTimeout The timeout used before giving up and declaring
                 a sub-DM as not-yet-present in a given host
         """
-        if dmHosts and ":" in dmHosts[0]:
+        self._dmHosts = [Node(host) for host in dmHosts]
+        if self._dmHosts and self._dmHosts[0].rest_port_specified:
             dmPort = -1
         self._dmPort = dmPort
         self._partitionAttr = partitionAttr
         self._subDmId = subDmId
-        self._dmHosts = dmHosts if dmHosts else []
         self._graph = {}
         self._drop_rels = {}
         self._sessionIds = (
@@ -176,6 +178,7 @@ class CompositeManager(DROPManager):
         # This list is different from the dmHosts, which are the machines that
         # are directly managed by this manager (which in turn could manage more
         # machines)
+        self._use_dmHosts = False
         self._nodes = []
 
         self.startDMChecker()
@@ -214,44 +217,56 @@ class CompositeManager(DROPManager):
 
     @property
     def dmHosts(self):
-        return self._dmHosts[:]
+        return [str(n) for n in self._dmHosts[:]]
 
-    def addDmHost(self, host):
-        if not ":" in host:
-            host += f":{self._dmPort}"
+    def addDmHost(self, host_str: str):
+        host = Node(host_str)
+        # if not ":" in host:
+        #     host += f":{self._dmPort}"
         if host not in self._dmHosts:
             self._dmHosts.append(host)
             logger.debug("Added sub-manager %s", host)
         else:
             logger.warning("Host %s already registered.", host)
 
-    def removeDmHost(self, host):
+    def removeDmHost(self, host_str):
+        host = Node(host_str)
         if host in self._dmHosts:
             self._dmHosts.remove(host)
 
     @property
     def nodes(self):
-        return self._nodes[:]
+        if self._use_dmHosts:
+            return [str(n) for n in self._dmHosts[:]]
+        else:
+            return self._nodes
 
     def add_node(self, node):
-        self._nodes.append(node)
+        if self._use_dmHosts:
+            return self._dmHosts.append(Node(node))
+        else:
+            self._nodes.append(node)
+
 
     def remove_node(self, node):
-        self._nodes.remove(node)
+        if self._use_dmHosts:
+            self._dmHosts.remove(Node(node))
+        else:
+            self._nodes.remove(node)
 
     @property
     def dmPort(self):
         return self._dmPort
 
-    def check_dm(self, host, port=None, timeout=10):
-        if ":" in host:
-            host, port = host.split(":")
-            port = int(port)
+    def check_dm(self, host: Node, port=None, timeout=10):
+        host_name = host.host
+        if host.rest_port_specified:
+            port = host.port
         else:
             port = port or self._dmPort
 
         logger.debug("Checking DM presence at %s port %d", host, port)
-        dm_is_there = portIsOpen(host, port, timeout)
+        dm_is_there = portIsOpen(host_name, port, timeout)
         return dm_is_there
 
     def dmAt(self, host, port=None):
@@ -268,21 +283,22 @@ class CompositeManager(DROPManager):
     def getSessionIds(self):
         return self._sessionIds
 
-    #
-    # Replication of commands to underlying drop managers
-    # If "collect" is given, then individual results are also kept in the given
-    # structure, which is either a dictionary or a list
-    #
     def _do_in_host(self, action, sessionId, exceptions, f, collect, port, iterable):
+        """
+        Replication of commands to underlying drop managers
+        If "collect" is given, then individual results are also kept in the given
+        structure, which is either a dictionary or a list
+        """
+
         host = iterable
         if isinstance(iterable, (list, tuple)):
-            host = iterable[0]
-        if ":" in host:
-            host, port = host.split(":")
-            port = int(port)
+            host = iterable[0]  # What's going on here?
+        # if ":" in host:
+        #     host, port = host.split(":")
+        #     port = int(port)
 
         try:
-            with self.dmAt(host, port) as dm:
+            with self.dmAt(host) as dm:
                 res = f(dm, iterable, sessionId)
 
             if isinstance(collect, dict):
@@ -295,8 +311,8 @@ class CompositeManager(DROPManager):
             logger.exception(
                 "Error while %s on host %s:%d, session %s",
                 action,
-                host,
-                port,
+                host.host,
+                host.port,
                 sessionId,
             )
 
@@ -398,7 +414,7 @@ class CompositeManager(DROPManager):
                 )
                 raise InvalidGraphException(msg)
 
-            partition = dropSpec[self._partitionAttr]
+            partition = Node(dropSpec[self._partitionAttr])
             if partition not in self._dmHosts:
                 msg = (
                     f"Drop {dropSpec.get('oid', None)}'s {self._partitionAttr} {partition} "
@@ -431,8 +447,8 @@ class CompositeManager(DROPManager):
         for rel in inter_partition_rels:
             # rhn = self._graph[rel.rhs]["node"].split(":")[0]
             # lhn = self._graph[rel.lhs]["node"].split(":")[0]
-            rhn = self._graph[rel.rhs]["node"]
-            lhn = self._graph[rel.lhs]["node"]
+            rhn = Node(self._graph[rel.rhs]["node"])
+            lhn = Node(self._graph[rel.lhs]["node"])
             drop_rels[lhn][rhn].append(rel)
             drop_rels[rhn][lhn].append(rel)
 
@@ -593,7 +609,8 @@ class DataIslandManager(CompositeManager):
         )
 
         # In the case of the Data Island the dmHosts are the final nodes as well
-        self._nodes = dmHosts
+        self._use_dmHosts = True
+        # self._nodes = dmHosts
         logger.info("Created DataIslandManager for hosts: %r", self._dmHosts)
 
 
