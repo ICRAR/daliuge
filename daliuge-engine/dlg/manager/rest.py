@@ -41,9 +41,9 @@ import pkg_resources
 from bottle import static_file
 
 from dlg import constants
-from .client import NodeManagerClient, DataIslandManagerClient
-from .. import utils
-from ..exceptions import (
+from dlg.manager.client import NodeManagerClient, DataIslandManagerClient
+from dlg import utils
+from dlg.exceptions import (
     InvalidGraphException,
     InvalidSessionState,
     DaliugeException,
@@ -53,9 +53,9 @@ from ..exceptions import (
     InvalidRelationshipException,
     SubManagerException,
 )
-from ..restserver import RestServer
-from ..restutils import RestClient, RestClientException
-from .session import generateLogFileName
+from dlg.restserver import RestServer
+from dlg.restutils import RestClient, RestClientException
+from dlg.manager.session import generateLogFileName
 from dlg.common.deployment_methods import DeploymentMethods
 from dlg.manager.manager_data import Node
 
@@ -108,7 +108,7 @@ def daliuge_aware(func):
             # logger.debug("Bottle sending back result: %s", jres[: min(len(jres), 80)])
             return jres
         except Exception as e:
-            logger.exception("Error while fulfilling request")
+            logger.exception("Error while fulfilling request for func %s ",func)
 
             status, eargs = 500, ()
             if isinstance(e, NotImplementedError):
@@ -453,6 +453,7 @@ class NMRestServer(ManagerRestServer):
         self.dm.add_node_subscriptions(sessionId, subscriptions)
 
     def _parse_subscriptions(self, json_request):
+
         return [Node(n) for n in json_request]
 
     @daliuge_aware
@@ -666,8 +667,8 @@ class CompositeManagerRestServer(ManagerRestServer):
             dmType=self.dm.__class__.__name__,
             dmPort=self.dm.dmPort,
             serverUrl=serverUrl,
-            dmHosts=json.dumps(self.dm.dmHosts),
-            nodes=json.dumps(self.dm.nodes),
+            dmHosts=json.dumps([str(n) for n in self.dm.dmHosts]),
+            nodes=json.dumps([str(n) for n in self.dm.nodes]),
             selectedNode=selectedNode,
         )
 
@@ -717,7 +718,7 @@ class MasterManagerRestServer(CompositeManagerRestServer):
 
     @daliuge_aware
     def getNMs(self):
-        return {"nodes": self.dm.nodes}
+        return {"nodes": [str(n) for n in self.dm.nodes]}
 
     @daliuge_aware
     def startNM(self, host):
@@ -774,7 +775,7 @@ class MasterManagerRestServer(CompositeManagerRestServer):
 
     def _getAllCMNodes(self):
         nodes = []
-        for node in self.dm.dmHosts:
-            with DataIslandManagerClient(host=node) as dm:
+        for host in self.dm.dmHosts:
+            with DataIslandManagerClient(host=host.host, port=host.port) as dm:
                 nodes += dm.nodes()
-        return nodes
+        return [str(n) for n in nodes]

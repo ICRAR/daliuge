@@ -281,6 +281,7 @@ class CompositeManager(DROPManager):
         return dm_is_there
 
     def dmAt(self, host: Node):
+        assert(isinstance(host, Node))
         if not self.check_dm(host):
             raise SubManagerException(
                 f"Manager expected but not running in {host.host}:{host.port}"
@@ -304,8 +305,12 @@ class CompositeManager(DROPManager):
         # if ":" in host:
         #     host, port = host.split(":")
         #     port = int(port)
-        print(host)
+        if not isinstance(host, Node):
+            host = Node(host)
         try:
+            if not isinstance(host, Node):
+                host = Node(host)
+
             with self.dmAt(host) as dm:
                 res = f(dm, iterable, sessionId)
 
@@ -577,7 +582,7 @@ class CompositeManager(DROPManager):
         return allGraphs
 
     def _getSessionStatus(self, dm, host, sessionId):
-        return {host: dm.getSessionStatus(sessionId)}
+        return {str(host): dm.getSessionStatus(sessionId)}
 
     def getSessionStatus(self, sessionId):
         allStatus = {}
@@ -619,7 +624,7 @@ class DataIslandManager(CompositeManager):
         )
 
         # In the case of the Data Island the dmHosts are the final nodes as well
-        self._use_dmHosts = True
+        self.use_dm_hosts = True
         # self._nodes = dmHosts
         logger.info("Created DataIslandManager for hosts: %r", self._dmHosts)
 

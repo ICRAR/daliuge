@@ -41,19 +41,21 @@ import time
 import typing
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, Future
 
-from .. import constants
-from .drop_manager import DROPManager
-from .session import Session
+from dlg import constants
+from dlg.manager.drop_manager import DROPManager
+from dlg.manager.session import Session
 
-from .. import rpc, utils
-from ..ddap_protocol import DROPStates
-from ..apps.app_base import AppDROP, DropRunner
-from ..exceptions import (
+from dlg import rpc, utils
+from dlg.ddap_protocol import DROPStates
+from dlg.apps.app_base import AppDROP, DropRunner
+from dlg.exceptions import (
     NoSessionException,
     SessionAlreadyExistsException,
     DaliugeException,
 )
 from ..lifecycle.dlm import DataLifecycleManager
+
+from dlg.manager.manager_data import Node
 
 logger = logging.getLogger(__name__)
 
@@ -435,30 +437,19 @@ class NodeManagerBase(DROPManager):
 
         # Set up event channels subscriptions
         for nodesub in relationships:
-            node = Node(nodesub)
+            # node = Node(nodesub)
             # This needs to be changed
-            events_port = constants.NODE_DEFAULT_EVENTS_PORT
+            events_port = nodesub.events_port #constants.NODE_DEFAULT_EVENTS_PORT
             if type(nodesub) is tuple:
                 host, events_port, _ = nodesub
             else:
                 # TODO: we also have to unsubscribe from them at some point
-                if nodesub.find(":") > 0:
-                    host, _ = nodesub.split(":")
-                else:
-                    host = nodesub
+                # if nodesub.find(":") > 0:
+                #     host, _ = nodesub.split(":")
+                # else:
+                host = nodesub
             logger.debug("Sending subscription to %s", f"{host}:{events_port}")
             self.subscribe(host, events_port)
-
-    def _convert_relationships_to_nodes(self, relationships):
-        """
-        Load JSON representation of relationships into Node classes.
-
-        :param relationships: dict, relationships receveived through REST call
-        :return: list of Node classes
-        """
-        nodes = []
-        for nodesub in relationships:
-            relationships
 
 
     def has_method(self, sessionId, uid, mname):
@@ -546,7 +537,7 @@ class ZMQPubSubMixIn(object):
     def subscribe(self, host, port):
         timeout = 5
         finished_evt = threading.Event()
-        endpoint = "tcp://%s:%d" % (utils.zmq_safe(host), port)
+        endpoint = "tcp://%s:%d" % (utils.zmq_safe(host.host), port)
         self._subscriptions.put(ZMQPubSubMixIn.subscription(endpoint, finished_evt))
         if not finished_evt.wait(timeout):
             raise DaliugeException(

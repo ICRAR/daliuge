@@ -531,9 +531,9 @@ class Session(object):
             droprels = [DROPRel(*x) for x in droprels]
 
             # Sanitize the host/rpc_port info if needed
-            rpc_port = constants.NODE_DEFAULT_RPC_PORT
-            if type(host) is tuple:
-                host, _, rpc_port = host
+            rpc_port = host.rpc_port #constants.NODE_DEFAULT_RPC_PORT
+            # if type(host) is tuple:
+            #     host, _, rpc_port = host
 
             # Store which drops should receive events from which remote drops
             dropsubs = collections.defaultdict(set)

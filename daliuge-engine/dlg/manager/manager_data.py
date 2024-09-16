@@ -34,9 +34,8 @@ from enum import IntEnum
 class NodeProtocolPosition(IntEnum):
     HOST = 0
     PORT = 1
-    RPC_PORT = 2
-    EVENTS_PORT = 3
-
+    EVENTS_PORT = 2
+    RPC_PORT = 3
 
 class Node:
     """
@@ -49,8 +48,8 @@ class Node:
         num_chunks = len(chunks)
         self.host = constants.NODE_DEFAULT_HOSTNAME
         self.port = constants.NODE_DEFAULT_REST_PORT
+        self.events_port = constants.NODE_DEFAULT_EVENTS_PORT
         self.rpc_port = constants.NODE_DEFAULT_RPC_PORT
-        self.events_port = constants.NODE_DEFAULT_RPC_PORT
         self._rest_port_specified = False
 
         if num_chunks >= 1:
@@ -59,20 +58,20 @@ class Node:
             self.port = int(chunks[NodeProtocolPosition.PORT])
             self._rest_port_specified = True
         if num_chunks >= 3:
-            self.rpc_port = int(chunks[NodeProtocolPosition.RPC_PORT])
-        if num_chunks >= 4:
             self.events_port = int(chunks[NodeProtocolPosition.EVENTS_PORT])
+        if num_chunks >= 4:
+            self.rpc_port = int(chunks[NodeProtocolPosition.RPC_PORT])
 
     def serialize(self):
         """
         Convert to the expect string representation of our Node using the
         following 'protocol':
 
-            "host:port:rpc_port:event_port"
+            "host:port:event_port:rpc_port"
 
         :return: str
         """
-        return f"{self.host}:{self.port}:{self.rpc_port}:{self.events_port}"
+        return f"{self.host}:{self.port}:{self.events_port}:{self.rpc_port}"
 
     @property
     def rest_port_specified(self):
