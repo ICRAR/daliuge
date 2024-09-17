@@ -88,8 +88,8 @@ class Node:
         """
         return self.serialize()
 
-    def __repr__(self):
-        return str(self)
+    # def __repr__(self):
+    #     return str(self)
 
     def __eq__(self, other):
         if isinstance(other, Node):
