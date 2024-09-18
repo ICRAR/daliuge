@@ -179,7 +179,7 @@ class CompositeManager(DROPManager):
         # This list is different from the dmHosts, which are the machines that
         # are directly managed by this manager (which in turn could manage more
         # machines)
-        self._use_dmHosts = False
+        self.use_dmHosts = False
         self._nodes = []
 
         self.startDMChecker()
@@ -237,19 +237,19 @@ class CompositeManager(DROPManager):
 
     @property
     def nodes(self):
-        if self._use_dmHosts:
+        if self.use_dmHosts:
             return [str(n) for n in self._dmHosts[:]]
         else:
             return self._nodes
 
     def add_node(self, node):
-        if self._use_dmHosts:
+        if self.use_dmHosts:
             return self._dmHosts.append(Node(node))
         else:
             self._nodes.append(node)
 
     def remove_node(self, node):
-        if self._use_dmHosts:
+        if self.use_dmHosts:
             self._dmHosts.remove(Node(node))
         else:
             self._nodes.remove(node)
@@ -296,6 +296,8 @@ class CompositeManager(DROPManager):
         # if ":" in host:
         #     host, port = host.split(":")
         #     port = int(port)
+        if isinstance(host, str):
+            host = Node(host)
 
         try:
             with self.dmAt(host) as dm:
@@ -448,8 +450,8 @@ class CompositeManager(DROPManager):
         for rel in inter_partition_rels:
             # rhn = self._graph[rel.rhs]["node"].split(":")[0]
             # lhn = self._graph[rel.lhs]["node"].split(":")[0]
-            rhn = Node(self._graph[rel.rhs]["node"])
-            lhn = Node(self._graph[rel.lhs]["node"])
+            rhn = (self._graph[rel.rhs]["node"])
+            lhn = (self._graph[rel.lhs]["node"])
             drop_rels[lhn][rhn].append(rel)
             drop_rels[rhn][lhn].append(rel)
 
@@ -611,7 +613,7 @@ class DataIslandManager(CompositeManager):
         )
 
         # In the case of the Data Island the dmHosts are the final nodes as well
-        self.use_dm_hosts = True
+        self.use_dmHosts = True
         # self._nodes = dmHosts
         logger.info("Created DataIslandManager for hosts: %r", self._dmHosts)
 

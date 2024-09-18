@@ -444,7 +444,6 @@ class NMRestServer(ManagerRestServer):
 
     @daliuge_aware
     def add_node_subscriptions(self, sessionId):
-        # TODO translate node information here
         logger.debug("NM REST call: add_subscriptions %s", bottle.request.json)
         if bottle.request.content_type != "application/json":
             bottle.response.status = 415
@@ -453,8 +452,10 @@ class NMRestServer(ManagerRestServer):
         self.dm.add_node_subscriptions(sessionId, subscriptions)
 
     def _parse_subscriptions(self, json_request):
-
-        return [Node(n) for n in json_request]
+        relationships = {}
+        for host, droprels in json_request.items():
+            relationships[Node(host)] = droprels
+        return relationships
 
     @daliuge_aware
     def trigger_drops(self, sessionId):
