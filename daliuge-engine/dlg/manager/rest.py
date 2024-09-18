@@ -558,7 +558,7 @@ class CompositeManagerRestServer(ManagerRestServer):
 
         """
         logger.debug("Removing node %s", node)
-        self.dm.remove_node(node)
+        self.dm.remove_node(Node(node))
 
     @daliuge_aware
     def getNodeSessions(self, node):

@@ -250,7 +250,7 @@ class CompositeManager(DROPManager):
 
     def remove_node(self, node):
         if self.use_dmHosts:
-            self._dmHosts.remove(Node(node))
+            self._dmHosts.remove(node)
         else:
             self._nodes.remove(node)
 
