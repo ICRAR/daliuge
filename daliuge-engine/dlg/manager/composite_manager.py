@@ -210,7 +210,7 @@ class CompositeManager(DROPManager):
                     break
                 if not self.check_dm(host, self._dmPort, timeout=self._dmCheckTimeout):
                     logger.error(
-                        "Couldn't contact manager for host %s:%d, will try again later",
+                        "Couldn't contact manager for host %s with dmPort %d, will try again later",
                         host, self._dmPort,
                     )
             if self._dmCheckerEvt.wait(60):
