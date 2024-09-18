@@ -242,9 +242,9 @@ class CompositeManager(DROPManager):
         else:
             return self._nodes
 
-    def add_node(self, node):
+    def add_node(self, node: Node):
         if self.use_dmHosts:
-            return self._dmHosts.append(Node(node))
+            return self._dmHosts.append(node)
         else:
             self._nodes.append(node)
 
