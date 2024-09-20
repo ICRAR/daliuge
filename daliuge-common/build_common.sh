@@ -5,7 +5,7 @@
 
 case "$1" in
     "dep")
-        export VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
+        export VCS_TAG=`git describe --tags --abbrev=0 --always|sed s/v//`
         echo "Building daliuge-common version using tag ${VCS_TAG}"
         docker build --build-arg VCS_TAG=${VCS_TAG} --no-cache -t icrar/daliuge-common:${VCS_TAG} -f docker/Dockerfile .
         echo "Build finished!"
