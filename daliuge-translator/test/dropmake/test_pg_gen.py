@@ -158,7 +158,7 @@ class TestPGGen(unittest.TestCase):
             with open(get_lg_fpath('pg_spec', lg_name), 'r') as json_fp:
                 test_json = json.load(json_fp)
             self.assertDictEqual(test_json, pg_json,
-                             f"pgt.to_gojs_json failed for: {lg_name}")
+                                 f"pgt.to_gojs_json failed for: {lg_name}")
 
 
 class TestPGPartition(unittest.TestCase):
@@ -290,6 +290,7 @@ class TestPGPartition(unittest.TestCase):
             self.assertEqual(total_data_movement_pgspec[lg_name],
                              result['total_data_movement'],
                              f"Incorrect partitioning for: {lg_name}")
+
     def test_metis_pgtp_gen_pg_island(self):
         """
         Regression testing to confirm that partitioning, then generating a PGT spec works
@@ -392,7 +393,7 @@ class TestPGPartition(unittest.TestCase):
                 pgtp.merge_partitions(len(node_list) - nb_islands, form_island=False)
                 pgtp.to_pg_spec(node_list, num_islands=nb_islands)
                 self.assertEqual(self.SARKAR_PARTITION_RESULTS_GEN_ISLAND[lg_name],
-                                pgtp.result(),
+                                 pgtp.result(),
                                  f"Incorrect partition results for: {lg_name}")
 
     def test_minnumparts_pgtp(self):
@@ -466,4 +467,4 @@ if __name__ == '__main__':
             __name__, f"{physical_graph_spec}/{fn_json}"
         )
         with open(pg_path, 'w') as fp:
-            json.dump(pg_json, fp)
+            json.dump(pg_json, fp, indent=2)

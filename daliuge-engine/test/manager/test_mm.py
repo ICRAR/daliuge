@@ -36,33 +36,8 @@ from dlg.manager.composite_manager import MasterManager
 from dlg.manager.session import SessionStates
 from dlg.testutils import ManagerStarter
 from dlg.exceptions import NoSessionException
-from test.manager import testutils
-
+from test.dlg_engine_testutils import DROPManagerUtils, RESTTestUtils, TerminatingTestHelper
 hostname = "localhost"
-
-default_repro = {
-    "rmode": "1",
-    "RERUN": {
-        "lg_blockhash": "x",
-        "pgt_blockhash": "y",
-        "pg_blockhash": "z",
-    },
-}
-default_graph_repro = {
-    "rmode": "1",
-    "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
-    "merkleroot": "a",
-    "RERUN": {
-        "signature": "b",
-    },
-}
-
-
-def add_test_reprodata(graph: list):
-    for drop in graph:
-        drop["reprodata"] = default_repro.copy()
-    graph.append(default_graph_repro.copy())
-    return graph
 
 
 class DimAndNMStarter(ManagerStarter):
@@ -108,7 +83,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
                 "node": f"{hostname}:{constants.NODE_DEFAULT_REST_PORT}",
             },
         ]
-        add_test_reprodata(graphSpec)
+        DROPManagerUtils.add_test_reprodata(graphSpec)
         self.mm.createSession(sessionId)
         self.mm.addGraphSpec(sessionId, graphSpec)
 
@@ -312,7 +287,7 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
         ]
         mmProcess = tool.start_process("mm", args)
 
-        with testutils.terminating(mmProcess, 10):
+        with TerminatingTestHelper(mmProcess, 10):
             # Wait until the REST server becomes alive
             self.assertTrue(
                 utils.portIsOpen("localhost", restPort, timeout=10),
@@ -320,10 +295,10 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             )
 
             # The DIM is still empty
-            sessions = testutils.get(self, "/sessions", restPort)
+            sessions = RESTTestUtils.get(self, "/sessions", restPort)
             self.assertEqual(0, len(sessions))
             # nm_host = "localhost:{restPort}"
-            dimStatus = testutils.get(self, "", restPort)
+            dimStatus = RESTTestUtils.get(self, "", restPort)
             host = f"{dimStatus['hosts'][0].split(':', 1)[0]}:{restPort}"
             self.assertEqual(1, len(dimStatus["hosts"]))
             self.assertEqual(
@@ -332,10 +307,10 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             self.assertEqual(0, len(dimStatus["sessionIds"]))
 
             # Create a session and check it exists
-            testutils.post(
+            RESTTestUtils.post(
                 self, "/sessions", restPort, '{"sessionId":"%s"}' % (sessionId)
             )
-            sessions = testutils.get(self, "/sessions", restPort)
+            sessions = RESTTestUtils.get(self, "/sessions", restPort)
             self.assertEqual(1, len(sessions))
             self.assertEqual(sessionId, sessions[0]["sessionId"])
             self.assertDictEqual(
@@ -357,7 +332,7 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             for dropSpec in complexGraphSpec:
                 dropSpec["node"] = f"{hostname}:{constants.NODE_DEFAULT_REST_PORT}"
                 dropSpec["island"] = f"{hostname}:{constants.NODE_DEFAULT_REST_PORT}"
-            testutils.post(
+            RESTTestUtils.post(
                 self,
                 "/sessions/%s/graph/append" % (sessionId),
                 restPort,
@@ -365,11 +340,11 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             )
             self.assertEqual(
                 {f"{hostname}:8000": SessionStates.BUILDING},
-                testutils.get(self, "/sessions/%s/status" % (sessionId), restPort),
+                RESTTestUtils.get(self, "/sessions/%s/status" % (sessionId), restPort),
             )
 
             # Now we deploy the graph...
-            testutils.post(
+            RESTTestUtils.post(
                 self,
                 "/sessions/%s/deploy" % (sessionId),
                 restPort,
@@ -378,7 +353,7 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             )
             self.assertEqual(
                 {f"{hostname}:8000": SessionStates.RUNNING},
-                testutils.get(self, "/sessions/%s/status" % (sessionId), restPort),
+                RESTTestUtils.get(self, "/sessions/%s/status" % (sessionId), restPort),
             )
 
             # ...and write to all 5 root nodes that are listening in ports
@@ -392,7 +367,7 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             # Wait until the graph has finished its execution. We'll know
             # it finished by polling the status of the session
             while SessionStates.RUNNING in [
-                testutils.get(self, "/sessions/%s/status" % (sessionId), restPort)[
+                RESTTestUtils.get(self, "/sessions/%s/status" % (sessionId), restPort)[
                     f"{hostname}:{constants.NODE_DEFAULT_REST_PORT}"
                 ]
             ]:
@@ -402,16 +377,16 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
                 {
                     f"{hostname}:{constants.NODE_DEFAULT_REST_PORT}": SessionStates.FINISHED
                 },
-                testutils.get(self, "/sessions/%s/status" % (sessionId), restPort),
+                RESTTestUtils.get(self, "/sessions/%s/status" % (sessionId), restPort),
             )
-            testutils.delete(self, "/sessions/%s" % (sessionId), restPort)
-            sessions = testutils.get(self, "/sessions", restPort)
+            RESTTestUtils.delete(self, "/sessions/%s" % (sessionId), restPort)
+            sessions = RESTTestUtils.get(self, "/sessions", restPort)
             self.assertEqual(0, len(sessions))
 
             # Check log should not exist
-            resp, _ = testutils._get("/sessions/not_exist/logs", 8000)
+            resp, _ = RESTTestUtils._get("/sessions/not_exist/logs", 8000)
             self.assertEqual(resp.status, 404)
 
             # Check logs exist and there is content
-            resp, _ = testutils._get("/sessions/{sessionId}/logs", restPort)
+            resp, _ = RESTTestUtils._get("/sessions/{sessionId}/logs", restPort)
             self.assertGreater(int(resp.getheader("Content-Length")), 0)
