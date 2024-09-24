@@ -5,28 +5,32 @@
             "fromPort": "e9c700b7-778e-406e-a124-c3ab86903ef6",
             "loop_aware": "1",
             "to": "2d15a255-8f57-46ae-a047-f6ed3064ba60",
-            "toPort": "e9c700b7-778e-406e-a124-c3ab86903ef6"
+            "toPort": "e9c700b7-778e-406e-a124-c3ab86903ef6",
+            "closesLoop": false
         },
         {
             "from": "2d15a255-8f57-46ae-a047-f6ed3064ba60",
             "fromPort": "e9c700b7-778e-406e-a124-c3ab86903ef6",
             "loop_aware": "1",
             "to": "bc1070f5-5472-44d3-9f28-901c829a7a81",
-            "toPort": "e9c700b7-778e-406e-a124-c3ab86903ef6"
+            "toPort": "e9c700b7-778e-406e-a124-c3ab86903ef6",
+            "closesLoop": false
         },
         {
             "from": "bc1070f5-5472-44d3-9f28-901c829a7a81",
             "fromPort": "e9c700b7-778e-406e-a124-c3ab86903ef6",
             "loop_aware": "1",
             "to": "4affcc1c-436d-41de-bb33-ed84e73edbed",
-            "toPort": "e9c700b7-778e-406e-a124-c3ab86903ef6"
+            "toPort": "e9c700b7-778e-406e-a124-c3ab86903ef6",
+            "closesLoop": false
         },
         {
             "from": "4affcc1c-436d-41de-bb33-ed84e73edbed",
             "fromPort": "e9c700b7-778e-406e-a124-c3ab86903ef6",
             "loop_aware": "1",
             "to": "ffda0258-c7eb-4115-9cf1-7fc007abebda",
-            "toPort": "e9c700b7-778e-406e-a124-c3ab86903ef6"
+            "toPort": "e9c700b7-778e-406e-a124-c3ab86903ef6",
+            "closesLoop": false
         }
     ],
     "modelData": {

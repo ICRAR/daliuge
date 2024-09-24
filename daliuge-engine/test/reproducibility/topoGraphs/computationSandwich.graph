@@ -5,14 +5,16 @@
             "fromPort": "0a86d692-359d-4375-9a15-a0adb6a02cf9",
             "loop_aware": "1",
             "to": "9c107f46-fa94-4fdf-886c-1938563c0817",
-            "toPort": "ec6c82a8-50d6-4efe-a6ff-12c1a211cd3e"
+            "toPort": "ec6c82a8-50d6-4efe-a6ff-12c1a211cd3e",
+            "closesLoop": false
         },
         {
             "from": "9c107f46-fa94-4fdf-886c-1938563c0817",
             "fromPort": "47af027a-1090-4807-b50c-074ab84957b0",
             "loop_aware": "1",
             "to": "76f70258-efa0-4ac5-8b5c-7fef2dbc5464",
-            "toPort": "68fc6be9-885d-498a-a009-eb9018022ca9"
+            "toPort": "68fc6be9-885d-498a-a009-eb9018022ca9",
+            "closesLoop": false
         }
     ],
     "modelData": {

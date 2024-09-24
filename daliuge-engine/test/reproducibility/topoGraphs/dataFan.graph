@@ -5,21 +5,24 @@
             "fromPort": "15c65149-507b-40de-8790-61dd2bcad568",
             "loop_aware": "1",
             "to": "6ca48f04-5d98-40ca-b6ea-2aa47f3dcfdf",
-            "toPort": "8e4bed29-ebc9-4f0a-9be1-4e2f0e613c4f"
+            "toPort": "8e4bed29-ebc9-4f0a-9be1-4e2f0e613c4f",
+            "closesLoop": false
         },
         {
             "from": "6ca48f04-5d98-40ca-b6ea-2aa47f3dcfdf",
             "fromPort": "8e4bed29-ebc9-4f0a-9be1-4e2f0e613c4f",
             "loop_aware": "1",
             "to": "7471f351-39c6-482a-9c65-f2edc24bdee5",
-            "toPort": "b4cb7025-041a-494a-ad2f-95b367e54823"
+            "toPort": "b4cb7025-041a-494a-ad2f-95b367e54823",
+            "closesLoop": false
         },
         {
             "from": "6ca48f04-5d98-40ca-b6ea-2aa47f3dcfdf",
             "fromPort": "8e4bed29-ebc9-4f0a-9be1-4e2f0e613c4f",
             "loop_aware": "1",
             "to": "c3f33dd9-1a0a-40ec-a06e-4a08a795be33",
-            "toPort": "b051f825-c8b1-412e-907b-45da1e70088f"
+            "toPort": "b051f825-c8b1-412e-907b-45da1e70088f",
+            "closesLoop": false
         }
     ],
     "modelData": {
