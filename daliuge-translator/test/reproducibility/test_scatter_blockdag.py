@@ -89,6 +89,14 @@ class ScatterTest(unittest.TestCase):
 
     temp_out = tempfile.TemporaryDirectory("out")
 
+    expected_visited = ['f0e6ea83-41ee-404a-a05c-b1cffdaf67f1',
+                        'b4c9db40-0a0e-4b8e-9c57-f10956a699ca',
+                        'd04d9bb4-8591-4025-9c97-eaecf10a5328',
+                        'acf00b72-6ae5-487f-ba9f-747c34539208',
+                        '37c31478-27e3-4474-9406-1d6326fa5c0c',
+                        '05a70a29-60f6-4e65-9c66-f818a4eb2ccd',
+                        '8895cb0d-7bc3-47a7-97b5-a48e06c7507c']
+
     def test_lg_scatter_rerun(self):
         """
         Tests how rerunning treats such a graph.
@@ -112,7 +120,7 @@ class ScatterTest(unittest.TestCase):
             list(scatter_inter_drop["reprodata"][ReproducibilityFlags.RERUN.name]["lg_parenthashes"].values())[0],
             scatter_drop["reprodata"][ReproducibilityFlags.RERUN.name]["lg_blockhash"],
         )
-        self.assertEqual(visited, [-1, -2, -5, -3, -6, -7, -9])
+        self.assertEqual(visited, self.expected_visited)
 
     def test_pg_scatter_rerun(self):
         """

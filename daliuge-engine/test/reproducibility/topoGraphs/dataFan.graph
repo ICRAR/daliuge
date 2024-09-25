@@ -1,39 +1,39 @@
 {
     "linkDataArray": [
         {
-            "closesLoop": false,
-            "from": -2,
+            "from": "e56673bd-4595-4d37-8a10-a9c3af99d6ff",
             "fromPort": "15c65149-507b-40de-8790-61dd2bcad568",
-            "loop_aware": "0",
-            "to": -1,
-            "toPort": "8e4bed29-ebc9-4f0a-9be1-4e2f0e613c4f"
+            "loop_aware": "1",
+            "to": "6ca48f04-5d98-40ca-b6ea-2aa47f3dcfdf",
+            "toPort": "8e4bed29-ebc9-4f0a-9be1-4e2f0e613c4f",
+            "closesLoop": false
         },
         {
-            "closesLoop": false,
-            "from": -1,
-            "fromPort": "9f11fe8e-52ae-4891-a1b6-1f186e56809a",
-            "loop_aware": "0",
-            "to": -3,
-            "toPort": "b4cb7025-041a-494a-ad2f-95b367e54823"
+            "from": "6ca48f04-5d98-40ca-b6ea-2aa47f3dcfdf",
+            "fromPort": "8e4bed29-ebc9-4f0a-9be1-4e2f0e613c4f",
+            "loop_aware": "1",
+            "to": "7471f351-39c6-482a-9c65-f2edc24bdee5",
+            "toPort": "b4cb7025-041a-494a-ad2f-95b367e54823",
+            "closesLoop": false
         },
         {
-            "closesLoop": false,
-            "from": -1,
-            "fromPort": "9f11fe8e-52ae-4891-a1b6-1f186e56809a",
-            "loop_aware": "0",
-            "to": -4,
-            "toPort": "b051f825-c8b1-412e-907b-45da1e70088f"
+            "from": "6ca48f04-5d98-40ca-b6ea-2aa47f3dcfdf",
+            "fromPort": "8e4bed29-ebc9-4f0a-9be1-4e2f0e613c4f",
+            "loop_aware": "1",
+            "to": "c3f33dd9-1a0a-40ec-a06e-4a08a795be33",
+            "toPort": "b051f825-c8b1-412e-907b-45da1e70088f",
+            "closesLoop": false
         }
     ],
     "modelData": {
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "generatorCommitHash": "183ba0391bca8e8629a4e59aded4e4956334e4e7",
-        "generatorVersion": "v6.2.0:eagle-1179",
-        "generatorName": "EAGLE",
         "filePath": "dataFan.graph",
         "fileType": "Graph",
+        "generatorCommitHash": "a0929c1f72151c7e9c430a839da45bc8f1d4284d",
+        "generatorName": "EAGLE",
+        "generatorVersion": "v6.4.2",
         "lastModifiedDatetime": 0,
         "lastModifiedEmail": "",
         "lastModifiedName": "",
@@ -60,13 +60,14 @@
             "expanded": false,
             "fields": [
                 {
-                    "defaultValue": "",
+                    "defaultValue": "0",
                     "description": "Estimate of execution time (in seconds) for this application.",
+                    "encoding": "pickle",
                     "id": "b7310bfd-92e6-424e-9983-bbd12bb526cf",
                     "keyAttribute": false,
                     "name": "execution_time",
                     "options": [],
-                    "parameterType": "ComponentParameter",
+                    "parameterType": "ConstraintParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
@@ -75,13 +76,14 @@
                     "value": 5
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "0",
                     "description": "Number of CPUs used for this application.",
+                    "encoding": "pickle",
                     "id": "c50d8667-1015-400f-bc41-661840e66b78",
                     "keyAttribute": false,
                     "name": "num_cpus",
                     "options": [],
-                    "parameterType": "ComponentParameter",
+                    "parameterType": "ConstraintParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
@@ -90,8 +92,9 @@
                     "value": 1
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "false",
                     "description": "Is this node the start of a group?",
+                    "encoding": "pickle",
                     "id": "4402dfa0-c726-44ee-960b-6f89be6a72da",
                     "keyAttribute": false,
                     "name": "group_start",
@@ -107,6 +110,7 @@
                 {
                     "defaultValue": "",
                     "description": "The command line to be executed",
+                    "encoding": "pickle",
                     "id": "93409976-b7e8-4d33-9019-584edf69d6d7",
                     "keyAttribute": false,
                     "name": "Arg01",
@@ -122,6 +126,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "8e4bed29-ebc9-4f0a-9be1-4e2f0e613c4f",
                     "keyAttribute": false,
                     "name": "out",
@@ -131,36 +136,37 @@
                     "precious": false,
                     "readonly": false,
                     "type": "String",
-                    "usage": "InputPort",
+                    "usage": "InputOutput",
                     "value": ""
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "dlg.apps.bash_shell_app.BashShellApp",
                     "description": "",
-                    "id": "9f11fe8e-52ae-4891-a1b6-1f186e56809a",
+                    "encoding": "pickle",
+                    "id": "6e6be95e-0166-4ffc-8f3a-2a32bd49504a",
                     "keyAttribute": false,
-                    "name": "out",
+                    "name": "dropclass",
                     "options": [],
-                    "parameterType": "ApplicationArgument",
+                    "parameterType": "ComponentParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
                     "type": "String",
-                    "usage": "OutputPort",
-                    "value": ""
+                    "usage": "NoPort",
+                    "value": "dlg.apps.bash_shell_app.BashShellApp"
                 }
             ],
+            "id": "6ca48f04-5d98-40ca-b6ea-2aa47f3dcfdf",
             "inputAppFields": [],
             "inputApplicationDescription": "",
-            "inputApplicationKey": null,
+            "inputApplicationId": null,
             "inputApplicationName": "",
             "inputApplicationType": "None",
             "isGroup": false,
-            "key": -1,
             "name": "Bash Shell App",
             "outputAppFields": [],
             "outputApplicationDescription": "",
-            "outputApplicationKey": null,
+            "outputApplicationId": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
@@ -182,13 +188,14 @@
             "expanded": false,
             "fields": [
                 {
-                    "defaultValue": "",
+                    "defaultValue": "0",
                     "description": "Estimated size of the data contained in this node",
+                    "encoding": "pickle",
                     "id": "883b4f6a-be42-4c9c-95c1-533573e03878",
                     "keyAttribute": false,
                     "name": "data_volume",
                     "options": [],
-                    "parameterType": "ComponentParameter",
+                    "parameterType": "ConstraintParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
@@ -197,8 +204,9 @@
                     "value": 5
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "false",
                     "description": "Is this node the end of a group?",
+                    "encoding": "pickle",
                     "id": "20f460a9-d1ae-4448-a8b0-44a59f2a6586",
                     "keyAttribute": false,
                     "name": "group_end",
@@ -212,8 +220,9 @@
                     "value": false
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "false",
                     "description": "Perform a check to make sure the file path exists before proceeding with the application",
+                    "encoding": "pickle",
                     "id": "76507e2a-cf35-4295-9006-e8ff35d8d5dd",
                     "keyAttribute": false,
                     "name": "check_filepath_exists",
@@ -229,6 +238,7 @@
                 {
                     "defaultValue": "",
                     "description": "Path to the file for this node",
+                    "encoding": "pickle",
                     "id": "f69be9e2-7935-434b-82e3-7ef2e75d383a",
                     "keyAttribute": false,
                     "name": "filepath",
@@ -244,6 +254,7 @@
                 {
                     "defaultValue": "",
                     "description": "Name of the directory containing the file for this node",
+                    "encoding": "pickle",
                     "id": "4ea721c0-81bf-4c1f-9c8c-853d876d2598",
                     "keyAttribute": false,
                     "name": "dirname",
@@ -259,6 +270,7 @@
                 {
                     "defaultValue": "true",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "encoding": "pickle",
                     "id": "b601b641-ad8c-413e-a61f-38d381dde536",
                     "keyAttribute": false,
                     "name": "persist",
@@ -274,6 +286,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "15c65149-507b-40de-8790-61dd2bcad568",
                     "keyAttribute": false,
                     "name": "out",
@@ -285,19 +298,35 @@
                     "type": "String",
                     "usage": "OutputPort",
                     "value": ""
+                },
+                {
+                    "defaultValue": "dlg.data.drops.file.FileDROP",
+                    "description": "",
+                    "encoding": "pickle",
+                    "id": "fc8f0d95-f7b6-4ef6-a277-b829a22e9b2e",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "parameterType": "ComponentParameter",
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "type": "String",
+                    "usage": "NoPort",
+                    "value": "dlg.data.drops.file.FileDROP"
                 }
             ],
+            "id": "e56673bd-4595-4d37-8a10-a9c3af99d6ff",
             "inputAppFields": [],
             "inputApplicationDescription": "",
-            "inputApplicationKey": null,
+            "inputApplicationId": null,
             "inputApplicationName": "",
             "inputApplicationType": "None",
             "isGroup": false,
-            "key": -2,
             "name": "File",
             "outputAppFields": [],
             "outputApplicationDescription": "",
-            "outputApplicationKey": null,
+            "outputApplicationId": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
@@ -319,13 +348,14 @@
             "expanded": false,
             "fields": [
                 {
-                    "defaultValue": "",
+                    "defaultValue": "0",
                     "description": "Estimated size of the data contained in this node",
+                    "encoding": "pickle",
                     "id": "d1ae7d81-32b1-4f24-ba75-9cb4f942bd4b",
                     "keyAttribute": false,
                     "name": "data_volume",
                     "options": [],
-                    "parameterType": "ComponentParameter",
+                    "parameterType": "ConstraintParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
@@ -334,8 +364,9 @@
                     "value": 5
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "false",
                     "description": "Is this node the end of a group?",
+                    "encoding": "pickle",
                     "id": "aa93482f-f0c4-4b57-a397-b86e88b5e89a",
                     "keyAttribute": false,
                     "name": "group_end",
@@ -349,8 +380,9 @@
                     "value": false
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "false",
                     "description": "Perform a check to make sure the file path exists before proceeding with the application",
+                    "encoding": "pickle",
                     "id": "ac9b0977-64c9-4b4f-bd33-1cb508525e86",
                     "keyAttribute": false,
                     "name": "check_filepath_exists",
@@ -366,6 +398,7 @@
                 {
                     "defaultValue": "",
                     "description": "Path to the file for this node",
+                    "encoding": "pickle",
                     "id": "c9977823-68ee-4b07-b186-228745643d8d",
                     "keyAttribute": false,
                     "name": "filepath",
@@ -381,6 +414,7 @@
                 {
                     "defaultValue": "",
                     "description": "Name of the directory containing the file for this node",
+                    "encoding": "pickle",
                     "id": "37447f6a-9011-4917-8889-663e001667b7",
                     "keyAttribute": false,
                     "name": "dirname",
@@ -396,6 +430,7 @@
                 {
                     "defaultValue": "true",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "encoding": "pickle",
                     "id": "90c386e4-cacb-47c0-9e69-dd45c884a2a6",
                     "keyAttribute": false,
                     "name": "persist",
@@ -411,6 +446,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "b4cb7025-041a-494a-ad2f-95b367e54823",
                     "keyAttribute": false,
                     "name": "out",
@@ -422,19 +458,35 @@
                     "type": "String",
                     "usage": "InputPort",
                     "value": ""
+                },
+                {
+                    "defaultValue": "dlg.data.drops.file.FileDROP",
+                    "description": "",
+                    "encoding": "pickle",
+                    "id": "04d1bfd2-dbcc-45f4-b922-66a29742fc00",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "parameterType": "ComponentParameter",
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "type": "String",
+                    "usage": "NoPort",
+                    "value": "dlg.data.drops.file.FileDROP"
                 }
             ],
+            "id": "7471f351-39c6-482a-9c65-f2edc24bdee5",
             "inputAppFields": [],
             "inputApplicationDescription": "",
-            "inputApplicationKey": null,
+            "inputApplicationId": null,
             "inputApplicationName": "",
             "inputApplicationType": "None",
             "isGroup": false,
-            "key": -3,
             "name": "File",
             "outputAppFields": [],
             "outputApplicationDescription": "",
-            "outputApplicationKey": null,
+            "outputApplicationId": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",
@@ -456,13 +508,14 @@
             "expanded": false,
             "fields": [
                 {
-                    "defaultValue": "",
+                    "defaultValue": "0",
                     "description": "Estimated size of the data contained in this node",
+                    "encoding": "pickle",
                     "id": "301596d2-4037-4c0c-ad1e-9a4ddd5e85e3",
                     "keyAttribute": false,
                     "name": "data_volume",
                     "options": [],
-                    "parameterType": "ComponentParameter",
+                    "parameterType": "ConstraintParameter",
                     "positional": false,
                     "precious": false,
                     "readonly": false,
@@ -471,8 +524,9 @@
                     "value": 5
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "false",
                     "description": "Is this node the end of a group?",
+                    "encoding": "pickle",
                     "id": "b7d23f61-01be-461a-ab35-33fc74ce417b",
                     "keyAttribute": false,
                     "name": "group_end",
@@ -486,8 +540,9 @@
                     "value": false
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "false",
                     "description": "Perform a check to make sure the file path exists before proceeding with the application",
+                    "encoding": "pickle",
                     "id": "383f5cac-63be-403f-a896-760f7c17b46c",
                     "keyAttribute": false,
                     "name": "check_filepath_exists",
@@ -503,6 +558,7 @@
                 {
                     "defaultValue": "",
                     "description": "Path to the file for this node",
+                    "encoding": "pickle",
                     "id": "9fe97a43-e7d5-4d4b-a894-370db23737d9",
                     "keyAttribute": false,
                     "name": "filepath",
@@ -518,6 +574,7 @@
                 {
                     "defaultValue": "",
                     "description": "Name of the directory containing the file for this node",
+                    "encoding": "pickle",
                     "id": "744ac215-89a8-4dcb-8f00-e0c26a6bac27",
                     "keyAttribute": false,
                     "name": "dirname",
@@ -533,6 +590,7 @@
                 {
                     "defaultValue": "true",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "encoding": "pickle",
                     "id": "1ecdd54a-44e4-431e-9eb5-e8aad7c58d8a",
                     "keyAttribute": false,
                     "name": "persist",
@@ -548,6 +606,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "b051f825-c8b1-412e-907b-45da1e70088f",
                     "keyAttribute": false,
                     "name": "out",
@@ -559,19 +618,35 @@
                     "type": "String",
                     "usage": "InputPort",
                     "value": ""
+                },
+                {
+                    "defaultValue": "dlg.data.drops.file.FileDROP",
+                    "description": "",
+                    "encoding": "pickle",
+                    "id": "d4a5805b-1d5c-487d-bc17-1636b3bb5fd4",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "parameterType": "ComponentParameter",
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "type": "String",
+                    "usage": "NoPort",
+                    "value": "dlg.data.drops.file.FileDROP"
                 }
             ],
+            "id": "c3f33dd9-1a0a-40ec-a06e-4a08a795be33",
             "inputAppFields": [],
             "inputApplicationDescription": "",
-            "inputApplicationKey": null,
+            "inputApplicationId": null,
             "inputApplicationName": "",
             "inputApplicationType": "None",
             "isGroup": false,
-            "key": -4,
             "name": "File",
             "outputAppFields": [],
             "outputApplicationDescription": "",
-            "outputApplicationKey": null,
+            "outputApplicationId": null,
             "outputApplicationName": "",
             "outputApplicationType": "None",
             "paletteDownloadUrl": "",

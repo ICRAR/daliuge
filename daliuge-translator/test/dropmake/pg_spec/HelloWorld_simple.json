@@ -3,13 +3,13 @@
   "nodeDataArray": [
     {
       "key": 1,
-      "oid": "test_pg_gen_-1_0",
+      "oid": "test_pg_gen_19877332-6fd7-455c-b7b5-9e3dc90560ac_0",
       "category": "Application",
       "name": "HelloWorldApp"
     },
     {
       "key": 2,
-      "oid": "test_pg_gen_-2_0",
+      "oid": "test_pg_gen_f3ebe6e1-7f28-4f3e-aa7c-874cd40a2a24_0",
       "category": "Data",
       "name": "hello"
     }

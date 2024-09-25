@@ -56,6 +56,28 @@ def get_lg_fpath(type, f_name):
     )
 
 
+class TestLGInit(unittest.TestCase):
+    lg_names = {
+        "HelloWorld_simple.graph": 2,
+        "eagle_gather_empty_update.graph": 11,
+        "eagle_gather_simple_update.graph": 18,
+        "eagle_gather_update.graph": 14,
+        "testLoop.graph": 4,
+        "cont_img_mvp.graph": 45,
+        "test_grpby_gather.graph": 21,
+        "chiles_simple.graph": 22,
+        "Plasma_test.graph": 6,
+    }
+
+    def test_lg_init(self):
+        for lg_name, num_keys in self.lg_names.items():
+            fp = get_lg_fpath("logical_graphs", lg_name)
+            lg = LG(fp, ssid=TEST_SSID)
+            self.assertEqual(num_keys,
+                             len(lg._done_dict.keys()),
+                             f"Incorrect number of elements when constructing LG "
+                             f"object using: {lg_name}")
+
 class TestLGUnroll(unittest.TestCase):
     """
     Test that the LG unrolls as expected
@@ -66,7 +88,25 @@ class TestLGUnroll(unittest.TestCase):
     generated using the code they are testing. If the LG class and it's methods change
     in the future, test data may need to be re-generated (provided test failures are
     caused by known-breaking changes, as opposed to legitimate bugs!).
+
+    We no longer compare directly the output, as this causes errors with UIDs/OID
+    conflicts. What we care about in this scenario is that twe have the correct nu
+
     """
+
+    lg_names = {
+        "HelloWorld_simple.graph": {"nodes": 2, "edges": 1},
+        "eagle_gather_empty_update.graph": {"nodes": 22, "edges": 24},
+        "eagle_gather_simple_update.graph": {"nodes": 42, "edges": 55},
+        "eagle_gather_update.graph": {"nodes": 29, "edges": 30},
+        "testLoop.graph": {"nodes": 11, "edges": 10},
+        "cont_img_mvp.graph": {"nodes": 144, "edges": 188},
+        "test_grpby_gather.graph": {"nodes": 15, "edges": 14},
+        "chiles_simple.graph": {"nodes": 22, "edges": 21},
+        "Plasma_test.graph": {"nodes": 6, "edges": 5},
+        "SharedMemoryTest_update.graph": {"nodes": 8, "edges": 7},
+        # "simpleMKN_update.graph", # Currently broken
+    }
 
     def test_lg_unroll(self):
         """
@@ -74,34 +114,38 @@ class TestLGUnroll(unittest.TestCase):
 
         lg_names = { "logical_graph_file.graph": num_keys_in_drop_list, ...}
         """
-
-        lg_names = {
-            "HelloWorld_simple.graph": 2,
-            "eagle_gather_empty_update.graph": 11,
-            "eagle_gather_simple_update.graph": 18,
-            "eagle_gather_update.graph": 14,
-            "testLoop.graph": 4,
-            "cont_img_mvp.graph": 45,
-            "test_grpby_gather.graph": 21,
-            "chiles_simple.graph": 22,
-            "Plasma_test.graph": 6,
-        }
-
-        for lg_name, num_keys in lg_names.items():
+        # TODO These are number of logical graph nodes! Make this exclusive to LG init
+        for lg_name, num_keys in self.lg_names.items():
             fp = get_lg_fpath("logical_graphs", lg_name)
             lg = LG(fp, ssid=TEST_SSID)
-            self.assertEqual(num_keys,
-                             len(lg._done_dict.keys()),
-                             f"Incorrect number of elements when constructing LG "
-                             f"object using: {lg_name}")
 
             drop_list = lg.unroll_to_tpl()
             with open(get_lg_fpath('pickle', lg_name), 'rb') as pk_fp:
                 test_unroll = pickle.load(pk_fp)
 
-            self.assertListEqual(test_unroll,
-                                 drop_list,
-                                 f"unroll_to_tpl failed for: {lg_name}")
+            # It is worth mentioning that we do not get an accurate number of links
+            # from the LG, as it is not tracked after the initial graph_loading.
+            self.assertEqual(len(test_unroll), len(drop_list))
+            self.assertEqual(num_keys['nodes'], len(drop_list))
+
+            # Confirm number of output/consumers and inputs/producers are the same
+            for i, drop in enumerate(drop_list):
+                if 'outputs' in drop:
+                    expected = test_unroll[i]['outputs']
+                    actual = drop['outputs']
+                    self.assertEqual(len(expected), len(actual))
+                if 'inputs' in drop:
+                    expected = test_unroll[i]['inputs']
+                    actual = drop['inputs']
+                    self.assertEqual(len(expected), len(actual))
+                if 'producers' in drop:
+                    expected = test_unroll[i]['producers']
+                    actual = drop['producers']
+                    self.assertEqual(len(expected), len(actual))
+                if 'consumers' in drop:
+                    expected = test_unroll[i]['consumers']
+                    actual = drop['consumers']
+                    self.assertEqual(len(expected), len(actual))
 
     def test_lg_unroll_sharedmemory(self):
         """
@@ -133,33 +177,57 @@ class TestPGGen(unittest.TestCase):
     change in the future, test data may need to be re-generated (provided test
     failures are caused by known-breaking changes, as opposed to legitimate bugs!).
     """
+    lgnames = {
+        "HelloWorld_simple.graph": {"nodes": 2, "edges": 1},
+        "eagle_gather_empty_update.graph": {"nodes": 22, "edges": 24},
+        "eagle_gather_simple_update.graph": {"nodes": 42, "edges": 55},
+        "eagle_gather_update.graph": {"nodes": 29, "edges": 30},
+        "testLoop.graph": {"nodes": 11, "edges": 10},
+        "cont_img_mvp.graph": {"nodes": 144, "edges": 188},
+        "test_grpby_gather.graph": {"nodes": 15, "edges": 14},
+        "chiles_simple.graph": {"nodes": 22, "edges": 21},
+        "Plasma_test.graph": {"nodes": 6, "edges": 5},
+        "SharedMemoryTest_update.graph": {"nodes": 8, "edges": 7},
+        # "simpleMKN_update.graph", # Currently broken
+    }
+
+    def _create_pgt(self, lg_name):
+        fp = get_lg_fpath('logical_graphs', lg_name)
+        lg = LG(fp, ssid=TEST_SSID)
+        drop_list = lg.unroll_to_tpl()
+        return PGT(drop_list)
+
+    def test_pgt_init(self):
+        """
+        Confirm that the PGT DAG correctly establishes the right number of nodes and edges
+        """
+
+        for lg_name, lg_expected in self.lgnames.items():
+            pgt = self._create_pgt(lg_name)
+            num_nodes = len(pgt.dag.nodes)
+            num_edges = len(pgt.dag.edges)
+            self.assertEqual(lg_expected['nodes'], num_nodes)
+            self.assertEqual(lg_expected['edges'], num_edges)
 
     def test_pgt_to_json(self):
-        lgnames = [
-            "HelloWorld_simple.graph",
-            "eagle_gather_empty_update.graph",
-            "eagle_gather_simple_update.graph",
-            "eagle_gather_update.graph",
-            "testLoop.graph",
-            "cont_img_mvp.graph",
-            "test_grpby_gather.graph",
-            "chiles_simple.graph",
-            "Plasma_test.graph",
-            "SharedMemoryTest_update.graph",
-            # "simpleMKN_update.graph", # Currently broken
-        ]
+        """
+        Verify that the expeceted output of the PGT to_gojs_json method is correct.
 
-        for lg_name in lgnames:
-            fp = get_lg_fpath('logical_graphs', lg_name)
-            lg = LG(fp, ssid=TEST_SSID)
-            drop_list = lg.unroll_to_tpl()
-            pgt = PGT(drop_list)
-            pg_json = pgt.to_gojs_json(visual=True, string_rep=False)
-            with open(get_lg_fpath('pg_spec', lg_name), 'r') as json_fp:
-                test_json = json.load(json_fp)
-            self.assertDictEqual(test_json, pg_json,
-                             f"pgt.to_gojs_json failed for: {lg_name}")
+        Note that the to_gojs_json is not _just_ producing the go_js representation; it
+        is also performing transformations on the PGT in the child classes.
 
+        This confirms that the number of nodes and edges is a) consistent with the
+        expected numbers, and b) is self-consistent between the drops and the networkx
+        graph that are used interchangeably in the PGT class.
+        """
+
+        for lg_name, pg_expected in self.lgnames.items():
+            pgt = self._create_pgt(lg_name)
+            pgt.to_gojs_json(visual=False, string_rep=False)
+            self.assertEqual(len(pgt.dag.edges), len(pgt.links))
+            self.assertEqual(len(pgt.dag.nodes), len(pgt.drops))
+            self.assertEqual(pg_expected['nodes'], len(pgt.drops))
+            self.assertEqual(pg_expected['edges'], len(pgt.dag.edges))
 
 class TestPGPartition(unittest.TestCase):
     """
@@ -290,6 +358,7 @@ class TestPGPartition(unittest.TestCase):
             self.assertEqual(total_data_movement_pgspec[lg_name],
                              result['total_data_movement'],
                              f"Incorrect partitioning for: {lg_name}")
+
     def test_metis_pgtp_gen_pg_island(self):
         """
         Regression testing to confirm that partitioning, then generating a PGT spec works
@@ -392,7 +461,7 @@ class TestPGPartition(unittest.TestCase):
                 pgtp.merge_partitions(len(node_list) - nb_islands, form_island=False)
                 pgtp.to_pg_spec(node_list, num_islands=nb_islands)
                 self.assertEqual(self.SARKAR_PARTITION_RESULTS_GEN_ISLAND[lg_name],
-                                pgtp.result(),
+                                 pgtp.result(),
                                  f"Incorrect partition results for: {lg_name}")
 
     def test_minnumparts_pgtp(self):

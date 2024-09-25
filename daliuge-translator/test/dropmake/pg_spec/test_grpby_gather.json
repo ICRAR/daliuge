@@ -3,91 +3,91 @@
   "nodeDataArray": [
     {
       "key": 1,
-      "oid": "test_pg_gen_-1_0",
+      "oid": "test_pg_gen_b340d25b-9d97-4f10-8430-629a6eb7846d_0",
       "category": "Application",
       "name": "Start"
     },
     {
       "key": 2,
-      "oid": "test_pg_gen_-3_0",
+      "oid": "test_pg_gen_612cdb69-c6ce-4099-bbdf-1ff3ff4fd541_0",
       "category": "Data",
       "name": "Data2"
     },
     {
       "key": 3,
-      "oid": "test_pg_gen_-2_0/0/0",
+      "oid": "test_pg_gen_3015f162-47bd-4594-a298-684a43dcdcaa_0/0/0",
       "category": "Application",
       "name": "Component1"
     },
     {
       "key": 4,
-      "oid": "test_pg_gen_-8_0/0/0",
+      "oid": "test_pg_gen_01d5c602-c75e-4b25-8b71-7ad67696570f_0/0/0",
       "category": "Data",
       "name": "Data1"
     },
     {
       "key": 5,
-      "oid": "test_pg_gen_-10_0/0/0",
+      "oid": "test_pg_gen_182d34dd-9ab2-40df-bf9b-79bad75f697a_0/0/0",
       "category": "Data",
       "name": "Data3"
     },
     {
       "key": 6,
-      "oid": "test_pg_gen_-22_0/0",
+      "oid": "test_pg_gen_c1ecaf2b-57e6-48d5-a034-5535608f8076_0/0",
       "category": "Application",
       "name": "Component"
     },
     {
       "key": 7,
-      "oid": "test_pg_gen_-21_0/0",
+      "oid": "test_pg_gen_59efc3a1-9504-48fa-ad90-a7acab00e00f_0/0",
       "category": "Application",
       "name": "Component4"
     },
     {
       "key": 8,
-      "oid": "test_pg_gen_-23_0/0",
+      "oid": "test_pg_gen_a1b3e5f5-5548-4518-a792-190f477c00ec_0/0",
       "category": "Data",
       "name": "Data5"
     },
     {
       "key": 9,
-      "oid": "test_pg_gen_-14_0/0",
+      "oid": "test_pg_gen_c1e9a25b-44fa-4ed0-ac7a-b7fbe0f3ffd9_0/0",
       "category": "Application",
       "name": "Group By 2"
     },
     {
       "key": 10,
-      "oid": "test_pg_gen_-14_0/0-grp-data",
+      "oid": "test_pg_gen_c1e9a25b-44fa-4ed0-ac7a-b7fbe0f3ffd9_0/0-grp-data",
       "category": "Data",
       "name": "grpdata"
     },
     {
       "key": 11,
-      "oid": "test_pg_gen_-28_0/0-grp-data",
+      "oid": "test_pg_gen_7a0184e8-d5e4-4cd0-a892-6aaf03515869_0/0-grp-data",
       "category": "Data",
       "name": "grpdata"
     },
     {
       "key": 12,
-      "oid": "test_pg_gen_-20_0/0",
+      "oid": "test_pg_gen_b047cb26-87f2-4495-8538-c3a83dc775e3_0/0",
       "category": "Application",
       "name": "Component 2"
     },
     {
       "key": 13,
-      "oid": "test_pg_gen_-27_0/0",
+      "oid": "test_pg_gen_b54eca47-482b-4f8d-bb54-f7077fa2ff1a_0/0",
       "category": "Data",
       "name": "Data4"
     },
     {
       "key": 14,
-      "oid": "test_pg_gen_-29_0/0",
+      "oid": "test_pg_gen_6cabf9d3-c926-49ea-bb8c-e2e8d66477c3_0/0",
       "category": "Application",
       "name": "Component3"
     },
     {
       "key": 15,
-      "oid": "test_pg_gen_-28_0/0",
+      "oid": "test_pg_gen_7a0184e8-d5e4-4cd0-a892-6aaf03515869_0/0",
       "category": "Application",
       "name": "Group By 1"
     }
