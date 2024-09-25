@@ -2,7 +2,6 @@
     "linkDataArray": [
         {
             "closesLoop": false,
-            "dataType": "Object.Array",
             "from": -20,
             "fromPort": "153420d8-21f9-4e39-bd9b-5ed487aa907c",
             "loop_aware": "0",
@@ -11,7 +10,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object.",
             "from": -6,
             "fromPort": "6e7b4f87-1a46-40bd-95ca-835249392af0",
             "loop_aware": "0",
@@ -20,7 +18,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object.",
             "from": -5,
             "fromPort": "495ad208-6132-4a0c-a708-4ad239d1ac72",
             "loop_aware": "0",
@@ -29,7 +26,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object.Array",
             "from": -4,
             "fromPort": "234ff053-1ed2-43eb-b3b7-3e8822b55831",
             "loop_aware": "0",
@@ -38,7 +34,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object.Array",
             "from": -22,
             "fromPort": "b0991ca3-6aaf-4ddd-b536-c64df6b30380",
             "loop_aware": "0",
@@ -47,7 +42,6 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object.Array",
             "from": -22,
             "fromPort": "b0991ca3-6aaf-4ddd-b536-c64df6b30380",
             "loop_aware": "0",
@@ -56,16 +50,14 @@
         },
         {
             "closesLoop": false,
-            "dataType": "Object.Array",
             "from": -7,
             "fromPort": "2c6b8108-9dd2-443b-9c0c-6273a326b992",
-            "loop_aware": "1",
+            "loop_aware": "0",
             "to": -23,
             "toPort": "7b6b475f-3bc8-4fb8-bfd5-10ccf381a61b"
         },
         {
             "closesLoop": false,
-            "dataType": "Object.Array",
             "from": -23,
             "fromPort": "7b6b475f-3bc8-4fb8-bfd5-10ccf381a61b",
             "loop_aware": "0",
@@ -77,11 +69,11 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "generatorName": "EAGLE",
-        "generatorCommitHash": "80717598c275f0e9b15a46e15e79383e0434e85f",
-        "generatorVersion": "v6.2.8",
-        "filePath": "eagle_gather_empty.graph",
+        "filePath": "eagle_gather_empty_update.graph",
         "fileType": "Graph",
+        "generatorCommitHash": "8eac67d2c4a8918c5a97dcef7adb2b4cf9941879",
+        "generatorName": "EAGLE",
+        "generatorVersion": "v6.4.2",
         "lastModifiedDatetime": 0,
         "lastModifiedEmail": "",
         "lastModifiedName": "",
@@ -110,6 +102,7 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "encoding": "pickle",
                     "id": "ad162680-1899-4115-999f-f3c76b9df352",
                     "keyAttribute": false,
                     "name": "dropclass",
@@ -125,6 +118,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "f9eae2bc-7065-481c-82be-c76ce87d6006",
                     "keyAttribute": false,
                     "name": "data_volume",
@@ -140,6 +134,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "2ce641ac-2bf9-4a3e-a3a0-5117533ae63a",
                     "keyAttribute": false,
                     "name": "group_end",
@@ -155,6 +150,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "add668b4-f4f1-4ea9-91fc-80e3315d0f10",
                     "keyAttribute": false,
                     "name": "string",
@@ -170,6 +166,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "2c6b8108-9dd2-443b-9c0c-6273a326b992",
                     "keyAttribute": false,
                     "name": "stringcopy",
@@ -218,6 +215,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "e15d67a9-9977-413d-8eac-6ccd2dccab77",
                     "keyAttribute": false,
                     "name": "num_of_copies",
@@ -233,6 +231,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "8167fabd-ca65-49f6-b0c2-d6e3dbdf4ccc",
                     "keyAttribute": false,
                     "name": "scatter_axis",
@@ -250,6 +249,7 @@
                 {
                     "defaultValue": "4",
                     "description": "Specifies the number of replications of the content of the scatter construct",
+                    "encoding": "pickle",
                     "id": "de2deb93-64e8-4735-be5e-3c920d7f1c24",
                     "keyAttribute": false,
                     "name": "num_of_copies",
@@ -265,6 +265,7 @@
                 {
                     "defaultValue": "False",
                     "description": "Is this node the start of a group?",
+                    "encoding": "pickle",
                     "id": "a1aa9a5f-da9d-4344-883e-2baa48bd1fde",
                     "keyAttribute": false,
                     "name": "group_start",
@@ -280,6 +281,7 @@
                 {
                     "defaultValue": "0",
                     "description": "the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed",
+                    "encoding": "pickle",
                     "id": "3ef6e059-4d34-4d3a-b22d-34ca4933a7fa",
                     "keyAttribute": false,
                     "name": "input_error_threshold",
@@ -295,6 +297,7 @@
                 {
                     "defaultValue": "1",
                     "description": "Specifies the number of times the 'run' method will be executed before finally giving up",
+                    "encoding": "pickle",
                     "id": "a90ba3a1-976d-4db1-9341-0e27ae972511",
                     "keyAttribute": false,
                     "name": "n_tries",
@@ -310,6 +313,7 @@
                 {
                     "defaultValue": "dlg.apps.simple.GenericScatterApp",
                     "description": "Application class",
+                    "encoding": "pickle",
                     "id": "112b82a7-a0fb-416f-bca1-d33d8408dbc7",
                     "keyAttribute": false,
                     "name": "dropclass",
@@ -325,6 +329,7 @@
                 {
                     "defaultValue": "5",
                     "description": "Estimated execution time",
+                    "encoding": "pickle",
                     "id": "edd47ccf-bdab-44e5-b297-8efe46e7ac27",
                     "keyAttribute": false,
                     "name": "execution_time",
@@ -340,6 +345,7 @@
                 {
                     "defaultValue": "1",
                     "description": "Number of cores used",
+                    "encoding": "pickle",
                     "id": "c095209a-2834-4c01-966b-26c8aaca90f6",
                     "keyAttribute": false,
                     "name": "num_cpus",
@@ -355,6 +361,7 @@
                 {
                     "defaultValue": "",
                     "description": "Port carrying the reduced array",
+                    "encoding": "pickle",
                     "id": "153420d8-21f9-4e39-bd9b-5ed487aa907c",
                     "keyAttribute": false,
                     "name": "array",
@@ -401,6 +408,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "92ebba92-11ae-4414-b408-f622cce3ea5b",
                     "keyAttribute": false,
                     "name": "execution_time",
@@ -416,6 +424,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "b3c52d22-6e20-406c-98a0-61dc00266f00",
                     "keyAttribute": false,
                     "name": "num_cpus",
@@ -431,6 +440,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "6fb8bf26-46df-48e4-9a49-177d1ca2bd0d",
                     "keyAttribute": false,
                     "name": "group_start",
@@ -446,6 +456,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "input_string",
                     "keyAttribute": false,
                     "name": "string",
@@ -461,6 +472,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "b0991ca3-6aaf-4ddd-b536-c64df6b30380",
                     "keyAttribute": false,
                     "name": "stringcopy",
@@ -472,6 +484,22 @@
                     "type": "Object.Array",
                     "usage": "OutputPort",
                     "value": ""
+                },
+                {
+                    "defaultValue": "dlg.apps.bash_shell_app.BashShellApp",
+                    "description": "",
+                    "encoding": "pickle",
+                    "id": "44990f73-4a4d-4e4d-9ed4-f68df40807aa",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "parameterType": "ComponentParameter",
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "type": "String",
+                    "usage": "NoPort",
+                    "value": "dlg.apps.bash_shell_app.BashShellApp"
                 }
             ],
             "group": -20,
@@ -509,6 +537,7 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "encoding": "pickle",
                     "id": "0a791548-629e-4896-9cdc-a30808cbc021",
                     "keyAttribute": false,
                     "name": "dropclass",
@@ -524,6 +553,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "e0fdf170-3c1e-4ea5-aaea-2fd3791615f9",
                     "keyAttribute": false,
                     "name": "data_volume",
@@ -539,6 +569,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "c3d4b557-c12f-4633-b60b-3417e08c8718",
                     "keyAttribute": false,
                     "name": "group_end",
@@ -554,6 +585,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "111b3131-57a7-4023-ab14-ca67f6eec728",
                     "keyAttribute": false,
                     "name": "string",
@@ -569,6 +601,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "234ff053-1ed2-43eb-b3b7-3e8822b55831",
                     "keyAttribute": false,
                     "name": "stringcopy",
@@ -617,6 +650,7 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "encoding": "pickle",
                     "id": "2a6c6290-1a7c-402d-b3c0-9f058ca0b5d8",
                     "keyAttribute": false,
                     "name": "dropclass",
@@ -632,6 +666,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "54d9e2f1-5c02-4c68-b275-f530e1b53d0f",
                     "keyAttribute": false,
                     "name": "data_volume",
@@ -647,6 +682,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "64fbaef4-5777-46d4-bd81-8c82e14bc1c1",
                     "keyAttribute": false,
                     "name": "group_end",
@@ -662,6 +698,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "d5653abf-b12f-4d97-ac15-d26702b20748",
                     "keyAttribute": false,
                     "name": "string",
@@ -677,6 +714,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "1bba86ae-d5f7-48d0-b1bc-18fade813a66",
                     "keyAttribute": false,
                     "name": "stringcopy",
@@ -725,6 +763,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "ee843f42-c947-4e3b-bea8-d0b675c4d448",
                     "keyAttribute": false,
                     "name": "execution_time",
@@ -740,6 +779,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "9d82c542-e1db-4ad0-bcfd-809d3f4c88af",
                     "keyAttribute": false,
                     "name": "num_cpus",
@@ -755,6 +795,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "515cb728-3aea-40fa-b56e-6b03d869e4bc",
                     "keyAttribute": false,
                     "name": "group_start",
@@ -770,6 +811,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "495ad208-6132-4a0c-a708-4ad239d1ac72",
                     "keyAttribute": false,
                     "name": "stringcopy",
@@ -781,6 +823,22 @@
                     "type": "Object.",
                     "usage": "OutputPort",
                     "value": ""
+                },
+                {
+                    "defaultValue": "dlg.apps.bash_shell_app.BashShellApp",
+                    "description": "",
+                    "encoding": "pickle",
+                    "id": "5c6b3a2c-977f-45e7-bfe5-dade5d32cd27",
+                    "keyAttribute": false,
+                    "name": "dropclass",
+                    "options": [],
+                    "parameterType": "ComponentParameter",
+                    "positional": false,
+                    "precious": false,
+                    "readonly": false,
+                    "type": "String",
+                    "usage": "NoPort",
+                    "value": "dlg.apps.bash_shell_app.BashShellApp"
                 }
             ],
             "inputAppFields": [],
@@ -817,6 +875,7 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "encoding": "pickle",
                     "id": "8a178a05-3dbb-413b-be51-80e261cb0d38",
                     "keyAttribute": false,
                     "name": "dropclass",
@@ -832,6 +891,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "e83fbcb5-bea5-4d3a-86f4-9e75f19c8781",
                     "keyAttribute": false,
                     "name": "data_volume",
@@ -847,6 +907,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "fb48811d-92ba-4783-a09e-abf8e4a552ef",
                     "keyAttribute": false,
                     "name": "group_end",
@@ -862,6 +923,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "553c9bbe-5b1e-4eae-9134-9f9b6bdb00a1",
                     "keyAttribute": false,
                     "name": "check_filepath_exists",
@@ -877,6 +939,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "a5801084-4fa9-446b-9174-47bf7c46b924",
                     "keyAttribute": false,
                     "name": "filepath",
@@ -892,6 +955,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "db02cbee-e1f8-4e4e-8dea-f4f27a93a86e",
                     "keyAttribute": false,
                     "name": "dirname",
@@ -907,6 +971,7 @@
                 {
                     "defaultValue": "true",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "encoding": "pickle",
                     "id": "0fd2dd83-4c99-4844-8010-9b49da8f80f6",
                     "keyAttribute": false,
                     "name": "persist",
@@ -922,6 +987,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "fa25afa9-43a1-4383-b10f-7e8570bb41d2",
                     "keyAttribute": false,
                     "name": "string",
@@ -937,6 +1003,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "6e7b4f87-1a46-40bd-95ca-835249392af0",
                     "keyAttribute": false,
                     "name": "stringcopy",
@@ -984,6 +1051,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "078a3e49-4258-4e5b-b059-b60172f59219",
                     "keyAttribute": false,
                     "name": "num_of_inputs",
@@ -999,6 +1067,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "bb28a520-900c-4a68-b772-1bf6f7e63035",
                     "keyAttribute": false,
                     "name": "gather_axis",
@@ -1016,6 +1085,7 @@
                 {
                     "defaultValue": "dlg.apps.simple.GenericNpyGatherApp",
                     "description": "Application class",
+                    "encoding": "pickle",
                     "id": "df548c09-6fed-4116-9594-0b5604077bdb",
                     "keyAttribute": false,
                     "name": "dropclass",
@@ -1031,6 +1101,7 @@
                 {
                     "defaultValue": "5",
                     "description": "Estimated execution time",
+                    "encoding": "pickle",
                     "id": "0e648c84-d7fc-4de5-8bf3-475e199ee9b5",
                     "keyAttribute": false,
                     "name": "execution_time",
@@ -1046,6 +1117,7 @@
                 {
                     "defaultValue": "1",
                     "description": "Number of cores used",
+                    "encoding": "pickle",
                     "id": "a7f165bf-50c9-4145-8918-70f738ed198f",
                     "keyAttribute": false,
                     "name": "num_cpus",
@@ -1061,6 +1133,7 @@
                 {
                     "defaultValue": "False",
                     "description": "Is this node the start of a group?",
+                    "encoding": "pickle",
                     "id": "e9051288-ccc3-4afb-a894-9201e6995e72",
                     "keyAttribute": false,
                     "name": "group_start",
@@ -1076,6 +1149,7 @@
                 {
                     "defaultValue": "0",
                     "description": "the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed",
+                    "encoding": "pickle",
                     "id": "5037415f-1103-46fa-85f0-1bc31a227563",
                     "keyAttribute": false,
                     "name": "input_error_threshold",
@@ -1091,6 +1165,7 @@
                 {
                     "defaultValue": "1",
                     "description": "Specifies the number of times the 'run' method will be executed before finally giving up",
+                    "encoding": "pickle",
                     "id": "96c5a5d5-6006-4761-8b98-19fd76632427",
                     "keyAttribute": false,
                     "name": "n_tries",
@@ -1106,6 +1181,7 @@
                 {
                     "defaultValue": "sum",
                     "description": "The function used for gathering",
+                    "encoding": "pickle",
                     "id": "d42120cb-cf17-461f-a466-de2e9b510afb",
                     "keyAttribute": false,
                     "name": "function",
@@ -1130,6 +1206,7 @@
                 {
                     "defaultValue": "None",
                     "description": "The ndarray axes to reduce, None reduces all axes for sum, prod, max, min functions",
+                    "encoding": "pickle",
                     "id": "0730f268-ea56-484a-9073-b5455da8ce5b",
                     "keyAttribute": false,
                     "name": "reduce_axes",
@@ -1145,6 +1222,7 @@
                 {
                     "defaultValue": "",
                     "description": "Port for the input array(s)",
+                    "encoding": "pickle",
                     "id": "7b6b475f-3bc8-4fb8-bfd5-10ccf381a61b",
                     "keyAttribute": false,
                     "name": "array",
@@ -1191,6 +1269,7 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "encoding": "pickle",
                     "id": "88c71461-5ac9-43fa-a081-487cedb3babb",
                     "keyAttribute": false,
                     "name": "dropclass",
@@ -1206,6 +1285,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "5d194a67-9959-44aa-bd3b-fd48ff4eb948",
                     "keyAttribute": false,
                     "name": "data_volume",
@@ -1221,6 +1301,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "c3e061c1-db92-4296-8787-ec7aa0cbf286",
                     "keyAttribute": false,
                     "name": "group_end",
@@ -1236,6 +1317,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "e53d93aa-2141-4d1b-b126-c21d204e9989",
                     "keyAttribute": false,
                     "name": "string",

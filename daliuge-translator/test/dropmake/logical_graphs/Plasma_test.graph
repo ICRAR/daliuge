@@ -3,7 +3,7 @@
         {
             "closesLoop": false,
             "from": -4,
-            "fromPort": "b8e5487a-7b0d-4e04-8fc2-4b7133acf584",
+            "fromPort": "f71063d9-7728-486c-b1f6-b08f4480a474",
             "loop_aware": "0",
             "to": -5,
             "toPort": "397652a9-99de-4449-a186-9ca3c77f90fc"
@@ -19,7 +19,7 @@
         {
             "closesLoop": false,
             "from": -2,
-            "fromPort": "acb358a8-d6f8-4780-97e7-037d1730d6ef",
+            "fromPort": "7c4a0d74-974e-4f0b-ac07-5c60c70bf576",
             "loop_aware": "0",
             "to": -1,
             "toPort": "cedb37c2-4db5-4397-a120-1ade0280d6cf"
@@ -43,7 +43,7 @@
         {
             "closesLoop": false,
             "from": -5,
-            "fromPort": "16854d06-784d-4068-b1c6-1af58d4c1dfb",
+            "fromPort": "397652a9-99de-4449-a186-9ca3c77f90fc",
             "loop_aware": "0",
             "to": -6,
             "toPort": "87d4376d-639c-400b-a8c1-6958c8e6abb3"
@@ -53,11 +53,11 @@
         "commitHash": "",
         "detailedDescription": "",
         "downloadUrl": "",
-        "generatorCommitHash": "183ba0391bca8e8629a4e59aded4e4956334e4e7",
-        "generatorVersion": "v6.2.0:eagle-1179",
-        "generatorName": "EAGLE",
         "filePath": "Plasma_test.graph",
         "fileType": "Graph",
+        "generatorCommitHash": "8eac67d2c4a8918c5a97dcef7adb2b4cf9941879",
+        "generatorName": "EAGLE",
+        "generatorVersion": "v6.4.2",
         "lastModifiedDatetime": 0,
         "lastModifiedEmail": "",
         "lastModifiedName": "",
@@ -84,8 +84,9 @@
             "expanded": false,
             "fields": [
                 {
-                    "defaultValue": "",
+                    "defaultValue": "0",
                     "description": "Estimated size of the data contained in this node",
+                    "encoding": "pickle",
                     "id": "74cddddd-599a-4062-b25a-f1725e7f3727",
                     "keyAttribute": false,
                     "name": "data_volume",
@@ -99,8 +100,9 @@
                     "value": 5
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "false",
                     "description": "Is this node the end of a group?",
+                    "encoding": "pickle",
                     "id": "4a2e4b66-1274-4d86-9872-77c6c680e56b",
                     "keyAttribute": false,
                     "name": "group_end",
@@ -116,6 +118,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "cedb37c2-4db5-4397-a120-1ade0280d6cf",
                     "keyAttribute": false,
                     "name": "MS-in",
@@ -124,13 +127,14 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "type": "Unknown",
+                    "type": "Object",
                     "usage": "InputPort",
                     "value": ""
                 },
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "f0aa9a05-beb0-4671-8b00-e7d34f87b8d3",
                     "keyAttribute": false,
                     "name": "MS-out",
@@ -139,7 +143,7 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "type": "Unknown",
+                    "type": "Object",
                     "usage": "OutputPort",
                     "value": ""
                 }
@@ -168,7 +172,7 @@
             "category": "PythonApp",
             "categoryType": "Application",
             "collapsed": false,
-            "color": "#FF66CC",
+            "color": "#0059a5",
             "commitHash": "",
             "dataHash": "",
             "description": "Component reading an MS and writing to a Plasma store",
@@ -176,8 +180,9 @@
             "expanded": false,
             "fields": [
                 {
-                    "defaultValue": "",
+                    "defaultValue": "0",
                     "description": "Estimate of execution time (in seconds) for this application.",
+                    "encoding": "pickle",
                     "id": "fc980822-81b5-434b-b46d-d6cbf61d0538",
                     "keyAttribute": false,
                     "name": "execution_time",
@@ -191,8 +196,9 @@
                     "value": 5
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "0",
                     "description": "Number of CPUs used for this application.",
+                    "encoding": "pickle",
                     "id": "e03ae1b7-82da-439f-b894-274837fcd804",
                     "keyAttribute": false,
                     "name": "num_cpus",
@@ -206,8 +212,9 @@
                     "value": 1
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "false",
                     "description": "Is this node the start of a group?",
+                    "encoding": "pickle",
                     "id": "7653c72a-5865-446a-b00f-90054e2ae8ee",
                     "keyAttribute": false,
                     "name": "group_start",
@@ -223,6 +230,7 @@
                 {
                     "defaultValue": "",
                     "description": "The python class that implements this application",
+                    "encoding": "pickle",
                     "id": "aad61e00-6fb7-48f4-94c9-47e72c51d58b",
                     "keyAttribute": false,
                     "name": "dropclass",
@@ -238,6 +246,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "7c4a0d74-974e-4f0b-ac07-5c60c70bf576",
                     "keyAttribute": false,
                     "name": "MS-in",
@@ -246,23 +255,8 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "type": "Unknown",
-                    "usage": "InputPort",
-                    "value": ""
-                },
-                {
-                    "defaultValue": "",
-                    "description": "",
-                    "id": "acb358a8-d6f8-4780-97e7-037d1730d6ef",
-                    "keyAttribute": false,
-                    "name": "MS-in",
-                    "options": [],
-                    "parameterType": "ApplicationArgument",
-                    "positional": false,
-                    "precious": false,
-                    "readonly": false,
-                    "type": "Unknown",
-                    "usage": "OutputPort",
+                    "type": "Object",
+                    "usage": "InputOutput",
                     "value": ""
                 }
             ],
@@ -300,6 +294,7 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "encoding": "pickle",
                     "id": "6e939b25-a844-49ba-b466-803d71ca7658",
                     "keyAttribute": false,
                     "name": "dropclass",
@@ -313,8 +308,9 @@
                     "value": "dlg.data.drops.file.FileDROP"
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "0",
                     "description": "Estimated size of the data contained in this node",
+                    "encoding": "pickle",
                     "id": "bb5e3fd4-6b00-46a7-be25-f2658e98b1b2",
                     "keyAttribute": false,
                     "name": "data_volume",
@@ -328,8 +324,9 @@
                     "value": 5
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "false",
                     "description": "Is this node the end of a group?",
+                    "encoding": "pickle",
                     "id": "e770a26b-0905-44f6-9f2b-0935abfe23d1",
                     "keyAttribute": false,
                     "name": "group_end",
@@ -343,8 +340,9 @@
                     "value": false
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "false",
                     "description": "Perform a check to make sure the file path exists before proceeding with the application",
+                    "encoding": "pickle",
                     "id": "70b20dc4-cc59-47fd-91b8-f4ff784091a9",
                     "keyAttribute": false,
                     "name": "check_filepath_exists",
@@ -360,6 +358,7 @@
                 {
                     "defaultValue": "",
                     "description": "Path to the file for this node",
+                    "encoding": "pickle",
                     "id": "007ad0bc-edd0-412d-ae45-f219adad3dde",
                     "keyAttribute": false,
                     "name": "filepath",
@@ -375,6 +374,7 @@
                 {
                     "defaultValue": "",
                     "description": "Name of the directory containing the file for this node",
+                    "encoding": "pickle",
                     "id": "55a96702-6517-444a-a64a-de865e9a04e8",
                     "keyAttribute": false,
                     "name": "dirname",
@@ -390,6 +390,7 @@
                 {
                     "defaultValue": "true",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "encoding": "pickle",
                     "id": "938811dc-49b5-4346-a7b0-9e104045635a",
                     "keyAttribute": false,
                     "name": "persist",
@@ -405,6 +406,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "af6487c4-bcd7-44d5-8f0a-677f9141fcf1",
                     "keyAttribute": false,
                     "name": "MS-in",
@@ -413,7 +415,7 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "type": "Unknown",
+                    "type": "Object",
                     "usage": "OutputPort",
                     "value": ""
                 }
@@ -442,7 +444,7 @@
             "category": "PythonApp",
             "categoryType": "Application",
             "collapsed": true,
-            "color": "#FF66CC",
+            "color": "#0059a5",
             "commitHash": "",
             "dataHash": "",
             "description": "Component reading an MS from a Plasma store and writing to a MS on disk",
@@ -450,8 +452,9 @@
             "expanded": false,
             "fields": [
                 {
-                    "defaultValue": "",
+                    "defaultValue": "0",
                     "description": "Estimate of execution time (in seconds) for this application.",
+                    "encoding": "pickle",
                     "id": "17519169-130d-4e33-a60e-ccd9e579dee4",
                     "keyAttribute": false,
                     "name": "execution_time",
@@ -465,8 +468,9 @@
                     "value": 5
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "0",
                     "description": "Number of CPUs used for this application.",
+                    "encoding": "pickle",
                     "id": "c576f8c8-827d-4107-a818-598e1ef0a8df",
                     "keyAttribute": false,
                     "name": "num_cpus",
@@ -480,8 +484,9 @@
                     "value": 1
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "false",
                     "description": "Is this node the start of a group?",
+                    "encoding": "pickle",
                     "id": "a524104f-e1a1-47e6-8ce8-fd31ba551d53",
                     "keyAttribute": false,
                     "name": "group_start",
@@ -497,6 +502,7 @@
                 {
                     "defaultValue": "",
                     "description": "The python class that implements this application",
+                    "encoding": "pickle",
                     "id": "f3f3dd31-9a44-402d-862c-62df021f783c",
                     "keyAttribute": false,
                     "name": "dropclass",
@@ -512,6 +518,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "f71063d9-7728-486c-b1f6-b08f4480a474",
                     "keyAttribute": false,
                     "name": "MS-out",
@@ -520,23 +527,8 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "type": "Unknown",
-                    "usage": "InputPort",
-                    "value": ""
-                },
-                {
-                    "defaultValue": "",
-                    "description": "",
-                    "id": "b8e5487a-7b0d-4e04-8fc2-4b7133acf584",
-                    "keyAttribute": false,
-                    "name": "MS-out",
-                    "options": [],
-                    "parameterType": "ApplicationArgument",
-                    "positional": false,
-                    "precious": false,
-                    "readonly": false,
-                    "type": "Unknown",
-                    "usage": "OutputPort",
+                    "type": "Object",
+                    "usage": "InputOutput",
                     "value": ""
                 }
             ],
@@ -574,6 +566,7 @@
                 {
                     "defaultValue": "",
                     "description": "Data class",
+                    "encoding": "pickle",
                     "id": "45cbffb4-96d8-44d0-8f94-0049398cb4b1",
                     "keyAttribute": false,
                     "name": "dropclass",
@@ -587,8 +580,9 @@
                     "value": "dlg.data.drops.file.FileDROP"
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "0",
                     "description": "Estimated size of the data contained in this node",
+                    "encoding": "pickle",
                     "id": "3224ad2f-d3bf-4232-898f-81c3319eb40c",
                     "keyAttribute": false,
                     "name": "data_volume",
@@ -602,8 +596,9 @@
                     "value": 5
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "false",
                     "description": "Is this node the end of a group?",
+                    "encoding": "pickle",
                     "id": "8c1baa78-14e8-4cf7-b1e8-f31531a14bad",
                     "keyAttribute": false,
                     "name": "group_end",
@@ -617,8 +612,9 @@
                     "value": false
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "false",
                     "description": "Perform a check to make sure the file path exists before proceeding with the application",
+                    "encoding": "pickle",
                     "id": "f32bf023-509c-428e-aed9-c44b5806e108",
                     "keyAttribute": false,
                     "name": "check_filepath_exists",
@@ -634,6 +630,7 @@
                 {
                     "defaultValue": "",
                     "description": "Path to the file for this node",
+                    "encoding": "pickle",
                     "id": "cff03edf-a70d-4164-8fc7-d33ab852c8e4",
                     "keyAttribute": false,
                     "name": "filepath",
@@ -649,6 +646,7 @@
                 {
                     "defaultValue": "",
                     "description": "Name of the directory containing the file for this node",
+                    "encoding": "pickle",
                     "id": "42918b52-115a-448e-952c-2d069c6f364f",
                     "keyAttribute": false,
                     "name": "dirname",
@@ -664,6 +662,7 @@
                 {
                     "defaultValue": "true",
                     "description": "Specifies whether this data component contains data that should not be deleted after execution",
+                    "encoding": "pickle",
                     "id": "6b577fa0-8852-4792-9b3d-45e897314777",
                     "keyAttribute": false,
                     "name": "persist",
@@ -679,6 +678,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "397652a9-99de-4449-a186-9ca3c77f90fc",
                     "keyAttribute": false,
                     "name": "MS-out",
@@ -687,23 +687,8 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "type": "Unknown",
-                    "usage": "InputPort",
-                    "value": ""
-                },
-                {
-                    "defaultValue": "",
-                    "description": "",
-                    "id": "16854d06-784d-4068-b1c6-1af58d4c1dfb",
-                    "keyAttribute": false,
-                    "name": "MS-out",
-                    "options": [],
-                    "parameterType": "ApplicationArgument",
-                    "positional": false,
-                    "precious": false,
-                    "readonly": false,
-                    "type": "Unknown",
-                    "usage": "OutputPort",
+                    "type": "Object",
+                    "usage": "InputOutput",
                     "value": ""
                 }
             ],
@@ -731,7 +716,7 @@
             "category": "PythonApp",
             "categoryType": "Application",
             "collapsed": true,
-            "color": "#FF66CC",
+            "color": "#0059a5",
             "commitHash": "",
             "dataHash": "",
             "description": "Compare the input and output MS, return 0 if the same 1 otherwise.",
@@ -739,8 +724,9 @@
             "expanded": false,
             "fields": [
                 {
-                    "defaultValue": "",
+                    "defaultValue": "0",
                     "description": "Estimate of execution time (in seconds) for this application.",
+                    "encoding": "pickle",
                     "id": "e9af9c6b-f134-4f90-bc1d-0672c19f6e2a",
                     "keyAttribute": false,
                     "name": "execution_time",
@@ -754,8 +740,9 @@
                     "value": 5
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "0",
                     "description": "Number of CPUs used for this application.",
+                    "encoding": "pickle",
                     "id": "3dbd37c2-3298-436a-b1ae-f7269adee6e6",
                     "keyAttribute": false,
                     "name": "num_cpus",
@@ -769,8 +756,9 @@
                     "value": 1
                 },
                 {
-                    "defaultValue": "",
+                    "defaultValue": "false",
                     "description": "Is this node the start of a group?",
+                    "encoding": "pickle",
                     "id": "97cd68e7-07d2-4d69-8066-b805a166813f",
                     "keyAttribute": false,
                     "name": "group_start",
@@ -786,6 +774,7 @@
                 {
                     "defaultValue": "",
                     "description": "The python class that implements this application",
+                    "encoding": "pickle",
                     "id": "030a88c3-ab68-4924-bce8-de71a4b0d45a",
                     "keyAttribute": false,
                     "name": "dropclass",
@@ -801,6 +790,7 @@
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "87d4376d-639c-400b-a8c1-6958c8e6abb3",
                     "keyAttribute": false,
                     "name": "MS-out",
@@ -809,13 +799,14 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "type": "Unknown",
+                    "type": "Object",
                     "usage": "InputPort",
                     "value": ""
                 },
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "acd9d843-fcb3-4590-b217-a02a2f132dcd",
                     "keyAttribute": false,
                     "name": "MS-in",
@@ -824,13 +815,14 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "type": "Unknown",
+                    "type": "Object",
                     "usage": "InputPort",
                     "value": ""
                 },
                 {
                     "defaultValue": "",
                     "description": "",
+                    "encoding": "pickle",
                     "id": "d9b69336-b1a3-4507-a4b3-1f442c3b5b8f",
                     "keyAttribute": false,
                     "name": "result",
@@ -839,7 +831,7 @@
                     "positional": false,
                     "precious": false,
                     "readonly": false,
-                    "type": "Unknown",
+                    "type": "Object",
                     "usage": "OutputPort",
                     "value": ""
                 }

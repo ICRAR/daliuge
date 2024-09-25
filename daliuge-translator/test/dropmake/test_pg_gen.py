@@ -185,8 +185,8 @@ class TestPGPartition(unittest.TestCase):
             'exec_time': 444, 'num_parts': 0
         },
         "test_grpby_gather.graph": {
-            'algo': 'Edge Zero', 'min_exec_time': 12, 'total_data_movement': 70,
-            'exec_time': 47, 'num_parts': 0
+            'algo': 'Edge Zero', 'min_exec_time': 16, 'total_data_movement': 70,
+            'exec_time': 51, 'num_parts': 0
         },
         "chiles_simple.graph": {
             'algo': 'Edge Zero', 'min_exec_time': 45, 'total_data_movement': 1080,
@@ -206,8 +206,8 @@ class TestPGPartition(unittest.TestCase):
             'exec_time': 179, 'num_islands': 2, 'num_parts': 4
         },
         "test_grpby_gather.graph": {
-            'algo': 'Edge Zero', 'min_exec_time': 12,
-            'total_data_movement': 0, 'exec_time': 12, 'num_parts': 1
+            'algo': 'Edge Zero', 'min_exec_time': 16,
+            'total_data_movement': 0, 'exec_time': 16, 'num_parts': 1
         },
         "chiles_simple.graph": {
             'algo': 'Edge Zero', 'min_exec_time': 45, 'total_data_movement': 0,
@@ -225,8 +225,8 @@ class TestPGPartition(unittest.TestCase):
             'total_data_movement': 932, 'exec_time': 444, 'num_parts': 0
         },
         "test_grpby_gather.graph": {
-            'algo': 'Lookahead', 'min_exec_time': 12,
-            'total_data_movement': 70, 'exec_time': 47, 'num_parts': 0
+            'algo': 'Lookahead', 'min_exec_time': 16,
+            'total_data_movement': 70, 'exec_time': 51, 'num_parts': 0
         },
         "chiles_simple.graph": {
             'algo': 'Lookahead', 'min_exec_time': 45, 'total_data_movement': 1080,
@@ -419,15 +419,15 @@ if __name__ == '__main__':
         if arg.lower() == "test-gen":
             print("\nRunning test dataset generator on following logical graphs:")
     except IndexError:
-        print("You have run the test dataset generator for this test suite.\n"
+        print("You have run the dataset generator for this test suite.\n"
               "\n"
               "This may have been done by accident: if so, double check the unitttest "
               "directive is used when running the file.\n"
               "\n"
               "If this was a deliberate effort to update the test cases due to a known "
               "change in the translator, please use the 'test-gen' argument. "
-              "Ensure that the changes are necessary, as this suite provides essential "
-              "regression testing for translator behaviour.")
+              "Please ensure that the changes are necessary, as this suite provides"
+              "essential regression testing for translator behaviour.")
         exit()
 
     pickle_dir = "pickle"
@@ -466,4 +466,4 @@ if __name__ == '__main__':
             __name__, f"{physical_graph_spec}/{fn_json}"
         )
         with open(pg_path, 'w') as fp:
-            json.dump(pg_json, fp)
+            json.dump(pg_json, fp, indent=2)
