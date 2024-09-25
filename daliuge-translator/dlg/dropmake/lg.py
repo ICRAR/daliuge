@@ -116,7 +116,7 @@ class LG:
             if len(node_ouput_ports) > 0:
                 for out_port in node_ouput_ports:
                     if out_port.get("name", "").lower().endswith("stream"):
-                        stream_output_ports[out_port["Id"]] = jd["key"]
+                        stream_output_ports[out_port["Id"]] = jd["id"]
         # Need to go through the list again, since done_dict is recursive
         for lgn in self._lgn_list:
             if lgn.is_start and lgn.jd["category"] not in [

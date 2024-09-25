@@ -30,7 +30,10 @@ Most of these tests will be asserting the obvious, with the exception of Reprodu
 import json
 import unittest
 
-import pkg_resources
+try:
+    from importlib.resources import files, as_file
+except ModuleNotFoundError:
+    from importlib_resources import files
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags, ALL_RMODES
 from dlg.common.reproducibility.reproducibility import (
@@ -41,7 +44,8 @@ from dlg.common.reproducibility.reproducibility import (
 
 
 def _init_graph(filename: str):
-    with pkg_resources.resource_stream("test.reproducibility", filename) as file:
+    f = files(__package__) / f"{filename}"
+    with f.open('r') as file:
         lgt = json.load(file)
     return lgt
 

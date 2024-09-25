@@ -497,7 +497,7 @@ def lg_build_blockdag(logical_graph: dict, level):
             dropset[neighbour][1] -= 1
             parenthash = {}
             if rmode != ReproducibilityFlags.NOTHING:
-                dtype = ""
+                dtype = "data"
                 if rmode == ReproducibilityFlags.REPRODUCE:
                     if "categoryType" in dropset[did][0]:
                         dtype = dropset[did][0]["categoryType"].lower()
