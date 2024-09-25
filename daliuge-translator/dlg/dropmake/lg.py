@@ -34,8 +34,8 @@ import datetime
 import logging
 import time
 from itertools import product
-
 import numpy as np
+
 from dlg.common import CategoryType
 from dlg.common import dropdict
 from dlg.dropmake.dm_utils import (
@@ -81,7 +81,7 @@ class LG:
 
         # key - gather drop oid, value - a tuple with two elements
         # input drops list and output drops list
-        self._gather_cache = dict()
+        self._gather_cache = {}
 
         lgver = get_lg_ver_type(lg)
         logger.info("Loading graph: %s", lg["modelData"]["filePath"])
@@ -96,18 +96,17 @@ class LG:
             lg = convert_construct(lg)
         elif LG_APPREF == lgver:
             lg = convert_fields(lg)
-            lgk = getNodesKeyDict(lg)
         # This ensures that future schema version mods are catched early
         else:
             raise GraphException(
                 "Logical graph version '{0}' not supported!".format(lgver)
             )
-        self._done_dict = dict()
+        self._done_dict = {}
         self._group_q = collections.defaultdict(list)
         self._output_q = collections.defaultdict(list)
         self._start_list = []
         self._lgn_list = []
-        stream_output_ports = dict()  # key - port_id, value - construct key
+        stream_output_ports = {}  # key - port_id, value - construct key
         for jd in lg["nodeDataArray"]:
             lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
             self._lgn_list.append(lgn)
@@ -183,13 +182,13 @@ class LG:
                 raise GInvalidLink(
                     "GroupBy {0} input must not be a group {1}".format(tgt.id, src.id)
                 )
-            elif len(tgt.inputs) > 0:
+            if len(tgt.inputs) > 0:
                 raise GInvalidLink(
                     "GroupBy {0} already has input {2} other than {1}".format(
                         tgt.id, src.id, tgt.inputs[0].id
                     )
                 )
-            elif src.gid == 0:
+            if src.gid == 0:
                 raise GInvalidLink(
                     "GroupBy {0} requires at least one Scatter around input {1}".format(
                         tgt.id, src.id
@@ -291,7 +290,7 @@ class LG:
                         )
                     for ge in grp_ends:
                         for gs in grp_starts:  # make an artificial circle
-                            lk = dict()
+                            lk = {}
                             if gs not in ge._outputs:
                                 ge.add_output(gs)
                             if ge not in gs._inputs:
@@ -306,7 +305,7 @@ class LG:
                     ):  # add artificial logical links to the "first" children
                         lgn.add_input(gs)
                         gs.add_output(lgn)
-                        lk = dict()
+                        lk = {}
                         lk["from"] = lgn.id
                         lk["to"] = gs.id
                         self._lg_links.append(lk)
@@ -352,8 +351,6 @@ class LG:
                         c_copy.loop_ctx = self.get_child_lp_ctx(lgn, lpcxt, i)
                         c_copy.iid = miid
                         self._start_list.append(c_copy)
-                    # else:
-                    #     src_drop = lgn.make_single_drop(miid, loop_ctx=lpcxt, proc_index=i)
         elif lgn.is_mpi:
             for i in range(lgn.dop):
                 if lgn.loop_ctx:
@@ -461,6 +458,7 @@ class LG:
             2. link sdrop to null_drop
             3. link tdrop to null_drop as a streamingConsumer
             """
+
             dropSpec_null = dropdict(
                 {
                     "oid": "{0}-{1}-stream".format(
@@ -609,7 +607,7 @@ class LG:
             elif not slgn.is_group and (not tlgn.is_group):
                 if slgn.is_start_node:
                     continue
-                elif (
+                if (
                     (slgn.group is not None)
                     and slgn.group.is_loop
                     and slgn.gid == tlgn.gid

@@ -22,7 +22,7 @@
 
 try:
     from importlib.resources import files, as_file
-except (ImportError, ModuleNotFoundError):
+except ModuleNotFoundError:
     from importlib_resources import files
 
 def get_lg_fpath(type, f_name):

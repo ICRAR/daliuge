@@ -64,7 +64,7 @@ def _calc_num_drops(drop_values):
     iterate through them and get the number of Physical Graph Nodes for every one of
     the Logical Graph nodes.
     """
-    return sum([len(drop_list) for drop_list in drop_values])
+    return sum(len(drop_list) for drop_list in drop_values)
 
 
 class TestLGNToPGN(unittest.TestCase):
@@ -108,50 +108,42 @@ class TestLGNToPGN(unittest.TestCase):
 
     def test_non_recursive(self):
         """
-        Test non-recursive implementation of lgn_to_pgn
+        This tests that we can generate the correct number of expected 'unrolled' drops
+        using a non-recursive implementation of the lgn_to_pgn translation method.
+
+
+        We want to get the number of drops created during lgn_to_pgn, which is the
+        intermediate representation of drops proir to calling 'unroll_to_tpl'.
+
+
+        To test the call to lgn_to_pgn, we use the same structure as in unroll_to_tpl,
+        and iterate through the _start_list identified during the LG class __init__.
         """
-        graph_name = "testLoop.graph"
-        lg_recursive = LG(path_utils.get_lg_fpath("logical_graphs", graph_name),
-                          ssid="TEST")
-        for lgn in lg_recursive._start_list:
-            lg_recursive.lgn_to_pgn(lgn)
-        lg_non_recursive = LG(path_utils.get_lg_fpath("logical_graphs", graph_name),
+
+        lg_names = {"testLoop.graph": {"num_pgt_drops": 11},
+                    "eagle_gather_update.graph": {"num_pgt_drops": 31}}
+
+        for graph_name, test_dict in lg_names.items():
+            expected_drops = test_dict['num_pgt_drops']
+
+            lg_recursive = LG(path_utils.get_lg_fpath("logical_graphs", graph_name),
                               ssid="TEST")
-        for lgn in lg_non_recursive._start_list:
-            lg_non_recursive.lgn_to_pgn(lgn, recursive=False)
+            for lgn in lg_recursive._start_list:
+                lg_recursive.lgn_to_pgn(lgn)
+            self.assertEqual(
+                expected_drops,
+                _calc_num_drops(lg_recursive._drop_dict.values())
+            )
 
-        expected_test_loop_drops = 11
-        self.assertEqual(
-            expected_test_loop_drops,
-            _calc_num_drops(lg_recursive._drop_dict.values())
-        )
-        self.assertEqual(
-            expected_test_loop_drops,
-            _calc_num_drops(lg_non_recursive._drop_dict.values())
-        )
-
-        graph_name = "eagle_gather_update.graph"
-        lg_recursive = LG(path_utils.get_lg_fpath("logical_graphs", graph_name),
-                          ssid="TEST")
-        for lgn in lg_recursive._start_list:
-            lg_recursive.lgn_to_pgn(lgn)
-        lg_non_recursive = LG(path_utils.get_lg_fpath("logical_graphs", graph_name),
-                              ssid="TEST")
-        for lgn in lg_non_recursive._start_list:
-            lg_non_recursive.lgn_to_pgn(lgn, recursive=False)
-
-        self.assertEqual(len(lg_recursive._drop_dict), len(lg_non_recursive._drop_dict))
-
-        expected_test_gather_drops = 31
-
-        self.assertEqual(
-            expected_test_gather_drops,
-            _calc_num_drops(lg_recursive._drop_dict.values())
-        )
-        self.assertEqual(
-            expected_test_gather_drops,
-            _calc_num_drops(lg_non_recursive._drop_dict.values())
-        )
+            lg_non_recursive = LG(
+                path_utils.get_lg_fpath("logical_graphs", graph_name), ssid="TEST"
+            )
+            for lgn in lg_non_recursive._start_list:
+                lg_non_recursive.lgn_to_pgn(lgn, recursive=False)
+            self.assertEqual(
+                expected_drops,
+                _calc_num_drops(lg_non_recursive._drop_dict.values())
+            )
 
 
 class TestLGNodeLoading(unittest.TestCase):

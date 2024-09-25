@@ -435,9 +435,10 @@ class KFamilyPartition(Partition):
         """
         Add a single node u to the partition
         """
-        kwargs = {}
-        for _w_attr in self._w_attr:
-            kwargs[_w_attr] = self._global_dag.nodes[u].get(_w_attr, 1)
+        kwargs = {
+            _w_attr: self._global_dag.nodes[u].get(_w_attr, 1)
+            for _w_attr in self._w_attr
+        }
         kwargs["weight"] = self._global_dag.nodes[u].get("weight", 5)
         self._dag.add_node(u, **kwargs)
         for k in self._w_attr:
@@ -663,7 +664,7 @@ class MySarkarScheduler(Scheduler):
 
         if index is None:
             raise SchedulerException("Failed to find r_gid")
-        parts[:] = parts[0:index] + parts[index + 1:]
+        parts[:] = parts[:index] + parts[index + 1:]
 
         return part_new
 
@@ -1018,12 +1019,12 @@ class PSOScheduler(Scheduler):
                 "Deadline is None, cannot apply constraints!"
             )
 
-        sk = "".join([str(int(round(xi))) for xi in x[0: self._topk]])
+        sk = "".join([str(int(round(xi))) for xi in x[: self._topk]])
         stuff = self._sspace_dict.get(sk, None)
         if not stuff:
             G = self._lite_dag.copy()
             stuff = self._partition_G(G, x)
-            self._sspace_dict[sk] = stuff[0:2]
+            self._sspace_dict[sk] = stuff[:2]
             del G
         return self._deadline - stuff[0]
 
@@ -1033,7 +1034,7 @@ class PSOScheduler(Scheduler):
         indices of x is identical to the indices in G.edges().sort(key='weight')
         """
         # first check if the solution is already available in the search space
-        sk = "".join([str(int(round(xi))) for xi in x[0: self._topk]])
+        sk = "".join([str(int(round(xi))) for xi in x[: self._topk]])
         stuff = self._sspace_dict.get(
             sk, None
         )  # TODO is this atomic operation?
@@ -1042,7 +1043,7 @@ class PSOScheduler(Scheduler):
             # each of which has multiple iterations
             G = self._lite_dag.copy()
             stuff = self._partition_G(G, x)
-            self._sspace_dict[sk] = stuff[0:2]
+            self._sspace_dict[sk] = stuff[:2]
             del G
         if self._deadline is None:
             return stuff[0]
@@ -1274,10 +1275,6 @@ class DAGUtil(object):
             myk = i + 1
             tt = drop["categoryType"]
             if tt in [CategoryType.DATA, "data"]:
-                # if (drop['nm'] == 'StreamNull'):
-                #     obk = 'streamingConsumers'
-                # else:
-                #     obk = 'consumers' # outbound keyword
                 tw = 0
                 dtp = 0
             elif tt in [CategoryType.APPLICATION, "app"]:

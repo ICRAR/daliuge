@@ -496,9 +496,8 @@ class MySarkarPGTP(PGT):
                         # print("e[2]['weight'] =", e[2]['weight'])
                         e[2]["weight"] /= self._bw_ratio
             if visual:
-                island_label = "%s_Island" % (
-                    self._island_labels[island_type % len(self._island_labels)]
-                )
+                labels = self._island_labels[island_type % len(self._island_labels)]
+                island_label = f"{labels}_Island"
                 for island_id in outer_groups:
                     gn = dict()
                     gn["key"] = island_id + start_i
