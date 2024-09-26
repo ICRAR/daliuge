@@ -222,8 +222,6 @@ class CompositeManager(DROPManager):
 
     def addDmHost(self, host_str: str):
         host = Node(host_str)
-        # if not ":" in host:
-        #     host += f":{self._dmPort}"
         if host not in self._dmHosts:
             self._dmHosts.append(host)
             logger.debug("Added sub-manager %s", host)
@@ -254,6 +252,16 @@ class CompositeManager(DROPManager):
         else:
             self._nodes.remove(node)
 
+    def get_node_from_json(self, node_str):
+        """
+        Given a node str, return the Node we have stored
+        Return: Node
+        Raises: ValueError if there is no existing Node added to the CompositeManager
+        """
+
+        idx = self._nodes.index(Node(node_str))
+        return self._nodes[idx]
+
     @property
     def dmPort(self):
         return self._dmPort
@@ -266,18 +274,14 @@ class CompositeManager(DROPManager):
             port = port or self._dmPort
 
         logger.debug("Checking DM presence at %s port %d", host, port)
-        dm_is_there = portIsOpen(host_name, port, timeout)
-        return dm_is_there
+        return portIsOpen(host_name, port, timeout)
 
     def dmAt(self, host):
         if not self.check_dm(host):
             raise SubManagerException(
                 f"Manager expected but not running in {host.host}:{host.port}"
             )
-        # if not ":" in host:
-        #     port = port or self._dmPort
-        # else:
-        #     host, port = host.split(":")
+
         return NodeManagerClient(host.host, host.port, 10)
 
     def getSessionIds(self):
