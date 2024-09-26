@@ -65,11 +65,10 @@ class Node:
             if num_chunks >= 4:
                 self.rpc_port = self._validate_port(chunks[NodeProtocolPosition.RPC_PORT])
         except AttributeError as e:
-            logger.exception("Node has been passed non-string object: ", e)
             raise RuntimeError(
                 "Constructor has been passed non-string object and cannot"
                 "be converted to Node: type %s.", type(host),
-            )
+            ) from e
         except ValueError as e:
             logger.error("An issue has occured with translating node information",
                          exc_info=e)
