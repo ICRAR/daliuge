@@ -69,14 +69,13 @@ class BashCommand(object):
         def _get_delimit(matchobj):
             return " " if matchobj.start() == 0 else ","
 
-        cmds = self._cmds
-        for k in range(len(cmds)):
-            d = cmds[k]
+        for k, cmd in enumerate(self._cmds):
+            d = self._cmds[k]
             imatch = inp_regex.search(d)
             omatch = out_regex.search(d)
             if imatch is not None:
                 lgn_id = int(imatch.group(1))
-                cmds[k] = d.replace(
+                self._cmds[k] = d.replace(
                     imatch.group(0),
                     _get_delimit(imatch).join(
                         ["%i[{0}]".format(x) for x in self._input_map[lgn_id]]
@@ -84,11 +83,11 @@ class BashCommand(object):
                 )
             elif omatch is not None:
                 lgn_id = int(omatch.group(1))
-                cmds[k] = d.replace(
+                self._cmds[k] = d.replace(
                     omatch.group(0),
                     _get_delimit(omatch).join(
                         ["%o[{0}]".format(x) for x in self._output_map[lgn_id]]
                     ),
                 )
 
-        return " ".join(cmds)
+        return " ".join(self._cmds)

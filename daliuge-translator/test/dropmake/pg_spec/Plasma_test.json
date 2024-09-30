@@ -1,1 +1,62 @@
-{"class": "go.GraphLinksModel", "nodeDataArray": [{"key": 1, "oid": "test_pg_gen_-1_0", "name": "Plasma"}, {"key": 2, "oid": "test_pg_gen_-2_0", "category": "Application", "name": "MS-plasma-writer"}, {"key": 3, "oid": "test_pg_gen_-3_0", "category": "Data", "name": "MS-in"}, {"key": 4, "oid": "test_pg_gen_-4_0", "category": "Application", "name": "MS-plasma-reader"}, {"key": 5, "oid": "test_pg_gen_-5_0", "category": "Data", "name": "MS-out"}, {"key": 6, "oid": "test_pg_gen_-6_0", "category": "Application", "name": "Compare"}], "linkDataArray": [{"from": 2, "to": 1}, {"from": 3, "to": 2}, {"from": 3, "to": 6}, {"from": 4, "to": 5}, {"from": 5, "to": 6}]}
+{
+  "class": "go.GraphLinksModel",
+  "nodeDataArray": [
+    {
+      "key": 1,
+      "oid": "test_pg_gen_ba7d20ac-9ae2-4ba2-ad13-fb0512dd928c_0",
+      "name": "Plasma"
+    },
+    {
+      "key": 2,
+      "oid": "test_pg_gen_10b4e22f-0d08-496e-98d2-6be4babfe074_0",
+      "category": "Application",
+      "name": "MS-plasma-writer"
+    },
+    {
+      "key": 3,
+      "oid": "test_pg_gen_b0dbff4d-484a-419d-bab9-2a1b06875a2d_0",
+      "category": "Data",
+      "name": "MS-in"
+    },
+    {
+      "key": 4,
+      "oid": "test_pg_gen_592cec22-e25c-4f97-aa00-796d38efbd6b_0",
+      "category": "Application",
+      "name": "MS-plasma-reader"
+    },
+    {
+      "key": 5,
+      "oid": "test_pg_gen_5ca3eddb-b786-4925-9153-c1d6c12139ba_0",
+      "category": "Data",
+      "name": "MS-out"
+    },
+    {
+      "key": 6,
+      "oid": "test_pg_gen_ea9b76bc-15cf-4d4e-b1a6-175f2de211a7_0",
+      "category": "Application",
+      "name": "Compare"
+    }
+  ],
+  "linkDataArray": [
+    {
+      "from": 2,
+      "to": 1
+    },
+    {
+      "from": 3,
+      "to": 2
+    },
+    {
+      "from": 3,
+      "to": 6
+    },
+    {
+      "from": 4,
+      "to": 5
+    },
+    {
+      "from": 5,
+      "to": 6
+    }
+  ]
+}
