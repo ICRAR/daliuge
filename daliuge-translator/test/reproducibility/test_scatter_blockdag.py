@@ -28,7 +28,9 @@ import json
 import optparse
 import tempfile
 import unittest
-import pkg_resources
+import daliuge_tests.reproGraphs as test_graphs
+
+from importlib.resources import files
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 from dlg.common.reproducibility.reproducibility import (
@@ -42,7 +44,7 @@ from dlg.translator.tool_commands import dlg_fill, dlg_partition, dlg_map, dlg_u
 def _run_full_workflow(
     rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
 ):
-    workflow_loc = pkg_resources.resource_filename("test", workflow_loc)
+    workflow_loc = str(files(test_graphs))
     lgt = workflow_loc + "/" + workflow + ".graph"
     lgr = scratch_loc + "/" + workflow + "LG.graph"
     pgs = scratch_loc + "/" + workflow + "PGS.graph"
@@ -71,7 +73,8 @@ def _read_graph(filename):
 
 
 def _init_graph(filename):
-    with pkg_resources.resource_stream("test", filename) as file:
+    workflow_loc = files(test_graphs)
+    with (workflow_loc / filename).open() as file:
         lgt = json.load(file)
     for drop in lgt["nodeDataArray"]:
         drop["reprodata"] = {}
@@ -103,7 +106,7 @@ class ScatterTest(unittest.TestCase):
         Expected behaviour should be the same as any other type of graph - they are all logical
         components
         """
-        lgt = _init_graph("reproducibility/reproGraphs/simpleScatter.graph")
+        lgt = _init_graph("simpleScatter.graph")
         init_lgt_repro_data(lgt, rmode=ReproducibilityFlags.RERUN.value)
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt, ReproducibilityFlags.RERUN)[1]

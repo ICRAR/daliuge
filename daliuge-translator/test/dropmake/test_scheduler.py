@@ -34,6 +34,8 @@ from dlg.dropmake.scheduler import (
     PSOScheduler,
 )
 
+from dlg.dropmake.path_utils import get_lg_fpath
+
 if "DALIUGE_TESTS_RUNLONGTESTS" in os.environ:
     skip_long_tests = not bool(os.environ["DALIUGE_TESTS_RUNLONGTESTS"])
 else:
@@ -45,23 +47,17 @@ else:
         skip_long_tests = True
 
 
-def get_lg_fname(lg_name):
-    return pkg_resources.resource_filename(
-        __name__, "logical_graphs/{0}".format(lg_name)
-    )  # @UndefinedVariable
-
-
 class TestScheduler(unittest.TestCase):
     def test_incremental_antichain(self):
         part = Partition(100, 8)
         G = part._dag
-        assert part.probe_max_dop(
-            1, 2, True, True, True
-        ) == DAGUtil.get_max_dop(part._dag)
+        assert part.probe_max_dop(1, 2, True, True, True) == DAGUtil.get_max_dop(
+            part._dag
+        )
         G.add_edge(2, 3)
-        assert part.probe_max_dop(
-            2, 3, False, True, True
-        ) == DAGUtil.get_max_dop(part._dag)
+        assert part.probe_max_dop(2, 3, False, True, True) == DAGUtil.get_max_dop(
+            part._dag
+        )
         # G.add_edge(1, 4)
         # assert(part.probe_max_dop(1, 4, False, True, True) == DAGUtil.get_max_dop(part._dag))
         # G.add_edge(2, 5)
@@ -70,7 +66,7 @@ class TestScheduler(unittest.TestCase):
         assert l == r, "l = {0}, r = {1}".format(l, r)
 
     def test_basic_scheduler(self):
-        fp = get_lg_fname("cont_img_mvp.graph")
+        fp = get_lg_fpath("logical_graphs", "cont_img_mvp.graph")
         lg = LG(fp)
         drop_list = lg.unroll_to_tpl()
         Scheduler(drop_list)
@@ -85,7 +81,7 @@ class TestScheduler(unittest.TestCase):
         mdp = 8
         ofa = 0.5
         for lgn, deadline in lgs.items():
-            fp = get_lg_fname(lgn)
+            fp = get_lg_fpath("logical_graphs", lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             mps = MinNumPartsScheduler(
@@ -102,7 +98,7 @@ class TestScheduler(unittest.TestCase):
         }
         mdp = 8
         for lgn, numparts in lgs.items():
-            fp = get_lg_fname(lgn)
+            fp = get_lg_fpath("logical_graphs", lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             mys = MySarkarScheduler(drop_list, max_dop=mdp)
@@ -129,7 +125,7 @@ class TestScheduler(unittest.TestCase):
         }
         mdp = 2
         for lgn, deadline in lgs.items():
-            fp = get_lg_fname(lgn)
+            fp = get_lg_fpath("logical_graphs", lgn)
             lg = LG(fp)
             drop_list = lg.unroll_to_tpl()
             psps01 = PSOScheduler(drop_list, max_dop=mdp)

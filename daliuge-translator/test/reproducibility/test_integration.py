@@ -27,9 +27,10 @@ import json
 import optparse
 import tempfile
 import unittest
-import pkg_resources
 import logging
+import daliuge_tests.reproGraphs as test_graphs
 
+from importlib.resources import files
 
 from dlg.common.reproducibility.constants import (
     ReproducibilityFlags,
@@ -48,10 +49,9 @@ logger = logging.getLogger("__name__")
 def _run_full_workflow(
     rmode: ReproducibilityFlags,
     workflow: str,
-    workflow_loc="./",
     scratch_loc="./",
 ):
-    workflow_loc = pkg_resources.resource_filename("test", workflow_loc)
+    workflow_loc = str(files(test_graphs))
     lgt = workflow_loc + "/" + workflow + ".graph"
     lgr = scratch_loc + "/" + workflow + "_" + str(rmode.value) + "LG.graph"
     pgs = scratch_loc + "/" + workflow + "_" + str(rmode.value) + "PGS.graph"
@@ -109,7 +109,6 @@ class IntegrationNothingTest(unittest.TestCase):
         _run_full_workflow(
             rmode=rmode,
             workflow=graph_name,
-            workflow_loc=graph_loc,
             scratch_loc=self.temp_out.name,
         )
 
@@ -172,7 +171,6 @@ class IntegrationHelloWorldTest(unittest.TestCase):
             _run_full_workflow(
                 rmode=rmode,
                 workflow=graph,
-                workflow_loc=self.graph_loc,
                 scratch_loc=self.temp_out.name,
             )
             if rmode == ReproducibilityFlags.ALL:
@@ -559,7 +557,6 @@ class IntegrationSplitRmode(unittest.TestCase):
         _run_full_workflow(
             rmode=rmode,
             workflow=graph_name,
-            workflow_loc=graph_loc,
             scratch_loc=self.temp_out.name,
         )
         pgr = (
@@ -573,7 +570,6 @@ class IntegrationSplitRmode(unittest.TestCase):
         _run_full_workflow(
             rmode=rmode,
             workflow=control_graph_name,
-            workflow_loc=graph_loc,
             scratch_loc=self.temp_out.name,
         )
         pgr_2 = (

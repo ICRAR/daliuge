@@ -28,7 +28,7 @@ Assumptions:
 
 import json
 import unittest
-
+import daliuge_tests.engine.topoGraphs as test_graphs
 try:
     from importlib.resources import files, as_file
 except ModuleNotFoundError:
@@ -62,7 +62,7 @@ _dummydrop = {
 
 
 def _init_graph(filename):
-    f = files(__package__) / f"{filename}"
+    f = files(test_graphs) / f"{filename}"
     with f.open('r') as file:
         lgt = json.load(file)
     for drop in lgt["nodeDataArray"]:
@@ -116,7 +116,7 @@ class ToposortTests(unittest.TestCase):
         Tests a single drop
         A
         """
-        lgt = _init_graph("topoGraphs/testSingle.graph")
+        lgt = _init_graph("testSingle.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt, ReproducibilityFlags.RERUN)[1]
@@ -130,7 +130,7 @@ class ToposortTests(unittest.TestCase):
              C
         B -->
         """
-        lgt = _init_graph("topoGraphs/testTwoStart.graph")
+        lgt = _init_graph("testTwoStart.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt, ReproducibilityFlags.RERUN)[1]
@@ -147,7 +147,7 @@ class ToposortTests(unittest.TestCase):
         A
           --> C
         """
-        lgt = _init_graph("topoGraphs/testTwoEnd.graph")
+        lgt = _init_graph("testTwoEnd.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt, ReproducibilityFlags.RERUN)[1]
@@ -162,7 +162,7 @@ class ToposortTests(unittest.TestCase):
         A --> B
         C --> D
         """
-        lgt = _init_graph("topoGraphs/testTwoLines.graph")
+        lgt = _init_graph("testTwoLines.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt, ReproducibilityFlags.RERUN)[1]
@@ -176,7 +176,7 @@ class ToposortTests(unittest.TestCase):
         """
         Tests an empty graph. Should fail gracefully.
         """
-        lgt = _init_graph("topoGraphs/testEmpty.graph")
+        lgt = _init_graph("testEmpty.graph")
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt, ReproducibilityFlags.RERUN)[1]

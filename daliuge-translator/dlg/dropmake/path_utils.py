@@ -25,22 +25,25 @@ try:
 except ModuleNotFoundError:
     from importlib_resources import files
 
-def get_lg_fpath(type, f_name):
+import daliuge_tests.dropmake as test_graphs
+
+
+def get_lg_fpath(test_type, f_name):
     """
     Get the test data file path based on the logical graph name and type of file we want
     :param type: str, type of test data (logical_graph, pickle, pg_spec) we are comparing
     :param f_name: name of the original logical graph created in Eagle
     :return: str, full path of the file
     """
-    f_dir = '../../test/dropmake/'
+    f_dir = f"{files(test_graphs)}/"
 
-    if type == 'pickle':
-        f_name = f_name.split('.')[0] + '.pkl'
-        f_dir += type
-    elif type == 'pg_spec':
-        f_name = f_name.split('.')[0] + '.json'
-        f_dir += type
+    if test_type == "pickle":
+        f_name = f_name.split(".")[0] + ".pkl"
+        f_dir += test_type
+    elif test_type == "pg_spec":
+        f_name = f_name.split(".")[0] + ".json"
+        f_dir += test_type
     else:
-        f_dir += 'logical_graphs'
+        f_dir += "logical_graphs"
 
-    return str(files(__package__) / f"{f_dir}/{f_name}")
+    return f"{f_dir}/{f_name}"
