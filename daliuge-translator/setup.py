@@ -121,6 +121,10 @@ install_requires = [
     "uvicorn==0.18",
     "wheel",
 ]
+extra_requires = {
+    "test": ["pytest",
+             "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@LIU-407"]
+}
 
 setup(
     name="daliuge-translator",
@@ -132,6 +136,7 @@ setup(
     url="https://github.com/ICRAR/daliuge",
     license="LGPLv2+",
     install_requires=install_requires,
+    extras_require=extra_requires,
     packages=find_packages(),
     package_data={"dlg": src_files},
     entry_points={"dlg.tool_commands": ["translator=dlg.translator.tool_commands"]},

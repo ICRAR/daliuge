@@ -167,7 +167,7 @@ extra_requires = {
     "MPI": ["mpi4py"],
     # AWS storage types
     "aws": ["boto3"],
-    "test": ["pylint",
+    "test": ["pytest",
              "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@LIU-407"]
 }
 
