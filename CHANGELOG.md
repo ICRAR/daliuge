@@ -1,6 +1,11 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+## v4.7.1
+
+- [Changed] Modified translator modules to make it easier to refactor; test cases reciprocally updated: https://github.com/ICRAR/daliuge/pull/278
+- [Fixed] Fixed `make test` for fresh install, and update ENV_PREFIX, which was relative: https://github.com/ICRAR/daliuge/pull/282
+
 ## v4.7.0
 
 - [Added] Support "encoding" attribute in LG schema: https://github.com/ICRAR/daliuge/pull/279, https://github.com/ICRAR/daliuge/pull/284
