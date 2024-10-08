@@ -1,6 +1,10 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+## v4.7.2
+
+- [Changed] Redirected palette generation from EAGLE_test_repo to EAGLE-graph-repo: https://github.com/ICRAR/daliuge/pull/286
+
 ## v4.7.1
 
 - [Changed] Modified translator modules to make it easier to refactor; test cases reciprocally updated: https://github.com/ICRAR/daliuge/pull/278
