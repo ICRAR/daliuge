@@ -251,7 +251,7 @@ def convert_mkn(lgo):
             node_kn["name"] = node_kn["name"] + "_OutApp"
         else:
             node_kn["name"] = opan
-        new_id = uuid.uuid4()
+        new_id = str(uuid.uuid4())
         keyset.add(new_id)
         node_kn["id"] = new_id
         node_kn["parentId"] = mkn_key
@@ -285,7 +285,7 @@ def convert_mkn(lgo):
         node_split_n["category"] = ConstructTypes.SCATTER
         node_split_n["categoryType"] = ConstructTypes.SCATTER
         node_split_n["name"] = "Nothing"
-        new_id = uuid.uuid4()
+        new_id = str(uuid.uuid4())
         keyset.add(new_id)
         node_split_n["id"] = new_id
         node_split_n["parentId"] = mkn_key
@@ -393,7 +393,7 @@ def convert_mkn_all_share_m(lgo):
 
         node_kn["category"] = ConstructTypes.GATHER
         node_kn["name"] = node_kn["name"] + "_OutApp"
-        new_id = uuid.uuid4()
+        new_id = str(uuid.uuid4())
         keyset.add(new_id)
         node_kn["id"] = new_id
         node_kn["application"] = node_kn["outputApplicationName"]
@@ -492,7 +492,7 @@ def convert_construct(lgo):
         app_node = _create_from_node(node, node[has_app], app_args)
 
         # step 2
-        new_id = uuid.uuid4()
+        new_id = str(uuid.uuid4())
         node["id"] = new_id
         keyset.add(new_id)
         old_new_grpk_map[app_node["id"]] = new_id
@@ -504,7 +504,7 @@ def convert_construct(lgo):
 
             # extra step to deal with "internal output" from within Gather
             # dup_app_node_k = min(keyset) - 1
-            dup_app_node_k = uuid.uuid4()
+            dup_app_node_k = str(uuid.uuid4())
             keyset.add(dup_app_node_k)
             dup_app_args = {
                 "id": dup_app_node_k,
@@ -865,7 +865,7 @@ def convert_subgraphs(lgo: dict) -> dict:
         new_nodes.extend([app_node, out_node])
 
         # Update group mappings and bump key
-        new_id = uuid.uuid4()
+        new_id = str(uuid.uuid4())
         node["id"] = new_id
         keyset.add(new_id)
         old_new_grpk_map[app_node["id"]] = new_id
@@ -883,7 +883,7 @@ def convert_subgraphs(lgo: dict) -> dict:
                                                                         lgo)
 
             # Create SubGraph as InputData to the SubGraph Input App
-            new_id = uuid.uuid4()
+            new_id = str(uuid.uuid4())
             keyset.add(new_id)
             subgraph = {
                 "nodeDataArray": list(subgraphNodes.values()),
@@ -1008,8 +1008,8 @@ def load_lg(f):
     if isinstance(f, str):
         if not os.path.exists(f):
             raise GraphException("Logical graph {0} not found".format(f))
-        with open(f) as f:
-            lg = json.load(f)
+        with open(f) as fp:
+            lg = json.load(fp)
     elif hasattr(f, "read"):
         lg = json.load(f)
     else:
