@@ -38,7 +38,8 @@ from dlg.manager.session import SessionStates
 from dlg.manager.manager_data import Node
 
 from dlg.testutils import ManagerStarter
-from test.dlg_engine_testutils import RESTTestUtils, DROPManagerUtils
+from test.dlg_engine_testutils import (RESTTestUtils, DROPManagerUtils,
+                                       TerminatingTestHelper)
 
 hostname = "localhost"
 dim_host = f"{hostname}:{ISLAND_DEFAULT_REST_PORT}"
@@ -345,7 +346,7 @@ class TestREST(LocalDimStarter, unittest.TestCase):
         args = ["--port", str(dimPort), "-N", f"{hostname}:{nmPort}", "-qqq"]
         dimProcess = tool.start_process("dim", args)
 
-        with RESTTestUtils.terminating(dimProcess, timeout=10):
+        with TerminatingTestHelper(dimProcess, timeout=10):
             # Wait until the REST server becomes alive
             self.assertTrue(
                 utils.portIsOpen("localhost", dimPort, timeout=10),

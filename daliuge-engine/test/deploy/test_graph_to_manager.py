@@ -31,6 +31,11 @@ from test.dlg_engine_testutils import NMTestsMixIn, DROPManagerUtils
 from dlg.testutils import ManagerStarter
 
 
+def create_full_hostname(server_info, event_port, rpc_port):
+
+    return (f"{server_info.server._server.listen}:"
+            f"{server_info.server._server.port}:{event_port}:{rpc_port}")
+
 class GraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter):
     def test_input_in_remote_nm(self):
         """
@@ -61,14 +66,17 @@ class GraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter):
             num_islands=1,
             par_label="Partition",
         )
-        _, events_port, rpc_port = DROPManagerUtils.nm_conninfo(1)
-        ms1_info = self.start_nm_in_thread(port=8085, events_port=events_port, rpc_port=rpc_port)
-        _, events_port, rpc_port = DROPManagerUtils.nm_conninfo(2)
-        ms2_info = self.start_nm_in_thread(port=8086, events_port=events_port, rpc_port=rpc_port)
-        host_names = [
-           f"{ms2_info.server._server.listen}:{ms2_info.server._server.port}",
-             f"{ms1_info.server._server.listen}:{ms1_info.server._server.port}"
-        ]
+        events_port, rpc_port = (5566, 6688)
+        ms1_info = self.start_nm_in_thread(port=8000, events_port=5566, rpc_port=6688)
+        ms1_hostname = create_full_hostname(ms1_info, events_port, rpc_port)
+
+        events_port, rpc_port = (5555, 6666)
+        ms2_info = self.start_nm_in_thread(port=8999,
+                                           events_port=constants.NODE_DEFAULT_EVENTS_PORT,
+                                           rpc_port=constants.NODE_DEFAULT_RPC_PORT)
+        ms2_hostname = create_full_hostname(ms2_info, events_port, rpc_port)
+
+        host_names = [ms1_hostname, ms2_hostname]
         dim = DataIslandManager(host_names)
         dim_host = f"localhost:{constants.NODE_DEFAULT_REST_PORT}"
         pg_spec = pgt.to_pg_spec([dim_host] + host_names, ret_str=False)
@@ -77,8 +85,8 @@ class GraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter):
         dim.addGraphSpec("TestSession", pg_spec)
         dim.deploySession("TestSession", completedDrops=roots)
 
-        time.sleep(10)
         from dlg.ddap_protocol import DROPStates
+        time.sleep(20)
         for dropstatus in dim.getGraphStatus("TestSession").values():
             self.assertEqual(DROPStates.COMPLETED, dropstatus['status'])
         ms1_info.stop()

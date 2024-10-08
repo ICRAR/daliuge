@@ -26,9 +26,8 @@ import unittest
 from dlg.common import dropdict, tool
 from dlg.manager import client
 from dlg.utils import terminate_or_kill
-from test.manager import testutils
 
-from test.dlg_engine_testutils import DROPManagerUtils
+from test.dlg_engine_testutils import DROPManagerUtils, TerminatingTestHelper
 
 logger = logging.getLogger(__name__)
 hostname = "localhost"
@@ -122,7 +121,7 @@ class TestBigGraph(unittest.TestCase):
         c = client.NodeManagerClient(port=restPort)
         dimProcess = tool.start_process("dim", args)
 
-        with testutils.terminating(dimProcess, timeout=timeout):
+        with TerminatingTestHelper(dimProcess, timeout=timeout):
             c.create_session(sessionId)
             logger.info("Appending graph")
             c.append_graph(sessionId, graph)

@@ -35,6 +35,7 @@ from dlg.common import dropdict
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.manager.node_manager import NodeManager
+from dlg.manager.manager_data import Node
 
 from test.dlg_engine_testconstants import DEFAULT_TEST_REPRO, DEFAULT_TEST_GRAPH_REPRO
 
@@ -97,8 +98,12 @@ class TerminatingTestHelper(object):
 class DROPManagerUtils:
 
     @staticmethod
-    def nm_conninfo(n):
-        return "localhost", 5553 + n, 6666 + n
+    def nm_conninfo(n, return_tuple=False):
+        if return_tuple:
+            return "localhost", 5553 + n, 6666 + n
+        else:
+            return Node(f"localhost:{8000}:{5553+n}:{6666+n}")
+
 
     @staticmethod
     def add_test_reprodata(graph: list):
@@ -111,18 +116,20 @@ class DROPManagerUtils:
     def quickDeploy(nm, sessionId, graphSpec, node_subscriptions: dict = None):
         if not node_subscriptions:
             node_subscriptions = {}
+        nm.createSession(sessionId)
         nm.addGraphSpec(sessionId, graphSpec)
         nm.add_node_subscriptions(sessionId, node_subscriptions)
         nm.deploySession(sessionId)
 
-class NMTestsMixIn(unittest.TestCase):
+class NMTestsMixIn:
     def __init__(self, *args, **kwargs):
         super(NMTestsMixIn, self).__init__(*args, **kwargs)
         self._dms = {}
         self.use_processes = False
 
     def _start_dm(self, threads=0, **kwargs):
-        host, events_port, rpc_port = DROPManagerUtils.nm_conninfo(len(self._dms))
+        host, events_port, rpc_port = DROPManagerUtils.nm_conninfo(len(self._dms),
+                                                                   return_tuple=True)
 
         nm = NodeManager(
             host=host,

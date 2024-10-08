@@ -65,8 +65,9 @@ class ManagerStarter(object):
                            events_port=constants.NODE_DEFAULT_EVENTS_PORT,
                            rpc_port=constants.NODE_DEFAULT_RPC_PORT):
         return self._start_manager_in_thread(
-            port, NodeManager, NMRestServer, False, events_port, rpc_port)
+            port, NodeManager, NMRestServer, False,events_port, rpc_port)
 
+            # port, NodeManager, NMRestServer, False, rpc_port, events_port)
     def start_dim_in_thread(
         self,
         nm_hosts: list[str] = None,
