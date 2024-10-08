@@ -20,10 +20,16 @@
 #    MA 02111-1307  USA
 #
 import time
+import unittest
+import pytest
 
 from importlib.resources import files
 from dlg import common
 from dlg import constants
+
+# Note this test will only run with a full installation of DALiuGE.
+pexpect = pytest.importorskip("dlg.dropmake.web.translator_utils")
+
 from dlg.dropmake.web.translator_utils import (unroll_and_partition_with_params,
                                                prepare_lgt)
 from dlg.manager.composite_manager import DataIslandManager
@@ -36,7 +42,7 @@ def create_full_hostname(server_info, event_port, rpc_port):
     return (f"{server_info.server._server.listen}:"
             f"{server_info.server._server.port}:{event_port}:{rpc_port}")
 
-class GraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter):
+class GraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter, unittest.TestCase):
     def test_input_in_remote_nm(self):
         """
         A test similar in spirit to TestDM.test_runGraphOneDOPerDom, but where
@@ -86,7 +92,7 @@ class GraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter):
         dim.deploySession("TestSession", completedDrops=roots)
 
         from dlg.ddap_protocol import DROPStates
-        time.sleep(20)
+        time.sleep(30)
         for dropstatus in dim.getGraphStatus("TestSession").values():
             self.assertEqual(DROPStates.COMPLETED, dropstatus['status'])
         ms1_info.stop()
