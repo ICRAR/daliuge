@@ -47,11 +47,11 @@ jobs:
           EAGLE_UPDATER_TOKEN: ${{ secrets.EAGLE_UPDATER_TOKEN }}
           PALETTE_TOKEN: ${{ secrets.PALETTE_TOKEN }}
         run: |
-          git clone https://$PALETTE_TOKEN@github.com/ICRAR/EAGLE_test_repo
-          mkdir -p EAGLE_test_repo/$PROJECT_NAME
-          mv $OUTPUT_FILENAME.palette EAGLE_test_repo/$PROJECT_NAME/
-          mv $OUTPUT_FILENAME-template.palette EAGLE_test_repo/$PROJECT_NAME/
-          cd EAGLE_test_repo
+          git clone https://$PALETTE_TOKEN@github.com/ICRAR/EAGLE-graph-repo
+          mkdir -p EAGLE-graph-repo/$PROJECT_NAME
+          mv $OUTPUT_FILENAME.palette EAGLE-graph-repo/$PROJECT_NAME/
+          mv $OUTPUT_FILENAME-template.palette EAGLE-graph-repo/$PROJECT_NAME/
+          cd EAGLE-graph-repo
           git add *
           git diff-index --quiet HEAD || git commit -m "Automatically generated DALiuGE palette (branch $GITHUB_REF_NAME, commit $PROJECT_VERSION)"
           git push
