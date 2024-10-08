@@ -28,15 +28,16 @@ from asyncio.log import logger
 
 import pkg_resources
 
-from dlg import droputils
-from dlg import utils
+from dlg import utils, droputils
+from dlg.testutils import ManagerStarter
 from dlg.common import tool
 from dlg.constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from dlg.ddap_protocol import DROPStates
 from dlg.manager.composite_manager import DataIslandManager
 from dlg.manager.session import SessionStates
-from dlg.testutils import ManagerStarter
-from test.manager import testutils
+from dlg.manager.manager_data import Node
+
+from . import testutils
 
 hostname = "localhost"
 dim_host = f"{hostname}:{ISLAND_DEFAULT_REST_PORT}"
@@ -210,8 +211,8 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         def assertSessionStatus(sessionId, status):
             sessionStatus = self.dim.getSessionStatus(sessionId)
             self.assertEqual(1, len(sessionStatus))
-            self.assertIn(nm_host, sessionStatus)
-            self.assertEqual(status, sessionStatus[nm_host])
+            self.assertIn(str(Node(nm_host)), sessionStatus)
+            self.assertEqual(status, sessionStatus[Node(nm_host)])
             self.assertEqual(status, self.dm.getSessionStatus(sessionId))
 
         sessionId = "lala"
@@ -379,7 +380,7 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             self.assertEqual(0, len(sessions))
             dimStatus = testutils.get(self, "", dimPort)
             self.assertEqual(1, len(dimStatus["hosts"]))
-            self.assertEqual(f"{hostname}:{nmPort}", dimStatus["hosts"][0])
+            self.assertEqual(Node(f"{hostname}:{nmPort}"), dimStatus["hosts"][0])
             self.assertEqual(0, len(dimStatus["sessionIds"]))
 
             # Create a session and check it exists
@@ -389,7 +390,7 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             sessions = testutils.get(self, "/sessions", dimPort)
             self.assertEqual(1, len(sessions))
             self.assertEqual(sessionId, sessions[0]["sessionId"])
-            nm_name = f"{hostname}:{nmPort}"
+            nm_name = str(Node(f"{hostname}:{nmPort}"))
             self.assertDictEqual(
                 {nm_name: SessionStates.PRISTINE}, sessions[0]["status"]
             )

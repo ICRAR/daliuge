@@ -122,6 +122,8 @@ install_requires = [
     "wheel",
 ]
 
+tests_requires = {"test": ['pytest']}
+
 setup(
     name="daliuge-translator",
     version=get_version_info()[0],
@@ -132,6 +134,7 @@ setup(
     url="https://github.com/ICRAR/daliuge",
     license="LGPLv2+",
     install_requires=install_requires,
+    extras_require=tests_requires,
     packages=find_packages(),
     package_data={"dlg": src_files},
     entry_points={"dlg.tool_commands": ["translator=dlg.translator.tool_commands"]},

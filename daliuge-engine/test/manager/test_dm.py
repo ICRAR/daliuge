@@ -33,6 +33,7 @@ from dlg.common import dropdict
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.manager.node_manager import NodeManager
+from dlg.manager.manager_data import Node
 
 try:
     from crc32c import crc32c  # @UnusedImport
@@ -107,8 +108,11 @@ class ErroneousApp(BarrierAppDROP):
         raise Exception("Sorry, we always fail")
 
 
-def nm_conninfo(n):
-    return "localhost", 5553 + n, 6666 + n
+def nm_conninfo(n, return_tuple=False):
+    if return_tuple:
+        return "localhost", 5553 + n, 6666 + n
+    else:
+        return Node(f"localhost:{8000}:{5553+n}:{6666+n}")
 
 
 class NMTestsMixIn(object):
@@ -118,7 +122,7 @@ class NMTestsMixIn(object):
         self.use_processes = False
 
     def _start_dm(self, threads=0, **kwargs):
-        host, events_port, rpc_port = nm_conninfo(len(self._dms))
+        host, events_port, rpc_port = nm_conninfo(len(self._dms), return_tuple=True)
         nm = NodeManager(
             host=host,
             events_port=events_port,

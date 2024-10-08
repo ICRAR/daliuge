@@ -35,6 +35,8 @@ import threading
 import gevent
 import zerorpc
 
+from dlg.manager.manager_data import Node
+
 from . import utils
 
 logger = logging.getLogger(__name__)
@@ -55,7 +57,7 @@ class RPCClientBase(RPCObject):
 
     def get_drop_attribute(self, hostname, port, session_id, uid, name):
 
-        hostname = hostname.split(":")[0]
+        # hostname = hostname.split(":")[0]
 
         logger.debug(
             "Getting attribute %s for drop %s of session %s at %s:%d",
@@ -65,7 +67,7 @@ class RPCClientBase(RPCObject):
             hostname,
             port,
         )
-        hostname = hostname.split(":")[0]
+        # hostname = hostname.split(":")[0]
 
         client, closer = self.get_rpc_client(hostname, port)
 
@@ -140,8 +142,11 @@ class ZeroRPCClient(RPCClientBase):
 
     def get_client_for_endpoint(self, host, port):
 
-        host = host.split(":")[0]
-        endpoint = (host, port)
+        # host = host.split(":")[0]
+        if isinstance(host, Node):
+            endpoint = (host.host, port)
+        else:
+            endpoint = (host, port)
 
         with self._zrpcclient_acquisition_lock:
             if endpoint in self._zrpcclients:
@@ -183,7 +188,8 @@ class ZeroRPCClient(RPCClientBase):
             return client
 
     def run_zrpcclient(self, host, port, req_queue):
-        host = host.split(":")[0]
+        if isinstance(host, Node):
+            host = host.host # split(":")[0]
         client = zerorpc.Client("tcp://%s:%d" % (host, port), context=self._context)
 
         forwarder = gevent.spawn(self.forward_requests, req_queue, client)
