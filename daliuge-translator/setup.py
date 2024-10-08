@@ -46,7 +46,8 @@ try:
 except PackageNotFoundError:
     logger.warning(
         "WARNING: daliuge-translator requires daliuge-common to be installed first. "
-        "Stopping installation...")
+        "Stopping installation..."
+    )
     sys.exit(1)
 RELEASE = True
 VERSION_FILE = "dlg/translator/version.py"
@@ -122,14 +123,16 @@ install_requires = [
     "wheel",
 ]
 extra_requires = {
-    "test": ["pytest",
-             "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@LIU-407"]
+    "test": [
+        "pytest",
+        "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo",
+    ]
 }
 
 setup(
     name="daliuge-translator",
     version=get_version_info()[0],
-    description="Data Activated \uF9CA (flow) Graph Engine - Graph Translation",
+    description="Data Activated \uf9ca (flow) Graph Engine - Graph Translation",
     long_description="The SKA-SDK prototype for the Execution Framework component",
     author="ICRAR DIA Group",
     author_email="rtobar@icrar.org",
@@ -139,6 +142,7 @@ setup(
     extras_require=extra_requires,
     packages=find_packages(),
     package_data={"dlg": src_files},
-    entry_points={"dlg.tool_commands": ["translator=dlg.translator.tool_commands"]},
+    entry_points={"dlg.tool_commands": [
+        "translator=dlg.translator.tool_commands"]},
     test_suite="test",
 )

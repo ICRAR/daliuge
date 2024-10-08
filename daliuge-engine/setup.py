@@ -167,14 +167,16 @@ extra_requires = {
     "MPI": ["mpi4py"],
     # AWS storage types
     "aws": ["boto3"],
-    "test": ["pytest",
-             "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@LIU-407"]
+    "test": [
+        "pytest",
+        "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo",
+    ],
 }
 
 setup(
     name="daliuge-engine",
     version=get_version_info()[0],
-    description="Data Activated \uF9CA (flow) Graph Engine - Execution Engine",
+    description="Data Activated \uf9ca (flow) Graph Engine - Execution Engine",
     long_description="""
         The element of the DALiuGE system executing the workflows. This replaces
         the former 'runtime' package (up to version 1.0). For more information 
