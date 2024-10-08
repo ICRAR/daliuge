@@ -43,11 +43,11 @@ jobs:
 
       - name: Install daliuge-translator
         if: ${{ matrix.translator == 'yes' }}
-        run: pip install -e daliuge-translator/
+        run: pip install -e "daliuge-translator/[test]"
 
       - name: Install daliuge-engine
         if: ${{ matrix.engine == 'yes' }}
-        run: pip install -e daliuge-engine/
+        run: pip install -e "daliuge-engine/[test]"
 
       - name: Run daliuge-translator tests
         if: ${{ matrix.translator == 'yes' }}

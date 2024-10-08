@@ -24,12 +24,11 @@ import logging
 import os
 import time
 import unittest
-import pkg_resources
 import pytest
+import daliuge_tests.engine.graphs as test_graphs
 
 from pathlib import Path
-
-# from dlg.runtime import version  # Imported to setup DlgLogger
+from importlib.resources import files
 
 from dlg.utils import getDlgWorkDir
 from dlg.apps.app_base import BarrierAppDROP
@@ -170,11 +169,8 @@ class TestSession(unittest.TestCase):
             # )  # missing X DROP
 
     def test_addGraphSpec_namedPorts(self):
-        with pkg_resources.resource_stream(
-                "test", "graphs/funcTestPG_namedPorts.graph"
-        ) as f:  # @UndefinedVariable
-            graphSpec = json.load(f)
-        # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
+        with (files(test_graphs) / "funcTestPG_namedPorts.graph").open() as f:
+           graphSpec = json.load(f)
         with Session("1") as s:
             s.addGraphSpec(graphSpec)
             s.deploy()

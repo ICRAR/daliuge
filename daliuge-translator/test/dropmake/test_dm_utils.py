@@ -28,23 +28,24 @@ import json
 import copy
 import unittest
 from dlg.dropmake.dm_utils import convert_construct, convert_subgraphs
+import daliuge_tests.dropmake as test_graphs
 
 try:
     from importlib.resources import files, as_file
 except (ImportError, ModuleNotFoundError):
     from importlib_resources import files
 
-NODES = 'nodeDataArray'
-LINKS = 'linkDataArray'
+NODES = "nodeDataArray"
+LINKS = "linkDataArray"
 
 
 def get_lg_fname(lg_name):
-    return str(files(__package__) / f"logical_graphs/{lg_name}")
+    return str(files(test_graphs) / f"logical_graphs/{lg_name}")
 
 
 def getNodeFromKey(lgo, key):
     for node in lgo[NODES]:
-        if node['id'] == key:
+        if node["id"] == key:
             return node
     return None
 
@@ -62,12 +63,12 @@ def getConstructNodeFromCategory(lgo, category):
     :return: dict, node of the Logical Graph
     """
     for node in lgo[NODES]:
-        if node['category'] == category and node['categoryType'] == 'Construct':
+        if node["category"] == category and node["categoryType"] == "Construct":
             return node
     return None
 
-class TestConvertSubGraphConstruct(unittest.TestCase):
 
+class TestConvertSubGraphConstruct(unittest.TestCase):
     def setUp(self):
         """
         Open a logical graph that we want to test using an approach similar to that
@@ -81,44 +82,44 @@ class TestConvertSubGraphConstruct(unittest.TestCase):
         :return:
         """
         for node in lgo[NODES]:
-            if node['category'] == 'SubGraph' and node['categoryType'] == 'Construct':
+            if node["category"] == "SubGraph" and node["categoryType"] == "Construct":
                 return node
         return None
 
     def test_convert_subgraphs_noinputapp(self):
-
         fname = get_lg_fname("ExampleSubgraphNoInput.graph")
-        with open(fname, 'r') as fp:
+        with open(fname, "r") as fp:
             lg = json.load(fp)
         previous_num_nodes = len(lg[NODES])
         previous_num_links = len(lg[LINKS])
         sg_node = self.getSubgraphNode(lg)
-        self.assertFalse('hasInputApp' in sg_node)
+        self.assertFalse("hasInputApp" in sg_node)
         convert_subgraphs(lg)
-        self.assertTrue('hasInputApp' in sg_node)
-        self.assertFalse(sg_node['hasInputApp'])
+        self.assertTrue("hasInputApp" in sg_node)
+        self.assertFalse(sg_node["hasInputApp"])
         self.assertEqual(previous_num_nodes, len(lg[NODES]))
         self.assertEqual(previous_num_links, len(lg[LINKS]))
 
     def test_convert_subgraphs_withinputapp(self):
         fname = get_lg_fname("ExampleSubgraphSimple.graph")
-        with open(fname, 'r') as fp:
+        with open(fname, "r") as fp:
             lg = json.load(fp)
         sg_node = self.getSubgraphNode(lg)
-        self.assertFalse('hasInputApp' in sg_node)
+        self.assertFalse("hasInputApp" in sg_node)
         self.assertEqual(6, len(lg[LINKS]))
-        nSubGraphConstruct = getConstructNodeFromCategory(lg, 'SubGraph')
-        nSubGraphKey = nSubGraphConstruct['id']
+        nSubGraphConstruct = getConstructNodeFromCategory(lg, "SubGraph")
+        nSubGraphKey = nSubGraphConstruct["id"]
         convert_subgraphs(lg)
-        self.assertTrue('hasInputApp' in sg_node)
-        self.assertTrue(sg_node['hasInputApp'])
+        self.assertTrue("hasInputApp" in sg_node)
+        self.assertTrue(sg_node["hasInputApp"])
         nSubGraphApp = getNodeFromKey(lg, nSubGraphKey)
-        self.assertEqual(nSubGraphKey, nSubGraphApp['id'])
-        self.assertEqual("PythonApp", nSubGraphApp['category'])
+        self.assertEqual(nSubGraphKey, nSubGraphApp["id"])
+        self.assertEqual("PythonApp", nSubGraphApp["category"])
         # We remove links from the Subgraph children
         self.assertEqual(4, len(lg[LINKS]))
-        subgraphDataNode = getNodeFromKey(lg, "bb9b78bc-b725-4b61-a12a-413bdcef7690" )
-        self.assertIsNotNone(subgraphDataNode['subgraph'])
+        subgraphDataNode = getNodeFromKey(
+            lg, "bb9b78bc-b725-4b61-a12a-413bdcef7690")
+        self.assertIsNotNone(subgraphDataNode["subgraph"])
 
 
 class TestConvertScatterGatherConstruct(unittest.TestCase):
@@ -141,15 +142,15 @@ class TestConvertScatterGatherConstruct(unittest.TestCase):
         We expect the keys to transition as well.
         """
         fname = get_lg_fname("SuperBasicScatterGather.graph")
-        with open(fname, 'r') as fp:
+        with open(fname, "r") as fp:
             lg = json.load(fp)
         self.assertEqual(3, len(lg[NODES]))
         self.assertEqual(2, len(lg[LINKS]))
 
-        nScatterConstruct = getConstructNodeFromCategory(lg, 'Scatter')
-        nScatterKey = nScatterConstruct['id']
-        nGatherConstruct = getConstructNodeFromCategory(lg, 'Gather')
-        nGatherKey = nGatherConstruct['id']
+        nScatterConstruct = getConstructNodeFromCategory(lg, "Scatter")
+        nScatterKey = nScatterConstruct["id"]
+        nGatherConstruct = getConstructNodeFromCategory(lg, "Gather")
+        nGatherKey = nGatherConstruct["id"]
 
         convert_construct(lg)
         self.assertEqual(5, len(lg[NODES]))
@@ -157,8 +158,8 @@ class TestConvertScatterGatherConstruct(unittest.TestCase):
 
         # Confirm that the transition from construct-to-app has occured.
         nScatterApp = getNodeFromKey(lg, nScatterKey)
-        self.assertEqual(nScatterKey, nScatterApp['id'])
-        self.assertEqual("PythonApp", nScatterApp['category'])
+        self.assertEqual(nScatterKey, nScatterApp["id"])
+        self.assertEqual("PythonApp", nScatterApp["category"])
         nGatherApp = getNodeFromKey(lg, nGatherKey)
-        self.assertEqual(nGatherKey, nGatherApp['id'])
-        self.assertEqual("PythonApp", nGatherApp['category'])
+        self.assertEqual(nGatherKey, nGatherApp["id"])
+        self.assertEqual("PythonApp", nGatherApp["category"])
