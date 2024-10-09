@@ -28,8 +28,7 @@ import subprocess
 import sys
 import time
 
-import pkg_resources
-
+from importlib.metadata import entry_points
 
 logger = logging.getLogger(__name__)
 
@@ -117,9 +116,8 @@ def version(parser, args):
 
 cmdwrap("version", "Reports the DALiuGE version and exits", version)
 
-
 def _load_commands():
-    for entry_point in pkg_resources.iter_entry_points("dlg.tool_commands"):
+    for entry_point in entry_points(group="dlg.tool_commands"):
         entry_point.load().register_commands()
 
 

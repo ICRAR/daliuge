@@ -145,7 +145,7 @@ install_requires = [
     "paramiko",
     "psutil",
     "python-daemon",
-    "pyzmq == 25.1.0",
+    "pyzmq == 25.1.1",  # Python 25.1.1 is minimal install that supports Python 3.12
     "scp",
     "pyext @ git+https://github.com/itea1001/PyExt",
     "pyyaml",

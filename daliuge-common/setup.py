@@ -63,8 +63,8 @@ def do_versioning():
 install_requires = [
     "gputil>=1.4.0",
     "merklelib@git+https://github.com/pritchardn/merklelib",
-    "pyzmq==25.1.0",
-    "pydantic==1.10.13",
+    "pyzmq==25.1.1",
+    "pydantic>=2.5",
     "boto3",
     "phonenumbers",
     "mailchecker",
