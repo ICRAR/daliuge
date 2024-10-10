@@ -28,13 +28,9 @@ import json
 import optparse
 import tempfile
 import unittest
-<<<<<<< HEAD
-import pkg_resources
-=======
 import daliuge_tests.reproGraphs as test_graphs
 
 from importlib.resources import files
->>>>>>> master
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 from dlg.common.reproducibility.reproducibility import (
@@ -48,11 +44,7 @@ from dlg.translator.tool_commands import dlg_fill, dlg_partition, dlg_map, dlg_u
 def _run_full_workflow(
     rmode: ReproducibilityFlags, workflow: str, workflow_loc="./", scratch_loc="./"
 ):
-<<<<<<< HEAD
-    workflow_loc = pkg_resources.resource_filename("test", workflow_loc)
-=======
     workflow_loc = str(files(test_graphs))
->>>>>>> master
     lgt = workflow_loc + "/" + workflow + ".graph"
     lgr = scratch_loc + "/" + workflow + "LG.graph"
     pgs = scratch_loc + "/" + workflow + "PGS.graph"
@@ -81,12 +73,8 @@ def _read_graph(filename):
 
 
 def _init_graph(filename):
-<<<<<<< HEAD
-    with pkg_resources.resource_stream("test", filename) as file:
-=======
     workflow_loc = files(test_graphs)
     with (workflow_loc / filename).open() as file:
->>>>>>> master
         lgt = json.load(file)
     for drop in lgt["nodeDataArray"]:
         drop["reprodata"] = {}
@@ -104,28 +92,23 @@ class ScatterTest(unittest.TestCase):
 
     temp_out = tempfile.TemporaryDirectory("out")
 
-<<<<<<< HEAD
-=======
-    expected_visited = ['f0e6ea83-41ee-404a-a05c-b1cffdaf67f1',
-                        'b4c9db40-0a0e-4b8e-9c57-f10956a699ca',
-                        'd04d9bb4-8591-4025-9c97-eaecf10a5328',
-                        'acf00b72-6ae5-487f-ba9f-747c34539208',
-                        '37c31478-27e3-4474-9406-1d6326fa5c0c',
-                        '05a70a29-60f6-4e65-9c66-f818a4eb2ccd',
-                        '8895cb0d-7bc3-47a7-97b5-a48e06c7507c']
+    expected_visited = [
+        "f0e6ea83-41ee-404a-a05c-b1cffdaf67f1",
+        "b4c9db40-0a0e-4b8e-9c57-f10956a699ca",
+        "d04d9bb4-8591-4025-9c97-eaecf10a5328",
+        "acf00b72-6ae5-487f-ba9f-747c34539208",
+        "37c31478-27e3-4474-9406-1d6326fa5c0c",
+        "05a70a29-60f6-4e65-9c66-f818a4eb2ccd",
+        "8895cb0d-7bc3-47a7-97b5-a48e06c7507c",
+    ]
 
->>>>>>> master
     def test_lg_scatter_rerun(self):
         """
         Tests how rerunning treats such a graph.
         Expected behaviour should be the same as any other type of graph - they are all logical
         components
         """
-<<<<<<< HEAD
-        lgt = _init_graph("reproducibility/reproGraphs/simpleScatter.graph")
-=======
         lgt = _init_graph("simpleScatter.graph")
->>>>>>> master
         init_lgt_repro_data(lgt, rmode=ReproducibilityFlags.RERUN.value)
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt, ReproducibilityFlags.RERUN)[1]
@@ -134,19 +117,25 @@ class ScatterTest(unittest.TestCase):
         scatter_inter_drop = lgt["nodeDataArray"][3]
         # Checks that the input app drop is the parent of the main application
         self.assertEqual(
-            list(app_drop["reprodata"][ReproducibilityFlags.RERUN.name]["lg_parenthashes"].values())[0],
-            scatter_inter_drop["reprodata"][ReproducibilityFlags.RERUN.name]["lg_blockhash"],
+            list(
+                app_drop["reprodata"][ReproducibilityFlags.RERUN.name][
+                    "lg_parenthashes"
+                ].values()
+            )[0],
+            scatter_inter_drop["reprodata"][ReproducibilityFlags.RERUN.name][
+                "lg_blockhash"
+            ],
         )
         # Checks that the scatter drop is the parent of the input drop
         self.assertEqual(
-            list(scatter_inter_drop["reprodata"][ReproducibilityFlags.RERUN.name]["lg_parenthashes"].values())[0],
+            list(
+                scatter_inter_drop["reprodata"][ReproducibilityFlags.RERUN.name][
+                    "lg_parenthashes"
+                ].values()
+            )[0],
             scatter_drop["reprodata"][ReproducibilityFlags.RERUN.name]["lg_blockhash"],
         )
-<<<<<<< HEAD
-        self.assertEqual(visited, [-1, -2, -5, -3, -6, -7, -9])
-=======
         self.assertEqual(visited, self.expected_visited)
->>>>>>> master
 
     def test_pg_scatter_rerun(self):
         """
@@ -182,6 +171,10 @@ class ScatterTest(unittest.TestCase):
         self.assertEqual(len(no_scatter_graph), 7)
         # Their signatures should in principal be identicle
         self.assertEqual(
-            scatter_graph[-1]["reprodata"][ReproducibilityFlags.RERUN.name]["pg_blockhash"],
-            no_scatter_graph[-1]["reprodata"][ReproducibilityFlags.RERUN.name]["pg_blockhash"],
+            scatter_graph[-1]["reprodata"][ReproducibilityFlags.RERUN.name][
+                "pg_blockhash"
+            ],
+            no_scatter_graph[-1]["reprodata"][ReproducibilityFlags.RERUN.name][
+                "pg_blockhash"
+            ],
         )

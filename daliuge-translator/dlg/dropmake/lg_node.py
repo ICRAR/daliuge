@@ -54,11 +54,7 @@ class LGNode:
         done_dict: LGNode that have been processed (Dict)
         ssid:   session id (string)
         """
-<<<<<<< HEAD
-        self.id = jd["key"]  # node ID
-=======
         self.id = jd["id"]  # node ID
->>>>>>> master
         self.jd = jd  # JSON TODO: this should be removed
         self.group_q = group_q  # the group hierarchy queue
         self.group = None  # used if node belongs to group
@@ -75,13 +71,6 @@ class LGNode:
         self._grpw = None
         self._inputs = []  # list of LGNode objects connected to this node
         self._outputs = []  # list of LGNode objects connected to this node
-<<<<<<< HEAD
-        self.inputPorts = "inputPorts"
-        self.outputPorts = "outputPorts"
-        logger.debug("%s input_ports: %s", self.name, self.inputPorts)
-        logger.debug("%s output_ports: %s", self.name, self.outputPorts)
-=======
->>>>>>> master
         self.dropclass = ""  # e.g. dlg.apps.simple.HelloWorldAPP
         self.reprodata = jd.get("reprodata", {}).copy()
         if "isGroup" in jd and jd["isGroup"] is True:
@@ -93,13 +82,8 @@ class LGNode:
         else:
             self.is_group = False
 
-<<<<<<< HEAD
-        if "group" in jd:
-            grp_id = jd["group"]
-=======
         if "parentId" in jd:
             grp_id = jd["parentId"]
->>>>>>> master
             if grp_id in done_dict:
                 grp_nd = done_dict[grp_id]
                 self.group = grp_nd
@@ -108,13 +92,10 @@ class LGNode:
                 group_q[grp_id].append(self)
 
         done_dict[self.id] = self
-        self.subgraph = jd['subgraph'] if 'subgraph' in jd else None
-<<<<<<< HEAD
-=======
+        self.subgraph = jd["subgraph"] if "subgraph" in jd else None
         self.happy = False
         self.loop_ctx = None
         self.iid = None
->>>>>>> master
 
     def __str__(self):
         return self.name
@@ -203,9 +184,7 @@ class LGNode:
         elif self.jd["categoryType"] in ["Other"]:
             value = "Other"
         else:
-            logger.error(
-                "Found unknown categoryType: %s", self.jd["categoryType"]
-            )
+            logger.error("Found unknown categoryType: %s", self.jd["categoryType"])
             # raise ValueError
         for key in keys:
             if key in self.jd:
@@ -218,16 +197,7 @@ class LGNode:
 
     @property
     def name(self):
-<<<<<<< HEAD
-        if self.jd.get("name"):
-            # backwards compatibility
-            # TODO: deprecated
-            return self.jd.get("name", "")
-        else:
-            return self.jd.get("name", "")
-=======
         return self.jd.get("name", "")
->>>>>>> master
 
     @property
     def category(self):
@@ -276,17 +246,10 @@ class LGNode:
         Add a group member
         """
         if (
-<<<<<<< HEAD
             lg_node.is_group
             and not (lg_node.is_scatter)
             and not (lg_node.is_loop)
             and not (lg_node.is_groupby)
-=======
-                lg_node.is_group
-                and not (lg_node.is_scatter)
-                and not (lg_node.is_loop)
-                and not (lg_node.is_groupby)
->>>>>>> master
         ):
             raise GInvalidNode(
                 "Only Scatters, Loops and GroupBys can be nested, but {0} is neither".format(
@@ -344,15 +307,9 @@ class LGNode:
         """
         key = []
         if self.is_app:
-            key = [
-                k
-                for k in self.jd
-                if re.match(r"execution[\s\_]time", k.lower())
-            ]
+            key = [k for k in self.jd if re.match(r"execution[\s\_]time", k.lower())]
         elif self.is_data:
-            key = [
-                k for k in self.jd if re.match(r"data[\s\_]volume", k.lower())
-            ]
+            key = [k for k in self.jd if re.match(r"data[\s\_]volume", k.lower())]
         try:
             self._weight = int(self.jd[key[0]])
         except (KeyError, ValueError, IndexError):
@@ -424,15 +381,9 @@ class LGNode:
         """
         result = False
         if self.has_group() and (
-<<<<<<< HEAD
             "group_start" in self.jd
             or "Group start" in self.jd
             or "Group Start" in self.jd
-=======
-                "group_start" in self.jd
-                or "Group start" in self.jd
-                or "Group Start" in self.jd
->>>>>>> master
         ):
             gs = (
                 self.jd.get("group_start", False)
@@ -454,15 +405,7 @@ class LGNode:
         """
         result = False
         if self.has_group() and (
-<<<<<<< HEAD
-            "group_end" in self.jd
-            or "Group end" in self.jd
-            or "Group End" in self.jd
-=======
-                "group_end" in self.jd
-                or "Group end" in self.jd
-                or "Group End" in self.jd
->>>>>>> master
+            "group_end" in self.jd or "Group end" in self.jd or "Group End" in self.jd
         ):
             ge = (
                 self.jd.get("group_end", False)
@@ -511,7 +454,7 @@ class LGNode:
 
     @property
     def is_subgraph(self):
-        if 'isSubGraphApp' in self._jd:
+        if "isSubGraphApp" in self._jd:
             return self._jd["isSubGraphApp"]
         else:
             return self._jd["category"] == Categories.SUBGRAPH
@@ -538,25 +481,6 @@ class LGNode:
                 )
 
     @property
-<<<<<<< HEAD
-    def inputPorts(self):
-        return self._inputPorts
-
-    @inputPorts.setter
-    def inputPorts(self, port="inputPorts"):
-        self._inputPorts = self._getPortName(ports="inputPorts", index=0)
-
-    @property
-    def outputPorts(self):
-        return self._outputPorts
-
-    @outputPorts.setter
-    def outputPorts(self, port="outputPorts"):
-        self._outputPorts = self._getPortName(ports="outputPorts", index=0)
-
-    @property
-=======
->>>>>>> master
     def gather_width(self):
         """
         Gather width
@@ -615,15 +539,11 @@ class LGNode:
             # group by followed by another group by
             if grpks is None or len(grpks) < 1:
                 raise GInvalidNode(
-                    "Must specify group_key for Group By '{0}'".format(
-                        self.name
-                    )
+                    "Must specify group_key for Group By '{0}'".format(self.name)
                 )
             # find the "root" groupby and get all of its scatters
             inputgrp = self
-            while (inputgrp is not None) and inputgrp.inputs[
-                0
-            ].group.is_groupby:
+            while (inputgrp is not None) and inputgrp.inputs[0].group.is_groupby:
                 inputgrp = inputgrp.inputs[0].group
             # inputgrp now is the "root" groupby that follows Scatter immiately
             # move it to Scatter
@@ -805,13 +725,7 @@ class LGNode:
 
         # NOTE: drop Argxx keywords
 
-    def _getPortName(
-<<<<<<< HEAD
-        self, ports: str = "outputPorts", index: int = 0, portId=None
-=======
-            self, ports: str = "outputPorts", index: int = 0, portId=None
->>>>>>> master
-    ):
+    def _getPortName(self, ports: str = "outputPorts", index: int = 0, portId=None):
         """
         Return name of port if it exists
         """
@@ -860,8 +774,7 @@ class LGNode:
         sij = self.inputs[0]
         if not sij.is_data:
             raise GInvalidNode(
-                "GroupBy should be connected to a DataDrop, not '%s'"
-                % sij.category
+                "GroupBy should be connected to a DataDrop, not '%s'" % sij.category
             )
         dw = sij.weight * self.groupby_width
 
@@ -879,9 +792,7 @@ class LGNode:
         )
         kwargs = {}
         kwargs["grp-data_drop"] = dropSpec_grp
-        kwargs[
-            "weight"
-        ] = 1  # barrier literarlly takes no time for its own computation
+        kwargs["weight"] = 1  # barrier literarlly takes no time for its own computation
         kwargs["sleep_time"] = 1
         drop_spec.update(kwargs)
         drop_spec.addOutput(dropSpec_grp, name="grpdata")
@@ -898,17 +809,7 @@ class LGNode:
         gi = self.inputs[0]
         if gi.is_groupby:
             gii = gi.inputs[0]
-            dw = (
-<<<<<<< HEAD
-                int(gii.jd["data_volume"])
-                * gi.groupby_width
-                * self.gather_width
-=======
-                    int(gii.jd["data_volume"])
-                    * gi.groupby_width
-                    * self.gather_width
->>>>>>> master
-            )
+            dw = int(gii.jd["data_volume"]) * gi.groupby_width * self.gather_width
         else:  # data
             dw = gi.weight * self.gather_width
 
@@ -996,8 +897,7 @@ class LGNode:
         if self.weight is not None:
             if self.weight < 0:
                 raise GraphException(
-                    "Execution_time must be greater"
-                    " than 0 for Node '%s'" % self.name
+                    "Execution_time must be greater" " than 0 for Node '%s'" % self.name
                 )
             else:
                 kwargs["weight"] = self.weight
@@ -1021,13 +921,8 @@ class LGNode:
             self.dropclass = self.jd["dataclass"]
         # Backwards compatibility
         if (
-<<<<<<< HEAD
             not hasattr(self, "dropclass")
             or self.dropclass == "dlg.apps.simple.SleepApp"
-=======
-                not hasattr(self, "dropclass")
-                or self.dropclass == "dlg.apps.simple.SleepApp"
->>>>>>> master
         ):
             if self.category == "File":
                 self.dropclass = "dlg.data.drops.file.FileDROP"

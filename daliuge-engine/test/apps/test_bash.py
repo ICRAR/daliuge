@@ -78,13 +78,7 @@ class BashAppTests(unittest.TestCase):
             a.addOutput(b)
             with DROPWaiterCtx(self, b, 100):
                 a.async_execute()
-<<<<<<< HEAD
-            self.assertEqual(
-                message.encode("utf8"), droputils.allDropContents(b)
-            )
-=======
             self.assertEqual(message.encode("utf8"), droputils.allDropContents(b))
->>>>>>> master
 
         msg = "This is a message with a single quote: '"
         assert_message_is_correct(msg, 'echo -n "{0}" > %o0'.format(msg))
@@ -110,13 +104,7 @@ class BashAppTests(unittest.TestCase):
             a.addOutput(b)
             with DROPWaiterCtx(self, b, 100):
                 a.async_execute()
-<<<<<<< HEAD
-            self.assertEqual(
-                value.encode("utf8"), droputils.allDropContents(b)
-            )
-=======
             self.assertEqual(value.encode("utf8"), droputils.allDropContents(b))
->>>>>>> master
 
         assert_envvar_is_there("DLG_UID", app_uid)
         assert_envvar_is_there("DLG_SESSION_ID", session_id)
@@ -140,13 +128,7 @@ class BashAppTests(unittest.TestCase):
         a.reproducibility_level = ReproducibilityFlags.RECOMPUTE
         a.commit()
         self.assertNotEqual(a.merkleroot, b.merkleroot)
-<<<<<<< HEAD
-        self.assertEqual(
-            a.generate_merkle_data(), {"command": "echo 'Hello world'"}
-        )
-=======
         self.assertEqual(a.generate_merkle_data(), {"command": "echo 'Hello world'"})
->>>>>>> master
 
         a.reproducibility_level = ReproducibilityFlags.REPRODUCE
         a.commit()
@@ -190,13 +172,7 @@ class StreamingBashAppTests(unittest.TestCase):
 
         output_fname = tempfile.mktemp()
 
-<<<<<<< HEAD
-        a = StreamingOutputBashApp(
-            "a", "a", command=r"echo -en '5\n4\n3\n2\n1'"
-        )
-=======
         a = StreamingOutputBashApp("a", "a", command=r"echo -en '5\n4\n3\n2\n1'")
->>>>>>> master
         b = InMemoryDROP("b", "b")
         c = StreamingInputBashApp("c", "c", command="cat > %o0")
         d = FileDROP("d", "d", filepath=output_fname)
@@ -245,13 +221,7 @@ class StreamingBashAppTests(unittest.TestCase):
 
         output_fname = tempfile.mktemp()
 
-<<<<<<< HEAD
-        a = StreamingOutputBashApp(
-            "a", "a", command=r"echo -en '5\n4\n3\n2\n1'"
-        )
-=======
         a = StreamingOutputBashApp("a", "a", command=r"echo -en '5\n4\n3\n2\n1'")
->>>>>>> master
         b = InMemoryDROP("b", "b")
         c = StreamingInputOutputBashApp("c", "c", command="cat")
         d = InMemoryDROP("d", "d")
@@ -273,14 +243,7 @@ class StreamingBashAppTests(unittest.TestCase):
             self.assertEqual(DROPStates.COMPLETED, drop.status)
         self.assertEqual(
             [1, 2, 3, 4, 5],
-<<<<<<< HEAD
-            [
-                int(x)
-                for x in droputils.allDropContents(f).strip().split(b"\n")
-            ],
-=======
             [int(x) for x in droputils.allDropContents(f).strip().split(b"\n")],
->>>>>>> master
         )
 
         # Clean up and go

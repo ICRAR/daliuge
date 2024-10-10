@@ -27,16 +27,10 @@ import json
 import optparse
 import tempfile
 import unittest
-<<<<<<< HEAD
-import pkg_resources
-import logging
-
-=======
 import logging
 import daliuge_tests.reproGraphs as test_graphs
 
 from importlib.resources import files
->>>>>>> master
 
 from dlg.common.reproducibility.constants import (
     ReproducibilityFlags,
@@ -55,16 +49,9 @@ logger = logging.getLogger("__name__")
 def _run_full_workflow(
     rmode: ReproducibilityFlags,
     workflow: str,
-<<<<<<< HEAD
-    workflow_loc="./",
-    scratch_loc="./",
-):
-    workflow_loc = pkg_resources.resource_filename("test", workflow_loc)
-=======
     scratch_loc="./",
 ):
     workflow_loc = str(files(test_graphs))
->>>>>>> master
     lgt = workflow_loc + "/" + workflow + ".graph"
     lgr = scratch_loc + "/" + workflow + "_" + str(rmode.value) + "LG.graph"
     pgs = scratch_loc + "/" + workflow + "_" + str(rmode.value) + "PGS.graph"
@@ -122,10 +109,6 @@ class IntegrationNothingTest(unittest.TestCase):
         _run_full_workflow(
             rmode=rmode,
             workflow=graph_name,
-<<<<<<< HEAD
-            workflow_loc=graph_loc,
-=======
->>>>>>> master
             scratch_loc=self.temp_out.name,
         )
 
@@ -145,12 +128,7 @@ class IntegrationNothingTest(unittest.TestCase):
                 else:
                     self.assertIn("rmode", drop)
         lgr = (
-            self.temp_out.name
-            + "/"
-            + graph_name
-            + "_"
-            + str(rmode.value)
-            + "LG.graph"
+            self.temp_out.name + "/" + graph_name + "_" + str(rmode.value) + "LG.graph"
         )
         graph = _read_graph(lgr)
         for drop in graph["nodeDataArray"]:
@@ -188,10 +166,6 @@ class IntegrationHelloWorldTest(unittest.TestCase):
             _run_full_workflow(
                 rmode=rmode,
                 workflow=graph,
-<<<<<<< HEAD
-                workflow_loc=self.graph_loc,
-=======
->>>>>>> master
                 scratch_loc=self.temp_out.name,
             )
             if rmode == ReproducibilityFlags.ALL:
@@ -543,9 +517,9 @@ class IntegrationHelloWorldTest(unittest.TestCase):
             for rmode in ALL_RMODES:
                 self.assertEqual(
                     self.graphs[graph][rmode.value],
-                    self.graphs[graph][ReproducibilityFlags.ALL.value][
-                        rmode.name
-                    ]["signature"],
+                    self.graphs[graph][ReproducibilityFlags.ALL.value][rmode.name][
+                        "signature"
+                    ],
                 )
 
 
@@ -558,9 +532,7 @@ class IntegrationSplitRmode(unittest.TestCase):
 
     temp_out = tempfile.TemporaryDirectory("out")
 
-    @unittest.skip(
-        "Individual rmodes not yet supported again (needs re-working)"
-    )
+    @unittest.skip("Individual rmodes not yet supported again (needs re-working)")
     def test_split_lgt(self):
         """
         Tests a simple 'hello world' graph (HelloWorldBash) where a single component has
@@ -578,27 +550,14 @@ class IntegrationSplitRmode(unittest.TestCase):
         _run_full_workflow(
             rmode=rmode,
             workflow=graph_name,
-<<<<<<< HEAD
-            workflow_loc=graph_loc,
-=======
->>>>>>> master
             scratch_loc=self.temp_out.name,
         )
         pgr = (
-            self.temp_out.name
-            + "/"
-            + graph_name
-            + "_"
-            + str(rmode.value)
-            + "PG.graph"
+            self.temp_out.name + "/" + graph_name + "_" + str(rmode.value) + "PG.graph"
         )
         _run_full_workflow(
             rmode=rmode,
             workflow=control_graph_name,
-<<<<<<< HEAD
-            workflow_loc=graph_loc,
-=======
->>>>>>> master
             scratch_loc=self.temp_out.name,
         )
         pgr_2 = (
@@ -620,27 +579,13 @@ class IntegrationSplitRmode(unittest.TestCase):
         )
 
         for drop in graph:
-            if drop["reprodata"]["rmode"] == str(
-                ReproducibilityFlags.RERUN.value
-            ):
-                self.assertIsNotNone(
-                    drop["reprodata"]["lgt_data"]["merkleroot"]
-                )
+            if drop["reprodata"]["rmode"] == str(ReproducibilityFlags.RERUN.value):
+                self.assertIsNotNone(drop["reprodata"]["lgt_data"]["merkleroot"])
                 self.assertIsNone(drop["reprodata"]["lg_data"]["merkleroot"])
-                self.assertIsNotNone(
-                    drop["reprodata"]["pgt_data"]["merkleroot"]
-                )
+                self.assertIsNotNone(drop["reprodata"]["pgt_data"]["merkleroot"])
                 self.assertIsNone(drop["reprodata"]["pg_data"]["merkleroot"])
             else:
-                self.assertIsNotNone(
-                    drop["reprodata"]["lgt_data"]["merkleroot"]
-                )
-                self.assertIsNotNone(
-                    drop["reprodata"]["lg_data"]["merkleroot"]
-                )
-                self.assertIsNotNone(
-                    drop["reprodata"]["pgt_data"]["merkleroot"]
-                )
-                self.assertIsNotNone(
-                    drop["reprodata"]["pg_data"]["merkleroot"]
-                )
+                self.assertIsNotNone(drop["reprodata"]["lgt_data"]["merkleroot"])
+                self.assertIsNotNone(drop["reprodata"]["lg_data"]["merkleroot"])
+                self.assertIsNotNone(drop["reprodata"]["pgt_data"]["merkleroot"])
+                self.assertIsNotNone(drop["reprodata"]["pg_data"]["merkleroot"])

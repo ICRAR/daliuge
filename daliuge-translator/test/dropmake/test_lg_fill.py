@@ -23,22 +23,12 @@
 import json
 import os
 import unittest
-<<<<<<< HEAD
-
-import pkg_resources
-from dlg.dropmake import pg_generator
-
-lg_dir = pkg_resources.resource_filename(
-    __name__, "logical_graphs"
-)  # @UndefinedVariable
-=======
 import daliuge_tests.dropmake as test_graphs
 from dlg.dropmake import pg_generator
 
 from importlib.resources import files
 
 lg_dir = str(files(test_graphs) / "logical_graphs")
->>>>>>> master
 
 
 # Test LGT to LG method: Filling parameter values in LG.

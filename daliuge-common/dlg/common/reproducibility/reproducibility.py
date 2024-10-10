@@ -96,12 +96,9 @@ def accumulate_lg_drop_data(drop: dict, level: ReproducibilityFlags):
     # category = drop.get("categoryType", "")
 
     # Cheeky way to get field list into dicts. map(dict, drop...) makes a copy
-    fields = {
-        e.pop("name"): e["value"] for e in map(dict, drop.get("fields", {}))
-    }
+    fields = {e.pop("name"): e["value"] for e in map(dict, drop.get("fields", {}))}
     app_fields = {
-        e.pop("name"): e["value"]
-        for e in map(dict, drop.get("applicationArgs", {}))
+        e.pop("name"): e["value"] for e in map(dict, drop.get("applicationArgs", {}))
     }
     fields.update(app_fields)
     lg_fields = lg_block_fields(category, level, app_fields.keys())
@@ -376,9 +373,7 @@ def build_lg_block_data(drop: dict, rmode):
     if "merkleroot" in drop["reprodata"][rmode.name]["lg_data"]:
         lg_hash = drop["reprodata"][rmode.name]["lg_data"]["merkleroot"]
         block_data.append(lg_hash)
-    for parenthash in sorted(
-        drop["reprodata"][rmode.name]["lg_parenthashes"].values()
-    ):
+    for parenthash in sorted(drop["reprodata"][rmode.name]["lg_parenthashes"].values()):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data, common_hash)
     drop["reprodata"][rmode.name]["lg_blockhash"] = mtree.merkle_root
@@ -393,9 +388,7 @@ def build_pgt_block_data(drop: dict, rmode):
     block_data = []
     if "pgt_data" in drop["reprodata"][rmode.name]:
         if "merkleroot" in drop["reprodata"][rmode.name]["pgt_data"]:
-            block_data.append(
-                drop["reprodata"][rmode.name]["pgt_data"]["merkleroot"]
-            )
+            block_data.append(drop["reprodata"][rmode.name]["pgt_data"]["merkleroot"])
     if "lg_blockhash" in drop["reprodata"][rmode.name]:
         block_data.append(drop["reprodata"][rmode.name]["lg_blockhash"])
     for parenthash in sorted(
@@ -417,9 +410,7 @@ def build_pg_block_data(drop: dict, rmode):
         drop["reprodata"][rmode.name]["pgt_blockhash"],
         drop["reprodata"][rmode.name]["lg_blockhash"],
     ]
-    for parenthash in sorted(
-        drop["reprodata"][rmode.name]["pg_parenthashes"].values()
-    ):
+    for parenthash in sorted(drop["reprodata"][rmode.name]["pg_parenthashes"].values()):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data, common_hash)
     drop["reprodata"][rmode.name]["pg_blockhash"] = mtree.merkle_root
@@ -432,16 +423,12 @@ def build_rg_block_data(drop: dict, rmode):
     :return:
     """
     block_data = [
-        drop["reprodata"][rmode.name].get("rg_data", {"merkleroot": b""})[
-            "merkleroot"
-        ],
+        drop["reprodata"][rmode.name].get("rg_data", {"merkleroot": b""})["merkleroot"],
         drop["reprodata"][rmode.name]["pg_blockhash"],
         drop["reprodata"][rmode.name]["pgt_blockhash"],
         drop["reprodata"][rmode.name]["lg_blockhash"],
     ]
-    for parenthash in sorted(
-        drop["reprodata"][rmode.name]["rg_parenthashes"].values()
-    ):
+    for parenthash in sorted(drop["reprodata"][rmode.name]["rg_parenthashes"].values()):
         block_data.append(parenthash)
     mtree = MerkleTree(block_data, common_hash)
     drop["reprodata"][rmode.name]["rg_blockhash"] = mtree.merkle_root
@@ -464,22 +451,13 @@ def lg_build_blockdag(logical_graph: dict, level):
     queue = collections.deque()
     # TODO: Deal with MKN/Scatter Input drops
     for drop in logical_graph.get("nodeDataArray", []):
-<<<<<<< HEAD
-        did = int(drop["key"])
-=======
-        did = (drop["id"])
->>>>>>> master
+        did = drop["id"]
         dropset[did] = [drop, 0, 0]
         neighbourset[did] = []
 
     for edge in logical_graph.get("linkDataArray", []):
-<<<<<<< HEAD
-        src = int(edge["from"])
-        dest = int(edge["to"])
-=======
-        src = (edge["from"])
-        dest = (edge["to"])
->>>>>>> master
+        src = edge["from"]
+        dest = edge["to"]
         dropset[dest][1] += 1
         dropset[src][2] += 1
         neighbourset[src].append(dest)
@@ -506,10 +484,7 @@ def lg_build_blockdag(logical_graph: dict, level):
             dropset[neighbour][1] -= 1
             parenthash = {}
             if rmode != ReproducibilityFlags.NOTHING:
-<<<<<<< HEAD
-=======
                 dtype = "data"
->>>>>>> master
                 if rmode == ReproducibilityFlags.REPRODUCE:
                     if "categoryType" in dropset[did][0]:
                         dtype = dropset[did][0]["categoryType"].lower()
@@ -522,21 +497,17 @@ def lg_build_blockdag(logical_graph: dict, level):
                     ):
                         # Add my new hash to the parent-hash list
                         if did not in parenthash:
-                            parenthash[did] = dropset[did][0]["reprodata"][
-                                level.name
-                            ]["lg_blockhash"]
+                            parenthash[did] = dropset[did][0]["reprodata"][level.name][
+                                "lg_blockhash"
+                            ]
                         # parenthash.append(dropset[did][0]['reprodata']['lg_blockhash'])
                     else:
                         # Add my parenthashes to the parent-hash list
                         parenthash.update(
-                            dropset[did][0]["reprodata"][level.name][
-                                "lg_parenthashes"
-                            ]
+                            dropset[did][0]["reprodata"][level.name]["lg_parenthashes"]
                         )
                         # parenthash.extend(dropset[did][0]['reprodata']['lg_parenthashes'])
-                if (
-                    rmode != ReproducibilityFlags.REPRODUCE
-                ):  # Non-compressing behaviour
+                if rmode != ReproducibilityFlags.REPRODUCE:  # Non-compressing behaviour
                     parenthash[did] = dropset[did][0]["reprodata"][level.name][
                         "lg_blockhash"
                     ]
@@ -639,13 +610,13 @@ def build_blockdag(drops: list, abstraction: str, level: ReproducibilityFlags):
                         "categoryType"
                         in dropset[did][0]["reprodata"][rmode.name]["pgt_data"]
                     ):
-                        ctype = dropset[did][0]["reprodata"][rmode.name][
-                            "pgt_data"
-                        ]["categoryType"]
+                        ctype = dropset[did][0]["reprodata"][rmode.name]["pgt_data"][
+                            "categoryType"
+                        ]
                     else:
-                        ctype = dropset[did][0]["reprodata"][rmode.name][
-                            "lgt_data"
-                        ]["categoryType"]
+                        ctype = dropset[did][0]["reprodata"][rmode.name]["lgt_data"][
+                            "categoryType"
+                        ]
 
                     if (
                         ctype.lower() == "data"
@@ -654,9 +625,9 @@ def build_blockdag(drops: list, abstraction: str, level: ReproducibilityFlags):
                     ):
                         # Add my new hash to the parent-hash list
                         if did not in parenthash:
-                            parenthash[did] = dropset[did][0]["reprodata"][
-                                level.name
-                            ][blockstr + "_blockhash"]
+                            parenthash[did] = dropset[did][0]["reprodata"][level.name][
+                                blockstr + "_blockhash"
+                            ]
                         # parenthash.append(dropset[did][0]['reprodata'] \
                         # [blockstr + "_blockhash"])
                     else:
@@ -682,9 +653,9 @@ def build_blockdag(drops: list, abstraction: str, level: ReproducibilityFlags):
                             parentstr
                         ].update(parenthash)
                 elif rmode != ReproducibilityFlags.RERUN:
-                    dropset[neighbour][0]["reprodata"][level.name][
-                        parentstr
-                    ].update(parenthash)
+                    dropset[neighbour][0]["reprodata"][level.name][parentstr].update(
+                        parenthash
+                    )
             if dropset[neighbour][1] == 0:
                 queue.append(neighbour)
 
@@ -692,9 +663,7 @@ def build_blockdag(drops: list, abstraction: str, level: ReproducibilityFlags):
         logger.warning("Not a DAG")
 
     for i, leaf in enumerate(leaves):
-        leaves[i] = dropset[leaf][0]["reprodata"][level.name][
-            blockstr + "_blockhash"
-        ]
+        leaves[i] = dropset[leaf][0]["reprodata"][level.name][blockstr + "_blockhash"]
     return leaves, visited
 
     # logger.info("BlockDAG Generated at" + abstraction + " level")
@@ -763,9 +732,7 @@ def init_lg_repro_data(logical_graph: dict):
         if rmode.name not in logical_graph["reprodata"]:
             logical_graph["reprodata"][rmode.name] = {}
         leaves, _ = lg_build_blockdag(logical_graph, rmode)
-        logical_graph["reprodata"][rmode.name][
-            "signature"
-        ] = agglomerate_leaves(leaves)
+        logical_graph["reprodata"][rmode.name]["signature"] = agglomerate_leaves(leaves)
     logger.info("Reproducibility data finished at LG level")
     return logical_graph
 

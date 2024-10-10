@@ -21,22 +21,6 @@
 #
 
 import json
-<<<<<<< HEAD
-import copy
-import unittest
-from dlg.dropmake.lg import LG
-
-try:
-    from importlib.resources import files, as_file
-except (ImportError, ModuleNotFoundError):
-    from importlib_resources import files
-
-NODES = 'nodeDataArray'
-LINKS = 'linkDataArray'
-
-def get_lg_fname(lg_name):
-    return str(files(__package__) / f"logical_graphs/{lg_name}")
-=======
 import pickle
 import unittest
 
@@ -44,9 +28,9 @@ from dlg.common import CategoryType
 from dlg.dropmake import path_utils
 from dlg.dropmake.lg import LG
 
-NODES = 'nodeDataArray'
-LINKS = 'linkDataArray'
-TEST_SSID = 'test_pg_gen'  # Needed to match output files generated in test_pg_gen.py
+NODES = "nodeDataArray"
+LINKS = "linkDataArray"
+TEST_SSID = "test_pg_gen"  # Needed to match output files generated in test_pg_gen.py
 
 
 class TestLGInit(unittest.TestCase):
@@ -66,10 +50,12 @@ class TestLGInit(unittest.TestCase):
         for lg_name, num_keys in self.lg_names.items():
             fp = path_utils.get_lg_fpath("logical_graphs", lg_name)
             lg = LG(fp, ssid=TEST_SSID)
-            self.assertEqual(num_keys,
-                             len(lg._done_dict.keys()),
-                             f"Incorrect number of elements when constructing LG "
-                             f"object using: {lg_name}")
+            self.assertEqual(
+                num_keys,
+                len(lg._done_dict.keys()),
+                f"Incorrect number of elements when constructing LG "
+                f"object using: {lg_name}",
+            )
 
 
 def _calc_num_drops(drop_values):
@@ -101,12 +87,13 @@ class TestLGNToPGN(unittest.TestCase):
         """
         graph_name = "testLoop.graph"
         graph_information = {"num_keys": 11}
-        lg = LG(path_utils.get_lg_fpath('logical_graphs', graph_name), ssid="TEST")
+        lg = LG(path_utils.get_lg_fpath("logical_graphs", graph_name), ssid="TEST")
         for lgn in lg._start_list:
             lg.lgn_to_pgn(lgn)
 
-        self.assertEqual(graph_information["num_keys"],
-                         _calc_num_drops(lg._drop_dict.values()))
+        self.assertEqual(
+            graph_information["num_keys"], _calc_num_drops(lg._drop_dict.values())
+        )
 
     def test_scatter_graph_graph(self):
         """
@@ -115,12 +102,13 @@ class TestLGNToPGN(unittest.TestCase):
 
         graph_name = "eagle_gather_update.graph"
         graph_information = {"num_keys": 31}
-        lg = LG(path_utils.get_lg_fpath('logical_graphs', graph_name), ssid="TEST")
+        lg = LG(path_utils.get_lg_fpath("logical_graphs", graph_name), ssid="TEST")
         for lgn in lg._start_list:
             lg.lgn_to_pgn(lgn)
 
-        self.assertEqual(graph_information["num_keys"],
-                         _calc_num_drops(lg._drop_dict.values()))
+        self.assertEqual(
+            graph_information["num_keys"], _calc_num_drops(lg._drop_dict.values())
+        )
 
     def test_non_recursive(self):
         """
@@ -136,19 +124,21 @@ class TestLGNToPGN(unittest.TestCase):
         and iterate through the _start_list identified during the LG class __init__.
         """
 
-        lg_names = {"testLoop.graph": {"num_pgt_drops": 11},
-                    "eagle_gather_update.graph": {"num_pgt_drops": 31}}
+        lg_names = {
+            "testLoop.graph": {"num_pgt_drops": 11},
+            "eagle_gather_update.graph": {"num_pgt_drops": 31},
+        }
 
         for graph_name, test_dict in lg_names.items():
-            expected_drops = test_dict['num_pgt_drops']
+            expected_drops = test_dict["num_pgt_drops"]
 
-            lg_recursive = LG(path_utils.get_lg_fpath("logical_graphs", graph_name),
-                              ssid="TEST")
+            lg_recursive = LG(
+                path_utils.get_lg_fpath("logical_graphs", graph_name), ssid="TEST"
+            )
             for lgn in lg_recursive._start_list:
                 lg_recursive.lgn_to_pgn(lgn)
             self.assertEqual(
-                expected_drops,
-                _calc_num_drops(lg_recursive._drop_dict.values())
+                expected_drops, _calc_num_drops(lg_recursive._drop_dict.values())
             )
 
             lg_non_recursive = LG(
@@ -157,11 +147,9 @@ class TestLGNToPGN(unittest.TestCase):
             for lgn in lg_non_recursive._start_list:
                 lg_non_recursive.lgn_to_pgn(lgn, recursive=False)
             self.assertEqual(
-                expected_drops,
-                _calc_num_drops(lg_non_recursive._drop_dict.values())
+                expected_drops, _calc_num_drops(lg_non_recursive._drop_dict.values())
             )
 
->>>>>>> master
 
 class TestLGNodeLoading(unittest.TestCase):
 
@@ -170,12 +158,6 @@ class TestLGNodeLoading(unittest.TestCase):
         Test that when we initially construct the logical graph, the SubGraph data node
         that is added to the graph stores the sub-graph nodes and links.
         """
-<<<<<<< HEAD
-        fname = get_lg_fname("ExampleSubgraphSimple.graph")
-        lg = LG(fname)
-        subgraph_data_node_key = -1
-        self.assertIsNotNone(lg._done_dict[subgraph_data_node_key].subgraph)
-=======
         fname = path_utils.get_lg_fpath("logical_graphs", "ExampleSubgraphSimple.graph")
         lg = LG(fname)
         subgraph_data_node_key = "bb9b78bc-b725-4b61-a12a-413bdcef7690"
@@ -224,31 +206,31 @@ class TestLGUnroll(unittest.TestCase):
             lg = LG(fp, ssid=TEST_SSID)
 
             drop_list = lg.unroll_to_tpl()
-            with open(path_utils.get_lg_fpath('pickle', lg_name), 'rb') as pk_fp:
+            with open(path_utils.get_lg_fpath("pickle", lg_name), "rb") as pk_fp:
                 test_unroll = pickle.load(pk_fp)
 
             # It is worth mentioning that we do not get an accurate number of links
             # from the LG, as it is not tracked after the initial graph_loading.
             self.assertEqual(len(test_unroll), len(drop_list))
-            self.assertEqual(num_keys['nodes'], len(drop_list))
+            self.assertEqual(num_keys["nodes"], len(drop_list))
 
             # Confirm number of output/consumers and inputs/producers are the same
             for i, drop in enumerate(drop_list):
-                if 'outputs' in drop:
-                    expected = test_unroll[i]['outputs']
-                    actual = drop['outputs']
+                if "outputs" in drop:
+                    expected = test_unroll[i]["outputs"]
+                    actual = drop["outputs"]
                     self.assertEqual(len(expected), len(actual))
-                if 'inputs' in drop:
-                    expected = test_unroll[i]['inputs']
-                    actual = drop['inputs']
+                if "inputs" in drop:
+                    expected = test_unroll[i]["inputs"]
+                    actual = drop["inputs"]
                     self.assertEqual(len(expected), len(actual))
-                if 'producers' in drop:
-                    expected = test_unroll[i]['producers']
-                    actual = drop['producers']
+                if "producers" in drop:
+                    expected = test_unroll[i]["producers"]
+                    actual = drop["producers"]
                     self.assertEqual(len(expected), len(actual))
-                if 'consumers' in drop:
-                    expected = test_unroll[i]['consumers']
-                    actual = drop['consumers']
+                if "consumers" in drop:
+                    expected = test_unroll[i]["consumers"]
+                    actual = drop["consumers"]
                     self.assertEqual(len(expected), len(actual))
 
     def test_lg_unroll_sharedmemory(self):
@@ -259,13 +241,14 @@ class TestLGUnroll(unittest.TestCase):
         num_keys = 8
         fp = path_utils.get_lg_fpath("logical_graphs", lg_name)
         lg = LG(fp, ssid=TEST_SSID)
-        self.assertEqual(num_keys,
-                         len(lg._done_dict.keys()),
-                         f"Incorrect number of elements when constructing LG "
-                         f"object using: {lg_name}")
+        self.assertEqual(
+            num_keys,
+            len(lg._done_dict.keys()),
+            f"Incorrect number of elements when constructing LG "
+            f"object using: {lg_name}",
+        )
 
         drop_list = lg.unroll_to_tpl()
         for drop in drop_list:
             if drop["categoryType"] in [CategoryType.DATA, "data"]:
                 self.assertEqual("SharedMemory", drop["category"])
->>>>>>> master

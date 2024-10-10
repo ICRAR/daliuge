@@ -29,11 +29,7 @@ then
 	export VCS_TAG=$2
 	export C_TAG=$VCS_TAG
 else
-<<<<<<< HEAD
 	export VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
-=======
-	export VCS_TAG=`git describe --tags --abbrev=0 --always|sed s/v//`
->>>>>>> master
 	export C_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
 fi
 case "$1" in

@@ -24,15 +24,10 @@ import os
 import unittest
 
 from asyncio.log import logger
-<<<<<<< HEAD
-import pkg_resources
-import base64, pickle, time
-=======
 import base64, pickle, time
 import daliuge_tests.engine.graphs as test_graphs
 
 from importlib.resources import files
->>>>>>> master
 
 from dlg.data.drops.memory import InMemoryDROP
 from dlg import droputils
@@ -74,13 +69,8 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         to test that the separatorString parameter is working correctly.
         """
         sessionId = "lalo"
-<<<<<<< HEAD
-        ddGraph = "graphs/ddTest.graph"
-        with pkg_resources.resource_stream("test", ddGraph) as f:  # @UndefinedVariable
-=======
         ddGraph = "ddTest.graph"
-        with (files(test_graphs) /ddGraph).open() as f:  # @UndefinedVariable
->>>>>>> master
+        with (files(test_graphs) / ddGraph).open() as f:  # @UndefinedVariable
             logger.debug(f"Loading graph: {f}")
             graphSpec = json.load(f)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
@@ -108,15 +98,10 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         """
         init_oid = "2022-03-20T04:33:27_-2_0"  # first drop in graph
         sessionId = "lalo"
-<<<<<<< HEAD
-        with pkg_resources.resource_stream(
-            "test", "graphs/funcTestPG_namedPorts.graph"
-        ) as f:  # @UndefinedVariable
+        with (
+            files(test_graphs) / "funcTestPG_namedPorts.graph"
+        ).open() as f:  # @UndefinedVariable
             graphSpec = json.load(f)
-=======
-        with (files(test_graphs) / "funcTestPG_namedPorts.graph").open() as f:  # @UndefinedVariable
-           graphSpec = json.load(f)
->>>>>>> master
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
 
@@ -138,15 +123,10 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         translate = lambda x: base64.b64encode(pickle.dumps(x))
         init_oid = "2023-07-04T00:13:32_-1_0"  # first drop in graph
         sessionId = "lalo"
-<<<<<<< HEAD
-        with pkg_resources.resource_stream(
-            "test", "graphs/appTestPG_namedPorts.graph"
-        ) as f:  # @UndefinedVariable
+        with (
+            files(test_graphs) / "appTestPG_namedPorts.graph"
+        ).open() as f:  # @UndefinedVariable
             graphSpec = json.load(f)
-=======
-        with (files(test_graphs) / "appTestPG_namedPorts.graph").open() as f:  # @UndefinedVariable
-           graphSpec = json.load(f)
->>>>>>> master
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
 
@@ -172,13 +152,9 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
             "2022-03-30T03:46:01_-6_0",
         ]  # first drops in graph
         sessionId = "lalo"
-<<<<<<< HEAD
-        with pkg_resources.resource_stream(
-            "test", "graphs/pyfunc_glob_testPG.graph"
-        ) as f:  # @UndefinedVariable
-=======
-        with (files(test_graphs) / "pyfunc_glob_testPG.graph").open() as f:  # @UndefinedVariable
->>>>>>> master
+        with (
+            files(test_graphs) / "pyfunc_glob_testPG.graph"
+        ).open() as f:  # @UndefinedVariable
             graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
@@ -204,13 +180,7 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         Use a graph with compile function to test positional only arguments
         """
         sessionId = "lalo"
-<<<<<<< HEAD
-        with pkg_resources.resource_stream(
-            "test", "graphs/compilePG.graph"
-        ) as f:  # @UndefinedVariable
-=======
         with (files(test_graphs) / "compilePG.graph").open() as f:  # @UndefinedVariable
->>>>>>> master
             graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
@@ -232,15 +202,10 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         """
         init_oid = "2023-07-05T10:59:43_-5_0"  # first drop in graph
         sessionId = "lalo"
-<<<<<<< HEAD
-        with pkg_resources.resource_stream(
-            "test", "graphs/HelloWorld_universePG.graph"
-        ) as f:  # @UndefinedVariable
+        with (
+            files(test_graphs) / "HelloWorld_universePG.graph"
+        ).open() as f:  # @UndefinedVariable
             graphSpec = json.load(f)
-=======
-        with (files(test_graphs) / "HelloWorld_universePG.graph").open() as f:  # @UndefinedVariable
-           graphSpec = json.load(f)
->>>>>>> master
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
 

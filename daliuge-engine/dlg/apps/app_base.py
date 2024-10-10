@@ -200,15 +200,9 @@ class AppDROP(ContainerDROP):
         named_ports: OrderedDict[str, DataDROP] = OrderedDict()
         port_dict = self.__getattribute__(f"_{ports}")
         if (
-<<<<<<< HEAD
-                ports in self.parameters
-                and len(self.parameters[ports]) > 0
-                and isinstance(self.parameters[ports][0], dict)
-=======
             ports in self.parameters
             and len(self.parameters[ports]) > 0
             and isinstance(self.parameters[ports][0], dict)
->>>>>>> master
         ):
             for i in range(len(port_dict)):
                 key = list(self.parameters[ports][i].values())[0]
@@ -221,15 +215,9 @@ class AppDROP(ContainerDROP):
                     else:
                         named_ports[key] = [named_ports[key], value]
         elif (
-<<<<<<< HEAD
-                ports in self.parameters
-                and len(self.parameters[ports]) > 0
-                and isinstance(self.parameters[ports], list)
-=======
             ports in self.parameters
             and len(self.parameters[ports]) > 0
             and isinstance(self.parameters[ports], list)
->>>>>>> master
         ):
             # This enablkes the gather to work
             return {}

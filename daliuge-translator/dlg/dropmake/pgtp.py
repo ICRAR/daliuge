@@ -92,30 +92,18 @@ class MetisPGTP(PGT):
         both upstream and downstream nodes to fit its input format
         """
         key_dict = dict()  # key - oid, value - GOJS key
-<<<<<<< HEAD
-        droplist = self._drop_list
-=======
->>>>>>> master
 
         G = nx.Graph()
         G.graph["edge_weight_attr"] = "weight"
         G.graph["node_weight_attr"] = "weight"
         G.graph["node_size_attr"] = "size"
 
-<<<<<<< HEAD
-        for i, drop in enumerate(droplist):
-=======
         for i, drop in enumerate(self._drop_list):
->>>>>>> master
             try:
                 oid = drop["oid"]
             except KeyError:
                 logger.debug("Drop does not have oid: %s", drop)
-<<<<<<< HEAD
-                droplist.pop(i)
-=======
                 self._drop_list.pop(i)
->>>>>>> master
                 continue
             key_dict[oid] = i + 1  # METIS index starts from 1
 
@@ -132,11 +120,7 @@ class MetisPGTP(PGT):
         sz = 1
         dst = "outputs"
         ust = "inputs"
-<<<<<<< HEAD
-        for i, drop in enumerate(droplist):
-=======
         for i, drop in enumerate(self._drop_list):
->>>>>>> master
             oid = drop["oid"]
             myk = i + 1
             tt = drop["categoryType"]
@@ -157,21 +141,14 @@ class MetisPGTP(PGT):
             if ust in drop:
                 adj_drops += drop[ust]
 
-<<<<<<< HEAD
-=======
             lw = 1
->>>>>>> master
             for inp in adj_drops:
                 key = list(inp.keys())[0] if isinstance(inp, dict) else inp
                 if tt in [CategoryType.DATA, "data"]:
                     lw = drop["weight"]
                 elif tt in [CategoryType.APPLICATION, "app"]:
                     # get the weight of the previous drop
-<<<<<<< HEAD
-                    lw = droplist[key_dict[key] - 1].get("weight", 1)
-=======
                     lw = self._drop_list[key_dict[key] - 1].get("weight", 1)
->>>>>>> master
                 if lw <= 0:
                     lw = 1
                 G.add_edge(myk, key_dict[key], weight=lw)
@@ -205,19 +182,6 @@ class MetisPGTP(PGT):
         1. parse METIS result, and add group node into the GOJS json
         2. also update edge weight for self._dag
         """
-<<<<<<< HEAD
-        # key_dict = dict() #k - gojs key, v - gojs group id
-        groups = set()
-        ogm = self._oid_gid_map
-        group_weight = self._group_workloads  # k - gid, v - a tuple of (tw, sz)
-        G = self._G
-        # start_k = len(self._drop_list) + 1
-        start_k = self._drop_list_len + 1
-        for gnode, gid in zip(G.nodes(data=True), metis_out):
-            groups.add(gid)
-            gnode = gnode[1]
-            ogm[gnode["oid"]] = gid
-=======
         groups = set()
         # start_k = len(self._drop_list) + 1
         start_k = self._drop_list_len + 1
@@ -225,7 +189,6 @@ class MetisPGTP(PGT):
             groups.add(gid)
             gnode = gnode[1]
             self._oid_gid_map[gnode["oid"]] = gid
->>>>>>> master
             gnode["gid"] = gid
 
         # house keeping after partitioning
@@ -240,15 +203,9 @@ class MetisPGTP(PGT):
         # the following is for potential partition merging into islands
         if self._merge_parts:
             for gid in groups:
-<<<<<<< HEAD
-                group_weight[gid] = [0, 0]
-            for gnode in G.nodes(data=True):
-                tt = group_weight[gnode[1]["gid"]]
-=======
                 self._group_workloads[gid] = [0, 0]
             for gnode in self._G.nodes(data=True):
                 tt = self._group_workloads[gnode[1]["gid"]]
->>>>>>> master
                 try:
                     tt[0] += int(gnode[1]["weight"])
                     tt[1] += int(gnode[1]["size"])
@@ -354,18 +311,10 @@ class MetisPGTP(PGT):
         if not self._can_merge(new_num_parts):
             return
 
-<<<<<<< HEAD
-        GG = self._G
-        part_edges = defaultdict(int)  # k: from_gid + to_gid, v: sum_of_weight
-        for e in GG.edges(data=True):
-            from_gid = GG.nodes[e[0]]["gid"]
-            to_gid = GG.nodes[e[1]]["gid"]
-=======
         part_edges = defaultdict(int)  # k: from_gid + to_gid, v: sum_of_weight
         for e in self._G.edges(data=True):
             from_gid = self._G.nodes[e[0]]["gid"]
             to_gid = self._G.nodes[e[1]]["gid"]
->>>>>>> master
             k = "{0}**{1}".format(from_gid, to_gid)
             part_edges[k] += e[2]["weight"]
 
@@ -390,22 +339,6 @@ class MetisPGTP(PGT):
             (edgecuts, metis_parts) = self._metis.part_graph(
                 G, nparts=new_num_parts, ufactor=1
             )
-<<<<<<< HEAD
-        tmp_map = self._gid_island_id_map
-        islands = set()
-        for gid, island_id in zip(G.nodes(), metis_parts):
-            tmp_map[gid] = island_id
-            islands.add(island_id)
-        if not form_island:
-            ogm = self._oid_gid_map
-            gnodes = GG.nodes(data=True)
-            for gnode in gnodes:
-                gnode = gnode[1]
-                oid = gnode["oid"]
-                old_gid = gnode["gid"]
-                new_gid = tmp_map[old_gid]
-                ogm[oid] = new_gid
-=======
         islands = set()
         for gid, island_id in zip(G.nodes(), metis_parts):
             self._gid_island_id_map[gid] = island_id
@@ -417,7 +350,6 @@ class MetisPGTP(PGT):
                 old_gid = gnode["gid"]
                 new_gid = self._gid_island_id_map[old_gid]
                 self._oid_gid_map[oid] = new_gid
->>>>>>> master
                 gnode["gid"] = new_gid
             self._num_parts_done = new_num_parts
         else:
@@ -428,18 +360,10 @@ class MetisPGTP(PGT):
             ):
                 # update intra-comp_island edge weight given it has a different
                 # bandwith compared to inter-comp_island
-<<<<<<< HEAD
-                metis_out = self._metis_out
-                for e in self.dag.edges(data=True):
-                    gid0 = metis_out[e[0] - 1]
-                    gid1 = metis_out[e[1] - 1]
-                    if tmp_map[gid0] == tmp_map[gid1]:
-=======
                 for e in self.dag.edges(data=True):
                     gid0 = self._metis_out[e[0] - 1]
                     gid1 = self._metis_out[e[1] - 1]
                     if self._gid_island_id_map[gid0] == self._gid_island_id_map[gid1]:
->>>>>>> master
                         e[2]["weight"] /= self._bw_ratio
                 self._data_movement = None  # force to refresh data_movment
             # add GOJS groups for visualisation
@@ -451,27 +375,16 @@ class MetisPGTP(PGT):
                 start_k = self._drop_list_len + 1
                 # start_i = len(node_list) + 1
                 start_i = start_k + self._num_parts_done
-<<<<<<< HEAD
-                node_list = self._node_list
-=======
->>>>>>> master
                 for island_id in islands:
                     # print('island_id = ', island_id)
                     gn = dict()
                     gn["key"] = island_id + start_i
                     gn["isGroup"] = True
                     gn["name"] = "{1}_{0}".format(island_id + 1, island_label)
-<<<<<<< HEAD
-                    node_list.append(gn)
-                inner_parts = self._inner_parts
-                for ip in inner_parts:
-                    ip["group"] = tmp_map[ip["key"] - start_k] + start_i
-=======
                     self._node_list.append(gn)
 
                 for ip in self._inner_parts:
                     ip["group"] = self._gid_island_id_map[ip["key"] - start_k] + start_i
->>>>>>> master
 
 
 class MySarkarPGTP(PGT):
@@ -545,41 +458,19 @@ class MySarkarPGTP(PGT):
         if not self._can_merge(new_num_parts):
             return
 
-<<<<<<< HEAD
-        # G = self._scheduler._dag
-        G = self.dag
-        inner_parts = self._inner_parts
-        parts = self._partitions
-        groups = self._groups
-        key_dict = self._grp_key_dict
-=======
->>>>>>> master
         in_out_part_map = dict()
         outer_groups = set()
         if new_num_parts > 1:
             self._scheduler.merge_partitions(new_num_parts, bal_cond=island_type)
         else:
-<<<<<<< HEAD
-            # all parts share the same outer group (island) when # of island == 1
-            ppid = self._drop_list_len + len(groups) + 1
-            for part in parts:
-=======
             ppid = self._drop_list_len + len(self._groups) + 1
             for part in self._partitions:
->>>>>>> master
                 part.parent_id = ppid
 
         start_k = self._drop_list_len + 1
         start_i = start_k + self._num_parts_done
 
-<<<<<<< HEAD
-        for part in parts:
-            # parent_id starts from
-            # len(self._drop_list) + len(self._parts) + 1, which is the same as
-            # start_i
-=======
         for part in self._partitions:
->>>>>>> master
             island_id = part.parent_id - start_i  # make sure island_id starts from 0
             outer_groups.add(island_id)
             in_out_part_map[part.partition_id - start_k] = island_id
@@ -587,26 +478,12 @@ class MySarkarPGTP(PGT):
         self._gid_island_id_map = in_out_part_map
         if not form_island:
             # update to new gid
-<<<<<<< HEAD
-            self_oid_gid_map = self._oid_gid_map
-            for gnode_g in G.nodes(data=True):
-=======
             for gnode_g in self.dag.nodes(data=True):
->>>>>>> master
                 gnode = gnode_g[1]
                 oid = gnode["drop_spec"]["oid"]
                 ggid = gnode["gid"] - start_k
                 new_ggid = in_out_part_map[ggid]
-<<<<<<< HEAD
-                self_oid_gid_map[oid] = new_ggid
-            # for node in node_list:
-            #     ggid = node.get('group', None)
-            #     if (ggid is not None):
-            #         new_ggid = in_out_part_map[ggid - start_k]
-            #         self._oid_gid_map[node['oid']] = new_ggid
-=======
                 self._oid_gid_map[oid] = new_ggid
->>>>>>> master
             self._num_parts_done = new_num_parts
         else:
             self._partition_merged = new_num_parts
@@ -614,17 +491,6 @@ class MySarkarPGTP(PGT):
                 for e in self.dag.edges(data=True):
                     # update edege weights within the same compute island
                     if in_out_part_map.get(
-<<<<<<< HEAD
-                        key_dict[e[0]] - start_k, -0.1
-                    ) == in_out_part_map.get(key_dict[e[1]] - start_k, -0.2):
-                        # print("e[2]['weight'] =", e[2]['weight'])
-                        e[2]["weight"] /= self._bw_ratio
-            if visual:
-                island_label = "%s_Island" % (
-                    self._island_labels[island_type % len(self._island_labels)]
-                )
-                node_list = self._node_list
-=======
                         self._grp_key_dict[e[0]] - start_k, -0.1
                     ) == in_out_part_map.get(self._grp_key_dict[e[1]] - start_k, -0.2):
                         # print("e[2]['weight'] =", e[2]['weight'])
@@ -632,21 +498,14 @@ class MySarkarPGTP(PGT):
             if visual:
                 labels = self._island_labels[island_type % len(self._island_labels)]
                 island_label = f"{labels}_Island"
->>>>>>> master
                 for island_id in outer_groups:
                     gn = dict()
                     gn["key"] = island_id + start_i
                     gn["isGroup"] = True
                     gn["name"] = "{1}_{0}".format(island_id + 1, island_label)
-<<<<<<< HEAD
-                    node_list.append(gn)
-
-                for ip in inner_parts:
-=======
                     self._node_list.append(gn)
 
                 for ip in self._inner_parts:
->>>>>>> master
                     ip["group"] = in_out_part_map[ip["key"] - start_k] + start_i
 
     def to_gojs_json(self, string_rep=True, outdict=None, visual=False):
@@ -668,39 +527,21 @@ class MySarkarPGTP(PGT):
             # for part in self._partitions:
             #     print('Partition: {0}, Actual DoP = {1}, Required DoP = {2}'.\
             #                 format(part._gid, part._max_dop, part._ask_max_dop))
-<<<<<<< HEAD
-        G = self.dag
-        # logger.debug("The same DAG? ", (G == self.dag))
-        start_k = self._drop_list_len + 1  # starting gojs group_id
-        self_oid_gid_map = self._oid_gid_map
-        groups = set()
-        key_dict = dict()  # k - gojs key, v - gojs group_id
-        root_gid = None
-        for gnode_g in G.nodes(data=True):
-=======
         # logger.debug("The same DAG? ", (G == self.dag))
         start_k = self._drop_list_len + 1  # starting gojs group_id
         groups = set()
         key_dict = dict()  # k - gojs key, v - gojs group_id
         root_gid = None
         for gnode_g in self.dag.nodes(data=True):
->>>>>>> master
             gnode = gnode_g[1]
             oid = gnode["drop_spec"]["oid"]
             if "-92" == oid:
                 root_gid = gnode["gid"]
                 # print("hit fake super root, gid = {0}".format(root_gid))
                 continue  # super_fake_root, so skip it
-<<<<<<< HEAD
-            gid = gnode["gid"]
-            key_dict[gnode_g[0]] = gid
-            self_oid_gid_map[oid] = gid - start_k
-            groups.add(gid)
-=======
             key_dict[gnode_g[0]] = gnode["gid"]
             self._oid_gid_map[oid] = gnode["gid"] - start_k
             groups.add(gnode["gid"])
->>>>>>> master
         if root_gid not in groups:
             # the super root has its own partition, which has no other Drops
             # so ditch this extra partition!
@@ -712,11 +553,6 @@ class MySarkarPGTP(PGT):
             self._num_parts_done = len(new_partitions)
         self._groups = groups
         self._grp_key_dict = key_dict
-<<<<<<< HEAD
-        # print("group length = %d" % len(groups))
-        # print('groups', groups)
-=======
->>>>>>> master
 
         if visual:
             jsobj = super(MySarkarPGTP, self).to_gojs_json(
@@ -725,29 +561,16 @@ class MySarkarPGTP(PGT):
 
             node_list = jsobj["nodeDataArray"]
             for node in node_list:
-<<<<<<< HEAD
-                gid = G.nodes[node["key"]]["gid"]  # gojs group_id
-=======
                 gid = self.dag.nodes[node["key"]]["gid"]  # gojs group_id
->>>>>>> master
                 if gid is None:
                     raise GPGTException(
                         "Node {0} does not have a Partition".format(node["key"])
                     )
                 node["group"] = gid
-<<<<<<< HEAD
-                # key_dict[node['key']] = gid
-                # self._oid_gid_map[node['oid']] = gid - start_k # real gid starts from 0
-=======
->>>>>>> master
             inner_parts = []
             for gid in groups:
                 gn = dict()
                 gn["key"] = gid
-<<<<<<< HEAD
-                # logger.debug("group key = {0}".format(gid))
-=======
->>>>>>> master
                 gn["isGroup"] = True
                 # gojs group_id label starts from 1
                 # so "gid - leng" instead of "gid - start_k"
