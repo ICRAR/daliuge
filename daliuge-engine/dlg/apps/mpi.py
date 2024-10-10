@@ -20,14 +20,24 @@
 #    MA 02111-1307  USA
 #
 """Module containing MPI application wrapping support"""
-
+import json
 import logging
+import os
 import signal
 import subprocess
 import sys
 
+from dlg import utils, droputils
 from dlg.apps.app_base import BarrierAppDROP
-from ..exceptions import InvalidDropException
+from dlg.named_port_utils import (
+    DropParser,
+    get_port_reader_function,
+    replace_named_ports,
+)
+from dlg.exceptions import InvalidDropException
+from ..meta import (
+    dlg_enum_param,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -38,15 +48,15 @@ logger = logging.getLogger(__name__)
 # @par EAGLE_START
 # @param category Mpi
 # @param tag template
-# @param num_of_procs 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Number of processes used for this application
 # @param command /String/ComponentParameter/NoPort/ReadWrite//False/False/The command to be executed
+# @param args /String/ComponentParameter/NoPort/ReadWrite//False/False/Additional command line arguments to be added to the command line to be executed
+# @param num_of_procs 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Number of processes used for this application
+# @param use_wrapper False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If the command should be executed inside the existing MPI communicator set this to True
 # @param input_redirection /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line argument that specifies the input into this application
 # @param output_redirection /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line argument that specifies the output from this application
-# @param command_line_arguments /String/ComponentParameter/NoPort/ReadWrite//False/False/Additional command line arguments to be added to the command line to be executed
 # @param paramValueSeparator " "/String/ComponentParameter/NoPort/ReadWrite//False/False/Separator character(s) between parameters on the command line
 # @param argumentPrefix "--"/String/ComponentParameter/NoPort/ReadWrite//False/False/Prefix to each keyed argument on the command line
 # @param dropclass dlg.apps.mpi.MPIApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
-# @param mpi construct/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
@@ -66,24 +76,96 @@ class MPIApp(BarrierAppDROP):
     This drop will gather the individual exit codes from the launched
     applications and transition to ERROR if any of them did not exit cleanly,
     or to FINISHED if all of them finished successfully.
+
     """
+
+    input_parser: DropParser = dlg_enum_param(DropParser, "input_parser", DropParser.PICKLE)  # type: ignore
 
     def initialize(self, **kwargs):
         super(MPIApp, self).initialize(**kwargs)
 
-        self._command = self._popArg(kwargs, "command", None)
         self._maxprocs = self._popArg(kwargs, "maxprocs", 1)
         self._use_wrapper = self._popArg(kwargs, "use_wrapper", False)
-        self._args = self._popArg(kwargs, "args", [])
+        self._args = self._popArg(kwargs, "args", "")
+        self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
+        self._argumentPrefix = self._popArg(kwargs, "argumentPrefix", "--")
+        self._paramValueSeparator = self._popArg(kwargs, "paramValueSeparator", " ")
+        self._inputRedirect = self._popArg(kwargs, "input_redirection", "")
+        self._outputRedirect = self._popArg(kwargs, "output_redirection", "")
+
+        self._command = self._popArg(kwargs, "command", None)
         if not self._command:
             raise InvalidDropException(
                 self, "No command specified, cannot create MPIApp"
             )
+        self._recompute_data = {}
 
     def run(self):
         from mpi4py import MPI
 
         cmd, args = self._command, self._args
+        inputs = self._inputs
+        outputs = self._outputs
+
+        logger.debug("Parameters found: %s", json.dumps(self.parameters))
+        logger.debug("MPI Inputs: %s; MPI Outputs: %s", inputs, outputs)
+        # we only support passing a path for bash apps
+        fsInputs = {uid: i for uid, i in inputs.items() if droputils.has_path(i)}
+        fsOutputs = {uid: o for uid, o in outputs.items() if droputils.has_path(o)}
+        dataURLInputs = {
+            uid: i for uid, i in inputs.items() if not droputils.has_path(i)
+        }
+        dataURLOutputs = {
+            uid: o for uid, o in outputs.items() if not droputils.has_path(o)
+        }
+        # deal with named ports
+        inport_names = self.parameters["inputs"] if "inputs" in self.parameters else []
+        outport_names = (
+            self.parameters["outputs"] if "outputs" in self.parameters else []
+        )
+        reader = get_port_reader_function(self.input_parser)
+        keyargs, pargs = replace_named_ports(
+            inputs.items(),
+            outputs.items(),
+            inport_names,
+            outport_names,
+            self._applicationArgs,
+            argumentPrefix=self._argumentPrefix,
+            separator=self._paramValueSeparator,
+            parser=reader,
+        )
+        argumentString = (
+            f"{' '.join(map(str,pargs + keyargs))}"  # add kwargs to end of pargs
+        )
+        # complete command including all additional parameters and optional redirects
+        if len(argumentString.strip()) > 0:
+            # the _cmdLineArgs would very likely make the command line invalid
+            cmd = f"{self._command} {argumentString} "
+        else:
+            cmd = f"{self._command} {argumentString} {args} "
+        if self._outputRedirect:
+            cmd = f"{cmd} > {self._outputRedirect}"
+        if self._inputRedirect:
+            cmd = f"cat {self._inputRedirect} > {cmd}"
+        cmd = cmd.strip()
+
+        app_uid = self.uid
+
+        # Replace inputs/outputs in command line with paths or data URLs
+        cmd = droputils.replace_path_placeholders(cmd, fsInputs, fsOutputs)
+
+        cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
+
+        # Pass down daliuge-specific information to the subprocesses as environment variables
+        env = os.environ.copy()
+        env.update({"DLG_UID": self._uid})
+        if self._dlg_session_id:
+            env.update({"DLG_SESSION_ID": self._dlg_session_id})
+
+        env.update({"DLG_ROOT": utils.getDlgDir()})
+
+        logger.info("Command after wrapping is: %s", cmd)
+
         if self._use_wrapper:
             # We spawn this very same module
             # When invoked as a program (see at the bottom) this module
@@ -91,8 +173,8 @@ class MPIApp(BarrierAppDROP):
             # command line, and send back the exit code.
             # Likewise, we barrier on the children communicator, and thus
             # we wait until all children processes are completed
+            args = ["-m", __name__, cmd]
             cmd = sys.executable
-            args = ["-m", __name__, self._command] + self._args
 
         errcodes = []
 
