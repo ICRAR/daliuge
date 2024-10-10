@@ -34,6 +34,7 @@ MODULES = ""
 VENV = f"{DLG_ROOT}/venv"
 DEFAULT_MON_HOST = "dlg-mon.icrar.org"  # TODO: need to get this running
 DEFAULT_MON_PORT = 8898
+EXEC_PREFIX = "srun -l"
 
 
 __sub_tpl_str = """#!/bin/bash --login
@@ -48,7 +49,7 @@ $MODULES
 export DLG_ROOT=$DLG_ROOT
 $VENV
 
-srun -l $PY_BIN -m dlg.deploy.start_dlg_cluster --log_dir $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION --ssid $SESSION_ID
+$EXEC_PREFIX $PY_BIN -m dlg.deploy.start_dlg_cluster --log_dir $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION --ssid $SESSION_ID
 """
 init_tpl = string.Template(__sub_tpl_str)
 
@@ -57,26 +58,48 @@ class DefaultConfig(object):
 
     def __init__(self):
         self._dict = dict()
-        self.setpar("host", self.LOGIN_NODE)
-        self.setpar("account", self.ACCOUNT)
-        self.setpar("home_dir", self.HOME_DIR.strip())
-        self.setpar("dlg_root", self.DLG_ROOT.strip())
-        self.setpar("log_root", self.LOG_DIR)
-        self.setpar("modules", self.MODULES.strip())
-        self.setpar("venv", self.VENV.strip())
+        self.setpar("host", "LOGIN_NODE")
+        self.setpar("account", "ACCOUNT")
+        self.setpar("home_dir", "HOME_DIR")
+        self.setpar("dlg_root", "DLG_ROOT")
+        self.setpar("log_root", "LOG_DIR")
+        self.setpar("modules", "MODULES")
+        self.setpar("venv", "VENV")
+        self.setpar("exec_prefix", "EXEC_PREFIX")
 
     @abstractmethod
     def init_list(self):
         pass
 
     def setpar(self, k, v):
-        self._dict[k] = v
+        if hasattr(self, v):
+            print(f"config[{v}] = '{globals()[v]}'")
+            self._dict[k] = getattr(self, v)
+        else:
+            print(f"default[{v}] = '{globals()[v]}'")
+            self._dict[k] = globals()[v]
 
     def getpar(self, k):
         return self._dict.get(k)
 
 
 #############################
+class ICRARHyadesConfig(DefaultConfig):
+    MODULES = """
+    """
+    # The following is more a workaround than a solution
+    # requires the user to have a venv exectly in that place
+    LOGIN_NODE = "hyades.icrar.org"
+    DLG_ROOT = "$HOME_DIR/dlg"
+    LOG_DIR = "$HOME_DIR/dlg/log"
+    VENV = "source $HOME_DIR/dlg/venv/bin/activate"
+    EXEC_PREFIX = ""
+
+    def __init__(self):
+        super(ICRARHyadesConfig, self).__init__()
+
+    def init_list(self):  # TODO please fill in
+        return [self.ACCOUNT, self.LOG_DIR, self.MODULES, self.VENV]
 
 
 class ICRARoodConfig(DefaultConfig):
@@ -85,7 +108,7 @@ class ICRARoodConfig(DefaultConfig):
     """
     # The following is more a workaround than a solution
     # requires the user to have a venv exectly in that place
-    ACCOUNT = os.environ["USER"]
+    LOGIN_NODE = "hyades.icrar.org"
     HOME_DIR = os.environ["HOME"] if "HOME" in os.environ else ""
     DLG_ROOT = f"{HOME_DIR}/dlg"
     LOG_DIR = f"{DLG_ROOT}/log"
@@ -192,7 +215,8 @@ class ConfigFactory:
         "galaxy": GalaxyASKAPConfig,
         "setonix": Setonix411Config,
         "shao": TianHe2Config,
-        "hyades.icrar.org": ICRARoodConfig,
+        "hyades": ICRARHyadesConfig,
+        "ood": ICRARoodConfig,
         "ood_cloud": ICRARoodCldConfig,
     }
 
@@ -201,6 +225,6 @@ class ConfigFactory:
         return list(ConfigFactory.mapping.keys())
 
     @staticmethod
-    def create_config(facility=None):
+    def create_config(facility=None, user=None):
         facility = facility.lower() if (facility is not None) else facility
         return ConfigFactory.mapping.get(facility)()
