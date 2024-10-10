@@ -380,6 +380,10 @@ def gen_pgt(
             detail="Logical graph '{0}' not found".format(lg_name),
         )
     try:
+<<<<<<< HEAD
+=======
+        print("TESTING PRINT IN TEST")
+>>>>>>> master
         lgt = prepare_lgt(lg_path(lg_dir, lg_name), rmode)
         test = test.lower() == "true"
         pgt = unroll_and_partition_with_params(

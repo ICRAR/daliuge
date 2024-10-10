@@ -35,7 +35,10 @@ from dlg.runtime import __git_version__ as git_commit
 from dlg.deploy.configs import ConfigFactory, init_tpl
 from dlg.deploy.configs import DEFAULT_MON_PORT, DEFAULT_MON_HOST
 from dlg.deploy.deployment_utils import find_numislands, label_job_dur
+<<<<<<< HEAD
 from paramiko.ssh_exception import SSHException
+=======
+>>>>>>> master
 
 
 class SlurmClient:
@@ -79,17 +82,26 @@ class SlurmClient:
         pip_name=None,
         username=None,
     ):
+<<<<<<< HEAD
         self._config = ConfigFactory.create_config(facility=facility, user=username)
         self.host = self._config.getpar("host") if host is None else host
         self._acc = self._config.getpar("account") if (acc is None) else acc
         self._user = self._config.getpar("user") if (username is None) else username
+=======
+        self._config = ConfigFactory.create_config(facility=facility)
+        self.host = self._config.getpar("host") if host is None else host
+        self._acc = self._config.getpar("account") if (acc is None) else acc
+>>>>>>> master
         self.dlg_root = self._config.getpar("dlg_root") if not dlg_root else dlg_root
         self._log_root = (
             self._config.getpar("log_root") if (log_root is None) else log_root
         )
         self.modules = self._config.getpar("modules")
         self.venv = self._config.getpar("venv")
+<<<<<<< HEAD
         self.exec_prefix = self._config.getpar("exec_prefix")
+=======
+>>>>>>> master
         if num_nodes is None:
             self._num_nodes = 1
         else:
@@ -175,7 +187,10 @@ class SlurmClient:
         )
         pardict["MODULES"] = self.modules
         pardict["DLG_ROOT"] = self.dlg_root
+<<<<<<< HEAD
         pardict["EXEC_PREFIX"] = self.exec_prefix
+=======
+>>>>>>> master
 
         job_desc = init_tpl.safe_substitute(pardict)
         return job_desc
@@ -204,6 +219,7 @@ class SlurmClient:
             os.makedirs(session_dir)
         if self._remote:
             command = f"mkdir -p {session_dir}"
+<<<<<<< HEAD
             print(
                 f"Creating remote session directory on {self.username}@{self.host}: {command}"
             )
@@ -214,6 +230,10 @@ class SlurmClient:
                     f"ERROR: Unable to create {session_dir} on {self.username}@{self.host}"
                 )
                 sys.exit()
+=======
+            print(f"Creating remote session directory on {self.host}: {command}")
+            remote.execRemote(self.host, command, username=self.username)
+>>>>>>> master
 
         return session_dir
 

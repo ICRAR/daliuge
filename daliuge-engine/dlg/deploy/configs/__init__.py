@@ -59,14 +59,6 @@ class DefaultConfig(object):
 
     def __init__(self, user=None):
         self._dict = dict()
-        # if user:
-        #     self.setpar("user", user)
-        #     HOME_DIR = f"/home/{user}"
-        #     pardict = {"HOME_DIR": f"/home/{user}"}
-        #     DLG_ROOT = string.Template(DLG_ROOT).safe_substitute(pardict)
-        #     LOG_DIR = string.Template(LOG_DIR).safe_substitute(pardict)
-        #     VENV = string.Template(VENV).safe_substitute(pardict)
-        #     # print(f"config: {self.DLG_ROOT}")
         if user:
             print(f"Setting user to {user}")
             self._dict["user"] = user

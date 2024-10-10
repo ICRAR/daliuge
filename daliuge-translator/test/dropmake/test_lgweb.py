@@ -29,14 +29,26 @@ from parameterized import parameterized
 import urllib.parse
 import logging
 
+<<<<<<< HEAD
 import pkg_resources
+=======
+# import pkg_resources
+>>>>>>> master
 
 from dlg import common
 from dlg.common import tool
 from dlg.dropmake.web.translator_utils import get_mgr_deployment_methods
 from dlg.restutils import RestClient, RestClientException
 
+<<<<<<< HEAD
 lg_dir = pkg_resources.resource_filename(__name__, ".")  # @UndefinedVariable
+=======
+from importlib.resources import files
+
+import daliuge_tests.dropmake as test_graphs
+
+lg_dir = files(test_graphs)
+>>>>>>> master
 lgweb_port = 8086
 logger = logging.getLogger(__name__)
 
@@ -84,7 +96,12 @@ class TestLGWeb(unittest.TestCase):
         c = RestClient("localhost", lgweb_port, timeout=10)
 
         # a specific one
+<<<<<<< HEAD
         lg = c._get_json("/jsonbody?lg_name=logical_graphs/chiles_simple.graph")
+=======
+        lg = c._get_json(
+            "/jsonbody?lg_name=logical_graphs/chiles_simple.graph")
+>>>>>>> master
         self.assertIsNotNone(lg)
 
         # by default the first one found by the lg_web should be returned
@@ -107,18 +124,33 @@ class TestLGWeb(unittest.TestCase):
             "lg_content": '{"id": 1, "name": "example"}',
             "rmode": "1",
         }
+<<<<<<< HEAD
         self.assertRaises(RestClientException, c._post_form, "/jsonbody", form_data)
 
         # Replace the contents of an existing one
         # (but replace it back with original after the test)
         original_fname = os.path.join(lg_dir, "logical_graphs", "chiles_simple.graph")
+=======
+        self.assertRaises(RestClientException, c._post_form,
+                          "/jsonbody", form_data)
+
+        # Replace the contents of an existing one
+        # (but replace it back with original after the test)
+        original_fname = os.path.join(
+            lg_dir, "logical_graphs", "chiles_simple.graph")
+>>>>>>> master
         copy_fname = tempfile.mktemp()
         shutil.copy(original_fname, copy_fname)
 
         try:
             form_data["lg_name"] = "logical_graphs/chiles_simple.graph"
             c._post_form("/jsonbody", form_data)
+<<<<<<< HEAD
             new = c._get_json("/jsonbody?lg_name=logical_graphs/chiles_simple.graph")
+=======
+            new = c._get_json(
+                "/jsonbody?lg_name=logical_graphs/chiles_simple.graph")
+>>>>>>> master
             self.assertIsNotNone(new)
             self.assertIn("id", new)
             self.assertIn("name", new)
@@ -159,7 +191,12 @@ class TestLGWeb(unittest.TestCase):
             "/pgt_jsonbody?pgt_name=unknown.json",
         )
         # good!
+<<<<<<< HEAD
         c._get_json("/pgt_jsonbody?pgt_name=logical_graphs/chiles_simple1_pgt.graph")
+=======
+        c._get_json(
+            "/pgt_jsonbody?pgt_name=logical_graphs/chiles_simple1_pgt.graph")
+>>>>>>> master
 
     def test_get_pgt_post(self, algo="metis", algo_options=None):
         c = RestClient("localhost", lgweb_port, timeout=10)
@@ -168,7 +205,12 @@ class TestLGWeb(unittest.TestCase):
         self.assertRaises(RestClientException, c._POST, "/gen_pgt")
 
         # new logical graph JSON
+<<<<<<< HEAD
         fname = os.path.join(lg_dir, "logical_graphs", "test-20190830-110556.graph")
+=======
+        fname = os.path.join(lg_dir, "logical_graphs",
+                             "test-20190830-110556.graph")
+>>>>>>> master
         with open(fname, "rb") as infile:
             json_data = infile.read()
 
@@ -411,9 +453,16 @@ class TestLGWeb(unittest.TestCase):
         for request in request_tests:
             self._test_post_request(c, test_url, request[0], request[1])
 
+<<<<<<< HEAD
     @parameterized.expand(
         [("testLoop", "testLoop.graph"), ("ArrayLoop", "ArrayLoop.graph")]
     )
+=======
+    @parameterized.expand([
+        ("testLoop", "testLoop.graph"),
+        ("ArrayLoop", "ArrayLoop.graph"),
+    ])
+>>>>>>> master
     def test_lg_unroll(self, n, graph):
         c = RestClient("localhost", lgweb_port, timeout=10)
         test_url = "/unroll"

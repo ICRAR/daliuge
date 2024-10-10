@@ -115,8 +115,13 @@
                     "drawOrderHint": {
                         "type": "integer"
                     },
+<<<<<<< HEAD
                     "key": {
                         "type": "integer"
+=======
+                    "id": {
+                        "type": "string"
+>>>>>>> master
                     },
                     "name": {
                         "type": "string"
@@ -318,6 +323,14 @@
                                 "keyAttribute": {
                                     "type": "boolean"
                                 },
+<<<<<<< HEAD
+=======
+                                "encoding": {
+                                    "type": "string",
+                                    "enum": ["binary", "pickle", "dill", "npy", "base64", "utf-8"],
+                                    "default": "dill"
+                                },
+>>>>>>> master
                                 "id": {
                                     "type": "string"
                                 },
@@ -394,8 +407,13 @@
                             ]
                         }
                     },
+<<<<<<< HEAD
                     "group": {
                         "type": "integer"
+=======
+                    "parentId": {
+                        "type": "string"
+>>>>>>> master
                     }
                 },
                 "required": [
@@ -412,7 +430,11 @@
                     "inputApplicationName",
                     "inputApplicationType",
                     "isGroup",
+<<<<<<< HEAD
                     "key",
+=======
+                    "id",
+>>>>>>> master
                     "name",
                     "outputAppFields",
                     "outputApplicationName",
@@ -434,13 +456,21 @@
                         "type": "boolean"
                     },
                     "from": {
+<<<<<<< HEAD
                         "type": "integer"
+=======
+                        "type": "string"
+>>>>>>> master
                     },
                     "fromPort": {
                         "type": "string"
                     },
                     "to": {
+<<<<<<< HEAD
                         "type": "integer"
+=======
+                        "type": "string"
+>>>>>>> master
                     },
                     "toPort": {
                         "type": "string"

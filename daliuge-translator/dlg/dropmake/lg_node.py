@@ -54,7 +54,11 @@ class LGNode:
         done_dict: LGNode that have been processed (Dict)
         ssid:   session id (string)
         """
+<<<<<<< HEAD
         self.id = jd["key"]  # node ID
+=======
+        self.id = jd["id"]  # node ID
+>>>>>>> master
         self.jd = jd  # JSON TODO: this should be removed
         self.group_q = group_q  # the group hierarchy queue
         self.group = None  # used if node belongs to group
@@ -71,10 +75,13 @@ class LGNode:
         self._grpw = None
         self._inputs = []  # list of LGNode objects connected to this node
         self._outputs = []  # list of LGNode objects connected to this node
+<<<<<<< HEAD
         self.inputPorts = "inputPorts"
         self.outputPorts = "outputPorts"
         logger.debug("%s input_ports: %s", self.name, self.inputPorts)
         logger.debug("%s output_ports: %s", self.name, self.outputPorts)
+=======
+>>>>>>> master
         self.dropclass = ""  # e.g. dlg.apps.simple.HelloWorldAPP
         self.reprodata = jd.get("reprodata", {}).copy()
         if "isGroup" in jd and jd["isGroup"] is True:
@@ -86,8 +93,13 @@ class LGNode:
         else:
             self.is_group = False
 
+<<<<<<< HEAD
         if "group" in jd:
             grp_id = jd["group"]
+=======
+        if "parentId" in jd:
+            grp_id = jd["parentId"]
+>>>>>>> master
             if grp_id in done_dict:
                 grp_nd = done_dict[grp_id]
                 self.group = grp_nd
@@ -97,6 +109,12 @@ class LGNode:
 
         done_dict[self.id] = self
         self.subgraph = jd['subgraph'] if 'subgraph' in jd else None
+<<<<<<< HEAD
+=======
+        self.happy = False
+        self.loop_ctx = None
+        self.iid = None
+>>>>>>> master
 
     def __str__(self):
         return self.name
@@ -200,12 +218,16 @@ class LGNode:
 
     @property
     def name(self):
+<<<<<<< HEAD
         if self.jd.get("name"):
             # backwards compatibility
             # TODO: deprecated
             return self.jd.get("name", "")
         else:
             return self.jd.get("name", "")
+=======
+        return self.jd.get("name", "")
+>>>>>>> master
 
     @property
     def category(self):
@@ -254,10 +276,17 @@ class LGNode:
         Add a group member
         """
         if (
+<<<<<<< HEAD
             lg_node.is_group
             and not (lg_node.is_scatter)
             and not (lg_node.is_loop)
             and not (lg_node.is_groupby)
+=======
+                lg_node.is_group
+                and not (lg_node.is_scatter)
+                and not (lg_node.is_loop)
+                and not (lg_node.is_groupby)
+>>>>>>> master
         ):
             raise GInvalidNode(
                 "Only Scatters, Loops and GroupBys can be nested, but {0} is neither".format(
@@ -395,9 +424,15 @@ class LGNode:
         """
         result = False
         if self.has_group() and (
+<<<<<<< HEAD
             "group_start" in self.jd
             or "Group start" in self.jd
             or "Group Start" in self.jd
+=======
+                "group_start" in self.jd
+                or "Group start" in self.jd
+                or "Group Start" in self.jd
+>>>>>>> master
         ):
             gs = (
                 self.jd.get("group_start", False)
@@ -419,9 +454,15 @@ class LGNode:
         """
         result = False
         if self.has_group() and (
+<<<<<<< HEAD
             "group_end" in self.jd
             or "Group end" in self.jd
             or "Group End" in self.jd
+=======
+                "group_end" in self.jd
+                or "Group end" in self.jd
+                or "Group End" in self.jd
+>>>>>>> master
         ):
             ge = (
                 self.jd.get("group_end", False)
@@ -497,6 +538,7 @@ class LGNode:
                 )
 
     @property
+<<<<<<< HEAD
     def inputPorts(self):
         return self._inputPorts
 
@@ -513,6 +555,8 @@ class LGNode:
         self._outputPorts = self._getPortName(ports="outputPorts", index=0)
 
     @property
+=======
+>>>>>>> master
     def gather_width(self):
         """
         Gather width
@@ -762,7 +806,11 @@ class LGNode:
         # NOTE: drop Argxx keywords
 
     def _getPortName(
+<<<<<<< HEAD
         self, ports: str = "outputPorts", index: int = 0, portId=None
+=======
+            self, ports: str = "outputPorts", index: int = 0, portId=None
+>>>>>>> master
     ):
         """
         Return name of port if it exists
@@ -851,9 +899,15 @@ class LGNode:
         if gi.is_groupby:
             gii = gi.inputs[0]
             dw = (
+<<<<<<< HEAD
                 int(gii.jd["data_volume"])
                 * gi.groupby_width
                 * self.gather_width
+=======
+                    int(gii.jd["data_volume"])
+                    * gi.groupby_width
+                    * self.gather_width
+>>>>>>> master
             )
         else:  # data
             dw = gi.weight * self.gather_width
@@ -967,8 +1021,13 @@ class LGNode:
             self.dropclass = self.jd["dataclass"]
         # Backwards compatibility
         if (
+<<<<<<< HEAD
             not hasattr(self, "dropclass")
             or self.dropclass == "dlg.apps.simple.SleepApp"
+=======
+                not hasattr(self, "dropclass")
+                or self.dropclass == "dlg.apps.simple.SleepApp"
+>>>>>>> master
         ):
             if self.category == "File":
                 self.dropclass = "dlg.data.drops.file.FileDROP"

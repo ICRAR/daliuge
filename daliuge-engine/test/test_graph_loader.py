@@ -21,7 +21,13 @@
 #
 import unittest
 import json
+<<<<<<< HEAD
 import pkg_resources
+=======
+import daliuge_tests.engine.graphs as test_graphs
+
+from importlib.resources import files
+>>>>>>> master
 
 from dlg import graph_loader
 from dlg.ddap_protocol import DROPLinkType, DROPRel
@@ -174,11 +180,16 @@ class TestGraphLoader(unittest.TestCase):
         )
 
     def test_removeUnmetRelationships_named(self):
+<<<<<<< HEAD
         with pkg_resources.resource_stream(
             "test", "graphs/HelloWorld_simplePG.graph"
         ) as f:  # @UndefinedVariable
             graphDesc = json.load(f)
 
+=======
+        with (files(test_graphs) / "HelloWorld_simplePG.graph").open() as f:
+            graphDesc = json.load(f)
+>>>>>>> master
         unmetRelationships = graph_loader.removeUnmetRelationships(graphDesc)
         self.assertEqual(0, len(unmetRelationships))
 
@@ -186,11 +197,16 @@ class TestGraphLoader(unittest.TestCase):
         """
         Use a graph with un-named ports and check whether it is loading
         """
+<<<<<<< HEAD
         with pkg_resources.resource_stream(
             "test", "graphs/funcTestPG.graph"
         ) as f:  # @UndefinedVariable
             graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
+=======
+        with (files(test_graphs) / "funcTestPG.graph").open() as f:
+            graphSpec = json.load(f)
+>>>>>>> master
         a = graph_loader.createGraphFromDropSpecList(graphSpec)
         dummy = a
 
@@ -198,11 +214,16 @@ class TestGraphLoader(unittest.TestCase):
         """
         Use a graph with named ports and check whether it is loading
         """
+<<<<<<< HEAD
         with pkg_resources.resource_stream(
             "test", "graphs/funcTestPG_namedPorts.graph"
         ) as f:  # @UndefinedVariable
             graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
+=======
+        with (files(test_graphs) / "funcTestPG_namedPorts.graph").open() as f:
+            graphSpec = json.load(f)
+>>>>>>> master
         a = graph_loader.createGraphFromDropSpecList(graphSpec)
         dummy = a
 
@@ -211,9 +232,13 @@ class TestGraphLoader(unittest.TestCase):
         Use a graph with applicationArgs and make sure applications see their
         arguments
         """
+<<<<<<< HEAD
         with pkg_resources.resource_stream(
             "test", "graphs/application_args.graph"
         ) as f:  # @UndefinedVariable
+=======
+        with (files(test_graphs) / "application_args.graph").open() as f:
+>>>>>>> master
             graphSpec = json.load(f)
         graph = graph_loader.createGraphFromDropSpecList(graphSpec)
         app = graph[0]

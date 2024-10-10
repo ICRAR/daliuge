@@ -114,6 +114,14 @@ class dropdict(dict):
     def addProducer(self, other, name=None):
         self._addSomething(other, "producers", name=name)
 
+<<<<<<< HEAD
+=======
+    def __ge__(self, other):
+        return self.get("oid") >= other.get("oid")
+
+    def __lt__(self, other):
+        return self.get("oid") < other.get("oid")
+>>>>>>> master
 
 def _sanitize_links(links):
     """

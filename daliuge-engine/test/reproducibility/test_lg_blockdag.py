@@ -29,8 +29,16 @@ Most of these tests will be asserting the obvious, with the exception of Reprodu
 
 import json
 import unittest
+<<<<<<< HEAD
 
 import pkg_resources
+=======
+import daliuge_tests.engine.topoGraphs as test_graphs
+try:
+    from importlib.resources import files, as_file
+except ModuleNotFoundError:
+    from importlib_resources import files
+>>>>>>> master
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags, ALL_RMODES
 from dlg.common.reproducibility.reproducibility import (
@@ -41,7 +49,12 @@ from dlg.common.reproducibility.reproducibility import (
 
 
 def _init_graph(filename: str):
+<<<<<<< HEAD
     with pkg_resources.resource_stream("test.reproducibility", filename) as file:
+=======
+    f = files(test_graphs) / f"{filename}"
+    with f.open('r') as file:
+>>>>>>> master
         lgt = json.load(file)
     return lgt
 
@@ -58,7 +71,11 @@ class LogicalBlockdagTests(unittest.TestCase):
 
     def test_single(self):
         for rmode in ALL_RMODES:
+<<<<<<< HEAD
             _, leaves = _setup_lgt("topoGraphs/testSingle.graph", rmode)
+=======
+            _, leaves = _setup_lgt("testSingle.graph", rmode)
+>>>>>>> master
             self.assertTrue(len(leaves) == 1, rmode.name)
 
     def test_twostart(self):
@@ -69,7 +86,11 @@ class LogicalBlockdagTests(unittest.TestCase):
         B -->
         """
         for rmode in ALL_RMODES:
+<<<<<<< HEAD
             lgt, leaves = _setup_lgt("topoGraphs/testTwoStart.graph", rmode)
+=======
+            lgt, leaves = _setup_lgt("testTwoStart.graph", rmode)
+>>>>>>> master
             parenthashes = list(
                 lgt["nodeDataArray"][1]["reprodata"][rmode.name]["lg_parenthashes"].values()
             )
@@ -105,7 +126,11 @@ class LogicalBlockdagTests(unittest.TestCase):
           --> C
         """
         for rmode in ALL_RMODES:
+<<<<<<< HEAD
             _, leaves = _setup_lgt("topoGraphs/testTwoEnd.graph", rmode)
+=======
+            _, leaves = _setup_lgt("testTwoEnd.graph", rmode)
+>>>>>>> master
             self.assertTrue(leaves[0] == leaves[1], rmode.name)
 
     def test_twolines(self):
@@ -115,7 +140,11 @@ class LogicalBlockdagTests(unittest.TestCase):
         C --> D
         """
         for rmode in ALL_RMODES:
+<<<<<<< HEAD
             _, leaves = _setup_lgt("topoGraphs/testTwoLines.graph", rmode)
+=======
+            _, leaves = _setup_lgt("testTwoLines.graph", rmode)
+>>>>>>> master
             self.assertTrue(leaves[0] == leaves[1], rmode.name)
 
     def test_data_fan(self):
@@ -123,7 +152,11 @@ class LogicalBlockdagTests(unittest.TestCase):
         Tests that a single data source scatters its signature to downstream data drops.
         """
         for rmode in ALL_RMODES:
+<<<<<<< HEAD
             lgt, leaves = _setup_lgt("topoGraphs/dataFan.graph", rmode)
+=======
+            lgt, leaves = _setup_lgt("dataFan.graph", rmode)
+>>>>>>> master
             if rmode != ReproducibilityFlags.REPRODUCE:
                 sourcehash = lgt["nodeDataArray"][0]["reprodata"][rmode.name]["lg_blockhash"]
                 parenthash1 = list(
@@ -151,7 +184,11 @@ class LogicalBlockdagTests(unittest.TestCase):
         Tests that two data sources are collected in a single downstream data drop
         """
         for rmode in ALL_RMODES:
+<<<<<<< HEAD
             lgt, _ = _setup_lgt("topoGraphs/dataFunnel.graph", rmode)
+=======
+            lgt, _ = _setup_lgt("dataFunnel.graph", rmode)
+>>>>>>> master
             if rmode != ReproducibilityFlags.REPRODUCE:
                 sourcehash = lgt["nodeDataArray"][1]["reprodata"][rmode.name]["lg_blockhash"]
                 parenthashes = list(
@@ -176,7 +213,11 @@ class LogicalBlockdagTests(unittest.TestCase):
         :return:
         """
         for rmode in ALL_RMODES:
+<<<<<<< HEAD
             lgt, _ = _setup_lgt("topoGraphs/dataSandwich.graph", rmode)
+=======
+            lgt, _ = _setup_lgt("dataSandwich.graph", rmode)
+>>>>>>> master
             index = 0 if rmode != ReproducibilityFlags.REPRODUCE else 1
             sourcehash = lgt["nodeDataArray"][index]["reprodata"][rmode.name]["lg_blockhash"]
             parenthashes = list(
@@ -189,7 +230,11 @@ class LogicalBlockdagTests(unittest.TestCase):
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
         for rmode in ALL_RMODES:
+<<<<<<< HEAD
             lgt, _ = _setup_lgt("topoGraphs/computationSandwich.graph", rmode)
+=======
+            lgt, _ = _setup_lgt("computationSandwich.graph", rmode)
+>>>>>>> master
             sourcehash = lgt["nodeDataArray"][1]["reprodata"][rmode.name]["lg_blockhash"]
             parenthashes = list(
                 lgt["nodeDataArray"][2]["reprodata"][rmode.name]["lg_parenthashes"].values()
@@ -215,14 +260,22 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
              C
         B -->
         """
+<<<<<<< HEAD
         lgt, _ = _setup_lgt("topoGraphs/testTwoStart.graph", self.rmode)
+=======
+        lgt, _ = _setup_lgt("testTwoStart.graph", self.rmode)
+>>>>>>> master
         self.assertIn("reprodata", lgt["nodeDataArray"][1])
 
     def test_data_fan(self):
         """
         Tests that a single data source scatters its signature to downstream data drops.
         """
+<<<<<<< HEAD
         lgt, _ = _setup_lgt("topoGraphs/dataFan.graph", self.rmode)
+=======
+        lgt, _ = _setup_lgt("dataFan.graph", self.rmode)
+>>>>>>> master
         for drop in lgt["nodeDataArray"]:
             self.assertIn("reprodata", drop)
 
@@ -230,7 +283,11 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         """
         Tests that two data sources are collected in a single downstream data drop
         """
+<<<<<<< HEAD
         lgt, _ = _setup_lgt("topoGraphs/dataFunnel.graph", self.rmode)
+=======
+        lgt, _ = _setup_lgt("dataFunnel.graph", self.rmode)
+>>>>>>> master
         for drop in lgt["nodeDataArray"]:
             self.assertIn("reprodata", drop)
 
@@ -239,7 +296,11 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         Tests two data drops with an interim computing drop
         :return:
         """
+<<<<<<< HEAD
         lgt, _ = _setup_lgt("topoGraphs/dataSandwich.graph", self.rmode)
+=======
+        lgt, _ = _setup_lgt("dataSandwich.graph", self.rmode)
+>>>>>>> master
         for drop in lgt["nodeDataArray"]:
             self.assertIn("reprodata", drop)
 
@@ -247,6 +308,10 @@ class LogicalBlockdagNothingTests(unittest.TestCase):
         """
         Tests that an internal data drop surrounded by computing drops is handled correctly.
         """
+<<<<<<< HEAD
         lgt, _ = _setup_lgt("topoGraphs/computationSandwich.graph", self.rmode)
+=======
+        lgt, _ = _setup_lgt("computationSandwich.graph", self.rmode)
+>>>>>>> master
         for drop in lgt["nodeDataArray"]:
             self.assertIn("reprodata", drop)

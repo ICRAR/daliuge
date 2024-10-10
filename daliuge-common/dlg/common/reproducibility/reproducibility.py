@@ -464,13 +464,22 @@ def lg_build_blockdag(logical_graph: dict, level):
     queue = collections.deque()
     # TODO: Deal with MKN/Scatter Input drops
     for drop in logical_graph.get("nodeDataArray", []):
+<<<<<<< HEAD
         did = int(drop["key"])
+=======
+        did = (drop["id"])
+>>>>>>> master
         dropset[did] = [drop, 0, 0]
         neighbourset[did] = []
 
     for edge in logical_graph.get("linkDataArray", []):
+<<<<<<< HEAD
         src = int(edge["from"])
         dest = int(edge["to"])
+=======
+        src = (edge["from"])
+        dest = (edge["to"])
+>>>>>>> master
         dropset[dest][1] += 1
         dropset[src][2] += 1
         neighbourset[src].append(dest)
@@ -497,6 +506,10 @@ def lg_build_blockdag(logical_graph: dict, level):
             dropset[neighbour][1] -= 1
             parenthash = {}
             if rmode != ReproducibilityFlags.NOTHING:
+<<<<<<< HEAD
+=======
+                dtype = "data"
+>>>>>>> master
                 if rmode == ReproducibilityFlags.REPRODUCE:
                     if "categoryType" in dropset[did][0]:
                         dtype = dropset[did][0]["categoryType"].lower()
