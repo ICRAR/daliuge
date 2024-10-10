@@ -25,6 +25,7 @@ from abc import abstractmethod
 # ===================
 # Deployment defaults
 # ====================
+USER = ""
 ACCOUNT = ""
 LOGIN_NODE = ""
 HOME_DIR = os.environ["HOME"] if "HOME" in os.environ else ""
@@ -56,8 +57,19 @@ init_tpl = string.Template(__sub_tpl_str)
 
 class DefaultConfig(object):
 
-    def __init__(self):
+    def __init__(self, user=None):
         self._dict = dict()
+        # if user:
+        #     self.setpar("user", user)
+        #     HOME_DIR = f"/home/{user}"
+        #     pardict = {"HOME_DIR": f"/home/{user}"}
+        #     DLG_ROOT = string.Template(DLG_ROOT).safe_substitute(pardict)
+        #     LOG_DIR = string.Template(LOG_DIR).safe_substitute(pardict)
+        #     VENV = string.Template(VENV).safe_substitute(pardict)
+        #     # print(f"config: {self.DLG_ROOT}")
+        if user:
+            print(f"Setting user to {user}")
+            self._dict["user"] = user
         self.setpar("host", "LOGIN_NODE")
         self.setpar("account", "ACCOUNT")
         self.setpar("home_dir", "HOME_DIR")
@@ -73,8 +85,11 @@ class DefaultConfig(object):
 
     def setpar(self, k, v):
         if hasattr(self, v):
-            print(f"config[{v}] = '{globals()[v]}'")
-            self._dict[k] = getattr(self, v)
+            value = getattr(self, v)
+            if "user" in self._dict:
+                pardict = {"USER": self._dict["user"]}
+                value = string.Template(value).safe_substitute(pardict)
+            self._dict[k] = value
         else:
             print(f"default[{v}] = '{globals()[v]}'")
             self._dict[k] = globals()[v]
@@ -90,13 +105,14 @@ class ICRARHyadesConfig(DefaultConfig):
     # The following is more a workaround than a solution
     # requires the user to have a venv exectly in that place
     LOGIN_NODE = "hyades.icrar.org"
-    DLG_ROOT = "$HOME_DIR/dlg"
-    LOG_DIR = "$HOME_DIR/dlg/log"
+    HOME_DIR = "/home/$USER"
+    DLG_ROOT = "/home/$USER/dlg"
+    LOG_DIR = "/home/$USER/dlg/log"
     VENV = "source $HOME_DIR/dlg/venv/bin/activate"
     EXEC_PREFIX = ""
 
-    def __init__(self):
-        super(ICRARHyadesConfig, self).__init__()
+    def __init__(self, user=None):
+        super(ICRARHyadesConfig, self).__init__(user=user)
 
     def init_list(self):  # TODO please fill in
         return [self.ACCOUNT, self.LOG_DIR, self.MODULES, self.VENV]
@@ -114,8 +130,8 @@ class ICRARoodConfig(DefaultConfig):
     LOG_DIR = f"{DLG_ROOT}/log"
     VENV = f"source {HOME_DIR}/dlg/venv/bin/activate"
 
-    def __init__(self):
-        super(ICRARoodConfig, self).__init__()
+    def __init__(self, user=None):
+        super(ICRARoodConfig, self).__init__(user=user)
 
     def init_list(self):  # TODO please fill in
         return [self.ACCOUNT, self.LOG_DIR, self.MODULES, self.VENV]
@@ -131,16 +147,16 @@ class ICRARoodCldConfig(DefaultConfig):
     # The compute nodes have have required python and DALiuGE but just in case....
     VENV = f"source {DLG_ROOT}/venv/bin/activate"
 
-    def __init__(self):
-        super(ICRARoodCldConfig, self).__init__()
+    def __init__(self, user=None):
+        super(ICRARoodCldConfig, self).__init__(user=user)
 
     def init_list(self):  # TODO please fill in
         return [self.ACCOUNT, self.LOG_DIR, self.VENV]
 
 
 class GalaxyMWAConfig(DefaultConfig):
-    def __init__(self):
-        super(GalaxyMWAConfig, self).__init__()
+    def __init__(self, user=None):
+        super(GalaxyMWAConfig, self).__init__(user=user)
 
     def init_list(self):
         return ["mwaops", "/group/mwaops/cwu/dfms/logs"]
@@ -154,8 +170,8 @@ module load mpi4py
 """
     VENV = ""
 
-    def __init__(self):
-        super(GalaxyASKAPConfig, self).__init__()
+    def __init__(self, user=None):
+        super(GalaxyASKAPConfig, self).__init__(user=user)
 
     def init_list(self):
         return [
@@ -166,8 +182,8 @@ module load mpi4py
 
 
 class MagnusConfig(DefaultConfig):
-    def __init__(self):
-        super(MagnusConfig, self).__init__()
+    def __init__(self, user=None):
+        super(MagnusConfig, self).__init__(user=user)
 
     def init_list(self):
         return ["pawsey0129", "/group/pawsey0129/daliuge_logs"]
@@ -189,8 +205,8 @@ class Setonix411Config(DefaultConfig):
 
     MODULES = ""
 
-    def __init__(self):
-        super(Setonix411Config, self).__init__()
+    def __init__(self, user=None):
+        super(Setonix411Config, self).__init__(user=user)
 
     def init_list(self):
         return [self.ACCOUNT, f"{self.HOME_DIR}/logs"]
@@ -227,4 +243,5 @@ class ConfigFactory:
     @staticmethod
     def create_config(facility=None, user=None):
         facility = facility.lower() if (facility is not None) else facility
-        return ConfigFactory.mapping.get(facility)()
+        config = ConfigFactory.mapping.get(facility)(user=user)
+        return config

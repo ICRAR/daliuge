@@ -79,7 +79,7 @@ class SlurmClient:
         pip_name=None,
         username=None,
     ):
-        self._config = ConfigFactory.create_config(facility=facility)
+        self._config = ConfigFactory.create_config(facility=facility, user=username)
         self.host = self._config.getpar("host") if host is None else host
         self._acc = self._config.getpar("account") if (acc is None) else acc
         self._user = self._config.getpar("user") if (username is None) else username
@@ -210,7 +210,9 @@ class SlurmClient:
             try:
                 remote.execRemote(self.host, command, username=self.username)
             except (TypeError, SSHException):
-                print(f"ERROR: Unable to create {session_dir} on {self.username}@{self.host}")
+                print(
+                    f"ERROR: Unable to create {session_dir} on {self.username}@{self.host}"
+                )
                 sys.exit()
 
         return session_dir
