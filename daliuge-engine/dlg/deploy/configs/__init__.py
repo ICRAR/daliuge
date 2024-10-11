@@ -100,7 +100,7 @@ class ICRARHyadesConfig(DefaultConfig):
     HOME_DIR = "/home/$USER"
     DLG_ROOT = "/home/$USER/dlg"
     LOG_DIR = "/home/$USER/dlg/log"
-    VENV = "source $HOME_DIR/dlg/venv/bin/activate"
+    VENV = "source /home/$USER/dlg/venv/bin/activate"
     EXEC_PREFIX = ""
 
     def __init__(self, user=None):
