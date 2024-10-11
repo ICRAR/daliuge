@@ -150,19 +150,13 @@ class TestGraphLoader(unittest.TestCase):
 
         unmetRelationships = graph_loader.removeUnmetRelationships(graphDesc)
         self.assertEqual(4, len(unmetRelationships))
-        self.assertIn(
-            DROPRel("D", DROPLinkType.CONSUMER, "A"), unmetRelationships
-        )
+        self.assertIn(DROPRel("D", DROPLinkType.CONSUMER, "A"), unmetRelationships)
         self.assertIn(
             DROPRel("D", DROPLinkType.STREAMING_CONSUMER, "C"),
             unmetRelationships,
         )
-        self.assertIn(
-            DROPRel("Z", DROPLinkType.PRODUCER, "A"), unmetRelationships
-        )
-        self.assertIn(
-            DROPRel("X", DROPLinkType.PRODUCER, "A"), unmetRelationships
-        )
+        self.assertIn(DROPRel("Z", DROPLinkType.PRODUCER, "A"), unmetRelationships)
+        self.assertIn(DROPRel("X", DROPLinkType.PRODUCER, "A"), unmetRelationships)
 
         # The original dropSpecs have changed as well
         a = graphDesc[0]
@@ -171,9 +165,7 @@ class TestGraphLoader(unittest.TestCase):
         self.assertEqual(1, len(a["consumers"]))
         self.assertEqual("B", a["consumers"][0])
         self.assertFalse("producers" in a and len(a["producers"]) > 0)
-        self.assertFalse(
-            "streamingConsumers" in c and len(c["streamingConsumers"]) > 0
-        )
+        self.assertFalse("streamingConsumers" in c and len(c["streamingConsumers"]) > 0)
 
     def test_removeUnmetRelationships_named(self):
         with (files(test_graphs) / "HelloWorld_simplePG.graph").open() as f:

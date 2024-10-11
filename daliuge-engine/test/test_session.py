@@ -170,7 +170,7 @@ class TestSession(unittest.TestCase):
 
     def test_addGraphSpec_namedPorts(self):
         with (files(test_graphs) / "funcTestPG_namedPorts.graph").open() as f:
-           graphSpec = json.load(f)
+            graphSpec = json.load(f)
         with Session("1") as s:
             s.addGraphSpec(graphSpec)
             s.deploy()

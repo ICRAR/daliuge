@@ -29,6 +29,7 @@ Assumptions:
 import json
 import unittest
 import daliuge_tests.engine.topoGraphs as test_graphs
+
 try:
     from importlib.resources import files, as_file
 except ModuleNotFoundError:
@@ -56,14 +57,14 @@ _dummydrop = {
             "pg_blockhash": "246",
             "rg_data": {"merkleroot": "bogus2"},
             "rg_parenthashes": {},
-        }
+        },
     },
 }
 
 
 def _init_graph(filename):
     f = files(test_graphs) / f"{filename}"
-    with f.open('r') as file:
+    with f.open("r") as file:
         lgt = json.load(file)
     for drop in lgt["nodeDataArray"]:
         drop["reprodata"] = {}
@@ -134,11 +135,14 @@ class ToposortTests(unittest.TestCase):
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt, ReproducibilityFlags.RERUN)[1]
-        self.assertTrue(visited == [
-            "4f57933d-a27c-4719-adf8-d1867c1800a4",
-            "08c86565-cd63-4967-95ba-315f497c8835",
-            "249dd6db-7fa4-478f-a4c9-2616446580f0"
-        ])
+        self.assertTrue(
+            visited
+            == [
+                "4f57933d-a27c-4719-adf8-d1867c1800a4",
+                "08c86565-cd63-4967-95ba-315f497c8835",
+                "249dd6db-7fa4-478f-a4c9-2616446580f0",
+            ]
+        )
 
     def test_lg_blockdag_twoend(self):
         """
@@ -151,10 +155,14 @@ class ToposortTests(unittest.TestCase):
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt, ReproducibilityFlags.RERUN)[1]
-        self.assertTrue(visited == [
-            "ee1db22f-4977-4e84-9965-5cbbdb68c5e6",
-            "23463b9a-57a7-4d96-a52f-e012c3fe0749",
-            "542a2a53-628f-4f45-8ba0-76121ad42c64"])
+        self.assertTrue(
+            visited
+            == [
+                "ee1db22f-4977-4e84-9965-5cbbdb68c5e6",
+                "23463b9a-57a7-4d96-a52f-e012c3fe0749",
+                "542a2a53-628f-4f45-8ba0-76121ad42c64",
+            ]
+        )
 
     def test_lg_blockdag_twolines(self):
         """
@@ -166,11 +174,15 @@ class ToposortTests(unittest.TestCase):
         init_lgt_repro_data(lgt, "1")
         init_lg_repro_data(lgt)
         visited = lg_build_blockdag(lgt, ReproducibilityFlags.RERUN)[1]
-        self.assertTrue(visited == [
-            "2a33cae9-29cc-4133-be6d-f028584bf159",
-            "82ac735a-ae5e-4eb3-b9b6-414b313214ef",
-            "8a50de9c-762b-495c-be68-a61281ae1a3a",
-            "aa607a29-0803-4319-9917-0516c4bbaa79"])
+        self.assertTrue(
+            visited
+            == [
+                "2a33cae9-29cc-4133-be6d-f028584bf159",
+                "82ac735a-ae5e-4eb3-b9b6-414b313214ef",
+                "8a50de9c-762b-495c-be68-a61281ae1a3a",
+                "aa607a29-0803-4319-9917-0516c4bbaa79",
+            ]
+        )
 
     def test_lg_blockdag_empty(self):
         """
