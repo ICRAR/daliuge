@@ -650,7 +650,9 @@ def main():
             # you can specify:
             # either a single directory
             if opts.log_root is None:
-                config = ConfigFactory.create_config(facility=opts.facility)
+                config = ConfigFactory.create_config(
+                    facility=opts.facility, user=opts.username
+                )
                 log_root = config.getpar("log_root")
             else:
                 log_root = opts.log_root
