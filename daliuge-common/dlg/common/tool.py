@@ -19,7 +19,6 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-# pylint: disable=no-member
 
 """dlg command line utility"""
 import importlib
@@ -123,7 +122,7 @@ def _load_commands():
         for entry_point in all_entry_points["dlg.tool_commands"]:
             entry_point.load().register_commands()
     else:
-        for entry_point in entry_points(group="dlg.tool_commands"):
+        for entry_point in entry_points(group="dlg.tool_commands"):  # pylint: disable=unexpected-keyword-arg
             entry_point.load().register_commands()
 
 
