@@ -38,8 +38,7 @@ from typing import Callable
 import dill
 from io import StringIO
 from contextlib import redirect_stdout
-
-from dlg import drop_loaders
+from dlg import drop_loaders, droputils
 from dlg.utils import serialize_data, deserialize_data
 from dlg.named_port_utils import (
     DropParser,
@@ -50,6 +49,9 @@ from dlg.named_port_utils import (
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import InvalidDropException
 from dlg.meta import (
+    dlg_int_param,
+    dlg_bool_param,
+    dlg_list_param,
     dlg_string_param,
     dlg_enum_param,
     dlg_dict_param,
@@ -59,6 +61,7 @@ from dlg.meta import (
     dlg_streaming_input,
 )
 
+from dlg.exceptions import DaliugeException
 logger = logging.getLogger(__name__)
 
 
@@ -603,7 +606,7 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(f"Input mapping provided: {self.func_arg_mapping}")
         self._recompute_data = {}
 
-    def run(self):
+    def run(self, write_results=True):
         """
         Function positional and keyword argument treatment:
 
@@ -696,7 +699,10 @@ class PyFuncApp(BarrierAppDROP):
         # Depending on how many outputs we have we treat our result
         # as an iterable or as a single object. Each result is pickled
         # and written to its corresponding output
-        self.write_results(result)
+        if write_results:
+            self.write_results(result)
+        else:
+            return result
 
     def write_results(self, result):
         outputs = self.outputs
@@ -724,3 +730,63 @@ class PyFuncApp(BarrierAppDROP):
                 logger.debug(e)
                 self._recompute_data[name] = repr(val)
         return self._recompute_data
+
+
+##
+# @brief PyFuncApp
+# @details An application that wraps a python function.
+# The inputs of the application are treated as the arguments of the function.
+# Conversely, the output of the function is treated as the output of the
+# application. If the application has more than one output, the result of
+# calling the function is treated as an iterable, with each individual object
+# being written to its corresponding output.
+# @par EAGLE_START
+# @param category PythonApp
+# @param tag daliuge
+# @param num_of_copies 4/Integer/ConstructParameter/NoPort/ReadWrite//False/False/Specifies the number of replications of the content of the scatter construct
+# @param func_name /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function name
+# @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code, e.g. 'def func_name(args): return args'. Note that func_name above needs to match the defined name here.
+# @param dropclass dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name pyfunc/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/The allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
+# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
+#     \~English Mapping from argname to default value. Should match only the last part of the argnames list.
+#               Values are interpreted as Python code literals and that means string values need to be quoted.
+# @par EAGLE_END
+
+class ScatterPyFuncApp(PyFuncApp):
+
+    component_meta = dlg_component(
+        "GenericScatterApp",
+        "Scatter an array like object into numSplit parts",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    # automatically populated by scatter node
+    num_of_copies: int = dlg_int_param("num_of_copies", 1)
+    element: bool = dlg_bool_param("element", False)
+    scatter_axes: list[int] = dlg_list_param("scatter_axes", "[0]")
+
+    def initialize(self, **kwargs):
+        super(PyFuncApp).initialize(**kwargs)
+
+    def run(self, write_results=False):
+        try:
+            result = self.run(write_results=False)
+        except IndexError as err:
+            raise err
+        for i in range(self.num_of_copies):
+            o = self.outputs[i]
+            if not self.element:
+                d = pickle.dumps(result[i])
+            else:
+                d = pickle.dumps(result[i][0])
+            o.len = len(d)
+            o.write(d)  # average across inputs

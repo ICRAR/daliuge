@@ -146,6 +146,38 @@ class TestPyFuncApp(unittest.TestCase):
             self.assertEqual(DROPStates.COMPLETED, drop.status)
         self.assertEqual(output_data, drop_loaders.load_pickle(c))
 
+    def _my_array_split(self, array, num_of_copies):
+        return numpy.array_split(array, num_of_copies)
+
+    def test_scatter_func(self):
+        from dlg.apps.pyfunc import ScatterPyFuncApp
+        import numpy as np
+        import glob
+        a = InMemoryDROP('a', 'a')
+        f = self._my_array_split
+        fcode, fdefaults = pyfunc.serialize_func(f)
+        b = pyfunc.PyFuncApp(
+            'pyfunc',
+            'pyfunc',
+            func_name=None,
+            func_code=fdefaults,
+            func_defaults=fdefaults,
+        )
+
+        c = InMemoryDROP('c')
+        d = InMemoryDROP('d')
+
+        b.addInput(a)
+        b.addInput(c)
+        b.addInput(d)
+        with DROPWaiterCtx(self, c, 5):
+            drop_loaders.save_npy(a, np.array([1,2,3,4]))
+            a.setCompleted()
+
+        for drop in a,b,c:
+            self.assertEqual(DROPStates.COMPLETED, drop.status)
+
+
     def test_eval_func(self, f=lambda x: x, input_data=None, output_data=None):
         input_data = [2, 2] if input_data is None else input_data
         output_data = [2, 2] if output_data is None else output_data
