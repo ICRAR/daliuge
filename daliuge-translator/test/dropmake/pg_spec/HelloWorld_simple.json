@@ -1,1 +1,0 @@
-{"class": "go.GraphLinksModel", "nodeDataArray": [{"key": 1, "oid": "test_pg_gen_-1_0", "category": "Application", "name": "HelloWorldApp"}, {"key": 2, "oid": "test_pg_gen_-2_0", "category": "Data", "name": "hello"}], "linkDataArray": [{"from": 1, "to": 2}]}

@@ -23,17 +23,18 @@ import json
 import subprocess
 import unittest
 
-import pkg_resources
+import daliuge_tests.dropmake as test_graphs
+
+from importlib.resources import files
 from dlg import common
 from dlg.common import tool
+
 
 
 class TestTool(unittest.TestCase):
     def test_pipeline(self):
         """A pipeline from an LG all the way to a finished graph execution"""
-        lg = pkg_resources.resource_filename(  # @UndefinedVariable
-            "test.dropmake", "logical_graphs/ArrayLoop.graph"
-        )
+        lg = str(files(test_graphs) / "logical_graphs/ArrayLoop.graph")
 
         # first fill the LGT parameters
         fill = tool.start_process(
