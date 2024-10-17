@@ -233,6 +233,7 @@ class NodeManagerClient(BaseDROPManagerClient):
         super(NodeManagerClient, self).__init__(host=host, port=port, timeout=timeout)
 
     def add_node_subscriptions(self, sessionId, node_subscriptions):
+
         self._post_json(
             f"/sessions/{quote(sessionId)}/subscriptions", node_subscriptions
         )
