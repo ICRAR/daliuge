@@ -56,6 +56,7 @@ class PGT(object):
     def __init__(self, drop_list, build_dag=True):
         self._drop_list = drop_list
         self._drop_list_len = len(drop_list)
+        self._links = []
         self._extra_drops = []  # artifacts DROPs produced during L2G mapping
         self._dag = DAGUtil.build_dag_from_drops(self._drop_list) if build_dag else None
         self._json_str = None
@@ -98,6 +99,10 @@ class PGT(object):
             return self._drop_list
         else:
             return self._drop_list + self._extra_drops
+
+    @property
+    def links(self):
+        return self._links
 
     def to_partition_input(self, outf):
         """
@@ -251,40 +256,36 @@ class PGT(object):
                 "Number of islands must be <= number of specified nodes!"
             )
 
-        if 0 == self._num_parts_done:
+        if self._num_parts_done == 0:
             raise GPGTException("The graph has not been partitioned yet")
 
-        if node_list is None or 0 == len(node_list):
+        if node_list is None or len(node_list) == 0:
             raise GPGTException("Node list is empty!")
 
         form_island = num_islands > 1
         if nodes_len < 1:  # we allow to run everything on a single node now!
             raise GPGTException("Too few nodes: {0}".format(nodes_len))
 
-        num_parts = self._num_parts_done
-        drop_list = self.drops
-
         # deal with the co-hosting of DIMs
         if not co_host_dim:
-            if form_island and num_parts > nodes_len:
+            if form_island and self._num_parts_done > nodes_len:
                 raise GPGTException(
                     "Insufficient number of nodes: {0}".format(nodes_len)
                 )
             is_list = node_list[0:num_islands]
             nm_list = node_list[num_islands:]
         else:
-            if form_island and num_islands + num_parts > nodes_len:
+            if form_island and num_islands + self._num_parts_done > nodes_len:
                 raise GPGTException(
                     "Insufficient number of nodes: {0}".format(nodes_len)
                 )
             is_list = node_list[0:num_islands]
             nm_list = node_list[num_islands:]
             logger.debug("NM list: %s", nm_list)
-        nm_len = len(nm_list)
         logger.info(
             "Drops count: %d, partitions count: %d, NM count: %d, island count: %d %s",
-            len(drop_list),
-            num_parts,
+            len(self.drops),
+            self._num_parts_done,
             len(nm_list),
             len(is_list),
             form_island,
@@ -294,12 +295,9 @@ class PGT(object):
             self.merge_partitions(num_islands, form_island=True)
             # from Eq.1 we know that num_parts <= nm_len
             # so no need to update its value
-        elif nm_len < num_parts:
-            self.merge_partitions(nm_len, form_island=False)
-            num_parts = nm_len
+        elif len(nm_list) < self._num_parts_done:
+            self.merge_partitions(len(nm_list), form_island=False)
 
-        lm = self._oid_gid_map
-        lm2 = self._gid_island_id_map
         # when #partitions < #nodes the lm values are spread around range(#nodes)
         # which leads to index out of range errors (TODO: find how _oid_gid_map is
         # constructed). The next three lines are attempting to fix this, however
@@ -310,25 +308,25 @@ class PGT(object):
         # lm = {k:values[v] for (k, v) in lm.items()} # replace old values with new
 
         if tpl_fl:
-            nm_list = ["#%s" % x for x in range(nm_len)]  # so that nm_list[i] == '#i'
+            nm_list = ["#%s" % x for x in range(len(nm_list))]  # so that nm_list[i] == '#i'
             is_list = [
                 "#%s" % x for x in range(len(is_list))
             ]  # so that is_list[i] == '#i'
 
-        for drop in drop_list:
+        for drop in self.drops:
             oid = drop["oid"]
             # For now, simply round robin, but need to consider
             # nodes cross COMPUTE islands which has
             # TODO consider distance between a pair of nodes
-            gid = lm[oid]
+            gid = self._oid_gid_map[oid]
             drop["node"] = nm_list[gid]
-            isid = lm2[gid] % num_islands if form_island else 0
+            isid = self._gid_island_id_map[gid] % num_islands if form_island else 0
             drop["island"] = is_list[isid]
 
         if ret_str:
-            return json.dumps(drop_list, indent=2)
+            return json.dumps(self.drops, indent=2)
         else:
-            return drop_list
+            return self.drops
 
     def to_gojs_json(self, string_rep=True, outdict=None, visual=False):
         """
@@ -469,7 +467,7 @@ class PGT(object):
                 node["category"] = "PythonApp"  # might not be correct
             node["name"] = drop["name"]
             nodes.append(node)
-
+        self._links = links
         ret["nodeDataArray"] = nodes
         ret["linkDataArray"] = links
         self._gojs_json_obj = ret

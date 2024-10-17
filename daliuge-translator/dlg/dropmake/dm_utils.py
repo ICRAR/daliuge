@@ -29,6 +29,8 @@ import json
 import logging
 import os
 import os.path as osp
+import uuid
+
 from .definition_classes import Categories, ConstructTypes
 
 from typing import Dict
@@ -106,7 +108,7 @@ def get_lg_ver_type(lgo):
 
 
 def get_keyset(lgo):
-    return set([x["key"] for x in lgo["nodeDataArray"]])
+    return set([x["id"] for x in lgo["nodeDataArray"]])
 
 
 def getNodesKeyDict(lgo):
@@ -114,7 +116,7 @@ def getNodesKeyDict(lgo):
     Return a dictionary of all nodes with the key attribute value as the key
     and the complete node as the value.
     """
-    return dict([(x["key"], x) for x in lgo["nodeDataArray"]])
+    return dict([(x["id"], x) for x in lgo["nodeDataArray"]])
 
 
 def convert_fields(lgo):
@@ -136,7 +138,7 @@ def convert_fields(lgo):
 def _build_node_index(lgo):
     ret = dict()
     for node in lgo["nodeDataArray"]:
-        ret[node["key"]] = node
+        ret[node["id"]] = node
 
     return ret
 
@@ -147,11 +149,11 @@ def _relink_gather(appnode, lgo, gather_newkey, node_index):
     relink them such that 'from' is the appnode
     """
 
-    gather_oldkey = appnode["key"]
+    gather_oldkey = appnode["id"]
     for link in lgo["linkDataArray"]:
         if link["from"] == gather_oldkey:
             node = node_index[link["to"]]
-            if node["group"] == gather_oldkey:
+            if node["parentId"] == gather_oldkey:
                 pass
 
 
@@ -172,7 +174,7 @@ def _check_MKN(m, k, n):
 
 
 def _make_unique_port_key(port_key, node_key):
-    return "%s+++%d" % (port_key, node_key)
+    return "%s+++%s" % (port_key, node_key)
 
 
 def convert_mkn(lgo):
@@ -198,7 +200,7 @@ def convert_mkn(lgo):
             if ak not in node:
                 raise Exception(
                     "MKN construct {0} must specify {1}".format(
-                        node["key"], ak
+                        node["id"], ak
                     )
                 )
         mknv_dict = dict()
@@ -207,14 +209,14 @@ def convert_mkn(lgo):
         M, K, N = mknv_dict["m"], mknv_dict["k"], mknv_dict["n"]
 
         # step 1 - clone the current MKN
-        mkn_key = node["key"]
+        mkn_key = node["id"]
         mkn_local_input_keys = [
-            _make_unique_port_key(x["id"], node["key"])
+            _make_unique_port_key(x["id"], node["id"])
             for x in node["inputAppFields"]
             if x["usage"] == "InputPort"
         ]
         mkn_output_keys = [
-            _make_unique_port_key(x["id"], node["key"])
+            _make_unique_port_key(x["id"], node["id"])
             for x in node["inputAppFields"]
             if x["usage"] == "OutputPort"
         ]
@@ -249,12 +251,12 @@ def convert_mkn(lgo):
             node_kn["name"] = node_kn["name"] + "_OutApp"
         else:
             node_kn["name"] = opan
-        k_new = min(keyset) - 1
-        keyset.add(k_new)
-        node_kn["key"] = k_new
-        node_kn["group"] = mkn_key
-        dont_change_group.add(k_new)
-        old_new_parent_map_split_1[mkn_key] = k_new
+        new_id = str(uuid.uuid4())
+        keyset.add(new_id)
+        node_kn["id"] = new_id
+        node_kn["parentId"] = mkn_key
+        dont_change_group.add(new_id)
+        old_new_parent_map_split_1[mkn_key] = new_id
         node_kn["application"] = node_kn["outputApplicationName"]
         node_kn["inputAppFields"] = node_kn["outputAppFields"]
         #        del node_kn["inputApplicationName"]
@@ -273,25 +275,25 @@ def convert_mkn(lgo):
         # for all connections that point to the local input ports of the MKN construct
         # we reconnect them to the "new" scatter
         for mlik in mkn_local_input_keys:
-            old_new_k2n_to_map[mlik] = k_new
+            old_new_k2n_to_map[mlik] = new_id
 
         # for all connections that go from the outputPorts of the MKN construct
         # we reconnect them from the new scatter
         for mok in mkn_output_keys:
-            old_new_k2n_from_map[mok] = k_new
+            old_new_k2n_from_map[mok] = new_id
 
         node_split_n["category"] = ConstructTypes.SCATTER
         node_split_n["categoryType"] = ConstructTypes.SCATTER
         node_split_n["name"] = "Nothing"
-        k_new = min(keyset) - 1
-        keyset.add(k_new)
-        node_split_n["key"] = k_new
-        node_split_n["group"] = mkn_key
-        dont_change_group.add(k_new)
-        old_new_parent_map_split_2[mkn_key] = k_new
+        new_id = str(uuid.uuid4())
+        keyset.add(new_id)
+        node_split_n["id"] = new_id
+        node_split_n["parentId"] = mkn_key
+        dont_change_group.add(new_id)
+        old_new_parent_map_split_2[mkn_key] = new_id
 
         for mok in mkn_output_keys:
-            n_products_map[mok] = k_new
+            n_products_map[mok] = new_id
 
         #        del node_split_n["inputApplicationName"]
         #        del node_split_n["outputApplicationName"]
@@ -321,18 +323,18 @@ def convert_mkn(lgo):
 
     # TODO change the parent for K and N data drops
     for node in lgo["nodeDataArray"]:
-        if not "group" in node:
+        if not "parentId" in node:
             continue
-        if node["key"] in dont_change_group:
+        if node["id"] in dont_change_group:
             continue
-        if node["group"] in old_new_parent_map_split_1:
-            node["group"] = old_new_parent_map_split_1[node["group"]]
-        elif node["group"] in old_new_parent_map_split_2:
-            node["group"] = old_new_parent_map_split_2[node["group"]]
+        if node["parentId"] in old_new_parent_map_split_1:
+            node["parentId"] = old_new_parent_map_split_1[node["parentId"]]
+        elif node["parentId"] in old_new_parent_map_split_2:
+            node["parentId"] = old_new_parent_map_split_2[node["parentId"]]
 
     for node in lgo["nodeDataArray"]:
-        if node["key"] in need_to_change_n_products:
-            node["group"] = need_to_change_n_products[node["key"]]
+        if node["id"] in need_to_change_n_products:
+            node["parentId"] = need_to_change_n_products[node["id"]]
 
     # with open('/Users/chen/Documents/MKN_translate_003.graph', 'w') as f:
     #     json.dump(lgo, f, indent=4)
@@ -361,7 +363,7 @@ def convert_mkn_all_share_m(lgo):
             if ak not in node:
                 raise Exception(
                     "MKN construct {0} must specify {1}".format(
-                        node["key"], ak
+                        node["id"], ak
                     )
                 )
         mknv_dict = dict()
@@ -371,7 +373,7 @@ def convert_mkn_all_share_m(lgo):
         ratio_mk, ratio_kn = _check_MKN(M, K, N)
 
         # step 1 - clone the current MKN
-        # mkn_key = node['key']
+        # mkn_key = node["id"]
         mkn_local_input_keys = [x["Id"] for x in node["inputLocalPorts"]]
         mkn_output_keys = [x["Id"] for x in node["outputPorts"]]
         node_mk = node
@@ -391,9 +393,9 @@ def convert_mkn_all_share_m(lgo):
 
         node_kn["category"] = ConstructTypes.GATHER
         node_kn["name"] = node_kn["name"] + "_OutApp"
-        k_new = min(keyset) - 1
-        keyset.add(k_new)
-        node_kn["key"] = k_new
+        new_id = str(uuid.uuid4())
+        keyset.add(new_id)
+        node_kn["id"] = new_id
         node_kn["application"] = node_kn["outputApplicationName"]
         node_kn["inputAppFields"] = node_kn["outputAppFields"]
         del node_kn["inputApplicationName"]
@@ -411,10 +413,10 @@ def convert_mkn_all_share_m(lgo):
         # for all connections that point to the local input ports of the MKN construct
         # we reconnect them to the "new" gather
         for mlik in mkn_local_input_keys:
-            old_new_k2n_to_map[mlik] = k_new
+            old_new_k2n_to_map[mlik] = new_id
 
         for mok in mkn_output_keys:
-            old_new_k2n_from_map[mok] = k_new
+            old_new_k2n_from_map[mok] = new_id
 
     for link in lgo["linkDataArray"]:
         if link["fromPort"] in old_new_k2n_from_map:
@@ -446,9 +448,9 @@ def getAppRefInputs(lgo):
 def convert_construct(lgo):
     """
     1. for each scatter/gather, create a "new" application drop, which shares
-       the same 'key' as the construct
-    2. reset the key of the scatter/gather construct to 'k_new'
-    3. reset the "group" keyword of each drop inside the construct to 'k_new'
+       the same "id" as the construct
+    2. reset the key of the scatter/gather construct to 'new_id'
+    3. reset the "parentId" keyword of each drop inside the construct to 'new_id'
     """
     # print('%d nodes in lg' % len(lgo['nodeDataArray']))
     keyset = get_keyset(lgo)
@@ -490,28 +492,29 @@ def convert_construct(lgo):
         app_node = _create_from_node(node, node[has_app], app_args)
 
         # step 2
-        k_new = min(keyset) - 1
-        node["key"] = k_new
-        keyset.add(k_new)
-        old_new_grpk_map[app_node["key"]] = k_new
+        new_id = str(uuid.uuid4())
+        node["id"] = new_id
+        keyset.add(new_id)
+        old_new_grpk_map[app_node["id"]] = new_id
 
         if ConstructTypes.GATHER == node["category"]:
-            old_new_gather_map[app_node["key"]] = k_new
-            app_node["group"] = k_new
+            old_new_gather_map[app_node["id"]] = new_id
+            app_node["parentId"] = new_id
             app_node["group_start"] = 1
 
             # extra step to deal with "internal output" from within Gather
-            dup_app_node_k = min(keyset) - 1
+            # dup_app_node_k = min(keyset) - 1
+            dup_app_node_k = str(uuid.uuid4())
             keyset.add(dup_app_node_k)
             dup_app_args = {
-                "key": dup_app_node_k,
+                "id": dup_app_node_k,
                 "fields": "appFields" if "appFields" in node else "inputAppFields"
             }
             tmp_node = _create_from_node(node=node, category=node[has_app],
                                          app_params=dup_app_args)
             redundant_keys = ['fields', 'reprodata']
             tmp_node = {k: v for k, v in tmp_node.items() if k not in redundant_keys}
-            duplicated_gather_app[k_new] = tmp_node
+            duplicated_gather_app[new_id] = tmp_node
 
         new_nodes.append(app_node)
 
@@ -522,32 +525,32 @@ def convert_construct(lgo):
 
         # step 3
         for node in lgo["nodeDataArray"]:
-            if "group" in node and node["group"] in old_new_grpk_map:
-                k_old = node["group"]
-                node["group"] = old_new_grpk_map[k_old]
+            if "parentId" in node and node["parentId"] in old_new_grpk_map:
+                k_old = node["parentId"]
+                node["parentId"] = old_new_grpk_map[k_old]
 
         # step 4
         if old_new_gather_map:
             for link in lgo["linkDataArray"]:
                 if link["to"] in old_new_gather_map:
                     k_old = link["to"]
-                    k_new = old_new_gather_map[k_old]
-                    link["to"] = k_new
+                    new_id = old_new_gather_map[k_old]
+                    link["to"] = new_id
                     # TODO Delete everything below this
                     # deal with the internal output from Gather
                     from_node = node_index[link["from"]]
                     # this is an obsolete and awkard way of checking internal output (for backward compatibility)
-                    if "group" in from_node and from_node["group"] == k_new:
-                        dup_app_node = duplicated_gather_app[k_new]
-                        k_new_new = dup_app_node["key"]
-                        link["to"] = k_new_new
-                        if k_new_new not in node_index:
-                            node_index[k_new_new] = dup_app_node
+                    if "parentId" in from_node and from_node["parentId"] == new_id:
+                        dup_app_node = duplicated_gather_app[new_id]
+                        new_id_new = dup_app_node["id"]
+                        link["to"] = new_id_new
+                        if new_id_new not in node_index:
+                            node_index[new_id_new] = dup_app_node
                             dup_app_node["reprodata"] = (
-                                node_index[k_new].get("reprodata", {}).copy()
+                                node_index[new_id].get("reprodata", {}).copy()
                             )
                             lgo["nodeDataArray"].append(dup_app_node)
-                            old_newnew_gather_map[k_old] = k_new_new
+                            old_newnew_gather_map[k_old] = new_id_new
 
             # step 5
             # relink the connection from gather to its external output if the gather
@@ -555,18 +558,18 @@ def convert_construct(lgo):
             for link in lgo["linkDataArray"]:
                 if link["from"] in old_new_gather_map:
                     k_old = link["from"]
-                    k_new = old_new_gather_map[k_old]
+                    new_id = old_new_gather_map[k_old]
                     to_node = node_index[link["to"]]
-                    gather_construct = node_index[k_new]
+                    gather_construct = node_index[new_id]
                     if (
-                            "group" not in to_node
-                            and "group" not in gather_construct
+                            "parentId" not in to_node
+                            and "parentId" not in gather_construct
                     ):
                         cond1 = True
                     elif (
-                            "group" in to_node
-                            and "group" in gather_construct
-                            and to_node["group"] == gather_construct["group"]
+                            "parentId" in to_node
+                            and "parentId" in gather_construct
+                            and to_node["parentId"] == gather_construct["parentId"]
                     ):
                         cond1 = True
                     else:
@@ -586,7 +589,7 @@ def _create_from_node(node: dict, category: str, app_params: dict) -> dict:
 
     The follow node attributes will be setup by default for new nodes:
     - 'reprodata'
-    - 'key'
+    - "id"
     - mkn (conditional)
     - group (conditional)
     - fields (conditional)
@@ -603,15 +606,15 @@ def _create_from_node(node: dict, category: str, app_params: dict) -> dict:
     """
     new_node = {}
     new_node["reprodata"] = node.get("reprodata", {}).copy()
-    new_node["key"] = node["key"]
+    new_node["id"] = node["id"]
     new_node["category"] = category
 
     new_node["name"] = node["text"] if 'text' in node else node["name"]
     if "mkn" in node:
         new_node["mkn"] = node["mkn"]
 
-    if "group" in node:
-        new_node["group"] = node["group"]
+    if "parentId" in node:
+        new_node["parentId"] = node["parentId"]
 
     if 'fields' in app_params:
         field = app_params.pop("fields")
@@ -669,9 +672,9 @@ def _update_keys(old_new_grpk_map: dict, lgo: dict) -> dict:
     """
 
     for n in lgo["nodeDataArray"]:
-        if "group" in n and n["group"] in old_new_grpk_map:
-            k_old = n["group"]
-            n["group"] = old_new_grpk_map[k_old]
+        if "parentId" in n and n["parentId"] in old_new_grpk_map:
+            k_old = n["parentId"]
+            n["parentId"] = old_new_grpk_map[k_old]
 
     return lgo
 
@@ -694,23 +697,23 @@ def identify_and_connect_output_input(input_node: dict,
     """
 
     for link in logical_graph['linkDataArray']:
-        if link["to"] == input_node['key']:
+        if link["to"] == input_node["id"]:
             for n in logical_graph['nodeDataArray']:
 
-                if n['key'] == link["from"]:
+                if n["id"] == link["from"]:
                     try:
-                        if n['group'] == input_node['group']:
-                            link["to"] = out_node['key']
+                        if n['parentId'] == input_node['parentId']:
+                            link["to"] = out_node["id"]
                     except KeyError:
                         pass
-        if link["from"] == input_node['key']:
+        if link["from"] == input_node["id"]:
             for n in logical_graph['nodeDataArray']:
-                if n['key'] == link["to"]:
+                if n["id"] == link["to"]:
                     try:
-                        if n['group'] != input_node['group']:
-                            link['from'] = out_node['key']
+                        if n['parentId'] != input_node['parentId']:
+                            link['from'] = out_node["id"]
                     except KeyError:
-                        link['from'] = out_node['key']
+                        link['from'] = out_node["id"]
     return logical_graph
 
 
@@ -733,14 +736,14 @@ def _extract_subgraph_nodes(input_node: dict,
     """
     subgraphNodes = {}
     subgraphLinks = []
-    construct_apps = {input_node['key'], out_node['key']}
+    construct_apps = {input_node["id"], out_node["id"]}
 
     # 1. Identifying subgraph nodes that are not the input/ouput app
     for n in logical_graph['nodeDataArray']:
-        if ('group' in n
-                and n['group'] == input_node['group']
-                and n['key'] not in construct_apps):
-            subgraphNodes[n['key']] = n
+        if ('parentId' in n
+                and n['parentId'] == input_node['parentId']
+                and n["id"] not in construct_apps):
+            subgraphNodes[n["id"]] = n
 
     output_links = {}
 
@@ -749,15 +752,15 @@ def _extract_subgraph_nodes(input_node: dict,
             # Find links from inside the SubGraph to the Output App to preserve
             if link['to'] in construct_apps:
                 key = subgraphNodes[link['from']]
-                output_links[key['key']] = {}
-                output_links[key['key']]['node'] = key
-                output_links[key['key']]['link'] = link
+                output_links[key["id"]] = {}
+                output_links[key["id"]]['node'] = key
+                output_links[key["id"]]['link'] = link
             subgraphLinks.append(link)
         if link['to'] in subgraphNodes.keys() and link not in subgraphLinks:
             subgraphLinks.append(link)
 
     for e in subgraphNodes.values():
-        if e['key'] not in output_links:
+        if e["id"] not in output_links:
             logical_graph['nodeDataArray'].remove(e)
     for e in subgraphLinks:
         logical_graph['linkDataArray'].remove(e)
@@ -772,7 +775,7 @@ def _extract_subgraph_nodes(input_node: dict,
 
     for n in output_links.values():
         logical_graph['linkDataArray'].append(
-            {'to': n['node']['key'], 'from': input_node['key']})
+            {'to': n['node']["id"], 'from': input_node["id"]})
         logical_graph['linkDataArray'].append(n['link'])
 
     return subgraphNodes, subgraphLinks, logical_graph
@@ -790,8 +793,8 @@ def _build_apps_from_subgraph_construct(subgraph_node: dict) -> (dict, dict):
     input_app_args = {
         "isSubGraphApp": True,
         "isSubGraphConstruct": False,
-        "SubGraphGroupKey": subgraph_node['key'],
-        "group": subgraph_node['key'],
+        "SubGraphGroupKey": subgraph_node["id"],
+        "parentId": subgraph_node["id"],
         "group_start": 1,
         "fields": 'inputAppFields',
         'inputApp': True
@@ -801,11 +804,11 @@ def _build_apps_from_subgraph_construct(subgraph_node: dict) -> (dict, dict):
                                    input_app_args)
 
     output_app_args = {
-        "key": subgraph_node['outputApplicationKey'],
+        "id": subgraph_node['outputApplicationId'],
         "isSubGraphApp": True,
         "isSubGraphConstruct": False,
-        "SubGraphGroupKey": input_node['key'],
-        "group": input_node['key'],
+        "SubGraphGroupKey": input_node["id"],
+        "parentId": input_node["id"],
         "group_start": 1,
         "fields": 'outputAppFields',
         "outputApp": True
@@ -858,19 +861,18 @@ def convert_subgraphs(lgo: dict) -> dict:
 
         # Connect output node to rest of graph
         lgo = identify_and_connect_output_input(app_node, out_node, lgo)
-        out_node["group"] = app_node['key']
+        out_node["parentId"] = app_node["id"]
         new_nodes.extend([app_node, out_node])
 
         # Update group mappings and bump key
-        k_new = min(keyset) - 1
-        node["key"] = k_new
-        keyset.add(k_new)
-        old_new_grpk_map[app_node["key"]] = k_new
+        new_id = str(uuid.uuid4())
+        node["id"] = new_id
+        keyset.add(new_id)
+        old_new_grpk_map[app_node["id"]] = new_id
 
         # Replace the keys based on new input and output apps.
         if new_nodes:
-            old_new_subgraph_map[app_node["key"]] = k_new
-            # old_new_subgraph_map[k_new] = out_node['key']
+            old_new_subgraph_map[app_node["id"]] = new_id
             lgo["nodeDataArray"].extend(new_nodes)
 
             lgo = _update_keys(old_new_grpk_map, lgo)
@@ -881,15 +883,15 @@ def convert_subgraphs(lgo: dict) -> dict:
                                                                         lgo)
 
             # Create SubGraph as InputData to the SubGraph Input App
-            k_new = min(keyset) - 1
-            keyset.add(k_new)
+            new_id = str(uuid.uuid4())
+            keyset.add(new_id)
             subgraph = {
                 "nodeDataArray": list(subgraphNodes.values()),
                 "linkDataArray": subgraphLinks,
                 "modelData": lgo['modelData']
             }
             for n in lgo['nodeDataArray']:
-                if n['key'] == app_node['key']:
+                if n["id"] == app_node["id"]:
                     app_node['subgraph'] = subgraph
 
     return lgo
@@ -933,15 +935,15 @@ def convert_eagle_to_daliuge_json(lg_name):
         # Building nodes_all dictionary.
         nodes = logical_graph["nodeDataArray"]
         for node in nodes:
-            node_key = node.get("key", "")
+            node_key = node.get("id", "")
             nodes_all[node_key] = node
 
         # Candidate nodes for relinking: node_key-to-group_key map.
         nodes_to_relink = dict()
         # Building nodes_to_relink dictionaries.
         for node in nodes:
-            node_key = node.get("key", "")
-            group_key = node.get("group", "")
+            node_key = node.get("id", "")
+            group_key = node.get("parentId", "")
 
             if group_key != "":
                 # This is a node inside a group.
@@ -968,7 +970,7 @@ def convert_eagle_to_daliuge_json(lg_name):
             key_from = link["from"]
             node_from = nodes_all.get(key_from, "")
             # Only relink the links that start from a node in a group.
-            if node_from.get("group", "") != "":
+            if node_from.get("parentId", "") != "":
                 # The link is from a node inside a group.
                 key_to = link["to"]
                 relink_to = nodes_to_relink.get(key_to, "")
@@ -1006,23 +1008,10 @@ def load_lg(f):
     if isinstance(f, str):
         if not os.path.exists(f):
             raise GraphException("Logical graph {0} not found".format(f))
-        with open(f) as f:
-            lg = json.load(f)
+        with open(f) as fp:
+            lg = json.load(fp)
     elif hasattr(f, "read"):
         lg = json.load(f)
     else:
         lg = f
     return lg
-
-
-if __name__ == "__main__":
-    import pkg_resources
-
-    lg_dir = pkg_resources.resource_filename(
-        __name__, "../../test/dropmake/logical_graphs"
-    )  # @UndefinedVariable
-    lg_name = f"{lg_dir}/lofar_std.graph"
-    # convert_eagle_to_daliuge_json(lg_name)
-    with open(lg_name) as f:
-        lgo = f.read()
-        print(get_lg_ver_type(json.loads(lgo)))

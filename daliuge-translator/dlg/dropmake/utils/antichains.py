@@ -180,6 +180,7 @@ def create_medium_parral_graph():
     G.nodes[5]["weight"] = 4
     return G, 14
 
+ # TODO move this into tests
 
 if __name__ == "__main__":
     gs = [

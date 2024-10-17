@@ -50,7 +50,7 @@ from .rest import (
     CompositeManagerRestServer,
     MasterManagerRestServer,
 )
-from .. import utils
+from dlg import utils
 from ..runtime import version
 
 
