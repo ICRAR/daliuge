@@ -35,6 +35,9 @@ from dlg.apps.app_base import BarrierAppDROP
 from dlg.manager.node_manager import NodeManager
 from dlg.manager.manager_data import Node
 
+from test.dlg_engine_testconstants import DEFAULT_TEST_REPRO, DEFAULT_TEST_GRAPH_REPRO
+from test.dlg_engine_testutils import DROPManagerUtils, NMTestsMixIn
+
 try:
     from crc32c import crc32c  # @UnusedImport
 except:
@@ -43,30 +46,6 @@ except:
 random.seed(42)
 
 hostname = "localhost"
-default_repro = {
-    "rmode": "1",
-    "RERUN": {
-        "lg_blockhash": "x",
-        "pgt_blockhash": "y",
-        "pg_blockhash": "z",
-    },
-}
-default_graph_repro = {
-    "rmode": "1",
-    "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
-    "merkleroot": "a",
-    "RERUN": {
-        "signature": "b",
-    },
-}
-
-
-def add_test_reprodata(graph: list):
-    for drop in graph:
-        drop["reprodata"] = default_repro.copy()
-    graph.append(default_graph_repro.copy())
-    return graph
-
 
 def memory(uid, **kwargs):
     dropSpec = dropdict(
@@ -74,7 +53,7 @@ def memory(uid, **kwargs):
             "oid": uid,
             "categoryType": "Data",
             "dropclass": "dlg.data.drops.memory.InMemoryDROP",
-            "reprodata": default_repro.copy(),
+            "reprodata": DEFAULT_TEST_REPRO.copy(),
         }
     )
     dropSpec.update(kwargs)
@@ -87,120 +66,15 @@ def sleepAndCopy(uid, **kwargs):
             "oid": uid,
             "categoryType": "Application",
             "dropclass": "dlg.apps.simple.SleepAndCopyApp",
-            "reprodata": default_repro.copy(),
+            "reprodata": DEFAULT_TEST_REPRO.copy(),
         }
     )
     dropSpec.update(kwargs)
     return dropSpec
 
-
-def quickDeploy(nm, sessionId, graphSpec, node_subscriptions:dict = None):
-    if not node_subscriptions:
-        node_subscriptions = {}
-    nm.createSession(sessionId)
-    nm.addGraphSpec(sessionId, graphSpec)
-    nm.add_node_subscriptions(sessionId, node_subscriptions)
-    nm.deploySession(sessionId)
-
-
 class ErroneousApp(BarrierAppDROP):
     def run(self):
         raise Exception("Sorry, we always fail")
-
-
-def nm_conninfo(n, return_tuple=False):
-    if return_tuple:
-        return "localhost", 5553 + n, 6666 + n
-    else:
-        return Node(f"localhost:{8000}:{5553+n}:{6666+n}")
-
-
-class NMTestsMixIn(object):
-    def __init__(self, *args, **kwargs):
-        super(NMTestsMixIn, self).__init__(*args, **kwargs)
-        self._dms = []
-        self.use_processes = False
-
-    def _start_dm(self, threads=0, **kwargs):
-        host, events_port, rpc_port = nm_conninfo(len(self._dms), return_tuple=True)
-        nm = NodeManager(
-            host=host,
-            events_port=events_port,
-            rpc_port=rpc_port,
-            max_threads=threads,
-            use_processes=self.use_processes,
-            **kwargs,
-        )
-        self._dms.append(nm)
-        return nm
-
-    def tearDown(self):
-        super(NMTestsMixIn, self).tearDown()
-        for nm in self._dms:
-            nm.shutdown()
-
-    def _test_runGraphInTwoNMs(
-        self,
-        g1,
-        g2,
-        rels,
-        root_data,
-        leaf_data,
-        root_oids=("A",),
-        leaf_oid="C",
-        expected_failures: list=None,
-        sessionId=f"s{random.randint(0, 1000)}",
-        node_managers=None,
-        threads=0,
-    ):
-        """Utility to run a graph in two Node Managers"""
-
-
-        dm1, dm2 = node_managers or [
-            self._start_dm(threads=threads) for _ in range(2)
-        ]
-        add_test_reprodata(g1)
-        add_test_reprodata(g2)
-        quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
-        quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
-        self.assertEqual(len(g1), len(dm1._sessions[sessionId].drops))
-        self.assertEqual(len(g2), len(dm2._sessions[sessionId].drops))
-
-        # Run! We wait until c is completed
-        drops = {}
-        drops.update(dm1._sessions[sessionId].drops)
-        drops.update(dm2._sessions[sessionId].drops)
-
-        leaf_drop = drops[leaf_oid]
-        with droputils.DROPWaiterCtx(self, leaf_drop, 5):
-            for oid in root_oids:
-                drop = drops[oid]
-                drop.write(root_data)
-                drop.setCompleted()
-
-        if not expected_failures:
-            expected_failures = []
-        expected_successes = [
-            drops[oid] for oid in drops if oid not in expected_failures
-        ]
-        expected_failures = [drops[oid] for oid in drops if oid in expected_failures]
-
-        for drop in expected_successes:
-            self.assertEqual(DROPStates.COMPLETED, drop.status)
-        for drop in expected_failures:
-            self.assertEqual(DROPStates.ERROR, drop.status)
-
-        leaf_drop_data = None
-        if leaf_drop not in expected_failures:
-            leaf_drop_data = droputils.allDropContents(leaf_drop)
-            if leaf_data is not None:
-                self.assertEqual(len(leaf_data), len(leaf_drop_data))
-                self.assertEqual(leaf_data, leaf_drop_data)
-
-        sleep(0.1)  # just make sure all events have been processed.
-        dm1.destroySession(sessionId)
-        dm2.destroySession(sessionId)
-        return leaf_drop_data
 
 
 class NodeManagerTestsBase(NMTestsMixIn):
@@ -216,7 +90,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
             },
             memory("C", producers=["B"]),
         ]
-        add_test_reprodata(g)
+        DROPManagerUtils.add_test_reprodata(g)
         dm = self._start_dm(**kwargs)
         dm.createSession(sessionId)
         dm.addGraphSpec(sessionId, g)
@@ -230,7 +104,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
             def on_error(self, drop):
                 erroneous_drops.append(drop.uid)
                 if (
-                    len(erroneous_drops) == 2
+                        len(erroneous_drops) == 2
                 ):  # both 'C' and 'B' failed already
                     evt.set()
 
@@ -340,14 +214,14 @@ class NodeManagerTestsBase(NMTestsMixIn):
             },
             memory("F", producers=["E"]),
         ]
-        add_test_reprodata(g1)
-        add_test_reprodata(g2)
+        DROPManagerUtils.add_test_reprodata(g1)
+        DROPManagerUtils.add_test_reprodata(g2)
         rels = [
             DROPRel("D", DROPLinkType.INPUT, "E"),
             DROPRel("B", DROPLinkType.INPUT, "E"),
         ]
-        quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
-        quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
+        DROPManagerUtils.quickDeploy(dm1, sessionId, g1, {DROPManagerUtils.nm_conninfo(1): rels})
+        DROPManagerUtils.quickDeploy(dm2, sessionId, g2, {DROPManagerUtils.nm_conninfo(0): rels})
 
         self.assertEqual(4, len(dm1._sessions[sessionId].drops))
         self.assertEqual(2, len(dm2._sessions[sessionId].drops))
@@ -431,34 +305,44 @@ class NodeManagerTestsBase(NMTestsMixIn):
             memory("O"),
         ]
         for g in [g1, g2, g3, g4]:
-            add_test_reprodata(g)
+            DROPManagerUtils.add_test_reprodata(g)
         rels_12 = [DROPRel("A", DROPLinkType.INPUT, "B")]
         rels_13 = [DROPRel("A", DROPLinkType.INPUT, "G")]
         rels_24 = [DROPRel("F", DROPLinkType.PRODUCER, "L")]
         rels_34 = [DROPRel("K", DROPLinkType.PRODUCER, "M")]
-        quickDeploy(
+        DROPManagerUtils.quickDeploy(
             dm1,
             sessionId,
             g1,
-            {nm_conninfo(1): rels_12, nm_conninfo(2): rels_13},
+            {
+                DROPManagerUtils.nm_conninfo(1): rels_12,
+                DROPManagerUtils.nm_conninfo(2): rels_13
+            },
         )
-        quickDeploy(
+        DROPManagerUtils.quickDeploy(
             dm2,
             sessionId,
             g2,
-            {nm_conninfo(0): rels_12, nm_conninfo(3): rels_24},
+            {
+                DROPManagerUtils.nm_conninfo(0): rels_12,
+                DROPManagerUtils.nm_conninfo(3): rels_24
+            },
         )
-        quickDeploy(
+        DROPManagerUtils.quickDeploy(
             dm3,
             sessionId,
             g3,
-            {nm_conninfo(0): rels_13, nm_conninfo(3): rels_34},
+            {
+                DROPManagerUtils.nm_conninfo(0): rels_13,
+                DROPManagerUtils.nm_conninfo(3): rels_34},
         )
-        quickDeploy(
+        DROPManagerUtils.quickDeploy(
             dm4,
             sessionId,
             g4,
-            {nm_conninfo(1): rels_24, nm_conninfo(2): rels_34},
+            {
+                DROPManagerUtils.nm_conninfo(1): rels_24,
+                DROPManagerUtils.nm_conninfo(2): rels_34},
         )
 
         self.assertEqual(1, len(dm1._sessions[sessionId].drops))
@@ -518,10 +402,10 @@ class NodeManagerTestsBase(NMTestsMixIn):
             # SleepAndCopyApp effectively opens the input drop
             g2.append(sleepAndCopy(b_oid, outputs=["C"], sleepTime=0))
             rels.append(DROPRel("A", DROPLinkType.INPUT, b_oid))
-        add_test_reprodata(g1)
-        add_test_reprodata(g2)
-        quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
-        quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
+        DROPManagerUtils.add_test_reprodata(g1)
+        DROPManagerUtils.add_test_reprodata(g2)
+        DROPManagerUtils.quickDeploy(dm1, sessionId, g1, {DROPManagerUtils.nm_conninfo(1): rels})
+        DROPManagerUtils.quickDeploy(dm2, sessionId, g2, {DROPManagerUtils.nm_conninfo(0): rels})
         self.assertEqual(1, len(dm1._sessions[sessionId].drops))
         self.assertEqual(1 + N, len(dm2._sessions[sessionId].drops))
 
@@ -584,14 +468,14 @@ class NodeManagerTestsBase(NMTestsMixIn):
                 "node": ip_addr_2,
             },
         ]
-        add_test_reprodata(g1)
-        add_test_reprodata(g2)
+        DROPManagerUtils.add_test_reprodata(g1)
+        DROPManagerUtils.add_test_reprodata(g2)
         rels = [
             DROPRel("D", DROPLinkType.INPUT, "E"),
             DROPRel("D", DROPLinkType.INPUT, "F"),
         ]
-        quickDeploy(dm1, sessionId, g1, {nm_conninfo(1): rels})
-        quickDeploy(dm2, sessionId, g2, {nm_conninfo(0): rels})
+        DROPManagerUtils.quickDeploy(dm1, sessionId, g1, {DROPManagerUtils.nm_conninfo(1): rels})
+        DROPManagerUtils.quickDeploy(dm2, sessionId, g2, {DROPManagerUtils.nm_conninfo(0): rels})
 
         self.assertEqual(3, len(dm1._sessions[sessionId].drops))
         self.assertEqual(2, len(dm2._sessions[sessionId].drops))
@@ -693,19 +577,14 @@ class TestDMMultiThreading(NodeManagerTestsBase, unittest.TestCase):
                 "dropclass": "dlg.data.drops.memory.SharedMemoryDROP",
             }
         ]
-        graph = add_test_reprodata(graph)
+        graph = DROPManagerUtils.add_test_reprodata(graph)
         dm = self._start_dm()
         sessionID = "s1"
         if sys.version_info < (3, 8):
             self.assertRaises(
-                NotImplementedError, quickDeploy, dm, sessionID, graph
+                NotImplementedError, DROPManagerUtils.quickDeploy, dm, sessionID, graph
             )
         else:
-            quickDeploy(dm, sessionID, graph)
+            DROPManagerUtils.quickDeploy(dm, sessionID, graph)
             self.assertEqual(1, len(dm._sessions[sessionID].drops))
             dm.destroySession(sessionID)
-
-class TestDMMultiProcessing(NodeManagerTestsBase, unittest.TestCase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.use_processes = True

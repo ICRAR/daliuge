@@ -207,3 +207,4 @@ class TestUtils(unittest.TestCase):
             os.environ["DLG_ROOT"] = old
         else:
             del os.environ["DLG_ROOT"]
+

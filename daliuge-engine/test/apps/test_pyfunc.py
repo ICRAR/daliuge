@@ -36,6 +36,8 @@ from dlg.data.drops.memory import InMemoryDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
 
+from test.dlg_engine_testutils import NMTestsMixIn
+
 from ..manager import test_dm
 
 logger = logging.getLogger(__name__)
@@ -438,7 +440,7 @@ class TestPyFuncApp(unittest.TestCase):
         self.assertEqual(a.generate_merkle_data(), a.generate_repeat_data())
 
 
-class PyFuncAppIntraNMTest(test_dm.NMTestsMixIn, unittest.TestCase):
+class PyFuncAppIntraNMTest(NMTestsMixIn, unittest.TestCase):
     def test_input_in_remote_nm(self):
         """
         A test similar in spirit to TestDM.test_runGraphOneDOPerDom, but where
