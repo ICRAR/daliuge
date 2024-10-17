@@ -24,9 +24,12 @@ from __future__ import annotations
 import abc
 import collections
 import functools
+import json
 import logging
 import multiprocessing.pool
 import threading
+
+from pathlib import Path
 
 from dlg import constants
 from .client import NodeManagerClient
@@ -40,7 +43,7 @@ from dlg.exceptions import (
     DaliugeException,
     SubManagerException,
 )
-from ..utils import portIsOpen
+from dlg.utils import portIsOpen, getDlgWorkDir
 
 logger = logging.getLogger(__name__)
 
@@ -133,13 +136,13 @@ class CompositeManager(DROPManager):
     __metaclass__ = abc.ABCMeta
 
     def __init__(
-        self,
-        dmPort,
-        partitionAttr,
-        subDmId,
-        dmHosts: list[str] = None,
-        pkeyPath=None,
-        dmCheckTimeout=10,
+            self,
+            dmPort,
+            partitionAttr,
+            subDmId,
+            dmHosts: list[str] = None,
+            pkeyPath=None,
+            dmCheckTimeout=10,
     ):
         """
         Creates a new CompositeManager. The sub-DMs it manages are to be located
@@ -376,6 +379,15 @@ class CompositeManager(DROPManager):
         # belong to the same host, so we can submit that graph into the individual
         # DMs. For this we need to make sure that our graph has a the correct
         # attribute set
+        graph_path = Path(getDlgWorkDir()) / sessionId / f"{sessionId}.graph"
+        try:
+            with graph_path.open('w') as fp:
+                json.dump(graphSpec, fp, indent=2)
+            logger.debug("Graph saved at %s", graph_path)
+        except NotADirectoryError:
+            logger.error("Session directory %s does not exist",
+                         graph_path.parent)
+
         logger.info(
             "Separating graph using partition attribute '%s'",
             self._partitionAttr,
