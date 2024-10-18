@@ -42,7 +42,7 @@ def create_full_hostname(server_info, event_port, rpc_port):
     return (f"{server_info.server._server.listen}:"
             f"{server_info.server._server.port}:{event_port}:{rpc_port}")
 
-class GraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter, unittest.TestCase):
+class TestGraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter, unittest.TestCase):
     def setUp(self):
         """
         Initialise the Managers
