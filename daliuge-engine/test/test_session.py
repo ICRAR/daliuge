@@ -20,11 +20,7 @@
 #    MA 02111-1307  USA
 #
 import json
-import logging
-import os
-import time
 import unittest
-import pytest
 import daliuge_tests.engine.graphs as test_graphs
 
 from pathlib import Path
@@ -35,36 +31,9 @@ from dlg.apps.app_base import BarrierAppDROP
 from dlg.ddap_protocol import DROPLinkType, DROPStates, AppDROPStates
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidGraphException
-from dlg.manager.session import SessionStates, Session, generateLogFileName
+from dlg.manager.session import SessionStates, Session
 
-default_repro = {
-    "rmode": "1",
-    "RERUN": {
-        "lg_blockhash": "x",
-        "pgt_blockhash": "y",
-        "pg_blockhash": "z",
-    },
-}
-default_graph_repro = {
-    "rmode": "1",
-    "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
-    "merkleroot": "a",
-    "RERUN": {
-        "signature": "b",
-    },
-}
-
-
-class MockThrowingDrop(BarrierAppDROP):
-    def run(self):
-        raise RuntimeError("App drop thrown")
-
-
-def add_test_reprodata(graph: list):
-    for drop in graph:
-        drop["reprodata"] = default_repro.copy()
-    graph.append(default_graph_repro.copy())
-    return graph
+from test.dlg_engine_testutils import DROPManagerUtils
 
 
 class TestSession(unittest.TestCase):
@@ -73,7 +42,7 @@ class TestSession(unittest.TestCase):
             self.assertEqual(SessionStates.PRISTINE, s.status)
             self.assertRaises(Exception, s.linkGraphParts, "", "", 0)
             s.addGraphSpec(
-                add_test_reprodata([{"oid": "A", "categoryType": "container"}])
+                DROPManagerUtils.add_test_reprodata([{"oid": "A", "categoryType": "container"}])
             )
             self.assertEqual(SessionStates.BUILDING, s.status)
 
@@ -98,32 +67,32 @@ class TestSession(unittest.TestCase):
     def test_addGraphSpec(self):
         with Session("1") as s:
             s.addGraphSpec(
-                add_test_reprodata([{"oid": "A", "categoryType": "container"}])
+                DROPManagerUtils.add_test_reprodata([{"oid": "A", "categoryType": "container"}])
             )
             s.addGraphSpec(
-                add_test_reprodata([{"oid": "B", "categoryType": "container"}])
+                DROPManagerUtils.add_test_reprodata([{"oid": "B", "categoryType": "container"}])
             )
             s.addGraphSpec(
-                add_test_reprodata([{"oid": "C", "categoryType": "container"}])
+                DROPManagerUtils.add_test_reprodata([{"oid": "C", "categoryType": "container"}])
             )
 
             # Adding an existing DROP
             self.assertRaises(
                 Exception,
                 s.addGraphSpec,
-                add_test_reprodata([{"oid": "A", "categoryType": "container"}]),
+                DROPManagerUtils.add_test_reprodata([{"oid": "A", "categoryType": "container"}]),
             )
 
             # Adding invalid specs
             self.assertRaises(
                 Exception,
                 s.addGraphSpec,
-                add_test_reprodata([{"oid": "D", "categoryType": "Application"}]),
+                DROPManagerUtils.add_test_reprodata([{"oid": "D", "categoryType": "Application"}]),
             )  # missing "storage"
             self.assertRaises(
                 Exception,
                 s.addGraphSpec,
-                add_test_reprodata(
+                DROPManagerUtils.add_test_reprodata(
                     [
                         {
                             "oid": "D",
@@ -136,7 +105,7 @@ class TestSession(unittest.TestCase):
             self.assertRaises(
                 Exception,
                 s.addGraphSpec,
-                add_test_reprodata([{"oid": "D", "categoryType": "invalid"}]),
+                DROPManagerUtils.add_test_reprodata([{"oid": "D", "categoryType": "invalid"}]),
             )  # invalid "categoryType"
             # s.addGraphSpec(
             #     add_test_reprodata(
@@ -178,22 +147,21 @@ class TestSession(unittest.TestCase):
     def test_linking(self):
         with Session("1") as s:
             s.addGraphSpec(
-                add_test_reprodata([{"oid": "A", "categoryType": "container"}])
+                DROPManagerUtils.add_test_reprodata([{"oid": "A", "categoryType": "container"}])
             )
             s.addGraphSpec(
-                add_test_reprodata(
+                DROPManagerUtils.add_test_reprodata(
                     [
                         {
                             "oid": "B",
                             "categoryType": "Application",
-                            # "dropclass": "dlg.data.drops.data_base.NullDROP",
                             "dropclass": "dlg.apps.crc.CRCApp",
                         }
                     ]
                 )
             )
             s.addGraphSpec(
-                add_test_reprodata([{"oid": "C", "categoryType": "container"}])
+                DROPManagerUtils.add_test_reprodata([{"oid": "C", "categoryType": "container"}])
             )
 
             # Link them now
@@ -217,7 +185,7 @@ class TestSession(unittest.TestCase):
         """Cancels a whole graph execution"""
         with Session("1") as s:
             s.addGraphSpec(
-                add_test_reprodata(
+                DROPManagerUtils.add_test_reprodata(
                     [
                         {
                             "oid": "A",
@@ -252,7 +220,7 @@ class TestSession(unittest.TestCase):
         """Like test_cancel, but only part of the graph should be cancelled"""
         with Session("1") as s:
             s.addGraphSpec(
-                add_test_reprodata(
+                DROPManagerUtils.add_test_reprodata(
                     [
                         {
                             "oid": "A",

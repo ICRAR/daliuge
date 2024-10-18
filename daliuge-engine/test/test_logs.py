@@ -10,22 +10,7 @@ from dlg.apps.app_base import BarrierAppDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.manager.session import Session, generateLogFileName
 
-default_repro = {
-    "rmode": "1",
-    "RERUN": {
-        "lg_blockhash": "x",
-        "pgt_blockhash": "y",
-        "pg_blockhash": "z",
-    },
-}
-default_graph_repro = {
-    "rmode": "1",
-    "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
-    "merkleroot": "a",
-    "RERUN": {
-        "signature": "b",
-    },
-}
+from test.dlg_engine_testconstants import DEFAULT_TEST_REPRO, DEFAULT_TEST_GRAPH_REPRO
 
 class MockThrowingDrop(BarrierAppDROP):
     def run(self):
@@ -33,8 +18,8 @@ class MockThrowingDrop(BarrierAppDROP):
 
 def add_test_reprodata(graph: list):
     for drop in graph:
-        drop["reprodata"] = default_repro.copy()
-    graph.append(default_graph_repro.copy())
+        drop["reprodata"] = DEFAULT_TEST_REPRO.copy()
+    graph.append(DEFAULT_TEST_GRAPH_REPRO.copy())
     return graph
 
 def test_logs(caplog):
@@ -70,7 +55,7 @@ def test_logs(caplog):
                         {
                             "oid": "B",
                             "categoryType": "Application",
-                            "dropclass": "test.test_session.MockThrowingDrop",
+                            "dropclass": "test.test_logs.MockThrowingDrop",
                             "sleep_time": 2,
                         },
                         {

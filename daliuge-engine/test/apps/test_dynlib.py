@@ -31,8 +31,9 @@ from dlg.ddap_protocol import DROPRel, DROPLinkType, DROPStates
 from dlg.data.drops.data_base import NullDROP
 from dlg.data.drops.memory import InMemoryDROP
 
+from test.dlg_engine_testutils import NMTestsMixIn
+
 from .setp_up import build_shared_library
-from ..manager import test_dm
 
 _libname = "dynlib_example"
 _libfname = "libdynlib_example.so"
@@ -125,7 +126,7 @@ class DynlibAppTest(unittest.TestCase):
         self.assertEqual(DROPStates.CANCELLED, a.status)
 
 
-class IntraNMMixIng(test_dm.NMTestsMixIn):
+class IntraNMMixIng(NMTestsMixIn):
     # Indicate which particular application should the test use
     app = None
 
