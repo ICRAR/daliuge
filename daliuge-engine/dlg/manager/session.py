@@ -36,14 +36,15 @@ import socket
 from dlg.common.reproducibility.reproducibility import init_runtime_repro_data
 from dlg.utils import createDirIfMissing
 
-from .. import constants
-from .. import droputils
-from .. import graph_loader
-from .. import rpc
-from .. import utils
-from ..common.reproducibility.constants import ReproducibilityFlags, ALL_RMODES
-from ..ddap_protocol import DROPLinkType, DROPRel, DROPStates
-from ..drop import (
+from dlg import constants
+# from .. import constants
+from dlg import droputils
+from dlg import graph_loader
+from dlg import rpc
+from dlg import utils
+from dlg.common.reproducibility.constants import ReproducibilityFlags, ALL_RMODES
+from dlg.ddap_protocol import DROPLinkType, DROPRel, DROPStates
+from dlg.drop import (
     AbstractDROP,
     LINKTYPE_1TON_APPEND_METHOD,
     LINKTYPE_1TON_BACK_APPEND_METHOD,
@@ -51,7 +52,7 @@ from ..drop import (
 from ..apps.app_base import AppDROP, InputFiredAppDROP
 from ..data.drops.data_base import EndDROP
 
-from ..exceptions import (
+from dlg.exceptions import (
     InvalidSessionState,
     InvalidGraphException,
     NoDropException,
@@ -511,6 +512,7 @@ class Session(object):
             drop.handleEvent(evt)
 
     def add_node_subscriptions(self, relationships):
+        # do we translate on the REST side? Probably best to do this actually.
 
         evt_consumer = (
             DROPLinkType.CONSUMER,
@@ -529,9 +531,9 @@ class Session(object):
             droprels = [DROPRel(*x) for x in droprels]
 
             # Sanitize the host/rpc_port info if needed
-            rpc_port = constants.NODE_DEFAULT_RPC_PORT
-            if type(host) is tuple:
-                host, _, rpc_port = host
+            rpc_port = host.rpc_port #constants.NODE_DEFAULT_RPC_PORT
+            # if type(host) is tuple:
+            #     host, _, rpc_port = host
 
             # Store which drops should receive events from which remote drops
             dropsubs = collections.defaultdict(set)

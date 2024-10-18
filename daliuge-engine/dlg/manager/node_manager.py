@@ -41,19 +41,21 @@ import time
 import typing
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, Future
 
-from .. import constants
-from .drop_manager import DROPManager
-from .session import Session
+from dlg import constants
+from dlg.manager.drop_manager import DROPManager
+from dlg.manager.session import Session
 
-from .. import rpc, utils
-from ..ddap_protocol import DROPStates
-from ..apps.app_base import AppDROP, DropRunner
-from ..exceptions import (
+from dlg import rpc, utils
+from dlg.ddap_protocol import DROPStates
+from dlg.apps.app_base import AppDROP, DropRunner
+from dlg.exceptions import (
     NoSessionException,
     SessionAlreadyExistsException,
     DaliugeException,
 )
 from ..lifecycle.dlm import DataLifecycleManager
+
+from dlg.manager.manager_data import Node
 
 logger = logging.getLogger(__name__)
 
@@ -238,6 +240,7 @@ class NodeManagerBase(DROPManager):
 
     def __init__(
         self,
+        events_port,
         dlm_check_period=0,
         dlm_cleanup_period=0,
         dlm_enable_replication=False,
@@ -248,6 +251,7 @@ class NodeManagerBase(DROPManager):
         use_processes=False,
         logdir=utils.getDlgLogsDir(),
     ):
+        self._events_port = events_port
         self._dlm = DataLifecycleManager(
             check_period=dlm_check_period,
             cleanup_period=dlm_cleanup_period,
@@ -433,17 +437,20 @@ class NodeManagerBase(DROPManager):
 
         # Set up event channels subscriptions
         for nodesub in relationships:
-            events_port = constants.NODE_DEFAULT_EVENTS_PORT
+            # node = Node(nodesub)
+            # This needs to be changed
+            events_port = nodesub.events_port #constants.NODE_DEFAULT_EVENTS_PORT
             if type(nodesub) is tuple:
                 host, events_port, _ = nodesub
             else:
                 # TODO: we also have to unsubscribe from them at some point
-                if nodesub.find(":") > 0:
-                    host, _ = nodesub.split(":")
-                else:
-                    host = nodesub
+                # if nodesub.find(":") > 0:
+                #     host, _ = nodesub.split(":")
+                # else:
+                host = nodesub
             logger.debug("Sending subscription to %s", f"{host}:{events_port}")
             self.subscribe(host, events_port)
+
 
     def has_method(self, sessionId, uid, mname):
         self._check_session_id(sessionId)
@@ -530,7 +537,7 @@ class ZMQPubSubMixIn(object):
     def subscribe(self, host, port):
         timeout = 5
         finished_evt = threading.Event()
-        endpoint = "tcp://%s:%d" % (utils.zmq_safe(host), port)
+        endpoint = "tcp://%s:%d" % (utils.zmq_safe(host.host), port)
         self._subscriptions.put(ZMQPubSubMixIn.subscription(endpoint, finished_evt))
         if not finished_evt.wait(timeout):
             raise DaliugeException(
@@ -654,7 +661,7 @@ class NodeManager(NodeManagerBase, EventMixIn, RpcMixIn):
         **kwargs,
     ):
         host = host or "localhost"
-        NodeManagerBase.__init__(self, *args, **kwargs)
+        NodeManagerBase.__init__(self, events_port, *args, **kwargs)
         EventMixIn.__init__(self, host, events_port)
         RpcMixIn.__init__(self, host, rpc_port)
         self.start()
