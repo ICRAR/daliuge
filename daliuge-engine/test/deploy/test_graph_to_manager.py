@@ -43,6 +43,25 @@ def create_full_hostname(server_info, event_port, rpc_port):
             f"{server_info.server._server.port}:{event_port}:{rpc_port}")
 
 class GraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter, unittest.TestCase):
+    def setUp(self):
+        """
+        Initialise the Managers
+        """
+        events_port, rpc_port = (5566, 6688)
+        self.ms1_info = self.start_nm_in_thread(port=8000,
+                                                events_port=5566,
+                                                rpc_port=6688)
+        ms1_hostname = create_full_hostname(self.ms1_info, events_port, rpc_port)
+
+        events_port, rpc_port = (5555, 6666)
+        self.ms2_info = self.start_nm_in_thread(port=8999,
+                                           events_port=constants.NODE_DEFAULT_EVENTS_PORT,
+                                           rpc_port=constants.NODE_DEFAULT_RPC_PORT)
+        ms2_hostname = create_full_hostname(self.ms2_info, events_port, rpc_port)
+
+        self.manager_host_names = [ms1_hostname, ms2_hostname]
+        self.dim = DataIslandManager(self.manager_host_names)
+
     def test_input_in_remote_nm(self):
         """
         A test similar in spirit to TestDM.test_runGraphOneDOPerDom, but where
@@ -60,9 +79,7 @@ class GraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter, unittest.TestCase):
         # Partitioning currently requires the to_go_js + to_pg_spec approach
         # We will partition using METIS, as the base PGT class doesn't actually partition
         # anything.
-        # lg_path = str(files(__package__)  / f"ArrayLoop.graph")
         lg_path = str(files(test_graphs) / "logical_graphs/ArrayLoop.graph")
-        # lg = LG(fp)
 
         # drop_list = lg.unroll_to_tpl()
         lgt = prepare_lgt(lg_path, 0)
@@ -74,29 +91,23 @@ class GraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter, unittest.TestCase):
             num_islands=1,
             par_label="Partition",
         )
-        events_port, rpc_port = (5566, 6688)
-        ms1_info = self.start_nm_in_thread(port=8000, events_port=5566, rpc_port=6688)
-        ms1_hostname = create_full_hostname(ms1_info, events_port, rpc_port)
-
-        events_port, rpc_port = (5555, 6666)
-        ms2_info = self.start_nm_in_thread(port=8999,
-                                           events_port=constants.NODE_DEFAULT_EVENTS_PORT,
-                                           rpc_port=constants.NODE_DEFAULT_RPC_PORT)
-        ms2_hostname = create_full_hostname(ms2_info, events_port, rpc_port)
-
-        host_names = [ms1_hostname, ms2_hostname]
-        dim = DataIslandManager(host_names)
         dim_host = f"localhost:{constants.NODE_DEFAULT_REST_PORT}"
-        pg_spec = pgt.to_pg_spec([dim_host] + host_names, ret_str=False)
+        pg_spec = pgt.to_pg_spec([dim_host] + self.manager_host_names, ret_str=False)
         roots = common.get_roots(pg_spec)
-        dim.createSession("TestSession")
-        dim.addGraphSpec("TestSession", pg_spec)
-        dim.deploySession("TestSession", completedDrops=roots)
+        self.dim.createSession("TestSession")
+        self.dim.addGraphSpec("TestSession", pg_spec)
+        self.dim.deploySession("TestSession", completedDrops=roots)
 
         from dlg.ddap_protocol import DROPStates
-        time.sleep(25)
-        for dropstatus in dim.getGraphStatus("TestSession").values():
+        time.sleep(30)
+        for dropstatus in self.dim.getGraphStatus("TestSession").values():
             self.assertEqual(DROPStates.COMPLETED, dropstatus['status'])
-        ms1_info.stop()
-        ms2_info.stop()
-        dim.shutdown()
+
+
+    def tearDown(self):
+        """
+        Clean up managers
+        """
+        self.ms1_info.stop()
+        self.ms2_info.stop()
+        self.dim.shutdown()
