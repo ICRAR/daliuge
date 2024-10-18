@@ -99,7 +99,7 @@ class TestGraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter, unittest.TestCa
         self.dim.deploySession("TestSession", completedDrops=roots)
 
         from dlg.ddap_protocol import DROPStates
-        time.sleep(45)
+        time.sleep(30)
         for dropstatus in self.dim.getGraphStatus("TestSession").values():
             self.assertEqual(DROPStates.COMPLETED, dropstatus['status'])
 
