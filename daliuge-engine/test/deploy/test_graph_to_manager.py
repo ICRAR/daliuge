@@ -35,7 +35,7 @@ from dlg.dropmake.web.translator_utils import (unroll_and_partition_with_params,
 from dlg.manager.composite_manager import DataIslandManager
 from test.dlg_engine_testutils import NMTestsMixIn, DROPManagerUtils
 from dlg.testutils import ManagerStarter
-import daliuge_tests.dropmake as test_graphs
+import daliuge_tests.engine.graphs as test_graphs
 
 def create_full_hostname(server_info, event_port, rpc_port):
 
@@ -79,7 +79,7 @@ class TestGraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter, unittest.TestCa
         # Partitioning currently requires the to_go_js + to_pg_spec approach
         # We will partition using METIS, as the base PGT class doesn't actually partition
         # anything.
-        lg_path = str(files(test_graphs) / "logical_graphs/ArrayLoop.graph")
+        lg_path = str(files(__package__) / "ArrayLoop.graph")
 
         # drop_list = lg.unroll_to_tpl()
         lgt = prepare_lgt(lg_path, 0)
@@ -99,7 +99,7 @@ class TestGraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter, unittest.TestCa
         self.dim.deploySession("TestSession", completedDrops=roots)
 
         from dlg.ddap_protocol import DROPStates
-        time.sleep(30)
+        time.sleep(45)
         for dropstatus in self.dim.getGraphStatus("TestSession").values():
             self.assertEqual(DROPStates.COMPLETED, dropstatus['status'])
 

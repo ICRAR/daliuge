@@ -64,7 +64,7 @@ jobs:
           COVFILES="$COVFILES daliuge-engine/.coverage"
           echo "COVFILES=$COVFILES" >> $GITHUB_ENV
           cd daliuge-engine
-          py.test --cov test/deploy/test_graph_to_manager.py
+          py.test --cov --show-capture=no
 
       - name: Combine coverage
         run: coverage combine $COVFILES
