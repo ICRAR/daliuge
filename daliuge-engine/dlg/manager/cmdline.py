@@ -148,7 +148,8 @@ def addCommonOptions(parser, defaultPort):
     parser.add_option(
         "-w",
         "--work-dir",
-        help="Working directory, defaults to DLG_ROOT/workspace in daemon mode, '.' in interactive mode",
+        help="Working directory, defaults to DLG_ROOT/workspace in daemon mode, "
+             "'.' in interactive mode",
         default=utils.getDlgWorkDir(),
     )
     parser.add_option(
@@ -301,6 +302,7 @@ def setupLogging(opts):
         lidx += min((opts.quiet, 2))
     level = levels[lidx]
 
+
     # Output to files/stdout uses a command format, which can or not contain
     # optionally a session_id and drop_uid to indicate what is currently being
     # executed. This only applies to the NodeManager logs though, for which a
@@ -335,6 +337,11 @@ def setupLogging(opts):
     logging.root.setLevel(level)
     logging.getLogger("dlg").setLevel(level)
     logging.getLogger("zerorpc").setLevel(logging.WARN)
+
+    # Assuming we have selected the default, info-level messages will not show to the
+    # user. A Warning message here let's the user know something is happening without
+    # us needing to modify the default logging level.
+    logging.warning("Starting with level: %s...", logging.getLevelName(level))
 
     return fileHandler
 
@@ -503,14 +510,23 @@ def dlgCompositeManager(parser, args, dmType, acronym, dmPort, dmRestServer):
         help="Maximum timeout used when automatically checking for DM presence",
         default=10,
     )
+    parser.add_option(
+        "--dump_graphs",
+        action="store_true",
+        dest="dump_graphs",
+        help="Store physical graphs submitted to the manager in the workspace directory",
+        default=False,
+    )
     (options, args) = parser.parse_args(args)
 
     # Add DIM-specific options
     options.dmType = dmType
     options.dmArgs = ([s for s in options.nodes.split(",") if s],)
+
     options.dmKwargs = {
         "pkeyPath": options.pkeyPath,
         "dmCheckTimeout": options.dmCheckTimeout,
+        "dump_graphs": options.dump_graphs
     }
     options.dmAcronym = acronym
     options.restType = dmRestServer

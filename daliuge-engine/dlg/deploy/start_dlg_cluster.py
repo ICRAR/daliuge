@@ -225,6 +225,7 @@ def start_dim(node_list, log_dir, origin_ip, logv=1):
         "0.0.0.0",
         "-m",
         "2048",
+        "--dump_graphs=true"
     ]
     proc = tool.start_process("dim", args)
     LOGGER.info("Island manager process started with pid %d", proc.pid)
@@ -251,6 +252,7 @@ def start_mm(node_list, log_dir, logv=1):
         "0.0.0.0",
         "-m",
         "2048",
+        "--dump_graphs=true"
     ]
     proc = tool.start_process("mm", args)
     LOGGER.info("Master manager process started with pid %d", proc.pid)
