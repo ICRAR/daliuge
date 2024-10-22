@@ -33,9 +33,9 @@ pexpect = pytest.importorskip("dlg.dropmake.web.translator_utils")
 from dlg.dropmake.web.translator_utils import (unroll_and_partition_with_params,
                                                prepare_lgt)
 from dlg.manager.composite_manager import DataIslandManager
-from test.dlg_engine_testutils import NMTestsMixIn, DROPManagerUtils
+from dlg.ddap_protocol import DROPStates
 from dlg.testutils import ManagerStarter
-import daliuge_tests.engine.graphs as test_graphs
+from test.dlg_engine_testutils import NMTestsMixIn, DROPManagerUtils
 
 def create_full_hostname(server_info, event_port, rpc_port):
 
@@ -98,10 +98,19 @@ class TestGraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter, unittest.TestCa
         self.dim.addGraphSpec("TestSession", pg_spec)
         self.dim.deploySession("TestSession", completedDrops=roots)
 
-        from dlg.ddap_protocol import DROPStates
-        time.sleep(30)
-        for dropstatus in self.dim.getGraphStatus("TestSession").values():
-            self.assertEqual(DROPStates.COMPLETED, dropstatus['status'])
+        max_wait_time = 30  # seconds
+        poll_interval = 1  # second
+        start_time = time.time()
+        all_completed = False
+        while time.time() - start_time < max_wait_time:
+            all_completed = all(
+                status['status'] == DROPStates.COMPLETED
+                for status in self.dim.getGraphStatus("TestSession").values()
+            )
+            if all_completed:
+                break
+            time.sleep(poll_interval)
+        self.assertTrue(all_completed)
 
 
     def tearDown(self):

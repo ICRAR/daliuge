@@ -102,7 +102,7 @@ class DROPManagerUtils:
         if return_tuple:
             return "localhost", 5553 + n, 6666 + n
         else:
-            return Node(f"localhost:{8000}:{5553+n}:{6666+n}")
+            return Node(f"localhost:8000:{5553 + n}:{6666 + n}")
 
 
     @staticmethod
