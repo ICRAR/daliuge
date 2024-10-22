@@ -31,6 +31,7 @@ from dlg import constants
 from dlg.manager.client import NodeManagerClient, DataIslandManagerClient
 from dlg.manager.composite_manager import DataIslandManager
 from dlg.manager.node_manager import NodeManager
+from dlg.manager.manager_data import Node
 from dlg.manager.rest import NMRestServer, CompositeManagerRestServer
 from dlg.restutils import RestClient
 
@@ -194,15 +195,15 @@ class TestRest(unittest.TestCase):
                         "oid": "a",
                         "categoryType": "Application",
                         "dropclass": "doesnt.exist",
-                        "node": hostname,
+                        "node": str(Node(hostname)),
                         "reprodata": default_repro.copy(),
                     },
                     default_graph_repro.copy(),
                 ],
             )
         ex = cm.exception
-        self.assertTrue(hostname in ex.args[0])
-        self.assertTrue(isinstance(ex.args[0][hostname], InvalidGraphException))
+        self.assertTrue(Node(hostname) in ex.args[0])
+        self.assertTrue(isinstance(ex.args[0][Node(hostname)], InvalidGraphException))
 
     def test_reprodata_get(self):
         """
