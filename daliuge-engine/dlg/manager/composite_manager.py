@@ -43,7 +43,7 @@ from dlg.exceptions import (
     DaliugeException,
     SubManagerException,
 )
-from dlg.utils import portIsOpen, getDlgWorkDir
+from dlg.utils import portIsOpen, getDlgWorkDir, createDirIfMissing
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +130,7 @@ class CompositeManager(DROPManager):
     each level (except at the bottom of the hierarchy) in order to place each
     DROP in its correct place. The attribute used by a particular
     CompositeManager to partition the graph (from its graphSpec) is given at
-    construction time.
+    construction time
     """
 
     __metaclass__ = abc.ABCMeta
@@ -379,7 +379,10 @@ class CompositeManager(DROPManager):
         # belong to the same host, so we can submit that graph into the individual
         # DMs. For this we need to make sure that our graph has a the correct
         # attribute set
-        graph_path = Path(getDlgWorkDir()) / sessionId / f"{sessionId}.graph"
+        sessionDir = Path(getDlgWorkDir()) / sessionId
+        Path.mkdir(sessionDir, exist_ok=True)
+        graph_path = sessionDir / f"{sessionId}.graph"
+
         try:
             with graph_path.open('w') as fp:
                 json.dump(graphSpec, fp, indent=2)
