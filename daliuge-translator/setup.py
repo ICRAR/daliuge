@@ -129,8 +129,6 @@ extra_requires = {
     ]
 }
 
-tests_requires = {"test": ['pytest']}
-
 setup(
     name="daliuge-translator",
     version=get_version_info()[0],
