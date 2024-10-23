@@ -190,7 +190,7 @@ class Setonix411Config(DefaultConfig):
     ACCOUNT = "pawsey0411"
     USER = os.environ["USER"] if "USER" in os.environ else ""
     HOME_DIR = f"/scratch/{ACCOUNT}"
-    DLG_ROOT = f"{HOME_DIR}/{USER}/dlg"
+    DLG_ROOT = f"{HOME_DIR}/$USER/dlg"
     LOG_DIR = f"{DLG_ROOT}/log"
     MODULES = ""
     VENV = f"source /software/projects/{ACCOUNT}/venv/bin/activate"
