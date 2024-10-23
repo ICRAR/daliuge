@@ -300,7 +300,9 @@ class LG:
                             self._lg_links.append(lk)
                             logger.debug("Loop constructed: %s", gs._inputs)
                 else:
-                    for gs in (
+                    for (
+                        gs
+                    ) in (
                         gs_list
                     ):  # add artificial logical links to the "first" children
                         lgn.add_input(gs)
@@ -342,10 +344,12 @@ class LG:
                         # self._drop_dict['new_added'].append(src_drop['gather-data_drop'])
                 if recursive:
                     for child in lgn.children:
-                        self.lgn_to_pgn(child, miid, self.get_child_lp_ctx(lgn, lpcxt, i))
+                        self.lgn_to_pgn(
+                            child, miid, self.get_child_lp_ctx(lgn, lpcxt, i)
+                        )
                 else:
                     for child in lgn.children:
-                    # Approach next 'set' of children
+                        # Approach next 'set' of children
                         c_copy = copy.deepcopy(child)
                         c_copy.happy = True
                         c_copy.loop_ctx = self.get_child_lp_ctx(lgn, lpcxt, i)
@@ -458,7 +462,6 @@ class LG:
             2. link sdrop to null_drop
             3. link tdrop to null_drop as a streamingConsumer
             """
-
             dropSpec_null = dropdict(
                 {
                     "oid": "{0}-{1}-stream".format(

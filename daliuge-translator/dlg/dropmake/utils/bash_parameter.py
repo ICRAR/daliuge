@@ -36,9 +36,7 @@ class BashCommand(object):
         cmds: a list such that ' '.join(cmds) looks something like:
                  'python /home/dfms/myclean.py -d %i[-21] -f %i[-3] %o[-2] -v'
         """
-        self._input_map = (
-            dict()
-        )  # key: logical drop id, value: a list of physical oids
+        self._input_map = dict()  # key: logical drop id, value: a list of physical oids
         self._output_map = dict()
         if len(cmds) > 0 and isinstance(cmds[0], dict):
             cmds = [list(c.keys())[0] for c in cmds]
@@ -49,9 +47,9 @@ class BashCommand(object):
         # self._cmds = re.split(';| *', cmd) # resplit for * as well as spaces
 
         for m in inp_regex.finditer(cmd):
-            self._input_map[
-                int(m.group(1))
-            ] = set()  # TODO - check if sequence needs to be reserved!
+            self._input_map[int(m.group(1))] = (
+                set()
+            )  # TODO - check if sequence needs to be reserved!
         for m in out_regex.finditer(cmd):
             self._output_map[int(m.group(1))] = set()
 

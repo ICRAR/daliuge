@@ -30,6 +30,7 @@ Most of these tests will be asserting the obvious, with the exception of Reprodu
 import json
 import unittest
 import daliuge_tests.engine.topoGraphs as test_graphs
+
 try:
     from importlib.resources import files, as_file
 except ModuleNotFoundError:
@@ -45,7 +46,7 @@ from dlg.common.reproducibility.reproducibility import (
 
 def _init_graph(filename: str):
     f = files(test_graphs) / f"{filename}"
-    with f.open('r') as file:
+    with f.open("r") as file:
         lgt = json.load(file)
     return lgt
 
@@ -75,12 +76,15 @@ class LogicalBlockdagTests(unittest.TestCase):
         for rmode in ALL_RMODES:
             lgt, leaves = _setup_lgt("testTwoStart.graph", rmode)
             parenthashes = list(
-                lgt["nodeDataArray"][1]["reprodata"][rmode.name]["lg_parenthashes"].values()
+                lgt["nodeDataArray"][1]["reprodata"][rmode.name][
+                    "lg_parenthashes"
+                ].values()
             )
             if rmode == ReproducibilityFlags.REPRODUCE:
                 parenthashes = list(
                     lgt["nodeDataArray"][1]["reprodata"][rmode.name][
-                        "lg_parenthashes"].values()
+                        "lg_parenthashes"
+                    ].values()
                 )
                 sig0 = lgt["nodeDataArray"][0]["reprodata"][rmode.name]["lg_blockhash"]
                 sig1 = lgt["nodeDataArray"][1]["reprodata"][rmode.name]["lg_blockhash"]
@@ -89,16 +93,16 @@ class LogicalBlockdagTests(unittest.TestCase):
                     len(leaves) == 1
                     and len(parenthashes) == 0
                     and sig0 == sig1
-                    and sig1 == sig2
-                    , rmode.name
+                    and sig1 == sig2,
+                    rmode.name,
                 )
                 self.assertTrue(len(parenthashes) == 0, rmode.name)
             else:
                 self.assertTrue(
                     len(leaves) == 1
                     and len(parenthashes) == 2
-                    and parenthashes[0] == parenthashes[1]
-                    , rmode.name
+                    and parenthashes[0] == parenthashes[1],
+                    rmode.name,
                 )
 
     def test_twoend(self):
@@ -129,26 +133,40 @@ class LogicalBlockdagTests(unittest.TestCase):
         for rmode in ALL_RMODES:
             lgt, leaves = _setup_lgt("dataFan.graph", rmode)
             if rmode != ReproducibilityFlags.REPRODUCE:
-                sourcehash = lgt["nodeDataArray"][0]["reprodata"][rmode.name]["lg_blockhash"]
-                parenthash1 = list(
-                    lgt["nodeDataArray"][2]["reprodata"][rmode.name]["lg_parenthashes"].values()
-                )
-                parenthash2 = list(
-                    lgt["nodeDataArray"][3]["reprodata"][rmode.name]["lg_parenthashes"].values()
-                )
-                self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash,
-                                rmode.name)
-            else:
-                sourcehash = lgt["nodeDataArray"][1]["reprodata"][rmode.name]["lg_blockhash"]
+                sourcehash = lgt["nodeDataArray"][0]["reprodata"][rmode.name][
+                    "lg_blockhash"
+                ]
                 parenthash1 = list(
                     lgt["nodeDataArray"][2]["reprodata"][rmode.name][
-                        "lg_parenthashes"].values()
+                        "lg_parenthashes"
+                    ].values()
                 )
                 parenthash2 = list(
                     lgt["nodeDataArray"][3]["reprodata"][rmode.name][
-                        "lg_parenthashes"].values()
+                        "lg_parenthashes"
+                    ].values()
                 )
-                self.assertTrue(parenthash1 == parenthash2 and parenthash1[0] == sourcehash)
+                self.assertTrue(
+                    parenthash1 == parenthash2 and parenthash1[0] == sourcehash,
+                    rmode.name,
+                )
+            else:
+                sourcehash = lgt["nodeDataArray"][1]["reprodata"][rmode.name][
+                    "lg_blockhash"
+                ]
+                parenthash1 = list(
+                    lgt["nodeDataArray"][2]["reprodata"][rmode.name][
+                        "lg_parenthashes"
+                    ].values()
+                )
+                parenthash2 = list(
+                    lgt["nodeDataArray"][3]["reprodata"][rmode.name][
+                        "lg_parenthashes"
+                    ].values()
+                )
+                self.assertTrue(
+                    parenthash1 == parenthash2 and parenthash1[0] == sourcehash
+                )
 
     def test_data_funnel(self):
         """
@@ -157,12 +175,17 @@ class LogicalBlockdagTests(unittest.TestCase):
         for rmode in ALL_RMODES:
             lgt, _ = _setup_lgt("dataFunnel.graph", rmode)
             if rmode != ReproducibilityFlags.REPRODUCE:
-                sourcehash = lgt["nodeDataArray"][1]["reprodata"][rmode.name]["lg_blockhash"]
+                sourcehash = lgt["nodeDataArray"][1]["reprodata"][rmode.name][
+                    "lg_blockhash"
+                ]
                 parenthashes = list(
-                    lgt["nodeDataArray"][3]["reprodata"][rmode.name]["lg_parenthashes"].values()
+                    lgt["nodeDataArray"][3]["reprodata"][rmode.name][
+                        "lg_parenthashes"
+                    ].values()
                 )
-                self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1,
-                                rmode.name)
+                self.assertTrue(
+                    sourcehash == parenthashes[0] and len(parenthashes) == 1, rmode.name
+                )
             else:
                 sourcehashes = [
                     lgt["nodeDataArray"][0]["reprodata"][rmode.name]["lg_blockhash"],
@@ -170,9 +193,12 @@ class LogicalBlockdagTests(unittest.TestCase):
                 ]
                 parenthashes = list(
                     lgt["nodeDataArray"][3]["reprodata"][rmode.name][
-                        "lg_parenthashes"].values()
+                        "lg_parenthashes"
+                    ].values()
                 )
-                self.assertTrue(sourcehashes == parenthashes and len(parenthashes) == 2, rmode.name)
+                self.assertTrue(
+                    sourcehashes == parenthashes and len(parenthashes) == 2, rmode.name
+                )
 
     def test_data_sandwich(self):
         """
@@ -182,11 +208,17 @@ class LogicalBlockdagTests(unittest.TestCase):
         for rmode in ALL_RMODES:
             lgt, _ = _setup_lgt("dataSandwich.graph", rmode)
             index = 0 if rmode != ReproducibilityFlags.REPRODUCE else 1
-            sourcehash = lgt["nodeDataArray"][index]["reprodata"][rmode.name]["lg_blockhash"]
+            sourcehash = lgt["nodeDataArray"][index]["reprodata"][rmode.name][
+                "lg_blockhash"
+            ]
             parenthashes = list(
-                lgt["nodeDataArray"][2]["reprodata"][rmode.name]["lg_parenthashes"].values()
+                lgt["nodeDataArray"][2]["reprodata"][rmode.name][
+                    "lg_parenthashes"
+                ].values()
             )
-            self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1, rmode.name)
+            self.assertTrue(
+                sourcehash == parenthashes[0] and len(parenthashes) == 1, rmode.name
+            )
 
     def test_computation_sandwich(self):
         """
@@ -194,13 +226,18 @@ class LogicalBlockdagTests(unittest.TestCase):
         """
         for rmode in ALL_RMODES:
             lgt, _ = _setup_lgt("computationSandwich.graph", rmode)
-            sourcehash = lgt["nodeDataArray"][1]["reprodata"][rmode.name]["lg_blockhash"]
+            sourcehash = lgt["nodeDataArray"][1]["reprodata"][rmode.name][
+                "lg_blockhash"
+            ]
             parenthashes = list(
-                lgt["nodeDataArray"][2]["reprodata"][rmode.name]["lg_parenthashes"].values()
+                lgt["nodeDataArray"][2]["reprodata"][rmode.name][
+                    "lg_parenthashes"
+                ].values()
             )
             if rmode != ReproducibilityFlags.REPRODUCE:
-                self.assertTrue(sourcehash == parenthashes[0] and len(parenthashes) == 1,
-                                rmode.name)
+                self.assertTrue(
+                    sourcehash == parenthashes[0] and len(parenthashes) == 1, rmode.name
+                )
             else:
                 self.assertEqual(0, len(parenthashes), rmode.name)
 

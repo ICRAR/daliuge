@@ -308,7 +308,9 @@ class PGT(object):
         # lm = {k:values[v] for (k, v) in lm.items()} # replace old values with new
 
         if tpl_fl:
-            nm_list = ["#%s" % x for x in range(len(nm_list))]  # so that nm_list[i] == '#i'
+            nm_list = [
+                "#%s" % x for x in range(len(nm_list))
+            ]  # so that nm_list[i] == '#i'
             is_list = [
                 "#%s" % x for x in range(len(is_list))
             ]  # so that is_list[i] == '#i'

@@ -120,6 +120,7 @@ class dropdict(dict):
     def __lt__(self, other):
         return self.get("oid") < other.get("oid")
 
+
 def _sanitize_links(links):
     """
     Links can now be dictionaries, but we only need
@@ -162,18 +163,14 @@ def get_roots(pg_spec):
         oid = dropspec["oid"]
         all_oids.add(oid)
         ctype = (
-            dropspec["categoryType"]
-            if "categoryType" in dropspec
-            else dropspec["type"]
+            dropspec["categoryType"] if "categoryType" in dropspec else dropspec["type"]
         )
         if ctype in (
             CategoryType.APPLICATION,
             CategoryType.SOCKET,
             "app",
         ):
-            if dropspec.get("inputs", None) or dropspec.get(
-                "streamingInputs", None
-            ):
+            if dropspec.get("inputs", None) or dropspec.get("streamingInputs", None):
                 nonroots.add(oid)
             if dropspec.get("outputs", None):
                 do = _sanitize_links(dropspec["outputs"])
@@ -205,9 +202,7 @@ def get_leaves(pg_spec):
         oid = dropspec["oid"]
         all_oids.add(oid)
         ctype = (
-            dropspec["categoryType"]
-            if "categoryType" in dropspec
-            else dropspec["type"]
+            dropspec["categoryType"] if "categoryType" in dropspec else dropspec["type"]
         )
 
         if ctype in [CategoryType.APPLICATION, "app"]:

@@ -30,7 +30,6 @@ from dlg import common
 from dlg.common import tool
 
 
-
 class TestTool(unittest.TestCase):
     def test_pipeline(self):
         """A pipeline from an LG all the way to a finished graph execution"""
