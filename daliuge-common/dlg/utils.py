@@ -226,7 +226,7 @@ def setDlgWorkDir(path: str = ""):
 
     Necessary to keep track of differing working directory paths and root directory paths.
     """
-    _path = os.path.join(getDlgPath(), "workspace")
+    _path = os.path.join(getDlgDir(), "workspace")
 
     if not path:
        logger.info("Starting with default workspace: %s",f"{getDlgDir()}/workspace")

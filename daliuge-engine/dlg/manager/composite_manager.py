@@ -43,7 +43,7 @@ from dlg.exceptions import (
     DaliugeException,
     SubManagerException,
 )
-from dlg.utils import portIsOpen, getDlgWorkDir, createDirIfMissing
+from dlg.utils import portIsOpen, getDlgWorkDir
 
 logger = logging.getLogger(__name__)
 
