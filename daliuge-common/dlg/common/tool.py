@@ -19,8 +19,8 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-"""dlg command line utility"""
 
+"""dlg command line utility"""
 import importlib
 import logging
 import optparse
@@ -28,8 +28,7 @@ import subprocess
 import sys
 import time
 
-import pkg_resources
-
+from importlib.metadata import entry_points
 
 logger = logging.getLogger(__name__)
 
@@ -117,10 +116,14 @@ def version(parser, args):
 
 cmdwrap("version", "Reports the DALiuGE version and exits", version)
 
-
 def _load_commands():
-    for entry_point in pkg_resources.iter_entry_points("dlg.tool_commands"):
-        entry_point.load().register_commands()
+    if sys.version_info.minor < 10:
+        all_entry_points = entry_points()
+        for entry_point in all_entry_points["dlg.tool_commands"]:
+            entry_point.load().register_commands()
+    else:
+        for entry_point in entry_points(group="dlg.tool_commands"):  # pylint: disable=unexpected-keyword-arg
+            entry_point.load().register_commands()
 
 
 def print_usage(prgname):
