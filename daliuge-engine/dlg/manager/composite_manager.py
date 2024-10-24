@@ -43,7 +43,7 @@ from dlg.exceptions import (
     DaliugeException,
     SubManagerException,
 )
-from dlg.utils import portIsOpen, getDlgWorkDir
+from dlg.utils import portIsOpen, getDlgWorkDir, createDirIfMissing
 
 logger = logging.getLogger(__name__)
 
@@ -384,8 +384,12 @@ class CompositeManager(DROPManager):
         :param: graphSpec, the JSON-representation of drops that form the
         complete physical graph.
         """
+        session_dir = Path(getDlgWorkDir()) / sessionId
+        # Make directory in case CompositeManagers are using different working directory
+        # to NodeManagers.
+        Path.mkdir(session_dir, exist_ok=True)
+        graph_path = session_dir / f"{sessionId}.graph"
 
-        graph_path = Path(getDlgWorkDir()) / sessionId / f"{sessionId}.graph"
         try:
             with graph_path.open('w') as fp:
                 json.dump(graphSpec, fp, indent=2)
