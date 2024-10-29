@@ -139,20 +139,6 @@ def addCommonOptions(parser, defaultPort):
         default=False,
     )
     parser.add_option(
-        "--cwd",
-        action="store_true",
-        dest="cwd",
-        help="Short for '-w .'",
-        default=False,
-    )
-    parser.add_option(
-        "-w",
-        "--work-dir",
-        help="Working directory, defaults to DLG_ROOT/workspace in daemon mode, "
-             "'.' in interactive mode",
-        default=utils.getDlgWorkDir(),
-    )
-    parser.add_option(
         "-s",
         "--stop",
         action="store_true",
@@ -230,19 +216,10 @@ def start(options, parser):
         utils.createDirIfMissing(pidDir)
         pidfile = os.path.join(pidDir, "dlg%s.pid" % (options.dmAcronym))
 
-        working_dir = options.work_dir
-        if not working_dir:
-            if options.cwd:
-                print(
-                    "The --cwd option is deprecated, prefer -w/--work-dir, continuing anyway"
-                )
-                working_dir = "."
-            else:
-                working_dir = utils.getDlgWorkDir()
         with daemon.DaemonContext(
             pidfile=PIDLockFile(pidfile, 1),
             files_preserve=[fileHandler.stream],
-            working_directory=working_dir,
+            working_directory=utils.getDlgWorkDir()
         ):
             launchServer(options)
 
@@ -270,8 +247,7 @@ def start(options, parser):
 
     # Start directly
     else:
-        working_dir = options.work_dir or "."
-        utils.setDlgWorkDir(working_dir)
+        working_dir = utils.getDlgWorkDir()
         tree = "/settings"
         utils.createDirIfMissing(working_dir + tree)
         os.chdir(working_dir)

@@ -215,29 +215,8 @@ def getDlgWorkDir():
     results. If `createIfMissing` is True, the directory will be created if it
     currently doesn't exist
     """
-    if 'DLG_WORKSPACE' not in os.environ:
-        setDlgWorkDir()
-    return os.environ['DLG_WORKSPACE']
+    return os.path.join(getDlgDir(), "workspace")
 
-
-def setDlgWorkDir(path: str = ""):
-    """
-    Creates the DLG_WORK directory if we have specified it at runtime.
-
-    Necessary to keep track of differing working directory paths and root directory paths.
-    """
-    _path = os.path.join(getDlgDir(), "workspace")
-
-    if not path:
-       logger.info("Starting with default workspace: %s",f"{getDlgDir()}/workspace")
-    elif os.path.exists(path):
-        logger.info("Updating user-provided workspace path: %s", path)
-        _path = path
-    else:
-        logger.warning("Specified workspace path '%s' does not exist, using default: %s",
-                     path, f"{getDlgDir()}/workspace")
-
-    os.environ['DLG_WORKSPACE'] = _path
 
 def getDlgPath():
     """
