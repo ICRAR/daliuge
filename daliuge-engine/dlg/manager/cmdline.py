@@ -198,9 +198,6 @@ def commonOptionsCheck(options, parser):
     # -v and -q are exclusive
     if options.verbose and options.quiet:
         parser.error("-v and -q cannot be specified together")
-    if options.cwd and options.work_dir:
-        parser.error("--cwd and -w/--work-dir cannot be specified together. Prefer -w")
-
 
 def start(options, parser):
     # Perform common option checks
