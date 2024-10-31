@@ -24,6 +24,7 @@ import json
 import os
 import time
 import unittest
+import shutil
 from asyncio.log import logger
 
 import pkg_resources
@@ -355,16 +356,19 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
 
 
 class TestREST(LocalDimStarter, unittest.TestCase):
+
     def test_fullRound(self):
         """
         A test that exercises most of the REST interface exposed on top of the
         DataIslandManager
         """
+        os.makedirs("/tmp/test_dim_rest/", exist_ok=True)
+        os.environ["DLG_ROOT"] = "/tmp/test_dim_rest"
 
         sessionId = "lala"
         nmPort = 8000  # NOTE: can't use any other port yet.
         dimPort = 8989  # don't interfere with EAGLE default port
-        args = ["--port", str(dimPort), "-N", f"{hostname}:{nmPort}", "-qqq"]
+        args = ["--port", str(dimPort), "-N", f"{hostname}:{nmPort}", "-qqq", "--dump_graphs"]
         dimProcess = tool.start_process("dim", args)
 
         with testutils.terminating(dimProcess, timeout=10):
@@ -452,6 +456,13 @@ class TestREST(LocalDimStarter, unittest.TestCase):
                 {nm_name: SessionStates.FINISHED},
                 testutils.get(self, "/sessions/%s/status" % (sessionId), dimPort),
             )
+
+
             testutils.delete(self, "/sessions/%s" % (sessionId), dimPort)
             sessions = testutils.get(self, "/sessions", dimPort)
             self.assertEqual(0, len(sessions))
+            pastSessions = testutils.get(self, "/past_sessions", dimPort)
+            self.assertEqual(1, len(pastSessions))
+            # Reset environment and test directories
+        shutil.rmtree("/tmp/test_dim_rest/", ignore_errors=True)
+        del os.environ['DLG_ROOT']
