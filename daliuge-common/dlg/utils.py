@@ -560,15 +560,11 @@ def truncateUidToKey(uid: str) -> str:
 
     Examples
     --------
+    >>> truncated("A") # "A"
 
-    uid = "A" 
-    truncatedUid = "A"
+    >>> truncated("2022-02-11T08:05:47_-1_0") # -1
 
-    uid = "2022-02-11T08:05:47_-1_0"
-    truncatedUid = "-1"
-
-    uid = '2024-10-30T12:01:57_0140555b-8c23-4d6a-9e24-e16c15555e8c_0'
-    truncatedUid = "0410"
+    >>> truncated('2024-10-30T12:01:57_0140555b-8c23-4d6a-9e24-e16c15555e8c_0') # 0410
     """
     truncatedUid = uid
     readableLengthLimit = 4
