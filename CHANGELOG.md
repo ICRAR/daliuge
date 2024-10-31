@@ -1,6 +1,11 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+## v4.7.3
+
+- [Added] New Node object introduced to allow us to send across all ports information required when running multiple managers, with non-default ports. This fixed existing issue where events could never receive events on a non-default port. 
+- [Added] New end-to-end unit testing behaviour to test non-default port behaviour with multiple managers.   
+
 ## v4.7.2
 
 - [Changed] Redirected palette generation from EAGLE_test_repo to EAGLE-graph-repo: https://github.com/ICRAR/daliuge/pull/286
