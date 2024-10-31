@@ -150,17 +150,6 @@ def get_ip_via_netifaces(iface_index):
     return utils.get_local_ip_addr()[iface_index][0]
 
 
-def get_workspace_dir(log_dir):
-    """
-    Common workspace dir for all nodes just underneath main session directory
-    """
-    if "DLG_ROOT" in os.environ:
-        workspace = f"{os.environ['DLG_ROOT']}/workspace"
-    else:
-        workspace = f"{os.path.split(log_dir)[0]}/workspace"
-    return workspace
-
-
 def start_node_mgr(
     log_dir,
     my_ip,
@@ -179,8 +168,6 @@ def start_node_mgr(
     args = [
         "-l",
         log_dir,
-        "-w",
-        get_workspace_dir(log_dir),
         "-%s" % log_level,
         "-H",
         host,
@@ -216,8 +203,6 @@ def start_dim(node_list, log_dir, origin_ip, logv=1):
     args = [
         "-l",
         log_dir,
-        "-w",
-        get_workspace_dir(log_dir),
         "-%s" % log_level,
         "-N",
         ",".join(node_list),
@@ -243,8 +228,6 @@ def start_mm(node_list, log_dir, logv=1):
     args = [
         "-l",
         log_dir,
-        "-w",
-        get_workspace_dir(log_dir),
         "-N",
         ",".join(node_list),
         "-%s" % log_level,
