@@ -40,6 +40,8 @@ import grp
 import pwd
 import pickle
 
+from pathlib import Path
+
 import netifaces
 
 from . import common
