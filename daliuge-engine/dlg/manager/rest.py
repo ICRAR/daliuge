@@ -555,12 +555,11 @@ class CompositeManagerRestServer(ManagerRestServer):
         serialisation across the wire. 
         """
 
-        pastSessions = []
-        for pastSession in self.dm.getPastSessionIds():
-            pastSessions.append(
-                {"sessionId": pastSession}
-            )
-        return pastSessions
+        
+        return [   
+            {"sessionId": pastSession}
+            for pastSession in self.dm.getPastSessionIds()
+        ]
 
 
     def _tarfile_write(self, tar, headers, stream):

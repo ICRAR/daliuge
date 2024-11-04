@@ -51,14 +51,13 @@ class PastSessionManager:
         sessions.
         """
 
-        past_sessions = [
+        return [
             path for path in self._work_dir.iterdir()
             if (path.is_dir()
                 and path.name not in excluded_sessions
                 and self._is_session_dir(path))
         ]
 
-        return past_sessions
 
     @staticmethod
     def _is_session_dir(session: Path, expected_ext=".graph") -> bool:
@@ -77,6 +76,6 @@ class PastSessionManager:
                 list of past sessions. 
         """
 
-        return any([expected_ext in f.name for f in session.iterdir()])
+        return any(expected_ext in f.name for f in session.iterdir())
 
 
