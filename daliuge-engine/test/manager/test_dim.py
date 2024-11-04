@@ -29,43 +29,22 @@ from asyncio.log import logger
 
 import pkg_resources
 
-from dlg import droputils
-from dlg import utils
+from dlg import utils, droputils
+from dlg.testutils import ManagerStarter
 from dlg.common import tool
 from dlg.constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from dlg.ddap_protocol import DROPStates
 from dlg.manager.composite_manager import DataIslandManager
 from dlg.manager.session import SessionStates
+from dlg.manager.manager_data import Node
+
 from dlg.testutils import ManagerStarter
-from test.manager import testutils
+from test.dlg_engine_testutils import (RESTTestUtils, DROPManagerUtils,
+                                       TerminatingTestHelper)
 
 hostname = "localhost"
 dim_host = f"{hostname}:{ISLAND_DEFAULT_REST_PORT}"
 nm_host = f"{hostname}:{NODE_DEFAULT_REST_PORT}"
-
-default_repro = {
-    "rmode": "1",
-    "RERUN": {
-        "lg_blockhash": "x",
-        "pgt_blockhash": "y",
-        "pg_blockhash": "z",
-    },
-}
-default_graph_repro = {
-    "rmode": "1",
-    "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
-    "merkleroot": "a",
-    "RERUN": {
-        "signature": "b",
-    },
-}
-
-
-def add_test_reprodata(graph: list):
-    for drop in graph:
-        drop["reprodata"] = default_repro.copy()
-    graph.append(default_graph_repro.copy())
-    return graph
 
 
 class LocalDimStarter(ManagerStarter):
@@ -115,7 +94,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
                 "node": nm_host,
             },
         ]
-        graphSpec = add_test_reprodata(graphSpec)
+        graphSpec = DROPManagerUtils.add_test_reprodata(graphSpec)
         self.dim.createSession(sessionId)
         self.assertEqual(0, self.dim.getGraphSize(sessionId))
         self.dim.addGraphSpec(sessionId, graphSpec)
@@ -149,7 +128,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
                 "node": "unknown_host",
             }
         ]
-        graphSpec = add_test_reprodata(graphSpec)
+        graphSpec = DROPManagerUtils.add_test_reprodata(graphSpec)
         self.assertRaises(Exception, self.dim.addGraphSpec, sessionId, graphSpec)
 
         # OK
@@ -161,7 +140,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
                 "node": nm_host,
             }
         ]
-        graphSpec = add_test_reprodata(graphSpec)
+        graphSpec = DROPManagerUtils.add_test_reprodata(graphSpec)
         self.dim.createSession(sessionId)
         self.assertEqual(0, self.dim.getGraphSize(sessionId))
         self.dim.addGraphSpec(sessionId, graphSpec)
@@ -211,8 +190,8 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         def assertSessionStatus(sessionId, status):
             sessionStatus = self.dim.getSessionStatus(sessionId)
             self.assertEqual(1, len(sessionStatus))
-            self.assertIn(nm_host, sessionStatus)
-            self.assertEqual(status, sessionStatus[nm_host])
+            self.assertIn(str(Node(nm_host)), sessionStatus)
+            self.assertEqual(status, sessionStatus[Node(nm_host)])
             self.assertEqual(status, self.dm.getSessionStatus(sessionId))
 
         sessionId = "lala"
@@ -371,7 +350,7 @@ class TestREST(LocalDimStarter, unittest.TestCase):
         args = ["--port", str(dimPort), "-N", f"{hostname}:{nmPort}", "-qqq", "--dump_graphs"]
         dimProcess = tool.start_process("dim", args)
 
-        with testutils.terminating(dimProcess, timeout=10):
+        with TerminatingTestHelper(dimProcess, timeout=10):
             # Wait until the REST server becomes alive
             self.assertTrue(
                 utils.portIsOpen("localhost", dimPort, timeout=10),
@@ -379,21 +358,21 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             )
 
             # The DIM is still empty
-            sessions = testutils.get(self, "/sessions", nmPort)
+            sessions = RESTTestUtils.get(self, "/sessions", nmPort)
             self.assertEqual(0, len(sessions))
-            dimStatus = testutils.get(self, "", dimPort)
+            dimStatus = RESTTestUtils.get(self, "", dimPort)
             self.assertEqual(1, len(dimStatus["hosts"]))
-            self.assertEqual(f"{hostname}:{nmPort}", dimStatus["hosts"][0])
+            self.assertEqual(Node(f"{hostname}:{nmPort}"), dimStatus["hosts"][0])
             self.assertEqual(0, len(dimStatus["sessionIds"]))
 
             # Create a session and check it exists
-            testutils.post(
+            RESTTestUtils.post(
                 self, "/sessions", dimPort, '{"sessionId":"%s"}' % (sessionId)
             )
-            sessions = testutils.get(self, "/sessions", dimPort)
+            sessions = RESTTestUtils.get(self, "/sessions", dimPort)
             self.assertEqual(1, len(sessions))
             self.assertEqual(sessionId, sessions[0]["sessionId"])
-            nm_name = f"{hostname}:{nmPort}"
+            nm_name = str(Node(f"{hostname}:{nmPort}"))
             self.assertDictEqual(
                 {nm_name: SessionStates.PRISTINE}, sessions[0]["status"]
             )
@@ -410,7 +389,7 @@ class TestREST(LocalDimStarter, unittest.TestCase):
                 logger.debug(f"Loaded graph: {f}")
             for dropSpec in complexGraphSpec:
                 dropSpec["node"] = nm_host
-            testutils.post(
+            RESTTestUtils.post(
                 self,
                 "/sessions/%s/graph/append" % (sessionId),
                 dimPort,
@@ -418,11 +397,11 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             )
             self.assertEqual(
                 {nm_name: SessionStates.BUILDING},
-                testutils.get(self, "/sessions/%s/status" % (sessionId), dimPort),
+                RESTTestUtils.get(self, "/sessions/%s/status" % (sessionId), dimPort),
             )
 
             # Now we deploy the graph...
-            testutils.post(
+            RESTTestUtils.post(
                 self,
                 "/sessions/%s/deploy" % (sessionId),
                 nmPort,
@@ -431,7 +410,7 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             )
             self.assertEqual(
                 {nm_name: SessionStates.RUNNING},
-                testutils.get(self, "/sessions/%s/status" % (sessionId), dimPort),
+                RESTTestUtils.get(self, "/sessions/%s/status" % (sessionId), dimPort),
             )
 
             # ...and write to all 5 root nodes that are listening in ports
@@ -446,7 +425,7 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             # it finished by polling the status of the session
             while (
                 SessionStates.RUNNING
-                in testutils.get(
+                in RESTTestUtils.get(
                     self, "/sessions/%s/status" % (sessionId), dimPort
                 ).values()
             ):
@@ -454,14 +433,12 @@ class TestREST(LocalDimStarter, unittest.TestCase):
 
             self.assertEqual(
                 {nm_name: SessionStates.FINISHED},
-                testutils.get(self, "/sessions/%s/status" % (sessionId), dimPort),
+                RESTTestUtils.get(self, "/sessions/%s/status" % (sessionId), dimPort),
             )
-
-
-            testutils.delete(self, "/sessions/%s" % (sessionId), dimPort)
-            sessions = testutils.get(self, "/sessions", dimPort)
+            RESTTestUtils.delete(self, "/sessions/%s" % (sessionId), dimPort)
+            sessions = RESTTestUtils.get(self, "/sessions", dimPort)
             self.assertEqual(0, len(sessions))
-            pastSessions = testutils.get(self, "/past_sessions", dimPort)
+            pastSessions = RESTTestUtils.get(self, "/past_sessions", dimPort)
             self.assertEqual(1, len(pastSessions))
             # Reset environment and test directories
         shutil.rmtree("/tmp/test_dim_rest/", ignore_errors=True)

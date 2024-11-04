@@ -31,13 +31,15 @@ import threading
 
 from pathlib import Path
 
+from dlg.manager.client import NodeManagerClient
+from dlg.manager.drop_manager import DROPManager
+from dlg.manager.manager_data import Node
+
 from dlg import constants
-from .client import NodeManagerClient
 from dlg.constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
-from .drop_manager import DROPManager
-from .. import graph_loader
+from dlg import graph_loader
 from dlg.common.reproducibility.reproducibility import init_pg_repro_data
-from ..ddap_protocol import DROPRel
+from dlg.ddap_protocol import DROPRel
 from dlg.exceptions import (
     InvalidGraphException,
     DaliugeException,
@@ -109,7 +111,8 @@ def sanitize_relations(interDMRelations, graph):
 def group_by_node(uids, graph):
     uids_by_node = collections.defaultdict(list)
     for uid in uids:
-        uids_by_node[graph[uid]["node"]].append(uid)
+        uids_by_node[Node(graph[uid]["node"])].append(uid)
+    logger.info(uids_by_node)
     return uids_by_node
 
 
@@ -161,12 +164,12 @@ class CompositeManager(DROPManager):
         :param: dmCheckTimeout The timeout used before giving up and declaring
                 a sub-DM as not-yet-present in a given host
         """
-        if dmHosts and ":" in dmHosts[0]:
+        self._dmHosts = [Node(host) for host in dmHosts]
+        if self._dmHosts and self._dmHosts[0].rest_port_specified:
             dmPort = -1
         self._dmPort = dmPort
         self._partitionAttr = partitionAttr
         self._subDmId = subDmId
-        self._dmHosts = dmHosts if dmHosts else []
         self._graph = {}
         self._drop_rels = {}
         self._sessionIds = (
@@ -182,6 +185,7 @@ class CompositeManager(DROPManager):
         # This list is different from the dmHosts, which are the machines that
         # are directly managed by this manager (which in turn could manage more
         # machines)
+        self.use_dmHosts = False
         self._nodes = []
 
         self.startDMChecker()
@@ -212,7 +216,7 @@ class CompositeManager(DROPManager):
                     break
                 if not self.check_dm(host, self._dmPort, timeout=self._dmCheckTimeout):
                     logger.error(
-                        "Couldn't contact manager for host %s:%d, will try again later",
+                        "Couldn't contact manager for host %s with dmPort %d, will try again later",
                         host, self._dmPort,
                     )
             if self._dmCheckerEvt.wait(60):
@@ -220,56 +224,71 @@ class CompositeManager(DROPManager):
 
     @property
     def dmHosts(self):
-        return self._dmHosts[:]
+        return [str(n) for n in self._dmHosts[:]]
 
-    def addDmHost(self, host):
-        if not ":" in host:
-            host += f":{self._dmPort}"
+    def addDmHost(self, host_str: str):
+        host = Node(host_str)
         if host not in self._dmHosts:
             self._dmHosts.append(host)
             logger.debug("Added sub-manager %s", host)
         else:
             logger.warning("Host %s already registered.", host)
 
-    def removeDmHost(self, host):
+    def removeDmHost(self, host_str):
+        host = Node(host_str)
         if host in self._dmHosts:
             self._dmHosts.remove(host)
 
     @property
     def nodes(self):
-        return self._nodes[:]
+        if self.use_dmHosts:
+            return [str(n) for n in self._dmHosts[:]]
+        else:
+            return self._nodes
 
-    def add_node(self, node):
-        self._nodes.append(node)
+    def add_node(self, node: Node):
+        if self.use_dmHosts:
+            return self._dmHosts.append(node)
+        else:
+            self._nodes.append(node)
 
     def remove_node(self, node):
-        self._nodes.remove(node)
+        if self.use_dmHosts:
+            self._dmHosts.remove(node)
+        else:
+            self._nodes.remove(node)
+
+    def get_node_from_json(self, node_str):
+        """
+        Given a node str, return the Node we have stored
+        Return: Node
+        Raises: ValueError if there is no existing Node added to the CompositeManager
+        """
+
+        idx = self._nodes.index(Node(node_str))
+        return self._nodes[idx]
 
     @property
     def dmPort(self):
         return self._dmPort
 
-    def check_dm(self, host, port=None, timeout=10):
-        if ":" in host:
-            host, port = host.split(":")
-            port = int(port)
+    def check_dm(self, host: Node, port: int = None, timeout=10):
+        host_name = host.host
+        if host.rest_port_specified:
+            port = host.port
         else:
             port = port or self._dmPort
 
         logger.debug("Checking DM presence at %s port %d", host, port)
-        dm_is_there = portIsOpen(host, port, timeout)
-        return dm_is_there
+        return portIsOpen(host_name, port, timeout)
 
-    def dmAt(self, host, port=None):
-        if not self.check_dm(host, port):
+    def dmAt(self, host):
+        if not self.check_dm(host):
             raise SubManagerException(
-                f"Manager expected but not running in {host}:{port}"
+                f"Manager expected but not running in {host.host}:{host.port}"
             )
-        if not ":" in host:
-            port = port or self._dmPort
-        else:
-            host, port = host.split(":")
-        return NodeManagerClient(host, port, 10)
+
+        return NodeManagerClient(host.host, host.port, 10)
 
     def getSessionIds(self):
         return self._sessionIds
@@ -293,13 +312,15 @@ class CompositeManager(DROPManager):
 
         host = iterable
         if isinstance(iterable, (list, tuple)):
-            host = iterable[0]
-        if ":" in host:
-            host, port = host.split(":")
-            port = int(port)
+            host = iterable[0]  # What's going on here?
+        # if ":" in host:
+        #     host, port = host.split(":")
+        #     port = int(port)
+        if isinstance(host, str):
+            host = Node(host)
 
         try:
-            with self.dmAt(host, port) as dm:
+            with self.dmAt(host) as dm:
                 res = f(dm, iterable, sessionId)
 
             if isinstance(collect, dict):
@@ -308,13 +329,14 @@ class CompositeManager(DROPManager):
                 collect.append(res)
 
         except Exception as e:
-            exceptions[host] = e
+            exceptions[str(host)] = e
             logger.exception(
-                "Error while %s on host %s:%d, session %s",
+                "Error while %s on host %s:%d, session %s, when executing %s",
                 action,
-                host,
-                port,
+                host.host,
+                host.port,
                 sessionId,
+                f
             )
 
     def replicate(self, sessionId, f, action, collect=None, iterable=None, port=None):
@@ -324,7 +346,7 @@ class CompositeManager(DROPManager):
         thrExs = {}
         iterable = iterable or self._dmHosts
         port = port or self._dmPort
-        # logger.debug("Replicating command: %s on hosts: %s", f, iterable)
+        logger.debug("Replicating command: %s on hosts: %s", f, iterable)
         self._tp.map(
             functools.partial(
                 self._do_in_host, action, sessionId, thrExs, f, collect, port
@@ -445,7 +467,7 @@ class CompositeManager(DROPManager):
                 )
                 raise InvalidGraphException(msg)
 
-            partition = dropSpec[self._partitionAttr]
+            partition = Node(dropSpec[self._partitionAttr])
             if partition not in self._dmHosts:
                 msg = (
                     f"Drop {dropSpec.get('oid', None)}'s {self._partitionAttr} {partition} "
@@ -478,8 +500,8 @@ class CompositeManager(DROPManager):
         for rel in inter_partition_rels:
             # rhn = self._graph[rel.rhs]["node"].split(":")[0]
             # lhn = self._graph[rel.lhs]["node"].split(":")[0]
-            rhn = self._graph[rel.rhs]["node"]
-            lhn = self._graph[rel.lhs]["node"]
+            rhn = (self._graph[rel.rhs]["node"])
+            lhn = (self._graph[rel.lhs]["node"])
             drop_rels[lhn][rhn].append(rel)
             drop_rels[rhn][lhn].append(rel)
 
@@ -509,6 +531,7 @@ class CompositeManager(DROPManager):
 
     def _triggerDrops(self, dm, host_and_uids, sessionId):
         host, uids = host_and_uids
+
         dm.trigger_drops(sessionId, uids)
         logger.info(
             "Successfully triggered drops for session %s on %s",
@@ -597,7 +620,7 @@ class CompositeManager(DROPManager):
         return allGraphs
 
     def _getSessionStatus(self, dm, host, sessionId):
-        return {host: dm.getSessionStatus(sessionId)}
+        return {str(host): dm.getSessionStatus(sessionId)}
 
     def getSessionStatus(self, sessionId):
         allStatus = {}
@@ -641,7 +664,8 @@ class DataIslandManager(CompositeManager):
         )
 
         # In the case of the Data Island the dmHosts are the final nodes as well
-        self._nodes = dmHosts
+        self.use_dmHosts = True
+        # self._nodes = dmHosts
         logger.info("Created DataIslandManager for hosts: %r", self._dmHosts)
 
 

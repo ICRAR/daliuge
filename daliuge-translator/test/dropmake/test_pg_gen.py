@@ -36,7 +36,6 @@ python -m unittest test.dropmake.test_pg_gen
 TEST_SSID = 'test_pg_gen'
 
 
-
 class TestPGGen(unittest.TestCase):
     """
     Test that the PhysicalGraph template constructor and supporting methods work.
