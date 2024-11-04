@@ -564,7 +564,7 @@ def truncateUidToKey(uid: str) -> str:
 
     >>> truncated("2022-02-11T08:05:47_-1_0") # -1
 
-    >>> truncated('2024-10-30T12:01:57_0140555b-8c23-4d6a-9e24-e16c15555e8c_0') # 0410
+    >>> truncated('2024-10-30T12:01:57_0140555b-8c23-4d6a-9e24-e16c15555e8c_0') # 0140
     """
     truncatedUid = uid
     readableLengthLimit = 4
@@ -572,9 +572,9 @@ def truncateUidToKey(uid: str) -> str:
     if len(split) > 1:
         second_el = str(split[1])
         if len(second_el) > readableLengthLimit:
-            split[1] = split[1][0:readableLengthLimit]
+            truncatedUid = split[1][:readableLengthLimit]
+        else:
             truncatedUid = split[1]
-        truncatedUid = split[1]
 
     return truncatedUid
 
