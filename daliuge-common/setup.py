@@ -32,12 +32,13 @@ from setuptools import setup
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
 
+
 def extract_version():
     """
-    Retrived the current version based on the most recent version tag, stored in daliuge-common/VERSION. 
+    Retrived the current version based on the most recent version tag, stored in daliuge-common/VERSION.
     This is then split into the individual major/minor/patch numbers.
-    
-    :return: tuple(int, int, int): major, minor, patch 
+
+    :return: tuple(int, int, int): major, minor, patch
     """
     TAG_VERSION_FILE = "VERSION"
     content = ""
@@ -45,6 +46,7 @@ def extract_version():
         major, minor, patch = open_file.read().strip("v").split(".")
         print("logging details: ", major, minor, patch)
     return int(major), int(minor), int(patch)
+
 
 VERSION = extract_version()
 VERSION_FILE = "dlg/common/version.py"

@@ -111,10 +111,6 @@ Help output::
      -m MAXREQSIZE, --max-request-size=MAXREQSIZE
                            The maximum allowed HTTP request size, in MB
      -d, --daemon          Run as daemon
-     --cwd                 Short for '-w .'
-     -w WORK_DIR, --work-dir=WORK_DIR
-                           Working directory, defaults to '/' in daemon mode, '.'
-                           in interactive mode
      -s, --stop            Stop an instance running as daemon
      --status              Checks if there is daemon process actively running
      -T TIMEOUT, --timeout=TIMEOUT
@@ -234,10 +230,6 @@ Help output::
      -m MAXREQSIZE, --max-request-size=MAXREQSIZE
                            The maximum allowed HTTP request size, in MB
      -d, --daemon          Run as daemon
-     --cwd                 Short for '-w .'
-     -w WORK_DIR, --work-dir=WORK_DIR
-                           Working directory, defaults to '/' in daemon mode, '.'
-                           in interactive mode
      -s, --stop            Stop an instance running as daemon
      --status              Checks if there is daemon process actively running
      -T TIMEOUT, --timeout=TIMEOUT
@@ -293,10 +285,6 @@ Help output::
      -m MAXREQSIZE, --max-request-size=MAXREQSIZE
                            The maximum allowed HTTP request size, in MB
      -d, --daemon          Run as daemon
-     --cwd                 Short for '-w .'
-     -w WORK_DIR, --work-dir=WORK_DIR
-                           Working directory, defaults to '/' in daemon mode, '.'
-                           in interactive mode
      -s, --stop            Stop an instance running as daemon
      --status              Checks if there is daemon process actively running
      -T TIMEOUT, --timeout=TIMEOUT
@@ -390,10 +378,6 @@ Help output::
      -m MAXREQSIZE, --max-request-size=MAXREQSIZE
                            The maximum allowed HTTP request size, in MB
      -d, --daemon          Run as daemon
-     --cwd                 Short for '-w .'
-     -w WORK_DIR, --work-dir=WORK_DIR
-                           Working directory, defaults to '/' in daemon mode, '.'
-                           in interactive mode
      -s, --stop            Stop an instance running as daemon
      --status              Checks if there is daemon process actively running
      -T TIMEOUT, --timeout=TIMEOUT

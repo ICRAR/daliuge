@@ -26,35 +26,11 @@ import unittest
 from dlg.common import dropdict, tool
 from dlg.manager import client
 from dlg.utils import terminate_or_kill
-from test.manager import testutils
+
+from test.dlg_engine_testutils import DROPManagerUtils, TerminatingTestHelper
 
 logger = logging.getLogger(__name__)
 hostname = "localhost"
-
-
-default_repro = {
-    "rmode": "1",
-    "RERUN": {
-        "lg_blockhash": "x",
-        "pgt_blockhash": "y",
-        "pg_blockhash": "z",
-    },
-}
-default_graph_repro = {
-    "rmode": "1",
-    "meta_data": {"repro_protocol": 0.1, "hashing_alg": "_sha3.sha3_256"},
-    "merkleroot": "a",
-    "RERUN": {
-        "signature": "b",
-    },
-}
-
-
-def add_test_reprodata(graph: list):
-    for drop in graph:
-        drop["reprodata"] = default_repro.copy()
-    graph.append(default_graph_repro.copy())
-    return graph
 
 
 def memory_drop(uid):
@@ -104,7 +80,7 @@ def create_graph(branches, drops_per_branch):
         final_drop.addProducer(final_app)
 
     graph.append(final_drop)
-    add_test_reprodata(graph)
+    DROPManagerUtils.add_test_reprodata(graph)
     return graph, completed_uids
 
 
@@ -145,7 +121,7 @@ class TestBigGraph(unittest.TestCase):
         c = client.NodeManagerClient(port=restPort)
         dimProcess = tool.start_process("dim", args)
 
-        with testutils.terminating(dimProcess, timeout=timeout):
+        with TerminatingTestHelper(dimProcess, timeout=timeout):
             c.create_session(sessionId)
             logger.info("Appending graph")
             c.append_graph(sessionId, graph)
