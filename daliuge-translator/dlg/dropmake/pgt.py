@@ -324,7 +324,7 @@ class PGT(object):
             isid = self._gid_island_id_map[gid] % num_islands if form_island else 0
             drop["island"] = is_list[isid]
             if self._gojs_key_dict:
-                drop["humanReadableKey"] = self._gojs_key_dict[oid]
+                drop["humanReadableKey"] = f"{self._gojs_json_obj}_{drop['iid']}"
 
         if ret_str:
             return json.dumps(self.drops, indent=2)
@@ -357,6 +357,9 @@ class PGT(object):
             elif CategoryType.APPLICATION == tt:
                 node["category"] = "Application"
             node["name"] = drop["name"]
+            if not "iid" in drop:
+                drop["iid"] = 0
+            node["iid"] = drop["iid"]
             nodes.append(node)
 
         if self._extra_drops is None:
@@ -470,6 +473,7 @@ class PGT(object):
                 node["category"] = "PythonApp"  # might not be correct
             node["name"] = drop["name"]
             nodes.append(node)
+            node["iid"] = drop["iid"]
         self._links = links
         ret["nodeDataArray"] = nodes
         ret["linkDataArray"] = links

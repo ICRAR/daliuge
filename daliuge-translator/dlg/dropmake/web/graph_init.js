@@ -216,7 +216,7 @@ function _addNode(g, node) {
     var html = '<div class="drop-label ' + typeShape + '" id="id_' + oid + '">';
     html += '<span class="notes">' + notes + '</span>';
     oid_date = node.oid.split("_")[0];
-	human_readable_id = oid_date + "_" + node.key
+	human_readable_id = oid_date + "_" + node.key + "_" + node.iid
     html += '<span style="font-size: 13px;">' + human_readable_id + '</span>';
     html += "</div>";
     g.setNode(oid, {
