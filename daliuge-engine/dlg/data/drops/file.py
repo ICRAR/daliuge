@@ -142,9 +142,11 @@ class FileDROP(DataDROP, PathBasedDrop):
         if isabs(dirname):
             check = self.check_filepath_exists
 
-        # Default filename to drop UID
+        # Default filename to drop human readable format based on UID
         if filename is None:
-            filename = self.non_fname_chars.sub("_", self.uid)
+            # '2024-10-30T12:01:57_0140555b-8c23-4d6a-9e24-e16c15555e8c_0'
+            fn = self.uid.split("_")[0] + "_" + str(self._humanKey)
+            filename = self.non_fname_chars.sub("_", fn)
         self.filename = filename
         self.dirname = self.get_dir(dirname)
 
