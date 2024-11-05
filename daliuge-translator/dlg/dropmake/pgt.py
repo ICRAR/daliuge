@@ -324,7 +324,7 @@ class PGT(object):
             isid = self._gid_island_id_map[gid] % num_islands if form_island else 0
             drop["island"] = is_list[isid]
             if self._gojs_key_dict:
-                drop["humanReadableKey"] = f"{self._gojs_json_obj}_{drop['iid']}"
+                drop["humanReadableKey"] = f"{self._gojs_key_dict[oid]}_{drop['iid']}"
 
         if ret_str:
             return json.dumps(self.drops, indent=2)
