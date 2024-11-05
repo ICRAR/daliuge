@@ -45,6 +45,7 @@ from dlg.exceptions import (
     DaliugeException,
     SubManagerException,
 )
+from dlg.manager.past_sessions import PastSessionManager
 from dlg.utils import portIsOpen, getDlgWorkDir
 
 logger = logging.getLogger(__name__)
@@ -179,7 +180,7 @@ class CompositeManager(DROPManager):
         n_threads = max(1, min(len(dmHosts), 20))
         self._tp = multiprocessing.pool.ThreadPool(n_threads)
         self._dump_graphs = dump_graphs
-
+        self._past_session_manager = PastSessionManager(getDlgWorkDir())
         # The list of bottom-level nodes that are covered by this manager
         # This list is different from the dmHosts, which are the machines that
         # are directly managed by this manager (which in turn could manage more
@@ -291,6 +292,16 @@ class CompositeManager(DROPManager):
 
     def getSessionIds(self):
         return self._sessionIds
+
+    def getPastSessionIds(self) -> list[str]:
+        """
+        Get past sessions stored in the composite managers current working directory.
+
+        :return: List of path names (str)
+        """
+        return [path.name for path in self._past_session_manager.past_sessions(
+            self._sessionIds)]
+
 
     def _do_in_host(self, action, sessionId, exceptions, f, collect, port, iterable):
         """
@@ -527,7 +538,6 @@ class CompositeManager(DROPManager):
             sessionId,
             host,
         )
-
     def deploySession(self, sessionId, completedDrops: list[str] = None):
         # Indicate the node managers that they have to subscribe to events
         # published by some nodes

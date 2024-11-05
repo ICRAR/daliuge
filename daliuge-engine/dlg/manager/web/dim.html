@@ -67,6 +67,21 @@
             </button>
         </div>
 
+        <div id="pastSessions">
+            <h4>Past Sessions</h4>
+            <table class="table table-striped" id="pastSessionsTable">
+                <thead>
+                    <tr>
+                        <th>Session ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+            <button class="btn btn-secondary" id="refreshPastSessionListBtn" type="button"><span class="fa fa-refresh"></span> Refresh</button>
+        </div>
+
+
         <div id="nodes">
             <h4>Nodes</h4>
             <table class="table table-striped" id="nodesTable">
@@ -96,8 +111,10 @@
         var nodes = {{!nodes}}
 
         var refreshSessionListBtn = d3.select('#refreshSessionListBtn');
+        var refreshPastSessionListBtn = d3.select('#refreshPastSessionListBtn');
         var addSessionBtn = d3.select('#addSessionBtn');
         var sessionsTbodyEl = d3.select('#sessionsTable tbody');
+        var pastSessionsTbodyEl = d3.select('#pastSessionsTable tbody');
 
         var serverIP = serverUrl.split("//").pop().split(":").shift();// Show/hide parts of the UI depending on whether we're zooming in or not
 
@@ -142,6 +159,11 @@
             loadSessions(serverUrl, sessionsTbodyEl, refreshSessionListBtn, selectedNode);
         });
 
+        refreshPastSessionListBtn.on('click', function () {
+            loadPastSessions(serverUrl, pastSessionsTbodyEl, refreshPastSessionListBtn, selectedNode);
+        });
+
+        loadPastSessions(serverUrl, pastSessionsTbodyEl, refreshPastSessionListBtn, selectedNode,);
         //Start loading the list of sessions periodically
         var loadSessionTimer = d3.timer(function () {
             loadSessions(serverUrl, sessionsTbodyEl, refreshSessionListBtn, selectedNode, 5000);

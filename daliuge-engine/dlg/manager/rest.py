@@ -485,6 +485,7 @@ class CompositeManagerRestServer(ManagerRestServer):
 
     def initializeSpecifics(self, app):
         app.get("/api", callback=self.getCMStatus)
+        app.get("/api/past_sessions", callback=self.getPastSessions)
         app.get("/api/nodes", callback=self.getCMNodes)
         app.post("/api/node/<node>", callback=self.addCMNode)
         app.delete("/api/node/<node>", callback=self.removeCMNode)
@@ -570,6 +571,29 @@ class CompositeManagerRestServer(ManagerRestServer):
             raise RuntimeError(f"{host_node} not in current list of nodes")
         with NodeManagerClient(host=host_node.host, port=host_node.port) as dm:
             return dm.sessions()
+
+    @daliuge_aware
+    def getPastSessions(self):
+        """
+        REST (GET): /api/past_sessions
+
+        Return JSON-compatible list of Composite Manager nodes
+        """
+        return self.pastSessions()
+
+
+    def pastSessions(self):
+        """
+        Retrieve sessions from this DropManager and place it in JSON-format, for 
+        serialisation across the wire. 
+        """
+
+        
+        return [   
+            {"sessionId": pastSession}
+            for pastSession in self.dm.getPastSessionIds()
+        ]
+
 
     def _tarfile_write(self, tar, headers, stream):
         file_header = headers.getheader("Content-Disposition")
