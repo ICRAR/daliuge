@@ -1,6 +1,14 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+## v4.8.0
+
+- [Added] Support for Python 3.11 and Python 3.12: https://github.com/ICRAR/daliuge/pull/290
+- [Added] Session history support in engine through the Composite Managers:  https://github.com/ICRAR/daliuge/pull/291, https://github.com/ICRAR/daliuge/pull/292.
+- [Changed] EAGLE_test_repo is now where all test graphs are stored for DALiuGE development: https://github.com/ICRAR/daliuge/pull/286, https://github.com/ICRAR/daliuge/pull/287.
+- [Changed] Replaced full UID4s with human-readable keys in graph visualisation and file output: https://github.com/ICRAR/daliuge/pull/293
+- [Fixed] Updated the MPIApp and deployment scripts for the Hyades cluster: https://github.com/ICRAR/daliuge/pull/289
+
 ## v4.7.3
 
 - [Added] New Node object introduced to allow us to send across all ports information required when running multiple managers, with non-default ports. This fixed existing issue where events could never receive events on a non-default port. 
