@@ -250,6 +250,8 @@ class MemoryIO(DataIO):
             return self._buf
         elif self._mode == OpenMode.OPEN_READ:
             # TODO: potentially wasteful copy
+            if isinstance(self._buf, io.StringIO):
+                return io.StringIO(self._buf.getvalue())
             return io.BytesIO(self._buf.getbuffer())
         else:
             raise ValueError()
@@ -318,10 +320,10 @@ class SharedMemoryIO(DataIO):
         total_size = len(data) + self._written
         if total_size > self._buf.size:
             self._buf.resize(total_size)
-            self._buf.buf[self._written: total_size] = data
+            self._buf.buf[self._written : total_size] = data
             self._written = total_size
         else:
-            self._buf.buf[self._written: total_size] = data
+            self._buf.buf[self._written : total_size] = data
             self._written = total_size
             self._buf.resize(total_size)
             # It may be inefficient to resize many times, but assuming data is written 'once' this is
@@ -358,7 +360,9 @@ class SharedMemoryIO(DataIO):
     def delete(self):
         self._close()
 
+
 # pylint: enable=possibly-used-before-assignment
+
 
 class FileIO(DataIO):
     """
@@ -382,6 +386,8 @@ class FileIO(DataIO):
 
     @overrides
     def _write(self, data, **kwargs) -> int:
+        if isinstance(data, str):
+            data = bytes(data, encoding="utf8")
         self._desc.write(data)
         return len(data)
 
@@ -675,5 +681,3 @@ def IOForURL(url):
     logger.debug("I/O chosen for dataURL %s: %r", url, io)
 
     return io
-
-

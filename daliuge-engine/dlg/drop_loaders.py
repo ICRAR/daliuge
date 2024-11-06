@@ -99,3 +99,14 @@ def load_npy(drop: "DataDROP", allow_pickle=False) -> np.ndarray:
 
 def load_numpy(drop: "DataDROP", allow_pickle=True):
     return load_npy(drop, allow_pickle=allow_pickle)
+
+
+def load_utf8(drop: "DataDROP", allow_pickle=False):
+    """
+    Loads data from a drop and converts it to a UTF8 encoded string.
+    """
+    dropio = drop.getIO()
+    dropio.open(OpenMode.OPEN_READ)
+    res = str(io.BytesIO(dropio.buffer()), encoding="utf8")
+    dropio.close()
+    return res

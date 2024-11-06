@@ -16,6 +16,7 @@ class DropParser(Enum):
     # JSON = "json"
     PATH = "path"  # input only
     DATAURL = "dataurl"  # input only
+    UTF8 = "utf8"
 
 
 def serialize_kwargs(keyargs, prefix="--", separator=" "):
@@ -64,9 +65,7 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     positional arguments and one for kw arguments that can be used to construct
     the final command line.
     """
-    applicationArgs = clean_applicationArgs(
-        applicationArgs
-    )
+    applicationArgs = clean_applicationArgs(applicationArgs)
     pargs = []
     kwargs = {}
     for name, vdict in applicationArgs.items():
@@ -396,6 +395,8 @@ def get_port_reader_function(input_parser: DropParser):
         reader = lambda x: x.path
     elif input_parser is DropParser.DATAURL:
         reader = lambda x: x.dataurl
+    elif input_parser is DropParser.UTF8:
+        reader = drop_loaders.load_utf8
     else:
         raise ValueError(input_parser.__repr__())
     return reader
