@@ -68,7 +68,7 @@ class LG:
     it is doing all the conversion inside __init__
     """
 
-    def __init__(self, f, ssid=None):
+    def __init__(self, f, ssid=None, apply_config=True):
         """
         parse JSON into LG object graph first
         """
@@ -88,7 +88,8 @@ class LG:
         logger.info("Loading graph: %s", lg["modelData"]["filePath"])
         logger.info("Found LG version: %s", lgver)
 
-        lg = apply_active_configuration(lg)
+        if apply_config:
+            lg = apply_active_configuration(lg)
 
         if LG_VER_EAGLE == lgver:
             lg = convert_mkn(lg)
