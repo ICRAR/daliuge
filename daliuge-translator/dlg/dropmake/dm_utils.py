@@ -168,8 +168,6 @@ def _check_MKN(m, k, n):
     if ratio1.is_integer() and ratio2.is_integer():
         return int(ratio1), int(ratio2)
     else:
-        from .pg_generator import GraphException
-
         raise GraphException("M-K and k-N must be pairs of multiples")
 
 
