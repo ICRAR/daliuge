@@ -31,33 +31,33 @@ ACTIVE_CONFIG_KEY = "activeGraphConfigId"
 CONFIG_KEY = "graphConfigurations"
 GRAPH_NODES = "nodeDataArray"
 
+
 def apply_active_configuration(logical_graph: dict) -> dict:
     """
-    Given a JSON representation of the LogicalGraph template, apply the 
+    Given a JSON representation of the LogicalGraph Template (LGT), apply the 
     "Active Configuration" to the relevant constructs/fields.
 
+    :param: logical_graph, dict representation of JSON LGT
 
+    Currently, this does not raise any exceptions, but logs either warnings or errors. 
+    If there are missing keys or the configuration cannot be applied, it will return 
+    the original LGT. See graph_config.check_config_is_value for more details. 
+
+    return: dict, the updated LG
     """
-
-    if not ACTIVE_CONFIG_KEY in logical_graph:
-        LOGGER.warning("No %s available in Logical Graph.", ACTIVE_CONFIG_KEY)
+    if is_config_invalid(logical_graph):
         return logical_graph
-    
-    if CONFIG_KEY in logical_graph:
-        if not logical_graph[CONFIG_KEY]:
-            LOGGER.warning("No %s provided to the Logical Graph.", CONFIG_KEY)
-            return logical_graph
 
+    try:
         activeConfigurationID = logical_graph[ACTIVE_CONFIG_KEY]
         activeConfig = logical_graph[CONFIG_KEY][activeConfigurationID]
-         
         nodeDataArray = logical_graph[GRAPH_NODES] 
 
         for node_id, fields in activeConfig["nodes"].items():
             idx = get_key_idx_from_list(node_id, nodeDataArray) 
             if idx is None:
                 LOGGER.warning(
-                    "%s present in activeConfig but no available in Logical Graph."
+                    "%s present in activeConfig but not available in Logical Graph."
                 )
                 continue 
             node_name = nodeDataArray[idx]["name"]
@@ -71,10 +71,39 @@ def apply_active_configuration(logical_graph: dict) -> dict:
                             node_name, field_name, str(prev_value), str(field["value"]))
                 nodeDataArray[idx]["fields"][fieldidx] = field
         logical_graph[GRAPH_NODES] = nodeDataArray
-    else:
-        LOGGER.error("No graph configuration available in Logical Graph.")
+
+    except KeyError:
+        LOGGER.warning(
+            "Graph config key does not exist in logical graph. Using base field values."
+        )
 
     return logical_graph
+
+def is_config_invalid(logical_graph: dict) -> bool:
+    """
+    Given a logical graph, verify that the correct keys are present prior to applying
+    the configuration. 
+
+    We want to make sure that: 
+        - "activeGraphConfigId" and "graphConfigurations" exist 
+        - Both of these store non-empty information
+
+    Note: We do not perform any validation on if the graphConfig is self-consistent; that 
+    is, if it mentions a graphConfig Key not in the LG, or there is a field/node ID that 
+    is not in the LG, we report this as an error and continue (this implies an error 
+    upstream that we cannot resolve).
+
+    :return: True if the config has correct keys and they are present. 
+    """
+
+    checkActiveId = logical_graph.get(ACTIVE_CONFIG_KEY, None)
+    if not checkActiveId:
+        LOGGER.warning("No %s data available in Logical Graph.", ACTIVE_CONFIG_KEY)
+    checkGraphConfig = logical_graph.get(CONFIG_KEY, None)    
+    if not checkGraphConfig:
+        LOGGER.warning("No %s data available in Logical Graph.", CONFIG_KEY)
+
+    return (not checkActiveId) or (not checkGraphConfig)
 
 
 def get_key_idx_from_list(key: str, dictList: list) -> int: 
