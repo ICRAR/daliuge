@@ -3,7 +3,7 @@
 # branch name or with a release tag depending whether this is a development or deployment
 # version.
 
-export VCS_TAG=`git describe --tags --abbrev=0 --always|sed s/v//`
+export VCS_TAG=`git describe --tags --always --abbrev=0|sed s/v//`
 export DEV_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
 if [ $DEV_TAG=="master" ]; then
     VCS_TAG=$DEV_TAG;
