@@ -24,9 +24,12 @@ from __future__ import annotations
 import abc
 import collections
 import functools
+import json
 import logging
 import multiprocessing.pool
 import threading
+
+from pathlib import Path
 
 from dlg.manager.client import NodeManagerClient
 from dlg.manager.drop_manager import DROPManager
@@ -42,7 +45,8 @@ from dlg.exceptions import (
     DaliugeException,
     SubManagerException,
 )
-from dlg.utils import portIsOpen
+from dlg.manager.past_sessions import PastSessionManager
+from dlg.utils import portIsOpen, getDlgWorkDir
 
 logger = logging.getLogger(__name__)
 
@@ -143,6 +147,7 @@ class CompositeManager(DROPManager):
             dmHosts: list[str] = None,
             pkeyPath=None,
             dmCheckTimeout=10,
+            dump_graphs=False
     ):
         """
         Creates a new CompositeManager. The sub-DMs it manages are to be located
@@ -174,7 +179,8 @@ class CompositeManager(DROPManager):
         self._dmCheckTimeout = dmCheckTimeout
         n_threads = max(1, min(len(dmHosts), 20))
         self._tp = multiprocessing.pool.ThreadPool(n_threads)
-
+        self._dump_graphs = dump_graphs
+        self._past_session_manager = PastSessionManager(getDlgWorkDir())
         # The list of bottom-level nodes that are covered by this manager
         # This list is different from the dmHosts, which are the machines that
         # are directly managed by this manager (which in turn could manage more
@@ -287,6 +293,16 @@ class CompositeManager(DROPManager):
     def getSessionIds(self):
         return self._sessionIds
 
+    def getPastSessionIds(self) -> list[str]:
+        """
+        Get past sessions stored in the composite managers current working directory.
+
+        :return: List of path names (str)
+        """
+        return [path.name for path in self._past_session_manager.past_sessions(
+            self._sessionIds)]
+
+
     def _do_in_host(self, action, sessionId, exceptions, f, collect, port, iterable):
         """
         Replication of commands to underlying drop managers
@@ -389,6 +405,33 @@ class CompositeManager(DROPManager):
             host,
         )
 
+    @staticmethod
+    def _dump_graph_to_file(sessionId: str, graphSpec: dict):
+        """
+        Store the partitioned Physcial Graph in the DALiuGE working directory. The graph
+        is associated with the session in which the graph will be run.
+
+        This directory will be present on the compute node that either the MasterManager
+        or DataIslandManager is running, depending on the run-time setup.
+
+        :param: sessionId, the Id of the session in which the graph is run
+        :param: graphSpec, the JSON-representation of drops that form the
+        complete physical graph.
+        """
+        session_dir = Path(getDlgWorkDir()) / sessionId
+        # Make directory in case CompositeManagers are using different working directory
+        # to NodeManagers.
+        Path.mkdir(session_dir, exist_ok=True)
+        graph_path = session_dir / f"{sessionId}.graph"
+
+        try:
+            with graph_path.open('w') as fp:
+                json.dump(graphSpec, fp, indent=2)
+            logger.debug("Graph saved at %s", graph_path)
+        except NotADirectoryError:
+            logger.error("Session directory %s does not exist",
+                         graph_path.parent)
+
     def _addGraphSpec(self, dm, host_and_graphspec, sessionId):
         host, graphSpec = host_and_graphspec
         dm.addGraphSpec(sessionId, graphSpec)
@@ -399,6 +442,9 @@ class CompositeManager(DROPManager):
         # belong to the same host, so we can submit that graph into the individual
         # DMs. For this we need to make sure that our graph has a the correct
         # attribute set
+        if self._dump_graphs:
+            self._dump_graph_to_file(sessionId, graphSpec)
+
         logger.info(
             "Separating graph using partition attribute '%s'",
             self._partitionAttr,
@@ -492,7 +538,6 @@ class CompositeManager(DROPManager):
             sessionId,
             host,
         )
-
     def deploySession(self, sessionId, completedDrops: list[str] = None):
         # Indicate the node managers that they have to subscribe to events
         # published by some nodes
@@ -606,7 +651,8 @@ class DataIslandManager(CompositeManager):
     The DataIslandManager, which manages a number of NodeManagers.
     """
 
-    def __init__(self, dmHosts: list[str] = None, pkeyPath=None, dmCheckTimeout=10):
+    def __init__(self, dmHosts: list[str] = None, pkeyPath=None, dmCheckTimeout=10,
+                 dump_graphs=False):
         super(DataIslandManager, self).__init__(
             NODE_DEFAULT_REST_PORT,
             "node",
@@ -614,6 +660,7 @@ class DataIslandManager(CompositeManager):
             dmHosts=dmHosts,
             pkeyPath=pkeyPath,
             dmCheckTimeout=dmCheckTimeout,
+            dump_graphs=dump_graphs
         )
 
         # In the case of the Data Island the dmHosts are the final nodes as well
@@ -627,7 +674,8 @@ class MasterManager(CompositeManager):
     The MasterManager, which manages a number of DataIslandManagers.
     """
 
-    def __init__(self, dmHosts: list[str] = None, pkeyPath=None, dmCheckTimeout=10):
+    def __init__(self, dmHosts: list[str] = None, pkeyPath=None, dmCheckTimeout=10,
+        dump_graphs=False):
         super(MasterManager, self).__init__(
             ISLAND_DEFAULT_REST_PORT,
             "island",
@@ -635,5 +683,6 @@ class MasterManager(CompositeManager):
             dmHosts=dmHosts,
             pkeyPath=pkeyPath,
             dmCheckTimeout=dmCheckTimeout,
+            dump_graphs=dump_graphs
         )
         logger.info("Created MasterManager for DIM hosts: %r", self._dmHosts)

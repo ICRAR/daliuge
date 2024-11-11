@@ -298,24 +298,95 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 	});
 }
 
-function fillDmTable(sessions, tbodyEl, sessionLink, DimSessionLink, cancelBtnSessionId, deleteBtnSessionId, hashCode) {
+
+function loadPastSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
+
+	// console.log("Inside loadSessions");
+	refreshBtn.attr('disabled');
+	// Support for node query forwarding
+	var url = serverUrl + '/api';
+	if (selectedNode) {
+		url += '/node/' + selectedNode;
+	}
+	url += '/past_sessions';
+
+	var sessionLink = null;
+
+	var DimSessionLink = function (s) {
+		var url = 'session?sessionId=' + s;
+		if (selectedNode) { url += '&node=' + selectedNode; }
+		var dimUrlQuery = new URL(window.location.href);
+		// Temporarily redirect back to DIM window until we provide 
+		// past session information. 
+		return dimUrlQuery;	
+	};
+
+	d3.json(url).then(function (response, error) {
+
+		if (error) {
+			console.error(error)
+			refreshBtn.attr('disabled', null);
+			return
+		}
+		var sessions = response;
+		sessions.sort(function comp(a, b) {
+			return (a.sessionId > b.sessionId) ? -1 : (a.sessionId < b.sessionId);
+		});
+		var rows = tbodyEl.selectAll('tr').data(sessions);
+		rows.exit().remove();
+		rows.enter().append('tr');
+		rows.exit().transition().delay(0).duration(500).style('opacity', 0.0).remove();
+		rows.enter().append('tr').style('opacity', 0.0).transition().delay(0).duration(500).style('opacity', 1.0);
+
+		fillDmTable(sessions, tbodyEl, sessionLink, DimSessionLink, null, null, false, false);
+		//progressbars in dim
+
+		// const width = $('#pastSessionsTable').find('.status').innerWidth();
+
+		refreshBtn.attr('disabled', null);
+
+		if (!(typeof delay === 'undefined')) {
+			var loadPassSessionTimer = d3.timer(function () {
+				loadPastSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay);
+				loadPastSessionTimer.stop()
+				return;
+			}, delay);
+		}
+	});
+
+}
+
+
+function fillDmTable(
+	sessions,
+	tbodyEl,
+	sessionLink,
+	DimSessionLink,
+	cancelBtnSessionId,
+	deleteBtnSessionId,
+	displayStatus=true,
+	displaySize=true,
+	hashCode) {
 	var rows = tbodyEl.selectAll('tr').data(sessions);
 	var idCells = rows.selectAll('td.id').data(function values(s) { return [s.sessionId]; });
 	idCells.enter().append('td').classed('id', true).text(String)
 	idCells.text(String)
 	idCells.exit().remove()
 
-	var statusCells = rows.selectAll('td.status').data(function values(s) { return [uniqueSessionStatus(s.status)]; });
-	statusCells.enter().append('td').classed('status', true).text(function (s) { return sessionStatusToString(s); })
-	statusCells.text(function (s) { return sessionStatusToString(s) })
-	statusCells.exit().remove()
-
-	var sizeCells = rows.selectAll('td.size').data(function values(s) { return [s.size]; });
-	sizeCells.enter().append('td').classed('size', true).text(String)
-	sizeCells.text(String)
-	sizeCells.exit().remove()
-
-
+	if (displayStatus)
+	{
+		var statusCells = rows.selectAll('td.status').data(function values(s) { return [uniqueSessionStatus(s.status)]; });
+		statusCells.enter().append('td').classed('status', true).text(function (s) { return sessionStatusToString(s); })
+		statusCells.text(function (s) { return sessionStatusToString(s) })
+		statusCells.exit().remove()
+	}
+	if (displaySize)
+	{
+		var sizeCells = rows.selectAll('td.size').data(function values(s) { return [s.size]; });
+		sizeCells.enter().append('td').classed('size', true).text(String)
+		sizeCells.text(String)
+		sizeCells.exit().remove()
+	}
 
 	statusCells = rows.selectAll('td.details').data(function values(s) { return [s.sessionId]; });
 	statusCells.enter().append('td').classed('details', true)
@@ -325,24 +396,26 @@ function fillDmTable(sessions, tbodyEl, sessionLink, DimSessionLink, cancelBtnSe
 	statusCells.exit().remove()
 
 	var actionCells = rows.selectAll('td.actions').data(function values(s) { return [s.sessionId]; });
-	actionCells.enter().append('td').classed('actions', true)
-		// .html('<button id="'+cancelBtnSessionId+'"class="btn btn-secondary" type="button" onclick="cancel_session(serverUrl,"false",this.id)">cancel</button>')
-		// .html('<button id="'+deleteBtnSessionId+'"class="btn btn-secondary" type="button" onclick="cancel_session(serverUrl,"false",this.id)">delete</button>')
-		.append("button").attr('id', cancelBtnSessionId)
-		.attr("type", 'button').attr('class', 'btn btn-secondary cancelSession fa fa-ban').attr('onclick', '(cancel_session(serverUrl,"false",this.id))')
-		.attr('data-bs-toggle', 'tooltip').attr('data-bs-placement', 'bottom').attr('title', 'cancel ongoing session')
-		.select(function () { return this.parentNode.appendChild(this.cloneNode(true)); })
-		.attr('id', deleteBtnSessionId)
-		.attr("type", 'button').attr('class', 'btn btn-secondary deleteSession fa fa-trash').attr('onclick', '(delete_session(serverUrl,"false",this.id))')
-		.attr('data-bs-toggle', 'tooltip').attr('data-bs-placement', 'bottom').attr('title', 'Delete session')
-	//log button ready for linking
-	// .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
-	// .attr('id', "logs")
-	// .attr("type", 'button').attr('class', 'btn btn-secondary sessionLogs fa fa-file-text').attr('onclick', '(delete_session(serverUrl,"false",this.id))')
-	// .attr( 'data-bs-toggle','tooltip').attr('data-bs-placement','bottom').attr('title','Show session logs')
-	actionCells.selectAll('button')
-	actionCells.exit().remove()
-
+	if (cancelBtnSessionId != null && deleteBtnSessionId != null)
+	{
+		actionCells.enter().append('td').classed('actions', true)
+			// .html('<button id="'+cancelBtnSessionId+'"class="btn btn-secondary" type="button" onclick="cancel_session(serverUrl,"false",this.id)">cancel</button>')
+			// .html('<button id="'+deleteBtnSessionId+'"class="btn btn-secondary" type="button" onclick="cancel_session(serverUrl,"false",this.id)">delete</button>')
+			.append("button").attr('id', cancelBtnSessionId)
+			.attr("type", 'button').attr('class', 'btn btn-secondary cancelSession fa fa-ban').attr('onclick', '(cancel_session(serverUrl,"false",this.id))')
+			.attr('data-bs-toggle', 'tooltip').attr('data-bs-placement', 'bottom').attr('title', 'cancel ongoing session')
+			.select(function () { return this.parentNode.appendChild(this.cloneNode(true)); })
+			.attr('id', deleteBtnSessionId)
+			.attr("type", 'button').attr('class', 'btn btn-secondary deleteSession fa fa-trash').attr('onclick', '(delete_session(serverUrl,"false",this.id))')
+			.attr('data-bs-toggle', 'tooltip').attr('data-bs-placement', 'bottom').attr('title', 'Delete session')
+		//log button ready for linking
+		// .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+		// .attr('id', "logs")
+		// .attr("type", 'button').attr('class', 'btn btn-secondary sessionLogs fa fa-file-text').attr('onclick', '(delete_session(serverUrl,"false",this.id))')
+		// .attr( 'data-bs-toggle','tooltip').attr('data-bs-placement','bottom').attr('title','Show session logs')
+		actionCells.selectAll('button')
+		actionCells.exit().remove()
+	}
 
 	$("button").tooltip({
 
@@ -557,7 +630,9 @@ function _addNode(g, doSpec) {
 	var oid = doSpec.oid;
 	var html = '<div class="drop-label ' + typeShape + '" id="id_' + oid + '">';
 	html += '<span class="notes">' + notes + '</span>';
-	html += '<span style="font-size: 13px;">' + oid + '</span>';
+    oid_date = doSpec.oid.split("_")[0];
+	human_readable_id = oid_date + "_" + doSpec.humanReadableKey.toString()
+	html += '<span style="font-size: 13px;">' + human_readable_id + '</span>';
 	html += "</div>";
 	g.setNode(oid, {
 		labelType: "html",

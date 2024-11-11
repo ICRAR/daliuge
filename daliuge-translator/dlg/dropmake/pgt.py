@@ -72,6 +72,7 @@ class PGT(object):
         self._island_labels = ["Data", "Compute"]
         self._data_movement = None
         self._reprodata = {}
+        self._gojs_key_dict = {}
 
     def _can_merge(self, new_num_parts):
         if new_num_parts <= 0:
@@ -313,7 +314,7 @@ class PGT(object):
                 "#%s" % x for x in range(len(is_list))
             ]  # so that is_list[i] == '#i'
 
-        for drop in self.drops:
+        for i, drop in enumerate(self.drops):
             oid = drop["oid"]
             # For now, simply round robin, but need to consider
             # nodes cross COMPUTE islands which has
@@ -322,6 +323,8 @@ class PGT(object):
             drop["node"] = nm_list[gid]
             isid = self._gid_island_id_map[gid] % num_islands if form_island else 0
             drop["island"] = is_list[isid]
+            if self._gojs_key_dict:
+                drop["humanReadableKey"] = f"{self._gojs_key_dict[oid]}_{drop['iid']}"
 
         if ret_str:
             return json.dumps(self.drops, indent=2)
@@ -340,13 +343,13 @@ class PGT(object):
         ret["class"] = "go.GraphLinksModel"
         nodes = []
         links = []
-        key_dict = dict()  # key - oid, value - GOJS key
+        # key_dict = dict()  # key - oid, value - GOJS key
 
         for i, drop in enumerate(self._drop_list):
             oid = drop["oid"]
             node = dict()
             node["key"] = i + 1
-            key_dict[oid] = i + 1
+            self._gojs_key_dict[oid] = i + 1
             node["oid"] = oid
             tt = drop["categoryType"]
             if CategoryType.DATA == tt:
@@ -354,6 +357,9 @@ class PGT(object):
             elif CategoryType.APPLICATION == tt:
                 node["category"] = "Application"
             node["name"] = drop["name"]
+            if not "iid" in drop:
+                drop["iid"] = 0
+            node["iid"] = drop["iid"]
             nodes.append(node)
 
         if self._extra_drops is None:
@@ -363,7 +369,7 @@ class PGT(object):
             add_nodes = []
             for drop in self._drop_list:
                 oid = drop["oid"]
-                myk = key_dict[oid]
+                myk = self._gojs_key_dict[oid]
                 for i, oup in enumerate(G.successors(myk)):
                     link = dict()
                     link["from"] = myk
@@ -447,7 +453,7 @@ class PGT(object):
         else:
             for drop in self._drop_list:
                 oid = drop["oid"]
-                myk = key_dict[oid]
+                myk = self._gojs_key_dict[oid]
                 for oup in G.successors(myk):
                     link = dict()
                     link["from"] = myk
@@ -467,6 +473,7 @@ class PGT(object):
                 node["category"] = "PythonApp"  # might not be correct
             node["name"] = drop["name"]
             nodes.append(node)
+            node["iid"] = drop["iid"]
         self._links = links
         ret["nodeDataArray"] = nodes
         ret["linkDataArray"] = links

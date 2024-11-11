@@ -5,6 +5,9 @@
 
 export VCS_TAG=`git describe --tags --abbrev=0|sed s/v//`
 export DEV_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
+if [ $DEV_TAG=="master" ]; then
+    VCS_TAG=$DEV_TAG;
+fi
 
 case "$1" in
     "dep")

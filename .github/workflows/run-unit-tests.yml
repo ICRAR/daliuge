@@ -21,7 +21,17 @@ jobs:
             translator: no
           - python-version: "3.10"
             test_number: 2
-            desc: "full package"
+            desc: "full package v3.10"
+            engine: yes
+            translator: yes
+          - python-version:  "3.11"
+            test_number: 3
+            desc: "full package v3.11"
+            engine: yes
+            translator: yes
+          - python-version:  "3.12"
+            test_number: 4
+            desc: "full package v3.12"
             engine: yes
             translator: yes
 

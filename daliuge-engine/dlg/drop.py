@@ -78,6 +78,7 @@ from dlg.utils import (
     isabs,
     object_tracking,
     getDlgVariable,
+    truncateUidToKey
 )
 from dlg.meta import (
     dlg_float_param,
@@ -316,6 +317,9 @@ class AbstractDROP(EventFirer, EventHandler):
         # TODO: Make these threadsafe, no lock around them yet
         self._rios = {}
 
+        self._humanKey = self._popArg(kwargs,
+                                       "humanReadableKey", 
+                                       truncateUidToKey(self._uid))
         # The execution mode.
         # When set to DROP (the default) the graph execution will be driven by
         # DROPs themselves by firing and listening to events, and reacting

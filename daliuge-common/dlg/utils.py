@@ -40,6 +40,8 @@ import grp
 import pwd
 import pickle
 
+from pathlib import Path
+
 import netifaces
 
 from . import common
@@ -534,6 +536,49 @@ def deserialize_data(d):
     # return pickle.loads()
     return pickle.loads(base64.b64decode(d.encode("utf8")))
 
+def truncateUidToKey(uid: str) -> str:
+    """
+    Given a UID of a Drop, generate a human-readable Uid that can be
+    used for easier visualisation and file navigation. 
+
+    When submitting a graph through the UI, we add the "humanReadableKey" to 
+    the dropSpec. However, this key is not always available (i.e. in the instance we
+    submit via the command line, or use tests). We need an alternative default
+    that does not run the risk of being duplicated, which can lead to over-writes when 
+    generating files based on Drop UIDs.  
+
+    :params: uid, the Drop UID either generated or provided at runtime. 
+
+    Notes
+    -----
+    The heuristic for generating truncated UID is as follows:
+    
+    - Split on "_", which is used to separate the Date of the UID in standard Drops. 
+    - If there are no "_" in the UID, then we default to just using the UID. 
+    - If there is an "_" in the UID, we
+        - Take the second element of the resulting split
+        - If the length is less than the readableLengthlimit, we use the whole value
+        - If the length is great than the readableLengthLimit, we use up to that value
+
+    Examples
+    --------
+    >>> truncated("A") # "A"
+
+    >>> truncated("2022-02-11T08:05:47_-1_0") # -1
+
+    >>> truncated('2024-10-30T12:01:57_0140555b-8c23-4d6a-9e24-e16c15555e8c_0') # 0140
+    """
+    truncatedUid = uid
+    readableLengthLimit = 4
+    split = uid.split("_")
+    if len(split) > 1:
+        second_el = str(split[1])
+        if len(second_el) > readableLengthLimit:
+            truncatedUid = split[1][:readableLengthLimit]
+        else:
+            truncatedUid = split[1]
+
+    return truncatedUid
 
 # Backwards compatibility
 terminate_or_kill = common.osutils.terminate_or_kill

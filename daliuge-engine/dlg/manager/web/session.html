@@ -336,7 +336,7 @@ function view_as_list(sessionId, selectedNode, serverUrl) {
 		appCells.enter().append('td').classed('nApp', true).text(String)
 		appCells.text(String)
 		appCells.exit().remove()
-		var oidCells = rows.selectAll('td.oid').data(function value(d) { return [d.oid] });
+		var oidCells = rows.selectAll('td.oid').data(function value(d) { return [d.humanReadableKey] });
 		oidCells.enter().append('td').classed('oid', true).text(String)
 		oidCells.text(String)
 		oidCells.exit().remove()
