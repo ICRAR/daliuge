@@ -8,7 +8,6 @@ else
 	export C_TAG=`git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]'`
 	if [ $C_TAG=="master" ]; then VCS_TAG=$C_TAG; fi
 fi
-
 case "$1" in
     "dep")
         echo "Running Translator deployment version in background..."
