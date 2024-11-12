@@ -37,6 +37,8 @@ import tempfile
 import time
 import os
 
+from pathlib import Path
+
 from dlg.deploy.configs import (
     ConfigFactory,
 )  # get all available configurations
@@ -403,6 +405,16 @@ class LogParser:
                 return True
         return False
 
+def load_client_config(cfg_path: Path):
+    """
+    """
+    from configparser import ConfigParser, ExtendedInterpolation
+    parser = ConfigParser() #interpolation=ExtendedInterpolation())
+    parser.read(cfg_path)
+    print(dict(parser["ENVIRONMENT"]))
+
+
+
 
 def main():
     parser = optparse.OptionParser(
@@ -623,7 +635,7 @@ def main():
         "--configs",
         dest="configs",
         action="store_true",
-        help="Display the available configurations  and exit",
+        help="Display the available configurations and exit",
         default=False,
     )
     parser.add_option(
@@ -634,6 +646,22 @@ def main():
         action="store",
         help="Remote username, if different from local",
         default=None,
+    )
+    parser.add_option(
+        "--config_file",
+        dest="config_file", 
+        type="string", 
+        action="store", 
+        help="Use INI configuration file.",
+        default=None
+    )
+    parser.add_option(
+        "--slurm_template", 
+        dest="slurm_template",
+        type="string", 
+        action="store", 
+        help="Use SLURM template file for job submission", 
+        default=None
     )
 
     (opts, _) = parser.parse_args(sys.argv)
@@ -715,6 +743,10 @@ def main():
             else:
                 pgt_file = path_to_graph_file
 
+        # if opts.config_file:
+        #     load_client_config(Path(opts.config_file))
+        #     sys.exit(0)
+
         client = SlurmClient(
             dlg_root=opts.dlg_root,
             log_root=opts.log_root,
@@ -734,6 +766,8 @@ def main():
             submit=opts.submit,
             remote=opts.remote,
             username=opts.username,
+            config=opts.config,
+            slurm_template=opts.slurm_template
         )
         client._visualise_graph = opts.visualise_graph
         client.submit_job()

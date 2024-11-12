@@ -52,6 +52,16 @@ $VENV
 
 $EXEC_PREFIX $PY_BIN -m dlg.deploy.start_dlg_cluster --log_dir $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION --ssid $SESSION_ID
 """
+
+__slurm_shebang = "#!/bin/bash --login"
+
+dlg_exec_str = (
+    "$EXEC_PREFIX $PY_BIN -m dlg.deploy.start_dlg_cluster" 
+    " --log_dir $LOG_DIR $GRAPH_PAR $PROXY_PAR $GRAPH_VIS_PAR $LOGV_PAR $ZERORUN_PAR"
+    " $MAXTHREADS_PAR $SNC_PAR $NUM_ISLANDS_PAR $ALL_NICS $CHECK_WITH_SESSION"
+    " --ssid $SESSION_ID"
+)
+
 init_tpl = string.Template(__sub_tpl_str)
 
 

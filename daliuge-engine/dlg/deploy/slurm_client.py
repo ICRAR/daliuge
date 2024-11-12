@@ -32,7 +32,7 @@ import tempfile
 from dlg import remote
 from dlg.runtime import __git_version__ as git_commit
 
-from dlg.deploy.configs import ConfigFactory, init_tpl
+from dlg.deploy.configs import ConfigFactory, init_tpl, dlg_exec_str
 from dlg.deploy.configs import DEFAULT_MON_PORT, DEFAULT_MON_HOST
 from dlg.deploy.deployment_utils import find_numislands, label_job_dur
 from paramiko.ssh_exception import SSHException
@@ -78,23 +78,52 @@ class SlurmClient:
         remote=True,
         pip_name=None,
         username=None,
+        config=None,
+        slurm_template=None,
+        suffix=None
     ):
-        self._config = ConfigFactory.create_config(facility=facility, user=username)
-        self.host = self._config.getpar("host") if host is None else host
-        self._acc = self._config.getpar("account") if (acc is None) else acc
-        self._user = self._config.getpar("user") if (username is None) else username
-        self.dlg_root = self._config.getpar("dlg_root") if not dlg_root else dlg_root
-        self._log_root = (
-            self._config.getpar("log_root") if (log_root is None) else log_root
-        )
-        self.modules = self._config.getpar("modules")
-        self.venv = self._config.getpar("venv")
-        self.exec_prefix = self._config.getpar("exec_prefix")
-        if num_nodes is None:
-            self._num_nodes = 1
+
+        ## TODO 
+        ## Here, we want to separate out the following
+        ## Config derived from CONFIG Factory - we replace with ini file
+        ## Config derived from CLI, intended for replacement in the SLURM job script
+        ##    - We want to replace these directives with the SLURM template
+        ## Config derived from CLI that is used in the final script call
+        ## Any leftover config - we keep as normal
+
+        if config:
+            # Do the config from the config file
+            self.host = config['host']
         else:
-            self._num_nodes = num_nodes
-        self._job_dur = job_dur
+            # Setup SLURM environment variables using config
+            self._config = ConfigFactory.create_config(facility=facility, user=username)
+            self.host = self._config.getpar("host") if host is None else host
+            self._acc = self._config.getpar("account") if (acc is None) else acc
+            # self._user = self._config.getpar("user") if (username is None) else username
+
+            # environment & sbatch
+            self.dlg_root = self._config.getpar("dlg_root") if not dlg_root else dlg_root
+            self.modules = self._config.getpar("modules")
+            self.venv = self._config.getpar("venv")
+            self.exec_prefix = self._config.getpar("exec_prefix")
+
+        # sbatch 
+        if slurm_template:
+            self._slurm_template = slurm_template
+            self._num_nodes = 1
+            self._job_dur = 1
+        else:
+            if num_nodes is None:
+                self._num_nodes = 1
+            else:
+                self._num_nodes = num_nodes
+            self._job_dur = job_dur
+
+        # self._log_root = (
+        #     self._config.getpar("log_root") if (log_root is None) else log_root
+        # )
+        # 
+        # start_dlg_cluster arguments
         self._logical_graph = logical_graph
         self._physical_graph_template_file = physical_graph_template_file
         self._visualise_graph = False
@@ -113,14 +142,24 @@ class SlurmClient:
         self._all_nics = all_nics
         self._check_with_session = check_with_session
         self._submit = submit
-        self._remote = remote
-        self._dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
+        self._suffix = self.create_session_suffix(suffix)
         ni, nn, self._pip_name = find_numislands(self._physical_graph_template_file)
         if isinstance(ni, int) and ni >= self._num_islands:
             self._num_islands = ni
         if nn and nn >= self._num_nodes:
             self._num_nodes = nn
+
+        # used for remote login/directory management.
+        self._remote = remote
         self.username = username
+        
+    
+    def create_session_suffix(self, suffix=None):
+        if not suffix:
+            datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+        else:
+            return suffix
+
 
     def get_session_dirname(self):
         """
@@ -131,7 +170,23 @@ class SlurmClient:
         # dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
         graph_name = self._pip_name.split("_")[0]  # use only the part of the graph name
         graph_name = graph_name.rsplit(".pgt.graph")[0]
-        return "{0}_{1}".format(graph_name, self._dtstr)
+        return "{0}_{1}".format(graph_name, self._suffix)
+    
+    def process_config(config_file):
+        """
+        Use configparser to process INI file
+
+        :returns: dict, config information
+        """
+        from configparser import ConfigParser
+        parser = ConfigParser() #interpolation=ExtendedInterpolation())
+        parser.read(config_file)
+        return (dict(parser["ENVIRONMENT"]))
+
+    def apply_slurm_template(self,template_str, session_id, dlg_root):
+        import string
+        intermed_slurm = string.Template(template_str) 
+        return intermed_slurm.safe_substitute(session_id=session_id, dlg_root=dlg_root)
 
     def create_job_desc(self, physical_graph_file):
         """
@@ -140,12 +195,26 @@ class SlurmClient:
         session_dir = "{0}/workspace/{1}".format(
             self.dlg_root, self.get_session_dirname()
         )
+        
         pardict = dict()
-        pardict["VENV"] = self.venv
-        pardict["NUM_NODES"] = str(self._num_nodes)
-        pardict["PIP_NAME"] = self._pip_name
         pardict["SESSION_ID"] = os.path.split(session_dir)[-1]
-        pardict["JOB_DURATION"] = label_job_dur(self._job_dur)
+        pardict["MODULES"] = self.modules
+        pardict["DLG_ROOT"] = self.dlg_root
+        pardict["EXEC_PREFIX"] = self.exec_prefix
+        slurm_str = dlg_exec_str
+        if self._slurm_template:
+            intermed_slurm = self.apply_slurm_template(
+                self._slurm_template,
+                pardict["SESSION_ID"],
+                pardict["DLG_ROOT"]
+            )
+            slurm_str = intermed_slurm + "\n\n" + dlg_exec_str
+        else: 
+            pardict["NUM_NODES"] = str(self._num_nodes)
+            pardict["JOB_DURATION"] = label_job_dur(self._job_dur)
+
+        pardict["VENV"] = self.venv
+        pardict["PIP_NAME"] = self._pip_name
         pardict["ACCOUNT"] = self._acc
         pardict["PY_BIN"] = "python3" if pardict["VENV"] else sys.executable
         pardict["LOG_DIR"] = session_dir
@@ -173,11 +242,11 @@ class SlurmClient:
         pardict["CHECK_WITH_SESSION"] = (
             "--check_with_session" if self._check_with_session else ""
         )
-        pardict["MODULES"] = self.modules
-        pardict["DLG_ROOT"] = self.dlg_root
-        pardict["EXEC_PREFIX"] = self.exec_prefix
-
-        job_desc = init_tpl.safe_substitute(pardict)
+        if self._slurm_template:
+            import string
+            job_desc = string.Template(slurm_str).safe_substitute(pardict)
+        else:
+            job_desc = init_tpl.safe_substitute(pardict)
         return job_desc
 
     def mk_session_dir(self, dlg_root: str = ""):
@@ -272,3 +341,16 @@ class SlurmClient:
         else:
             print(f"Created job submission script {job_file_name}")
         return jobId
+
+
+# class ConfigManager: 
+#     """
+#     """
+
+#     def process_config():
+#         pass
+
+#     def create_slurm_script():
+#         """
+#         """
+#         job_desc = init_tpl.safe_substitute(pardict)
