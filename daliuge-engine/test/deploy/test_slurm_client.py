@@ -42,13 +42,14 @@ class TestSlurmClient(unittest.TestCase):
         client = SlurmClient(
             facility="setonix", 
             num_nodes=6,
-            job_dur=60,
+            job_dur=45,
             physical_graph_template_file=str(pg),
-            suffix="TestSession"
+            suffix="TestSession",
+            username="test"
         )
         job_desc = client.create_job_desc(pg)
         curr_file = Path(__file__)
-        compare_script = curr_file.parent / "sample.sh"
+        compare_script = curr_file.parent / "slurm_script.sh"
         with compare_script.open() as fp:
             script = fp.read()
             self.assertEqual(script, job_desc)
@@ -59,20 +60,45 @@ class TestSlurmClient(unittest.TestCase):
         - That we produce the same as the CLI with the same parameters
         - That we can use the INI file to produce alternative parameters
         """
-        client = SlurmClient()
+        from dlg.deploy.create_dlg_job import process_config
+        pg = files(test_graphs) / "SLURM_HelloWorld_simplePG.graph"
+        cfg_file = Path(__file__).parent / "setonix.ini"
+        cfg = process_config(cfg_file)
+        client = SlurmClient(
+            facility="setonix", 
+            num_nodes=6,
+            job_dur=45,
+            physical_graph_template_file=str(pg),
+            suffix="TestSession",
+            config=cfg,
+            username='test'
+        )
 
-        job_desc = client.create_job_desc()
+        job_desc = client.create_job_desc(pg)
+        curr_file = Path(__file__)
+        compare_script = curr_file.parent / "slurm_script.sh"
+        with open('slurm_script.sh', 'w') as fp: 
+            fp.write(job_desc)
+        with compare_script.open() as fp:
+            script = fp.read()
+            self.assertEqual(script, job_desc)
 
 
     def test_client_with_slurm_template(self):
+        """
+        Use 'slurm_script_from_template.sh as a comparison file to demonstrate
+        how the template approach gives us more options. 
+        """
         pg = files(test_graphs) / "SLURM_HelloWorld_simplePG.graph"
-        with ("exampe_template.slurm").open('r') as fp:
+        template = Path(__file__).parent / "example_template.slurm"
+        with template.open() as fp:
             slurm_template = fp.read()
         client = SlurmClient(
             facility="setonix", 
             physical_graph_template_file=str(pg),
             suffix="TestSession",
-            slurm_template=slurm_template
+            slurm_template=slurm_template,
+            username='test'
         )
         job_desc = client.create_job_desc(pg)
         curr_file = Path(__file__)

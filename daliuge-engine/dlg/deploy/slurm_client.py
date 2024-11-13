@@ -93,26 +93,36 @@ class SlurmClient:
 
         if config:
             # Do the config from the config file
-            self.host = config['host']
+            self.host = config['login_node']
+            self._acc = config['account'] # superceded by slurm_template if present
+            self.dlg_root = config['dlg_root']
+            self.modules = config['modules']
+            self.venv = config['venv'] # superceded by slurm_template if present
+            self.exec_prefix = config["exec_prefix"]
+            self.username = config['user'] if 'user' in config else sys.exit(1)
+            if not self.username:
+                print("Username not configured in INI file.")
+                sys.exit(1)
         else:
             # Setup SLURM environment variables using config
-            self._config = ConfigFactory.create_config(facility=facility, user=username)
-            self.host = self._config.getpar("host") if host is None else host
-            self._acc = self._config.getpar("account") if (acc is None) else acc
-            # self._user = self._config.getpar("user") if (username is None) else username
+            config = ConfigFactory.create_config(facility=facility, user=username)
+            self.host = config.getpar("host") if host is None else host
+            self._acc = config.getpar("account") if (acc is None) else acc
+            # self._user = config.getpar("user") if (username is None) else username
 
             # environment & sbatch
-            self.dlg_root = self._config.getpar("dlg_root") if not dlg_root else dlg_root
-            self.modules = self._config.getpar("modules")
-            self.venv = self._config.getpar("venv")
-            self.exec_prefix = self._config.getpar("exec_prefix")
-
+            self.dlg_root = config.getpar("dlg_root") if not dlg_root else dlg_root
+            self.modules = config.getpar("modules")
+            self.venv = config.getpar("venv")
+            self.exec_prefix = config.getpar("exec_prefix")
+            self.username = username
         # sbatch 
         if slurm_template:
             self._slurm_template = slurm_template
-            self._num_nodes = 1
-            self._job_dur = 1
+            self._num_nodes = 1 # placeholder
+            self._job_dur = 1 # placeholder
         else:
+            self._slurm_template = None
             if num_nodes is None:
                 self._num_nodes = 1
             else:
@@ -151,39 +161,24 @@ class SlurmClient:
 
         # used for remote login/directory management.
         self._remote = remote
-        self.username = username
         
     
     def create_session_suffix(self, suffix=None):
         if not suffix:
-            datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+            return datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
         else:
             return suffix
-
 
     def get_session_dirname(self):
         """
         (pipeline name_)[Nnum_of_daliuge_nodes]_[time_stamp]
         """
-        # Moved setting of dtstr to init
-        # to ensure it doesn't change for this instance of SlurmClient()
-        # dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
         graph_name = self._pip_name.split("_")[0]  # use only the part of the graph name
         graph_name = graph_name.rsplit(".pgt.graph")[0]
         return "{0}_{1}".format(graph_name, self._suffix)
     
-    def process_config(config_file):
-        """
-        Use configparser to process INI file
 
-        :returns: dict, config information
-        """
-        from configparser import ConfigParser
-        parser = ConfigParser() #interpolation=ExtendedInterpolation())
-        parser.read(config_file)
-        return (dict(parser["ENVIRONMENT"]))
-
-    def apply_slurm_template(self,template_str, session_id, dlg_root):
+    def apply_slurm_template(self, template_str, session_id, dlg_root):
         import string
         intermed_slurm = string.Template(template_str) 
         return intermed_slurm.safe_substitute(session_id=session_id, dlg_root=dlg_root)
@@ -208,6 +203,7 @@ class SlurmClient:
                 pardict["SESSION_ID"],
                 pardict["DLG_ROOT"]
             )
+            print("Creating job description")
             slurm_str = intermed_slurm + "\n\n" + dlg_exec_str
         else: 
             pardict["NUM_NODES"] = str(self._num_nodes)
@@ -254,6 +250,7 @@ class SlurmClient:
         Create the session directory. If dlg_root is provided it is used,
         else env var DLG_ROOT is used.
         """
+
         if dlg_root:  # has always preference
             self.dlg_root = dlg_root
         if self._remote and not self.dlg_root:
@@ -278,11 +275,10 @@ class SlurmClient:
             )
             try:
                 remote.execRemote(self.host, command, username=self.username)
-            except (TypeError, SSHException):
+            except (TypeError, SSHException) as e:
                 print(
-                    f"ERROR: Unable to create {session_dir} on {self.username}@{self.host}"
+                    f"ERROR: Unable to create {session_dir} on {self.username}@{self.host}, {str(e)}"
                 )
-                sys.exit()
 
         return session_dir
 
@@ -309,6 +305,8 @@ class SlurmClient:
 
         job_file_name = "{0}/jobsub.sh".format(session_dir)
         job_desc = self.create_job_desc(physical_graph_file_name)
+        print(job_desc)
+        # sys.exit()
         if self._remote:
             print(f"Creating SLURM script remotely: {job_file_name}")
             tjob = tempfile.mktemp()
@@ -333,7 +331,7 @@ class SlurmClient:
                 )
                 if exitStatus != 0:
                     print(
-                        f"Job submission unsuccessful: {exitStatus.decode()}, {stderr.decode()}"
+                        f"Job submission unsuccessful: {exitStatus}, {stderr.decode()}"
                     )
                 else:
                     jobId = stdout.decode()

@@ -1,10 +1,10 @@
 #!/bin/bash --login
 
-#SBATCH --nodes=1
+#SBATCH --nodes=2
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=2
 #SBATCH --job-name=DALiuGE-$SESSION_ID
-#SBATCH --time=00:30:00
+#SBATCH --time=00:45:00
 #SBATCH --error=err-%j.log
 
 export DLG_ROOT=$DLG_ROOT
