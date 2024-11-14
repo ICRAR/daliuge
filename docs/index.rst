@@ -26,7 +26,7 @@ and is performed by the `DIA team <http://www.icrar.org/our-research/data-intens
  running
  basics
  architecture/index
- deployment
+ deployment/overview
  graph_development
  development/dev_index
  usage/index
