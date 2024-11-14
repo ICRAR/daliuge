@@ -82,7 +82,7 @@ class ContainerIpWaiter(object):
 # @param image /String/ComponentParameter/NoPort/ReadWrite//False/False/The name of the docker image to be used for this application
 # @param docker_tag 1.0/String/ComponentParameter/NoPort/ReadWrite//False/False/The tag of the docker image to be used for this application
 # @param docker_digest /String/ComponentParameter/NoPort/ReadWrite//False/False/The hexadecimal hash (long version) of the docker image to be used for this application
-# @param command /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line to run within the docker instance. The specified command will be executed in a bash shell. That means that images will need a bash shell.
+# @param command /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line to run within the docker instance. Leave empty to execute the default command specified as the entrypoint of the image.
 # @param input_redirection /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line argument that specifies the input into this application
 # @param output_redirection /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line argument that specifies the output from this application
 # @param command_line_arguments /String/ComponentParameter/NoPort/ReadWrite//False/False/Additional command line arguments to be added to the command line to be executed
@@ -250,7 +250,7 @@ class DockerApp(BarrierAppDROP):
         self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
         self._argumentPrefix = self._popArg(kwargs, "argumentPrefix", "--")
         self._paramValueSeparator = self._popArg(kwargs, "paramValueSeparator", " ")
-        self._entryPoint = self._popArg(kwargs, "entrypoint", " ")
+        self._entryPoint = self._popArg(kwargs, "entrypoint", None)
         if not self._image:
             raise InvalidDropException(
                 self, "No docker image specified, cannot create DockerApp"
@@ -356,6 +356,7 @@ class DockerApp(BarrierAppDROP):
         inspection = c.api.inspect_image(self._image)
         logger.debug("Docker Image inspection: %r", inspection)
         self.workdir = inspection.get("ContainerConfig", {}).get("WorkingDir", None)
+        self.defaultEntryPoint = inspection.get("Config", {}).get("Entrypoint", None)
         # self.workdir = None
         self._sessionId = self._dlg_session_id
         if not self.workdir:
@@ -554,15 +555,17 @@ class DockerApp(BarrierAppDROP):
 
             # Wrap everything inside bash
             if len(cmd) > 0 and not self._noBash:
-                cmd = (
+                self._entryPoint = (
                     '/bin/bash -c "%s"'
                     % (utils.escapeQuotes(cmd, singleQuotes=False)).strip()
                 )
                 logger.info("Command after user creation and wrapping is: %s", cmd)
             else:
-                cmd = f"{utils.escapeQuotes(cmd, singleQuotes=False)}".strip()
+                # cmd = f"{utils.escapeQuotes(cmd, singleQuotes=False)}".strip()
+                # cmd = cmd.split(" ")
                 logger.info(
-                    "executing container with default cmd and wrapped arguments: %s",
+                    "executing container with default cmd %s and wrapped arguments: %s",
+                    self.defaultEntryPoint,
                     cmd,
                 )
 
@@ -583,7 +586,7 @@ class DockerApp(BarrierAppDROP):
                 # TODO: daliuge will handle automatic removal (otherwise check before stopping container)
                 # auto_remove=self._removeContainer,
                 detach=True,
-                entrypoint=f"{self._entryPoint}",
+                entrypoint=f"{self._entryPoint}" if self._entryPoint else None,
             )
 
         if not self.container:
