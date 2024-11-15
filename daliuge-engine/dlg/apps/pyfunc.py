@@ -712,6 +712,19 @@ class PyFuncApp(BarrierAppDROP):
                 elif self.output_parser is DropParser.NPY:
                     drop_loaders.save_npy(o, r)
                 elif self.output_parser is DropParser.RAW:
+                    if not isinstance(r, (bytes, memoryview, str)):
+                        raise Exception(
+                            "Can't write data of this type: ", type(r).__name__
+                        )
+                    o.write(r)
+                elif self.output_parser is DropParser.UTF8:
+                    if not isinstance(r, (bytes, memoryview, str)):
+                        try:
+                            r = str(r)
+                        except:  # not sure what the exception would be...
+                            raise Exception(
+                                "Can't write data of this type: ", type(r).__name__
+                            )
                     o.write(r)
                 else:
                     ValueError(self.output_parser.__repr__())
