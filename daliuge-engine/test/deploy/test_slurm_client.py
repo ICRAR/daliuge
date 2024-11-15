@@ -21,7 +21,10 @@
 #
 
 import unittest
+import pytest
 from pathlib import Path
+# Note this test will only run with a full installation of DALiuGE.
+pexpect = pytest.importorskip("dlg.dropmake.pg_generator")
 
 try:
     from importlib.resources import files
@@ -29,6 +32,7 @@ except ModuleNotFoundError:
     from importlib_resources import files # type: ignore
 import dlg.deploy.configs as configs
 import daliuge_tests.engine.graphs as test_graphs
+
 
 from dlg.deploy.slurm_client import SlurmClient
 import json 
