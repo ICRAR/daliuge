@@ -27,7 +27,7 @@ import daliuge_tests.dropmake as test_graphs
 
 try:
     from importlib.resources import files, as_file
-except (ImportError, ModuleNotFoundError):
+except ModuleNotFoundError:
     from importlib_resources import files
 
 LOG_PRFIX = "WARNING:dlg.dropmake.graph_config:"
@@ -66,7 +66,7 @@ class TestGraphConfig(unittest.TestCase):
             - Keys from the activeGraphConfigId or graphConfigurations are not found in 
             the logical graph. 
         """ 
-        lg = get_lg_from_fname(f"ArrayLoopNoActiveID.graph")
+        lg = get_lg_from_fname("ArrayLoopNoActiveID.graph")
         with self.assertLogs('root', level="WARNING") as cm:
             alt_lg = apply_active_configuration(lg)
         self.assertEqual(

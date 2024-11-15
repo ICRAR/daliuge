@@ -57,15 +57,16 @@ def apply_active_configuration(logical_graph: dict) -> dict:
             idx = get_key_idx_from_list(node_id, nodeDataArray) 
             if idx is None:
                 LOGGER.warning(
-                    "%s present in activeConfig but not available in Logical Graph."
+                    "%s present in activeConfig but not available in Logical Graph.",
+                    node_id
                 )
                 continue 
             node_name = nodeDataArray[idx]["name"]
-            for field_id, config_field in activeConfig["nodes"][node_id]["fields"].items():
+            for field_id, cfg_field in activeConfig["nodes"][node_id]["fields"].items():
                 fieldidx = get_key_idx_from_list(field_id, nodeDataArray[idx]["fields"])
                 field = nodeDataArray[idx]["fields"][fieldidx]
                 prev_value = field["value"]
-                field["value"] =  config_field["value"]
+                field["value"] =  cfg_field["value"]
                 field_name = field["name"]
                 LOGGER.info("Updating: Node %s, Field %s, from %s to %s",
                             node_name, field_name, str(prev_value), str(field["value"]))
@@ -96,10 +97,10 @@ def is_config_invalid(logical_graph: dict) -> bool:
     :return: True if the config has correct keys and they are present. 
     """
 
-    checkActiveId = logical_graph.get(ACTIVE_CONFIG_KEY, None)
+    checkActiveId = logical_graph.get(ACTIVE_CONFIG_KEY)
     if not checkActiveId:
         LOGGER.warning("No %s data available in Logical Graph.", ACTIVE_CONFIG_KEY)
-    checkGraphConfig = logical_graph.get(CONFIG_KEY, None)    
+    checkGraphConfig = logical_graph.get(CONFIG_KEY)    
     if not checkGraphConfig:
         LOGGER.warning("No %s data available in Logical Graph.", CONFIG_KEY)
 
