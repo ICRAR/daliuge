@@ -66,20 +66,29 @@ A user can create and reference their own .ini file using these parameters, and 
 
 SLURM Template
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+There are significantly more SLURM options than are practical as CLI options. The SLURM template is an experimental feature that allows you to specify additional SBATCH options that are not currently supported in the CLI. The template will be prefixed to the final SLURM script that runs the DALiuGE job on the remote system. 
 
-A basic example that replicates the current SLURM script that is created by :code:`create_dlg_job.py`. ::
+A basic example that replicates the current SLURM script that is created by :code:`create_dlg_job.py` is available in dlg/deploy/config/default.slurm ::
 
    #!/bin/bash --login
 
    #SBATCH --nodes=2
    #SBATCH --ntasks-per-node=1
    #SBATCH --cpus-per-task=2
-   #SBATCH --job-name=DALiuGE-$SESSION_ID
+   #SBATCH --job-name=DALiuGE-$SESSION_ID # NECESSARY, DO NOT REMOVE 
    #SBATCH --time=00:45:00
    #SBATCH --error=err-%j.log
 
-   export DLG_ROOT=$DLG_ROOT
+   export DLG_ROOT=$DLG_ROOT # DO NOT CHANGE - use .INI file or CLI 
    source /software/projects/pawsey0411/venv/bin/activate
+   # Keep an empty line in the file
+
+.. note:: 
+   Settings defined in the SLURM template will over-write anything passed via the CLI _and_ the .INI. For example, the `source` for a virtualenv declared in the .slurm file will overwrite the VENV environment variable in the .INI file. This may change in the future depending on the extent of the features we add. 
+
+Running with a SLURM template is similar to the .ini method: 
+   
+   python create_dlg_job.py -a 1 -n 1 -s 1 -u -f setonix -L ~/github/EAGLE_test_repo/eagle_test_graphs/daliuge_tests/dropmake/logical_graphs/ArrayLoop.graph -v 5 --remote --submit -U rbunney --config_file example_config.ini --slurm_template example.slurm
 
 Complete command-line options
 -----------------------------
