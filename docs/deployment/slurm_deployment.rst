@@ -12,7 +12,7 @@ Script has two configuration approaches:
 
 - Command line interface (CLI)
 - Configuration files:
-   - Environment INI [Experimental]
+   - Facility INI [Experimental]
    - Slurm template [Experimental]
 
 Command-line Interface (CLI)
@@ -42,13 +42,44 @@ This performs the following:
 - Uses 1 data island manager (-s 1) and requests 32 nodes (-n 32) for a job duration of 60 minutes (-t)
 - Translates the Logical Graph (-L) using the PSO algorithm (-A PSO). 
 
-Environment INI
+Facility INI
 ~~~~~~~~~~~~~~~~~~~~~
-TBC
+Currently, deploying onto a HPC facility requires using the facilities DALiuGE already supports, or adding a brand new class entry to the deploy/config/__init__.py file. 
+To make deployment more flexible and easier to expand to feasibly any facility, we have added (experimental) support for using an INI configuration file for facility deployment parameters. 
+
+The following configuration is an example deployment that contains all variables necessary to deploy onto a remove system:: 
+
+   [ENVIRONMENT]
+   ACCOUNT = pawsey0411
+   USER = test
+   LOGIN_NODE = setonix.pawsey.org.au
+   HOME_DIR = /scratch/${ACCOUNT}
+   DLG_ROOT = ${HOME_DIR}/${USER}/dlg
+   LOG_DIR = ${DLG_ROOT}/log
+   MODULES = 
+   VENV = source /software/projects/${ACCOUNT}/venv/bin/activate
+   EXEC_PREFIX = srun -l
+
+A user can create and reference their own .ini file using these parameters, and run with the --config_file option::
+
+   python create_dlg_job.py -a 1 -n 1 -s 1 -u -f setonix -L ~/github/EAGLE_test_repo/eagle_test_graphs/daliuge_tests/dropmake/logical_graphs/ArrayLoop.graph -v 5 --remote --submit -U rbunney --config_file example_config.ini
 
 SLURM Template
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TBC
+
+A basic example that replicates the current SLURM script that is created by :code:`create_dlg_job.py`. ::
+
+   #!/bin/bash --login
+
+   #SBATCH --nodes=2
+   #SBATCH --ntasks-per-node=1
+   #SBATCH --cpus-per-task=2
+   #SBATCH --job-name=DALiuGE-$SESSION_ID
+   #SBATCH --time=00:45:00
+   #SBATCH --error=err-%j.log
+
+   export DLG_ROOT=$DLG_ROOT
+   source /software/projects/pawsey0411/venv/bin/activate
 
 Complete command-line options
 -----------------------------
