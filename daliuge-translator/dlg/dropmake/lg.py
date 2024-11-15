@@ -53,8 +53,9 @@ from dlg.dropmake.dm_utils import (
     GInvalidNode,
     load_lg,
 )
-from .definition_classes import Categories
-from .lg_node import LGNode
+from dlg.dropmake.definition_classes import Categories
+from dlg.dropmake.lg_node import LGNode
+from dlg.dropmake.graph_config import apply_active_configuration
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ class LG:
     it is doing all the conversion inside __init__
     """
 
-    def __init__(self, f, ssid=None):
+    def __init__(self, f, ssid=None, apply_config=True):
         """
         parse JSON into LG object graph first
         """
@@ -87,6 +88,9 @@ class LG:
         logger.info("Loading graph: %s", lg["modelData"]["filePath"])
         logger.info("Found LG version: %s", lgver)
 
+        if apply_config:
+            lg = apply_active_configuration(lg)
+
         if LG_VER_EAGLE == lgver:
             lg = convert_mkn(lg)
             lg = convert_fields(lg)
@@ -101,6 +105,7 @@ class LG:
             raise GraphException(
                 "Logical graph version '{0}' not supported!".format(lgver)
             )
+
         self._done_dict = {}
         self._group_q = collections.defaultdict(list)
         self._output_q = collections.defaultdict(list)
