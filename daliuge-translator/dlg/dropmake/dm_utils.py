@@ -890,7 +890,13 @@ def convert_subgraphs(lgo: dict) -> dict:
             }
             for n in lgo['nodeDataArray']:
                 if n["id"] == app_node["id"]:
-                    app_node['subgraph'] = subgraph
+                    app_node['subgraph'] = subgraph                        
+                    new_field = {
+                        "name": "subgraph",
+                        "value": subgraph,
+                        "parameterType": "applicationArgument", 
+                    }
+                    app_node["fields"].append(new_field)
 
     return lgo
 

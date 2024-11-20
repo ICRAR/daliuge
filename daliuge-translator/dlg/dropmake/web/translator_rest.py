@@ -480,11 +480,11 @@ async def gen_pgt_post(
     test = test.lower() == "true"
     try:
         logical_graph = json.loads(json_data)
-        try:
-            validate(logical_graph, LG_SCHEMA)
-        except ValidationError as ve:
-            error = "Validation Error {1}: {0}".format(str(ve), lg_name)
-            logger.error(error)
+        # try:
+        #     validate(logical_graph, LG_SCHEMA)
+        # except ValidationError as ve:
+        #     error = "Validation Error {1}: {0}".format(str(ve), lg_name)
+        #     logger.error(error)
             # raise HTTPException(status_code=500, detail=error)
         logical_graph = prepare_lgt(logical_graph, rmode)
         # LG -> PGT

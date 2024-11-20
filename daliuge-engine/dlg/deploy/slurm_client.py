@@ -55,29 +55,29 @@ class SlurmClient:
 
     def __init__(
         self,
-        dlg_root=None,
-        log_root=None,
-        host=None,
-        acc=None,
-        physical_graph_template_file=None,  # filename of physical graph template
-        logical_graph=None,
-        job_dur=30,
-        num_nodes=None,
-        run_proxy=False,
-        mon_host=DEFAULT_MON_HOST,
-        mon_port=DEFAULT_MON_PORT,
-        logv=1,
-        facility=None,
-        zerorun=False,
-        max_threads=0,
-        sleepncopy=False,
-        num_islands=None,
-        all_nics=False,
-        check_with_session=False,
-        submit=False,
-        remote=True,
-        pip_name=None,
-        username=None,
+        dlg_root: str = "",
+        log_root: str = "",
+        host: str = "",
+        acc: str = "",
+        physical_graph_template_file: str = "",  # filename of physical graph template
+        logical_graph:str = "",
+        job_dur: int = 30,
+        num_nodes: int = None,
+        run_proxy: bool = False,
+        mon_host: int = DEFAULT_MON_HOST,
+        mon_port: int = DEFAULT_MON_PORT,
+        logv: int = 1,
+        facility: str = "",
+        zerorun: bool =False,
+        max_threads: int = 0,
+        sleepncopy: bool = False,
+        num_islands: int = None,
+        all_nics: bool = False,
+        check_with_session: bool =False,
+        submit: bool = False,
+        remote: bool = True,
+        pip_name: str = "",
+        username: str = "",
     ):
         self._config = ConfigFactory.create_config(facility=facility, user=username)
         self.host = self._config.getpar("host") if host is None else host
@@ -115,11 +115,12 @@ class SlurmClient:
         self._submit = submit
         self._remote = remote
         self._dtstr = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")  # .%f
-        ni, nn, self._pip_name = find_numislands(self._physical_graph_template_file)
-        if isinstance(ni, int) and ni >= self._num_islands:
-            self._num_islands = ni
-        if nn and nn >= self._num_nodes:
-            self._num_nodes = nn
+        if self._physical_graph_template_file:
+            ni, nn, self._pip_name = find_numislands(self._physical_graph_template_file)
+            if isinstance(ni, int) and ni >= self._num_islands:
+                self._num_islands = ni
+            if nn and nn >= self._num_nodes:
+                self._num_nodes = nn
         self.username = username
 
     def get_session_dirname(self):
@@ -217,11 +218,17 @@ class SlurmClient:
 
         return session_dir
 
-    def submit_job(self):
+
+    def submit_job(self, subgraph: dict = None):
         """
         Submits the slurm script to the requested facility
         """
         jobId = None
+        print(f"Subgraph is as follows {subgraph}")
+        import json
+        with open("/tmp/subgraph.graph", 'w+') as fp:
+            json.dump(subgraph, fp)
+        self._logical_graph = "/tmp/subgraph.graph"
         session_dir = self.mk_session_dir()
         physical_graph_file_name = "{0}/{1}".format(session_dir, self._pip_name)
         if self._physical_graph_template_file:
@@ -236,6 +243,15 @@ class SlurmClient:
             else:
                 shutil.copyfile(
                     self._physical_graph_template_file, physical_graph_file_name
+                )
+        elif self._logical_graph:
+            if self._remote:
+                print(f"Copying LGT to: {physical_graph_file_name}")
+                remote.copyTo(
+                    self.host,
+                    self._logical_graph,
+                    physical_graph_file_name,
+                    username=self.username,
                 )
 
         job_file_name = "{0}/jobsub.sh".format(session_dir)
@@ -272,3 +288,4 @@ class SlurmClient:
         else:
             print(f"Created job submission script {job_file_name}")
         return jobId
+
