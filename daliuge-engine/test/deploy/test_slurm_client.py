@@ -26,13 +26,14 @@ from pathlib import Path
 # Note this test will only run with a full installation of DALiuGE.
 pexpect = pytest.importorskip("dlg.dropmake.pg_generator")
 
+
 try:
     from importlib.resources import files
 except ModuleNotFoundError:
     from importlib_resources import files # type: ignore
 import dlg.deploy.configs as configs
+from dlg.deploy.create_dlg_job import process_config
 import daliuge_tests.engine.graphs as test_graphs
-
 
 from dlg.deploy.slurm_client import SlurmClient
 import json 
@@ -64,7 +65,6 @@ class TestSlurmClient(unittest.TestCase):
         - That we produce the same as the CLI with the same parameters
         - That we can use the INI file to produce alternative parameters
         """
-        from dlg.deploy.create_dlg_job import process_config
         pg = files(test_graphs) / "SLURM_HelloWorld_simplePG.graph"
         cfg_file = Path(__file__).parent / "setonix.ini"
         cfg = process_config(cfg_file)
@@ -81,8 +81,6 @@ class TestSlurmClient(unittest.TestCase):
         job_desc = client.create_job_desc(pg)
         curr_file = Path(__file__)
         compare_script = curr_file.parent / "slurm_script.sh"
-        with open('slurm_script.sh', 'w') as fp: 
-            fp.write(job_desc)
         with compare_script.open() as fp:
             script = fp.read()
             self.assertEqual(script, job_desc)
@@ -107,8 +105,6 @@ class TestSlurmClient(unittest.TestCase):
         job_desc = client.create_job_desc(pg)
         curr_file = Path(__file__)
         compare_script = curr_file.parent / "slurm_script_from_template.sh"
-        with open('output.sh', 'w') as fp: 
-            fp.write(job_desc)
         with compare_script.open() as fp:
             script = fp.read()
             self.assertEqual(script, job_desc)

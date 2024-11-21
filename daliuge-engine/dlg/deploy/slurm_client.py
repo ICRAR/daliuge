@@ -29,6 +29,7 @@ import os
 import subprocess
 import shutil
 import tempfile
+import string
 from dlg import remote
 from dlg.runtime import __git_version__ as git_commit
 
@@ -101,8 +102,7 @@ class SlurmClient:
             self.exec_prefix = config["exec_prefix"]
             self.username = config['user'] if 'user' in config else sys.exit(1)
             if not self.username:
-                print("Username not configured in INI file.")
-                sys.exit(1)
+                print("Username not configured in INI file, using local username...")
         else:
             # Setup SLURM environment variables using config
             config = ConfigFactory.create_config(facility=facility, user=username)
@@ -164,6 +164,13 @@ class SlurmClient:
         
     
     def create_session_suffix(self, suffix=None):
+        """
+        Create a suffix to identify the session. If no suffix is specified, use the 
+        current datetime setting. 
+
+        :param: suffix, used to specify a non-datetime suffix. 
+        :return: the final suffix 
+        """
         if not suffix:
             return datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
         else:
@@ -179,35 +186,28 @@ class SlurmClient:
     
 
     def apply_slurm_template(self, template_str, session_id, dlg_root):
-        import string
+        """
+        Given a string from a template file, use a string.Template object to perform
+        safe substution on the string and replace $VALUES with the correct value 
+        specified. 
+        """
         intermed_slurm = string.Template(template_str) 
-        return intermed_slurm.safe_substitute(session_id=session_id, dlg_root=dlg_root)
+        ims = intermed_slurm.safe_substitute(session_id=session_id, dlg_root=dlg_root)
+        print("Creating job description")
+        return ims + "\n\n" + dlg_exec_str
 
-    def create_job_desc(self, physical_graph_file):
+    def create_paramater_mapping(self, session_dir, physical_graph_file):
         """
-        Creates the slurm script from a physical graph
-        """
-        session_dir = "{0}/workspace/{1}".format(
-            self.dlg_root, self.get_session_dirname()
-        )
-        
-        pardict = dict()
+        Map the runtime or configured parameters to the session environment and SLURM 
+        script paramteres, in anticipation of using substition. 
+        """ 
+        pardict = {}
         pardict["SESSION_ID"] = os.path.split(session_dir)[-1]
         pardict["MODULES"] = self.modules
         pardict["DLG_ROOT"] = self.dlg_root
         pardict["EXEC_PREFIX"] = self.exec_prefix
-        slurm_str = dlg_exec_str
-        if self._slurm_template:
-            intermed_slurm = self.apply_slurm_template(
-                self._slurm_template,
-                pardict["SESSION_ID"],
-                pardict["DLG_ROOT"]
-            )
-            print("Creating job description")
-            slurm_str = intermed_slurm + "\n\n" + dlg_exec_str
-        else: 
-            pardict["NUM_NODES"] = str(self._num_nodes)
-            pardict["JOB_DURATION"] = label_job_dur(self._job_dur)
+        pardict["NUM_NODES"] = str(self._num_nodes)
+        pardict["JOB_DURATION"] = label_job_dur(self._job_dur)
 
         pardict["VENV"] = self.venv
         pardict["PIP_NAME"] = self._pip_name
@@ -238,12 +238,31 @@ class SlurmClient:
         pardict["CHECK_WITH_SESSION"] = (
             "--check_with_session" if self._check_with_session else ""
         )
+        return pardict
+
+    def create_job_desc(self, physical_graph_file):
+        """
+        Creates the slurm script from a physical graph
+
+        This uses string.Template to apply substitutions that are linked to the 
+        parameters defined at runtime. These parameters map to $VALUEs in a pre-defined
+        execution command that contains the necessary parameters to run DALiuGE through
+        SLURM. 
+        """
+
+        session_dir = "{0}/workspace/{1}".format(
+            self.dlg_root, self.get_session_dirname()
+        )
+        pardict = self.create_paramater_mapping(session_dir, physical_graph_file)
+
         if self._slurm_template:
-            import string
-            job_desc = string.Template(slurm_str).safe_substitute(pardict)
-        else:
-            job_desc = init_tpl.safe_substitute(pardict)
-        return job_desc
+            slurm_str = self.apply_slurm_template(self._slurm_template, 
+                                                  pardict['SESSION_ID'],
+                                                  pardict['DLG_ROOT'])
+            return string.Template(slurm_str).safe_substitute(pardict)
+
+        return init_tpl.safe_substitute(pardict)
+
 
     def mk_session_dir(self, dlg_root: str = ""):
         """
@@ -279,15 +298,24 @@ class SlurmClient:
                 print(
                     f"ERROR: Unable to create {session_dir} on {self.username}@{self.host}, {str(e)}"
                 )
+                return None
 
         return session_dir
 
     def submit_job(self):
         """
         Submits the slurm script to the requested facility
+
+        :returns: jobId, the id of the SLURM job create on the facility. 
+                  None if a remote directory could not be created or if an error occurs
+                  during connection. 
         """
         jobId = None
         session_dir = self.mk_session_dir()
+        if not session_dir:
+            print("No session_dir created.")
+            return jobId
+
         physical_graph_file_name = "{0}/{1}".format(session_dir, self._pip_name)
         if self._physical_graph_template_file:
             if self._remote:
@@ -305,8 +333,7 @@ class SlurmClient:
 
         job_file_name = "{0}/jobsub.sh".format(session_dir)
         job_desc = self.create_job_desc(physical_graph_file_name)
-        print(job_desc)
-        # sys.exit()
+
         if self._remote:
             print(f"Creating SLURM script remotely: {job_file_name}")
             tjob = tempfile.mktemp()
@@ -339,16 +366,3 @@ class SlurmClient:
         else:
             print(f"Created job submission script {job_file_name}")
         return jobId
-
-
-# class ConfigManager: 
-#     """
-#     """
-
-#     def process_config():
-#         pass
-
-#     def create_slurm_script():
-#         """
-#         """
-#         job_desc = init_tpl.safe_substitute(pardict)
