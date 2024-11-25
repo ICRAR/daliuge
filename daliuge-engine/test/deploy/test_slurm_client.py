@@ -40,15 +40,18 @@ import json
 
 class TestSlurmClient(unittest.TestCase):
 
-    def test_client_with_cli(self):
+    def setUp(self) -> None:
+        super().setUp()
+        self.maxDiff = None
         # Use special graph that also contains file name. See 'create_dlg_job.py'
-        pg = files(test_graphs) / "SLURM_HelloWorld_simplePG.graph"
+        self.pg = files(test_graphs) / "SLURM_HelloWorld_simplePG.graph"
 
+    def test_client_with_cli(self):
         client = SlurmClient(
             facility="setonix", 
             num_nodes=6,
             job_dur=45,
-            physical_graph_template_file=pg,
+            physical_graph_template_file=self.pg,
             suffix="TestSession",
             username="test"
         )
@@ -67,14 +70,13 @@ class TestSlurmClient(unittest.TestCase):
         - That we produce the same as the CLI with the same parameters
         - That we can use the INI file to produce alternative parameters
         """
-        pg = files(test_graphs) / "SLURM_HelloWorld_simplePG.graph"
         cfg_file = Path(__file__).parent / "setonix.ini"
         cfg = process_config(cfg_file)
         client = SlurmClient(
             facility="setonix", 
             num_nodes=6,
             job_dur=45,
-            physical_graph_template_file=str(pg),
+            physical_graph_template_file=self.pg,
             suffix="TestSession",
             config=cfg,
             username='test'
@@ -95,13 +97,12 @@ class TestSlurmClient(unittest.TestCase):
         Use 'slurm_script_from_template.sh as a comparison file to demonstrate
         how the template approach gives us more options. 
         """
-        pg = files(test_graphs) / "SLURM_HelloWorld_simplePG.graph"
         template = Path(__file__).parent / "example_template.slurm"
         with template.open() as fp:
             slurm_template = fp.read()
         client = SlurmClient(
             facility="setonix", 
-            physical_graph_template_file=str(pg),
+            physical_graph_template_file=self.pg,
             suffix="TestSession",
             slurm_template=slurm_template,
             username='test'
