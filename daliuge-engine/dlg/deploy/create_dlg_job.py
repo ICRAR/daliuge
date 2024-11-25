@@ -636,6 +636,15 @@ def main():
         default=None,
     )
 
+    parser.add_option(
+        "--ssh_key",
+        dest="ssh_key",
+        type="string", 
+        action="store",
+        help="Path to ssh private key",
+        default=""
+    )
+
     (opts, _) = parser.parse_args(sys.argv)
     if opts.configs:
         print(f"Available facilities: {FACILITIES}")
@@ -734,6 +743,7 @@ def main():
             submit=opts.submit,
             remote=opts.remote,
             username=opts.username,
+            ssh_key=opts.ssh_key
         )
         client._visualise_graph = opts.visualise_graph
         client.submit_job()
