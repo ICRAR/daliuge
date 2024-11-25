@@ -122,6 +122,9 @@ def find_numislands(physical_graph_template_file):
     init already.
     TODO: We will probably need to do the same with job duration and CPU number
     """
+    if not physical_graph_template_file:
+        return None, None, physical_graph_template_file
+
     with open(physical_graph_template_file, "r") as f:
         pgt_data = json.load(f, strict=False)
     try:
