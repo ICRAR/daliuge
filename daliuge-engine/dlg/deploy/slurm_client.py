@@ -263,6 +263,11 @@ class SlurmClient:
 
         return init_tpl.safe_substitute(pardict)
 
+    @property
+    def session_dir(self):
+        return "{0}/workspace/{1}".format(
+            self.dlg_root, self.get_session_dirname()
+        )
 
     def mk_session_dir(self, dlg_root: str = ""):
         """
@@ -282,9 +287,7 @@ class SlurmClient:
                 dlg_root = os.environ["DLG_ROOT"]
             else:
                 dlg_root = f"{os.environ['HOME']}.dlg"
-        session_dir = "{0}/workspace/{1}".format(
-            self.dlg_root, self.get_session_dirname()
-        )
+        session_dir =  self.session_dir
         if not self._remote and not os.path.exists(session_dir):
             os.makedirs(session_dir)
         if self._remote:

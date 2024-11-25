@@ -43,16 +43,18 @@ class TestSlurmClient(unittest.TestCase):
     def test_client_with_cli(self):
         # Use special graph that also contains file name. See 'create_dlg_job.py'
         pg = files(test_graphs) / "SLURM_HelloWorld_simplePG.graph"
-          
+
         client = SlurmClient(
             facility="setonix", 
             num_nodes=6,
             job_dur=45,
-            physical_graph_template_file=str(pg),
+            physical_graph_template_file=pg,
             suffix="TestSession",
             username="test"
         )
-        job_desc = client.create_job_desc(pg)
+        session_dir = client.session_dir
+        physical_graph_file_name = "{0}/{1}".format(session_dir, client._pip_name)
+        job_desc = client.create_job_desc(physical_graph_file_name)
         curr_file = Path(__file__)
         compare_script = curr_file.parent / "slurm_script.sh"
         with compare_script.open() as fp:
@@ -77,8 +79,10 @@ class TestSlurmClient(unittest.TestCase):
             config=cfg,
             username='test'
         )
+        session_dir = client.session_dir
+        physical_graph_file_name = "{0}/{1}".format(session_dir, client._pip_name)
+        job_desc = client.create_job_desc(physical_graph_file_name)
 
-        job_desc = client.create_job_desc(pg)
         curr_file = Path(__file__)
         compare_script = curr_file.parent / "slurm_script.sh"
         with compare_script.open() as fp:
@@ -102,9 +106,14 @@ class TestSlurmClient(unittest.TestCase):
             slurm_template=slurm_template,
             username='test'
         )
-        job_desc = client.create_job_desc(pg)
+        session_dir = client.session_dir
+        physical_graph_file_name = "{0}/{1}".format(session_dir, client._pip_name)
+        job_desc = client.create_job_desc(physical_graph_file_name)
+
         curr_file = Path(__file__)
         compare_script = curr_file.parent / "slurm_script_from_template.sh"
         with compare_script.open() as fp:
             script = fp.read()
+            print(job_desc)
+            print(script)
             self.assertEqual(script, job_desc)
