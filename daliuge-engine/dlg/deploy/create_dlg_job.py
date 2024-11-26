@@ -37,6 +37,8 @@ import tempfile
 import time
 import os
 
+from pathlib import Path
+
 from dlg.deploy.configs import (
     ConfigFactory,
 )  # get all available configurations
@@ -403,6 +405,65 @@ class LogParser:
                 return True
         return False
 
+def process_config(config_file: str):
+    """
+    Use configparser to process INI file
+
+    Current functionality: 
+        - Returns remote environment config (e.g. DLG_ROOT, HOME etc.)
+
+    Future Functionality: 
+        - Graph translation parameters
+        - Engine parameters
+
+    :returns: dict, config information
+    """
+    from configparser import ConfigParser, ExtendedInterpolation
+    parser = ConfigParser(interpolation=ExtendedInterpolation())
+    parser.read(config_file)
+    return (dict(parser["ENVIRONMENT"]))
+
+def process_slurm_template(template_file: str):
+    template = Path(template_file)
+    with template.open('r') as fp:
+        return fp.read()
+
+def create_experiment_group(parser: optparse.OptionParser):
+    from optparse import OptionGroup
+    group=OptionGroup(parser, "Experimental Options", 
+                      "Caution: These are not properly tested and likely to"
+                      "be rough around the edges.")
+
+    group.add_option(
+        "--config_file",
+        dest="config_file", 
+        type="string", 
+        action="store", 
+        help="Use INI configuration file.",
+        default=None
+    )
+    group.add_option(
+        "--slurm_template", 
+        dest="slurm_template",
+        type="string", 
+        action="store", 
+        help="Use SLURM template file for job submission. WARNING: Using this command will over-write other job-parameters passed here.", 
+        default=None
+    )
+    return group
+
+def create_job_group():
+    """
+    TODO: LIU-424
+    """
+    pass
+
+def create_graph_group():
+    """
+    TODO: LIU-424
+    """
+    pass
+
 
 def main():
     parser = optparse.OptionParser(
@@ -623,7 +684,7 @@ def main():
         "--configs",
         dest="configs",
         action="store_true",
-        help="Display the available configurations  and exit",
+        help="Display the available configurations and exit",
         default=False,
     )
     parser.add_option(
@@ -635,6 +696,8 @@ def main():
         help="Remote username, if different from local",
         default=None,
     )
+
+    parser.add_option_group(create_experiment_group(parser))
 
     (opts, _) = parser.parse_args(sys.argv)
     if opts.configs:
@@ -715,6 +778,10 @@ def main():
             else:
                 pgt_file = path_to_graph_file
 
+        config = process_config(opts.config_file) if opts.config_file else None
+        template = process_slurm_template(
+            opts.slurm_template) if opts.slurm_template else None
+
         client = SlurmClient(
             dlg_root=opts.dlg_root,
             log_root=opts.log_root,
@@ -734,7 +801,10 @@ def main():
             submit=opts.submit,
             remote=opts.remote,
             username=opts.username,
+            config=config,
+            slurm_template=template
         )
+        
         client._visualise_graph = opts.visualise_graph
         client.submit_job()
     else:
