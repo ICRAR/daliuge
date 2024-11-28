@@ -30,6 +30,8 @@ import subprocess
 import shutil
 import tempfile
 import string
+import time
+from pathlib import Path
 from dlg import remote
 from dlg.runtime import __git_version__ as git_commit
 
@@ -61,7 +63,6 @@ class SlurmClient:
         host: str = "",
         acc: str = "",
         physical_graph_template_file: str = "",  # filename of physical graph template
-        logical_graph:str = "",
         job_dur: int = 30,
         num_nodes: int = None,
         run_proxy: bool = False,
@@ -129,12 +130,7 @@ class SlurmClient:
                 self._num_nodes = num_nodes
             self._job_dur = job_dur
 
-        # self._log_root = (
-        #     self._config.getpar("log_root") if (log_root is None) else log_root
-        # )
-        # 
         # start_dlg_cluster arguments
-        self._logical_graph = logical_graph
         self._physical_graph_template_file = physical_graph_template_file
         self._visualise_graph = False
         self._run_proxy = run_proxy
@@ -159,6 +155,8 @@ class SlurmClient:
                 self._num_islands = ni
             if nn and nn >= self._num_nodes:
                 self._num_nodes = nn
+            
+        self._logical_graph = ""
 
         # used for remote login/directory management.
         self._remote = remote
@@ -197,7 +195,7 @@ class SlurmClient:
         print("Creating job description")
         return ims + "\n\n" + dlg_exec_str
 
-    def create_paramater_mapping(self, session_dir, physical_graph_file):
+    def create_paramater_mapping(self, session_dir, remote_graph_file):
         """
         Map the runtime or configured parameters to the session environment and SLURM 
         script paramteres, in anticipation of using substition. 
@@ -216,11 +214,11 @@ class SlurmClient:
         pardict["PY_BIN"] = "python3" if pardict["VENV"] else sys.executable
         pardict["LOG_DIR"] = session_dir
         pardict["GRAPH_PAR"] = (
-            '--logical-graph "{0}"'.format(self._logical_graph)
+            '--logical-graph "{0}"'.format(remote_graph_file)
             if self._logical_graph
             else (
-                '--physical-graph "{0}"'.format(physical_graph_file)
-                if physical_graph_file
+                '--physical-graph "{0}"'.format(remote_graph_file)
+                if remote_graph_file
                 else ""
             )
         )
@@ -307,7 +305,7 @@ class SlurmClient:
         return session_dir
 
 
-    def submit_job(self, subgraph: dict = None):
+    def submit_job(self, logical_graph: dict = None):
         """
         Submits the slurm script to the requested facility
 
@@ -316,42 +314,47 @@ class SlurmClient:
                   during connection. 
         """
         jobId = None
-        print(f"Subgraph is as follows {subgraph}")
+
         import json
-        with open("/tmp/subgraph.graph", 'w+') as fp:
-            json.dump(subgraph, fp)
-        self._logical_graph = "/tmp/subgraph.graph"
+        subgraph_dir = Path("/tmp/")
+        subgraph_name = "subgraph.graph"
+        self._logical_graph = subgraph_dir / subgraph_name
+        with open(self._logical_graph, 'w+') as fp:
+            json.dump(logical_graph, fp)
+
         session_dir = self.mk_session_dir()
         if not session_dir:
             print("No session_dir created.")
             return jobId
-
-        physical_graph_file_name = "{0}/{1}".format(session_dir, self._pip_name)
+        if logical_graph:
+            self._pip_name = subgraph_name
+        remote_graph_file_name = "{0}/{1}".format(session_dir, self._pip_name)
+        print(f"{remote_graph_file_name=}")
         if self._physical_graph_template_file:
             if self._remote:
-                print(f"Copying PGT to: {physical_graph_file_name}")
+                print(f"Copying PGT to: {remote_graph_file_name}")
                 remote.copyTo(
                     self.host,
                     self._physical_graph_template_file,
-                    physical_graph_file_name,
+                    remote_graph_file_name,
                     username=self.username,
                 )
             else:
                 shutil.copyfile(
-                    self._physical_graph_template_file, physical_graph_file_name
+                    self._physical_graph_template_file, remote_graph_file_name
                 )
         elif self._logical_graph:
             if self._remote:
-                print(f"Copying LGT to: {physical_graph_file_name}")
+                print(f"Copying LGT to: {remote_graph_file_name}")
                 remote.copyTo(
                     self.host,
                     self._logical_graph,
-                    physical_graph_file_name,
+                    remote_graph_file_name,
                     username=self.username,
                 )
 
         job_file_name = "{0}/jobsub.sh".format(session_dir)
-        job_desc = self.create_job_desc(physical_graph_file_name)
+        job_desc = self.create_job_desc(remote_graph_file_name)
 
         if self._remote:
             print(f"Creating SLURM script remotely: {job_file_name}")
@@ -384,5 +387,31 @@ class SlurmClient:
                     print(f"Job with ID {jobId} submitted successfully.")
         else:
             print(f"Created job submission script {job_file_name}")
+
+        return self.fetch_remote_status(jobId)
+    
+    def fetch_remote_status(self, jobId: str, timeout: int = 15):
+        # If still running use squeue --jobs=18761179 --format=state --noheader
+        # IF squeue fails, use sacct --jobs=18761179 --format=state --noheader
+        running = True
+        job_id = jobId.strip()
+        while running:
+            command = f"sacct --jobs={job_id} --format=state --noheader"
+            stdout, stderr, exitStatus = remote.execRemote(
+                self.host, command, username=self.username
+            )
+            print(f"{stdout=},{stderr=}")
+            # Process result here 
+            curr_jobs = stdout.decode().lower().split()
+            if "failed" in curr_jobs or "cancelled" in curr_jobs:
+                raise RuntimeError(
+                    f"Slurm job did not finish successfully: stdout is: {stdout}\n.")
+            if "pending" in curr_jobs or "running" in curr_jobs:
+                time.sleep(timeout)
+                continue
+            if curr_jobs.count("completed") == len(curr_jobs):
+                # Success!
+                running = False
+
         return jobId
 
