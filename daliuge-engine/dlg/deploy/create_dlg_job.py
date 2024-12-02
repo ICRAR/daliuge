@@ -697,6 +697,15 @@ def main():
         default=None,
     )
 
+    parser.add_option(
+        "--ssh_key",
+        dest="ssh_key",
+        type="string", 
+        action="store",
+        help="Path to ssh private key",
+        default=""
+    )
+
     parser.add_option_group(create_experiment_group(parser))
 
     (opts, _) = parser.parse_args(sys.argv)
@@ -803,6 +812,7 @@ def main():
             username=opts.username,
             config=config,
             slurm_template=template
+            ssh_key=opts.ssh_key
         )
         
         client._visualise_graph = opts.visualise_graph
