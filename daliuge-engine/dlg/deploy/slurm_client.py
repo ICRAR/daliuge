@@ -31,14 +31,15 @@ import shutil
 import tempfile
 import string
 import time
+import dlg.remote as remote
+
 from pathlib import Path
-from dlg import remote
+from paramiko.ssh_exception import SSHException
 from dlg.runtime import __git_version__ as git_commit
 
 from dlg.deploy.configs import ConfigFactory, init_tpl, dlg_exec_str
 from dlg.deploy.configs import DEFAULT_MON_PORT, DEFAULT_MON_HOST
 from dlg.deploy.deployment_utils import find_numislands, label_job_dur
-from paramiko.ssh_exception import SSHException
 
 
 class SlurmClient:
@@ -268,6 +269,10 @@ class SlurmClient:
             self.dlg_root, self.get_session_dirname()
         )
 
+    @property
+    def session_id(self):
+        os.path.split(self.session_dir)[-1]
+
     def mk_session_dir(self, dlg_root: str = ""):
         """
         Create the session directory. If dlg_root is provided it is used,
@@ -287,6 +292,7 @@ class SlurmClient:
             else:
                 dlg_root = f"{os.environ['HOME']}.dlg"
         session_dir =  self.session_dir
+        # TODO look into if we have permissiosn to create directory
         if not self._remote and not os.path.exists(session_dir):
             os.makedirs(session_dir)
         if self._remote:
@@ -391,9 +397,10 @@ class SlurmClient:
         return self.fetch_remote_status(jobId)
     
     def fetch_remote_status(self, jobId: str, timeout: int = 15):
-        # If still running use squeue --jobs=18761179 --format=state --noheader
-        # IF squeue fails, use sacct --jobs=18761179 --format=state --noheader
+        #Use sacct --jobs=jobID --format=state --noheader
         running = True
+        if not jobId: 
+            return None
         job_id = jobId.strip()
         while running:
             command = f"sacct --jobs={job_id} --format=state --noheader"
@@ -415,3 +422,20 @@ class SlurmClient:
 
         return jobId
 
+    
+    def collect_job_data(self):
+        """
+        1. Zip remote session directory
+        2. Copy it to this machine
+        """
+        command = f"tar -cvfz {self.session_id}.tar.gz {self.session_id}"
+        if self._remote:
+            remote.execRemote(self.host, command, username=self.username) 
+            output_path = f"{self.session_id}.tar.gz"
+            remote.copyFrom(self.host, 
+                            remotePath=f"{self.session_dir}.tar.xz", 
+                            localPath=f"{self.session_dir}.tar.xz",
+                            sername=self.username)
+        else:
+            return None
+        return output_path
