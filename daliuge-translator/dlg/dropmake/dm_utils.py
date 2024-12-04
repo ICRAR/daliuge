@@ -487,7 +487,7 @@ def convert_construct(lgo):
         if node["category"] == ConstructTypes.SERVICE:
             app_args['isService'] = True
 
-        app_node = _create_from_node(node, node[has_app], app_args)
+        app_node = _create_from_node(node, node[has_app], node["name"], app_args)
 
         # step 2
         new_id = str(uuid.uuid4())
@@ -508,7 +508,8 @@ def convert_construct(lgo):
                 "id": dup_app_node_k,
                 "fields": "appFields" if "appFields" in node else "inputAppFields"
             }
-            tmp_node = _create_from_node(node=node, category=node[has_app],
+            tmp_node = _create_from_node(node=node, category=node[has_app], 
+                                         name=node["name"],
                                          app_params=dup_app_args)
             redundant_keys = ['fields', 'reprodata']
             tmp_node = {k: v for k, v in tmp_node.items() if k not in redundant_keys}
@@ -580,7 +581,7 @@ def convert_construct(lgo):
     return lgo
 
 
-def _create_from_node(node: dict, category: str, app_params: dict) -> dict:
+def _create_from_node(node: dict, category: str, name: str, app_params: dict) -> dict:
     """
     Create a new dictionary from the node based on the category of the new drop, and any
     specific attributes for the application
@@ -607,7 +608,7 @@ def _create_from_node(node: dict, category: str, app_params: dict) -> dict:
     new_node["id"] = node["id"]
     new_node["category"] = category
 
-    new_node["name"] = node["text"] if 'text' in node else node["name"]
+    new_node["name"] = name
     if "mkn" in node:
         new_node["mkn"] = node["mkn"]
 
@@ -799,6 +800,7 @@ def _build_apps_from_subgraph_construct(subgraph_node: dict) -> (dict, dict):
     }
     input_node = _create_from_node(subgraph_node,
                                    subgraph_node["inputApplicationType"],
+                                   subgraph_node["inputApplicationName"],
                                    input_app_args)
 
     output_app_args = {
@@ -813,6 +815,7 @@ def _build_apps_from_subgraph_construct(subgraph_node: dict) -> (dict, dict):
     }
     output_node = _create_from_node(subgraph_node,
                                     subgraph_node["outputApplicationType"],
+                                    subgraph_node["outputApplicationName"],
                                     output_app_args)
 
     return input_node, output_node
@@ -848,6 +851,7 @@ def convert_subgraphs(lgo: dict) -> dict:
         if node["category"] != ConstructTypes.SUBGRAPH:
             continue
 
+        logger.info("Converting subgraphs...")
         node["isSubGraphConstruct"] = True
         node["hasInputApp"] = True
         if not _has_app_keywords(node, app_keywords, requires_all=True):
@@ -890,16 +894,37 @@ def convert_subgraphs(lgo: dict) -> dict:
             }
             for n in lgo['nodeDataArray']:
                 if n["id"] == app_node["id"]:
-                    app_node['subgraph'] = subgraph                        
-                    new_field = {
-                        "name": "subgraph",
-                        "value": subgraph,
-                        "parameterType": "applicationArgument", 
-                    }
-                    app_node["fields"].append(new_field)
-
+                    n = apply_subgraph_keyword(n, node, subgraph)
     return lgo
 
+def apply_subgraph_keyword(app_node, construct_node, subgraph): 
+    """
+    Allocate the subgraph to a field in the subgraph input app. 
+    If the field does not exist, create it.
+    If no keyword was provided, the default field is "subgraph". 
+    """
+    keyword = "subgraph"
+    for f in construct_node["fields"]:
+        if f["name"] == "subgraph_keyword_map":
+            keyword = f["value"]
+
+    subgraph_added = False
+    for f in app_node["fields"]: 
+        if f["name"] == keyword:
+            f["value"] = subgraph 
+            subgraph_added = True
+            break
+    if not subgraph_added:
+        app_node["fields"].append({
+            "name": keyword,
+            "value": subgraph,
+            "parameterType": "applicationArgument", 
+        })
+        logger.warning(f"No subgraph keyword map found for {app_node['name']}. Using"
+                       "'subgraph' as default.")
+    return app_node
+
+    
 
 def convert_eagle_to_daliuge_json(lg_name):
     """
