@@ -46,6 +46,7 @@ from dlg.named_port_utils import (
     check_ports_dict,
     get_port_reader_function,
     identify_named_ports,
+    replace_named_ports
 )
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import InvalidDropException
@@ -467,15 +468,18 @@ class PyFuncApp(BarrierAppDROP):
         portargs = {}
         # 3. replace default argument values with named input ports
         # TODO: investigate performing inputs and outputs in a single call
+        iitems = self._inputs
+        oitems = self._outputs
+
         if "inputs" in self.parameters and check_ports_dict(self.parameters["inputs"]):
             check_len = min(
-                len(inputs),
+                len(iitems),
                 self.fn_nargs + self.fn_nkw,
             )
             inputs_dict = collections.OrderedDict()
             for inport in self.parameters["inputs"]:
                 key = list(inport.keys())[0]
-                inputs_dict[key] = {"name": inport[key], "path": inputs[key]}
+                inputs_dict[key] = {"name": inport[key], "path": None, "drop": iitems[key]}
             portargs.update(
                 identify_named_ports(
                     inputs_dict,
@@ -485,24 +489,33 @@ class PyFuncApp(BarrierAppDROP):
                     check_len=check_len,
                     mode="inputs",
                     addPositionalToKeyword=True,
+                    parser=get_port_reader_function(self.input_parser)
                 )
             )
         else:
-            # Just as a fallback using the index, but this is risky!
-            for i in range(min(len(inputs), self.fn_nargs)):
-                portargs.update({self.argnames[i]: list(inputs.values())[i]})
+            check_len = min(
+                len(iitems),
+                self.fn_nargs + self.fn_nkw,
+            )
+
+            iitem_keys = list(iitems.keys())
+            for i in range(min(len(iitems), self.fn_nargs)):
+                key = iitem_keys[i]
+                all_contents = get_port_reader_function(self.input_parser)
+                portargs.update({self.argnames[i]: all_contents(iitems[key])})
 
         # 4. replace default argument values with named output ports
         if "outputs" in self.parameters and check_ports_dict(
             self.parameters["outputs"]
         ):
-            check_len = min(len(outputs), self.fn_nargs + self.fn_nkw)
+            check_len = min(len(oitems), self.fn_nargs + self.fn_nkw)
             outputs_dict = collections.OrderedDict()
             for outport in self.parameters["outputs"]:
                 key = list(outport.keys())[0]
                 outputs_dict[key] = {
-                    "name": outport[key],
-                    "path": outputs[key],
+                    "name": oitems[key], 
+                    "path": oitems[key].path if 'path' in oitems else None, 
+                    "drop": oitems[key]
                 }
 
             portargs.update(
@@ -628,24 +641,24 @@ class PyFuncApp(BarrierAppDROP):
 
         """
         funcargs = {}
-        all_contents = get_port_reader_function(self.input_parser)
+        # # all_contents = get_port_reader_function(self.input_parser)
         inputs = collections.OrderedDict()
-        for uid, drop in self._inputs.items():
-            inputs[uid] = all_contents(drop)
+        # # for uid, drop in self._inputs.items():
+        # #     inputs[uid] = all_contents(drop)
 
         outputs = collections.OrderedDict()
-        for uid, drop in self._outputs.items():
-            if self.output_parser is DropParser.PATH:
-                outputs[uid] = drop.path
-            else:
-                outputs[uid] = None
+        # for uid, drop in self._outputs.items():
+        #     if self.output_parser is DropParser.PATH:
+        #         outputs[uid] = drop.path
+        #     else:
+        #         outputs[uid] = None
 
         # Keyword arguments are made up of the default values plus the inputs
         # that match one of the keyword argument names
         # if defaults dict has not been specified at all we'll go ahead anyway
 
         # 1. Fill arguments with rest of inputs
-        logger.debug(f"available inputs: {inputs}")
+        # logger.debug(f"available inputs: {inputs}")
 
         posargs = list(self.posonly.keys()) + list(self.poskw.keys())
         # fill the pargsDict with positional and poskw arguments and defaults
