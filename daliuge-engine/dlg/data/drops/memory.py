@@ -47,7 +47,7 @@ def parse_pydata(pd_dict: dict) -> bytes:
         return None
 
     if pd_dict["type"].lower() == "string":
-        return pydata
+        return pydata if pydata != "None" else None
     if pd_dict["type"].lower() == "json":
         try:
             pydata = json.loads(pydata)
@@ -88,7 +88,7 @@ def parse_pydata(pd_dict: dict) -> bytes:
 # @par EAGLE_START
 # @param category Memory
 # @param tag daliuge
-# @param pydata None/String/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
+# @param pydata /Object/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
@@ -139,6 +139,8 @@ class InMemoryDROP(DataDROP):
         if pydata:
             args.append(pydata)
             logger.debug("Loaded into memory: %s, %s", pydata, pdict["type"])
+        else:
+            pdict["type"] = ""
         self._buf = (
             io.BytesIO(*args)
             if pdict["type"].lower() != "string"

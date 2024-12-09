@@ -258,6 +258,8 @@ class MemoryIO(DataIO):
 
     @overrides
     def _write(self, data, **kwargs) -> int:
+        if isinstance(data, str):
+            data = bytes(data, encoding="utf8")
         self._desc.write(data)
         return len(data)
 
