@@ -22,6 +22,7 @@
 import codecs
 import json
 import os
+import pathlib
 import time
 import unittest
 import shutil
@@ -39,8 +40,11 @@ from dlg.manager.session import SessionStates
 from dlg.manager.manager_data import Node
 
 from dlg.testutils import ManagerStarter
-from test.dlg_engine_testutils import (RESTTestUtils, DROPManagerUtils,
-                                       TerminatingTestHelper)
+from test.dlg_engine_testutils import (
+    RESTTestUtils,
+    DROPManagerUtils,
+    TerminatingTestHelper,
+)
 
 hostname = "localhost"
 dim_host = f"{hostname}:{ISLAND_DEFAULT_REST_PORT}"
@@ -341,13 +345,21 @@ class TestREST(LocalDimStarter, unittest.TestCase):
         A test that exercises most of the REST interface exposed on top of the
         DataIslandManager
         """
+        cwd = pathlib.Path.cwd()
         os.makedirs("/tmp/test_dim_rest/", exist_ok=True)
         os.environ["DLG_ROOT"] = "/tmp/test_dim_rest"
 
         sessionId = "lala"
         nmPort = 8000  # NOTE: can't use any other port yet.
         dimPort = 8989  # don't interfere with EAGLE default port
-        args = ["--port", str(dimPort), "-N", f"{hostname}:{nmPort}", "-qqq", "--dump_graphs"]
+        args = [
+            "--port",
+            str(dimPort),
+            "-N",
+            f"{hostname}:{nmPort}",
+            "-qqq",
+            "--dump_graphs",
+        ]
         dimProcess = tool.start_process("dim", args)
 
         with TerminatingTestHelper(dimProcess, timeout=10):
@@ -440,6 +452,7 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             self.assertEqual(0, len(sessions))
             pastSessions = RESTTestUtils.get(self, "/past_sessions", dimPort)
             self.assertEqual(1, len(pastSessions))
-            # Reset environment and test directories
+        # Reset environment and test directories
+        os.chdir(cwd)
         shutil.rmtree("/tmp/test_dim_rest/", ignore_errors=True)
-        del os.environ['DLG_ROOT']
+        del os.environ["DLG_ROOT"]
