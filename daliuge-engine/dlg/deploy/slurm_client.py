@@ -29,7 +29,7 @@ import os
 import subprocess
 import shutil
 import tempfile
-from dlg import remote
+import dlg.remote as remote
 from dlg.runtime import __git_version__ as git_commit
 
 from dlg.deploy.configs import ConfigFactory, init_tpl
@@ -78,6 +78,7 @@ class SlurmClient:
         remote=True,
         pip_name=None,
         username=None,
+        ssh_key="",
     ):
         self._config = ConfigFactory.create_config(facility=facility, user=username)
         self.host = self._config.getpar("host") if host is None else host
@@ -121,6 +122,7 @@ class SlurmClient:
         if nn and nn >= self._num_nodes:
             self._num_nodes = nn
         self.username = username
+        self.ssh_key = ssh_key
 
     def get_session_dirname(self):
         """
@@ -208,7 +210,9 @@ class SlurmClient:
                 f"Creating remote session directory on {self.username}@{self.host}: {command}"
             )
             try:
-                remote.execRemote(self.host, command, username=self.username)
+                remote.execRemote(
+                    self.host, command, username=self.username, pkeyPath=self.ssh_key
+                )
             except (TypeError, SSHException):
                 print(
                     f"ERROR: Unable to create {session_dir} on {self.username}@{self.host}"
@@ -232,6 +236,7 @@ class SlurmClient:
                     self._physical_graph_template_file,
                     physical_graph_file_name,
                     username=self.username,
+                    pkeyPath=self.ssh_key,
                 )
             else:
                 shutil.copyfile(
@@ -245,7 +250,13 @@ class SlurmClient:
             tjob = tempfile.mktemp()
             with open(tjob, "w+t") as t:
                 t.write(job_desc)
-            remote.copyTo(self.host, tjob, job_file_name, username=self.username)
+            remote.copyTo(
+                self.host,
+                tjob,
+                job_file_name,
+                username=self.username,
+                pkeyPath=self.ssh_key,
+            )
             os.remove(tjob)
         else:
             with open(job_file_name, "w") as job_file:
@@ -260,7 +271,7 @@ class SlurmClient:
                 command = f"cd {session_dir} && sbatch --parsable {job_file_name}"
                 print(f"Submitting sbatch job: {command}")
                 stdout, stderr, exitStatus = remote.execRemote(
-                    self.host, command, username=self.username
+                    self.host, command, username=self.username, pkeyPath=self.ssh_key
                 )
                 if exitStatus != 0:
                     print(
