@@ -20,6 +20,9 @@ Data Activated 流 Graph Engine
 .. image:: https://img.shields.io/badge/License-LGPL_v2-blue.svg
     :target: https://www.gnu.org/licenses/lgpl-2.1
     :alt: License: LGPL v2.1
+.. image:: https://img.shields.io/badge/ascl-1912.004-blue.svg?colorB=262255
+     :target: https://ascl.net/1912.004
+     :alt: ascl:1912.004
 
 |daliuge|
 is a workflow graph development, management and execution framework, specifically designed to support very large
