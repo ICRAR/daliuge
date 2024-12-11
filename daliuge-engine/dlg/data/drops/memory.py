@@ -43,7 +43,11 @@ def parse_pydata(pd_dict: dict) -> bytes:
     """
     pydata = pd_dict["value"]
     logger.debug(f"pydata value provided: {pydata}, {type(pydata)}")
+    if not pydata:
+        return None
 
+    if pd_dict["type"].lower() == "string":
+        return pydata
     if pd_dict["type"].lower() == "json":
         try:
             pydata = json.loads(pydata)
@@ -114,6 +118,7 @@ class InMemoryDROP(DataDROP):
         """
         args = []
         pydata = None
+        pdict = {"type": "raw"}  # initialize this value to enforce BytesIO
         field_names = (
             [f["name"] for f in kwargs["fields"]] if "fields" in kwargs else []
         )
@@ -129,10 +134,16 @@ class InMemoryDROP(DataDROP):
                 pydata = None
         elif "fields" in kwargs and "pydata" in field_names:
             data_pos = field_names.index("pydata")
-            pydata = parse_pydata(kwargs["fields"][data_pos])
-        args.append(pydata)
-        logger.debug("Loaded into memory: %s", pydata)
-        self._buf = io.BytesIO(*args)
+            pdict = kwargs["fields"][data_pos]
+            pydata = parse_pydata(pdict)
+        if pydata:
+            args.append(pydata)
+            logger.debug("Loaded into memory: %s, %s", pydata, pdict["type"])
+        self._buf = (
+            io.BytesIO(*args)
+            if pdict["type"].lower() != "string"
+            else io.StringIO(*args)
+        )
         self.size = len(pydata) if pydata else 0
 
     def getIO(self):
