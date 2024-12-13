@@ -32,7 +32,10 @@ from dlg.manager.client import MasterManagerClient
 from dlg.manager.proc_daemon import DlgDaemon
 
 _TIMEOUT = 5
-IDENTITY = lambda x: x
+
+
+def IDENTITY(x):
+    return x
 
 
 def wait_until(
@@ -136,14 +139,13 @@ class TestDaemon(unittest.TestCase):
         )
 
     def test_zeroconf_discovery(self):
-
         self.create_daemon(master=True, noNM=False, disable_zeroconf=False)
 
         # Both managers started fine. If they zeroconf themselves correctly then
         # if we query the MM it should know about its nodes, which should have
         # one element
         mc = MasterManagerClient()
-        nodes = _get_nodes_from_client(mc)
+        nodes = _get_nodes_from_client(mc)["nodes"]
         self.assertIsNotNone(nodes)
         self.assertEqual(
             1,
@@ -219,7 +221,6 @@ class TestDaemon(unittest.TestCase):
         self.assertEqual(0, len(new_nodes))
 
     def test_start_dataisland_via_rest(self):
-
         self.create_daemon(master=True, noNM=False, disable_zeroconf=False)
 
         # Both managers started fine. If they zeroconf themselves correctly then
@@ -242,7 +243,6 @@ class TestDaemon(unittest.TestCase):
         )
 
     def test_stop_dataisland_via_rest(self):
-
         # start master and island manager
         self.create_daemon(master=True, noNM=False, disable_zeroconf=False)
         mc = MasterManagerClient()
@@ -271,7 +271,6 @@ class TestDaemon(unittest.TestCase):
         )
 
     def test_stop_start_node_via_rest(self):
-
         # test both stop and start of NM via REST
         self.create_daemon(master=True, noNM=False, disable_zeroconf=False)
 
