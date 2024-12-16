@@ -131,7 +131,7 @@ def identify_named_ports(
     keywordPortArgs = {}
     positionalArgs = list(positionalArgs)
     keys = list(port_dict.keys())
-    logger.debug("Checking ports: %s against %s %s", keys, positionalArgs, keywordArgs)
+    logger.debug("Checking ports: %sagainst %s %s", keys, positionalArgs, keywordArgs)
     for i in range(check_len):
         try:
             key = port_dict[keys[i]]["name"]
@@ -297,12 +297,14 @@ def replace_named_ports(
     keywordArgs = _get_args(appArgs, positional=False)
 
     # Extract values from dictionaries - "encoding" etc. are irrelevant
-    appArgs = {arg: subdict['value'] for arg, subdict in appArgs.items()}
-    positionalArgs = {arg: subdict['value'] for arg, subdict in positionalArgs.items()}
-    keywordArgs = {arg: subdict['value'] for arg, subdict in keywordArgs.items()}
-    keywordPortArgs = {arg: subdict['value'] for arg, subdict in keywordPortArgs.items()}
- 
-     # Construct the final keywordArguments and positionalPortArguments
+    appArgs = {arg: subdict["value"] for arg, subdict in appArgs.items()}
+    positionalArgs = {arg: subdict["value"] for arg, subdict in positionalArgs.items()}
+    keywordArgs = {arg: subdict["value"] for arg, subdict in keywordArgs.items()}
+    keywordPortArgs = {
+        arg: subdict["value"] for arg, subdict in keywordPortArgs.items()
+    }
+
+    # Construct the final keywordArguments and positionalPortArguments
     for k, v in keywordPortArgs.items():
         if v not in [None, ""]:
             keywordArgs.update({k: v})
@@ -374,8 +376,10 @@ def _get_args(appArgs, positional=False):
     Separate out the arguments dependening on if we want positional or keyword style
     """
     args = {
-        arg: {"value": appArgs[arg]["value"], 
-              "encoding": appArgs[arg].get("encoding", "dill")}
+        arg: {
+            "value": appArgs[arg]["value"],
+            "encoding": appArgs[arg].get("encoding", "dill"),
+        }
         for arg in appArgs
         if (appArgs[arg]["positional"] == positional)
     }

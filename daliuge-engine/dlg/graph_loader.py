@@ -246,9 +246,9 @@ def loadDropSpecs(dropSpecList):
     return dropSpecs, reprodata
 
 
-def createGraphFromDropSpecList(dropSpecList: List[dict],
-                                session: Optional["Session"]=None
-                                ) -> List[AbstractDROP]:
+def createGraphFromDropSpecList(
+    dropSpecList: List[dict], session: Optional["Session"] = None
+) -> List[AbstractDROP]:
     logger.debug("Found %d DROP definitions", len(dropSpecList))
 
     # Step #1: create the actual DROPs
