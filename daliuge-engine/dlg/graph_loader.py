@@ -245,7 +245,7 @@ def loadDropSpecs(dropSpecList):
     return dropSpecs, reprodata
 
 
-def createGraphFromDropSpecList(dropSpecList, session=None):
+def createGraphFromDropSpecList(dropSpecList, session=None, ret_drops=False):
     logger.debug("Found %d DROP definitions", len(dropSpecList))
 
     # Step #1: create the actual DROPs
@@ -317,7 +317,8 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
         drop for drop in drops.values() if not droputils.getUpstreamObjects(drop)
     ]
     logger.info("%d graph roots found, bye-bye!", len(roots))
-
+    if ret_drops:
+        return roots, drops
     return roots
 
 

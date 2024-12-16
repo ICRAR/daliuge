@@ -28,6 +28,7 @@ which will then be deployed and monitored by the Physical Graph Manager
 if __name__ == "__main__":
     __package__ = "dlg.dropmake"
 
+import json
 import logging
 import math
 import random
@@ -725,6 +726,7 @@ class LGNode:
         """
         kwargs["applicationArgs"] = {}
         kwargs["constraintParams"] = {}
+        kwargs["componentParams"] = {}
         if "fields" in self.jd:
             kwargs["fields"] = self.jd["fields"]
             for je in self.jd["fields"]:
@@ -736,6 +738,8 @@ class LGNode:
                         kwargs["applicationArgs"].update({je["name"]: je})
                     elif je["parameterType"] == "ConstraintParameter":
                         kwargs["constraintParams"].update({je["name"]: je})
+                    elif je["parameterType"] == "ComponentParameter":
+                        kwargs["componentParams"].update({je["name"]: je})
 
         # NOTE: drop Argxx keywords
 
@@ -752,32 +756,20 @@ class LGNode:
         ports_dict = {}
         name = None
         # if portId is None and index >= 0:
-        if index >= 0:
-            if ports in port_selector:
-                for field in self.jd["fields"]:
-                    if "usage" not in field:  # fixes manual graphs
-                        continue
-                    if field["usage"] in port_selector[ports]:
-                        if portId is None:
-                            name = field["name"]
-                        elif field["id"] == portId:
-                            name = field["name"]
-                        # can't be sure that name is unique
-                        if name not in ports_dict:
-                            ports_dict[name] = [field["id"]]
-                        else:
-                            ports_dict[name].append(field["id"])
-        else:
-            # TODO: This is not really correct, but maybe not needed at all?
-            for port in port_selector[ports]:
-                name = [
-                    p["name"]
-                    for p in self.jd[port]
-                    if port in self.jd and p["Id"] == portId
-                ]
-                name = name[0] if len(name) > 0 else None
-                if name is not None:
-                    break
+        if ports in port_selector:
+            for field in self.jd["fields"]:
+                if "usage" not in field:  # fixes manual graphs
+                    continue
+                if field["usage"] in port_selector[ports]:
+                    if portId is None:
+                        name = field["name"]
+                    elif field["id"] == portId:
+                        name = field["name"]
+                    # can't be sure that name is unique
+                    if name not in ports_dict:
+                        ports_dict[name] = [field["id"]]
+                    else:
+                        ports_dict[name].append(field["id"])
         return name if index >= 0 else ports_dict
 
     def _create_groupby_drops(self, drop_spec):
@@ -905,7 +897,8 @@ class LGNode:
                 app_class = "dlg.apps.dockerapp.DockerApp"
                 drop_spec["name"] = self.jd["command"]
             else:
-                logger.debug("Might be a problem with this node: %s", self.jd)
+                logger.debug("Might be a problem with this node: %s", 
+                             json.dumps(self.jd, indent=2))
 
         self.dropclass = app_class
         self.jd["dropclass"] = app_class

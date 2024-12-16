@@ -372,18 +372,25 @@ class PyFuncApp(BarrierAppDROP):
                     # only transfer if there is a value or precious is True
                     self._applicationArgs.pop(kw)
 
-    def _init_appArgs(self, pargsDict, keyargsDict, inputs, outputs, posargs) -> list:
+    def _init_appArgs(self, pargsDict: dict, keyargsDict: dict, posargs: list) -> list:
         """
         Identify and fill application arguments.
 
         Deals with positional and keyword arguments.
 
+        pargsDict: dict, 
+
+        keyargsDict: 
+
+        posargs: list 
+
+
         Returns:
         --------
         list, [funcargs, pargs]
         """
-        pargs = []
-        funcargs = {}
+        pargs = [] # positional arguments
+        funcargs = {} # Function arguments
         if "applicationArgs" in self.parameters:
             appArgs = self.parameters["applicationArgs"]  # we'll pop the default ones
             _dum = [appArgs.pop(k) for k in self.func_def_keywords if k in appArgs]
@@ -401,6 +408,7 @@ class PyFuncApp(BarrierAppDROP):
                 if appArgs[arg]["type"] in ["Json", "Complex"]:
                     try:
                         value = ast.literal_eval(appArgs[arg]["value"])
+                        encoding = appArgs[arg]["encoding"] 
                         logger.debug(
                             f"Evaluated %s to %s",
                             appArgs[arg]["value"],
@@ -411,14 +419,18 @@ class PyFuncApp(BarrierAppDROP):
                         logger.error("Unable to evaluate %s", appArgs[arg]["value"])
                 else:
                     value = appArgs[arg]["value"]
+                    encoding = appArgs[arg]["encoding"]
                 if arg in pargsDict:
-                    pargsDict.update({arg: value})
+                    pargsDict.update({arg:{"value":value, "encoding":encoding}})
 
             _ = [appArgs.pop(k) for k in pargsDict if k in appArgs]
             logger.debug("Updated posargs dictionary: %s", pargsDict)
 
             keyargsDict.update(
-                {k: appArgs[k]["value"] for k in keyargsDict if k in appArgs}
+                {
+                    k: {"value": appArgs[k]["value"], "encoding": appArgs[k]["encoding"]}
+                    for k in keyargsDict if k in appArgs
+                }
             )
             logger.debug("Updated keyargs dictionary: %s", keyargsDict)
 
@@ -445,19 +457,27 @@ class PyFuncApp(BarrierAppDROP):
             if self.arguments.varkw:
                 logger.debug("Adding remaining **kwargs to funcargs: %s", vkarg)
                 funcargs.update(vkarg)
+        else:
+            pargsDict.update(
+                {k: {"value": pargsDict[k], "encoding": "pickle"} for k in pargsDict}
+            )
+
+        tmpPargs = {port: subdict["value"] for port, subdict in pargsDict.items()}
+        funcargs.update(tmpPargs)
+        # Mixin the values from named ports
+        portargs = self._ports2args(posargs, pargsDict, keyargsDict)
 
         logger.debug(f"Updating funcargs with values from pargsDict {pargsDict}")
-        funcargs.update(pargsDict)
-
-        # Mixin the values from named ports
-        portargs = self._ports2args(inputs, outputs, posargs, pargsDict, keyargsDict)
+        # Extract port and values from pargs; we no longer need the encoding 
 
         logger.debug(f"Updating funcargs with values from named ports {portargs}")
-        funcargs.update(portargs)
+        tmpPortArgs = {port: subdict["value"] for port, subdict in portargs.items()}
+
+        funcargs.update(tmpPortArgs)
 
         return [funcargs, pargs]
 
-    def _ports2args(self, inputs, outputs, posargs, pargsDict, keyargsDict) -> dict:
+    def _ports2args(self, posargs, pargsDict, keyargsDict) -> dict:
         """
         Replace arguments with values from ports.
 
@@ -508,6 +528,7 @@ class PyFuncApp(BarrierAppDROP):
         if "outputs" in self.parameters and check_ports_dict(
             self.parameters["outputs"]
         ):
+            # TODO remove output processing
             check_len = min(len(oitems), self.fn_nargs + self.fn_nkw)
             outputs_dict = collections.OrderedDict()
             for outport in self.parameters["outputs"]:
@@ -641,25 +662,13 @@ class PyFuncApp(BarrierAppDROP):
 
         """
         funcargs = {}
-        # # all_contents = get_port_reader_function(self.input_parser)
-        inputs = collections.OrderedDict()
-        # # for uid, drop in self._inputs.items():
-        # #     inputs[uid] = all_contents(drop)
-
-        outputs = collections.OrderedDict()
-        # for uid, drop in self._outputs.items():
-        #     if self.output_parser is DropParser.PATH:
-        #         outputs[uid] = drop.path
-        #     else:
-        #         outputs[uid] = None
 
         # Keyword arguments are made up of the default values plus the inputs
         # that match one of the keyword argument names
         # if defaults dict has not been specified at all we'll go ahead anyway
 
         # 1. Fill arguments with rest of inputs
-        # logger.debug(f"available inputs: {inputs}")
-
+        # TODO improve naming conventions
         posargs = list(self.posonly.keys()) + list(self.poskw.keys())
         # fill the pargsDict with positional and poskw arguments and defaults
         pargsDict = {k: v.default for k, v in self.posonly.items()}
@@ -671,7 +680,7 @@ class PyFuncApp(BarrierAppDROP):
 
         # deal with arguments of any sort
         funcargs, pargs = self._init_appArgs(
-            pargsDict, keyargsDict, inputs, outputs, posargs
+            pargsDict, keyargsDict, posargs
         )
 
         self._recompute_data["args"] = funcargs.copy()
@@ -711,23 +720,45 @@ class PyFuncApp(BarrierAppDROP):
         # and written to its corresponding output
         self.write_results(result)
 
+    def check_outputs_match_results(self, result: tuple):
+        """
+        # TODO This may be removeable
+        """
+        if len(self.outputs) == 1:
+            result = [result]
+        else:
+            from dlg.droputils import listify
+            result = listify(result)
+            if len(result) != len(self.outputs):
+                raise RuntimeError(
+                    f"Number of PyFunc outputs ({len(self.outputs)})"
+                    f"does not match generated results ({len(self.results)})")
+            return result
+
+    def _match_parser(output_drop):
+        """
+        Match the output parser to the appropriate drop
+        """
+
     def write_results(self, result):
-        outputs = self.outputs
-        if len(outputs) > 0:
-            if len(outputs) == 1:
-                result = [result]
-            for r, o in zip(result, outputs):
-                if self.output_parser is DropParser.PICKLE:
-                    logger.debug(f"Writing pickeled result {type(r)} to {o}")
-                    o.write(pickle.dumps(r))
-                elif self.output_parser is DropParser.EVAL:
-                    o.write(repr(r).encode("utf-8"))
-                elif self.output_parser is DropParser.NPY:
-                    drop_loaders.save_npy(o, r)
-                elif self.output_parser is DropParser.RAW:
-                    o.write(r)
-                else:
-                    ValueError(self.output_parser.__repr__())
+
+        if not self.outputs:
+            return
+
+        for o in self.outputs:
+            if self.output_parser is DropParser.PICKLE:
+                logger.debug(f"Writing pickeled result {type(result)} to {o}")
+                o.write(pickle.dumps(result))
+            elif self.output_parser is DropParser.EVAL:
+                o.write(repr(result).encode("utf-8"))
+            elif self.output_parser is DropParser.NPY:
+                drop_loaders.save_npy(o, result)
+            elif self.output_parser is DropParser.RAW:
+                o.write(result)
+            elif self.output_parser is DropParser.DILL:
+                o.write(pickle.dumps(result))
+            else:
+                ValueError(self.output_parser.__repr__())
 
     def generate_recompute_data(self):
         for name, val in self._recompute_data.items():
