@@ -28,7 +28,7 @@ Use examples derived from the following DROP classes:
 - s3_drop
 - bash_shell_app
 - dockerapp 
-- mpi
+    - mpi
 """
 import dill
 import logging

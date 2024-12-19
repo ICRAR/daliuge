@@ -708,6 +708,36 @@ class PyFuncApp(BarrierAppDROP):
         """
         Match the output parser to the appropriate drop
         """
+        encoding = None
+        component_params = self.parameters.get("componentParams")
+        if not component_params:
+            return self.output_parser
+        if "outputs" in self.parameters and check_ports_dict(
+            self.parameters["outputs"]
+        ):
+            for outport in self.parameters["outputs"]:
+                drop_uid, drop_port = list(outport.items())[0]
+                if drop_uid == output_drop.uid:
+                    encoding = component_params[drop_port]["encoding"]
+        if encoding:
+            return DropParser(encoding)
+        else:
+            return self.output_parser
+
+        encoding = (
+            None  # TODO: When we remove the output_parser, transition this to dill
+        )
+        component_params = self.parameters.get("componentParams")
+        if not component_params:
+            return self.output_parser
+        if "outputs" in self.parameters and check_ports_dict(
+            self.parameters["outputs"]
+        ):
+            for outport in self.parameters["outputs"]:
+                drop_uid, drop_port = list(outport.items())[0]
+                if drop_uid == output_drop.uid and drop_port in component_params:
+                    encoding = component_params[drop_port]["encoding"]
+        return DropParser(encoding) if encoding else self.output_parser
 
         encoding = (
             None  # TODO: When we remove the output_parser, transition this to dill

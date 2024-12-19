@@ -136,7 +136,7 @@ class TestPyFuncApp(unittest.TestCase):
 
     def test_pickle_func(self, f=lambda x: x, input_data="hello", output_data="hello"):
         a = InMemoryDROP("a", "a")
-        kwargs = {a.uid: 'x'}
+        kwargs = {a.uid: "x"}
         b = _PyFuncApp("b", "b", f, **kwargs)
         c = InMemoryDROP("c", "c")
 
@@ -154,14 +154,14 @@ class TestPyFuncApp(unittest.TestCase):
         input_data = [2, 2] if input_data is None else input_data
         output_data = [2, 2] if output_data is None else output_data
         a = InMemoryDROP("a", "a")
-        kwargs = {a.uid: 'x'}
+        kwargs = {a.uid: "x"}
         b = _PyFuncApp(
             "b",
             "b",
             f,
             input_parser=DropParser.EVAL,
             output_parser=DropParser.EVAL,
-            **kwargs
+            **kwargs,
         )
         c = InMemoryDROP("c", "c")
 
@@ -181,15 +181,10 @@ class TestPyFuncApp(unittest.TestCase):
     def test_string2json_func(self, f=string2json, input_data=None, output_data=None):
         input_data = '["a", "b", "c"]' if input_data is None else input_data
         output_data = ["a", "b", "c"] if output_data is None else output_data
- 
+
         a = InMemoryDROP("a", "a")
-        kwargs = {a.uid: 'string'}
-        b = _PyFuncApp(
-            "b",
-            "b",
-            f,
-            **kwargs
-        )
+        kwargs = {a.uid: "string"}
+        b = _PyFuncApp("b", "b", f, **kwargs)
         c = InMemoryDROP("c", "c")
 
         b.addInput(a)
@@ -207,14 +202,14 @@ class TestPyFuncApp(unittest.TestCase):
         output_data = numpy.ones([2, 2]) if output_data is None else output_data
 
         a = InMemoryDROP("a", "a")
-        kwargs = {a.uid: 'x'}
+        kwargs = {a.uid: "x"}
         b = _PyFuncApp(
             "b",
             "b",
             f,
             input_parser=DropParser.NPY,
             output_parser=DropParser.NPY,
-            **kwargs
+            **kwargs,
         )
         c = InMemoryDROP("c", "c")
 
@@ -230,7 +225,7 @@ class TestPyFuncApp(unittest.TestCase):
 
     def _test_simple_functions(self, f, input_data, output_data, argname):
         a, c = [InMemoryDROP(x, x) for x in ("a", "c")]
-        kwargs = {a.uid:argname}
+        kwargs = {a.uid: argname}
         b = _PyFuncApp("b", "b", f, **kwargs)
         b.addInput(a)
         b.addOutput(c)
@@ -474,10 +469,8 @@ class PyFuncAppIntraNMTest(NMTestsMixIn, unittest.TestCase):
                 "dropclass": "dlg.apps.pyfunc.PyFuncApp",
                 "func_name": __name__ + ".func1",
                 "inputs": [
-                    {
-                        "A": "arg1"
-                    },
-                ]
+                    {"A": "arg1"},
+                ],
             },
             {
                 "oid": "C",
@@ -514,11 +507,9 @@ class PyFuncAppIntraNMTest(NMTestsMixIn, unittest.TestCase):
                 "dropclass": "dlg.apps.pyfunc.PyFuncApp",
                 "func_name": __name__ + ".func1",
                 "inputs": [
-                    {
-                        "A": "arg1"
-                    },
-                ]
-            }
+                    {"A": "arg1"},
+                ],
+            },
         ]
         g2 = [
             {
