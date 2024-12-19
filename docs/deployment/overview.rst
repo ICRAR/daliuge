@@ -9,11 +9,11 @@ As mentioned above, |daliuge| has been developed to enable processing of data fr
 
 .. _dataflow.fig.funcs:
 
-.. figure:: images/dfms_func_as_graphs.jpg
+.. figure:: ../images/dfms_func_as_graphs.jpg
 
    Graph-based Functions of the |daliuge| Prototype
 
-The :doc:`architecture/graphs` section describes the implementation details for each function.
+The :doc:`../architecture/graphs` section describes the implementation details for each function.
 Here we briefly discuss how they work together to fullfill the SKA requirements.
 
 * First of all, the *Logical Graph Template* (topleft in
@@ -39,8 +39,8 @@ Here we briefly discuss how they work together to fullfill the SKA requirements.
 
 * Before an observation starts, the |daliuge| engine de-serializes a physical graph JSON string and turns all the nodes into Drop objects and then deploys all the Drops onto the allocated resources as per the
   location information stated in the physical graph. The deployment process is
-  facilitated through :doc:`architecture/managers`, which are daemon processes managing the deployment of Drops
-  onto the designated resources. Note that the :doc:`architecture/managers` do _not_ control the Drops or the execution, but they do monitor the state of them during the execution.
+  facilitated through :doc:`../architecture/managers`, which are daemon processes managing the deployment of Drops
+  onto the designated resources. Note that the :doc:`../architecture/managers` do _not_ control the Drops or the execution, but they do monitor the state of them during the execution.
 
 * Once an observation starts, the graph :ref:`graph.execution` cascades down the graph edges through either data Drops that triggers its next consumers or application Drops
   that produces its next outputs. When all Drops are in the **COMPLETED** state, some data Drops
@@ -61,7 +61,14 @@ The translator is able to determine which of the following options is available 
 Deployment in HPC Centers
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
+For current deployment in HPC systems that do not support OOD, please refer to :ref:`slurm_deployment`. 
+
 When trying to deploy |daliuge| inside a HPC centre the basic concept as described above does not apply, since in general it is not possible to have the managers running on nodes in a daemon-like way. Typically a user has to submit a job into a batch queue system like SLURM or Torque and that is pretty much all that can be done by a normal user. In order to address this use case, the |daliuge| code base contains example code (daliuge-engine/dlg/deploy/pawsey/start_dfms_cluster.py) which essentially allows to submit not just the workflow, but also the |daliuge| engine as a job. The first thing that job is then doing is to start the managers and then submit the graph. It also allows to start a proxy server, which provides access to the managers' web interfaces via an external machine in order to be able to monitor the running graph. The best way to get access to the |daliuge| code base is to ask the support team to create a load module specifically for |daliuge|. If that is not possible, then users can just load an appropriate Python version (3.7 or 3.8) and install |daliuge| locally. In many cases it is not possible to run docker containers on HPC infrastructure.
+
+.. toctree::
+  :maxdepth: 1 
+  
+  slurm_deployment
 
 Deployment with OpenOnDemand
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -73,7 +80,7 @@ Importantly, the physical graph deployment is triggered by the user's browser di
 
 .. _deployment.fig.ood:
 
-.. figure:: images/deploy_ood.jpeg
+.. figure:: ../images/deploy_ood.jpeg
 
    Sequence diagram of graph deployment in OOD envrionment.
 
@@ -92,7 +99,7 @@ The server deployment option assumes the machine hosting the translator can comm
 
 .. _deployment.fig.server:
 
-.. figure:: images/deploy_server.jpeg
+.. figure:: ../images/deploy_server.jpeg
 
    Sequence diagram of direct graph deployment.
 
@@ -109,7 +116,7 @@ locally, make sure that your host descriptions in EAGLE and the translator are '
 
 .. _deployment.fig.browser:
 
-.. figure:: images/deploy_browser.jpeg
+.. figure:: ../images/deploy_browser.jpeg
 
    Sequence diagram of restful graph deployment.
 
@@ -128,9 +135,11 @@ The user will need to monitor the k8s environment directly.
 
 .. _deployment.fig.helm:
 
-.. figure:: images/deploy_helm.jpeg
+.. figure:: ../images/deploy_helm.jpeg
 
    Sequence diagram of graph deployment in helm environment.
+
+
 
 Component Deployment
 ====================
@@ -160,3 +169,4 @@ In order to be able to use Python components, it must be possible for the engine
   docker exec -ti daliuge-engine bash -c "pip install --prefix=\$DLG_ROOT/code dlg_example_cmpts" 
 
 Please note that the '\' character is required for this to work correctly. In the case of running |daliuge| in docker containers $DLG_ROOT is mounted from the host and thus also the subdirectory code is visible directly on the host. In a typical HPC deployment scenario that directory will be on the user's home directory, or a shared volume, visible to all compute nodes. 
+
