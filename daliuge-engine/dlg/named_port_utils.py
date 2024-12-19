@@ -19,7 +19,7 @@ class DropParser(Enum):
     PATH = "path"  # input only
     DATAURL = "dataurl"  # input only
     BINARY = "binary"
-    UTF8 = "utf8"
+    UTF8 = "utf-8"
 
 
 def serialize_kwargs(keyargs, prefix="--", separator=" "):
@@ -387,7 +387,7 @@ def get_port_reader_function(input_parser: DropParser):
     if input_parser is DropParser.PICKLE:
         # all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
         reader = drop_loaders.load_pickle
-    elif input_parser is DropParser.EVAL:
+    elif input_parser is DropParser.EVAL or input_parser is DropParser.UTF8:
 
         def optionalEval(x):
             # Null and Empty Drops will return an empty byte string
@@ -405,7 +405,7 @@ def get_port_reader_function(input_parser: DropParser):
     elif input_parser is DropParser.DILL:
         reader = drop_loaders.load_dill
     elif input_parser is DropParser.BINARY:
-        reader = drop_loaders.load_dill
+        reader = drop_loaders.load_binary
     else:
         raise ValueError(input_parser.__repr__())
     return reader
