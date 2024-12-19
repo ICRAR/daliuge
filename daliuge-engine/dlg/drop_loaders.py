@@ -116,3 +116,26 @@ def load_dill(drop: "DataDROP"):
     drop.close(desc)
     return dill.loads(buf.getbuffer())
 
+def load_binary(drop: "DataDROP"): 
+   """
+   Load binary 
+   """
+   buf = io.BytesIO()
+   desc = drop.open()
+   while True:
+       data = drop.read(desc)
+       if not data: 
+           break
+       buf.write(data)
+       drop.close(desc)
+       return buf.getvalue()
+
+def save_binary(drop: "DataDROP", data: bytes):
+    """
+    Load binary 
+    """
+    bytes_data = io.BytesIO(data)
+    dropio = drop.getIO()
+    dropio.open(OpenMode.OPEN_WRITE)
+    dropio.write(bytes_data)
+    dropio.close()

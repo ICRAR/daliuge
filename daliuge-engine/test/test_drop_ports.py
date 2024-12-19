@@ -28,7 +28,7 @@ Use examples derived from the following DROP classes:
 - s3_drop
 - bash_shell_app
 - dockerapp 
-- mpi
+    - mpi
 """
 import logging
 import unittest
@@ -66,7 +66,7 @@ class TestPortsLoaded(unittest.TestCase):
         with Path(spec).open('r') as f: 
             appDropSpec = json.load(f)
         
-        roots, drops = graph_loader.createGraphFromDropSpecList(appDropSpec, ret_drops=True)
+        roots = graph_loader.createGraphFromDropSpecList(appDropSpec)
         # drops = [v for d,v in drops.items()]
         leafs = droputils.getLeafNodes(roots)  
         with  droputils.DROPWaiterCtx(self, leafs, timeout=3000):

@@ -27,8 +27,8 @@ full JSON representation.
 import collections
 import importlib
 import logging
+from typing import List, Optional
 
-from typing import List
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 
 from . import droputils
@@ -39,6 +39,7 @@ from .drop import (
     LINKTYPE_NTO1_PROPERTY,
     LINKTYPE_1TON_APPEND_METHOD,
 )
+
 from .data.drops.data_base import NullDROP
 from .data.drops.container import ContainerDROP
 
@@ -245,7 +246,9 @@ def loadDropSpecs(dropSpecList):
     return dropSpecs, reprodata
 
 
-def createGraphFromDropSpecList(dropSpecList, session=None, ret_drops=False):
+def createGraphFromDropSpecList(dropSpecList: List[dict],
+                                session: Optional["Session"]=None
+                                ) -> List[AbstractDROP]:
     logger.debug("Found %d DROP definitions", len(dropSpecList))
 
     # Step #1: create the actual DROPs
@@ -317,8 +320,6 @@ def createGraphFromDropSpecList(dropSpecList, session=None, ret_drops=False):
         drop for drop in drops.values() if not droputils.getUpstreamObjects(drop)
     ]
     logger.info("%d graph roots found, bye-bye!", len(roots))
-    if ret_drops:
-        return roots, drops
     return roots
 
 
