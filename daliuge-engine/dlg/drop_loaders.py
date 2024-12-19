@@ -99,3 +99,43 @@ def load_npy(drop: "DataDROP", allow_pickle=False) -> np.ndarray:
 
 def load_numpy(drop: "DataDROP", allow_pickle=True):
     return load_npy(drop, allow_pickle=allow_pickle)
+
+
+import dill
+def load_dill(drop: "DataDROP"):
+    """
+    Load dill
+    """
+    buf = io.BytesIO()
+    desc = drop.open()
+    while True:
+        data = drop.read(desc)
+        if not data:
+            break
+        buf.write(data)
+    drop.close(desc)
+    return dill.loads(buf.getbuffer())
+
+def load_binary(drop: "DataDROP"): 
+   """
+   Load binary 
+   """
+   buf = io.BytesIO()
+   desc = drop.open()
+   while True:
+       data = drop.read(desc)
+       if not data: 
+           break
+       buf.write(data)
+       drop.close(desc)
+       return buf.getvalue()
+
+def save_binary(drop: "DataDROP", data: bytes):
+    """
+    Load binary 
+    """
+    bytes_data = io.BytesIO(data)
+    dropio = drop.getIO()
+    dropio.open(OpenMode.OPEN_WRITE)
+    dropio.write(bytes_data)
+    dropio.close()

@@ -382,6 +382,7 @@ if __name__ == '__main__':
         "chiles_simple.graph",
         "Plasma_test.graph",
         "SharedMemoryTest_update.graph",
+        "test_ports.graph"
         # "simpleMKN_update.graph", # Currently broken
     ]
 
@@ -391,15 +392,29 @@ if __name__ == '__main__':
         lg = LG(fp, ssid=TEST_SSID)
 
         lg_unroll = lg.unroll_to_tpl()
-        fn_pkl = lg_name.split('.')[0] + '.pkl'
         pkl_path = path_utils.get_lg_fpath("pickle", lg_name)
         with open(pkl_path, 'wb') as fp:
             pickle.dump(lg_unroll, fp)
 
         pgt = PGT(lg_unroll)
         pg_json = pgt.to_gojs_json(visual=True, string_rep=False)
-        fn_json = lg_name.split('.')[0] + '.json'
-        pg_path = path_utils.get_lg_fpath("pg_spec", lg_name)
+        pg_path = path_utils.get_lg_fpath("go_js_json", lg_name)
 
         with open(pg_path, 'w') as fp:
             json.dump(pg_json, fp, indent=2)
+
+        node_list = [
+            "10.128.0.11",
+            "10.128.0.12",
+            "10.128.0.13",
+            "10.128.0.14",
+            "10.128.0.15",
+            "10.128.0.16",
+        ]
+        pgtp = MetisPGTP(lg_unroll,merge_parts=True)
+        pgtp.to_gojs_json(visual=True, string_rep=False)
+        pg_spec = pgtp.to_pg_spec(node_list=node_list, num_islands=1, ret_str=False)
+        fn_spec = lg_name.split('.')[0] + '.spec'
+        drop_spec_path = path_utils.get_lg_fpath("drop_spec", lg_name)
+        with open(drop_spec_path, 'w') as fp:
+            json.dump(pg_spec, fp, indent=2)
