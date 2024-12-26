@@ -147,7 +147,8 @@ class CompositeManager(DROPManager):
             dmHosts: list[str] = None,
             pkeyPath=None,
             dmCheckTimeout=10,
-            dump_graphs=False
+            dump_graphs=False,
+            hosts_are_dim=True
     ):
         """
         Creates a new CompositeManager. The sub-DMs it manages are to be located
@@ -164,7 +165,7 @@ class CompositeManager(DROPManager):
         :param: dmCheckTimeout The timeout used before giving up and declaring
                 a sub-DM as not-yet-present in a given host
         """
-        self._dmHosts = [Node(host) for host in dmHosts]
+        self._dmHosts = [Node(host, dim=hosts_are_dim) for host in dmHosts]
         if self._dmHosts and self._dmHosts[0].rest_port_specified:
             dmPort = -1
         self._dmPort = dmPort
@@ -683,6 +684,7 @@ class MasterManager(CompositeManager):
             dmHosts=dmHosts,
             pkeyPath=pkeyPath,
             dmCheckTimeout=dmCheckTimeout,
-            dump_graphs=dump_graphs
+            dump_graphs=dump_graphs,
+            hosts_are_dim=True
         )
         logger.info("Created MasterManager for DIM hosts: %r", self._dmHosts)
