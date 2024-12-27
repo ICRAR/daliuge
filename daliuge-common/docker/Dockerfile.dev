@@ -9,12 +9,12 @@ LABEL stage=builder
 LABEL build=$BUILD_ID
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get update && \
-    apt-get install -y avahi-utils gcc python3 python3.8-venv python3-pip python3-distutils python3-appdirs libmetis-dev curl git sudo && \
+    apt-get install -y avahi-daemon avahi-utils gcc python3.9 python3.9-venv python3-pip python3-distutils python3-appdirs libmetis-dev curl git sudo && \
     apt-get clean
 
 COPY / /daliuge
 
-RUN cd / && python3 -m venv dlg && cd /daliuge && \
+RUN cd / && python3.9 -m venv dlg && cd /daliuge && \
     . /dlg/bin/activate && \
     pip install --upgrade pip && \
     pip install wheel numpy && \
