@@ -49,7 +49,7 @@ prototyping tool. Please review the installation material for Docker `here <http
 
 The following steps are recommended for quickstarting your DALiuGE install: 
 
-1. Create and enterthe virtual environment
+1. Create and enter the virtual environment
 2. Build the docker images
 3. Run the docker images
 4. Confirm the images are running and accessible from EAGLE using a web browser. 
