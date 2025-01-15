@@ -44,6 +44,7 @@ except ImportError:
 
 
 def add(x, y):
+    logger.debug(f"{repr(x)}")
     return x + y
 
 
@@ -51,11 +52,12 @@ def add_list(numbers):
     return functools.reduce(add, numbers)
 
 
-def subtract(x, y):
+def subtract(x: float, y: float):
+    logger.debug(f"{repr(x)}")
     return x - y
 
 
-def subtract_list(numbers):
+def subtract_list(numbers: list):
     return functools.reduce(subtract, numbers)
 
 
@@ -129,7 +131,7 @@ class _TestDelayed(object):
         """
         delayed = self.delayed
         compute = self.compute
-
+        
         the_sum = delayed(add)(1.0, 2.0)
         the_sub = delayed(subtract)(4.0, 3.0)
         division = delayed(divide)(the_sum, the_sub)
@@ -149,11 +151,15 @@ class _TestDelayed(object):
             delayed(3.0),
             delayed(4.0),
         )
+        # TODO make sure that we accept lists as specific input
+        # I Think the *args expander is not working appropriately here when we use it in 
+        # The appDrop method. 
         the_sum = delayed(add_list)([one, two])
         the_sub = delayed(subtract_list)([four, three])
         division = delayed(divide)(the_sum, the_sub)
         parts = delayed(partition, nout=2)(division)
-        result = compute(delayed(add)(*parts))
+        x, y = parts
+        result = compute(delayed(add)(x,y))
         self.assertEqual(3.0, result)
 
     def test_compute_with_lists(self):

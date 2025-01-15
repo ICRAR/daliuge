@@ -189,6 +189,7 @@ def check_ports_dict(ports: list) -> bool:
         bool: True if all ports are dict, else False
     """
     # all returns true if list is empty!
+    logger.debug("Ports list is: %s", ports)
     if len(ports) > 0:
         return all(isinstance(p, dict) for p in ports)
     else:

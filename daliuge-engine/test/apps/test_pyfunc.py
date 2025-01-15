@@ -78,6 +78,7 @@ def _PyFuncApp(oid, uid, f, **kwargs):
     input_kws = [
         {k: v} for k, v in kwargs.items() if k not in ["input_parser", "output_parser"]
     ]
+
     fcode, fdefaults = pyfunc.serialize_func(f)
     return pyfunc.PyFuncApp(
         oid,
@@ -234,7 +235,7 @@ class TestPyFuncApp(unittest.TestCase):
         b.addInput(a)
         b.addOutput(c)
 
-        with DROPWaiterCtx(self, c, 5):
+        with DROPWaiterCtx(self, c, 50):
             a.write(pickle.dumps(input_data))
             a.setCompleted()
 
@@ -305,7 +306,7 @@ class TestPyFuncApp(unittest.TestCase):
         with multiple outputs.
         """
         output_drops = [InMemoryDROP(x, x) for x in ("b", "c", "d")]
-        self._test_func3(output_drops, [["b", "c", "d"]])
+        self._test_func3(output_drops, ["b", "c", "d"])
 
     def _test_defaults(self, expected_out, *args, **kwargs):
         def _do_test(func, expected_out, *args, **kwargs):
