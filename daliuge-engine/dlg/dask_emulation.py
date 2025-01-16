@@ -63,7 +63,7 @@ class ResultTransmitter(BarrierAppDROP):
             except EOFError:
                 content = None
             return content
-
+        
         results = map(read_result, self.inputs)  # @UndefinedVariable
         results = list(results)
         if len(self.inputs) == 1:
@@ -245,6 +245,7 @@ class _Listifier(BarrierAppDROP):
     """Returns a list with all objects as contents"""
 
     def run(self):
+        logger.debug("Listifier running...")
         self.outputs[0].write(
             pickle.dumps(
                 [pickle.loads(droputils.allDropContents(x)) for x in self.inputs]
@@ -284,6 +285,11 @@ class _DelayedDrops(_DelayedDrop):
     def __getitem__(self, i):
         return self.drops[i]
 
+    def _add_upstream(self, upstream: _DelayedDrop):
+        _DelayedDrop._add_upstream(self, upstream)
+        self.dropdict["inputs"].append(upstream.oid)
+        
+
     def make_dropdict(self):
         return dropdict(
             {
@@ -291,6 +297,7 @@ class _DelayedDrops(_DelayedDrop):
                 "categoryType": "Application",
                 "dropclass": "dlg.dask_emulation._Listifier",
                 "name": "listifier",
+                "inputs": self.inputs
             }
         )
 
@@ -444,7 +451,10 @@ def getitem(x, i):
     Helper function to ensure the delayed() __getitem__ gets the appropriate arguments
     in the correct order. 
     """
-    return x[i]
+    try: 
+        return x[i]
+    except TypeError:
+        return x
 class _DataDropSequence(_DataDrop):
     """One or more _DataDrops that can be subscribed"""
 
