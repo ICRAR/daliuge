@@ -256,7 +256,7 @@ class PyFuncApp(BarrierAppDROP):
     output_parser: DropParser = dlg_enum_param(DropParser, "output_parser", DropParser.PICKLE)  # type: ignore
     func_arg_mapping = dlg_dict_param("func_arg_mapping", {})
     func_defaults = dlg_dict_param("func_defaults", {})
-    f: Callable
+    func: Callable
     fdefaults: dict
 
     def _mixin_func_defaults(self):
@@ -285,7 +285,7 @@ class PyFuncApp(BarrierAppDROP):
         if not isinstance(self.func_defaults, dict):
             logger.error(
                 "Wrong format or type for function defaults for %s: %r, %r",
-                self.f.__name__,
+                self.func.__name__,
                 self.func_defaults,
                 type(self.func_defaults),
             )
@@ -305,7 +305,7 @@ class PyFuncApp(BarrierAppDROP):
         Multiple options exist and some are here for compatibility.
         """
         logger.debug(f"Starting evaluation of function signature")
-        self.argsig = inspect.signature(self.f)
+        self.argsig = inspect.signature(self.func)
         self.argnames = list(self.argsig.parameters.keys())
         logger.debug("Function signature: %s", self.argsig)
         args = list(self.argsig.parameters.keys())
@@ -342,7 +342,7 @@ class PyFuncApp(BarrierAppDROP):
                     self.arguments_defaults.append(None)
                     self.fn_ndef += 1
 
-        logger.debug("Got signature for function %s %s", self.f, self.argsig)
+        logger.debug("Got signature for function %s %s", self.func, self.argsig)
         logger.debug("Got default values for arguments %s", self.arguments_defaults)
         self.fn_defaults = self.arguments_defaults
         logger.debug(f"initialized fn_defaults with {self.fn_defaults}")
@@ -403,7 +403,7 @@ class PyFuncApp(BarrierAppDROP):
                     try:
                         value = ast.literal_eval(self._applicationArgs[arg]["value"])
                         # TODO sanity check the encoding? 
-                        encoding = self._applicationArgs[arg]["encoding"] 
+                        encoding = self._applicationArgs[arg].get("encoding", "pickle")
                         logger.debug(
                             f"Evaluated %s to %s",
                             self._applicationArgs[arg]["value"],
@@ -414,10 +414,10 @@ class PyFuncApp(BarrierAppDROP):
                         logger.error("Unable to evaluate %s", self._applicationArgs[arg]["value"])
                 else:
                     value = self._applicationArgs[arg]["value"]
-                    encoding = self._applicationArgs[arg]["encoding"]
+                    encoding = self._applicationArgs[arg].get("encoding", "pickle")
                 if arg in pargsDict:
                     pargsDict.update({arg:{"value":value, "encoding":encoding}})
-
+            
             _ = [self._applicationArgs.pop(k) for k in pargsDict if k in self._applicationArgs]
             logger.debug("Updated posargs dictionary: %s", pargsDict)
 
@@ -446,7 +446,7 @@ class PyFuncApp(BarrierAppDROP):
                     vkarg.update({arg: value})
 
             # TODO: check where this is defined in signature
-            self.arguments = inspect.getfullargspec(self.f)
+            self.arguments = inspect.getfullargspec(self.func)
             if self.arguments.varargs:
                 logger.debug("Adding remaining *args to pargs %s", vparg)
                 pargs.extend(vparg)
@@ -454,6 +454,7 @@ class PyFuncApp(BarrierAppDROP):
                 logger.debug("Adding remaining **kwargs to funcargs: %s", vkarg)
                 funcargs.update(vkarg)
         else:
+            logger.debug("AppArgs/pargsDict: %s", pargsDict)
             if self.input_parser:
                 encoding = self.input_parser
             else:
@@ -462,8 +463,8 @@ class PyFuncApp(BarrierAppDROP):
                 {k: {"value": pargsDict[k], "encoding": encoding} for k in pargsDict}
             )
         # Extract arg and values from pargs; we no longer need the encoding 
+        logger.debug(f"Updating funcargs with values from pargsDict: {pargsDict}")
         tmpPargs = {arg: subdict["value"] for arg, subdict in pargsDict.items()}
-        logger.debug(f"Updating funcargs with values from pargsDict {pargsDict}")
         funcargs.update(tmpPargs)
 
         # Mixin the values from named ports
@@ -485,11 +486,11 @@ class PyFuncApp(BarrierAppDROP):
         """
         portargs = {}
         # 3. replace default argument values with named input ports
-        # TODO: investigate performing inputs and outputs in a single call
         iitems = self._inputs
-        oitems = self._outputs
-
+        logger.debug("Mapping from _inputs: %s", iitems)
+        logger.debug("Parameters: %s", self.parameters)
         if "inputs" in self.parameters and check_ports_dict(self.parameters["inputs"]):
+            logger.debug("Mapping ports to inputs...")
             check_len = min(
                 len(iitems),
                 self.fn_nargs + self.fn_nkw,
@@ -510,6 +511,13 @@ class PyFuncApp(BarrierAppDROP):
                     parser=get_port_reader_function(self.input_parser)
                 )
             )
+        else:
+            for i, input_drop in enumerate(iitems): 
+                parser = get_port_reader_function(self.input_parser)
+                value = parser(input_drop)
+                logger.debug("Port value pair: %s, %s", self.argnames[i], value)
+
+        logger.debug("Finally port mapping: %s, %s, %s", portargs, pargsDict, keyargsDict)
         return portargs
 
     def initialize_with_func_code(self):
@@ -520,7 +528,7 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(f"Initializing with func_code of type {type(self.func_code)}")
         if not isinstance(self.func_code, bytes):
             try:
-                self.f = import_using_code(
+                self.func = import_using_code(
                     self.func_code, self.func_name, serialized=False
                 )
             except (SyntaxError, NameError):
@@ -528,7 +536,7 @@ class PyFuncApp(BarrierAppDROP):
         if isinstance(self.func_code, bytes) or serialized:
             if isinstance(self.func_code, str):
                 self.func_code = base64.b64decode(self.func_code.encode("utf8"))
-            self.f = import_using_code(self.func_code, self.func_name, serialized=True)
+            self.func = import_using_code(self.func_code, self.func_name, serialized=True)
 
         self._init_fn_defaults()
         # make sure defaults are dicts
@@ -580,7 +588,7 @@ class PyFuncApp(BarrierAppDROP):
 
         # Lookup function or import bytecode as a function
         if not self.func_code:
-            self.f = import_using_name(self, self.func_name)
+            self.func = import_using_name(self, self.func_name)
             self._init_fn_defaults()
         else:
             self.initialize_with_func_code()
@@ -667,7 +675,7 @@ class PyFuncApp(BarrierAppDROP):
 
         # Here is where the function is actually executed
         with redirect_stdout(capture):
-            result = self.f(*bind.args, **bind.kwargs)
+            result = self.func(*bind.args, **bind.kwargs)
 
         logger.debug("Returned result from %s: %s", self.func_name, result)
         logger.info(
@@ -715,10 +723,25 @@ class PyFuncApp(BarrierAppDROP):
             return self.output_parser
 
     def write_results(self, result):
-
+        from dlg.droputils import listify
         if not self.outputs:
             return
-        for o in self.outputs:
+        result_iter = listify(result)
+        logger.debug("Writing follow result to %d output: %s", len(self.outputs), result_iter) 
+        for i, o in enumerate(self.outputs):
+            # result = result_iter[0]
+            if len(result_iter) == 1:# and len(self.outputs) > 1: 
+                # We only have one element, no need to save as a list
+                result = result_iter[0] 
+            elif len(result_iter) > 1 and len(self.outputs) == 1:
+                # We want all elements in the list to go to the output
+                result = result 
+            else:
+                # Iterate over each element of the list for each output
+                # Wrap around for len(result_iter) < len(self.outputs)
+                i = i%len(self.outputs) 
+                result = result_iter[i] 
+
             parser = self._match_parser(o)
             if parser is DropParser.PICKLE:
                 logger.debug(f"Writing pickeled result {type(result)} to {o}")

@@ -169,7 +169,7 @@ extra_requires = {
     "aws": ["boto3"],
     "test": [
         "pytest",
-        "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo",
+        "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@LIU-392",
     ],
 }
 
