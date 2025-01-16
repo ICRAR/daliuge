@@ -1,4 +1,4 @@
-#a
+#
 #    ICRAR - International Centre for Radio Astronomy Research
 #    (c) UWA - The University of Western Australia, 2014
 #    Copyright by UWA (in the framework of the ICRAR)
@@ -28,42 +28,58 @@ Use examples derived from the following DROP classes:
 - s3_drop
 - bash_shell_app
 - dockerapp 
-    - mpi
+- mpi
 """
+import dill
 import logging
 import unittest
+import pytest
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-import json
-import dlg.droputils as droputils
+# Note this test will only run with a full installation of DALiuGE.
+pexpect = pytest.importorskip("dlg.dropmake")
 
+import json
+from pathlib import Path
+
+import dlg.droputils as droputils
 import dlg.graph_loader as graph_loader
 
-from pathlib import Path
+from dlg.ddap_protocol import DROPStates
 from dlg.dropmake import path_utils
 
-from dlg.ddap_protocol import DROPStates
-
-from test.apps.test_pyfunc import func_with_defaults
-
-class TestPortsLoaded(unittest.TestCase):
+class TestPortsEncoding(unittest.TestCase):
     """
     Given a dropspec, make sure the ports are loaded correctly. 
     """ 
 
-    def test_extract_attributes(self):
+    def test_pyfunc_ports_encoding(self):
         """
-        Given a drop, make sure the attributes are accurately loaded.
+        
+        This test evaluates the use of per-port encoding using the test_ports.graph, 
+        described below. 
+        
+        The CreateMultiA drop has inputs of 2,8 (non-default), which are replicated
+        with the chosen encoding (numpy and pickle, respectively). These are passed to 
+        CreateMultiB, which again replicates the output with selected encoding. These are
+        passed to FileDrops, from which we can confirm the encoding has worked as 
+        expected. 
 
-        Rules for applicationArgs: 
-            - If it is an applicationArgument and it has a port value, we don't
-              set this as a param
 
+                    ------> numpy(2) ---              ------> "numpy(2)"
+                    |                   |             |
+                    (npy)              (npy)        (UTF-8) 
+                    |                   |             |
+        <CreateMultiA(2,8)>                  <CreateMultiB> 
+                    |                   |             |
+                    (pickle)          (pickle)       (pickle)
+                    |                   |             |
+                    ------> pickle(8) ---             -----> pickle(8)
         """
         spec = Path(path_utils.get_lg_fpath("drop_spec", "test_ports.graph"))
-        with Path(spec).open('r') as f: 
+        with Path(spec).open('r', encoding="utf-8") as f: 
             appDropSpec = json.load(f)
         
         roots = graph_loader.createGraphFromDropSpecList(appDropSpec)
@@ -76,3 +92,11 @@ class TestPortsLoaded(unittest.TestCase):
                 
         for l in leafs:
             self.assertEqual(DROPStates.COMPLETED, l.status) 
+
+        # Leaf Node 1 has been encoded first as numpy, second as UTF-8. 
+        leaf = leafs.pop(0)
+        desc = leaf.open()
+        self.assertEqual("array(2)", leaf.read(desc).decode())
+        leaf = leafs.pop()
+        desc = leaf.open()
+        self.assertEqual(8, dill.loads(leaf.read(desc)))
