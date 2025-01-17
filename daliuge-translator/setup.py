@@ -125,7 +125,7 @@ install_requires = [
 extra_requires = {
     "test": [
         "pytest",
-        "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo",
+        "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@LIU-392",
     ]
 }
 
