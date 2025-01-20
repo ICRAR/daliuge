@@ -148,7 +148,7 @@ class CompositeManager(DROPManager):
             pkeyPath=None,
             dmCheckTimeout=10,
             dump_graphs=False,
-            hosts_are_dim=True
+            hosts_are_dim=False
     ):
         """
         Creates a new CompositeManager. The sub-DMs it manages are to be located
