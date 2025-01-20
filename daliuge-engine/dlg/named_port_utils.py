@@ -254,9 +254,9 @@ def replace_named_ports(
     keywordArgs = _get_args(appArgs, positional=False)
     # we will need an ordered dict for all positional arguments
     # thus we create it here and fill it with values
-    positionalPortArgs = collections.OrderedDict(
-        zip(positionalArgs, [None] * len(positionalArgs))
-    )
+    positionalPortArgs = collections.OrderedDict(positionalArgs)
+    #       zip(positionalArgs, [None] * len(positionalArgs))
+    # )
 
     logger.debug(
         "posargs: %s; keyargs: %s, %s",
@@ -371,7 +371,8 @@ def _get_args(appArgs, positional=False):
     Separate out the arguments dependening on if we want positional or keyword style
     """
     args = {
-        arg: appArgs[arg]["value"]
+        arg: {"value": appArgs[arg]["value"], 
+              "encoding": appArgs.get("encoding", "dill")}
         for arg in appArgs
         if (appArgs[arg]["positional"] == positional)
     }
