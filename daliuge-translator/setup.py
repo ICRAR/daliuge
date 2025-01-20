@@ -42,7 +42,8 @@ logger = logging.getLogger(__name__)
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
 try:
-    VERSION = version("daliuge-common")
+    import dlg
+    VERSION = dlg.__version__
 except PackageNotFoundError:
     logger.warning(
         "WARNING: daliuge-translator requires daliuge-common to be installed first. "
@@ -118,7 +119,6 @@ install_requires = [
     "psutil",
     "pyswarm",
     "python-multipart",
-    # "ruamel.yaml.clib<=0.2.2",
     "uvicorn==0.18",
     "wheel",
 ]
