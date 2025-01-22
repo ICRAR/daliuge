@@ -54,6 +54,27 @@ class TestPortsEncoding(unittest.TestCase):
     """
     Given a dropspec, make sure the ports are loaded correctly. 
     """ 
+    def _create_and_run_graph_spec_from_lgt(self, logical_graph_name: str):
+        """
+        Boilerplate graph running code which takes a Logical Graph Template (LGT) and 
+        performs the translation and submission through the graph loader. 
+        
+        Returns drop leaf nodes on graph completion. 
+        """
+        spec = Path(path_utils.get_lg_fpath("drop_spec", logical_graph_name))
+        with Path(spec).open('r', encoding="utf-8") as f: 
+            appDropSpec = json.load(f)
+        
+        roots = graph_loader.createGraphFromDropSpecList(appDropSpec)
+        # drops = [v for d,v in drops.items()]
+        leafs = droputils.getLeafNodes(roots)  
+        with  droputils.DROPWaiterCtx(self, leafs, timeout=3):
+            for drop in roots: 
+                fut = drop.async_execute()
+                fut.result()
+    
+        return leafs
+
 
     def test_pyfunc_ports_encoding(self):
         """
@@ -78,18 +99,8 @@ class TestPortsEncoding(unittest.TestCase):
                     |                   |             |
                     ------> pickle(8) ---             -----> pickle(8)
         """
-        spec = Path(path_utils.get_lg_fpath("drop_spec", "test_ports.graph"))
-        with Path(spec).open('r', encoding="utf-8") as f: 
-            appDropSpec = json.load(f)
-        
-        roots = graph_loader.createGraphFromDropSpecList(appDropSpec)
-        # drops = [v for d,v in drops.items()]
-        leafs = droputils.getLeafNodes(roots)  
-        with  droputils.DROPWaiterCtx(self, leafs, timeout=3000):
-            for drop in roots: 
-                fut = drop.async_execute()
-                fut.result()
-                
+
+        leafs = self._create_and_run_graph_spec_from_lgt("test_ports.graph")               
         for l in leafs:
             self.assertEqual(DROPStates.COMPLETED, l.status) 
 
@@ -97,6 +108,14 @@ class TestPortsEncoding(unittest.TestCase):
         leaf = leafs.pop(0)
         desc = leaf.open()
         self.assertEqual("array(2)", leaf.read(desc).decode())
-        leaf = leafs.pop()
+        leaf = leafs.pop(0)
         desc = leaf.open()
         self.assertEqual(8, dill.loads(leaf.read(desc)))
+        
+
+    def test_bash_shell_ports(self): 
+        """
+        "drop_spec", "pyfunc_glob_shell_test.graph"
+        """
+        leafs = self._create_and_run_graph_spec_from_lgt("pyfunc_glob_shell_test.graph")
+
