@@ -297,7 +297,12 @@ def replace_named_ports(
     positionalArgs = _get_args(appArgs, positional=True)
     keywordArgs = _get_args(appArgs, positional=False)
 
-    # Construct the final keywordArguments and positionalPortArguments
+    # Extract values from dictionaries - "encoding" etc. are irrelevant
+    appArgs = {arg: subdict['value'] for arg, subdict in appArgs.items()}
+    positionalArgs = {arg: subdict['value'] for arg, subdict in positionalArgs.items()}
+    keywordArgs = {arg: subdict['value'] for arg, subdict in keywordArgs.items()}
+
+     # Construct the final keywordArguments and positionalPortArguments
     for k, v in keywordPortArgs.items():
         if v not in [None, ""]:
             keywordArgs.update({k: v})
