@@ -87,7 +87,7 @@ class dropdict(dict):
     def _addSomething(self, other, key, name=None):
         if key not in self:
             self[key] = []
-            # TODO: self[key] = {}
+            # TODO: self[key] = {}; we want to move to dictionaries, not lists
         if other["oid"] not in self[key]:
             # TODO: Returning just the other drop OID instead of the named
             #       port list is not a good solution. Required for the dask

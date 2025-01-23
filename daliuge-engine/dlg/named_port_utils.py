@@ -255,8 +255,6 @@ def replace_named_ports(
     # we will need an ordered dict for all positional arguments
     # thus we create it here and fill it with values
     positionalPortArgs = collections.OrderedDict(positionalArgs)
-    #       zip(positionalArgs, [None] * len(positionalArgs))
-    # )
 
     logger.debug(
         "posargs: %s; keyargs: %s, %s",

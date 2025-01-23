@@ -688,21 +688,6 @@ class PyFuncApp(BarrierAppDROP):
         # and written to its corresponding output
         self.write_results(result)
 
-    def check_outputs_match_results(self, result: tuple):
-        """
-        # TODO This may be removeable
-        """
-        if len(self.outputs) == 1:
-            result = [result]
-        else:
-            from dlg.droputils import listify
-            result = listify(result)
-            if len(result) != len(self.outputs):
-                raise RuntimeError(
-                    f"Number of PyFunc outputs ({len(self.outputs)})"
-                    f"does not match generated results ({len(self.results)})")
-            return result
-
     def _match_parser(self, output_drop):
         """
         Match the output parser to the appropriate drop

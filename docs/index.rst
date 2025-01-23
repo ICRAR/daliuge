@@ -30,7 +30,11 @@ and is performed by the `DIA team <http://www.icrar.org/our-research/data-intens
  graph_development
  cli
  api-index
-..  development/dev_index
+
+.. toctree:: 
+    :hidden:
+
+    development/dev_index
     usage/index
 
 Citations

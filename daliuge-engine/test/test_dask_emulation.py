@@ -44,7 +44,6 @@ except ImportError:
 
 
 def add(x, y):
-    logger.debug(f"{repr(x)}")
     return x + y
 
 
@@ -53,7 +52,6 @@ def add_list(numbers):
 
 
 def subtract(x: float, y: float):
-    logger.debug(f"{repr(x)}")
     return x - y
 
 
