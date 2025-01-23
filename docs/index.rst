@@ -28,10 +28,10 @@ and is performed by the `DIA team <http://www.icrar.org/our-research/data-intens
  architecture/index
  deployment
  graph_development
- development/dev_index
- usage/index
  cli
  api-index
+..  development/dev_index
+    usage/index
 
 Citations
 ---------

@@ -7,5 +7,5 @@
  :maxdepth: 3
 
  intro
- reduction
- graph_developer
+..  reduction
+..  graph_developer
