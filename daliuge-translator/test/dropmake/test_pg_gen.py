@@ -382,7 +382,8 @@ if __name__ == '__main__':
         "chiles_simple.graph",
         "Plasma_test.graph",
         "SharedMemoryTest_update.graph",
-        "test_ports.graph"
+        "test_ports.graph",
+        "pyfunc_glob_shell_test.graph"
         # "simpleMKN_update.graph", # Currently broken
     ]
 
