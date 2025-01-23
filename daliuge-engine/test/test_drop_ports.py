@@ -105,12 +105,12 @@ class TestPortsEncoding(unittest.TestCase):
             self.assertEqual(DROPStates.COMPLETED, l.status) 
 
         # Leaf Node 1 has been encoded first as numpy, second as UTF-8. 
-        leaf = leafs.pop(0)
-        desc = leaf.open()
-        self.assertEqual("array(2)", leaf.read(desc).decode())
-        leaf = leafs.pop(0)
+        leaf = leafs.pop()
         desc = leaf.open()
         self.assertEqual(8, dill.loads(leaf.read(desc)))
+        leaf = leafs.pop()
+        desc = leaf.open()
+        self.assertEqual("array(2)", leaf.read(desc).decode())
         
 
     def test_bash_shell_ports(self): 
@@ -118,4 +118,7 @@ class TestPortsEncoding(unittest.TestCase):
         "drop_spec", "pyfunc_glob_shell_test.graph"
         """
         leafs = self._create_and_run_graph_spec_from_lgt("pyfunc_glob_shell_test.graph")
-
+        
+        for l in leafs:
+            self.assertEqual(DROPStates.COMPLETED, l.status) 
+        self.assertEqual(0, leafs.pop().proc.returncode)
