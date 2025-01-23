@@ -230,8 +230,6 @@ class _DelayedDrop(object):
                 self.oid,
             )
         else:
-            # self_dd.addInput(up_dd)
-            # self_dd["inputs"].append({upstream.oid : upstream.argname})
             logger.debug(
                 "Set %r/%s as input of %r/%s",
                 upstream,
@@ -256,11 +254,10 @@ class _Listifier(BarrierAppDROP):
 class _DelayedDrops(_DelayedDrop):
     """One or more _DelayedDrops treated as a single item"""
 
-    def __init__(self, *drops, argname=None):
+    def __init__(self, *drops):
         super(_DelayedDrops, self).__init__()
         self.drops = drops
         self.inputs.extend(drops)
-        self.argname = argname
         logger.debug("Created %r", self)
 
     def _to_physical_graph(self, visited, graph):
@@ -293,7 +290,6 @@ class _DelayedDrops(_DelayedDrop):
     def make_dropdict(self):
         return dropdict(
             {
-                # "oid": uuid.uuid1(),
                 "categoryType": "Application",
                 "dropclass": "dlg.dask_emulation._Listifier",
                 "name": "listifier",
@@ -347,8 +343,6 @@ class _AppDrop(_DelayedDrop):
 
     def _add_upstream(self, dep):
         _DelayedDrop._add_upstream(self, dep)
-        # argname = dep.argname
-        # self.dropdict["func_arg_mapping"][argname] = dep.oid
         if self.kwarg_names:
             name = self.kwarg_names.pop()
             if name is not None:
@@ -372,17 +366,17 @@ class _AppDrop(_DelayedDrop):
                 self.dropdict["inputs"].append({dep.oid: name})
                 self.dropdict["func_arg_mapping"][name] = dep.oid
 
-    def _to_delayed_arg(self, arg, argname):
+    def _to_delayed_arg(self, arg):
         logger.info("Turning into delayed arg for %r: %r", self, arg)
         if isinstance(arg, _DelayedDrop):
             return arg
 
         # Turn lists/tuples of _DataDrop objects into a _DelayedDrops
         if _is_list_of_delayeds(arg):
-            return _DelayedDrops(*arg, argname=argname)
+            return _DelayedDrops(*arg)
 
         # Plain data gets turned into a _DataDrop
-        return _DataDrop(pydata=arg, argname=argname)
+        return _DataDrop(pydata=arg)
 
     def __call__(self, *args, **kwargs):
         logger.debug(
@@ -393,7 +387,7 @@ class _AppDrop(_DelayedDrop):
         )
 
         for name, arg in kwargs.items():
-            self.inputs.append(self._to_delayed_arg(arg, name))
+            self.inputs.append(self._to_delayed_arg(arg))
             self.original_kwarg_names.append(name)
 
         leftover_args = [x for x in list(signature(self.f).parameters.keys()) 
@@ -401,7 +395,7 @@ class _AppDrop(_DelayedDrop):
 
         iter_range = min(len(args), len(leftover_args))
         for i in range(iter_range):
-            self.inputs.append(self._to_delayed_arg(args[i], leftover_args[i]))
+            self.inputs.append(self._to_delayed_arg(args[i])) #, leftover_args[i]))
             self.original_arg_names.append(leftover_args[i])
 
         if self.nout is None:
@@ -419,13 +413,12 @@ _no_data = object()
 class _DataDrop(_DelayedDrop):
     """Defines an in-memory drop"""
 
-    def __init__(self, producer=None, pydata=_no_data, argname=None):
+    def __init__(self, producer=None, pydata=_no_data):
         _DelayedDrop.__init__(self, producer)
 
         if bool(producer is None) == bool(pydata is _no_data):
             raise ValueError("either producer or pydata must be not None")
         self.pydata = pydata
-        self.argname = argname
         logger.debug("Created %r", self)
 
     def make_dropdict(self):
