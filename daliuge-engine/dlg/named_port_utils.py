@@ -161,6 +161,7 @@ def identify_named_ports(
                 value = parser(port_dict[keys[i]]["drop"])
             # if not found in appArgs we don't put them into portargs either
             # pargsDict.update({key: value})
+            keywordArgs[key]["value"] = value
             keywordPortArgs.update({key: keywordArgs[key]})
             logger.debug("Using %s of type %s for kwarg %s", mode, type(value), key)
             _ = keywordArgs.pop(key)  # remove from original arg list
@@ -299,7 +300,8 @@ def replace_named_ports(
     appArgs = {arg: subdict['value'] for arg, subdict in appArgs.items()}
     positionalArgs = {arg: subdict['value'] for arg, subdict in positionalArgs.items()}
     keywordArgs = {arg: subdict['value'] for arg, subdict in keywordArgs.items()}
-
+    keywordPortArgs = {arg: subdict['value'] for arg, subdict in keywordPortArgs.items()}
+ 
      # Construct the final keywordArguments and positionalPortArguments
     for k, v in keywordPortArgs.items():
         if v not in [None, ""]:
@@ -373,7 +375,7 @@ def _get_args(appArgs, positional=False):
     """
     args = {
         arg: {"value": appArgs[arg]["value"], 
-              "encoding": appArgs.get("encoding", "dill")}
+              "encoding": appArgs[arg].get("encoding", "dill")}
         for arg in appArgs
         if (appArgs[arg]["positional"] == positional)
     }
