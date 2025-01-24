@@ -1,3 +1,26 @@
+def _create_result_transmitter(port):
+    """Create a result transmitter drop"""
+    transmitter_oid = "-1"
+    return dropdict(
+        {
+            "categoryType": "Application",
+            "dropclass": "dlg.dask_emulation.ResultTransmitter",
+            "oid": transmitter_oid,
+            "uid": transmitter_oid,
+            "port": port,
+            "name": "result transmitter",
+        }
+    )
+
+
+def _add_transmitter_to_graph(graph, transmitter):
+    """Add transmitter to graph and connect to leaf nodes"""
+    for leaf_oid in droputils.get_leaves(graph.values()):
+        graph[leaf_oid].addConsumer(transmitter)
+    graph[transmitter.oid] = transmitter
+    return list(graph.values())
+
+
 #
 #    ICRAR - International Centre for Radio Astronomy Research
 #    (c) UWA - The University of Western Australia, 2017
@@ -98,32 +121,13 @@ def compute(value, **kwargs):
     """Returns the result of the (possibly) delayed computation by sending
     the graph to a Drop Manager and waiting for the result to arrive back"""
 
-    # Support calling compute with a list of DelayedDrops
     if _is_list_of_delayeds(value):
         value = _DelayedDrops(*value)
 
     graph = value.get_graph()
     port = 10000
-    # Add one final application that will wait for all results
-    # and transmit them back to us
-    transmitter_oid = "-1"
-    transmitter = dropdict(
-        {
-            "categoryType": "Application",
-            #            "categoryType": CategoryType.APPLICATION,
-            # "Application": "dlg.dask_emulation.ResultTransmitter",
-            "dropclass": "dlg.dask_emulation.ResultTransmitter",
-            "oid": transmitter_oid,
-            "uid": transmitter_oid,
-            "port": port,
-            "name": "result transmitter",
-        }
-    )
-    for leaf_oid in droputils.get_leaves(graph.values()):
-        graph[leaf_oid].addConsumer(transmitter)
-    graph[transmitter_oid] = transmitter
-
-    graph = list(graph.values())
+    transmitter = _create_result_transmitter(port)
+    graph = _add_transmitter_to_graph(graph, transmitter)
 
     # Submit and wait
     session_id = "session-%f" % time.time()
@@ -210,39 +214,41 @@ class _DelayedDrop(object):
 
         return self
 
+    def _get_connection_type(self, upstream):
+        """Determine the connection type for an upstream drop"""
+        return "producer" if isinstance(self, _DataDrop) else "input"
+
+    def _link_drops(self, upstream, connection_type):
+        """Link two drops with the specified connection type"""
+        if connection_type == "producer":
+            self.dropdict.addProducer(upstream.dropdict)
+        else:
+            self.dropdict.addInput(upstream.dropdict)
+
     def _add_upstream(self, upstream):
         """Link the given drop as either a producer or input of this drop"""
-        self_dd = self.dropdict
-        up_dd = upstream.dropdict
-        if isinstance(self, _DataDrop):
-            self_dd.addProducer(up_dd)
-            logger.debug(
-                "Set %r/%s as producer of %r/%s",
-                upstream,
-                upstream.oid,
-                self,
-                self.oid,
-            )
-        else:
-            self_dd.addInput(up_dd)
-            logger.debug(
-                "Set %r/%s as input of %r/%s",
-                upstream,
-                upstream.oid,
-                self,
-                self.oid,
-            )
+        if not upstream or not hasattr(upstream, "dropdict"):
+            return
+
+        connection_type = self._get_connection_type(upstream)
+        self._link_drops(upstream, connection_type)
+
+        logger.debug(
+            "Set %r/%s as %s of %r/%s",
+            upstream,
+            upstream.oid,
+            connection_type,
+            self,
+            self.oid,
+        )
 
 
 class _Listifier(BarrierAppDROP):
     """Returns a list with all objects as contents"""
 
     def run(self):
-        self.outputs[0].write(
-            pickle.dumps(
-                [pickle.loads(droputils.allDropContents(x)) for x in self.inputs]
-            )
-        )
+        contents = [pickle.loads(droputils.allDropContents(x)) for x in self.inputs]
+        self.outputs[0].write(pickle.dumps(contents))
 
 
 class _DelayedDrops(_DelayedDrop):
@@ -305,38 +311,40 @@ class _AppDrop(_DelayedDrop):
         logger.debug("Created %r", self)
 
     def make_dropdict(self):
-        self.kwarg_names = list(self.original_kwarg_names)
-        self.kwarg_names.reverse()
-        my_dropdict = dropdict(
-            {
-                # "oid": uuid.uuid1(),
-                "categoryType": "Application",
-                "dropclass": "dlg.apps.pyfunc.PyFuncApp",
-                "func_arg_mapping": {},
-            }
-        )
-        if self.fname is not None:
-            simple_fname = self.fname.split(".")[-1]
-            my_dropdict["func_name"] = self.fname
-            my_dropdict["name"] = simple_fname
-        if self.fcode is not None:
-            my_dropdict["func_code"] = utils.b2s(base64.b64encode(self.fcode))
-        if self.fdefaults:
-            my_dropdict["func_defaults"] = self.fdefaults
-        return my_dropdict
+        self.kwarg_names = list(reversed(self.original_kwarg_names))
+
+        base_dict = {
+            "categoryType": "Application",
+            "dropclass": "dlg.apps.pyfunc.PyFuncApp",
+            "func_arg_mapping": {},
+            "func_name": self.fname if self.fname else None,
+            "name": self.fname.split(".")[-1] if self.fname else None,
+            "func_code": (
+                utils.b2s(base64.b64encode(self.fcode)) if self.fcode else None
+            ),
+            "func_defaults": self.fdefaults if self.fdefaults else None,
+        }
+        # Remove None values
+        return dropdict({k: v for k, v in base_dict.items() if v is not None})
+
+        return dropdict(base_dict)
+
+    def _update_func_mapping(self, name, dep):
+        """Helper method to update function argument mapping"""
+        if name is not None:
+            logger.debug(
+                "Adding %s/%s to function mapping for %s",
+                name,
+                dep.oid,
+                self.fname,
+            )
+            self.dropdict["func_arg_mapping"][name] = dep.oid
 
     def _add_upstream(self, dep):
+        """Add upstream dependency and update function mapping if needed"""
         _DelayedDrop._add_upstream(self, dep)
         if self.kwarg_names:
-            name = self.kwarg_names.pop()
-            if name is not None:
-                logger.debug(
-                    "Adding %s/%s to function mapping for %s",
-                    name,
-                    dep.oid,
-                    self.fname,
-                )
-                self.dropdict["func_arg_mapping"][name] = dep.oid
+            self._update_func_mapping(self.kwarg_names.pop(), dep)
 
     def _to_delayed_arg(self, arg):
         logger.info("Turning into delayed arg for %r: %r", self, arg)
@@ -350,25 +358,40 @@ class _AppDrop(_DelayedDrop):
         # Plain data gets turned into a _DataDrop
         return _DataDrop(pydata=arg)
 
+    def _process_args(self, args):
+        """Process positional arguments"""
+        for arg in args:
+            delayed_arg = self._to_delayed_arg(arg)
+            self.inputs.append(delayed_arg)
+            self.original_kwarg_names.append(None)
+
+    def _process_kwargs(self, kwargs):
+        """Process keyword arguments"""
+        for name, arg in kwargs.items():
+            delayed_arg = self._to_delayed_arg(arg)
+            self.inputs.append(delayed_arg)
+            self.original_kwarg_names.append(name)
+
     def __call__(self, *args, **kwargs):
+        """Process function call and return appropriate drop type"""
         logger.debug(
             "Delayed function %s called with %d args and %d kwargs",
             self.fname,
             len(args),
             len(kwargs),
         )
-        for arg in args:
-            self.inputs.append(self._to_delayed_arg(arg))
-            self.original_kwarg_names.append(None)
 
-        for name, arg in kwargs.items():
-            self.inputs.append(self._to_delayed_arg(arg))
-            self.original_kwarg_names.append(name)
-
-        if self.nout is None:
+        if not args and not kwargs:
             return _DataDrop(producer=self)
 
-        return _DataDropSequence(nout=self.nout, producer=self)
+        self._process_args(args)
+        self._process_kwargs(kwargs)
+
+        return (
+            _DataDropSequence(nout=self.nout, producer=self)
+            if self.nout is not None
+            else _DataDrop(producer=self)
+        )
 
     def __repr__(self):
         return "<_DelayedApp fname=%s, nout=%s>" % (self.fname, str(self.nout))
@@ -383,8 +406,11 @@ class _DataDrop(_DelayedDrop):
     def __init__(self, producer=None, pydata=_no_data):
         _DelayedDrop.__init__(self, producer)
 
-        if bool(producer is None) == bool(pydata is _no_data):
-            raise ValueError("either producer or pydata must be not None")
+        if producer is not None and pydata is not _no_data:
+            raise ValueError("Cannot provide both producer and pydata")
+        if producer is None and pydata is _no_data:
+            raise ValueError("Must provide either producer or pydata")
+
         self.pydata = pydata
         logger.debug("Created %r", self)
 
