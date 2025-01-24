@@ -418,7 +418,7 @@ class PyFuncApp(BarrierAppDROP):
                     value = self._applicationArgs[arg]["value"]
                     encoding = self._applicationArgs[arg].get("encoding", "pickle")
                 if arg in pargsDict:
-                    pargsDict.update({arg: {"value": value, "encoding": encoding}})
+                    pargsDict[arg] = {"value": value, "encoding": encoding}
 
             _ = [
                 self._applicationArgs.pop(k)
@@ -453,7 +453,7 @@ class PyFuncApp(BarrierAppDROP):
                 if self._applicationArgs[arg]["positional"]:
                     vparg.append(value)
                 else:
-                    vkarg.update({arg: value})
+                    vkarg[arg] = value
 
             # TODO: check where this is defined in signature
             self.arguments = inspect.getfullargspec(self.func)
@@ -709,7 +709,9 @@ class PyFuncApp(BarrierAppDROP):
         Match the output parser to the appropriate drop
         """
 
-        encoding = None
+        encoding = (
+            None  # TODO: When we remove the output_parser, transition this to dill
+        )
         component_params = self.parameters.get("componentParams")
         if not component_params:
             return self.output_parser
@@ -718,12 +720,9 @@ class PyFuncApp(BarrierAppDROP):
         ):
             for outport in self.parameters["outputs"]:
                 drop_uid, drop_port = list(outport.items())[0]
-                if drop_uid == output_drop.uid:
+                if drop_uid == output_drop.uid and drop_port in component_params:
                     encoding = component_params[drop_port]["encoding"]
-        if encoding:
-            return DropParser(encoding)
-        else:
-            return self.output_parser
+        return DropParser(encoding) if encoding else self.output_parser
 
     def write_results(self, result):
         from dlg.droputils import listify
