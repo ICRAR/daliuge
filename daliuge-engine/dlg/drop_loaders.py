@@ -122,13 +122,15 @@ def load_binary(drop: "DataDROP"):
    """
    buf = io.BytesIO()
    desc = drop.open()
-   while True:
+   read = True
+   while read:
        data = drop.read(desc)
-       if not data: 
-           break
-       buf.write(data)
-       drop.close(desc)
-       return buf.getvalue().decode()
+       if data: 
+           buf.write(data)
+           drop.close(desc)
+           return buf.getvalue().decode()
+        
+       return 0
 
 def save_binary(drop: "DataDROP", data: bytes):
     """

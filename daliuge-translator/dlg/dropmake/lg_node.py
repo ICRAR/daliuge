@@ -761,9 +761,7 @@ class LGNode:
                 if "usage" not in field:  # fixes manual graphs
                     continue
                 if field["usage"] in port_selector[ports]:
-                    if portId is None:
-                        name = field["name"]
-                    elif field["id"] == portId:
+                    if portId is None or field["id"] == portId:
                         name = field["name"]
                     # can't be sure that name is unique
                     if name not in ports_dict:

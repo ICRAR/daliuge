@@ -133,14 +133,14 @@ def identify_named_ports(
     keywordPortArgs = {}
     positionalArgs = list(positionalArgs)
     keys = list(port_dict.keys())
-    logger.debug("Checking ports: %sagainst %s %s", keys, positionalArgs, keywordArgs)
+    logger.debug("Checking ports: %s against %s %s", keys, positionalArgs, keywordArgs)
     for i in range(check_len):
         try:
             key = port_dict[keys[i]]["name"]
             value = port_dict[keys[i]]["path"]
-        except KeyError:
-            logger.debug("portDict: %s", port_dict)
-            raise KeyError
+        except KeyError as e:
+            logger.debug("portDict: %s does not have key: %s", port_dict, keys[i])
+            raise KeyError("")
         if value is None:
             value = ""  # make sure we are passing NULL drop events
         if key in positionalArgs:
