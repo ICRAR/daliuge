@@ -18,20 +18,51 @@ our `overview paper <http://dx.doi.org/10.1016/j.ascom.2017.03.007>`_. DALiuGE h
 Development and maintenance of |daliuge| is currently hosted at ICRAR_
 and is performed by the `DIA team <http://www.icrar.org/our-research/data-intensive-astronomy/>`_.
 
-.. toctree::
- :maxdepth: 2
 
- intro
- installing
- running
- basics
- architecture/index
- deployment
- graph_development
- development/dev_index
- usage/index
- cli
- api-index
+Quick Start Guide
+-----------------
+:doc:`intro`
+:doc:`/usage/index`
+:doc:`/running`
+
+
+DALiuGE Fundamentals
+--------------------
+:doc:`/architecture/index`
+:doc:`/deployment`
+
+Advanced Techniques and Applications
+------------------------------------
+:doc:`/development/app_development/app_index`
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Quickstart Guide
+   :hidden: 
+    
+   intro
+   usage/index
+   running
+   basics
+   installing
+   graph_development
+   development/dev_index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Architecture
+   :hidden: 
+
+   architecture/index
+   deployment
+   
+.. toctree::
+   :caption: API Documentation
+   :maxdepth: 2
+   :hidden:
+
+   api-index
+   cli
 
 Citations
 ---------
