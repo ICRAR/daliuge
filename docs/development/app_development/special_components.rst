@@ -9,7 +9,7 @@ In addition users can develop a number of specialized components, which are base
 #. MPI Components
 #. Archiving/store Components
 
-Descriptions TODO
+.. Descriptions TODO
 
 Built-in Application Components
 ===============================

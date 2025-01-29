@@ -51,11 +51,11 @@ def add_list(numbers):
     return functools.reduce(add, numbers)
 
 
-def subtract(x, y):
+def subtract(x: float, y: float):
     return x - y
 
 
-def subtract_list(numbers):
+def subtract_list(numbers: list):
     return functools.reduce(subtract, numbers)
 
 
@@ -129,7 +129,7 @@ class _TestDelayed(object):
         """
         delayed = self.delayed
         compute = self.compute
-
+        
         the_sum = delayed(add)(1.0, 2.0)
         the_sub = delayed(subtract)(4.0, 3.0)
         division = delayed(divide)(the_sum, the_sub)
@@ -143,17 +143,12 @@ class _TestDelayed(object):
         delayed = self.delayed
         compute = self.compute
 
-        one, two, three, four = (
-            delayed(1.0),
-            delayed(2.0),
-            delayed(3.0),
-            delayed(4.0),
-        )
-        the_sum = delayed(add_list)([one, two])
-        the_sub = delayed(subtract_list)([four, three])
+        the_sum = delayed(add_list)([1.0, 2.0])
+        the_sub = delayed(subtract_list)([4.0, 3.0])
         division = delayed(divide)(the_sum, the_sub)
         parts = delayed(partition, nout=2)(division)
-        result = compute(delayed(add)(*parts))
+        x, y = parts
+        result = compute(delayed(add)(x,y))
         self.assertEqual(3.0, result)
 
     def test_compute_with_lists(self):
@@ -161,13 +156,10 @@ class _TestDelayed(object):
         delayed = self.delayed
         compute = self.compute
 
-        one, two, three, four = (
-            delayed(1.0),
-            delayed(2.0),
-            delayed(3.0),
-            delayed(4.0),
-        )
-        doubles = [delayed(lambda i: i * 2)(x) for x in (one, two, three, four)]
+        def double(x):
+            return x*2
+    
+        doubles = [delayed(double)(x) for x in (1.0, 2.0, 3.0, 4.0)]
         result = compute(doubles)
         self.assertEqual([2.0, 4.0, 6.0, 8.0], result)
 
