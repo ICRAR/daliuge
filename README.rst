@@ -59,7 +59,7 @@ Creating the virtual environment is as simple as running::
     make virtualenv
     source .venv/bin/activate 
 
-Now, in the ``.venv`` environment, run:: 
+Now, in the `.venv` environment, run:: 
 
     make docker-install 
 
