@@ -83,8 +83,6 @@ class SlurmClient:
         slurm_template=None,
         suffix=None
     ):
-
-        ## TODO 
         ## Here, we want to separate out the following
         ## Config derived from CONFIG Factory - we replace with ini file
         ## Config derived from CLI, intended for replacement in the SLURM job script

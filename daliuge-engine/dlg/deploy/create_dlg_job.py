@@ -453,13 +453,6 @@ def create_experiment_group(parser: optparse.OptionParser):
         help="Use SLURM template file for job submission. WARNING: Using this command will over-write other job-parameters passed here.",
         default=None
     )
-    group.add_option(
-        "--setup",
-        dest="setup",
-        action="store_true",
-        help="Setup local '$HOME/.config/dlg' directory to store custom environment config and slurm scripts",
-        default=False
-    )
 
     return group
 
@@ -714,14 +707,8 @@ def run(_, args=None):
 
     cfg_manager = ConfigManager(FACILITIES)
 
-    if opts.setup:
-        cfg_manager.setup_user()
-        sys.exit(0)
-
     if opts.configs:
-        print(f"Available facilities:\n")
-        cfg_manager.print_available_config()
-        sys.exit(1)
+        print(f"Available facilities: {FACILITIES}")
     if not (opts.action and opts.facility):
         parser.error("Missing required parameters!")
         parser.print_help()

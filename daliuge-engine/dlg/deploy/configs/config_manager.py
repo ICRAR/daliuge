@@ -19,6 +19,8 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import sys
+import optparse
 import shutil
 import textwrap
 
@@ -28,6 +30,7 @@ from importlib.resources import files, as_file
 from pathlib import Path
 
 import dlg.deploy.configs as default_configs
+from dlg.deploy.configs import ConfigFactory
 
 USER_CONFIG_DIR = Path.home() / ".config"
 DLG_CONFIG_DIR = USER_CONFIG_DIR / "dlg"
@@ -162,7 +165,7 @@ class ConfigManager:
             - If it doesn't exist, return None
         """
         if not DLG_CONFIG_DIR.exists() and self.prompt_setup:
-            print("NOTE: No user configs exists; consider dlg create --setup.")
+            print("NOTE: No user configs exists; consider running 'dlg config --setup'.")
             self.prompt_setup = False
 
         choice_path = Path(config_choice)
@@ -178,3 +181,35 @@ class ConfigManager:
                 if config_choice == o.name:
                     return o
             return None
+
+def run(_, args):
+
+    cfg_manager = ConfigManager(ConfigFactory.available())
+
+    parser = optparse.OptionParser()
+    parser.add_option(
+        "--setup",
+        dest="setup",
+        action="store_true",
+        help="Setup local '$HOME/.config/dlg' directory to store custom environment config and slurm scripts",
+        default=False
+    )
+    parser.add_option(
+        "-l", "--list",
+        dest="list",
+        action="store_true",
+        help="List the available configuration for DALiuGE deployment."
+    )
+    (opts, _) = parser.parse_args(sys.argv)
+    if opts.setup:
+        cfg_manager.setup_user()
+        sys.exit(0)
+    elif opts.list:
+        print(f"Available facilities:\n")
+        cfg_manager.print_available_config()
+        sys.exit(0)
+    else:
+        parser.print_help()
+
+
+
