@@ -40,8 +40,11 @@ def get_lg_fpath(test_type, f_name):
     if test_type == "pickle":
         f_name = f_name.split(".")[0] + ".pkl"
         f_dir += test_type
-    elif test_type == "pg_spec":
+    elif test_type == "go_js_json":
         f_name = f_name.split(".")[0] + ".json"
+        f_dir += test_type
+    elif test_type == "drop_spec":
+        f_name = f_name.split(".")[0] + ".spec"
         f_dir += test_type
     else:
         f_dir += "logical_graphs"

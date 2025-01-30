@@ -7,5 +7,9 @@
  :maxdepth: 3
 
  intro
- reduction
- graph_developer
+ 
+.. toctree:: 
+    :hidden:
+    
+    reduction
+    graph_developer

@@ -2,8 +2,9 @@ import ast
 from enum import Enum
 import logging
 import collections
+import dlg.droputils as droputils
+import dlg.drop_loaders as drop_loaders
 from typing import Tuple
-from dlg import droputils, drop_loaders
 
 logger = logging.getLogger(__name__)
 
@@ -11,11 +12,14 @@ logger = logging.getLogger(__name__)
 class DropParser(Enum):
     RAW = "raw"
     PICKLE = "pickle"
-    EVAL = "eval"
+    EVAL = "eval" 
     NPY = "npy"
+    DILL = "dill"
     # JSON = "json"
     PATH = "path"  # input only
     DATAURL = "dataurl"  # input only
+    BINARY = "binary"
+    UTF8 = "utf-8"
 
 
 def serialize_kwargs(keyargs, prefix="--", separator=" "):
@@ -134,28 +138,33 @@ def identify_named_ports(
         try:
             key = port_dict[keys[i]]["name"]
             value = port_dict[keys[i]]["path"]
-        except KeyError:
-            logger.debug("portDict: %s", port_dict)
-            raise KeyError
+        except KeyError as e:
+            logger.debug("portDict: %s does not have key: %s", port_dict, keys[i])
+            raise KeyError("")
         if value is None:
             value = ""  # make sure we are passing NULL drop events
         if key in positionalArgs:
+            encoding = DropParser(positionalPortArgs[key]['encoding'])
+            parser = get_port_reader_function(encoding)
             if parser:
                 logger.debug("Reading from port using %s", parser.__repr__())
                 value = parser(port_dict[keys[i]]["drop"])
-            positionalPortArgs.update({key: value})
+            positionalPortArgs[key]["value"] = value
             logger.debug("Using %s '%s' for parg %s", mode, value, key)
-            positionalArgs.pop(positionalArgs.index(key))
+            positionalArgs.remove(key)
             # We have positional argument that is also a keyword
             if addPositionalToKeyword:
-                keywordPortArgs.update({key: value})
+                keywordPortArgs.update({key: positionalPortArgs[key]})
         elif key in keywordArgs:
+            encoding = DropParser(keywordArgs[key]['encoding'])
+            parser = get_port_reader_function(encoding)
             if parser:
                 logger.debug("Reading from port using %s", parser.__repr__())
                 value = parser(port_dict[keys[i]]["drop"])
             # if not found in appArgs we don't put them into portargs either
             # pargsDict.update({key: value})
-            keywordPortArgs.update({key: value})
+            keywordArgs[key]["value"] = value
+            keywordPortArgs.update({key: keywordArgs[key]})
             logger.debug("Using %s of type %s for kwarg %s", mode, type(value), key)
             _ = keywordArgs.pop(key)  # remove from original arg list
         else:
@@ -183,6 +192,7 @@ def check_ports_dict(ports: list) -> bool:
         bool: True if all ports are dict, else False
     """
     # all returns true if list is empty!
+    logger.debug("Ports list is: %s", ports)
     if len(ports) > 0:
         return all(isinstance(p, dict) for p in ports)
     else:
@@ -245,9 +255,7 @@ def replace_named_ports(
     keywordArgs = _get_args(appArgs, positional=False)
     # we will need an ordered dict for all positional arguments
     # thus we create it here and fill it with values
-    positionalPortArgs = collections.OrderedDict(
-        zip(positionalArgs, [None] * len(positionalArgs))
-    )
+    positionalPortArgs = collections.OrderedDict(positionalArgs)
 
     logger.debug(
         "posargs: %s; keyargs: %s, %s",
@@ -290,7 +298,13 @@ def replace_named_ports(
     positionalArgs = _get_args(appArgs, positional=True)
     keywordArgs = _get_args(appArgs, positional=False)
 
-    # Construct the final keywordArguments and positionalPortArguments
+    # Extract values from dictionaries - "encoding" etc. are irrelevant
+    appArgs = {arg: subdict['value'] for arg, subdict in appArgs.items()}
+    positionalArgs = {arg: subdict['value'] for arg, subdict in positionalArgs.items()}
+    keywordArgs = {arg: subdict['value'] for arg, subdict in keywordArgs.items()}
+    keywordPortArgs = {arg: subdict['value'] for arg, subdict in keywordPortArgs.items()}
+ 
+     # Construct the final keywordArguments and positionalPortArguments
     for k, v in keywordPortArgs.items():
         if v not in [None, ""]:
             keywordArgs.update({k: v})
@@ -362,7 +376,8 @@ def _get_args(appArgs, positional=False):
     Separate out the arguments dependening on if we want positional or keyword style
     """
     args = {
-        arg: appArgs[arg]["value"]
+        arg: {"value": appArgs[arg]["value"], 
+              "encoding": appArgs[arg].get("encoding", "dill")}
         for arg in appArgs
         if (appArgs[arg]["positional"] == positional)
     }
@@ -370,7 +385,6 @@ def _get_args(appArgs, positional=False):
     argType = "Positional" if positional else "Keyword"
     logger.debug("%s arguments: %s", argType, args)
     return args
-
 
 def get_port_reader_function(input_parser: DropParser):
     """
@@ -381,7 +395,7 @@ def get_port_reader_function(input_parser: DropParser):
     if input_parser is DropParser.PICKLE:
         # all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
         reader = drop_loaders.load_pickle
-    elif input_parser is DropParser.EVAL:
+    elif input_parser is DropParser.EVAL or input_parser is DropParser.UTF8:
 
         def optionalEval(x):
             # Null and Empty Drops will return an empty byte string
@@ -396,6 +410,10 @@ def get_port_reader_function(input_parser: DropParser):
         reader = lambda x: x.path
     elif input_parser is DropParser.DATAURL:
         reader = lambda x: x.dataurl
+    elif input_parser is DropParser.DILL:
+        reader = drop_loaders.load_dill
+    elif input_parser is DropParser.BINARY:
+         reader = drop_loaders.load_binary
     else:
         raise ValueError(input_parser.__repr__())
     return reader
