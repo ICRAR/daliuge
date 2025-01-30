@@ -87,12 +87,14 @@ class dropdict(dict):
     def _addSomething(self, other, key, name=None):
         if key not in self:
             self[key] = []
+            # TODO: self[key] = {}; we want to move to dictionaries, not lists
         if other["oid"] not in self[key]:
             # TODO: Returning just the other drop OID instead of the named
             #       port list is not a good solution. Required for the dask
             #       tests.
             append = {other["oid"]: name} if name else other["oid"]
             # if name is None:
+            # TODO: self[key][other['oid']: name]
             # raise ValueError
             self[key].append(append)
 
@@ -113,6 +115,32 @@ class dropdict(dict):
 
     def addProducer(self, other, name=None):
         self._addSomething(other, "producers", name=name)
+
+    def _hasSomething(self, key, name):
+        """
+        self[key] => [{oidA: nameA}, {oidB:nameB}]
+
+        Need to translate to ["nameA", "nameB"] to determine if we have that element
+        """
+        if key not in self:
+            return False
+        ports = [] 
+        [ports.extend(pair.values()) for pair in self[key]]
+        return name in ports
+
+    def hasOutput(self, output):
+        """
+        self["outputs"] => [{"oidA": "portnameA"}, {"oidB":"portnameB"}]
+
+        Translate to ["portnameA", "portnameB"]
+        """
+        return self._hasSomething("outputs", output)
+
+    def hasProducer(self, producer):
+        """
+        See hasOutput. 
+        """
+        return self._hasSomething("producers", producer)
 
     def __ge__(self, other):
         return self.get("oid") >= other.get("oid")
