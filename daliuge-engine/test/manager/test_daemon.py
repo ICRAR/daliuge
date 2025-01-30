@@ -143,7 +143,7 @@ class TestDaemon(unittest.TestCase):
         # if we query the MM it should know about its nodes, which should have
         # one element
         mc = MasterManagerClient()
-        nodes = _get_nodes_from_client(mc)
+        nodes = _get_nodes_from_client(mc)["nodes"]
         self.assertIsNotNone(nodes)
         self.assertEqual(
             1,

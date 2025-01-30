@@ -22,12 +22,18 @@ integration and testing during component development. As mentioned already, for 
  bash_components
  python_components
  special_components
- dynlib_components
- docker_components
- service_components
  pyfunc_components
  datadrop_io
- wrap_existing
- test_and_debug
  eagle_app_integration
- deployment_testing
+
+.. toctree:: 
+    :hidden:
+
+    bash_advanced
+    docker_components
+    deployment_testing
+    dynlib_components
+    service_components
+    test_and_debug
+    wrap_existing
+ 
