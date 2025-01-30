@@ -829,7 +829,7 @@ def run(_, args=None):
             submit=opts.submit,
             remote=opts.remote,
             username=opts.username,
-            ssh_key=opts.ssh_key
+            ssh_key=opts.ssh_key,
             config=config,
             slurm_template=template
         )
