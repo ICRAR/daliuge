@@ -833,4 +833,4 @@ def run(_, args=None):
 
 
 if __name__ == "__main__":
-    run()
+    run(None, sys.argv[1:])

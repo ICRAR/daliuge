@@ -169,7 +169,7 @@ class ConfigManager:
             self.prompt_setup = False
 
         choice_path = Path(config_choice)
-        if choice_path.is_absolute() and p.exists():
+        if choice_path.is_absolute() and choice_path.exists():
             return choice_path
         elif choice_path.exists():
             return choice_path.absolute()
