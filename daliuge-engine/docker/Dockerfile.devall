@@ -5,10 +5,16 @@ FROM icrar/daliuge-common:${VCS_TAG:-latest}
 # RUN sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata \
 #     gcc g++ gdb casacore-dev clang-tidy-10 clang-tidy libboost1.71-all-dev libgsl-dev
 
+RUN apt install -y git python3.9-dev
+
 RUN apt-get update &&\
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc curl python3-pip python3-numpy
 
-RUN service dbus start && service avahi-daemon start && avahi-set-host-name dlg-engine
+RUN service avahi-daemon stop && \
+    service dbus start && \
+    service avahi-daemon start && \
+    avahi-set-host-name dlg-engine
+
 # USER ${USER}
 COPY / /daliuge
 RUN . /dlg/bin/activate && pip install wheel && cd /daliuge && \
@@ -26,7 +32,6 @@ ENV VIRTUAL_ENV=/dlg
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV DLG_ROOT="/tmp/dlg"
 
-RUN apt install -y git python3-dev
 
 # Nifty
 #RUN pip install --prefix=$PYTHON_PREFIX git+https://gitlab.com/ska-telescope/sdp/ska-gridder-nifty-cuda.git
