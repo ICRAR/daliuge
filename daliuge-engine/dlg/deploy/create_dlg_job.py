@@ -626,6 +626,7 @@ def main():
         help="Display the available configurations  and exit",
         default=False,
     )
+
     parser.add_option(
         "-U",
         "--username",
@@ -638,11 +639,9 @@ def main():
 
     parser.add_option(
         "--ssh_key",
-        dest="ssh_key",
-        type="string", 
         action="store",
         help="Path to ssh private key",
-        default=""
+        default=None
     )
 
     (opts, _) = parser.parse_args(sys.argv)
