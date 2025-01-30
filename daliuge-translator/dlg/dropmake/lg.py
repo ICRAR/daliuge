@@ -36,8 +36,8 @@ import time
 from itertools import product
 import numpy as np
 
-from dlg.common import CategoryType
-from dlg.common import dropdict
+from dlg.common import CategoryType, dropdict
+
 from dlg.dropmake.dm_utils import (
     LG_APPREF,
     getNodesKeyDict,
@@ -53,8 +53,9 @@ from dlg.dropmake.dm_utils import (
     GInvalidNode,
     load_lg,
 )
-from .definition_classes import Categories
-from .lg_node import LGNode
+from dlg.dropmake.definition_classes import Categories
+from dlg.dropmake.lg_node import LGNode
+from dlg.dropmake.graph_config import apply_active_configuration
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ class LG:
     it is doing all the conversion inside __init__
     """
 
-    def __init__(self, f, ssid=None):
+    def __init__(self, f, ssid=None, apply_config=True):
         """
         parse JSON into LG object graph first
         """
@@ -87,6 +88,9 @@ class LG:
         logger.info("Loading graph: %s", lg["modelData"]["filePath"])
         logger.info("Found LG version: %s", lgver)
 
+        if apply_config:
+            lg = apply_active_configuration(lg)
+
         if LG_VER_EAGLE == lgver:
             lg = convert_mkn(lg)
             lg = convert_fields(lg)
@@ -101,6 +105,7 @@ class LG:
             raise GraphException(
                 "Logical graph version '{0}' not supported!".format(lgver)
             )
+
         self._done_dict = {}
         self._group_q = collections.defaultdict(list)
         self._output_q = collections.defaultdict(list)
@@ -426,7 +431,12 @@ class LG:
             Categories.PYTHON_APP,
         ]
 
-    def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink):
+    def _link_drops(self, 
+                    slgn: LGNode, 
+                    tlgn: LGNode, 
+                    src_drop: dropdict, 
+                    tgt_drop: dropdict, 
+                    llink: dict):
         """ """
         sdrop = None
         if slgn.is_gather:
@@ -477,10 +487,26 @@ class LG:
             tdrop.addStreamingInput(dropSpec_null, name="stream")
             self._drop_dict["new_added"].append(dropSpec_null)
         elif s_type in ["Application", "Control"]:
-            sname = slgn._getPortName("outputPorts")
+            sname = slgn._getPortName("outputPorts", index=-1)
             tname = tlgn._getPortName("inputPorts")
-            # logger.debug("Found port names: IN: %s, OUT: %s", sname, tname)
-            sdrop.addOutput(tdrop, name=sname)
+
+            # sname is dictionary of all output ports on the sDROP. 
+            # Therefore there's an expected number of output edges that we need to add
+            # We keep track of this by querying the sDROP's current outputs and seeing 
+            # what is currently 'lowest' in number. Eventual, all output port names will 
+            # be added. 
+            expected = [p for p in sname.keys()]
+            output_port = expected[0]
+            if "outputs" in sdrop:
+                actual = []
+                [actual.extend(pair.values()) for pair in sdrop["outputs"]]
+                actual_counts = {port: actual.count(port) for port in set(expected)}
+                expected_counts = {port: expected.count(port) for port in (expected)}
+                differences = {port: (expected_counts[port] - actual_counts.get(port,0)) for port in expected_counts}
+                candidates = {port: deficit for port, deficit in differences.items() if deficit>0}
+                if candidates: 
+                    output_port = max(candidates, key=candidates.get)
+            sdrop.addOutput(tdrop, name=output_port)
             tdrop.addProducer(sdrop, name=tname)
             if Categories.BASH_SHELL_APP == s_type:
                 bc = src_drop["command"]

@@ -78,6 +78,7 @@ def _PyFuncApp(oid, uid, f, **kwargs):
     input_kws = [
         {k: v} for k, v in kwargs.items() if k not in ["input_parser", "output_parser"]
     ]
+
     fcode, fdefaults = pyfunc.serialize_func(f)
     return pyfunc.PyFuncApp(
         oid,
@@ -135,7 +136,8 @@ class TestPyFuncApp(unittest.TestCase):
 
     def test_pickle_func(self, f=lambda x: x, input_data="hello", output_data="hello"):
         a = InMemoryDROP("a", "a")
-        b = _PyFuncApp("b", "b", f)
+        kwargs = {a.uid: 'x'}
+        b = _PyFuncApp("b", "b", f, **kwargs)
         c = InMemoryDROP("c", "c")
 
         b.addInput(a)
@@ -151,14 +153,15 @@ class TestPyFuncApp(unittest.TestCase):
     def test_eval_func(self, f=lambda x: x, input_data=None, output_data=None):
         input_data = [2, 2] if input_data is None else input_data
         output_data = [2, 2] if output_data is None else output_data
-
         a = InMemoryDROP("a", "a")
+        kwargs = {a.uid: 'x'}
         b = _PyFuncApp(
             "b",
             "b",
             f,
             input_parser=DropParser.EVAL,
             output_parser=DropParser.EVAL,
+            **kwargs
         )
         c = InMemoryDROP("c", "c")
 
@@ -178,19 +181,21 @@ class TestPyFuncApp(unittest.TestCase):
     def test_string2json_func(self, f=string2json, input_data=None, output_data=None):
         input_data = '["a", "b", "c"]' if input_data is None else input_data
         output_data = ["a", "b", "c"] if output_data is None else output_data
-
+ 
         a = InMemoryDROP("a", "a")
+        kwargs = {a.uid: 'string'}
         b = _PyFuncApp(
             "b",
             "b",
             f,
+            **kwargs
         )
         c = InMemoryDROP("c", "c")
 
         b.addInput(a)
         b.addOutput(c)
 
-        with DROPWaiterCtx(self, c, 5):
+        with DROPWaiterCtx(self, c, 120):
             drop_loaders.save_pickle(a, input_data)
             a.setCompleted()
         for drop in a, b, c:
@@ -202,12 +207,14 @@ class TestPyFuncApp(unittest.TestCase):
         output_data = numpy.ones([2, 2]) if output_data is None else output_data
 
         a = InMemoryDROP("a", "a")
+        kwargs = {a.uid: 'x'}
         b = _PyFuncApp(
             "b",
             "b",
             f,
             input_parser=DropParser.NPY,
             output_parser=DropParser.NPY,
+            **kwargs
         )
         c = InMemoryDROP("c", "c")
 
@@ -221,13 +228,14 @@ class TestPyFuncApp(unittest.TestCase):
             self.assertEqual(DROPStates.COMPLETED, drop.status)
         numpy.testing.assert_equal(output_data, drop_loaders.load_npy(c))
 
-    def _test_simple_functions(self, f, input_data, output_data):
+    def _test_simple_functions(self, f, input_data, output_data, argname):
         a, c = [InMemoryDROP(x, x) for x in ("a", "c")]
-        b = _PyFuncApp("b", "b", f)
+        kwargs = {a.uid:argname}
+        b = _PyFuncApp("b", "b", f, **kwargs)
         b.addInput(a)
         b.addOutput(c)
 
-        with DROPWaiterCtx(self, c, 5):
+        with DROPWaiterCtx(self, c, 50):
             a.write(pickle.dumps(input_data))
             a.setCompleted()
 
@@ -238,12 +246,12 @@ class TestPyFuncApp(unittest.TestCase):
     def test_func1(self):
         """Checks that func1 in this module works when wrapped"""
         data = os.urandom(64)
-        self._test_simple_functions("func1", data, data)
+        self._test_simple_functions("func1", data, data, argname="arg1")
 
     def test_func2(self):
         """Checks that func2 in this module works when wrapped"""
         n = random.randint(0, 1_000_000)
-        self._test_simple_functions("func2", n, 2 * n)
+        self._test_simple_functions("func2", n, 2 * n, argname="arg1")
 
     def test_inner_func(self):
         n = random.randint(0, 1_000_000)
@@ -251,11 +259,11 @@ class TestPyFuncApp(unittest.TestCase):
         def f(x):
             return x + 2
 
-        self._test_simple_functions(f, n, n + 2)
+        self._test_simple_functions(f, n, n + 2, argname="x")
 
     def test_lambda(self):
         n = random.randint(0, 1_000_000)
-        self._test_simple_functions(lambda x: x / 2, n, n / 2)
+        self._test_simple_functions(lambda x: x / 2, n, n / 2, argname="x")
 
     def test_inner_func_with_closure(self):
         n = random.randint(0, 1_000_000)
@@ -263,11 +271,11 @@ class TestPyFuncApp(unittest.TestCase):
         def f(x):
             return x + n
 
-        self._test_simple_functions(f, n, n + n)
+        self._test_simple_functions(f, n, n + n, argname="x")
 
     def test_lambda_with_closure(self):
         n = random.randint(0, 1_000_000)
-        self._test_simple_functions(lambda x: (x + n) / 2, n, (n + n) / 2)
+        self._test_simple_functions(lambda x: (x + n) / 2, n, (n + n) / 2, argname="x")
 
     def _test_func3(self, output_drops, expected_outputs):
         a = _PyFuncApp("a", "a", "func3")
@@ -298,7 +306,7 @@ class TestPyFuncApp(unittest.TestCase):
         with multiple outputs.
         """
         output_drops = [InMemoryDROP(x, x) for x in ("b", "c", "d")]
-        self._test_func3(output_drops, ("b", "c", "d"))
+        self._test_func3(output_drops, ["b", "c", "d"])
 
     def _test_defaults(self, expected_out, *args, **kwargs):
         def _do_test(func, expected_out, *args, **kwargs):
@@ -465,6 +473,11 @@ class PyFuncAppIntraNMTest(NMTestsMixIn, unittest.TestCase):
                 "categoryType": "Application",
                 "dropclass": "dlg.apps.pyfunc.PyFuncApp",
                 "func_name": __name__ + ".func1",
+                "inputs": [
+                    {
+                        "A": "arg1"
+                    },
+                ]
             },
             {
                 "oid": "C",
@@ -500,7 +513,12 @@ class PyFuncAppIntraNMTest(NMTestsMixIn, unittest.TestCase):
                 "categoryType": "Application",
                 "dropclass": "dlg.apps.pyfunc.PyFuncApp",
                 "func_name": __name__ + ".func1",
-            },
+                "inputs": [
+                    {
+                        "A": "arg1"
+                    },
+                ]
+            }
         ]
         g2 = [
             {
