@@ -75,7 +75,7 @@ class ConfigManager:
 
         while True:
             ui = input("Do you want to create a $HOME/.config/dlg directory"
-                       " to store your custom configuration files and scripts?")
+                       " to store your custom configuration files and scripts (y/n)? ")
             if ui.lower() == "y" or ui.lower() == "n":
                 return ui.lower() == "y"
             else:
