@@ -25,6 +25,7 @@ A module containing utility code for running remote commands over SSH.
 
 import logging
 import os
+import sys
 import time
 
 from paramiko.client import SSHClient, AutoAddPolicy
@@ -102,11 +103,13 @@ def createClient(host, username=None, pkeyPath=None):
     """
     client = SSHClient()
     client.set_missing_host_key_policy(AutoAddPolicy())
-
-    pkey = (
-        RSAKey.from_private_key_file(os.path.expanduser(pkeyPath)) if pkeyPath else None
-    )
-    client.connect(host, username=username, pkey=pkey)
+    try:
+        client.connect(host, username=username, key_filename=pkeyPath)
+    except FileNotFoundError:
+        logger.warning(
+            "File '%s' was not found, cannot create remote connection", pkeyPath
+        )
+        sys.exit(1)
     return client
 
 

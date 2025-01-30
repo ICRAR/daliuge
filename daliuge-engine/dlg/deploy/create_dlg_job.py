@@ -626,6 +626,7 @@ def main():
         help="Display the available configurations  and exit",
         default=False,
     )
+
     parser.add_option(
         "-U",
         "--username",
@@ -634,6 +635,13 @@ def main():
         action="store",
         help="Remote username, if different from local",
         default=None,
+    )
+
+    parser.add_option(
+        "--ssh_key",
+        action="store",
+        help="Path to ssh private key",
+        default=None
     )
 
     (opts, _) = parser.parse_args(sys.argv)
@@ -734,6 +742,7 @@ def main():
             submit=opts.submit,
             remote=opts.remote,
             username=opts.username,
+            ssh_key=opts.ssh_key
         )
         client._visualise_graph = opts.visualise_graph
         client.submit_job()

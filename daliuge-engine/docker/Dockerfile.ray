@@ -6,7 +6,11 @@ FROM icrar/daliuge-common:${VCS_TAG:-latest}
 #     gcc g++ gdb casacore-dev clang-tidy-10 clang-tidy libboost1.71-all-dev libgsl-dev
 
 RUN sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends gcc python3-pip curl
-RUN service dbus start && service avahi-daemon start && avahi-set-host-name dlg-engine
+
+RUN service avahi-daemon stop && \
+    service dbus start && \
+    service avahi-daemon start && \
+    avahi-set-host-name dlg-engine
 
 COPY / /daliuge
 RUN . /home/ray/dlg/bin/activate && \
