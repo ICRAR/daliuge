@@ -692,6 +692,7 @@ def run(_, args=None):
         help="Display the available configurations and exit",
         default=False,
     )
+
     parser.add_option(
         "-U",
         "--username",
@@ -700,6 +701,13 @@ def run(_, args=None):
         action="store",
         help="Remote username, if different from local",
         default=None,
+    )
+
+    parser.add_option(
+        "--ssh_key",
+        action="store",
+        help="Path to ssh private key",
+        default=None
     )
 
     parser.add_option_group(create_experiment_group(parser))
@@ -821,6 +829,7 @@ def run(_, args=None):
             submit=opts.submit,
             remote=opts.remote,
             username=opts.username,
+            ssh_key=opts.ssh_key
             config=config,
             slurm_template=template
         )
