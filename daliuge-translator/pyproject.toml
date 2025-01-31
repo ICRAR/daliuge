@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "daliuge-translator"
+dynamic = ["version"]
+description = "Data Activated 流 (flow) Graph Engine - Graph Translation"
+readme = "README.md"
+authors = [
+    { name = "ICRAR DIA Group", email = "rtobar@icrar.org" }
+]
+license = { text = "LGPLv2+" }
+dependencies = [
+    "daliuge-common",
+    "fastapi",
+    "jinja2",
+    "jsonschema",
+    "metis>=0.2a3",
+    "netifaces",
+    "networkx",
+    "numpy",
+    "parameterized",
+    "psutil",
+    "pyswarm",
+    "python-multipart",
+    "uvicorn==0.18",
+    "wheel",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo",
+]
+
+[tool.setuptools]
+packages = ["dlg"]
+
+[tool.setuptools.package-data]
+dlg = ["**/*"]
+
+[project.scripts]
+dlg = "dlg.common.tool:run"
+
+[project.entry-points]
+"dlg.tool_commands" = { runtime = "dlg.translator.tool_commands" }
+
+[tool.setuptools.dynamic]
+version = {attr = "dlg.version_helper.get_version_for_dependent_projects"}

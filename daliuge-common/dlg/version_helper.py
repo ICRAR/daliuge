@@ -19,9 +19,17 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import logging
 import os
 import subprocess
+import sys
 
+logger = logging.getLogger(__name__)
+
+try:
+    from importlib.metadata import version, PackageNotFoundError
+except ModuleNotFoundError:
+    from importlib_metadata import version, PackageNotFoundError
 
 def get_git_version():
     out = subprocess.check_output(["git", "rev-parse", "HEAD"])
@@ -40,6 +48,25 @@ def get_version_info(version, is_release):
 
 def version_as_string(version_tuple):
     return "%d.%d.%d" % version_tuple
+
+def get_version():
+    from pathlib import Path
+
+    TAG_VERSION_FILE = "VERSION"
+    with (Path(__file__).parent.parent / TAG_VERSION_FILE).open(encoding="utf8") as f:
+        major, minor, patch = f.read().strip("v").split(".")
+    return f"{major}.{minor}.{patch}"
+
+def get_version_for_dependent_projects():
+    try:
+        import dlg
+        return dlg.__version__
+    except PackageNotFoundError:
+        logger.warning(
+            "WARNING: daliuge-engine requires daliuge-common to be installed first. "
+            "Stopping installation..."
+        )
+        sys.exit(1)
 
 
 def write_version_info(version_tuple, version_file, is_release):

@@ -1,0 +1,96 @@
+#    ICRAR - International Centre for Radio Astronomy Research
+#    (c) UWA - The University of Western Australia, 2025
+#    Copyright by UWA (in the framework of the ICRAR)
+#    All rights reserved
+#
+#    This library is free software; you can redistribute it and/or
+#    modify it under the terms of the GNU Lesser General Public
+#    License as published by the Free Software Foundation; either
+#    version 2.1 of the License, or (at your option) any later version.
+#
+#    This library is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#    Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public
+#    License along with this library; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+#    MA 02111-1307  USA
+#
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "daliuge-engine"
+dynamic = ["version"]
+description = "Data Activated (flow) Graph Engine - Execution Engine"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "LGPLv2+"}
+authors = [
+    { name = "ICRAR DIA Group", email = "dfms_prototype@googlegroups.com" }
+]
+
+dependencies = [
+    "wheel",
+    "bottle",
+    "urllib3<1.27,>=1.25.4",
+    "boto3",
+    "configobj",
+    "crc32c",
+    "daliuge-common",  # Dynamically sets version in setuptools_scm
+    "dill",
+    "docker",
+    "lockfile",
+    "netifaces>=0.10.6",
+    "numpy",
+    "overrides",
+    "paramiko",
+    "psutil",
+    "python-daemon",
+    "pyzmq==25.1.1",
+    "scp",
+    "pyext @ git+https://github.com/itea1001/PyExt",
+    "pyyaml",
+    "zeroconf==0.38.4",
+    "zerorpc==0.6.3",
+]
+
+[project.optional-dependencies]
+spead = ["spead2==0.4.0"]
+drive-casa = ["drive-casa>0.7"]
+MPI = ["mpi4py"]
+aws = ["boto3"]
+test = [
+    "pytest",
+    "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo",
+]
+
+[project.scripts]
+dlg = "dlg.common.tool:run"
+
+[project.entry-points]
+"dlg.tool_commands" = { runtime = "dlg.runtime.tool_commands" }
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["test", "test.*", "fabfile"]
+
+[tool.setuptools.package-data]
+"dlg.apps" = ["dlg_app.h", "dlg_app2.h"]
+"dlg.manager" = [
+    "web/*.html",
+    "web/static/css/*.css",
+    "web/static/fonts/*",
+    "web/static/js/*.js",
+    "web/static/js/d3/*",
+    "web/static/icons/*",
+]
+"test.dropmake" = ["logical_graphs/*.json"]
+"test.apps" = ["dynlib_example.c", "dynlib_example2.c"]
+
+[tool.setuptools.dynamic]
+version = {attr = "dlg.version_helper.get_version_for_dependent_projects"}
