@@ -381,7 +381,7 @@ def has_path(x):
         return False
 
 
-def replace_path_placeholders(cmd, inputs, outputs):
+def replace_placeholders(cmd, inputs, outputs):
     """
     Replaces any placeholder found in ``cmd`` with the path of the respective
     input or output Drop from ``inputs`` or ``outputs``.
@@ -399,24 +399,18 @@ def replace_path_placeholders(cmd, inputs, outputs):
         inputs.keys(),
         outputs.keys(),
     )
+    replacements = {**inputs, **outputs}
+    for attr, value in replacements.items():
+        try:
+            cmd = cmd.replace(f"%{attr}%", value.path)
+        except AttributeError:
+            logger.debug("Input %s does not have 'path' attr", attr)
 
-    for x, i in enumerate(inputs.values()):
-        pathRef = "%%i%d" % (x,)
-        if pathRef in cmd:
-            cmd = cmd.replace(pathRef, i.path)
-    for x, o in enumerate(outputs.values()):
-        pathRef = "%%o%d" % (x)
-        if pathRef in cmd:
-            cmd = cmd.replace(pathRef, o.path)
+        try:
+            cmd = cmd.replace(f"%{attr}%", value.dataUrl)
+        except AttributeError:
+            logger.debug("Input %s does not have 'dataUrl' attr", attr)
 
-    for uid, i in inputs.items():
-        pathRef = "%%i[%s]" % (uid,)
-        if pathRef in cmd:
-            cmd = cmd.replace(pathRef, i.path)
-    for uid, o in outputs.items():
-        pathRef = "%%o[%s]" % (uid,)
-        if pathRef in cmd:
-            cmd = cmd.replace(pathRef, o.path)
 
     logger.debug("Command after path placeholder replacement is: %s", cmd)
 
