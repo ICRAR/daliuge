@@ -152,9 +152,7 @@ class MPIApp(BarrierAppDROP):
         app_uid = self.uid
 
         # Replace inputs/outputs in command line with paths or data URLs
-        cmd = droputils.replace_path_placeholders(cmd, fsInputs, fsOutputs)
-
-        cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
+        cmd = droputils.replace_placeholders(cmd, fsInputs, fsOutputs)
 
         # Pass down daliuge-specific information to the subprocesses as environment variables
         env = os.environ.copy()

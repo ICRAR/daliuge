@@ -488,11 +488,8 @@ class DockerApp(BarrierAppDROP):
                     if isinstance(addEnv, dict):  # if it is a dict populate directly
                         # but replace placeholders first
                         for key in addEnv:
-                            value = droputils.replace_path_placeholders(
+                            value = droputils.replace_placeholders(
                                 addEnv[key], dockerInputs, dockerOutputs
-                            )
-                            value = droputils.replace_dataurl_placeholders(
-                                value, dataURLInputs, dataURLOutputs
                             )
                             addEnv[key] = value
                         env.update(addEnv)
@@ -530,11 +527,8 @@ class DockerApp(BarrierAppDROP):
             # complete command including all additional parameters and optional redirects
             cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
             if cmd:
-                cmd = droputils.replace_path_placeholders(
+                cmd = droputils.replace_placeholders(
                     cmd, dockerInputs, dockerOutputs
-                )
-                cmd = droputils.replace_dataurl_placeholders(
-                    cmd, dataURLInputs, dataURLOutputs
                 )
                 # if "output_redirection" in self._applicationArgs:
                 #     logger.debug(">>>> outport_names: %s", outport_names)

@@ -23,13 +23,14 @@ class DropParser(Enum):
 
 
 def serialize_kwargs(keyargs, prefix="--", separator=" "):
-    kwargs = []
+    kwargs = {}
     for name, value in iter(keyargs.items()):
-        if prefix == "--" and len(name) == 1:
-            kwargs += [f"-{name} {value}"]
-        else:
-            kwargs += [f"{prefix.strip()}{name.strip()}{separator}{str(value).strip()}"]
-    logger.debug("kwargs after serialization: %s", kwargs)
+        kwargs[name] = value
+    #     if prefix == "--" and len(name) == 1:
+    #         kwargs += [f"-{name} {value}"]
+    #     else:
+    #         kwargs += [f"{prefix.strip()}{name.strip()}{separator}{str(value).strip()}"]
+    # logger.debug("kwargs after serialization: %s", kwargs)
     return kwargs
 
 
@@ -80,9 +81,8 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
             pargs.append(str(value).strip())
         else:
             kwargs.update({name: value})
-    skwargs = serialize_kwargs(kwargs, prefix=prefix, separator=separator)
     logger.info("Constructed command line arguments: %s %s", pargs, kwargs)
-    return (pargs, skwargs)
+    return (pargs, kwargs)
 
 
 def identify_named_ports(
@@ -304,27 +304,28 @@ def replace_named_ports(
     keywordArgs = {arg: subdict['value'] for arg, subdict in keywordArgs.items()}
     keywordPortArgs = {arg: subdict['value'] for arg, subdict in keywordPortArgs.items()}
  
-     # Construct the final keywordArguments and positionalPortArguments
+    #  # Construct the final keywordArguments and positionalPortArguments
     for k, v in keywordPortArgs.items():
         if v not in [None, ""]:
             keywordArgs.update({k: v})
     for k, v in positionalPortArgs.items():
-        logger.debug("port posarg %s has value %s", k, v)
-        if k == "input_redirection":
-            v = f"cat {v} > "
-        if k == "output_redirection":
-            v = f"> {v}"
+    #     logger.debug("port posarg %s has value %s", k, v)
+    #     if k == "input_redirection":
+    #         v = f"cat {v} > "
+    #     if k == "output_redirection":
+    #         v = f"> {v}"
         if v not in [None, ""]:
             positionalArgs.update({k: v})
 
-    keywordArgs = (
-        serialize_kwargs(keywordArgs, prefix=argumentPrefix, separator=separator)
-        if len(keywordArgs) > 0
-        else [""]
-    )
-    pargs = list(positionalArgs.values())
-    if not pargs or None in pargs:
-        pargs = [""]
+    # keywordArgs = (
+    #     serialize_kwargs(keywordArgs, prefix=argumentPrefix, separator=separator)
+    #     if len(keywordArgs) > 0
+    #     else [""]
+    # )
+    keywordArgs = serialize_kwargs(keywordArgs)
+    pargs = positionalArgs
+    # if not pargs or None in pargs:
+    #     pargs = [""]
 
     logger.debug("After port replacement: pargs: %s; keyargs: %s", pargs, keywordArgs)
     return keywordArgs, pargs
@@ -409,7 +410,7 @@ def get_port_reader_function(input_parser: DropParser):
     elif input_parser is DropParser.PATH:
         reader = lambda x: x.path
     elif input_parser is DropParser.DATAURL:
-        reader = lambda x: x.dataurl
+        reader = lambda x: x.dataURL
     elif input_parser is DropParser.DILL:
         reader = drop_loaders.load_dill
     elif input_parser is DropParser.BINARY:

@@ -207,6 +207,7 @@ class BashShellBase(object):
         logger.debug("Parameters found: %s", json.dumps(self.parameters))
         logger.debug("Bash Inputs: %s; Bash Outputs: %s", inputs, outputs)
         # we only support passing a path for bash apps
+        # no longer true
         fsInputs = {uid: i for uid, i in inputs.items() if droputils.has_path(i)}
         fsOutputs = {uid: o for uid, o in outputs.items() if droputils.has_path(o)}
         dataURLInputs = {
@@ -220,6 +221,10 @@ class BashShellBase(object):
         outport_names = (
             self.parameters["outputs"] if "outputs" in self.parameters else []
         )
+
+        cmd = self.command.strip()
+        cmd = droputils.replace_placeholders(cmd, fsInputs, fsOutputs)
+
         reader = get_port_reader_function(self.input_parser)
         keyargs, pargs = replace_named_ports(
             inputs.items(),
@@ -231,27 +236,16 @@ class BashShellBase(object):
             separator=self._paramValueSeparator,
             parser=reader,
         )
-        argumentString = (
-            f"{' '.join(map(str,pargs + keyargs))}"  # add kwargs to end of pargs
-        )
-        # complete command including all additional parameters and optional redirects
-        if len(argumentString.strip()) > 0:
-            # the _cmdLineArgs would very likely make the command line invalid
-            cmd = f"{self.command} {argumentString} "
-        else:
-            cmd = f"{self.command} {argumentString} {self._cmdLineArgs} "
-        if self._outputRedirect:
-            cmd = f"{cmd} > {self._outputRedirect}"
-        if self._inputRedirect:
-            cmd = f"cat {self._inputRedirect} > {cmd}"
-        cmd = cmd.strip()
+
+        for key, value in keyargs.items():
+            cmd = cmd.replace(f"%{key}%", str(value))
+        for key, value in pargs.items():
+            cmd = cmd.replace(f"%{key}%", str(value))
+
 
         app_uid = self.uid
 
         # Replace inputs/outputs in command line with paths or data URLs
-        cmd = droputils.replace_path_placeholders(cmd, fsInputs, fsOutputs)
-
-        cmd = droputils.replace_dataurl_placeholders(cmd, dataURLInputs, dataURLOutputs)
 
         # Pass down daliuge-specific information to the subprocesses as environment variables
         env = os.environ.copy()
@@ -372,11 +366,6 @@ class StreamingInputBashAppBase(BashShellBase, AppDROP):
 # @param category BashShellApp
 # @param tag template
 # @param command /String/ComponentParameter/NoPort/ReadWrite//False/False/The command to be executed
-# @param input_redirection /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line argument that specifies the input into this application
-# @param output_redirection /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line argument that specifies the output from this application
-# @param command_line_arguments /String/ComponentParameter/NoPort/ReadWrite//False/False/Additional command line arguments to be added to the command line to be executed
-# @param paramValueSeparator " "/String/ComponentParameter/NoPort/ReadWrite//False/False/Separator character(s) between parameters on the command line
-# @param argumentPrefix "--"/String/ComponentParameter/NoPort/ReadWrite//False/False/Prefix to each keyed argument on the command line
 # @param dropclass dlg.apps.bash_shell_app.BashShellApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param base_name bash_shell_app/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
