@@ -306,14 +306,17 @@ def replace_named_ports(
     keywordArgs = {arg: subdict['value'] for arg, subdict in keywordArgs.items()}
     positionalArgs = {arg: subdict['value'] for arg, subdict in positionalArgs.items()}
     keywordPortArgs = {arg: subdict['value'] for arg, subdict in keywordPortArgs.items()}
-    positionalPortArgs = {arg: subdict['value'] for arg, subdict in
-                          positionalPortArgs.items()}
-
-    #  Construct the final keywordArguments and positionalPortArguments
+ 
+    #  # Construct the final keywordArguments and positionalPortArguments
     for k, v in keywordPortArgs.items():
         if v not in [None, ""]:
             keywordArgs.update({k: v})
     for k, v in positionalPortArgs.items():
+    #     logger.debug("port posarg %s has value %s", k, v)
+    #     if k == "input_redirection":
+    #         v = f"cat {v} > "
+    #     if k == "output_redirection":
+    #         v = f"> {v}"
         if v not in [None, ""]:
             positionalArgs.update({k: v})
 
