@@ -201,6 +201,16 @@ class BashShellBase:
         """
         logger.debug("Parameters found: %s", json.dumps(self.parameters))
         logger.debug("Bash Inputs: %s; Bash Outputs: %s", inputs, outputs)
+        # we only support passing a path for bash apps
+        # no longer true
+        fsInputs = {uid: i for uid, i in inputs.items() if droputils.has_path(i)}
+        fsOutputs = {uid: o for uid, o in outputs.items() if droputils.has_path(o)}
+        dataURLInputs = {
+            uid: i for uid, i in inputs.items() if not droputils.has_path(i)
+        }
+        dataURLOutputs = {
+            uid: o for uid, o in outputs.items() if not droputils.has_path(o)
+        }
         # deal with named ports
         inport_names = self.parameters["inputs"] if "inputs" in self.parameters else []
         outport_names = (
@@ -208,7 +218,7 @@ class BashShellBase:
         )
 
         cmd = self.command.strip()
-        cmd = droputils.replace_placeholders(cmd, inputs, outputs)
+        cmd = droputils.replace_placeholders(cmd, fsInputs, fsOutputs)
 
         reader = get_port_reader_function(self.input_parser)
         keyargs, pargs = replace_named_ports(
