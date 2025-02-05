@@ -144,7 +144,11 @@ def identify_named_ports(
         if value is None:
             value = ""  # make sure we are passing NULL drop events
         if key in positionalArgs:
-            encoding = DropParser(positionalPortArgs[key]['encoding'])
+            try:
+                encoding = DropParser(positionalPortArgs[key]['encoding'])
+            except ValueError:
+                logger.warning("No encoding set for %key: possible default")
+                continue
             parser = get_port_reader_function(encoding)
             if parser:
                 logger.debug("Reading from port using %s", parser.__repr__())
@@ -156,7 +160,11 @@ def identify_named_ports(
             if addPositionalToKeyword:
                 keywordPortArgs.update({key: positionalPortArgs[key]})
         elif key in keywordArgs:
-            encoding = DropParser(keywordArgs[key]['encoding'])
+            try:
+                encoding = DropParser(keywordArgs[key]['encoding'])
+            except ValueError:
+                logger.warning("No encoding set for %key: possible default")
+                continue
             parser = get_port_reader_function(encoding)
             if parser:
                 logger.debug("Reading from port using %s", parser.__repr__())
