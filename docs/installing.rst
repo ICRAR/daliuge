@@ -91,7 +91,7 @@ Installing to Local Machine
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. note::
-  NOTE: |daliuge| requires python 3.7 or later. If your terminal python does not meet this requirement, consider using a python manager such as `pyenv <https://github.com/pyenv/pyenv>`_ to manage multiple python installations.
+  NOTE: |daliuge| requires python 3.9 or later. If your terminal python does not meet this requirement, consider using a python manager such as `pyenv <https://github.com/pyenv/pyenv>`_ to manage multiple python installations.
 
 Install from GitHub
 """""""""""""""""""
@@ -99,8 +99,8 @@ Install from GitHub
 .. note::
   It is always recommended to use |daliuge| from inside a virtual environment to avoid breaking global dependencies of a python installation. If in doubt about creating and activating virtual environments, use the following `venv <https://docs.python.org/3/library/venv.html>`_ commands from your workspace directory::
 
-    python -m venv .dlgvenv
-    source ./.dlgvenv/bin/activate
+    python -m venv .venv
+    source ./.venv/bin/activate
     # ...
 
     # run `deactivate` to deactivate when done
@@ -127,7 +127,7 @@ If you want to have access to the sources you can run the installation in a slig
 Perform the following steps to setup and install |daliuge| into a virtual environment::
 
   cd daliuge
-  python -m venv .venv
+  make local
   source .venv/bin/activate
   make show # Optional, use to confirm virtualenv is active
   make install
