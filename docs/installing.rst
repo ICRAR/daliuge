@@ -24,7 +24,7 @@ This way we are trying to separate the requirements of the daliuge engine and tr
 The *daliuge-engine* image by default runs a generic daemon, which allows to then start the Master Manager, Node Manager or DataIsland Manager. This approach allows to change the actual manager deployment configuration in a more dynamic way and adjusted to the actual requirements of the environment.
 
 .. note::
-  This guide is meant for people who are experimenting with the system. It does not cover specific needs of more complex, distributed operational deployments.**
+  This guide is meant for people who are experimenting with the system. It does not cover specific needs of more complex, distributed operational deployments.
 
 Creating the images
 ^^^^^^^^^^^^^^^^^^^
