@@ -53,7 +53,9 @@ from dlg.dropmake import path_utils
 
 
 def create_and_run_graph_spec_from_lgt(test_case: unittest.TestCase,
-                                       graph_name: str, resolve_path = True):
+                                       graph_name: str,
+                                       resolve_path = True,
+                                       app_root=True):
     """
     Boilerplate graph running code which takes a Logical Graph Template (LGT) and
     performs the translation and submission through the graph loader.
@@ -72,8 +74,11 @@ def create_and_run_graph_spec_from_lgt(test_case: unittest.TestCase,
     leafs = droputils.getLeafNodes(roots)
     with droputils.DROPWaiterCtx(test_case, leafs, timeout=3):
         for drop in roots:
-            fut = drop.async_execute()
-            fut.result()
+            if app_root:
+                fut = drop.async_execute()
+                fut.result()
+            else:
+                drop.setCompleted()
 
     return leafs
 
@@ -134,12 +139,12 @@ class TestSimpleFunctionGraphs(unittest.TestCase):
     def test_string2json(self):
         """
         Test variations in edge cases for string2json functions:
-        - No parameters are provided in graph (string2jsonPGT.graph)
-        - Empty parameters are provided in graph
-        - Incorrect parameters are provided in graph (e.g. component instead of
-        application)
+            - No parameters are provided in graph (string2jsonPGT.graph)
+            - Empty parameters are provided in graph
+            - Incorrect parameters are provided in graph (e.g. component instead of
+               application)
 
-        dlg.apps.simple_functions.string2json
+        Func: dlg.apps.simple_functions.string2json
 
         """
 
@@ -148,4 +153,14 @@ class TestSimpleFunctionGraphs(unittest.TestCase):
         leafs = create_and_run_graph_spec_from_lgt(self, graph, resolve_path=False)
         for l in leafs:
             self.assertEqual(DROPStates.COMPLETED, l.status)
-        # self.assertEqual(0
+        graph = f"{files(simple_functions)}/string2json_incorrect_argsPG.graph"
+        leafs = create_and_run_graph_spec_from_lgt(self, graph, resolve_path=False)
+        for l in leafs:
+            self.assertEqual(DROPStates.COMPLETED, l.status)
+        graph = f"{files(simple_functions)}/string2json_incorrect_paramtypePGT.graph"
+        leafs = create_and_run_graph_spec_from_lgt(self,
+                                                   graph,
+                                                   resolve_path=False,
+                                                   app_root=False)
+        for l in leafs:
+            self.assertEqual(DROPStates.COMPLETED, l.status)

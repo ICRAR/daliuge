@@ -390,7 +390,7 @@ class Session(object):
 
         try:
             self._roots = graph_loader.createGraphFromDropSpecList(
-                self._graph.values(), session=self
+                list(self._graph.values()), session=self
             )
 
         except KeyError as e:

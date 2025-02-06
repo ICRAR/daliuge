@@ -405,10 +405,11 @@ class PyFuncApp(BarrierAppDROP):
         """
         pargs = []  # positional arguments
         funcargs = {}  # Function arguments
+        vparg = []
+        vkarg = {}
 
         # update the positional args
         pargsDict = self._initialise_positional_args(pargsDict)
-
         if self._applicationArgs:
             # if defined in both we use AppArgs values
             for arg in self._applicationArgs:
@@ -435,8 +436,6 @@ class PyFuncApp(BarrierAppDROP):
 
             # Put all remaining arguments into *args and **kwargs
             # TODO: This should only be done if the function signature allows it
-            vparg = []
-            vkarg = {}
             logger.debug(f"Remaining AppArguments {self._applicationArgs}")
             for arg in self._applicationArgs:
                 if self._applicationArgs[arg]["type"] in ["Json", "Complex"]:
