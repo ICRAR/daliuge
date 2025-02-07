@@ -23,7 +23,8 @@ This way we are trying to separate the requirements of the daliuge engine and tr
 
 The *daliuge-engine* image by default runs a generic daemon, which allows to then start the Master Manager, Node Manager or DataIsland Manager. This approach allows to change the actual manager deployment configuration in a more dynamic way and adjusted to the actual requirements of the environment.
 
-**NOTE: This guide is meant for people who are experimenting with the system. It does not cover specific needs of more complex, distributed operational deployments.**
+.. note::
+  This guide is meant for people who are experimenting with the system. It does not cover specific needs of more complex, distributed operational deployments.
 
 Creating the images
 ^^^^^^^^^^^^^^^^^^^
@@ -86,16 +87,23 @@ file, which are automatically retrieved when running it. The spead2 library (one
 #. boost-devel
 #. gcc >= 4.8
 
-Installing into host Python
+Installing to Local Machine
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-NOTE: |daliuge| requires python 3.7 or later. It is always recommended to install |daliuge| inside a python virtual environment. Make sure that you have on created and enabled. More often than not pip requries an update, else it will always issue a warning. Thus first run::
 
-  pip install --upgrade pip
-
-Like for the docker installation the local installation also follows the same pattern. 
+.. note::
+  NOTE: |daliuge| requires python 3.9 or later. If your terminal python does not meet this requirement, consider using a python manager such as `pyenv <https://github.com/pyenv/pyenv>`_ to manage multiple python installations.
 
 Install from GitHub
 """""""""""""""""""
+
+.. note::
+  It is always recommended to use |daliuge| from inside a virtual environment to avoid breaking global dependencies of a python installation. If in doubt about creating and activating virtual environments, use the following `venv <https://docs.python.org/3/library/venv.html>`_ commands from your workspace directory::
+
+    python -m venv .venv
+    source ./.venv/bin/activate
+    # ...
+
+    # run `deactivate` to deactivate when done
 
 The following commands are installing the |daliuge| parts directly from github. In this case you won't have access to the sources, but the system will run. First install the daliuge-common part::
 
@@ -116,10 +124,10 @@ If you want to have access to the sources you can run the installation in a slig
 
   git clone https://github.com/ICRAR/daliuge
 
-Then perform the following steps to setup and install |daliuge| into an isolated environment::
+Perform the following steps to setup and install |daliuge| into a virtual environment::
 
   cd daliuge
-  make virtualenv
+  make local
   source .venv/bin/activate
   make show # Optional, use to confirm virtualenv is active
   make install
