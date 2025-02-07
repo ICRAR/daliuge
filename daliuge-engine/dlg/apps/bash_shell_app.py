@@ -159,7 +159,7 @@ def prepare_input_channel(data):
     raise Exception("Unsupported streaming channel: %s", data)
 
 
-class BashShellBase(object):
+class BashShellBase:
     """
     Common class for BashShell apps. It simply requires a command to be
     specified.
@@ -206,16 +206,6 @@ class BashShellBase(object):
         """
         logger.debug("Parameters found: %s", json.dumps(self.parameters))
         logger.debug("Bash Inputs: %s; Bash Outputs: %s", inputs, outputs)
-        # we only support passing a path for bash apps
-        # no longer true
-        fsInputs = {uid: i for uid, i in inputs.items() if droputils.has_path(i)}
-        fsOutputs = {uid: o for uid, o in outputs.items() if droputils.has_path(o)}
-        dataURLInputs = {
-            uid: i for uid, i in inputs.items() if not droputils.has_path(i)
-        }
-        dataURLOutputs = {
-            uid: o for uid, o in outputs.items() if not droputils.has_path(o)
-        }
         # deal with named ports
         inport_names = self.parameters["inputs"] if "inputs" in self.parameters else []
         outport_names = (
@@ -223,7 +213,7 @@ class BashShellBase(object):
         )
 
         cmd = self.command.strip()
-        cmd = droputils.replace_placeholders(cmd, fsInputs, fsOutputs)
+        cmd = droputils.replace_placeholders(cmd, inputs, outputs)
 
         reader = get_port_reader_function(self.input_parser)
         keyargs, pargs = replace_named_ports(
@@ -232,8 +222,6 @@ class BashShellBase(object):
             inport_names,
             outport_names,
             self.appArgs,
-            argumentPrefix=self._argumentPrefix,
-            separator=self._paramValueSeparator,
             parser=reader,
         )
 
@@ -241,9 +229,6 @@ class BashShellBase(object):
             cmd = cmd.replace(f"%{key}%", str(value))
         for key, value in pargs.items():
             cmd = cmd.replace(f"%{key}%", str(value))
-
-
-        app_uid = self.uid
 
         # Replace inputs/outputs in command line with paths or data URLs
 

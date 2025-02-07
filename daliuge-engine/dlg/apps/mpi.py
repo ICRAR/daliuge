@@ -27,6 +27,8 @@ import signal
 import subprocess
 import sys
 
+from mpi4py import MPI
+
 from dlg import utils, droputils
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.named_port_utils import (
@@ -100,32 +102,22 @@ class MPIApp(BarrierAppDROP):
         self._recompute_data = {}
 
     def run(self):
-        from mpi4py import MPI
+        logger.debug("Parameters found: %s",
+                     json.dumps(self.parameters))
+        logger.debug("MPI Inputs: %s; MPI Outputs: %s",
+                     self._inputs, self._outputs)
 
-        cmd, args = self._command, self._args
-        inputs = self._inputs
-        outputs = self._outputs
-
-        logger.debug("Parameters found: %s", json.dumps(self.parameters))
-        logger.debug("MPI Inputs: %s; MPI Outputs: %s", inputs, outputs)
-        # we only support passing a path for bash apps
-        fsInputs = {uid: i for uid, i in inputs.items() if droputils.has_path(i)}
-        fsOutputs = {uid: o for uid, o in outputs.items() if droputils.has_path(o)}
-        dataURLInputs = {
-            uid: i for uid, i in inputs.items() if not droputils.has_path(i)
-        }
-        dataURLOutputs = {
-            uid: o for uid, o in outputs.items() if not droputils.has_path(o)
-        }
         # deal with named ports
         inport_names = self.parameters["inputs"] if "inputs" in self.parameters else []
         outport_names = (
             self.parameters["outputs"] if "outputs" in self.parameters else []
         )
+        cmd = droputils.replace_placeholders(self._command, self.inputs, self.outputs)
+
         reader = get_port_reader_function(self.input_parser)
         keyargs, pargs = replace_named_ports(
-            inputs.items(),
-            outputs.items(),
+            self.inputs.items(),
+            self.outputs.items(),
             inport_names,
             outport_names,
             self._applicationArgs,
@@ -133,25 +125,14 @@ class MPIApp(BarrierAppDROP):
             separator=self._paramValueSeparator,
             parser=reader,
         )
-        argumentString = (
-            f"{' '.join(map(str,pargs + keyargs))}"  # add kwargs to end of pargs
-        )
-        # complete command including all additional parameters and optional redirects
-        if len(argumentString.strip()) > 0:
-            # the _cmdLineArgs would very likely make the command line invalid
-            cmd = f"{self._command} {argumentString} "
-        else:
-            cmd = f"{self._command} {argumentString} {args} "
-        if self._outputRedirect:
-            cmd = f"{cmd} > {self._outputRedirect}"
-        if self._inputRedirect:
-            cmd = f"cat {self._inputRedirect} > {cmd}"
-        cmd = cmd.strip()
 
-        app_uid = self.uid
+        for key, value in keyargs.items():
+            cmd = cmd.replace(f"%{key}%", str(value))
+        for key, value in pargs.items():
+            cmd = cmd.replace(f"%{key}%", str(value))
 
         # Replace inputs/outputs in command line with paths or data URLs
-        cmd = droputils.replace_placeholders(cmd, fsInputs, fsOutputs)
+        # cmd = droputils.replace_placeholders(cmd, fsInputs, fsOutputs)
 
         # Pass down daliuge-specific information to the subprocesses as environment variables
         env = os.environ.copy()
@@ -172,6 +153,8 @@ class MPIApp(BarrierAppDROP):
             # we wait until all children processes are completed
             args = ["-m", __name__, cmd]
             cmd = sys.executable
+        else:
+            args = self._args
 
         errcodes = []
 
