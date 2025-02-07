@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class DropParser(Enum):
     RAW = "raw"
     PICKLE = "pickle"
-    EVAL = "eval" 
+    EVAL = "eval"
     NPY = "npy"
     DILL = "dill"
     # JSON = "json"
@@ -205,8 +205,6 @@ def replace_named_ports(
     inport_names: dict,
     outport_names: dict,
     appArgs: dict,
-    argumentPrefix: str = "--",
-    separator: str = " ",
     parser: callable = None,
 ) -> Tuple[str, str]:
     """
@@ -218,8 +216,6 @@ def replace_named_ports(
         inport_names: dictionary of input port names (key: uid)
         outport_names: dictionary of output port names (key: uid)
         appArgs: dictionary of all arguments
-        argumentPrefix: prefix for keyword arguments
-        separator: character used between keyword and value
         parser: reader function for ports
 
     This method is focused on creating two 'sets' of arguments:
@@ -237,6 +233,7 @@ def replace_named_ports(
         inport_names,
         outport_names,
     )
+
     inputs_dict = collections.OrderedDict()
     for uid, drop in iitems:
         inputs_dict[uid] = {
@@ -253,10 +250,6 @@ def replace_named_ports(
 
     positionalArgs = _get_args(appArgs, positional=True)
     keywordArgs = _get_args(appArgs, positional=False)
-    # we will need an ordered dict for all positional arguments
-    # thus we create it here and fill it with values
-    positionalPortArgs = collections.OrderedDict(positionalArgs)
-
     logger.debug(
         "posargs: %s; keyargs: %s, %s",
         positionalArgs,
@@ -264,7 +257,11 @@ def replace_named_ports(
         check_ports_dict(inport_names),
     )
 
+    # we will need an ordered dict for all positional arguments
+    # thus we create it here and fill it with values
+    positionalPortArgs = collections.OrderedDict(positionalArgs)
     keywordPortArgs = {}
+
     # Update the argument dictionaries in-place based on the port names.
     # This needs to be done for both the input ports and output ports on the drop.
     _process_port(
@@ -299,33 +296,22 @@ def replace_named_ports(
     keywordArgs = _get_args(appArgs, positional=False)
 
     # Extract values from dictionaries - "encoding" etc. are irrelevant
-    appArgs = {arg: subdict['value'] for arg, subdict in appArgs.items()}
-    positionalArgs = {arg: subdict['value'] for arg, subdict in positionalArgs.items()}
     keywordArgs = {arg: subdict['value'] for arg, subdict in keywordArgs.items()}
+    positionalArgs = {arg: subdict['value'] for arg, subdict in positionalArgs.items()}
     keywordPortArgs = {arg: subdict['value'] for arg, subdict in keywordPortArgs.items()}
- 
-    #  # Construct the final keywordArguments and positionalPortArguments
+    positionalPortArgs = {arg: subdict['value'] for arg, subdict in
+                          positionalPortArgs.items()}
+
+    #  Construct the final keywordArguments and positionalPortArguments
     for k, v in keywordPortArgs.items():
         if v not in [None, ""]:
             keywordArgs.update({k: v})
     for k, v in positionalPortArgs.items():
-    #     logger.debug("port posarg %s has value %s", k, v)
-    #     if k == "input_redirection":
-    #         v = f"cat {v} > "
-    #     if k == "output_redirection":
-    #         v = f"> {v}"
         if v not in [None, ""]:
             positionalArgs.update({k: v})
 
-    # keywordArgs = (
-    #     serialize_kwargs(keywordArgs, prefix=argumentPrefix, separator=separator)
-    #     if len(keywordArgs) > 0
-    #     else [""]
-    # )
     keywordArgs = serialize_kwargs(keywordArgs)
     pargs = positionalArgs
-    # if not pargs or None in pargs:
-    #     pargs = [""]
 
     logger.debug("After port replacement: pargs: %s; keyargs: %s", pargs, keywordArgs)
     return keywordArgs, pargs
@@ -377,7 +363,7 @@ def _get_args(appArgs, positional=False):
     Separate out the arguments dependening on if we want positional or keyword style
     """
     args = {
-        arg: {"value": appArgs[arg]["value"], 
+        arg: {"value": appArgs[arg]["value"],
               "encoding": appArgs[arg].get("encoding", "dill")}
         for arg in appArgs
         if (appArgs[arg]["positional"] == positional)
