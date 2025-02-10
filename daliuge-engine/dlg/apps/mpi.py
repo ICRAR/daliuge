@@ -27,7 +27,6 @@ import signal
 import subprocess
 import sys
 
-from mpi4py import MPI
 
 from dlg import utils, droputils
 from dlg.apps.app_base import BarrierAppDROP
@@ -93,6 +92,7 @@ class MPIApp(BarrierAppDROP):
         self._recompute_data = {}
 
     def run(self):
+        from mpi4py import MPI
         logger.debug("Parameters found: %s",
                      json.dumps(self.parameters))
         logger.debug("MPI Inputs: %s; MPI Outputs: %s",
