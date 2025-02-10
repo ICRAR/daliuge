@@ -448,7 +448,7 @@ class PyFuncApp(BarrierAppDROP):
                     vkarg[arg] = value
         else:
             logger.debug("AppArgs/pargsDict: %s", pargsDict)
-            encoding = self.input_parser if self.input_parser else "dill"
+            encoding = self.input_parser or "dill"
 
             pargsDict.update(
                 {k: {"value": pargsDict[k]["value"], "encoding": encoding}
