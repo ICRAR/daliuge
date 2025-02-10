@@ -51,13 +51,8 @@ logger = logging.getLogger(f"dlg.{__name__}")
 # @param category Mpi
 # @param tag template
 # @param command /String/ComponentParameter/NoPort/ReadWrite//False/False/The command to be executed
-# @param args /String/ComponentParameter/NoPort/ReadWrite//False/False/Additional command line arguments to be added to the command line to be executed
 # @param num_of_procs 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Number of processes used for this application
 # @param use_wrapper False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If the command should be executed inside the existing MPI communicator set this to True
-# @param input_redirection /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line argument that specifies the input into this application
-# @param output_redirection /String/ComponentParameter/NoPort/ReadWrite//False/False/The command line argument that specifies the output from this application
-# @param paramValueSeparator " "/String/ComponentParameter/NoPort/ReadWrite//False/False/Separator character(s) between parameters on the command line
-# @param argumentPrefix "--"/String/ComponentParameter/NoPort/ReadWrite//False/False/Prefix to each keyed argument on the command line
 # @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.mpi.MPIApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -89,10 +84,6 @@ class MPIApp(BarrierAppDROP):
         self._use_wrapper = self._popArg(kwargs, "use_wrapper", False)
         self._args = self._popArg(kwargs, "args", "")
         self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
-        self._argumentPrefix = self._popArg(kwargs, "argumentPrefix", "--")
-        self._paramValueSeparator = self._popArg(kwargs, "paramValueSeparator", " ")
-        self._inputRedirect = self._popArg(kwargs, "input_redirection", "")
-        self._outputRedirect = self._popArg(kwargs, "output_redirection", "")
 
         self._command = self._popArg(kwargs, "command", None)
         if not self._command:
@@ -121,8 +112,6 @@ class MPIApp(BarrierAppDROP):
             inport_names,
             outport_names,
             self._applicationArgs,
-            argumentPrefix=self._argumentPrefix,
-            separator=self._paramValueSeparator,
             parser=reader,
         )
 
