@@ -47,7 +47,7 @@ class BashAppTests(unittest.TestCase):
 
     def test_echo(self):
         a = FileDROP("a", "a")
-        b = BashShellApp("b", "b", command="cp %i0 %o0")
+        b = BashShellApp("b", "b", command="cp %a% %c%")
         c = FileDROP("c", "c")
 
         b.addInput(a)
@@ -81,9 +81,9 @@ class BashAppTests(unittest.TestCase):
             self.assertEqual(message.encode("utf8"), droputils.allDropContents(b))
 
         msg = "This is a message with a single quote: '"
-        assert_message_is_correct(msg, 'echo -n "{0}" > %o0'.format(msg))
+        assert_message_is_correct(msg, 'echo -n "{0}" > %b%'.format(msg))
         msg = 'This is a message with a double quotes: "'
-        assert_message_is_correct(msg, "echo -n '{0}' > %o0".format(msg))
+        assert_message_is_correct(msg, "echo -n '{0}' > %b%".format(msg))
 
     def test_envvars(self):
         """Checks that the DLG_* environment variables are available to bash programs"""
@@ -96,7 +96,7 @@ class BashAppTests(unittest.TestCase):
             pass
 
         def assert_envvar_is_there(varname, value):
-            command = "echo -n $%s > %%o0" % (varname)
+            command = f"echo -n ${varname} > %b%"
             a = BashShellApp(
                 app_uid, app_uid, dlg_session_id=session_id, command=command
             )
@@ -174,7 +174,7 @@ class StreamingBashAppTests(unittest.TestCase):
 
         a = StreamingOutputBashApp("a", "a", command=r"echo -en '5\n4\n3\n2\n1'")
         b = InMemoryDROP("b", "b")
-        c = StreamingInputBashApp("c", "c", command="cat > %o0")
+        c = StreamingInputBashApp("c", "c", command="cat > %d%")
         d = FileDROP("d", "d", filepath=output_fname)
 
         a.addOutput(b)
@@ -225,7 +225,7 @@ class StreamingBashAppTests(unittest.TestCase):
         b = InMemoryDROP("b", "b")
         c = StreamingInputOutputBashApp("c", "c", command="cat")
         d = InMemoryDROP("d", "d")
-        e = StreamingInputBashApp("e", "e", command="sort -n > %o0")
+        e = StreamingInputBashApp("e", "e", command="sort -n > %f%")
         f = FileDROP("f", "f", filepath=output_fname)
 
         a.addOutput(b)

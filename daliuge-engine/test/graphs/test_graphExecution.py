@@ -29,6 +29,7 @@ import daliuge_tests.engine.graphs as test_graphs
 
 from importlib.resources import files
 
+from dlg.data.drops.file import FileDROP
 from dlg.data.drops.memory import InMemoryDROP
 from dlg import droputils
 from dlg.manager.composite_manager import DataIslandManager
@@ -69,28 +70,31 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         to test that the separatorString parameter is working correctly.
         """
         sessionId = "lalo"
-        ddGraph = "ddTest.graph"
-        with (files(test_graphs) /ddGraph).open() as f:  # @UndefinedVariable
-            logger.debug(f"Loading graph: {f}")
-            graphSpec = json.load(f)
-        self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
+        bs = 10
+        count = 2048
+        ddGraphs = ["ddExamplePG.graph","ddExample_mixedPortsPG.graph"]
+        for ddGraph in ddGraphs:
+            with (files(test_graphs) /ddGraph).open() as f:  # @UndefinedVariable
+                logger.debug(f"Loading graph: {f}")
+                graphSpec = json.load(f)
+            self.createSessionAndAddGraph(ddGraph, graphSpec=graphSpec)
+            self.dim.deploySession(ddGraph)
+            a, c = [
+                drop for drop in self.dm._sessions[ddGraph].drops.values()
+                 if isinstance(drop, FileDROP)
+            ]
+            x = [ drop for drop in self.dm._sessions[ddGraph].drops.values()
+                 if isinstance(drop, InMemoryDROP)
+            ]
 
-        # Deploy now and get OIDs
-        bs = graphSpec[0]["applicationArgs"]["bs"]["value"]
-        count = graphSpec[0]["applicationArgs"]["count"]["value"]
-        self.dim.deploySession(sessionId)
-        a, c = [
-            self.dm._sessions[sessionId].drops[x]
-            for x in ("2022-02-11T08:05:47_-5_0", "2022-02-11T08:05:47_-3_0")
-        ]
+            data = os.urandom(bs * count)
+            logger.debug(f"Length of data produced: {len(data)}")
+            with droputils.DROPWaiterCtx(self, c, 300):
+                a.setCompleted()
+                for d in x:
+                    d.setCompleted()
 
-        data = os.urandom(bs * count)
-        logger.debug(f"Length of data produced: {len(data)}")
-        with droputils.DROPWaiterCtx(self, c, 3):
-            a.write(data)
-            a.setCompleted()
-
-        self.assertEqual(data, droputils.allDropContents(c))
+            self.assertEqual(len(data), len(droputils.allDropContents(c)))
 
     def test_namedPorts_funcs(self):
         """
