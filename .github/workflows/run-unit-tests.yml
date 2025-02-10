@@ -57,7 +57,7 @@ jobs:
 
       - name: Install daliuge-engine
         if: ${{ matrix.engine == 'yes' }}
-        run: pip install -e "daliuge-engine/[test, MPI]"
+        run: pip install -e "daliuge-engine/[test]"
 
       - name: Run daliuge-translator tests
         if: ${{ matrix.translator == 'yes' }}
