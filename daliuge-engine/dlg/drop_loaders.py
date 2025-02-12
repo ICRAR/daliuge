@@ -102,6 +102,8 @@ def load_numpy(drop: "DataDROP", allow_pickle=True):
 
 
 import dill
+
+
 def load_dill(drop: "DataDROP"):
     """
     Load dill
@@ -116,28 +118,30 @@ def load_dill(drop: "DataDROP"):
     drop.close(desc)
     return dill.loads(buf.getbuffer())
 
-def load_binary(drop: "DataDROP"): 
-   """
-   Load binary 
-   """
-   buf = io.BytesIO()
-   desc = drop.open()
-   read = True
-   while read:
-       data = drop.read(desc)
-       if data: 
-           buf.write(data)
-           drop.close(desc)
-           return buf.getvalue().decode()
-        
-       return 0
+
+def load_binary(drop: "DataDROP"):
+    """
+    Load binary
+    """
+    buf = io.BytesIO()
+    desc = drop.open()
+    read = True
+    while read:
+        data = drop.read(desc)
+        if data:
+            buf.write(data)
+            drop.close(desc)
+            return buf.getvalue().decode()
+
+        return 0
+
 
 def save_binary(drop: "DataDROP", data: bytes):
     """
-    Save binary 
+    Save binary
     """
     bytes_data = io.BytesIO(data)
     dropio = drop.getIO()
     dropio.open(OpenMode.OPEN_WRITE)
-    dropio.write(bytes_data)
+    dropio.write(bytes_data.getbuffer())
     dropio.close()
