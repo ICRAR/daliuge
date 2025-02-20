@@ -180,7 +180,7 @@ extra_requires = {
     "aws": ["boto3"],
     "test": [
         "pytest",
-        "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo",
+        "eagle-test-graphs"
     ],
 }
 
@@ -200,7 +200,7 @@ setup(
     license="LGPLv2+",
     packages=find_packages(exclude=("test", "test.*", "fabfile")),
     package_data={
-        "dlg": ["VERSION"],
+        "": ["VERSION"],
         "dlg.apps": ["dlg_app.h", "dlg_app2.h"],
         "dlg.manager": [
             "web/*.html",

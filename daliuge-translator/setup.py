@@ -128,7 +128,7 @@ install_requires = [
 extra_requires = {
     "test": [
         "pytest",
-        "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo",
+        "eagle-test-graphs"
     ]
 }
 
@@ -144,7 +144,7 @@ setup(
     install_requires=install_requires,
     extras_require=extra_requires,
     packages=find_packages(),
-    package_data={"dlg": src_files},
+    package_data={"":["VERSION"], "dlg": src_files},
     entry_points={"dlg.tool_commands": [
         "translator=dlg.translator.tool_commands"]},
     test_suite="test",
