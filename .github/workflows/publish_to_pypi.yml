@@ -22,7 +22,7 @@ jobs:
         build
         --user
     - name: Build a binary wheel and a source tarball
-      run: > 
+      run: | 
         cd daliuge-common
         python3 -m build --sdist && python -m build --wheel
     - name: Store the distribution packages
@@ -50,7 +50,7 @@ jobs:
         build
         --user
     - name: Build a binary wheel and a source tarball
-      run: > 
+      run: | 
         cd daliuge-engine
         python3 -m build --sdist && python -m build --wheel
     - name: Store the distribution packages
@@ -78,7 +78,7 @@ jobs:
         build
         --user
     - name: Build a binary wheel and a source tarball
-      run: > 
+      run: | 
         cd daliuge-translator
         python3 -m build --sdist && python -m build --wheel
     - name: Store the distribution packages
