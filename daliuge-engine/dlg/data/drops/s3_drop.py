@@ -55,6 +55,7 @@ from dlg.meta import (
 # @par EAGLE_START
 # @param category S3
 # @param tag daliuge
+# @param InOut /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param Bucket /String/ComponentParameter/NoPort/ReadWrite//False/False/The S3 Bucket
@@ -65,7 +66,6 @@ from dlg.meta import (
 # @param base_name s3_drop/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @par EAGLE_END
 class S3DROP(DataDROP):
     """

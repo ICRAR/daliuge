@@ -59,13 +59,13 @@ logger = logging.getLogger(__name__)
 # @par EAGLE_START
 # @param category Data
 # @param tag template
+# @param InOut /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @param dropclass dlg.data.drops.data_base.DataDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/The python class that implements this data component
 # @param base_name data_base/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @par EAGLE_END
 class DataDROP(AbstractDROP):
     """
@@ -353,7 +353,7 @@ class DataDROP(AbstractDROP):
         """
 
         try:
-            dropInputPorts = self.parameters['producers']
+            dropInputPorts = self.parameters["producers"]
         except KeyError:
             logging.debug("No producers available for drop: %s", self.uid)
             return
@@ -362,7 +362,7 @@ class DataDROP(AbstractDROP):
         finalDropPortMap = {}  # Final mapping of named port to value stored in producer
 
         for p in self.producers:
-            params = p.parameters['outputs']
+            params = p.parameters["outputs"]
             for param in params:
                 try:
                     key = list(param.keys())[0]
@@ -376,8 +376,10 @@ class DataDROP(AbstractDROP):
                     portValue = p.parameters[param[key]]
                 # TODO This currently only allows 1 UID -> Portname/Value
                 # Investigate UID -> [Portname1:Value1, Portnam2:value2,..,]
-                producerPortValueMap[producerUid] = {"portname": portName,
-                                                     "value": portValue}
+                producerPortValueMap[producerUid] = {
+                    "portname": portName,
+                    "value": portValue,
+                }
 
         for port in dropInputPorts:
             try:
@@ -389,8 +391,8 @@ class DataDROP(AbstractDROP):
                 try:
                     print(uid, portname)
                     tmp = producerPortValueMap[uid]
-                    if tmp['portname'] == portname:
-                        finalDropPortMap[portname] = tmp['value']
+                    if tmp["portname"] == portname:
+                        finalDropPortMap[portname] = tmp["value"]
                 except KeyError:
                     print("Not available")
 
@@ -399,7 +401,6 @@ class DataDROP(AbstractDROP):
                 self.parameters[portname] = finalDropPortMap[portname]
 
         self._updatedPorts = True
-
 
     @abstractmethod
     def getIO(self) -> DataIO:
@@ -474,11 +475,11 @@ class PathBasedDrop(object):
 # @par EAGLE_START
 # @param category Memory
 # @param tag daliuge
+# @param InOut /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @param dropclass dlg.data.drops.data_base.NullDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param base_name data_base/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @par EAGLE_END
 class NullDROP(DataDROP):
     """

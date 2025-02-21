@@ -68,8 +68,6 @@ logger = logging.getLogger(__name__)
 # @param bufsize 4096/String/ApplicationArgument/NoPort/ReadWrite//False/False/Receive buffer size
 # @param reuseAddr False/Boolean/ApplicationArgument/NoPort/ReadWrite//False/False/
 # @param data /String/ApplicationArgument/OutputPort/ReadWrite//False/False/
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class SocketListenerApp(BarrierAppDROP):
     """

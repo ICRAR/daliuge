@@ -31,6 +31,7 @@ from dlg.meta import dlg_string_param, dlg_int_param
 # @par EAGLE_START
 # @param category NGAS
 # @param tag daliuge
+# @param InOut /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @param ngasSrv localhost/String/ComponentParameter/NoPort/ReadWrite//False/False/The URL of the NGAS Server
 # @param ngasPort 7777/Integer/ComponentParameter/NoPort/ReadWrite//False/False/The port of the NGAS Server
 # @param ngasFileId /String/ComponentParameter/NoPort/ReadWrite//False/False/File ID on NGAS (for retrieval only)
@@ -43,7 +44,6 @@ from dlg.meta import dlg_string_param, dlg_int_param
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @par EAGLE_END
 class NgasDROP(DataDROP):
     """

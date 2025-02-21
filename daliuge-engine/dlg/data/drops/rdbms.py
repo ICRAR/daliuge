@@ -35,6 +35,7 @@ from dlg.utils import prepare_sql
 # @par EAGLE_START
 # @param category RDBMS
 # @param tag daliuge
+# @param InOut /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param dbmodule /String/ComponentParameter/NoPort/ReadWrite//False/False/Load path for python DB module
@@ -44,7 +45,6 @@ from dlg.utils import prepare_sql
 # @param selectVals {}/Json/ComponentParameter/NoPort/ReadWrite//False/False/Values for the WHERE statement
 # @param dropclass dlg.data.drops.rdbms.RDBMSDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param base_name rdbms/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @par EAGLE_END
 class RDBMSDrop(DataDROP):
     """
