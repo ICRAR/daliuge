@@ -6,6 +6,8 @@ import dlg.droputils as droputils
 import dlg.drop_loaders as drop_loaders
 from typing import Tuple
 
+from dlg.data.drops import DataDROP
+
 logger = logging.getLogger(__name__)
 
 
@@ -384,15 +386,22 @@ def get_port_reader_function(input_parser: DropParser):
     if input_parser is DropParser.PICKLE:
         # all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
         reader = drop_loaders.load_pickle
-    elif input_parser is DropParser.EVAL or input_parser is DropParser.UTF8:
+    elif input_parser is DropParser.EVAL:
 
         def optionalEval(x):
             # Null and Empty Drops will return an empty byte string
             # which should propogate back to None
             content: str = droputils.allDropContents(x).decode("utf-8")
             return ast.literal_eval(content) if len(content) > 0 else None
-
         reader = optionalEval
+    elif input_parser is DropParser.UTF8:
+        def utf8decode(drop: "DataDROP"):
+            """
+            Decode utf8
+            Not stored in drop_loaders to avoid cyclic imports
+            """
+            return droputils.allDropContents(drop).decode("utf-8")
+        reader = utf8decode
     elif input_parser is DropParser.NPY:
         reader = drop_loaders.load_npy
     elif input_parser is DropParser.PATH:

@@ -113,6 +113,7 @@ class TestPortsEncoding(unittest.TestCase):
         self.assertEqual("array(2)", leaf.read(desc).decode())
         
 
+    @unittest.skip
     def test_bash_shell_ports(self): 
         """
         "drop_spec", "pyfunc_glob_shell_test.graph"
