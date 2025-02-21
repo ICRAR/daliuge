@@ -91,7 +91,7 @@ release:          ## Create a new tag for release.
 	@echo "v$${TAG}" > daliuge-common/VERSION
 	@echo "v$${TAG}" > daliuge-engine/VERSION
 	@echo "v$${TAG}" > daliuge-translator/VERSION
-	@git add daliuge-common/VERSION CHANGELOG.md
+	@git add daliuge-common/VERSION daliuge-engine/VERSION daliuge-translator/VERSION CHANGELOG.md
 	@git commit -m "Release: version v$${TAG} 🚀"
 	@echo "creating git tag : v$${TAG}"
 	@git tag v$${TAG}
