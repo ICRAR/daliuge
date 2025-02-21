@@ -68,7 +68,7 @@ class TestPortsEncoding(unittest.TestCase):
         roots = graph_loader.createGraphFromDropSpecList(appDropSpec)
         # drops = [v for d,v in drops.items()]
         leafs = droputils.getLeafNodes(roots)  
-        with  droputils.DROPWaiterCtx(self, leafs, timeout=600):
+        with  droputils.DROPWaiterCtx(self, leafs, timeout=3):
             for drop in roots: 
                 fut = drop.async_execute()
                 fut.result()
