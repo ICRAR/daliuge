@@ -1,0 +1,43 @@
+name: Build and Push Docker Images
+
+on: push
+
+jobs:
+  build-common:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Extract Git Tag
+        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Build and Push daliuge-common
+        working-directory: daliuge-common
+        run: |
+          docker build -t icrar/daliuge-common:$TAG -f docker/Dockerfile .
+          docker push icrar/daliuge-common:$TAG
+
+  build-engine:
+    needs: build-common
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Extract Git Tag
+        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Build and Push daliuge-engine
+        working-directory: daliuge-engine
+        run: |
+          docker build -t icrar/daliuge-engine:$TAG \
+            --build-arg BASE_IMAGE=icrar/daliuge-common:$TAG \
+            -f docker/dockerfile .
+          docker push icrar/daliuge-engine:$TAG
