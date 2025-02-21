@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import pytest
 import subprocess
 import unittest
 
@@ -26,6 +27,8 @@ from dlg import common
 from dlg.common import tool
 from dlg.testutils import ManagerStarter
 
+# Note this test will only run with a full installation of DALiuGE.
+pexpect = pytest.importorskip("dlg.dropmake")
 
 class TestTool(ManagerStarter, unittest.TestCase):
     def test_cmdhelp(self):

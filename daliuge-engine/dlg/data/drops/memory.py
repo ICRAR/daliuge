@@ -42,7 +42,7 @@ def parse_pydata(pd_dict: dict) -> bytes:
     :returns a byte encoded value
     """
     pydata = pd_dict["value"]
-    logger.debug(f"pydata value provided: {pydata}, {type(pydata)}")
+    logger.debug(f"pydata value provided: {pydata}, {pd_dict['type'].lower()}")
 
     if pd_dict["type"].lower() == "json":
         try:

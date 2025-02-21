@@ -54,3 +54,12 @@ def register_commands():
         "Print the directory where C header files can be found",
         include_dir,
     )
+    tool.cmdwrap(
+        "create",
+        "Create a DALiuGE graph to a remote computing environment",
+        "dlg.deploy.create_dlg_job:run", 
+    )
+    tool.cmdwrap("config",
+                 "Manage dlg config environment",
+                 "dlg.deploy.configs.config_manager:run")
+

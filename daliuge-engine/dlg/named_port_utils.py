@@ -69,9 +69,7 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     positional arguments and one for kw arguments that can be used to construct
     the final command line.
     """
-    applicationArgs = clean_applicationArgs(
-        applicationArgs
-    )
+    applicationArgs = clean_applicationArgs(applicationArgs)
     pargs = []
     kwargs = {}
     for name, vdict in applicationArgs.items():
@@ -144,7 +142,7 @@ def identify_named_ports(
         if value is None:
             value = ""  # make sure we are passing NULL drop events
         if key in positionalArgs:
-            encoding = DropParser(positionalPortArgs[key]['encoding'])
+            encoding = DropParser(positionalPortArgs[key]["encoding"])
             parser = get_port_reader_function(encoding)
             if parser:
                 logger.debug("Reading from port using %s", parser.__repr__())
@@ -156,7 +154,7 @@ def identify_named_ports(
             if addPositionalToKeyword:
                 keywordPortArgs.update({key: positionalPortArgs[key]})
         elif key in keywordArgs:
-            encoding = DropParser(keywordArgs[key]['encoding'])
+            encoding = DropParser(keywordArgs[key]["encoding"])
             parser = get_port_reader_function(encoding)
             if parser:
                 logger.debug("Reading from port using %s", parser.__repr__())
@@ -296,13 +294,14 @@ def replace_named_ports(
     keywordArgs = _get_args(appArgs, positional=False)
 
     # Extract values from dictionaries - "encoding" etc. are irrelevant
-    keywordArgs = {arg: subdict['value'] for arg, subdict in keywordArgs.items()}
-    positionalArgs = {arg: subdict['value'] for arg, subdict in positionalArgs.items()}
-    keywordPortArgs = {arg: subdict['value'] for arg, subdict in keywordPortArgs.items()}
-    positionalPortArgs = {arg: subdict['value'] for arg, subdict in
-                          positionalPortArgs.items()}
+    appArgs = {arg: subdict["value"] for arg, subdict in appArgs.items()}
+    positionalArgs = {arg: subdict["value"] for arg, subdict in positionalArgs.items()}
+    keywordArgs = {arg: subdict["value"] for arg, subdict in keywordArgs.items()}
+    keywordPortArgs = {
+        arg: subdict["value"] for arg, subdict in keywordPortArgs.items()
+    }
 
-    #  Construct the final keywordArguments and positionalPortArguments
+    # Construct the final keywordArguments and positionalPortArguments
     for k, v in keywordPortArgs.items():
         if v not in [None, ""]:
             keywordArgs.update({k: v})
@@ -363,8 +362,10 @@ def _get_args(appArgs, positional=False):
     Separate out the arguments dependening on if we want positional or keyword style
     """
     args = {
-        arg: {"value": appArgs[arg]["value"],
-              "encoding": appArgs[arg].get("encoding", "dill")}
+        arg: {
+            "value": appArgs[arg]["value"],
+            "encoding": appArgs[arg].get("encoding", "dill"),
+        }
         for arg in appArgs
         if (appArgs[arg]["positional"] == positional)
     }
@@ -372,6 +373,7 @@ def _get_args(appArgs, positional=False):
     argType = "Positional" if positional else "Keyword"
     logger.debug("%s arguments: %s", argType, args)
     return args
+
 
 def get_port_reader_function(input_parser: DropParser):
     """
@@ -400,7 +402,7 @@ def get_port_reader_function(input_parser: DropParser):
     elif input_parser is DropParser.DILL:
         reader = drop_loaders.load_dill
     elif input_parser is DropParser.BINARY:
-         reader = drop_loaders.load_binary
+        reader = drop_loaders.load_binary
     else:
         raise ValueError(input_parser.__repr__())
     return reader
