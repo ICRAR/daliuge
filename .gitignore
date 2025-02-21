@@ -29,7 +29,6 @@ daliuge.iml
 *.xml
 __pycache__
 .DS_Store
-VERSION
 DALIUGE
 docs/DALIUGE
 lalo
