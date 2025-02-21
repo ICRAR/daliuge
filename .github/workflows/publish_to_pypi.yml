@@ -1,6 +1,8 @@
 name: Publish Python distribution to PyPI
 
-on: push
+on:
+  release:
+    types: [published]
 
 jobs:
   build-common:
@@ -94,8 +96,8 @@ jobs:
     runs-on: ubuntu-latest
 
     environment:
-      name: testpypi
-      url: https://test.pypi.org/p/daliuge-common
+      name: pypi
+      url: https://pypi.org/p/daliuge-common
 
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
@@ -110,7 +112,6 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         verbose: true
-        repository-url: https://test.pypi.org/legacy/
 
   publish-engine:
     name: Publish daliuge-engine
@@ -119,8 +120,8 @@ jobs:
     runs-on: ubuntu-latest
 
     environment:
-      name: testpypi
-      url: https://test.pypi.org/p/daliuge-engine
+      name: pypi
+      url: https://pypi.org/p/daliuge-engine
 
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
@@ -135,7 +136,6 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         verbose: true
-        repository-url: https://test.pypi.org/legacy/
 
   publish-translator:
     name: Publish daliuge-translator
@@ -144,8 +144,8 @@ jobs:
     runs-on: ubuntu-latest
 
     environment:
-      name: testpypi
-      url: https://test.pypi.org/p/daliuge-translator
+      name: pypi
+      url: https://pypi.org/p/daliuge-translator
 
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
@@ -160,6 +160,4 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         verbose: true
-        repository-url: https://test.pypi.org/legacy/
-
 
