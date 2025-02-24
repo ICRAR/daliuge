@@ -47,7 +47,5 @@ jobs:
       - name: Build and Push daliuge-engine
         working-directory: daliuge-engine
         run: |
-          docker build -t icrar/daliuge-engine:$TAG \
-            --build-arg VCS_TAG=$TAG
-            -f docker/dockerfile .
+          docker build --build-arg VCS_TAG=$TAG --no-cache -t icrar/daliuge-engine:$TAG -f docker/Dockerfile .
           docker push icrar/daliuge-engine:$TAG
