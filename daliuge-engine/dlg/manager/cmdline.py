@@ -275,7 +275,7 @@ def setupLogging(opts):
         lidx -= min((opts.verbose, 3))
     elif opts.quiet:
         lidx += min((opts.quiet, 2))
-    level = levels[lidx]
+    level = levels[1]
 
     # Output to files/stdout uses a command format, which can or not contain
     # optionally a session_id and drop_uid to indicate what is currently being

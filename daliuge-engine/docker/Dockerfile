@@ -5,6 +5,11 @@ FROM icrar/daliuge-common:${VCS_TAG:-latest}
 # RUN sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata \
 #     gcc g++ gdb casacore-dev clang-tidy-10 clang-tidy libboost1.71-all-dev libgsl-dev
 
+RUN service avahi-daemon stop && \
+    service dbus start && \
+    service avahi-daemon start && \
+    avahi-set-host-name dlg-engine
+
 COPY / /daliuge
 RUN . /dlg/bin/activate && pip install wheel && cd /daliuge && \
     pip install . 
@@ -20,5 +25,5 @@ EXPOSE 8002
 ENV VIRTUAL_ENV=/dlg
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV DLG_ROOT="/tmp/dlg"
-# We start the daemon and the NM 
-CMD ["dlg", "daemon", "-vv"]
+# We start the Master Manager daemon
+CMD ["dlg", "daemon", "-vvv", "mm","--noNM"]

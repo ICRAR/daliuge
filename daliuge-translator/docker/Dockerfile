@@ -3,10 +3,10 @@
 
 # First stage build based on daliuge-common and cleanup
 ARG VCS_TAG
-ARG BUILD_ID
-FROM icrar/daliuge-common:${VCS_TAG}
+#ARG BUILD_ID
+#FROM icrar/daliuge-common:${VCS_TAG}
 LABEL stage=builder
-LABEL build=$BUILD_ID
+#LABEL build=$BUILD_ID
 # all dependencies are already installed in daliuge-common
 # RUN apt-get update && \
 #     apt-get clean && \
@@ -15,7 +15,8 @@ LABEL build=$BUILD_ID
 RUN service avahi-daemon stop && \
     service dbus start && \
     service avahi-daemon start && \
-    avahi-set-host-name dlg-trans
+    avahi-set-host-name dlg-trans \
+
 COPY / /daliuge
 
 RUN . /dlg/bin/activate && \

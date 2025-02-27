@@ -51,7 +51,7 @@ jobs:
           
           curl -sL https://raw.githubusercontent.com/slimtoolkit/slim/master/scripts/install-slim.sh | sudo -E bash -
           slim build --include-shell \
-            --include-path /etc --include-path /usr/local/lib --include-path /usr/local/bin --include-path /usr/lib/python3.8 \
+            --include-path /etc --include-path /usr/local/lib --include-path /usr/local/bin --include-path /usr/lib/python3.12 \
             --include-path /usr/lib/python3 --include-bin /usr/bin/hostname --include-path /dlg --include-path /daliuge \
             --include-bin /usr/sbin/service --publish-exposed-ports=true \
             --http-probe=false --continue-after 5 --tag=icrar/daliuge-engine.slim:$TAG \

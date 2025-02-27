@@ -18,8 +18,8 @@ common_prep ()
     mkdir -p ${DLG_ROOT}/testdata
     mkdir -p ${DLG_ROOT}/code
     # get current user and group id and prepare passwd and group files
-    DOCKER_GID=`python3 -c "from dlg.prepareUser import prepareUser; print(prepareUser(DLG_ROOT='${DLG_ROOT}'))"`
-    DOCKER_OPTS=${DOCKER_OPTS}" --group-add ${DOCKER_GID}"
+#    DOCKER_GID=`python3 -c "from dlg.prepareUser import prepareUser; print(prepareUser(DLG_ROOT='${DLG_ROOT}'))"`
+#    DOCKER_OPTS=${DOCKER_OPTS}" --group-add ${DOCKER_GID}"
     DOCKER_OPTS=${DOCKER_OPTS}" -v ${DLG_ROOT}/workspace/settings/passwd:/etc/passwd"
     DOCKER_OPTS=${DOCKER_OPTS}" -v ${DLG_ROOT}/workspace/settings/group:/etc/group"
     DOCKER_OPTS=${DOCKER_OPTS}" -v ${DLG_ROOT}:${DLG_ROOT} --env DLG_ROOT=${DLG_ROOT}"
@@ -46,6 +46,7 @@ case "$1" in
             docker run -td ${DOCKER_OPTS}  icrar/daliuge-engine:${VCS_TAG}
             sleep 3
             docker exec -u root daliuge-engine bash -c "service avahi-daemon stop > /dev/null 2>&1 && service dbus restart > /dev/null 2>&1 && service avahi-daemon start > /dev/null 2>&1"
+            docker exec -u root daliuge-engine bash -c "dlg nm -H 0.0.0.0 -vvv &"
             ENGINE_NAME=`docker exec daliuge-engine sh -c "hostname"`
             ENGINE_IP=`docker exec daliuge-engine sh -c "hostname --ip-address"`
             # exit 0
