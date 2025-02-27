@@ -9,7 +9,7 @@ LABEL stage=builder
 LABEL build=$BUILD_ID
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get update && \
-    apt-get install -y avahi-utils gcc python3 python3-venv python3-pip python3-appdirs libmetis-dev curl git sudo && \
+    apt-get install -y avahi-daemon avahi-utils gcc python3 python3-venv python3-pip python3-appdirs libmetis-dev curl git sudo orphan-sysvinit-scripts && \
     apt-get clean
 
 COPY / /daliuge
