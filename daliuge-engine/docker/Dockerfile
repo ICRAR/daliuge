@@ -26,4 +26,4 @@ ENV VIRTUAL_ENV=/dlg
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV DLG_ROOT="/tmp/dlg"
 # We start the Master Manager daemon
-CMD ["dlg", "daemon", "-vvv", "mm","--noNM"]
+CMD ["dlg", "daemon", "-vvv", "mm","--no-nm"]
