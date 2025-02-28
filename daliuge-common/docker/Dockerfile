@@ -3,7 +3,7 @@
 
 # First stage build and cleanup
 #FROM python:3.8-slim
-FROM ubuntu:24.04
+FROM ubuntu:22.04
 ARG BUILD_ID
 LABEL stage=builder
 LABEL build=$BUILD_ID

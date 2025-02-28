@@ -4,7 +4,7 @@
 # First stage build based on daliuge-common and cleanup
 ARG VCS_TAG
 #ARG BUILD_ID
-#FROM icrar/daliuge-common:${VCS_TAG}
+FROM icrar/daliuge-common:${VCS_TAG:-latest}
 LABEL stage=builder
 #LABEL build=$BUILD_ID
 # all dependencies are already installed in daliuge-common
@@ -15,7 +15,7 @@ LABEL stage=builder
 RUN service avahi-daemon stop && \
     service dbus start && \
     service avahi-daemon start && \
-    avahi-set-host-name dlg-trans \
+    avahi-set-host-name dlg-trans
 
 COPY / /daliuge
 
@@ -25,7 +25,7 @@ RUN . /dlg/bin/activate && \
     pip3 install . 
 
 # Second stage build taking what's required from first stage
-FROM icrar/daliuge-common:${VCS_TAG}
+FROM icrar/daliuge-common:${VCS_TAG:-latest}
 COPY --from=0 /daliuge/. /daliuge/.
 COPY --from=0 /dlg /dlg
 # RUN apt-get update && apt-get install -y libmetis-dev python3
