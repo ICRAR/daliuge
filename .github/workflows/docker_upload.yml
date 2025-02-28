@@ -11,7 +11,7 @@ jobs:
 
       - name: Extract Git Tag
         run: |
-          VERSION=$(cat daliuge-common/VERSION)
+          VERSION=$(cat daliuge-common/VERSION | sed s/v// )
           echo "TAG=$VERSION" >> $GITHUB_ENV
 
       - name: Log in to Docker Hub
@@ -23,8 +23,8 @@ jobs:
       - name: Build and Push daliuge-common
         working-directory: daliuge-common
         run: |
-          docker build -t icrar/daliuge-common:$TAG -f docker/Dockerfile .
-          docker push icrar/daliuge-common:$TAG
+          docker build -t icrar/daliuge-common:$TAG -t icrar/daliuge-common:latest -f docker/Dockerfile .
+          docker push --all-tags icrar/daliuge-common
 
   build-engine:
     needs: build-common
@@ -35,7 +35,7 @@ jobs:
 
       - name: Extract Git Tag
         run: |
-          VERSION=$(cat daliuge-engine/VERSION)
+          VERSION=$(cat daliuge-engine/VERSION | sed s/v// )
           echo "TAG=$VERSION" >> $GITHUB_ENV
 
       - name: Log in to Docker Hub
@@ -47,16 +47,57 @@ jobs:
       - name: Build engine
         working-directory: daliuge-engine
         run: |
-          docker build --build-arg VCS_TAG=$TAG --no-cache -t icrar/daliuge-engine:$TAG -f docker/Dockerfile .
+          docker build --build-arg VCS_TAG=$TAG --no-cache -t icrar/daliuge-engine:$TAG -t icrar/daliuge-translator:latest -f docker/Dockerfile .
           
           curl -sL https://raw.githubusercontent.com/slimtoolkit/slim/master/scripts/install-slim.sh | sudo -E bash -
           slim build --include-shell \
-            --include-path /etc --include-path /usr/local/lib --include-path /usr/local/bin --include-path /usr/lib/python3.12 \
+            --include-path /etc --include-path /usr/local/lib --include-path /usr/local/bin --include-path /usr/lib/python3.10 \
             --include-path /usr/lib/python3 --include-bin /usr/bin/hostname --include-path /dlg --include-path /daliuge \
+            --include-bin /usr/bin/basename --include-bin /usr/bin/groups \
+            --include-path /usr/lib/x86_64-linux-gnu/ \
+            --include-path /lib/systemd/ --include-path /lib/lsb/ \
             --include-bin /usr/sbin/service --publish-exposed-ports=true \
-            --http-probe=false --continue-after 5 --tag=icrar/daliuge-engine.slim:$TAG \
-            icrar/daliuge-engine:$TAG
+            --http-probe=false --continue-after 5 --tag=icrar/daliuge-engine.slim:local \
+            --tag=icrar/daliuge-engine.slim:latest \
+            icrar/daliuge-engine:local
           
-          docker push icrar/daliuge-engine:$TAG
-          docker push icrar/daliuge-engine.slim:$TAG
+          docker push --all-tags icrar/daliuge-engine
+          docker push --all-tags icrar/daliuge-engine.slim
 
+  build-translator:
+    needs: build-common
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Extract Git Tag
+        run: |
+          VERSION=$(cat daliuge-translator/VERSION | sed s/v// )
+          echo "TAG=$VERSION" >> $GITHUB_ENV
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build translator
+        working-directory: daliuge-translator
+        run: |
+          docker build --build-arg VCS_TAG=$TAG --no-cache -t icrar/daliuge-translator:$TAG -t icrar/daliuge-translator:latest -f docker/Dockerfile .
+          
+          curl -sL https://raw.githubusercontent.com/slimtoolkit/slim/master/scripts/install-slim.sh | sudo -E bash -
+          slim build --include-shell \
+            --include-path /etc --include-path /usr/local/lib --include-path /usr/local/bin --include-path /usr/lib/python3.10 \
+            --include-path /usr/lib/python3 --include-bin /usr/bin/hostname --include-path /dlg --include-path /daliuge \
+            --include-bin /usr/bin/basename --include-bin /usr/bin/groups \
+            --include-path /usr/lib/x86_64-linux-gnu/ \
+            --include-path /lib/systemd/ --include-path /lib/lsb/ \
+            --include-bin /usr/sbin/service --publish-exposed-ports=true \
+            --http-probe=false --continue-after 5 --tag=icrar/daliuge-translator.slim:local \
+            --tag=icrar/daliuge-translator.slim:latest \
+            icrar/daliuge-translator:local
+          
+          docker push --all-tags icrar/daliuge-translator
+          docker push --all-tags icrar/daliuge-translator.slim
