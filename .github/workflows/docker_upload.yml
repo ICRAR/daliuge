@@ -1,6 +1,8 @@
 name: Build and Push Docker Images
 
-on: push
+on:
+  release:
+    types: [published]
 
 jobs:
   build-common:
@@ -47,7 +49,7 @@ jobs:
       - name: Build engine
         working-directory: daliuge-engine
         run: |
-          docker build --build-arg VCS_TAG=$TAG --no-cache -t icrar/daliuge-engine:$TAG -t icrar/daliuge-translator:latest -f docker/Dockerfile .
+          docker build --build-arg VCS_TAG=$TAG --no-cache -t icrar/daliuge-engine:$TAG -t icrar/daliuge-engine:latest -f docker/Dockerfile .
           
           curl -sL https://raw.githubusercontent.com/slimtoolkit/slim/master/scripts/install-slim.sh | sudo -E bash -
           slim build --include-shell \
