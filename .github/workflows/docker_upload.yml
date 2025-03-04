@@ -57,9 +57,9 @@ jobs:
             --include-path /usr/lib/x86_64-linux-gnu/ \
             --include-path /lib/systemd/ --include-path /lib/lsb/ \
             --include-bin /usr/sbin/service --publish-exposed-ports=true \
-            --http-probe=false --continue-after 5 --tag=icrar/daliuge-engine.slim:local \
+            --http-probe=false --continue-after 5 --tag=icrar/daliuge-engine.slim:${TAG} \
             --tag=icrar/daliuge-engine.slim:latest \
-            icrar/daliuge-engine:local
+            icrar/daliuge-engine:${TAG}
           
           docker push --all-tags icrar/daliuge-engine
           docker push --all-tags icrar/daliuge-engine.slim
@@ -95,9 +95,9 @@ jobs:
             --include-path /usr/lib/x86_64-linux-gnu/ \
             --include-path /lib/systemd/ --include-path /lib/lsb/ \
             --include-bin /usr/sbin/service --publish-exposed-ports=true \
-            --http-probe=false --continue-after 5 --tag=icrar/daliuge-translator.slim:local \
+            --http-probe=false --continue-after 5 --tag=icrar/daliuge-translator.slim:${TAG} \
             --tag=icrar/daliuge-translator.slim:latest \
-            icrar/daliuge-translator:local
+            icrar/daliuge-translator:${TAG}
           
           docker push --all-tags icrar/daliuge-translator
           docker push --all-tags icrar/daliuge-translator.slim
