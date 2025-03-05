@@ -1,6 +1,6 @@
 .. _delayed:
 
-Graph development
+Delayed Execution
 =================
 
 Using :func:`dlg.delayed`

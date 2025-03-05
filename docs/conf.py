@@ -95,7 +95,7 @@ except ImportError:
     release = version
 
 language = "en"
-exclude_patterns = ["_build"]
+exclude_patterns = ["_build", "tutorial/*"]
 pygments_style = "sphinx"
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
@@ -112,9 +112,15 @@ rst_prolog = """
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 html_theme = "sphinx_rtd_theme"
-
+html_static_path = ["_static"]
+html_css_files = ["css/daliuge.css"]
+html_style = "css/daliuge.css"
 htmlhelp_basename = "daliugedoc"
 
+html_logo = "images/DLGLogo_White.png"
+html_theme_options = {
+    "logo_only" : True
+}
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {}
