@@ -1,8 +1,3 @@
-.. daliuge documentation master file, created by
-   sphinx-quickstart on Mon Feb  8 16:19:47 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 .. |br| raw:: html
 
    <br />
@@ -21,18 +16,13 @@ our `overview paper <http://dx.doi.org/10.1016/j.ascom.2017.03.007>`_. DALiuGE h
 Development and maintenance of |daliuge| is currently hosted at ICRAR_
 and is performed by the `DIA team <http://www.icrar.org/our-research/data-intensive-astronomy/>`_.
 
-Latest Release
---------------
-DALiuGE x.x.x has been released! It contains the following new features and bug fixes: 
-* 
-
 Quick Start Guide
 -----------------
 
-:doc:`intro` |br|
-:doc:`/usage/index` |br|
+:doc:`/intro` |br|
+:doc:`/installing` |br| 
 :doc:`/running` |br|
-
+:doc:`/basics`
 
 DALiuGE Fundamentals
 --------------------
@@ -42,6 +32,12 @@ DALiuGE Fundamentals
 Advanced Techniques and Applications
 ------------------------------------
 :doc:`/development/app_development/app_index` |br|
+:doc:`/advanced/delayed` |br| 
+
+API Documentation
+-----------------
+:doc:`api-index` |br| 
+:doc:`cli` |br|
 
 .. toctree::
    :maxdepth: 1
@@ -52,19 +48,18 @@ Advanced Techniques and Applications
    installing
    running
    basics
-   graph_development
-   usage/index
-
+ 
 .. toctree::
    :maxdepth: 2
-   :caption: Architecture
+   :caption: DALiuGE Fundamentals
    :hidden: 
 
    architecture/index
    deployment
    
 .. toctree:: 
-   :maxdepth: 2 
+   :maxdepth: 1 
+   :hidden: 
    :caption: Advanced DALiuGE Methods
 
    development/dev_index

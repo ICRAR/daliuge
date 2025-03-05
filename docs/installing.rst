@@ -1,22 +1,34 @@
-.. _installation:
-
 .. |br| raw:: html
 
      <br>
 
-Installation Guide
-==================
-.. warning:: 
-  |daliuge| is under heavy development and we are not regularily updating the version on PyPi and DockerHub right now. This guide assumes you have a copy of the latest release which you can get from here::
+.. _installation:
 
-   git clone https://github.com/ICRAR/daliuge
-   cd daliuge
+Installation 
+============
+.. note::
+  This guide is meant for people who are developing and testing workflows using EAGLE, or who are experimenting with the system. It does not cover specific needs of more complex, distributed operational deployments.
+
+DALiuGE applications
+---------------------
+For development and testing of workflows for DALiuGE, the following runtime environments are necessary: 
+
+* ``daliuge-translator``: This takes the workflow from EAGLE and 'unrolls' it into the workflow DAG that will be executed (see :ref:`graphs.translation`). 
+* ``daliuge-engine``: This manages workflow execution across many nodes. There is a hierarchy of applications within the engine that must be run to manage the execution at different level of granularity (i.e. at the node level, the data-island level, and at the master level; see :ref:`drop.managers`).
+
+
+The intricacies of the different environments and their applications will be covered in more detail in later sections of the documentation. For the purpose of starting out, it is enough to know that to start developing and testing workflows on DALiuGE, the following is necessary: 
+
+* EAGLE workflow has a graph that is ready to translate;
+* ``daliuge-translator`` is running, waiting to receive a workflow from EAGLE; and
+* ``daliuge-engine`` applications (A Data Island Manager and a Node Manager) are running.
+
+The following instructions explain how to set up your environment to achieve this. 
 
 Installation Options
 --------------------
 
 .. list-table:: 
-   :widths: 15 15 15
    :header-rows: 1
 
    * - I am:
@@ -47,25 +59,21 @@ Installation Options
 
 .. _docker install:
 
-Docker images
--------------
+Docker Installation
+--------------------
+Recommended 
+^^^^^^^^^^^^
+The recommended and easiest way to get started is to use the docker containers for the daliuge-engine and daliuge-translator. To download the images for the purpose of developing workflows with the EAGLE editor, the following is all that is necessary:: 
 
-.. note::
-  This guide is meant for people who are experimenting with the system. It does not cover specific needs of more complex, distributed operational deployments.
+  docker pull icrar/daliuge-engine.slim:latest
+  docker pull icrar/daliuge-translator.slim:latest
 
+These are minified docker images that contain only the necessary material for running the applications. To start running the applications, head straight to :ref:`docker run`.
 
-The recommended and easiest way to get started is to use the docker container installation procedures provided to build and run the daliuge-engine and the daliuge-translator. We currently build the system in three images:
+Alternative: Building the images locally
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This section assumes you have experience using Git and Docker, and want to build from the (potentially unstable) DALiuGE source code. 
 
-#. *icrar/daliuge-common* contains all the basic |daliuge| libraries and dependencies.
-#. *icrar/daliuge-engine* is built on top of the :base image and includes the installation of the DALiuGE execution engine.
-#. *icrar/daliuge-translator* is also built on top of the :base image and includes the installation of the DALiuGE translator.
-
-This way we are trying to separate the requirements of the daliuge engine and translator from the rest of the framework, which has a less dynamic development cycle.
-
-The *daliuge-engine* image by default runs a generic daemon, which allows to then start the Master Manager, Node Manager or DataIsland Manager. This approach allows to change the actual manager deployment configuration in a more dynamic way and adjusted to the actual requirements of the environment.
-
-Building the images
-^^^^^^^^^^^^^^^^^^^^^^^
 Using ``make`` we can simplify building the docker images for a development environment::
 
   make docker-install
@@ -124,12 +132,21 @@ and::
    </details>
    <br/>
 
+.. _pip install:
+
+PyPI Installation
+-----------------
 
 
 .. _direct install:
 
 Direct Installation
 -------------------
+   git clone https://github.com/ICRAR/daliuge
+   cd daliuge
+
+PyPI 
+^^^^
 
 Installing from sources
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
