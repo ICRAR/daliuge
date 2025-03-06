@@ -94,7 +94,7 @@ case "$1" in
         curl -X POST http://${ENGINE_IP}:9000/managers/island/start
         sleep 1
         curl -X POST http://${ENGINE_IP}:8001/api/node/${ENGINE_IP}:8000
-        echo "Engine NAME/IP address: http://${ENGINE_IP}:8000"
+        echo "Engine IP address: http://${ENGINE_IP}:8000"
         exit 0;;
     "local")
         common_prep
