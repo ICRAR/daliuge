@@ -8,54 +8,8 @@ on:
     types: [opened, synchronize]  # Run on PRs from any branch
 
 jobs:
-  run_translator:
-    name: Run daliuge-translator tests with python ${{matrix.python-version}}
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        include:
-          - python-version: "3.9"
-          - python-version: "3.10"
-          - python-version:  "3.11"
-          - python-version:  "3.12"
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        name: Install Python
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install test dependencies
-        run: |
-          pip install -U coveralls pytest pytest-cov
-          pip install -U setuptools pip wheel dask
-
-      - name: Install daliuge-common
-        run: pip install -e daliuge-common/
-
-      - name: Install daliuge-translator
-        run: pip install -e "daliuge-translator/[test]"
-
-      - name: Run daliuge-translator tests
-        run: |
-          py.test daliuge-translator/test/ --cov --show-capture=no
-
-      - name: Update to coveralls
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
-          COVERALLS_PARALLEL: true
-        run: coveralls --service=github
-
-      - name: Run upload coverage artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-${{ github.job }}.${{ matrix.python-version }}
-          path: daliuge-translator/.coverage.${{ matrix.python-version }}.${{ github.job }}
-
-  run_engine:
-    name: Run daliuge-engine tests with python ${{matrix.python-version}}
+  run_tests:
+    name: Run unit tests with python ${{matrix.python-version}} - ${{ matrix.desc }}
     runs-on: ubuntu-22.04
     strategy:
       matrix:
