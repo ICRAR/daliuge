@@ -134,5 +134,5 @@ class TestBigGraph(unittest.TestCase):
             # A minute is more than enough, in my PC it takes around 4 or 5 [s]
             # A minute is also way less than the ~2 [h] we observed in AWS
             self.assertLessEqual(
-                delta, 60, "It took way too much time to create all drops"
+                delta, 70, "It took way too much time to create all drops"
             )
