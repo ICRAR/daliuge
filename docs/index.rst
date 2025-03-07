@@ -74,6 +74,12 @@ API Documentation
    api-index
    cli
 
+.. toctree:: 
+    :hidden:
+
+    development/dev_index
+    usage/index
+
 Citations
 ---------
 As you use |daliuge| for your exciting projects, please cite the following paper:

@@ -2,8 +2,11 @@ import ast
 from enum import Enum
 import logging
 import collections
+import dlg.droputils as droputils
+import dlg.drop_loaders as drop_loaders
 from typing import Tuple
-from dlg import droputils, drop_loaders
+
+from dlg.data.drops import DataDROP
 
 logger = logging.getLogger(__name__)
 
@@ -13,9 +16,12 @@ class DropParser(Enum):
     PICKLE = "pickle"
     EVAL = "eval"
     NPY = "npy"
+    DILL = "dill"
     # JSON = "json"
     PATH = "path"  # input only
     DATAURL = "dataurl"  # input only
+    BINARY = "binary"
+    UTF8 = "utf-8"
 
 
 def serialize_kwargs(keyargs, prefix="--", separator=" "):
@@ -64,9 +70,7 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     positional arguments and one for kw arguments that can be used to construct
     the final command line.
     """
-    applicationArgs = clean_applicationArgs(
-        applicationArgs
-    )
+    applicationArgs = clean_applicationArgs(applicationArgs)
     pargs = []
     kwargs = {}
     for name, vdict in applicationArgs.items():
@@ -134,28 +138,33 @@ def identify_named_ports(
         try:
             key = port_dict[keys[i]]["name"]
             value = port_dict[keys[i]]["path"]
-        except KeyError:
-            logger.debug("portDict: %s", port_dict)
-            raise KeyError
+        except KeyError as e:
+            logger.debug("portDict: %s does not have key: %s", port_dict, keys[i])
+            raise KeyError("")
         if value is None:
             value = ""  # make sure we are passing NULL drop events
         if key in positionalArgs:
+            encoding = DropParser(positionalPortArgs[key]["encoding"])
+            parser = get_port_reader_function(encoding)
             if parser:
                 logger.debug("Reading from port using %s", parser.__repr__())
                 value = parser(port_dict[keys[i]]["drop"])
-            positionalPortArgs.update({key: value})
+            positionalPortArgs[key]["value"] = value
             logger.debug("Using %s '%s' for parg %s", mode, value, key)
-            positionalArgs.pop(positionalArgs.index(key))
+            positionalArgs.remove(key)
             # We have positional argument that is also a keyword
             if addPositionalToKeyword:
-                keywordPortArgs.update({key: value})
+                keywordPortArgs.update({key: positionalPortArgs[key]})
         elif key in keywordArgs:
+            encoding = DropParser(keywordArgs[key]["encoding"])
+            parser = get_port_reader_function(encoding)
             if parser:
                 logger.debug("Reading from port using %s", parser.__repr__())
                 value = parser(port_dict[keys[i]]["drop"])
             # if not found in appArgs we don't put them into portargs either
             # pargsDict.update({key: value})
-            keywordPortArgs.update({key: value})
+            keywordArgs[key]["value"] = value
+            keywordPortArgs.update({key: keywordArgs[key]})
             logger.debug("Using %s of type %s for kwarg %s", mode, type(value), key)
             _ = keywordArgs.pop(key)  # remove from original arg list
         else:
@@ -183,6 +192,7 @@ def check_ports_dict(ports: list) -> bool:
         bool: True if all ports are dict, else False
     """
     # all returns true if list is empty!
+    logger.debug("Ports list is: %s", ports)
     if len(ports) > 0:
         return all(isinstance(p, dict) for p in ports)
     else:
@@ -245,9 +255,7 @@ def replace_named_ports(
     keywordArgs = _get_args(appArgs, positional=False)
     # we will need an ordered dict for all positional arguments
     # thus we create it here and fill it with values
-    positionalPortArgs = collections.OrderedDict(
-        zip(positionalArgs, [None] * len(positionalArgs))
-    )
+    positionalPortArgs = collections.OrderedDict(positionalArgs)
 
     logger.debug(
         "posargs: %s; keyargs: %s, %s",
@@ -289,6 +297,14 @@ def replace_named_ports(
     appArgs = clean_applicationArgs(appArgs)
     positionalArgs = _get_args(appArgs, positional=True)
     keywordArgs = _get_args(appArgs, positional=False)
+
+    # Extract values from dictionaries - "encoding" etc. are irrelevant
+    appArgs = {arg: subdict["value"] for arg, subdict in appArgs.items()}
+    positionalArgs = {arg: subdict["value"] for arg, subdict in positionalArgs.items()}
+    keywordArgs = {arg: subdict["value"] for arg, subdict in keywordArgs.items()}
+    keywordPortArgs = {
+        arg: subdict["value"] for arg, subdict in keywordPortArgs.items()
+    }
 
     # Construct the final keywordArguments and positionalPortArguments
     for k, v in keywordPortArgs.items():
@@ -362,7 +378,10 @@ def _get_args(appArgs, positional=False):
     Separate out the arguments dependening on if we want positional or keyword style
     """
     args = {
-        arg: appArgs[arg]["value"]
+        arg: {
+            "value": appArgs[arg]["value"],
+            "encoding": appArgs[arg].get("encoding", "dill"),
+        }
         for arg in appArgs
         if (appArgs[arg]["positional"] == positional)
     }
@@ -388,14 +407,25 @@ def get_port_reader_function(input_parser: DropParser):
             # which should propogate back to None
             content: str = droputils.allDropContents(x).decode("utf-8")
             return ast.literal_eval(content) if len(content) > 0 else None
-
         reader = optionalEval
+    elif input_parser is DropParser.UTF8:
+        def utf8decode(drop: "DataDROP"):
+            """
+            Decode utf8
+            Not stored in drop_loaders to avoid cyclic imports
+            """
+            return droputils.allDropContents(drop).decode("utf-8")
+        reader = utf8decode
     elif input_parser is DropParser.NPY:
         reader = drop_loaders.load_npy
     elif input_parser is DropParser.PATH:
         reader = lambda x: x.path
     elif input_parser is DropParser.DATAURL:
         reader = lambda x: x.dataurl
+    elif input_parser is DropParser.DILL:
+        reader = drop_loaders.load_dill
+    elif input_parser is DropParser.BINARY:
+        reader = drop_loaders.load_binary
     else:
         raise ValueError(input_parser.__repr__())
     return reader

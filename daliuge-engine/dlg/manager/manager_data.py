@@ -25,7 +25,7 @@ This module contains classes and helper-methods to support the various manager c
 """
 
 import logging
-from dlg import constants
+import dlg.constants as constants
 from enum import IntEnum
 
 logger = logging.getLogger(__name__)
@@ -44,12 +44,15 @@ class Node:
     inter-node communication.
     """
 
-    def __init__(self, host: str):
+    def __init__(self, host: str, dim=False):
         try:
             chunks = host.split(':')
             num_chunks = len(chunks)
             self.host = constants.NODE_DEFAULT_HOSTNAME
-            self.port = constants.NODE_DEFAULT_REST_PORT
+            self.port = (
+                constants.ISLAND_DEFAULT_REST_PORT if dim 
+                else constants.NODE_DEFAULT_REST_PORT
+            )
             self.events_port = constants.NODE_DEFAULT_EVENTS_PORT
             self.rpc_port = constants.NODE_DEFAULT_RPC_PORT
             self._rest_port_specified = False
@@ -113,6 +116,11 @@ class Node:
         """
         Make our serialized Node the string.
         :return: str
+        """
+        return self.serialize()
+
+    def __repr__(self):
+        """
         """
         return self.serialize()
 

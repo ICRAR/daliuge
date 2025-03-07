@@ -30,7 +30,7 @@ def get_git_version():
 
 def get_version_info(version, is_release):
     git_version = "Unknown"
-    if os.path.exists(".git"):
+    if os.path.exists("../.git"):
         git_version = get_git_version()
     full_version = version
     if not is_release:
