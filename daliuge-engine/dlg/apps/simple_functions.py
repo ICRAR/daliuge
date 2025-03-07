@@ -86,6 +86,8 @@ def string2json(string: str, pickle_flag: bool = False) -> list:
         string: string containing a JSON representation
         pickle_flag: False, whether output should be pickled
     """
+    if not string:
+        string = '""'
     if not pickle_flag:
         return json.loads(string)
     else:

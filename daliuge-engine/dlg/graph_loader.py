@@ -201,7 +201,7 @@ def loadDropSpecs(dropSpecList):
     reprodata = None
     if dropSpecList is None:
         raise InvalidGraphException("DropSpec is empty %r" % dropSpecList)
-    if dropSpecList[-1].get("rmode"):
+    if dropSpecList[-1].get("rmode") or not dropSpecList[-1]:
         reprodata = dropSpecList.pop()
     for n, dropSpec in enumerate(dropSpecList):
         # "categoryType" and 'oid' are mandatory
@@ -254,6 +254,8 @@ def createGraphFromDropSpecList(dropSpecList: List[dict],
     # Step #1: create the actual DROPs
     drops = collections.OrderedDict()
     logger.info("Creating %d drops", len(dropSpecList))
+    if dropSpecList[-1].get("rmode") or not dropSpecList[-1]:
+        dropSpecList.pop()
     for n, dropSpec in enumerate(dropSpecList):
         check_dropspec(n, dropSpec)
         #        dropType = dropSpec.pop("categoryType")
