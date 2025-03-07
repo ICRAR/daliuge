@@ -1,10 +1,14 @@
 .. _running:
 
-Startup and Shutdown Guide
+Running DALiuGE
 ==========================
-The translator and the engine are separate services and can be installed and run independently. 
+As discussed in :ref:`the previous section<installation>`, the translator and the engine are separate services and can be installed and run independently. 
 
-Depending on how you are intending to run the system startup and shutdown is slightly different. 
+Depending on how you are intending to run the system startup and shutdown is slightly different. The following options for start up and shutdown are given in alignment with the installation options: 
+
+* Docker 
+* PyPI
+* Source
 
 For the impatient: Single node |daliuge|
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -17,9 +21,38 @@ This is the quickest way to start deploying workflows. Obviously this is limited
 
 The following paragraphs are providing more detailed guidelines to enable people to start the system on multiple nodes to cover the specific local requirements.
 
+.. _docker run:
+
 Starting the docker containers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-We are providing convenience scripts to start the docker containers built according to the :ref:`installation`. Depending whether you want to run the development (dev) or the deployment (dep) version of the image there exist different startup options. Starting the translator::
+
+The 
+
+.. raw:: html
+
+   <details>
+    <summary><a>Not using Git</a></summary>
+
+If you would prefer not to use git, , which fetch the latest release artifacts::
+  wget "$(curl -s "https://api.github.com/repos/icrar/daliuge/releases/latest" \
+        | grep "tarball_url" \
+        | awk -F '"' '{print $4}')" -O daliuge-latest.tar.gz
+      
+  mkdir daliuge
+  tar -xvf daliuge-latest.tar.gz -C daliuge --strip-components=1 
+
+  cd daliuge
+
+.. raw:: html
+
+   </details>
+   <br/>
+
+Then, to run both the daliuge-engine and daliuge-translator::
+
+  make docker-run
+
+We are providing convenience scripts to start the docker containers built according to the :ref:`docker install`. Depending whether you want to run the development (dev) or the deployment (dep) version of the image there exist different startup options. Starting the translator::
 
    cd daliuge-translator
    ./run_translator.sh dev|dep
