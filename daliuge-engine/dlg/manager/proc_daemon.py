@@ -187,7 +187,7 @@ class DlgDaemon(RestServer):
     def startNM(self):
         tool = get_tool()
         args = ["--host", "0.0.0.0"]
-        args += "-vvvv" # self._verbosity_as_cmdline()
+        args += self._verbosity_as_cmdline()
         logger.info("Starting Node Drop Manager with args: %s", (" ".join(args)))
         self._nm_proc = tool.start_process("nm", args)
         logger.info("Started Node Drop Manager with PID %d", self._nm_proc.pid)

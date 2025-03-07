@@ -111,5 +111,6 @@ case "$1" in
         echo "Usage run_engine.sh <dep|dev|slim|local>"
         exit 0;;
 esac
-echo -e $"\nEngine NAME/IP address: http://${ENGINE_NAME}.local:8000 / ${ENGINE_IP}"
+echo -e $"Container IP: ${ENGINE_IP}, Hostname: ${ENGINE_NAME}"
+echo -e $"\nEngine NAME/IP address: http://${ENGINE_NAME}.local:8000
 
