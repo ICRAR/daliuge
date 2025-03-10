@@ -1,6 +1,21 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+
+## v4.9.0
+
+- [Added] Workflow to deploy DALiuGE to PyPI: https://github.com/ICRAR/daliuge/pull/311
+- [Added] Added prototype .ini environment config and Slurm template scripts: https://github.com/ICRAR/daliuge/pull/297
+- [Added] Private key support for remote submission: https://github.com/ICRAR/daliuge/pull/298
+- [Added] Enable per-port serilaisation: https://github.com/ICRAR/daliuge/pull/300
+- [Added] Add GraphConfig support to translator: https://github.com/ICRAR/daliuge/pull/296
+- [Fixed] Fix writing of BytesIO Data: https://github.com/ICRAR/daliuge/pull/310
+- [Fixed] Updated installation documentation: https://github.com/ICRAR/daliuge/pull/307
+- [Fixed] Drop naming fix: https://github.com/ICRAR/daliuge/pull/306
+- [Fixed] Use translator avahi approach for engine docker container: https://github.com/ICRAR/daliuge/pull/302
+- [Fixed] Use correct ports for CompositeManager: https://github.com/ICRAR/daliuge/pull/303
+
+
 ## v4.8.0
 
 - [Added] Support for Python 3.11 and Python 3.12: https://github.com/ICRAR/daliuge/pull/290

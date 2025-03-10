@@ -65,7 +65,6 @@ jobs:
           COVFILES=" daliuge-translator/.coverage"
           echo "COVFILES=$COVFILES" >> $GITHUB_ENV
           cd daliuge-translator
-          pip install -r test-requirements.txt
           py.test --cov --show-capture=no
 
       - name: Run daliuge-engine tests

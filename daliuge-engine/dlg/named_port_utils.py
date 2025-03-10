@@ -307,12 +307,14 @@ def replace_named_ports(
     keywordArgs = _get_args(appArgs, positional=False)
 
     # Extract values from dictionaries - "encoding" etc. are irrelevant
-    appArgs = {arg: subdict['value'] for arg, subdict in appArgs.items()}
-    positionalArgs = {arg: subdict['value'] for arg, subdict in positionalArgs.items()}
-    keywordArgs = {arg: subdict['value'] for arg, subdict in keywordArgs.items()}
-    keywordPortArgs = {arg: subdict['value'] for arg, subdict in keywordPortArgs.items()}
- 
-     # Construct the final keywordArguments and positionalPortArguments
+    appArgs = {arg: subdict["value"] for arg, subdict in appArgs.items()}
+    positionalArgs = {arg: subdict["value"] for arg, subdict in positionalArgs.items()}
+    keywordArgs = {arg: subdict["value"] for arg, subdict in keywordArgs.items()}
+    keywordPortArgs = {
+        arg: subdict["value"] for arg, subdict in keywordPortArgs.items()
+    }
+
+    # Construct the final keywordArguments and positionalPortArguments
     for k, v in keywordPortArgs.items():
         if v not in [None, ""]:
             keywordArgs.update({k: v})
@@ -384,8 +386,10 @@ def _get_args(appArgs, positional=False):
     Separate out the arguments dependening on if we want positional or keyword style
     """
     args = {
-        arg: {"value": appArgs[arg]["value"], 
-              "encoding": appArgs[arg].get("encoding", "dill")}
+        arg: {
+            "value": appArgs[arg]["value"],
+            "encoding": appArgs[arg].get("encoding", "dill"),
+        }
         for arg in appArgs
         if (appArgs[arg]["positional"] == positional)
     }
@@ -403,7 +407,7 @@ def get_port_reader_function(input_parser: DropParser):
     if input_parser is DropParser.PICKLE:
         # all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
         reader = drop_loaders.load_pickle
-    elif input_parser is DropParser.EVAL or input_parser is DropParser.UTF8:
+    elif input_parser is DropParser.EVAL:
 
         def optionalEval(x):
             # Null and Empty Drops will return an empty byte string
@@ -412,6 +416,14 @@ def get_port_reader_function(input_parser: DropParser):
             return ast.literal_eval(content) if len(content) > 0 else None
 
         reader = optionalEval
+    elif input_parser is DropParser.UTF8:
+        def utf8decode(drop: "DataDROP"):
+            """
+            Decode utf8
+            Not stored in drop_loaders to avoid cyclic imports
+            """
+            return droputils.allDropContents(drop).decode("utf-8")
+        reader = utf8decode
     elif input_parser is DropParser.NPY:
         reader = drop_loaders.load_npy
     elif input_parser is DropParser.PATH:
@@ -421,7 +433,7 @@ def get_port_reader_function(input_parser: DropParser):
     elif input_parser is DropParser.DILL:
         reader = drop_loaders.load_dill
     elif input_parser is DropParser.BINARY:
-         reader = drop_loaders.load_binary
+        reader = drop_loaders.load_binary
     else:
         raise ValueError(input_parser.__repr__())
     return reader

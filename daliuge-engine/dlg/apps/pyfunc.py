@@ -31,7 +31,6 @@ import json
 import logging
 import os
 import pickle
-import pyext
 import re
 
 from typing import Callable
@@ -59,6 +58,7 @@ from dlg.meta import (
     dlg_batch_output,
     dlg_streaming_input,
 )
+from dlg.pyext import pyext
 
 logger = logging.getLogger(__name__)
 
