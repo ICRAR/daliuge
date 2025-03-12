@@ -10,9 +10,6 @@ from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
 from typing import Tuple, Union
 
-from dlg.drop import AbstractDROP
-from numpy import isin
-
 logger = logging.getLogger(f"dlg.{__name__}")
 
 class ArgType(IntEnum):
@@ -53,6 +50,7 @@ class Argument:
     value: object
     encoding: DropParser = DropParser.DILL
     type: Union [ArgType, None] = None
+    input_output: bool = False
     precious: bool = False
     positional: bool = False
 
@@ -303,8 +301,9 @@ def replace_named_ports(
     # thus we create it here and fill it with values
     positionalPortArgs = collections.OrderedDict(positionalArgs)
     keywordPortArgs = {}
-
-    # Update the argument dictionaries in-place based on the port names.
+    positionalPortArgs =  {} # Update the argument dictionaries in-place based on the
+    # port
+        # names.
     # This needs to be done for both the input ports and output ports on the drop.
     tmp_key, tmp_port = _process_port(
         inport_names,

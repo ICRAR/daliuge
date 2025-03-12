@@ -425,7 +425,7 @@ class PyFuncApp(BarrierAppDROP):
         """
         for arg, value in argsDict.items():
             argsDict[arg] = Argument(value)
-            param_arg = self.parameters.get(arg)
+            param_arg = self.parameters.get(arg, None)
             if param_arg:
                 argsDict[arg].value = param_arg
                 argsDict[arg].encoding = "dill"
@@ -476,8 +476,9 @@ class PyFuncApp(BarrierAppDROP):
                 if self._applicationArgs[arg]["type"] in ["Json", "Complex"]:
                     try:
                         value = ast.literal_eval(value)
-                        logger.debug(f"Evaluated %s to %s", value, type(value))
-                        self._applicationArgs[arg]["value"] = value
+                        logger.debug(f"Evaluated %s to %s",
+                                     value, type(value))
+                        self._applicationArgs[arg].value = value
                     except ValueError:
                         logger.error("Unable to evaluate %s",
                                      self._applicationArgs[arg]["value"])
