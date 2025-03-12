@@ -117,6 +117,7 @@ class FileDROP(DataDROP, PathBasedDrop):
 
     def _setupFilePaths(self):
         filepath = self.parameters.get("filepath", None)
+        # TODO ADD SUFFIX/PREFIX
         dirname = None
         filename = None
 
@@ -148,9 +149,9 @@ class FileDROP(DataDROP, PathBasedDrop):
             # '2024-10-30T12:01:57_0140555b-8c23-4d6a-9e24-e16c15555e8c_0'
             fn = self.uid.split("_")[0] + "_" + str(self._humanKey)
             filename = self.non_fname_chars.sub("_", fn)
-        self.filename = filename
-        self.dirname = self.get_dir(dirname)
 
+        self.filename = self._apply_filename_modifiers(filename)
+        self.dirname = self.get_dir(dirname)
         self._root = self.dirname
         self._path = (
             os.path.join(self.dirname, self.filename) if self.filename else self.dirname
@@ -164,6 +165,15 @@ class FileDROP(DataDROP, PathBasedDrop):
             )
 
         self._wio = None
+
+    def _apply_filename_modifiers(self, filename):
+        """
+        Take the 'prefix' and 'suffix' modifiers to
+        """
+        suffix = self.parameters.get("suffix", "")
+        prefix = self.parameters.get("prefix", "")
+
+        return f"{prefix}{filename}{suffix}"
 
     def getIO(self):
 

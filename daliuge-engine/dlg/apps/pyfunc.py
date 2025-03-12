@@ -24,7 +24,6 @@
 import ast
 import base64
 import collections
-from enum import Enum
 import importlib
 import inspect
 import json
@@ -42,6 +41,7 @@ from dlg import drop_loaders
 from dlg.drop import track_current_drop
 from dlg.utils import serialize_data, deserialize_data
 from dlg.named_port_utils import (
+    Argument,
     DropParser,
     check_ports_dict,
     get_port_reader_function,
@@ -77,12 +77,12 @@ def serialize_func(f):
     if a.defaults:
         fdefaults["kwargs"] = dict(
             zip(
-                a.args[-len(a.defaults) :],
+                a.args[-len(a.defaults):],
                 [serialize_data(d) for d in a.defaults],
             )
         )
         adefaults["kwargs"] = dict(
-            zip(a.args[-len(a.defaults) :], [d for d in a.defaults])
+            zip(a.args[-len(a.defaults):], [d for d in a.defaults])
         )
     logger.debug(f"Introspection of function {f}: {a}")
     logger.debug("Defaults for function %r: %r", f, adefaults)
@@ -287,17 +287,17 @@ class PyFuncApp(BarrierAppDROP):
         """
         logger.debug(f"Starting evaluation of func_defaults: {self.func_defaults}")
         if (
-            isinstance(self.func_defaults, dict)
-            and len(self.func_defaults) > 0
-            and list(self.func_defaults.keys()) == ["kwargs", "args"]
+                isinstance(self.func_defaults, dict)
+                and len(self.func_defaults) > 0
+                and list(self.func_defaults.keys()) == ["kwargs", "args"]
         ):
             for arg in self.func_defaults["args"]:
                 self.func_defaults["kwargs"][arg] = arg
                 self.func_defaults = self.func_defaults["kwargs"]
         elif (
-            isinstance(self.func_defaults, dict)
-            and "kwargs" in self.func_defaults
-            and isinstance(self.func_defaults["kwargs"], dict)
+                isinstance(self.func_defaults, dict)
+                and "kwargs" in self.func_defaults
+                and isinstance(self.func_defaults["kwargs"], dict)
         ):
             self.func_defaults = self.func_defaults["kwargs"]
         # we came all this way, now assume that any resulting dict is correct
@@ -327,11 +327,6 @@ class PyFuncApp(BarrierAppDROP):
         Multiple options exist and some are here for compatibility.
         """
         logger.debug(f"Starting evaluation of function signature")
-        self.argsig = inspect.signature(self.func)
-        self.argnames = list(self.argsig.parameters.keys())
-        logger.debug("Function signature: %s", self.argsig)
-        args = list(self.argsig.parameters.keys())
-        self.fn_nargs = len(self.argsig.parameters)
         # set defaults
         self.fn_defaults = {}
         self.fn_nposkw = 0
@@ -343,6 +338,18 @@ class PyFuncApp(BarrierAppDROP):
         self.varargs = False
         self.varkw = False
         self.fn_ndef = 0
+        try:
+            self.argsig = inspect.signature(self.func)
+            self.argnames = list(self.argsig.parameters.keys())
+            logger.debug("Function signature: %s", self.argsig)
+            args = list(self.argsig.parameters.keys())
+            self.fn_nargs = len(self.argsig.parameters)
+        except ValueError:
+            logger.warning("Unable to uncover signature from function. This is likely a "
+                           "C-based Python function. No positional/keyword arguments "
+                           "determined.")
+            return
+
         for k, p in self.argsig.parameters.items():
             if not isinstance(p, str):
                 if p.kind == p.POSITIONAL_OR_KEYWORD:
@@ -396,7 +403,7 @@ class PyFuncApp(BarrierAppDROP):
                     # only transfer if there is a value or precious is True
                     self._applicationArgs.pop(kw)
 
-    def _initialise_positional_args(self, argsDict: dict):
+    def _initialise_args(self, argsDict: dict):
         """
         Ensure default arguments are properly setup.
         # If there are default values in the function sig
@@ -410,18 +417,21 @@ class PyFuncApp(BarrierAppDROP):
             argsDict[arg] = {"value": value, "encoding": encoding}
             param_arg = self.parameters.get(arg, None)
             if param_arg:
-                argsDict[arg]["value"] = param_arg
-
+                argsDict[arg].value = param_arg
         return argsDict
 
     def _get_arg_info(self, arg):
-
+        """
+        Get necessary information for populating the argument
+        """
         value = self._applicationArgs[arg]["value"]
         encoding = self._applicationArgs[arg].get("encoding", self.input_parser)
+        precious = self._applicationArgs[arg].get("precious", False)
+        input_output_file = self._applicationArgs[arg].get("input_output", False)
 
-        return value, encoding
+        return value, encoding, precious, input_output_file
 
-    def _init_appArgs(self, pargsDict: dict, keyargsDict: dict, posargs: list) -> list:
+    def _init_appArgs(self, positionalArgs: dict, keywordArguments: dict) -> tuple:
         """
         Identify and fill application arguments.
 
@@ -444,12 +454,14 @@ class PyFuncApp(BarrierAppDROP):
         vkarg = {}
 
         # update the positional args
-        pargsDict = self._initialise_positional_args(pargsDict)
+        positionalArgsMap = self._initialise_args(positionalArgs)
+        keywordArgsMap = self._initialise_args(keywordArguments)
+        input_output_args = []
         if self._applicationArgs:
             # if defined in both we use AppArgs values
             for arg in self._applicationArgs:
                 # check value type and interpret
-                value, encoding = self._get_arg_info(arg)
+                value, encoding, precious, positional = self._get_arg_info(arg)
                 if self._applicationArgs[arg]["type"] in ["Json", "Complex"]:
                     try:
                         value = ast.literal_eval(value)
@@ -459,21 +471,20 @@ class PyFuncApp(BarrierAppDROP):
                         logger.error(
                             "Unable to evaluate %s", self._applicationArgs[arg]["value"]
                         )
-                if arg in pargsDict:
-                    pargsDict[arg] = {"value": value, "encoding": encoding}
-                if arg in keyargsDict:
-                    keyargsDict[arg] = {"value": value, "encoding": encoding}
+                if arg in positionalArgs:
+                    positionalArgs[arg] = {"value": value, "encoding": encoding}
+                if arg in keywordArguments:
+                    keywordArguments[arg] = {"value": value, "encoding": encoding}
 
             _ = [
                 self._applicationArgs.pop(k)
-                for k in pargsDict
+                for k in positionalArgs
                 if k in self._applicationArgs
             ]
-            logger.debug("Updated posargs dictionary: %s", pargsDict)
-            logger.debug("Updated keyargs dictionary: %s", keyargsDict)
+            logger.debug("Updated posargs dictionary: %s", positionalArgs)
+            logger.debug("Updated keyargs dictionary: %s", keywordArguments)
 
             # Put all remaining arguments into *args and **kwargs
-            # TODO: This should only be done if the function signature allows it
             logger.debug(f"Remaining AppArguments {self._applicationArgs}")
             for arg in self._applicationArgs:
                 if self._applicationArgs[arg]["type"] in ["Json", "Complex"]:
@@ -485,33 +496,120 @@ class PyFuncApp(BarrierAppDROP):
                 else:
                     vkarg[arg] = value
         else:
-            logger.debug("AppArgs/pargsDict: %s", pargsDict)
-            encoding = self.input_parser if hasattr(self, "input_parser") else None
+            logger.debug("AppArgs/positionalArgs: %s", positionalArgsMap)
+            encoding = self.input_parser or DropParser.DILL
+            for key in positionalArgsMap:
+                positionalArgsMap[key].value = positionalArgsMap[key].value
+                positionalArgsMap[key].encoding = encoding
+            logger.debug("AppArgs/pargsDict: %s", positionalArgsMap)
 
-        # TODO: check where this is defined in signature
-        self.arguments = inspect.getfullargspec(self.func)
-        if self.arguments.varargs:
+        # Determine if we can use the *args and **kwargs we identified above
+        if self.varargs:
             logger.debug("Adding remaining *args to pargs %s", vparg)
             pargs.extend(vparg)
-        if self.arguments.varkw:
+        if self.varkw:
             logger.debug("Adding remaining **kwargs to funcargs: %s", vkarg)
             funcargs.update(vkarg)
 
-        # Extract arg and values from pargs; we no longer need the encoding
-        logger.debug(f"Updating funcargs with values from pargsDict: {pargsDict}")
-        tmpPargs = {arg: subdict["value"] for arg, subdict in pargsDict.items()}
+        # Extract arg and values from pargs; we no longer need the metadata
+        logger.debug(f"Updating funcargs with values from pargsDict: {positionalArgsMap}")
+
+        if self._outputs and input_output_args:
+            keywordArgsMap, positionalArgsMap = self._map_output_to_input(
+                input_output_args, positionalArgsMap, keywordArgsMap)
+
+        tmpPargs = {argstr: argument.value for argstr, argument in
+                    positionalArgsMap.items()}
         funcargs.update(tmpPargs)
 
         # Mixin the values from named ports
-        portargs = self._ports2args(posargs, pargsDict, keyargsDict)
+        portargs = self._ports2args(positionalArgsMap, keywordArgsMap)
 
         logger.debug(f"Updating funcargs with values from named ports {portargs}")
-        tmpPortArgs = {port: subdict["value"] for port, subdict in portargs.items()}
+        tmpPortArgs = {port: arg.value for port, arg in portargs.items()}
         funcargs.update(tmpPortArgs)
 
-        return [funcargs, pargs]
+        return funcargs, pargs
 
-    def _ports2args(self, posargs, pargsDict, keyargsDict) -> dict:
+    def _map_output_to_input(
+            self,
+            input_output_args: list,
+            positionalArgsMap: dict[str, Argument],
+            keywordArgsMap: dict[str, Argument]
+    ):
+        """
+        Map any attribute that has an input-output flag to the intended output.
+
+        This is used to allow PyFunc apps that require a filename as input to refer to
+        the output FileDROP that is linked to the AppDrop. This resolves issues with us
+        hidden having side effects of functions saving files without DALiuGE being
+        aware of them.
+
+        Parameters
+        ----------
+        input_output_args: list of arguments that are being passed to self.func
+        positionalArgsMap: m
+        keywordArgsMap
+
+        Notes
+        -----
+        The expected behaviour is for the Argument to reference the output parameter
+        using the DALiUGE f-string style variable substitution "{}".
+
+        Returns
+        -------
+        modified keywordArgsMap and positionalArgsMap
+        """
+
+        attr_uid_map = {}
+        for output in self.parameters["outputs"]:
+            for key, value in output.items():
+                attr_uid_map[value] = key
+
+            for arg in input_output_args:
+                if arg in keywordArgsMap:
+                    keywordArgsMap[arg] = self._arg_to_output(attr_uid_map,
+                                                              keywordArgsMap[arg])
+                else:
+                    positionalArgsMap[arg] = self._arg_to_output(attr_uid_map,
+                                                                 positionalArgsMap[arg])
+
+        return keywordArgsMap, positionalArgsMap
+
+    def _arg_to_output(self, attr_uid_map: dict, argument: Argument):
+        """
+
+        Map the argument to the output attribute that is referrenced in the attribute.
+        This uses our variable replacement notation "{}".
+        input_output_file flag, which means we want to match it to an output file.
+
+        Parameters
+        ----------
+        attr_uid_map
+        argument:
+
+        Returns
+        ------
+        argument with modified value (likely a filename)
+        """
+
+        _attribute_ref = argument.value.strip("{}")
+        output_uid = attr_uid_map[_attribute_ref]
+        # Match output to output
+        try:
+            output_filename = self._outputs[output_uid].path
+        except AttributeError:
+            logger.warning("Attribute %s mapped to a non-file attribute (%s)",
+                           argument.name, _attribute_ref)
+
+        if not output_filename:
+            return argument
+        else:
+            argument.value = output_filename
+
+        return argument
+
+    def _ports2args(self, pargsDict, keyargsDict) -> dict:
         """
         Replace arguments with values from ports.
 
@@ -522,39 +620,29 @@ class PyFuncApp(BarrierAppDROP):
         portargs = {}
         # 3. replace default argument values with named input ports
         iitems = self._inputs
-        logger.debug("Mapping from _inputs: %s", iitems)
+        logger.debug("Mapping from _inputs: %s", self._inputs)
         logger.debug("Parameters: %s", self.parameters)
         if "inputs" in self.parameters and check_ports_dict(self.parameters["inputs"]):
             logger.debug("Mapping ports to inputs...")
             check_len = min(
-                len(iitems),
+                len(self._inputs),
                 self.fn_nargs + self.fn_nkw,
             )
             inputs_dict = collections.OrderedDict()
             for inport in self.parameters["inputs"]:
                 key = list(inport.keys())[0]
-                inputs_dict[key] = {
-                    "name": inport[key],
-                    "path": None,
-                    "drop": iitems[key],
-                }
-            parser = (
-                get_port_reader_function(self.input_parser)
-                if hasattr(self, "input_parser")
-                else None
+                inputs_dict[key] = {"name": inport[key], "path": None, "drop":
+                    self._inputs[key]}
+            keyPortArgs, posPortArgs = identify_named_ports(
+                inputs_dict,
+                pargsDict,
+                keyargsDict,
+                check_len=check_len,
+                mode="inputs",
+                addPositionalToKeyword=True,
+                parser=get_port_reader_function(self.input_parser)
             )
-            portargs.update(
-                identify_named_ports(
-                    inputs_dict,
-                    posargs,
-                    pargsDict,
-                    keyargsDict,
-                    check_len=check_len,
-                    mode="inputs",
-                    addPositionalToKeyword=True,
-                    parser=parser,
-                )
-            )
+            portargs.update(keyPortArgs)
         else:
             for i, input_drop in enumerate(iitems.values()):
                 parser = (
@@ -578,21 +666,14 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(f"Initializing with func_code of type {type(self.func_code)}")
         if not isinstance(self.func_code, bytes):
             try:
-                self.func = import_using_code(
-                    self.func_code, self.func_name, serialized=False
-                )
-            except (SyntaxError, NameError) as err:
-                logger.warning(
-                    "Problem importing code: %s.",
-                    err,
-                )
-                # serialized = True
-        # if isinstance(self.func_code, bytes) or serialized:
-        #     if isinstance(self.func_code, str):
-        #         self.func_code = base64.b64decode(self.func_code.encode("utf8"))
-        #     self.func = import_using_code(
-        #         self.func_code, self.func_name, serialized=True
-        #     )
+                self.func = import_using_code(self.func_code, self.func_name,
+                                              serialized=False)
+            except (SyntaxError, NameError):
+                serialized = True
+        if isinstance(self.func_code, bytes) or serialized:
+            if isinstance(self.func_code, str):
+                self.func_code = base64.b64decode(self.func_code.encode("utf8"))
+            self.func = import_using_code(self.func_code, self.func_name, serialized=True)
 
         self._init_fn_defaults()
         # make sure defaults are dicts
@@ -695,8 +776,6 @@ class PyFuncApp(BarrierAppDROP):
         # if defaults dict has not been specified at all we'll go ahead anyway
 
         # 1. Fill arguments with rest of inputs
-        # TODO improve naming conventions
-        posargs = list(self.posonly.keys()) + list(self.poskw.keys())
         # fill the pargsDict with positional and poskw arguments and defaults
         pargsDict = {k: v.default for k, v in self.posonly.items()}
         pargsDict.update({k: v.default for k, v in self.poskw.items()})
@@ -710,8 +789,8 @@ class PyFuncApp(BarrierAppDROP):
         for arg in keyargsDict:
             keyargsDict[arg] = self.fn_defaults[arg]
 
-        # deal with arguments of any sort
-        funcargs, pargs = self._init_appArgs(pargsDict, keyargsDict, posargs)
+        # 2. deal with arguments of any sort
+        funcargs, pargs = self._init_appArgs(pargsDict, keyargsDict)
 
         self._recompute_data["args"] = funcargs.copy()
 
@@ -725,7 +804,7 @@ class PyFuncApp(BarrierAppDROP):
         logger.info(f"Running {self.func_name}")
         logger.debug(f"Arguments: *{pargs} **{funcargs}")
 
-        # 6. prepare for execution
+        # 4. prepare for execution
         # we capture and log whatever is produced on STDOUT
         capture = StringIO()
         try:
@@ -735,7 +814,7 @@ class PyFuncApp(BarrierAppDROP):
             logger.error("Binding of arguments failed: %s", e)
             raise
 
-        # Here is where the function is actually executed
+        # 5. Here is where the function is actually executed
         with redirect_stdout(capture):
             self.result = self.func(*bind.args, **bind.kwargs)
 
