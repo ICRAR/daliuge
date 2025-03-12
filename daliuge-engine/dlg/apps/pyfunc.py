@@ -409,12 +409,9 @@ class PyFuncApp(BarrierAppDROP):
 
         for kw in self.func_def_keywords:
             if kw in self._applicationArgs:  # these are the preferred ones now
-                if isinstance(
-                    self._applicationArgs[kw]["value"],
-                    bool
-                    or self._applicationArgs[kw]["value"]
-                    or self._applicationArgs[kw]["precious"],
-                ):
+                if isinstance(self._applicationArgs[kw]["value"],
+                              bool or self._applicationArgs[kw]["value"] or
+                              self._applicationArgs[kw]["precious"], ):
                     # only transfer if there is a value or precious is True
                     self._applicationArgs.pop(kw)
 
@@ -476,8 +473,7 @@ class PyFuncApp(BarrierAppDROP):
             # if defined in both we use AppArgs values
             for arg in self._applicationArgs:
                 # check value type and interpret
-                value, encoding, precious, positional, usage = self._get_arg_info(
-                    arg)
+                value, encoding, precious, positional = self._get_arg_info(arg)
                 if self._applicationArgs[arg]["type"] in ["Json", "Complex"]:
                     try:
                         value = ast.literal_eval(value)
@@ -487,6 +483,8 @@ class PyFuncApp(BarrierAppDROP):
                     except ValueError:
                         logger.error("Unable to evaluate %s",
                                      self._applicationArgs[arg]["value"])
+                if precious:  # todo change to input_output_arg
+                    input_output_args.append(arg)
                 if arg in positionalArgsMap:
                     positionalArgsMap[arg].value = value
                     positionalArgsMap[arg].encoding = encoding
@@ -498,14 +496,10 @@ class PyFuncApp(BarrierAppDROP):
                     keywordArgsMap[arg].precious = precious
                     keywordArgsMap[arg].positional = positional
 
-                if usage == "InputOutput":
-                    input_outputs.append(arg)
-
-        # Remove parameters of function that have been found in applicationArgs
-        _ = [self._applicationArgs.pop(k) for k in positionalArgsMap if
-             k in self._applicationArgs]
-        logger.debug("Updated posargs dictionary: %s", positionalArgsMap)
-        logger.debug("Updated keyargs dictionary: %s", keywordArgsMap)
+            _ = [self._applicationArgs.pop(k) for k in positionalArgsMap if
+                 k in self._applicationArgs]
+            logger.debug("Updated posargs dictionary: %s", positionalArgsMap)
+            logger.debug("Updated keyargs dictionary: %s", keywordArgsMap)
 
         # Put all remaining arguments into *args and **kwargs
         logger.debug(f"Remaining AppArguments {self._applicationArgs}")
@@ -721,7 +715,7 @@ class PyFuncApp(BarrierAppDROP):
         if not isinstance(self.func_code, bytes):
             try:
                 self.func = import_using_code(self.func_code, self.func_name,
-                    serialized=False)
+                                              serialized=False)
             except (SyntaxError, NameError):
                 serialized = True
         if isinstance(self.func_code, bytes) or serialized:
@@ -773,8 +767,7 @@ class PyFuncApp(BarrierAppDROP):
         self._clean_applicationArgs()
 
         self.num_args = len(
-            self._applicationArgs
-        )  # number of additional arguments provided
+            self._applicationArgs)  # number of additional arguments provided
 
         if not self.func_name and not self.func_code and not self.func:
             raise InvalidDropException(
