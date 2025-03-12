@@ -46,6 +46,8 @@ from typing import Union
 # @param base_name file/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param persist True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
+# @param prefix /String/ApplicationArgument/NoPort/ReadWrite//False/False/"File path for this file. In many cases this does not need to be specified. If it has a \/ at the end it will be treated as a directory name and the filename will be generated. If it does not have a \/, the last part will be treated as a filename. If filepath does not start with \/ (relative path) then the session directory will be prepended to make the path absolute.""
+# @param suffix /String/ApplicationArgument/NoPort/ReadWrite//False/False/"File path for this file. In many cases this does not need to be specified. If it has a \/ at the end it will be treated as a directory name and the filename will be generated. If it does not have a \/, the last part will be treated as a filename. If filepath does not start with \/ (relative path) then the session directory will be prepended to make the path absolute.""
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
@@ -116,6 +118,7 @@ class FileDROP(DataDROP, PathBasedDrop):
 
     def _setupFilePaths(self):
         filepath = self.parameters.get("filepath", None)
+        # TODO ADD SUFFIX/PREFIX
         dirname = None
         filename = None
 
@@ -147,9 +150,9 @@ class FileDROP(DataDROP, PathBasedDrop):
             # '2024-10-30T12:01:57_0140555b-8c23-4d6a-9e24-e16c15555e8c_0'
             fn = self.uid.split("_")[0] + "_" + str(self._humanKey)
             filename = self.non_fname_chars.sub("_", fn)
-        self.filename = filename
-        self.dirname = self.get_dir(dirname)
 
+        self.filename = self._apply_filename_modifiers(filename)
+        self.dirname = self.get_dir(dirname)
         self._root = self.dirname
         self._path = (
             os.path.join(self.dirname, self.filename) if self.filename else self.dirname
@@ -163,6 +166,15 @@ class FileDROP(DataDROP, PathBasedDrop):
             )
 
         self._wio = None
+
+    def _apply_filename_modifiers(self, filename):
+        """
+        Take the 'prefix' and 'suffix' modifiers to
+        """
+        suffix = self.parameters.get("suffix", "")
+        prefix = self.parameters.get("prefix", "")
+
+        return f"{prefix}{filename}{suffix}"
 
     def getIO(self):
 
