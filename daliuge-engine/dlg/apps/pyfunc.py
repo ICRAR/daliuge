@@ -483,8 +483,6 @@ class PyFuncApp(BarrierAppDROP):
                     except ValueError:
                         logger.error("Unable to evaluate %s",
                                      self._applicationArgs[arg]["value"])
-                if precious:  # todo change to input_output_arg
-                    input_output_args.append(arg)
                 if arg in positionalArgsMap:
                     positionalArgsMap[arg].value = value
                     positionalArgsMap[arg].encoding = encoding
@@ -642,6 +640,39 @@ class PyFuncApp(BarrierAppDROP):
                 arg_map[arg] = argument
                 self.parameters[arg] = arg_map[arg].value
         return keywordArgsMap, positionalArgsMap
+
+    def _arg_to_output(self, attr_uid_map: dict, argument: Argument):
+        """
+
+        Map the argument to the output attribute that is referrenced in the attribute.
+        This uses our variable replacement notation "{}".
+        input_output_file flag, which means we want to match it to an output file.
+
+        Parameters
+        ----------
+        attr_uid_map
+        argument:
+
+        Returns
+        ------
+        argument with modified value (likely a filename)
+        """
+
+        _attribute_ref = argument.value.strip("{}")
+        output_uid = attr_uid_map[_attribute_ref]
+        # Match output to output
+        try:
+            output_filename = self._outputs[output_uid].path
+        except AttributeError:
+            logger.warning("Attribute %s mapped to a non-file attribute (%s)",
+                           argument.name, _attribute_ref)
+
+        if not output_filename:
+            return argument
+        else:
+            argument.value = output_filename
+
+        return argument
 
     def _ports2args(self, pargsDict, keyargsDict) -> dict:
         """
