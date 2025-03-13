@@ -427,9 +427,9 @@ class PyFuncApp(BarrierAppDROP):
         value = self._applicationArgs[arg]["value"]
         encoding = self._applicationArgs[arg].get("encoding", self.input_parser)
         precious = self._applicationArgs[arg].get("precious", False)
-        input_output_file = self._applicationArgs[arg].get("input_output", False)
+        positional = self._applicationArgs[arg].get("positional", False)
 
-        return value, encoding, precious, input_output_file
+        return value, encoding, precious, positional
 
     def _init_appArgs(self, positionalArgs: dict, keywordArguments: dict) -> tuple:
         """
@@ -456,7 +456,6 @@ class PyFuncApp(BarrierAppDROP):
         # update the positional args
         positionalArgsMap = self._initialise_args(positionalArgs)
         keywordArgsMap = self._initialise_args(keywordArguments)
-        input_output_args = []
         if self._applicationArgs:
             # if defined in both we use AppArgs values
             for arg in self._applicationArgs:
@@ -468,21 +467,23 @@ class PyFuncApp(BarrierAppDROP):
                         logger.debug(f"Evaluated %s to %s", value, type(value))
                         self._applicationArgs[arg]["value"] = value
                     except ValueError:
-                        logger.error(
-                            "Unable to evaluate %s", self._applicationArgs[arg]["value"]
-                        )
-                if arg in positionalArgs:
-                    positionalArgs[arg] = {"value": value, "encoding": encoding}
-                if arg in keywordArguments:
-                    keywordArguments[arg] = {"value": value, "encoding": encoding}
+                        logger.error("Unable to evaluate %s",
+                                     self._applicationArgs[arg]["value"])
+                if arg in positionalArgsMap:
+                    positionalArgsMap[arg].value = value
+                    positionalArgsMap[arg].encoding = encoding
+                    positionalArgsMap[arg].precious = precious
+                    positionalArgsMap[arg].positional = positional
+                if arg in keywordArgsMap:
+                    keywordArgsMap[arg].value = value
+                    keywordArgsMap[arg].encoding = encoding
+                    keywordArgsMap[arg].precious = precious
+                    keywordArgsMap[arg].positional = positional
 
-            _ = [
-                self._applicationArgs.pop(k)
-                for k in positionalArgs
-                if k in self._applicationArgs
-            ]
-            logger.debug("Updated posargs dictionary: %s", positionalArgs)
-            logger.debug("Updated keyargs dictionary: %s", keywordArguments)
+            _ = [self._applicationArgs.pop(k) for k in positionalArgsMap if
+                 k in self._applicationArgs]
+            logger.debug("Updated posargs dictionary: %s", positionalArgsMap)
+            logger.debug("Updated keyargs dictionary: %s", keywordArgsMap)
 
             # Put all remaining arguments into *args and **kwargs
             logger.debug(f"Remaining AppArguments {self._applicationArgs}")
@@ -514,9 +515,9 @@ class PyFuncApp(BarrierAppDROP):
         # Extract arg and values from pargs; we no longer need the metadata
         logger.debug(f"Updating funcargs with values from pargsDict: {positionalArgsMap}")
 
-        if self._outputs and input_output_args:
+        if self._outputs:
             keywordArgsMap, positionalArgsMap = self._map_output_to_input(
-                input_output_args, positionalArgsMap, keywordArgsMap)
+                positionalArgsMap, keywordArgsMap)
 
         tmpPargs = {argstr: argument.value for argstr, argument in
                     positionalArgsMap.items()}
@@ -533,7 +534,6 @@ class PyFuncApp(BarrierAppDROP):
 
     def _map_output_to_input(
             self,
-            input_output_args: list,
             positionalArgsMap: dict[str, Argument],
             keywordArgsMap: dict[str, Argument]
     ):
@@ -541,20 +541,19 @@ class PyFuncApp(BarrierAppDROP):
         Map any attribute that has an input-output flag to the intended output.
 
         This is used to allow PyFunc apps that require a filename as input to refer to
-        the output FileDROP that is linked to the AppDrop. This resolves issues with us
+        the output data that is linked to the AppDrop. This resolves issues with us
         hidden having side effects of functions saving files without DALiuGE being
         aware of them.
 
         Parameters
         ----------
-        input_output_args: list of arguments that are being passed to self.func
-        positionalArgsMap: m
-        keywordArgsMap
+        positionalArgsMap: map of positional argument strs (from function signature) to the
+        Argument objects (which store the current state of the values to be passed to
+        the function).
+        keywordArgsMap: map of keyword argument strs (from function signature) to the
+        Argument objects (which store the current state of the values to be passed to
+        the function).
 
-        Notes
-        -----
-        The expected behaviour is for the Argument to reference the output parameter
-        using the DALiUGE f-string style variable substitution "{}".
 
         Returns
         -------
@@ -566,13 +565,12 @@ class PyFuncApp(BarrierAppDROP):
             for key, value in output.items():
                 attr_uid_map[value] = key
 
-            for arg in input_output_args:
-                if arg in keywordArgsMap:
-                    keywordArgsMap[arg] = self._arg_to_output(attr_uid_map,
-                                                              keywordArgsMap[arg])
-                else:
-                    positionalArgsMap[arg] = self._arg_to_output(attr_uid_map,
-                                                                 positionalArgsMap[arg])
+        for arg in keywordArgsMap:
+                keywordArgsMap[arg] = self._arg_to_output(attr_uid_map,
+                                                          keywordArgsMap[arg])
+        for arg in positionalArgsMap:
+                positionalArgsMap[arg] = self._arg_to_output(attr_uid_map,
+                                                             positionalArgsMap[arg])
 
         return keywordArgsMap, positionalArgsMap
 
@@ -585,8 +583,13 @@ class PyFuncApp(BarrierAppDROP):
 
         Parameters
         ----------
-        attr_uid_map
-        argument:
+        attr_uid_map: map of attribute names to the output DROP UID
+        argument: the argument we are parsing to the function wrapped by this PyFuncApp
+
+        Notes
+        -----
+        The expected behaviour is for the Argument to reference the output parameter
+        using the DALiUGE f-string style variable substitution "{}".
 
         Returns
         ------
@@ -594,18 +597,24 @@ class PyFuncApp(BarrierAppDROP):
         """
 
         _attribute_ref = argument.value.strip("{}")
-        output_uid = attr_uid_map[_attribute_ref]
+        if _attribute_ref in attr_uid_map:
+            output_uid = attr_uid_map[_attribute_ref]
+        else:
+            return argument
         # Match output to output
+        output = None
         try:
-            output_filename = self._outputs[output_uid].path
+            # Consider encoding?
+            parser = get_port_reader_function(DropParser(argument.encoding))
+            output = parser(self._outputs[output_uid])
         except AttributeError:
             logger.warning("Attribute %s mapped to a non-file attribute (%s)",
                            argument.name, _attribute_ref)
 
-        if not output_filename:
+        if not output:
             return argument
         else:
-            argument.value = output_filename
+            argument.value = output
 
         return argument
 
