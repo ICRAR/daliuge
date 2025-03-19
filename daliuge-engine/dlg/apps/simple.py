@@ -32,6 +32,7 @@ import numpy as np
 
 from dlg import droputils, drop_loaders
 from dlg.apps.app_base import BarrierAppDROP
+from dlg.apps.pyfunc import PyFuncApp
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops import InMemoryDROP, FileDROP
 from dlg.apps.branch import BranchAppDrop
@@ -908,18 +909,51 @@ class GenericNpyScatterApp(BarrierAppDROP):
                 drop_loaders.save_numpy(self.outputs[out_index], result[split_index])
 
 
-class SimpleBranch(BranchAppDrop, NullBarrierApp):
-    """Simple branch app that is told the result of its condition"""
+# @brief Branch
+# @details A branch application that copies the input to either the 'true' or the 'false' output depending on the result of
+# the provided conditional function. The conditional function can be specified either in-line or as an external function and has
+# to return a boolean value.
+# The inputs of the application are passed on as arguments to the conditional function. The conditional function needs to return
+# a boolean value, but the application will copy the input data to the true or false output, depending on the result of the
+# conditional function.
+# @par EAGLE_START
+# @param category Branch
+# @param tag daliuge
+# @param func_name condition/String/ComponentParameter/NoPort/ReadWrite//False/False/Python conditional function name. This can also be a valid import path to an importable function.
+# @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code for the branch condition, e.g. 'def condition(x): return (x > 0)'. Note that func_name above needs to match the defined name here.
+# @param x /Object/ComponentParameter/InputPort/ReadWrite//False/False/Port carrying the input which is also used in the condition function. Note that the name of the parameter has to match the argument of the condition function.
+# @param true  /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is true the input will be copied to this port
+# @param false /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is false the input will be copied to this port
+# @param dropclass dlg.apps.simple.Branch/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/The allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
+# @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
+# @par EAGLE_END
+class Branch(PyFuncApp):
 
-    def initialize(self, **kwargs):
-        self.result = self._popArg(kwargs, "result", True)
-        BranchAppDrop.initialize(self, **kwargs)
+    bufsize = dlg_int_param("bufsize", 65536)
 
-    def run(self):
-        pass
+    def write_results(self, result: bool):
+        """
+        Copy the inpput to the output identified by the condition function.
 
-    def condition(self):
-        return self.result
+        Parameters:
+        -----------
+        result:
+            The result of the condition function
+        """
+
+        if not self.outputs:
+            return
+
+        # TODO: The following should eventually use named ports
+        self.outputs[1 if result else 0].skip()  # send skip to correct branch
+
+        output = self.outputs[0 if result else 1]
+        droputils.copyDropContents(self.inputs[0], output, bufsize=self.bufsize)
 
 
 ##
