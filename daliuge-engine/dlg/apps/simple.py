@@ -884,6 +884,7 @@ class GenericNpyScatterApp(BarrierAppDROP):
                 drop_loaders.save_numpy(self.outputs[out_index], result[split_index])
 
 
+##
 # @brief Branch
 # @details A branch application that copies the input to either the 'true' or the 'false' output depending on the result of
 # the provided conditional function. The conditional function can be specified either in-line or as an external function and has
@@ -895,7 +896,7 @@ class GenericNpyScatterApp(BarrierAppDROP):
 # @param category Branch
 # @param tag daliuge
 # @param func_name condition/String/ComponentParameter/NoPort/ReadWrite//False/False/Python conditional function name. This can also be a valid import path to an importable function.
-# @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code for the branch condition, e.g. 'def condition(x): return (x > 0)'. Note that func_name above needs to match the defined name here.
+# @param func_code condition(x): return (x > 0)/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code for the branch condition. Modify as required. Note that func_name above needs to match the defined name here.
 # @param x /Object/ComponentParameter/InputPort/ReadWrite//False/False/Port carrying the input which is also used in the condition function. Note that the name of the parameter has to match the argument of the condition function.
 # @param true  /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is true the input will be copied to this port
 # @param false /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is false the input will be copied to this port
@@ -906,6 +907,14 @@ class GenericNpyScatterApp(BarrierAppDROP):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @par EAGLE_END
 class Branch(PyFuncApp):
+    """
+    A branch application that copies the input to either the 'true' or the 'false' output depending on the result of
+    the provided conditional function. The conditional function can be specified either in-line or as an external function and has
+    to return a boolean value.
+    The inputs of the application are passed on as arguments to the conditional function. The conditional function needs to return
+    a boolean value, but the application will copy the input data to the true or false output, depending on the result of the
+    conditional function.
+    """
 
     bufsize = dlg_int_param("bufsize", 65536)
 
