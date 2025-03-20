@@ -884,6 +884,23 @@ class GenericNpyScatterApp(BarrierAppDROP):
                 drop_loaders.save_numpy(self.outputs[out_index], result[split_index])
 
 
+class SimpleBranch(BranchAppDrop, NullBarrierApp):
+    """
+    Simple branch app that is told the result of its condition.
+    We are keeping this not to break existing graphs.
+    """
+
+    def initialize(self, **kwargs):
+        self.result = self._popArg(kwargs, "result", True)
+        BranchAppDrop.initialize(self, **kwargs)
+
+    def run(self):
+        pass
+
+    def condition(self):
+        return self.result
+
+
 ##
 # @brief Branch
 # @details A branch application that copies the input to either the 'true' or the 'false' output depending on the result of
