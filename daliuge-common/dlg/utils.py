@@ -23,6 +23,7 @@
 Module containing miscellaneous utility classes and functions.
 """
 import base64
+import dill
 import errno
 import functools
 import importlib
@@ -38,7 +39,6 @@ import zlib
 import re
 import grp
 import pwd
-import pickle
 
 from pathlib import Path
 
@@ -529,12 +529,12 @@ def prepareUser(DLG_ROOT=getDlgDir()):
 
 def serialize_data(d):
     # return pickle.dumps(d)
-    return b2s(base64.b64encode(pickle.dumps(d)))
+    return b2s(base64.b64encode(dill.dumps(d)))
 
 
 def deserialize_data(d):
     # return pickle.loads()
-    return pickle.loads(base64.b64decode(d.encode("utf8")))
+    return dill.loads(base64.b64decode(d.encode("utf8")))
 
 
 def truncateUidToKey(uid: str) -> str:

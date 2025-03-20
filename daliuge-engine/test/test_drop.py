@@ -20,9 +20,11 @@
 #    MA 02111-1307  USA
 #
 
+import base64
 import contextlib
 import io
 import os, unittest
+import pickle
 import random
 import shutil
 import sqlite3
@@ -43,7 +45,7 @@ from dlg.data.drops.directorycontainer import DirectoryContainer
 from dlg.data.drops.file import FileDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
-from dlg.apps.simple import NullBarrierApp, SimpleBranch, SleepAndCopyApp
+from dlg.apps.simple import NullBarrierApp, Branch, SleepAndCopyApp
 
 try:
     from crc32c import crc32c
@@ -1157,11 +1159,15 @@ class TestDROPReproducibility(unittest.TestCase):
             os.unlink(dbfile)
 
 
+def func1(result):
+    return result
+
+
 class BranchAppDropTestsBase(object):
-    """Tests for the BranchAppDrop class"""
+    """Tests for the Branch class"""
 
     def _simple_branch_with_outputs(self, result, uids):
-        a = SimpleBranch(uids[0], uids[0], result=result)
+        a = Branch(uids[0], uids[0], result=result, func_name="test.test_drop.func1")
         b, c = (self.DataDropType(x, x) for x in uids[1:])
         a.addOutput(b)
         a.addOutput(c)
@@ -1275,7 +1281,7 @@ class BranchAppDropTestsBase(object):
             last_first_output = y
 
         with DROPWaiterCtx(
-            self, all_drops, 2, [DROPStates.COMPLETED, DROPStates.SKIPPED]
+            self, all_drops, 300, [DROPStates.COMPLETED, DROPStates.SKIPPED]
         ):
             a.async_execute()
 

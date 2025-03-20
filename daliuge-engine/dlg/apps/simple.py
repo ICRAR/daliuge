@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 """Applications used as examples, for testing, or in simple situations"""
+import dill
 import _pickle
 from numbers import Number
 import pickle
@@ -925,7 +926,10 @@ class Branch(PyFuncApp):
         self.outputs[1 if result else 0].skip()  # send skip to correct branch
 
         output = self.outputs[0 if result else 1]
-        droputils.copyDropContents(self.inputs[0], output, bufsize=self.bufsize)
+        if self.inputs:
+            droputils.copyDropContents(self.inputs[0], output, bufsize=self.bufsize)
+        else:
+            output.write(dill.dumps(result))
 
 
 ##
