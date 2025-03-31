@@ -913,7 +913,7 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 # @param category Branch
 # @param tag daliuge
 # @param func_name condition/String/ComponentParameter/NoPort/ReadWrite//False/False/Python conditional function name. This can also be a valid import path to an importable function.
-# @param func_code condition(x): return (x > 0)/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code for the branch condition. Modify as required. Note that func_name above needs to match the defined name here.
+# @param func_code def condition(x): return (x > 0)/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code for the branch condition. Modify as required. Note that func_name above needs to match the defined name here.
 # @param x /Object/ComponentParameter/InputPort/ReadWrite//False/False/Port carrying the input which is also used in the condition function. Note that the name of the parameter has to match the argument of the condition function.
 # @param true  /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is true the input will be copied to this port
 # @param false /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is false the input will be copied to this port
@@ -937,7 +937,7 @@ class Branch(PyFuncApp):
 
     def write_results(self, result: bool):
         """
-        Copy the inpput to the output identified by the condition function.
+        Copy the input to the output identified by the condition function.
 
         Parameters:
         -----------
@@ -949,13 +949,16 @@ class Branch(PyFuncApp):
             return
 
         # TODO: The following should eventually use named ports
-        self.outputs[1 if result else 0].skip()  # send skip to correct branch
+        false_out = 1 if result else 0
+        true_out = 0 if result else 1
+        self.outputs[false_out].skip()  # send skip to correct branch
 
-        output = self.outputs[0 if result else 1]
         if self.inputs:
-            droputils.copyDropContents(self.inputs[0], output, bufsize=self.bufsize)
-        else:
-            output.write(dill.dumps(result))
+            droputils.copyDropContents(  # send data to correct branch
+                self.inputs[0], self.outputs[true_out], bufsize=self.bufsize
+            )
+        else:  # this enables a branch based only on the condition function
+            self.outputs[true_out].write(dill.dumps(result))
 
 
 ##
