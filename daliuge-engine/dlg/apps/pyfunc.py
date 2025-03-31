@@ -459,21 +459,17 @@ class PyFuncApp(BarrierAppDROP):
 
         vparg = []
         vkarg = {}
+
+        # update the positional args
+        positionalArgsMap = self._initialise_args(positionalArgs)
+        keywordArgsMap = self._initialise_args(keywordArguments)
         input_outputs = []
-
-        # Port-types that we may receive a filename/path from that is used as an output
-        # reference
-        filename_ports = ["InputOutput", "OutputPort"]
-
-        # Port-types that we may receive a filename/path from that is used as an output
-        # reference
-        filename_ports = ["InputOutput", "OutputPort"]
-
         if self._applicationArgs:
             # if defined in both we use AppArgs values
             for arg in self._applicationArgs:
                 # check value type and interpret
-                value, encoding, precious, positional = self._get_arg_info(arg)
+                value, encoding, precious, positional, usage = self._get_arg_info(
+                    arg)
                 if self._applicationArgs[arg]["type"] in ["Json", "Complex"]:
                     try:
                         value = ast.literal_eval(value)
@@ -493,6 +489,9 @@ class PyFuncApp(BarrierAppDROP):
                     keywordArgsMap[arg].encoding = encoding
                     keywordArgsMap[arg].precious = precious
                     keywordArgsMap[arg].positional = positional
+
+                if usage == "InputOutput":
+                    input_outputs.append(arg)
 
             _ = [self._applicationArgs.pop(k) for k in positionalArgsMap if
                  k in self._applicationArgs]
@@ -719,6 +718,25 @@ class PyFuncApp(BarrierAppDROP):
                 parser=parser
             )
             portargs.update(keyPortArgs)
+        # elif input_outputs:
+        #     inputs_dict = collections.OrderedDict()
+        #     for in_out in input_outputs:
+        #         inputs_dict[in_out] = {"name": in_out, "path": None, "drop":
+        #         self}
+        #     check_len = min(
+        #         len(input_outputs),
+        #         self.fn_nargs + self.fn_nkw,
+        #     )
+        #     keyPortArgs, posPortArgs = identify_named_ports(
+        #         inputs_dict,
+        #         pargsDict,
+        #         keyargsDict,
+        #         check_len=check_len,
+        #         mode="inputs",
+        #         addPositionalToKeyword=True,
+        #         parser=get_port_reader_function(self.input_parser)
+        #     )
+        #     portargs.update(keyPortArgs)
         else:
             for i, input_drop in enumerate(self._inputs.values()):
                 parser = (

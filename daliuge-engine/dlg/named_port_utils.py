@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
 from typing import Tuple, Union
 
+from dlg.drop import AbstractDROP
+
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
