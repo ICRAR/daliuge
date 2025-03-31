@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
 from typing import Tuple, Union
 
+
 logger = logging.getLogger(f"dlg.{__name__}")
 
 class ArgType(IntEnum):

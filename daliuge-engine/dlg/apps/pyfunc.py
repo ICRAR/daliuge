@@ -558,9 +558,9 @@ class PyFuncApp(BarrierAppDROP):
         # Extract arg and values from pargs; we no longer need the metadata
         logger.debug(f"Updating funcargs with values from pargsDict: {positionalArgsMap}")
 
-        if self._outputs:
-            keywordArgsMap, positionalArgsMap = self._map_output_to_input(
-                positionalArgsMap, keywordArgsMap)
+        for arg in input_outputs:
+            keywordArgsMap, positionalArgsMap = self._update_InputOutputs(
+                positionalArgsMap, keywordArgsMap, arg)
 
         tmpPargs = {argstr: argument.value for argstr, argument in
                     positionalArgsMap.items()}
@@ -604,7 +604,6 @@ class PyFuncApp(BarrierAppDROP):
         Argument objects (which store the current state of the values to be passed to
         the function).
 
-
         Returns
         -------
         modified keywordArgsMap and positionalArgsMap
@@ -627,50 +626,6 @@ class PyFuncApp(BarrierAppDROP):
                                                              positionalArgsMap[arg])
 
         return keywordArgsMap, positionalArgsMap
-
-    def _arg_to_output(self, attr_uid_map: dict, argument: Argument):
-        """
-
-        Map the argument to the output attribute that is referrenced in the attribute.
-        This uses our variable replacement notation "{}".
-        input_output_file flag, which means we want to match it to an output file.
-
-        Parameters
-        ----------
-        attr_uid_map: map of attribute names to the output DROP UID
-        argument: the argument we are parsing to the function wrapped by this PyFuncApp
-
-        Notes
-        -----
-        The expected behaviour is for the Argument to reference the output parameter
-        using the DALiUGE f-string style variable substitution "{}".
-
-        Returns
-        ------
-        argument with modified value (likely a filename)
-        """
-
-        _attribute_ref = argument.value.strip("{}")
-        if _attribute_ref in attr_uid_map:
-            output_uid = attr_uid_map[_attribute_ref]
-        else:
-            return argument
-        # Match output to output
-        output = None
-        try:
-            # Consider encoding?
-            parser = get_port_reader_function(DropParser(argument.encoding))
-            output = parser(self._outputs[output_uid])
-        except AttributeError:
-            logger.warning("Attribute %s mapped to a non-file attribute (%s)",
-                           argument.name, _attribute_ref)
-
-        if not output:
-            return argument
-        else:
-            argument.value = output
-
-        return argument
 
     def _ports2args(self, pargsDict, keyargsDict) -> dict:
         """
@@ -717,6 +672,25 @@ class PyFuncApp(BarrierAppDROP):
                 parser=parser
             )
             portargs.update(keyPortArgs)
+        # elif input_outputs:
+        #     inputs_dict = collections.OrderedDict()
+        #     for in_out in input_outputs:
+        #         inputs_dict[in_out] = {"name": in_out, "path": None, "drop":
+        #         self}
+        #     check_len = min(
+        #         len(input_outputs),
+        #         self.fn_nargs + self.fn_nkw,
+        #     )
+        #     keyPortArgs, posPortArgs = identify_named_ports(
+        #         inputs_dict,
+        #         pargsDict,
+        #         keyargsDict,
+        #         check_len=check_len,
+        #         mode="inputs",
+        #         addPositionalToKeyword=True,
+        #         parser=get_port_reader_function(self.input_parser)
+        #     )
+        #     portargs.update(keyPortArgs)
         else:
             for i, input_drop in enumerate(self._inputs.values()):
                 parser = (
