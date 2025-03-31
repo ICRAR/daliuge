@@ -38,6 +38,7 @@ from io import StringIO
 from contextlib import redirect_stdout
 
 from dlg import drop_loaders
+from dlg.data.path_builder import filepath_from_string
 from dlg.utils import serialize_data, deserialize_data
 from dlg.named_port_utils import (
     Argument,
@@ -395,8 +396,9 @@ class PyFuncApp(BarrierAppDROP):
         encoding = self._applicationArgs[arg].get("encoding", "dill")
         precious = self._applicationArgs[arg].get("precious", False)
         positional = self._applicationArgs[arg].get("positional", False)
+        usage = self._applicationArgs[arg].get("usage", None)
 
-        return value, encoding, precious, positional
+        return value, encoding, precious, positional, usage
 
     def _init_appArgs(self, positionalArgs: dict, keywordArguments: dict) -> tuple:
         """
@@ -423,11 +425,13 @@ class PyFuncApp(BarrierAppDROP):
         # update the positional args
         positionalArgsMap = self._initialise_args(positionalArgs)
         keywordArgsMap = self._initialise_args(keywordArguments)
+        input_outputs = []
         if self._applicationArgs:
             # if defined in both we use AppArgs values
             for arg in self._applicationArgs:
                 # check value type and interpret
-                value, encoding, precious, positional = self._get_arg_info(arg)
+                value, encoding, precious, positional, usage = self._get_arg_info(
+                    arg)
                 if self._applicationArgs[arg]["type"] in ["Json", "Complex"]:
                     try:
                         value = ast.literal_eval(value)
@@ -447,6 +451,9 @@ class PyFuncApp(BarrierAppDROP):
                     keywordArgsMap[arg].encoding = encoding
                     keywordArgsMap[arg].precious = precious
                     keywordArgsMap[arg].positional = positional
+
+                if usage == "InputOutput":
+                    input_outputs.append(arg)
 
             _ = [self._applicationArgs.pop(k) for k in positionalArgsMap if
                  k in self._applicationArgs]
@@ -483,9 +490,9 @@ class PyFuncApp(BarrierAppDROP):
         # Extract arg and values from pargs; we no longer need the metadata
         logger.debug(f"Updating funcargs with values from pargsDict: {positionalArgsMap}")
 
-        if self._outputs:
-            keywordArgsMap, positionalArgsMap = self._map_output_to_input(
-                positionalArgsMap, keywordArgsMap)
+        for arg in input_outputs:
+            keywordArgsMap, positionalArgsMap = self._update_InputOutputs(
+                positionalArgsMap, keywordArgsMap, arg)
 
         tmpPargs = {argstr: argument.value for argstr, argument in
                     positionalArgsMap.items()}
@@ -494,16 +501,21 @@ class PyFuncApp(BarrierAppDROP):
         # Mixin the values from named ports
         portargs = self._ports2args(positionalArgsMap, keywordArgsMap)
 
+        for arg in input_outputs:
+            keywordArgsMap, positionalArgsMap = self._update_InputOutputs(
+                positionalArgsMap, keywordArgsMap, arg)
+
         logger.debug(f"Updating funcargs with values from named ports {portargs}")
         tmpPortArgs = {port: arg.value for port, arg in portargs.items()}
         funcargs.update(tmpPortArgs)
 
         return funcargs, pargs
 
-    def _map_output_to_input(
+    def _update_InputOutputs(
             self,
             positionalArgsMap: dict[str, Argument],
-            keywordArgsMap: dict[str, Argument]
+            keywordArgsMap: dict[str, Argument],
+            arg: str
     ):
         """
         Map any attribute that has an input-output flag to the intended output.
@@ -522,69 +534,28 @@ class PyFuncApp(BarrierAppDROP):
         Argument objects (which store the current state of the values to be passed to
         the function).
 
-
         Returns
         -------
         modified keywordArgsMap and positionalArgsMap
         """
+        from dlg.data.path_builder import filepath_from_string
+        if arg in keywordArgsMap:
+            argument = keywordArgsMap[arg]
+            parser = (DropParser(argument.encoding))
+            if parser == DropParser.PATH:
+                argument = filepath_from_string(argument.value)
+            self.parameters[arg] = keywordArgsMap[arg].value
+            keywordArgsMap[arg] = argument
 
-        attr_uid_map = {}
-        for output in self.parameters["outputs"]:
-            for key, value in output.items():
-                attr_uid_map[value] = key
-
-        for arg in keywordArgsMap:
-                keywordArgsMap[arg] = self._arg_to_output(attr_uid_map,
-                                                          keywordArgsMap[arg])
-        for arg in positionalArgsMap:
-                positionalArgsMap[arg] = self._arg_to_output(attr_uid_map,
-                                                             positionalArgsMap[arg])
+        elif arg in positionalArgsMap:
+            argument = positionalArgsMap[arg]
+            parser = (DropParser(argument.encoding))
+            if parser == DropParser.PATH:
+                argument.value = filepath_from_string(argument.value)
+            self.parameters[arg] = argument.value
+            positionalArgsMap[arg] = argument
 
         return keywordArgsMap, positionalArgsMap
-
-    def _arg_to_output(self, attr_uid_map: dict, argument: Argument):
-        """
-
-        Map the argument to the output attribute that is referrenced in the attribute.
-        This uses our variable replacement notation "{}".
-        input_output_file flag, which means we want to match it to an output file.
-
-        Parameters
-        ----------
-        attr_uid_map: map of attribute names to the output DROP UID
-        argument: the argument we are parsing to the function wrapped by this PyFuncApp
-
-        Notes
-        -----
-        The expected behaviour is for the Argument to reference the output parameter
-        using the DALiUGE f-string style variable substitution "{}".
-
-        Returns
-        ------
-        argument with modified value (likely a filename)
-        """
-
-        _attribute_ref = argument.value.strip("{}")
-        if _attribute_ref in attr_uid_map:
-            output_uid = attr_uid_map[_attribute_ref]
-        else:
-            return argument
-        # Match output to output
-        output = None
-        try:
-            # Consider encoding?
-            parser = get_port_reader_function(DropParser(argument.encoding))
-            output = parser(self._outputs[output_uid])
-        except AttributeError:
-            logger.warning("Attribute %s mapped to a non-file attribute (%s)",
-                           argument.name, _attribute_ref)
-
-        if not output:
-            return argument
-        else:
-            argument.value = output
-
-        return argument
 
     def _ports2args(self, pargsDict, keyargsDict) -> dict:
         """
@@ -620,6 +591,25 @@ class PyFuncApp(BarrierAppDROP):
                 parser=get_port_reader_function(self.input_parser)
             )
             portargs.update(keyPortArgs)
+        # elif input_outputs:
+        #     inputs_dict = collections.OrderedDict()
+        #     for in_out in input_outputs:
+        #         inputs_dict[in_out] = {"name": in_out, "path": None, "drop":
+        #         self}
+        #     check_len = min(
+        #         len(input_outputs),
+        #         self.fn_nargs + self.fn_nkw,
+        #     )
+        #     keyPortArgs, posPortArgs = identify_named_ports(
+        #         inputs_dict,
+        #         pargsDict,
+        #         keyargsDict,
+        #         check_len=check_len,
+        #         mode="inputs",
+        #         addPositionalToKeyword=True,
+        #         parser=get_port_reader_function(self.input_parser)
+        #     )
+        #     portargs.update(keyPortArgs)
         else:
             for i, input_drop in enumerate(iitems):
                 parser = get_port_reader_function(self.input_parser)
@@ -735,8 +725,6 @@ class PyFuncApp(BarrierAppDROP):
         mapping. This also allows to pass values to any function argument through a port.
 
         """
-        funcargs = {}
-
         # Keyword arguments are made up of the default values plus the inputs
         # that match one of the keyword argument names
         # if defaults dict has not been specified at all we'll go ahead anyway

@@ -70,6 +70,44 @@ class dropdict(dict):
     with JSON -> DROP representation transformations, and the different
     repositories where graph templates are expected to be found by the
     DROPManager.
+
+    Supported Keys
+    ---------------
+    Common:
+
+        "oid": str
+        "iid": str
+        "lg_key": str
+        "name": str
+        "categoryType": str
+        "dropclass": str
+        "storage": str
+        "rank": list[int]
+        "reprodata": dict
+        "loop_ctx": Union[None/int]
+        "weight": int
+        "applicationArgs": dict
+        "constraintParams": dict
+        "componentParams": dict
+        "fields": list[dict]
+        "data_volume": str
+        "group_end": str (rep. of boolean value '0'==False)
+        "check_file_path_exists": str (rep. of boolean value '0'==False)
+
+    AppDROP only:
+
+        "outputs": list[dict]
+
+    DataDROP only:
+
+        "persist": bool
+        "producers": list[dict]
+        "port_map": dict
+
+    FileDROP only:
+
+        "filepath": str
+        "dirname": str
     """
 
     def __init__(self, init_dict=None):
