@@ -22,13 +22,13 @@
 import errno
 import logging
 import os
-import re
 
 from dlg.common.reproducibility.reproducibility import common_hash
+from dlg.data import path_builder
+from dlg.data.io import FileIO
 from dlg.ddap_protocol import DROPStates
 from .data_base import DataDROP, PathBasedDrop, logger, track_current_drop
 from dlg.exceptions import InvalidDropException
-from dlg.data.io import FileIO
 from dlg.meta import dlg_bool_param
 from dlg.utils import isabs
 from typing import Union
@@ -106,7 +106,6 @@ class FileDROP(DataDROP, PathBasedDrop):
             filepath = self.get_dir(filepath)
         return filepath
 
-    non_fname_chars = re.compile(r":|%s" % os.sep)
 
     def initialize(self, **kwargs):
         """
@@ -122,6 +121,7 @@ class FileDROP(DataDROP, PathBasedDrop):
         filename = None
 
         if filepath:  # if there is anything provided
+            # TODO do f-string substitution if necessary
             if "/" not in filepath:  # just a name
                 filename = filepath
                 dirname = self.get_dir(".")
@@ -146,9 +146,7 @@ class FileDROP(DataDROP, PathBasedDrop):
 
         # Default filename to drop human readable format based on UID
         if filename is None:
-            # '2024-10-30T12:01:57_0140555b-8c23-4d6a-9e24-e16c15555e8c_0'
-            fn = self.uid.split("_")[0] + "_" + str(self._humanKey)
-            filename = self.non_fname_chars.sub("_", fn)
+            filename = path_builder.base_uid_filename(self.uid, self._humanKey)
 
         self.filename = self._apply_filename_modifiers(filename)
         self.dirname = self.get_dir(dirname)

@@ -3,24 +3,16 @@ import logging
 import collections
 from dlg.data.drops.data_base import DataDROP
 import dlg.droputils as droputils
+from dlg.data import path_builder
 import dlg.drop_loaders as drop_loaders
 
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
 from typing import Tuple, Union
 
+from dlg.drop import AbstractDROP
+
 logger = logging.getLogger(f"dlg.{__name__}")
-
-class ArgType(IntEnum):
-    """
-    Arguments can be positional or keyword.
-
-    This enum is used when determining what we do with the argument, as POSITIONAL
-    arguments will need to be treated differently as the order in which they appear
-    is important.
-    """
-    POSITIONAL = auto()
-    KEYWORD = auto()
 
 class ArgType(IntEnum):
     """
@@ -125,6 +117,19 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     logger.info("Constructed command line arguments: %s %s", pargs, kwargs)
     return (pargs, kwargs)
 
+def extract_encoded_value(args: dict, drop: "AbstractDROP", encoding:DropParser):
+    """
+
+    Parameters
+    ----------
+    args
+    drop
+    encoding
+
+    Returns
+    -------
+
+    """
 
 def identify_named_ports(
     port_dict: dict,
@@ -345,11 +350,12 @@ def replace_named_ports(
     keywordArgs = _get_args(appArgs, positional=False)
 
     # Extract values from dictionaries - "encoding" etc. are irrelevant
-    keywordArgs = {arg: subdict['value'] for arg, subdict in keywordArgs.items()}
-    positionalArgs = {arg: subdict['value'] for arg, subdict in positionalArgs.items()}
-    keywordPortArgs = {arg: subdict['value'] for arg, subdict in keywordPortArgs.items()}
-    positionalPortArgs = {arg: subdict['value'] for arg, subdict in
-                          positionalPortArgs.items()}
+    positionalArgs = {argstr: argument.value for argstr, argument in (
+            positionalArgs.items())}
+    keywordArgs = {argstr: argument.value for argstr, argument in keywordArgs.items()}
+    keywordPortArgs = {
+        argstr: argument.value for argstr, argument in keywordPortArgs.items()
+    }
 
     #  Construct the final keywordArguments and positionalPortArguments
     for k, v in keywordPortArgs.items():
@@ -459,7 +465,15 @@ def get_port_reader_function(input_parser: DropParser):
     elif input_parser is DropParser.NPY:
         reader = drop_loaders.load_npy
     elif input_parser is DropParser.PATH:
-        reader = lambda x: x.path
+        def PathFromData(x: AbstractDROP):
+            # Attempt to access path from DROP "x"
+            # If not Path, this could be a memory Drop with path information.
+            # If so, try and decode accordingly.
+            try:
+                return x.path
+            except AttributeError:
+                return drop_loaders.load_dill(x)
+        reader = PathFromData
     elif input_parser is DropParser.DATAURL:
         reader = lambda x: x.dataURL
     elif input_parser is DropParser.DILL:
