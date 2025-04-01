@@ -6,15 +6,13 @@ import dlg.droputils as droputils
 import dlg.drop_loaders as drop_loaders
 from typing import Tuple
 
-from dlg.data.drops import DataDROP
-
 logger = logging.getLogger(__name__)
 
 
 class DropParser(Enum):
     RAW = "raw"
     PICKLE = "pickle"
-    EVAL = "eval"
+    EVAL = "eval" 
     NPY = "npy"
     DILL = "dill"
     # JSON = "json"
@@ -70,7 +68,9 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     positional arguments and one for kw arguments that can be used to construct
     the final command line.
     """
-    applicationArgs = clean_applicationArgs(applicationArgs)
+    applicationArgs = clean_applicationArgs(
+        applicationArgs
+    )
     pargs = []
     kwargs = {}
     for name, vdict in applicationArgs.items():
@@ -144,7 +144,11 @@ def identify_named_ports(
         if value is None:
             value = ""  # make sure we are passing NULL drop events
         if key in positionalArgs:
-            encoding = DropParser(positionalPortArgs[key]["encoding"])
+            try:
+                encoding = DropParser(positionalPortArgs[key]['encoding'])
+            except ValueError:
+                logger.warning("No encoding set for %key: possible default")
+                continue
             parser = get_port_reader_function(encoding)
             if parser:
                 logger.debug("Reading from port using %s", parser.__repr__())
@@ -156,7 +160,11 @@ def identify_named_ports(
             if addPositionalToKeyword:
                 keywordPortArgs.update({key: positionalPortArgs[key]})
         elif key in keywordArgs:
-            encoding = DropParser(keywordArgs[key]["encoding"])
+            try:
+                encoding = DropParser(keywordArgs[key]['encoding'])
+            except ValueError:
+                logger.warning("No encoding set for %key: possible default")
+                continue
             parser = get_port_reader_function(encoding)
             if parser:
                 logger.debug("Reading from port using %s", parser.__repr__())
@@ -390,7 +398,6 @@ def _get_args(appArgs, positional=False):
     logger.debug("%s arguments: %s", argType, args)
     return args
 
-
 def get_port_reader_function(input_parser: DropParser):
     """
     Return the function used to read input from a named port
@@ -407,6 +414,7 @@ def get_port_reader_function(input_parser: DropParser):
             # which should propogate back to None
             content: str = droputils.allDropContents(x).decode("utf-8")
             return ast.literal_eval(content) if len(content) > 0 else None
+
         reader = optionalEval
     elif input_parser is DropParser.UTF8:
         def utf8decode(drop: "DataDROP"):
