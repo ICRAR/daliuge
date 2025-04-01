@@ -78,7 +78,7 @@ from dlg.utils import (
     isabs,
     object_tracking,
     getDlgVariable,
-    truncateUidToKey
+    truncateUidToKey,
 )
 from dlg.meta import (
     dlg_float_param,
@@ -317,9 +317,9 @@ class AbstractDROP(EventFirer, EventHandler):
         # TODO: Make these threadsafe, no lock around them yet
         self._rios = {}
 
-        self._humanKey = self._popArg(kwargs,
-                                       "humanReadableKey", 
-                                       truncateUidToKey(self._uid))
+        self._humanKey = self._popArg(
+            kwargs, "humanReadableKey", truncateUidToKey(self._uid)
+        )
         # The execution mode.
         # When set to DROP (the default) the graph execution will be driven by
         # DROPs themselves by firing and listening to events, and reacting
@@ -1016,6 +1016,7 @@ class AbstractDROP(EventFirer, EventHandler):
             self._finishedProducers.append(drop_state)
             nFinished = len(self._finishedProducers)
             nProd = len(self._producers)
+            self._refCount -= 1
 
             if nFinished > nProd:
                 raise Exception(
@@ -1180,11 +1181,21 @@ class AbstractDROP(EventFirer, EventHandler):
         self.completedrop()
 
     def skip(self):
-        """Moves this drop to the SKIPPED state closing any writers we opened"""
+        """
+        Moves this drop to the SKIPPED state closing any writers we opened.
+
+        If the drop has more than one producer it will block until all producers
+        have
+        """
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            self._closeWriters()
-            self.status = DROPStates.SKIPPED
-        self.completedrop()
+            if len(self.producers) == 1 or (
+                len(self.producers) > 1 and self._refCount == 1
+            ):
+                self._closeWriters()
+                self.status = DROPStates.SKIPPED
+                self.completedrop()
+            else:
+                self._refCount -= 1
 
     @property
     def node(self):
