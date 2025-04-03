@@ -22,8 +22,9 @@ case "$1" in
     "slim")
         echo "Running Translator development version in background..."
         docker run -d -h dlg-trans --volume $PWD/dlg/dropmake:/dlg/lib/python3.8/site-packages/dlg/dropmake --name daliuge-translator --rm -t -p 8084:8084 icrar/daliuge-translator.slim:${VCS_TAG}
-        sleep 3
-        docker exec -u root daliuge-translator bash -c "service avahi-daemon stop > /dev/null 2>&1 && service dbus restart > /dev/null 2>&1 && service avahi-daemon start > /dev/null 2>&1";;
+        TRANS_IP=`docker exec daliuge-translator sh -c "hostname --ip-address"`
+        echo "Translator URL: http://${TRANS_IP}:8084"
+        exit 0;;
     "casa")
         export VCS_TAG=`git rev-parse --abbrev-ref HEAD| tr '[:upper:]' '[:lower:]'`-casa
         echo "Running Translator development version in foreground..."
@@ -37,4 +38,4 @@ esac
 sleep 3
 TRANS_NAME=`docker exec daliuge-translator sh -c "hostname"`
 TRANS_IP=`docker exec daliuge-translator sh -c "hostname --ip-address"`
-echo "Translator URL: http://${TRANS_NAME}.local:8084"
+echo "Translator URL: http://${TRANS_NAME}:8084"
