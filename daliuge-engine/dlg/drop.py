@@ -375,6 +375,13 @@ class AbstractDROP(EventFirer, EventHandler):
         if self._persist:
             self._expireAfterUse = False
 
+        # Flag to control whether a call to skip blocks until the
+        # last producer is finished. This is useful for data drops capturing
+        # the output of multiple branches. Default is false, meaning that
+        # the first call to skip will close the drop and also skip the following
+        # drops.
+        self.block_skip = self._popArg(kwargs, "block_skip", False)
+
         # Useful to have access to all EAGLE parameters without a prior knowledge
         self._parameters = dict(kwargs)
         self.autofill_environment_variables()
@@ -1188,8 +1195,9 @@ class AbstractDROP(EventFirer, EventHandler):
         have
         """
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            if len(self.producers) == 1 or (
-                len(self.producers) > 1 and self._refCount == 1
+            if not self.block_skip or (
+                len(self.producers) == 1
+                or (len(self.producers) > 1 and self._refCount == 1)
             ):
                 self._closeWriters()
                 self.status = DROPStates.SKIPPED
