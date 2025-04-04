@@ -741,7 +741,7 @@ class PyFuncApp(BarrierAppDROP):
                 drop_uid, drop_port = list(outport.items())[0]
                 if drop_uid == output_drop.uid and drop_port in component_params:
                     param_enc = component_params[drop_port]["encoding"]
-                    encoding = param_enc if param_enc else encoding
+                    encoding = param_enc or encoding
         return DropParser(encoding) if encoding else self.output_parser
 
     def write_results(self, result):
