@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 """Applications used as examples, for testing, or in simple situations"""
+import dill
 import _pickle
 from numbers import Number
 import pickle
@@ -32,6 +33,7 @@ import numpy as np
 
 from dlg import droputils, drop_loaders
 from dlg.apps.app_base import BarrierAppDROP
+from dlg.apps.pyfunc import PyFuncApp
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops import InMemoryDROP, FileDROP
 from dlg.apps.branch import BranchAppDrop
@@ -102,8 +104,6 @@ class PythonApp(BarrierAppDROP):
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 
 
@@ -158,8 +158,6 @@ class SleepApp(BarrierAppDROP):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class CopyApp(BarrierAppDROP):
     """
@@ -216,8 +214,6 @@ class CopyApp(BarrierAppDROP):
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class SleepAndCopyApp(SleepApp, CopyApp):
     """A combination of the SleepApp and the CopyApp. It sleeps, then copies"""
@@ -246,8 +242,6 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param array /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/random array
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class RandomArrayApp(BarrierAppDROP):
     """
@@ -326,8 +320,6 @@ class RandomArrayApp(BarrierAppDROP):
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param array /Object.Array/ApplicationArgument/InputOutput/ReadWrite//False/False/Port for the array(s)
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class AverageArraysApp(BarrierAppDROP):
     """
@@ -422,8 +414,6 @@ class AverageArraysApp(BarrierAppDROP):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input /Object/ApplicationArgument/InputPort/ReadWrite//False/False/0-base placeholder port for inputs
 # @param output /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/Placeholder port for outputs
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class GenericGatherApp(BarrierAppDROP):
     component_meta = dlg_component(
@@ -468,8 +458,6 @@ class GenericGatherApp(BarrierAppDROP):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input /Object/ApplicationArgument/InputPort/ReadWrite//False/False/0-base placeholder port for inputs
 # @param output /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/Placeholder port for outputs
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class DictGatherApp(BarrierAppDROP):
     component_meta = dlg_component(
@@ -522,8 +510,6 @@ class DictGatherApp(BarrierAppDROP):
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input /Object/ComponentParameter/InputPort/ReadWrite//False/False/0-base placeholder port for inputs
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class ArrayGatherApp(BarrierAppDROP):
     component_meta = dlg_component(
@@ -571,8 +557,6 @@ class ArrayGatherApp(BarrierAppDROP):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param array_in /Object.Array/ApplicationArgument/InputPort/ReadWrite//False/False/Port for the input array(s)
 # @param array_out /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/reduced array
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class GenericNpyGatherApp(BarrierAppDROP):
     """
@@ -672,8 +656,6 @@ class GenericNpyGatherApp(BarrierAppDROP):
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param hello "world"/Object/ApplicationArgument/OutputPort/ReadWrite//False/False/message
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class HelloWorldApp(BarrierAppDROP):
     """
@@ -730,8 +712,6 @@ class HelloWorldApp(BarrierAppDROP):
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param content /String/ApplicationArgument/OutputPort/ReadWrite//False/False/content read from URL
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class UrlRetrieveApp(BarrierAppDROP):
     """
@@ -788,8 +768,6 @@ class UrlRetrieveApp(BarrierAppDROP):
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class GenericScatterApp(BarrierAppDROP):
     """
@@ -859,8 +837,6 @@ class GenericScatterApp(BarrierAppDROP):
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param array_in /Object.Array/ApplicationArgument/InputPort/ReadWrite//False/False/A numpy array of arrays
 # @param array_out /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/reduced array
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class GenericNpyScatterApp(BarrierAppDROP):
     """
@@ -909,7 +885,10 @@ class GenericNpyScatterApp(BarrierAppDROP):
 
 
 class SimpleBranch(BranchAppDrop, NullBarrierApp):
-    """Simple branch app that is told the result of its condition"""
+    """
+    Simple branch app that is told the result of its condition.
+    We are keeping this not to break existing graphs.
+    """
 
     def initialize(self, **kwargs):
         self.result = self._popArg(kwargs, "result", True)
@@ -920,6 +899,66 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 
     def condition(self):
         return self.result
+
+
+##
+# @brief Branch
+# @details A branch application that copies the input to either the 'true' or the 'false' output depending on the result of
+# the provided conditional function. The conditional function can be specified either in-line or as an external function and has
+# to return a boolean value.
+# The inputs of the application are passed on as arguments to the conditional function. The conditional function needs to return
+# a boolean value, but the application will copy the input data to the true or false output, depending on the result of the
+# conditional function.
+# @par EAGLE_START
+# @param category Branch
+# @param tag daliuge
+# @param func_name condition/String/ComponentParameter/NoPort/ReadWrite//False/False/Python conditional function name. This can also be a valid import path to an importable function.
+# @param func_code def condition(x): return (x > 0)/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code for the branch condition. Modify as required. Note that func_name above needs to match the defined name here.
+# @param x /Object/ComponentParameter/InputPort/ReadWrite//False/False/Port carrying the input which is also used in the condition function. Note that the name of the parameter has to match the argument of the condition function.
+# @param true  /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is true the input will be copied to this port
+# @param false /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is false the input will be copied to this port
+# @param dropclass dlg.apps.simple.Branch/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @par EAGLE_END
+class Branch(PyFuncApp):
+    """
+    A branch application that copies the input to either the 'true' or the 'false' output depending on the result of
+    the provided conditional function. The conditional function can be specified either in-line or as an external function and has
+    to return a boolean value.
+    The inputs of the application are passed on as arguments to the conditional function. The conditional function needs to return
+    a boolean value, but the application will copy the input data to the true or false output, depending on the result of the
+    conditional function.
+    """
+
+    bufsize = dlg_int_param("bufsize", 65536)
+
+    def write_results(self, result: bool):
+        """
+        Copy the input to the output identified by the condition function.
+
+        Parameters:
+        -----------
+        result:
+            The result of the condition function
+        """
+
+        if not self.outputs:
+            return
+
+        # TODO: The following should eventually use named ports
+        false_out = 1 if result else 0
+        true_out = 0 if result else 1
+        self.outputs[false_out].skip()  # send skip to correct branch
+
+        if self.inputs:
+            droputils.copyDropContents(  # send data to correct branch
+                self.inputs[0], self.outputs[true_out], bufsize=self.bufsize
+            )
+        else:  # this enables a branch based only on the condition function
+            self.outputs[true_out].write(dill.dumps(result))
 
 
 ##
@@ -938,8 +977,6 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param rest_array /Object.array/ApplicationArgument/InputOutput/ReadWrite//False/False/List of elements
 # @param element /Object.element/ApplicationArgument/OutputPort/ReadWrite//False/False/first element
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class PickOne(BarrierAppDROP):
     """
@@ -1000,8 +1037,6 @@ class PickOne(BarrierAppDROP):
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param array /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/random array
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class ListAppendThrashingApp(BarrierAppDROP):
     """
