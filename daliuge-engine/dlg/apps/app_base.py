@@ -57,14 +57,15 @@ def run_on_daemon_thread(func: Callable, *args, **kwargs) -> Future:
     ungracefully terminated if the process ends."""
     future = Future()
 
-    def thread_target():
+    def thread_target(thread_id):
         try:
             res = func(*args, **kwargs)
             future.set_result(res)
         except BaseException as e:
             future.set_exception(e)
 
-    t = threading.Thread(target=thread_target)
+    thread_id = 0
+    t = threading.Thread(target=thread_target, args=(thread_id,))
     t.daemon = True
     t.start()
 
@@ -277,11 +278,11 @@ class AppDROP(ContainerDROP):
             self.status = DROPStates.COMPLETED
         logger.debug(
             "Moving %r to %s",
-            self.oid,
+            self.name,
             "FINISHED" if not is_error else "ERROR",
         )
-        self._fire("producerFinished", status=self.status, execStatus=self.execStatus)
         self.completedrop()
+        self._fire("producerFinished", status=self.status, execStatus=self.execStatus)
 
     def cancel(self):
         """Moves this application drop to its CANCELLED state"""
@@ -440,6 +441,8 @@ class InputFiredAppDROP(AppDROP):
                 self._notifyAppIsFinished()
             elif skipped_len == n_eff_inputs:
                 self.skip()
+            elif self._drop_runner == _SYNC_DROP_RUNNER:
+                self.execute()
             else:
                 self.async_execute()
 
@@ -468,7 +471,7 @@ class InputFiredAppDROP(AppDROP):
         #       applications, for the time being they follow their execState.
 
         # Run at most self._n_tries if there are errors during the execution
-        logger.debug("Executing %r", self.oid)
+        logger.info("Executing %r", f"{self.name}.{self._humanKey}")
         tries = 0
         drop_state = DROPStates.COMPLETED
         self.execStatus = AppDROPStates.RUNNING
@@ -476,10 +479,19 @@ class InputFiredAppDROP(AppDROP):
             try:
                 fut = self._drop_runner.run_drop(self)
                 fut.result()
-
                 if self.execStatus == AppDROPStates.CANCELLED:
                     return
                 self.execStatus = AppDROPStates.FINISHED
+                if logger.getEffectiveLevel() != logging.getLevelName(
+                    self._global_log_level
+                ):
+                    logging.getLogger("dlg").setLevel(self._global_log_level)
+                    logger.warning(
+                        "Set log-level after execution %s.%s to %s",
+                        self.name,
+                        self._humanKey,
+                        logging.getLevelName(logger.getEffectiveLevel()),
+                    )
                 break
             except:
                 if self.execStatus == AppDROPStates.CANCELLED:

@@ -135,6 +135,14 @@ class NodeManagerThreadDropRunner(NodeManagerDropRunner):
         self._thread_pool = ThreadPoolExecutor(max_workers=self._max_workers)
 
     def run_drop(self, app_drop: AppDROP) -> Future:
+        if logger.getEffectiveLevel() != logging.getLevelName(app_drop._log_level):
+            logging.getLogger("dlg").setLevel(app_drop._log_level)
+            logger.warning(
+                "Set log-level for %s.%s to %s",
+                app_drop.name,
+                app_drop._humanKey,
+                logging.getLevelName(logger.getEffectiveLevel()),
+            )
         return self._thread_pool.submit(app_drop.run)
 
     def close(self):
@@ -439,7 +447,7 @@ class NodeManagerBase(DROPManager):
         for nodesub in relationships:
             # node = Node(nodesub)
             # This needs to be changed
-            events_port = nodesub.events_port #constants.NODE_DEFAULT_EVENTS_PORT
+            events_port = nodesub.events_port  # constants.NODE_DEFAULT_EVENTS_PORT
             if type(nodesub) is tuple:
                 host, events_port, _ = nodesub
             else:
@@ -450,7 +458,6 @@ class NodeManagerBase(DROPManager):
                 host = nodesub
             logger.debug("Sending subscription to %s", f"{host}:{events_port}")
             self.subscribe(host, events_port)
-
 
     def has_method(self, sessionId, uid, mname):
         self._check_session_id(sessionId)

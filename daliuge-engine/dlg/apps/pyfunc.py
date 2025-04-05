@@ -630,7 +630,8 @@ class PyFuncApp(BarrierAppDROP):
             raise InvalidDropException(
                 self, "No function specified (either via name or code)"
             )
-
+        self.name = f"{self.name}:{self.func_name}"  # PyFuncApp is parent
+        logger.debug("AppDROP name: %s", self.name)
         # Lookup function or import bytecode as a function
         if not self.func_code:
             self.func = import_using_name(self, self.func_name)

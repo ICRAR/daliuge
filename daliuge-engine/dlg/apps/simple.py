@@ -675,8 +675,16 @@ class HelloWorldApp(BarrierAppDROP):
     )
 
     greet = dlg_string_param("greet", "World")
+    _log_level = dlg_string_param("log_level", "DEBUG")
 
     def run(self):
+        logger.info("Internal logger: %s", logger.name)
+        logger.info(
+            "log-level for %s.%s: %s",
+            self.name,
+            self._humanKey,
+            self._log_level,
+        )
         ins = self.inputs
         # if no inputs use the parameter else use the input
         if len(ins) == 0:
@@ -689,6 +697,7 @@ class HelloWorldApp(BarrierAppDROP):
             except _pickle.UnpicklingError:
                 phrase = str(droputils.allDropContents(ins[0]), encoding="utf-8")
             self.greeting = f"Hello {phrase}"
+        logger.debug("Greeting is %s", self.greeting)
 
         outs = self.outputs
         if len(outs) < 1:

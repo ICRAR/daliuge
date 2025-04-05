@@ -218,6 +218,17 @@ class AbstractDROP(EventFirer, EventHandler):
         self._oid = str(oid)
         self._uid = str(uid)
 
+        # A simple name that the Drop might receive
+        # This is usually set in the Logical Graph Editor,
+        # but is not necessarily always there
+        self.name = self._popArg(kwargs, "name", self)
+
+        # Set log_level for this drop to level provided
+        self._log_level = self._popArg(
+            kwargs, "log_level", logging.getLevelName(logger.getEffectiveLevel())
+        )
+        self._global_log_level = logging.getLevelName(logger.getEffectiveLevel())
+
         # The physical graph drop type. This is determined
         # by the drop category when generating the drop spec
         self._type = self._popArg(kwargs, "categoryType", None)
@@ -227,11 +238,6 @@ class AbstractDROP(EventFirer, EventHandler):
         # general it cannot be assumed it will (e.g., unit tests create drops
         # directly outside the context of a session).
         self._dlg_session_id = self._popArg(kwargs, "dlg_session_id", "")
-
-        # A simple name that the Drop might receive
-        # This is usually set in the Logical Graph Editor,
-        # but is not necessarily always there
-        self.name = self._popArg(kwargs, "name", "")
 
         # The key of this drop in the original Logical Graph
         # This information might or might not be present depending on how the
@@ -1112,6 +1118,13 @@ class AbstractDROP(EventFirer, EventHandler):
         self.commit()
         reprodata = {"data": self._merkleData, "merkleroot": self.merkleroot}
         self._fire(eventType="reproducibility", reprodata=reprodata)
+        if logger.getEffectiveLevel() != logging.getLevelName(self._global_log_level):
+            logger.warning(
+                "log-level after %s.%s: %s",
+                self.name,
+                self._humanKey,
+                logging.getLevelName(logger.getEffectiveLevel()),
+            )
 
     @track_current_drop
     def setError(self):
