@@ -178,6 +178,7 @@ def import_using_code(func_code: str, func_name: str, serialized: bool = True):
 # @param tag daliuge
 # @param func_name object.__init__/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function name
 # @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code, e.g. 'def f(args): return args'. Function name has to be 'f'!
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name Object/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param self /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Port exposing the object
@@ -186,8 +187,6 @@ def import_using_code(func_code: str, func_name: str, serialized: bool = True):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/The allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 #     \~English Mapping from argname to default value. Should match only the last part of the argnames list.
 #               Values are interpreted as Python code literals and that means string values need to be quoted.
 # @par EAGLE_END
@@ -210,6 +209,7 @@ class PyMemberApp(BarrierAppDROP):
 # @param tag template
 # @param func_name /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function name
 # @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code, e.g. 'def func_name(args): return args'. Note that func_name above needs to match the defined name here.
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.pyfunc.PyFuncApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name pyfunc/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -217,8 +217,6 @@ class PyMemberApp(BarrierAppDROP):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/The allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 #     \~English Mapping from argname to default value. Should match only the last part of the argnames list.
 #               Values are interpreted as Python code literals and that means string values need to be quoted.
 # @par EAGLE_END

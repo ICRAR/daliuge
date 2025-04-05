@@ -9,6 +9,10 @@ from dlg.exceptions import InvalidDropException
 # @par EAGLE_START
 # @param category Branch
 # @param tag template
+# @param dummy_input /Object/ApplicationArgument/InputPort/ReadWrite//False/False/Dummy input port
+# @param true /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/True condition output port
+# @param false /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/False condition output port
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.branch.BranchAppDrop/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -16,11 +20,6 @@ from dlg.exceptions import InvalidDropException
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param dummy_input /Object/ApplicationArgument/InputPort/ReadWrite//False/False/Dummy input port
-# @param true /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/True condition output port
-# @param false /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/False condition output port
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class BranchAppDrop(BarrierAppDROP):
     """
