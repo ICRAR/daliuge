@@ -147,18 +147,25 @@ def import_using_code(func_code: str, func_name: str, serialized: bool = True):
     """
     if not serialized:
         logger.debug(f"Trying to import code from string: {func_code}")
-        mod = pyext.RuntimeModule.from_string("mod", "My test function", func_code)
+        mod = pyext.RuntimeModule.from_string("mod", func_name, func_code)
+        logger.debug("Imported function: %s", func_name)
         if func_name:
             if hasattr(mod, func_name):
                 func = getattr(mod, func_name)
             else:
+                logger.warning("Function with name '%s' not found!", func_name)
                 raise ValueError(f"Function with name '{func_name}' not found!")
     else:
-        func = dill.loads(func_code)
+        try:
+            func = dill.loads(func_code)
+        except Exception as err:
+            logger.warning("Unable to deserialize func_code: %s", err)
+            raise
         if func_name and func_name.split(".")[-1] != func.__name__:
             raise ValueError(
                 f"Function with name '{func.__name__}' instead of '{func_name}' found!"
             )
+    logger.debug("Imported function: %s", func_name)
     return func
 
 
@@ -563,7 +570,11 @@ class PyFuncApp(BarrierAppDROP):
                 self.func = import_using_code(
                     self.func_code, self.func_name, serialized=False
                 )
-            except (SyntaxError, NameError):
+            except (SyntaxError, NameError) as err:
+                logger.warning(
+                    "Problem importing code: %s. Checking whether it was serialized.",
+                    err,
+                )
                 serialized = True
         if isinstance(self.func_code, bytes) or serialized:
             if isinstance(self.func_code, str):
