@@ -39,6 +39,7 @@ class SyncDropRunner(DropRunner):
     A simple pool-like object that creates a new thread for each invocation.
     """
 
+    @track_current_drop
     def run_drop(self, app_drop: "AppDROP") -> Future:
         """Run drop synchronously."""
         future = Future()
@@ -52,6 +53,7 @@ class SyncDropRunner(DropRunner):
         return future
 
 
+@track_current_drop
 def run_on_daemon_thread(func: Callable, *args, **kwargs) -> Future:
     """Runs a callable on a daemon thread, meaning it will be
     ungracefully terminated if the process ends."""
@@ -64,8 +66,8 @@ def run_on_daemon_thread(func: Callable, *args, **kwargs) -> Future:
         except BaseException as e:
             future.set_exception(e)
 
-    thread_id = 0
-    t = threading.Thread(target=thread_target, args=(thread_id,))
+    logger.debug(">>>> track drop: %s", track_current_drop.tlocal.drop)
+    t = threading.Thread(target=thread_target, args=(track_current_drop,))
     t.daemon = True
     t.start()
 
@@ -114,6 +116,7 @@ class AppDROP(ContainerDROP):
         super().__setstate__(state)
         self._drop_runner = _SYNC_DROP_RUNNER
 
+    @track_current_drop
     def initialize(self, **kwargs):
         super(AppDROP, self).initialize(**kwargs)
 
@@ -125,6 +128,7 @@ class AppDROP(ContainerDROP):
         # Input and output objects are later referenced by their *index*
         # (relative to the order in which they were added to this object)
         # Therefore we use an ordered dict to keep the insertion order.
+
         self._inputs = OrderedDict()
         self._outputs = OrderedDict()
 
@@ -446,12 +450,14 @@ class InputFiredAppDROP(AppDROP):
             else:
                 self.async_execute()
 
+    @track_current_drop
     def async_execute(self):
         # TODO Do we need another thread pool for this?
         # Careful, trying to run this on the same threadpool as the
         # DropRunner can cause deadlocks
         return run_on_daemon_thread(self._execute_and_log_exception)
 
+    @track_current_drop
     def _execute_and_log_exception(self):
         try:
             self.execute()
@@ -485,13 +491,14 @@ class InputFiredAppDROP(AppDROP):
                 if logger.getEffectiveLevel() != logging.getLevelName(
                     self._global_log_level
                 ):
-                    logging.getLogger("dlg").setLevel(self._global_log_level)
                     logger.warning(
-                        "Set log-level after execution %s.%s to %s",
+                        "Setting log-level after execution %s.%s back to %s",
                         self.name,
                         self._humanKey,
-                        logging.getLevelName(logger.getEffectiveLevel()),
+                        self._global_log_level,
                     )
+                    # logging.getLogger("dlg").setLevel(self._global_log_level)
+                    logger.setLevel(self._global_log_level)
                 break
             except:
                 if self.execStatus == AppDROPStates.CANCELLED:
@@ -513,6 +520,7 @@ class InputFiredAppDROP(AppDROP):
         if _send_notifications:
             self._notifyAppIsFinished()
 
+    @track_current_drop
     def _run(self):
         """
         Run this application. It can be safely assumed that at this point all

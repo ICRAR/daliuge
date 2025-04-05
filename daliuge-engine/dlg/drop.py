@@ -191,7 +191,6 @@ class AbstractDROP(EventFirer, EventHandler):
 
         self._listeners = collections.defaultdict(list)
 
-    @track_current_drop
     def __init__(self, oid, uid, **kwargs):
         """
         Creates a DROP. The only mandatory argument are the Object ID
@@ -227,6 +226,10 @@ class AbstractDROP(EventFirer, EventHandler):
         self._log_level = self._popArg(
             kwargs, "log_level", logging.getLevelName(logger.getEffectiveLevel())
         )
+        if self._log_level == "" or self._log_level == logging.getLevelName(
+            logging.NOTSET
+        ):
+            self._log_level = logging.getLevelName(logger.getEffectiveLevel())
         self._global_log_level = logging.getLevelName(logger.getEffectiveLevel())
 
         # The physical graph drop type. This is determined

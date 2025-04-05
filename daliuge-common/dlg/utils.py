@@ -351,9 +351,23 @@ def object_tracking(name):
                 previous = None
 
             setattr(current_object, name, args[0])
+            logger.debug(
+                ">>>> Inside track_current_drop: %s humanKey: %s",
+                current_object,
+                (
+                    args[0]._humanKey
+                    if hasattr(getattr(current_object, name), "_humanKey")
+                    else "unknown"
+                ),
+            )
             try:
                 if "self" in kwargs:
                     kwargs.pop("self")
+                logger.debug(
+                    ">>>> Inside track_current_drop: %s, %s",
+                    f,
+                    hasattr(current_object, name),
+                )
                 return f(*args, **kwargs)
             finally:
                 setattr(current_object, name, previous)
@@ -361,6 +375,16 @@ def object_tracking(name):
         return _wrapper
 
     track_current_drop.tlocal = current_object
+    logger.debug(
+        ">>>> Inside track_current_drop: %s humanKey: %s",
+        current_object,
+        (
+            current_object._humanKey
+            if hasattr(current_object, name)
+            and hasattr(getattr(current_object, name), "_humanKey")
+            else "unknown"
+        ),
+    )
     return track_current_drop
 
 

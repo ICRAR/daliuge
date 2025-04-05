@@ -31,7 +31,7 @@ import logging
 import time
 import numpy as np
 
-from dlg import droputils, drop_loaders
+from dlg import drop, droputils, drop_loaders
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.apps.pyfunc import PyFuncApp
 from dlg.data.drops.container import ContainerDROP
@@ -51,9 +51,10 @@ from dlg.meta import (
 )
 from dlg.exceptions import DaliugeException
 from dlg.rpc import DropProxy
+from dlg.utils import object_tracking
 
-
-logger = logging.getLogger(__name__)
+track_current_drop = object_tracking("drop")
+logger = logging.getLogger("dlg")
 
 
 class NullBarrierApp(BarrierAppDROP):
@@ -655,7 +656,6 @@ class GenericNpyGatherApp(BarrierAppDROP):
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @param hello "world"/Object/ApplicationArgument/OutputPort/ReadWrite//False/False/message
 # @par EAGLE_END
 class HelloWorldApp(BarrierAppDROP):
     """
@@ -675,14 +675,15 @@ class HelloWorldApp(BarrierAppDROP):
     )
 
     greet = dlg_string_param("greet", "World")
-    _log_level = dlg_string_param("log_level", "DEBUG")
 
+    @track_current_drop
     def run(self):
         logger.info("Internal logger: %s", logger.name)
         logger.info(
             "log-level for %s.%s: %s",
             self.name,
             self._humanKey,
+            # track_current_drop.tlocal.drop._humanKey,
             self._log_level,
         )
         ins = self.inputs

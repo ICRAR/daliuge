@@ -39,7 +39,7 @@ from io import StringIO
 from contextlib import redirect_stdout
 
 from dlg import drop_loaders
-from dlg.utils import serialize_data, deserialize_data
+from dlg.utils import serialize_data, deserialize_data, object_tracking
 from dlg.named_port_utils import (
     DropParser,
     check_ports_dict,
@@ -61,6 +61,7 @@ from dlg.meta import (
 from dlg.pyext import pyext
 
 logger = logging.getLogger(__name__)
+track_current_drop = object_tracking("drop")
 
 
 def serialize_func(f):
@@ -265,6 +266,7 @@ class PyFuncApp(BarrierAppDROP):
     input_parser = dlg_enum_param(DropParser, "input_parser", DropParser.DILL)
     output_parser = dlg_enum_param(DropParser, "output_parser", DropParser.DILL)
 
+    @track_current_drop
     def _mixin_func_defaults(self):
         """
         func_defaults can be passed in through an argument, but this is only used for
@@ -308,6 +310,7 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug("func_defaults %s", self.func_defaults)
         self.fn_defaults.update(self.func_defaults)
 
+    @track_current_drop
     def _init_fn_defaults(self):
         """
         Inititalize self.fn_defaults dictionary from values provided.
@@ -358,6 +361,7 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug("Got default values for arguments %s", self.arguments_defaults)
         logger.debug(f"initialized fn_defaults with {self.fn_defaults}")
 
+    @track_current_drop
     def _clean_applicationArgs(self):
         """
         remove function definition arguments in applicationArgs
@@ -383,6 +387,7 @@ class PyFuncApp(BarrierAppDROP):
                     # only transfer if there is a value or precious is True
                     self._applicationArgs.pop(kw)
 
+    @track_current_drop
     def _initialise_positional_args(self, argsDict: dict):
         """
         Ensure default arguments are properly setup.
@@ -401,6 +406,7 @@ class PyFuncApp(BarrierAppDROP):
 
         return argsDict
 
+    @track_current_drop
     def _get_arg_info(self, arg):
 
         value = self._applicationArgs[arg]["value"]
@@ -408,6 +414,7 @@ class PyFuncApp(BarrierAppDROP):
 
         return value, encoding
 
+    @track_current_drop
     def _init_appArgs(self, pargsDict: dict, keyargsDict: dict, posargs: list) -> list:
         """
         Identify and fill application arguments.
@@ -498,6 +505,7 @@ class PyFuncApp(BarrierAppDROP):
 
         return [funcargs, pargs]
 
+    @track_current_drop
     def _ports2args(self, posargs, pargsDict, keyargsDict) -> dict:
         """
         Replace arguments with values from ports.
@@ -557,6 +565,7 @@ class PyFuncApp(BarrierAppDROP):
         )
         return portargs
 
+    @track_current_drop
     def initialize_with_func_code(self):
         """
         This function takes over if code is passed in through an argument.
@@ -587,6 +596,7 @@ class PyFuncApp(BarrierAppDROP):
         if isinstance(self.func_arg_mapping, str):
             self.func_arg_mapping = ast.literal_eval(self.func_arg_mapping)
 
+    @track_current_drop
     def initialize(self, **kwargs):
         """
         The initialization of a function component is mainly dealing with mapping
@@ -649,6 +659,7 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(f"Input mapping provided: {self.func_arg_mapping}")
         self._recompute_data = {}
 
+    @track_current_drop
     def run(self):
         """
         Function positional and keyword argument treatment:
@@ -673,8 +684,9 @@ class PyFuncApp(BarrierAppDROP):
         mapping. This also allows to pass values to any function argument through a port.
 
         """
+        drop_uid = self._humanKey
+        logger.debug("This object: %s, %s", self, self._humanKey)
         funcargs = {}
-
         # Keyword arguments are made up of the default values plus the inputs
         # that match one of the keyword argument names
         # if defaults dict has not been specified at all we'll go ahead anyway
@@ -754,6 +766,7 @@ class PyFuncApp(BarrierAppDROP):
                     encoding = param_enc or encoding
         return DropParser(encoding) if encoding else self.output_parser
 
+    @track_current_drop
     def write_results(self, result):
         from dlg.droputils import listify
 
