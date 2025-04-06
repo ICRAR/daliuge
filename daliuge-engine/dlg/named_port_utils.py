@@ -52,7 +52,6 @@ class Argument:
     value: object
     encoding: DropParser = DropParser.DILL
     type: Union [ArgType, None] = None
-    input_output: bool = False
     precious: bool = False
     positional: bool = False
 
