@@ -459,44 +459,52 @@ class PyFuncApp(BarrierAppDROP):
 
         vparg = []
         vkarg = {}
-
-        # update the positional args
-        positionalArgsMap = self._initialise_args(positionalArgs)
-        keywordArgsMap = self._initialise_args(keywordArguments)
         input_outputs = []
-        if self._applicationArgs:
-            # if defined in both we use AppArgs values
-            for arg in self._applicationArgs:
-                # check value type and interpret
-                value, encoding, precious, positional, usage = self._get_arg_info(
-                    arg)
-                if self._applicationArgs[arg]["type"] in ["Json", "Complex"]:
-                    try:
-                        value = ast.literal_eval(value)
-                        logger.debug(f"Evaluated %s to %s",
-                                     value, type(value))
-                        self._applicationArgs[arg].value = value
-                    except ValueError:
-                        logger.error("Unable to evaluate %s",
-                                     self._applicationArgs[arg]["value"])
-                if arg in positionalArgsMap:
-                    positionalArgsMap[arg].value = value
-                    positionalArgsMap[arg].encoding = encoding
-                    positionalArgsMap[arg].precious = precious
-                    positionalArgsMap[arg].positional = positional
-                if arg in keywordArgsMap:
-                    keywordArgsMap[arg].value = value
-                    keywordArgsMap[arg].encoding = encoding
-                    keywordArgsMap[arg].precious = precious
-                    keywordArgsMap[arg].positional = positional
 
-                if usage == "InputOutput":
-                    input_outputs.append(arg)
+        # Legacy, used for graphs reliant on input/output parser
+        if not self._applicationArgs:
+            encoding = self.input_parser or DropParser.DILL
+            for key in positionalArgsMap:
+                positionalArgsMap[key].encoding = encoding
+            logger.debug("AppArgs/pargsDict: %s", positionalArgsMap)
 
-            _ = [self._applicationArgs.pop(k) for k in positionalArgsMap if
-                 k in self._applicationArgs]
-            logger.debug("Updated posargs dictionary: %s", positionalArgsMap)
-            logger.debug("Updated keyargs dictionary: %s", keywordArgsMap)
+            return positionalArgsMap, keywordArgsMap, input_outputs, vparg, vkarg
+
+        # If we overwrite any defaults with what is store in AppArgs "value"
+        for arg in self._applicationArgs:
+            # check value type and interpret
+            value, encoding, precious, positional, portType = self._get_arg_info(
+                arg)
+            if self._applicationArgs[arg]["type"] in ["Json", "Complex"]:
+                try:
+                    value = ast.literal_eval(value)
+                    logger.debug(f"Evaluated %s to %s",
+                                 value, type(value))
+                    self._applicationArgs[arg].value = value
+                except ValueError:
+                    logger.error("Unable to evaluate %s",
+                                 self._applicationArgs[arg]["value"])
+            for arg_map in [positionalArgsMap, keywordArgsMap]:
+                if arg in arg_map:
+                    argument = arg_map[arg]
+                    argument.value = value if value else argument.value
+                    argument.encoding = encoding if encoding else argument.encoding
+                    argument.precious = precious if precious else argument.precious
+                    argument.positional = positional if positional else argument.positional
+                    arg_map[arg] = argument
+
+            # if populate_maps_without_args:
+            #     positionalArgsMap[arg] = Argument(value=value, encoding=encoding,
+            #                                 precious=precious, positional=positional)
+            #
+            if portType == "InputOutput" or "OutputPort":
+                input_outputs.append(arg)
+
+        # Remove parameters of function that have been found in applicationArgs
+        _ = [self._applicationArgs.pop(k) for k in positionalArgsMap if
+             k in self._applicationArgs]
+        logger.debug("Updated posargs dictionary: %s", positionalArgsMap)
+        logger.debug("Updated keyargs dictionary: %s", keywordArgsMap)
 
         # Put all remaining arguments into *args and **kwargs
         logger.debug(f"Remaining AppArguments {self._applicationArgs}")
@@ -547,13 +555,6 @@ class PyFuncApp(BarrierAppDROP):
             funcargs.update(vkarg)
 
         # Update any InputOutput ports that might have path names
-        for arg in input_outputs:
-            keywordArgsMap, positionalArgsMap = self._update_filepaths(
-                positionalArgsMap, keywordArgsMap, arg)
-
-        # Extract arg and values from pargs; we no longer need the metadata
-        logger.debug(f"Updating funcargs with values from pargsDict: {positionalArgsMap}")
-
         for arg in input_outputs:
             keywordArgsMap, positionalArgsMap = self._update_filepaths(
                 positionalArgsMap, keywordArgsMap, arg)
@@ -718,25 +719,6 @@ class PyFuncApp(BarrierAppDROP):
                 parser=parser
             )
             portargs.update(keyPortArgs)
-        # elif input_outputs:
-        #     inputs_dict = collections.OrderedDict()
-        #     for in_out in input_outputs:
-        #         inputs_dict[in_out] = {"name": in_out, "path": None, "drop":
-        #         self}
-        #     check_len = min(
-        #         len(input_outputs),
-        #         self.fn_nargs + self.fn_nkw,
-        #     )
-        #     keyPortArgs, posPortArgs = identify_named_ports(
-        #         inputs_dict,
-        #         pargsDict,
-        #         keyargsDict,
-        #         check_len=check_len,
-        #         mode="inputs",
-        #         addPositionalToKeyword=True,
-        #         parser=get_port_reader_function(self.input_parser)
-        #     )
-        #     portargs.update(keyPortArgs)
         else:
             for i, input_drop in enumerate(self._inputs.values()):
                 parser = (
