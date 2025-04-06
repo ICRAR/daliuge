@@ -30,7 +30,8 @@ construct (e.g. Scatter or Loop) and we don't run the risk of overwriting them.
 This module provides the methods that support different filepath naming heuristics to
 facilitate implicit filepath naming at runtime.
 """
-
+import datetime
+import logging
 import re
 import os
 
@@ -103,24 +104,32 @@ def find_dlg_fstrings(filename: str):
     -------
     list of placeholder strings (incl. {})
     """
-
-    return re.findall(r'\{[^{}]+\}', filename)
+    opts = []
+    try:
+        opts.extend(re.findall(r'\{([^{}]+)\}', filename))
+        return opts
+    except TypeError as e:
+        logging.warning("Data not in expected format %s",e)
+        return opts
 
 FSTRING_MAP = {
-    "{dlg}": "DALIGUE",
-    "{uid}": "123456",
-    "{datetime}": "2025-08-17"
+    "dlg": "DALIGUE",
+    "datetime": datetime.date.today().strftime("%Y-%m-%d")
 }
 
-def filepath_from_string(filename):
+def filepath_from_string(filename, **kwargs):
     """
 
     Returns
     -------
 
     """
-    opts = find_dlg_fstrings(filename)
+    if not filename:
+        return filename
+    opts = []
+    FSTRING_MAP.update(kwargs)
+    opts.extend(find_dlg_fstrings(filename))
     for fp in opts:
-        filename = filename.replace(fp, FSTRING_MAP[fp])
+        filename = filename.replace(f"{{{fp}}}", FSTRING_MAP[fp])
 
     return filename
