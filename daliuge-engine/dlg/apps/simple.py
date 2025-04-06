@@ -79,6 +79,7 @@ class NullBarrierApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag template
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.simple.PythonApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
@@ -100,6 +101,7 @@ class PythonApp(BarrierAppDROP):
 # @param category PythonApp
 # @param tag daliuge
 # @param sleep_time 5/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The number of seconds to sleep
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.simple.SleepApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -152,6 +154,7 @@ class SleepApp(BarrierAppDROP):
 # @param category PythonApp
 # @param tag daliuge
 # @param bufsize 65536/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/Buffer size
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.simple.CopyApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -210,6 +213,7 @@ class CopyApp(BarrierAppDROP):
 # @param category PythonApp
 # @param tag daliuge
 # @param sleep_time 5/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The number of seconds to sleep
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.simple.SleepAndCopyApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -237,6 +241,7 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 # @param low 0/Float/ApplicationArgument/NoPort/ReadWrite//False/False/Low value of range in array [inclusive]
 # @param high 1/Float/ApplicationArgument/NoPort/ReadWrite//False/False/High value of range of array [exclusive]
 # @param integer True/Boolean/ApplicationArgument/NoPort/ReadWrite//False/False/Generate integer array?
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.simple.RandomArrayApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -315,6 +320,7 @@ class RandomArrayApp(BarrierAppDROP):
 # @param category PythonApp
 # @param tag daliuge
 # @param method mean/Select/ApplicationArgument/NoPort/ReadWrite/mean,median/False/False/The method used for averaging
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.simple.AverageArraysApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -408,6 +414,7 @@ class AverageArraysApp(BarrierAppDROP):
 # @param category PythonApp
 # @param tag daliuge
 # @param num_of_inputs 4/Integer/ConstructParameter/NoPort/ReadWrite//False/False/The Gather width, stating how many inputs each Gather instance will handle
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.simple.GenericGatherApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -451,7 +458,8 @@ class GenericGatherApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
-# @param value_dict value_dict/Jasom/ApplicationArgument/NoPort/ReadWrite//False/False/The value dictionary can be initialized here
+# @param value_dict value_dict/Jason/ApplicationArgument/NoPort/ReadWrite//False/False/The value dictionary can be initialized here
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.simple.DictGatherApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -505,6 +513,7 @@ class DictGatherApp(BarrierAppDROP):
 # @param category PythonApp
 # @param tag daliuge
 # @param value_array value_array/array/ApplicationArgument/OutputPort/ReadWrite//False/False/The value array can be initialized here
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.simple.ArrayGatherApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -551,6 +560,7 @@ class ArrayGatherApp(BarrierAppDROP):
 # @param num_of_inputs 4/Integer/ConstructParameter/NoPort/ReadWrite//False/False/The Gather width, stating how many inputs each Gather instance will handle
 # @param function sum/Select/ApplicationArgument/NoPort/ReadWrite/sum,prod,min,max,add,multiply,maximum,minimum/False/False/The function used for gathering
 # @param reduce_axes None/String/ApplicationArgument/NoPort/ReadOnly//False/False/The array axes to reduce, None reduces all axes for sum, prod, max, min functions
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.simple.GenericNpyGatherApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -651,6 +661,7 @@ class GenericNpyGatherApp(BarrierAppDROP):
 # @param category PythonApp
 # @param tag daliuge
 # @param greet World/String/ApplicationArgument/NoPort/ReadWrite//False/False/What appears after 'Hello '
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.simple.HelloWorldApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -716,6 +727,7 @@ class HelloWorldApp(BarrierAppDROP):
 # @param category PythonApp
 # @param tag daliuge
 # @param url None/String/ApplicationArgument/NoPort/ReadWrite//False/False/The URL to retrieve
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.simple.UrlRetrieveApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -772,9 +784,10 @@ class UrlRetrieveApp(BarrierAppDROP):
 # @param array_in /Object.Array/ApplicationArgument/InputPort/ReadWrite//False/False/A numpy array of arrays, where the first axis is of length <numSplit>
 # @param object_out /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/reduced array or single element, depending on element flag.
 # @param element False/Boolean/ApplicationArgument/NoPort/ReadWrite//False/False/if True the outputs of each of the splits will be the first element of the split array, rather than the split array.
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
+# @param dropclass dlg.apps.simple.GenericScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param dropclass dlg.apps.simple.GenericScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
@@ -841,6 +854,8 @@ class GenericScatterApp(BarrierAppDROP):
 # @param num_of_copies 4/Integer/ConstructParameter/NoPort/ReadWrite//False/False/Specifies the number of replications of the content of the scatter construct
 # @param scatter_axes /String/ApplicationArgument/NoPort/ReadWrite//False/False/The axes to split input ndarrays on, e.g. [0,0,0], length must match the number of input ports
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
+# @param dropclass dlg.apps.simple.GenericScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param dropclass dlg.apps.simple.GenericNpyScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -927,6 +942,8 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 # @param x /Object/ComponentParameter/InputPort/ReadWrite//False/False/Port carrying the input which is also used in the condition function. Note that the name of the parameter has to match the argument of the condition function.
 # @param true  /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is true the input will be copied to this port
 # @param false /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is false the input will be copied to this port
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
+# @param dropclass dlg.apps.simple.GenericScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param dropclass dlg.apps.simple.Branch/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -980,6 +997,8 @@ class Branch(PyFuncApp):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
+# @param dropclass dlg.apps.simple.GenericScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param dropclass dlg.apps.simple.PickOne/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -1041,6 +1060,8 @@ class PickOne(BarrierAppDROP):
 # @param category PythonApp
 # @param tag test
 # @param size 100/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/the size of the array
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
+# @param dropclass dlg.apps.simple.GenericScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param dropclass dlg.apps.simple.ListAppendThrashingApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
