@@ -425,7 +425,7 @@ class PyFuncApp(BarrierAppDROP):
         """
         for arg, value in argsDict.items():
             argsDict[arg] = Argument(value)
-            param_arg = self.parameters.get(arg, None)
+            param_arg = self.parameters.get(arg)
             if param_arg:
                 argsDict[arg].value = param_arg
                 argsDict[arg].encoding = "dill"
@@ -559,8 +559,11 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(f"Updating funcargs with values from pargsDict: {positionalArgsMap}")
 
         for arg in input_outputs:
-            keywordArgsMap, positionalArgsMap = self._update_InputOutputs(
+            keywordArgsMap, positionalArgsMap = self._update_filepaths(
                 positionalArgsMap, keywordArgsMap, arg)
+
+        # Extract arg and values from pargs; we no longer need the metadata
+        logger.debug(f"Updating funcargs with values from pargsDict: {positionalArgsMap}")
 
         tmpPargs = {argstr: argument.value for argstr, argument in
                     positionalArgsMap.items()}
@@ -672,25 +675,6 @@ class PyFuncApp(BarrierAppDROP):
                 parser=parser
             )
             portargs.update(keyPortArgs)
-        # elif input_outputs:
-        #     inputs_dict = collections.OrderedDict()
-        #     for in_out in input_outputs:
-        #         inputs_dict[in_out] = {"name": in_out, "path": None, "drop":
-        #         self}
-        #     check_len = min(
-        #         len(input_outputs),
-        #         self.fn_nargs + self.fn_nkw,
-        #     )
-        #     keyPortArgs, posPortArgs = identify_named_ports(
-        #         inputs_dict,
-        #         pargsDict,
-        #         keyargsDict,
-        #         check_len=check_len,
-        #         mode="inputs",
-        #         addPositionalToKeyword=True,
-        #         parser=get_port_reader_function(self.input_parser)
-        #     )
-        #     portargs.update(keyPortArgs)
         else:
             for i, input_drop in enumerate(self._inputs.values()):
                 parser = (
