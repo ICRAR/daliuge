@@ -59,9 +59,7 @@ def setup_logger_class():
                 drop = None
             try:
                 drop_uid = drop._humanKey if drop else ""
-                print(f">>>> makeRecord {drop.name} drop_uid: {drop_uid}")
             except AttributeError:
-                print(f">>>> makeRecord: no drop!!")
                 drop_uid = ""
 
             # Do the same with the session_id, which can be found via the drop (if any)
@@ -74,11 +72,6 @@ def setup_logger_class():
                     session_id = session.track_current_session.tlocal.session.sessionId
                 except AttributeError:
                     pass
-            (
-                print(f">>>> makeRecord >>> {drop.name} drop_uid: {drop_uid}")
-                if drop and hasattr(drop, "name")
-                else print(">>>> makeRecord pass")
-            )
             record.drop_uid = drop_uid
             record.session_id = session_id
             return record
