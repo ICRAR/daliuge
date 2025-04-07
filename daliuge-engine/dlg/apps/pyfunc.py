@@ -602,7 +602,8 @@ class PyFuncApp(BarrierAppDROP):
                 argument = arg_map[arg]
                 parser = (DropParser(argument.encoding))
                 if parser == DropParser.PATH:
-                    argument.value = filepath_from_string(argument.value)
+                    uid = self._humanKey
+                    argument.value = filepath_from_string(argument.value, uid=uid)
                 self.parameters[arg] = arg_map[arg].value
                 arg_map[arg] = argument
 
@@ -885,8 +886,11 @@ class PyFuncApp(BarrierAppDROP):
                 logger.debug(f"Writing dilled result {type(result)} to {o}")
                 o.write(dill.dumps(result))
             elif parser is DropParser.EVAL or parser is DropParser.UTF8:
-                encoded_result = repr(result).encode("utf-8")
-                o.write(encoded_result)
+                if isinstance(result, str):
+                    o.write(result.encode("utf-8"))
+                else:
+                    encoded_result = repr(result).encode("utf-8")
+                    o.write(encoded_result)
             elif parser is DropParser.NPY:
                 import numpy as np
 
