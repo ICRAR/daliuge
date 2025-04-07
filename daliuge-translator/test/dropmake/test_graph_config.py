@@ -30,7 +30,7 @@ try:
 except ModuleNotFoundError:
     from importlib_resources import files
 
-LOG_PRFIX = "WARNING:__main__.dlg.dropmake.graph_config:"
+LOG_PRFIX = "WARNING:dlg.dlg.dropmake.graph_config:"
 
 
 def get_lg_from_fname(lg_name: str) -> dict:
