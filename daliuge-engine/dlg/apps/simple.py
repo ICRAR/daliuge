@@ -31,7 +31,7 @@ import logging
 import time
 import numpy as np
 
-from dlg import drop, droputils, drop_loaders
+from dlg import droputils, drop_loaders
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.apps.pyfunc import PyFuncApp
 from dlg.data.drops.container import ContainerDROP
@@ -51,10 +51,8 @@ from dlg.meta import (
 )
 from dlg.exceptions import DaliugeException
 from dlg.rpc import DropProxy
-from dlg.utils import object_tracking
 
-track_current_drop = object_tracking("drop")
-logger = logging.getLogger("dlg")
+logger = logging.getLogger("__name__")
 
 
 class NullBarrierApp(BarrierAppDROP):
@@ -687,16 +685,7 @@ class HelloWorldApp(BarrierAppDROP):
 
     greet = dlg_string_param("greet", "World")
 
-    @track_current_drop
     def run(self):
-        logger.info("Internal logger: %s", logger.name)
-        logger.info(
-            "log-level for %s.%s: %s",
-            self.name,
-            self._humanKey,
-            # track_current_drop.tlocal.drop._humanKey,
-            self._log_level,
-        )
         ins = self.inputs
         # if no inputs use the parameter else use the input
         if len(ins) == 0:

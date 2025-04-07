@@ -285,8 +285,8 @@ class AppDROP(ContainerDROP):
             self.name,
             "FINISHED" if not is_error else "ERROR",
         )
-        self.completedrop()
         self._fire("producerFinished", status=self.status, execStatus=self.execStatus)
+        self.completedrop()
 
     def cancel(self):
         """Moves this application drop to its CANCELLED state"""

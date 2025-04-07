@@ -352,6 +352,8 @@ def object_tracking(name):
 
             setattr(current_object, name, args[0])
             try:
+                if "self" in kwargs:
+                    kwargs.pop("self")
                 return f(*args, **kwargs)
             finally:
                 setattr(current_object, name, previous)

@@ -53,13 +53,11 @@ from dlg.exceptions import (
     SessionAlreadyExistsException,
     DaliugeException,
 )
-from dlg.utils import object_tracking
 from ..lifecycle.dlm import DataLifecycleManager
 
 from dlg.manager.manager_data import Node
 
 logger = logging.getLogger(__name__)
-track_current_drop = object_tracking("drop")
 
 
 class NMDropEventListener(object):
@@ -184,7 +182,6 @@ class NodeManagerProcessDropRunner(NodeManagerDropRunner):
         # (instead of the normal `shutdown()`)
         cls._rpc_client.start()
 
-    @track_current_drop
     def run_drop(self, app_drop: AppDROP):
         inputs_proxy_info, outputs_proxy_info = (
             NodeManagerProcessDropRunner._get_proxy_infos(app_drop)
