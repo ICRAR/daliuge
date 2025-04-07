@@ -177,7 +177,7 @@ class DlgSharedMemory:
         try:
             _posixshmem.shm_unlink(self._name)
         except FileNotFoundError:
-            LOGGER.debug(f"{self.name} tried to unlink twice")
+            logger.debug(f"{self.name} tried to unlink twice")
             warnings.warn("Cannot unlink a shared block twice", RuntimeWarning)
 
     def resize(self, new_size):

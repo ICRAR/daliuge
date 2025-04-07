@@ -26,7 +26,7 @@ Module containing utility methods for working with GraphConfigs
 
 import logging
 
-LOGGER = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger("dlg." + __name__)
 ACTIVE_CONFIG_KEY = "activeGraphConfigId"
 CONFIG_KEY = "graphConfigurations"
 GRAPH_NODES = "nodeDataArray"
@@ -56,7 +56,7 @@ def apply_active_configuration(logical_graph: dict) -> dict:
         for node_id, fields in activeConfig["nodes"].items():
             idx = get_key_idx_from_list(node_id, nodeDataArray)
             if idx is None:
-                LOGGER.warning(
+                logger.warning(
                     "%s present in activeConfig but not available in Logical Graph.",
                     node_id,
                 )
@@ -68,7 +68,7 @@ def apply_active_configuration(logical_graph: dict) -> dict:
                 prev_value = field["value"]
                 field["value"] = cfg_field["value"]
                 field_name = field["name"]
-                LOGGER.info(
+                logger.info(
                     "Updating: Node %s, Field %s, from %s to %s",
                     node_name,
                     field_name,
@@ -79,7 +79,7 @@ def apply_active_configuration(logical_graph: dict) -> dict:
         logical_graph[GRAPH_NODES] = nodeDataArray
 
     except KeyError:
-        LOGGER.warning(
+        logger.warning(
             "Graph config key does not exist in logical graph. Using base field values."
         )
 
@@ -105,10 +105,10 @@ def is_config_invalid(logical_graph: dict) -> bool:
 
     checkActiveId = logical_graph.get(ACTIVE_CONFIG_KEY)
     if not checkActiveId:
-        LOGGER.warning("No %s data available in Logical Graph.", ACTIVE_CONFIG_KEY)
+        logger.warning("No %s data available in Logical Graph.", ACTIVE_CONFIG_KEY)
     checkGraphConfig = logical_graph.get(CONFIG_KEY)
     if not checkGraphConfig:
-        LOGGER.warning("No %s data available in Logical Graph.", CONFIG_KEY)
+        logger.warning("No %s data available in Logical Graph.", CONFIG_KEY)
 
     return (not checkActiveId) or (not checkGraphConfig)
 
