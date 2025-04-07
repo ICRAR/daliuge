@@ -1,6 +1,8 @@
 name: Build and Push Docker Images
 
-on: push
+on:
+  release:
+    types: [published]
 
 jobs:
   build-common:
