@@ -31,7 +31,7 @@ from dlg.drop import DEFAULT_INTERNAL_PARAMETERS
 from dlg.data.io import MemoryIO
 from dlg.meta import dlg_string_param
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 ##

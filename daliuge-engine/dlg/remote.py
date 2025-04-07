@@ -33,7 +33,7 @@ from paramiko.rsakey import RSAKey
 import scp
 from typing import Union
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 def execRemoteWithClient(client, command, timeout=None, bufsize=-1):

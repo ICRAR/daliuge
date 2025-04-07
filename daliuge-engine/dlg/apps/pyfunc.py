@@ -60,7 +60,8 @@ from dlg.meta import (
 )
 from dlg.pyext import pyext
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 def serialize_func(f):

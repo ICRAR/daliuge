@@ -24,7 +24,7 @@ import logging
 import math
 import time
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 def terminate_or_kill(proc, timeout):

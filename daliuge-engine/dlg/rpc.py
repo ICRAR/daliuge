@@ -39,7 +39,7 @@ from dlg.manager.manager_data import Node
 
 from . import utils
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 class RPCObject(object):
@@ -189,7 +189,7 @@ class ZeroRPCClient(RPCClientBase):
 
     def run_zrpcclient(self, host, port, req_queue):
         if isinstance(host, Node):
-            host = host.host # split(":")[0]
+            host = host.host  # split(":")[0]
         client = zerorpc.Client("tcp://%s:%d" % (host, port), context=self._context)
 
         forwarder = gevent.spawn(self.forward_requests, req_queue, client)

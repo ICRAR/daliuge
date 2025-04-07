@@ -22,7 +22,7 @@ from dlg.meta import (
     dlg_int_param,
 )
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 class DropRunner(ABC):
@@ -483,14 +483,13 @@ class InputFiredAppDROP(AppDROP):
                 if logger.getEffectiveLevel() != logging.getLevelName(
                     self._global_log_level
                 ):
+                    logging.getLogger("dlg").setLevel(self._global_log_level)
                     logger.warning(
                         "Setting log-level after execution %s.%s back to %s",
                         self.name,
                         self._humanKey,
                         self._global_log_level,
                     )
-                    # logging.getLogger("dlg").setLevel(self._global_log_level)
-                    logger.setLevel(self._global_log_level)
                 break
             except:
                 if self.execStatus == AppDROPStates.CANCELLED:

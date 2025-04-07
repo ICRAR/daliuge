@@ -37,7 +37,7 @@ if sys.version_info >= (3, 8):
     from dlg.shared_memory import DlgSharedMemory
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 class OpenMode:
@@ -318,10 +318,10 @@ class SharedMemoryIO(DataIO):
         total_size = len(data) + self._written
         if total_size > self._buf.size:
             self._buf.resize(total_size)
-            self._buf.buf[self._written: total_size] = data
+            self._buf.buf[self._written : total_size] = data
             self._written = total_size
         else:
-            self._buf.buf[self._written: total_size] = data
+            self._buf.buf[self._written : total_size] = data
             self._written = total_size
             self._buf.resize(total_size)
             # It may be inefficient to resize many times, but assuming data is written 'once' this is
@@ -358,7 +358,9 @@ class SharedMemoryIO(DataIO):
     def delete(self):
         self._close()
 
+
 # pylint: enable=possibly-used-before-assignment
+
 
 class FileIO(DataIO):
     """
@@ -675,5 +677,3 @@ def IOForURL(url):
     logger.debug("I/O chosen for dataURL %s: %r", url, io)
 
     return io
-
-

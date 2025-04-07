@@ -41,7 +41,7 @@ from dlg.constants import (
     MASTER_DEFAULT_REST_PORT,
     REPLAY_DEFAULT_REST_PORT,
     NODE_DEFAULT_RPC_PORT,
-    NODE_DEFAULT_EVENTS_PORT
+    NODE_DEFAULT_EVENTS_PORT,
 )
 from .node_manager import NodeManager
 from .replay import ReplayManager, ReplayManagerServer
@@ -70,7 +70,7 @@ class DlgFormatter(logging.Formatter):
 
 def launchServer(opts):
     # we might be called via __main__, but we want a nice logger name
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger("dlg." + __name__)
     dmName = opts.dmType.__name__
 
     logger.info("DALiuGE version %s running at %s", version.full_version, os.getcwd())
@@ -199,6 +199,7 @@ def commonOptionsCheck(options, parser):
     if options.verbose and options.quiet:
         parser.error("-v and -q cannot be specified together")
 
+
 def start(options, parser):
     # Perform common option checks
     commonOptionsCheck(options, parser)
@@ -216,7 +217,7 @@ def start(options, parser):
         with daemon.DaemonContext(
             pidfile=PIDLockFile(pidfile, 1),
             files_preserve=[fileHandler.stream],
-            working_directory=utils.getDlgWorkDir()
+            working_directory=utils.getDlgWorkDir(),
         ):
             launchServer(options)
 
@@ -275,7 +276,6 @@ def setupLogging(opts):
     elif opts.quiet:
         lidx += min((opts.quiet, 2))
     level = levels[lidx]
-
 
     # Output to files/stdout uses a command format, which can or not contain
     # optionally a session_id and drop_uid to indicate what is currently being
@@ -404,7 +404,7 @@ def dlgNM(parser, args):
         type="int",
         dest="rpc_port",
         help="Set the port number for the NodeManager RPC client",
-        default=NODE_DEFAULT_RPC_PORT
+        default=NODE_DEFAULT_RPC_PORT,
     )
     parser.add_option(
         "--event_port",
@@ -412,7 +412,7 @@ def dlgNM(parser, args):
         type="int",
         dest="events_port",
         help="Set the port number for the NodeManager ZMQ client",
-        default=NODE_DEFAULT_EVENTS_PORT
+        default=NODE_DEFAULT_EVENTS_PORT,
     )
 
     (options, args) = parser.parse_args(args)
@@ -500,7 +500,7 @@ def dlgCompositeManager(parser, args, dmType, acronym, dmPort, dmRestServer):
     options.dmKwargs = {
         "pkeyPath": options.pkeyPath,
         "dmCheckTimeout": options.dmCheckTimeout,
-        "dump_graphs": options.dump_graphs
+        "dump_graphs": options.dump_graphs,
     }
     options.dmAcronym = acronym
     options.restType = dmRestServer

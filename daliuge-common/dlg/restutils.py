@@ -33,7 +33,7 @@ from . import exceptions
 from .exceptions import DaliugeException, SubManagerException
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 class ThreadingWSGIServer(
@@ -144,8 +144,7 @@ class RestClient(object):
     def _post_form(self, url, content=None):
         if content is not None:
             content = urllib.parse.urlencode(content)
-        ret = self._POST(
-            url, content, content_type="application/x-www-form-urlencoded")
+        ret = self._POST(url, content, content_type="application/x-www-form-urlencoded")
         return json.load(ret) if ret else None
 
     def _post_json(self, url, content, compress=False):
@@ -178,13 +177,12 @@ class RestClient(object):
         stream, _ = self._request(url, "DELETE")
         return stream
 
-    def _request(self, url, method, content=None, headers: dict=None, timeout=10):
+    def _request(self, url, method, content=None, headers: dict = None, timeout=10):
         if not headers:
             headers = {}
         # Do the HTTP stuff...
         url = self.url_prefix + url
-        logger.debug("Sending %s request to %s:%d%s",
-                     method, self.host, self.port, url)
+        logger.debug("Sending %s request to %s:%d%s", method, self.host, self.port, url)
 
         if not common.portIsOpen(self.host, self.port, timeout):
             raise RestClientException(

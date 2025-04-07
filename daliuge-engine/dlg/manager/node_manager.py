@@ -57,7 +57,7 @@ from ..lifecycle.dlm import DataLifecycleManager
 
 from dlg.manager.manager_data import Node
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 class NMDropEventListener(object):

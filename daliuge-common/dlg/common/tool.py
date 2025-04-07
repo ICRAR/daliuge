@@ -30,7 +30,8 @@ import time
 
 from importlib.metadata import entry_points
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger("dlg")
 
 
 def add_logging_options(parser):
@@ -116,13 +117,16 @@ def version(parser, args):
 
 cmdwrap("version", "Reports the DALiuGE version and exits", version)
 
+
 def _load_commands():
     if sys.version_info.minor < 10:
         all_entry_points = entry_points()
         for entry_point in all_entry_points["dlg.tool_commands"]:
             entry_point.load().register_commands()
     else:
-        for entry_point in entry_points(group="dlg.tool_commands"):  # pylint: disable=unexpected-keyword-arg
+        for entry_point in entry_points(
+            group="dlg.tool_commands"
+        ):  # pylint: disable=unexpected-keyword-arg
             entry_point.load().register_commands()
 
 

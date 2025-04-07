@@ -28,7 +28,7 @@ from pathlib import Path
 from setuptools import find_packages
 from setuptools import setup
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 # Version information
 # We do like numpy: we have a major/minor/patch hand-written version written
@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 # dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
+
 
 def extract_version():
     """
@@ -46,16 +47,17 @@ def extract_version():
     """
     TAG_VERSION_FILE = "VERSION"
     content = ""
-    with (Path(__file__).parent / TAG_VERSION_FILE).open(
-            encoding="utf8") as open_file:
+    with (Path(__file__).parent / TAG_VERSION_FILE).open(encoding="utf8") as open_file:
         major, minor, patch = open_file.read().strip("v").split(".")
         print("logging details: ", major, minor, patch)
     return int(major), int(minor), int(patch)
 
+
 major, minor, patch = extract_version()
-VERSION=f"{major}.{minor}.{patch}"
+VERSION = f"{major}.{minor}.{patch}"
 RELEASE = True
 VERSION_FILE = "dlg/translator/version.py"
+
 
 def get_git_version():
     out = subprocess.check_output(["git", "rev-parse", "HEAD"])
@@ -132,7 +134,7 @@ extra_requires = {
         "np-merklelib",
         "parameterized>=0.9.0",
         "ruamel.yaml==0.16.0",
-        "pyyaml>=0.6"
+        "pyyaml>=0.6",
     ]
 }
 
@@ -163,8 +165,7 @@ setup(
     install_requires=install_requires,
     extras_require=extra_requires,
     packages=find_packages(),
-    package_data={"":["VERSION"], "dlg": src_files},
-    entry_points={"dlg.tool_commands": [
-        "translator=dlg.translator.tool_commands"]},
+    package_data={"": ["VERSION"], "dlg": src_files},
+    entry_points={"dlg.tool_commands": ["translator=dlg.translator.tool_commands"]},
     test_suite="test",
 )

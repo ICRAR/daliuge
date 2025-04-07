@@ -39,7 +39,7 @@ from ..meta import (
     dlg_enum_param,
 )
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 ##

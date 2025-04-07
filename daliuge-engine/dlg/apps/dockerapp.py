@@ -45,7 +45,7 @@ from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import DaliugeException, InvalidDropException
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 DLG_ROOT = utils.getDlgDir()
 

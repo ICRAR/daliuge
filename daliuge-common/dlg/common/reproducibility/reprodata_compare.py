@@ -39,7 +39,7 @@ from dlg.common.reproducibility.constants import (
     ReproducibilityFlags,
 )
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 def _unique_filemid():

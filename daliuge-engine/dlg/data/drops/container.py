@@ -11,7 +11,7 @@ from dlg.ddap_protocol import (
     DROPRel,
 )
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 class ContainerDROP(DataDROP):
@@ -65,9 +65,7 @@ class ContainerDROP(DataDROP):
     @property
     def expirationDate(self):
         if self._children:
-            return heapq.nlargest(
-                1, [c.expirationDate for c in self._children]
-            )[0]
+            return heapq.nlargest(1, [c.expirationDate for c in self._children])[0]
         return self._expirationDate
 
     @property

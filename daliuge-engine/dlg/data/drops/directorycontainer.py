@@ -30,7 +30,7 @@ from dlg.data.drops.container import ContainerDROP
 from dlg.exceptions import InvalidDropException, InvalidRelationshipException
 from dlg.meta import dlg_bool_param
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 # TODO: This needs some more work

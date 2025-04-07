@@ -52,7 +52,8 @@ from dlg.meta import (
 from dlg.exceptions import DaliugeException
 from dlg.rpc import DropProxy
 
-logger = logging.getLogger("__name__")
+# logger = logging.getLogger("__name__")
+logger = logging.getLogger("dlg." + __name__)
 
 
 class NullBarrierApp(BarrierAppDROP):

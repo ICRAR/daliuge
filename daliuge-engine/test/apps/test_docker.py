@@ -79,7 +79,7 @@ class DockerTests(unittest.TestCase):
         """
 
         a = FileDROP("a", "a")
-        b = DockerApp("b", "b", image="ubuntu:22.04", command="cp %i0 %o0")
+        b = DockerApp("b", "b", image="ubuntu:14.04", command="cp %i0 %o0")
         c = FileDROP("c", "c")
 
         b.addInput(a)
@@ -117,10 +117,10 @@ class DockerTests(unittest.TestCase):
         b = DockerApp(
             "b",
             "b",
-            image="ubuntu:22.04",
+            image="ubuntu:14.04",
             command="cat %i0 > /dev/tcp/%containerIp[c]%/8000",
         )
-        c = DockerApp("c", "c", image="ubuntu:22.04", command="nc -l 8000 > %o0")
+        c = DockerApp("c", "c", image="ubuntu:14.04", command="nc -l 8000 > %o0")
         d = FileDROP("d", "d")
 
         b.addInput(a)
@@ -146,7 +146,7 @@ class DockerTests(unittest.TestCase):
         """
 
         def assertMsgIsCorrect(msg, command):
-            a = DockerApp("a", "a", image="ubuntu:22.04", command=command)
+            a = DockerApp("a", "a", image="ubuntu:14.04", command=command)
             b = FileDROP("b", "b")
             a.addOutput(b)
             with DROPWaiterCtx(self, b, 100):
@@ -180,7 +180,7 @@ class DockerTests(unittest.TestCase):
             "HelloWorld_out.txt", "HelloWorld_out.txt"
         )  # not a filesystem-related DROP, we can reference its URL in the command-line
         a.ngasSrv = "ngas.icrar.org"
-        b = DockerApp("b", "b", image="ubuntu:22.04", command=command)
+        b = DockerApp("b", "b", image="ubuntu:14.04", command=command)
         c = FileDROP("c", "c")
         b.addInput(a)
         b.addOutput(c)
@@ -200,7 +200,7 @@ class DockerTests(unittest.TestCase):
         a = DockerApp(
             "a",
             "a",
-            image="ubuntu:22.04",
+            image="ubuntu:14.04",
             command="cp /opt/file %s" % (tempDir,),
             additionalBindings=[tempDir, "%s:/opt/file" % (tempFile,)],
         )
@@ -224,7 +224,7 @@ class DockerTests(unittest.TestCase):
             "a",
             "a",
             workingDir="/mydir",
-            image="ubuntu:22.04",
+            image="ubuntu:14.04",
             command="pwd > %o0 && sleep 0.05",
             ensureUserAndSwitch=ensureUserAndSwitch,
         )

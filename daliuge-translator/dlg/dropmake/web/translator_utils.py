@@ -15,7 +15,7 @@ from dlg.dropmake.lg import load_lg
 from dlg.dropmake.pg_generator import unroll, partition
 from dlg.restutils import RestClientException
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 ALGO_PARAMS = [
     ("min_goal", int),

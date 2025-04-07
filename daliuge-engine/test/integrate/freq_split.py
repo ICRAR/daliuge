@@ -14,7 +14,7 @@ import sys
 from optparse import OptionParser
 from string import Template
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 ms_transform_tpl = """
 mstransform(vis='${infile}',

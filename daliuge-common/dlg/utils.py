@@ -46,7 +46,7 @@ import netifaces
 
 from . import common
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 def timed_import(module_name):

@@ -46,7 +46,7 @@ from dlg.data.drops.file import FileDROP
 if sys.version_info >= (3, 8):
     from dlg.manager.shared_memory_manager import DlgSharedMemoryManager
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 class TestSimpleApps(unittest.TestCase):
@@ -278,7 +278,9 @@ class TestSimpleApps(unittest.TestCase):
         max_threads = cpu_count(logical=False)
         drop_ids = [chr(97 + x) for x in range(max_threads)]
         threadpool = ThreadPool(processes=max_threads)
-        memory_manager = DlgSharedMemoryManager()  # pylint: disable=possibly-used-before-assignment
+        memory_manager = (
+            DlgSharedMemoryManager()
+        )  # pylint: disable=possibly-used-before-assignment
         session_id = 1
         memory_manager.register_session(session_id)
         S = InMemoryDROP("S", "S")

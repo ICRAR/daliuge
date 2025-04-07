@@ -39,7 +39,7 @@ from abc import abstractmethod, ABCMeta
 from ..ddap_protocol import DROPPhases
 from ..utils import prepare_sql
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 class DROP(object):

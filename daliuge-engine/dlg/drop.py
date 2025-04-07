@@ -101,7 +101,7 @@ except:
 
     _checksumType = ChecksumTypes.CRC_32
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 class ListAsDict(list):
@@ -191,6 +191,7 @@ class AbstractDROP(EventFirer, EventHandler):
 
         self._listeners = collections.defaultdict(list)
 
+    @track_current_drop
     def __init__(self, oid, uid, **kwargs):
         """
         Creates a DROP. The only mandatory argument are the Object ID
@@ -220,7 +221,7 @@ class AbstractDROP(EventFirer, EventHandler):
         # A simple name that the Drop might receive
         # This is usually set in the Logical Graph Editor,
         # but is not necessarily always there
-        self.name = self._popArg(kwargs, "name", self)
+        self.name = self._popArg(kwargs, "name", "")
 
         # Set log_level for this drop to level provided
         self._log_level = self._popArg(

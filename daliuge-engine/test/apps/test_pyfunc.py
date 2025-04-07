@@ -40,7 +40,7 @@ from test.dlg_engine_testutils import NMTestsMixIn
 
 from ..manager import test_dm
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 def func1(arg1):
