@@ -400,12 +400,12 @@ def replace_placeholders(cmd, inputs, outputs):
     replacements = {**inputs, **outputs}
     for attr, value in replacements.items():
         try:
-            cmd = cmd.replace(f"%{attr}%", value.path)
+            cmd = cmd.replace(f"{{{attr}}}", value.path)
         except AttributeError:
             logger.debug("Input %s does not have 'path' attr", attr)
 
         try:
-            cmd = cmd.replace(f"%{attr}%", value.dataUrl)
+            cmd = cmd.replace(f"{{{attr}}}", value.dataUrl)
         except AttributeError:
             logger.debug("Input %s does not have 'dataUrl' attr", attr)
 
