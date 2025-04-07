@@ -525,9 +525,9 @@ class DockerApp(BarrierAppDROP):
                     self._command, dockerInputs, dockerOutputs
                 )
                 for key, value in keyargs.items():
-                    cmd = cmd.replace(f"%{key}%", str(value))
+                    cmd = cmd.replace(f"{{{key}}}", str(value))
                 for key, value in pargs.items():
-                    cmd = cmd.replace(f"%{key}%", str(value))
+                    cmd = cmd.replace(f"{{{key}}}", str(value))
             else:
                 cmd = ""
 

@@ -221,9 +221,9 @@ class BashShellBase:
         )
 
         for key, value in keyargs.items():
-            cmd = cmd.replace(f"%{key}%", str(value))
+            cmd = cmd.replace(f"{{{key}}}", str(value))
         for key, value in pargs.items():
-            cmd = cmd.replace(f"%{key}%", str(value))
+            cmd = cmd.replace(f"{{{key}}}", str(value))
 
         # Replace inputs/outputs in command line with paths or data URLs
 
