@@ -88,7 +88,14 @@ def string2json(string: str, pickle_flag: bool = False) -> list:
     """
     if not string:
         string = '""'
-    if not pickle_flag:
-        return json.loads(string)
-    else:
-        return pickle.dumps(json.loads(string))
+
+    try:
+        if not pickle_flag:
+            return json.loads(string)
+        else:
+            return pickle.dumps(json.loads(string))
+    except json.decoder.JSONDecodeError as e:
+        if not pickle_flag:
+            return []
+        else:
+            return pickle.dumps([])

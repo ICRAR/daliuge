@@ -25,15 +25,12 @@ import codecs
 import http.client
 import json
 import random
-import unittest
 
 from time import sleep
 
 from dlg import utils
 from dlg import droputils
-from dlg.common import dropdict
-from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
-from dlg.apps.app_base import BarrierAppDROP
+from dlg.ddap_protocol import DROPStates
 from dlg.manager.node_manager import NodeManager
 from dlg.manager.manager_data import Node
 
@@ -217,3 +214,5 @@ class NMTestsMixIn:
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
         return leaf_drop_data
+
+

@@ -34,9 +34,15 @@ import datetime
 import logging
 import re
 import os
+import uuid
 
 NON_FILENAME_CHARACTERS = re.compile(r":|%s" % os.sep)
 
+FSTRING_MAP = {
+    "dlg": "DALIGUE",
+    "datetime": datetime.date.today().strftime("%Y-%m-%d"),
+    "uid": uuid.uuid4(),
+}
 
 def base_uid_filename(uid: str, humanKey: str):
     """
@@ -112,10 +118,6 @@ def find_dlg_fstrings(filename: str):
         logging.warning("Data not in expected format %s",e)
         return opts
 
-FSTRING_MAP = {
-    "dlg": "DALIGUE",
-    "datetime": datetime.date.today().strftime("%Y-%m-%d")
-}
 
 def filepath_from_string(filename, **kwargs):
     """
