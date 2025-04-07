@@ -124,7 +124,7 @@ def _load_commands():
         for entry_point in all_entry_points["dlg.tool_commands"]:
             entry_point.load().register_commands()
     else:
-        for entry_point in entry_points(
+        for entry_point in entry_points(  # pylint: disable=E1123
             group="dlg.tool_commands"
         ):  # pylint: disable=unexpected-keyword-arg
             entry_point.load().register_commands()
