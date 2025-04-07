@@ -497,7 +497,7 @@ class PyFuncApp(BarrierAppDROP):
             #     positionalArgsMap[arg] = Argument(value=value, encoding=encoding,
             #                                 precious=precious, positional=positional)
             #
-            if portType == "InputOutput" or "OutputPort":
+            if portType == "InputOutput" or portType == "OutputPort":
                 input_outputs.append(arg)
 
         # Remove parameters of function that have been found in applicationArgs
