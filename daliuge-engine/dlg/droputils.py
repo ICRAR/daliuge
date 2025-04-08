@@ -44,7 +44,7 @@ if TYPE_CHECKING:
     from dlg.apps.app_base import AppDROP
     from dlg.data.drops.data_base import DataDROP
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 # Used to check whether a command specifies via UID reference the path or
 # data URL of an input or output
@@ -88,7 +88,9 @@ class DROPWaiterCtx(object):
          a.setCompleted()
     """
 
-    def __init__(self, test, drops, timeout=1, expected_states:list[DROPStates] = None):
+    def __init__(
+        self, test, drops, timeout=1, expected_states: list[DROPStates] = None
+    ):
         self._drops = listify(drops)
         self._expected_states = expected_states or (
             DROPStates.COMPLETED,
@@ -233,7 +235,7 @@ def getLeafNodes(drops):
     ]
 
 
-def depthFirstTraverse(node: "AbstractDROP", visited: list[AbstractDROP]=None):
+def depthFirstTraverse(node: "AbstractDROP", visited: list[AbstractDROP] = None):
     """
     Depth-first iterator for a DROP graph.
 

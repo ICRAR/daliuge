@@ -34,7 +34,7 @@ from pyswarm import pso
 from .utils.antichains import get_max_weighted_antichain
 from ..common import dropdict, get_roots, CategoryType
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 DEBUG = 0
 
@@ -50,9 +50,7 @@ class Schedule(object):
 
     def __init__(self, dag, max_dop):
         self._dag = dag
-        self._max_dop = (
-            max_dop if type(max_dop) == int else max_dop.get("num_cpus", 1)
-        )
+        self._max_dop = max_dop if type(max_dop) == int else max_dop.get("num_cpus", 1)
         DAGUtil.label_schedule(self._dag)
         self._lpl = DAGUtil.get_longest_path(
             self._dag, default_weight=0, show_path=True
@@ -116,8 +114,9 @@ class Schedule(object):
                     if found is None:
                         raise SchedulerException(
                             "Cannot find a idle PID, max_dop provided: {0}, actual max_dop: {1}\n Graph: {2}".format(
-                                self._max_dop, "DAGUtil.get_max_dop(G)",
-                                self._dag.nodes(data=True)
+                                self._max_dop,
+                                "DAGUtil.get_max_dop(G)",
+                                self._dag.nodes(data=True),
                             )
                         )
                         # DAGUtil.get_max_dop(G), G.nodes(data=True)))
@@ -139,9 +138,7 @@ class Schedule(object):
             c = []
             for i in range(self.schedule_matrix.shape[1]):
                 c.append(np.count_nonzero(self.schedule_matrix[:, i]))
-            self._wkl = int(
-                np.mean(np.array(c))
-            )  # since METIS only accepts integer
+            self._wkl = int(np.mean(np.array(c)))  # since METIS only accepts integer
         return self._wkl
 
     @property
@@ -259,10 +256,8 @@ class Partition(object):
             if DEBUG:
                 mydop_slow = DAGUtil.get_max_dop(self._dag)  #
                 if mydop_slow != mydop:
-                    err_msg = (
-                        "u = {0}, v = {1}, unew = {2}, vnew = {3}".format(
-                            u, v, unew, vnew
-                        )
+                    err_msg = "u = {0}, v = {1}, unew = {2}, vnew = {3}".format(
+                        u, v, unew, vnew
                     )
                     raise SchedulerException(
                         "{2}: mydop = {0}, mydop_slow = {1}".format(
@@ -370,9 +365,9 @@ class Partition(object):
             new_ac = []
             md = 1
             for (
-                    ma
+                ma
             ) in (
-                    self._max_antichains
+                self._max_antichains
             ):  # missing elements in the current max_antichains!
                 # incremental updates
                 found = False
@@ -442,9 +437,7 @@ class KFamilyPartition(Partition):
         kwargs["weight"] = self._global_dag.nodes[u].get("weight", 5)
         self._dag.add_node(u, **kwargs)
         for k in self._w_attr:
-            self._tmp_max_dop[k] = get_max_weighted_antichain(
-                self._dag, w_attr=k
-            )[0]
+            self._tmp_max_dop[k] = get_max_weighted_antichain(self._dag, w_attr=k)[0]
         self._max_dop = self._tmp_max_dop
 
     def can_merge(self, that, u, v):
@@ -531,18 +524,14 @@ class Scheduler(object):
             G.graph["node_weight_attr"] = ["wkl", "eff"]
             for part in self._parts:
                 sc = part.schedule
-                G.add_node(
-                    part.partition_id, wkl=sc.workload, eff=sc.efficiency
-                )
+                G.add_node(part.partition_id, wkl=sc.workload, eff=sc.efficiency)
         else:
             G.graph["node_weight_attr"] = "cc"
             for part in self._parts:
                 # sc = part.schedule
                 pdop = part._max_dop
                 # TODO add memory as one of the LB condition too
-                cc_eval = (
-                    pdop if type(pdop) == int else pdop.get("num_cpus", 1)
-                )
+                cc_eval = pdop if type(pdop) == int else pdop.get("num_cpus", 1)
                 G.add_node(part.partition_id, cc=cc_eval)
 
         for e in self._part_edges:
@@ -562,9 +551,7 @@ class Scheduler(object):
             if e[2]["weight"] == 0:
                 e[2]["weight"] = 1
         # logger.debug(G.nodes(data=True))
-        (edgecuts, metis_parts) = metis.part_graph(
-            G, nparts=num_partitions, ufactor=1
-        )
+        (edgecuts, metis_parts) = metis.part_graph(G, nparts=num_partitions, ufactor=1)
 
         for node, pt in zip(G.nodes(), metis_parts):  # note min(pt) == 0
             parent_id = pt + st_gid
@@ -602,9 +589,7 @@ class MySarkarScheduler(Scheduler):
     """
 
     def __init__(self, drop_list, max_dop=8, dag=None, dump_progress=False):
-        super(MySarkarScheduler, self).__init__(
-            drop_list, max_dop=max_dop, dag=dag
-        )
+        super(MySarkarScheduler, self).__init__(drop_list, max_dop=max_dop, dag=dag)
         self._sspace = [3] * len(self._dag.edges())  # all edges are not zeroed
         self._dump_progress = dump_progress
 
@@ -664,7 +649,7 @@ class MySarkarScheduler(Scheduler):
 
         if index is None:
             raise SchedulerException("Failed to find r_gid")
-        parts[:] = parts[:index] + parts[index + 1:]
+        parts[:] = parts[:index] + parts[index + 1 :]
 
         return part_new
 
@@ -702,9 +687,7 @@ class MySarkarScheduler(Scheduler):
                         break  # force re-sorting
                 else:
                     done_reduction = True
-                    logger.info(
-                        "Performed reductions %d times", num_reductions
-                    )
+                    logger.info("Performed reductions %d times", num_reductions)
                     break
 
     def partition_dag(self):
@@ -731,8 +714,9 @@ class MySarkarScheduler(Scheduler):
             parts.append(part)  # will it get rejected?
             st_gid += 1
 
-        for i, e in enumerate(sorted(self._dag.edges(data=True),
-                                     key=lambda ed: ed[2]["weight"] * -1)):
+        for i, e in enumerate(
+            sorted(self._dag.edges(data=True), key=lambda ed: ed[2]["weight"] * -1)
+        ):
             u = e[0]
             v = e[1]
             gu = self._dag.nodes[u]
@@ -777,12 +761,8 @@ class MinNumPartsScheduler(MySarkarScheduler):
     The assumption is # of partitions (with certain DoP) more or less represents resource footprint.
     """
 
-    def __init__(
-            self, drop_list, deadline, max_dop=8, dag=None, optimistic_factor=0.5
-    ):
-        super(MinNumPartsScheduler, self).__init__(
-            drop_list, max_dop=max_dop, dag=dag
-        )
+    def __init__(self, drop_list, deadline, max_dop=8, dag=None, optimistic_factor=0.5):
+        super(MinNumPartsScheduler, self).__init__(drop_list, max_dop=max_dop, dag=dag)
         self._deadline = deadline
         self._optimistic_factor = optimistic_factor
 
@@ -866,13 +846,13 @@ class PSOScheduler(Scheduler):
     """
 
     def __init__(
-            self,
-            drop_list,
-            max_dop=8,
-            dag=None,
-            deadline=None,
-            topk=30,
-            swarm_size=40,
+        self,
+        drop_list,
+        max_dop=8,
+        dag=None,
+        deadline=None,
+        topk=30,
+        swarm_size=40,
     ):
         super(PSOScheduler, self).__init__(drop_list, max_dop=max_dop, dag=dag)
         self._deadline = deadline
@@ -881,15 +861,11 @@ class PSOScheduler(Scheduler):
         self._sspace_dict = dict()
         self._topk = topk
         self._swarm_size = swarm_size if swarm_size is not None else 40
-        self._lite_dag = DAGUtil.build_dag_from_drops(
-            self._drop_list, embed_drop=False
-        )
+        self._lite_dag = DAGUtil.build_dag_from_drops(self._drop_list, embed_drop=False)
         self._call_counts = 0
         leng = len(self._lite_dag.edges())
         self._leng = leng
-        self._topk = (
-            leng if self._topk is None or leng < self._topk else self._topk
-        )
+        self._topk = leng if self._topk is None or leng < self._topk else self._topk
 
     def partition_dag(self):
         """
@@ -904,9 +880,7 @@ class PSOScheduler(Scheduler):
         ub = [3.01] * self._leng
         stt = time.time()
         if self._deadline is None:
-            xopt, fopt = pso(
-                self.objective_func, lb, ub, swarmsize=self._swarm_size
-            )
+            xopt, fopt = pso(self.objective_func, lb, ub, swarmsize=self._swarm_size)
         else:
             xopt, fopt = pso(
                 self.objective_func,
@@ -953,9 +927,7 @@ class PSOScheduler(Scheduler):
             elif pos == 1:  # 00 zero without linearisation + 1
                 linear = False
             else:
-                raise SchedulerException(
-                    "PSO position out of bound: {0}".format(pos)
-                )
+                raise SchedulerException("PSO position out of bound: {0}".format(pos))
 
             u = e[0]
             gu = G.nodes[u]
@@ -1015,9 +987,7 @@ class PSOScheduler(Scheduler):
         Deadline - critical_path >= 0
         """
         if self._deadline is None:
-            raise SchedulerException(
-                "Deadline is None, cannot apply constraints!"
-            )
+            raise SchedulerException("Deadline is None, cannot apply constraints!")
 
         sk = "".join([str(int(round(xi))) for xi in x[: self._topk]])
         stuff = self._sspace_dict.get(sk, None)
@@ -1035,9 +1005,7 @@ class PSOScheduler(Scheduler):
         """
         # first check if the solution is already available in the search space
         sk = "".join([str(int(round(xi))) for xi in x[: self._topk]])
-        stuff = self._sspace_dict.get(
-            sk, None
-        )  # TODO is this atomic operation?
+        stuff = self._sspace_dict.get(sk, None)  # TODO is this atomic operation?
         if not stuff:
             # make a deep copy to avoid mix up multiple particles,
             # each of which has multiple iterations
@@ -1058,7 +1026,7 @@ class DAGUtil(object):
 
     @staticmethod
     def get_longest_path(
-            G, weight="weight", default_weight=1, show_path=True, topo_sort=None
+        G, weight="weight", default_weight=1, show_path=True, topo_sort=None
     ):
         """
         Ported from:
@@ -1175,9 +1143,7 @@ class DAGUtil(object):
                 # get the latest end time of one of its parents
                 ledt = -1
                 for parent in parents:
-                    pedt = G.nodes[parent]["edt"] + G.adj[parent][v].get(
-                        weight, 0
-                    )
+                    pedt = G.nodes[parent]["edt"] + G.adj[parent][v].get(weight, 0)
                     if pedt > ledt:
                         ledt = pedt
                 gv["stt"] = ledt
@@ -1211,9 +1177,7 @@ class DAGUtil(object):
             try:
                 ma[i, stt:edt] = np.ones((1, leng))
             except:
-                logger.error(
-                    "i, stt, edt, leng = %d, %d, %d, %d", i, stt, edt, leng
-                )
+                logger.error("i, stt, edt, leng = %d, %d, %d, %d", i, stt, edt, leng)
                 logger.error("N, M = %d, %d", M, N)
                 raise
             # print ma[i, :]
@@ -1251,9 +1215,7 @@ class DAGUtil(object):
         return mt
 
     @staticmethod
-    def build_dag_from_drops(
-            drop_list, embed_drop=True, fake_super_root=False
-    ):
+    def build_dag_from_drops(drop_list, embed_drop=True, fake_super_root=False):
         """
         return a networkx Digraph (DAG)
         :param: fake_super_root whether to create a fake super root node in the DAG
@@ -1291,9 +1253,7 @@ class DAGUtil(object):
                     tw = 1
                 dtp = 1
             else:
-                raise SchedulerException(
-                    "Drop Type '{0}' not supported".format(tt)
-                )
+                raise SchedulerException("Drop Type '{0}' not supported".format(tt))
             num_cpus = drop.get("num_cpus", 1)
             if embed_drop:
                 G.add_node(
@@ -1315,11 +1275,7 @@ class DAGUtil(object):
             for obk in out_bound_keys:
                 if obk in drop:
                     for oup in drop[obk]:
-                        key = (
-                            list(oup.keys())[0]
-                            if isinstance(oup, dict)
-                            else oup
-                        )
+                        key = list(oup.keys())[0] if isinstance(oup, dict) else oup
                         if CategoryType.DATA == tt:
                             G.add_weighted_edges_from(
                                 [(myk, key_dict[key], int(drop["weight"]))]
@@ -1389,6 +1345,7 @@ class DAGUtil(object):
         lines.insert(0, header)
         with open(outf, "w") as f:
             f.write("\n".join(lines))
+
 
 # TODO MOVE THIS STUFF INTO TESTS
 if __name__ == "__main__":

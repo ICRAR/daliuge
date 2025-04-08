@@ -31,12 +31,13 @@ try:
 except ModuleNotFoundError:
     from importlib_metadata import version, PackageNotFoundError
 
-from pathlib  import Path
+from pathlib import Path
 from setuptools import find_packages
 from setuptools import setup
 from setuptools.command.install import install
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
+
 
 # Version information
 # We do like numpy: we have a major/minor/patch hand-written version written
@@ -53,14 +54,14 @@ def extract_version():
     """
     TAG_VERSION_FILE = "VERSION"
     content = ""
-    with (Path(__file__).parent / TAG_VERSION_FILE).open(
-            encoding="utf8") as open_file:
+    with (Path(__file__).parent / TAG_VERSION_FILE).open(encoding="utf8") as open_file:
         major, minor, patch = open_file.read().strip("v").split(".")
         print("logging details: ", major, minor, patch)
     return int(major), int(minor), int(patch)
 
+
 major, minor, patch = extract_version()
-VERSION=f"{major}.{minor}.{patch}"
+VERSION = f"{major}.{minor}.{patch}"
 RELEASE = True
 VERSION_FILE = "dlg/runtime/version.py"
 PTH_FILE = "lib64_dist.pth"
@@ -178,10 +179,7 @@ extra_requires = {
     "MPI": ["mpi4py"],
     # AWS storage types
     "aws": ["boto3"],
-    "test": [
-        "pytest",
-        "eagle-test-graphs"
-    ],
+    "test": ["pytest", "eagle-test-graphs"],
 }
 
 setup(
@@ -217,7 +215,7 @@ setup(
     package_data={
         "": ["VERSION"],
         "dlg.apps": ["dlg_app.h", "dlg_app2.h"],
-        "dlg.deploy.configs": ["*.ini", ".slurm"], 
+        "dlg.deploy.configs": ["*.ini", ".slurm"],
         "dlg.manager": [
             "web/*.html",
             "web/static/css/*.css",

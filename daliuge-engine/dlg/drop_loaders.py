@@ -38,7 +38,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from dlg.data.drops.data_base import DataDROP
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 # Used to check whether a command specifies via UID reference the path or
 # data URL of an input or output

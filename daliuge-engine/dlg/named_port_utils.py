@@ -6,13 +6,13 @@ import dlg.droputils as droputils
 import dlg.drop_loaders as drop_loaders
 from typing import Tuple
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 
 class DropParser(Enum):
     RAW = "raw"
     PICKLE = "pickle"
-    EVAL = "eval" 
+    EVAL = "eval"
     NPY = "npy"
     DILL = "dill"
     # JSON = "json"
@@ -68,9 +68,7 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     positional arguments and one for kw arguments that can be used to construct
     the final command line.
     """
-    applicationArgs = clean_applicationArgs(
-        applicationArgs
-    )
+    applicationArgs = clean_applicationArgs(applicationArgs)
     pargs = []
     kwargs = {}
     for name, vdict in applicationArgs.items():
@@ -145,7 +143,7 @@ def identify_named_ports(
             value = ""  # make sure we are passing NULL drop events
         if key in positionalArgs:
             try:
-                encoding = DropParser(positionalPortArgs[key]['encoding'])
+                encoding = DropParser(positionalPortArgs[key]["encoding"])
             except ValueError:
                 logger.warning("No encoding set for %key: possible default")
                 continue
@@ -161,7 +159,7 @@ def identify_named_ports(
                 keywordPortArgs.update({key: positionalPortArgs[key]})
         elif key in keywordArgs:
             try:
-                encoding = DropParser(keywordArgs[key]['encoding'])
+                encoding = DropParser(keywordArgs[key]["encoding"])
             except ValueError:
                 logger.warning("No encoding set for %key: possible default")
                 continue
@@ -398,6 +396,7 @@ def _get_args(appArgs, positional=False):
     logger.debug("%s arguments: %s", argType, args)
     return args
 
+
 def get_port_reader_function(input_parser: DropParser):
     """
     Return the function used to read input from a named port
@@ -417,12 +416,14 @@ def get_port_reader_function(input_parser: DropParser):
 
         reader = optionalEval
     elif input_parser is DropParser.UTF8:
+
         def utf8decode(drop: "DataDROP"):
             """
             Decode utf8
             Not stored in drop_loaders to avoid cyclic imports
             """
             return droputils.allDropContents(drop).decode("utf-8")
+
         reader = utf8decode
     elif input_parser is DropParser.NPY:
         reader = drop_loaders.load_npy

@@ -48,7 +48,7 @@ import networkx as nx
 import numpy as np
 import pygraphviz as pgv
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg." + __name__)
 
 ORIGINAL_COLOR = (87, 87, 87)
 YELLOW_COLOR = (255, 255, 0)
@@ -150,9 +150,7 @@ class GraphPlayer(object):
         with open(self.status_path) as f:
             for i, line in enumerate(f):
                 colour_dict = dict()
-                colour_dict[
-                    "{}"
-                ] = '<viz:color r="%d" g="%d" b="%d"></viz:color>\n' % (
+                colour_dict["{}"] = '<viz:color r="%d" g="%d" b="%d"></viz:color>\n' % (
                     ORIGINAL_COLOR[0],
                     ORIGINAL_COLOR[1],
                     ORIGINAL_COLOR[2],
@@ -180,9 +178,7 @@ class GraphPlayer(object):
                             if gexf_line.find("<node id=") > -1:
                                 # <node id="38345" label="38345">
                                 # 38345
-                                node_id = gexf_line.split()[1].split("=")[1][
-                                    1:-1
-                                ]
+                                node_id = gexf_line.split()[1].split("=")[1][1:-1]
                             output_lines.append(gexf_line)
                 # each line generate a new file
                 new_gexf = "{0}/{1}.gexf".format(out_dir, ts)
@@ -245,9 +241,7 @@ class GraphPlayer(object):
 
         return G
 
-    def get_state_changes(
-        self, gexf_file, grep_log_file, steps=400, out_dir=None
-    ):
+    def get_state_changes(self, gexf_file, grep_log_file, steps=400, out_dir=None):
         """
         grep -R "changed to state" --include=*.log . > statelog.txt
         the simulation time will be evenly divided up by "steps"
@@ -265,17 +259,11 @@ class GraphPlayer(object):
                 alllines = f.readlines()
             with open(csv_file, "w") as fo:
                 for line in alllines:
-                    ts = (
-                        line.split("[DEBUG]")[0].split("dlgNM.log:")[1].strip()
-                    )
-                    ts = int(
-                        dt.strptime(ts, "%Y-%m-%d %H:%M:%S,%f").strftime("%s")
-                    )
+                    ts = line.split("[DEBUG]")[0].split("dlgNM.log:")[1].strip()
+                    ts = int(dt.strptime(ts, "%Y-%m-%d %H:%M:%S,%f").strftime("%s"))
                     oid = line.split("oid=")[1].split()[0]
                     state = line.split()[-1]
-                    fo.write(
-                        "{0},{1},{2},{3}".format(ts, oid, state, os.linesep)
-                    )
+                    fo.write("{0},{1},{2},{3}".format(ts, oid, state, os.linesep))
         else:
             logger.info("csv file already exists: %s", csv_file)
 
@@ -379,9 +367,7 @@ class GraphPlayer(object):
         else:
             G = nx.Graph()
             do_subgraph = False
-        subgraph_dict = defaultdict(
-            list
-        )  # k - node-ip, v - a list of graph nodes
+        subgraph_dict = defaultdict(list)  # k - node-ip, v - a list of graph nodes
         oid_gnid_dict = dict()
 
         for i, oid in enumerate(self.pg_spec.keys()):
@@ -542,9 +528,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
-    logging.basicConfig(
-        filename=options.log_file, level=logging.DEBUG, format=FORMAT
-    )
+    logging.basicConfig(filename=options.log_file, level=logging.DEBUG, format=FORMAT)
 
     if options.edgelist and options.dot_file is not None:
         logger.info("Loading networx graph from file %s", options.graph_path)
