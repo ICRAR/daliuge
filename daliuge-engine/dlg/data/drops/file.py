@@ -173,18 +173,6 @@ class FileDROP(DataDROP, PathBasedDrop):
 
         return f"{prefix}{filename}{suffix}"
 
-    def update_path(self, filename):
-        """
-
-        Parameters
-        ----------
-        filename
-
-        Returns
-        -------
-
-        """
-
     def getIO(self):
 
         # We need to update named_ports now we have runtime information
