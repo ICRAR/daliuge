@@ -33,7 +33,7 @@ from . import exceptions
 from .exceptions import DaliugeException, SubManagerException
 
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class ThreadingWSGIServer(
