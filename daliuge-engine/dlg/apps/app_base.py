@@ -22,7 +22,7 @@ from dlg.meta import (
     dlg_int_param,
 )
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class DropRunner(ABC):
