@@ -38,11 +38,15 @@ import uuid
 
 NON_FILENAME_CHARACTERS = re.compile(r":|%s" % os.sep)
 
-FSTRING_MAP = {
-    "dlg": "DALIGUE",
-    "datetime": datetime.date.today().strftime("%Y-%m-%d"),
-    "uid": str(uuid.uuid4()),
-}
+def default_map():
+    """
+    Get the default map for the FSTRING replacement keywords
+    """
+    return {
+        "dlg": "DALIGUE",
+        "datetime": datetime.date.today().strftime("%Y-%m-%d"),
+        "uid": str(uuid.uuid4()),
+    } 
 
 def base_uid_filename(uid: str, humanKey: str):
     """
@@ -77,8 +81,8 @@ def base_uid_filename(uid: str, humanKey: str):
     -------
         str: Base filename
     """
-    if not uid:
-        uid = ""
+    if not uid or not humanKey:
+        return None
     fn = uid.split("_")[0] + "_" + str(humanKey)
     return NON_FILENAME_CHARACTERS.sub("_", fn)
 
@@ -127,14 +131,15 @@ def filepath_from_string(filename: str, **kwargs) -> str:
     """
 
     opts = []
-    FSTRING_MAP.update(kwargs)
+    fstring_map = default_map() 
+    fstring_map.update(kwargs)
     if not filename and "humanKey" in FSTRING_MAP:
-        return base_uid_filename(FSTRING_MAP["uid"], FSTRING_MAP["humanKey"])
+        return base_uid_filename(fstring_map["uid"], fstring_map["humanKey"])
     elif not filename:
         return filename
 
     opts.extend(find_dlg_fstrings(filename))
     for fp in opts:
-        filename = filename.replace(f"{{{fp}}}", FSTRING_MAP[fp])
+        filename = filename.replace(f"{{{fp}}}", fstring_map[fp])
 
     return filename
