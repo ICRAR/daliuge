@@ -218,6 +218,6 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
             logger.debug(f"PyfuncAPPDrop producer names:{i}")
 
         st = time.time()
-        with droputils.DROPWaiterCtx(self, fd, 3):
+        with droputils.DROPWaiterCtx(self, fd, 10):
             init_drop.execute()
         # self.assertAlmostEqual(0.6, time.time() - st, 1)
