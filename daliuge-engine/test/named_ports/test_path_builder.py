@@ -48,7 +48,7 @@ class TestPathBuilders(unittest.TestCase):
                                    uid=uid, datetime=dt)
         self.assertEqual(f"prefix_123456_2025-08-17.dat", res)
         res = filepath_from_string(None, uid=None)
-        self.assertNotEqual(None, res)
+        self.assertEqual(None, res)
 
 
 class TestHelperFunctions(unittest.TestCase):
