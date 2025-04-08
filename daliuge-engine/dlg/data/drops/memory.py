@@ -44,6 +44,8 @@ def parse_pydata(pd_dict: dict) -> bytes:
     pydata = pd_dict["value"]
     logger.debug(f"pydata value provided: {pydata}, {pd_dict['type'].lower()}")
 
+    if pd_dict["type"].lower() in ["string", "str"]:
+        return pydata if pydata != "None" else None
     if pd_dict["type"].lower() == "json":
         try:
             pydata = json.loads(pydata)
@@ -84,7 +86,7 @@ def parse_pydata(pd_dict: dict) -> bytes:
 # @par EAGLE_START
 # @param category Memory
 # @param tag daliuge
-# @param pydata None/String/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
+# @param pydata /Object/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @param block_skip False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If set the drop will block a skipping chain until the last producer has finished and is not also skipped.
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
@@ -115,6 +117,7 @@ class InMemoryDROP(DataDROP):
         """
         args = []
         pydata = None
+        pdict = {"type": "raw"}  # initialize this value to enforce BytesIO
         field_names = (
             [f["name"] for f in kwargs["fields"]] if "fields" in kwargs else []
         )
@@ -130,10 +133,18 @@ class InMemoryDROP(DataDROP):
                 pydata = None
         elif "fields" in kwargs and "pydata" in field_names:
             data_pos = field_names.index("pydata")
-            pydata = parse_pydata(kwargs["fields"][data_pos])
-        args.append(pydata)
-        logger.debug("Loaded into memory: %s", pydata)
-        self._buf = io.BytesIO(*args)
+            pdict = kwargs["fields"][data_pos]
+            pydata = parse_pydata(pdict)
+        if pydata:
+            args.append(pydata)
+            logger.debug("Loaded into memory: %s, %s", pydata, pdict["type"])
+        else:
+            pdict["type"] = ""
+        self._buf = (
+            io.BytesIO(*args)
+            if pdict["type"].lower() not in ["string", "str"]
+            else io.StringIO(*args)
+        )
         self.size = len(pydata) if pydata else 0
 
     def getIO(self):

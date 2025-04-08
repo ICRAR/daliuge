@@ -265,6 +265,8 @@ class DataDROP(AbstractDROP):
         if self._checksum is None:
             self._checksum = 0
             self._checksumType = _checksumType
+        if isinstance(chunk, str):
+            chunk = bytes(chunk, encoding="utf8")
         self._checksum = crc32c(chunk, self._checksum)
 
     @property
@@ -284,6 +286,8 @@ class DataDROP(AbstractDROP):
             io = self.getIO()
             io.open(OpenMode.OPEN_READ)
             data = io.read(65536)
+            if isinstance(data, str):
+                data = bytes(data, encoding="utf8")
             while data is not None and len(data) > 0:
                 self._updateChecksum(data)
                 data = io.read(65536)

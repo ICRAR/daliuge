@@ -250,12 +250,16 @@ class MemoryIO(DataIO):
             return self._buf
         elif self._mode == OpenMode.OPEN_READ:
             # TODO: potentially wasteful copy
+            if isinstance(self._buf, io.StringIO):
+                return io.StringIO(self._buf.getvalue())
             return io.BytesIO(self._buf.getbuffer())
         else:
             raise ValueError()
 
     @overrides
     def _write(self, data, **kwargs) -> int:
+        if isinstance(data, str):
+            data = bytes(data, encoding="utf8")
         self._desc.write(data)
         return len(data)
 
@@ -384,6 +388,8 @@ class FileIO(DataIO):
 
     @overrides
     def _write(self, data, **kwargs) -> int:
+        if isinstance(data, str):
+            data = bytes(data, encoding="utf8")
         self._desc.write(data)
         return len(data)
 
