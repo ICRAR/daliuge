@@ -77,6 +77,8 @@ def base_uid_filename(uid: str, humanKey: str):
     -------
         str: Base filename
     """
+    if not uid:
+        uid = ""
     fn = uid.split("_")[0] + "_" + str(humanKey)
     return NON_FILENAME_CHARACTERS.sub("_", fn)
 
