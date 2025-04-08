@@ -41,7 +41,7 @@ NON_FILENAME_CHARACTERS = re.compile(r":|%s" % os.sep)
 FSTRING_MAP = {
     "dlg": "DALIGUE",
     "datetime": datetime.date.today().strftime("%Y-%m-%d"),
-    "uid": uuid.uuid4(),
+    "uid": str(uuid.uuid4()),
 }
 
 def base_uid_filename(uid: str, humanKey: str):
@@ -80,35 +80,30 @@ def base_uid_filename(uid: str, humanKey: str):
     fn = uid.split("_")[0] + "_" + str(humanKey)
     return NON_FILENAME_CHARACTERS.sub("_", fn)
 
-def find_dlg_fstrings(filename: str):
+def find_dlg_fstrings(filename: str) -> list[str]:
     """
     Find f-string style braces intended for replacement by the Engine and return a list
     of the placeholder strings.
 
     Supports escaping the braces by using two in a row (e.g. {{example}}).
 
-    Parameters
-    ----------
-    filename: str
+    :param filename: filename with possible f-string brackets for keyword replacement
 
-    Notes
-    -----
-    The following cases are supported by this method:
-    1. No braces:
-        "unique_file.txt"  # []
+    .. note::
+        The following cases are supported by this method:
+        1. No braces:
+            "unique_file.txt"  # []
 
-    2. Standard {} replacement :
-        "gather_{uid}.py" -> return ['uid']
+        2. Standard {} replacement :
+            "gather_{uid}.py" -> return ['uid']
 
-    3. Escaped braces:
-        "gather_{{uid}}.py"  -> []
+        3. Escaped braces:
+            "gather_{{uid}}.py"  -> []
 
-    4. Multiple braces
-        "prefix_{uid}_{datetime}.dat"  # ['uid', 'datetime']
+        4. Multiple braces
+            "prefix_{uid}_{datetime}.dat"  # ['uid', 'datetime']
 
-    Returns
-    -------
-    list of placeholder strings (incl. {})
+    :return: list of placeholder strings (incl. {})
     """
     opts = []
     try:
@@ -119,17 +114,23 @@ def find_dlg_fstrings(filename: str):
         return opts
 
 
-def filepath_from_string(filename, **kwargs):
+def filepath_from_string(filename: str, **kwargs) -> str:
     """
+    Attempts to construct a filename from filename and possible mappings, which are
+    built from a combination of FSTRING_MAP and **kwargs.
 
     Returns
     -------
-
+    filename
     """
-    if not filename:
-        return filename
+
     opts = []
     FSTRING_MAP.update(kwargs)
+    if not filename and "humanKey" in FSTRING_MAP:
+        return base_uid_filename(FSTRING_MAP["uid"], FSTRING_MAP["humanKey"])
+    elif not filename:
+        return filename
+
     opts.extend(find_dlg_fstrings(filename))
     for fp in opts:
         filename = filename.replace(f"{{{fp}}}", FSTRING_MAP[fp])

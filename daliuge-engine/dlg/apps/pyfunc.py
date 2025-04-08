@@ -583,13 +583,27 @@ class PyFuncApp(BarrierAppDROP):
         modified keywordArgsMap and positionalArgsMap
         """
 
+        # match to output in the event that it is None
+        # Get the outputs accordingly
+
+        attr_uid_map = {}
+        for output in self.parameters["outputs"]:
+            for key, value in output.items():
+                attr_uid_map[value] = key
+
         for arg_map in [keywordArgsMap, positionalArgsMap]:
             if arg in arg_map:
+                output_uid = attr_uid_map[arg]
+                output_drop = next(
+                    (drop for drop in self.outputs if drop.uid ==output_uid),
+                    None
+                )
                 argument = arg_map[arg]
                 parser = (DropParser(argument.encoding))
                 if parser == DropParser.PATH:
-                    uid = self._humanKey
-                    argument.value = filepath_from_string(argument.value, uid=uid)
+                    argument.value = filepath_from_string(
+                        argument.value, uid=output_drop.uid,humanKey=output_drop._humanKey
+                    )
                 self.parameters[arg] = arg_map[arg].value
                 arg_map[arg] = argument
 
@@ -605,7 +619,6 @@ class PyFuncApp(BarrierAppDROP):
         """
         portargs = {}
         # 3. replace default argument values with named input ports
-        iitems = self._inputs
         logger.debug("Mapping from _inputs: %s", self._inputs)
         logger.debug("Parameters: %s", self.parameters)
         if "inputs" in self.parameters and check_ports_dict(self.parameters["inputs"]):
@@ -633,7 +646,7 @@ class PyFuncApp(BarrierAppDROP):
             )
             portargs.update(keyPortArgs)
         else:
-            for i, input_drop in enumerate(iitems):
+            for i, input_drop in enumerate(self._inputs):
                 parser = get_port_reader_function(self.input_parser)
                 value = parser(input_drop)
                 if self.argnames:
