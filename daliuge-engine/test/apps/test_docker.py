@@ -19,15 +19,14 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-
-from asyncio.log import logger
 import os
 import shutil
 import tempfile
 import unittest
-
 import configobj
 import docker
+
+from asyncio.log import logger
 
 from dlg import droputils, utils, prepareUser
 from dlg.apps.dockerapp import DockerApp
@@ -42,6 +41,36 @@ try:
 except:
     pass
 
+class CustomContainer:
+    """
+    Used to create custom docker images
+    """
+    client = docker.from_env()
+
+    def create_container(self, fstr, tag):
+        """
+        Create a customer docker image through a temporary Dockerfile.
+        :return: image tag
+        """
+        from pathlib import Path
+
+        docker_dir = tempfile.TemporaryDirectory()
+        dockerfile = Path(docker_dir.name) / "Dockerfile"
+        with dockerfile.open("w") as fp:
+            fp.write(fstr)
+        image, _ = self.client.images.build(path=str(dockerfile.parent),
+                                          tag=tag)
+        return image.tags.pop()
+
+
+    def remove_container(self, image: str):
+        """
+        Remove the custom docker image
+
+        :param image:
+        :return:
+        """
+        return self.client.images.remove(image)
 
 @unittest.skipIf(docker_unavailable, "Docker daemon not available")
 class DockerTests(unittest.TestCase):
@@ -79,7 +108,7 @@ class DockerTests(unittest.TestCase):
         """
 
         a = FileDROP("a", "a")
-        b = DockerApp("b", "b", image="ubuntu:14.04", command="cp {a} {c}")
+        b = DockerApp("b", "b", image="ubuntu:22.04", command="cp {a} {c}")
         c = FileDROP("c", "c")
 
         b.addInput(a)
@@ -112,15 +141,21 @@ class DockerTests(unittest.TestCase):
         treated as a publisher of D. This way D waits for both applications to
         finish before proceeding.
         """
-
+        dockerfile = ("FROM ubuntu:22.04\n"
+                         "RUN apt update && apt install -y netcat\n")
+        container_manager = CustomContainer()
         a = FileDROP("a", "a")
         b = DockerApp(
             "b",
             "b",
-            image="ubuntu:14.04",
-            command="cat {a} > /dev/tcp/%containerIp[c]%/8000",
+            image="ubuntu:22.04",
+            command="cat {a} > /dev/tcp/%containerIp[{c}]%/8000",
         )
-        c = DockerApp("c", "c", image="ubuntu:14.04", command="nc -l 8000 > {d}")
+
+        image = container_manager.create_container(
+            dockerfile,tag="netcat_test_container")
+        c = DockerApp("c", "c", image=image, command="nc -l "
+                                                                              "8000 > {d}")
         d = FileDROP("d", "d")
 
         b.addInput(a)
@@ -132,7 +167,7 @@ class DockerTests(unittest.TestCase):
         b.handleInterest(c)
 
         data = os.urandom(10)
-        with DROPWaiterCtx(self, d, 10):
+        with DROPWaiterCtx(self, d, 5):
             a.write(data)
             a.setCompleted()
 
@@ -146,7 +181,7 @@ class DockerTests(unittest.TestCase):
         """
 
         def assertMsgIsCorrect(msg, command):
-            a = DockerApp("a", "a", image="ubuntu:14.04", command=command)
+            a = DockerApp("a", "a", image="ubuntu:22.04", command=command)
             b = FileDROP("b", "b")
             a.addOutput(b)
             with DROPWaiterCtx(self, b, 100):
@@ -181,7 +216,7 @@ class DockerTests(unittest.TestCase):
             "HelloWorld_out.txt", "HelloWorld_out.txt"
         )  # not a filesystem-related DROP, we can reference its URL in the command-line
         a.ngasSrv = "ngas.icrar.org"
-        b = DockerApp("b", "b", image="ubuntu:14.04", command=command)
+        b = DockerApp("b", "b", image="ubuntu:22.04", command=command)
         c = FileDROP("c", "c")
         b.addInput(a)
         b.addOutput(c)
@@ -201,7 +236,7 @@ class DockerTests(unittest.TestCase):
         a = DockerApp(
             "a",
             "a",
-            image="ubuntu:14.04",
+            image="ubuntu:22.04",
             command="cp /opt/file %s" % (tempDir,),
             additionalBindings=[tempDir, "%s:/opt/file" % (tempFile,)],
         )
@@ -225,7 +260,7 @@ class DockerTests(unittest.TestCase):
             "a",
             "a",
             workingDir="/mydir",
-            image="ubuntu:14.04",
+            image="ubuntu:22.04",
             command="pwd > {b} && sleep 0.05",
             ensureUserAndSwitch=ensureUserAndSwitch,
         )
