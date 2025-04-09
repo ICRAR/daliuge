@@ -133,7 +133,7 @@ def filepath_from_string(filename: str, **kwargs) -> str:
     opts = []
     fstring_map = default_map() 
     fstring_map.update(kwargs)
-    if not filename and "humanKey" in FSTRING_MAP:
+    if not filename and "humanKey" in fstring_map:
         return base_uid_filename(fstring_map["uid"], fstring_map["humanKey"])
     elif not filename:
         return filename
