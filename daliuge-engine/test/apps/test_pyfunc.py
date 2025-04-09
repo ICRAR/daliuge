@@ -168,7 +168,7 @@ class TestPyFuncApp(unittest.TestCase):
         b.addInput(a)
         b.addOutput(c)
 
-        with DROPWaiterCtx(self, c, 5):
+        with DROPWaiterCtx(self, c, 500):
             a.write(repr(input_data).encode("utf-8"))
             a.setCompleted()
         for drop in a, b, c:

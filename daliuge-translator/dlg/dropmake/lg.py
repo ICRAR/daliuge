@@ -488,26 +488,22 @@ class LG:
             self._drop_dict["new_added"].append(dropSpec_null)
         elif s_type in ["Application", "Control"]:
             sname = slgn._getPortName("outputPorts", index=-1)
-            tname = tlgn._getPortName("inputPorts")
+            tname = tlgn._getPortName("inputPorts", index=-1)
 
             # sname is dictionary of all output ports on the sDROP. 
             # Therefore there's an expected number of output edges that we need to add
             # We keep track of this by querying the sDROP's current outputs and seeing 
             # what is currently 'lowest' in number. Eventual, all output port names will 
-            # be added. 
-            expected = [p for p in sname.keys()]
-            output_port = expected[0]
-            if "outputs" in sdrop:
-                actual = []
-                [actual.extend(pair.values()) for pair in sdrop["outputs"]]
-                actual_counts = {port: actual.count(port) for port in set(expected)}
-                expected_counts = {port: expected.count(port) for port in (expected)}
-                differences = {port: (expected_counts[port] - actual_counts.get(port,0)) for port in expected_counts}
-                candidates = {port: deficit for port, deficit in differences.items() if deficit>0}
-                if candidates: 
-                    output_port = max(candidates, key=candidates.get)
+            # be added.
+            output_port = sname[llink["fromPort"]]
+            input_port = tname[llink["toPort"]]
             sdrop.addOutput(tdrop, name=output_port)
-            tdrop.addProducer(sdrop, name=tname)
+            tdrop.addProducer(sdrop, name=input_port)
+            if "port_map" not in tdrop:
+                tdrop["port_map"] = {input_port:output_port}
+            else:
+                tdrop["port_map"][input_port] = output_port
+
             if Categories.BASH_SHELL_APP == s_type:
                 bc = src_drop["command"]
                 bc.add_output_param(tlgn.id, tgt_drop["oid"])
@@ -520,6 +516,7 @@ class LG:
                 self._gather_cache[gather_oid][2].append(tgt_drop)
             else:  # sdrop is a data drop
                 # there should be only one port, get the name
+                # ^ TODO This comment is no longer true, need to address
                 portId = llink["fromPort"] if "fromPort" in llink else None
                 sname = slgn._getPortName("outputPorts", portId=portId)
                 # could be multiple ports, need to identify
@@ -649,9 +646,6 @@ class LG:
                             )
                         )
                     # first add the outer construct (scatter, gather, group-by) boundary
-                    # oc = slgn.group.group
-                    # if (oc is not None and (not oc.is_loop())):
-                    #     pass
                     loop_chunk_size = slgn.group.dop
                     for i, chunk in enumerate(
                         self._split_list(sdrops, loop_chunk_size)
@@ -665,10 +659,6 @@ class LG:
                                     tdrops[i * loop_chunk_size + j + 1],
                                     lk,
                                 )
-
-                    # for i, sdrop in enumerate(sdrops):
-                    #     if (i < lsd - 1):
-                    #         self._link_drops(slgn, tlgn, sdrop, tdrops[i + 1])
                 elif (
                     slgn.group is not None
                     and slgn.group.is_loop
@@ -807,7 +797,6 @@ class LG:
                 else:
                     data_drop.addConsumer(output_drop, name=sname)
                     output_drop.addInput(data_drop, name=sname)
-                # print(data_drop['nm'], data_drop['oid'], '-->', output_drop['nm'], output_drop['oid'])
 
         logger.info(
             "Unroll progress - %d links done for session %s",
@@ -828,16 +817,11 @@ class LG:
                     if "grp-data_drop" in sl_drop:
                         del sl_drop["grp-data_drop"]
             elif lgn.is_gather:
-                # lid_sub = "{0}-gather-data".format(lid)
                 del self._drop_dict[lid]
-                # for sl_drop in self._drop_dict[lid]:
-                #     if 'gather-data_drop' in sl_drop:
-                #         del sl_drop['gather-data_drop']
             elif lgn.is_subgraph:
                 # Remove the SubGraph construct drop
                 if lgn.jd["isSubGraphConstruct"]:
                     del self._drop_dict[lid]
-
                 else:
                     pass
 

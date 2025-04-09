@@ -20,12 +20,10 @@
 #    MA 02111-1307  USA
 #
 
-import json
 import pickle
 import unittest
 
-from dlg.common import CategoryType
-from dlg.dropmake import path_utils
+from dlg.common import CategoryType, path_utils
 from dlg.dropmake.lg import LG
 
 NODES = 'nodeDataArray'
