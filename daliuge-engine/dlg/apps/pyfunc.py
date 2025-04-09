@@ -467,6 +467,10 @@ class PyFuncApp(BarrierAppDROP):
         # reference
         filename_ports = ["InputOutput", "OutputPort"]
 
+        # Port-types that we may receive a filename/path from that is used as an output
+        # reference
+        filename_ports = ["InputOutput", "OutputPort"]
+
         if self._applicationArgs:
             # if defined in both we use AppArgs values
             for arg in self._applicationArgs:
