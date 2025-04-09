@@ -89,7 +89,7 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
 
             data = os.urandom(bs * count)
             logger.debug(f"Length of data produced: {len(data)}")
-            with droputils.DROPWaiterCtx(self, c, 300):
+            with droputils.DROPWaiterCtx(self, c, 10):
                 a.setCompleted()
                 for d in x:
                     d.setCompleted()
