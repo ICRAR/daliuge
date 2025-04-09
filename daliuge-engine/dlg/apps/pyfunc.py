@@ -265,7 +265,7 @@ class PyFuncApp(BarrierAppDROP):
         if hasattr(self, "func"):
             return  f"{self.__class__.__name__}_{self.func}_{self.oid}"
         else:
-            return self
+            return f"{self.__class__.__name__}"
 
     def _mixin_func_defaults(self):
         """
@@ -381,12 +381,14 @@ class PyFuncApp(BarrierAppDROP):
                                   "pickle", ]
 
         for kw in self.func_def_keywords:
-            if kw in self._applicationArgs:  # these are the preferred ones now
-                if isinstance(self._applicationArgs[kw]["value"],
-                              bool or self._applicationArgs[kw]["value"] or
-                              self._applicationArgs[kw]["precious"], ):
-                    # only transfer if there is a value or precious is True
-                    self._applicationArgs.pop(kw)
+            # these are the preferred ones now
+            if kw in self._applicationArgs and isinstance(
+                self._applicationArgs[kw]["value"],
+                bool or self._applicationArgs[kw]["value"] or
+                self._applicationArgs[kw]["precious"],
+            ):
+                # only transfer if there is a value or precious is True
+                self._applicationArgs.pop(kw)
 
     def _initialise_args(self, argsDict: dict):
         """
@@ -435,6 +437,10 @@ class PyFuncApp(BarrierAppDROP):
         vkarg = {}
         input_outputs = []
 
+        # Port-types that we may receive a filename/path from that is used as an output
+        # reference
+        filename_ports = ["InputOutput", "OutputPort"]
+
         # Legacy, used for graphs reliant on input/output parser
         if not self._applicationArgs:
             encoding = self.input_parser or DropParser.DILL
@@ -461,17 +467,13 @@ class PyFuncApp(BarrierAppDROP):
             for arg_map in [positionalArgsMap, keywordArgsMap]:
                 if arg in arg_map:
                     argument = arg_map[arg]
-                    argument.value = value if value else argument.value
-                    argument.encoding = encoding if encoding else argument.encoding
-                    argument.precious = precious if precious else argument.precious
-                    argument.positional = positional if positional else argument.positional
+                    argument.value = value or argument.value
+                    argument.encoding = encoding or argument.encoding
+                    argument.precious = precious or argument.precious
+                    argument.positional = positional or argument.positional
                     arg_map[arg] = argument
 
-            # if populate_maps_without_args:
-            #     positionalArgsMap[arg] = Argument(value=value, encoding=encoding,
-            #                                 precious=precious, positional=positional)
-            #
-            if portType == "InputOutput" or portType == "OutputPort":
+            if portType in filename_ports:
                 input_outputs.append(arg)
 
         # Remove parameters of function that have been found in applicationArgs

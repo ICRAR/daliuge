@@ -95,7 +95,4 @@ def string2json(string: str, pickle_flag: bool = False) -> list:
         else:
             return pickle.dumps(json.loads(string))
     except json.decoder.JSONDecodeError as e:
-        if not pickle_flag:
-            return []
-        else:
-            return pickle.dumps([])
+        return [] if not pickle_flag else pickle.dumps([])
