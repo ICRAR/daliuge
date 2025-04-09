@@ -37,7 +37,7 @@ from dlg.dropmake.lg import GraphException
 from dlg.dropmake.scheduler import DAGUtil
 from dlg.common import CategoryType, dropdict
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class GPGTNoNeedMergeException(GraphException):

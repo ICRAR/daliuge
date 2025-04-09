@@ -133,7 +133,7 @@ from ..ddap_protocol import DROPStates, DROPPhases, AppDROPStates
 from ..drop import AbstractDROP
 from ..data.drops.container import ContainerDROP
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class DataLifecycleManagerBackgroundTask(threading.Thread):

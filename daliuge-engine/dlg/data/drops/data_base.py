@@ -50,7 +50,7 @@ except:
 
     _checksumType = ChecksumTypes.CRC_32
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 ##

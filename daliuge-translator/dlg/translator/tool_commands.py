@@ -36,7 +36,7 @@ from dlg.common.reproducibility.reproducibility import (
     init_pg_repro_data,
 )
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def _open_i(path, flags=None):

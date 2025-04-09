@@ -60,8 +60,7 @@ from dlg.meta import (
 )
 from dlg.pyext import pyext
 
-# logger = logging.getLogger("dlg." + __name__)
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def serialize_func(f):
@@ -630,7 +629,7 @@ class PyFuncApp(BarrierAppDROP):
                 self, "No function specified (either via name or code)"
             )
         self.name = f"{self.name}:{self.func_name}"  # PyFuncApp is parent
-        logger.debug("AppDROP name: %s", self.name)
+        logger.info("AppDROP name: %s", self.name)
         # Lookup function or import bytecode as a function
         if not self.func_code:
             self.func = import_using_name(self, self.func_name)
@@ -674,7 +673,6 @@ class PyFuncApp(BarrierAppDROP):
         mapping. This also allows to pass values to any function argument through a port.
 
         """
-        drop_uid = self._humanKey
         logger.debug("This object: %s, %s", self, self._humanKey)
         funcargs = {}
         # Keyword arguments are made up of the default values plus the inputs

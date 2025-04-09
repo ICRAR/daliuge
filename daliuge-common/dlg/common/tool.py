@@ -30,7 +30,6 @@ import time
 
 from importlib.metadata import entry_points
 
-# logger = logging.getLogger("dlg." + __name__)
 logger = logging.getLogger("dlg")
 
 

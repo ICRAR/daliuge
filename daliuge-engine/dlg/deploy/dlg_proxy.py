@@ -53,7 +53,7 @@ default_dlg_monitor_port = 8081
 default_dlg_port = 8001
 FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 delimit = b"@#%!$"
 dl = len(delimit)
 

@@ -101,7 +101,7 @@ except:
 
     _checksumType = ChecksumTypes.CRC_32
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class ListAsDict(list):
@@ -1208,8 +1208,12 @@ class AbstractDROP(EventFirer, EventHandler):
         """
         Moves this drop to the SKIPPED state closing any writers we opened.
 
-        If the drop has more than one producer it will block until all producers
-        have
+        If the drop has more than one producer it will block until the first
+        producer is skipped or all producers are completed. If the block_skip
+        flag is set the drop will block a skipping chain until the last producer
+        is completed or also skipped. This is useful for branches inside loops
+        to allow alternate paths for each iteration. For a branch to terminate
+        a loop the flag needs to be false (default).
         """
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             if not self.block_skip or (

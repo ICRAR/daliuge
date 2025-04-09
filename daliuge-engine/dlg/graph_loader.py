@@ -74,7 +74,7 @@ __TOONE = {DROPLinkType.PARENT: "parent"}
 __TOMANY.update({v: k for k, v in __TOMANY.items()})
 __TOONE.update({v: k for k, v in __TOONE.items()})
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def addLink(linkType, lhDropSpec, rhOID, force=False):

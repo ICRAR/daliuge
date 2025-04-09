@@ -59,7 +59,7 @@ from ..meta import (
 )
 
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def message_stdouts(prefix, stdout, stderr, enc="utf8"):

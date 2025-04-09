@@ -47,7 +47,7 @@ from dlg.dropmake import pg_generator
 from dlg.restutils import RestClient
 from dlg.common.k8s_utils import check_k8s_env
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def _num_deployments_required(islands, nodes):

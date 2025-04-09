@@ -25,7 +25,7 @@ import re
 import subprocess
 import time
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class ListTokens(object):

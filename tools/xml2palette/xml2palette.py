@@ -1894,7 +1894,7 @@ if __name__ == "__main__":
 
     TODO: Should be split up
     """
-    logger = logging.getLogger("dlg." + __name__)
+    logger = logging.getLogger(f"dlg.{__name__}")
     FORMAT = "%(asctime)s [  %(filename)s  ] [  %(lineno)s  ] [  %(funcName)s  ] || %(message)s ||"
     logging.basicConfig(
         format=FORMAT,

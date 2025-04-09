@@ -28,7 +28,7 @@ from pathlib import Path
 from setuptools import find_packages
 from setuptools import setup
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 # Version information
 # We do like numpy: we have a major/minor/patch hand-written version written

@@ -27,7 +27,7 @@ import logging
 
 from dlg.shared_memory import DlgSharedMemory
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def _cleanup_block(session_id, name):

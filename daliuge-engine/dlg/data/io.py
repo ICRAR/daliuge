@@ -37,7 +37,7 @@ if sys.version_info >= (3, 8):
     from dlg.shared_memory import DlgSharedMemory
 
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class OpenMode:

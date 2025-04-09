@@ -70,7 +70,7 @@ class DlgFormatter(logging.Formatter):
 
 def launchServer(opts):
     # we might be called via __main__, but we want a nice logger name
-    logger = logging.getLogger("dlg." + __name__)
+    logger = logging.getLogger(f"dlg.{__name__}")
     dmName = opts.dmType.__name__
 
     logger.info("DALiuGE version %s running at %s", version.full_version, os.getcwd())

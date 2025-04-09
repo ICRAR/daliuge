@@ -46,7 +46,7 @@ from dlg.data.drops.file import FileDROP
 if sys.version_info >= (3, 8):
     from dlg.manager.shared_memory_manager import DlgSharedMemoryManager
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class TestSimpleApps(unittest.TestCase):

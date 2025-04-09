@@ -11,7 +11,7 @@ from dlg.ddap_protocol import (
     DROPRel,
 )
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class ContainerDROP(DataDROP):

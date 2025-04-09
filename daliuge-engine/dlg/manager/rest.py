@@ -59,7 +59,7 @@ from dlg.manager.session import generateLogFileName
 from dlg.common.deployment_methods import DeploymentMethods
 from dlg.manager.manager_data import Node
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def file_as_string(fname, enc="utf8"):

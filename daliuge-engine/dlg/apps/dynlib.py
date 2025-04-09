@@ -32,7 +32,7 @@ from ..ddap_protocol import AppDROPStates
 from ..apps.app_base import AppDROP, BarrierAppDROP
 from ..exceptions import InvalidDropException
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 _read_cb_type = ctypes.CFUNCTYPE(
     ctypes.c_size_t, ctypes.POINTER(ctypes.c_char), ctypes.c_size_t

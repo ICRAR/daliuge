@@ -36,7 +36,7 @@ from setuptools import find_packages
 from setuptools import setup
 from setuptools.command.install import install
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 # Version information

@@ -28,7 +28,7 @@ import logging
 import dlg.constants as constants
 from enum import IntEnum
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class NodeProtocolPosition(IntEnum):

@@ -26,7 +26,7 @@ Module containing utility methods for working with GraphConfigs
 
 import logging
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 ACTIVE_CONFIG_KEY = "activeGraphConfigId"
 CONFIG_KEY = "graphConfigurations"
 GRAPH_NODES = "nodeDataArray"

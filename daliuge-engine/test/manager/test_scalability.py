@@ -29,7 +29,7 @@ from dlg.utils import terminate_or_kill
 
 from test.dlg_engine_testutils import DROPManagerUtils, TerminatingTestHelper
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 hostname = "localhost"
 
 

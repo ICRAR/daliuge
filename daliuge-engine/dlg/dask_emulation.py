@@ -40,7 +40,7 @@ from .ddap_protocol import DROPStates
 from .apps.app_base import BarrierAppDROP
 from .exceptions import InvalidDropException
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class ResultTransmitter(BarrierAppDROP):

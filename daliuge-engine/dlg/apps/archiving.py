@@ -33,7 +33,7 @@ from ..meta import (
     dlg_streaming_input,
 )
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class ExternalStoreApp(BarrierAppDROP):

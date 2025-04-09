@@ -33,7 +33,7 @@ import warnings
 
 import _posixshmem  # Does not work on Windows
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 _O_CREX = os.O_CREAT | os.O_EXCL
 _MAXNAMELENGTH = 14  # Apparently FreeBSD has this limitation

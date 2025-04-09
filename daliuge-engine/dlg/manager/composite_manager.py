@@ -48,7 +48,7 @@ from dlg.exceptions import (
 from dlg.manager.past_sessions import PastSessionManager
 from dlg.utils import portIsOpen, getDlgWorkDir
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def uid_for_drop(dropSpec):

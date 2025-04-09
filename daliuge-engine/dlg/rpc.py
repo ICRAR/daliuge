@@ -39,7 +39,7 @@ from dlg.manager.manager_data import Node
 
 from . import utils
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class RPCObject(object):

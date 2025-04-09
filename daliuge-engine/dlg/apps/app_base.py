@@ -491,7 +491,7 @@ class InputFiredAppDROP(AppDROP):
                         self._global_log_level,
                     )
                 break
-            except:
+            except Exception:
                 if self.execStatus == AppDROPStates.CANCELLED:
                     return
                 tries += 1

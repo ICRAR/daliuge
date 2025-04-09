@@ -25,7 +25,7 @@ import logging
 import socket
 import time
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def check_port(host, port, timeout=0, checking_open=True, return_socket=False):

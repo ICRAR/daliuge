@@ -2,11 +2,12 @@ import ast
 from enum import Enum
 import logging
 import collections
+from dlg.data.drops.data_base import DataDROP
 import dlg.droputils as droputils
 import dlg.drop_loaders as drop_loaders
 from typing import Tuple
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class DropParser(Enum):

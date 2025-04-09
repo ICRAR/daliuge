@@ -44,7 +44,7 @@ from dlg.dropmake.dm_utils import (
 from dlg.dropmake.utils.bash_parameter import BashCommand
 from .definition_classes import Categories, DATA_TYPES, APP_TYPES
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class LGNode:

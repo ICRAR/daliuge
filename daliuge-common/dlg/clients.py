@@ -28,7 +28,7 @@ import urllib.parse
 from dlg import constants
 from .restutils import RestClient
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 compress = os.environ.get("DALIUGE_COMPRESSED_JSON", True)
 
 quote = urllib.parse.quote

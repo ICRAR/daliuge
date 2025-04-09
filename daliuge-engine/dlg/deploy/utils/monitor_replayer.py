@@ -48,7 +48,7 @@ import networkx as nx
 import numpy as np
 import pygraphviz as pgv
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 ORIGINAL_COLOR = (87, 87, 87)
 YELLOW_COLOR = (255, 255, 0)

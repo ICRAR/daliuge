@@ -61,7 +61,7 @@ from dlg.exceptions import (
 )
 
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class SessionStates:

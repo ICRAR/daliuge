@@ -34,7 +34,7 @@ import urllib.request
 import requests
 from xml.dom.minidom import parseString
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def open(

@@ -131,7 +131,7 @@ app = FastAPI(
     },
 )
 app.mount("/static", StaticFiles(directory=file_location), name="static")
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 post_sem = threading.Semaphore(1)
 gen_pgt_sem = threading.Semaphore(1)

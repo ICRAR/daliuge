@@ -38,7 +38,7 @@ from dlg.data.drops.memory import InMemoryDROP
 from dlg.data.drops.ngas import NgasDROP
 from dlg.data.drops.file import FileDROP
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class AbstractStore(object):

@@ -57,7 +57,7 @@ from dlg.dropmake.definition_classes import Categories
 from dlg.dropmake.lg_node import LGNode
 from dlg.dropmake.graph_config import apply_active_configuration
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class LG:

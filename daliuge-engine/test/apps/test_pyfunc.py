@@ -40,7 +40,7 @@ from test.dlg_engine_testutils import NMTestsMixIn
 
 from ..manager import test_dm
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def func1(arg1):
@@ -168,7 +168,7 @@ class TestPyFuncApp(unittest.TestCase):
         b.addInput(a)
         b.addOutput(c)
 
-        with DROPWaiterCtx(self, c, 300):
+        with DROPWaiterCtx(self, c, 10):
             a.write(repr(input_data).encode("utf-8"))
             a.setCompleted()
         for drop in a, b, c:
@@ -190,7 +190,7 @@ class TestPyFuncApp(unittest.TestCase):
         b.addInput(a)
         b.addOutput(c)
 
-        with DROPWaiterCtx(self, c, 120):
+        with DROPWaiterCtx(self, c, 10):
             drop_loaders.save_pickle(a, input_data)
             a.setCompleted()
         for drop in a, b, c:

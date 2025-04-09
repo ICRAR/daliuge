@@ -60,7 +60,7 @@ FORMAT = (
     "%(asctime)-15s [%(levelname)5.5s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
 )
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 delimit = b"@#%!$"
 dl = len(delimit)
 

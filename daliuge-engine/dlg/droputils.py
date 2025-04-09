@@ -44,7 +44,7 @@ if TYPE_CHECKING:
     from dlg.apps.app_base import AppDROP
     from dlg.data.drops.data_base import DataDROP
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 # Used to check whether a command specifies via UID reference the path or
 # data URL of an input or output

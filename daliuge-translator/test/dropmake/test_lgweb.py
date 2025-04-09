@@ -42,7 +42,7 @@ import daliuge_tests.dropmake as test_graphs
 
 lg_dir = files(test_graphs)
 lgweb_port = 8086
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class TestLGWeb(unittest.TestCase):

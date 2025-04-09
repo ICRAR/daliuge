@@ -25,7 +25,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Optional, Union, List, DefaultDict
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class Event(object):

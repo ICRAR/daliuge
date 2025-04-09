@@ -35,7 +35,7 @@ from .definition_classes import Categories, ConstructTypes
 
 from typing import Dict
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 LG_VER_OLD = 1
 LG_VER_EAGLE_CONVERTED = 2

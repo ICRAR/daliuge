@@ -29,7 +29,7 @@ import socket
 
 from . import deployment_utils
 
-logger = logging.getLogger("dlg." + __name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class Remote(object):
