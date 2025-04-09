@@ -390,12 +390,11 @@ class DataDROP(AbstractDROP):
             for uid, input_port_name in port.items():
                 try:
                     ouput_port_name = self.parameters["port_map"][input_port_name]
-                    print(uid, input_port_name)
                     if ouput_port_name in producerPortValueMap[uid]:
                         finalDropPortMap[input_port_name] = producerPortValueMap[uid][
                             ouput_port_name]
                 except KeyError:
-                    logger.debug("UID %s Not available!", uid)
+                    logging.warning("%s not available.", input_port_name)
 
         for portname in finalDropPortMap:
             if portname in self.parameters:

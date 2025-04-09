@@ -280,7 +280,7 @@ class PyFuncApp(BarrierAppDROP):
         if hasattr(self, "func"):
             return  f"{self.__class__.__name__}_{self.func}_{self.oid}"
         else:
-            return self
+            return f"{self.__class__.__name__}"
 
     def _mixin_func_defaults(self):
         """
@@ -460,6 +460,11 @@ class PyFuncApp(BarrierAppDROP):
         vparg = []
         vkarg = {}
         input_outputs = []
+
+        # Port-types that we may receive a filename/path from that is used as an output
+        # reference
+        filename_ports = ["InputOutput", "OutputPort"]
+
         if self._applicationArgs:
             # if defined in both we use AppArgs values
             for arg in self._applicationArgs:

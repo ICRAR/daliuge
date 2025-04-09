@@ -37,6 +37,14 @@ class TestPathBuilders(unittest.TestCase):
         """
         Using the baseUID Generator with the humanreadable key
         """
+        res = base_uid_filename("", "")
+        self.assertEqual(None, res)
+        res = base_uid_filename(123456, None)
+        self.assertEqual("123456_", res)
+        res = base_uid_filename("123456_abcdef", "0/1")
+        self.assertEqual("123456_0_1", res)
+
+
 
     def test_file_path_from_string(self):
         uid = "123456"
@@ -46,7 +54,7 @@ class TestPathBuilders(unittest.TestCase):
         dt = "2025-08-17"
         res = filepath_from_string("prefix_{uid}_{datetime}.dat",
                                    uid=uid, datetime=dt)
-        self.assertEqual(f"prefix_123456_2025-08-17.dat", res)
+        self.assertEqual("prefix_123456_2025-08-17.dat", res)
         res = filepath_from_string(None, uid=None)
         self.assertEqual(None, res)
 

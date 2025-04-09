@@ -36,7 +36,7 @@ import re
 import os
 import uuid
 
-NON_FILENAME_CHARACTERS = re.compile(r":|%s" % os.sep)
+NON_FILENAME_CHARACTERS = re.compile(fr":|{os.sep}")
 
 def default_map():
     """
@@ -81,9 +81,11 @@ def base_uid_filename(uid: str, humanKey: str):
     -------
         str: Base filename
     """
-    if not uid or not humanKey:
+    if not uid:
         return None
-    fn = uid.split("_")[0] + "_" + str(humanKey)
+    if not humanKey:
+        humanKey = ""
+    fn = str(uid).split("_")[0] + "_" + str(humanKey)
     return NON_FILENAME_CHARACTERS.sub("_", fn)
 
 def find_dlg_fstrings(filename: str) -> list[str]:
