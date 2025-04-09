@@ -23,13 +23,14 @@ class DropParser(Enum):
 
 
 def serialize_kwargs(keyargs, prefix="--", separator=" "):
-    kwargs = []
+    kwargs = {}
     for name, value in iter(keyargs.items()):
-        if prefix == "--" and len(name) == 1:
-            kwargs += [f"-{name} {value}"]
-        else:
-            kwargs += [f"{prefix.strip()}{name.strip()}{separator}{str(value).strip()}"]
-    logger.debug("kwargs after serialization: %s", kwargs)
+        kwargs[name] = value
+    #     if prefix == "--" and len(name) == 1:
+    #         kwargs += [f"-{name} {value}"]
+    #     else:
+    #         kwargs += [f"{prefix.strip()}{name.strip()}{separator}{str(value).strip()}"]
+    # logger.debug("kwargs after serialization: %s", kwargs)
     return kwargs
 
 
@@ -80,9 +81,8 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
             pargs.append(str(value).strip())
         else:
             kwargs.update({name: value})
-    skwargs = serialize_kwargs(kwargs, prefix=prefix, separator=separator)
     logger.info("Constructed command line arguments: %s %s", pargs, kwargs)
-    return (pargs, skwargs)
+    return (pargs, kwargs)
 
 
 def identify_named_ports(
@@ -213,8 +213,6 @@ def replace_named_ports(
     inport_names: dict,
     outport_names: dict,
     appArgs: dict,
-    argumentPrefix: str = "--",
-    separator: str = " ",
     parser: callable = None,
 ) -> Tuple[str, str]:
     """
@@ -226,8 +224,6 @@ def replace_named_ports(
         inport_names: dictionary of input port names (key: uid)
         outport_names: dictionary of output port names (key: uid)
         appArgs: dictionary of all arguments
-        argumentPrefix: prefix for keyword arguments
-        separator: character used between keyword and value
         parser: reader function for ports
 
     This method is focused on creating two 'sets' of arguments:
@@ -245,6 +241,7 @@ def replace_named_ports(
         inport_names,
         outport_names,
     )
+
     inputs_dict = collections.OrderedDict()
     for uid, drop in iitems:
         inputs_dict[uid] = {
@@ -261,10 +258,6 @@ def replace_named_ports(
 
     positionalArgs = _get_args(appArgs, positional=True)
     keywordArgs = _get_args(appArgs, positional=False)
-    # we will need an ordered dict for all positional arguments
-    # thus we create it here and fill it with values
-    positionalPortArgs = collections.OrderedDict(positionalArgs)
-
     logger.debug(
         "posargs: %s; keyargs: %s, %s",
         positionalArgs,
@@ -272,7 +265,11 @@ def replace_named_ports(
         check_ports_dict(inport_names),
     )
 
+    # we will need an ordered dict for all positional arguments
+    # thus we create it here and fill it with values
+    positionalPortArgs = collections.OrderedDict(positionalArgs)
     keywordPortArgs = {}
+
     # Update the argument dictionaries in-place based on the port names.
     # This needs to be done for both the input ports and output ports on the drop.
     _process_port(
@@ -319,22 +316,11 @@ def replace_named_ports(
         if v not in [None, ""]:
             keywordArgs.update({k: v})
     for k, v in positionalPortArgs.items():
-        logger.debug("port posarg %s has value %s", k, v)
-        if k == "input_redirection":
-            v = f"cat {v} > "
-        if k == "output_redirection":
-            v = f"> {v}"
         if v not in [None, ""]:
             positionalArgs.update({k: v})
 
-    keywordArgs = (
-        serialize_kwargs(keywordArgs, prefix=argumentPrefix, separator=separator)
-        if len(keywordArgs) > 0
-        else [""]
-    )
-    pargs = list(positionalArgs.values())
-    if not pargs or None in pargs:
-        pargs = [""]
+    keywordArgs = serialize_kwargs(keywordArgs)
+    pargs = positionalArgs
 
     logger.debug("After port replacement: pargs: %s; keyargs: %s", pargs, keywordArgs)
     return keywordArgs, pargs
@@ -429,7 +415,7 @@ def get_port_reader_function(input_parser: DropParser):
     elif input_parser is DropParser.PATH:
         reader = lambda x: x.path
     elif input_parser is DropParser.DATAURL:
-        reader = lambda x: x.dataurl
+        reader = lambda x: x.dataURL
     elif input_parser is DropParser.DILL:
         reader = drop_loaders.load_dill
     elif input_parser is DropParser.BINARY:
