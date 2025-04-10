@@ -176,7 +176,7 @@ class StreamingBashAppTests(unittest.TestCase):
 
         a = StreamingOutputBashApp("a", "a", command=r"echo -en '5\n4\n3\n2\n1'")
         b = InMemoryDROP("b", "b")
-        c = StreamingInputBashApp("c", "c", command="cat > {d}")
+        c = StreamingInputBashApp("c", "c", command="cat > {d}", output_parser="utf8")
         d = FileDROP("d", "d", filepath=output_fname)
 
         a.addOutput(b)
