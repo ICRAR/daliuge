@@ -136,19 +136,15 @@ class InMemoryDROP(DataDROP):
             data_pos = field_names.index("pydata")
             pdict = kwargs["fields"][data_pos]
             pydata = parse_pydata(pdict)
+        if  pdict["type"].lower() in ["str","string"]:
+            self.data_type =  "String"
+            self._buf = io.StringIO(*args)
+        else:
+            self.data_type = pdict["type"]
+            self._buf = io.BytesIO(*args)
         if pydata:
             args.append(pydata)
-        else:
-            pdict["type"] = ""
-        self.data_type = pdict["type"]
-        if  self.data_type.lower() in ["str","string"]:
-            self.data_type =  "String"
-        logger.debug("Loaded into memory: %s, %s", pydata, self.data_type)
-        self._buf = (
-            io.BytesIO(*args)
-            if self.data_type != "String"
-            else io.StringIO(*args)
-        )
+            logger.debug("Loaded into memory: %s, %s", pydata, self.data_type)
         self.size = len(pydata) if pydata else 0
 
     def getIO(self):

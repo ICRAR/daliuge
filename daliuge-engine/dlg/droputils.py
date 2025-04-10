@@ -128,7 +128,11 @@ def allDropContents(drop, bufsize=65536) -> bytes:
     """
     Returns all the data contained in a given DROP
     """
-    buf = drop._buf
+    bflag = True
+    buf = io.BytesIO()
+    if hasattr(drop,"_buf") and isinstance(drop._buf, io.StringIO):
+        bflag = False
+        buf = io.StringIO()
     desc = drop.open()
 
     while True:
@@ -137,7 +141,7 @@ def allDropContents(drop, bufsize=65536) -> bytes:
             break
         buf.write(data)
     drop.close(desc)
-    return buf.getvalue()
+    return buf.getbuffer() if bflag else buf.getvalue()
 
 
 def copyDropContents(source: "DataDROP", target: "DataDROP", bufsize: int = 65536):

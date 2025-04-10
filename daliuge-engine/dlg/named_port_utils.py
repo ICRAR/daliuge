@@ -397,7 +397,7 @@ def get_port_reader_function(input_parser: DropParser):
         def optionalEval(x):
             # Null and Empty Drops will return an empty byte string
             # which should propogate back to None
-            content: str = droputils.allDropContents(x)
+            content: str = droputils.allDropContents(x).decode("utf-8")
             logger.debug("Read %s from %s drop.", content, input_parser)
             return ast.literal_eval(content) if len(content) > 0 else None
 
