@@ -413,6 +413,7 @@ def build_pg_block_data(drop: dict, rmode):
     block_data.extend(
         iter(sorted(drop["reprodata"][rmode.name]["pg_parenthashes"].values()))
     )
+    mtree = MerkleTree(block_data, common_hash)
     drop["reprodata"][rmode.name]["pg_blockhash"] = mtree.merkle_root
 
 
@@ -431,6 +432,7 @@ def build_rg_block_data(drop: dict, rmode):
     block_data.extend(
         iter(sorted(drop["reprodata"][rmode.name]["rg_parenthashes"].values()))
     )
+    mtree = MerkleTree(block_data, common_hash)
     drop["reprodata"][rmode.name]["rg_blockhash"] = mtree.merkle_root
 
 
