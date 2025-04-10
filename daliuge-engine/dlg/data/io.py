@@ -292,7 +292,7 @@ class MemoryIO(DataIO):
     @overrides
     def buffer(self) -> memoryview:
         # TODO: This may also be an issue
-        return self._buf.getbuffer()
+        return self._buf.getbuffer() if hasattr(self._buf,  "getbuffer") else self._buf.getvalue()
 
 
 # pylint: disable=possibly-used-before-assignment

@@ -150,7 +150,7 @@ def identify_named_ports(
                 continue
             parser = get_port_reader_function(encoding)
             if parser:
-                logger.debug("Reading from port using %s", parser.__repr__())
+                logger.debug("Reading from %s encoded port using %s", encoding, parser.__repr__())
                 value = parser(port_dict[keys[i]]["drop"])
             positionalPortArgs[key]["value"] = value
             logger.debug("Using %s '%s' for parg %s", mode, value, key)
@@ -166,7 +166,7 @@ def identify_named_ports(
                 continue
             parser = get_port_reader_function(encoding)
             if parser:
-                logger.debug("Reading from port using %s", parser.__repr__())
+                logger.debug("Reading from %s encoded port using %s", encoding, parser.__repr__())
                 value = parser(port_dict[keys[i]]["drop"])
             # if not found in appArgs we don't put them into portargs either
             # pargsDict.update({key: value})
@@ -390,12 +390,15 @@ def get_port_reader_function(input_parser: DropParser):
     if input_parser is DropParser.PICKLE:
         # all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
         reader = drop_loaders.load_pickle
+    elif input_parser is DropParser.UTF8:
+        reader = drop_loaders.load_utf8
     elif input_parser is DropParser.EVAL:
 
         def optionalEval(x):
             # Null and Empty Drops will return an empty byte string
             # which should propogate back to None
-            content: str = droputils.allDropContents(x).decode("utf-8")
+            content: str = droputils.allDropContents(x)
+            logger.debug("Read %s from %s drop.", content, input_parser)
             return ast.literal_eval(content) if len(content) > 0 else None
 
         reader = optionalEval
@@ -420,5 +423,5 @@ def get_port_reader_function(input_parser: DropParser):
     elif input_parser is DropParser.BINARY:
         reader = drop_loaders.load_binary
     else:
-        raise ValueError(input_parser.__repr__())
+        raise ValueError("Invalid input parser specified: %s", input_parser.__repr__())
     return reader

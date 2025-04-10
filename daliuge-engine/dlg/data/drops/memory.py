@@ -118,6 +118,7 @@ class InMemoryDROP(DataDROP):
         args = []
         pydata = None
         pdict = {"type": "raw"}  # initialize this value to enforce BytesIO
+        self.data_type = pdict["type"]
         field_names = (
             [f["name"] for f in kwargs["fields"]] if "fields" in kwargs else []
         )
@@ -137,12 +138,15 @@ class InMemoryDROP(DataDROP):
             pydata = parse_pydata(pdict)
         if pydata:
             args.append(pydata)
-            logger.debug("Loaded into memory: %s, %s", pydata, pdict["type"])
         else:
             pdict["type"] = ""
+        self.data_type = pdict["type"]
+        if  self.data_type.lower() in ["str","string"]:
+            self.data_type =  "String"
+        logger.debug("Loaded into memory: %s, %s", pydata, self.data_type)
         self._buf = (
             io.BytesIO(*args)
-            if pdict["type"].lower() not in ["string", "str"]
+            if self.data_type != "String"
             else io.StringIO(*args)
         )
         self.size = len(pydata) if pydata else 0

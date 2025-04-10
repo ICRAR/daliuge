@@ -145,3 +145,15 @@ def save_binary(drop: "DataDROP", data: bytes):
     dropio.open(OpenMode.OPEN_WRITE)
     dropio.write(bytes_data.getbuffer())
     dropio.close()
+
+
+def load_utf8(drop: "DataDROP", allow_pickle=False):
+    """
+    Loads data from a drop and converts it to a UTF8 encoded string.
+    """
+    dropio = drop.getIO()
+    dropio.open(OpenMode.OPEN_READ)
+    res = dropio.buffer()
+    # res = str(io.BytesIO(dropio.buffer()), encoding="utf8")
+    dropio.close()
+    return res
