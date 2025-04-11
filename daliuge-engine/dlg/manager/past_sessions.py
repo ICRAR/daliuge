@@ -27,6 +27,7 @@ Currently, this module only supports sessions with history stored on the _local_
 """
 
 from pathlib import Path
+from types import list
 
 
 class PastSessionManager:

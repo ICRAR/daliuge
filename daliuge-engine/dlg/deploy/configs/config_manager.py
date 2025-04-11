@@ -28,6 +28,7 @@ from enum import Enum, auto
 from dataclasses import dataclass
 from importlib.resources import files, as_file
 from pathlib import Path
+from types import list, dict
 
 import dlg.deploy.configs as default_configs
 from dlg.deploy.configs import ConfigFactory

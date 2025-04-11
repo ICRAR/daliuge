@@ -270,7 +270,7 @@ class MemoryIO(DataIO):
         try:
             self._desc.write(data)
         except Exception:
-            logger.debug("Writing of %s failed: %s", data)
+            logger.debug("Writing of data failed: %s", data)
             raise
         return len(data)
 
