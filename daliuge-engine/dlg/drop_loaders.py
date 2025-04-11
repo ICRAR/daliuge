@@ -23,7 +23,8 @@
 Utility functions for DROP I/O. This has been factored out from droputils
 to avoid cyclic imports.
 """
-
+import base64
+import dill
 import io
 import logging
 import pickle
@@ -114,6 +115,8 @@ def load_dill(drop: "DataDROP"):
         data = drop.read(desc)
         if not data:
             break
+        if isinstance(data, str):
+            data = base64.b64decode(data)
         buf.write(data)
     drop.close(desc)
     return dill.loads(buf.getbuffer())

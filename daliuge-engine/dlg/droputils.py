@@ -139,7 +139,7 @@ def allDropContents(drop, bufsize=65536) -> bytes:
             break
         buf.write(data)
     drop.close(desc)
-    return buf.getbuffer() if isinstance(buf,io.StringIO) else buf.getvalue()
+    return buf.getvalue()
 
 
 def copyDropContents(source: "DataDROP", target: "DataDROP", bufsize: int = 65536):

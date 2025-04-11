@@ -528,12 +528,12 @@ def prepareUser(DLG_ROOT=getDlgDir()):
 
 
 def serialize_data(d):
-    # return pickle.dumps(d)
+    # return dill.dumps(d)
     return b2s(base64.b64encode(dill.dumps(d)))
 
 
 def deserialize_data(d):
-    # return pickle.loads()
+    # return dill.loads(d)
     return dill.loads(base64.b64decode(d.encode("utf8")))
 
 

@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 from abc import abstractmethod, ABCMeta
+import base64
 from http.client import HTTPConnection
 from multiprocessing.sharedctypes import Value
 from overrides import overrides
@@ -32,6 +33,7 @@ from abc import abstractmethod, ABCMeta
 from typing import Optional, Union
 
 from dlg import ngaslite
+from dlg.common import b2s
 
 if sys.version_info >= (3, 8):
     from dlg.shared_memory import DlgSharedMemory
@@ -251,6 +253,7 @@ class MemoryIO(DataIO):
         elif self._mode == OpenMode.OPEN_READ:
             # TODO: potentially wasteful copy
             if isinstance(self._buf, io.StringIO):
+                self._desc = io.StringIO
                 return io.StringIO(self._buf.getvalue())
             return io.BytesIO(self._buf.getbuffer())
         else:
@@ -258,9 +261,17 @@ class MemoryIO(DataIO):
 
     @overrides
     def _write(self, data, **kwargs) -> int:
-        if isinstance(data, str):
+        if isinstance(self._desc, io.BytesIO) and isinstance(data, str):
             data = bytes(data, encoding="utf8")
-        self._desc.write(data)
+        elif isinstance(self._desc, io.StringIO) and isinstance(data, bytes):
+            data = b2s(base64.b64encode(data))
+        elif isinstance(data, memoryview):
+            data = bytes(data)
+        try:
+            self._desc.write(data)
+        except Exception:
+            logger.debug("Writing of %s failed: %s", data)
+            raise
         return len(data)
 
     @overrides

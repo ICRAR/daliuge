@@ -358,8 +358,9 @@ class TestPyFuncApp(unittest.TestCase):
                 for i in arg_inputs + [x[1] for x in kwarg_inputs.values()]:
                     i.setCompleted()
 
+            out = droputils.allDropContents(output)
             self.assertEqual(
-                expected_out, pickle.loads(droputils.allDropContents(output))
+                expected_out, pickle.loads(out)
             )  # @UndefinedVariable
 
         # func_with_defaults returns a - b * c + (y - x) * z

@@ -20,32 +20,48 @@
 #    MA 02111-1307  USA
 #
 import base64
+import builtins
+import dill
 import io
 import json
 import os
-import pickle
 import random
 import string
 import sys
+from typing import Union
 
 from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.data.drops.data_base import DataDROP, logger
 from dlg.data.io import SharedMemoryIO, MemoryIO
 
+def get_builtins()-> dict:
+    """
+    Get a tuple of buitlin types to compare pydata with.
+    """
+    builtin_types = tuple(getattr(builtins, t) for t in dir(builtins) if isinstance(getattr(builtins, t), type))
+    builtin_types = builtin_types[builtin_types.index(bool):]
+    builtin_names = [b.__name__ for b in builtin_types]
+    return dict(zip(builtin_names, builtin_types))
 
-def parse_pydata(pd_dict: dict) -> bytes:
+
+def parse_pydata(pd: Union[bytes, dict]) -> bytes:
     """
     Parse and evaluate the pydata argument to populate memory during initialization
 
-    :param pd_dict: the pydata dictionary from the graph node
+    :param pd: either the pydata dictionary from the graph node or the value directly
 
     :returns a byte encoded value
     """
+    pd_dict = pd if isinstance(pd, dict) else {"value":pd, "type":"raw"}
     pydata = pd_dict["value"]
-    logger.debug(f"pydata value provided: {pydata}, {pd_dict['type'].lower()}")
+    logger.debug("pydata value provided: '%s' with type '%s'", pydata, type(pydata))
 
     if pd_dict["type"].lower() in ["string", "str"]:
         return pydata if pydata != "None" else None
+    builtin_types = get_builtins()
+    if pd_dict["type"] != "raw" and type(pydata) in builtin_types.values() and pd_dict["type"] not in builtin_types.keys():
+        logger.warning("Type of pydata %s provided differs from specified type: %s", type(pydata).__name__, pd_dict["type"])
+        pd_dict["type"] = type(pydata).__name__
     if pd_dict["type"].lower() == "json":
         try:
             pydata = json.loads(pydata)
@@ -56,28 +72,35 @@ def parse_pydata(pd_dict: dict) -> bytes:
         pydata = eval(pydata)
         # except:
         #     pydata = pydata.encode()
-    elif pd_dict["type"].lower() == "int":
+    elif pd_dict["type"].lower() == "int" or isinstance(pydata, int):
         try:
             pydata = int(pydata)
+            pd_dict["type"] = "int"
         except:
             pydata = pydata.encode()
-    elif pd_dict["type"].lower() == "float":
+    elif pd_dict["type"].lower() == "float" or isinstance(pydata, float):
         try:
             pydata = float(pydata)
+            pd_dict["type"] = "float"
         except:
             pydata = pydata.encode()
-    elif pd_dict["type"].lower() == "boolean":
+    elif pd_dict["type"].lower() == "boolean" or isinstance(pydata, bool):
         try:
             pydata = bool(pydata)
+            pd_dict["type"] = "bool"
         except:
             pydata = pydata.encode()
     elif pd_dict["type"].lower() == "object":
         pydata = base64.b64decode(pydata.encode())
         try:
-            pydata = pickle.loads(pydata)
+            pydata = dill.loads(pydata)
         except:
             raise
-    return pickle.dumps(pydata)
+    elif pd_dict["type"].lower() == "raw":
+        pydata = dill.loads(base64.b64decode(pydata))
+        logger.debug("Returning pydata of type: %s", type(pydata))
+        # return pydata
+    return dill.dumps(pydata)
 
 
 ##
@@ -117,6 +140,7 @@ class InMemoryDROP(DataDROP):
         """
         args = []
         pydata = None
+        # pdict = {}
         pdict = {"type": "raw"}  # initialize this value to enforce BytesIO
         self.data_type = pdict["type"]
         field_names = (
@@ -124,27 +148,22 @@ class InMemoryDROP(DataDROP):
         )
         if "pydata" in kwargs and not (
             "fields" in kwargs and "pydata" in field_names
-        ):  # means that is was passed directly
+        ):  # means that is was passed directly (e.g. from tests)
             pydata = kwargs.pop("pydata")
-            logger.debug("pydata value provided: %s, %s", pydata, kwargs)
-            try:  # test whether given value is valid
-                _ = pickle.loads(base64.b64decode(pydata))
-                pydata = base64.b64decode(pydata)
-            except:
-                pydata = None
+            pdict["value"] = pydata
+            pydata = parse_pydata(pdict)
         elif "fields" in kwargs and "pydata" in field_names:
             data_pos = field_names.index("pydata")
             pdict = kwargs["fields"][data_pos]
             pydata = parse_pydata(pdict)
-        if  pdict["type"].lower() in ["str","string"]:
-            self.data_type =  "String"
-            self._buf = io.StringIO(*args)
+        if pdict and pdict["type"].lower() in ["str","string"]:
+            self.data_type =  "String" if pydata else "raw"
         else:
-            self.data_type = pdict["type"]
-            self._buf = io.BytesIO(*args)
+            self.data_type = pdict["type"] if pdict else ""
         if pydata:
             args.append(pydata)
-            logger.debug("Loaded into memory: %s, %s", pydata, self.data_type)
+            logger.debug("Loaded into memory: %s, %s, %s", pydata, self.data_type, type(pydata))
+        self._buf = io.BytesIO(*args) if self.data_type != "String" else io.StringIO(*args)
         self.size = len(pydata) if pydata else 0
 
     def getIO(self):
@@ -230,7 +249,7 @@ class SharedMemoryDROP(DataDROP):
             pydata = kwargs.pop("pydata")
             logger.debug("pydata value provided: %s", pydata)
             try:  # test whether given value is valid
-                _ = pickle.loads(base64.b64decode(pydata.encode("latin1")))
+                _ = dill.loads(base64.b64decode(pydata.encode("latin1")))
                 pydata = base64.b64decode(pydata.encode("latin1"))
             except:
                 pydata = None

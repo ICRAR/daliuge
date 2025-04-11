@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import base64
 import contextlib
+import inspect
 import logging
 import pickle
 import socket
@@ -312,6 +313,7 @@ class _AppDrop(_DelayedDrop):
         if hasattr(f, "__name__"):
             self.fname = f.__name__
         self.fcode, self.fdefaults = pyfunc.serialize_func(f)
+        # self.fcode = inspect.getsource(f)
         self.original_kwarg_names = []
         self.original_arg_names = []
         self.nout = nout
@@ -336,7 +338,10 @@ class _AppDrop(_DelayedDrop):
             my_dropdict["func_name"] = self.fname
             my_dropdict["name"] = simple_fname
         if self.fcode is not None:
-            my_dropdict["func_code"] = utils.b2s(base64.b64encode(self.fcode))
+            logger.debug("func_code provided: %s", self.fcode)
+            my_dropdict["func_code"] = self.fcode
+            # my_dropdict["func_code"] = base64.b64encode(self.fcode)
+            # my_dropdict["func_code"] = utils.b2s(base64.b64encode(self.fcode))
         if self.fdefaults:
             # APPLICATION ARGUMENTS
             my_dropdict["func_defaults"] = self.fdefaults
@@ -435,6 +440,7 @@ class _DataDrop(_DelayedDrop):
         )
         if not self.producer:
             my_dropdict["pydata"] = pyfunc.serialize_data(self.pydata)
+            # my_dropdict["pydata"] = self.pydata
         return my_dropdict
 
     def __repr__(self):

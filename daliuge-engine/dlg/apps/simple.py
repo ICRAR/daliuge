@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 """Applications used as examples, for testing, or in simple situations"""
+import base64
 import dill
 import _pickle
 from numbers import Number
@@ -1007,9 +1008,12 @@ class PickOne(BarrierAppDROP):
     def readData(self):
         input = self.inputs[0]
         data = pickle.loads(droputils.allDropContents(input))
+        # data = droputils.allDropContents(input)
+        # data = dill.loads(base64.b64decode(data))
 
         # make sure we always have a ndarray with at least 1dim.
         if type(data) not in (list, tuple) and not isinstance(data, (np.ndarray)):
+            logger.warning("Data type not in [list, tuple]: %s", data)
             raise TypeError
         if isinstance(data, np.ndarray) and data.ndim == 0:
             data = np.array([data])

@@ -33,7 +33,7 @@ import os
 import pickle
 import re
 
-from typing import Callable
+from typing import Callable, Union
 import dill
 from io import StringIO
 from contextlib import redirect_stdout
@@ -68,7 +68,8 @@ def serialize_func(f):
         parts = f.split(".")
         f = getattr(importlib.import_module(".".join(parts[:-1])), parts[-1])
 
-    fser = dill.dumps(f)
+    fser = base64.b64encode(dill.dumps(f)).decode()
+    # fser = inspect.getsource(f)
     fdefaults = {"args": [], "kwargs": {}}
     adefaults = {"args": [], "kwargs": {}}
     a = inspect.getfullargspec(f)
@@ -139,32 +140,43 @@ def import_using_name(app, fname):
             logger.debug("Loaded module: %s", mod)
             return mod
 
+def import_using_code_ser(func_code: Union[str, bytes], func_name: str):
+    """
+    Import the function provided as a serialised code string.
+    """
+    try:
+        func_code = func_code if isinstance(func_code, bytes) else func_code.encode()
+        func = dill.loads(base64.b64decode(func_code))
+    except Exception as err:
+        logger.warning("Unable to deserialize func_code: %s", err)
+        raise
+    if func_name and func_name.split(".")[-1] != func.__name__:
+        raise ValueError(
+            f"Function with name '{func.__name__}' instead of '{func_name}' found!"
+        )
+    return func
 
 def import_using_code(func_code: str, func_name: str, serialized: bool = True):
     """
     Import the function provided as a code string. Plain code as well as serialized code
     is supported. If the func_name does not match the provided func_name the load will fail.
     """
-    if not serialized:
-        logger.debug(f"Trying to import code from string: {func_code}")
-        mod = pyext.RuntimeModule.from_string("mod", func_name, func_code)
+    mod = None
+    if not serialized and not isinstance(func_code, bytes):
+        logger.debug(f"Trying to import code from string: {func_code.strip()}")
+        try:
+            mod = pyext.RuntimeModule.from_string("mod", func_name, func_code.strip())
+        except Exception:
+            func = import_using_code_ser(func_code, func_name)
         logger.debug("Imported function: %s", func_name)
-        if func_name:
+        if mod and func_name:
             if hasattr(mod, func_name):
                 func = getattr(mod, func_name)
             else:
                 logger.warning("Function with name '%s' not found!", func_name)
                 raise ValueError(f"Function with name '{func_name}' not found!")
     else:
-        try:
-            func = dill.loads(func_code)
-        except Exception as err:
-            logger.warning("Unable to deserialize func_code: %s", err)
-            raise
-        if func_name and func_name.split(".")[-1] != func.__name__:
-            raise ValueError(
-                f"Function with name '{func.__name__}' instead of '{func_name}' found!"
-            )
+        func = import_using_code_ser(func_code, func_name)
     logger.debug("Imported function: %s", func_name)
     return func
 
@@ -570,16 +582,16 @@ class PyFuncApp(BarrierAppDROP):
                 )
             except (SyntaxError, NameError) as err:
                 logger.warning(
-                    "Problem importing code: %s. Checking whether it was serialized.",
+                    "Problem importing code: %s.",
                     err,
                 )
-                serialized = True
-        if isinstance(self.func_code, bytes) or serialized:
-            if isinstance(self.func_code, str):
-                self.func_code = base64.b64decode(self.func_code.encode("utf8"))
-            self.func = import_using_code(
-                self.func_code, self.func_name, serialized=True
-            )
+                # serialized = True
+        # if isinstance(self.func_code, bytes) or serialized:
+        #     if isinstance(self.func_code, str):
+        #         self.func_code = base64.b64decode(self.func_code.encode("utf8"))
+        #     self.func = import_using_code(
+        #         self.func_code, self.func_name, serialized=True
+        #     )
 
         self._init_fn_defaults()
         # make sure defaults are dicts
@@ -778,9 +790,9 @@ class PyFuncApp(BarrierAppDROP):
                 result = result_iter[i]
 
             parser = self._match_parser(o)
-            if parser is DropParser.PICKLE:
-                logger.debug(f"Writing pickeled result {type(result)} to {o}")
-                o.write(pickle.dumps(result))
+            if parser in [DropParser.PICKLE, DropParser.DILL]:
+                logger.debug(f"Writing dilled result {type(result)} to {o}")
+                o.write(dill.dumps(result))
             elif parser is DropParser.EVAL or parser is DropParser.UTF8:
                 encoded_result = repr(result).encode("utf-8")
                 o.write(encoded_result)
@@ -795,8 +807,6 @@ class PyFuncApp(BarrierAppDROP):
                 drop_loaders.save_npy(o, result)
             elif parser is DropParser.RAW:
                 o.write(result)
-            elif parser is DropParser.DILL:
-                o.write(dill.dumps(result))
             elif parser is DropParser.BINARY:
                 drop_loaders.save_binary(o, result)
             else:
