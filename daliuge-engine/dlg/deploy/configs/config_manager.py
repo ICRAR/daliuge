@@ -28,7 +28,7 @@ from enum import Enum, auto
 from dataclasses import dataclass
 from importlib.resources import files, as_file
 from pathlib import Path
-from types import list, dict
+from types import List, Dict
 
 import dlg.deploy.configs as default_configs
 from dlg.deploy.configs import ConfigFactory
@@ -53,7 +53,7 @@ class ConfigManager:
     Utility class to manager job submission configuration files
     """
 
-    facilities: list[str]
+    facilities: List[str]
     prompt_setup = True
 
     def setup_user(self):
@@ -116,7 +116,7 @@ class ConfigManager:
         else:
             print("Unable to copy to %s, does is not available", DLG_CONFIG_DIR)
 
-    def get_user_configs(self) -> dict[Path]:
+    def get_user_configs(self) -> Dict[Path]:
         """
         Returns dictionary of filetypes to split out?
         """
