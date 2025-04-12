@@ -512,7 +512,6 @@ function drawGraphForDrops(g, drawGraph, oids, doSpecs, url) {
 	if (modified) {
 		drawGraph();
 		zoomFit();
-		zoomFit();
 	}
 
 	var time3 = new Date().getTime();
