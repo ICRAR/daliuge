@@ -243,6 +243,12 @@ class AbstractDROP(EventFirer, EventHandler):
         # directly outside the context of a session).
         self._dlg_session_id = self._popArg(kwargs, "dlg_session_id", "")
 
+        # A simple name that the Drop might receive
+        # This is usually set in the Logical Graph Editor,
+        # but is not necessarily always there
+        _name = self._popArg(kwargs, "name", "")
+        self.name = _name if _name else self._oid
+
         # The key of this drop in the original Logical Graph
         # This information might or might not be present depending on how the
         # physical graph was generated (or if this drop is being created as part
@@ -257,8 +263,10 @@ class AbstractDROP(EventFirer, EventHandler):
         # library we need to expose a list.
         self._consumers_uids = set()
         self._consumers = ListAsDict(self._consumers_uids)
+        self._consumers_names = dict()
         self._producers_uids = set()
         self._producers = ListAsDict(self._producers_uids)
+        self._producers_names = dict()
 
         # Set holding the state of the producers that have finished their
         # execution. Once all producers have finished, this DROP moves
@@ -953,6 +961,7 @@ class AbstractDROP(EventFirer, EventHandler):
             return
         # logger.debug("Adding new consumer %r to %r", consumer.oid, self.oid)
         self._consumers.append(consumer)
+        self._consumers_names[consumer.name] = consumer._uid
 
         # Subscribe the consumer to events sent when this DROP moves to
         # COMPLETED. This way the consumer will be notified that its input has
@@ -998,6 +1007,7 @@ class AbstractDROP(EventFirer, EventHandler):
             return
 
         self._producers.append(producer)
+        self._producers_names[producer.name] = producer._uid
 
         # Automatic back-reference
         if back and hasattr(producer, "addOutput"):

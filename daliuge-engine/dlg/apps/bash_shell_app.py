@@ -208,7 +208,11 @@ class BashShellBase:
         )
 
         cmd = self.command.strip()
-        cmd = droputils.replace_placeholders(cmd, inputs, outputs)
+        ins = {inputs[k].name:v for k,v in inputs.items()}
+        outs = {outputs[k].name:v for k,v in outputs.items()}
+
+        logger.debug("input names: %s, output names: %s", ins.keys(), outs.keys())
+        cmd = droputils.replace_placeholders(cmd, ins, outs)
 
         reader = get_port_reader_function(self.input_parser)
         keyargs, pargs = replace_named_ports(
