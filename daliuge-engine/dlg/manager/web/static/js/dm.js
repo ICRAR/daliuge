@@ -512,6 +512,7 @@ function drawGraphForDrops(g, drawGraph, oids, doSpecs, url) {
 	if (modified) {
 		drawGraph();
 		zoomFit();
+		zoomFit();
 	}
 
 	var time3 = new Date().getTime();
@@ -635,9 +636,7 @@ function _addNode(g, doSpec, url) {
 	else if (doSpec.type == 'plain') {
 		notes += 'storage: ' + doSpec.storage;
 	}
-    url = url.replace("api/","") + "/graph/drop/" +  doSpec.oid;
-    let link = "<a href=" + url +  " target='_blank'>Details</a>";
-	var oid = doSpec.oid;
+
 	var html = '<div class="drop-label ' + typeShape + '" id="id_' + oid + '">';
 	html += '<span class="notes">' + notes + '</span>';
     oid_date = doSpec.oid.split("_")[0];
