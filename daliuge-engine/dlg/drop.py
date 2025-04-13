@@ -221,7 +221,7 @@ class AbstractDROP(EventFirer, EventHandler):
         # A simple name that the Drop might receive
         # This is usually set in the Logical Graph Editor,
         # but is not necessarily always there
-        self.name = self._popArg(kwargs, "name", "")
+        self._name = self._popArg(kwargs, "name", self._oid)
 
         # Set log_level for this drop to level provided
         self._log_level = self._popArg(
@@ -246,8 +246,7 @@ class AbstractDROP(EventFirer, EventHandler):
         # A simple name that the Drop might receive
         # This is usually set in the Logical Graph Editor,
         # but is not necessarily always there
-        _name = self._popArg(kwargs, "name", "")
-        self.name = _name if _name else self._oid
+        self.name = self._popArg(kwargs, "name", self._oid)
 
         # The key of this drop in the original Logical Graph
         # This information might or might not be present depending on how the

@@ -23,12 +23,12 @@ import sys
 import optparse
 import shutil
 import textwrap
+import typing
 
 from enum import Enum, auto
 from dataclasses import dataclass
-from importlib.resources import files, as_file
+from importlib.resources import files
 from pathlib import Path
-from types import List, Dict
 
 import dlg.deploy.configs as default_configs
 from dlg.deploy.configs import ConfigFactory
@@ -53,12 +53,12 @@ class ConfigManager:
     Utility class to manager job submission configuration files
     """
 
-    facilities: List[str]
+    facilities: typing.List[str]
     prompt_setup = True
 
     def setup_user(self):
         """
-        Called when passing the "--setup" command of the "dlg remote" option. 
+        Called when passing the "--setup" command of the "dlg remote" option.
         """
         dir_state = self.create_dlg_config_directory()
         if dir_state == ConfigDirState.NEW:
@@ -116,7 +116,7 @@ class ConfigManager:
         else:
             print("Unable to copy to %s, does is not available", DLG_CONFIG_DIR)
 
-    def get_user_configs(self) -> Dict[Path]:
+    def get_user_configs(self) -> typing.Dict:
         """
         Returns dictionary of filetypes to split out?
         """
@@ -156,11 +156,11 @@ class ConfigManager:
         """
         Resolve the config type and choice to a config file and return full path.
 
-        Path resolution occurs in the following hierarchy: 
+        Path resolution occurs in the following hierarchy:
         - If config choice is absolute path, return the absolute path
         - If config choice is not an absolute path, but the path exists (i.e. can be
         found) return the path
-        - If the config choice is relative, and doesn't exist, check if it exists in 
+        - If the config choice is relative, and doesn't exist, check if it exists in
           DLG_CONFIG_DIR
             - If it does exist, construct the path
             - If it doesn't exist, return None
