@@ -218,11 +218,6 @@ class AbstractDROP(EventFirer, EventHandler):
         self._oid = str(oid)
         self._uid = str(uid)
 
-        # A simple name that the Drop might receive
-        # This is usually set in the Logical Graph Editor,
-        # but is not necessarily always there
-        self._name = self._popArg(kwargs, "name", self._oid)
-
         # Set log_level for this drop to level provided
         self._log_level = self._popArg(
             kwargs, "log_level", logging.getLevelName(logger.getEffectiveLevel())
