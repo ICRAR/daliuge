@@ -45,7 +45,8 @@ from dlg.data.drops.directorycontainer import DirectoryContainer
 from dlg.data.drops.file import FileDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
-from dlg.apps.simple import NullBarrierApp, Branch, SleepAndCopyApp
+from dlg.apps.simple import SimpleBranch
+from dlg.apps.simple import NullBarrierApp, SleepAndCopyApp
 
 try:
     from crc32c import crc32c
@@ -1167,7 +1168,7 @@ class BranchAppDropTestsBase(object):
     """Tests for the Branch class"""
 
     def _simple_branch_with_outputs(self, result, uids):
-        a = Branch(uids[0], uids[0], result=result, func_name="test.test_drop.func1")
+        a = SimpleBranch(uids[0], uids[0], result=result, func_name="test.test_drop.func1")
         b, c = (self.DataDropType(x, x) for x in uids[1:])
         a.addOutput(b)
         a.addOutput(c)

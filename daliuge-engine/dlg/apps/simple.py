@@ -951,6 +951,7 @@ class Branch(PyFuncApp):
     """
 
     bufsize = dlg_int_param("bufsize", 65536)
+    result = dlg_bool_param("result", False)
 
     def write_results(self, result: bool):
         """
@@ -968,6 +969,7 @@ class Branch(PyFuncApp):
         # TODO: The following should eventually use named ports
         false_out = 1 if result else 0
         true_out = 0 if result else 1
+        logger.debug("Sending skip to port: %s", self.outputs[false_out])
         self.outputs[false_out].skip()  # send skip to correct branch
 
         if self.inputs:
