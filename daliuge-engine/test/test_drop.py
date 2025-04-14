@@ -23,6 +23,7 @@
 import base64
 import contextlib
 import io
+import time
 import os, unittest
 import pickle
 import random
@@ -45,7 +46,7 @@ from dlg.data.drops.directorycontainer import DirectoryContainer
 from dlg.data.drops.file import FileDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
-from dlg.apps.simple import SimpleBranch
+from dlg.apps.simple import Branch
 from dlg.apps.simple import NullBarrierApp, SleepAndCopyApp
 
 try:
@@ -1168,7 +1169,7 @@ class BranchAppDropTestsBase(object):
     """Tests for the Branch class"""
 
     def _simple_branch_with_outputs(self, result, uids):
-        a = SimpleBranch(uids[0], uids[0], result=result, func_name="test.test_drop.func1")
+        a = Branch(uids[0], uids[0], result=result, func_name="test.test_drop.func1")
         b, c = (self.DataDropType(x, x) for x in uids[1:])
         a.addOutput(b)
         a.addOutput(c)
@@ -1231,7 +1232,7 @@ class BranchAppDropTestsBase(object):
             [DROPStates.COMPLETED, DROPStates.SKIPPED],
         ):
             a.async_execute()
-
+        time.sleep(0.01)
         # Depending on "result", the "true" branch will be run or skipped
         self._assert_drop_complete_or_skipped(last_true, result)
         self._assert_drop_complete_or_skipped(last_false, not result)
