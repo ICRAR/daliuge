@@ -385,14 +385,14 @@ def has_path(x):
 
 def replace_placeholders(cmd, inputs, outputs):
     """
-    Replaces any placeholder found in ``cmd`` with the path of the respective
+    Attemps to replace any placeholder found in ``cmd`` with the path of the respective
     input or output Drop from ``inputs`` or ``outputs``.
-    Placeholders have the different formats:
 
-    * ``%iN``, with N starting from 0, indicates the path of the N-th element
-      from the ``inputs`` argument; likewise for ``%oN``.
-    * ``%i[X]`` indicates the path of the input with UID ``X``; likewise for
-      ``%o[X]``.
+    This will attempt to use the value from the associated input or output DROP,
+    provided it has a `path` attribute.
+
+    Sometimes there will be no matching replacement, in which case the argument is not
+    replaced.
     """
 
     logger.debug(
@@ -413,7 +413,6 @@ def replace_placeholders(cmd, inputs, outputs):
         except AttributeError:
             logger.debug("Input %s does not have 'dataUrl' attr", attr)
 
-
     logger.debug("Command after path placeholder replacement is: %s", cmd)
 
     return cmd
@@ -423,12 +422,12 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
     """
     Replaces any placeholder found in ``cmd`` with the dataURL property of the
     respective input or output Drop from ``inputs`` or ``outputs``.
-    Placeholders have the different formats:
 
-    * ``%iDataURLN``, with N starting from 0, indicates the path of the N-th
-      element from the ``inputs`` argument; likewise for ``%oDataURLN``.
-    * ``%iDataURL[X]`` indicates the path of the input with UID ``X``; likewise
-      for ``%oDataURL[X]``.
+    This will attempt to use the value from the reciprocal input or output DROP,
+    provided it has a `dataURL` attribute.
+
+    Sometimes there will be no matching replacement, in which case the argument is not
+    replaced.
     """
 
     # Inputs/outputs that are not FileDROPs or DirectoryContainers can't

@@ -518,16 +518,11 @@ class DockerApp(BarrierAppDROP):
                 outport_names,
                 appArgs,
             )
-            # ins = {k:v for item in inport_names for k,v in item.items()}
-            # outs = {k:v for item in outport_names for k,v in item.items()}
-            # ins = {ins[k]:v for k,v in iitems}
-            # outs = {outs[k]:v for k,v in oitems}
-            ins = {self._inputs[k].name:v for k,v in self._inputs.items()}
-            outs = {self._outputs[k].name:v for k,v in self._outputs.items()}
+
             # complete command including all additional parameters and optional redirects
             if self._command:
                 cmd = droputils.replace_placeholders(
-                    self._command, ins, outs
+                    self._command, dockerInputs, dockerOutputs
                 )
                 for key, value in keyargs.items():
                     cmd = cmd.replace(f"{{{key}}}", str(value))

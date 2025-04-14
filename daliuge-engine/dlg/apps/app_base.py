@@ -146,7 +146,6 @@ class AppDROP(ContainerDROP):
         uid = inputDrop.uid
         if uid not in self._inputs:
             self._inputs[uid] = inputDrop
-            self._inputs_names[uid] = inputDrop.name
             if back:
                 inputDrop.addConsumer(self, False)
 
@@ -167,7 +166,6 @@ class AppDROP(ContainerDROP):
         uid = outputDrop.uid
         if uid not in self._outputs:
             self._outputs[uid] = outputDrop
-            self._outputs_names[uid] = outputDrop.name
 
             if back:
                 outputDrop.addProducer(self, False)
