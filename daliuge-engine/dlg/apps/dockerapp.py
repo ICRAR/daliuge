@@ -391,7 +391,7 @@ class DockerApp(BarrierAppDROP):
         # The only interest we currently have is the containerIp of other
         # DockerApps, and only if our command actually uses this IP
         if isinstance(drop, DockerApp):
-            if "%containerIp[{0}]%".format(drop.uid) in self._command:
+            if f"%containerIp[{{{drop.uid}}}]%" in self._command:
                 self._waiters.append(ContainerIpWaiter(drop))
                 logger.debug("%r: Added ContainerIpWaiter for %r", self, drop)
 
@@ -538,7 +538,7 @@ class DockerApp(BarrierAppDROP):
             # started, and replace their IP placeholders by the real IPs
             for waiter in self._waiters:
                 uid, ip = waiter.waitForIp()
-                cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
+                cmd = cmd.replace(f"%containerIp[{{{uid}}}]%", ip)
                 logger.debug("Command after IP replacement is: %s", cmd)
 
             # Wrap everything inside bash
