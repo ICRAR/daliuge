@@ -2,17 +2,18 @@ import ast
 from enum import Enum
 import logging
 import collections
+from dlg.data.drops.data_base import DataDROP
 import dlg.droputils as droputils
 import dlg.drop_loaders as drop_loaders
 from typing import Tuple
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class DropParser(Enum):
     RAW = "raw"
     PICKLE = "pickle"
-    EVAL = "eval" 
+    EVAL = "eval"
     NPY = "npy"
     DILL = "dill"
     # JSON = "json"
@@ -69,9 +70,7 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     positional arguments and one for kw arguments that can be used to construct
     the final command line.
     """
-    applicationArgs = clean_applicationArgs(
-        applicationArgs
-    )
+    applicationArgs = clean_applicationArgs(applicationArgs)
     pargs = []
     kwargs = {}
     for name, vdict in applicationArgs.items():
@@ -145,13 +144,13 @@ def identify_named_ports(
             value = ""  # make sure we are passing NULL drop events
         if key in positionalArgs:
             try:
-                encoding = DropParser(positionalPortArgs[key]['encoding'])
+                encoding = DropParser(positionalPortArgs[key]["encoding"])
             except ValueError:
                 logger.warning("No encoding set for %key: possible default")
                 continue
             parser = get_port_reader_function(encoding)
             if parser:
-                logger.debug("Reading from port using %s", parser.__repr__())
+                logger.debug("Reading from %s encoded port using %s", encoding, parser.__repr__())
                 value = parser(port_dict[keys[i]]["drop"])
             positionalPortArgs[key]["value"] = value
             logger.debug("Using %s '%s' for parg %s", mode, value, key)
@@ -161,13 +160,13 @@ def identify_named_ports(
                 keywordPortArgs.update({key: positionalPortArgs[key]})
         elif key in keywordArgs:
             try:
-                encoding = DropParser(keywordArgs[key]['encoding'])
+                encoding = DropParser(keywordArgs[key]["encoding"])
             except ValueError:
                 logger.warning("No encoding set for %key: possible default")
                 continue
             parser = get_port_reader_function(encoding)
             if parser:
-                logger.debug("Reading from port using %s", parser.__repr__())
+                logger.debug("Reading from %s encoded port using %s", encoding, parser.__repr__())
                 value = parser(port_dict[keys[i]]["drop"])
             # if not found in appArgs we don't put them into portargs either
             # pargsDict.update({key: value})
@@ -304,14 +303,13 @@ def replace_named_ports(
     keywordArgs = _get_args(appArgs, positional=False)
 
     # Extract values from dictionaries - "encoding" etc. are irrelevant
-    appArgs = {arg: subdict["value"] for arg, subdict in appArgs.items()}
-    positionalArgs = {arg: subdict["value"] for arg, subdict in positionalArgs.items()}
-    keywordArgs = {arg: subdict["value"] for arg, subdict in keywordArgs.items()}
-    keywordPortArgs = {
-        arg: subdict["value"] for arg, subdict in keywordPortArgs.items()
-    }
+    keywordArgs = {arg: subdict['value'] for arg, subdict in keywordArgs.items()}
+    positionalArgs = {arg: subdict['value'] for arg, subdict in positionalArgs.items()}
+    keywordPortArgs = {arg: subdict['value'] for arg, subdict in keywordPortArgs.items()}
+    positionalPortArgs = {arg: subdict['value'] for arg, subdict in
+                          positionalPortArgs.items()}
 
-    # Construct the final keywordArguments and positionalPortArguments
+    #  Construct the final keywordArguments and positionalPortArguments
     for k, v in keywordPortArgs.items():
         if v not in [None, ""]:
             keywordArgs.update({k: v})
@@ -372,10 +370,8 @@ def _get_args(appArgs, positional=False):
     Separate out the arguments dependening on if we want positional or keyword style
     """
     args = {
-        arg: {
-            "value": appArgs[arg]["value"],
-            "encoding": appArgs[arg].get("encoding", "dill"),
-        }
+        arg: {"value": appArgs[arg]["value"],
+              "encoding": appArgs[arg].get("encoding", "dill")}
         for arg in appArgs
         if (appArgs[arg]["positional"] == positional)
     }
@@ -383,6 +379,7 @@ def _get_args(appArgs, positional=False):
     argType = "Positional" if positional else "Keyword"
     logger.debug("%s arguments: %s", argType, args)
     return args
+
 
 def get_port_reader_function(input_parser: DropParser):
     """
@@ -393,22 +390,27 @@ def get_port_reader_function(input_parser: DropParser):
     if input_parser is DropParser.PICKLE:
         # all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
         reader = drop_loaders.load_pickle
+    elif input_parser is DropParser.UTF8:
+        reader = drop_loaders.load_utf8
     elif input_parser is DropParser.EVAL:
 
         def optionalEval(x):
             # Null and Empty Drops will return an empty byte string
             # which should propogate back to None
             content: str = droputils.allDropContents(x).decode("utf-8")
+            logger.debug("Read %s from %s drop.", content, input_parser)
             return ast.literal_eval(content) if len(content) > 0 else None
 
         reader = optionalEval
     elif input_parser is DropParser.UTF8:
+
         def utf8decode(drop: "DataDROP"):
             """
             Decode utf8
             Not stored in drop_loaders to avoid cyclic imports
             """
             return droputils.allDropContents(drop).decode("utf-8")
+
         reader = utf8decode
     elif input_parser is DropParser.NPY:
         reader = drop_loaders.load_npy
@@ -421,5 +423,5 @@ def get_port_reader_function(input_parser: DropParser):
     elif input_parser is DropParser.BINARY:
         reader = drop_loaders.load_binary
     else:
-        raise ValueError(input_parser.__repr__())
+        raise ValueError("Invalid input parser specified: %s", input_parser.__repr__())
     return reader

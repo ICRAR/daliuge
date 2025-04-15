@@ -57,7 +57,7 @@ from dlg.dropmake.definition_classes import Categories
 from dlg.dropmake.lg_node import LGNode
 from dlg.dropmake.graph_config import apply_active_configuration
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class LG:
@@ -305,7 +305,9 @@ class LG:
                             self._lg_links.append(lk)
                             logger.debug("Loop constructed: %s", gs._inputs)
                 else:
-                    for gs in (
+                    for (
+                        gs
+                    ) in (
                         gs_list
                     ):  # add artificial logical links to the "first" children
                         lgn.add_input(gs)
@@ -347,10 +349,12 @@ class LG:
                         # self._drop_dict['new_added'].append(src_drop['gather-data_drop'])
                 if recursive:
                     for child in lgn.children:
-                        self.lgn_to_pgn(child, miid, self.get_child_lp_ctx(lgn, lpcxt, i))
+                        self.lgn_to_pgn(
+                            child, miid, self.get_child_lp_ctx(lgn, lpcxt, i)
+                        )
                 else:
                     for child in lgn.children:
-                    # Approach next 'set' of children
+                        # Approach next 'set' of children
                         c_copy = copy.deepcopy(child)
                         c_copy.happy = True
                         c_copy.loop_ctx = self.get_child_lp_ctx(lgn, lpcxt, i)
@@ -431,12 +435,14 @@ class LG:
             Categories.PYTHON_APP,
         ]
 
-    def _link_drops(self, 
-                    slgn: LGNode, 
-                    tlgn: LGNode, 
-                    src_drop: dropdict, 
-                    tgt_drop: dropdict, 
-                    llink: dict):
+    def _link_drops(
+        self,
+        slgn: LGNode,
+        tlgn: LGNode,
+        src_drop: dropdict,
+        tgt_drop: dropdict,
+        llink: dict,
+    ):
         """ """
         sdrop = None
         if slgn.is_gather:
@@ -490,11 +496,11 @@ class LG:
             sname = slgn._getPortName("outputPorts", index=-1)
             tname = tlgn._getPortName("inputPorts")
 
-            # sname is dictionary of all output ports on the sDROP. 
+            # sname is dictionary of all output ports on the sDROP.
             # Therefore there's an expected number of output edges that we need to add
-            # We keep track of this by querying the sDROP's current outputs and seeing 
-            # what is currently 'lowest' in number. Eventual, all output port names will 
-            # be added. 
+            # We keep track of this by querying the sDROP's current outputs and seeing
+            # what is currently 'lowest' in number. Eventual, all output port names will
+            # be added.
             expected = [p for p in sname.keys()]
             output_port = expected[0]
             if "outputs" in sdrop:
@@ -502,9 +508,16 @@ class LG:
                 [actual.extend(pair.values()) for pair in sdrop["outputs"]]
                 actual_counts = {port: actual.count(port) for port in set(expected)}
                 expected_counts = {port: expected.count(port) for port in (expected)}
-                differences = {port: (expected_counts[port] - actual_counts.get(port,0)) for port in expected_counts}
-                candidates = {port: deficit for port, deficit in differences.items() if deficit>0}
-                if candidates: 
+                differences = {
+                    port: (expected_counts[port] - actual_counts.get(port, 0))
+                    for port in expected_counts
+                }
+                candidates = {
+                    port: deficit
+                    for port, deficit in differences.items()
+                    if deficit > 0
+                }
+                if candidates:
                     output_port = max(candidates, key=candidates.get)
             sdrop.addOutput(tdrop, name=output_port)
             tdrop.addProducer(sdrop, name=tname)

@@ -39,7 +39,7 @@ from .. import utils
 from ..restserver import RestServer
 from dlg.nm_dim_assigner import NMAssigner
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def get_tool():

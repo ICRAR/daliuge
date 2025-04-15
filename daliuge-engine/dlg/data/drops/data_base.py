@@ -50,7 +50,7 @@ except:
 
     _checksumType = ChecksumTypes.CRC_32
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 ##
@@ -97,7 +97,7 @@ class DataDROP(AbstractDROP):
         with self._refLock:
             self._refCount -= 1
 
-    @track_current_drop
+    # @track_current_drop
     def open(self, **kwargs):
         """
         Opens the DROP for reading, and returns a "DROP descriptor"
@@ -265,6 +265,8 @@ class DataDROP(AbstractDROP):
         if self._checksum is None:
             self._checksum = 0
             self._checksumType = _checksumType
+        if isinstance(chunk, str):
+            chunk = bytes(chunk, encoding="utf8")
         self._checksum = crc32c(chunk, self._checksum)
 
     @property
@@ -284,6 +286,8 @@ class DataDROP(AbstractDROP):
             io = self.getIO()
             io.open(OpenMode.OPEN_READ)
             data = io.read(65536)
+            if isinstance(data, str):
+                data = bytes(data, encoding="utf8")
             while data is not None and len(data) > 0:
                 self._updateChecksum(data)
                 data = io.read(65536)
@@ -353,7 +357,7 @@ class DataDROP(AbstractDROP):
         """
 
         try:
-            dropInputPorts = self.parameters['producers']
+            dropInputPorts = self.parameters["producers"]
         except KeyError:
             logging.debug("No producers available for drop: %s", self.uid)
             return
@@ -362,7 +366,7 @@ class DataDROP(AbstractDROP):
         finalDropPortMap = {}  # Final mapping of named port to value stored in producer
 
         for p in self.producers:
-            params = p.parameters['outputs']
+            params = p.parameters["outputs"]
             for param in params:
                 try:
                     key = list(param.keys())[0]
@@ -376,8 +380,10 @@ class DataDROP(AbstractDROP):
                     portValue = p.parameters[param[key]]
                 # TODO This currently only allows 1 UID -> Portname/Value
                 # Investigate UID -> [Portname1:Value1, Portnam2:value2,..,]
-                producerPortValueMap[producerUid] = {"portname": portName,
-                                                     "value": portValue}
+                producerPortValueMap[producerUid] = {
+                    "portname": portName,
+                    "value": portValue,
+                }
 
         for port in dropInputPorts:
             try:
@@ -387,19 +393,18 @@ class DataDROP(AbstractDROP):
                 continue
             for uid, portname in port.items():
                 try:
-                    print(uid, portname)
+                    logger.debug("Trying to map UID: %s to port %s", uid, portname)
                     tmp = producerPortValueMap[uid]
-                    if tmp['portname'] == portname:
-                        finalDropPortMap[portname] = tmp['value']
+                    if tmp["portname"] == portname:
+                        finalDropPortMap[portname] = tmp["value"]
                 except KeyError:
-                    print("Not available")
+                    logger.debug("UID %s Not available!", uid)
 
         for portname in finalDropPortMap:
             if portname in self.parameters:
                 self.parameters[portname] = finalDropPortMap[portname]
 
         self._updatedPorts = True
-
 
     @abstractmethod
     def getIO(self) -> DataIO:

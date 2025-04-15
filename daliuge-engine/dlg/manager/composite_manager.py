@@ -48,7 +48,7 @@ from dlg.exceptions import (
 from dlg.manager.past_sessions import PastSessionManager
 from dlg.utils import portIsOpen, getDlgWorkDir
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def uid_for_drop(dropSpec):
@@ -140,15 +140,15 @@ class CompositeManager(DROPManager):
     __metaclass__ = abc.ABCMeta
 
     def __init__(
-            self,
-            dmPort,
-            partitionAttr,
-            subDmId,
-            dmHosts: list[str] = None,
-            pkeyPath=None,
-            dmCheckTimeout=10,
-            dump_graphs=False,
-            hosts_are_dim=False
+        self,
+        dmPort,
+        partitionAttr,
+        subDmId,
+        dmHosts: list[str] = None,
+        pkeyPath=None,
+        dmCheckTimeout=10,
+        dump_graphs=False,
+        hosts_are_dim=False,
     ):
         """
         Creates a new CompositeManager. The sub-DMs it manages are to be located
@@ -218,7 +218,8 @@ class CompositeManager(DROPManager):
                 if not self.check_dm(host, self._dmPort, timeout=self._dmCheckTimeout):
                     logger.error(
                         "Couldn't contact manager for host %s with dmPort %d, will try again later",
-                        host, self._dmPort,
+                        host,
+                        self._dmPort,
                     )
             if self._dmCheckerEvt.wait(60):
                 break
@@ -300,9 +301,10 @@ class CompositeManager(DROPManager):
 
         :return: List of path names (str)
         """
-        return [path.name for path in self._past_session_manager.past_sessions(
-            self._sessionIds)]
-
+        return [
+            path.name
+            for path in self._past_session_manager.past_sessions(self._sessionIds)
+        ]
 
     def _do_in_host(self, action, sessionId, exceptions, f, collect, port, iterable):
         """
@@ -337,7 +339,7 @@ class CompositeManager(DROPManager):
                 host.host,
                 host.port,
                 sessionId,
-                f
+                f,
             )
 
     def replicate(self, sessionId, f, action, collect=None, iterable=None, port=None):
@@ -426,12 +428,11 @@ class CompositeManager(DROPManager):
         graph_path = session_dir / f"{sessionId}.graph"
 
         try:
-            with graph_path.open('w') as fp:
+            with graph_path.open("w") as fp:
                 json.dump(graphSpec, fp, indent=2)
             logger.debug("Graph saved at %s", graph_path)
         except NotADirectoryError:
-            logger.error("Session directory %s does not exist",
-                         graph_path.parent)
+            logger.error("Session directory %s does not exist", graph_path.parent)
 
     def _addGraphSpec(self, dm, host_and_graphspec, sessionId):
         host, graphSpec = host_and_graphspec
@@ -501,8 +502,8 @@ class CompositeManager(DROPManager):
         for rel in inter_partition_rels:
             # rhn = self._graph[rel.rhs]["node"].split(":")[0]
             # lhn = self._graph[rel.lhs]["node"].split(":")[0]
-            rhn = (self._graph[rel.rhs]["node"])
-            lhn = (self._graph[rel.lhs]["node"])
+            rhn = self._graph[rel.rhs]["node"]
+            lhn = self._graph[rel.lhs]["node"]
             drop_rels[lhn][rhn].append(rel)
             drop_rels[rhn][lhn].append(rel)
 
@@ -539,6 +540,7 @@ class CompositeManager(DROPManager):
             sessionId,
             host,
         )
+
     def deploySession(self, sessionId, completedDrops: list[str] = None):
         # Indicate the node managers that they have to subscribe to events
         # published by some nodes
@@ -652,8 +654,13 @@ class DataIslandManager(CompositeManager):
     The DataIslandManager, which manages a number of NodeManagers.
     """
 
-    def __init__(self, dmHosts: list[str] = None, pkeyPath=None, dmCheckTimeout=10,
-                 dump_graphs=False):
+    def __init__(
+        self,
+        dmHosts: list[str] = None,
+        pkeyPath=None,
+        dmCheckTimeout=10,
+        dump_graphs=False,
+    ):
         super(DataIslandManager, self).__init__(
             NODE_DEFAULT_REST_PORT,
             "node",
@@ -661,7 +668,7 @@ class DataIslandManager(CompositeManager):
             dmHosts=dmHosts,
             pkeyPath=pkeyPath,
             dmCheckTimeout=dmCheckTimeout,
-            dump_graphs=dump_graphs
+            dump_graphs=dump_graphs,
         )
 
         # In the case of the Data Island the dmHosts are the final nodes as well
@@ -675,8 +682,13 @@ class MasterManager(CompositeManager):
     The MasterManager, which manages a number of DataIslandManagers.
     """
 
-    def __init__(self, dmHosts: list[str] = None, pkeyPath=None, dmCheckTimeout=10,
-        dump_graphs=False):
+    def __init__(
+        self,
+        dmHosts: list[str] = None,
+        pkeyPath=None,
+        dmCheckTimeout=10,
+        dump_graphs=False,
+    ):
         super(MasterManager, self).__init__(
             ISLAND_DEFAULT_REST_PORT,
             "island",
@@ -685,6 +697,6 @@ class MasterManager(CompositeManager):
             pkeyPath=pkeyPath,
             dmCheckTimeout=dmCheckTimeout,
             dump_graphs=dump_graphs,
-            hosts_are_dim=True
+            hosts_are_dim=True,
         )
         logger.info("Created MasterManager for DIM hosts: %r", self._dmHosts)

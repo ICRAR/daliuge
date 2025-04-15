@@ -23,7 +23,8 @@
 Utility functions for DROP I/O. This has been factored out from droputils
 to avoid cyclic imports.
 """
-
+import base64
+import dill
 import io
 import logging
 import pickle
@@ -38,7 +39,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from dlg.data.drops.data_base import DataDROP
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 # Used to check whether a command specifies via UID reference the path or
 # data URL of an input or output
@@ -114,6 +115,8 @@ def load_dill(drop: "DataDROP"):
         data = drop.read(desc)
         if not data:
             break
+        if isinstance(data, str):
+            data = base64.b64decode(data)
         buf.write(data)
     drop.close(desc)
     return dill.loads(buf.getbuffer())
@@ -145,3 +148,15 @@ def save_binary(drop: "DataDROP", data: bytes):
     dropio.open(OpenMode.OPEN_WRITE)
     dropio.write(bytes_data.getbuffer())
     dropio.close()
+
+
+def load_utf8(drop: "DataDROP", allow_pickle=False):
+    """
+    Loads data from a drop and converts it to a UTF8 encoded string.
+    """
+    dropio = drop.getIO()
+    dropio.open(OpenMode.OPEN_READ)
+    res = dropio.buffer()
+    # res = str(io.BytesIO(dropio.buffer()), encoding="utf8")
+    dropio.close()
+    return res

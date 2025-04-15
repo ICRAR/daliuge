@@ -7,7 +7,7 @@ For more information please refer to the documentation
 https://daliuge.readthedocs.io/en/latest/development/app_development/eagle_app_integration.html#automatic-eagle-palette-generation
 
 
-TODO: This whole tool needs re-factoring into separate class files 
+TODO: This whole tool needs re-factoring into separate class files
 (compound, child, grandchild, grandgrandchild, node, param, pluggable parsers)
 Should also be made separate sub-repo with proper installation and entry point.
 """
@@ -134,9 +134,7 @@ def get_args():
     )
     parser.add_argument("idir", help="input directory path or file name")
     parser.add_argument("ofile", help="output file name")
-    parser.add_argument(
-        "-m", "--module", help="Module load path name", default=""
-    )
+    parser.add_argument("-m", "--module", help="Module load path name", default="")
     parser.add_argument(
         "-t", "--tag", help="filter components with matching tag", default=""
     )
@@ -201,9 +199,7 @@ def check_environment_variables() -> bool:
 
         if value is None:
             if variable == "PROJECT_NAME":
-                os.environ["PROJECT_NAME"] = os.path.basename(
-                    os.path.abspath(".")
-                )
+                os.environ["PROJECT_NAME"] = os.path.basename(os.path.abspath("."))
             elif variable == "PROJECT_VERSION":
                 os.environ["PROJECT_VERSION"] = "0.1"
             elif variable == "GIT_REPO":
@@ -339,9 +335,7 @@ def find_field_by_name(fields, name):
     return None
 
 
-def _check_required_fields_for_category(
-    text: str, fields: list, category: str
-):
+def _check_required_fields_for_category(text: str, fields: list, category: str):
     """
     Check if fields have mandatory content and alert with <text> if not.
 
@@ -461,9 +455,7 @@ def alert_if_missing(message: str, fields: list, internal_name: str):
     :param internal_name: str, identifier name of field to check
     """
     if find_field_by_name(fields, internal_name) is None:
-        logger.warning(
-            message + " component missing " + internal_name + " cparam"
-        )
+        logger.warning(message + " component missing " + internal_name + " cparam")
         pass
 
 
@@ -624,9 +616,7 @@ def create_palette_node_from_params(params) -> tuple:
     # process the params
     for param in params:
         if not isinstance(param, dict):
-            logger.error(
-                "param %s has wrong type %s. Ignoring!", param, type(param)
-            )
+            logger.error("param %s has wrong type %s. Ignoring!", param, type(param))
             continue
         key = param["key"]
         direction = param["direction"]
@@ -965,8 +955,7 @@ class greatgrandchild:
             for p in detailed_description.split(":param")[1:]
         ]
         type_lines = [
-            p.replace("\n", "").strip()
-            for p in detailed_description.split(":type")[1:]
+            p.replace("\n", "").strip() for p in detailed_description.split(":type")[1:]
         ]
         # param_lines = [line.strip() for line in detailed_description]
 
@@ -988,18 +977,14 @@ class greatgrandchild:
             # logger.debug("%s description: %s", param_name, param_description)
 
             if len(type_lines) != 0:
-                result.update(
-                    {param_name: {"desc": param_description, "type": None}}
-                )
+                result.update({param_name: {"desc": param_description, "type": None}})
             else:
                 result.update(
                     {
                         param_name: {
                             "desc": param_description,
                             "type": _typeFix(
-                                re.split(
-                                    r"[,\s\n]", param_description.strip()
-                                )[0]
+                                re.split(r"[,\s\n]", param_description.strip())[0]
                             ),
                         }
                     }
@@ -1108,9 +1093,7 @@ class greatgrandchild:
                 rpds = rpds[1:]
             else:  # if something else use first word and type Unknown
                 rpds = re.findall(r"\w+", rpds[0])[0:1] + ["Unknown"]
-            rdict = dict(
-                zip(rpds[::3], zip(rpds[1::3]))
-            )  # create initial return dict
+            rdict = dict(zip(rpds[::3], zip(rpds[1::3])))  # create initial return dict
             rdict = {
                 k: {"desc": v[0].replace("\n", " "), "type": _typeFix(k)}
                 for k, v in rdict.items()
@@ -1185,11 +1168,7 @@ class greatgrandchild:
             # Might not be complete or correct and has to be merged with the information
             # in the param section below.
             direction = None
-            if (
-                len(ggchild) > 0
-                and len(ggchild[0]) > 0
-                and ggchild[0][0].text != None
-            ):
+            if len(ggchild) > 0 and len(ggchild[0]) > 0 and ggchild[0][0].text != None:
                 # get description, params and return
                 dd = ggchild[0][0].text
                 d_format = self._identify_format(dd)  # identify docstyle
@@ -1281,10 +1260,7 @@ class greatgrandchild:
             # if str(name) == "self" and \
             #     self.func_name.rsplit("::",1)[-1] in ["__init__", "__class__"]:
             #     return None
-            if (
-                name in self.member["params"]
-                and "type" in self.member["params"][name]
-            ):
+            if name in self.member["params"] and "type" in self.member["params"][name]:
                 logger.debug(
                     "Existing type definition found for %s: %s",
                     name,
@@ -1587,9 +1563,7 @@ def _process_child(child: dict, language: str) -> dict:
         else:
             casa_mode = False
             hold_name = "Unknown"
-        logger.debug(
-            "Found compoundname: %s; extracted: %s", child.text, hold_name
-        )
+        logger.debug("Found compoundname: %s; extracted: %s", child.text, hold_name)
     if child.tag == "detaileddescription" and len(child) > 0 and casa_mode:
         # for child in ggchild:
         dStr = child[0][0].text
@@ -1729,9 +1703,7 @@ def process_compounddef_default(compounddef, language):
 
 
 # find the named aparam in params, and update the description
-def set_param_description(
-    name: str, description: str, p_type: str, params: dict
-):
+def set_param_description(name: str, description: str, p_type: str, params: dict):
     """
     Set the description field of a of parameter <name> from parameters.
     TODO: This should really be part of a class
@@ -1766,10 +1738,7 @@ def create_construct_node(node_type: str, node: dict) -> dict:
     # check that type is in the list of known types
     if node_type not in KNOWN_CONSTRUCT_TYPES:
         logger.warning(
-            " construct for node'"
-            + node["name"]
-            + "' has unknown type: "
-            + node_type
+            " construct for node'" + node["name"] + "' has unknown type: " + node_type
         )
         pass
 
@@ -1887,18 +1856,14 @@ def parseCasaDocs(dStr: str) -> dict:
     dStr = cleanString(dStr)
     dList = dStr.split("\n")
     try:
-        start_ind = [
-            idx for idx, s in enumerate(dList) if "-- parameter" in s
-        ][0] + 1
+        start_ind = [idx for idx, s in enumerate(dList) if "-- parameter" in s][0] + 1
         end_ind = [idx for idx, s in enumerate(dList) if "-- example" in s][0]
     except IndexError:
         logger.debug("Problems finding start or end index for task: {task}")
         return {}, ""
     paramsList = dList[start_ind:end_ind]
     paramsSidx = [
-        idx + 1
-        for idx, p in enumerate(paramsList)
-        if len(p) > 0 and p[0] != " "
+        idx + 1 for idx, p in enumerate(paramsList) if len(p) > 0 and p[0] != " "
     ]
     paramsEidx = paramsSidx[1:] + [len(paramsList) - 1]
     paramFirstLine = [
@@ -1929,7 +1894,7 @@ if __name__ == "__main__":
 
     TODO: Should be split up
     """
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger(f"dlg.{__name__}")
     FORMAT = "%(asctime)s [  %(filename)s  ] [  %(lineno)s  ] [  %(funcName)s  ] || %(message)s ||"
     logging.basicConfig(
         format=FORMAT,
@@ -1978,9 +1943,7 @@ if __name__ == "__main__":
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
-    logger.info(
-        "Wrote doxygen configuration file (Doxyfile) to " + doxygen_filename
-    )
+    logger.info("Wrote doxygen configuration file (Doxyfile) to " + doxygen_filename)
 
     # modify options in the Doxyfile
     modify_doxygen_options(doxygen_filename, DOXYGEN_SETTINGS)
@@ -2043,9 +2006,7 @@ if __name__ == "__main__":
             functions = functions[0] if len(functions) > 0 else functions
             logger.debug("Number of functions in compound: %d", len(functions))
             for f in functions:
-                f_name = [
-                    k["value"] for k in f["params"] if k["key"] == "name"
-                ]
+                f_name = [k["value"] for k in f["params"] if k["key"] == "name"]
                 logger.debug("Function names: %s", f_name)
                 if f_name == [".Unknown"]:
                     continue

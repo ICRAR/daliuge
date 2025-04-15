@@ -37,6 +37,7 @@ from dlg.common.reproducibility.reproducibility import init_runtime_repro_data
 from dlg.utils import createDirIfMissing
 
 from dlg import constants
+
 # from .. import constants
 from dlg import droputils
 from dlg import graph_loader
@@ -60,7 +61,7 @@ from dlg.exceptions import (
 )
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class SessionStates:
@@ -531,7 +532,7 @@ class Session(object):
             droprels = [DROPRel(*x) for x in droprels]
 
             # Sanitize the host/rpc_port info if needed
-            rpc_port = host.rpc_port #constants.NODE_DEFAULT_RPC_PORT
+            rpc_port = host.rpc_port  # constants.NODE_DEFAULT_RPC_PORT
             # if type(host) is tuple:
             #     host, _, rpc_port = host
 

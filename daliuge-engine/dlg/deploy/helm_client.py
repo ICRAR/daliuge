@@ -47,7 +47,7 @@ from dlg.dropmake import pg_generator
 from dlg.restutils import RestClient
 from dlg.common.k8s_utils import check_k8s_env
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def _num_deployments_required(islands, nodes):
@@ -82,9 +82,7 @@ def _write_chart(
         "kubeVersion": kubeVersion,
     }
     # TODO: Fix app_version quotations.
-    with open(
-        f"{chart_dir}{os.sep}{name}", "w", encoding="utf-8"
-    ) as chart_file:
+    with open(f"{chart_dir}{os.sep}{name}", "w", encoding="utf-8") as chart_file:
         yaml.dump(chart_info, chart_file)
 
 
@@ -97,13 +95,9 @@ def _write_values(chart_dir, config):
 
 
 def _read_values(chart_dir):
-    with open(
-        f"{chart_dir}{os.sep}values.yaml", "r", encoding="utf-8"
-    ) as old_file:
+    with open(f"{chart_dir}{os.sep}values.yaml", "r", encoding="utf-8") as old_file:
         data = yaml.safe_load(old_file)
-    with open(
-        f"{chart_dir}{os.sep}values.yaml", "r", encoding="utf-8"
-    ) as custom_file:
+    with open(f"{chart_dir}{os.sep}values.yaml", "r", encoding="utf-8") as custom_file:
         new_data = yaml.safe_load(custom_file)
     data.update(new_data)
     logger.info("Read yaml values file")
@@ -164,9 +158,7 @@ class HelmClient:
             self._set_physical_graph(physical_graph_file)
 
         # Copy in template files.
-        library_root = pathlib.Path(
-            os.path.dirname(dlg.__file__)
-        ).parent.parent
+        library_root = pathlib.Path(os.path.dirname(dlg.__file__)).parent.parent
         logger.debug(f"Helm chart copied to: {library_root}")
         if sys.version_info >= (3, 8):
             shutil.copytree(
@@ -183,9 +175,9 @@ class HelmClient:
     def _set_physical_graph(self, physical_graph_content, co_host=True):
         self._physical_graph_file = physical_graph_content
         self._islands, self._nodes = _find_resources(self._physical_graph_file)
-        self._num_machines = _num_deployments_required(
-            self._islands, self._nodes
-        ) - (1 if co_host else 0)
+        self._num_machines = _num_deployments_required(self._islands, self._nodes) - (
+            1 if co_host else 0
+        )
 
     def _find_pod_details(self):
         # NOTE: +1 for the master.
@@ -317,24 +309,16 @@ class HelmClient:
             else:
                 logger.error("K8s pods did not start in timeframe allocated")
                 self.teardown()
-                raise RuntimeWarning(
-                    "K8s pods did not start in timeframe allocated"
-                )
+                raise RuntimeWarning("K8s pods did not start in timeframe allocated")
         else:
-            logger.info(
-                f"Created helm chart {self._chart_name} in {self._deploy_dir}"
-            )
+            logger.info(f"Created helm chart {self._chart_name} in {self._deploy_dir}")
 
     def teardown(self):
         if not self._k8s_access:
             raise RuntimeError("Cannot access k8s")
         for i in range(self._num_machines - 1, -1, -1):
-            subprocess.check_output(
-                [f"helm uninstall daliuge-daemon-{i}"], shell=True
-            )
-        subprocess.check_output(
-            [f"helm uninstall daliuge-daemon-master"], shell=True
-        )
+            subprocess.check_output([f"helm uninstall daliuge-daemon-{i}"], shell=True)
+        subprocess.check_output([f"helm uninstall daliuge-daemon-master"], shell=True)
 
     def _monitor(self, session_id=None):
         def _task():
@@ -347,9 +331,7 @@ class HelmClient:
                     )
                     break
                 except:
-                    logger.exception(
-                        "Monitoring failed, attempting to restart"
-                    )
+                    logger.exception("Monitoring failed, attempting to restart")
 
         threads = threading.Thread(target=_task)
         threads.start()
@@ -368,9 +350,7 @@ class HelmClient:
         node_ips.remove(self._pod_details["master"]["ip"])
         node_ips = [self._pod_details["master"]["ip"]] + node_ips
         # node_ips = ['localhost']
-        physical_graph = pg_generator.resource_map(
-            pgt_data, node_ips, co_host_dim=True
-        )
+        physical_graph = pg_generator.resource_map(pgt_data, node_ips, co_host_dim=True)
         # TODO: Add dumping to log-dir
         submit(
             physical_graph,

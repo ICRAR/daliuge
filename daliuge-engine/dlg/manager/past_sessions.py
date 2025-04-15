@@ -28,7 +28,6 @@ Currently, this module only supports sessions with history stored on the _local_
 
 from pathlib import Path
 
-
 class PastSessionManager:
     """
     A utility class that 'manages' past sessions that have been run on the current compute
