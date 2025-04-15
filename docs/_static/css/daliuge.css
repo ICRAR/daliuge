@@ -19,3 +19,7 @@
     white-space: normal !important; /* Allow text to wrap */
     word-wrap: break-word !important;
 }
+
+.wy-nav-content {
+    max-width: 1000px
+}
