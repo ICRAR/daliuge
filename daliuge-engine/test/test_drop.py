@@ -1171,8 +1171,8 @@ class BranchAppDropTestsBase(object):
     def _simple_branch_with_outputs(self, result, uids):
         a = Branch(uids[0], uids[0], result=result, func_name="test.test_drop.func1")
         b, c = (self.DataDropType(x, x) for x in uids[1:])
-        a.addOutput(b)
         a.addOutput(c)
+        a.addOutput(b)
         return a, b, c
 
     def _assert_drop_in_status(self, drop, status, execStatus):
