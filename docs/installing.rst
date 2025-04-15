@@ -39,18 +39,18 @@ Installation Options
         * Translate workflows through the browser
         * Deploy workflows locally
      - :ref:`docker install`
-   * - Developing and deploying graphs remotely
-     - * Using the ``dlg`` CLI
-       * Developing EAGLE graphs in the browser
+   * - Developing and deploying graphs that use |br| an external library (e.g. `numpy`)
+     - * Developing EAGLE graphs in the browser
        * Translating through the browser or CLI  
+       * Using the ``dlg`` CLI
        * Deploying through the browser or CLI
-     - :ref:`direct install`
+     - :ref:`pip install`
    *  - Adminstrator of a HPC cluster interested in DALiuGE
       - * Using the ``dlg`` CLI
         * Developing EAGLE graphs in the browser
         * Translating through the browser or CLI  
         * Deploying through the browser or CLI
-      - :ref:`direct install`
+      - :ref:`pip install`
    *  - Contributing to DALiuGE software
       - * Writing and testing the software
         * Wanting the latest features
@@ -74,7 +74,12 @@ Alternative: Building the images locally
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 This section assumes you have experience using Git and Docker, and want to build from the (potentially unstable) DALiuGE source code. 
 
-Using ``make`` we can simplify building the docker images for a development environment::
+First, clone the |daliuge| github repository::
+
+  git clone https://github.com/ICRAR/daliuge
+  cd daliuge
+
+Then using the ``make`` utility we build the docker images for a development environment::
 
   make docker-install
 
@@ -137,30 +142,50 @@ and::
 PyPI Installation
 -----------------
 
+.. note::
+
+  |daliuge| requires python 3.9 or later. It is always recommended to install |daliuge| inside it's own Python virtual environment. Make sure that you have on created and enabled. More often than not pip requries an update, else it will always issue a warning::
+
+    pip install --upgrade pip
+
+Inside your virtual environment, the latest version of the |daliuge| can be installed as follows::
+
+ pip install daliuge-common && pip install daliuge-engine && pip install daliuge-translator
+
+
+|daliuge| may now be run using the :ref:`CLI interface<running_with_cli>`.
+
+
+Updating PyPI installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An existing installation can be updated using::
+
+ pip install -U daliuge-common && pip install -U daliuge-engine && pip install -U daliuge-translato
 
 .. _direct install:
 
 Direct Installation
 -------------------
-   git clone https://github.com/ICRAR/daliuge
-   cd daliuge
 
-PyPI 
-^^^^
-
-Installing from sources
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. note:: 
 
-  |daliuge| requires python 3.9 or later. It is always recommended to install |daliuge| inside it's own Python virtual environment. Make sure that you have on created and enabled. More often than not pip requries an update, else it will always issue a warning:
+  |daliuge| requires python 3.9 or later.
+
+  It is always recommended to install |daliuge| inside it's own Python virtual environment. Make sure that you have on created and enabled. More often than not pip requries an update, else it will always issue a warning::
 
     pip install --upgrade pip
 
 
-Perform the following steps to setup and install |daliuge| into the specific virtual environment. 
+First, clone the |daliuge| github repository::
+
+  git clone https://github.com/ICRAR/daliuge
+  cd daliuge
+
+Perform the following steps to setup and install |daliuge| into the specific virtual environment::
 
   cd daliuge
-  # source virtual env
+  # source your virtual env
   make show # Optional, use to confirm virtualenv is active
   make install
   
@@ -169,12 +194,14 @@ Perform the following steps to setup and install |daliuge| into the specific vir
    <details>
     <summary><a>Installing from source manually</a></summary>
 
+After cloning and entering the `daliuge` folder::
+
   cd daliuge-common
-  pip install -e . 
+  pip install -e .
   cd daliuge-engine
-  pip install -e . 
+  pip install -e .
   cd daliuge-translator
-  pip install -e . 
+  pip install -e .
 
 .. raw:: html
 

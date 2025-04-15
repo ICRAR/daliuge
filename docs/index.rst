@@ -27,7 +27,7 @@ Quick Start Guide
 DALiuGE Fundamentals
 --------------------
 :doc:`/architecture/index` |br|
-:doc:`/deployment` |br|
+:doc:`/deployment/overview` |br|
 
 Advanced Techniques and Applications
 ------------------------------------
@@ -55,7 +55,7 @@ API Documentation
    :hidden: 
 
    architecture/index
-   deployment
+   deployment/overview
    
 .. toctree:: 
    :maxdepth: 1 
@@ -63,8 +63,9 @@ API Documentation
    :caption: Advanced DALiuGE Methods
 
    development/dev_index
+   development/app_development/app_index
+   development/data_development/data_index
    advanced/delayed
-
 
 .. toctree::
    :caption: API Documentation
@@ -76,9 +77,6 @@ API Documentation
 
 .. toctree:: 
     :hidden:
-
-    development/dev_index
-    usage/index
 
 Citations
 ---------
