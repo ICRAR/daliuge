@@ -3,7 +3,7 @@
 
 .. _app_index:
 
-|daliuge| *Application* Component Developers Guide
+|daliuge| Application Component Developers Guide
 ##################################################
 
 This chapter describes what developers need to do
@@ -22,6 +22,7 @@ integration and testing during component development. As mentioned already, for 
  bash_components
  python_components
  special_components
+ builtin_components
  pyfunc_components
  datadrop_io
  eagle_app_integration
@@ -29,8 +30,3 @@ integration and testing during component development. As mentioned already, for 
 .. toctree:: 
     :hidden:
 
-    bash_advanced
-    docker_components
-    deployment_testing
-    dynlib_components
-    service_components
