@@ -65,30 +65,30 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
     if pd_dict["type"].lower() == "json":
         try:
             pydata = json.loads(pydata)
-        except:
+        except Exception:
             pydata = pydata.encode()
     if pd_dict["type"].lower() == "eval":
         # try:
         pydata = eval(pydata)
-        # except:
+        # except Exception:
         #     pydata = pydata.encode()
     elif pd_dict["type"].lower() == "int" or isinstance(pydata, int):
         try:
             pydata = int(pydata)
             pd_dict["type"] = "int"
-        except:
+        except Exception:
             pydata = pydata.encode()
     elif pd_dict["type"].lower() == "float" or isinstance(pydata, float):
         try:
             pydata = float(pydata)
             pd_dict["type"] = "float"
-        except:
+        except Exception:
             pydata = pydata.encode()
     elif pd_dict["type"].lower() == "boolean" or isinstance(pydata, bool):
         try:
             pydata = bool(pydata)
             pd_dict["type"] = "bool"
-        except:
+        except Exception:
             pydata = pydata.encode()
     elif pd_dict["type"].lower() == "object":
         pydata = base64.b64decode(pydata.encode())
@@ -251,7 +251,7 @@ class SharedMemoryDROP(DataDROP):
             try:  # test whether given value is valid
                 _ = dill.loads(base64.b64decode(pydata.encode("latin1")))
                 pydata = base64.b64decode(pydata.encode("latin1"))
-            except:
+            except Exception:
                 pydata = None
         elif "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]:
             pydata = parse_pydata(kwargs["nodeAttributes"]["pydata"])
