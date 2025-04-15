@@ -157,7 +157,7 @@ Inside your virtual environment, the latest version of the |daliuge| can be inst
 
 
 Updating PyPI installation
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 An existing installation can be updated using::
 
