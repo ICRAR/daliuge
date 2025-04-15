@@ -1171,8 +1171,8 @@ class BranchAppDropTestsBase(object):
     def _simple_branch_with_outputs(self, result, uids):
         a = Branch(uids[0], uids[0], result=result, func_name="test.test_drop.func1")
         b, c = (self.DataDropType(x, x) for x in uids[1:])
-        a.addOutput(c)
         a.addOutput(b)
+        a.addOutput(c)
         return a, b, c
 
     def _assert_drop_in_status(self, drop, status, execStatus):
@@ -1202,8 +1202,9 @@ class BranchAppDropTestsBase(object):
         A ---- false --> C --> ...
         """
         a, b, c = self._simple_branch_with_outputs(result, "abc")
-        last_true = b
-        last_false = c
+        # This order is important, since we are using indexed ports in Branch
+        last_false = b
+        last_true = c
         all_drops = [a, b, c]
 
         # all_uids is ['de', 'fg', 'hi', ....]
