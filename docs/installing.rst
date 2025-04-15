@@ -171,11 +171,6 @@ An existing installation can be updated using::
 
 Direct Installation
 -------------------
-   git clone https://github.com/ICRAR/daliuge
-   cd daliuge
-
-PyPI 
-^^^^
 
 .. note:: 
 
