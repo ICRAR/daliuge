@@ -967,8 +967,8 @@ class Branch(PyFuncApp):
             return
 
         # TODO: The following should eventually use named ports
-        false_out = 1 if result else 0
-        true_out = 0 if result else 1
+        false_out = 0 if result else 1
+        true_out = 1 if result else 0
         logger.debug("Sending skip to port: %s", self.outputs[false_out])
         self.outputs[false_out].skip()  # send skip to correct branch
 
