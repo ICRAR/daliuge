@@ -488,11 +488,8 @@ class DockerApp(BarrierAppDROP):
                     if isinstance(addEnv, dict):  # if it is a dict populate directly
                         # but replace placeholders first
                         for key in addEnv:
-                            value = droputils.replace_path_placeholders(
+                            value = droputils.replace_placeholders(
                                 addEnv[key], dockerInputs, dockerOutputs
-                            )
-                            value = droputils.replace_dataurl_placeholders(
-                                value, dataURLInputs, dataURLOutputs
                             )
                             addEnv[key] = value
                         env.update(addEnv)
@@ -521,30 +518,21 @@ class DockerApp(BarrierAppDROP):
                 inport_names,
                 outport_names,
                 appArgs,
-                argumentPrefix=self._argumentPrefix,
-                separator=self._paramValueSeparator,
             )
 
-            argumentString = f"{' '.join(keyargs + pargs)}"
-
             # complete command including all additional parameters and optional redirects
-            cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
-            if cmd:
-                cmd = droputils.replace_path_placeholders(
-                    cmd, dockerInputs, dockerOutputs
+            if self._command:
+                cmd = droputils.replace_placeholders(
+                    self._command, dockerInputs, dockerOutputs
                 )
-                cmd = droputils.replace_dataurl_placeholders(
-                    cmd, dataURLInputs, dataURLOutputs
-                )
-                # if "output_redirection" in self._applicationArgs:
-                #     logger.debug(">>>> outport_names: %s", outport_names)
-                #     out_name = outport_names["output_redirection"]
-                #     cmd = f"{cmd} > {out_name}"
-                # if "input_redirection" in self._applicationArgs:
-                #     in_name = inport_names["input_redirection"]
-                #     cmd = f"cat {in_name} > {cmd}"
+                for key, value in keyargs.items():
+                    cmd = cmd.replace(f"{{{key}}}", str(value))
+                for key, value in pargs.items():
+                    cmd = cmd.replace(f"{{{key}}}", str(value))
             else:
                 cmd = ""
+
+
             ###############
             # Wait until the DockerApps this application runtime depends on have
             # started, and replace their IP placeholders by the real IPs

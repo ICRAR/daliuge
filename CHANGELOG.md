@@ -1,6 +1,10 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+## v5.0.0
+
+- [Changed] New BashShellApp command replacement: https://github.com/ICRAR/daliuge/pull/309 
+- [Fixed] Improve PyFunc robustness to erroneous graph input: https://github.com/ICRAR/daliuge/pull/308
 
 ## v4.9.0
 
