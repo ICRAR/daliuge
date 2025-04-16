@@ -7,6 +7,7 @@ jobs:
     name: Run unit tests with python ${{matrix.python-version}} - ${{ matrix.desc }}
     runs-on: ubuntu-22.04
     strategy:
+      fail-fast: false
       matrix:
         include:
           - python-version: "3.9"
