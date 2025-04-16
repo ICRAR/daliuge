@@ -29,6 +29,7 @@ import daliuge_tests.engine.graphs as test_graphs
 
 from importlib.resources import files
 
+from dlg.data.drops.file import FileDROP
 from dlg.data.drops.memory import InMemoryDROP
 from dlg import droputils
 from dlg.manager.composite_manager import DataIslandManager
@@ -69,28 +70,32 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         to test that the separatorString parameter is working correctly.
         """
         sessionId = "lalo"
-        ddGraph = "ddTest.graph"
-        with (files(test_graphs) /ddGraph).open() as f:  # @UndefinedVariable
-            logger.debug(f"Loading graph: {f}")
-            graphSpec = json.load(f)
-        self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
+        bs = 10
+        count = 2048
+        ddGraphs = ["ddExamplePG.graph","ddExample_mixedPortsPG.graph"]
+        for ddGraph in ddGraphs:
+            with (files(test_graphs) /ddGraph).open() as f:  # @UndefinedVariable
+                logger.debug(f"Loading graph: {f}")
+                graphSpec = json.load(f)
+            self.createSessionAndAddGraph(ddGraph, graphSpec=graphSpec)
+            self.dim.deploySession(ddGraph)
+            a, c = [
+                drop for drop in self.dm._sessions[ddGraph].drops.values()
+                 if isinstance(drop, FileDROP)
+            ]
+            x = [ drop for drop in self.dm._sessions[ddGraph].drops.values()
+                 if isinstance(drop, InMemoryDROP)
+            ]
 
-        # Deploy now and get OIDs
-        bs = graphSpec[0]["applicationArgs"]["bs"]["value"]
-        count = graphSpec[0]["applicationArgs"]["count"]["value"]
-        self.dim.deploySession(sessionId)
-        a, c = [
-            self.dm._sessions[sessionId].drops[x]
-            for x in ("2022-02-11T08:05:47_-5_0", "2022-02-11T08:05:47_-3_0")
-        ]
+            data = os.urandom(bs * count)
+            logger.debug(f"Length of data produced: {len(data)}")
+            with droputils.DROPWaiterCtx(self, c, 10):
+                a.setCompleted()
+                for d in x:
+                    d.setCompleted()
 
-        data = os.urandom(bs * count)
-        logger.debug(f"Length of data produced: {len(data)}")
-        with droputils.DROPWaiterCtx(self, c, 3):
-            a.write(data)
-            a.setCompleted()
+            self.assertEqual(len(data), len(droputils.allDropContents(c)))
 
-        self.assertEqual(data, droputils.allDropContents(c))
 
     def test_namedPorts_funcs(self):
         """
@@ -98,8 +103,10 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         """
         init_oid = "2022-03-20T04:33:27_-2_0"  # first drop in graph
         sessionId = "lalo"
-        with (files(test_graphs) / "funcTestPG_namedPorts.graph").open() as f:  # @UndefinedVariable
-           graphSpec = json.load(f)
+        with (
+            files(test_graphs) / "funcTestPG_namedPorts.graph"
+        ).open() as f:  # @UndefinedVariable
+            graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
 
@@ -121,8 +128,10 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         translate = lambda x: base64.b64encode(pickle.dumps(x))
         init_oid = "2023-07-04T00:13:32_-1_0"  # first drop in graph
         sessionId = "lalo"
-        with (files(test_graphs) / "appTestPG_namedPorts.graph").open() as f:  # @UndefinedVariable
-           graphSpec = json.load(f)
+        with (
+            files(test_graphs) / "appTestPG_namedPorts.graph"
+        ).open() as f:  # @UndefinedVariable
+            graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
 
@@ -148,7 +157,9 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
             "2022-03-30T03:46:01_-6_0",
         ]  # first drops in graph
         sessionId = "lalo"
-        with (files(test_graphs) / "pyfunc_glob_testPG.graph").open() as f:  # @UndefinedVariable
+        with (
+            files(test_graphs) / "pyfunc_glob_testPG.graph"
+        ).open() as f:  # @UndefinedVariable
             graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
@@ -196,8 +207,10 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         """
         init_oid = "2023-07-05T10:59:43_-5_0"  # first drop in graph
         sessionId = "lalo"
-        with (files(test_graphs) / "HelloWorld_universePG.graph").open() as f:  # @UndefinedVariable
-           graphSpec = json.load(f)
+        with (
+            files(test_graphs) / "HelloWorld_universePG.graph"
+        ).open() as f:  # @UndefinedVariable
+            graphSpec = json.load(f)
         # dropSpecs = graph_loader.loadDropSpecs(graphSpec)
         self.createSessionAndAddGraph(sessionId, graphSpec=graphSpec)
 
@@ -210,6 +223,6 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
             logger.debug(f"PyfuncAPPDrop producer names:{i}")
 
         st = time.time()
-        with droputils.DROPWaiterCtx(self, fd, 300):
+        with droputils.DROPWaiterCtx(self, fd, 10):
             init_drop.execute()
         # self.assertAlmostEqual(0.6, time.time() - st, 1)

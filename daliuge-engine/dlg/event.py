@@ -25,7 +25,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Optional, Union, List, DefaultDict
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class Event(object):
@@ -69,13 +69,11 @@ class EventFirer(object):
 
     def __init__(self):
         # Union string key with object to handle __ALL_EVENTS above
-        self._listeners: DefaultDict[
-            Union[str, object], List[EventHandler]
-        ] = defaultdict(list)
+        self._listeners: DefaultDict[Union[str, object], List[EventHandler]] = (
+            defaultdict(list)
+        )
 
-    def subscribe(
-        self, listener: EventHandler, eventType: Optional[str] = None
-    ):
+    def subscribe(self, listener: EventHandler, eventType: Optional[str] = None):
         """
         Subscribes `listener` to events fired by this object. If `eventType` is
         not `None` then `listener` will only receive events of `eventType` that
@@ -90,18 +88,20 @@ class EventFirer(object):
         eventType = eventType or EventFirer.__ALL_EVENTS
         self._listeners[eventType].append(listener)
 
-    def unsubscribe(
-        self, listener: EventHandler, eventType: Optional[str] = None
-    ):
+    def unsubscribe(self, listener: EventHandler, eventType: Optional[str] = None):
         """
         Unsubscribes `listener` from events fired by this object.
         """
-        logger.debug(
-            "Removing listener to %r eventType=%s: %r",
-            self.oid,
-            eventType,
-            listener.oid,
-        ) if hasattr(listener, "oid") else None
+        (
+            logger.debug(
+                "Removing listener to %r eventType=%s: %r",
+                self.oid,
+                eventType,
+                listener.oid,
+            )
+            if hasattr(listener, "oid")
+            else None
+        )
 
         eventType = eventType or EventFirer.__ALL_EVENTS
         if listener in self._listeners[eventType]:

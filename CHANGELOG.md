@@ -1,6 +1,16 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+## v5.1.0
+
+- [Added] New Branch component based on PyFuncApp that allows for conditional execution: https://github.com/ICRAR/daliuge/pull/317
+- [Added] Users can to set the log-level of an application from the graph per-application: https://github.com/ICRAR/daliuge/pull/317
+- [Added] Provide ability to read and write plain strings if requested by the user: https://github.com/ICRAR/daliuge/pull/317
+
+## v5.0.0
+
+- [Changed] New BashShellApp command replacement: https://github.com/ICRAR/daliuge/pull/309 
+- [Fixed] Improve PyFunc robustness to erroneous graph input: https://github.com/ICRAR/daliuge/pull/308
 
 ## v4.9.0
 

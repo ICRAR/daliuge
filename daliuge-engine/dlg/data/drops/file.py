@@ -46,8 +46,7 @@ from typing import Union
 # @param base_name file/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param persist True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param prefix /String/ApplicationArgument/NoPort/ReadWrite//False/False/"File path for this file. In many cases this does not need to be specified. If it has a \/ at the end it will be treated as a directory name and the filename will be generated. If it does not have a \/, the last part will be treated as a filename. If filepath does not start with \/ (relative path) then the session directory will be prepended to make the path absolute.""
-# @param suffix /String/ApplicationArgument/NoPort/ReadWrite//False/False/"File path for this file. In many cases this does not need to be specified. If it has a \/ at the end it will be treated as a directory name and the filename will be generated. If it does not have a \/, the last part will be treated as a filename. If filepath does not start with \/ (relative path) then the session directory will be prepended to make the path absolute.""
+# @param block_skip False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If set the drop will block a skipping chain until the last producer has finished and is not also skipped.
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port

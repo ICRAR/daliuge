@@ -50,7 +50,7 @@ except:
 
     _checksumType = ChecksumTypes.CRC_32
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 ##
@@ -97,7 +97,7 @@ class DataDROP(AbstractDROP):
         with self._refLock:
             self._refCount -= 1
 
-    @track_current_drop
+    # @track_current_drop
     def open(self, **kwargs):
         """
         Opens the DROP for reading, and returns a "DROP descriptor"
@@ -265,6 +265,8 @@ class DataDROP(AbstractDROP):
         if self._checksum is None:
             self._checksum = 0
             self._checksumType = _checksumType
+        if isinstance(chunk, str):
+            chunk = bytes(chunk, encoding="utf8")
         self._checksum = crc32c(chunk, self._checksum)
 
     @property
@@ -284,6 +286,8 @@ class DataDROP(AbstractDROP):
             io = self.getIO()
             io.open(OpenMode.OPEN_READ)
             data = io.read(65536)
+            if isinstance(data, str):
+                data = bytes(data, encoding="utf8")
             while data is not None and len(data) > 0:
                 self._updateChecksum(data)
                 data = io.read(65536)
@@ -353,7 +357,7 @@ class DataDROP(AbstractDROP):
         """
 
         try:
-            dropInputPorts = self.parameters['producers']
+            dropInputPorts = self.parameters["producers"]
         except KeyError:
             logging.debug("No producers available for drop: %s", self.uid)
             return
@@ -364,7 +368,7 @@ class DataDROP(AbstractDROP):
         for p in self.producers:
             producerUid = p.uid
             producerPortValueMap[producerUid] = {}
-            params = p.parameters['outputs']
+            params = p.parameters["outputs"]
             for param in params:
                 try:
                     key = list(param.keys())[0]
@@ -397,7 +401,6 @@ class DataDROP(AbstractDROP):
                 self.parameters[portname] = finalDropPortMap[portname]
 
         self._updatedPorts = True
-
 
     @abstractmethod
     def getIO(self) -> DataIO:

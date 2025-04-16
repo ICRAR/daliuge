@@ -30,7 +30,7 @@ from dlg.data.drops.container import ContainerDROP
 from dlg.exceptions import InvalidDropException, InvalidRelationshipException
 from dlg.meta import dlg_bool_param
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 # TODO: This needs some more work
@@ -49,6 +49,7 @@ logger = logging.getLogger(__name__)
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param check_exists True/Boolean/ApplicationArgument/NoPort/ReadWrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
 # @param dirname /String/ApplicationArgument/NoPort/ReadWrite//False/False/"Directory name/path"
+# @param block_skip False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If set the drop will block a skipping chain until the last producer has finished and is not also skipped.
 # @param dummy /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/Dummy output port
 # @par EAGLE_END
 class DirectoryContainer(PathBasedDrop, ContainerDROP):

@@ -31,7 +31,7 @@ from dlg.drop import DEFAULT_INTERNAL_PARAMETERS
 from dlg.data.io import MemoryIO
 from dlg.meta import dlg_string_param
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 ##
@@ -48,6 +48,7 @@ logger = logging.getLogger(__name__)
 # @param base_name parset_drop/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
+# @param block_skip False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If set the drop will block a skipping chain until the last producer has finished and is not also skipped.
 # @param Config /Object.File/ApplicationArgument/OutputPort/ReadWrite//False/False/The output configuration file
 # @par EAGLE_END
 class ParameterSetDROP(DataDROP):

@@ -22,7 +22,7 @@ from dlg.meta import (
     dlg_int_param,
 )
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class DropRunner(ABC):
@@ -124,8 +124,11 @@ class AppDROP(ContainerDROP):
         # Input and output objects are later referenced by their *index*
         # (relative to the order in which they were added to this object)
         # Therefore we use an ordered dict to keep the insertion order.
+
         self._inputs = OrderedDict()
         self._outputs = OrderedDict()
+        self._inputs_names = OrderedDict()
+        self._outputs_names = OrderedDict()
 
         # Same as above, only that these correspond to the 'streaming' version
         # of the consumers
@@ -277,7 +280,7 @@ class AppDROP(ContainerDROP):
             self.status = DROPStates.COMPLETED
         logger.debug(
             "Moving %r to %s",
-            self.oid,
+            self.name,
             "FINISHED" if not is_error else "ERROR",
         )
         self._fire("producerFinished", status=self.status, execStatus=self.execStatus)
@@ -468,7 +471,7 @@ class InputFiredAppDROP(AppDROP):
         #       applications, for the time being they follow their execState.
 
         # Run at most self._n_tries if there are errors during the execution
-        logger.debug("Executing %r", self.oid)
+        logger.info("Executing %r", f"{self.name}.{self._humanKey}")
         tries = 0
         drop_state = DROPStates.COMPLETED
         self.execStatus = AppDROPStates.RUNNING
@@ -476,12 +479,21 @@ class InputFiredAppDROP(AppDROP):
             try:
                 fut = self._drop_runner.run_drop(self)
                 fut.result()
-
                 if self.execStatus == AppDROPStates.CANCELLED:
                     return
                 self.execStatus = AppDROPStates.FINISHED
+                if logger.getEffectiveLevel() != logging.getLevelName(
+                    self._global_log_level
+                ):
+                    logging.getLogger("dlg").setLevel(self._global_log_level)
+                    logger.warning(
+                        "Setting log-level after execution %s.%s back to %s",
+                        self.name,
+                        self._humanKey,
+                        self._global_log_level,
+                    )
                 break
-            except:
+            except Exception:
                 if self.execStatus == AppDROPStates.CANCELLED:
                     return
                 tries += 1

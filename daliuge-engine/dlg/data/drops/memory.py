@@ -20,62 +20,87 @@
 #    MA 02111-1307  USA
 #
 import base64
+import builtins
+import dill
 import io
 import json
 import os
-import pickle
 import random
 import string
 import sys
+from typing import Union
 
 from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.data.drops.data_base import DataDROP, logger
 from dlg.data.io import SharedMemoryIO, MemoryIO
 
+def get_builtins()-> dict:
+    """
+    Get a tuple of buitlin types to compare pydata with.
+    """
+    builtin_types = tuple(getattr(builtins, t) for t in dir(builtins) if isinstance(getattr(builtins, t), type))
+    builtin_types = builtin_types[builtin_types.index(bool):]
+    builtin_names = [b.__name__ for b in builtin_types]
+    return dict(zip(builtin_names, builtin_types))
 
-def parse_pydata(pd_dict: dict) -> bytes:
+
+def parse_pydata(pd: Union[bytes, dict]) -> bytes:
     """
     Parse and evaluate the pydata argument to populate memory during initialization
 
-    :param pd_dict: the pydata dictionary from the graph node
+    :param pd: either the pydata dictionary from the graph node or the value directly
 
     :returns a byte encoded value
     """
+    pd_dict = pd if isinstance(pd, dict) else {"value":pd, "type":"raw"}
     pydata = pd_dict["value"]
-    logger.debug(f"pydata value provided: {pydata}, {pd_dict['type'].lower()}")
+    logger.debug("pydata value provided: '%s' with type '%s'", pydata, type(pydata))
 
+    if pd_dict["type"].lower() in ["string", "str"]:
+        return pydata if pydata != "None" else None
+    builtin_types = get_builtins()
+    if pd_dict["type"] != "raw" and type(pydata) in builtin_types.values() and pd_dict["type"] not in builtin_types.keys():
+        logger.warning("Type of pydata %s provided differs from specified type: %s", type(pydata).__name__, pd_dict["type"])
+        pd_dict["type"] = type(pydata).__name__
     if pd_dict["type"].lower() == "json":
         try:
             pydata = json.loads(pydata)
-        except:
+        except Exception:
             pydata = pydata.encode()
     if pd_dict["type"].lower() == "eval":
         # try:
         pydata = eval(pydata)
-        # except:
+        # except Exception:
         #     pydata = pydata.encode()
-    elif pd_dict["type"].lower() == "int":
+    elif pd_dict["type"].lower() == "int" or isinstance(pydata, int):
         try:
             pydata = int(pydata)
-        except:
+            pd_dict["type"] = "int"
+        except Exception:
             pydata = pydata.encode()
-    elif pd_dict["type"].lower() == "float":
+    elif pd_dict["type"].lower() == "float" or isinstance(pydata, float):
         try:
             pydata = float(pydata)
-        except:
+            pd_dict["type"] = "float"
+        except Exception:
             pydata = pydata.encode()
-    elif pd_dict["type"].lower() == "boolean":
+    elif pd_dict["type"].lower() == "boolean" or isinstance(pydata, bool):
         try:
             pydata = bool(pydata)
-        except:
+            pd_dict["type"] = "bool"
+        except Exception:
             pydata = pydata.encode()
     elif pd_dict["type"].lower() == "object":
         pydata = base64.b64decode(pydata.encode())
         try:
-            pydata = pickle.loads(pydata)
+            pydata = dill.loads(pydata)
         except:
             raise
-    return pickle.dumps(pydata)
+    elif pd_dict["type"].lower() == "raw":
+        pydata = dill.loads(base64.b64decode(pydata))
+        logger.debug("Returning pydata of type: %s", type(pydata))
+        # return pydata
+    return dill.dumps(pydata)
 
 
 ##
@@ -84,8 +109,9 @@ def parse_pydata(pd_dict: dict) -> bytes:
 # @par EAGLE_START
 # @param category Memory
 # @param tag daliuge
-# @param pydata None/String/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
+# @param pydata /Object/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param block_skip False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If set the drop will block a skipping chain until the last producer has finished and is not also skipped.
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
@@ -114,25 +140,30 @@ class InMemoryDROP(DataDROP):
         """
         args = []
         pydata = None
+        # pdict = {}
+        pdict = {"type": "raw"}  # initialize this value to enforce BytesIO
+        self.data_type = pdict["type"]
         field_names = (
             [f["name"] for f in kwargs["fields"]] if "fields" in kwargs else []
         )
         if "pydata" in kwargs and not (
             "fields" in kwargs and "pydata" in field_names
-        ):  # means that is was passed directly
+        ):  # means that is was passed directly (e.g. from tests)
             pydata = kwargs.pop("pydata")
-            logger.debug("pydata value provided: %s, %s", pydata, kwargs)
-            try:  # test whether given value is valid
-                _ = pickle.loads(base64.b64decode(pydata))
-                pydata = base64.b64decode(pydata)
-            except:
-                pydata = None
+            pdict["value"] = pydata
+            pydata = parse_pydata(pdict)
         elif "fields" in kwargs and "pydata" in field_names:
             data_pos = field_names.index("pydata")
-            pydata = parse_pydata(kwargs["fields"][data_pos])
-        args.append(pydata)
-        logger.debug("Loaded into memory: %s", pydata)
-        self._buf = io.BytesIO(*args)
+            pdict = kwargs["fields"][data_pos]
+            pydata = parse_pydata(pdict)
+        if pdict and pdict["type"].lower() in ["str","string"]:
+            self.data_type =  "String" if pydata else "raw"
+        else:
+            self.data_type = pdict["type"] if pdict else ""
+        if pydata:
+            args.append(pydata)
+            logger.debug("Loaded into memory: %s, %s, %s", pydata, self.data_type, type(pydata))
+        self._buf = io.BytesIO(*args) if self.data_type != "String" else io.StringIO(*args)
         self.size = len(pydata) if pydata else 0
 
     def getIO(self):
@@ -193,6 +224,7 @@ class PythonObjectDROP(InMemoryDROP):
 # @param pydata None/String/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
+# @param block_skip False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If set the drop will block a skipping chain until the last producer has finished and is not also skipped.
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
@@ -217,9 +249,9 @@ class SharedMemoryDROP(DataDROP):
             pydata = kwargs.pop("pydata")
             logger.debug("pydata value provided: %s", pydata)
             try:  # test whether given value is valid
-                _ = pickle.loads(base64.b64decode(pydata.encode("latin1")))
+                _ = dill.loads(base64.b64decode(pydata.encode("latin1")))
                 pydata = base64.b64decode(pydata.encode("latin1"))
-            except:
+            except Exception:
                 pydata = None
         elif "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]:
             pydata = parse_pydata(kwargs["nodeAttributes"]["pydata"])

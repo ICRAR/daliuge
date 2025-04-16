@@ -35,7 +35,7 @@ from dlg.dropmake.scheduler import (
 )
 from dlg.common import CategoryType
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class MetisPGTP(PGT):

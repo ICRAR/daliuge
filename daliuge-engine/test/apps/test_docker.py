@@ -79,7 +79,7 @@ class DockerTests(unittest.TestCase):
         """
 
         a = FileDROP("a", "a")
-        b = DockerApp("b", "b", image="ubuntu:14.04", command="cp %i0 %o0")
+        b = DockerApp("b", "b", image="ubuntu:14.04", command="cp {a} {c}")
         c = FileDROP("c", "c")
 
         b.addInput(a)
@@ -118,9 +118,9 @@ class DockerTests(unittest.TestCase):
             "b",
             "b",
             image="ubuntu:14.04",
-            command="cat %i0 > /dev/tcp/%containerIp[c]%/8000",
+            command="cat {a} > /dev/tcp/%containerIp[c]%/8000",
         )
-        c = DockerApp("c", "c", image="ubuntu:14.04", command="nc -l 8000 > %o0")
+        c = DockerApp("c", "c", image="ubuntu:14.04", command="nc -l 8000 > {d}")
         d = FileDROP("d", "d")
 
         b.addInput(a)
@@ -153,10 +153,11 @@ class DockerTests(unittest.TestCase):
                 a.execute()
             self.assertEqual(msg.encode("utf8"), droputils.allDropContents(b))
 
+        bcmd = "{b}"
         msg = "This is a message with a single quote: '"
-        assertMsgIsCorrect(msg, 'echo -n "{0}" > %o0'.format(msg))
+        assertMsgIsCorrect(msg, 'echo -n "{0}" > {1}'.format(msg, bcmd))
         msg = 'This is a message with a double quotes: "'
-        assertMsgIsCorrect(msg, "echo -n '{0}' > %o0".format(msg))
+        assertMsgIsCorrect(msg, "echo -n '{0}' > {1}".format(msg, bcmd))
 
     @unittest.skip
     def test_dataURLReference(self):
@@ -164,7 +165,7 @@ class DockerTests(unittest.TestCase):
         A test to check that DROPs other than FileDROPs and DirectoryContainers
         can pass their dataURLs into docker containers
         """
-        self._ngas_and_fs_io("echo -n '%iDataURL0' > %o0")
+        self._ngas_and_fs_io("echo -n '%iDataURL0' > {c}")
 
     @unittest.skip
     def test_refer_to_io_by_uid(self):
@@ -225,7 +226,7 @@ class DockerTests(unittest.TestCase):
             "a",
             workingDir="/mydir",
             image="ubuntu:14.04",
-            command="pwd > %o0 && sleep 0.05",
+            command="pwd > {b} && sleep 0.05",
             ensureUserAndSwitch=ensureUserAndSwitch,
         )
         b = FileDROP("b", "b")

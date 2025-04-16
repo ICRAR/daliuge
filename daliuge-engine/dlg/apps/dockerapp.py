@@ -45,7 +45,7 @@ from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import DaliugeException, InvalidDropException
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 DLG_ROOT = utils.getDlgDir()
 
@@ -89,6 +89,7 @@ class ContainerIpWaiter(object):
 # @param entrypoint /String/ComponentParameter/NoPort/ReadWrite//False/False/Alternate entrypoint
 # @param paramValueSeparator " "/String/ComponentParameter/NoPort/ReadWrite//False/False/Separator character(s) between parameters and their respective values on the command line
 # @param argumentPrefix "--"/String/ComponentParameter/NoPort/ReadWrite//False/False/Prefix to each keyed argument on the command line
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.dockerapp.DockerApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param base_name dockerapp/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -101,8 +102,6 @@ class ContainerIpWaiter(object):
 # @param removeContainer True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Instruct Docker engine to delete the container after execution is complete
 # @param additionalBindings /String/ComponentParameter/NoPort/ReadWrite//False/False/Directories which will be visible inside the container during run-time. Format is srcdir_on_host:trgtdir_on_container. Multiple entries can be separated by commas.
 # @param portMappings /String/ComponentParameter/NoPort/ReadWrite//False/False/Port mappings on the host machine
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class DockerApp(BarrierAppDROP):
     """
@@ -488,11 +487,8 @@ class DockerApp(BarrierAppDROP):
                     if isinstance(addEnv, dict):  # if it is a dict populate directly
                         # but replace placeholders first
                         for key in addEnv:
-                            value = droputils.replace_path_placeholders(
+                            value = droputils.replace_placeholders(
                                 addEnv[key], dockerInputs, dockerOutputs
-                            )
-                            value = droputils.replace_dataurl_placeholders(
-                                value, dataURLInputs, dataURLOutputs
                             )
                             addEnv[key] = value
                         env.update(addEnv)
@@ -521,30 +517,21 @@ class DockerApp(BarrierAppDROP):
                 inport_names,
                 outport_names,
                 appArgs,
-                argumentPrefix=self._argumentPrefix,
-                separator=self._paramValueSeparator,
             )
 
-            argumentString = f"{' '.join(keyargs + pargs)}"
-
             # complete command including all additional parameters and optional redirects
-            cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
-            if cmd:
-                cmd = droputils.replace_path_placeholders(
-                    cmd, dockerInputs, dockerOutputs
+            if self._command:
+                cmd = droputils.replace_placeholders(
+                    self._command, dockerInputs, dockerOutputs
                 )
-                cmd = droputils.replace_dataurl_placeholders(
-                    cmd, dataURLInputs, dataURLOutputs
-                )
-                # if "output_redirection" in self._applicationArgs:
-                #     logger.debug(">>>> outport_names: %s", outport_names)
-                #     out_name = outport_names["output_redirection"]
-                #     cmd = f"{cmd} > {out_name}"
-                # if "input_redirection" in self._applicationArgs:
-                #     in_name = inport_names["input_redirection"]
-                #     cmd = f"cat {in_name} > {cmd}"
+                for key, value in keyargs.items():
+                    cmd = cmd.replace(f"{{{key}}}", str(value))
+                for key, value in pargs.items():
+                    cmd = cmd.replace(f"{{{key}}}", str(value))
             else:
                 cmd = ""
+
+
             ###############
             # Wait until the DockerApps this application runtime depends on have
             # started, and replace their IP placeholders by the real IPs

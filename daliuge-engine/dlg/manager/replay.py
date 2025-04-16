@@ -32,7 +32,7 @@ from .rest import ManagerRestServer
 from .session import SessionStates
 from ..exceptions import NoSessionException, InvalidSessionState
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 build_step = 3
 deploy_step = 6

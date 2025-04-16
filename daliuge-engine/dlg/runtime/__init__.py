@@ -58,7 +58,7 @@ def setup_logger_class():
             except AttributeError:
                 drop = None
             try:
-                drop_uid = drop.uid if drop else ""
+                drop_uid = drop._humanKey if drop else ""
             except AttributeError:
                 drop_uid = ""
 
