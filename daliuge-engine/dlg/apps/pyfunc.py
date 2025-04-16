@@ -912,7 +912,9 @@ class PyFuncApp(BarrierAppDROP):
                 result = result_iter[i]
 
             parser = self._match_parser(o)
-            if parser in [DropParser.PICKLE, DropParser.DILL]:
+            if parser is DropParser.PICKLE:
+                o.write(pickle.dumps(result))
+            elif parser is DropParser.DILL:
                 logger.debug(f"Writing dilled result {type(result)} to {o}")
                 o.write(dill.dumps(result))
             elif parser is DropParser.EVAL or parser is DropParser.UTF8:

@@ -127,20 +127,6 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
     logger.info("Constructed command line arguments: %s %s", pargs, kwargs)
     return (pargs, kwargs)
 
-def extract_encoded_value(args: dict, drop: "AbstractDROP", encoding:DropParser):
-    """
-
-    Parameters
-    ----------
-    args
-    drop
-    encoding
-
-    Returns
-    -------
-
-    """
-
 def identify_named_ports(
     port_dict: dict,
     positionalArgs: list,
@@ -363,13 +349,12 @@ def replace_named_ports(
     keywordArgs = _get_args(appArgs, positional=False)
 
     # Extract values from dictionaries - "encoding" etc. are irrelevant
-    appArgs = {arg: subdict["value"] for arg, subdict in appArgs.items()}
-    positionalArgs = {arg: subdict["value"] for arg, subdict in positionalArgs.items()}
-    keywordArgs = {arg: subdict["value"] for arg, subdict in keywordArgs.items()}
+    positionalArgs = {argstr: argument.value for argstr, argument in (
+            positionalArgs.items())}
+    keywordArgs = {argstr: argument.value for argstr, argument in keywordArgs.items()}
     keywordPortArgs = {
-        arg: subdict["value"] for arg, subdict in keywordPortArgs.items()
+        argstr: argument.value for argstr, argument in keywordPortArgs.items()
     }
-
     #  Construct the final keywordArguments and positionalPortArguments
     for k, v in keywordPortArgs.items():
         if v not in [None, ""]:
@@ -410,14 +395,14 @@ def _process_port(
         for port in port_names:
             key = list(port.keys())[0]
             ports[key].update({"name": port[key]})
-            keywordPortArgs, positionalPortArgs = identify_named_ports(
-                ports,
-                positionalArgs,
-                keywordArgs,
-                check_len=len(iitems),
-                mode=mode,
-                parser=parser,
-            )
+        keywordPortArgs, positionalPortArgs = identify_named_ports(
+            ports,
+            positionalArgs,
+            keywordArgs,
+            check_len=len(iitems),
+            mode=mode,
+            parser=parser,
+        )
 
     else:
         for i in range(min(len(iitems), len(positionalArgs))):
@@ -430,10 +415,11 @@ def _get_args(appArgs, positional=False):
     Separate out the arguments dependening on if we want positional or keyword style
     """
     args = {
-        arg: {
-            "value": appArgs[arg]["value"],
-            "encoding": appArgs[arg].get("encoding", "dill"),
-        }
+        arg: Argument(
+            value=appArgs[arg]["value"],
+            encoding= appArgs[arg].get("encoding", "dill"),
+            positional=positional
+        )
         for arg in appArgs
         if (appArgs[arg]["positional"] == positional)
     }
@@ -484,7 +470,7 @@ def get_port_reader_function(input_parser: DropParser):
             try:
                 return x.path
             except AttributeError:
-                return drop_loaders.load_dill(x)
+                return drop_loaders.load_utf8(x)
         reader = PathFromData
     elif input_parser is DropParser.DATAURL:
         reader = lambda x: x.dataURL
