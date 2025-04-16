@@ -14,6 +14,11 @@
     color: darkslategrey; 
 }
 
+.wy-menu-vertical a:hover {
+    background-color: #002A57;
+    color: white;
+}
+
 .wy-table-responsive table td,
 .wy-table-responsive table th {
     white-space: normal !important; /* Allow text to wrap */
