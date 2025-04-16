@@ -81,9 +81,3 @@ Not all of them need to be present in a component, only the ones the component d
 The applicationArgs are treated in the order of appearance. After the construction of the command line, any placeholder strings will be replaced with actual values. In particular strings of the form '%iX' (where X is the index number of the inputs of this component), will be replaced with the input URL of the input with that index (counting from 0). Similarly '%oX' will be replaced with the respective output URLs.
 
 Eventually we will also drop support for the command_line_arguments parameters. However, currently the applicationArgs can't be used to specify positional arguments (just a value) and thus, as a fallback users can still use one the command_line_arguments to achieve that. It should also be noted that for really simple commands, like the one used in the helloWorld example, users can simply specify that in the command parameter directly and ommit all of the others. 
-
-.. .. _advanced_bash:
-
-.. Advanced Bash Components
-.. ------------------------
-.. .. include:: bash_advanced.rst

@@ -1,0 +1,30 @@
+@import "theme.css";
+
+.wy-side-nav-search {
+    background: #002A57;
+}
+.wy-nav-side {
+    background: #D8DCEF;
+}
+
+.wy-menu-vertical p.caption{
+    color: #002A57;    
+}
+.wy-menu-vertical a{
+    color: darkslategrey; 
+}
+
+.wy-menu-vertical a:hover {
+    background-color: #002A57;
+    color: white;
+}
+
+.wy-table-responsive table td,
+.wy-table-responsive table th {
+    white-space: normal !important; /* Allow text to wrap */
+    word-wrap: break-word !important;
+}
+
+.wy-nav-content {
+    max-width: 1000px
+}
