@@ -130,7 +130,8 @@ install_requires = [
 extra_requires = {
     "test": [
         "pytest",
-        "eagle-test-graphs",
+        "eagle-test-graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@LIU-5-Update",
+        # "eagle-test-graphs",
         "np-merklelib",
         "parameterized>=0.9.0",
         "ruamel.yaml==0.16.0",
