@@ -90,7 +90,6 @@ class TestPortsEncoding(unittest.TestCase):
         desc = leaf.open()
         self.assertEqual("array(2)", leaf.read(desc).decode())
 
-    @unittest.skip
     def test_bash_shell_ports(self):
         """
         "drop_spec", "pyfunc_glob_shell_test.graph"
@@ -108,7 +107,6 @@ class TestString2JsonGraphs(unittest.TestCase):
     Func: dlg.apps.simple_functions.string2json
     """
 
-    @unittest.skip
     def test_string2json(self):
         """
         No parameters are provided in graph (string2jsonPG.graph)

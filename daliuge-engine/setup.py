@@ -180,7 +180,7 @@ extra_requires = {
     # AWS storage types
     "aws": ["boto3"],
     "test": ["pytest",
-             "eagle-test-graphs==0.1.4"],
+             "eagle-test-graphs==0.1.6"],
 }
 
 setup(

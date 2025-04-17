@@ -341,6 +341,9 @@ def replace_named_ports(
     keywordPortArgs = {
         argstr: argument.value for argstr, argument in keywordPortArgs.items()
     }
+    positionalPortArgs = {argstr: argument.value for argstr, argument in (
+        positionalPortArgs.items())}
+
     #  Construct the final keywordArguments and positionalPortArguments
     for k, v in keywordPortArgs.items():
         if v not in [None, ""]:
