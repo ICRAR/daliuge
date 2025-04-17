@@ -8,8 +8,8 @@ on:
     types: [opened, synchronize]  # Run on PRs from any branch
 
 jobs:
-  run_tests:
-    name: Run unit tests with python ${{matrix.python-version}} - ${{ matrix.desc }}
+  run_translator:
+    name: Run daliuge-translator tests with python ${{matrix.python-version}}
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
