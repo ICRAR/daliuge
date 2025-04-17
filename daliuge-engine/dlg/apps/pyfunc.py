@@ -890,9 +890,9 @@ class PyFuncApp(BarrierAppDROP):
     def write_results(self, result):
         from dlg.droputils import listify
 
-        if not self.outputs:
-            return
         result_iter = listify(result)
+        if not self.outputs or not result_iter:
+            return
         logger.debug(
             "Writing follow result to %d output: %s", len(self.outputs),
                      result_iter
