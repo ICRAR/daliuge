@@ -42,42 +42,42 @@ jobs:
             cd daliuge-translator
             py.test --cov --show-capture=no
 
-    run_engine:
-      name: Run daliuge-enginge tests with python ${{matrix.python-version}}
-      runs-on: ubuntu-22.04
-      strategy:
-        matrix:
-          include:
-            - python-version: "3.9"
-            - python-version: "3.10"
-            - python-version:  "3.11"
-            - python-version:  "3.12"
-      steps:
-        - uses: actions/checkout@v4
+  run_engine:
+    name: Run daliuge-enginge tests with python ${{matrix.python-version}}
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        include:
+          - python-version: "3.9"
+          - python-version: "3.10"
+          - python-version:  "3.11"
+          - python-version:  "3.12"
+    steps:
+      - uses: actions/checkout@v4
 
-        - uses: actions/setup-python@v5
-          name: Install Python
-          with:
-            python-version: ${{ matrix.python-version }}
+      - uses: actions/setup-python@v5
+        name: Install Python
+        with:
+          python-version: ${{ matrix.python-version }}
 
-        - name: Install test dependencies
-          run: |
-            pip install -U coveralls pytest pytest-cov
-            pip install -U setuptools pip wheel dask
+      - name: Install test dependencies
+        run: |
+          pip install -U coveralls pytest pytest-cov
+          pip install -U setuptools pip wheel dask
 
-        - name: Install daliuge-common
-          run: pip install -e daliuge-common/
+      - name: Install daliuge-common
+        run: pip install -e daliuge-common/
 
-        - name: Install daliuge-engine
-          run: pip install -e "daliuge-engine/[test]"
+      - name: Install daliuge-engine
+        run: pip install -e "daliuge-engine/[test]"
 
 
-        - name: Run daliuge-engine tests
-          run: |
-            COVFILES="$COVFILES daliuge-engine/.coverage"
-            echo "COVFILES=$COVFILES" >> $GITHUB_ENV
-            cd daliuge-engine
-            py.test --cov --show-capture=no
+      - name: Run daliuge-engine tests
+        run: |
+          COVFILES="$COVFILES daliuge-engine/.coverage"
+          echo "COVFILES=$COVFILES" >> $GITHUB_ENV
+          cd daliuge-engine
+          py.test --cov --show-capture=no
 
   run_end_to_end:
     name: Run end-to-end tests with python ${{matrix.python-version}}
