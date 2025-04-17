@@ -7,39 +7,88 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]  # Run on PRs from any branch to any target
 
-
 jobs:
-  run_tests:
-    name: Run unit tests with python ${{matrix.python-version}} - ${{ matrix.desc }}
+  run_translator:
+    name: Run daliuge-translator tests with python ${{matrix.python-version}}
     runs-on: ubuntu-22.04
     strategy:
       matrix:
         include:
           - python-version: "3.9"
-            test_number: 0
-            engine: no
-            translator: yes
-            desc: "no engine"
-          - python-version: "3.9"
-            test_number: 1
-            desc: "no translator"
-            engine: yes
-            translator: no
           - python-version: "3.10"
-            test_number: 2
-            desc: "full package v3.10"
-            engine: yes
-            translator: yes
           - python-version:  "3.11"
-            test_number: 3
-            desc: "full package v3.11"
-            engine: yes
-            translator: yes
           - python-version:  "3.12"
-            test_number: 4
-            desc: "full package v3.12"
-            engine: yes
-            translator: yes
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        name: Install Python
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install test dependencies
+        run: |
+          pip install -U coveralls pytest pytest-cov
+          pip install -U setuptools pip wheel dask
+
+      - name: Install daliuge-common
+        run: pip install -e daliuge-common/
+
+      - name: Run daliuge-translator tests
+        if: ${{ matrix.translator == 'yes' }}
+        run: |
+            COVFILES=" daliuge-translator/.coverage"
+            echo "COVFILES=$COVFILES" >> $GITHUB_ENV
+            cd daliuge-translator
+            py.test --cov --show-capture=no
+
+    run_engine:
+      name: Run daliuge-enginge tests with python ${{matrix.python-version}}
+      runs-on: ubuntu-22.04
+      strategy:
+        matrix:
+          include:
+            - python-version: "3.9"
+            - python-version: "3.10"
+            - python-version:  "3.11"
+            - python-version:  "3.12"
+      steps:
+        - uses: actions/checkout@v4
+
+        - uses: actions/setup-python@v5
+          name: Install Python
+          with:
+            python-version: ${{ matrix.python-version }}
+
+        - name: Install test dependencies
+          run: |
+            pip install -U coveralls pytest pytest-cov
+            pip install -U setuptools pip wheel dask
+
+        - name: Install daliuge-common
+          run: pip install -e daliuge-common/
+
+        - name: Install daliuge-engine
+          run: pip install -e "daliuge-engine/[test]"
+
+
+        - name: Run daliuge-engine tests
+          run: |
+            COVFILES="$COVFILES daliuge-engine/.coverage"
+            echo "COVFILES=$COVFILES" >> $GITHUB_ENV
+            cd daliuge-engine
+            py.test --cov --show-capture=no
+
+  run_end_to_end:
+    name: Run end-to-end tests with python ${{matrix.python-version}}
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        include:
+          - python-version: "3.9"
+          - python-version: "3.10"
+          - python-version:  "3.11"
+          - python-version:  "3.12"
 
     steps:
       - uses: actions/checkout@v4
@@ -58,28 +107,18 @@ jobs:
         run: pip install -e daliuge-common/
 
       - name: Install daliuge-translator
-        if: ${{ matrix.translator == 'yes' }}
         run: pip install -e "daliuge-translator/[test]"
 
       - name: Install daliuge-engine
-        if: ${{ matrix.engine == 'yes' }}
         run: pip install -e "daliuge-engine/[test]"
 
-      - name: Run daliuge-translator tests
-        if: ${{ matrix.translator == 'yes' }}
-        run: |
-          COVFILES=" daliuge-translator/.coverage"
-          echo "COVFILES=$COVFILES" >> $GITHUB_ENV
-          cd daliuge-translator
-          py.test --cov --show-capture=no
-
-      - name: Run daliuge-engine tests
+      - name: Run end-to-end tests
         if: ${{ matrix.engine == 'yes' }}
         run: |
           COVFILES="$COVFILES daliuge-engine/.coverage"
           echo "COVFILES=$COVFILES" >> $GITHUB_ENV
           cd daliuge-engine
-          py.test --cov --show-capture=no
+          py.test test/deploy/test_graph_to_manager.py test/deploy/test_slurm_utils.py test/test_tool.py test/test_named_port_apps.py --cov --show-capture=no
 
       - name: Combine coverage
         run: coverage combine $COVFILES
