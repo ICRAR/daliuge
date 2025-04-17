@@ -25,17 +25,6 @@ class ArgType(IntEnum):
     POSITIONAL = auto()
     KEYWORD = auto()
 
-class ArgType(IntEnum):
-    """
-    Arguments can be positional or keyword.
-
-    This enum is used when determining what we do with the argument, as POSITIONAL
-    arguments will need to be treated differently as the order in which they appear
-    is important.
-    """
-    POSITIONAL = auto()
-    KEYWORD = auto()
-
 
 class DropParser(Enum):
     RAW = "raw"
