@@ -179,7 +179,7 @@ extra_requires = {
     "MPI": ["mpi4py"],
     # AWS storage types
     "aws": ["boto3"],
-    "test": ["pytest", "eagle-test-graphs"],
+    "test": ["pytest", "eagle-test-graphs==0.1.3"],
 }
 
 setup(
