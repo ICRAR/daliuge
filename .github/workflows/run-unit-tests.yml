@@ -139,8 +139,9 @@ jobs:
       - name: Run upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
+          if-no-files-found: error
           name: coverage-${{ github.job }}.${{ matrix.python-version }}
-          path: ./daliuge-engine/.coverage.${{ matrix.python-version }}.${{ github.job }}
+          path: ${{ github.workspace }}/daliuge-engine/.coverage.${{ matrix.python-version }}.${{ github.job }}
 
   finish:
     needs: [run_end_to_end] # [run_translator, run_engine, run_end_to_end]
