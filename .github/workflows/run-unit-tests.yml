@@ -141,19 +141,12 @@ jobs:
       - name: Update to coveralls
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: ${{ matrix.python-version }}.${{ github.job }}
+          COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
           COVERALLS_PARALLEL: true
         run: coveralls --service=github
 
-#      - uses: actions/upload-artifact@v4
-#        with:
-#          if-no-files-found: error
-#          include-hidden-files: true
-#          name: coverage-${{ github.job }}.${{ matrix.python-version }}
-#          path: ${{ env.covfiles }}
-
   finish:
-    needs: [run_end_to_end]
+    needs: [run_translator, run_engine, run_end_to_end]
     runs-on: ubuntu-22.04
     steps:
     - name: Download all coverage artifacts
