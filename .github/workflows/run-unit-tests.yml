@@ -106,7 +106,7 @@ jobs:
         run: coveralls --service=github
 
   finish:
-    needs: [run_end_to_end] # [run_translator, run_engine, run_end_to_end]
+    needs: [run_end_to_end]
     runs-on: ubuntu-22.04
     steps:
     - name: Download all coverage artifacts
