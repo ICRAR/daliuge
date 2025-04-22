@@ -115,7 +115,66 @@ class DROPLogFilter(logging.Filter):
         return uid == self.uid or uid == self.humanKey
 
 
+class InstanceLogHandler(logging.Handler):
+    """Custom handler to store logs in-memory per object instance."""
+    def __init__(self, log_storage):
+        super().__init__()
+        self.log_storage = log_storage
 
+    def emit(self, record):
+        """Store log messages in the instance's log storage.
+
+         :param record: The log string we want to add to the log storage
+
+         .. note: We are not interested in actually emitting the log;
+             we are just interested in extracting and storing Record metadata
+        """
+
+        exc = f"{str(record.exc_text)}" if record.exc_text else ""
+        # msg = str(record.message).replace("\n", "<br>")
+        msg = (f"<pre>{record.message.encode('utf-8').decode('unicode_escape')}\n"
+               f"{exc}</pre>")
+        try:
+            rec_time = record.asctime
+        except AttributeError:
+            rec_time = ""
+        self.log_storage.append({ "time":rec_time,
+            "Level": record.levelname,
+            "Module": record.name,
+            "Function/Method": record.funcName,
+            "Line #": record.lineno,
+            "Message": msg,
+        })
+
+class DROPLogFilter(logging.Filter):
+    def __init__(self, uid: str, humanKey: str):
+        self.uid = uid
+        self.humanKey = humanKey
+
+    def filter(self, record):
+        uid = getattr(record, "drop_uid", None)
+        return uid == self.uid or uid == self.humanKey
+
+
+class InstanceLogHandler(logging.Handler):
+    """Custom handler to store logs in-memory per object instance."""
+    def __init__(self, log_storage):
+        super().__init__()
+        self.log_storage = log_storage
+
+    def emit(self, record):
+        """Store log messages in the instance's log storage."""
+        log_entry = self.format(record)
+        self.log_storage.append(log_entry)
+
+class AppLogFilter(logging.Filter):
+    def __init__(self, uid: str, humanKey: str):
+        self.uid = uid
+        self.humanKey = humanKey
+
+    def filter(self, record):
+        uid = getattr(record, "drop_uid", None)
+        return uid == self.uid or uid == self.humanKey
 # ===============================================================================
 # AppDROP classes follow
 # ===============================================================================
