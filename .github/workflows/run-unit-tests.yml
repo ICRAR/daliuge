@@ -8,87 +8,85 @@ on:
     types: [opened, synchronize, reopened]  # Run on PRs from any branch to any target
 
 jobs:
-#  run_translator:
-#    name: Run daliuge-translator tests with python ${{matrix.python-version}}
-#    runs-on: ubuntu-22.04
-#    strategy:
-#      matrix:
-#        include:
-#          - python-version: "3.9"
-#          - python-version: "3.10"
-#          - python-version:  "3.11"
-#          - python-version:  "3.12"
-#    steps:
-#      - uses: actions/checkout@v4
-#
-#      - uses: actions/setup-python@v5
-#        name: Install Python
-#        with:
-#          python-version: ${{ matrix.python-version }}
-#
-#      - name: Install test dependencies
-#        run: |
-#          pip install -U coveralls pytest pytest-cov
-#          pip install -U setuptools pip wheel dask
-#
-#      - name: Install daliuge-common
-#        run: pip install -e daliuge-common/
-#
-#      - name: Install daliuge-translator
-#        run: pip install -e "daliuge-translator/[test]"
-#
-#      - name: Run daliuge-engine tests
-#        run: |
-#          export COVERAGE_FILE=daliuge-translator/.coverage.${{ matrix.subset }}.${{ github.job }}
-#          cd daliuge-translator
-#          py.test --cov --show-capture=no
-#
-#      - name: Run upload coverage artifact
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: coverage-${{ github.job }}.${{ matrix.python-version }}
-#          path: daliuge-translator/.coverage.${{ matrix.python-version }}.${{ github.job }}
-#
-#  run_engine:
-#    name: Run daliuge-enginge tests with python ${{matrix.python-version}}
-#    runs-on: ubuntu-22.04
-#    strategy:
-#      matrix:
-#        include:
-#          - python-version: "3.9"
-#          - python-version: "3.10"
-#          - python-version:  "3.11"
-#          - python-version:  "3.12"
-#    steps:
-#      - uses: actions/checkout@v4
-#
-#      - uses: actions/setup-python@v5
-#        name: Install Python
-#        with:
-#          python-version: ${{ matrix.python-version }}
-#
-#      - name: Install test dependencies
-#        run: |
-#          pip install -U coveralls pytest pytest-cov
-#          pip install -U setuptools pip wheel dask
-#
-#      - name: Install daliuge-common
-#        run: pip install -e daliuge-common/
-#
-#      - name: Install daliuge-engine
-#        run: pip install -e "daliuge-engine/[test]"
-#
-#      - name: Run tests with coverage
-#        run: |
-#          export COVERAGE_FILE=daliuge-engine/.coverage.${{ matrix.python-version }}.${{ github.job }}
-#          cd daliuge-engine
-#          py.test --cov --show-capture=no
-#
-#      - name: Run upload coverage artifact
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: coverage-${{ github.job }}.${{ matrix.python-version }}
-#          path: daliuge-engine/.coverage.${{ matrix.python-version }}.${{ github.job }}
+  run_translator:
+    name: Run daliuge-translator tests with python ${{matrix.python-version}}
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        include:
+          - python-version: "3.9"
+          - python-version: "3.10"
+          - python-version:  "3.11"
+          - python-version:  "3.12"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        name: Install Python
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install test dependencies
+        run: |
+          pip install -U coveralls pytest pytest-cov
+          pip install -U setuptools pip wheel dask
+
+      - name: Install daliuge-common
+        run: pip install -e daliuge-common/
+
+      - name: Install daliuge-translator
+        run: pip install -e "daliuge-translator/[test]"
+
+      - name: Run daliuge-translator tests
+        run: |
+          py.test daliuge-translator/test/ --cov --show-capture=no
+
+      - name: Update to coveralls
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
+          COVERALLS_PARALLEL: true
+        run: coveralls --service=github
+
+  run_engine:
+    name: Run daliuge-enginge tests with python ${{matrix.python-version}}
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        include:
+          - python-version: "3.9"
+          - python-version: "3.10"
+          - python-version:  "3.11"
+          - python-version:  "3.12"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        name: Install Python
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install test dependencies
+        run: |
+          pip install -U coveralls pytest pytest-cov
+          pip install -U setuptools pip wheel dask
+
+      - name: Install daliuge-common
+        run: pip install -e daliuge-common/
+
+      - name: Install daliuge-engine
+        run: pip install -e "daliuge-engine/[test]"
+
+      - name: Run tests with coverage
+        run: |
+          py.test daliuge-engine/test/ --cov --show-capture=no
+
+      - name: Update to coveralls
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
+          COVERALLS_PARALLEL: true
+        run: coveralls --service=github
 
   run_end_to_end:
     name: Run end-to-end tests with python ${{matrix.python-version}}
@@ -131,19 +129,12 @@ jobs:
       - name: Update to coveralls
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: ${{ matrix.python-version }}.${{ github.job }}
+          COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
           COVERALLS_PARALLEL: true
         run: coveralls --service=github
 
-#      - uses: actions/upload-artifact@v4
-#        with:
-#          if-no-files-found: error
-#          include-hidden-files: true
-#          name: coverage-${{ github.job }}.${{ matrix.python-version }}
-#          path: ${{ env.covfiles }}
-
   finish:
-    needs: [run_end_to_end]
+    needs: [run_translator, run_engine, run_end_to_end]
     runs-on: ubuntu-22.04
     steps:
       - name: Coveralls Finished
@@ -151,32 +142,3 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           parallel-finished: true
-#  finish:
-#    needs: [run_end_to_end] # [run_translator, run_engine, run_end_to_end]
-#    runs-on: ubuntu-22.04
-#    steps:
-#    - name: Download all coverage artifacts
-#      uses: actions/download-artifact@v4
-#      with:
-#        path: coverage-artifacts
-#
-#    - name: Confirm artifacts exist
-#      run: find . -name ".coverage*"
-#
-#    - name: Install coverage tools
-#      run: pip install coverage coveralls
-#
-#    - name: Combine coverage data
-#      run: |
-#        mkdir combined
-#        find . -name ".coverage.*" -exec cp {} combined \;
-#        ls -l combined/
-#        coverage combine combined
-#        coverage report
-#        coverage xml
-#
-#    - name: Upload to Coveralls
-#      env:
-#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        COVERALLS_PARALLEL: true
-#      run: coveralls --service=github
