@@ -34,13 +34,22 @@ jobs:
       - name: Install daliuge-common
         run: pip install -e daliuge-common/
 
-      - name: Run daliuge-translator tests
-        if: ${{ matrix.translator == 'yes' }}
+      - name: Install daliuge-translator
+        run: pip install -e "daliuge-translator/[test]"
+
+      - name: Set COVERAGE_FILE env var
+        run: echo "COVERAGE_FILE=daliuge-translator/.coverage.${{ matrix.subset }}.${{ github.job }}" >> $GITHUB_ENV
+
+      - name: Run daliuge-engine tests
         run: |
-            COVFILES=" daliuge-translator/.coverage"
-            echo "COVFILES=$COVFILES" >> $GITHUB_ENV
-            cd daliuge-translator
-            py.test --cov --show-capture=no
+          cd daliuge-translator
+          py.test --cov --show-capture=no
+
+      - name: Run upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ github.job }}.${{ matrix.subset }}
+          path: daliuge-translator/.coverage.${{ matrix.subset }}.${{ github.job }}
 
   run_engine:
     name: Run daliuge-enginge tests with python ${{matrix.python-version}}
@@ -71,13 +80,19 @@ jobs:
       - name: Install daliuge-engine
         run: pip install -e "daliuge-engine/[test]"
 
+      - name: Set COVERAGE_FILE env var
+        run: echo "COVERAGE_FILE=daliuge-engine/.coverage.${{ matrix.subset }}.${{ github.job }}" >> $GITHUB_ENV
 
       - name: Run daliuge-engine tests
         run: |
-          COVFILES="$COVFILES daliuge-engine/.coverage"
-          echo "COVFILES=$COVFILES" >> $GITHUB_ENV
           cd daliuge-engine
           py.test --cov --show-capture=no
+
+      - name: Run upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ github.job }}.${{ matrix.subset }}
+          path: daliuge-engine/.coverage.${{ matrix.subset }}.${{ github.job }}
 
   run_end_to_end:
     name: Run end-to-end tests with python ${{matrix.python-version}}
@@ -112,30 +127,41 @@ jobs:
       - name: Install daliuge-engine
         run: pip install -e "daliuge-engine/[test]"
 
-      - name: Run end-to-end tests
-        if: ${{ matrix.engine == 'yes' }}
+      - name: Set COVERAGE_FILE env var
+        run: echo "COVERAGE_FILE=daliuge-engine/.coverage.${{ matrix.subset }}.${{ github.job }}" >> $GITHUB_ENV
+
+      - name: Run daliuge-engine tests
         run: |
-          COVFILES="$COVFILES daliuge-engine/.coverage"
-          echo "COVFILES=$COVFILES" >> $GITHUB_ENV
           cd daliuge-engine
           py.test test/deploy/test_graph_to_manager.py test/deploy/test_slurm_utils.py test/test_tool.py test/test_named_port_apps.py --cov --show-capture=no
 
-      - name: Combine coverage
-        run: coverage combine $COVFILES
-
-      - name: Update to coveralls
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: ${{ matrix.test_number }}
-          COVERALLS_PARALLEL: true
-        run: coveralls --service=github
+      - name: Run upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ github.job }}.${{ matrix.subset }}
+          path: daliuge-engine/.coverage.${{ matrix.subset }}.${{ github.job }}
 
   finish:
     needs: [run_translator, run_engine, run_end_to_end]
     runs-on: ubuntu-22.04
     steps:
-      - name: Coveralls Finished
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          parallel-finished: true
+    - name: Download all coverage artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: coverage-artifacts
+
+    - name: Install coverage tools
+      run: pip install coverage coveralls
+
+    - name: Combine coverage data
+      run: |
+        find . -name ".coverage.*" -exec mv {} . \;
+        coverage combine coverage-artifacts
+        coverage report
+        coverage xml
+
+    - name: Upload to Coveralls
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_PARALLEL: true
+      run: coveralls --service=github
