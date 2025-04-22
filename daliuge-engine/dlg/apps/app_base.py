@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from concurrent.futures import Future
 from typing import List, Callable
+import json
 import logging
 import math
 import threading
@@ -73,7 +74,25 @@ def run_on_daemon_thread(func: Callable, *args, **kwargs) -> Future:
 
 _SYNC_DROP_RUNNER = SyncDropRunner()
 
+class InstanceLogHandler(logging.Handler):
+    """Custom handler to store logs in-memory per object instance."""
+    def __init__(self, log_storage):
+        super().__init__()
+        self.log_storage = log_storage
 
+    def emit(self, record):
+        """Store log messages in the instance's log storage."""
+        log_entry = self.format(record)
+        self.log_storage.append(log_entry)
+
+class AppLogFilter(logging.Filter):
+    def __init__(self, uid: str, humanKey: str):
+        self.uid = uid
+        self.humanKey = humanKey
+
+    def filter(self, record):
+        uid = getattr(record, "drop_uid", None)
+        return uid == self.uid or uid == self.humanKey
 # ===============================================================================
 # AppDROP classes follow
 # ===============================================================================
@@ -140,6 +159,18 @@ class AppDROP(ContainerDROP):
 
         # by default run drops synchronously
         self._drop_runner: DropRunner = _SYNC_DROP_RUNNER
+
+        self.log_storage = []
+
+        self.logger = logging.getLogger(f"{__class__}.{self.uid}")
+        instance_handler = InstanceLogHandler(self.log_storage)
+        instance_handler.addFilter(AppLogFilter(self.uid, self._humanKey))
+
+        # Attach instance-specific handler
+        logging.root.addHandler(instance_handler)
+
+        # Ensure logs still propagate to the root logger
+        logger.propagate = True
 
     @track_current_drop
     def addInput(self, inputDrop, back=True):
@@ -307,6 +338,14 @@ class AppDROP(ContainerDROP):
                 status=self.status,
                 execStatus=self.execStatus,
             )
+
+    def getLogs(self):
+        """
+        :return: Return the logs stored in the logging handler
+        """
+
+        return self.log_storage
+
 
 
 class InputFiredAppDROP(AppDROP):

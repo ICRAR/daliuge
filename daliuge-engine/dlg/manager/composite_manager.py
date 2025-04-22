@@ -306,7 +306,7 @@ class CompositeManager(DROPManager):
             for path in self._past_session_manager.past_sessions(self._sessionIds)
         ]
 
-    def _do_in_host(self, action, sessionId, exceptions, f, collect, port, iterable):
+    def _do_in_host(self, action, sessionId, exceptions, f, collect, port, iterable, **kwargs):
         """
         Replication of commands to underlying drop managers
         If "collect" is given, then individual results are also kept in the given
@@ -324,7 +324,7 @@ class CompositeManager(DROPManager):
 
         try:
             with self.dmAt(host) as dm:
-                res = f(dm, iterable, sessionId)
+                res = f(dm, iterable, sessionId, **kwargs)
 
             if isinstance(collect, dict):
                 collect.update(res)
@@ -342,7 +342,8 @@ class CompositeManager(DROPManager):
                 f,
             )
 
-    def replicate(self, sessionId, f, action, collect=None, iterable=None, port=None):
+    def replicate(self, sessionId, f, action, collect=None, iterable=None, port=None,
+                  **kwargs):
         """
         Replicates the given function call on each of the underlying drop managers
         """
@@ -352,7 +353,8 @@ class CompositeManager(DROPManager):
         logger.debug("Replicating command: %s on hosts: %s", f, iterable)
         self._tp.map(
             functools.partial(
-                self._do_in_host, action, sessionId, thrExs, f, collect, port
+                self._do_in_host, action, sessionId, thrExs, f, collect, port,
+                **kwargs
             ),
             iterable,
         )
@@ -597,6 +599,30 @@ class CompositeManager(DROPManager):
             collect=allStatus,
         )
         return allStatus
+
+    def getDropStatus(self, sessionId, dropId):
+        allstatus = {}
+        self.replicate(
+            sessionId,
+            # {"session": sessionId, "drop": dropId},
+            self._getDropStatus,
+            "getting graph status",
+            collect=allstatus,
+            dropId=dropId
+        )
+        return allstatus
+
+    def _getDropStatus(self, dm, host, sessionId, dropId ):
+        """
+        See session.getDropLogs()
+
+        :param dm:
+        :param host:
+        :param sessionId:
+        :param dropId:
+        :return: JSON of status logs and DROP information
+        """
+        return dm.getDropStatus(sessionId, dropId)
 
     def _getGraph(self, dm, host, sessionId):
         return dm.getGraph(sessionId)
