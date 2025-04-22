@@ -39,7 +39,7 @@ jobs:
 
       - name: Run daliuge-engine tests
         run: |
-          export "COVERAGE_FILE=daliuge-translator/.coverage.${{ matrix.subset }}.${{ github.job }}"
+          export COVERAGE_FILE=daliuge-translator/.coverage.${{ matrix.subset }}.${{ github.job }}
           cd daliuge-translator
           py.test --cov --show-capture=no
 
@@ -80,7 +80,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          export "COVERAGE_FILE=daliuge-engine/.coverage.${{ matrix.python-version }}.${{ github.job }}" 
+          export COVERAGE_FILE=daliuge-engine/.coverage.${{ matrix.python-version }}.${{ github.job }} 
           cd daliuge-engine
           py.test --cov --show-capture=no
 
@@ -125,10 +125,9 @@ jobs:
 
       - name: Run daliuge-engine tests
         run: |
-          export "COVERAGE_FILE=daliuge-engine/.coverage.${{ matrix.python-version }}.${{ github.job }}"
+          export COVERAGE_FILE=daliuge-engine/.coverage.${{ matrix.python-version }}.${{ github.job }}
           cd daliuge-engine
           py.test test/deploy/test_graph_to_manager.py test/deploy/test_slurm_utils.py test/test_tool.py test/test_named_port_apps.py --cov --show-capture=no
-          coverage report
           ls -la .coverage*
 
       - name: Run upload coverage artifact
