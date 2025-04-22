@@ -48,6 +48,12 @@ jobs:
           COVERALLS_PARALLEL: true
         run: coveralls --service=github
 
+      - name: Run upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ github.job }}.${{ matrix.subset }}
+          path: daliuge-translator/.coverage.${{ matrix.subset }}.${{ github.job }}
+
   run_engine:
     name: Run daliuge-engine tests with python ${{matrix.python-version}}
     runs-on: ubuntu-22.04
@@ -87,6 +93,12 @@ jobs:
           COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
           COVERALLS_PARALLEL: true
         run: coveralls --service=github
+
+      - name: Run upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ github.job }}.${{ matrix.subset }}
+          path: daliuge-engine/.coverage.${{ matrix.subset }}.${{ github.job }}
 
   run_end_to_end:
     name: Run end-to-end tests with python ${{matrix.python-version}}
@@ -136,8 +148,23 @@ jobs:
     needs: [run_translator, run_engine, run_end_to_end]
     runs-on: ubuntu-22.04
     steps:
-      - name: Coveralls Finished
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          parallel-finished: true
+    - name: Download all coverage artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: coverage-artifacts
+
+    - name: Install coverage tools
+      run: pip install coverage coveralls
+
+    - name: Combine coverage data
+      run: |
+        find . -name ".coverage.*" -exec mv {} . \;
+        coverage combine coverage-artifacts
+        coverage report
+        coverage xml
+
+    - name: Upload to Coveralls
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_PARALLEL: true
+      run: coveralls --service=github
