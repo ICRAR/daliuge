@@ -205,6 +205,7 @@ class ManagerRestServer(RestServer):
             method="OPTIONS",
             callback=self.acceptPreflight2,
         )
+        app.get("/api/sessions/<sessionId>/graph/drop/<dropId>", callback=self.getDropStatus)
 
         # The non-REST mappings that serve HTML-related content
         app.route("/static/<filepath:path>", callback=self.server_static)
@@ -335,6 +336,10 @@ class ManagerRestServer(RestServer):
     @daliuge_aware
     def getGraphStatus(self, sessionId):
         return self.dm.getGraphStatus(sessionId)
+
+    @daliuge_aware
+    def getDropStatus(self, sessionId, dropId):
+        return self.dm.getDropStatus(sessionId, dropId)
 
     @daliuge_aware
     def addGraphSpec(self, sessionId):

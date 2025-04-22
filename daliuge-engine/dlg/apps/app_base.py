@@ -105,7 +105,7 @@ class InstanceLogHandler(logging.Handler):
             "Message": msg,
         })
 
-class DROPLogFilter(logging.Filter):
+class AppLogFilter(logging.Filter):
     def __init__(self, uid: str, humanKey: str):
         self.uid = uid
         self.humanKey = humanKey
@@ -115,7 +115,25 @@ class DROPLogFilter(logging.Filter):
         return uid == self.uid or uid == self.humanKey
 
 
+class InstanceLogHandler(logging.Handler):
+    """Custom handler to store logs in-memory per object instance."""
+    def __init__(self, log_storage):
+        super().__init__()
+        self.log_storage = log_storage
 
+    def emit(self, record):
+        """Store log messages in the instance's log storage."""
+        log_entry = self.format(record)
+        self.log_storage.append(log_entry)
+
+class AppLogFilter(logging.Filter):
+    def __init__(self, uid: str, humanKey: str):
+        self.uid = uid
+        self.humanKey = humanKey
+
+    def filter(self, record):
+        uid = getattr(record, "drop_uid", None)
+        return uid == self.uid or uid == self.humanKey
 # ===============================================================================
 # AppDROP classes follow
 # ===============================================================================
@@ -187,11 +205,7 @@ class AppDROP(ContainerDROP):
 
         self.logger = logging.getLogger(f"{__class__}.{self.uid}")
         instance_handler = InstanceLogHandler(self.log_storage)
-        instance_handler.addFilter(DROPLogFilter(self.uid, self._humanKey))
-        fmt = ("%(asctime)-15s [%(levelname)5.5s] "
-               "%(name)s#%(funcName)s:%(lineno)s %(message)s")
-        fmt = logging.Formatter(fmt)
-        instance_handler.setFormatter(fmt)
+        instance_handler.addFilter(AppLogFilter(self.uid, self._humanKey))
 
         # Attach instance-specific handler
         logging.root.addHandler(instance_handler)
@@ -372,6 +386,7 @@ class AppDROP(ContainerDROP):
         """
 
         return self.log_storage
+
 
 
 class InputFiredAppDROP(AppDROP):
