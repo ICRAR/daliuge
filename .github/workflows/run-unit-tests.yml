@@ -125,7 +125,7 @@ jobs:
 
       - run: |
           export COVERAGE_FILE=coverage.${{ matrix.python-version }}.${{ github.job }}
-          py.test daliuge-engine/test/deploy/test_graph_to_manager.py 
+          py.test daliuge-engine/test/deploy/test_graph_to_manager.py --cov
           echo "covfiles=$COVERAGE_FILE" >> $GITHUB_ENV
           echo $COVERAGE_FILE
           ls -la
