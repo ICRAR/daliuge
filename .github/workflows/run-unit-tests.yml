@@ -145,13 +145,17 @@ jobs:
       with:
         path: coverage-artifacts
 
+    - name: Confirm artifacts exist
+      run: find . -name "coverage*"
+
     - name: Install coverage tools
       run: pip install coverage coveralls
 
     - name: Combine coverage data
       run: |
-        find . -name "coverage.*" -exec mv {} . \;
-        coverage combine coverage-artifacts
+        mkdir combined
+        find . -name "coverage.*" -exec cp {} combined \;
+        coverage combine combined
         coverage report
         coverage xml
 
