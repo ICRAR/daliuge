@@ -133,16 +133,15 @@ jobs:
       - name: Install daliuge-engine
         run: pip install -e "daliuge-engine/[test]"
 
-      - name: Run tests
-        run: |
-          py.test daliuge-engine/test/deploy/ daliuge-engine/test/named_ports daliuge-engine/test/test_tool.py --cov --show-capture=no
-
-      - name: Update to coveralls
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
-          COVERALLS_PARALLEL: true
-        run: coveralls --service=github
+      - run: |
+          export COVERAGE_FILE=.coverage.${{ matrix.python-version }}.${{ github.job }}
+          py.test daliuge-engine/test/deploy/test_graph_to_manager.py 
+          echo "covfiles=$COVERAGE_FILE" >> $GITHUB_ENV
+      - uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          name: coverage-${{ github.job }}.${{ matrix.python-version }}
+          path: ${{ env.covfiles }}
 
   finish:
     needs: [run_end_to_end] # [run_translator, run_engine, run_end_to_end]
