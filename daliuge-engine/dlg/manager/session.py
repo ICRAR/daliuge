@@ -642,6 +642,18 @@ class Session(object):
 
         return statusDict
 
+    def getDropLogs(self, drop_oid: str):
+        """
+        Retrieve the logs stored in the given DROP
+        :param drop_oid: drop_oid
+
+        :return:
+        """
+        return {"session": self.sessionId,
+                "status": self.status,
+                "logs": self._drops[drop_oid].getLogs() }
+
+
     @track_current_session
     def cancel(self):
         status = self.status
