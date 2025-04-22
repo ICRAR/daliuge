@@ -141,6 +141,7 @@ jobs:
           if-no-files-found: error
           name: coverage-${{ github.job }}.${{ matrix.python-version }}
           path: ${{ env.covfiles }}
+          working-directory: daliuge-engine
 
   finish:
     needs: [run_end_to_end] # [run_translator, run_engine, run_end_to_end]
