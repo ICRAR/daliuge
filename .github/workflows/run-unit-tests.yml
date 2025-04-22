@@ -125,7 +125,7 @@ jobs:
 
       - run: |
           export COVERAGE_FILE=.coverage.${{ matrix.python-version }}.${{ github.job }}
-          py.test daliuge-engine/test/deploy/test_graph_to_manager.py 
+          py.test daliuge-engine/test/deploy/test_graph_to_manager.py
           echo "covfiles=$COVERAGE_FILE" >> $GITHUB_ENV
       - uses: actions/upload-artifact@v4
         with:
