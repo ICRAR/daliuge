@@ -49,7 +49,7 @@ jobs:
         run: coveralls --service=github
 
   run_engine:
-    name: Run daliuge-enginge tests with python ${{matrix.python-version}}
+    name: Run daliuge-engine tests with python ${{matrix.python-version}}
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -123,8 +123,7 @@ jobs:
 
       - name: Run tests
         run: |
-          py.test daliuge-engine/test/deploy/test_graph_to_manager.py --cov --show-capture=no
-          ls -la
+          py.test daliuge-engine/test/deploy/test_graph_to_manager.py daliuge-engine/test/test_slurm_client.py daliuge-engine/test/test_named_port_apps.py daliuge-engine/test/test_tool.py --cov --show-capture=no
 
       - name: Update to coveralls
         env:
