@@ -140,6 +140,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
+          include-hidden-files: true
           name: coverage-${{ github.job }}.${{ matrix.python-version }}
           path: ${{ env.covfiles }}
 
