@@ -61,11 +61,12 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
     builtin_types = get_builtins()
     if pd_dict["type"] != "raw" and type(pydata) in builtin_types.values() and pd_dict["type"] not in builtin_types.keys():
         logger.warning("Type of pydata %s provided differs from specified type: %s", type(pydata).__name__, pd_dict["type"])
-        pd_dict["type"] = type(pydata).__name__
+        # pd_dict["type"] = type(pydata).__name__
     if pd_dict["type"].lower() == "json":
         try:
             pydata = json.loads(pydata)
-        except Exception:
+        except Exception as err:
+            logger.warning("Loading of JSON data failed: %s. Encoding it as string.", err)
             pydata = pydata.encode()
     if pd_dict["type"].lower() == "eval":
         # try:
@@ -162,7 +163,8 @@ class InMemoryDROP(DataDROP):
             self.data_type = pdict["type"] if pdict else ""
         if pydata:
             args.append(pydata)
-            logger.debug("Loaded into memory: %s, %s, %s", pydata, self.data_type, type(pydata))
+            logger.debug("Loaded into memory: Specified type: %s, loaded type: %s, Bytes: %s ", 
+                         self.data_type, type(dill.loads(pydata)), sys.getsizeof(pydata),)
         self._buf = io.BytesIO(*args) if self.data_type != "String" else io.StringIO(*args)
         self.size = len(pydata) if pydata else 0
 
