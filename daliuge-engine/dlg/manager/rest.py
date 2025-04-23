@@ -205,11 +205,12 @@ class ManagerRestServer(RestServer):
             method="OPTIONS",
             callback=self.acceptPreflight2,
         )
-        app.get("/api/sessions/<sessionId>/graph/drop/<dropId>", callback=self.getDropStatus)
 
         # The non-REST mappings that serve HTML-related content
         app.route("/static/<filepath:path>", callback=self.server_static)
         app.get("/session", callback=self.visualizeSession)
+        app.get("/api/sessions/<sessionId>/graph/drop/<dropId>",
+                  callback=self._getDropStatus)
         app.route("/sessions/<sessionId>/graph/drop/<dropId>",
                 callback=self.getDropStatus)
 
@@ -338,10 +339,6 @@ class ManagerRestServer(RestServer):
         return self.dm.getGraphStatus(sessionId)
 
     @daliuge_aware
-    def getDropStatus(self, sessionId, dropId):
-        return self.dm.getDropStatus(sessionId, dropId)
-
-    @daliuge_aware
     def addGraphSpec(self, sessionId):
         # WARNING: TODO: Somehow, the content_type can be overwritten to 'text/plain'
         logger.debug("Graph content type: %s", bottle.request.content_type)
@@ -400,22 +397,16 @@ class ManagerRestServer(RestServer):
         urlparts = bottle.request.urlparts
         serverUrl = urlparts.scheme + "://" + urlparts.netloc
 
+        # import requests
+        # api_url = f"{serverUrl}/api/sessions/{sessionId}/graph/drop/{dropId}"
+        # data = requests.get(api_url)
+        # data_alt = json.loads(data.text)
         data = self._getDropStatus(sessionId, dropId)
-        if data["logs"]:
-            columns = [col for col in data["logs"][-1].keys()]
-            filter_column = "Level"
-            filter_column_index = columns.index(filter_column)
-        else:
-            columns = []
-            filter_column_index=0
-
 
         tpl = file_as_string("web/drop_log.html")
         return bottle.template(
             tpl,
-            data=data,
-            columns=columns,
-            filter_index=filter_column_index,
+            node=data,
             sessionId=sessionId,
             serverUrl=serverUrl,
             dmType=self.dm.__class__.__name__,

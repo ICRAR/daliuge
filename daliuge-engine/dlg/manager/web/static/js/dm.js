@@ -635,8 +635,7 @@ function _addNode(g, doSpec, url) {
 	else if (doSpec.type == 'plain') {
 		notes += 'storage: ' + doSpec.storage;
 	}
-    url = url + "/graph/drop/" +  doSpec.oid;
-//    let link = "<a href=" + url +  target='_blank'>Click Me</a>";
+    url = url.replace("api/","") + "/graph/drop/" +  doSpec.oid;
     let link = "<a href=" + url +  " target='_blank'>Click Me</a>";
 	var oid = doSpec.oid;
 	var html = '<div class="drop-label ' + typeShape + '" id="id_' + oid + '">';
