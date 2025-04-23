@@ -1,55 +1,16 @@
 .. _eagle_app_integration:
 
-Component Description Generation
-================================
-In order to present graph developers with well defined components for their workflow development, EAGLE uses descriptions of the components based on a JSON schema. Typically a number of these component descriptions are saved and used together in a so-called *palette*. The |daliuge| system provides two ways to create such palettes. One internal to EAGLE and another one by using special `Doxygen <https://www.doxygen.nl/>`_ markup inline with the component code. The latter method allows the component developer to keep everything required to describe a component in a single place, together with the code itself. The manual one allows graph developers to define and use components, which are otherwise not available, like for example bash components.
+Component Description (Palette) Generation
+==========================================
+In order to present graph developers with well defined components for their workflow development, EAGLE uses descriptions of the components based on a JSON schema. Typically a number of these component descriptions are saved and used together in a so-called *palette*. The |daliuge| system provides two ways to create such palettes, one is by using EAGLE (but that is pretty cumbersome) and another one using a stand-alone tool to automatically generate palettes from installed Python modules or source code. This command line tool is called *dlg_paletteGen* and can be installed using pip. The documentation is available `here <https://icrar.github.io/dlg_paletteGen/>`_. *dlg_paletteGen* can parse completely un-modified Python modules from any source, including C-extensions and PyBind11 based modules and generate so-called *PythonFunction* components from the functions, classes and methods in those modules. It can also parse custom written |daliuge| component code and generate so-called *DALiuGEApp* component palettes. Creating *PythonFunction* palettes is by far the most common use case and covers almost all situations.
 
-Automatic EAGLE Palette Generation
-----------------------------------
-The automatic generation of a *palette* involves three steps:
-
-#. Markup of code using custom Doxygen comments
-#. Running of xml2palette.py, which is a small python script that uses the Doxygen documentation comments to generate a EAGLE palette with the required JSON format.
-#. (optional) commit the resulting palette file to a graph repository.
-
-The last two steps can be integrated into a CI build system and would then be executed automatically with any commit of the component source code. Very often one directory of source code contains multiple source files, each of which contain multiple components. The resulting palette will include descriptions of all the components found in a directory.
-
-Generate palette using xml2palette.py
-"""""""""""""""""""""""""""""""""""""
-
-The xml2palette.py script is located in the tools directory within the DALiuGE repository. It is designed to generate a single palette file for a input directory containing doscumented code. The script has the following dependencies:
-
-#. Doxygen
-#. xsltproc
-
-The xml2palette.py script can be run using this command line:
-
-.. code-block::
-
-  python3 xml2palette.py [-h] [-m MODULE] [-t TAG] [-c] [-r] [-s] [-v] idir ofile
-
-  positional arguments:
-    idir                  input directory path or file name
-    ofile                 output file name
-
-  optional arguments:
-    -h, --help            show this help message and exit
-    -m MODULE, --module MODULE
-                          Module load path name
-    -t TAG, --tag TAG     filter components with matching tag
-    -c                    C mode, if not set Python will be used
-    -r, --recursive       Traverse sub-directories
-    -s, --parse_all       Try to parse non DAliuGE compliant functions and methods
-    -v, --verbose         increase output verbosity
-
-  If no tag is specified, all components found in the input directory will part of the output file. If, however, a tag is specified, then only those components with a matching tag will be part of the output. Tags can be added to the Doxygen comments for a component using:
-
-.. code-block:: python
-
-  # @param tag <tag_name>
+*NOTE: The following section is for special use cases only!*
 
 Component Doxygen Markup Guide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+*dlg_paletteGen* provides a way to parse propietary `Doxygen <https://www.doxygen.nl/>`_ markup inline with |daliuge| specific component code. This allows the |daliuge| component developer to keep everything required to describe a component in a single place, together with the code itself. The manual one allows graph developers to define and use components, which are otherwise not available, like for example bash components.
+
 In order to support the direct usage of newly written application components in the EAGLE editor, the |daliuge| system supports a custom set of Doxygen directives and tools. When writing an application component, developers can add specific custom `Doxygen <https://www.doxygen.nl/>`_ comments to the source code. These comments describe the component and can be used to automatically generate a JSON DALiuGE component description which in turn can be used in the *EAGLE*. A few basic rules to remember:
 
 #. The |daliuge| specific comments should be contained within a *EAGLE_START* and *EAGLE_END* pair.
