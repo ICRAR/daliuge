@@ -293,7 +293,7 @@ class LGNode:
                 glist.append(str(cg.gid))
                 cg = cg.group
             glist.append("0")
-            self._g_h = "/".join(reversed(glist))
+            self._g_h = "-".join(reversed(glist))
         return self._g_h
 
     @property
@@ -703,7 +703,7 @@ class LGNode:
             iid:    instance id (for the physical graph node)
         """
         # TODO: This is rather ugly, but a quick and dirty fix. The iid is the rank data we need
-        rank = [int(x) for x in iid.split("/")]
+        rank = [int(x) for x in iid.split("-")]
         return "{0}_{1}_{2}".format(self._ssid, self.id, iid), rank
 
     def _update_key_value_attributes(self, kwargs):

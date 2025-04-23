@@ -634,7 +634,7 @@ class CompositeManager(DROPManager):
         )
 
         # The graphs coming from the DMs are not interconnected, we need to
-        # add the missing connections to the graph before returning upstream
+        # add the missing connections to the graph befor/ returninr upstream
         rels = set(
             [
                 z

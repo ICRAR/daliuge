@@ -651,6 +651,7 @@ class Session(object):
         """
         return {"session": self.sessionId,
                 "status": self.status,
+                "oid": drop_oid,
                 "logs": self._drops[drop_oid].getLogs() }
 
 

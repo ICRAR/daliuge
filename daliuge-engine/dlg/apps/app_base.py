@@ -85,7 +85,7 @@ class InstanceLogHandler(logging.Handler):
         log_entry = self.format(record)
         self.log_storage.append(log_entry)
 
-class AppLogFilter(logging.Filter):
+class DROPLogFilter(logging.Filter):
     def __init__(self, uid: str, humanKey: str):
         self.uid = uid
         self.humanKey = humanKey
@@ -164,7 +164,12 @@ class AppDROP(ContainerDROP):
 
         self.logger = logging.getLogger(f"{__class__}.{self.uid}")
         instance_handler = InstanceLogHandler(self.log_storage)
-        instance_handler.addFilter(AppLogFilter(self.uid, self._humanKey))
+        instance_handler.addFilter(DROPLogFilter(self.uid, self._humanKey))
+        fmt = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] "
+        fmt += "[%(drop_uid)10.10s] "
+        fmt += "%(name)s#%(funcName)s:%(lineno)s %(message)s"
+        fmt = logging.Formatter(fmt)
+        instance_handler.setFormatter(fmt)
 
         # Attach instance-specific handler
         logging.root.addHandler(instance_handler)
