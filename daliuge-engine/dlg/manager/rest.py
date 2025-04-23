@@ -205,11 +205,14 @@ class ManagerRestServer(RestServer):
             method="OPTIONS",
             callback=self.acceptPreflight2,
         )
-        app.get("/api/sessions/<sessionId>/graph/drop/<dropId>", callback=self.getDropStatus)
 
         # The non-REST mappings that serve HTML-related content
         app.route("/static/<filepath:path>", callback=self.server_static)
         app.get("/session", callback=self.visualizeSession)
+        app.get("/api/sessions/<sessionId>/graph/drop/<dropId>",
+                  callback=self._getDropStatus)
+        app.route("/sessions/<sessionId>/graph/drop/<dropId>",
+                callback=self.getDropStatus)
 
         # sub-class specifics
         self.initializeSpecifics(app)
@@ -336,10 +339,6 @@ class ManagerRestServer(RestServer):
         return self.dm.getGraphStatus(sessionId)
 
     @daliuge_aware
-    def getDropStatus(self, sessionId, dropId):
-        return self.dm.getDropStatus(sessionId, dropId)
-
-    @daliuge_aware
     def addGraphSpec(self, sessionId):
         # WARNING: TODO: Somehow, the content_type can be overwritten to 'text/plain'
         logger.debug("Graph content type: %s", bottle.request.content_type)
@@ -390,6 +389,30 @@ class ManagerRestServer(RestServer):
             dmType=self.dm.__class__.__name__,
         )
 
+    def _getDropStatus(self, sessionId, dropId):
+        return self.dm.getDropStatus(sessionId, dropId)
+
+    def getDropStatus(self, sessionId, dropId):
+        params = bottle.request.params
+        logger.warning("PARAMS: %s", params)
+
+        urlparts = bottle.request.urlparts
+        serverUrl = urlparts.scheme + "://" + urlparts.netloc
+
+        # import requests
+        # api_url = f"{serverUrl}/api/sessions/{sessionId}/graph/drop/{dropId}"
+        # data = requests.get(api_url)
+        # data_alt = json.loads(data.text)
+        data = self._getDropStatus(sessionId, dropId)
+
+        tpl = file_as_string("web/drop_log.html")
+        return bottle.template(
+            tpl,
+            node=data,
+            sessionId=sessionId,
+            serverUrl=serverUrl,
+            dmType=self.dm.__class__.__name__,
+        )
 
 class NMRestServer(ManagerRestServer):
     """
