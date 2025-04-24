@@ -606,26 +606,32 @@ class PyFuncApp(BarrierAppDROP):
         # Get the outputs accordingly
 
         attr_uid_map = {}
+        output_port_count = {}
         for output in self.parameters["outputs"]:
             for key, value in output.items():
                 attr_uid_map[value] = key
+                if key in output_port_count:
+                    output_port_count[key] += 1
+                else:
+                    output_port_count[key] = 1
 
         for arg_map in [keywordArgsMap, positionalArgsMap]:
             if arg in arg_map:
                 output_uid = attr_uid_map[arg]
                 output_drop = next(
-                    (drop for drop in self.outputs if drop.uid ==output_uid),
+                    (drop for drop in self.outputs if drop.uid == output_uid),
                     None
                 )
                 argument = arg_map[arg]
                 parser = (DropParser(argument.encoding))
                 if parser == DropParser.PATH:
                     argument.value = filepath_from_string(
-                        argument.value, uid=output_drop.uid,humanKey=output_drop._humanKey
+                        argument.value, dirname=output_drop.dirname, uid=output_drop.uid,
+                        humanKey=output_drop._humanKey
                     )
-                self.parameters[arg] = arg_map[arg].value
+                    self._output_filepaths[output_uid] = argument.value
                 arg_map[arg] = argument
-
+                self.parameters[arg] = arg_map[arg].value
         return keywordArgsMap, positionalArgsMap
 
     def _ports2args(self, pargsDict, keyargsDict) -> dict:
@@ -765,6 +771,7 @@ class PyFuncApp(BarrierAppDROP):
 
         # Mapping between argument name and input drop uids
         logger.debug(f"Input mapping provided: {self.func_arg_mapping}")
+        self._output_filepaths = {}
         self._recompute_data = {}
 
     @track_current_drop
@@ -880,15 +887,22 @@ class PyFuncApp(BarrierAppDROP):
         from dlg.droputils import listify
 
         result_iter = listify(result)
-        if not self.outputs or not result_iter:
+        if not self.outputs and result_iter:
             return
+
         logger.debug(
             "Writing follow result to %d output: %s", len(self.outputs), result_iter
         )
-        # TODO Consider how to avoid overwriting a file with side effects
         for i, o in enumerate(self.outputs):
-            # result = result_iter[0]
-            if len(result_iter) == 1:  # and len(self.outputs) > 1:
+            # Ensure that we don't produce two files for the same output DROP
+            if o.uid in self._output_filepaths:
+                # Trigger FileDROP filename update, but don't write to the drop because
+                # it has already been written to.
+                _ = o.getIO()
+                continue
+            if not result_iter and self.outputs:
+                result = result_iter
+            elif len(result_iter) == 1:
                 # We only have one element, no need to save as a list
                 result = result_iter[0]
             elif len(result_iter) > 1 and len(self.outputs) == 1:

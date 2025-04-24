@@ -122,7 +122,7 @@ def find_dlg_fstrings(filename: str) -> list[str]:
         return opts
 
 
-def filepath_from_string(filename: str, **kwargs) -> str:
+def filepath_from_string(filename: str, dirname: str = "", **kwargs) -> str:
     """
     Attempts to construct a filename from filename and possible mappings, which are
     built from a combination of FSTRING_MAP and **kwargs.
@@ -144,4 +144,4 @@ def filepath_from_string(filename: str, **kwargs) -> str:
     for fp in opts:
         filename = filename.replace(f"{{{fp}}}", fstring_map[fp])
 
-    return filename
+    return f"{dirname}/{filename}" if dirname else filename
