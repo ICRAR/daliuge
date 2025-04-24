@@ -42,17 +42,12 @@ pexpect = pytest.importorskip("dlg.dropmake")
 
 class TestBasicApp(unittest.TestCase):
     """
-    Given a simple graph with:
+    Test that the Graph produces:
 
-    <return_path("test_{datetime}.txt")> --> <FileDrop>
-
-    Where:
-        >>> def return_path(fn):
-        >>>     return fn
-
-    Make sure that it runs and produces a graph with name test_<current_date>.txt, and
-    that the content is also test_<current_date>.txt
-
+        - A file as a side effect of the behaviour of the function ((hello_{dt}.txt)).
+        - A file that is a result of copying the side effect filename, using the FileDROP
+          connected to the AppDrop.
+        - A file that is a result of the output of the function (the return)
     """
 
     graph = f"{files(test_graphs)}/Filepath_test_side_effectPG.graph"

@@ -73,7 +73,7 @@ jobs:
           COVFILES="$COVFILES daliuge-engine/.coverage"
           echo "COVFILES=$COVFILES" >> $GITHUB_ENV
           cd daliuge-engine
-          py.test test/named_ports/ --cov --show-capture=no
+          py.test --cov --show-capture=no
 
       - name: Combine coverage
         run: coverage combine $COVFILES
