@@ -624,6 +624,10 @@ class PyFuncApp(BarrierAppDROP):
         for output in self.parameters["outputs"]:
             for key, value in output.items():
                 attr_uid_map[value] = key
+                if key in output_port_count:
+                    output_port_count[key] += 1
+                else:
+                    output_port_count[key] = 1
 
         for arg in keywordArgsMap:
                 keywordArgsMap[arg] = self._arg_to_output(attr_uid_map,
@@ -909,7 +913,6 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(
             "Writing following result to %d outputs: %s", len(self.outputs), result_iter
         )
-        # TODO Consider how to avoid overwriting a file with side effects
         for i, o in enumerate(self.outputs):
             # Ensure that we don't produce two files for the same output DROP
             if o.uid in self._output_filepaths:
