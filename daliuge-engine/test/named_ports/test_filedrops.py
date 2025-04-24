@@ -23,11 +23,14 @@
 This module is used to test FileDROP input/output naming through named ports.
 """
 import datetime
+import shutil
+
 import dill
 import pytest
 import unittest
 
 from importlib.resources import files
+from pathlib import Path
 
 from dlg.ddap_protocol import DROPStates
 from test.dlg_end_to_end_utils import create_and_run_graph_spec_from_graph_file
@@ -51,36 +54,12 @@ class TestBasicApp(unittest.TestCase):
 
     """
 
-    graph = f"{files(test_graphs)}/Filepath_testPG.graph"
+    graph = f"{files(test_graphs)}/Filepath_test_side_effectPG.graph"
+
+    def setUp(self):
+        shutil.rmtree("/tmp/daliuge_tfiles")
 
     def test_pyfunc_to_fileapp(self):
-        """
-        Confirm filename and file output is correct
-        """
-        leafs = create_and_run_graph_spec_from_graph_file(
-            self, self.graph, resolve_path=False)
-        for l in leafs:
-            self.assertEqual(DROPStates.COMPLETED, l.status)
-
-        dt = datetime.date.today().strftime("%Y-%m-%d")
-        # Leaf Node 1 has been encoded first as numpy, second as UTF-8.
-        leaf = leafs.pop()
-        self.assertEqual(f"test_{dt}.txt", leaf.filename)
-        desc = leaf.open()
-        self.assertEqual(f"test_{dt}.txt", leaf.read(desc).decode())
-
-
-class TestBasicAppWithMemoryDropFileInput(unittest.TestCase):
-    """
-    This is the same as the TestBasicApp graph, except we use a memory drop with Pydata
-    that defines the path name instead.
-    
-    <Pydata("test_{datetime}.txt")> --> <return_path> --> <FileDROP>
-    """
-
-    graph = f"{files(test_graphs)}/Filepath_test_InputOutputPG.graph"
-
-    def test_pyfuncapp_to_file(self):
         """
         Confirm filename and file output is correct
         """
@@ -90,37 +69,24 @@ class TestBasicAppWithMemoryDropFileInput(unittest.TestCase):
             self.assertEqual(DROPStates.COMPLETED, l.status)
 
         dt = datetime.date.today().strftime("%Y-%m-%d")
-        # Leaf Node 1 has been encoded first as numpy, second as UTF-8.
         leaf = leafs.pop()
-        self.assertEqual(f"test_{dt}.txt", leaf.filename)
-        desc = leaf.open()
-        self.assertEqual(f"test_{dt}.txt", leaf.read(desc).decode())
 
+        hello_filename = f"hello_{dt}.txt"
+        hello_text = "Hello Ryan"
+        hello_duplicate = "hello2.txt"
 
-class TestAppFileChain(unittest.TestCase):
-    """
-    This is an extension of TestBasicApp graph, where we now read in the output and use
-    the path of the first FileDROP, and do the same thing again whilst modifying the
-    filename and data in the file.
+        output_filename = "output.txt"
+        output_text = "Hello from write_file"
 
-    This shows that we can re-use data using the user-supplied filename approach.
+        expected_files = [hello_filename, hello_duplicate, output_filename]
+        created_files = [p.name for p in Path(leaf.dirname).iterdir()]
+        for e in expected_files:
+            self.assertTrue(e in created_files)
 
-    """
-    graph = f"{files(test_graphs)}/Filepath_test_multiple_appsPG.graph"
-
-    def test_pyfunc_to_file_with_multiple_apps(self):
-        """
-        Confirm filename and file output is correct
-        """
-        leafs = create_and_run_graph_spec_from_graph_file(
-            self, self.graph, resolve_path=False)
-        for l in leafs:
-            self.assertEqual(DROPStates.COMPLETED, l.status)
-
-        dt = datetime.date.today().strftime("%Y-%m-%d")
-
-        leaf = leafs.pop()
-        self.assertEqual(f"test_{dt}_redux.txt", leaf.filename)
-        desc = leaf.open()
-
-        self.assertTrue(f"test_{dt}.txt redux" in leaf.read(desc).decode())
+        for p in Path(leaf.dirname).iterdir():
+            if p.name == hello_filename or p.name == hello_duplicate:
+                text = hello_text
+            else:
+                text = output_text
+                with p.open() as fp:
+                    self.assertEqual(text, fp.read())
