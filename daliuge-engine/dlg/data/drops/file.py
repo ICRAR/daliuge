@@ -171,7 +171,7 @@ class FileDROP(DataDROP, PathBasedDrop):
         # if not self._updatedPorts:
         if not self.parameters.get("filepath", None):
             self._map_input_ports_to_params()
-        self._setupFilePaths()
+            self._setupFilePaths()
 
         return FileIO(self._path)
 

@@ -952,7 +952,6 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(
             "Writing following result to %d outputs: %s", len(self.outputs), result_iter
         )
-        # TODO Consider how to avoid overwriting a file with side effects
         for i, o in enumerate(self.outputs):
             # Ensure that we don't produce two files for the same output DROP
             if o.uid in self._output_filepaths:
