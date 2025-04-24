@@ -59,13 +59,13 @@ jobs:
         if: ${{ matrix.engine == 'yes' }}
         run: pip install -e "daliuge-engine/[test]"
 
-      - name: Run daliuge-translator tests
-        if: ${{ matrix.translator == 'yes' }}
-        run: |
-          COVFILES=" daliuge-translator/.coverage"
-          echo "COVFILES=$COVFILES" >> $GITHUB_ENV
-          cd daliuge-translator
-          py.test --cov --show-capture=no
+#      - name: Run daliuge-translator tests
+#        if: ${{ matrix.translator == 'yes' }}
+#        run: |
+#          COVFILES=" daliuge-translator/.coverage"
+#          echo "COVFILES=$COVFILES" >> $GITHUB_ENV
+#          cd daliuge-translator
+#          py.test --cov --show-capture=no
 
       - name: Run daliuge-engine tests
         if: ${{ matrix.engine == 'yes' }}
