@@ -23,6 +23,7 @@
 This module is used to test FileDROP input/output naming through named ports.
 """
 import datetime
+import os
 import shutil
 
 import dill
@@ -55,9 +56,18 @@ class TestBasicApp(unittest.TestCase):
     """
 
     graph = f"{files(test_graphs)}/Filepath_test_side_effectPG.graph"
+    rundir = "/tmp/daliuge_tfiles"
 
     def setUp(self):
-        shutil.rmtree("/tmp/daliuge_tfiles")
+        if os.path.exists(self.rundir):
+            shutil.rmtree(self.rundir)
+        # if os.path.exists(self.rundir):
+        #     shutil.rmtree(self.rundir)
+        # os.makedirs(self.rundir)
+
+    # def tearDown(self):
+    #     if os.path.exists(self.rundir):
+    #         shutil.rmtree(self.rundir)
 
     def test_pyfunc_to_fileapp(self):
         """
