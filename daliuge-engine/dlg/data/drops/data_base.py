@@ -400,8 +400,6 @@ class DataDROP(AbstractDROP):
             if portname in self.parameters:
                 self.parameters[portname] = finalDropPortMap[portname]
 
-        self._updatedPorts = True
-
     @abstractmethod
     def getIO(self) -> DataIO:
         """
