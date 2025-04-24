@@ -165,22 +165,13 @@ class FileDROP(DataDROP, PathBasedDrop):
 
         self._wio = None
 
-    def _apply_filename_modifiers(self, filename):
-        """
-        Take the 'prefix' and 'suffix' modifiers to
-        """
-        suffix = self.parameters.get("suffix", "")
-        prefix = self.parameters.get("prefix", "")
-
-        return f"{prefix}{filename}{suffix}"
-
     def getIO(self):
 
         # We need to update named_ports now we have runtime information
         # if not self._updatedPorts:
         if not self.parameters.get("filepath", None):
             self._map_input_ports_to_params()
-            self._setupFilePaths()
+        self._setupFilePaths()
 
         return FileIO(self._path)
 
