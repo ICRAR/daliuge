@@ -897,6 +897,7 @@ class PyFuncApp(BarrierAppDROP):
             "Writing follow result to %d output: %s", len(self.outputs),
                      result_iter
         )
+        # TODO Consider how to avoid overwriting a file with side effects
         for i, o in enumerate(self.outputs):
             # result = result_iter[0]
             if len(result_iter) == 1:  # and len(self.outputs) > 1:

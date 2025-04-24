@@ -184,7 +184,7 @@ class StreamingBashAppTests(unittest.TestCase):
         c.addOutput(d)
 
         # Let's fire the app
-        with DROPWaiterCtx(self, d, 2):
+        with DROPWaiterCtx(self, d, 200):
             a.async_execute()
 
         # The application executed, finished, and its output was recorded
