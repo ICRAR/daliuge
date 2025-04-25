@@ -931,8 +931,8 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 # @param func_name condition/String/ComponentParameter/NoPort/ReadWrite//False/False/Python conditional function name. This can also be a valid import path to an importable function.
 # @param func_code def condition(x): return (x > 0)/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code for the branch condition. Modify as required. Note that func_name above needs to match the defined name here.
 # @param x /Object/ComponentParameter/InputPort/ReadWrite//False/False/Port carrying the input which is also used in the condition function. Note that the name of the parameter has to match the argument of the condition function.
-# @param true  /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is true the input will be copied to this port
-# @param false /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is false the input will be copied to this port
+# @param True  /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is true the input will be copied to this port
+# @param False /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is false the input will be copied to this port
 # @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.simple.GenericScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param dropclass dlg.apps.simple.Branch/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
@@ -966,19 +966,26 @@ class Branch(PyFuncApp):
 
         if not self.outputs:
             return
+        out_uid_dict = {o.uid:o for o in self.outputs}
+        out_name_dict = {v:k for out in self.parameters["outputs"] for k,v in out.items()}
+        out_dict = {k:out_uid_dict[v] for k,v in out_name_dict.items()}
 
-        # TODO: The following should eventually use named ports
-        false_out = 0 if result else 1
-        true_out = 1 if result else 0
-        logger.debug("Sending skip to port: %s", self.outputs[false_out])
-        self.outputs[false_out].skip()  # send skip to correct branch
+        str_result = str(result).lower()
+        skip_result = str(not result).lower()
+
+        logger.debug("outputs params: %s", out_name_dict)
+        logger.debug("outputs list: %s", out_uid_dict)
+        logger.debug("out_dict: %s", out_dict)
+        
+        logger.info("Sending skip to port: %s: %s", str(result), out_name_dict[skip_result])
+        out_dict[skip_result].skip()  # send skip to correct branch
 
         if self.inputs:
             droputils.copyDropContents(  # send data to correct branch
-                self.inputs[0], self.outputs[true_out], bufsize=self.bufsize
+                self.inputs[0], out_dict[str_result], bufsize=self.bufsize
             )
         else:  # this enables a branch based only on the condition function
-            self.outputs[true_out].write(dill.dumps(result))
+            out_dict[str_result].write(dill.dumps(result))
 
 
 ##
