@@ -685,6 +685,7 @@ class PyFuncApp(BarrierAppDROP):
         mapping. This also allows to pass values to any function argument through a port.
 
         """
+        self._run()
         logger.debug("This object: %s, %s", self, self._humanKey)
         funcargs = {}
         # Keyword arguments are made up of the default values plus the inputs

@@ -31,6 +31,7 @@ from psutil import cpu_count
 
 from dlg import droputils, drop_loaders
 from dlg.apps.simple import (
+    Branch,
     GenericScatterApp,
     GenericNpyScatterApp,
     ListAppendThrashingApp,
@@ -346,3 +347,17 @@ class TestSimpleApps(unittest.TestCase):
         else:
             # Ensure that multi-threading overhead doesn't ruin serial performance?
             self.assertAlmostEqual(t1, t2, delta=0.5)
+
+    def test_Branch(self):
+        value = 2
+        b = Branch("b", "b", func_name="condition", func_code="def condition(x): return x>0", x=value)
+        t = InMemoryDROP("t", "t", type="int")
+        f = InMemoryDROP("f", "f", type="int")
+        b.addOutput(t)
+        b.false = f
+        b.true = t
+        b.addOutput(f)
+        b.execute()
+        res = pickle.loads(droputils.allDropContents(t))
+        self.assertEqual(value, res)
+

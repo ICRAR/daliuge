@@ -966,26 +966,23 @@ class Branch(PyFuncApp):
 
         if not self.outputs:
             return
-        out_uid_dict = {o.uid:o for o in self.outputs}
-        out_name_dict = {v:k for out in self.parameters["outputs"] for k,v in out.items()}
-        out_dict = {k:out_uid_dict[v] for k,v in out_name_dict.items()}
 
-        str_result = str(result).lower()
-        skip_result = str(not result).lower()
+        go_result = str(result).lower()
+        nogo_result = str(not result).lower()
 
-        logger.debug("outputs params: %s", out_name_dict)
-        logger.debug("outputs list: %s", out_uid_dict)
-        logger.debug("out_dict: %s", out_dict)
-        
-        logger.info("Sending skip to port: %s: %s", str(result), out_name_dict[skip_result])
-        out_dict[skip_result].skip()  # send skip to correct branch
+        nogo_drop = getattr(self, nogo_result, None)
+        go_drop = getattr(self, go_result, None)
+        logger.info("Sending skip to port: %s: %s", str(nogo_result), getattr(self,nogo_result))
+        nogo_drop.skip()  # send skip to correct branch
 
         if self.inputs:
             droputils.copyDropContents(  # send data to correct branch
-                self.inputs[0], out_dict[str_result], bufsize=self.bufsize
+                self.inputs[0], go_drop, bufsize=self.bufsize
             )
         else:  # this enables a branch based only on the condition function
-            out_dict[str_result].write(dill.dumps(result))
+            d = pickle.dumps(self.parameters[self.argnames[0]])
+            # d = self.parameters[self.argnames[0]]
+            go_drop.write(d)
 
 
 ##
