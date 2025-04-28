@@ -89,42 +89,15 @@ class InstanceLogHandler(logging.Handler):
              we are just interested in extracting and storing Record metadata
         """
 
-        exc = f"{str(record.exc_text)}" if record.exc_text else ""
-        # msg = str(record.message).replace("\n", "<br>")
-        msg = (f"<pre>{record.message.encode('utf-8').decode('unicode_escape')}\n"
-               f"{exc}</pre>")
-        try:
-            rec_time = record.asctime
-        except AttributeError:
-            rec_time = ""
-        self.log_storage.append({ "time":rec_time,
+        exc = (str(record.exc_text if record.exc_text else ""))
+        exc = f"<pre>{exc}</pre>"
+        self.log_storage.append({ "time":record.asctime,
             "Level": record.levelname,
             "Module": record.name,
             "Function/Method": record.funcName,
             "Line #": record.lineno,
-            "Message": msg,
+            "Message": f"{str(record.message)}\n{exc}"
         })
-
-class AppLogFilter(logging.Filter):
-    def __init__(self, uid: str, humanKey: str):
-        self.uid = uid
-        self.humanKey = humanKey
-
-    def filter(self, record):
-        uid = getattr(record, "drop_uid", None)
-        return uid == self.uid or uid == self.humanKey
-
-
-class InstanceLogHandler(logging.Handler):
-    """Custom handler to store logs in-memory per object instance."""
-    def __init__(self, log_storage):
-        super().__init__()
-        self.log_storage = log_storage
-
-    def emit(self, record):
-        """Store log messages in the instance's log storage."""
-        log_entry = self.format(record)
-        self.log_storage.append(log_entry)
 
 class DROPLogFilter(logging.Filter):
     def __init__(self, uid: str, humanKey: str):
@@ -134,6 +107,9 @@ class DROPLogFilter(logging.Filter):
     def filter(self, record):
         uid = getattr(record, "drop_uid", None)
         return uid == self.uid or uid == self.humanKey
+
+
+
 # ===============================================================================
 # AppDROP classes follow
 # ===============================================================================
@@ -206,9 +182,8 @@ class AppDROP(ContainerDROP):
         self.logger = logging.getLogger(f"{__class__}.{self.uid}")
         instance_handler = InstanceLogHandler(self.log_storage)
         instance_handler.addFilter(DROPLogFilter(self.uid, self._humanKey))
-        fmt = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] "
-        fmt += "[%(drop_uid)10.10s] "
-        fmt += "%(name)s#%(funcName)s:%(lineno)s %(message)s"
+        fmt = ("%(asctime)-15s [%(levelname)5.5s] "
+               "%(name)s#%(funcName)s:%(lineno)s %(message)s")
         fmt = logging.Formatter(fmt)
         instance_handler.setFormatter(fmt)
 
