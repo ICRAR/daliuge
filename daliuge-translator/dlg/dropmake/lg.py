@@ -92,7 +92,7 @@ class LG:
             lg = apply_active_configuration(lg)
 
         if LG_VER_EAGLE == lgver:
-            lg = convert_mkn(lg)
+            # lg = convert_mkn(lg)
             lg = convert_fields(lg)
             lg = convert_construct(lg)
             lg = convert_subgraphs(lg)
@@ -115,20 +115,20 @@ class LG:
         for jd in lg["nodeDataArray"]:
             lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
             self._lgn_list.append(lgn)
-            node_ouput_ports = jd.get("outputPorts", [])
-            node_ouput_ports += jd.get("outputLocalPorts", [])
+            node_ouput_ports = jd.get("outputPorts", {})
+            node_ouput_ports.update(jd.get("outputLocalPorts", {}))
             # check all the outports of this node, and store "stream" output
             if len(node_ouput_ports) > 0:
-                for out_port in node_ouput_ports:
-                    if out_port.get("name", "").lower().endswith("stream"):
+                for name, out_port in node_ouput_ports.items():
+                    if name.lower().endswith("stream"):
                         stream_output_ports[out_port["Id"]] = jd["id"]
         # Need to go through the list again, since done_dict is recursive
         for lgn in self._lgn_list:
-            if lgn.is_start and lgn.jd["category"] not in [
+            if lgn.is_start and lgn.category not in [
                 Categories.COMMENT,
                 Categories.DESCRIPTION,
             ]:
-                if lgn.jd["category"] == Categories.VARIABLES:
+                if lgn.category == Categories.VARIABLES:
                     self._g_var.append(lgn)
                 else:
                     self._start_list.append(lgn)
@@ -137,10 +137,12 @@ class LG:
 
         for lk in self._lg_links:
             src = self._done_dict[lk["from"]]
+            srcPort = lk.get("fromPort", None)
             tgt = self._done_dict[lk["to"]]
+            tgtPort = lk.get("toPort", None)
             self.validate_link(src, tgt)
-            src.add_output(tgt)
-            tgt.add_input(src)
+            src.add_output(tgt, srcPort)
+            tgt.add_input(src, tgtPort)
             # check stream links
             from_port = lk.get("fromPort", "__None__")
             if stream_output_ports.get(from_port, None) == lk["from"]:
@@ -493,34 +495,16 @@ class LG:
             tdrop.addStreamingInput(dropSpec_null, name="stream")
             self._drop_dict["new_added"].append(dropSpec_null)
         elif s_type in ["Application", "Control"]:
+            logger.debug("Getting source and traget port names and IDs of %s and %s", slgn.name, tlgn.name)
             sname = slgn._getPortName("outputPorts", index=-1)
             tname = tlgn._getPortName("inputPorts")
-
+            sout_ids = []
             # sname is dictionary of all output ports on the sDROP.
-            # Therefore there's an expected number of output edges that we need to add
-            # We keep track of this by querying the sDROP's current outputs and seeing
-            # what is currently 'lowest' in number. Eventual, all output port names will
-            # be added.
-            expected = [p for p in sname.keys()]
-            output_port = expected[0]
-            if "outputs" in sdrop:
-                actual = []
-                [actual.extend(pair.values()) for pair in sdrop["outputs"]]
-                actual_counts = {port: actual.count(port) for port in set(expected)}
-                expected_counts = {port: expected.count(port) for port in (expected)}
-                differences = {
-                    port: (expected_counts[port] - actual_counts.get(port, 0))
-                    for port in expected_counts
-                }
-                candidates = {
-                    port: deficit
-                    for port, deficit in differences.items()
-                    if deficit > 0
-                }
-                if candidates:
-                    output_port = max(candidates, key=candidates.get)
-            sdrop.addOutput(tdrop, name=output_port)
-            tdrop.addProducer(sdrop, name=tname)
+            for output_port in sname.keys():
+                if tdrop["oid"] not in sout_ids:
+                    sdrop.addOutput(tdrop, name=output_port)
+                    tdrop.addProducer(sdrop, name=output_port)
+                    sout_ids = [list(o.keys())[0] for o in sdrop["outputs"]]
             if Categories.BASH_SHELL_APP == s_type:
                 bc = src_drop["command"]
                 bc.add_output_param(tlgn.id, tgt_drop["oid"])

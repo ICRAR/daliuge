@@ -931,8 +931,8 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 # @param func_name condition/String/ComponentParameter/NoPort/ReadWrite//False/False/Python conditional function name. This can also be a valid import path to an importable function.
 # @param func_code def condition(x): return (x > 0)/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code for the branch condition. Modify as required. Note that func_name above needs to match the defined name here.
 # @param x /Object/ComponentParameter/InputPort/ReadWrite//False/False/Port carrying the input which is also used in the condition function. Note that the name of the parameter has to match the argument of the condition function.
-# @param true  /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is true the input will be copied to this port
-# @param false /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is false the input will be copied to this port
+# @param True  /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is true the input will be copied to this port
+# @param False /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is false the input will be copied to this port
 # @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.simple.GenericScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param dropclass dlg.apps.simple.Branch/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
@@ -954,31 +954,32 @@ class Branch(PyFuncApp):
     bufsize = dlg_int_param("bufsize", 65536)
     result = dlg_bool_param("result", False)
 
-    def write_results(self, result: bool):
+    def write_results(self,result:bool=False):
         """
         Copy the input to the output identified by the condition function.
-
-        Parameters:
-        -----------
-        result:
-            The result of the condition function
         """
-
+        if result and isinstance(result, bool):
+            self.result = result
         if not self.outputs:
             return
 
-        # TODO: The following should eventually use named ports
-        false_out = 0 if result else 1
-        true_out = 1 if result else 0
-        logger.debug("Sending skip to port: %s", self.outputs[false_out])
-        self.outputs[false_out].skip()  # send skip to correct branch
+        go_result = str(self.result).lower()
+        nogo_result = str(not self.result).lower()
 
-        if self.inputs:
+        nogo_drop = getattr(self, nogo_result, None)
+        go_drop = getattr(self, go_result, None)
+        logger.info("Sending skip to port: %s: %s", str(nogo_result), getattr(self,nogo_result))
+        nogo_drop.skip()  # send skip to correct branch
+
+        if self.inputs and hasattr(go_drop, "write"):
             droputils.copyDropContents(  # send data to correct branch
-                self.inputs[0], self.outputs[true_out], bufsize=self.bufsize
+                self.inputs[0], go_drop, bufsize=self.bufsize
             )
         else:  # this enables a branch based only on the condition function
-            self.outputs[true_out].write(dill.dumps(result))
+            d = pickle.dumps(self.parameters[self.argnames[0]])
+            # d = self.parameters[self.argnames[0]]
+            if hasattr(go_drop, "write"):
+                go_drop.write(d) 
 
 
 ##
