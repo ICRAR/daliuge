@@ -399,16 +399,18 @@ class ManagerRestServer(RestServer):
         urlparts = bottle.request.urlparts
         serverUrl = urlparts.scheme + "://" + urlparts.netloc
 
-        # import requests
-        # api_url = f"{serverUrl}/api/sessions/{sessionId}/graph/drop/{dropId}"
-        # data = requests.get(api_url)
-        # data_alt = json.loads(data.text)
         data = self._getDropStatus(sessionId, dropId)
+
+        columns = [col for col in data["logs"][-1].keys()]
+        filter_column = "Level"
+        filter_column_index = columns.index(filter_column)
 
         tpl = file_as_string("web/drop_log.html")
         return bottle.template(
             tpl,
-            node=data,
+            data=data,
+            columns=columns,
+            filter_index=filter_column_index,
             sessionId=sessionId,
             serverUrl=serverUrl,
             dmType=self.dm.__class__.__name__,

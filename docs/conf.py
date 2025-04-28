@@ -75,7 +75,7 @@ needs_sphinx = "1.3"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.todo",
-    "sphinx.ext.coverage",
+    # "sphinx.ext.coverage",
     "sphinx.ext.imgmath",
     "sphinx_rtd_theme",
 ]
