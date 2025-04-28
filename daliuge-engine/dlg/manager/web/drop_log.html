@@ -10,6 +10,9 @@
 	<link href="/static/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
 	<link  href="/static/css/dm.css" rel="stylesheet" type="text/css"/>
 	<link  href="/static/css/progressBar.css" rel="stylesheet" type="text/css"/>
+	<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 	<style>
 		@import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.css";
 	</style></head>
@@ -42,9 +45,9 @@
 	</nav>
 	<div id="graphNameWrapper">
 		<ul id="graphName">
-			<li>Session:{{node.get("session")}}</li>
+			<li>Session:{{data.get("session")}}</li>
 			<li></li>
-			<li>DROP: {{node.get("uid")}}</li>
+			<li>DROP: {{data.get("uid")}}</li>
 		</ul>
 	</div>
 	<div id="dimContentWrapper">
@@ -52,14 +55,50 @@
 	<div id="listContainer" class="container">
 		<div>
 			<h3>Log Entries</h3>
-				<ul>
-				% for log in node["logs"]:
-					<li>{{log}}</li>
-				% end
-				</ul>
+			<label for="levelFilter">Filter by Log Level:</label>
+			<select id="levelFilter" class="form-select" style="width: 200px; display: inline-block; margin-bottom: 10px;">
+			    <option value="">Show All</option>
+			</select>
+			<table id="logentries" align="left" class="table table-striped table-hover">
+				<thead>
+				<tr>
+					% for col in columns:
+						<th class="text-start">{{ col }} </th>
+					% end
+				</tr>
+				</thead>
+				<tbody>
+					%for row in data["logs"]:
+					<tr>
+						% for col in columns:
+							<td class="text-start"> {{! row.get(col, '') }} </td>
+						% end
+					</tr>
+					%end
+				</tbody>
+			</table>
 		</div>
-
 	</div>
 
+	<script>
+	$(document).ready(function() {
+		var table = $('#logentries').DataTable();
+
+		// Get unique values for the column (City)
+		table.column({{filter_index}}).data().unique().sort().each(function(d, j) {
+			$('#levelFilter').append('<option value="' + d + '">' + d + '</option>');
+		});
+
+		// Filter the table when a selection is made
+		$('#levelFilter').on('change', function() {
+			var selected = $(this).val();
+			if (selected) {
+				table.column({{filter_index}}).search('^' + selected + '$', true, false).draw();
+			} else {
+				table.column({{filter_index}}).search('').draw();
+			}
+		});
+	});
+</script>
 </body>
 </html>

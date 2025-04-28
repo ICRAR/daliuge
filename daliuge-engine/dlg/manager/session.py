@@ -652,7 +652,9 @@ class Session(object):
         return {"session": self.sessionId,
                 "status": self.status,
                 "oid": drop_oid,
-                "logs": self._drops[drop_oid].getLogs() }
+                "logs": self._drops[drop_oid].getLogs()}
+                # "stderr": self._drops[drop_oid].getStdError(),
+                # "stdout": self._drops[drop_oid].getStdOut()}
 
 
     @track_current_session

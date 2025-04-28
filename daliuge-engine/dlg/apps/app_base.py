@@ -81,9 +81,23 @@ class InstanceLogHandler(logging.Handler):
         self.log_storage = log_storage
 
     def emit(self, record):
-        """Store log messages in the instance's log storage."""
-        log_entry = self.format(record)
-        self.log_storage.append(log_entry)
+        """Store log messages in the instance's log storage.
+
+         :param record: The log string we want to add to the log storage
+
+         .. note: We are not interested in actually emitting the log;
+             we are just interested in extracting and storing Record metadata
+        """
+
+        exc = (str(record.exc_text if record.exc_text else ""))
+        exc = f"<pre>{exc}</pre>"
+        self.log_storage.append({ "time":record.asctime,
+            "Level": record.levelname,
+            "Module": record.name,
+            "Function/Method": record.funcName,
+            "Line #": record.lineno,
+            "Message": f"{str(record.message)}\n{exc}"
+        })
 
 class DROPLogFilter(logging.Filter):
     def __init__(self, uid: str, humanKey: str):
@@ -93,6 +107,9 @@ class DROPLogFilter(logging.Filter):
     def filter(self, record):
         uid = getattr(record, "drop_uid", None)
         return uid == self.uid or uid == self.humanKey
+
+
+
 # ===============================================================================
 # AppDROP classes follow
 # ===============================================================================
@@ -165,9 +182,8 @@ class AppDROP(ContainerDROP):
         self.logger = logging.getLogger(f"{__class__}.{self.uid}")
         instance_handler = InstanceLogHandler(self.log_storage)
         instance_handler.addFilter(DROPLogFilter(self.uid, self._humanKey))
-        fmt = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] "
-        fmt += "[%(drop_uid)10.10s] "
-        fmt += "%(name)s#%(funcName)s:%(lineno)s %(message)s"
+        fmt = ("%(asctime)-15s [%(levelname)5.5s] "
+               "%(name)s#%(funcName)s:%(lineno)s %(message)s")
         fmt = logging.Formatter(fmt)
         instance_handler.setFormatter(fmt)
 
