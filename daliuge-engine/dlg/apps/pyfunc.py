@@ -220,7 +220,7 @@ class PyMemberApp(BarrierAppDROP):
 # calling the function is treated as an iterable, with each individual object
 # being written to its corresponding output.
 # @par EAGLE_START
-# @param category PythonApp
+# @param category PyFuncApp
 # @param tag template
 # @param func_name /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function name
 # @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code, e.g. 'def func_name(args): return args'. Note that func_name above needs to match the defined name here.

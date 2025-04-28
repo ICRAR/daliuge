@@ -869,7 +869,7 @@ class LGNode:
             {
                 "oid": "{0}-s".format(drop_spec["oid"]),
                 "categoryType": CategoryType.APPLICATION,
-                "category": "PythonApp",
+                "category": "DALiuGEApp",
                 "dropclass": "dlg.apps.simple.SleepApp",
                 "name": "lstnr",
                 "weigth": 5,
