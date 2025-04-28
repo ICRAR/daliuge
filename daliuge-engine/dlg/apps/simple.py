@@ -954,35 +954,32 @@ class Branch(PyFuncApp):
     bufsize = dlg_int_param("bufsize", 65536)
     result = dlg_bool_param("result", False)
 
-    def write_results(self, result: bool):
+    def write_results(self,result:bool=False):
         """
         Copy the input to the output identified by the condition function.
-
-        Parameters:
-        -----------
-        result:
-            The result of the condition function
         """
-
+        if result and isinstance(result, bool):
+            self.result = result
         if not self.outputs:
             return
 
-        go_result = str(result).lower()
-        nogo_result = str(not result).lower()
+        go_result = str(self.result).lower()
+        nogo_result = str(not self.result).lower()
 
         nogo_drop = getattr(self, nogo_result, None)
         go_drop = getattr(self, go_result, None)
         logger.info("Sending skip to port: %s: %s", str(nogo_result), getattr(self,nogo_result))
         nogo_drop.skip()  # send skip to correct branch
 
-        if self.inputs:
+        if self.inputs and hasattr(go_drop, "write"):
             droputils.copyDropContents(  # send data to correct branch
                 self.inputs[0], go_drop, bufsize=self.bufsize
             )
         else:  # this enables a branch based only on the condition function
             d = pickle.dumps(self.parameters[self.argnames[0]])
             # d = self.parameters[self.argnames[0]]
-            go_drop.write(d)
+            if hasattr(go_drop, "write"):
+                go_drop.write(d) 
 
 
 ##

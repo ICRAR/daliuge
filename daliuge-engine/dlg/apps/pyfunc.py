@@ -735,9 +735,9 @@ class PyFuncApp(BarrierAppDROP):
 
         # Here is where the function is actually executed
         with redirect_stdout(capture):
-            result = self.func(*bind.args, **bind.kwargs)
+            self.result = self.func(*bind.args, **bind.kwargs)
 
-        logger.debug("Returned result from %s: %s", self.func_name, result)
+        logger.debug("Returned result from %s: %s", self.func_name, self.result)
         logger.info(
             f"Captured output from function app '{self.func_name}': {capture.getvalue()}"
         )
@@ -746,7 +746,7 @@ class PyFuncApp(BarrierAppDROP):
         # Depending on how many outputs we have we treat our result
         # as an iterable or as a single object. Each result is pickled
         # and written to its corresponding output
-        self.write_results(result)
+        self.write_results()
 
     def _match_parser(self, output_drop):
         """
@@ -767,12 +767,12 @@ class PyFuncApp(BarrierAppDROP):
                     encoding = param_enc or encoding
         return DropParser(encoding) if encoding else self.output_parser
 
-    def write_results(self, result):
+    def write_results(self):
         from dlg.droputils import listify
 
         if not self.outputs:
             return
-        result_iter = listify(result)
+        result_iter = listify(self.result)
         logger.debug(
             "Writing follow result to %d output: %s", len(self.outputs), result_iter
         )
@@ -783,7 +783,7 @@ class PyFuncApp(BarrierAppDROP):
                 result = result_iter[0]
             elif len(result_iter) > 1 and len(self.outputs) == 1:
                 # We want all elements in the list to go to the output
-                result = result
+                result = self.result
             else:
                 # Iterate over each element of the list for each output
                 # Wrap around for len(result_iter) < len(self.outputs)
