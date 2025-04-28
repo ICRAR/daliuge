@@ -290,7 +290,7 @@
             "y": -21.154919345655784
         },
         {
-            "category": "PythonApp",
+            "category": "DALiuGEApp",
             "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
@@ -773,7 +773,7 @@
             "y": 19.008842158387544
         },
         {
-            "category": "PythonApp",
+            "category": "DALiuGEApp",
             "categoryType": "Application",
             "collapsed": true,
             "color": "#0059a5",
@@ -1174,7 +1174,7 @@
             "inputApplicationDescription": "",
             "inputApplicationId": "58e53f6a-4a67-4ff8-a656-e400f2d72ad1",
             "inputApplicationName": "GenericScatterApp",
-            "inputApplicationType": "PythonApp",
+            "inputApplicationType": "DALiuGEApp",
             "isGroup": true,
             "name": "Scatter",
             "outputAppFields": [],

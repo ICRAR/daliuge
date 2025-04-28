@@ -65,7 +65,7 @@ def startupManagersInThread(managers: dict) -> None:
 ##
 # @brief SubGraphLocal
 # @par EAGLE_START
-# @param category PythonApp
+# @param category DALiuGEApp
 # @param tag daliuge
 # @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.simple.GenericScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
