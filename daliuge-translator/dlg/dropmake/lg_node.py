@@ -42,7 +42,6 @@ from dlg.dropmake.dm_utils import (
     GInvalidNode,
 )
 from dlg.dropmake.utils.bash_parameter import BashCommand
-from py import log
 from .definition_classes import Categories, DATA_TYPES, APP_TYPES
 
 logger = logging.getLogger(f"dlg.{__name__}")
