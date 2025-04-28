@@ -407,6 +407,10 @@ class ManagerRestServer(RestServer):
             filter_column_index=0
 
 
+        columns = [col for col in data["logs"][-1].keys()]
+        filter_column = "Level"
+        filter_column_index = columns.index(filter_column)
+
         tpl = file_as_string("web/drop_log.html")
         return bottle.template(
             tpl,
