@@ -62,11 +62,11 @@ from dlg.meta import (
 )
 from dlg.pyext import pyext
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 logging.basicConfig(level=logging.DEBUG)
+
 MAX_IMPORT_RECURSION = 100
 
-MAX_IMPORT_RECURRSION = 100
 def serialize_func(f, serialize=True):
     if isinstance(f, str):
         parts = f.split(".")
