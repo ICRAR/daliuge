@@ -522,14 +522,6 @@ class LG:
                 # could be multiple ports, need to identify
                 portId = llink["toPort"] if "toPort" in llink else None
                 tname = tlgn._getPortName("inputPorts", portId=portId)
-                # logger.debug("Found port names: IN: %s, OUT: %s", sname, tname)
-                # logger.debug(
-                #     ">>> link from %s to %s (%s) (%s)",
-                #     sname,
-                #     tname,
-                #     llink,
-                #     portId,
-                # )
                 if llink.get("is_stream", False):
                     logger.debug(
                         "link stream connection %s to %s",
@@ -539,11 +531,6 @@ class LG:
                     sdrop.addStreamingConsumer(tdrop, name=sname)
                     tdrop.addStreamingInput(sdrop, name=sname)
                 else:
-                    # logger.debug(
-                    #     ">>> adding consumer %s to %s",
-                    #     tdrop["categoryType"],
-                    #     sdrop["categoryType"],
-                    # )
                     sdrop.addConsumer(tdrop, name=sname)
                     tdrop.addInput(sdrop, name=tname)
             if Categories.BASH_SHELL_APP == t_type:
@@ -607,11 +594,6 @@ class LG:
                                 tdrops[j].addInput(gddrop, name=tname)
                                 j += 1
 
-                            # if 'gather-data_drop' in ga_drop:
-                            #     gddrop = ga_drop['gather-data_drop'] # this is the "true" target (not source!) drop
-                            #     gddrop.addConsumer(tdrops[j])
-                            #     tdrops[j].addInput(gddrop)
-                            #     j += 1
                 elif slgn.is_subgraph or tlgn.is_subgraph:
                     pass
                 else:
