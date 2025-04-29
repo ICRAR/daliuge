@@ -135,7 +135,7 @@ jobs:
 
       - name: Run tests
         run: |
-          py.test daliuge-engine/test/deploy/test_graph_to_manager.py daliuge-engine/test/deploy/test_slurm_client.py daliuge-engine/test/test_named_port_apps.py daliuge-engine/test/test_tool.py --cov --show-capture=no
+          py.test daliuge-engine/test/deploy/ daliuge-engine/test/named_ports daliuge-engine/test/test_tool.py --cov --show-capture=no
 
       - name: Update to coveralls
         env:
