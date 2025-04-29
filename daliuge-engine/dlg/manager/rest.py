@@ -398,10 +398,14 @@ class ManagerRestServer(RestServer):
         serverUrl = urlparts.scheme + "://" + urlparts.netloc
 
         data = self._getDropStatus(sessionId, dropId)
+        if data["logs"]:
+            columns = [col for col in data["logs"][-1].keys()]
+            filter_column = "Level"
+            filter_column_index = columns.index(filter_column)
+        else:
+            columns = []
+            filter_column_index=0
 
-        columns = [col for col in data["logs"][-1].keys()]
-        filter_column = "Level"
-        filter_column_index = columns.index(filter_column)
 
         tpl = file_as_string("web/drop_log.html")
         return bottle.template(

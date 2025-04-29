@@ -63,7 +63,7 @@ from dlg.meta import (
 from dlg.pyext import pyext
 
 logger = logging.getLogger(__name__)
-
+logging.basicConfig(level=logging.DEBUG)
 MAX_IMPORT_RECURSION = 100
 
 def serialize_func(f, serialize=True):
