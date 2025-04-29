@@ -22,7 +22,6 @@
 import os
 import unittest
 
-import pkg_resources
 import psutil
 from dlg.dropmake.lg import LG
 from dlg.dropmake.scheduler import (
@@ -34,7 +33,7 @@ from dlg.dropmake.scheduler import (
     PSOScheduler,
 )
 
-from dlg.dropmake.path_utils import get_lg_fpath
+from dlg.common.path_utils import get_lg_fpath
 
 if "DALIUGE_TESTS_RUNLONGTESTS" in os.environ:
     skip_long_tests = not bool(os.environ["DALIUGE_TESTS_RUNLONGTESTS"])

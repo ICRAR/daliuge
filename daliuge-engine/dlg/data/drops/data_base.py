@@ -97,7 +97,7 @@ class DataDROP(AbstractDROP):
         with self._refLock:
             self._refCount -= 1
 
-    # @track_current_drop
+    @track_current_drop
     def open(self, **kwargs):
         """
         Opens the DROP for reading, and returns a "DROP descriptor"
@@ -366,6 +366,8 @@ class DataDROP(AbstractDROP):
         finalDropPortMap = {}  # Final mapping of named port to value stored in producer
 
         for p in self.producers:
+            producerUid = p.uid
+            producerPortValueMap[producerUid] = {}
             params = p.parameters["outputs"]
             for param in params:
                 try:
@@ -375,15 +377,9 @@ class DataDROP(AbstractDROP):
                     continue
                 portName = param[key]
                 portValue = ""
-                producerUid = p.uid
                 if portName in p.parameters:
                     portValue = p.parameters[param[key]]
-                # TODO This currently only allows 1 UID -> Portname/Value
-                # Investigate UID -> [Portname1:Value1, Portnam2:value2,..,]
-                producerPortValueMap[producerUid] = {
-                    "portname": portName,
-                    "value": portValue,
-                }
+                producerPortValueMap[producerUid][portName] = portValue
 
         for port in dropInputPorts:
             try:
@@ -391,20 +387,18 @@ class DataDROP(AbstractDROP):
             except AttributeError:
                 logging.debug("Producer %s does not have named ports", p.uid)
                 continue
-            for uid, portname in port.items():
+            for uid, input_port_name in port.items():
                 try:
-                    logger.debug("Trying to map UID: %s to port %s", uid, portname)
-                    tmp = producerPortValueMap[uid]
-                    if tmp["portname"] == portname:
-                        finalDropPortMap[portname] = tmp["value"]
+                    ouput_port_name = self.parameters["port_map"][input_port_name]
+                    if ouput_port_name in producerPortValueMap[uid]:
+                        finalDropPortMap[input_port_name] = producerPortValueMap[uid][
+                            ouput_port_name]
                 except KeyError:
-                    logger.debug("UID %s Not available!", uid)
+                    logging.warning("%s not available.", input_port_name)
 
         for portname in finalDropPortMap:
             if portname in self.parameters:
                 self.parameters[portname] = finalDropPortMap[portname]
-
-        self._updatedPorts = True
 
     @abstractmethod
     def getIO(self) -> DataIO:
