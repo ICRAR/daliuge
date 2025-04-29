@@ -38,6 +38,7 @@ from dlg.apps.pyfunc import PyFuncApp
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops import InMemoryDROP, FileDROP
 from dlg.apps.branch import BranchAppDrop
+from dlg.drop import track_current_drop
 from dlg.meta import (
     dlg_float_param,
     dlg_string_param,
@@ -804,6 +805,7 @@ class GenericScatterApp(BarrierAppDROP):
     def initialize(self, **kwargs):
         super(GenericScatterApp, self).initialize(**kwargs)
 
+    @track_current_drop
     def run(self):
         numSplit = self.num_of_copies
         cont = droputils.allDropContents(self.inputs[0])

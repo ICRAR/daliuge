@@ -89,14 +89,20 @@ class InstanceLogHandler(logging.Handler):
              we are just interested in extracting and storing Record metadata
         """
 
-        exc = (str(record.exc_text if record.exc_text else ""))
-        exc = f"<pre>{exc}</pre>"
-        self.log_storage.append({ "time":record.asctime,
+        exc = f"{str(record.exc_text)}" if record.exc_text else ""
+        # msg = str(record.message).replace("\n", "<br>")
+        msg = (f"<pre>{record.message.encode('utf-8').decode('unicode_escape')}\n"
+               f"{exc}</pre>")
+        try:
+            rec_time = record.asctime
+        except AttributeError:
+            rec_time = ""
+        self.log_storage.append({ "time":rec_time,
             "Level": record.levelname,
             "Module": record.name,
             "Function/Method": record.funcName,
             "Line #": record.lineno,
-            "Message": f"{str(record.message)}\n{exc}"
+            "Message": msg,
         })
 
 class DROPLogFilter(logging.Filter):
@@ -366,7 +372,6 @@ class AppDROP(ContainerDROP):
         """
 
         return self.log_storage
-
 
 
 class InputFiredAppDROP(AppDROP):
