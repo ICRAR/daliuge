@@ -40,6 +40,7 @@ import time
 import types
 import json
 
+from dlg.drop import track_current_drop
 from .. import droputils, utils
 from dlg.named_port_utils import (
     DropParser,
@@ -370,6 +371,7 @@ class BashShellApp(BashShellBase, BarrierAppDROP):
         [dlg_streaming_input("text/*")],
     )
 
+    @track_current_drop
     def run(self):
         self._run_bash(self._inputs, self._outputs)
 

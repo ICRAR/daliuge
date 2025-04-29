@@ -30,6 +30,7 @@ import threading
 from .. import rpc
 from ..ddap_protocol import AppDROPStates
 from ..apps.app_base import AppDROP, BarrierAppDROP
+from ..drop import track_current_drop
 from ..exceptions import InvalidDropException
 
 logger = logging.getLogger(f"dlg.{__name__}")
@@ -386,6 +387,7 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
         super(DynlibApp, self).initialize(**kwargs)
         self.ranks = self._popArg(kwargs, "rank", None)
 
+    @track_current_drop
     def run(self):
         input_closers = prepare_c_inputs(self._c_app, self.inputs)
         prepare_c_ranks(self._c_app, self.ranks)

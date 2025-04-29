@@ -39,6 +39,7 @@ from io import StringIO
 from contextlib import redirect_stdout
 
 from dlg import drop_loaders
+from dlg.drop import track_current_drop
 from dlg.utils import serialize_data, deserialize_data
 from dlg.named_port_utils import (
     DropParser,
@@ -61,7 +62,7 @@ from dlg.meta import (
 from dlg.pyext import pyext
 
 logger = logging.getLogger(f"dlg.{__name__}")
-
+logging.basicConfig(level=logging.DEBUG)
 
 def serialize_func(f):
     if isinstance(f, str):
@@ -163,7 +164,7 @@ def import_using_code(func_code: str, func_name: str, serialized: bool = True):
     """
     mod = None
     if not serialized and not isinstance(func_code, bytes):
-        logger.debug(f"Trying to import code from string: {func_code.strip()}")
+        logger.debug(f"Trying to import code from string:\n {func_code.strip()}")
         try:
             mod = pyext.RuntimeModule.from_string("mod", func_name, func_code.strip())
         except Exception:
@@ -661,6 +662,7 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(f"Input mapping provided: {self.func_arg_mapping}")
         self._recompute_data = {}
 
+    @track_current_drop
     def run(self):
         """
         Function positional and keyword argument treatment:

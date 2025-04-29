@@ -97,7 +97,7 @@ class DataDROP(AbstractDROP):
         with self._refLock:
             self._refCount -= 1
 
-    # @track_current_drop
+    @track_current_drop
     def open(self, **kwargs):
         """
         Opens the DROP for reading, and returns a "DROP descriptor"
