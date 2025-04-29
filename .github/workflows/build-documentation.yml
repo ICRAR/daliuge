@@ -1,12 +1,6 @@
 name: Build documentation
 
-on:
-  push:
-    branches:
-      - master  #  Only run on pushes to master
-  pull_request:
-    types: [opened, synchronize, reopened]  # Run on PRs from any branch to any target
-
+on: [push, pull_request]
 
 jobs:
 
