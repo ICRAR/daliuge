@@ -28,7 +28,7 @@ from .osutils import terminate_or_kill, wait_or_kill
 from .network import check_port, connect_to, portIsClosed, portIsOpen, write_to
 from .streams import ZlibCompressedStream, JSONStream
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class CategoryType(str, Enum):
@@ -70,6 +70,44 @@ class dropdict(dict):
     with JSON -> DROP representation transformations, and the different
     repositories where graph templates are expected to be found by the
     DROPManager.
+
+    Supported Keys
+    ---------------
+    Common:
+
+        "oid": str
+        "iid": str
+        "lg_key": str
+        "name": str
+        "categoryType": str
+        "dropclass": str
+        "storage": str
+        "rank": list[int]
+        "reprodata": dict
+        "loop_ctx": Union[None/int]
+        "weight": int
+        "applicationArgs": dict
+        "constraintParams": dict
+        "componentParams": dict
+        "fields": list[dict]
+        "data_volume": str
+        "group_end": str (rep. of boolean value '0'==False)
+        "check_file_path_exists": str (rep. of boolean value '0'==False)
+
+    AppDROP only:
+
+        "outputs": list[dict]
+
+    DataDROP only:
+
+        "persist": bool
+        "producers": list[dict]
+        "port_map": dict
+
+    FileDROP only:
+
+        "filepath": str
+        "dirname": str
     """
 
     def __init__(self, init_dict=None):
@@ -124,7 +162,7 @@ class dropdict(dict):
         """
         if key not in self:
             return False
-        ports = [] 
+        ports = []
         [ports.extend(pair.values()) for pair in self[key]]
         return name in ports
 
@@ -138,7 +176,7 @@ class dropdict(dict):
 
     def hasProducer(self, producer):
         """
-        See hasOutput. 
+        See hasOutput.
         """
         return self._hasSomething("producers", producer)
 
@@ -147,6 +185,7 @@ class dropdict(dict):
 
     def __lt__(self, other):
         return self.get("oid") < other.get("oid")
+
 
 def _sanitize_links(links):
     """
@@ -190,18 +229,14 @@ def get_roots(pg_spec):
         oid = dropspec["oid"]
         all_oids.add(oid)
         ctype = (
-            dropspec["categoryType"]
-            if "categoryType" in dropspec
-            else dropspec["type"]
+            dropspec["categoryType"] if "categoryType" in dropspec else dropspec["type"]
         )
         if ctype in (
             CategoryType.APPLICATION,
             CategoryType.SOCKET,
             "app",
         ):
-            if dropspec.get("inputs", None) or dropspec.get(
-                "streamingInputs", None
-            ):
+            if dropspec.get("inputs", None) or dropspec.get("streamingInputs", None):
                 nonroots.add(oid)
             if dropspec.get("outputs", None):
                 do = _sanitize_links(dropspec["outputs"])
@@ -233,9 +268,7 @@ def get_leaves(pg_spec):
         oid = dropspec["oid"]
         all_oids.add(oid)
         ctype = (
-            dropspec["categoryType"]
-            if "categoryType" in dropspec
-            else dropspec["type"]
+            dropspec["categoryType"] if "categoryType" in dropspec else dropspec["type"]
         )
 
         if ctype in [CategoryType.APPLICATION, "app"]:

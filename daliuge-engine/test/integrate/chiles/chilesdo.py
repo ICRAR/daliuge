@@ -27,7 +27,7 @@ from six.moves import queue as Queue  # @UnresolvedImport
 from dlg.apps.app_base import BarrierAppDROP
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class SourceFlux(BarrierAppDROP):

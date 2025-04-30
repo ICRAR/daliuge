@@ -511,12 +511,12 @@ function drawGraphForDrops(g, drawGraph, oids, doSpecs) {
 
 	if (modified) {
 		drawGraph();
+		zoomFit();
 	}
 
 	var time3 = new Date().getTime();
 	console.log('Took %d [ms] to draw the hole thing', (time3 - time2))
 
-	zoomFit()
 }
 
 function setStatusColor(status) {
@@ -580,11 +580,18 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 			// to know when we go to RUNNING.
 			// During RUNNING (or potentially FINISHED/CANCELLED, if the execution is
 			// extremely fast) we need to start updating the status of the graph
-			if (status == 3 || status == 4 || status == 5) {
+			if (status === 3 || status === 4 || status === 5) {
 				startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 					status_update_handler);
 			}
-			else if (status == 0 || status == 1 || status == 2 || status == -1) {
+			else if (status === 0 || status === 1 || status === 2 || status === -1) {
+				if (status === 2) {
+					// Visualise the drops if we are trying to 'deploy' them.
+					var keys = Object.keys(doSpecs);
+					keys.sort();
+					var statuses = keys.map(function (k) { return {"status": 0} });
+					status_update_handler(statuses);
+				}
 				// schedule a new JSON request
 				updateGraphDelayTimer = d3.timer(updateGraph, delay);
 				updateGraphDelayTimerActive = true;
@@ -605,7 +612,9 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 
 function _addNode(g, doSpec) {
 
-	if (g.hasNode(g)) {
+	var oid = doSpec.oid;
+
+	if (g.hasNode(oid)) {
 		return false;
 	}
 
@@ -627,7 +636,6 @@ function _addNode(g, doSpec) {
 		notes += 'storage: ' + doSpec.storage;
 	}
 
-	var oid = doSpec.oid;
 	var html = '<div class="drop-label ' + typeShape + '" id="id_' + oid + '">';
 	html += '<span class="notes">' + notes + '</span>';
     oid_date = doSpec.oid.split("_")[0];

@@ -12,15 +12,18 @@ from dlg.manager.session import Session, generateLogFileName
 
 from test.dlg_engine_testconstants import DEFAULT_TEST_REPRO, DEFAULT_TEST_GRAPH_REPRO
 
+
 class MockThrowingDrop(BarrierAppDROP):
     def run(self):
         raise RuntimeError("App drop thrown")
+
 
 def add_test_reprodata(graph: list):
     for drop in graph:
         drop["reprodata"] = DEFAULT_TEST_REPRO.copy()
     graph.append(DEFAULT_TEST_GRAPH_REPRO.copy())
     return graph
+
 
 def test_logs(caplog):
     """
@@ -78,12 +81,15 @@ def test_logs(caplog):
             logfile = Path(generateLogFileName(s._sessionDir, s.sessionId))
             exception_logged = False
             for record in caplog.records:
-                if record.name == 'dlg.apps.app_base' and record.levelname == 'ERROR':
+                if (
+                    record.name == "dlg.dlg.apps.app_base"
+                    and record.levelname == "ERROR"
+                ):
                     exception_logged = True
-                    with logfile.open('r') as f:
+                    with logfile.open("r") as f:
                         buffer = f.read()
                         assert record.name in buffer
-                        assert 'Traceback' in buffer
-                        assert 'App drop thrown' in buffer
+                        assert "Traceback" in buffer
+                        assert "App drop thrown" in buffer
             assert exception_logged
             logfile.unlink(missing_ok=True)

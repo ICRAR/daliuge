@@ -33,7 +33,7 @@ from ..meta import (
     dlg_streaming_input,
 )
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class ExternalStoreApp(BarrierAppDROP):
@@ -81,6 +81,13 @@ class ExternalStoreApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category PythonApp
 # @param tag daliuge
+# @param ngasSrv localhost/String/ApplicationArgument/NoPort/ReadWrite//False/False/URL of the NGAS Server
+# @param ngasPort 7777/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/"TCP/IP Port on the NGAS Server"
+# @param ngasMime "application/octet-stream"/String/ApplicationArgument/NoPort/ReadWrite//False/False/Mime-type of the NGAS payload
+# @param ngasTimeout 2/Integer/ApplicationArgument/NoPort/ReadOnly//False/False/Archiving request timeout
+# @param ngasConnectTimeout 2/Integer/ApplicationArgument/NoPort/ReadOnly//False/False/NGAS Server connection timeout
+# @param fileObject /Object.File/ApplicationArgument/InputPort/ReadWrite//False/False/Input File Object
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.archiving.NgasArchivingApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name archiving/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -88,14 +95,6 @@ class ExternalStoreApp(BarrierAppDROP):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param ngasSrv localhost/String/ApplicationArgument/NoPort/ReadWrite//False/False/URL of the NGAS Server
-# @param ngasPort 7777/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/"TCP/IP Port on the NGAS Server"
-# @param ngasMime "application/octet-stream"/String/ApplicationArgument/NoPort/ReadWrite//False/False/Mime-type of the NGAS payload
-# @param ngasTimeout 2/Integer/ApplicationArgument/NoPort/ReadOnly//False/False/Archiving request timeout
-# @param ngasConnectTimeout 2/Integer/ApplicationArgument/NoPort/ReadOnly//False/False/NGAS Server connection timeout
-# @param fileObject /Object.File/ApplicationArgument/InputPort/ReadWrite//False/False/Input File Object
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class NgasArchivingApp(ExternalStoreApp):
     """

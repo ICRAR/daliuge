@@ -1,7 +1,7 @@
 import logging
 from dlg.manager import client
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class NMAssigner:
@@ -12,6 +12,7 @@ class NMAssigner:
     Allocation logic is currently very simple, handling only the case of a single DIM, but with
     room for more advanced load-balancing, if we require in the future.
     """
+
     def __init__(self):
         self.DIMs = {}  # Set of DIMs   name -> (server, port)
         self.NMs = {}  # Set of NMs     name -> (server, port)

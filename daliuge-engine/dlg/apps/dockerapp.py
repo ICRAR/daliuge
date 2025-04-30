@@ -45,7 +45,7 @@ from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import DaliugeException, InvalidDropException
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 DLG_ROOT = utils.getDlgDir()
 
@@ -89,6 +89,7 @@ class ContainerIpWaiter(object):
 # @param entrypoint /String/ComponentParameter/NoPort/ReadWrite//False/False/Alternate entrypoint
 # @param paramValueSeparator " "/String/ComponentParameter/NoPort/ReadWrite//False/False/Separator character(s) between parameters and their respective values on the command line
 # @param argumentPrefix "--"/String/ComponentParameter/NoPort/ReadWrite//False/False/Prefix to each keyed argument on the command line
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.dockerapp.DockerApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param base_name dockerapp/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -101,8 +102,6 @@ class ContainerIpWaiter(object):
 # @param removeContainer True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Instruct Docker engine to delete the container after execution is complete
 # @param additionalBindings /String/ComponentParameter/NoPort/ReadWrite//False/False/Directories which will be visible inside the container during run-time. Format is srcdir_on_host:trgtdir_on_container. Multiple entries can be separated by commas.
 # @param portMappings /String/ComponentParameter/NoPort/ReadWrite//False/False/Port mappings on the host machine
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class DockerApp(BarrierAppDROP):
     """
@@ -391,7 +390,7 @@ class DockerApp(BarrierAppDROP):
         # The only interest we currently have is the containerIp of other
         # DockerApps, and only if our command actually uses this IP
         if isinstance(drop, DockerApp):
-            if "%containerIp[{0}]%".format(drop.uid) in self._command:
+            if f"%containerIp[{{{drop.uid}}}]%" in self._command:
                 self._waiters.append(ContainerIpWaiter(drop))
                 logger.debug("%r: Added ContainerIpWaiter for %r", self, drop)
 
@@ -538,7 +537,7 @@ class DockerApp(BarrierAppDROP):
             # started, and replace their IP placeholders by the real IPs
             for waiter in self._waiters:
                 uid, ip = waiter.waitForIp()
-                cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
+                cmd = cmd.replace(f"%containerIp[{{{uid}}}]%", ip)
                 logger.debug("Command after IP replacement is: %s", cmd)
 
             # Wrap everything inside bash

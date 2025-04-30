@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import base64
 import contextlib
+import inspect
 import logging
 import pickle
 import socket
@@ -40,7 +41,7 @@ from .ddap_protocol import DROPStates
 from .apps.app_base import BarrierAppDROP
 from .exceptions import InvalidDropException
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class ResultTransmitter(BarrierAppDROP):
@@ -63,7 +64,7 @@ class ResultTransmitter(BarrierAppDROP):
             except EOFError:
                 content = None
             return content
-        
+
         results = map(read_result, self.inputs)  # @UndefinedVariable
         results = list(results)
         if len(self.inputs) == 1:
@@ -72,7 +73,9 @@ class ResultTransmitter(BarrierAppDROP):
 
         s = socket.socket()
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
-        logger.debug("Attempting to bind ResultTransmitter to %s:%i", self.host, self.port)
+        logger.debug(
+            "Attempting to bind ResultTransmitter to %s:%i", self.host, self.port
+        )
         s.bind((self.host, self.port))
         s.listen(1)
         client, _ = s.accept()
@@ -285,7 +288,6 @@ class _DelayedDrops(_DelayedDrop):
     def _add_upstream(self, upstream: _DelayedDrop):
         _DelayedDrop._add_upstream(self, upstream)
         self.dropdict["inputs"].append(upstream.oid)
-        
 
     def make_dropdict(self):
         return dropdict(
@@ -293,7 +295,7 @@ class _DelayedDrops(_DelayedDrop):
                 "categoryType": "Application",
                 "dropclass": "dlg.dask_emulation._Listifier",
                 "name": "listifier",
-                "inputs": self.inputs
+                "inputs": self.inputs,
             }
         )
 
@@ -311,6 +313,7 @@ class _AppDrop(_DelayedDrop):
         if hasattr(f, "__name__"):
             self.fname = f.__name__
         self.fcode, self.fdefaults = pyfunc.serialize_func(f)
+        # self.fcode = inspect.getsource(f)
         self.original_kwarg_names = []
         self.original_arg_names = []
         self.nout = nout
@@ -327,7 +330,7 @@ class _AppDrop(_DelayedDrop):
                 "categoryType": "Application",
                 "dropclass": "dlg.apps.pyfunc.PyFuncApp",
                 "func_arg_mapping": {},
-                "inputs" : self.inputs
+                "inputs": self.inputs,
             }
         )
         if self.fname is not None:
@@ -335,7 +338,10 @@ class _AppDrop(_DelayedDrop):
             my_dropdict["func_name"] = self.fname
             my_dropdict["name"] = simple_fname
         if self.fcode is not None:
-            my_dropdict["func_code"] = utils.b2s(base64.b64encode(self.fcode))
+            logger.debug("func_code provided: %s", self.fcode)
+            my_dropdict["func_code"] = self.fcode
+            # my_dropdict["func_code"] = base64.b64encode(self.fcode)
+            # my_dropdict["func_code"] = utils.b2s(base64.b64encode(self.fcode))
         if self.fdefaults:
             # APPLICATION ARGUMENTS
             my_dropdict["func_defaults"] = self.fdefaults
@@ -390,12 +396,15 @@ class _AppDrop(_DelayedDrop):
             self.inputs.append(self._to_delayed_arg(arg))
             self.original_kwarg_names.append(name)
 
-        leftover_args = [x for x in list(signature(self.f).parameters.keys()) 
-                        if x not in list(kwargs.keys())]
+        leftover_args = [
+            x
+            for x in list(signature(self.f).parameters.keys())
+            if x not in list(kwargs.keys())
+        ]
 
         iter_range = min(len(args), len(leftover_args))
         for i in range(iter_range):
-            self.inputs.append(self._to_delayed_arg(args[i])) #, leftover_args[i]))
+            self.inputs.append(self._to_delayed_arg(args[i]))  # , leftover_args[i]))
             self.original_arg_names.append(leftover_args[i])
 
         if self.nout is None:
@@ -431,6 +440,7 @@ class _DataDrop(_DelayedDrop):
         )
         if not self.producer:
             my_dropdict["pydata"] = pyfunc.serialize_data(self.pydata)
+            # my_dropdict["pydata"] = self.pydata
         return my_dropdict
 
     def __repr__(self):
@@ -442,12 +452,14 @@ class _DataDrop(_DelayedDrop):
 def getitem(x, i):
     """
     Helper function to ensure the delayed() __getitem__ gets the appropriate arguments
-    in the correct order. 
+    in the correct order.
     """
-    try: 
+    try:
         return x[i]
     except TypeError:
         return x
+
+
 class _DataDropSequence(_DataDrop):
     """One or more _DataDrops that can be subscribed"""
 
@@ -473,6 +485,7 @@ class _DataDropSequence(_DataDrop):
             self.producer,
         )
 
+
 def delayed(x, *args, **kwargs):
     """Like dask.delayed, but quietly swallowing anything other than `nout`"""
     if "nout" in kwargs:
@@ -481,7 +494,7 @@ def delayed(x, *args, **kwargs):
         nout = args[0]
     else:
         nout = None
-    
+
     if callable(x):
         return _AppDrop(x, nout=nout)
         # return x(*args, **kwargs)

@@ -38,7 +38,7 @@ from dlg.data.drops.memory import InMemoryDROP
 from dlg.data.drops.ngas import NgasDROP
 from dlg.data.drops.file import FileDROP
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class AbstractStore(object):
@@ -62,8 +62,7 @@ class AbstractStore(object):
             total = self.getTotalSpace()
             perc = avail * 100.0 / total
             logger.debug(
-                "Available/Total space on %s: %d/%d (%.2f %%)",
-                self, avail, total, perc
+                "Available/Total space on %s: %d/%d (%.2f %%)", self, avail, total, perc
             )
         pass
 
@@ -202,7 +201,7 @@ class NgasStore(AbstractStore):
             # col14 = bytes_stored
             totalAvailable += float(disk["col13"])
             totalStored += int(disk["col14"])
-        totalAvailable *= 1024 ** 2  # to bytes
+        totalAvailable *= 1024**2  # to bytes
 
         # TODO: Check if these computations are correct, I'm not sure if the
         #       quantities stored by NGAS should be interpreted like this, or
@@ -254,7 +253,7 @@ class DirectoryStore(AbstractStore):
             )
         else:
             # Should be used only for testing
-            size = 1024 ** 3
+            size = 1024**3
             logger.info(
                 "Initializing %s with size %d. THIS SHOULD ONLY BE USED DURING TESTING",
                 sizeFile,

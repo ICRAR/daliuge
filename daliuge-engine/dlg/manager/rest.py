@@ -59,7 +59,7 @@ from dlg.manager.session import generateLogFileName
 from dlg.common.deployment_methods import DeploymentMethods
 from dlg.manager.manager_data import Node
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def file_as_string(fname, enc="utf8"):
@@ -82,8 +82,8 @@ def daliuge_aware(func):
                 # logger.debug("CORS request comming from: %s", origin)
                 # logger.debug("Request method: %s", bottle.request.method)
                 if origin is None or re.match(
-                        r"(http://dlg-trans.local:80[0-9][0-9]|https://dlg-trans.icrar.org)",
-                        origin,
+                    r"(http://dlg-trans.local:80[0-9][0-9]|https://dlg-trans.icrar.org)",
+                    origin,
                 ):
                     pass
                 elif re.match(r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin):
@@ -339,8 +339,8 @@ class ManagerRestServer(RestServer):
         # WARNING: TODO: Somehow, the content_type can be overwritten to 'text/plain'
         logger.debug("Graph content type: %s", bottle.request.content_type)
         if (
-                "application/json" not in bottle.request.content_type
-                and "text/plain" not in bottle.request.content_type
+            "application/json" not in bottle.request.content_type
+            and "text/plain" not in bottle.request.content_type
         ):
             bottle.response.status = 415
             return
@@ -451,9 +451,7 @@ class NMRestServer(ManagerRestServer):
         self.dm.add_node_subscriptions(sessionId, subscriptions)
 
     def _parse_subscriptions(self, json_request):
-        return {Node(host): droprels
-                for host, droprels
-                in json_request.items()}
+        return {Node(host): droprels for host, droprels in json_request.items()}
 
     @daliuge_aware
     def trigger_drops(self, sessionId):
@@ -515,9 +513,9 @@ class CompositeManagerRestServer(ManagerRestServer):
     @daliuge_aware
     def getCMStatus(self):
         """
-            REST (GET): /api/
+        REST (GET): /api/
 
-            Return JSON-compatible list of Composite Manager nodes and sessions
+        Return JSON-compatible list of Composite Manager nodes and sessions
         """
         return {
             "hosts": [str(n) for n in self.dm.dmHosts],
@@ -581,19 +579,15 @@ class CompositeManagerRestServer(ManagerRestServer):
         """
         return self.pastSessions()
 
-
     def pastSessions(self):
         """
-        Retrieve sessions from this DropManager and place it in JSON-format, for 
-        serialisation across the wire. 
+        Retrieve sessions from this DropManager and place it in JSON-format, for
+        serialisation across the wire.
         """
 
-        
-        return [   
-            {"sessionId": pastSession}
-            for pastSession in self.dm.getPastSessionIds()
+        return [
+            {"sessionId": pastSession} for pastSession in self.dm.getPastSessionIds()
         ]
-
 
     def _tarfile_write(self, tar, headers, stream):
         file_header = headers.getheader("Content-Disposition")
@@ -715,7 +709,7 @@ class MasterManagerRestServer(CompositeManagerRestServer):
     @daliuge_aware
     def createDataIsland(self, host):
         with RestClient(
-                host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10
+            host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10
         ) as c:
             c._post_json("/managers/island/start", bottle.request.body.read())
         self.dm.addDmHost(host)
@@ -781,14 +775,14 @@ class MasterManagerRestServer(CompositeManagerRestServer):
     @daliuge_aware
     def getDIMInfo(self, host):
         with RestClient(
-                host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10
+            host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10
         ) as c:
             return json.loads(c._GET("/managers/island").read())
 
     @daliuge_aware
     def getMMInfo(self, host):
         with RestClient(
-                host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10
+            host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10
         ) as c:
             return json.loads(c._GET("/managers/master").read())
 

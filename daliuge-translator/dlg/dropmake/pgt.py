@@ -37,7 +37,7 @@ from dlg.dropmake.lg import GraphException
 from dlg.dropmake.scheduler import DAGUtil
 from dlg.common import CategoryType, dropdict
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class GPGTNoNeedMergeException(GraphException):
@@ -309,7 +309,9 @@ class PGT(object):
         # lm = {k:values[v] for (k, v) in lm.items()} # replace old values with new
 
         if tpl_fl:
-            nm_list = ["#%s" % x for x in range(len(nm_list))]  # so that nm_list[i] == '#i'
+            nm_list = [
+                "#%s" % x for x in range(len(nm_list))
+            ]  # so that nm_list[i] == '#i'
             is_list = [
                 "#%s" % x for x in range(len(is_list))
             ]  # so that is_list[i] == '#i'
