@@ -135,7 +135,8 @@ class lib64_path(install):
         lp = sysconfig.get_path("stdlib")
         with open(PTH_FILE, "w") as f:
             f.write("{0}/dist-packages".format(lp))
-        install.copy_file(self, PTH_FILE, os.path.join(self.install_lib, PTH_FILE))
+        install.copy_file(self, PTH_FILE, os.path.join(
+            self.install_lib, PTH_FILE))
 
 
 # Core requirements of DALiuGE
@@ -179,9 +180,7 @@ extra_requires = {
     "MPI": ["mpi4py"],
     # AWS storage types
     "aws": ["boto3"],
-    "test": ["pytest",
-            "eagle-test-graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@LIU-5"]
-             # "eagle-test-graphs==0.1.6"],
+    "test": ["pytest", "eagle-test-graphs==0.1.8"],
 }
 
 setup(
