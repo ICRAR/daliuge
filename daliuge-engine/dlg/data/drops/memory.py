@@ -33,9 +33,8 @@ from typing import Union
 from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.data.drops.data_base import DataDROP, logger
 from dlg.data.io import SharedMemoryIO, MemoryIO
-from dlg.utils import object_tracking
+from dlg.drop import track_current_drop
 
-track_current_drop = object_tracking("drop")
 
 def get_builtins()-> dict:
     """
