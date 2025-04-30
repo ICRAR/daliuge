@@ -14,7 +14,7 @@ from dlg.exceptions import InvalidDropException
 # @param false /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/False condition output port
 # @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.branch.BranchAppDrop/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
-# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param base_name branch/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?

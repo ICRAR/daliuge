@@ -199,11 +199,12 @@ class InMemoryDROP(DataDROP):
 # @par EAGLE_START
 # @param category PythonObject
 # @param tag daliuge
-# @param self /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Reference to object
+# @param self /Object/ComponentParameter/InputOutput/ReadWrite//False/False/Reference to object
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Object should be serialized
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in the object
 # @param dropclass dlg.data.drops.memory.InMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class
-# @param base_name Object/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of class
+# @param base_name memory/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of class
+# @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @par EAGLE_END
 class PythonObjectDROP(InMemoryDROP):
     """
