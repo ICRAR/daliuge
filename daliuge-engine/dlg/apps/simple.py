@@ -1024,7 +1024,7 @@ class PickOne(BarrierAppDROP):
         else:
             data = np.array(data)
         value = data[0] if len(data) else None
-        rest = data[1:] if len(data) > 1 else np.array([])
+        rest = data[1:] if len(data) >= 1 else np.array([])
         return value, rest
 
     def writeData(self, value, rest):
