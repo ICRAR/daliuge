@@ -21,9 +21,10 @@ To do this, you will need to:
 #. Create a BashShellAppDROP component on the EAGLE Graph Canvas
 #. Click on the BashShellAppDrop and open the **Fields Table**
 #. In the ``command`` row, add the following to the **value** column: ``echo "Hello, World" > {output}``
-#. In the **Fields Table**, click **Add Parameter** and give it the name ``output``, and output ``demo.txt`` 
+#. In the **Fields Table**, click **Add Parameter** and give it the name ``output``, and value ``demo.txt``
 
-  * Note: This is using our string-substituion approach ; if we had put something else inside the "{}" in the above command, we use that instead of "output" for our parameter name. 
+  * Note: This is using our string-substituion approach ; the parameter name ``output`` and the string inside the braces (`{}`) need to match.
+  * Note: The demo.txt could also have been used as part of the command line directly; however, this would fix the name of the file to demo.txt which can be a problem if we want to scale the workflow (more on this in further tutorials).
 
 #. In the **Use As** column, click on the drop-down menu for the ``output`` attribute and select **OutputPort**
 #. This should create an OutputPort on the BashShellAppDROP; add an output FileDROP to the BashShellAppDROP by clicking on the new port and dragging, then selecting **Built-In Components -> File**

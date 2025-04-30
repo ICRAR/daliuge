@@ -66,7 +66,7 @@ from dlg.pyext import pyext
 
 logger = logging.getLogger(__name__)
 
-MAX_IMPORT_RECURRSION = 100
+MAX_IMPORT_RECURSION = 100
 
 def serialize_func(f):
     if isinstance(f, str):
@@ -94,7 +94,7 @@ def serialize_func(f):
 
 
 def import_using_name(app, fname, curr_depth):
-    if curr_depth > MAX_IMPORT_RECURRSION:
+    if curr_depth > MAX_IMPORT_RECURSION:
         raise InvalidDropException(
             app, "Problem importing module %s, search exceeded recursion limit" % fname
         )
