@@ -51,13 +51,13 @@ A key part of the DALiuGE ethos is to reduce the amount of time scientists spend
 * Providing drop-in support for a range of existing application 'formats', including Docker containers and shell applications;
 * Removing the need to learn a new domain specifical language or scripting framework - existing code can be referenced directly in the graph without the need to produce intermediate file storage. 
 
-Depending on the existing use case and software being used in the pipeline, it is entirely possible that `no additional code` needs to be written in order to create a distributed pipeline that can be deployed across an entire cluster!
+Depending on the existing use case and software being used in the pipeline, it is entirely possible that `no additional code` needs to be written in order to create a distributed workflow that can be deployed across an entire cluster!
 
-In order to achieve this, DALiuGE is developed as part of an ecosystem of tools that each support each stage of pipeline development: 
+In order to achieve this, DALiuGE is developed as part of an ecosystem of tools that each support each stage of workflow development:
 
-* DALiuGE Palette Generator Tool: This tool decomposes an existing Python module or library into DALiuGE Components, which are the basis of the visual logical pipeline;
+* DALiuGE Palette Generator Tool: This tool decomposes an existing Python module or library into DALiuGE Components, which are the basis of the visual logical graph;
 * Editor for the Astronomical Graph Language Environment (EAGLE): EAGLE is the graphical environment in which a user uses components to draw the Logical Graph, which represents the high-level interactions of the different parts of the workflow.  
-* DALiuGE: The workflow execution framework that manages the deployment and runtime demands of the pipeline. This 'translates' the Logical Graph into a complete workflow based on the runtime parameters provided in the Logical Graph. 
+* DALiuGE: The workflow execution framework that manages the deployment and runtime demands of the pipeline. This 'translates' the Logical Graph into a complete workflow based on the runtime parameters, and the parallelization and flow constructst that are specified in the Logical Graph.
 
 Other workflow systems
 -----------------------
