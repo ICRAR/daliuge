@@ -578,6 +578,7 @@ class InputFiredAppDROP(AppDROP):
         if _send_notifications:
             self._notifyAppIsFinished()
 
+    @track_current_drop
     def _run(self):
         """
         Run this application. It can be safely assumed that at this point all
