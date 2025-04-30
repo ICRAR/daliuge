@@ -63,6 +63,10 @@ Docker Installation
 --------------------
 Recommended 
 ^^^^^^^^^^^^
+.. note::
+
+    This assumes docker is installed locally on your system before running these commands. Please review https://docs.docker.com/get-started/get-docker/ if Docker is not installed on your system.
+
 The recommended and easiest way to get started is to use the docker containers for the daliuge-engine and daliuge-translator. To download the images for the purpose of developing workflows with the EAGLE editor, the following is all that is necessary:: 
 
   docker pull icrar/daliuge-engine.slim:latest
