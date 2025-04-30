@@ -142,7 +142,7 @@ class SleepApp(BarrierAppDROP):
             )
             self.sleep_time = 0
             time.sleep(self.sleep_time)
-        logger.debug("%s slept for %s s", self.name, self.sleep_time)
+        logger.info("%s slept for %s s", self.name, self.sleep_time)
 
 
 ##
