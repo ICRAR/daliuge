@@ -49,6 +49,7 @@ from dlg.named_port_utils import (
     replace_named_ports
 )
 from dlg.apps.app_base import BarrierAppDROP
+from dlg.drop import track_current_drop
 from dlg.exceptions import InvalidDropException
 from dlg.meta import (
     dlg_string_param,
@@ -787,6 +788,7 @@ class PyFuncApp(BarrierAppDROP):
         self._output_filepaths = {}
         self._recompute_data = {}
 
+    @track_current_drop
     def run(self):
         """
         Function positional and keyword argument treatment:
