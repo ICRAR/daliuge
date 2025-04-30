@@ -34,6 +34,3 @@ integration and testing during component development. As mentioned already, for 
     deployment_testing
     dynlib_components
     service_components
-    test_and_debug
-    wrap_existing
- 
