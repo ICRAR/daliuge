@@ -44,7 +44,7 @@ from dlg.utils import prepare_sql
 # @param selectVals {}/Json/ComponentParameter/NoPort/ReadWrite//False/False/Values for the WHERE statement
 # @param dropclass dlg.data.drops.rdbms.RDBMSDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param base_name rdbms/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param io /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Input Output port
 # @par EAGLE_END
 class RDBMSDrop(DataDROP):
     """

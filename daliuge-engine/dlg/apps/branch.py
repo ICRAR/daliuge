@@ -9,9 +9,9 @@ from dlg.exceptions import InvalidDropException
 # @par EAGLE_START
 # @param category Branch
 # @param tag template
-# @param dummy_input /Object/ApplicationArgument/InputPort/ReadWrite//False/False/Dummy input port
-# @param true /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/True condition output port
-# @param false /Object/ApplicationArgument/OutputPort/ReadWrite//False/False/False condition output port
+# @param input /Object/ApplicationArgument/InputPort/ReadWrite//False/False/Input port
+# @param true /Object/ComponentParameter/OutputPort/ReadWrite//False/False/True condition output port
+# @param false /Object/ComponentParameter/OutputPort/ReadWrite//False/False/False condition output port
 # @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.branch.BranchAppDrop/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name branch/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
