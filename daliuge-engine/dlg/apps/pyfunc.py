@@ -142,9 +142,10 @@ def import_using_name(app, fname, curr_depth):
                         mod = import_using_name(app, fname, curr_depth=curr_depth+1)
                         break
                     except Exception as e:
-                        raise InvalidDropException(
-                            app, "Problem importing module %s, %s" % (mod, e)
-                        )
+                        logger.critical("Problem importing module %s, %s" % (mod, e))
+                        def dummy_func(err = e):
+                            raise err
+                        mod = dummy_func
             logger.debug("Loaded module: %s", mod)
             return mod
 
@@ -156,12 +157,16 @@ def import_using_code_ser(func_code: Union[str, bytes], func_name: str):
         func_code = func_code if isinstance(func_code, bytes) else func_code.encode()
         func = dill.loads(base64.b64decode(func_code))
     except Exception as err:
-        logger.warning("Unable to deserialize func_code: %s", err)
-        raise
+        logger.critical("Unable to deserialize func_code: %s", err)
+        def dummy_func(err = err):
+            raise err
+        func = dummy_func
+        return func
     if func_name and func_name.split(".")[-1] != func.__name__:
-        raise ValueError(
-            f"Function with name '{func.__name__}' instead of '{func_name}' found!"
-        )
+        err = f"Function with name '{func.__name__}' instead of '{func_name}' found!"
+        def dummy_func(err = err):
+            raise err
+        func = dummy_func
     return func
 
 def import_using_code(func_code: str, func_name: str, serialized: bool = True):
