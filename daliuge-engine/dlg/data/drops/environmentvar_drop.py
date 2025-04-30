@@ -66,6 +66,7 @@ def _filter_parameters(parameters: dict):
 # @par EAGLE_START
 # @param category EnvironmentVariables
 # @param tag daliuge
+# @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param dropclass dlg.data.drops.environmentvar_drop.EnvironmentVarDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param base_name environmentvar_drop/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
