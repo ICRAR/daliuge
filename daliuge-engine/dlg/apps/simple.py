@@ -997,7 +997,7 @@ class Branch(PyFuncApp):
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @param rest_array /Object.array/ApplicationArgument/InputOutput/ReadWrite//False/False/List of elements
+# @param rest_array /Object.Array/ApplicationArgument/InputOutput/ReadWrite//False/False/List of elements
 # @param element /Object.element/ApplicationArgument/OutputPort/ReadWrite//False/False/first element
 # @par EAGLE_END
 class PickOne(BarrierAppDROP):
