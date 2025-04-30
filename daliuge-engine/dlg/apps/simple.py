@@ -125,6 +125,7 @@ class SleepApp(BarrierAppDROP):
     def initialize(self, **kwargs):
         super(SleepApp, self).initialize(**kwargs)
 
+    @track_current_drop
     def run(self):
         self._run()
         try:
