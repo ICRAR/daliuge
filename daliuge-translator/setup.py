@@ -166,6 +166,7 @@ setup(
     extras_require=extra_requires,
     packages=find_packages(),
     package_data={"": ["VERSION"], "dlg": src_files},
-    entry_points={"dlg.tool_commands": ["translator=dlg.translator.tool_commands"]},
+    entry_points={"dlg.tool_commands": [
+        "translator=dlg.translator.tool_commands"]},
     test_suite="test",
 )
