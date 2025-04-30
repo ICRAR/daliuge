@@ -51,6 +51,7 @@ from dlg.named_port_utils import (
     replace_named_ports,
 )
 from dlg.apps.app_base import BarrierAppDROP
+from dlg.drop import track_current_drop
 from dlg.exceptions import InvalidDropException
 from dlg.meta import (
     dlg_string_param,
