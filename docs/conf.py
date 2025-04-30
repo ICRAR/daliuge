@@ -75,7 +75,7 @@ needs_sphinx = "1.3"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.todo",
-    # "sphinx.ext.coverage",
+    #    "sphinx.ext.coverage",
     "sphinx.ext.imgmath",
     "sphinx_rtd_theme",
 ]
@@ -96,8 +96,7 @@ except ImportError:
 
 language = "en"
 app_development = "development/app_development/"
-exclude_patterns = ["_build", "tutorial/*",
-                   "development/wip_docs/*"]
+exclude_patterns = ["_build", "tutorial/*", "development/wip_docs/*"]
 
 pygments_style = "sphinx"
 # If true, `todo` and `todoList` produce output, else they produce nothing.
@@ -121,9 +120,7 @@ html_style = "css/daliuge.css"
 htmlhelp_basename = "daliugedoc"
 
 html_logo = "images/DLGLogo_White.png"
-html_theme_options = {
-    "logo_only" : True
-}
+html_theme_options = {"logo_only": True}
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {}
