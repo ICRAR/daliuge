@@ -130,7 +130,7 @@ install_requires = [
 extra_requires = {
     "test": [
         "pytest",
-        "eagle-test-graphs==0.1.7",
+        "eagle-test-graphs==0.1.8",
         "np-merklelib",
         "parameterized>=0.9.0",
         "ruamel.yaml==0.16.0",
@@ -166,7 +166,6 @@ setup(
     extras_require=extra_requires,
     packages=find_packages(),
     package_data={"": ["VERSION"], "dlg": src_files},
-    entry_points={"dlg.tool_commands": [
-        "translator=dlg.translator.tool_commands"]},
+    entry_points={"dlg.tool_commands": ["translator=dlg.translator.tool_commands"]},
     test_suite="test",
 )
