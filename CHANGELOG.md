@@ -1,6 +1,11 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+## v5.2.1
+
+- [Fixed] Fix eagle-test-graphs Git branch: https://github.com/ICRAR/daliuge/pull/329
+- [Fixed] TestRunner fix failing unittests due to overlapping PR changes: https://github.com/ICRAR/daliuge/pull/328
+
 ## v5.2.0
 
 - [Added] FileDROP naming support for PyFuncApp "side effect" files: https://github.com/ICRAR/daliuge/pull/314
