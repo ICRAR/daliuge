@@ -400,6 +400,18 @@ def _createSocket(dropSpec, dryRun=False, session_id=None):
         return
     return SocketListenerApp(oid, uid, dlg_session_id=session_id, **kwargs)
 
+def dummy_func(appName="", err = "Unknown error"):
+    """This function is used internally to enable raising an error
+    on the graph to enable better debugging for users.
+
+    Args:
+        appName: The name of the original application causing the error
+        err: The passed in error message
+
+    """
+    logger.critical("Problem loading of %s: %s", appName ,err)
+    raise InvalidGraphException
+
 
 def _createApp(dropSpec, dryRun=False, session_id=None):
     oid, uid = _getIds(dropSpec)
@@ -417,8 +429,14 @@ def _createApp(dropSpec, dryRun=False, session_id=None):
         module = importlib.import_module(".".join(parts[:-1]))
         appType = getattr(module, parts[-1])
     except (ImportError, AttributeError, ValueError):
-        raise InvalidGraphException(
-            "drop %s specifies non-existent application: %s" % (oid, appName))
+        err = "drop %s specifies non-existent application: %s" % (oid, appName)
+        return PyFuncApp(
+            oid,
+            uid,
+            func_name="dlg.graph_loader.dummy_func",
+            appName=appName,
+            err = err
+        )
 
     if dryRun:
         return
