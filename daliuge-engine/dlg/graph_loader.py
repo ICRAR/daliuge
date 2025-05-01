@@ -400,6 +400,18 @@ def _createSocket(dropSpec, dryRun=False, session_id=None):
         return
     return SocketListenerApp(oid, uid, dlg_session_id=session_id, **kwargs)
 
+def dummy_func(appName="", err = "Unknown error"):
+    """This function is used internally to enable raising an error
+    on the graph to enable better debugging for users.
+
+    Args:
+        appName: The name of the original application causing the error
+        err: The passed in error message
+
+    """
+    logger.critical("Problem loading of %s: %s", appName ,err)
+    raise InvalidGraphException
+
 
 def _createApp(dropSpec, dryRun=False, session_id=None):
     oid, uid = _getIds(dropSpec)
