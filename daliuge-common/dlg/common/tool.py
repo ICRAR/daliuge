@@ -98,11 +98,6 @@ def cmdwrap(cmdname, desc, f):
                 modname, fname = orig_f.split(":")
                 module = importlib.import_module(modname)
                 return getattr(module, fname)(*args, **kwargs)
-                # try:
-                #     return getattr(module, fname)(*args, **kwargs)
-                # except TypeError:
-                #     # Used for dlg_paletteGen
-                #     return getattr(module, fname)()
 
         f = Importer()
 
@@ -121,12 +116,6 @@ def version(parser, args):
 
 
 cmdwrap("version", "Reports the DALiuGE version and exits", version)
-
-try:
-    import dlg_paletteGen
-    cmdwrap("palette", "Create a palette", "dlg_paletteGen.__main__:main")
-except ImportError:
-    pass
 
 def _load_commands():
     if sys.version_info.minor < 10:
