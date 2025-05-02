@@ -111,6 +111,8 @@ def load_dill(drop: "DataDROP"):
     """
     buf = io.BytesIO()
     desc = drop.open()
+    if drop.size == 0:
+        return None
     while True:
         data = drop.read(desc)
         if not data:

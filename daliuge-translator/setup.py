@@ -130,7 +130,7 @@ install_requires = [
 extra_requires = {
     "test": [
         "pytest",
-        "eagle-test-graphs",
+        "eagle-test-graphs==0.1.8",
         "np-merklelib",
         "parameterized>=0.9.0",
         "ruamel.yaml==0.16.0",

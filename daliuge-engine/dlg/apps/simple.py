@@ -659,7 +659,8 @@ class GenericNpyGatherApp(BarrierAppDROP):
 # @par EAGLE_START
 # @param category DALiuGEApp
 # @param tag daliuge
-# @param greet World/String/ApplicationArgument/NoPort/ReadWrite//False/False/What appears after 'Hello '
+# @param greet World/String/ApplicationArgument/InputPort/ReadWrite//False/False/What appears after 'Hello '
+# @param hello "world"/Object/ApplicationArgument/OutputPort/ReadWrite//False/False/message
 # @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.simple.HelloWorldApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
