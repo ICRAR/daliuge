@@ -22,6 +22,7 @@
 
 
 import codecs
+import dataclasses
 import http.client
 import json
 import random
@@ -30,6 +31,7 @@ from time import sleep
 
 from dlg import utils
 from dlg import droputils
+from dlg.data.drops import DataDROP
 from dlg.ddap_protocol import DROPStates
 from dlg.manager.node_manager import NodeManager
 from dlg.manager.manager_data import Node
@@ -216,3 +218,44 @@ class NMTestsMixIn:
         return leaf_drop_data
 
 
+class AppArgsStore:
+
+    ARGS = "applicationArgs"
+
+    DEFAULT_ARGS = {
+        "defaultValue": "",
+        "description": "",
+        "encoding": "pickle",
+        "id": "8c81f45f-6f79-4033-a454-3aa4ebb21228",
+        "name": "",
+        "options": [],
+        "parameterType": "ApplicationArgument",
+        "positional": "false",
+        "precious": "false",
+        "readonly": "false",
+        "type": "Integer",
+        "usage": "NoPort",
+        "value":""
+    }
+
+    def __init__(self):
+        self.application_args = {self.ARGS:{}}
+
+    def add_args(self,
+        name: str = "",
+        default_value: str = "",
+        value: object = None,
+        encoding: str = "dill",
+        usage: str = "NoPort",
+    ):
+        args = {k: v for k, v in self.DEFAULT_ARGS.items()}
+        args["name"] = name
+        args["defaultValue"] = default_value
+        args["value"] = value
+        args["encoding"] = encoding
+        args["usage"] = usage
+
+        self.application_args[self.ARGS].update({name: args})
+
+    def get_args(self):
+        return self.application_args
