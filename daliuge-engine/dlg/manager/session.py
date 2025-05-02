@@ -294,8 +294,11 @@ class Session(object):
 
         # This will check the consistency of each dropSpec
         logger.debug("Trying to add graphSpec:")
-        for x in graphSpec:
-            logger.debug("%s: %s", x, x.keys())
+        logger.debug("Number of drops: %s", len(graphSpec))
+
+        # This is very excessive and should not be done in production
+        # for x in graphSpec:
+        #     logger.debug("%s: %s", x, x.keys())
         try:
             graphSpecDict, self._graphreprodata = graph_loader.loadDropSpecs(graphSpec)
             # Check for duplicates
