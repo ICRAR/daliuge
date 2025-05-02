@@ -1214,7 +1214,7 @@ def run(_, args):
     signal.signal(signal.SIGINT, handler)
 
     logging.debug("Starting uvicorn verbose %s", options.verbose)
-    uvicorn.run(app=app, host=options.host, port=options.port, debug=options.verbose)
+    uvicorn.run(app=app, host=options.host, port=options.port, log_level=options.verbose)
 
 
 if __name__ == "__main__":

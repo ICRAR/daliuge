@@ -81,6 +81,8 @@ install_requires = [
     "pylint",
 ]
 
+extra_requires = {"paletteGen": ["dlg_paletteGen"]}
+
 setup(
     name="daliuge-common",
     version=do_versioning(),
@@ -112,4 +114,5 @@ setup(
         "console_scripts": ["dlg=dlg.common.tool:run"]
     },  # One tool to rule them all
     install_requires=install_requires,
+    extra_requires=extra_requires,
 )

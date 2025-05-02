@@ -32,6 +32,7 @@ from importlib.metadata import entry_points
 
 logger = logging.getLogger("dlg")
 
+from dlg_paletteGen.__main__ import main
 
 def add_logging_options(parser):
     parser.add_option(
@@ -97,6 +98,11 @@ def cmdwrap(cmdname, desc, f):
                 modname, fname = orig_f.split(":")
                 module = importlib.import_module(modname)
                 return getattr(module, fname)(*args, **kwargs)
+                # try:
+                #     return getattr(module, fname)(*args, **kwargs)
+                # except TypeError:
+                #     # Used for dlg_paletteGen
+                #     return getattr(module, fname)()
 
         f = Importer()
 
@@ -116,6 +122,11 @@ def version(parser, args):
 
 cmdwrap("version", "Reports the DALiuGE version and exits", version)
 
+try:
+    import dlg_paletteGen
+    cmdwrap("palette", "Create a palette", "dlg_paletteGen.__main__:main")
+except ImportError:
+    pass
 
 def _load_commands():
     if sys.version_info.minor < 10:

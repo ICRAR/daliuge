@@ -40,6 +40,7 @@ from contextlib import redirect_stdout
 from dlg import drop_loaders
 from dlg.drop import track_current_drop
 from dlg.data.path_builder import filepath_from_string
+from dlg.drop import track_current_drop
 from dlg.utils import serialize_data, deserialize_data
 from dlg.named_port_utils import (
     Argument,
@@ -711,6 +712,7 @@ class PyFuncApp(BarrierAppDROP):
         if isinstance(self.func_arg_mapping, str):
             self.func_arg_mapping = ast.literal_eval(self.func_arg_mapping)
 
+    @track_current_drop
     def initialize(self, **kwargs):
         """
         The initialization of a function component is mainly dealing with mapping
