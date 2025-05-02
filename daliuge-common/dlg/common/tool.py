@@ -32,7 +32,6 @@ from importlib.metadata import entry_points
 
 logger = logging.getLogger("dlg")
 
-from dlg_paletteGen.__main__ import main
 
 def add_logging_options(parser):
     parser.add_option(
