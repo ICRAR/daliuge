@@ -143,10 +143,9 @@ def import_using_name(app, fname, curr_depth):
                         mod = import_using_name(app, fname, curr_depth=curr_depth+1)
                         break
                     except Exception as e:
-                        logger.critical("Problem importing module %s, %s" % (mod, e))
-                        def dummy_func(err = e):
-                            raise err
-                        mod = dummy_func
+                        raise InvalidDropException(
+                            app, "Problem importing module %s, %s" % (mod, e)
+                        )
             logger.debug("Loaded module: %s", mod)
             return mod
 
@@ -158,16 +157,12 @@ def import_using_code_ser(func_code: Union[str, bytes], func_name: str):
         func_code = func_code if isinstance(func_code, bytes) else func_code.encode()
         func = dill.loads(base64.b64decode(func_code))
     except Exception as err:
-        logger.critical("Unable to deserialize func_code: %s", err)
-        def dummy_func(err = err):
-            raise err
-        func = dummy_func
-        return func
+        logger.warning("Unable to deserialize func_code: %s", err)
+        raise
     if func_name and func_name.split(".")[-1] != func.__name__:
-        err = f"Function with name '{func.__name__}' instead of '{func_name}' found!"
-        def dummy_func(err = err):
-            raise err
-        func = dummy_func
+        raise ValueError(
+            f"Function with name '{func.__name__}' instead of '{func_name}' found!"
+        )
     return func
 
 def import_using_code(func_code: str, func_name: str, serialized: bool = True):
@@ -180,14 +175,6 @@ def import_using_code(func_code: str, func_name: str, serialized: bool = True):
         logger.debug(f"Trying to import code from string:\n {func_code.strip()}")
         try:
             mod = pyext.RuntimeModule.from_string("mod", func_name, func_code.strip())
-        except SyntaxError as e:
-            logger.critical("Problem importing in-line function %s, %s" % (mod, e))
-            # need to define the function here to be able to pass on the
-            # error as a default argument.
-            def dummy_func(err = e):
-                raise err
-            func = dummy_func
-            return func
         except Exception:
             func = import_using_code_ser(func_code, func_name)
         logger.debug("Imported function: %s", func_name)
