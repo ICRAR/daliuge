@@ -59,6 +59,9 @@ class TestAppLogStorage(unittest.TestCase):
         :return:
         """
         self.name = f"dlg.{__name__}"
+        self.logger = logging.getLogger(self.name)
+        self.logger.root.setLevel("WARNING")
+
         xDrop = InMemoryDROP("xDrop", "xDrop", pydata=translate(4))
         yDrop = InMemoryDROP("yDrop", "yDrop", pydata=translate(2))
         self.result = InMemoryDROP("result", "result")
@@ -96,7 +99,7 @@ class TestAppLogStorage(unittest.TestCase):
         logger = logging.getLogger(self.name)
         name = logging.getLevelName(logger.root.getEffectiveLevel())
         self.assertEqual("WARNING", name)
-        with DROPWaiterCtx(self, self.result, 100):
+        with DROPWaiterCtx(self, self.result, 5):
             for drop in self.input_drops:
                 drop.setCompleted()
         logs = filter_logs_by_level(self.app.getLogs(), "INFO")
