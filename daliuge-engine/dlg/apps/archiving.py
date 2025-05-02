@@ -79,7 +79,7 @@ class ExternalStoreApp(BarrierAppDROP):
 # @brief NgasArchivingApp
 # @details Takes an input and archives it in an NGAS server.
 # @par EAGLE_START
-# @param category PythonApp
+# @param category DALiuGEApp
 # @param tag daliuge
 # @param ngasSrv localhost/String/ApplicationArgument/NoPort/ReadWrite//False/False/URL of the NGAS Server
 # @param ngasPort 7777/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/"TCP/IP Port on the NGAS Server"

@@ -54,7 +54,7 @@ logger = logging.getLogger(f"dlg.{__name__}")
 # can be specified with the restriction that they are not ContainerDROPs
 # so data can be written into them through the framework.
 # @par EAGLE_START
-# @param category PythonApp
+# @param category DALiuGEApp
 # @param tag daliuge
 # @param host localhost/String/ApplicationArgument/NoPort/ReadWrite//False/False/Host address
 # @param port 1111/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/Host port
