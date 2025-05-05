@@ -340,7 +340,6 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
 
 class TestREST(LocalDimStarter, unittest.TestCase):
 
-    @unittest.skip
     def test_fullRound(self):
         """
         A test that exercises most of the REST interface exposed on top of the
