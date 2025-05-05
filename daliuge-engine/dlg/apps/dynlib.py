@@ -27,11 +27,11 @@ import multiprocessing
 import queue
 import threading
 
-from .. import rpc
-from ..ddap_protocol import AppDROPStates
-from ..apps.app_base import AppDROP, BarrierAppDROP
-from ..drop import track_current_drop
-from ..exceptions import InvalidDropException
+from dlg import rpc
+from dlg.ddap_protocol import AppDROPStates
+from dlg.apps.app_base import AppDROP, BarrierAppDROP
+from dlg.drop import track_current_drop
+from dlg.exceptions import InvalidDropException
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
