@@ -399,10 +399,6 @@ class TestREST(LocalDimStarter, unittest.TestCase):
                 complexGraphSpec = json.load(codecs.getreader("utf-8")(fp))
             logger.debug(f"Loaded graph: {fp}")
             # get rejected by the DIM.
-            # with pkg_resources.resource_stream(
-            #     "test", "graphs/complex.js"
-            # ) as f:  # @UndefinedVariable
-            #     complexGraphSpec = json.load(codecs.getreader("utf-8")(f))
             for dropSpec in complexGraphSpec:
                 dropSpec["node"] = nm_host
             RESTTestUtils.post(
