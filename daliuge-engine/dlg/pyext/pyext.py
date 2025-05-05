@@ -128,16 +128,6 @@ def _argspec(func):
 
 inspect.getargspec = _argspec
 
-try:
-    import IPython
-except ImportError:
-    IPython = None
-else:
-    # Replace IPython's argspec
-    oipyargspec = IPython.core.oinspect.getargspec
-    def _ipyargspec(func):
-        return _targspec(func, oipyargspec, '__orig_arg_ipy__')
-    IPython.core.oinspect.getargspec = _ipyargspec
 
 class overload(object):
     '''Simple function overloading in Python.'''
@@ -192,8 +182,6 @@ class overload(object):
             newf = modify_function(newf, globals={'overloads': overloads})
             newf.__pyext_overload_basic__ = None
             newf.__orig_arg__ = argspec(f)
-            if IPython:
-                newf.__orig_arg_ipy__ = IPython.core.oinspect.getargspec(f)
             return newf
         return wrap
     @classmethod
@@ -262,8 +250,6 @@ class overload(object):
             newf = modify_function(newf, globals={'overloads': overloads})
             newf.__pyext_overload_args__ = None
             newf.__orig_arg__ = argspec(f)
-            if IPython:
-                newf.__orig_arg_ipy__ = IPython.core.oinspect.getargspec(f)
             return newf
         return wrap
 
@@ -278,15 +264,15 @@ class _RuntimeModule(object):
     @staticmethod
     @overload.argc(2)
     def from_objects(name, docstring, **d):
-        '''Create a module at runtime from `d`.
+        """Create a module at runtime from `d`.
 
            :param name: The module name.
 
            :param docstring: Optional. The module's docstring.
 
-           :param \*\*d: All the keyword args, mapped from name->value.
+           :param d: All the keyword args, mapped from name->value.
 
-           Example: ``RuntimeModule.from_objects('name', 'doc', a=1, b=2)``'''
+           Example: ``RuntimeModule.from_objects('name', 'doc', a=1, b=2)``"""
         module = types.ModuleType(name, docstring)
         module.__dict__.update(d)
         module.__file__ = '<runtime_module>'
@@ -421,11 +407,11 @@ def annotate(*args, **kwargs):
     return _wrap
 
 def fannotate(*args, **kwargs):
-    '''Set function annotations using decorators.
+    """Set function annotations using decorators.
 
-       :param \*args: The first positional argument is used for the function's return value; all others are discarded.
+       :param args: The first positional argument is used for the function's return value; all others are discarded.
 
-       :param \**kwargs: This is a mapping of argument names to annotations.
+       :param kwargs: This is a mapping of argument names to annotations.
 
        Example::
 
@@ -433,7 +419,7 @@ def fannotate(*args, **kwargs):
            def x(a, b):
                pass
 
-       '''
+       """
     def wrap(f):
         if not hasattr(f, '__annotations__'):
             f.__annotations__ = {}
