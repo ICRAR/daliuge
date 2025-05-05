@@ -1,37 +1,74 @@
 .. _running:
 
-Startup and Shutdown Guide
+Running DALiuGE
 ==========================
-The translator and the engine are separate services and can be installed and run independently. 
+As discussed in :ref:`the previous section<installation>`, the translator and the engine are separate services and can be installed and run independently. 
 
-Depending on how you are intending to run the system startup and shutdown is slightly different. 
+Depending on how you are intending to run the system startup and shutdown is slightly different. The following options for start up and shutdown are given in alignment with the installation options: 
 
-For the impatient: Single node |daliuge|
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-As a developer the following two commands will start both the translator and the engine, including a data island manager (DIM) and a node manager (NM)::
+* :ref:`Docker <docker run>`
+* :ref:`PyPI<running_with_cli>`
+* :ref:`Source<running_with_cli>`
 
-    cd daliuge-translator ; ./run_translator dev ; cd ..
-    cd daliuge-engine ; ./run_engine dev ; cd ..
 
-This is the quickest way to start deploying workflows. Obviously this is limited to a single computer, but certainly useful for testing out the system and developing new components. You can use EAGLE on the URL: https://eagle.icrar.org and point the EAGLE setting (keyboard shortcut 'O') for the translator URL to http://localhost:8084. After submitting your graph to the translator, the translator web interface will be opened in a new tab and you need to adjust the translator settings to point to the URL of the engine you've just started. Since the system is running across docker containers, you need to specify the IP address of the docker host machine, i.e. http://<IP-address>:8001 not localhost. These settings are saved in browser storage, that means that you will have the same settings when coming back. Now you have access to a complete |daliuge| system!
+.. _docker run:
 
-The following paragraphs are providing more detailed guidelines to enable people to start the system on multiple nodes to cover the specific local requirements.
-
-Starting the docker containers
+|daliuge| in Docker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-We are providing convenience scripts to start the docker containers built according to the :ref:`installation`. Depending whether you want to run the development (dev) or the deployment (dep) version of the image there exist different startup options. Starting the translator::
+The DALiUGE repository has scripts that are used to help run the Docker images. These can
+be accessed with or without `git`. Using the shell scripts is not strictly necessary, but the docker command line is quite complex.
+
+.. raw:: html
+
+   <details>
+    <summary><a>Using Git</a></summary>
+
+This can be acheived by cloning the repository::
+
+  git clone https://github.com/ICRAR/daliuge
+  cd daliuge
+
+.. raw:: html
+
+   </details>
+   <br/>
+
+.. raw:: html
+
+   <details>
+    <summary><a>Not using Git</a></summary>
+
+If you would prefer not to use git, you can fetch the latest release artifacts::
+
+  wget "$(curl -s "https://api.github.com/repos/icrar/daliuge/releases/latest" \
+        | grep "tarball_url" \
+        | awk -F '"' '{print $4}')" -O daliuge-latest.tar.gz
+      
+  mkdir daliuge
+  tar -xvf daliuge-latest.tar.gz -C daliuge --strip-components=1 
+
+  cd daliuge
+
+.. raw:: html
+
+   </details>
+   <br/>
+
+Once you have access to the script code, you can run the start scripts for the translator::
 
    cd daliuge-translator
    ./run_translator.sh dev|dep
 
-Similarly starting the engine::
+and the engine::
 
    cd daliuge-engine
    ./run_engine.sh dev|dep
 
-The main difference between the development and the deployment version is that the development version is automatically strating a data island manager, while the deployment version is not doing that. Both are starting a Node Manager by default (see below). Using the shell scripts is not strictly necessary, but the docker command line is a bit complex.
+The main difference between the development and the deployment version is that the development version is automatically strating a data island manager, while the deployment version is not doing that. Both are starting a Node Manager by default (see below).
 
-Starting and stopping using CLI
+.. _running_with_cli:
+
+Running DALiuGE using the CLI
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 If |daliuge| had been installed in a virtual environment of the host system it is possible to start the managers from the command line::
 
@@ -49,7 +86,14 @@ and::
 
     dlg nm -s 
 
-respectively. The help for the complete CLI is available by just entering dlg at the prompt::
+respectively.
+
+To run the translator::
+
+    dlg lgweb -d /tmp/ -t /tmp/
+
+
+The help for the complete CLI is available by just entering dlg at the prompt::
 
     ❯ dlg
     Usage: /home/awicenec/.pyenv/versions/dlg/bin/dlg [command] [options]
@@ -77,8 +121,8 @@ respectively. The help for the complete CLI is available by just entering dlg at
 More details about the usage of the CLI can be found in the :ref:`cli` chapter.
 
 
-Starting and stopping the managers
-----------------------------------
+More advanced: Starting and stopping the managers
+-------------------------------------------------
 |daliuge| is using three different kinds of managers:
 
 #. Node Manager (NM), one per compute node participating in the |daliuge| cluster. The NMs are running all the component wrappers for a single node.
@@ -115,7 +159,7 @@ In this example there is just a Node Manager running with process ID 18.
 
 For the independent: Build and run EAGLE
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-It is also possible to start the EAGLE locally in addition as well. This requires to clone and build the EAGLE repo into a directory separate from the |daliuge| repo::
+It is also possible to start the EAGLE locally in addition as well. This requires you to clone and build the EAGLE repo into a directory separate from the |daliuge| repo::
 
     git clone https://github.com/ICRAR/EAGLE
     cd EAGLE

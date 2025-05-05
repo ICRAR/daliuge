@@ -65,6 +65,8 @@ from dlg.pyext import pyext
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
+MAX_IMPORT_RECURSION = 100
+
 def serialize_func(f):
     if isinstance(f, str):
         parts = f.split(".")
@@ -90,7 +92,12 @@ def serialize_func(f):
     return fser, fdefaults
 
 
-def import_using_name(app, fname):
+def import_using_name(app, fname, curr_depth):
+    if curr_depth > MAX_IMPORT_RECURSION:
+        raise InvalidDropException(
+            app, "Problem importing module %s, search exceeded recursion limit" % fname
+        )
+
     logger.debug("Importing %s", fname)
     parts = fname.split(".")
     # If only one part check if builtin
@@ -133,7 +140,7 @@ def import_using_name(app, fname):
                         break
                     except ModuleNotFoundError:
                         # try again, sometimes fixes the namespace
-                        mod = import_using_name(app, fname)
+                        mod = import_using_name(app, fname, curr_depth=curr_depth+1)
                         break
                     except Exception as e:
                         raise InvalidDropException(
@@ -219,7 +226,7 @@ class PyMemberApp(BarrierAppDROP):
 # calling the function is treated as an iterable, with each individual object
 # being written to its corresponding output.
 # @par EAGLE_START
-# @param category PythonApp
+# @param category PyFuncApp
 # @param tag template
 # @param func_name /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function name
 # @param func_code /String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code, e.g. 'def func_name(args): return args'. Note that func_name above needs to match the defined name here.
@@ -771,7 +778,7 @@ class PyFuncApp(BarrierAppDROP):
         logger.info("AppDROP name: %s", self.name)
         # Lookup function or import bytecode as a function
         if not self.func_code:
-            self.func = import_using_name(self, self.func_name)
+            self.func = import_using_name(self, self.func_name, curr_depth=0)
             self._init_fn_defaults()
         else:
             self.initialize_with_func_code()

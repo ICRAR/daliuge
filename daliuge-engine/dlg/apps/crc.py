@@ -83,7 +83,7 @@ class CRCApp(BarrierAppDROP):
 # @details Calculate CRC in the streaming mode
 # i.e. A "streamingConsumer" of its predecessor in the graph
 # @par EAGLE_START
-# @param category PythonApp
+# @param category DALiuGEApp
 # @param tag daliuge
 # @param data /String/ApplicationArgument/OutputPort/ReadWrite//False/False/Input data stream
 # @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop

@@ -5,7 +5,7 @@ on:
     branches:
       - master  #  Only run on pushes to master
   pull_request:
-    types: [opened, synchronize]  # Run on PRs from any branch to any target
+    types: [opened, synchronize]  # Run on PRs from any branch
 
 jobs:
   run_translator:

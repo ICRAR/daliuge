@@ -427,11 +427,13 @@ class LG:
             Categories.DYNLIB_APP,
             Categories.DYNLIB_PROC_APP,
             Categories.PYTHON_APP,
+            Categories.DALIUGE_APP
         ] and t_type in [
             Categories.COMPONENT,
             Categories.DYNLIB_APP,
             Categories.DYNLIB_PROC_APP,
             Categories.PYTHON_APP,
+            Categories.DALIUGE_APP
         ]
 
     def _link_drops(
@@ -772,7 +774,7 @@ class LG:
                     # to the physical graph as a node of type SERVICE_APP instead of APP
                     # per compute instance
                     tlgn["categoryType"] = "Application"
-                    tlgn["category"] = "PythonApp"
+                    tlgn["category"] = "DALiuGEApp"
                 elif tlgn.is_subgraph:
                     pass
                 else:
