@@ -86,6 +86,9 @@ class TestAppLogStorage(unittest.TestCase):
             self.app.addInput(drop)
         self.app.addOutput(self.result)
 
+    def tearDown(self):
+        self.logger.root.setLevel("WARNING")
+
 
     def test_default_logging(self):
         """
