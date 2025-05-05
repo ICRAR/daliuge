@@ -28,7 +28,7 @@ import unittest
 import shutil
 from asyncio.log import logger
 
-import pkg_resources
+# import pkg_resources
 
 from dlg import utils, droputils
 from dlg.testutils import ManagerStarter
@@ -394,12 +394,16 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             # The UID of the two leaf nodes of this complex.js graph are T and S
             # Since the original complexGraph doesn't have node information
             # we need to add it manually before submitting -- otherwise it will
+            import importlib.resources
+            ref = importlib.resources.files('test').joinpath('graphs/complex.js')
+            with ref.open('rb') as fp:
+                complexGraphSpec = json.load(codecs.getreader("utf-8")(fp))
+            logger.debug(f"Loaded graph: {fp}")
             # get rejected by the DIM.
-            with pkg_resources.resource_stream(
-                "test", "graphs/complex.js"
-            ) as f:  # @UndefinedVariable
-                complexGraphSpec = json.load(codecs.getreader("utf-8")(f))
-                logger.debug(f"Loaded graph: {f}")
+            # with pkg_resources.resource_stream(
+            #     "test", "graphs/complex.js"
+            # ) as f:  # @UndefinedVariable
+            #     complexGraphSpec = json.load(codecs.getreader("utf-8")(f))
             for dropSpec in complexGraphSpec:
                 dropSpec["node"] = nm_host
             RESTTestUtils.post(

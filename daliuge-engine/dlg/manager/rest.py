@@ -36,9 +36,10 @@ import tarfile
 import threading
 
 import bottle
-import pkg_resources
+import importlib.resources
 
 from bottle import static_file
+from pathlib import Path
 
 from dlg import constants
 from dlg.manager.client import NodeManagerClient, DataIslandManagerClient
@@ -61,10 +62,9 @@ from dlg.manager.manager_data import Node
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
-
 def file_as_string(fname, enc="utf8"):
-    b = pkg_resources.resource_string(__name__, fname)  # @UndefinedVariable
-    return utils.b2s(b, enc)
+    res = Path(__file__).parent / fname
+    return utils.b2s(res.read_bytes(), enc)
 
 
 def daliuge_aware(func):
@@ -365,9 +365,7 @@ class ManagerRestServer(RestServer):
     # non-REST methods
     # ===========================================================================
     def server_static(self, filepath):
-        staticRoot = pkg_resources.resource_filename(
-            __name__, "/web/static"
-        )  # @UndefinedVariable
+        staticRoot = Path(__file__).parent / "web/static"
         return bottle.static_file(filepath, root=staticRoot)
 
     def visualizeSession(self):
