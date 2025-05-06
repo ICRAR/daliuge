@@ -116,7 +116,6 @@ def version(parser, args):
 
 cmdwrap("version", "Reports the DALiuGE version and exits", version)
 
-
 def _load_commands():
     if sys.version_info.minor < 10:
         all_entry_points = entry_points()

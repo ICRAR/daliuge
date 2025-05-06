@@ -294,8 +294,11 @@ class Session(object):
 
         # This will check the consistency of each dropSpec
         logger.debug("Trying to add graphSpec:")
-        for x in graphSpec:
-            logger.debug("%s: %s", x, x.keys())
+        logger.debug("Number of drops: %s", len(graphSpec))
+
+        # This is very excessive and should not be done in production
+        # for x in graphSpec:
+        #     logger.debug("%s: %s", x, x.keys())
         try:
             graphSpecDict, self._graphreprodata = graph_loader.loadDropSpecs(graphSpec)
             # Check for duplicates
@@ -641,6 +644,21 @@ class Session(object):
             statusDict[drop.oid]["status"] = drop.status
 
         return statusDict
+
+    def getDropLogs(self, drop_oid: str):
+        """
+        Retrieve the logs stored in the given DROP
+        :param drop_oid: drop_oid
+
+        :return:
+        """
+        return {"session": self.sessionId,
+                "status": self.status,
+                "oid": drop_oid,
+                "logs": self._drops[drop_oid].getLogs()}
+                # "stderr": self._drops[drop_oid].getStdError(),
+                # "stdout": self._drops[drop_oid].getStdOut()}
+
 
     @track_current_session
     def cancel(self):

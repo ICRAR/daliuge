@@ -38,6 +38,7 @@ from dlg.apps.pyfunc import PyFuncApp
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops import InMemoryDROP, FileDROP
 from dlg.apps.branch import BranchAppDrop
+from dlg.drop import track_current_drop
 from dlg.meta import (
     dlg_float_param,
     dlg_string_param,
@@ -124,6 +125,7 @@ class SleepApp(BarrierAppDROP):
     def initialize(self, **kwargs):
         super(SleepApp, self).initialize(**kwargs)
 
+    @track_current_drop
     def run(self):
         self._run()
         try:
@@ -140,7 +142,7 @@ class SleepApp(BarrierAppDROP):
             )
             self.sleep_time = 0
             time.sleep(self.sleep_time)
-        logger.debug("%s slept for %s s", self.name, self.sleep_time)
+        logger.info("%s slept for %s s", self.name, self.sleep_time)
 
 
 ##
@@ -804,6 +806,7 @@ class GenericScatterApp(BarrierAppDROP):
     def initialize(self, **kwargs):
         super(GenericScatterApp, self).initialize(**kwargs)
 
+    @track_current_drop
     def run(self):
         numSplit = self.num_of_copies
         cont = droputils.allDropContents(self.inputs[0])

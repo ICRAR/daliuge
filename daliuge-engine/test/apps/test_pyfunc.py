@@ -122,8 +122,7 @@ class TestPyFuncApp(unittest.TestCase):
             pyfunc.PyFuncApp,
             "a",
             "a",
-            func_name="test.apps.test_pyfunc.doesnt_exist",
-        )
+            func_name = "test.apps.test_pyfunc.doesnt_exist",)
 
     def test_valid_creation(self):
         _PyFuncApp("a", "a", "func1")

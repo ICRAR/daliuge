@@ -33,6 +33,8 @@ from typing import Union
 from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.data.drops.data_base import DataDROP, logger
 from dlg.data.io import SharedMemoryIO, MemoryIO
+from dlg.drop import track_current_drop
+
 
 def get_builtins()-> dict:
     """
@@ -125,6 +127,8 @@ class InMemoryDROP(DataDROP):
     """
 
     # Allow in-memory drops to be automatically removed by default
+
+    @track_current_drop
     def __init__(self, *args, **kwargs):
         if "persist" not in kwargs:
             kwargs["persist"] = False

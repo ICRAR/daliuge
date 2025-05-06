@@ -40,12 +40,8 @@ from .drop import (
     LINKTYPE_1TON_APPEND_METHOD,
 )
 
-from .data.drops.data_base import NullDROP
-from .data.drops.container import ContainerDROP
-
-from dlg.data.drops.environmentvar_drop import EnvironmentVarDROP
-from dlg.data.drops.parset_drop import ParameterSetDROP
-from .exceptions import InvalidGraphException
+from dlg.data.drops.container import ContainerDROP
+from dlg.exceptions import InvalidGraphException
 from dlg.data.drops.json_drop import JsonDROP
 from dlg.data.drops import *
 
@@ -418,8 +414,7 @@ def _createApp(dropSpec, dryRun=False, session_id=None):
         appType = getattr(module, parts[-1])
     except (ImportError, AttributeError, ValueError):
         raise InvalidGraphException(
-            "drop %s specifies non-existent application: %s" % (oid, appName)
-        )
+            "drop %s specifies non-existent application: %s" % (oid, appName))
 
     if dryRun:
         return

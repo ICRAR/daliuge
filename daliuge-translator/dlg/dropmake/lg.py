@@ -256,7 +256,7 @@ class LG:
             if lpcxt is None:
                 return "{0}".format(idx)
             else:
-                return "{0}/{1}".format(lpcxt, idx)
+                return "{0}-{1}".format(lpcxt, idx)
         else:
             return None
 
@@ -322,15 +322,14 @@ class LG:
             shape = []
             if lgk is not None and len(lgk) > 1:
                 multikey_grpby = True
-                scatters = lgn.group_by_scatter_layers[
-                    2
-                ]  # inner most scatter to outer most scatter
-                shape = [
-                    x.dop for x in scatters
-                ]  # inner most is also the slowest running index
+                # inner most scatter to outer most scatter
+                scatters = lgn.group_by_scatter_layers[2]
+                # inner most is also the slowest running index
+                shape = [x.dop for x in scatters]
 
             for i in range(lgn.dop):
-                miid = "{0}/{1}".format(iid, i)
+                # todo - create iid(?)
+                miid = f"{iid}-{i}"
                 if multikey_grpby:
                     # set up more refined hierarchical context for group by with multiple keys
                     # recover multl-dimension indexes from i
@@ -365,7 +364,7 @@ class LG:
                 if lgn.loop_ctx:
                     lpcxt = lgn.loop_ctx
                     iid = lgn.iid
-                miid = "{0}/{1}".format(iid, i)
+                miid = "{0}-{1}".format(iid, i)
                 src_drop = lgn.make_single_drop(miid, loop_ctx=lpcxt, proc_index=i)
                 self._drop_dict[lgn.id].append(src_drop)
         elif lgn.is_service:
@@ -720,7 +719,7 @@ class LG:
                     grpby_dict = collections.defaultdict(list)
                     layer_index = tlgn.group_by_scatter_layers[1]
                     for gdd in sdrops:
-                        src_ctx = gdd["iid"].split("/")
+                        src_ctx = gdd["iid"].split("-")
                         if tlgn.group_keys is None:
                             # the last bit of iid (current h id) is the local GrougBy key, i.e. inner most loop context id
                             gby = src_ctx[-1]
@@ -728,8 +727,8 @@ class LG:
                                 slgn.h_level - 2 == tlgn.h_level and tlgn.h_level > 0
                             ):  # groupby itself is nested inside a scatter
                                 # group key consists of group context id + inner most loop context id
-                                gctx = "/".join(src_ctx[0:-2])
-                                gby = gctx + "/" + gby
+                                gctx = "-".join(src_ctx[0:-2])
+                                gby = f"{gctx}-{gby}"
                         else:
                             # find the "group by" scatter level
                             gbylist = []
@@ -746,7 +745,7 @@ class LG:
                                 src_ctx.reverse()
                             for lid in layer_index:
                                 gbylist.append(src_ctx[lid])
-                            gby = "/".join(gbylist)
+                            gby = "-".join(gbylist)
                         grpby_dict[gby].append(gdd)
                     grp_keys = grpby_dict.keys()
                     if len(grp_keys) != len(tdrops):

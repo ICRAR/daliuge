@@ -30,6 +30,7 @@ import sys
 
 from dlg import utils, droputils
 from dlg.apps.app_base import BarrierAppDROP
+from dlg.drop import track_current_drop
 from dlg.named_port_utils import (
     DropParser,
     get_port_reader_function,
@@ -91,6 +92,7 @@ class MPIApp(BarrierAppDROP):
             )
         self._recompute_data = {}
 
+    @track_current_drop
     def run(self):
         from mpi4py import MPI
         logger.debug("Parameters found: %s",

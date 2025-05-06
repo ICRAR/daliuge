@@ -143,3 +143,18 @@ tr td.details a:hover{
   transition: 0s visibility;
   visibility: visible;
 }
+
+.table-container {
+    max-width: 75%;
+    overflow-x: auto;
+    margin: 0 auto;
+}
+
+.table {
+    width: 100%;
+    table-layout: auto; /* Let the columns resize based on content */
+}
+
+.table th, .table td {
+    max-width: 700px; /* Limit maximum width of each column */
+}

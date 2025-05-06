@@ -39,6 +39,7 @@ from contextlib import redirect_stdout
 
 from dlg import drop_loaders
 from dlg.data.path_builder import filepath_from_string
+from dlg.drop import track_current_drop
 from dlg.utils import serialize_data, deserialize_data
 from dlg.named_port_utils import (
     Argument,
@@ -49,6 +50,7 @@ from dlg.named_port_utils import (
     replace_named_ports
 )
 from dlg.apps.app_base import BarrierAppDROP
+from dlg.drop import track_current_drop
 from dlg.exceptions import InvalidDropException
 from dlg.meta import (
     dlg_string_param,
@@ -721,7 +723,7 @@ class PyFuncApp(BarrierAppDROP):
         if isinstance(self.func_code, bytes) or serialized:
             if isinstance(self.func_code, str):
                 self.func_code = base64.b64decode(self.func_code.encode("utf8"))
-            self.func = import_using_code(self.func_code, self.func_name, serialized=True)
+            self.func = import_using_code_ser(self.func_code, self.func_name)
 
         self._init_fn_defaults()
         # make sure defaults are dicts
@@ -729,6 +731,7 @@ class PyFuncApp(BarrierAppDROP):
         if isinstance(self.func_arg_mapping, str):
             self.func_arg_mapping = ast.literal_eval(self.func_arg_mapping)
 
+    @track_current_drop
     def initialize(self, **kwargs):
         """
         The initialization of a function component is mainly dealing with mapping
@@ -793,6 +796,7 @@ class PyFuncApp(BarrierAppDROP):
         self._output_filepaths = {}
         self._recompute_data = {}
 
+    @track_current_drop
     def run(self):
         """
         Function positional and keyword argument treatment:
