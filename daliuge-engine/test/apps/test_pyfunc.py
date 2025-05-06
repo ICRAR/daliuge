@@ -134,7 +134,9 @@ class TestPyFuncApp(unittest.TestCase):
 
     def test_function_invalid_fname(self):
         # The function lives in an unknown module/package
-        testApp = pyfunc.PyFuncApp(
+        self.assertRaises(
+            InvalidDropException,
+            pyfunc.PyFuncApp,
             "a",
             "a",
             func_name = "test.apps.test_pyfunc.doesnt_exist",)
