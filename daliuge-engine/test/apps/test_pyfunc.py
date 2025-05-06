@@ -134,14 +134,12 @@ class TestPyFuncApp(unittest.TestCase):
 
     def test_function_invalid_fname(self):
         # The function lives in an unknown module/package
-        testApp = pyfunc.PyFuncApp(
+        self.assertRaises(
+            InvalidDropException,
+            pyfunc.PyFuncApp,
             "a",
             "a",
-            func_name="test.apps.test_pyfunc.doesnt_exist",)
-        err = testApp.fn_defaults["err"]
-        self.assertEqual(
-            'AttributeError("module \'test.apps.test_pyfunc\' has no attribute \'doesnt_exist\'")',
-            err.__repr__(),)
+            func_name = "test.apps.test_pyfunc.doesnt_exist",)
 
     def test_valid_creation(self):
         _PyFuncApp("a", "a", func1)

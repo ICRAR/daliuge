@@ -742,24 +742,17 @@ class PyFuncApp(BarrierAppDROP):
         """
         This function takes over if code is passed in through an argument.
         """
-        b64reg = (
-            re.compile("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$")
-        ) # base64 check regexp
         serialized = False
         logger.debug(f"Initializing with func_code of type {type(self.func_code)}")
-        if isinstance(self.func_code, str):
-            serialized = b64reg.match(self.func_code)
-        if not isinstance(self.func_code, bytes) and not serialized:
+        if not isinstance(self.func_code, bytes):
             try:
                 self.func = import_using_code(self.func_code, self.func_name,
                                               serialized=False)
             except (SyntaxError, NameError):
                 serialized = True
         if isinstance(self.func_code, bytes) or serialized:
-            # if the code is a string, check whether it is base64 encoded
-            if isinstance(self.func_code, str) and not b64reg.match(self.func_code):
+            if isinstance(self.func_code, str):
                 self.func_code = base64.b64decode(self.func_code.encode("utf8"))
-            serialized = b64reg.match(self.func_code)
             self.func = import_using_code_ser(self.func_code, self.func_name)
 
         self._init_fn_defaults()
