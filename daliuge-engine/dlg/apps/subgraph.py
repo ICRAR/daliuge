@@ -44,8 +44,8 @@ def shutdownManager(managers: dict) -> None:
     :return:
     """
     for manager in managers.values():
-        manager['manager'].shutdown()
-        manager['server'].stop()
+        manager["manager"].shutdown()
+        manager["server"].stop()
 
 
 def startupManagersInThread(managers: dict) -> None:
@@ -57,8 +57,7 @@ def startupManagersInThread(managers: dict) -> None:
     """
     for manager in managers.values():
         thread = threading.Thread(
-            target=manager['server'].start,
-            args=(manager['host'], manager['port'])
+            target=manager["server"].start, args=(manager["host"], manager["port"])
         )
         thread.start()
 
@@ -66,8 +65,10 @@ def startupManagersInThread(managers: dict) -> None:
 ##
 # @brief SubGraphLocal
 # @par EAGLE_START
-# @param category PythonApp
+# @param category DALiuGEApp
 # @param tag daliuge
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
+# @param dropclass dlg.apps.simple.GenericScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param dropclass dlg.apps.subgraph.SubGraphLocal/String/ComponentParameter/NoPort/ReadOnly//False/False/
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
@@ -106,7 +107,7 @@ class SubGraphLocal(BarrierAppDROP):
         self._session_prefix = self._popArg(kwargs, "session_prefix", "subgraph")
 
     def _pollRESTInterface(
-            self, manager: DROPManager, session: str, pollFrequencyInSeconds: int = 30
+        self, manager: DROPManager, session: str, pollFrequencyInSeconds: int = 30
     ):
         """
         Check the completion status of each drop in the SubGraph.
@@ -156,30 +157,32 @@ class SubGraphLocal(BarrierAppDROP):
         either successfully completed or failed.
         """
         managers = {
-            'node': {
-                'manager': NodeManager(
+            "node": {
+                "manager": NodeManager(
                     self._nodeManagerHost, rpc_port=6667, events_port=5556
                 ),
-                'port': self._nm_port,
-                'host': self._nodeManagerHost
+                "port": self._nm_port,
+                "host": self._nodeManagerHost,
             },
-            'dim': {
-                'manager': DataIslandManager([self._nodeManagerHost]),
-                'port': self._dim_port,
-                'host': self._islandManagerHost,
-            }
+            "dim": {
+                "manager": DataIslandManager([self._nodeManagerHost]),
+                "port": self._dim_port,
+                "host": self._islandManagerHost,
+            },
         }
-        managers['node']['server'] = NMRestServer(managers['node'])
-        managers['dim']['server'] = CompositeManagerRestServer(managers['dim'])
+        managers["node"]["server"] = NMRestServer(managers["node"])
+        managers["dim"]["server"] = CompositeManagerRestServer(managers["dim"])
         startupManagersInThread(managers)
 
         nodes = [self._islandManagerHost, self._nodeManagerHost]
         try:
-            session = self._translateAndDeploySubGraph(managers['dim']['manager'], nodes)
+            session = self._translateAndDeploySubGraph(
+                managers["dim"]["manager"], nodes
+            )
             while not self._pollRESTInterface(
-                    manager=managers['dim']['manager'],
-                    session=session,
-                    pollFrequencyInSeconds=10
+                manager=managers["dim"]["manager"],
+                session=session,
+                pollFrequencyInSeconds=10,
             ):
                 logger.info("Running SubGraph externally")
 
@@ -219,5 +222,6 @@ class SubGraphLocal(BarrierAppDROP):
         :return: A string prefix
         """
         ts = time.time()
-        return (f"{self._session_prefix}_"
-                + datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H-%M-%S'))
+        return f"{self._session_prefix}_" + datetime.datetime.fromtimestamp(
+            ts
+        ).strftime("%Y-%m-%d_%H-%M-%S")

@@ -131,7 +131,7 @@ app = FastAPI(
     },
 )
 app.mount("/static", StaticFiles(directory=file_location), name="static")
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 post_sem = threading.Semaphore(1)
 gen_pgt_sem = threading.Semaphore(1)
@@ -1214,7 +1214,7 @@ def run(_, args):
     signal.signal(signal.SIGINT, handler)
 
     logging.debug("Starting uvicorn verbose %s", options.verbose)
-    uvicorn.run(app=app, host=options.host, port=options.port, debug=options.verbose)
+    uvicorn.run(app=app, host=options.host, port=options.port, log_level=options.verbose)
 
 
 if __name__ == "__main__":

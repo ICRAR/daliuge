@@ -28,7 +28,7 @@ import pickle
 from dlg.dropmake.lg import LG
 from dlg.dropmake.pgt import PGT, GPGTNoNeedMergeException
 from dlg.dropmake.pgtp import MetisPGTP, MySarkarPGTP, MinNumPartsPGTP
-from dlg.dropmake import path_utils
+from dlg.common import path_utils
 
 """
 python -m unittest test.dropmake.test_pg_gen

@@ -1,15 +1,13 @@
-.. daliuge documentation master file, created by
-   sphinx-quickstart on Mon Feb  8 16:19:47 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. |br| raw:: html
+
+   <br />
 
 |daliuge|
 #########
 
 Welcome to the Data Activated 流 [#f1]_ Graph Engine (|daliuge|).
 
-|daliuge|
-is a workflow graph execution framework, specifically designed to support very large scale processing graphs for the reduction of interferometric radio astronomy data sets. DALiuGE has already been used for processing large astronomical datasets in existing radio astronomy projects. It originated from a prototyping activity as part of the SDP Consortium called Data Flow Management System (DFMS). DFMS aimed to prototype the execution framework of the proposed SDP architecture.
+|daliuge| is a workflow graph execution framework, specifically designed to support very large scale processing graphs for the reduction of interferometric radio astronomy data sets. DALiuGE has already been used for processing large astronomical datasets in existing radio astronomy projects. It originated from a prototyping activity as part of the SDP Consortium called Data Flow Management System (DFMS). DFMS aimed to prototype the execution framework of the proposed SDP architecture.
 For a complete tour of |daliuge| please read
 our `overview paper <http://dx.doi.org/10.1016/j.ascom.2017.03.007>`_. DALiuGE has been used in a project running a `full-scale simulation <http://dx.doi.org/10.1109/SC41405.2020.00006>`_ of the Square Kilometre Array dataflow on the ORNL Summit supercomputer.
 
@@ -18,24 +16,67 @@ our `overview paper <http://dx.doi.org/10.1016/j.ascom.2017.03.007>`_. DALiuGE h
 Development and maintenance of |daliuge| is currently hosted at ICRAR_
 and is performed by the `DIA team <http://www.icrar.org/our-research/data-intensive-astronomy/>`_.
 
-.. toctree::
- :maxdepth: 2
+Quick Start Guide
+-----------------
 
- intro
- installing
- running
- basics
- architecture/index
- deployment/overview
- graph_development
- cli
- api-index
+:doc:`/intro` |br|
+:doc:`/installing` |br| 
+:doc:`/running` |br|
+:doc:`/basics`
+
+DALiuGE Fundamentals
+--------------------
+:doc:`/architecture/index` |br|
+:doc:`/deployment/overview` |br|
+
+Advanced Techniques and Applications
+------------------------------------
+:doc:`/development/app_development/app_index` |br|
+:doc:`/advanced/delayed` |br| 
+
+API Documentation
+-----------------
+:doc:`api-index` |br| 
+:doc:`cli` |br|
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Quickstart Guide
+   :hidden: 
+    
+   intro
+   installing
+   running
+   basics
+ 
+.. toctree::
+   :maxdepth: 2
+   :caption: DALiuGE Fundamentals
+   :hidden: 
+
+   architecture/index
+   deployment/overview
+   
+.. toctree:: 
+   :maxdepth: 1 
+   :hidden: 
+   :caption: Advanced DALiuGE Methods
+
+   development/dev_index
+   development/app_development/app_index
+   development/data_development/data_index
+   advanced/delayed
+
+.. toctree::
+   :caption: API Documentation
+   :maxdepth: 2
+   :hidden:
+
+   api-index
+   cli
 
 .. toctree:: 
     :hidden:
-
-    development/dev_index
-    usage/index
 
 Citations
 ---------

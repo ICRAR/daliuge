@@ -64,17 +64,18 @@ def createMultiOut(v1: Any = 1, v2: Any = 7) -> tuple:
     out2 = v2
     return out1, out2
 
-def getMax(v1: float=1.0, v2: float=7.0) -> float:
-    """
-    Return the largest float of two different values. 
 
-    Inputs: 
+def getMax(v1: float = 1.0, v2: float = 7.0) -> float:
+    """
+    Return the largest float of two different values.
+
+    Inputs:
         v1: value 1
-        v2: value 2 
+        v2: value 2
 
     Returns:
         max(v1, v2)
-    """    
+    """
     return max(v1, v2)
 
 
@@ -86,7 +87,13 @@ def string2json(string: str, pickle_flag: bool = False) -> list:
         string: string containing a JSON representation
         pickle_flag: False, whether output should be pickled
     """
-    if not pickle_flag:
-        return json.loads(string)
-    else:
-        return pickle.dumps(json.loads(string))
+    if not string:
+        string = '""'
+
+    try:
+        if not pickle_flag:
+            return json.loads(string)
+        else:
+            return pickle.dumps(json.loads(string))
+    except json.decoder.JSONDecodeError as e:
+        return [] if not pickle_flag else pickle.dumps([])

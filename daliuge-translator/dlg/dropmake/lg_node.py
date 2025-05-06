@@ -44,7 +44,7 @@ from dlg.dropmake.dm_utils import (
 from dlg.dropmake.utils.bash_parameter import BashCommand
 from .definition_classes import Categories, DATA_TYPES, APP_TYPES
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class LGNode:
@@ -93,7 +93,7 @@ class LGNode:
                 group_q[grp_id].append(self)
 
         done_dict[self.id] = self
-        self.subgraph = jd['subgraph'] if 'subgraph' in jd else None
+        self.subgraph = jd["subgraph"] if "subgraph" in jd else None
         self.happy = False
         self.loop_ctx = None
         self.iid = None
@@ -185,9 +185,7 @@ class LGNode:
         elif self.jd["categoryType"] in ["Other"]:
             value = "Other"
         else:
-            logger.error(
-                "Found unknown categoryType: %s", self.jd["categoryType"]
-            )
+            logger.error("Found unknown categoryType: %s", self.jd["categoryType"])
             # raise ValueError
         for key in keys:
             if key in self.jd:
@@ -249,10 +247,10 @@ class LGNode:
         Add a group member
         """
         if (
-                lg_node.is_group
-                and not (lg_node.is_scatter)
-                and not (lg_node.is_loop)
-                and not (lg_node.is_groupby)
+            lg_node.is_group
+            and not (lg_node.is_scatter)
+            and not (lg_node.is_loop)
+            and not (lg_node.is_groupby)
         ):
             raise GInvalidNode(
                 "Only Scatters, Loops and GroupBys can be nested, but {0} is neither".format(
@@ -295,7 +293,7 @@ class LGNode:
                 glist.append(str(cg.gid))
                 cg = cg.group
             glist.append("0")
-            self._g_h = "/".join(reversed(glist))
+            self._g_h = "-".join(reversed(glist))
         return self._g_h
 
     @property
@@ -310,15 +308,9 @@ class LGNode:
         """
         key = []
         if self.is_app:
-            key = [
-                k
-                for k in self.jd
-                if re.match(r"execution[\s\_]time", k.lower())
-            ]
+            key = [k for k in self.jd if re.match(r"execution[\s\_]time", k.lower())]
         elif self.is_data:
-            key = [
-                k for k in self.jd if re.match(r"data[\s\_]volume", k.lower())
-            ]
+            key = [k for k in self.jd if re.match(r"data[\s\_]volume", k.lower())]
         try:
             self._weight = int(self.jd[key[0]])
         except (KeyError, ValueError, IndexError):
@@ -390,9 +382,9 @@ class LGNode:
         """
         result = False
         if self.has_group() and (
-                "group_start" in self.jd
-                or "Group start" in self.jd
-                or "Group Start" in self.jd
+            "group_start" in self.jd
+            or "Group start" in self.jd
+            or "Group Start" in self.jd
         ):
             gs = (
                 self.jd.get("group_start", False)
@@ -414,9 +406,7 @@ class LGNode:
         """
         result = False
         if self.has_group() and (
-                "group_end" in self.jd
-                or "Group end" in self.jd
-                or "Group End" in self.jd
+            "group_end" in self.jd or "Group end" in self.jd or "Group End" in self.jd
         ):
             ge = (
                 self.jd.get("group_end", False)
@@ -465,7 +455,7 @@ class LGNode:
 
     @property
     def is_subgraph(self):
-        if 'isSubGraphApp' in self._jd:
+        if "isSubGraphApp" in self._jd:
             return self._jd["isSubGraphApp"]
         else:
             return self._jd["category"] == Categories.SUBGRAPH
@@ -550,15 +540,11 @@ class LGNode:
             # group by followed by another group by
             if grpks is None or len(grpks) < 1:
                 raise GInvalidNode(
-                    "Must specify group_key for Group By '{0}'".format(
-                        self.name
-                    )
+                    "Must specify group_key for Group By '{0}'".format(self.name)
                 )
             # find the "root" groupby and get all of its scatters
             inputgrp = self
-            while (inputgrp is not None) and inputgrp.inputs[
-                0
-            ].group.is_groupby:
+            while (inputgrp is not None) and inputgrp.inputs[0].group.is_groupby:
                 inputgrp = inputgrp.inputs[0].group
             # inputgrp now is the "root" groupby that follows Scatter immiately
             # move it to Scatter
@@ -717,7 +703,7 @@ class LGNode:
             iid:    instance id (for the physical graph node)
         """
         # TODO: This is rather ugly, but a quick and dirty fix. The iid is the rank data we need
-        rank = [int(x) for x in iid.split("/")]
+        rank = [int(x) for x in iid.split("-")]
         return "{0}_{1}_{2}".format(self._ssid, self.id, iid), rank
 
     def _update_key_value_attributes(self, kwargs):
@@ -743,9 +729,7 @@ class LGNode:
 
         # NOTE: drop Argxx keywords
 
-    def _getPortName(
-            self, ports: str = "outputPorts", index: int = 0, portId=None
-    ):
+    def _getPortName(self, ports: str = "outputPorts", index: int = 0, portId=None):
         """
         Return name of port if it exists
         """
@@ -764,10 +748,8 @@ class LGNode:
                     if portId is None or field["id"] == portId:
                         name = field["name"]
                     # can't be sure that name is unique
-                    if name not in ports_dict:
-                        ports_dict[name] = [field["id"]]
-                    else:
-                        ports_dict[name].append(field["id"])
+                    if field["id"] not in ports_dict:
+                        ports_dict[field["id"]] = name
         return name if index >= 0 else ports_dict
 
     def _create_groupby_drops(self, drop_spec):
@@ -780,8 +762,7 @@ class LGNode:
         sij = self.inputs[0]
         if not sij.is_data:
             raise GInvalidNode(
-                "GroupBy should be connected to a DataDrop, not '%s'"
-                % sij.category
+                "GroupBy should be connected to a DataDrop, not '%s'" % sij.category
             )
         dw = sij.weight * self.groupby_width
 
@@ -799,9 +780,7 @@ class LGNode:
         )
         kwargs = {}
         kwargs["grp-data_drop"] = dropSpec_grp
-        kwargs[
-            "weight"
-        ] = 1  # barrier literarlly takes no time for its own computation
+        kwargs["weight"] = 1  # barrier literarlly takes no time for its own computation
         kwargs["sleep_time"] = 1
         drop_spec.update(kwargs)
         drop_spec.addOutput(dropSpec_grp, name="grpdata")
@@ -818,11 +797,7 @@ class LGNode:
         gi = self.inputs[0]
         if gi.is_groupby:
             gii = gi.inputs[0]
-            dw = (
-                    int(gii.jd["data_volume"])
-                    * gi.groupby_width
-                    * self.gather_width
-            )
+            dw = int(gii.jd["data_volume"]) * gi.groupby_width * self.gather_width
         else:  # data
             dw = gi.weight * self.gather_width
 
@@ -862,7 +837,7 @@ class LGNode:
             {
                 "oid": "{0}-s".format(drop_spec["oid"]),
                 "categoryType": CategoryType.APPLICATION,
-                "category": "PythonApp",
+                "category": "DALiuGEApp",
                 "dropclass": "dlg.apps.simple.SleepApp",
                 "name": "lstnr",
                 "weigth": 5,
@@ -895,8 +870,10 @@ class LGNode:
                 app_class = "dlg.apps.dockerapp.DockerApp"
                 drop_spec["name"] = self.jd["command"]
             else:
-                logger.debug("Might be a problem with this node: %s", 
-                             json.dumps(self.jd, indent=2))
+                logger.debug(
+                    "Might be a problem with this node: %s",
+                    json.dumps(self.jd, indent=2),
+                )
 
         self.dropclass = app_class
         self.jd["dropclass"] = app_class
@@ -911,8 +888,7 @@ class LGNode:
         if self.weight is not None:
             if self.weight < 0:
                 raise GraphException(
-                    "Execution_time must be greater"
-                    " than 0 for Node '%s'" % self.name
+                    "Execution_time must be greater" " than 0 for Node '%s'" % self.name
                 )
             else:
                 kwargs["weight"] = self.weight
@@ -936,8 +912,8 @@ class LGNode:
             self.dropclass = self.jd["dataclass"]
         # Backwards compatibility
         if (
-                not hasattr(self, "dropclass")
-                or self.dropclass == "dlg.apps.simple.SleepApp"
+            not hasattr(self, "dropclass")
+            or self.dropclass == "dlg.apps.simple.SleepApp"
         ):
             if self.category == "File":
                 self.dropclass = "dlg.data.drops.file.FileDROP"

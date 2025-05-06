@@ -27,12 +27,13 @@ import multiprocessing
 import queue
 import threading
 
-from .. import rpc
-from ..ddap_protocol import AppDROPStates
-from ..apps.app_base import AppDROP, BarrierAppDROP
-from ..exceptions import InvalidDropException
+from dlg import rpc
+from dlg.ddap_protocol import AppDROPStates
+from dlg.apps.app_base import AppDROP, BarrierAppDROP
+from dlg.drop import track_current_drop
+from dlg.exceptions import InvalidDropException
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 _read_cb_type = ctypes.CFUNCTYPE(
     ctypes.c_size_t, ctypes.POINTER(ctypes.c_char), ctypes.c_size_t
@@ -370,6 +371,7 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
 # @param category DynlibApp
 # @param tag template
 # @param libpath /String/ComponentParameter/NoPort/ReadWrite//False/False/"The location of the shared object/DLL that implements this application"
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.dynlib.DynlibApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param base_name dynlib/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -377,8 +379,6 @@ class DynlibStreamApp(DynlibAppBase, AppDROP):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class DynlibApp(DynlibAppBase, BarrierAppDROP):
     """Loads a dynamic library into the current process and runs it"""
@@ -387,6 +387,7 @@ class DynlibApp(DynlibAppBase, BarrierAppDROP):
         super(DynlibApp, self).initialize(**kwargs)
         self.ranks = self._popArg(kwargs, "rank", None)
 
+    @track_current_drop
     def run(self):
         input_closers = prepare_c_inputs(self._c_app, self.inputs)
         prepare_c_ranks(self._c_app, self.ranks)
@@ -466,15 +467,14 @@ def get_from_subprocess(proc, q):
 # @param category DynlibProcApp
 # @param tag template
 # @param libpath /String/ComponentParameter/NoPort/ReadWrite//False/False/"The location of the shared object/DLL that implements this application"
+# @param dropclass dlg.apps.dynlib.DynlibProcApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param dropclass dlg.apps.dynlib.DynlibProcApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param base_name dynlib/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class DynlibProcApp(BarrierAppDROP):
     """Loads a dynamic library in a different process and runs it"""

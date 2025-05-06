@@ -40,12 +40,8 @@ from .drop import (
     LINKTYPE_1TON_APPEND_METHOD,
 )
 
-from .data.drops.data_base import NullDROP
-from .data.drops.container import ContainerDROP
-
-from dlg.data.drops.environmentvar_drop import EnvironmentVarDROP
-from dlg.data.drops.parset_drop import ParameterSetDROP
-from .exceptions import InvalidGraphException
+from dlg.data.drops.container import ContainerDROP
+from dlg.exceptions import InvalidGraphException
 from dlg.data.drops.json_drop import JsonDROP
 from dlg.data.drops import *
 
@@ -74,7 +70,7 @@ __TOONE = {DROPLinkType.PARENT: "parent"}
 __TOMANY.update({v: k for k, v in __TOMANY.items()})
 __TOONE.update({v: k for k, v in __TOONE.items()})
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def addLink(linkType, lhDropSpec, rhOID, force=False):
@@ -201,7 +197,7 @@ def loadDropSpecs(dropSpecList):
     reprodata = None
     if dropSpecList is None:
         raise InvalidGraphException("DropSpec is empty %r" % dropSpecList)
-    if dropSpecList[-1].get("rmode"):
+    if dropSpecList[-1].get("rmode") or not dropSpecList[-1]:
         reprodata = dropSpecList.pop()
     for n, dropSpec in enumerate(dropSpecList):
         # "categoryType" and 'oid' are mandatory
@@ -246,14 +242,16 @@ def loadDropSpecs(dropSpecList):
     return dropSpecs, reprodata
 
 
-def createGraphFromDropSpecList(dropSpecList: List[dict],
-                                session: Optional["Session"]=None
-                                ) -> List[AbstractDROP]:
+def createGraphFromDropSpecList(
+    dropSpecList: List[dict], session: Optional["Session"] = None
+) -> List[AbstractDROP]:
     logger.debug("Found %d DROP definitions", len(dropSpecList))
 
     # Step #1: create the actual DROPs
     drops = collections.OrderedDict()
     logger.info("Creating %d drops", len(dropSpecList))
+    if dropSpecList[-1].get("rmode") or not dropSpecList[-1]:
+        dropSpecList.pop()
     for n, dropSpec in enumerate(dropSpecList):
         check_dropspec(n, dropSpec)
         #        dropType = dropSpec.pop("categoryType")
@@ -416,8 +414,7 @@ def _createApp(dropSpec, dryRun=False, session_id=None):
         appType = getattr(module, parts[-1])
     except (ImportError, AttributeError, ValueError):
         raise InvalidGraphException(
-            "drop %s specifies non-existent application: %s" % (oid, appName)
-        )
+            "drop %s specifies non-existent application: %s" % (oid, appName))
 
     if dryRun:
         return

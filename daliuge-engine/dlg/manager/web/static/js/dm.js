@@ -457,7 +457,7 @@ function promptNewSession(serverUrl, tbodyEl, refreshBtn) {
 	});
 }
 
-function drawGraphForDrops(g, drawGraph, oids, doSpecs) {
+function drawGraphForDrops(g, drawGraph, oids, doSpecs, url) {
 
 	// Keep track of modifications to see if we need to re-draw
 	var modified = false;
@@ -468,7 +468,7 @@ function drawGraphForDrops(g, drawGraph, oids, doSpecs) {
 	for (var idx in oids) {
 		if (oids[idx] != 'reprodata') {
 			var doSpec = doSpecs[oids[idx]];
-			modified |= _addNode(g, doSpec);
+			modified |= _addNode(g, doSpec, url);
 		}
 	}
 
@@ -572,7 +572,7 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 			if (oids.length > 0) {
 				// Get sorted oids
 				oids.sort();
-				graph_update_handler(oids, doSpecs);
+				graph_update_handler(oids, doSpecs, url);
 			}
 
 			// During PRISITINE and BUILDING we need to update the graph structure
@@ -580,11 +580,18 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 			// to know when we go to RUNNING.
 			// During RUNNING (or potentially FINISHED/CANCELLED, if the execution is
 			// extremely fast) we need to start updating the status of the graph
-			if (status == 3 || status == 4 || status == 5) {
+			if (status === 3 || status === 4 || status === 5) {
 				startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 					status_update_handler);
 			}
-			else if (status == 0 || status == 1 || status == 2 || status == -1) {
+			else if (status === 0 || status === 1 || status === 2 || status === -1) {
+				if (status === 2) {
+					// Visualise the drops if we are trying to 'deploy' them.
+					var keys = Object.keys(doSpecs);
+					keys.sort();
+					var statuses = keys.map(function (k) { return {"status": 0} });
+					status_update_handler(statuses);
+				}
 				// schedule a new JSON request
 				updateGraphDelayTimer = d3.timer(updateGraph, delay);
 				updateGraphDelayTimerActive = true;
@@ -603,9 +610,11 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 	var updateGraphTimer = d3.timer(updateGraph);
 }
 
-function _addNode(g, doSpec) {
+function _addNode(g, doSpec, url) {
 
-	if (g.hasNode(g)) {
+	var oid = doSpec.oid;
+
+	if (g.hasNode(oid)) {
 		return false;
 	}
 
@@ -626,13 +635,16 @@ function _addNode(g, doSpec) {
 	else if (doSpec.type == 'plain') {
 		notes += 'storage: ' + doSpec.storage;
 	}
-
-	var oid = doSpec.oid;
+    url = url.replace("api/","") + "/graph/drop/" +  doSpec.oid;
+    let link = "<a href=" + url +  " target='_blank'>Details</a>";
 	var html = '<div class="drop-label ' + typeShape + '" id="id_' + oid + '">';
 	html += '<span class="notes">' + notes + '</span>';
     oid_date = doSpec.oid.split("_")[0];
 	human_readable_id = oid_date + "_" + doSpec.humanReadableKey.toString()
 	html += '<span style="font-size: 13px;">' + human_readable_id + '</span>';
+	if (doSpec.categoryType != "Data") {
+	    html += '<span style="font-size: 13px;">' + link + '</span>';
+	}
 	html += "</div>";
 	g.setNode(oid, {
 		labelType: "html",

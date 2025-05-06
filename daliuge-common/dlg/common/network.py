@@ -25,7 +25,7 @@ import logging
 import socket
 import time
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
@@ -46,9 +46,7 @@ def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
     """
 
     if return_socket and not checking_open:
-        raise ValueError(
-            "If return_socket is True then checking_open must be True"
-        )
+        raise ValueError("If return_socket is True then checking_open must be True")
 
     start = time.time()
     while True:

@@ -27,8 +27,7 @@ import logging
 
 from dlg.data.drops.file import FileDROP
 
-LOG = logging.getLogger(__name__)
-
+LOG = logging.getLogger(f"dlg.{__name__}")
 
 class JsonDROP(FileDROP):
     """

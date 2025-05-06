@@ -78,7 +78,7 @@ from dlg.utils import (
     isabs,
     object_tracking,
     getDlgVariable,
-    truncateUidToKey
+    truncateUidToKey,
 )
 from dlg.meta import (
     dlg_float_param,
@@ -101,7 +101,7 @@ except:
 
     _checksumType = ChecksumTypes.CRC_32
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class ListAsDict(list):
@@ -218,6 +218,16 @@ class AbstractDROP(EventFirer, EventHandler):
         self._oid = str(oid)
         self._uid = str(uid)
 
+        # Set log_level for this drop to level provided
+        self._log_level = self._popArg(
+            kwargs, "log_level", logging.getLevelName(logger.getEffectiveLevel())
+        )
+        if self._log_level == "" or self._log_level == logging.getLevelName(
+            logging.NOTSET
+        ):
+            self._log_level = logging.getLevelName(logger.getEffectiveLevel())
+        self._global_log_level = logging.getLevelName(logger.getEffectiveLevel())
+
         # The physical graph drop type. This is determined
         # by the drop category when generating the drop spec
         self._type = self._popArg(kwargs, "categoryType", None)
@@ -231,7 +241,7 @@ class AbstractDROP(EventFirer, EventHandler):
         # A simple name that the Drop might receive
         # This is usually set in the Logical Graph Editor,
         # but is not necessarily always there
-        self.name = self._popArg(kwargs, "name", "")
+        self.name = self._popArg(kwargs, "name", self._oid)
 
         # The key of this drop in the original Logical Graph
         # This information might or might not be present depending on how the
@@ -317,9 +327,9 @@ class AbstractDROP(EventFirer, EventHandler):
         # TODO: Make these threadsafe, no lock around them yet
         self._rios = {}
 
-        self._humanKey = self._popArg(kwargs,
-                                       "humanReadableKey", 
-                                       truncateUidToKey(self._uid))
+        self._humanKey = self._popArg(
+            kwargs, "humanReadableKey", truncateUidToKey(self._uid)
+        )
         # The execution mode.
         # When set to DROP (the default) the graph execution will be driven by
         # DROPs themselves by firing and listening to events, and reacting
@@ -374,6 +384,13 @@ class AbstractDROP(EventFirer, EventHandler):
         # If DROP should be persisted, don't expire (delete) it.
         if self._persist:
             self._expireAfterUse = False
+
+        # Flag to control whether a call to skip blocks until the
+        # last producer is finished. This is useful for data drops capturing
+        # the output of multiple branches. Default is false, meaning that
+        # the first call to skip will close the drop and also skip the following
+        # drops.
+        self.block_skip = self._popArg(kwargs, "block_skip", False)
 
         # Useful to have access to all EAGLE parameters without a prior knowledge
         self._parameters = dict(kwargs)
@@ -1016,6 +1033,7 @@ class AbstractDROP(EventFirer, EventHandler):
             self._finishedProducers.append(drop_state)
             nFinished = len(self._finishedProducers)
             nProd = len(self._producers)
+            self._refCount -= 1
 
             if nFinished > nProd:
                 raise Exception(
@@ -1104,6 +1122,13 @@ class AbstractDROP(EventFirer, EventHandler):
         self.commit()
         reprodata = {"data": self._merkleData, "merkleroot": self.merkleroot}
         self._fire(eventType="reproducibility", reprodata=reprodata)
+        if logger.getEffectiveLevel() != logging.getLevelName(self._global_log_level):
+            logger.warning(
+                "log-level after %s.%s: %s",
+                self.name,
+                self._humanKey,
+                logging.getLevelName(logger.getEffectiveLevel()),
+            )
 
     @track_current_drop
     def setError(self):
@@ -1180,11 +1205,26 @@ class AbstractDROP(EventFirer, EventHandler):
         self.completedrop()
 
     def skip(self):
-        """Moves this drop to the SKIPPED state closing any writers we opened"""
+        """
+        Moves this drop to the SKIPPED state closing any writers we opened.
+
+        If the drop has more than one producer it will block until the first
+        producer is skipped or all producers are completed. If the block_skip
+        flag is set the drop will block a skipping chain until the last producer
+        is completed or also skipped. This is useful for branches inside loops
+        to allow alternate paths for each iteration. For a branch to terminate
+        a loop the flag needs to be false (default).
+        """
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            self._closeWriters()
-            self.status = DROPStates.SKIPPED
-        self.completedrop()
+            if not self.block_skip or (
+                len(self.producers) == 1
+                or (len(self.producers) > 1 and self._refCount == 1)
+            ):
+                self._closeWriters()
+                self.status = DROPStates.SKIPPED
+                self.completedrop()
+            else:
+                self._refCount -= 1
 
     @property
     def node(self):

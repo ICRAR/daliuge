@@ -5,6 +5,6 @@ sphinx_rtd_theme
 sphinx-autobuild
 myst-parser
 ipython
-merklelib >= 1.0
+np-merklelib >= 1.0
 gputil >= 1.4.0
 python-benedict[all]

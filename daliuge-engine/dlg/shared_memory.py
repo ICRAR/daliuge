@@ -33,7 +33,7 @@ import warnings
 
 import _posixshmem  # Does not work on Windows
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 _O_CREX = os.O_CREAT | os.O_EXCL
 _MAXNAMELENGTH = 14  # Apparently FreeBSD has this limitation
@@ -177,7 +177,7 @@ class DlgSharedMemory:
         try:
             _posixshmem.shm_unlink(self._name)
         except FileNotFoundError:
-            LOGGER.debug(f"{self.name} tried to unlink twice")
+            logger.debug(f"{self.name} tried to unlink twice")
             warnings.warn("Cannot unlink a shared block twice", RuntimeWarning)
 
     def resize(self, new_size):

@@ -37,6 +37,7 @@ from dlg.common.reproducibility.reproducibility import init_runtime_repro_data
 from dlg.utils import createDirIfMissing
 
 from dlg import constants
+
 # from .. import constants
 from dlg import droputils
 from dlg import graph_loader
@@ -60,7 +61,7 @@ from dlg.exceptions import (
 )
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class SessionStates:
@@ -293,8 +294,11 @@ class Session(object):
 
         # This will check the consistency of each dropSpec
         logger.debug("Trying to add graphSpec:")
-        for x in graphSpec:
-            logger.debug("%s: %s", x, x.keys())
+        logger.debug("Number of drops: %s", len(graphSpec))
+
+        # This is very excessive and should not be done in production
+        # for x in graphSpec:
+        #     logger.debug("%s: %s", x, x.keys())
         try:
             graphSpecDict, self._graphreprodata = graph_loader.loadDropSpecs(graphSpec)
             # Check for duplicates
@@ -390,7 +394,7 @@ class Session(object):
 
         try:
             self._roots = graph_loader.createGraphFromDropSpecList(
-                self._graph.values(), session=self
+                list(self._graph.values()), session=self
             )
 
         except KeyError as e:
@@ -531,7 +535,7 @@ class Session(object):
             droprels = [DROPRel(*x) for x in droprels]
 
             # Sanitize the host/rpc_port info if needed
-            rpc_port = host.rpc_port #constants.NODE_DEFAULT_RPC_PORT
+            rpc_port = host.rpc_port  # constants.NODE_DEFAULT_RPC_PORT
             # if type(host) is tuple:
             #     host, _, rpc_port = host
 
@@ -640,6 +644,21 @@ class Session(object):
             statusDict[drop.oid]["status"] = drop.status
 
         return statusDict
+
+    def getDropLogs(self, drop_oid: str):
+        """
+        Retrieve the logs stored in the given DROP
+        :param drop_oid: drop_oid
+
+        :return:
+        """
+        return {"session": self.sessionId,
+                "status": self.status,
+                "oid": drop_oid,
+                "logs": self._drops[drop_oid].getLogs()}
+                # "stderr": self._drops[drop_oid].getStdError(),
+                # "stdout": self._drops[drop_oid].getStdOut()}
+
 
     @track_current_session
     def cancel(self):

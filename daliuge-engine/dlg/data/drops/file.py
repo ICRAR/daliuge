@@ -22,13 +22,13 @@
 import errno
 import logging
 import os
-import re
 
 from dlg.common.reproducibility.reproducibility import common_hash
+from dlg.data import path_builder
+from dlg.data.io import FileIO
 from dlg.ddap_protocol import DROPStates
 from .data_base import DataDROP, PathBasedDrop, logger, track_current_drop
 from dlg.exceptions import InvalidDropException
-from dlg.data.io import FileIO
 from dlg.meta import dlg_bool_param
 from dlg.utils import isabs
 from typing import Union
@@ -46,6 +46,7 @@ from typing import Union
 # @param base_name file/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param persist True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
+# @param block_skip False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If set the drop will block a skipping chain until the last producer has finished and is not also skipped.
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
@@ -105,7 +106,6 @@ class FileDROP(DataDROP, PathBasedDrop):
             filepath = self.get_dir(filepath)
         return filepath
 
-    non_fname_chars = re.compile(r":|%s" % os.sep)
 
     def initialize(self, **kwargs):
         """
@@ -116,10 +116,12 @@ class FileDROP(DataDROP, PathBasedDrop):
 
     def _setupFilePaths(self):
         filepath = self.parameters.get("filepath", None)
+        # TODO ADD SUFFIX/PREFIX
         dirname = None
         filename = None
 
         if filepath:  # if there is anything provided
+            # TODO do f-string substitution if necessary
             if "/" not in filepath:  # just a name
                 filename = filepath
                 dirname = self.get_dir(".")
@@ -144,12 +146,11 @@ class FileDROP(DataDROP, PathBasedDrop):
 
         # Default filename to drop human readable format based on UID
         if filename is None:
-            # '2024-10-30T12:01:57_0140555b-8c23-4d6a-9e24-e16c15555e8c_0'
-            fn = self.uid.split("_")[0] + "_" + str(self._humanKey)
-            filename = self.non_fname_chars.sub("_", fn)
+            filename = path_builder.base_uid_filename(self.uid, self._humanKey)
+
+
         self.filename = filename
         self.dirname = self.get_dir(dirname)
-
         self._root = self.dirname
         self._path = (
             os.path.join(self.dirname, self.filename) if self.filename else self.dirname
@@ -167,7 +168,8 @@ class FileDROP(DataDROP, PathBasedDrop):
     def getIO(self):
 
         # We need to update named_ports now we have runtime information
-        if not self._updatedPorts:
+        # if not self._updatedPorts:
+        if not self.parameters.get("filepath", None):
             self._map_input_ports_to_params()
             self._setupFilePaths()
 

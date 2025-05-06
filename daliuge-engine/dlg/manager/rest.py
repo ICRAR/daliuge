@@ -36,9 +36,10 @@ import tarfile
 import threading
 
 import bottle
-import pkg_resources
+import importlib.resources
 
 from bottle import static_file
+from pathlib import Path
 
 from dlg import constants
 from dlg.manager.client import NodeManagerClient, DataIslandManagerClient
@@ -59,12 +60,11 @@ from dlg.manager.session import generateLogFileName
 from dlg.common.deployment_methods import DeploymentMethods
 from dlg.manager.manager_data import Node
 
-logger = logging.getLogger(__name__)
-
+logger = logging.getLogger(f"dlg.{__name__}")
 
 def file_as_string(fname, enc="utf8"):
-    b = pkg_resources.resource_string(__name__, fname)  # @UndefinedVariable
-    return utils.b2s(b, enc)
+    res = Path(__file__).parent / fname
+    return utils.b2s(res.read_bytes(), enc)
 
 
 def daliuge_aware(func):
@@ -82,8 +82,8 @@ def daliuge_aware(func):
                 # logger.debug("CORS request comming from: %s", origin)
                 # logger.debug("Request method: %s", bottle.request.method)
                 if origin is None or re.match(
-                        r"(http://dlg-trans.local:80[0-9][0-9]|https://dlg-trans.icrar.org)",
-                        origin,
+                    r"(http://dlg-trans.local:80[0-9][0-9]|https://dlg-trans.icrar.org)",
+                    origin,
                 ):
                     pass
                 elif re.match(r"http://((localhost)|(127.0.0.1)):80[0-9][0-9]", origin):
@@ -209,6 +209,10 @@ class ManagerRestServer(RestServer):
         # The non-REST mappings that serve HTML-related content
         app.route("/static/<filepath:path>", callback=self.server_static)
         app.get("/session", callback=self.visualizeSession)
+        app.route("/api/sessions/<sessionId>/graph/drop/<dropId>",
+                  callback=self._getDropStatus)
+        app.route("/sessions/<sessionId>/graph/drop/<dropId>",
+                callback=self.getDropStatus)
 
         # sub-class specifics
         self.initializeSpecifics(app)
@@ -339,8 +343,8 @@ class ManagerRestServer(RestServer):
         # WARNING: TODO: Somehow, the content_type can be overwritten to 'text/plain'
         logger.debug("Graph content type: %s", bottle.request.content_type)
         if (
-                "application/json" not in bottle.request.content_type
-                and "text/plain" not in bottle.request.content_type
+            "application/json" not in bottle.request.content_type
+            and "text/plain" not in bottle.request.content_type
         ):
             bottle.response.status = 415
             return
@@ -363,9 +367,7 @@ class ManagerRestServer(RestServer):
     # non-REST methods
     # ===========================================================================
     def server_static(self, filepath):
-        staticRoot = pkg_resources.resource_filename(
-            __name__, "/web/static"
-        )  # @UndefinedVariable
+        staticRoot = Path(__file__).parent / "web/static"
         return bottle.static_file(filepath, root=staticRoot)
 
     def visualizeSession(self):
@@ -385,6 +387,36 @@ class ManagerRestServer(RestServer):
             dmType=self.dm.__class__.__name__,
         )
 
+    def _getDropStatus(self, sessionId, dropId):
+        return self.dm.getDropStatus(sessionId, dropId)
+
+    def getDropStatus(self, sessionId, dropId):
+        params = bottle.request.params
+        logger.warning("PARAMS: %s", params)
+
+        urlparts = bottle.request.urlparts
+        serverUrl = urlparts.scheme + "://" + urlparts.netloc
+
+        data = self._getDropStatus(sessionId, dropId)
+        if data["logs"]:
+            columns = [col for col in data["logs"][-1].keys()]
+            filter_column = "Level"
+            filter_column_index = columns.index(filter_column)
+        else:
+            columns = []
+            filter_column_index=0
+
+
+        tpl = file_as_string("web/drop_log.html")
+        return bottle.template(
+            tpl,
+            data=data,
+            columns=columns,
+            filter_index=filter_column_index,
+            sessionId=sessionId,
+            serverUrl=serverUrl,
+            dmType=self.dm.__class__.__name__,
+        )
 
 class NMRestServer(ManagerRestServer):
     """
@@ -451,9 +483,7 @@ class NMRestServer(ManagerRestServer):
         self.dm.add_node_subscriptions(sessionId, subscriptions)
 
     def _parse_subscriptions(self, json_request):
-        return {Node(host): droprels
-                for host, droprels
-                in json_request.items()}
+        return {Node(host): droprels for host, droprels in json_request.items()}
 
     @daliuge_aware
     def trigger_drops(self, sessionId):
@@ -515,9 +545,9 @@ class CompositeManagerRestServer(ManagerRestServer):
     @daliuge_aware
     def getCMStatus(self):
         """
-            REST (GET): /api/
+        REST (GET): /api/
 
-            Return JSON-compatible list of Composite Manager nodes and sessions
+        Return JSON-compatible list of Composite Manager nodes and sessions
         """
         return {
             "hosts": [str(n) for n in self.dm.dmHosts],
@@ -581,19 +611,15 @@ class CompositeManagerRestServer(ManagerRestServer):
         """
         return self.pastSessions()
 
-
     def pastSessions(self):
         """
-        Retrieve sessions from this DropManager and place it in JSON-format, for 
-        serialisation across the wire. 
+        Retrieve sessions from this DropManager and place it in JSON-format, for
+        serialisation across the wire.
         """
 
-        
-        return [   
-            {"sessionId": pastSession}
-            for pastSession in self.dm.getPastSessionIds()
+        return [
+            {"sessionId": pastSession} for pastSession in self.dm.getPastSessionIds()
         ]
-
 
     def _tarfile_write(self, tar, headers, stream):
         file_header = headers.getheader("Content-Disposition")
@@ -715,7 +741,7 @@ class MasterManagerRestServer(CompositeManagerRestServer):
     @daliuge_aware
     def createDataIsland(self, host):
         with RestClient(
-                host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10
+            host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10
         ) as c:
             c._post_json("/managers/island/start", bottle.request.body.read())
         self.dm.addDmHost(host)
@@ -781,14 +807,14 @@ class MasterManagerRestServer(CompositeManagerRestServer):
     @daliuge_aware
     def getDIMInfo(self, host):
         with RestClient(
-                host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10
+            host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10
         ) as c:
             return json.loads(c._GET("/managers/island").read())
 
     @daliuge_aware
     def getMMInfo(self, host):
         with RestClient(
-                host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10
+            host=host, port=constants.DAEMON_DEFAULT_REST_PORT, timeout=10
         ) as c:
             return json.loads(c._GET("/managers/master").read())
 

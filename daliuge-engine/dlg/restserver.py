@@ -25,7 +25,7 @@ import bottle
 
 from .restutils import RestServerWSGIServer
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class RestServer(object):

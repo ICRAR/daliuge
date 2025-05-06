@@ -31,7 +31,7 @@ from ..manager.session import SessionStates
 import itertools
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class _StatusDumper(BaseDROPManagerClient):

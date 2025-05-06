@@ -28,7 +28,7 @@ import urllib.parse
 from dlg import constants
 from .restutils import RestClient
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 compress = os.environ.get("DALIUGE_COMPRESSED_JSON", True)
 
 quote = urllib.parse.quote
@@ -113,6 +113,16 @@ class BaseDROPManagerClient(RestClient):
         logger.debug(
             "Successfully read graph status from session %s on %s:%s",
             sessionId,
+            self.host,
+            self.port,
+        )
+        return ret
+
+    def get_drop_status(self, sid, did):
+        ret = self._get_json(f"/sessions/{quote(sid)}/graph/drop/{quote(did)}")
+        logger.debug(
+            "Successfully read graph status from session %s on %s:%s",
+            sid,
             self.host,
             self.port,
         )
@@ -220,6 +230,7 @@ class BaseDROPManagerClient(RestClient):
     getGraphStatus = graph_status
     getGraphSize = graph_size
     getGraph = graph
+    getDropStatus = get_drop_status
 
 
 class NodeManagerClient(BaseDROPManagerClient):
