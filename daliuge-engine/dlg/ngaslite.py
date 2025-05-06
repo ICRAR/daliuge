@@ -30,7 +30,6 @@ still need to access NGAS from time to time.
 
 import http.client
 import logging
-import urllib.request
 import requests
 from xml.dom.minidom import parseString
 
@@ -72,7 +71,7 @@ def retrieve(host, fileId, port=7777, timeout=None, chunksize=65536):
     scheme = "http" if port != 443 else "https"
     url = "%s://%s:%d/RETRIEVE?file_id=%s" % (scheme, host, port, fileId)
     logger.debug("Issuing RETRIEVE request: %s", url)
-    resp = requests.request("GET", url, stream=True)
+    resp = requests.request("GET", url, stream=True, timeout=timeout)
     # conn = urllib.request.urlopen(url)
     if resp.status_code != http.HTTPStatus.OK:
         raise Exception(
@@ -132,10 +131,10 @@ def fileStatus(host, port, fileId, timeout=10):
     url = "%s://%s:%d/STATUS?file_id=%s" % (scheme, host, port, fileId)
     logger.debug("Issuing STATUS request: %s", url)
     try:
-        conn = requests.request("GET", url)
+        conn = requests.request("GET", url, timeout=timeout)
         # conn = urllib.request.urlopen(url, timeout=timeout)
-    except ConnectionError:
-        raise FileNotFoundError
+    except ConnectionError as e:
+        raise FileNotFoundError from e
     if conn.status_code != http.HTTPStatus.OK:
         raise Exception(
             "Error while getting STATUS %s from %s:%d: %d %s"

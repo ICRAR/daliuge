@@ -45,9 +45,9 @@ from .data.drops.container import ContainerDROP
 
 from dlg.data.drops.environmentvar_drop import EnvironmentVarDROP
 from dlg.data.drops.parset_drop import ParameterSetDROP
-from .exceptions import InvalidGraphException
+from dlg.exceptions import InvalidGraphException
 from dlg.data.drops.json_drop import JsonDROP
-from dlg.data.drops import *
+from dlg.data.drops import InMemoryDROP, SharedMemoryDROP, FileDROP, NgasDROP
 
 
 class CategoryType:
@@ -96,12 +96,12 @@ def addLink(linkType, lhDropSpec, rhOID, force=False):
         if rhOID not in relList:
             relList.append(rhOID)
         else:
-            raise Exception("DROP %s is already part of %s's %s" % (rhOID, lhOID, rel))
+            raise RuntimeError("DROP %s is already part of %s's %s" % (rhOID, lhOID, rel))
     # N-1 relationship, overwrite existing relationship only if `force` is specified
     elif linkType in __TOONE:
         rel = __TOONE[linkType]
         if rel and not force:
-            raise Exception(
+            raise RuntimeError(
                 "DROP %s already has a '%s', use 'force' to override" % (lhOID, rel)
             )
         lhDropSpec[rel] = rhOID
@@ -225,22 +225,9 @@ def loadDropSpecs(dropSpecList):
                 # relationship list but doesn't exist in the list of DROPs
                 for oid in dropSpec[rel]:
                     oid = list(oid.keys())[0] if isinstance(oid, dict) else oid
-                    if oid in dropSpecs:
-                        dropSpecs[oid]
-                    else:
+                    if oid not in dropSpecs:
                         logger.error("OID: %s not found!", oid)
                         continue
-                        # raise KeyError
-
-            # N-1 relationships
-            elif rel in __TOONE:
-                port = (
-                    list(dropSpecs[rel].keys())
-                    if isinstance(dropSpecs[rel], dict)
-                    else dropSpecs[rel]
-                )
-                # See comment above
-                dropSpecs[port]
 
     # Done!
     return dropSpecs, reprodata
@@ -351,7 +338,7 @@ def _createData(dropSpec, dryRun=False, session_id=None):
         }
 
         try:
-            from .data.drops.s3_drop import S3DROP
+            from dlg.data.drops.s3_drop import S3DROP
 
             STORAGE_TYPES["S3"] = S3DROP
         except ImportError:
@@ -416,10 +403,10 @@ def _createApp(dropSpec, dryRun=False, session_id=None):
     try:
         module = importlib.import_module(".".join(parts[:-1]))
         appType = getattr(module, parts[-1])
-    except (ImportError, AttributeError, ValueError):
+    except (ImportError, AttributeError, ValueError) as e:
         raise InvalidGraphException(
             "drop %s specifies non-existent application: %s" % (oid, appName)
-        )
+        ) from e
 
     if dryRun:
         return

@@ -230,8 +230,8 @@ class BashShellBase:
         # Pass down daliuge-specific information to the subprocesses as environment variables
         env = os.environ.copy()
         env.update({"DLG_UID": self._uid})
-        if self._dlg_session_id:
-            env.update({"DLG_SESSION_ID": self._dlg_session_id})
+        if self.dlg_session_id:
+            env.update({"DLG_SESSION_ID": self.dlg_session_id})
 
         env.update({"DLG_ROOT": utils.getDlgDir()})
 

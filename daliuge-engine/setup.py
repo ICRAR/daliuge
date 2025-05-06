@@ -23,13 +23,14 @@
 import logging
 import os
 import subprocess
-import sys
 import sysconfig
 
+# pylint: disable=unused-import
 try:
     from importlib.metadata import version, PackageNotFoundError
 except ModuleNotFoundError:
     from importlib_metadata import version, PackageNotFoundError
+# pylint: enable=unused-import
 
 from pathlib import Path
 from setuptools import find_packages
@@ -53,11 +54,10 @@ def extract_version():
     :return: tuple(int, int, int): major, minor, patch
     """
     TAG_VERSION_FILE = "VERSION"
-    content = ""
     with (Path(__file__).parent / TAG_VERSION_FILE).open(encoding="utf8") as open_file:
-        major, minor, patch = open_file.read().strip("v").split(".")
-        print("logging details: ", major, minor, patch)
-    return int(major), int(minor), int(patch)
+        mjr, mnr, ptch = open_file.read().strip("v").split(".")
+        print("logging details: ", mjr, mnr, ptch)
+    return int(mjr), int(mnr), int(ptch)
 
 
 major, minor, patch = extract_version()

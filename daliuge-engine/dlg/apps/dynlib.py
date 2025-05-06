@@ -488,7 +488,7 @@ class DynlibProcApp(BarrierAppDROP):
         self.proc = None
 
     def run(self):
-        if not hasattr(self, "_rpc_endpoint"):
+        if not hasattr(self, "rpc_endpoint"):
             raise Exception("DynlibProcApp can only run within an RPC server")
 
         # On the sub-process we create DropProxy objects, so we need to extract

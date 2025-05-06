@@ -190,7 +190,7 @@ class S3IO(DataIO):
         if self._mode == 1:
             try:
                 self._s3Stream = self._open()
-            except botocore.exceptions.ClientError as e:
+            except botocore.exceptions.ClientError:
                 if not self.exists():
                     logger.debug("Object does not exist yet. Creating!")
                     self._mode = 0
@@ -270,7 +270,7 @@ class S3IO(DataIO):
             )
             self._partNo += 1
             self._written += len(write_buffer)
-        except botocore.exceptions.ClientError as e:
+        except botocore.exceptions.ClientError:
             logger.error("Writing to S3 failed")
             return -1
 
@@ -369,7 +369,7 @@ class S3IO(DataIO):
                 logger.info("Object: %s does not exist", self._key)
                 return True, False
             else:
-                raise RuntimeError("Error occured in Client: %s", e.response)
+                raise RuntimeError("Error occured in Client: %s" % e.response) from e
 
     @overrides
     def exists(self) -> bool:

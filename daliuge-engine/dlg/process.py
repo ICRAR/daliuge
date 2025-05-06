@@ -37,7 +37,7 @@ class DlgProcess(multiprocessing.Process):
         try:
             multiprocessing.Process.run(self)
             self._childConn.send(None)
-        except Exception as e:
+        except multiprocessing.ProcessError as e:
             tb = traceback.format_exc()
             self._childConn.send((e, tb))
 

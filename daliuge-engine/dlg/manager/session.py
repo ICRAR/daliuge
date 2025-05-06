@@ -415,7 +415,7 @@ class Session(object):
             # This information is usually not necessary, but there are cases in
             # which we actually need it (like in the DynlibProcApp)
             if self._nm:
-                drop._rpc_endpoint = self._nm.rpc_endpoint
+                drop.rpc_endpoint = self._nm.rpc_endpoint
 
             # Register them with the error handler
             if event_listeners:

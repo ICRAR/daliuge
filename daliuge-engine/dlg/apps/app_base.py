@@ -346,8 +346,8 @@ class InputFiredAppDROP(AppDROP):
 
     def initialize(self, **kwargs):
         super(InputFiredAppDROP, self).initialize(**kwargs)
-        if "_dlg_session_id" in kwargs:
-            self._dlg_session_id = kwargs["_dlg_session_id"]
+        if "dlg_session_id" in kwargs:
+            self.dlg_session_id = kwargs["dlg_session_id"]
         self._completedInputs = []
         self._errorInputs = []
         self._skippedInputs = []

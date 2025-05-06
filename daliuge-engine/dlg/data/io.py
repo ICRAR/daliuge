@@ -19,10 +19,8 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from abc import abstractmethod, ABCMeta
 import base64
 from http.client import HTTPConnection
-from multiprocessing.sharedctypes import Value
 from overrides import overrides
 import io
 import logging
@@ -111,7 +109,7 @@ class DataIO:
         """
         if self._mode is None:
             return
-        self._close()
+        self._close(**kwargs)
         self._mode = None
 
     def size(self, **kwargs) -> int:
@@ -243,7 +241,7 @@ class MemoryIO(DataIO):
 
     _desc: io.BytesIO  # TODO: This might actually be a problem
 
-    def __init__(self, buf: io.BytesIO, **kwargs):
+    def __init__(self, buf: io.BytesIO):
         super().__init__()
         self._buf = buf
 
@@ -312,7 +310,7 @@ class SharedMemoryIO(DataIO):
     A DataIO class that writes to a shared memory buffer
     """
 
-    def __init__(self, uid, session_id, **kwargs):
+    def __init__(self, uid, session_id):
         super().__init__()
         self._name = f"{session_id}_{uid}"
         self._written = 0
@@ -384,7 +382,7 @@ class FileIO(DataIO):
 
     _desc: io.BufferedRWPair
 
-    def __init__(self, filename, **kwargs):
+    def __init__(self, filename):
         super().__init__()
         self._fnm = filename
 
@@ -451,10 +449,10 @@ class NgasIO(DataIO):
 
         # Check that we actually have the NGAMS client libraries
         try:
-            from ngamsPClient import ngamsPClient  # @UnusedImport @UnresolvedImport
-        except:
+            from ngamsPClient import ngamsPClient  # pylint: disable=unused-import
+        except ImportError as e:
             logger.error("No NGAMS client libs found, cannot use NgasIO")
-            raise
+            raise e
 
         super(NgasIO, self).__init__()
         self._ngasSrv = hostname
@@ -487,7 +485,7 @@ class NgasIO(DataIO):
     def _close(self, **kwargs):
         client = self._desc
         if self._mode == OpenMode.OPEN_WRITE:
-            reply, msg, _, _ = client._httpPost(
+            reply, _, _, _ = client._httpPost( # pylint: disable=protected-access
                 client.getHost(),
                 client.getPort(),
                 "QARCHIVE",
@@ -586,7 +584,7 @@ class NgasLiteIO(DataIO):
         return self._length is None or self._length < 0
 
     def _getClient(self):
-        return ngaslite.open(
+        return ngaslite.open_archive(
             self._ngasSrv,
             self._fileId,
             port=self._ngasPort,
@@ -623,7 +621,8 @@ class NgasLiteIO(DataIO):
                 self._buf = None
             else:
                 logger.debug(
-                    f"Length is known, assuming data has been sent ({self._fileId}, {self._length})"
+                    "Length is known, assuming data has been sent (%s, %s)",
+                    self._fileId, self._length
                 )
             ngaslite.finishArchive(conn, self._fileId)
             conn.close()
@@ -664,7 +663,7 @@ def IOForURL(url):
     suitable DataIO class can be found to handle the URL, `None` is returned.
     """
     url = urllib.parse.urlparse(url)
-    io = None
+    data_io = None
     if url.scheme == "file":
         hostname = url.netloc
         filename = url.path
@@ -673,9 +672,9 @@ def IOForURL(url):
             or hostname == "localhost"
             or hostname == os.uname()[1]
         ):
-            io = FileIO(filename)
+            data_io = FileIO(filename)
     elif url.scheme == "null":
-        io = NullIO()
+        data_io = NullIO()
     elif url.scheme == "ngas":
         networkLocation = url.netloc
         if ":" in networkLocation:
@@ -686,11 +685,11 @@ def IOForURL(url):
             port = 7777
         fileId = url.path[1:]  # remove the trailing slash
         try:
-            io = NgasIO(hostname, fileId, port)
-        except:
+            data_io = NgasIO(hostname, fileId, port)
+        except ImportError:
             logger.warning("NgasIO not available, using NgasLiteIO instead")
-            io = NgasLiteIO(hostname, fileId, port)
+            data_io = NgasLiteIO(hostname, fileId, port)
 
-    logger.debug("I/O chosen for dataURL %s: %r", url, io)
+    logger.debug("I/O chosen for dataURL %s: %r", url, data_io)
 
-    return io
+    return data_io

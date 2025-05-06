@@ -74,8 +74,6 @@ DEFAULT_INTERNAL_PARAMETERS = {
 if sys.version_info >= (3, 8):
     pass
 from dlg.utils import (
-    createDirIfMissing,
-    isabs,
     object_tracking,
     getDlgVariable,
     truncateUidToKey,
@@ -93,11 +91,11 @@ from dlg.meta import (
 # Opt into using per-drop checksum calculation
 checksum_disabled = "DLG_DISABLE_CHECKSUM" in os.environ
 try:
-    from crc32c import crc32c  # @UnusedImport
+    from crc32c import crc32c  # pylint: disable=unused-import
 
     _checksumType = ChecksumTypes.CRC_32C
-except:
-    from binascii import crc32  # @Reimport
+except (ModuleNotFoundError, ImportError):
+    from binascii import crc32 # pylint: disable=unused-import
 
     _checksumType = ChecksumTypes.CRC_32
 
@@ -223,7 +221,7 @@ class AbstractDROP(EventFirer, EventHandler):
             kwargs, "log_level", logging.getLevelName(logger.getEffectiveLevel())
         )
         if self._log_level == "" or self._log_level == logging.getLevelName(
-            logging.NOTSET
+                logging.NOTSET
         ):
             self._log_level = logging.getLevelName(logger.getEffectiveLevel())
         self._global_log_level = logging.getLevelName(logger.getEffectiveLevel())
@@ -427,12 +425,13 @@ class AbstractDROP(EventFirer, EventHandler):
         def get_param_value(attr_name, default_value):
             has_component_param = attr_name in kwargs
             has_app_param = (
-                "applicationArgs" in kwargs and attr_name in kwargs["applicationArgs"]
+                    "applicationArgs" in kwargs and attr_name in kwargs["applicationArgs"]
             )
             param = default_value
             if has_component_param and has_app_param:
                 logger.warning(
-                    f"Drop has both component and app param {attr_name}. Using component param."
+                    "Drop has both component and app param %s. Using component param.",
+                    attr_name
                 )
             if has_component_param:
                 param = kwargs.get(attr_name)
@@ -481,7 +480,7 @@ class AbstractDROP(EventFirer, EventHandler):
                     else:
                         value = ast.literal_eval(value)
                 if value is not None and not isinstance(value, list):
-                    raise Exception(
+                    raise TypeError(
                         f"dlg_list_param {attr_name} is not a list. Type is {type(value)}"
                     )
             elif isinstance(member, dlg_dict_param):
@@ -492,7 +491,7 @@ class AbstractDROP(EventFirer, EventHandler):
                     else:
                         value = ast.literal_eval(value)
                 if value is not None and not isinstance(value, dict):
-                    raise Exception(
+                    raise TypeError(
                         "dlg_dict_param {} is not a dict. It is a {}".format(
                             attr_name, type(value)
                         )
@@ -606,7 +605,7 @@ class AbstractDROP(EventFirer, EventHandler):
                 self._merkleTree = None
                 self._merkleData = []
         else:
-            raise NotImplementedError("new_flag %d is not supported", new_flag.value)
+            raise NotImplementedError("new_flag %d is not supported" % new_flag.value)
 
     def generate_rerun_data(self):
         """
@@ -843,12 +842,12 @@ class AbstractDROP(EventFirer, EventHandler):
     @size.setter
     def size(self, size):
         if self._size is not None:
-            raise Exception(
+            raise RuntimeError(
                 "The size of DROP %s is already calculated, cannot overwrite with new value"
                 % (self)
             )
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            raise Exception(
+            raise RuntimeError(
                 "DROP %s is still not fully written, cannot manually set a size yet"
                 % (self)
             )
@@ -902,7 +901,7 @@ class AbstractDROP(EventFirer, EventHandler):
             if hasattr(parent, "addChild") and self not in parent.children:
                 try:
                     parent.addChild(self)
-                except:
+                except InvalidRelationshipException:
                     self._parent = prevParent
 
     def get_consumers_nodes(self):
@@ -1036,7 +1035,7 @@ class AbstractDROP(EventFirer, EventHandler):
             self._refCount -= 1
 
             if nFinished > nProd:
-                raise Exception(
+                raise RuntimeError(
                     "More producers finished that registered in DROP %r: %d > %d"
                     % (self, nFinished, nProd)
                 )
@@ -1044,7 +1043,7 @@ class AbstractDROP(EventFirer, EventHandler):
                 finished = True
 
         if finished:
-            logger.debug("All producers finished for DROP %r", self)
+            logger.debug("All producers finished for DROP %r,%s", self, uid)
 
             # decided that if any producer fails then fail the data drop
             if DROPStates.ERROR in self._finishedProducers:
@@ -1217,8 +1216,8 @@ class AbstractDROP(EventFirer, EventHandler):
         """
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
             if not self.block_skip or (
-                len(self.producers) == 1
-                or (len(self.producers) > 1 and self._refCount == 1)
+                    len(self.producers) == 1
+                    or (len(self.producers) > 1 and self._refCount == 1)
             ):
                 self._closeWriters()
                 self.status = DROPStates.SKIPPED
@@ -1237,6 +1236,20 @@ class AbstractDROP(EventFirer, EventHandler):
     @property
     def parameters(self):
         return self._parameters
+
+    @property
+    def dlg_session_id(self) -> str:
+        """
+        Get the session id for the session to which this drop is assigned.
+        """
+        return self._dlg_session_id
+
+    @property
+    def humanKey(self) -> str:
+        """
+        Get the Human Readable Key for this drop
+        """
+        return self._humanKey
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods

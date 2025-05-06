@@ -211,7 +211,7 @@ class NodeManagerProcessDropRunner(NodeManagerDropRunner):
     def _setup_drop_proxies(
         cls, app_drop: AppDROP, inputs_proxy_info, outputs_proxy_info
     ):
-        app_drop._rpc_endpoint = cls._rpc_endpoint
+        app_drop.rpc_endpoint = cls._rpc_endpoint
         for input_proxy_info in inputs_proxy_info:
             app_drop.addInput(
                 rpc.DropProxy(cls._rpc_client, input_proxy_info), back=False

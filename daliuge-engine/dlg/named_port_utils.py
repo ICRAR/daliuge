@@ -3,7 +3,6 @@ import logging
 import collections
 from dlg.data.drops.data_base import DataDROP
 import dlg.droputils as droputils
-from dlg.data import path_builder
 import dlg.drop_loaders as drop_loaders
 
 from dataclasses import dataclass
@@ -56,18 +55,6 @@ class Argument:
     positional: bool = False
 
 
-def serialize_kwargs(keyargs, prefix="--", separator=" "):
-    kwargs = {}
-    for name, value in iter(keyargs.items()):
-        kwargs[name] = value
-    #     if prefix == "--" and len(name) == 1:
-    #         kwargs += [f"-{name} {value}"]
-    #     else:
-    #         kwargs += [f"{prefix.strip()}{name.strip()}{separator}{str(value).strip()}"]
-    # logger.debug("kwargs after serialization: %s", kwargs)
-    return kwargs
-
-
 def clean_applicationArgs(applicationArgs: dict) -> dict:
     """
     Removes arguments with None and False values, if not precious. This
@@ -97,7 +84,7 @@ def clean_applicationArgs(applicationArgs: dict) -> dict:
     return cleanedArgs
 
 
-def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
+def serialize_applicationArgs(applicationArgs):
     """
     Unpacks the applicationArgs dictionary and returns two strings, one for
     positional arguments and one for kw arguments that can be used to construct
@@ -114,7 +101,7 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
         else:
             kwargs.update({name: value})
     logger.info("Constructed command line arguments: %s %s", pargs, kwargs)
-    return (pargs, kwargs)
+    return pargs, kwargs
 
 def identify_named_ports(
     port_dict: dict,
@@ -171,7 +158,7 @@ def identify_named_ports(
             value = port_dict[keys[i]]["path"]
         except KeyError as e:
             logger.debug("portDict: %s does not have key: %s", port_dict, keys[i])
-            raise KeyError("")
+            raise KeyError from e
         if value is None:
             value = ""  # make sure we are passing NULL drop events
         if key in positionalArgs:
@@ -355,7 +342,6 @@ def replace_named_ports(
         if v not in [None, ""]:
             positionalArgs.update({k: v})
 
-    keywordArgs = serialize_kwargs(keywordArgs)
     pargs = positionalArgs
 
     logger.debug("After port replacement: pargs: %s; keyargs: %s", pargs, keywordArgs)
@@ -469,7 +455,7 @@ def get_port_reader_function(input_parser: DropParser):
     elif input_parser is DropParser.DILL:
         reader = drop_loaders.load_dill
     elif input_parser is DropParser.BINARY:
-         reader = drop_loaders.load_binary
+        reader = drop_loaders.load_binary
     else:
-        raise ValueError("Invalid input parser specified: %s", input_parser.__repr__())
+        raise ValueError("Invalid input parser specified: %s" % input_parser.__repr__())
     return reader
