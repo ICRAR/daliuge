@@ -63,7 +63,7 @@ def do_versioning():
 
 
 install_requires = [
-    "gputil>=1.4.0",
+    "GPUtil-fix>=1.4.0",
     "np-merklelib",
     "pyzmq==25.1.1",
     "pydantic>=2.5",
