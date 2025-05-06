@@ -209,6 +209,8 @@ class ManagerRestServer(RestServer):
         # The non-REST mappings that serve HTML-related content
         app.route("/static/<filepath:path>", callback=self.server_static)
         app.get("/session", callback=self.visualizeSession)
+        app.route("/api/sessions/<sessionId>/graph/drop/<dropId>",
+                  callback=self._getDropStatus)
         app.route("/sessions/<sessionId>/graph/drop/<dropId>",
                 callback=self.getDropStatus)
 
