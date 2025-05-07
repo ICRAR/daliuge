@@ -36,7 +36,7 @@ from xml.dom.minidom import parseString
 logger = logging.getLogger(f"dlg.{__name__}")
 
 
-def open(
+def open( # pylint: disable=redefined-builtin
     host,
     fileId,
     port=7777,

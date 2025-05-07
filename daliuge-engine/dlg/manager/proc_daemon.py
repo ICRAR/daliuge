@@ -436,10 +436,11 @@ def run_with_cmdline(parser, args):
 
     # Signal handling, which stops the daemon
     def handle_signal(signalNo, stack_frame):
-        global terminating
+        global terminating # pylint: disable=global-statement
         if terminating:
             return
-        logger.info("Received signal %d, will stop the daemon now", signalNo)
+        logger.info("Received signal %d in frame %s, will stop the daemon now",
+                    signalNo, stack_frame)
         terminating = True
         daemon.stop(10)
 

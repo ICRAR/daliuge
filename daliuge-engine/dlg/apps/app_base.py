@@ -156,6 +156,10 @@ class AppDROP(ContainerDROP):
         """
         return list(self._inputs.values())
 
+    @inputs.setter
+    def inputs(self, inputs):
+        self._inputs = inputs
+
     @track_current_drop
     def addOutput(self, outputDrop: DataDROP, back=True):
         if outputDrop is self:
@@ -180,6 +184,10 @@ class AppDROP(ContainerDROP):
         The list of outputs set into this AppDROP
         """
         return list(self._outputs.values())
+
+    @outputs.setter
+    def outputs(self, outputs):
+        self._outputs = outputs
 
     def addStreamingInput(self, streamingInputDrop, back=True):
         if streamingInputDrop not in self._streamingInputs.values():
@@ -307,6 +315,13 @@ class AppDROP(ContainerDROP):
                 status=self.status,
                 execStatus=self.execStatus,
             )
+
+    @property
+    def drop_runner(self):
+        """
+        Getter for the drop runner
+        """
+        return self._drop_runner
 
 
 class InputFiredAppDROP(AppDROP):
@@ -542,6 +557,7 @@ class InputFiredAppDROP(AppDROP):
     # TODO: another thing we need to check
     def exists(self):
         return True
+
 
 
 class BarrierAppDROP(InputFiredAppDROP):

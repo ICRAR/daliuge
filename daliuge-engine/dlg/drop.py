@@ -1240,16 +1240,23 @@ class AbstractDROP(EventFirer, EventHandler):
     @property
     def dlg_session_id(self) -> str:
         """
-        Get the session id for the session to which this drop is assigned.
+        Get the session id for the session to which this DROP is assigned.
         """
         return self._dlg_session_id
 
     @property
     def humanKey(self) -> str:
         """
-        Get the Human Readable Key for this drop
+        Get the Human Readable Key for this DROP
         """
         return self._humanKey
+
+    @property
+    def log_level(self):
+        """
+        Get the log level for this DROP
+        """
+        return self._log_level
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods

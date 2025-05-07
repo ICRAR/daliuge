@@ -23,8 +23,8 @@
 Module containing the REST layer that exposes the methods of the different
 Data Managers (DROPManager and DataIslandManager) to the outside world.
 """
+# pylint: disable=protected-access
 
-import cgi
 from email.message import Message
 import functools
 import io
@@ -107,16 +107,16 @@ def daliuge_aware(func):
             )
             # logger.debug("Bottle sending back result: %s", jres[: min(len(jres), 80)])
             return jres
-        except Exception as e:
+        except Exception as e: # pylint: disable=broad-exception-caught
             logger.exception("Error while fulfilling request for func %s ", func)
 
             status, eargs = 500, ()
             if isinstance(e, NotImplementedError):
                 status, eargs = 501, e.args
             elif isinstance(e, NoSessionException):
-                status, eargs = 404, (e._session_id,)
+                status, eargs = 404, (e.session_id,)
             elif isinstance(e, SessionAlreadyExistsException):
-                status, eargs = 409, (e._session_id,)
+                status, eargs = 409, (e.session_id,)
             elif isinstance(e, InvalidDropException):
                 status, eargs = 409, ((e.oid, e.uid), e.reason)
             elif isinstance(e, InvalidRelationshipException):
@@ -249,6 +249,7 @@ class ManagerRestServer(RestServer):
 
     @daliuge_aware
     def acceptPreflight2(self, sessionId):
+        logger.info("Preflight2 for %s", sessionId)
         return {}
 
     def sessions(self):
@@ -272,7 +273,7 @@ class ManagerRestServer(RestServer):
         status = self.dm.getSessionStatus(sessionId)
         try:
             graphDict = self.dm.getGraph(sessionId)
-        except:  # Pristine state sessions don't have a graph, yet.
+        except KeyError:  # Pristine state sessions don't have a graph, yet.
             graphDict = {}
             status = 0
         return {"status": status, "graph": graphDict}

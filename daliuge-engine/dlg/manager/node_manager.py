@@ -135,12 +135,12 @@ class NodeManagerThreadDropRunner(NodeManagerDropRunner):
         self._thread_pool = ThreadPoolExecutor(max_workers=self._max_workers)
 
     def run_drop(self, app_drop: AppDROP) -> Future:
-        if logger.getEffectiveLevel() != logging.getLevelName(app_drop._log_level):
-            logging.getLogger("dlg").setLevel(app_drop._log_level)
+        if logger.getEffectiveLevel() != logging.getLevelName(app_drop.log_level):
+            logging.getLogger("dlg").setLevel(app_drop.log_level)
             logger.warning(
                 "Set log-level for %s.%s to %s",
                 app_drop.name,
-                app_drop._humanKey,
+                app_drop.humanKey,
                 logging.getLevelName(logger.getEffectiveLevel()),
             )
         return self._thread_pool.submit(
@@ -192,8 +192,8 @@ class NodeManagerProcessDropRunner(NodeManagerDropRunner):
         # so we create a shallow copy that can be pickled at an indeterminate point in the future
         # See https://github.com/python/cpython/blob/v3.10.13/Lib/multiprocessing/queues.py#L95
         copied_drop = copy.copy(app_drop)
-        copied_drop._inputs = collections.OrderedDict()
-        copied_drop._outputs = collections.OrderedDict()
+        copied_drop.inputs = collections.OrderedDict()
+        copied_drop.outputs = collections.OrderedDict()
 
         return self._process_pool.submit(
             NodeManagerProcessDropRunner._run_app_drop,
@@ -429,7 +429,7 @@ class NodeManagerBase(DROPManager):
     def getGraphSize(self, sessionId):
         self._check_session_id(sessionId)
         session = self._sessions[sessionId]
-        return len(session._graph)
+        return len(session.graph)
 
     def trigger_drops(self, sessionId, uids):
         self._check_session_id(sessionId)
@@ -633,7 +633,7 @@ class ZMQPubSubMixIn(object):
                 self._events_in.put(evt)
             except zmq.error.Again:
                 time.sleep(0.01)
-            except Exception:
+            except zmq.error.ZMQError:
                 # Figure out what to do here
                 logger.exception(
                     "Something bad happened in %s:%d to ZMQ :'(",
@@ -661,7 +661,7 @@ class RpcMixIn(rpc.RPCClient, rpc.RPCServer):
 
 # Final NodeManager class
 class NodeManager(NodeManagerBase, EventMixIn, RpcMixIn):
-    def __init__(
+    def __init__( # pylint: disable=keyword-arg-before-vararg
         self,
         host=None,
         rpc_port=constants.NODE_DEFAULT_RPC_PORT,
@@ -675,7 +675,7 @@ class NodeManager(NodeManagerBase, EventMixIn, RpcMixIn):
         RpcMixIn.__init__(self, host, rpc_port)
         self.start()
 
-    def start(self):
+    def start(self): # pylint: disable=arguments-differ
         # We "just know" that our RpcMixIn will have a create_context static
         # method, which in reality means we are using the ZeroRPCServer class
         self._context = RpcMixIn.create_context()

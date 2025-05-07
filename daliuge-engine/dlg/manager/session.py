@@ -36,9 +36,6 @@ import socket
 from dlg.common.reproducibility.reproducibility import init_runtime_repro_data
 from dlg.utils import createDirIfMissing
 
-from dlg import constants
-
-# from .. import constants
 from dlg import droputils
 from dlg import graph_loader
 from dlg import rpc
@@ -83,10 +80,11 @@ class LeavesCompletionListener(object):
         # TODO: be thread-safe
         self._completed += 1
         logger.debug(
-            "%d/%d leaf drops completed on session %s",
+            "%d/%d leaf drops completed on session %s during event %s",
             self._completed,
             self._nexpected,
             self._session.sessionId,
+            evt
         )
         if self._completed == self._nexpected:
             self._session.finish()
@@ -110,14 +108,14 @@ class ReproFinishedListener(object):
             if not self._session.reprostatus:
                 logger.debug("Building Reproducibility BlockDAG")
                 new_reprodata = init_runtime_repro_data(
-                    self._session._graph, self._session._graphreprodata
+                    self._session.graph, self._session.graphreprodata
                 ).get("reprodata", {})
                 logger.debug(
                     "Reprodata for %s is %s",
                     self._session.sessionId,
                     json.dumps(new_reprodata),
                 )
-                self._session._graphreprodata = new_reprodata
+                self._session.graphreprodata = new_reprodata
                 self._session.reprostatus = True
                 self._session.write_reprodata()
 
@@ -131,6 +129,7 @@ class EndListener(object):
         self._session = session
 
     def handleEvent(self, evt):
+        logger.info("Handling event %s", evt)
         self._session.end()
 
 
@@ -186,7 +185,7 @@ class Session(object):
         os.environ.update({"DLG_SESSION_ID": sessionId})
 
         class SessionFilter(logging.Filter):
-            def __init__(self, sessionId):
+            def __init__(self, sessionId): #pylint: disable=super-init-not-called
                 self.sessionId = sessionId
 
             def filter(self, record):
@@ -532,9 +531,7 @@ class Session(object):
             droprels = [DROPRel(*x) for x in droprels]
 
             # Sanitize the host/rpc_port info if needed
-            rpc_port = host.rpc_port  # constants.NODE_DEFAULT_RPC_PORT
-            # if type(host) is tuple:
-            #     host, _, rpc_port = host
+            rpc_port = host.rpc_port
 
             # Store which drops should receive events from which remote drops
             dropsubs = collections.defaultdict(set)
@@ -664,6 +661,14 @@ class Session(object):
 
     def getGraph(self):
         return dict(self._graph)
+
+    @property
+    def graph(self):
+        return self._graph
+
+    @property
+    def graphreprodata(self):
+        return self._graphreprodata
 
     def destroy(self):
         try:

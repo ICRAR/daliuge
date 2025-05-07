@@ -155,7 +155,7 @@ class FileDROP(DataDROP, PathBasedDrop):
             os.path.join(self.dirname, self.filename) if self.filename else self.dirname
         )
         logger.debug(
-            f"Set path of drop %s: %s check: %s %s",
+            "Set path of drop %s: %s check: %s %s",
             self._uid, self._path, check, os.path.isfile(self._path)
         )
         if check and not os.path.isfile(self._path):
@@ -224,7 +224,7 @@ class FileDROP(DataDROP, PathBasedDrop):
             try:
                 with open(self.path, "wb"):
                     pass
-            except:
+            except IOError:
                 self.status = DROPStates.ERROR
                 logger.error("Path not accessible: %s", self.path)
             self._size = 0
