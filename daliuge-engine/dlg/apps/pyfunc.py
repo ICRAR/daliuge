@@ -668,6 +668,11 @@ class PyFuncApp(BarrierAppDROP):
                 key = list(inport.keys())[0]
                 inputs_dict[key] = {"name": inport[key], "path": None, "drop":
                     self._inputs[key]}
+            parser = (
+                get_port_reader_function(self.input_parser)
+                if hasattr(self, "input_parser")
+                else None
+            )
             keyPortArgs, posPortArgs = identify_named_ports(
                 inputs_dict,
                 pargsDict,
@@ -675,7 +680,7 @@ class PyFuncApp(BarrierAppDROP):
                 check_len=check_len,
                 mode="inputs",
                 addPositionalToKeyword=True,
-                parser=get_port_reader_function(self.input_parser)
+                parser=parser
             )
             portargs.update(keyPortArgs)
         else:
@@ -857,21 +862,21 @@ class PyFuncApp(BarrierAppDROP):
         # 5. Here is where the function is actually executed
         with redirect_stdout(capture):
             if isinstance(self.argsig, inspect.Signature):
-                result = self.func(*bind.args, **bind.kwargs)
+                self.result = self.func(*bind.args, **bind.kwargs)
             else:
-                result = self.func(*pargs, **funcargs)
+                self.result = self.func(*pargs, **funcargs)
 
-        logger.debug("Returned result from %s: %s", self.func_name, self.result)
         logger.info(
             f"Captured output from function app '{self.func_name}': {capture.getvalue()}"
         )
+        logger.debug("Returned result from %s: %s", self.func_name, self.result)
         logger.debug(f"Finished execution of {self.func_name}.")
 
         # 6. Process results
         # Depending on how many outputs we have we treat our result
         # as an iterable or as a single object. Each result is pickled
         # and written to its corresponding output
-        self.write_results(result)
+        self.write_results(self.result)
 
     def _match_parser(self, output_drop):
         """
@@ -895,7 +900,7 @@ class PyFuncApp(BarrierAppDROP):
     def write_results(self):
         from dlg.droputils import listify
 
-        result_iter = listify(result)
+        result_iter = listify(self.result)
         if not self.outputs and result_iter:
             return
 

@@ -176,7 +176,7 @@ def identify_named_ports(
             value = ""  # make sure we are passing NULL drop events
         if key in positionalArgs:
             try:
-                encoding = DropParser(positionalPortArgs[key]["encoding"])
+                encoding = DropParser(positionalPortArgs[key].encoding)
             except ValueError:
                 logger.warning("No encoding set for %key: possible default")
                 continue
