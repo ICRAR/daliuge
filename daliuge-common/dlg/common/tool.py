@@ -127,6 +127,9 @@ def _load_commands():
         ):  # pylint: disable=unexpected-keyword-arg
             entry_point.load().register_commands()
 
+def format_cmd(cmd, data):
+    desc, f = data
+    return f"\t {cmd:25}{desc:25}"
 
 def print_usage(prgname):
     print("Usage: %s [command] [options]" % (prgname))

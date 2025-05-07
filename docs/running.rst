@@ -118,7 +118,7 @@ The help for the complete CLI is available by just entering dlg at the prompt::
 
     Try $PATH/bin/dlg [command] --help for more details
 
-More details about the usage of the CLI can be found in the :ref:`cli` chapter.
+More details about the usage of the CLI can be found in the :ref:`cli_engine` chapter.
 
 
 More advanced: Starting and stopping the managers

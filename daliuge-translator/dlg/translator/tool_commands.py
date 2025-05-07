@@ -530,26 +530,34 @@ def dlg_submit(parser, args):
 
 
 def register_commands():
+    translator_group = tool.CommandGroup(
+        "translator",
+        "Commands for unrolling and partitioning graphs using the dlg translator.")
     tool.cmdwrap(
-        "lgweb",
+        "lgweb", translator_group,
         "A Web server for the Logical Graph Editor",
         "dlg.dropmake.web.translator_rest:run",
     )
-    tool.cmdwrap("submit", "Submits a Physical Graph to a Drop Manager", dlg_submit)
     tool.cmdwrap(
-        "map",
+        "submit", translator_group,
+        "Submits a Physical Graph to a Drop Manager", dlg_submit
+    )
+    tool.cmdwrap(
+        "map", translator_group,
         "Maps a Physical Graph Template to resources and produces a Physical Graph",
         dlg_map,
     )
     tool.cmdwrap(
-        "unroll",
+        "unroll", translator_group,
         "Unrolls a Logical Graph into a Physical Graph Template",
         dlg_unroll,
     )
     tool.cmdwrap(
-        "partition",
+        "partition", translator_group,
         "Divides a Physical Graph Template into N logical partitions",
         dlg_partition,
     )
-    tool.cmdwrap("unroll-and-partition", "unroll + partition", dlg_unroll_and_partition)
-    tool.cmdwrap("fill", "Fill a Logical Graph with parameters", dlg_fill)
+    tool.cmdwrap("unroll-and-partition", translator_group,
+                 "unroll + partition", dlg_unroll_and_partition)
+    tool.cmdwrap("fill", translator_group,
+                 "Fill a Logical Graph with parameters", dlg_fill)
