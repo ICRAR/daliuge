@@ -97,7 +97,7 @@ Help output::
    
 
 ComCommand: dlg partition
-----------------------
+-------------------------
 Help output::
 
    Usage: partition [options]
