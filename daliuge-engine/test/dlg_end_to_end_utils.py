@@ -55,6 +55,7 @@ def create_and_run_graph_spec_from_graph_file(test_case: unittest.TestCase,
             appDropSpec = json.load(f)
 
     roots = graph_loader.createGraphFromDropSpecList(appDropSpec)
+
     # drops = [v for d,v in drops.items()]
     leafs = droputils.getLeafNodes(roots)
     with droputils.DROPWaiterCtx(test_case, leafs, timeout=300):

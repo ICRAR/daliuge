@@ -58,6 +58,8 @@ def load_pickle(drop: "DataDROP") -> Any:
     """Loads a pkl formatted data object stored in a DataDROP.
     Note: does not support streaming mode.
     """
+    if drop.size == 0:
+        return None
     buf = io.BytesIO()
     desc = drop.open()
     while True:
@@ -66,7 +68,7 @@ def load_pickle(drop: "DataDROP") -> Any:
             break
         buf.write(data)
     drop.close(desc)
-    return pickle.loads(buf.getbuffer())
+    return pickle.loads(buf.getvalue())
 
 
 def save_npy(drop: "DataDROP", ndarray: np.ndarray, allow_pickle=False):
@@ -87,7 +89,7 @@ def save_numpy(drop: "DataDROP", ndarray: np.ndarray):
     save_npy(drop, ndarray)
 
 
-def load_npy(drop: "DataDROP", allow_pickle=False) -> np.ndarray:
+def load_npy(drop: "DataDROP", allow_pickle=True) -> np.ndarray:
     """
     Loads a numpy ndarray from a drop in npy format
     """
@@ -100,9 +102,6 @@ def load_npy(drop: "DataDROP", allow_pickle=False) -> np.ndarray:
 
 def load_numpy(drop: "DataDROP", allow_pickle=True):
     return load_npy(drop, allow_pickle=allow_pickle)
-
-
-import dill
 
 
 def load_dill(drop: "DataDROP"):
@@ -121,7 +120,7 @@ def load_dill(drop: "DataDROP"):
             data = base64.b64decode(data)
         buf.write(data)
     drop.close(desc)
-    return dill.loads(buf.getbuffer())
+    return dill.loads(buf.getvalue())
 
 
 def load_binary(drop: "DataDROP"):

@@ -202,6 +202,8 @@ def loadDropSpecs(dropSpecList):
     for n, dropSpec in enumerate(dropSpecList):
         # "categoryType" and 'oid' are mandatory
         check_dropspec(n, dropSpec)
+        dropSpec.pop("input_parser", None)
+        dropSpec.pop("output_parser", None)
         dropType = dropSpec["categoryType"].lower()
 
         cf = __CREATION_FUNCTIONS[dropType]
@@ -256,6 +258,8 @@ def createGraphFromDropSpecList(
         check_dropspec(n, dropSpec)
         #        dropType = dropSpec.pop("categoryType")
         # backwards compatibility
+        dropSpec.pop("input_parser", None)
+        dropSpec.pop("output_parser", None)
         dropType = dropSpec["categoryType"]
         # if dropType.lower() in ["application", "app"]:
         #     dropType = "dropclass"
