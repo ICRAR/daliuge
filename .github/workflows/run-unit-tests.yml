@@ -12,6 +12,7 @@ jobs:
     name: Run daliuge-translator tests with python ${{matrix.python-version}}
     runs-on: ubuntu-22.04
     strategy:
+      fail-fast: false
       matrix:
         include:
           - python-version: "3.9"
