@@ -158,8 +158,7 @@ def format_cmd(cmd, data):
     return f"\t {cmd:25}{desc:25}"
 
 def print_usage(prgname):
-    print("Usage: %s [command] [options]" % (prgname))
-    print("\nCommands are:")
+    print("Usage: %s [command] [options]\n" % (prgname))
     for group, grouped_commands in sorted(commands.items()):
         print(f"\n{grouped_commands['desc']}")
         print("\n".join([format_cmd(cmd, data)

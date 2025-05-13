@@ -35,18 +35,23 @@ from dlg.common.reproducibility.reproducibility import (
     init_pgt_partition_repro_data,
     init_pg_repro_data,
 )
+from dlg.dropmake.pgt import GPGTNoNeedMergeException
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def _open_i(path, flags=None):
     if path == "-":
+        logger.warning("Waiting for stdin '<' ")
+        logger.warning("Please use Ctrl-D to signify end of input.")
         return sys.stdin
     return open(os.path.expanduser(path), flags or "r")
 
 
 def _open_o(path, flags=None):
     if path == "-":
+        logger.warning("Waiting for stdout '>' ")
+        logger.warning("Please use Ctrl-D to signify end.")
         return sys.stdout
     return open(os.path.expanduser(path), flags or "w")
 
@@ -307,7 +312,8 @@ def _add_partition_options(parser):
         type="choice",
         choices=pg_generator.known_algorithms(),
         dest="algo",
-        help="algorithm used to do the partitioning",
+        help=f"Algorithm used to do the partitioning. Select from:\n"
+             f"{str(pg_generator.known_algorithms()).strip('[]')}",
         default="metis",
     )
     parser.add_option(
@@ -332,14 +338,35 @@ def dlg_partition(parser, args):
         help="Path to the Physical Graph Template (default: stdin)",
         default="-",
     )
-    (opts, args) = parser.parse_args(args)
+
+    opts, args = parser.parse_args(args)
+
     tool.setup_logging(opts)
     dump = _setup_output(opts)
-
     with _open_i(opts.pgt_path) as fi:
+        print(opts.pgt_path)
         pgt = json.load(fi)
+        print(pgt)
+    if not isinstance(pgt, list):
+        print("\nOption 'partition' expects an unrolled graph, which is a "
+              "JSON-compatible list."
+              "\nEither you have passed in the wrong file, "
+              "or you need to unroll your Logical Graph first.")
+        print("\n\nRun 'dlg unroll -h' for more information.\n")
+
+        sys.exit()
+
+    init_pgt_unroll_repro_data(pgt)
     repro = pgt.pop()  # TODO: Re-integrate
-    pgt = partition(pgt, opts)
+    # TODO catch the exception and provide suggestions
+    try:
+        pgt = partition(pgt, opts)
+    except GPGTNoNeedMergeException:
+        print("\nThe combination of -N nodes and -i Islands does not work for "
+                "the graph provided. "
+              "\nThis is either a result of the parallelism of the graph being too low,"
+              " or i >= N."
+              "\nConsider reducing the number of islands.\n")
     pgt.append(repro)
     dump(init_pgt_partition_repro_data(pgt))
 
@@ -526,6 +553,7 @@ def dlg_submit(parser, args):
         pg = json.load(f)
         repro = pg[-1]
         submit(pg, opts)
+        logger.warning("Submitted")
         pg.append(repro)
 
 
