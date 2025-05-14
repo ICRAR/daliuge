@@ -1,10 +1,12 @@
 import ast
 import logging
 import collections
+
+import numpy as np
+
 from dlg.data.drops.data_base import DataDROP
 from dlg.drop import AbstractDROP
 import dlg.droputils as droputils
-from dlg.data import path_builder
 import dlg.drop_loaders as drop_loaders
 
 from dataclasses import dataclass
@@ -351,10 +353,10 @@ def replace_named_ports(
 
     #  Construct the final keywordArguments and positionalPortArguments
     for k, v in keywordPortArgs.items():
-        if v not in [None, ""]:
-            keywordArgs.update({k: v})
+        if not _is_value_empty(v):
+                keywordArgs.update({k: v})
     for k, v in positionalPortArgs.items():
-        if v not in [None, ""]:
+        if not _is_value_empty(v):
             positionalArgs.update({k: v})
 
     keywordArgs = serialize_kwargs(keywordArgs)
@@ -362,6 +364,23 @@ def replace_named_ports(
 
     logger.debug("After port replacement: pargs: %s; keyargs: %s", pargs, keywordArgs)
     return keywordArgs, pargs
+
+def _is_value_empty(value: object):
+    """
+    Check if the value is empty
+
+    If it is a non-standard datatype, such as a numpy array, there can be truth
+    ambiguities for the emptiness. In this instance, we explicitly check for the
+    size of the array.
+
+    :param value: an object that could be a primitive (int), an iterator, an object, or
+    an array.
+    :return: True if the value is emptyr,
+    """
+    if isinstance(value, np.ndarray):
+        return True if value.size == 0 else False
+    else:
+        return False if value else True
 
 
 def _process_port(
