@@ -8,31 +8,35 @@ Basic Usage
 ^^^^^^^^^^^
 In order to be able to use the CLI at least daliuge-common needs to be installed. In that case the functionality is obviously very limited, but it shows already the basic usage::
 
-    ❯ dlg
-    Usage: /home/awicenec/.pyenv/versions/dlg/bin/dlg [command] [options]
+   > dlg 
+   Usage: /home/00087932/github/daliuge-new/.venv/bin/dlg [command] [options]
 
-    Commands are:
-        version                  Reports the DALiuGE version and exits
 
-    Try $PATH/bin/dlg [command] --help for more details
+   Base commands for dlg CLI
+       version                  Reports the DALiuGE version and exits
+
 
 If daliuge-engine is also installed it is a bit more interesting::
 
-    ❯ dlg
-    Usage: dlg [command] [options]
+   > dlg 
+   Usage: /home/00087932/github/daliuge-new/.venv/bin/dlg [command] [options]
 
-    Commands are:
-        daemon                   Starts a DALiuGE Daemon process
-        dim                      Starts a Drop Island Manager
-        include_dir              Print the directory where C header files can be found
-        mm                       Starts a Master Manager
-        monitor                  A proxy to be used in conjunction with the dlg proxy in restricted environments
-        nm                       Starts a Node Manager
-        proxy                    A reverse proxy to be used in restricted environments to contact the Drop Managers
-        replay                   Starts a Replay Manager
-        version                  Reports the DALiuGE version and exits
 
-    Try dlg [command] --help for more details
+   Base commands for dlg CLI
+       version                  Reports the DALiuGE version and exits
+
+   DROP Manager Commands
+       daemon                   Starts a DALiuGE Daemon process
+       dim                      Starts a Drop Island Manager
+       mm                       Starts a Master Manager  
+       monitor                  A proxy to be used in conjunction with the dlg proxy in restricted environments
+       nm                       Starts a Node Manager    
+       proxy                    A reverse proxy to be used in restricted environments to contact the Drop Managers
+       replay                   Starts a Replay Manager  
+
+   Remote environment configuration and deployment
+       config                   Manage dlg config environment
+       create                   Create a DALiuGE graph to a remote computing environment
 
 
 If *only* the daliuge-translator is installed this changes to::
@@ -129,32 +133,6 @@ Help output::
                            DM presence
    
 
-Command: dlg fill
------------------
-Help output::
-
-   Usage: fill [options]
-   
-   Fill a Logical Graph with parameters
-   
-   Options:
-     -h, --help            show this help message and exit
-     -v, --verbose         Become more verbose. The more flags, the more verbose
-     -q, --quiet           Be less verbose. The more flags, the quieter
-     -o OUTPUT, --output=OUTPUT
-                           Where the output should be written to (default:
-                           stdout)
-     -f, --format          Format JSON output (newline, 2-space indent)
-     -L LOGICAL_GRAPH, --logical-graph=LOGICAL_GRAPH
-                           Path to the Logical Graph (default: stdin)
-     -p PARAMETER, --parameter=PARAMETER
-                           Parameter specification (either 'name=value' or a JSON
-                           string)
-     -R, --reproducibility
-                           Level of reproducibility. Default 0 (NOTHING). Accepts '-1'-'8'"
-                           Refer to dlg.common.reproducibility.constants for more explanation.
-   
-
 Command: dlg include_dir
 ------------------------
 Help output::
@@ -185,34 +163,6 @@ Help output::
    of those maintained at:
    
    https://github.com/ICRAR/daliuge-logical-graphs
-   
-   
-
-Command: dlg map
-----------------
-Help output::
-
-   Usage: map [options]
-   
-   Maps a Physical Graph Template to resources and produces a Physical Graph
-   
-   Options:
-     -h, --help            show this help message and exit
-     -v, --verbose         Become more verbose. The more flags, the more verbose
-     -q, --quiet           Be less verbose. The more flags, the quieter
-     -o OUTPUT, --output=OUTPUT
-                           Where the output should be written to (default:
-                           stdout)
-     -f, --format          Format JSON output (newline, 2-space indent)
-     -H HOST, --host=HOST  The host we connect to to deploy the graph
-     -p PORT, --port=PORT  The port we connect to to deploy the graph
-     -P PGT_PATH, --physical-graph-template=PGT_PATH
-                           Path to the Physical Graph to submit (default: stdin)
-     -N NODES, --nodes=NODES
-                           The nodes where the Physical Graph will be
-                           distributed, comma-separated
-     -i ISLANDS, --islands=ISLANDS
-                           Number of islands to use during the partitioning
    
 
 Command: dlg mm
@@ -308,35 +258,6 @@ Help output::
                            (default) means no pool.
    
 
-Command: dlg partition
-----------------------
-Help output::
-
-   Usage: partition [options]
-   
-   Divides a Physical Graph Template into N logical partitions
-   
-   Options:
-     -h, --help            show this help message and exit
-     -v, --verbose         Become more verbose. The more flags, the more verbose
-     -q, --quiet           Be less verbose. The more flags, the quieter
-     -o OUTPUT, --output=OUTPUT
-                           Where the output should be written to (default:
-                           stdout)
-     -f, --format          Format JSON output (newline, 2-space indent)
-     -N PARTITIONS, --partitions=PARTITIONS
-                           Number of partitions to generate
-     -i ISLANDS, --islands=ISLANDS
-                           Number of islands to use during the partitioning
-     -a ALGO, --algorithm=ALGO
-                           algorithm used to do the partitioning
-     -A ALGO_PARAMS, --algorithm-param=ALGO_PARAMS
-                           Extra name=value parameters used by the algorithms
-                           (algorithm-specific)
-     -P PGT_PATH, --physical-graph-template=PGT_PATH
-                           Path to the Physical Graph Template (default: stdin)
-   
-
 Command: dlg proxy
 ------------------
 Help output::
@@ -391,102 +312,3 @@ Help output::
      -g GRAPH_FILE, --graph-file=GRAPH_FILE
                            File containing a physical graph dump
    
-
-Command: dlg submit
--------------------
-Help output::
-
-   Usage: submit [options]
-   
-   Submits a Physical Graph to a Drop Manager
-   
-   Options:
-     -h, --help            show this help message and exit
-     -v, --verbose         Become more verbose. The more flags, the more verbose
-     -q, --quiet           Be less verbose. The more flags, the quieter
-     -H HOST, --host=HOST  The host we connect to to deploy the graph
-     -p PORT, --port=PORT  The port we connect to to deploy the graph
-     -P PG_PATH, --physical-graph=PG_PATH
-                           Path to the Physical Graph to submit (default: stdin)
-     -s SESSION_ID, --session-id=SESSION_ID
-                           Session ID (default: <pg_name>-<current-time>)
-     -S, --skip-deploy     Skip the deployment step (default: False)
-     -w, --wait            Wait for the graph execution to finish (default:
-                           False)
-     -i POLL_INTERVAL, --poll-interval=POLL_INTERVAL
-                           Polling interval used for monitoring the execution
-                           (default: 10)
-     -R REPRODUCIBILITY, --reproducibility=REPRODUCIBILITY
-                           Fetch (and output) reproducibility data for final execution graph.
-                           (default: False)
-   
-
-Command: dlg unroll
--------------------
-Help output::
-
-   Usage: unroll [options]
-   
-   Unrolls a Logical Graph into a Physical Graph Template
-   
-   Options:
-     -h, --help            show this help message and exit
-     -v, --verbose         Become more verbose. The more flags, the more verbose
-     -q, --quiet           Be less verbose. The more flags, the quieter
-     -o OUTPUT, --output=OUTPUT
-                           Where the output should be written to (default:
-                           stdout)
-     -f, --format          Format JSON output (newline, 2-space indent)
-     -L LG_PATH, --logical-graph=LG_PATH
-                           Path to the Logical Graph (default: stdin)
-     -p OID_PREFIX, --oid-prefix=OID_PREFIX
-                           Prefix to use for generated OIDs
-     -z, --zerorun         Generate a Physical Graph Template that takes no time
-                           to run
-     --app=APP             Force an app to be used in the Physical Graph. 0=Don't
-                           force, 1=SleepApp, 2=SleepAndCopy
-   
-
-Command: dlg unroll-and-partition
----------------------------------
-Help output::
-
-   Usage: unroll-and-partition [options]
-   
-   unroll + partition
-   
-   Options:
-     -h, --help            show this help message and exit
-     -v, --verbose         Become more verbose. The more flags, the more verbose
-     -q, --quiet           Be less verbose. The more flags, the quieter
-     -o OUTPUT, --output=OUTPUT
-                           Where the output should be written to (default:
-                           stdout)
-     -f, --format          Format JSON output (newline, 2-space indent)
-     -L LG_PATH, --logical-graph=LG_PATH
-                           Path to the Logical Graph (default: stdin)
-     -p OID_PREFIX, --oid-prefix=OID_PREFIX
-                           Prefix to use for generated OIDs
-     -z, --zerorun         Generate a Physical Graph Template that takes no time
-                           to run
-     --app=APP             Force an app to be used in the Physical Graph. 0=Don't
-                           force, 1=SleepApp, 2=SleepAndCopy
-     -N PARTITIONS, --partitions=PARTITIONS
-                           Number of partitions to generate
-     -i ISLANDS, --islands=ISLANDS
-                           Number of islands to use during the partitioning
-     -a ALGO, --algorithm=ALGO
-                           algorithm used to do the partitioning
-     -A ALGO_PARAMS, --algorithm-param=ALGO_PARAMS
-                           Extra name=value parameters used by the algorithms
-                           (algorithm-specific)
-   
-
-Command: dlg version
---------------------
-Help output::
-
-   Version: 1.0.0
-   Git version: Unknown
- 
-
