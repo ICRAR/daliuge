@@ -218,10 +218,10 @@ def start_process(cmd, args=(), **subproc_args):
     """
 
     _load_commands()
-
+    group, _  = _get_cmd(cmd)
     from ..exceptions import DaliugeException
 
-    if cmd not in commands:
+    if cmd not in commands[group]["commands"]:
         raise DaliugeException("Unknown command: %s" % (cmd,))
 
     cmdline = ["dlg", cmd]
