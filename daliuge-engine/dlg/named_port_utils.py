@@ -375,7 +375,7 @@ def _is_value_empty(value: object):
 
     :param value: an object that could be a primitive (int), an iterator, an object, or
     an array.
-    :return: True if the value is emptyr,
+    :return: True if the value is empty.
     """
     if isinstance(value, np.ndarray):
         return True if value.size == 0 else False
