@@ -380,7 +380,7 @@ def _is_value_empty(value: object):
     if isinstance(value, np.ndarray):
         return True if value.size == 0 else False
     else:
-        return False if value else True
+        return True if value in ["", None] else False
 
 
 def _process_port(
