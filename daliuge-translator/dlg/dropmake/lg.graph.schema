@@ -42,7 +42,7 @@
                     "type": "string"
                 },
                 "lastModifiedDatetime": {
-                    "type": "integer"
+                    "type": "number"
                 },
                 "numLGNodes": {
                     "type": "integer"
@@ -133,14 +133,8 @@
                     "radius": {
                         "type": "number"
                     },
-                    "collapsed": {
-                        "type": "boolean"
-                    },
                     "subject": {
                         "type": "null"
-                    },
-                    "expanded": {
-                        "type": "boolean"
                     },
                     "inputApplicationName": {
                         "type": "string"
@@ -315,9 +309,6 @@
                                     "type": "boolean",
                                     "default": false
                                 },
-                                "keyAttribute": {
-                                    "type": "boolean"
-                                },
                                 "encoding": {
                                     "type": "string",
                                     "enum": ["binary", "pickle", "dill", "npy", "base64", "utf-8"],
@@ -341,7 +332,6 @@
                                 "precious",
                                 "options",
                                 "positional",
-                                "keyAttribute",
                                 "id",
                                 "parameterType",
                                 "usage"
@@ -405,13 +395,12 @@
                 },
                 "required": [
                     "category",
-                    "collapsed",
+                    "categoryType",
                     "color",
                     "commitHash",
                     "dataHash",
                     "description",
                     "drawOrderHint",
-                    "expanded",
                     "fields",
                     "inputAppFields",
                     "inputApplicationName",
