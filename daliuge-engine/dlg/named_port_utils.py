@@ -2,6 +2,7 @@ import ast
 import logging
 import collections
 from dlg.data.drops.data_base import DataDROP
+from dlg.drop import AbstractDROP
 import dlg.droputils as droputils
 from dlg.data import path_builder
 import dlg.drop_loaders as drop_loaders

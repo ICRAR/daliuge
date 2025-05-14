@@ -590,10 +590,10 @@ class PyFuncApp(BarrierAppDROP):
         return funcargs, pargs
 
     def _update_filepaths(
-            self,
-            positionalArgsMap: dict[str, Argument],
-            keywordArgsMap: dict[str, Argument],
-            arg: str
+        self,
+        positionalArgsMap: dict[str, Argument],
+        keywordArgsMap: dict[str, Argument],
+        arg: str
     ):
         """
         Map any attribute that is an InputOutput
@@ -630,13 +630,23 @@ class PyFuncApp(BarrierAppDROP):
                 else:
                     output_port_count[key] = 1
 
-        for arg in keywordArgsMap:
-                keywordArgsMap[arg] = self._arg_to_output(attr_uid_map,
-                                                          keywordArgsMap[arg])
-        for arg in positionalArgsMap:
-                positionalArgsMap[arg] = self._arg_to_output(attr_uid_map,
-                                                             positionalArgsMap[arg])
-
+        for arg_map in [keywordArgsMap, positionalArgsMap]:
+            if arg in arg_map:
+                output_uid = attr_uid_map[arg]
+                output_drop = next(
+                    (drop for drop in self.outputs if drop.uid == output_uid),
+                    None
+                )
+                argument = arg_map[arg]
+                parser = (DropParser(argument.encoding))
+                if parser == DropParser.PATH:
+                    argument.value = filepath_from_string(
+                        argument.value, dirname=output_drop.dirname, uid=output_drop.uid,
+                        humanKey=output_drop._humanKey
+                    )
+                    self._output_filepaths[output_uid] = argument.value
+                arg_map[arg] = argument
+                self.parameters[arg] = arg_map[arg].value
         return keywordArgsMap, positionalArgsMap
 
     def _ports2args(self, pargsDict, keyargsDict) -> dict:
@@ -775,7 +785,10 @@ class PyFuncApp(BarrierAppDROP):
         self.name = f"{self.name}:{self.func_name}"  # PyFuncApp is parent
         logger.info("AppDROP name: %s", self.name)
         # Lookup function or import bytecode as a function
-        if not self.func and not self.func_code:
+        if inspect.isfunction(self.func):
+            self.argnames = list(inspect.signature(self.func).parameters)
+            self._init_fn_defaults()
+        elif not self.func and not self.func_code:
             self.func = import_using_name(self, self.func_name, curr_depth=0)
             self._init_fn_defaults()
         else:

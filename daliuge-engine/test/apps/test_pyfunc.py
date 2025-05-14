@@ -75,7 +75,7 @@ def _PyFuncApp(oid, uid, f, additional_imports=[], global_parsers= False, **kwar
     func = None
     fcode = None
     if inspect.isfunction(f):
-        # means likely we got a lambda function passed in
+        # means likely we got a function passed in (from tests)
         fname = f.__name__
         func = f
     elif not isinstance(f, str):
