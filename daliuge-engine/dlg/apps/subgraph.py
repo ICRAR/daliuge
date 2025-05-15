@@ -68,8 +68,8 @@ def startupManagersInThread(managers: dict) -> None:
 # @param category DALiuGEApp
 # @param tag daliuge
 # @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
-# @param dropclass dlg.apps.simple.GenericScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param dropclass dlg.apps.subgraph.SubGraphLocal/String/ComponentParameter/NoPort/ReadOnly//False/False/
+# @param base_name subgraph/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
