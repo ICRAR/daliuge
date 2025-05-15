@@ -82,7 +82,7 @@ Thus some environment variables that may be set in the ``.ini`` file will be ove
 The following is a complete example::
 
     dlg create -a submit -n 1 -s 1 -u -f setonix 
-    -L ~/github/EAGLE_test_repo/eagle_test_graphs/daliuge_tests/dropmake/logical_graphs/ArrayLoop.graph 
+    -L <my_logical_graph>
     -v 5 --remote --submit 
     --config_file setonix.ini --slurm_template setonix.slurm
     
