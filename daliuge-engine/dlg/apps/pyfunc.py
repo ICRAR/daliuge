@@ -466,7 +466,7 @@ class PyFuncApp(BarrierAppDROP):
 
         # Legacy, used for graphs reliant on input/output parser
         if not self._applicationArgs:
-            encoding = self.input_parser or DropParser.DILL
+            encoding = DropParser.DILL
             for key in positionalArgsMap:
                 positionalArgsMap[key].encoding = encoding
             logger.debug("AppArgs/pargsDict: %s", positionalArgsMap)
