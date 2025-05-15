@@ -31,6 +31,7 @@ from psutil import cpu_count
 
 from dlg import droputils, drop_loaders
 from dlg.apps.simple import (
+    Branch,
     GenericScatterApp,
     GenericNpyScatterApp,
     ListAppendThrashingApp,
@@ -346,3 +347,5 @@ class TestSimpleApps(unittest.TestCase):
         else:
             # Ensure that multi-threading overhead doesn't ruin serial performance?
             self.assertAlmostEqual(t1, t2, delta=0.5)
+
+

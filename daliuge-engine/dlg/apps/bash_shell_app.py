@@ -211,14 +211,12 @@ class BashShellBase:
         cmd = self.command.strip()
         cmd = droputils.replace_placeholders(cmd, inputs, outputs)
 
-        reader = get_port_reader_function(self.input_parser)
         keyargs, pargs = replace_named_ports(
             inputs.items(),
             outputs.items(),
             inport_names,
             outport_names,
             self.appArgs,
-            parser=reader,
         )
 
         for key, value in keyargs.items():

@@ -111,7 +111,7 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
 # @par EAGLE_START
 # @param category Memory
 # @param tag daliuge
-# @param pydata /Object/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
+# @param pydata None/Object/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
 # @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
 # @param block_skip False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If set the drop will block a skipping chain until the last producer has finished and is not also skipped.
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution

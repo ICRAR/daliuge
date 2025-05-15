@@ -97,9 +97,34 @@ class LGNode:
         self.happy = False
         self.loop_ctx = None
         self.iid = None
+        self.input_ports = self._getPortName(ports="inputPorts", index=-1)
+        self.output_ports = self._getPortName(ports="outputPorts", index=-1)
 
     def __str__(self):
         return self.name
+
+    @property
+    def output_ports(self):
+        return self._output_ports
+
+    @output_ports.setter
+    def output_ports(self,value):
+        """
+        Setting the output_ports property.
+        """
+        self._output_ports = value
+
+    @property
+    def input_ports(self):
+        return self._input_ports
+
+    @input_ports.setter
+    def input_ports(self,value):
+        """
+        Setting the output_ports property.
+        """
+        self._input_ports = value
+
 
     @property
     def jd(self):
@@ -108,7 +133,7 @@ class LGNode:
     @jd.setter
     def jd(self, node_json):
         """
-        Setting he jd property to the original data structure directly loaded
+        Setting the jd property to the original data structure directly loaded
         from JSON.
         """
         if "categoryType" not in node_json:
@@ -232,15 +257,19 @@ class LGNode:
         else:
             return self.group.id
 
-    def add_output(self, lg_node):
+    def add_output(self, lg_node, srcPort=None):
         if lg_node not in self._outputs:
             self._outputs.append(lg_node)
+        if self.jd.get("outputPorts") and srcPort is not None and srcPort in self.jd["outputPorts"]:
+            self.jd["outputPorts"][srcPort]["target_id"] = lg_node.id
 
-    def add_input(self, lg_node):
+    def add_input(self, lg_node, tgtPort=None):
         # only add if not already there
         # this may happen in nested constructs
         if lg_node not in self._inputs:
             self._inputs.append(lg_node)
+        if self.jd.get("inputPorts") and tgtPort is not None and tgtPort in self.jd["inputPorts"]:
+            self.jd["inputPorts"][tgtPort]["source_id"] = lg_node.id
 
     def add_child(self, lg_node):
         """
@@ -750,6 +779,7 @@ class LGNode:
                     # can't be sure that name is unique
                     if field["id"] not in ports_dict:
                         ports_dict[field["id"]] = name
+        logger.debug("Ports: %s; name: %s; index: %d", ports_dict, name, index)
         return name if index >= 0 else ports_dict
 
     def _create_groupby_drops(self, drop_spec):
@@ -981,6 +1011,8 @@ class LGNode:
         # Behaviour is that child-nodes inherit reproducibility data from their parents.
         if self._reprodata is not None:
             kwargs["reprodata"] = self._reprodata.copy()
+        kwargs["outputPorts"] = self.jd.get("outputPorts", {})
+        kwargs["inputPorts"] = self.jd.get("inputPorts", {})
         drop_spec.update(kwargs)
         return drop_spec
 

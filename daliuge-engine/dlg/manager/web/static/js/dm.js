@@ -511,12 +511,12 @@ function drawGraphForDrops(g, drawGraph, oids, doSpecs, url) {
 
 	if (modified) {
 		drawGraph();
+		zoomFit();
 	}
 
 	var time3 = new Date().getTime();
 	console.log('Took %d [ms] to draw the hole thing', (time3 - time2))
 
-	zoomFit()
 }
 
 function setStatusColor(status) {
