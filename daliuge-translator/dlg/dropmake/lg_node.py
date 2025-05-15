@@ -777,10 +777,8 @@ class LGNode:
                     if portId is None or field["id"] == portId:
                         name = field["name"]
                     # can't be sure that name is unique
-                    if name not in ports_dict:
-                        ports_dict[name] = [field["id"]]
-                    else:
-                        ports_dict[name].append(field["id"])
+                    if field["id"] not in ports_dict:
+                        ports_dict[field["id"]] = name
         logger.debug("Ports: %s; name: %s; index: %d", ports_dict, name, index)
         return name if index >= 0 else ports_dict
 

@@ -368,7 +368,7 @@ class DataDROP(AbstractDROP):
         for p in self.producers:
             producerUid = p.uid
             producerPortValueMap[producerUid] = {}
-            params = p.parameters['outputs']
+            params = p.parameters["outputs"]
             for param in params:
                 try:
                     key = list(param.keys())[0]

@@ -5,7 +5,6 @@ import collections
 import numpy as np
 
 from dlg.data.drops.data_base import DataDROP
-from dlg.drop import AbstractDROP
 import dlg.droputils as droputils
 import dlg.drop_loaders as drop_loaders
 
@@ -295,6 +294,7 @@ def replace_named_ports(
 
     positionalArgs = _get_args(appArgs, positional=True)
     keywordArgs = _get_args(appArgs, positional=False)
+
     logger.debug(
         "posargs: %s; keyargs: %s, %s",
         positionalArgs,
@@ -306,7 +306,6 @@ def replace_named_ports(
     # thus we create it here and fill it with values
     positionalPortArgs = collections.OrderedDict(positionalArgs)
     keywordPortArgs = {}
-    positionalPortArgs =  {} # Update the argument dictionaries in-place based on the
     # port
         # names.
     # This needs to be done for both the input ports and output ports on the drop.

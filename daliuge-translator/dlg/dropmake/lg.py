@@ -498,9 +498,19 @@ class LG:
         elif s_type in ["Application", "Control"]:
             logger.debug("Getting source and traget port names and IDs of %s and %s", slgn.name, tlgn.name)
             sname = slgn._getPortName("outputPorts", index=-1)
-            tname = tlgn._getPortName("inputPorts")
+            tname = tlgn._getPortName("inputPorts", index=-1)
+
             sout_ids = []
             # sname is dictionary of all output ports on the sDROP.
+            output_port = sname[llink["fromPort"]]
+            input_port = tname[llink["toPort"]]
+            # sdrop.addOutput(tdrop, name=output_port)
+            # tdrop.addProducer(sdrop, name=input_port)
+            if "port_map" not in tdrop:
+                tdrop["port_map"] = {input_port:output_port}
+            else:
+                tdrop["port_map"][input_port] = output_port
+
             for output_port in sname.keys():
                 if tdrop["oid"] not in sout_ids:
                     sdrop.addOutput(tdrop, name=output_port)

@@ -37,7 +37,6 @@ from io import StringIO
 from contextlib import redirect_stdout
 
 from dlg import drop_loaders
-from dlg.drop import track_current_drop
 from dlg.data.path_builder import filepath_from_string
 from dlg.drop import track_current_drop
 from dlg.utils import serialize_data, deserialize_data
@@ -47,10 +46,10 @@ from dlg.named_port_utils import (
     check_ports_dict,
     get_port_reader_function,
     identify_named_ports,
-    resolve_drop_parser
+    resolve_drop_parser,
+    replace_named_ports
 )
 from dlg.apps.app_base import BarrierAppDROP
-from dlg.drop import track_current_drop
 from dlg.exceptions import InvalidDropException
 from dlg.meta import (
     dlg_string_param,
@@ -63,7 +62,6 @@ from dlg.meta import (
 from dlg.pyext import pyext
 
 logger = logging.getLogger(f"dlg.{__name__}")
-logging.basicConfig(level=logging.DEBUG)
 
 MAX_IMPORT_RECURSION = 100
 
@@ -583,10 +581,10 @@ class PyFuncApp(BarrierAppDROP):
         return funcargs, pargs
 
     def _update_filepaths(
-        self,
-        positionalArgsMap: dict[str, Argument],
-        keywordArgsMap: dict[str, Argument],
-        arg: str
+            self,
+            positionalArgsMap: dict[str, Argument],
+            keywordArgsMap: dict[str, Argument],
+            arg: str
     ):
         """
         Map any attribute that is an InputOutput
@@ -641,39 +639,6 @@ class PyFuncApp(BarrierAppDROP):
                 arg_map[arg] = argument
                 self.parameters[arg] = arg_map[arg].value
         return keywordArgsMap, positionalArgsMap
-
-    def _arg_to_output(self, attr_uid_map: dict, argument: Argument):
-        """
-
-        Map the argument to the output attribute that is referrenced in the attribute.
-        This uses our variable replacement notation "{}".
-        input_output_file flag, which means we want to match it to an output file.
-
-        Parameters
-        ----------
-        attr_uid_map
-        argument:
-
-        Returns
-        ------
-        argument with modified value (likely a filename)
-        """
-
-        _attribute_ref = argument.value.strip("{}")
-        output_uid = attr_uid_map[_attribute_ref]
-        # Match output to output
-        try:
-            output_filename = self._outputs[output_uid].path
-        except AttributeError:
-            logger.warning("Attribute %s mapped to a non-file attribute (%s)",
-                           argument.name, _attribute_ref)
-
-        if not output_filename:
-            return argument
-        else:
-            argument.value = output_filename
-
-        return argument
 
     def _ports2args(self, pargsDict, keyargsDict) -> dict:
         """
