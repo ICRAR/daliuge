@@ -60,7 +60,7 @@ def register_commands():
     remote_group = tool.CommandGroup("remote", "Remote environment configuration and "
                                                "deployment")
     tool.cmdwrap(
-        "create",remote_group,
+        "remote-submit",remote_group,
         "Create a DALiuGE graph to a remote computing environment",
         "dlg.deploy.create_dlg_job:run", 
     )

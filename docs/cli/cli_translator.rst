@@ -140,7 +140,7 @@ Help output::
 .. _partition_complete:
 
 Command: dlg partition
--------------------------
+=========================
 Help output::
 
    Usage: partition [options]
@@ -170,7 +170,7 @@ Help output::
 
 
 Command: dlg unroll-and-partition
----------------------------------
+=================================
 Help output::
 
    Usage: unroll-and-partition [options]
@@ -206,7 +206,7 @@ Help output::
    
 
 Command: dlg map
-----------------
+================
 Help output::
 
    Usage: map [options]
@@ -284,7 +284,7 @@ Help output::
  
 
 Command: dlg version
---------------------
+====================
 Help output::
 
    Version: 1.0.0

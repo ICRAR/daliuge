@@ -1,90 +1,159 @@
 .. _cli_engine:
 
 Engine Commands
-===============
-As briefly highlighted in the :ref:`running` there is a complete Command Line Interface (CLI) available to control the managers and translate, partition and deploy graphs. This makes the whole system independent of EAGLE or a web browser and also allows the system to be scripted (although we recommend to do this in Python following the :ref:`api`). The available functionality of the CLI depends on which parts of the |daliuge| execution framework are actually installed on the python virtualenv.
+###############
 
-Basic Usage
-^^^^^^^^^^^
-In order to be able to use the CLI at least daliuge-common needs to be installed. In that case the functionality is obviously very limited, but it shows already the basic usage::
-
-   > dlg 
-   Usage: /home/00087932/github/daliuge-new/.venv/bin/dlg [command] [options]
+The basic commands for running the DALiuGE engine were briefly covered in :ref:`running` . This section expands on the commands to facilitate more sophisticated deployements and provides a comprehensive review of the CLI to the engine.  
 
 
-   Base commands for dlg CLI
-       version                  Reports the DALiuGE version and exits
-
-
-If daliuge-engine is also installed it is a bit more interesting::
-
-   > dlg 
-   Usage: /home/00087932/github/daliuge-new/.venv/bin/dlg [command] [options]
-
-
-   Base commands for dlg CLI
-       version                  Reports the DALiuGE version and exits
-
-   DROP Manager Commands
-       daemon                   Starts a DALiuGE Daemon process
-       dim                      Starts a Drop Island Manager
-       mm                       Starts a Master Manager  
-       monitor                  A proxy to be used in conjunction with the dlg proxy in restricted environments
-       nm                       Starts a Node Manager    
-       proxy                    A reverse proxy to be used in restricted environments to contact the Drop Managers
-       replay                   Starts a Replay Manager  
-
-   Remote environment configuration and deployment
-       config                   Manage dlg config environment
-       create                   Create a DALiuGE graph to a remote computing environment
-
-
-If *only* the daliuge-translator is installed this changes to::
-
-    ❯ dlg
-    Usage: dlg [command] [options]
-
-    Commands are:
-        fill                     Fill a Logical Graph with parameters
-        lgweb                    A Web server for the Logical Graph Editor
-        map                      Maps a Physical Graph Template to resources and produces a Physical Graph
-        partition                Divides a Physical Graph Template into N logical partitions
-        submit                   Submits a Physical Graph to a Drop Manager
-        unroll                   Unrolls a Logical Graph into a Physical Graph Template
-        unroll-and-partition     unroll + partition
-        version                  Reports the DALiuGE version and exits
-
-    Try dlg [command] --help for more details
-
-If everything is installed the output is a merge of all three::
-
-    ❯ dlg
-    Usage: dlg [command] [options]
-
-    Commands are:
-        daemon                   Starts a DALiuGE Daemon process
-        dim                      Starts a Drop Island Manager
-        fill                     Fill a Logical Graph with parameters
-        include_dir              Print the directory where C header files can be found
-        lgweb                    A Web server for the Logical Graph Editor
-        map                      Maps a Physical Graph Template to resources and produces a Physical Graph
-        mm                       Starts a Master Manager
-        monitor                  A proxy to be used in conjunction with the dlg proxy in restricted environments
-        nm                       Starts a Node Manager
-        partition                Divides a Physical Graph Template into N logical partitions
-        proxy                    A reverse proxy to be used in restricted environments to contact the Drop Managers
-        replay                   Starts a Replay Manager
-        submit                   Submits a Physical Graph to a Drop Manager
-        unroll                   Unrolls a Logical Graph into a Physical Graph Template
-        unroll-and-partition     unroll + partition
-        version                  Reports the DALiuGE version and exits
-
-    Try dlg [command] --help for more details
-
-Subcommand usage
+Running Managers
 ^^^^^^^^^^^^^^^^
+|daliuge| is using three different kinds of managers:
+
+#. Node Manager (NM), one per compute node participating in the |daliuge| cluster. The NMs are running all the component wrappers for a single node.
+#. Data Island Manager (DIM), which is manageing a (sub-)set of nodes in the cluster. There could be minimum one or maximum as many as NMs Data Island Managers in a deployment. The DIM is also the entity receiving the workflow description from the translator and is then distributing the sections to the NMs.
+#. Master Manager (MM), which has the information about all nodes and islands in the deployment. In many deployments the master manager is optional and not really required. If it is necessary, then there is only a single master manager running on the cluster.
+
+
+Standard Interface 
+------------------
+
+Node Manager (NM)
+******************
+The most basic command a Node Manager, with some verbose logging for demonstration, is::
+
+  > dlg nm -v
+
+  2025-05-15 04:47:35,591 [WARNI] [...] root#setupLogging:318 Starting with level: INFO...
+  2025-05-15 04:47:35,591 [ INFO] [...] dlg.dlg.manager.cmdline#launchServer:76 DALiuGE version 5.3.0 running at /home/00087932/dlg/workspace
+  2025-05-15 04:47:35,591 [ INFO] [...] dlg.dlg.manager.cmdline#launchServer:77 Creating NodeManager
+  2025-05-15 04:47:35,591 [ INFO] [...] dlg.dlg.manager.node_manager#__init__:278 Adding /home/00087932/dlg/code to the system path
+  2025-05-15 04:47:35,591 [ INFO] [...] dlg.dlg.manager.node_manager#__init__:284 Adding /home/00087932/dlg/code/lib/python3.10/site-packages to the system path
+  2025-05-15 04:47:35,593 [ INFO] [...] dlg.dlg.rpc#run_zrpcserver:266 Listening for RPC requests via ZeroRPC on tcp://127.0.0.1:6666
+  2025-05-15 04:47:35,594 [ INFO] [...] dlg.dlg.manager.node_manager#_publish_events:570 Publishing events via ZeroMQ on tcp://127.0.0.1:5555
+  2025-05-15 04:47:35,596 [ INFO] [...] dlg.dlg.manager.node_manager#start:134 Initializing thread pool with 8 workers
+  2025-05-15 04:47:35,596 [ INFO] [...] dlg.dlg.lifecycle.dlm#__init__:149 Starting DropChecker running every 10.000 [s]
+  2025-05-15 04:47:35,597 [ INFO] [...] dlg.dlg.lifecycle.dlm#__init__:149 Starting DropGarbageCollector running every 30.000 [s]
+  2025-05-15 04:47:35,603 [ INFO] [...] dlg.dlg.restserver#start:45 Starting REST server on localhost:8000
+  
+
+From this output, we see a few of the defaults that the NM will start with on a given machine
+
+  - The default host that the manager is available at is ``localhost``; the default port is 8000
+  - The Manager also communicates via two other port: the MQ port (default is 5555), and the RPC port (default is 6666)
+
+It is possible to change the host to an alternative:: 
+
+  > dlg nm -H 172.19.0.1 
+
+Use a non-default server port:: 
+
+  > dlg nm -H 172.19.0.1 -P 8999
+
+And use custom MQ and RPC ports:: 
+
+  > dlg nm -H 172.19.0.1 -P 8999 --event_port 5432 --rpc_port --6789
+  
+Typically the defaults are fine and there is no need to provide custom ports; however, if running multiple NMs on a single machine, it is necessary to make sure the ``event_port`` and ``rpc_port`` are different for each NM.
+
+A full reference of commands that customise the behaviour of the NMs is available :ref:`below <complete_nm>`.
+
+Data Island Manager 
+*******************
+
+The base command for the DIMs is very similar to that of the NMs:: 
+   
+  > dlg dim -v 
+  
+This will start the Data Island Manager with no Node Managers registered to it. 
+
+It is possible to add more NMs after starting the NM (see :ref:`below <rest_interface>`), but for convenience sake, if the NMs are known ahead of time it is easier to add them to the DIM at startup::
+
+  dlg dim -N localhost
+
+Looking under the hood, this is doing a little more than the NM; if we re-create the full command with defaults:: 
+
+  > dlg dim -N localhost:8000:5555:6666
+
+It is important to note the 'protocol' being used here, which takes the form:: 
+
+  <host><server_port><event_port><rpc_port>
+
+Again, this is unnecessary if running multiple servers on different compute nodes::
+
+  dlg dim -N localhost,172.19.0.1 
+
+With nodes passed to the -N argument as a comma separated list. This will connect to hosts on both the local machine, and the machine accessible on 172.19.0.1. Both servers will be accessed on port 8000 (default) and the other defaults. The only time the default ports would need to be modified is if there was a port conflict on one of the compute nodes. 
+
+It is also possible to modify the ports that the DIM server is running on using the ``-P/--port`` command. Further information on complete options is available under :ref:`dim commands<complete_dim>`.
+
+Master Manager 
+*************** 
+
+To run a Master Manager and register nodes to it, simply run::
+
+  > dlg mm -N localhost
+
+ Note that for the MM, the nodes that need to be registered are DIMs, not NMs. 
+
+.. _rest_interface:
+
+The REST interface
+------------------
+
+Starting a master manager can be done using the dlg command::
+
+    dlg daemon
+
+by default this will also start a NM, but not a DIM. 
+
+The managers are spawned off (as processes) from the daemon process, which  also exposes a REST interface allowing the user to start and stop managers. The start and stop commands follow the URL pattern [1]_::
+
+   curl -X POST http://localhost:9000/managers/<type>/start
+
+and::
+
+    curl -X POST http://localhost:9000/managers/<type>/stop
+
+where <type> is on of [node|dataisland|master]. In case of the DIM (island) it is possible to specify the nodes participating in that specific island. For example::
+
+    curl -d '{"nodes": ["192.168.1.72","192.168.1.11"]}' -H "Content-Type: application/json" -X POST http://localhost:9000/managers/island/start
+
+If a manager is already running or already stopped error messages are returned. In order to see which managers are running on a particular node you can use the GET method::
+
+    curl http://localhost:9000/managers
+
+which returns something like::
+
+    {"master": null, "island": null, "node": 18}
+
+In this example there is just a Node Manager running with process ID 18.
+
+
+Zeroconf
+********
+The Master Manager also opens a zeroconf service, which allows the Node Managers to register and deregister and thus the MM is always up to date with the node available in the cluster. NOTE: This mechanism is currently not implemented for the DIMs, i.e. a DIM does not register with the MM automatically. Since it is not possible to guess which NM should belong to which DIM, the NMs also do not register with a DIM. For convenience and as an exception to this rule, when starting the development version of the daliuge-engine image, the single NM is automatically assigned to the DIM on localhost.
+
+.. [1] The daemon process is listening on port 9000 by default.
+
+..
+
+  TODO This section is commented out as it is lower priority. We will track updates in JIRA
+  Proxy and monitor tools
+  ^^^^^^^^^^^^^^^^^^^^^^^
+
+  dlg Proxy 
+  ---------
+
+  dlg Monitor
+  ------------
+
+Reference
+^^^^^^^^^
+
 Command: dlg daemon
 -------------------
+
 Help output::
 
    Usage: daemon [options]
@@ -100,8 +169,11 @@ Help output::
      -q, --quiet    Be less verbose. The more flags, the quieter
    
 
+
+     
 Command: dlg dim
-----------------
+-------------------
+
 Help output::
 
    Usage: dim [options]
@@ -132,41 +204,10 @@ Help output::
                            Maximum timeout used when automatically checking for
                            DM presence
    
-
-Command: dlg include_dir
-------------------------
-Help output::
-
-   /home/awicenec/.pyenv/versions/3.8.10/envs/dlg/lib/python3.8/site-packages/dlg/apps
-   
-
-Command: dlg lgweb
-------------------
-Help output::
-
-   Usage: lgweb [options]
-   
-   A Web server for the Logical Graph Editor
-   
-   Options:
-     -h, --help            show this help message and exit
-     -d LG_PATH, --lgdir=LG_PATH
-                           A path that contains at least one sub-directory, which
-                           contains logical graph files
-     -t PGT_PATH, --pgtdir=PGT_PATH
-                           physical graph template path (output)
-     -H HOST, --host=HOST  logical graph editor host (all by default)
-     -p PORT, --port=PORT  logical graph editor port (8084 by default)
-     -v, --verbose         Enable more logging
-   
-   If you have no Logical Graphs yet and want to see some you can grab a copy
-   of those maintained at:
-   
-   https://github.com/ICRAR/daliuge-logical-graphs
-   
+.. _complete_dim:
 
 Command: dlg mm
----------------
+-------------------
 Help output::
 
    Usage: mm [options]
@@ -199,7 +240,7 @@ Help output::
    
 
 Command: dlg monitor
---------------------
+-------------------
 Help output::
 
    Usage: monitor [options]
@@ -220,8 +261,10 @@ Help output::
      -d, --debug           Whether to log debug info
    
 
+.. _complete_nm:
+
 Command: dlg nm
----------------
+===============
 Help output::
 
    Usage: nm [options]
@@ -259,7 +302,7 @@ Help output::
    
 
 Command: dlg proxy
-------------------
+-------------------
 Help output::
 
    Usage: proxy [options]
@@ -311,4 +354,12 @@ Help output::
                            File containing a continuous graph status dump
      -g GRAPH_FILE, --graph-file=GRAPH_FILE
                            File containing a physical graph dump
+
+Command: dlg include_dir
+-------------------------
+
+Help output::
+
+  <python virtualenv>/lib/pythonX.X/site-packages/dlg/apps
    
+  
