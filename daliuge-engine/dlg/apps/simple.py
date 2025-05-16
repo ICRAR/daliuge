@@ -181,6 +181,7 @@ class CopyApp(BarrierAppDROP):
         [dlg_streaming_input("binary/*")],
     )
 
+    @track_current_drop
     def run(self):
         logger.debug("Using buffer size %d", self.bufsize)
         logger.info(
