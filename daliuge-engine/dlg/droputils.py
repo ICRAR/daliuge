@@ -162,7 +162,7 @@ def copyDropContents(source: "DataDROP", target: "DataDROP", bufsize: int = 6553
     logger.debug("Copying from %s to %s", repr(source.path), repr(target.path))
     sdesc = source.open()
     buf = source.read(sdesc, bufsize)
-    logger.debug("Using buffersize of %d bytes", len(buf), repr(source))
+    logger.debug("Using buffersize of %d bytes", len(buf))
     st = time.time()
     ssize = source.size if source.size is not None else -1
     logger.debug("Source size: %s; Source checksum: %s", ssize, source.checksum)
@@ -184,7 +184,7 @@ def copyDropContents(source: "DataDROP", target: "DataDROP", bufsize: int = 6553
             ofl = True
         buf = source.read(sdesc, bufsize)
     dur = time.time() - st
-    logger.debug(
+    logger.info(
         "Wrote %d Bytes of %d to %s; rate %.2f MB/s",
         tot_w,
         ssize,
