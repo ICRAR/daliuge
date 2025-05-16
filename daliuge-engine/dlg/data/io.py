@@ -735,7 +735,7 @@ class NgasLiteIO(DataIO):
         return len(data)
 
     def exists(self) -> bool:
-        raise NotImplementedError("This method is not supported by this class")
+        logger.warning("This method is not supported by this class")
 
     def fileStatus(self):
         logger.debug("Getting status of file %s", self._fileId)
