@@ -146,7 +146,8 @@ def copyDropContents(source: "DataDROP", target: "DataDROP", bufsize: int = 6553
     """
     Manually copies data from one DROP into another, in bufsize steps
     """
-    logger.debug("Copying from %s to %s", repr(source.path), repr(target.path))
+    logger.debug("Copying from %s to %s", (getattr(source, "path", "") or source.name), 
+                 (getattr(target, "path", "") or target.name))
     sdesc = source.open()
     buf = source.read(sdesc, bufsize)
     logger.debug("Using buffersize of %d bytes", len(buf))
