@@ -887,22 +887,26 @@ class PyFuncApp(BarrierAppDROP):
 
     def _match_parser(self, output_drop):
         """
-        Match the output parser to the appropriate drop
+        Match the output parser to the appropriate drop. Output ports could be defined
+        as either ComponentParameters or ApplicationArguments.
         """
 
-        encoding = "dill"
-        component_params = self.parameters.get("componentParams")
-        if not component_params:
-            return self.output_parser
+        encoding = "dill" # default if nothing else is found
+        param_enc = None
+        params = self.parameters.get("componentParams", {})
+        params.update(self.parameters.get("applicationArguments", {}))
+        if not params:
+            param_enc = getattr(self, "output_parser", None)
         if "outputs" in self.parameters and check_ports_dict(
             self.parameters["outputs"]
         ):
             for outport in self.parameters["outputs"]:
-                drop_uid, drop_port = list(outport.items())[0]
-                if drop_uid == output_drop.uid and drop_port in component_params:
-                    param_enc = component_params[drop_port]["encoding"]
-                    encoding = param_enc or encoding
-        return DropParser(encoding) if encoding else self.output_parser
+                drop_uid, drop_port = outport.items()[0]
+                if drop_uid == output_drop.uid:
+                    param_enc = params[drop_port]["encoding"]
+        encoding = param_enc or encoding
+        logger.debug("Using encoding: %s for output: %s", encoding, drop_port)
+        return DropParser(encoding)
 
     def write_results(self, result):
         from dlg.droputils import listify
