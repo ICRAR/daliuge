@@ -185,8 +185,8 @@ class CopyApp(BarrierAppDROP):
         logger.debug("Using buffer size %d", self.bufsize)
         logger.info(
             "Copying data from inputs %s to outputs %s",
-            [x.name for x in self.inputs],
-            [x.name for x in self.outputs],
+            [x.path for x in self.inputs],
+            [x.path for x in self.outputs],
         )
         self.copyAll()
         logger.info(
