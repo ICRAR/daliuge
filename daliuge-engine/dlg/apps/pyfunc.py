@@ -893,6 +893,7 @@ class PyFuncApp(BarrierAppDROP):
 
         encoding = "dill" # default if nothing else is found
         param_enc = None
+        drop_port = ""
         params = self.parameters.get("componentParams", {})
         params.update(self.parameters.get("applicationArguments", {}))
         if not params:
@@ -901,8 +902,8 @@ class PyFuncApp(BarrierAppDROP):
             self.parameters["outputs"]
         ):
             for outport in self.parameters["outputs"]:
-                drop_uid, drop_port = outport.items()[0]
-                if drop_uid == output_drop.uid:
+                drop_uid, drop_port = list(outport.items())[0]
+                if drop_uid == output_drop.uid and drop_port in params:
                     param_enc = params[drop_port]["encoding"]
         encoding = param_enc or encoding
         logger.debug("Using encoding: %s for output: %s", encoding, drop_port)
