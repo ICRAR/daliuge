@@ -765,13 +765,13 @@ class PyFuncApp(BarrierAppDROP):
         else:
             self.initialize_with_func_code()
 
-        logger.info("Args summary for %s", self.func_name)
-        logger.info("Args: %s", self.argnames)
-        logger.info("Args defaults:  %s", self.fn_defaults)
-        logger.info("Args pos/kw: %s", list(self.poskw.keys()))
-        logger.info("Args keyword only: %s", list(self.kwonly.keys()))
-        logger.info("VarArgs allowed:  %s", self.varargs)
-        logger.info("VarKwds allowed:  %s", self.varkw)
+        logger.debug(f"Args summary for '{self.func_name}':")
+        logger.debug(f"Args: {self.argnames}")
+        logger.info(f"Args defaults:  {self.fn_defaults}")
+        logger.debug(f"Args pos/kw: {list(self.poskw.keys())}")
+        logger.debug(f"Args keyword only: {list(self.kwonly.keys())}")
+        logger.debug(f"VarArgs allowed:  {self.varargs}")
+        logger.debug(f"VarKwds allowed:  {self.varkw}")
 
         # Mapping between argument name and input drop uids
         logger.debug("Input mapping provided: %s", self.func_arg_mapping)
@@ -857,12 +857,13 @@ class PyFuncApp(BarrierAppDROP):
             else:
                 self.result = self.func(*pargs, **funcargs)
 
-        logger.info(
-            "Captured output from function app '%s: %s'",
-            self.func_name, capture.getvalue()
-        )
-        logger.debug("Returned result from %s: %s", self.func_name, self.result)
-        logger.debug("Finished execution of %s.", self.func_name)
+        logger.debug("Returned result from %s: %s", self.func_name, result)
+        if capture.getvalue():
+            msg = f"STDOUT/STDERR output from function: '{self.func_name}': {capture.getvalue()}"
+        else:
+            msg = f"No STDOUT/STDERR output from function: '{self.func_name}'"
+        logger.info(msg)
+        logger.debug(f"Finished execution of {self.func_name}.")
 
         # 6. Process results
         # Depending on how many outputs we have we treat our result
