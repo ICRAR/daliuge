@@ -708,7 +708,8 @@ class Session(object):
             drop = self._drops[uid]
             return getattr(drop, prop_name)
         except AttributeError:
-            raise DaliugeException("%r has no property called %s" % (drop, prop_name))
+            logger.critical("%r has no property called %s" % (drop, prop_name))
+            return getattr(drop, "name")
 
     def call_drop(self, uid, method, *args):
         if uid not in self._drops:

@@ -67,6 +67,7 @@ class NgasDROP(DataDROP):
             self.fileId = self.ngasFileId
         else:
             self.fileId = self.uid
+        # self.path = self.fileId # we are using the path for logging
 
     def getIO(self):
         try:
