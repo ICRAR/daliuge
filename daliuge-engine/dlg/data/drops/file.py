@@ -116,7 +116,7 @@ class FileDROP(DataDROP, PathBasedDrop):
     def setupFilePaths(self):
         filepath = self.parameters.get("filepath", None)
         # TODO ADD SUFFIX/PREFIX
-        dirname = None
+        dirname = "."  # default is a relative filepath
         filename = None
 
         if filepath:
@@ -129,16 +129,15 @@ class FileDROP(DataDROP, PathBasedDrop):
             if "/" not in fp:  # just a name
                 filename = fp
                 dirname = self.get_dir(".")
-            elif fp.endswith("/"):  # just a directory name
+            elif filepath.endswith("/"):  # just a directory name
                 self.is_dir = True
                 filename = None
                 dirname = fp
             else:
-                filename = os.path.basename(fp)
-                dirname = os.path.dirname(fp)
-        if dirname is None:
-            dirname = "."
-
+                filename = os.path.basename(filepath)
+                dirname = os.path.dirname(filepath)
+        filename = os.path.expandvars(filename) if filename else None
+        dirname = self.sanitize_paths(dirname) if dirname else None
         # We later check if the file exists, but only if the user has specified
         # an absolute dirname/filepath (otherwise it doesn't make sense, since
         # we create our own filenames/dirnames dynamically as necessary

@@ -28,6 +28,7 @@ import contextlib
 import logging
 import socket
 
+from dlg.drop import track_current_drop
 from ..ddap_protocol import DROPRel, DROPLinkType
 from ..apps.app_base import BarrierAppDROP
 from ..exceptions import InvalidRelationshipException
@@ -97,6 +98,10 @@ class SocketListenerApp(BarrierAppDROP):
     bufsize = dlg_int_param("bufsize", 4096)
     reuseAddr = dlg_bool_param("reuseAddr", False)
 
+    def initialize(self, **kwargs):
+        super(SocketListenerApp, self).initialize(**kwargs)
+
+    @track_current_drop
     def run(self):
         # At least one output should have been added
         outs = self.outputs
