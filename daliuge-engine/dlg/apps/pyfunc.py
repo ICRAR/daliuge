@@ -782,13 +782,13 @@ class PyFuncApp(BarrierAppDROP):
         else:
             self.initialize_with_func_code()
 
-        logger.info(f"Args summary for '{self.func_name}':")
-        logger.info(f"Args: {self.argnames}")
+        logger.debug(f"Args summary for '{self.func_name}':")
+        logger.debug(f"Args: {self.argnames}")
         logger.info(f"Args defaults:  {self.fn_defaults}")
-        logger.info(f"Args pos/kw: {list(self.poskw.keys())}")
-        logger.info(f"Args keyword only: {list(self.kwonly.keys())}")
-        logger.info(f"VarArgs allowed:  {self.varargs}")
-        logger.info(f"VarKwds allowed:  {self.varkw}")
+        logger.debug(f"Args pos/kw: {list(self.poskw.keys())}")
+        logger.debug(f"Args keyword only: {list(self.kwonly.keys())}")
+        logger.debug(f"VarArgs allowed:  {self.varargs}")
+        logger.debug(f"VarKwds allowed:  {self.varkw}")
 
         # Mapping between argument name and input drop uids
         logger.debug(f"Input mapping provided: {self.func_arg_mapping}")
@@ -851,8 +851,8 @@ class PyFuncApp(BarrierAppDROP):
                 and "self" in funcargs):
             funcargs.pop("self")
 
-        logger.info(f"Running {self.func_name}")
-        logger.debug(f"Arguments: *{pargs} **{funcargs}")
+        logger.debug(f"Running {self.func_name}")
+        logger.info(f"Arguments for {self.func_name}: *{pargs} **{funcargs}")
 
         # 4. prepare for execution
         # we capture and log whatever is produced on STDOUT
@@ -873,9 +873,11 @@ class PyFuncApp(BarrierAppDROP):
                 result = self.func(*pargs, **funcargs)
 
         logger.debug("Returned result from %s: %s", self.func_name, result)
-        logger.info(
-            f"Captured output from function app '{self.func_name}': {capture.getvalue()}"
-        )
+        if capture.getvalue():
+            msg = f"STDOUT/STDERR output from function: '{self.func_name}': {capture.getvalue()}"
+        else:
+            msg = f"No STDOUT/STDERR output from function: '{self.func_name}'"
+        logger.info(msg)
         logger.debug(f"Finished execution of {self.func_name}.")
 
         # 6. Process results

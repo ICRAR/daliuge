@@ -200,7 +200,7 @@ def identify_named_ports(
                 continue
             parser = get_port_reader_function(encoding)
             if parser:
-                logger.debug("Reading from %s encoded port using %s", encoding, parser.__repr__())
+                logger.debug("Reading from %s encoded port using '%s'", encoding, parser)
                 value = parser(port_dict[keys[i]]["drop"])
             # if not found in appArgs we don't put them into portargs either
             # pargsDict.update({key: value})
