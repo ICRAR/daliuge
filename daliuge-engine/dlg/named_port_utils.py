@@ -489,7 +489,7 @@ def get_port_reader_function(input_parser: DropParser):
             return ast.literal_eval(content) if len(content) > 0 else None
 
         reader = optionalEval
-    elif ip is DropParser.UTF8:
+    elif input_parser is DropParser.UTF8:
 
         def utf8decode(drop: "DataDROP"):
             """
@@ -499,7 +499,7 @@ def get_port_reader_function(input_parser: DropParser):
             return droputils.allDropContents(drop).decode("utf-8")
 
         reader = utf8decode
-    elif ip is DropParser.NPY:
+    elif input_parser is DropParser.NPY:
         reader = drop_loaders.load_npy
     elif ip is DropParser.PATH:
         def PathFromData(x: AbstractDROP):
