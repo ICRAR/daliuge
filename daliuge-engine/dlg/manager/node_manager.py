@@ -517,7 +517,7 @@ class ZMQPubSubMixIn(object):
         self._subscriptions = queue.Queue()
 
         # Starts background threads, but wait until their sockets are created
-        timeout = 30
+        timeout = 10
         self._event_publisher = self._start_thread(
             self._publish_events, "Evt pub", timeout
         )
