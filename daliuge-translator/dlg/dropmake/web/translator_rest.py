@@ -1172,7 +1172,6 @@ def run(_, args):
         action="store_true",
         help="Use local system time when logging",
         default=False,
-        # dest="gm_time"
     )
 
     options = parser.parse_args(args)

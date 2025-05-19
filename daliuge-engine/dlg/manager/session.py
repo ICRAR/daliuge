@@ -161,7 +161,7 @@ class Session(object):
     graph has finished the session is moved to FINISHED.
     """
 
-    def __init__(self, sessionId, nm: "NodeManager"):
+    def __init__(self, sessionId, nm: "NodeManager"=None):
         self._sessionId = sessionId
         self._graph = {}  # key: oid, value: dropSpec dictionary
         self._drops = {}  # key: oid, value: actual drop object
@@ -196,7 +196,10 @@ class Session(object):
         fmt += "[%(drop_uid)10.10s] "
         fmt += "%(name)s#%(funcName)s:%(lineno)s %(message)s"
         fmt = logging.Formatter(fmt)
-        fmt.converter = time.localtime if self._nm.use_local_time else time.gmtime
+        if self._nm:
+            fmt.converter = time.localtime if self._nm.use_local_time else time.gmtime
+        else:
+            fmt.converter = time.gmtime
 
         logfile = generateLogFileName(self._sessionDir, self.sessionId)
         try:
