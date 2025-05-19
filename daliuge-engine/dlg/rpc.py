@@ -243,7 +243,7 @@ class ZeroRPCServer(RPCServerBase):
         super(ZeroRPCServer, self).start()
 
         # Starts the single-threaded ZeroRPC server for RPC requests
-        timeout = 30
+        timeout = 10
         server_started = threading.Event()
         self._zrpcserverthread = threading.Thread(
             target=self.run_zrpcserver,
