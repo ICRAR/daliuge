@@ -127,6 +127,7 @@ class FileDROP(DataDROP, PathBasedDrop):
             if "/" not in fp:  # just a name
                 filename = fp
                 dirname = self.get_dir(".")
+            # filepath = self.sanitize_paths(self.filepath)
             elif filepath.endswith("/"):  # just a directory name
                 self.is_dir = True
                 filename = None
