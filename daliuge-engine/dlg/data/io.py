@@ -647,7 +647,7 @@ class NgasLiteIO(DataIO):
         return len(data)
 
     def exists(self) -> bool:
-        logger.warning("This method is not supported by this class")
+        return ngaslite.fileIdExists(self._ngasSrv, self._ngasPort, self._fileId)
 
     def fileStatus(self):
         logger.debug("Getting status of file %s", self._fileId)
