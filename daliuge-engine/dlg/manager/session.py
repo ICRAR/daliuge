@@ -196,7 +196,7 @@ class Session(object):
         fmt += "[%(drop_uid)10.10s] "
         fmt += "%(name)s#%(funcName)s:%(lineno)s %(message)s"
         fmt = logging.Formatter(fmt)
-        fmt.converter = time.gmtime if self._nm.use_gm_time else time.localtime
+        fmt.converter = time.localtime if self._nm.use_local_time else time.gmtime
 
         logfile = generateLogFileName(self._sessionDir, self.sessionId)
         try:

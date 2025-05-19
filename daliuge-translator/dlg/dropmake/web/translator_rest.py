@@ -1168,7 +1168,7 @@ def run(_, args):
     )
 
     parser.add_argument(
-        "--gm-time",
+        "--local-time",
         action="store_true",
         help="Use local system time when logging",
         default=False,
@@ -1182,14 +1182,14 @@ def run(_, args):
     elif not os.path.exists(options.lg_path):
         parser.error(f"{options.lg_path} does not exist")
 
-    time_fmt_str = "GMT" if options.gm_time else "Local"
+    time_fmt_str = "Local" if options.local_time else "GMT"
     if options.verbose or options.logdir:
         fmt = logging.Formatter(
             "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] "
             "%(name)s#%(funcName)s:%(lineno)s %(message)s"
         )
 
-        fmt.converter = time.gmtime if options.gm_time else time.localtime
+        fmt.converter = time.localtime if options.local_time else time.gmtime
         if options.verbose:
             stream_handler = logging.StreamHandler(sys.stdout)
             stream_handler.setFormatter(fmt)
