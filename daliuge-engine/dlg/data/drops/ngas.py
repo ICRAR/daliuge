@@ -108,6 +108,9 @@ class NgasDROP(DataDROP):
         # this file, in which case we create an empty file so applications
         # downstream don't fail to read
         logger.debug("Trying to set size of NGASDrop")
+        if not self.getIO().exists():
+            self.setError()
+            raise FileNotFoundError(f"File with fileId '{self.fileId}' not found on host '{self.ngasSrv}'!")
         try:
             stat = self.getIO().fileStatus()
             logger.debug(
@@ -127,6 +130,7 @@ class NgasDROP(DataDROP):
             #     logger.error("Path not accessible: %s" % self.path)
             logger.debug("Setting size of NGASDrop to %s", 0)
             self._size = 0
+            self.setError()
             raise
         # Signal our subscribers that the show is over
         logger.debug("Moving %r to COMPLETED", self)
