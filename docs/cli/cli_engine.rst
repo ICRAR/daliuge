@@ -52,7 +52,7 @@ Use a non-default server port::
 
 And use custom MQ and RPC ports:: 
 
-  > dlg nm -H 172.19.0.1 -P 8999 --event_port 5432 --rpc_port --6789
+  > dlg nm -H 172.19.0.1 -P 8999 --event_port 5432 --rpc_port 6789
   
 Typically the defaults are fine and there is no need to provide custom ports; however, if running multiple NMs on a single machine, it is necessary to make sure the ``event_port`` and ``rpc_port`` are different for each NM.
 
