@@ -65,7 +65,7 @@ class TestTool(unittest.TestCase):
 
         # partition the PGT
         partition = tool.start_process(
-            "partition", stdin=unroll.stdout, stdout=subprocess.PIPE
+            "partition", ["-vv"], stdin=unroll.stdout, stdout=subprocess.PIPE
         )
 
         # map PGT to resources to construct PG
