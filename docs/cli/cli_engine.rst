@@ -40,7 +40,7 @@ The most basic command a Node Manager, with some verbose logging for demonstrati
 From this output, we see a few of the defaults that the NM will start with on a given machine
 
   - The default host that the manager is available at is ``localhost``; the default port is 8000
-  - The Manager also communicates via two other port: the MQ port (default is 5555), and the RPC port (default is 6666)
+  - The Manager also communicates via two other ports: the MQ port (default is 5555), and the RPC port (default is 6666)
 
 It is possible to change the host to an alternative:: 
 
