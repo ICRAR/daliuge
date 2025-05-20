@@ -344,9 +344,7 @@ def dlg_partition(parser, args):
     tool.setup_logging(opts)
     dump = _setup_output(opts)
     with _open_i(opts.pgt_path) as fi:
-        print(opts.pgt_path)
         pgt = json.load(fi)
-        print(pgt)
     if not isinstance(pgt, list):
         print("\nOption 'partition' expects an unrolled graph, which is a "
               "JSON-compatible list."
@@ -356,9 +354,7 @@ def dlg_partition(parser, args):
 
         sys.exit()
 
-    init_pgt_unroll_repro_data(pgt)
     repro = pgt.pop()  # TODO: Re-integrate
-    # TODO catch the exception and provide suggestions
     try:
         pgt = partition(pgt, opts)
     except GPGTNoNeedMergeException:

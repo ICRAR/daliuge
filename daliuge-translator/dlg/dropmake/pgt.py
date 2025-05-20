@@ -239,7 +239,8 @@ class PGT(object):
         if num_islands < 1:
             num_islands = 1  # need at least one island manager
         if len(node_list) == 0 and tpl_nodes_len > 0:  # generate pg_spec template
-            node_list = range(tpl_nodes_len + num_islands)  # create a fake list for now
+            node_list = [x for x in range(tpl_nodes_len + num_islands)]  # create a fake
+            # list for now
             tpl_fl = True
         else:
             tpl_fl = False

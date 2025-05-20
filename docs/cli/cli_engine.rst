@@ -136,17 +136,14 @@ The Master Manager also opens a zeroconf service, which allows the Node Managers
 
 .. [1] The daemon process is listening on port 9000 by default.
 
-..
 
-  TODO This section is commented out as it is lower priority. We will track updates in JIRA
-  Proxy and monitor tools
-  ^^^^^^^^^^^^^^^^^^^^^^^
-
-  dlg Proxy 
-  ---------
-
-  dlg Monitor
-  ------------
+..  TODO This section is commented out as it is lower priority. We will track updates in JIRA
+..  Proxy and monitor tools
+..  ^^^^^^^^^^^^^^^^^^^^^^^
+..  dlg Proxy 
+..  ---------
+..  dlg Monitor
+..  ------------
 
 Reference
 ^^^^^^^^^
@@ -240,7 +237,7 @@ Help output::
    
 
 Command: dlg monitor
--------------------
+--------------------
 Help output::
 
    Usage: monitor [options]
@@ -264,7 +261,7 @@ Help output::
 .. _complete_nm:
 
 Command: dlg nm
-===============
+---------------
 Help output::
 
    Usage: nm [options]
