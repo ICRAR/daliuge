@@ -52,7 +52,7 @@ The following provides an example that specifies both the algorithm (-a/--algori
    
 Typically, it is not necessary to separate the `unroll` and `partition` actions, so we provide the `unroll-and-partition` option:: 
 
-    dlg unroll-and-partition-L parallel_loop.graph -i 2 -N 4 -a mysarkar -o parallel_loop_PGT.graph
+    dlg unroll-and-partition -L parallel_loop.graph -i 2 -N 4 -a mysarkar -o parallel_loop_PGT.graph
 
 A full list of options is available at :ref:`partition_complete`.
 
