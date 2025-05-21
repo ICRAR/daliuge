@@ -169,6 +169,7 @@ def identify_named_ports(
     keys = list(port_dict.keys())
     logger.debug("Checking ports: %s against %s %s", keys, positionalArgs, keywordArgs)
     for i in range(check_len):
+        local_parser = parser
         try:
             key = port_dict[keys[i]]["name"]
             value = port_dict[keys[i]]["path"]
@@ -183,12 +184,12 @@ def identify_named_ports(
             except ValueError:
                 logger.warning("No encoding set for %key: possible default")
                 continue
-            if parser is None:
+            if local_parser is None:
                 # if no parser is passed, we use the one from the port dict
-                parser = get_port_reader_function(encoding)
-            if parser:
+                local_parser = get_port_reader_function(encoding)
+            if local_parser:
                 logger.debug("Reading from %s encoded port %s using %s", encoding, key, parser.__repr__())
-                value = parser(port_dict[keys[i]]["drop"])
+                value = local_parser(port_dict[keys[i]]["drop"])
             positionalPortArgs[key].value = value
             logger.debug("Using %s '%s' for port %s", mode, value, key)
             positionalArgs.remove(key)
@@ -201,10 +202,11 @@ def identify_named_ports(
             except ValueError:
                 logger.warning("No encoding set for %key: possible default")
                 continue
-            parser = get_port_reader_function(encoding)
-            if parser:
+            if local_parser is None:
+                local_parser = get_port_reader_function(encoding)
+            if local_parser:
                 logger.debug("Reading from %s encoded port using %s", encoding, parser.__repr__())
-                value = parser(port_dict[keys[i]]["drop"])
+                value = local_parser(port_dict[keys[i]]["drop"])
             # if not found in appArgs we don't put them into portargs either
             # pargsDict.update({key: value})
             keywordArgs[key].value = value

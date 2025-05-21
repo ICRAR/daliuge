@@ -893,16 +893,15 @@ class PyFuncApp(BarrierAppDROP):
         """
 
         encoding = "dill"
-        component_params = self.parameters.get("componentParams")
-        if not component_params:
+        if not self._applicationArgs:
             return getattr(self, "output_parser", "dill")
         if "outputs" in self.parameters and check_ports_dict(
             self.parameters["outputs"]
         ):
             for outport in self.parameters["outputs"]:
                 drop_uid, drop_port = list(outport.items())[0]
-                if drop_uid == output_drop.uid and drop_port in component_params:
-                    param_enc = component_params[drop_port]["encoding"]
+                if drop_uid == output_drop.uid and drop_port in self._applicationArgs:
+                    param_enc = self._applicationArgs[drop_port]["encoding"]
                     encoding = param_enc or encoding
         return DropParser(encoding) if encoding else self.output_parser
 

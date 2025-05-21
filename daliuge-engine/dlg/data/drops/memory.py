@@ -57,9 +57,9 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
     pd_dict = pd if isinstance(pd, dict) else {"value":pd, "type":"raw"}
     pydata = pd_dict["value"]
     logger.debug("pydata value provided: '%s' with type '%s'", pydata, type(pydata))
-
-    if pd_dict["type"].lower() in ["string", "str"]:
-        return pydata if pydata != "None" else None
+    empty_strings = ["None", ""]
+    if pd_dict["type"].lower() in ["string", "str"] or pydata in empty_strings:
+        pydata = pydata if pydata != "None" else None
     builtin_types = get_builtins()
     if pd_dict["type"] != "raw" and type(pydata) in builtin_types.values() and pd_dict["type"] not in builtin_types.keys():
         logger.warning("Type of pydata %s provided differs from specified type: %s", type(pydata).__name__, pd_dict["type"])
@@ -167,7 +167,8 @@ class InMemoryDROP(DataDROP):
         if pydata:
             args.append(pydata)
             logger.debug("Loaded into memory: %s, %s, %s", pydata, self.data_type, type(pydata))
-        self._buf = io.BytesIO(*args) if self.data_type != "String" else io.StringIO(*args)
+        self._buf = io.BytesIO(*args) if self.data_type != "String" else io.StringIO(
+            dill.loads(*args))
         self.size = len(pydata) if pydata else 0
 
     def getIO(self):
