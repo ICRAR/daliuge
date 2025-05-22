@@ -70,10 +70,12 @@ def sum_with_args_and_kwarg(a, *args, **kwargs):
     return a + sum(args) + b
 
 
-def _PyFuncApp(oid, uid, f, additional_imports=[], global_parsers= False, **kwargs):
+def _PyFuncApp(oid, uid, f, additional_imports=None, global_parsers= False, **kwargs):
     fname = None
     func = None
     fcode = None
+    if not additional_imports:
+        additional_imports = []
     if inspect.isfunction(f):
         # means likely we got a function passed in (from tests)
         fname = f.__name__

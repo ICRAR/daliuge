@@ -186,7 +186,7 @@ class InMemoryDROP(DataDROP):
             args.append(pydata)
             logger.debug("Loaded into memory: %s, %s, %s", pydata, self.data_type, type(pydata))
         self._buf = io.BytesIO(*args) if self.data_type != "String" else io.StringIO(
-            dill.loads(*args))
+            dill.loads(*args)) # pylint: disable = no-value-for-parameter
         self.size = len(pydata) if pydata else 0
 
     def getIO(self):
