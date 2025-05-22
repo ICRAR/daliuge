@@ -968,8 +968,21 @@ class Branch(PyFuncApp):
         go_result = str(self.result).lower()
         nogo_result = str(not self.result).lower()
 
-        nogo_drop = getattr(self, nogo_result, None)
-        go_drop = getattr(self, go_result, None)
+        try:
+            nogo_drop = getattr(self, nogo_result)
+        except AttributeError:
+            logger.error("There is no Drop associated with the False condition; "
+                         "a runtime failure has occured.")
+            self.setError()
+            return
+        try:
+            go_drop = getattr(self, go_result)
+        except AttributeError:
+            logger.error("There is no Drop associated with the True condition; "
+                         "a runtime failure has occured.")
+            self.setError()
+            return
+
         logger.info("Sending skip to port: %s: %s", str(nogo_result), getattr(self,nogo_result))
         nogo_drop.skip()  # send skip to correct branch
 
