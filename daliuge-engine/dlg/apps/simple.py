@@ -956,31 +956,45 @@ class Branch(PyFuncApp):
     bufsize = dlg_int_param("bufsize", 65536)
     result = dlg_bool_param("result", False)
 
-    def write_results(self, result: bool):
+    def write_results(self,result:bool=False):
         """
         Copy the input to the output identified by the condition function.
-
-        Parameters:
-        -----------
-        result:
-            The result of the condition function
         """
-
+        if result and isinstance(result, bool):
+            self.result = result
         if not self.outputs:
             return
 
-        # TODO: The following should eventually use named ports
-        false_out = 0 if result else 1
-        true_out = 1 if result else 0
-        logger.debug("Sending skip to port: %s", self.outputs[false_out])
-        self.outputs[false_out].skip()  # send skip to correct branch
+        go_result = str(self.result).lower()
+        nogo_result = str(not self.result).lower()
 
-        if self.inputs:
+        try:
+            nogo_drop = getattr(self, nogo_result)
+        except AttributeError:
+            logger.error("There is no Drop associated with the False condition; "
+                         "a runtime failure has occured.")
+            self.setError()
+            return
+        try:
+            go_drop = getattr(self, go_result)
+        except AttributeError:
+            logger.error("There is no Drop associated with the True condition; "
+                         "a runtime failure has occured.")
+            self.setError()
+            return
+
+        logger.info("Sending skip to port: %s: %s", str(nogo_result), getattr(self,nogo_result))
+        nogo_drop.skip()  # send skip to correct branch
+
+        if self.inputs and hasattr(go_drop, "write"):
             droputils.copyDropContents(  # send data to correct branch
-                self.inputs[0], self.outputs[true_out], bufsize=self.bufsize
+                self.inputs[0], go_drop, bufsize=self.bufsize
             )
         else:  # this enables a branch based only on the condition function
-            self.outputs[true_out].write(dill.dumps(result))
+            d = pickle.dumps(self.parameters[self.argnames[0]])
+            # d = self.parameters[self.argnames[0]]
+            if hasattr(go_drop, "write"):
+                go_drop.write(d) 
 
 
 ##
@@ -1025,7 +1039,7 @@ class PickOne(BarrierAppDROP):
         else:
             data = np.array(data)
         value = data[0] if len(data) else None
-        rest = data[1:] if len(data) > 1 else np.array([])
+        rest = data[1:] if len(data) >= 1 else np.array([])
         return value, rest
 
     def writeData(self, value, rest):

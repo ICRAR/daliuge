@@ -30,9 +30,8 @@ import json
 import logging
 import os
 import pickle
-import re
 
-from typing import Callable, Union, Union
+from typing import Callable, Union
 import dill
 from io import StringIO
 from contextlib import redirect_stdout
@@ -47,14 +46,13 @@ from dlg.named_port_utils import (
     check_ports_dict,
     get_port_reader_function,
     identify_named_ports,
+    resolve_drop_parser,
     replace_named_ports
 )
 from dlg.apps.app_base import BarrierAppDROP
-from dlg.drop import track_current_drop
 from dlg.exceptions import InvalidDropException
 from dlg.meta import (
     dlg_string_param,
-    dlg_enum_param,
     dlg_dict_param,
     dlg_component,
     dlg_batch_input,
@@ -67,12 +65,12 @@ logger = logging.getLogger(f"dlg.{__name__}")
 
 MAX_IMPORT_RECURSION = 100
 
-def serialize_func(f):
+def serialize_func(f, serialize=True):
     if isinstance(f, str):
         parts = f.split(".")
         f = getattr(importlib.import_module(".".join(parts[:-1])), parts[-1])
 
-    fser = base64.b64encode(dill.dumps(f)).decode()
+    fser = base64.b64encode(dill.dumps(f)).decode() if serialize else f
     # fser = inspect.getsource(f)
     fdefaults = {"args": [], "kwargs": {}}
     adefaults = {"args": [], "kwargs": {}}
@@ -172,7 +170,7 @@ def import_using_code(func_code: str, func_name: str, serialized: bool = True):
     """
     mod = None
     if not serialized and not isinstance(func_code, bytes):
-        logger.debug(f"Trying to import code from string: {func_code.strip()}")
+        logger.debug(f"Trying to import code from string:\n {func_code.strip()}")
         try:
             mod = pyext.RuntimeModule.from_string("mod", func_name, func_code.strip())
         except Exception:
@@ -277,17 +275,11 @@ class PyFuncApp(BarrierAppDROP):
     )
 
     func_name = dlg_string_param("func_name", None)
-    # func_code = dlg_bytes_param("func_code", None) # bytes or base64 string
-    input_parser: DropParser = dlg_enum_param(DropParser, "input_parser", DropParser.PICKLE)  # type: ignore
-    output_parser: DropParser = dlg_enum_param(DropParser, "output_parser", DropParser.PICKLE)  # type: ignore
     func_arg_mapping = dlg_dict_param("func_arg_mapping", {})
     func_defaults = dlg_dict_param("func_defaults", {})
     func: Callable
     fdefaults: dict
 
-    # backwards compatibility
-    input_parser = dlg_enum_param(DropParser, "input_parser", DropParser.DILL)
-    output_parser = dlg_enum_param(DropParser, "output_parser", DropParser.DILL)
 
     def __repr__(self):
         if hasattr(self, "func"):
@@ -326,13 +318,8 @@ class PyFuncApp(BarrierAppDROP):
                 type(self.func_defaults),
             )
             raise ValueError
-        if hasattr(self, "input_parser") and self.input_parser in [
-            DropParser.PICKLE,
-            DropParser.DILL,
-        ]:
-            # only values are pickled, get them unpickled
-            for name, value in self.func_defaults.items():
-                self.func_defaults[name] = deserialize_data(value)
+        for name, value in self.func_defaults.items():
+            self.func_defaults[name] = deserialize_data(value)
         # the fn_defaults are used afterwards, we'll drop the func_defaults
         logger.debug("fn_defaults %s", self.fn_defaults)
         logger.debug("func_defaults %s", self.func_defaults)
@@ -411,11 +398,10 @@ class PyFuncApp(BarrierAppDROP):
             "func_code",
             "func_name",
             "func_arg_mapping",
-                                  "input_parser",
+            "input_parser",
             "output_parser",
             "func_defaults",
-           
-                                  "pickle",
+            "pickle",
         ]
 
         for kw in self.func_def_keywords:
@@ -446,11 +432,11 @@ class PyFuncApp(BarrierAppDROP):
         """
         Get necessary information for populating the argument
         """
-        value = self._applicationArgs[arg]["value"]
-        encoding = self._applicationArgs[arg].get("encoding")
-        precious = self._applicationArgs[arg].get("precious")
-        positional = self._applicationArgs[arg].get("positional")
-        portType = self._applicationArgs[arg].get("usage")
+        value = self._applicationArgs[arg].get("value", None)
+        encoding = self._applicationArgs[arg].get("encoding", "dill")
+        precious = self._applicationArgs[arg].get("precious", False)
+        positional = self._applicationArgs[arg].get("positional", False)
+        portType = self._applicationArgs[arg].get("usage", "NoPort")
 
         return value, encoding, precious, positional, portType
 
@@ -480,7 +466,7 @@ class PyFuncApp(BarrierAppDROP):
 
         # Legacy, used for graphs reliant on input/output parser
         if not self._applicationArgs:
-            encoding = self.input_parser or DropParser.DILL
+            encoding = DropParser.DILL
             for key in positionalArgsMap:
                 positionalArgsMap[key].encoding = encoding
             logger.debug("AppArgs/pargsDict: %s", positionalArgsMap)
@@ -666,6 +652,10 @@ class PyFuncApp(BarrierAppDROP):
         # 3. replace default argument values with named input ports
         logger.debug("Mapping from _inputs: %s", self._inputs)
         logger.debug("Parameters: %s", self.parameters)
+        if "input_parser" in self.parameters:
+            self.input_parser = self.parameters["input_parser"]
+        if "output_parser" in self.parameters:
+            self.output_parser = self.parameters["output_parser"]
         if "inputs" in self.parameters and check_ports_dict(self.parameters["inputs"]):
             logger.debug("Mapping ports to inputs...")
             if self.fn_nargs == 0:
@@ -680,6 +670,11 @@ class PyFuncApp(BarrierAppDROP):
                 key = list(inport.keys())[0]
                 inputs_dict[key] = {"name": inport[key], "path": None, "drop":
                     self._inputs[key]}
+            parser = (
+                get_port_reader_function(self.input_parser)
+                if hasattr(self, "input_parser")
+                else None
+            )
             keyPortArgs, posPortArgs = identify_named_ports(
                 inputs_dict,
                 pargsDict,
@@ -687,7 +682,7 @@ class PyFuncApp(BarrierAppDROP):
                 check_len=check_len,
                 mode="inputs",
                 addPositionalToKeyword=True,
-                parser=get_port_reader_function(self.input_parser)
+                parser=parser
             )
             portargs.update(keyPortArgs)
         else:
@@ -695,7 +690,7 @@ class PyFuncApp(BarrierAppDROP):
                 parser = (
                     get_port_reader_function(self.input_parser)
                     if hasattr(self, "input_parser")
-                    else None
+                    else get_port_reader_function("dill")
                 )
                 value = parser(input_drop)
                 if self.argnames:
@@ -717,7 +712,7 @@ class PyFuncApp(BarrierAppDROP):
         if not isinstance(self.func_code, bytes):
             try:
                 self.func = import_using_code(self.func_code, self.func_name,
-                    serialized=False)
+                                              serialized=False)
             except (SyntaxError, NameError):
                 serialized = True
         if isinstance(self.func_code, bytes) or serialized:
@@ -730,6 +725,8 @@ class PyFuncApp(BarrierAppDROP):
         self._mixin_func_defaults()
         if isinstance(self.func_arg_mapping, str):
             self.func_arg_mapping = ast.literal_eval(self.func_arg_mapping)
+        self.func_name = self.func.__qualname__
+        return
 
     @track_current_drop
     def initialize(self, **kwargs):
@@ -751,6 +748,7 @@ class PyFuncApp(BarrierAppDROP):
         self._applicationArgs = self._popArg(kwargs, "applicationArgs", {})
 
         self.func_code = self._popArg(kwargs, "func_code", None)
+        self.func = self._popArg(kwargs, "func", None)
         self.arguments_defaults = []
 
         # backwards compatibility
@@ -766,18 +764,21 @@ class PyFuncApp(BarrierAppDROP):
         self._clean_applicationArgs()
 
         self.num_args = len(
-            
-            self._applicationArgs
-        )  # number of additional arguments provided
+            self._applicationArgs)  # number of additional arguments provided
 
-        if not self.func_name and not self.func_code:
+        if not self.func_name and not self.func_code and not self.func:
             raise InvalidDropException(
-                                       self, "No function specified (either via name or code)"
+                self, "No function specified (either via name, code or function object)"
             )
+        if self.func:
+            self.func_name = self.func.__name__
         self.name = f"{self.name}:{self.func_name}"  # PyFuncApp is parent
         logger.info("AppDROP name: %s", self.name)
         # Lookup function or import bytecode as a function
-        if not self.func_code:
+        if inspect.isfunction(self.func):
+            self.argnames = list(inspect.signature(self.func).parameters)
+            self._init_fn_defaults()
+        elif not self.func and not self.func_code:
             self.func = import_using_name(self, self.func_name, curr_depth=0)
             self._init_fn_defaults()
         else:
@@ -821,6 +822,7 @@ class PyFuncApp(BarrierAppDROP):
         mapping. This also allows to pass values to any function argument through a port.
 
         """
+        self._run()
         logger.debug("This object: %s, %s", self, self._humanKey)
         funcargs = {}
         # Keyword arguments are made up of the default values plus the inputs
@@ -869,21 +871,21 @@ class PyFuncApp(BarrierAppDROP):
         # 5. Here is where the function is actually executed
         with redirect_stdout(capture):
             if isinstance(self.argsig, inspect.Signature):
-                result = self.func(*bind.args, **bind.kwargs)
+                self.result = self.func(*bind.args, **bind.kwargs)
             else:
-                result = self.func(*pargs, **funcargs)
+                self.result = self.func(*pargs, **funcargs)
 
-        logger.debug("Returned result from %s: %s", self.func_name, result)
         logger.info(
             f"Captured output from function app '{self.func_name}': {capture.getvalue()}"
         )
+        logger.debug("Returned result from %s: %s", self.func_name, self.result)
         logger.debug(f"Finished execution of {self.func_name}.")
 
         # 6. Process results
         # Depending on how many outputs we have we treat our result
         # as an iterable or as a single object. Each result is pickled
         # and written to its corresponding output
-        self.write_results(result)
+        self.write_results()
 
     def _match_parser(self, output_drop):
         """
@@ -891,29 +893,32 @@ class PyFuncApp(BarrierAppDROP):
         """
 
         encoding = "dill"
-        component_params = self.parameters.get("componentParams")
-        if not component_params:
-            return self.output_parser
+        # if not self._applicationArgs:
+        #     return getattr(self, "output_parser", "dill")
+        component_params = self.parameters.get("componentParams", {})
+        applicationArgs = self.parameters.get("applicationArgs", {})
         if "outputs" in self.parameters and check_ports_dict(
             self.parameters["outputs"]
         ):
             for outport in self.parameters["outputs"]:
                 drop_uid, drop_port = list(outport.items())[0]
-                if drop_uid == output_drop.uid and drop_port in component_params:
+                if drop_uid == output_drop.uid and drop_port in applicationArgs:
+                    param_enc = applicationArgs[drop_port]["encoding"]
+                    encoding = param_enc or encoding
+                elif drop_uid == output_drop.uid and drop_port in component_params:
                     param_enc = component_params[drop_port]["encoding"]
                     encoding = param_enc or encoding
         return DropParser(encoding) if encoding else self.output_parser
 
-    def write_results(self, result):
+    def write_results(self):
         from dlg.droputils import listify
 
-        result_iter = listify(result)
+        result_iter = listify(self.result)
         if not self.outputs and result_iter:
             return
 
         logger.debug(
-            "Writing follow result to %d output: %s", len(self.outputs),
-                     result_iter
+            "Writing following result to %d outputs: %s", len(self.outputs), result_iter
         )
         for i, o in enumerate(self.outputs):
             # Ensure that we don't produce two files for the same output DROP
@@ -929,7 +934,7 @@ class PyFuncApp(BarrierAppDROP):
                 result = result_iter[0]
             elif len(result_iter) > 1 and len(self.outputs) == 1:
                 # We want all elements in the list to go to the output
-                result = result
+                result = self.result
             else:
                 # Iterate over each element of the list for each output
                 # Wrap around for len(result_iter) < len(self.outputs)
@@ -937,6 +942,7 @@ class PyFuncApp(BarrierAppDROP):
                 result = result_iter[i]
 
             parser = self._match_parser(o)
+            parser = resolve_drop_parser(parser)
             if parser is DropParser.PICKLE:
                 o.write(pickle.dumps(result))
             elif parser is DropParser.DILL:

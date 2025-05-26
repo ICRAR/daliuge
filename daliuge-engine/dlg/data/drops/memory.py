@@ -52,14 +52,24 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
 
     :param pd: either the pydata dictionary from the graph node or the value directly
 
+    This function attempts to identify the type of data so it can appropriately be stored
+    in the right IO buffer (currently supporting BytesIO and StringIO).
+
+    If there is nothing in pydata (e.g. the empty string, ''), then technically the
+    type of the input data is String. However, if this is because the memory drop is
+    expecting data from an InputPort, then this is not a good assumption.
+
     :returns a byte encoded value
     """
     pd_dict = pd if isinstance(pd, dict) else {"value":pd, "type":"raw"}
     pydata = pd_dict["value"]
     logger.debug("pydata value provided: '%s' with type '%s'", pydata, type(pydata))
-
+    empty_strings = ["None", ""]
     if pd_dict["type"].lower() in ["string", "str"]:
-        return pydata if pydata != "None" else None
+        pydata = pydata
+    if pydata in empty_strings:
+        pydata = bytes() # Treat None/Empty objects as empty object data.
+        pd_dict["type"] = 'object'
     builtin_types = get_builtins()
     if pd_dict["type"] != "raw" and type(pydata) in builtin_types.values() and pd_dict["type"] not in builtin_types.keys():
         logger.warning("Type of pydata %s provided differs from specified type: %s", type(pydata).__name__, pd_dict["type"])
@@ -93,11 +103,12 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
         except Exception:
             pydata = pydata.encode()
     elif pd_dict["type"].lower() == "object":
-        pydata = base64.b64decode(pydata.encode())
-        try:
-            pydata = dill.loads(pydata)
-        except:
-            raise
+        if pydata:
+            pydata = base64.b64decode(pydata.encode())
+            try:
+                pydata = dill.loads(pydata)
+            except:
+                raise
     elif pd_dict["type"].lower() == "raw":
         pydata = dill.loads(base64.b64decode(pydata))
         logger.debug("Returning pydata of type: %s", type(pydata))
@@ -141,6 +152,13 @@ class InMemoryDROP(DataDROP):
     def initialize(self, **kwargs):
         """
         If there is a pydata argument use that to populate the DROP
+
+        Note: It is essential to have the type of the initial PyData correct, or it could
+        cause issues with the type of IO system that is used.
+
+        If parse_pydata() determines that the data passed via 'pydata' is a String, it
+        will use StringIO as the buffer. This can have ramifications for none-string
+        encodings used further down the track.
         """
         args = []
         pydata = None
@@ -167,7 +185,8 @@ class InMemoryDROP(DataDROP):
         if pydata:
             args.append(pydata)
             logger.debug("Loaded into memory: %s, %s, %s", pydata, self.data_type, type(pydata))
-        self._buf = io.BytesIO(*args) if self.data_type != "String" else io.StringIO(*args)
+        self._buf = io.BytesIO(*args) if self.data_type != "String" else io.StringIO(
+            dill.loads(*args)) # pylint: disable = no-value-for-parameter
         self.size = len(pydata) if pydata else 0
 
     def getIO(self):

@@ -3,7 +3,7 @@
 
 .. _app_index:
 
-|daliuge| *Application* Component Developers Guide
+|daliuge| Application Component Developers Guide
 ##################################################
 
 This chapter describes what developers need to do
