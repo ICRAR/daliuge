@@ -123,7 +123,7 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
 # @param category Memory
 # @param tag daliuge
 # @param pydata None/Object/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param io /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Input Output port
 # @param block_skip False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If set the drop will block a skipping chain until the last producer has finished and is not also skipped.
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
@@ -222,11 +222,12 @@ class InMemoryDROP(DataDROP):
 # @par EAGLE_START
 # @param category PythonObject
 # @param tag daliuge
-# @param self /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Reference to object
+# @param self /Object/ComponentParameter/InputOutput/ReadWrite//False/False/Reference to object
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Object should be serialized
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in the object
 # @param dropclass dlg.data.drops.memory.InMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class
-# @param base_name Object/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of class
+# @param base_name memory/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of class
+# @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @par EAGLE_END
 class PythonObjectDROP(InMemoryDROP):
     """
@@ -245,7 +246,7 @@ class PythonObjectDROP(InMemoryDROP):
 # @param category SharedMemory
 # @param tag daliuge
 # @param pydata None/String/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param io /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Input Output port
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param block_skip False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If set the drop will block a skipping chain until the last producer has finished and is not also skipped.
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node

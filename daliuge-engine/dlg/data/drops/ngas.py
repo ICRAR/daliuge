@@ -38,12 +38,13 @@ from dlg.meta import dlg_string_param, dlg_int_param
 # @param ngasMime "text/ascii"/String/ComponentParameter/NoPort/ReadWrite//False/False/Mime-type to be used for archiving
 # @param ngasTimeout 2/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Timeout for receiving responses for NGAS
 # @param block_skip False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If set the drop will block a skipping chain until the last producer has finished and is not also skipped.
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param io /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Input Output port
 # @param dropclass dlg.data.drops.ngas.NgasDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param base_name ngas/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
+# @param persist True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @par EAGLE_END
 class NgasDROP(DataDROP):
     """

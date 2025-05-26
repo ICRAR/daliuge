@@ -162,7 +162,7 @@ class SleepApp(BarrierAppDROP):
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param io /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Input Output port
 # @par EAGLE_END
 class CopyApp(BarrierAppDROP):
     """
@@ -1013,7 +1013,7 @@ class Branch(PyFuncApp):
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @param rest_array /Object.array/ApplicationArgument/InputOutput/ReadWrite//False/False/List of elements
+# @param rest_array /Object.Array/ApplicationArgument/InputOutput/ReadWrite//False/False/List of elements
 # @param element /Object.element/ApplicationArgument/OutputPort/ReadWrite//False/False/first element
 # @par EAGLE_END
 class PickOne(BarrierAppDROP):
