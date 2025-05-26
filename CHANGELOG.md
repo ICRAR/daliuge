@@ -1,6 +1,11 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+## v5.4.0
+
+- [Added] Add named-ports functionality to Branch construct: https://github.com/ICRAR/daliuge/pull/325
+- [Changed] Update component docstrings: https://github.com/ICRAR/daliuge/pull/330
+
 ## v5.3.1
 
 - [Added] Initial work to build docker images on release: https://github.com/ICRAR/daliuge/pull/312
