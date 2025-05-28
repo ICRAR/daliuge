@@ -108,13 +108,31 @@ class LG:
 
         self._done_dict = {}
         self._group_q = collections.defaultdict(list)
-        self._output_q = collections.defaultdict(list)
         self._start_list = []
         self._lgn_list = []
         stream_output_ports = {}  # key - port_id, value - construct key
         for jd in lg["nodeDataArray"]:
-            lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
+            lgn = LGNode(jd, ssid)
+            parentId = lgn.jd.get('parentId')
+
+            if lgn.is_group:
+                for wn in self._group_q[lgn.id]:
+                    wn.group = lgn
+                    lgn.add_child(wn)
+                self._group_q.pop(lgn.id)  # not thread safe
+
+            if parentId:
+                grp_id = parentId
+                if grp_id in self._done_dict:
+                    grp_nd = self._done_dict[grp_id]
+                    lgn.group = grp_nd
+                    grp_nd.add_child(lgn)
+                else:
+                    self._group_q[grp_id].append(lgn)
+
+            self._done_dict[lgn.id] = lgn
             self._lgn_list.append(lgn)
+
             node_ouput_ports = jd.get("outputPorts", {})
             node_ouput_ports.update(jd.get("outputLocalPorts", {}))
             # check all the outports of this node, and store "stream" output
@@ -122,9 +140,9 @@ class LG:
                 for name, out_port in node_ouput_ports.items():
                     if name.lower().endswith("stream"):
                         stream_output_ports[out_port["Id"]] = jd["id"]
-        # Need to go through the list again, since done_dict is recursive
+        # Need to go through the list again, since done_dict and group_q is recursive
         for lgn in self._lgn_list:
-            if lgn.is_start and lgn.category not in [
+            if lgn.is_start_node and lgn.category not in [
                 Categories.COMMENT,
                 Categories.DESCRIPTION,
             ]:

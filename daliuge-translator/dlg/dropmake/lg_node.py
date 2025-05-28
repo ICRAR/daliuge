@@ -74,23 +74,24 @@ class LGNode:
         self._outputs = []  # list of LGNode objects connected to this node
         self.dropclass = ""  # e.g. dlg.apps.simple.HelloWorldAPP
         self.reprodata = jd.get("reprodata", {}).copy()
+
         if "isGroup" in jd and jd["isGroup"] is True:
             self.is_group = True
-            for wn in group_q[self.id]:
-                wn.group = self
-                self.add_child(wn)
-            group_q.pop(self.id)  # not thread safe
+        #     for wn in group_q[self.id]:
+        #         wn.group = self
+        #         self.add_child(wn)
+        #     group_q.pop(self.id)  # not thread safe
         else:
             self.is_group = False
-
-        if "parentId" in jd:
-            grp_id = jd["parentId"]
-            if grp_id in done_dict:
-                grp_nd = done_dict[grp_id]
-                self.group = grp_nd
-                grp_nd.add_child(self)
-            else:
-                group_q[grp_id].append(self)
+        #
+        # if "parentId" in jd:
+        #     grp_id = jd["parentId"]
+        #     if grp_id in done_dict:
+        #         grp_nd = done_dict[grp_id]
+        #         self.group = grp_nd
+        #         grp_nd.add_child(self)
+        #     else:
+        #         group_q[grp_id].append(self)
 
         done_dict[self.id] = self
         self.subgraph = jd["subgraph"] if "subgraph" in jd else None
