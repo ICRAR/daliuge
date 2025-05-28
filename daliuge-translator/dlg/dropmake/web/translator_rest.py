@@ -87,7 +87,6 @@ from dlg.dropmake.web.translator_utils import (
     parse_mgr_url,
 )
 from dlg import constants
-
 APP_DESCRIPTION = """
 DALiuGE LG Web interface translates and deploys logical graphs.
 
@@ -124,7 +123,7 @@ app = FastAPI(
     description=APP_DESCRIPTION,
     openapi_tags=APP_TAGS_METADATA,
     contact={"name": "pritchardn", "email": "nicholas.pritchard@icrar.org"},
-    version=dlg.version.version,
+    # version=version,
     license_info={
         "name": "LGPLv2+",
         "url": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html",
