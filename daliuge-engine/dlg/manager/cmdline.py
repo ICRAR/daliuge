@@ -27,6 +27,7 @@ like DMs and DIMs.
 import logging
 import os
 import signal
+import subprocess
 import sys
 import time
 import re
@@ -98,8 +99,42 @@ def launchServer(opts):
 
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
+    # signal.signal(signal.SIGSEGV, handle_signal)
 
-    server.start(opts.host, opts.port)
+    if opts.watchdog_enabled:
+        start_watchdog(server, opts)
+    else:
+        server.start(opts.host, opts.port)
+
+def start_watchdog(server, opts):
+    """
+    Run the server in a separate process to keep it under observation.
+
+    This is an experimental feature intended to secure complete runtime shutdown when we
+    run potentially memory-unsafe code in child threads of the server.
+
+    If we detect a sigsegv, we warn the user and attempt to re-run the server so that
+    the NodeManager doesn't completely disappear.
+
+    This method only acts as the watchdog, and does not support Session management or
+    any explicit reconnect, and instead leaves that up to the respective manager
+    implementations.
+
+    :param server: server object that we are watching
+    :param opts: runtime options
+    """
+    def run_server():
+        server.start(opts.host, opts.port)
+
+    while watchdog:
+        p = Process(target=run_server)
+        p.start()
+        p.join()
+        if p.exitcode == signal.SIGSEGV:
+            logger.warning(
+                "Threaded server crashed with SIGSEGV (signal 11). Restarting...")
+        else:
+            watchdog = False
 
 
 def addCommonOptions(parser, defaultPort):
@@ -184,6 +219,12 @@ def addCommonOptions(parser, defaultPort):
         dest="logdir",
         help="The directory where the logging files will be stored",
         default=utils.getDlgLogsDir(),
+    )
+    parser.add_option(
+        "--watchdog",
+        action="store_true",
+        dest="watchdog_enabled",
+        help="Enable watchdog process wrapper for server (WARNING: Experimental feature)"
     )
 
 
