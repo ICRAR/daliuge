@@ -29,15 +29,20 @@ DALiuGE Fundamentals
 :doc:`/architecture/index` |br|
 :doc:`/deployment/overview` |br|
 
-Advanced Techniques and Applications
-------------------------------------
-:doc:`/development/app_development/app_index` |br|
+Using the command line interface
+--------------------------------
+:doc:`/cli/cli_basics`
+:doc:`/cli/cli_engine`
+:doc:`/cli/cli_translator`
+
+Advanced DALiuGE Methods
+------------------------
 :doc:`/advanced/delayed` |br| 
+
 
 API Documentation
 -----------------
 :doc:`api-index` |br| 
-:doc:`cli` |br|
 
 .. toctree::
    :maxdepth: 1
@@ -62,10 +67,17 @@ API Documentation
    :hidden: 
    :caption: Advanced DALiuGE Methods
 
-   development/dev_index
-   development/app_development/app_index
-   development/data_development/data_index
    advanced/delayed
+   
+.. toctree:: 
+   :maxdepth: 1
+   :hidden:
+   :caption: CLI User Guide
+
+   cli/cli_basics
+   cli/cli_engine
+   cli/cli_translator
+   cli/cli_remote
 
 .. toctree::
    :caption: API Documentation
@@ -73,7 +85,6 @@ API Documentation
    :hidden:
 
    api-index
-   cli
 
 .. toctree:: 
     :hidden:
