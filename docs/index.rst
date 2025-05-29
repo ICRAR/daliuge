@@ -35,9 +35,8 @@ Using the command line interface
 :doc:`/cli/cli_engine`
 :doc:`/cli/cli_translator`
 
-Advanced Techniques and Applications
-------------------------------------
-:doc:`/development/app_development/app_index` |br|
+Advanced DALiuGE Methods
+------------------------
 :doc:`/advanced/delayed` |br| 
 
 
@@ -68,9 +67,6 @@ API Documentation
    :hidden: 
    :caption: Advanced DALiuGE Methods
 
-   development/dev_index
-   development/app_development/app_index
-   development/data_development/data_index
    advanced/delayed
    
 .. toctree:: 
