@@ -34,6 +34,7 @@ import re
 
 import daemon
 from lockfile.pidlockfile import PIDLockFile
+from multiprocessing import Process
 
 from .composite_manager import DataIslandManager, MasterManager
 from dlg.constants import (
@@ -102,11 +103,11 @@ def launchServer(opts):
     # signal.signal(signal.SIGSEGV, handle_signal)
 
     if opts.watchdog_enabled:
-        start_watchdog(server, opts)
+        start_watchdog(server, opts, logger)
     else:
         server.start(opts.host, opts.port)
 
-def start_watchdog(server, opts):
+def start_watchdog(server, opts, logger):
     """
     Run the server in a separate process to keep it under observation.
 
@@ -126,6 +127,7 @@ def start_watchdog(server, opts):
     def run_server():
         server.start(opts.host, opts.port)
 
+    watchdog = True
     while watchdog:
         p = Process(target=run_server)
         p.start()
