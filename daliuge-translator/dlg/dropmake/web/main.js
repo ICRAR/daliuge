@@ -679,7 +679,7 @@ async function directRestDeploy() {
         })
     })
     const mgr_url = manager_url + "/session?sessionId=" + sessionId;
-    window.open(mgr_url, 'blank').focus();
+    window.open(mgr_url, 'deploy_target').focus();
 }
 
 function jsonEscape(str) {
