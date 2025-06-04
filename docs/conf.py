@@ -96,7 +96,7 @@ except ImportError:
 
 language = "en"
 app_development = "development/app_development/"
-exclude_patterns = ["_build", "tutorial/*", "development/*"]
+exclude_patterns = ["_build", "tutorial/*", "development/wip_docs/*", "development/dev/*"]
 
 pygments_style = "sphinx"
 # If true, `todo` and `todoList` produce output, else they produce nothing.

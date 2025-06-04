@@ -43,6 +43,9 @@ Advanced DALiuGE Methods
 API Documentation
 -----------------
 :doc:`api-index` |br| 
+:doc:`development/app_development/app_index` |br|
+:doc:`development/data_development/data_index` |br|
+
 
 .. toctree::
    :maxdepth: 1
@@ -80,11 +83,14 @@ API Documentation
    cli/cli_remote
 
 .. toctree::
-   :caption: API Documentation
+   :caption: Reference
    :maxdepth: 2
    :hidden:
 
    api-index
+   development/template_primer
+   development/app_development/app_index 
+   development/data_development/data_index 
 
 .. toctree:: 
     :hidden:
