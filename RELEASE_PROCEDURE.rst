@@ -10,53 +10,31 @@ Release procedure
     git status
 
 
-* Decide a new version number (with major, minor, patch components) and apply it
-  in all packages' ``setup.py``
-  ::
+* Decide on the next version number, making reference to Semantic Versioning
 
-    VERSION_MAJOR=X
-    VERSION_MINOR=Y
-    VERSION_PATCH=Z
-    VERSION=$VERSION_MAJOR.$VERSION_MINOR.$VERSION_PATCH
-    SETUP_FILES="daliuge-common/setup.py daliuge-translator/setup.py daliuge-engine/setup.py"
-    echo $SETUP_FILES | xargs sed -i "s/MAJOR = .*/MAJOR = $VERSION_MAJOR/; s/MINOR = .*/MINOR = $VERSION_MINOR/; s/PATCH = .*/PATCH = $VERSION_PATCH/"
+* Update the Changelog with:
+  * The new version as a heading
+  * List each merged PRs that have been committed to master since the last Release with a copy of the PR link
 
-* Double-check these are the only changes you will commit
-  ::
+* Run
 
-    git diff
+  :: 
 
-* Commit the version changes
-  ::
+    make release
 
-    git commit $SETUP_FILES -m "daliuge $VERSION"
 
-* Tag the repository with a new version name tag (using ``vX.Y.Z`` format)
-  ::
+* This will:
 
-    git tag v$VERSION -m "daliuge $VERSION"
-    # Alternatively, if you want to sign it
-    git tag v$VERSION -m "daliuge $VERSION" -s
+  * Confirm that you have updated the changelog with the new version information
+  * Update the VERSION files across the repo for each module 
+  * Tag and commit all files
+  * Push everything to master
 
-* Push the new commit and the tag to GitHub
-  ::
+* Using the GitHub UI to create an official release: 
 
-    git push origin master v$VERSION
+  * Navigate to the Releases section in the right-hand side
+  * Click "Draft a new Release" 
+  * Choose the most recent tagged version that you just created and click "Generate release notes" 
+  * Click "Publish Release"
 
-* Produce and collect source distributions for all packages
-  ::
-
-    python setup.py sdist
-    for package in daliuge-common daliuge-translator daliuge-engine; do
-      cd $package
-      python setup.py sdist
-      cp dist/*-$VERSION.tar.gz $OLDPWD/dist
-      cd $OLDPWD
-    done
-
-* Upload to PyPI 
-  ::
-
-    pip install twine
-    # Adjust credentials in ~/.pypirc, then
-    twine upload dist/daliuge*-$VERSION.tar.gz
+* If everything is successful, this will push to PyPI and DockerHub!
