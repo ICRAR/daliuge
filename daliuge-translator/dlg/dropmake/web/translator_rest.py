@@ -1167,6 +1167,13 @@ def run(_, args):
         default=utils.getDlgLogsDir(),
     )
 
+    parser.add_argument(
+        "--local-time",
+        action="store_true",
+        help="Use local system time when logging",
+        default=False,
+    )
+
     options = parser.parse_args(args)
 
     if options.lg_path is None or options.pgt_path is None:
@@ -1174,12 +1181,14 @@ def run(_, args):
     elif not os.path.exists(options.lg_path):
         parser.error(f"{options.lg_path} does not exist")
 
+    time_fmt_str = "Local" if options.local_time else "GMT"
     if options.verbose or options.logdir:
         fmt = logging.Formatter(
             "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] "
             "%(name)s#%(funcName)s:%(lineno)s %(message)s"
         )
-        fmt.converter = time.gmtime
+
+        fmt.converter = time.localtime if options.local_time else time.gmtime
         if options.verbose:
             stream_handler = logging.StreamHandler(sys.stdout)
             stream_handler.setFormatter(fmt)
@@ -1214,7 +1223,9 @@ def run(_, args):
     signal.signal(signal.SIGINT, handler)
 
     logging.debug("Starting uvicorn verbose %s", options.verbose)
-    uvicorn.run(app=app, host=options.host, port=options.port, log_level=options.verbose)
+    logging.warning("Logging using %s time", time_fmt_str)
+    ll = 'debug' if options.verbose else 'warning'
+    uvicorn.run(app=app, host=options.host, port=options.port, log_level=ll)
 
 
 if __name__ == "__main__":
