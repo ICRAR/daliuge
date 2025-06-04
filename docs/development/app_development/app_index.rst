@@ -4,7 +4,7 @@
 .. _app_index:
 
 Application Component Developers Guide
-##################################################
+######################################
 
 This chapter describes what developers need to do
 to write a new application component that can be used

@@ -1,9 +1,11 @@
 import ast
 import logging
 import collections
+
+import numpy as np
+
 from dlg.data.drops.data_base import DataDROP
 import dlg.droputils as droputils
-from dlg.data import path_builder
 import dlg.drop_loaders as drop_loaders
 
 from dataclasses import dataclass
@@ -11,6 +13,7 @@ from enum import Enum, IntEnum, auto
 from typing import Tuple, Union
 
 from dlg.drop import AbstractDROP
+
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
@@ -166,6 +169,7 @@ def identify_named_ports(
     keys = list(port_dict.keys())
     logger.debug("Checking ports: %s against %s %s", keys, positionalArgs, keywordArgs)
     for i in range(check_len):
+        local_parser = parser
         try:
             key = port_dict[keys[i]]["name"]
             value = port_dict[keys[i]]["path"]
@@ -180,12 +184,14 @@ def identify_named_ports(
             except ValueError:
                 logger.warning("No encoding set for %key: possible default")
                 continue
-            parser = get_port_reader_function(encoding)
-            if parser:
-                logger.debug("Reading from %s encoded port using %s", encoding, parser.__repr__())
-                value = parser(port_dict[keys[i]]["drop"])
+            if local_parser is None:
+                # if no parser is passed, we use the one from the port dict
+                local_parser = get_port_reader_function(encoding)
+            if local_parser:
+                logger.debug("Reading from %s encoded port %s using %s", encoding, key, parser.__repr__())
+                value = local_parser(port_dict[keys[i]]["drop"])
             positionalPortArgs[key].value = value
-            logger.debug("Using %s '%s' for parg %s", mode, value, key)
+            logger.debug("Using %s '%s' for port %s", mode, value, key)
             positionalArgs.remove(key)
             # We have positional argument that is also a keyword
             if addPositionalToKeyword:
@@ -196,10 +202,11 @@ def identify_named_ports(
             except ValueError:
                 logger.warning("No encoding set for %key: possible default")
                 continue
-            parser = get_port_reader_function(encoding)
-            if parser:
+            if local_parser is None:
+                local_parser = get_port_reader_function(encoding)
+            if local_parser:
                 logger.debug("Reading from %s encoded port using %s", encoding, parser.__repr__())
-                value = parser(port_dict[keys[i]]["drop"])
+                value = local_parser(port_dict[keys[i]]["drop"])
             # if not found in appArgs we don't put them into portargs either
             # pargsDict.update({key: value})
             keywordArgs[key].value = value
@@ -289,8 +296,6 @@ def replace_named_ports(
 
     positionalArgs = _get_args(appArgs, positional=True)
     keywordArgs = _get_args(appArgs, positional=False)
-    # we will need an ordered dict for all positional arguments
-    # thus we create it here and fill it with values
 
     logger.debug(
         "posargs: %s; keyargs: %s, %s",
@@ -303,8 +308,8 @@ def replace_named_ports(
     # thus we create it here and fill it with values
     positionalPortArgs = collections.OrderedDict(positionalArgs)
     keywordPortArgs = {}
-
-    # Update the argument dictionaries in-place based on the port names.
+    # port
+        # names.
     # This needs to be done for both the input ports and output ports on the drop.
     tmp_key, tmp_port = _process_port(
         inport_names,
@@ -349,10 +354,10 @@ def replace_named_ports(
 
     #  Construct the final keywordArguments and positionalPortArguments
     for k, v in keywordPortArgs.items():
-        if v not in [None, ""]:
-            keywordArgs.update({k: v})
+        if not _is_value_empty(v):
+                keywordArgs.update({k: v})
     for k, v in positionalPortArgs.items():
-        if v not in [None, ""]:
+        if not _is_value_empty(v):
             positionalArgs.update({k: v})
 
     keywordArgs = serialize_kwargs(keywordArgs)
@@ -360,6 +365,23 @@ def replace_named_ports(
 
     logger.debug("After port replacement: pargs: %s; keyargs: %s", pargs, keywordArgs)
     return keywordArgs, pargs
+
+def _is_value_empty(value: object):
+    """
+    Check if the value is empty
+
+    If it is a non-standard datatype, such as a numpy array, there can be truth
+    ambiguities for the emptiness. In this instance, we explicitly check for the
+    size of the array.
+
+    :param value: an object that could be a primitive (int), an iterator, an object, or
+    an array.
+    :return: True if the value is empty.
+    """
+    if isinstance(value, np.ndarray):
+        return True if value.size == 0 else False
+    else:
+        return True if value in ["", None] else False
 
 
 def _process_port(
@@ -420,6 +442,20 @@ def _get_args(appArgs, positional=False):
     logger.debug("%s arguments: %s", argType, args)
     return args
 
+def resolve_drop_parser(parser: Union[str, DropParser]) -> DropParser:
+    """
+    Resolve the drop parser to a DropParser enum value.
+    """
+    if isinstance(parser, str):
+        try:
+            parser = DropParser[parser.upper()]
+        except KeyError:
+            logger.critical("Invalid parser string: %s", parser)
+            return DropParser.DILL
+    elif not isinstance(parser, DropParser):
+        logger.critical("Expected a string or DropParser enum, got %s", type(parser))
+        return DropParser.DILL
+    return parser
 
 def get_port_reader_function(input_parser: DropParser):
     """
@@ -427,12 +463,20 @@ def get_port_reader_function(input_parser: DropParser):
     """
     # Inputs are un-pickled and treated as the arguments of the function
     # Their order must be preserved, so we use an OrderedDict
-    if input_parser is DropParser.PICKLE:
+    ip = None
+    # if isinstance(input_parser, str):
+    #     parsers = DropParser.__members__
+    #     ip = input_parser.upper()
+    #     ip = parsers[ip] if ip in parsers else None
+    # else:
+    #     ip = input_parser
+    ip = resolve_drop_parser(input_parser)
+    if ip is DropParser.PICKLE:
         # all_contents = lambda x: pickle.loads(droputils.allDropContents(x))
         reader = drop_loaders.load_pickle
-    elif input_parser is DropParser.UTF8:
+    elif ip is DropParser.UTF8:
         reader = drop_loaders.load_utf8
-    elif input_parser is DropParser.EVAL:
+    elif ip is DropParser.EVAL:
 
         def optionalEval(x):
             # Null and Empty Drops will return an empty byte string
@@ -442,7 +486,7 @@ def get_port_reader_function(input_parser: DropParser):
             return ast.literal_eval(content) if len(content) > 0 else None
 
         reader = optionalEval
-    elif input_parser is DropParser.UTF8:
+    elif ip is DropParser.UTF8:
 
         def utf8decode(drop: "DataDROP"):
             """
@@ -452,9 +496,9 @@ def get_port_reader_function(input_parser: DropParser):
             return droputils.allDropContents(drop).decode("utf-8")
 
         reader = utf8decode
-    elif input_parser is DropParser.NPY:
+    elif ip is DropParser.NPY:
         reader = drop_loaders.load_npy
-    elif input_parser is DropParser.PATH:
+    elif ip is DropParser.PATH:
         def PathFromData(x: AbstractDROP):
             # Attempt to access path from DROP "x"
             # If not Path, this could be a memory Drop with path information.
@@ -464,12 +508,13 @@ def get_port_reader_function(input_parser: DropParser):
             except AttributeError:
                 return drop_loaders.load_utf8(x)
         reader = PathFromData
-    elif input_parser is DropParser.DATAURL:
+    elif ip is DropParser.DATAURL:
         reader = lambda x: x.dataURL
-    elif input_parser is DropParser.DILL:
+    elif ip is DropParser.DILL:
         reader = drop_loaders.load_dill
-    elif input_parser is DropParser.BINARY:
+    elif ip is DropParser.BINARY:
          reader = drop_loaders.load_binary
     else:
-        raise ValueError("Invalid input parser specified: %s", input_parser.__repr__())
+        logger.critical("Invalid input parser specified: %s", ip.__repr__())
+        return drop_loaders.load_dill
     return reader

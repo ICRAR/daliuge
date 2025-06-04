@@ -555,6 +555,7 @@ function handleFetchErrors(response) {
 }
 
 async function directRestDeploy() {
+
     // fetch manager host and port from local storage
     let murl = window.localStorage.getItem("manager_url");
     if (!murl) {
@@ -678,7 +679,7 @@ async function directRestDeploy() {
         })
     })
     const mgr_url = manager_url + "/session?sessionId=" + sessionId;
-    window.open(mgr_url, '_blank').focus();
+    window.open(mgr_url, 'deploy_target').focus();
 }
 
 function jsonEscape(str) {

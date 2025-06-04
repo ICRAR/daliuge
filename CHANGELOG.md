@@ -1,6 +1,16 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+## v5.4.0
+
+- [Added] Add named-ports functionality to Branch construct: https://github.com/ICRAR/daliuge/pull/325
+- [Changed] Update component docstrings: https://github.com/ICRAR/daliuge/pull/330
+
+## v5.3.1
+
+- [Added] Initial work to build docker images on release: https://github.com/ICRAR/daliuge/pull/312
+- [Fixed] Test np.array is empty correctly in named_port_utils.py: https://github.com/ICRAR/daliuge/pull/334
+
 ## v5.3.0
 
 - [Added] Per-app logging from the web UI: https://github.com/ICRAR/daliuge/pull/327

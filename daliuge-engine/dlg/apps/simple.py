@@ -162,7 +162,7 @@ class SleepApp(BarrierAppDROP):
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param io /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Input Output port
 # @par EAGLE_END
 class CopyApp(BarrierAppDROP):
     """
@@ -937,7 +937,6 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 # @param true  /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is true the input will be copied to this port
 # @param false /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is false the input will be copied to this port
 # @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
-# @param dropclass dlg.apps.simple.GenericScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param dropclass dlg.apps.simple.Branch/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -957,31 +956,45 @@ class Branch(PyFuncApp):
     bufsize = dlg_int_param("bufsize", 65536)
     result = dlg_bool_param("result", False)
 
-    def write_results(self, result: bool):
+    def write_results(self,result:bool=False):
         """
         Copy the input to the output identified by the condition function.
-
-        Parameters:
-        -----------
-        result:
-            The result of the condition function
         """
-
+        if result and isinstance(result, bool):
+            self.result = result
         if not self.outputs:
             return
 
-        # TODO: The following should eventually use named ports
-        false_out = 0 if result else 1
-        true_out = 1 if result else 0
-        logger.debug("Sending skip to port: %s", self.outputs[false_out])
-        self.outputs[false_out].skip()  # send skip to correct branch
+        go_result = str(self.result).lower()
+        nogo_result = str(not self.result).lower()
 
-        if self.inputs:
+        try:
+            nogo_drop = getattr(self, nogo_result)
+        except AttributeError:
+            logger.error("There is no Drop associated with the False condition; "
+                         "a runtime failure has occured.")
+            self.setError()
+            return
+        try:
+            go_drop = getattr(self, go_result)
+        except AttributeError:
+            logger.error("There is no Drop associated with the True condition; "
+                         "a runtime failure has occured.")
+            self.setError()
+            return
+
+        logger.info("Sending skip to port: %s: %s", str(nogo_result), getattr(self,nogo_result))
+        nogo_drop.skip()  # send skip to correct branch
+
+        if self.inputs and hasattr(go_drop, "write"):
             droputils.copyDropContents(  # send data to correct branch
-                self.inputs[0], self.outputs[true_out], bufsize=self.bufsize
+                self.inputs[0], go_drop, bufsize=self.bufsize
             )
         else:  # this enables a branch based only on the condition function
-            self.outputs[true_out].write(dill.dumps(result))
+            d = pickle.dumps(self.parameters[self.argnames[0]])
+            # d = self.parameters[self.argnames[0]]
+            if hasattr(go_drop, "write"):
+                go_drop.write(d) 
 
 
 ##
@@ -1000,7 +1013,7 @@ class Branch(PyFuncApp):
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @param rest_array /Object.array/ApplicationArgument/InputOutput/ReadWrite//False/False/List of elements
+# @param rest_array /Object.Array/ApplicationArgument/InputOutput/ReadWrite//False/False/List of elements
 # @param element /Object.element/ApplicationArgument/OutputPort/ReadWrite//False/False/first element
 # @par EAGLE_END
 class PickOne(BarrierAppDROP):
@@ -1026,7 +1039,7 @@ class PickOne(BarrierAppDROP):
         else:
             data = np.array(data)
         value = data[0] if len(data) else None
-        rest = data[1:] if len(data) > 1 else np.array([])
+        rest = data[1:] if len(data) >= 1 else np.array([])
         return value, rest
 
     def writeData(self, value, rest):

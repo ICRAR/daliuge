@@ -20,6 +20,8 @@
 #    MA 02111-1307  USA
 #
 import base64
+import inspect
+import dill
 import logging
 import os
 import pickle
@@ -28,7 +30,7 @@ import unittest
 import numpy
 
 from dlg import droputils, drop_loaders
-from dlg.named_port_utils import DropParser
+from dlg.named_port_utils import DropParser, get_port_reader_function
 from dlg.apps import pyfunc
 from dlg.apps.simple_functions import string2json
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
@@ -58,7 +60,7 @@ def func3():
 def func_with_defaults(a, b=10, c=20, x=30, y=40, z=50):
     """Returns a - b * c + (y - x) * z. Default is a + 300"""
     res = a - b * c + (y - x) * z
-    logger.info("%r - %r * %r + (%r - %r) * %r = %r", a, b, c, y, x, z, res)
+    # logger.info("%r - %r * %r + (%r - %r) * %r = %r", a, b, c, y, x, z, res)
     return res
 
 
@@ -68,24 +70,41 @@ def sum_with_args_and_kwarg(a, *args, **kwargs):
     return a + sum(args) + b
 
 
-def _PyFuncApp(oid, uid, f, **kwargs):
+def _PyFuncApp(oid, uid, f, additional_imports=None, global_parsers= False, **kwargs):
     fname = None
-    if isinstance(f, str):
+    func = None
+    fcode = None
+    if not additional_imports:
+        additional_imports = []
+    if inspect.isfunction(f):
+        # means likely we got a function passed in (from tests)
+        fname = f.__name__
+        func = f
+    elif not isinstance(f, str):
+        fcode = inspect.getsource(f)
+        imports = "\n".join([f"import {i}" for i in additional_imports])
+        fcode = f"{imports}\n{fcode}".strip()
+    elif isinstance(f, str):
         fname = f = "test.apps.test_pyfunc." + f
-    fw_kwargs = {
-        k: v for k, v in kwargs.items() if k in ["input_parser", "output_parser"]
-    }
+    if global_parsers:
+        fw_kwargs = {
+            k: v for k, v in kwargs.items() if k in ["input_parser", "output_parser"]
+        }
+    else:
+        fw_kwargs = {}
+
+    applicationArgs = kwargs.pop("applicationArgs", {})
     input_kws = [
         {k: v} for k, v in kwargs.items() if k not in ["input_parser", "output_parser"]
     ]
-
-    fcode, fdefaults = pyfunc.serialize_func(f)
+    # fcode, fdefaults = pyfunc.serialize_func(f)
     return pyfunc.PyFuncApp(
         oid,
         uid,
         func_name=fname,
         func_code=fcode,
-        func_defaults=fdefaults,
+        func=func,
+        applicationArgs=applicationArgs,
         inputs=input_kws,
         **fw_kwargs,
     )
@@ -125,7 +144,7 @@ class TestPyFuncApp(unittest.TestCase):
             func_name = "test.apps.test_pyfunc.doesnt_exist",)
 
     def test_valid_creation(self):
-        _PyFuncApp("a", "a", "func1")
+        _PyFuncApp("a", "a", func1)
 
     def test_creation_with_code(self):
         def inner_function(x, y):
@@ -153,20 +172,22 @@ class TestPyFuncApp(unittest.TestCase):
         input_data = [2, 2] if input_data is None else input_data
         output_data = [2, 2] if output_data is None else output_data
         a = InMemoryDROP("a", "a")
-        kwargs = {a.uid: "x"}
+        kwargs = {a.uid: "x", 
+                  "applicationArgs": {
+                      "x":{"value":None, "type": "numpy.array", "encoding": "eval","usage":"InputPort"},
+                      }
+                      }
         b = _PyFuncApp(
             "b",
             "b",
             f,
-            input_parser=DropParser.EVAL,
-            output_parser=DropParser.EVAL,
+            global_parsers=False,
             **kwargs,
         )
         c = InMemoryDROP("c", "c")
 
         b.addInput(a)
         b.addOutput(c)
-
         with DROPWaiterCtx(self, c, 10):
             a.write(repr(input_data).encode("utf-8"))
             a.setCompleted()
@@ -174,7 +195,7 @@ class TestPyFuncApp(unittest.TestCase):
             self.assertEqual(DROPStates.COMPLETED, drop.status)
         self.assertEqual(
             output_data,
-            eval(droputils.allDropContents(c).decode("utf-8"), {}, {}),
+            dill.loads(droputils.allDropContents(c)),
         )
 
     def test_string2json_func(self, f=string2json, input_data=None, output_data=None):
@@ -183,7 +204,7 @@ class TestPyFuncApp(unittest.TestCase):
 
         a = InMemoryDROP("a", "a")
         kwargs = {a.uid: "string"}
-        b = _PyFuncApp("b", "b", f, **kwargs)
+        b = _PyFuncApp("b", "b", f, additional_imports=["json"], **kwargs)
         c = InMemoryDROP("c", "c")
 
         b.addInput(a)
@@ -194,14 +215,18 @@ class TestPyFuncApp(unittest.TestCase):
             a.setCompleted()
         for drop in a, b, c:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
-        numpy.testing.assert_equal(output_data, drop_loaders.load_pickle(c))
+        numpy.testing.assert_equal(drop_loaders.load_pickle(c), output_data)
 
     def test_npy_func(self, f=lambda x: x, input_data=None, output_data=None):
         input_data = numpy.ones([2, 2]) if input_data is None else input_data
         output_data = numpy.ones([2, 2]) if output_data is None else output_data
 
         a = InMemoryDROP("a", "a")
-        kwargs = {a.uid: "x"}
+        kwargs = {a.uid: "x", 
+                  "applicationArgs": {
+                      "x":{"value":None, "type": "numpy.array", "encoding": "npy","usage":"InputPort"}
+                      }
+                      }
         b = _PyFuncApp(
             "b",
             "b",
