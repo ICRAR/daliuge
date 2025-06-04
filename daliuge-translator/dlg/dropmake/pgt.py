@@ -76,6 +76,8 @@ class PGT(object):
 
     def _can_merge(self, new_num_parts):
         if new_num_parts <= 0:
+            logger.warning("This has caused a runtime error: consider checking that you "
+                           "have set the right number of nodes in the DIM command line.")
             raise GPGTException("Invalid new_num_parts {0}".format(new_num_parts))
         if not self._merge_parts:
             raise GPGTException(
@@ -83,7 +85,8 @@ class PGT(object):
             )
         if self._num_parts_done <= new_num_parts:
             raise GPGTNoNeedMergeException(
-                "No need to merge this {0} PGTP: {1} <= {2}".format(
+                "No need to merge this {0} PGTP: Merged parts: {1} <=  "
+                "New Parts: {2}".format(
                     self.__class__.__name__,
                     self._num_parts_done,
                     new_num_parts,
@@ -236,7 +239,8 @@ class PGT(object):
         if num_islands < 1:
             num_islands = 1  # need at least one island manager
         if len(node_list) == 0 and tpl_nodes_len > 0:  # generate pg_spec template
-            node_list = range(tpl_nodes_len + num_islands)  # create a fake list for now
+            node_list = [x for x in range(tpl_nodes_len + num_islands)]  # create a fake
+            # list for now
             tpl_fl = True
         else:
             tpl_fl = False
@@ -260,13 +264,10 @@ class PGT(object):
         if self._num_parts_done == 0:
             raise GPGTException("The graph has not been partitioned yet")
 
-        if node_list is None or len(node_list) == 0:
+        if not node_list:
             raise GPGTException("Node list is empty!")
 
         form_island = num_islands > 1
-        if nodes_len < 1:  # we allow to run everything on a single node now!
-            raise GPGTException("Too few nodes: {0}".format(nodes_len))
-
         # deal with the co-hosting of DIMs
         if not co_host_dim:
             if form_island and self._num_parts_done > nodes_len:

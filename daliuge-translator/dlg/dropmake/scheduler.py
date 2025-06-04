@@ -20,6 +20,7 @@
 #
 
 import copy
+import importlib.resources
 import logging
 import os
 import platform
@@ -28,7 +29,6 @@ from collections import defaultdict
 
 import networkx as nx
 import numpy as np
-import pkg_resources
 from pyswarm import pso
 
 from .utils.antichains import get_max_weighted_antichain
@@ -1193,9 +1193,9 @@ class DAGUtil(object):
                 ext = "dylib"
             else:
                 ext = "so"  # what about Microsoft??!!
-            os.environ["METIS_DLL"] = pkg_resources.resource_filename(
-                "dlg.dropmake", "lib/libmetis.{0}".format(ext)
-            )  # @UndefinedVariable
+            os.environ["METIS_DLL"] = str(
+                importlib.resources.files("dlg.dropmake") / f"lib/libmetis.{ext}"
+            )
             import metis as mt
         if not hasattr(mt, "_dlg_patched"):
             mt._part_graph = mt.part_graph

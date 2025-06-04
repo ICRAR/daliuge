@@ -1,3 +1,5 @@
+.. _template_primer:
+
 Template Primer
 ===============
 We are providing a GitHUB `component development template <https://github.com/ICRAR/daliuge-component-template>`_. The template covers application and data components and provides everything to get you started, including project setup, testing, format compliance, build, documentation and release, continuous integration and more. Although it is meant to be used to develop a whole set of components, it is quite useful even for just a single one. We are still actively developing the template itself and thus a few things are still missing, or have rough edges.

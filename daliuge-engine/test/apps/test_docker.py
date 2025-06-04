@@ -142,7 +142,7 @@ class DockerTests(unittest.TestCase):
         finish before proceeding.
         """
         dockerfile = ("FROM ubuntu:22.04\n"
-                         "RUN apt update && apt install -y netcat\n")
+                         "RUN apt update && apt install apt-transport-https && apt install -y netcat\n")
         container_manager = CustomContainer()
         a = FileDROP("a", "a")
         b = DockerApp(
