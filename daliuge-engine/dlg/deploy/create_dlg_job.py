@@ -481,7 +481,7 @@ def run(_, args=None):
         type="choice",
         choices=["submit", "analyse"],
         dest="action",
-        help="1 - create/submit job, 2 - analyse log",
+        help="**submit** job or **analyse** log",
         default=None,
     )
     parser.add_option(

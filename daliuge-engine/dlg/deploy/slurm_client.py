@@ -258,6 +258,7 @@ class SlurmClient:
             slurm_str = self.apply_slurm_template(self._slurm_template, 
                                                   pardict['SESSION_ID'],
                                                   pardict['DLG_ROOT'])
+            print(slurm_str)
             return string.Template(slurm_str).safe_substitute(pardict)
 
         return init_tpl.safe_substitute(pardict)
@@ -283,9 +284,9 @@ class SlurmClient:
         elif not self._remote:
             # locally fallback to env var
             if os.environ["DLG_ROOT"]:
-                dlg_root = os.environ["DLG_ROOT"]
+                self.dlg_root = os.environ["DLG_ROOT"]
             else:
-                dlg_root = f"{os.environ['HOME']}.dlg"
+                self.dlg_root = f"{os.environ['HOME']}.dlg"
         session_dir =  self.session_dir
         if not self._remote and not os.path.exists(session_dir):
             os.makedirs(session_dir)
@@ -338,6 +339,7 @@ class SlurmClient:
 
         job_file_name = "{0}/jobsub.sh".format(session_dir)
         job_desc = self.create_job_desc(physical_graph_file_name)
+        print(job_desc)
 
         if self._remote:
             print(f"Creating SLURM script remotely: {job_file_name}")
