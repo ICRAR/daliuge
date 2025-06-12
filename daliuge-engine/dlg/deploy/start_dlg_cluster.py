@@ -615,7 +615,6 @@ def main():
         action="store_true",
         dest="co_host_dim",
         help="Start DIM on first NM node",
-        default=True,
     )
 
     (options, _) = parser.parse_args()
@@ -717,6 +716,7 @@ def main():
                     "Couldn't connect to the main drop manager, proxy not started"
                 )
         elif remote.my_ip in remote.dim_ips:
+            co_hosted = True
             nm_uris = [f"{ip}:{NODE_DEFAULT_REST_PORT}" for ip in remote.nm_ips]
             LOGGER.info(f"Starting island managers on nodes: {remote.dim_ips}")
             dim_proc = start_dim(nm_uris, log_dir, remote.my_ip, logv=logv)
