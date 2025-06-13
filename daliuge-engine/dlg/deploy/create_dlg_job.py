@@ -550,8 +550,7 @@ def run(_, args=None):
         action="store",
         type="int",
         dest="num_nodes",
-        help="number of compute nodes requested",
-        default=3,
+        help="Number of compute nodes requested",
     )
     parser.add_option(
         "-i",
@@ -634,7 +633,6 @@ def run(_, args=None):
         action="store",
         type="int",
         dest="num_islands",
-        default=1,
         help="The number of Data Islands",
     )
     parser.add_option(

@@ -495,7 +495,6 @@ def main():
         action="store",
         type="int",
         dest="num_islands",
-        default=1,
         help="The number of Data Islands",
     )
 
