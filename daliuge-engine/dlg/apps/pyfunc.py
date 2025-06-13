@@ -968,7 +968,7 @@ class PyFuncApp(BarrierAppDROP):
             elif parser is DropParser.BINARY:
                 drop_loaders.save_binary(o, result)
             else:
-                ValueError(self.output_parser.__repr__())
+                ValueError(parser)
 
     def generate_recompute_data(self):
         for name, val in self._recompute_data.items():
