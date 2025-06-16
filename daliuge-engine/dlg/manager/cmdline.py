@@ -57,7 +57,7 @@ from ..runtime import version
 
 
 _terminating = False
-
+MAX_WATCHDOG_RESTART = 10
 
 class DlgFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
@@ -68,6 +68,15 @@ class DlgFormatter(logging.Formatter):
                 record.__dict__[field] = None
 
         return super().format(record)
+
+
+def run_server(server, host, port):
+    """
+    Run the server using the options. Non-nested to avoid issues if needing to be pickled.
+    :param opts: Command line options
+    :return: None
+    """
+    server.start(host, port)
 
 
 def launchServer(opts):
@@ -105,7 +114,8 @@ def launchServer(opts):
     if opts.watchdog_enabled:
         start_watchdog(server, opts, logger)
     else:
-        server.start(opts.host, opts.port)
+        run_server(server, opts.host, opts.port)
+
 
 def start_watchdog(server, opts, logger):
     """
@@ -114,8 +124,12 @@ def start_watchdog(server, opts, logger):
     This is an experimental feature intended to secure complete runtime shutdown when we
     run potentially memory-unsafe code in child threads of the server.
 
-    If we detect a sigsegv, we warn the user and attempt to re-run the server so that
-    the NodeManager doesn't completely disappear.
+    If we detect a SIGSEGV, we warn the user and attempt to re-run the server on a new
+    port so that the NodeManager doesn't completely disappear and we avoid any issues with
+    phantom threads using the old port.
+
+    If we recieve any other exitcodes, we do not attempt a restart and instead following
+    existing exit protocols.
 
     This method only acts as the watchdog, and does not support Session management or
     any explicit reconnect, and instead leaves that up to the respective manager
@@ -123,18 +137,30 @@ def start_watchdog(server, opts, logger):
 
     :param server: server object that we are watching
     :param opts: runtime options
+    :param logger: runtime logger
     """
-    def run_server():
-        server.start(opts.host, opts.port)
 
     watchdog = True
+    wait_period = 30
+    current_restart = 0
     while watchdog:
-        p = Process(target=run_server)
+        p = Process(target=run_server, args=(server, opts.host, opts.port))
         p.start()
         p.join()
-        if p.exitcode == signal.SIGSEGV:
+        if p.exitcode == signal.SIGSEGV or p.exitcode == -signal.SIGSEGV:
             logger.warning(
-                "Threaded server crashed with SIGSEGV (signal 11). Restarting...")
+                "Threaded server crashed with SIGSEGV (signal 11)."
+                "Restarting in %s seconds...",
+                wait_period
+            )
+            opts.port += 27 # Avoid collisions with more obvious ports, e.g. 8080 or 8888
+            if current_restart < MAX_WATCHDOG_RESTART:
+                current_restart +=1
+            else:
+                watchdog=False
+                logger.warning(
+                    "Watchdog service reached maximum restarts. Shutting Down..."
+            )
         else:
             watchdog = False
 
