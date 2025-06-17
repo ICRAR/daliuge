@@ -156,7 +156,7 @@ def prepare_input_channel(data):
         logger.debug("Connected to TCP socket %s:%d for reading", host, port)
         return sock
 
-    raise Exception("Unsupported streaming channel: %s", data)
+    raise RuntimeError(f"Unsupported streaming channel: {data}")
 
 
 class BashShellBase:
@@ -242,7 +242,7 @@ class BashShellBase:
         start = time.time()
 
         # Run and wait until it finishes
-        process = subprocess.Popen(
+        process = subprocess.Popen( # pylint: disable=subprocess-popen-preexec-fn
             cmd,
             close_fds=True,
             stdin=stdin,
@@ -282,7 +282,7 @@ class BashShellBase:
         BarrierAppDROP.cancel(self)
         try:
             os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
-        except:
+        except OSError:
             logger.exception("Error while terminating process %r", self.proc)
 
     def generate_recompute_data(self):
@@ -321,7 +321,7 @@ class StreamingInputBashAppBase(BashShellBase, AppDROP):
             self.run(data)
             drop_state = DROPStates.COMPLETED
             execStatus = AppDROPStates.FINISHED
-        except:
+        except Exception: #pylint: disable=broad-exception-caught
             logger.exception("Error while executing %r", self)
             drop_state = DROPStates.ERROR
             execStatus = AppDROPStates.ERROR

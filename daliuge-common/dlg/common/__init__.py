@@ -19,11 +19,14 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+"""
+Common utilities used by daliuge packages
+"""
+
 from enum import Enum
 from dataclasses import dataclass, field, asdict
 import logging
 
-"""Common utilities used by daliuge packages"""
 from .osutils import terminate_or_kill, wait_or_kill
 from .network import check_port, connect_to, portIsClosed, portIsOpen, write_to
 from .streams import ZlibCompressedStream, JSONStream
@@ -163,8 +166,8 @@ class dropdict(dict):
         if key not in self:
             return False
         ports = []
-        [ports.extend(pair.values()) for pair in self[key]]
-        return name in ports
+        fports = [ports.extend(pair.values()) for pair in self[key]]
+        return name in fports
 
     def hasOutput(self, output):
         """
@@ -198,7 +201,10 @@ def _sanitize_links(links):
             if isinstance(l, dict):  # could be a list of dicts
                 nlinks.extend(list(l.keys()))
             else:
-                nlinks.extend(l) if isinstance(l, list) else nlinks.append(l)
+                if isinstance(l, list):
+                    nlinks.extend(l)
+                else:
+                    nlinks.append(l)
         return nlinks
     elif isinstance(links, dict):
         return list(links.keys()) if isinstance(links, dict) else links

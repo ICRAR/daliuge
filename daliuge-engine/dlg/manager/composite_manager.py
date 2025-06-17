@@ -35,7 +35,6 @@ from dlg.manager.client import NodeManagerClient
 from dlg.manager.drop_manager import DROPManager
 from dlg.manager.manager_data import Node
 
-from dlg import constants
 from dlg.constants import ISLAND_DEFAULT_REST_PORT, NODE_DEFAULT_REST_PORT
 from dlg import graph_loader
 from dlg.common.reproducibility.reproducibility import init_pg_repro_data
@@ -306,7 +305,7 @@ class CompositeManager(DROPManager):
             for path in self._past_session_manager.past_sessions(self._sessionIds)
         ]
 
-    def _do_in_host(self, action, sessionId, exceptions, f, collect, port, iterable):
+    def _do_in_host(self, action, sessionId, exceptions, f, collect, iterable):
         """
         Replication of commands to underlying drop managers
         If "collect" is given, then individual results are also kept in the given
@@ -316,9 +315,6 @@ class CompositeManager(DROPManager):
         host = iterable
         if isinstance(iterable, (list, tuple)):
             host = iterable[0]  # What's going on here?
-        # if ":" in host:
-        #     host, port = host.split(":")
-        #     port = int(port)
         if isinstance(host, str):
             host = Node(host)
 
@@ -331,7 +327,7 @@ class CompositeManager(DROPManager):
             elif isinstance(collect, list):
                 collect.append(res)
 
-        except Exception as e:
+        except Exception as e: # pylint: disable=broad-exception-caught
             exceptions[str(host)] = e
             logger.exception(
                 "Error while %s on host %s:%d, session %s, when executing %s",
@@ -342,17 +338,16 @@ class CompositeManager(DROPManager):
                 f,
             )
 
-    def replicate(self, sessionId, f, action, collect=None, iterable=None, port=None):
+    def replicate(self, sessionId, f, action, collect=None, iterable=None):
         """
         Replicates the given function call on each of the underlying drop managers
         """
         thrExs = {}
         iterable = iterable or self._dmHosts
-        port = port or self._dmPort
         logger.debug("Replicating command: %s on hosts: %s", f, iterable)
         self._tp.map(
             functools.partial(
-                self._do_in_host, action, sessionId, thrExs, f, collect, port
+                self._do_in_host, action, sessionId, thrExs, f, collect
             ),
             iterable,
         )
@@ -549,7 +544,6 @@ class CompositeManager(DROPManager):
                 sessionId,
                 self._add_node_subscriptions,
                 "adding relationship information",
-                port=constants.NODE_DEFAULT_REST_PORT,
                 iterable=self._drop_rels[sessionId].items(),
             )
             logger.info("Delivered node subscription list to node managers")
@@ -569,10 +563,10 @@ class CompositeManager(DROPManager):
             not_found = set(completedDrops) - set(self._graph)
             if not_found:
                 raise DaliugeException(
-                    "UIDs for completed drops not found: %r", not_found
+                    f"UIDs for completed drops not found: {str(not_found)}"
                 )
             logger.info(
-                "Moving graph root Drops to COMPLETED right away: %r",
+                "Moving graph root Drops to COMPLETED right away: %s",
                 completedDrops,
             )
             completed_by_host = group_by_node(completedDrops, self._graph)
@@ -580,12 +574,12 @@ class CompositeManager(DROPManager):
                 sessionId,
                 self._triggerDrops,
                 "triggering drops",
-                port=constants.NODE_DEFAULT_REST_PORT,
                 iterable=completed_by_host.items(),
             )
             logger.info("Successfully triggered drops")
 
     def _getGraphStatus(self, dm, host, sessionId):
+        logger.info("Getting graph status from %s", host)
         return dm.getGraphStatus(sessionId)
 
     def getGraphStatus(self, sessionId):
@@ -599,6 +593,7 @@ class CompositeManager(DROPManager):
         return allStatus
 
     def _getGraph(self, dm, host, sessionId):
+        logger.info("Getting graph from %s", host)
         return dm.getGraph(sessionId)
 
     def getGraph(self, sessionId):
@@ -636,6 +631,7 @@ class CompositeManager(DROPManager):
         return allStatus
 
     def _getGraphSize(self, dm, host, sessionId):
+        logger.info("Getting graph size from %s", host)
         return dm.getGraphSize(sessionId)
 
     def getGraphSize(self, sessionId):
@@ -647,6 +643,12 @@ class CompositeManager(DROPManager):
             collect=allCounts,
         )
         return sum(allCounts)
+
+    def getGraphReproData(self, sessionId):
+        raise NotImplementedError
+
+    def getSessionReproStatus(self, sessionId):
+        raise NotImplementedError
 
 
 class DataIslandManager(CompositeManager):
@@ -676,6 +678,11 @@ class DataIslandManager(CompositeManager):
         # self._nodes = dmHosts
         logger.info("Created DataIslandManager for hosts: %r", self._dmHosts)
 
+    def getGraphReproData(self, sessionId):
+        raise NotImplementedError
+
+    def getSessionReproStatus(self, sessionId):
+        raise NotImplementedError
 
 class MasterManager(CompositeManager):
     """
@@ -700,3 +707,9 @@ class MasterManager(CompositeManager):
             hosts_are_dim=True,
         )
         logger.info("Created MasterManager for DIM hosts: %r", self._dmHosts)
+
+    def getGraphReproData(self, sessionId):
+        raise NotImplementedError
+
+    def getSessionReproStatus(self, sessionId):
+        raise NotImplementedError

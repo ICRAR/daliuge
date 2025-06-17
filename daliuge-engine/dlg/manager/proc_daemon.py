@@ -115,7 +115,7 @@ class DlgDaemon(RestServer):
         server.
         """
         self._shutting_down = True
-        super(DlgDaemon, self).stop(timeout)
+        super(DlgDaemon, self).stop()
         self.stopNM(timeout)
         self.stopDIM(timeout)
         self.stopMM(timeout)

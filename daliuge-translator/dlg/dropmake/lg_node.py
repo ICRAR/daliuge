@@ -25,9 +25,6 @@ the profiling information and turns it into the partitioned physical graph,
 which will then be deployed and monitored by the Physical Graph Manager
 """
 
-if __name__ == "__main__":
-    __package__ = "dlg.dropmake"
-
 import json
 import logging
 import math
@@ -41,7 +38,6 @@ from dlg.dropmake.dm_utils import (
     GInvalidLink,
     GInvalidNode,
 )
-from dlg.dropmake.utils.bash_parameter import BashCommand
 from .definition_classes import Categories, DATA_TYPES, APP_TYPES
 
 logger = logging.getLogger(f"dlg.{__name__}")
@@ -479,7 +475,7 @@ class LGNode:
                     "group_key must be an integer or comma-separated integers: {0}".format(
                         ve
                     )
-                )
+                ) from ve
 
     @property
     def gather_width(self):
@@ -490,13 +486,11 @@ class LGNode:
             if self._gaw is None:
                 try:
                     self._gaw = int(self.jd["num_of_inputs"])
-                except:
+                except KeyError:
                     self._gaw = 1
             return self._gaw
         else:
-            """
-            TODO: use OO style to replace all type-related statements!
-            """
+            # TODO: use OO style to replace all type-related statements!
             return None
 
     @property
@@ -607,10 +601,10 @@ class LGNode:
                 elif self.is_gather:
                     try:
                         tlgn = self.inputs[0]
-                    except IndexError:
+                    except IndexError as e:
                         raise GInvalidLink(
                             "Gather '{0}' does not have input!".format(self.id)
-                        )
+                        ) from e
                     if tlgn.is_groupby:
                         tt = tlgn.dop
                     else:
@@ -729,7 +723,7 @@ class LGNode:
 
         # NOTE: drop Argxx keywords
 
-    def _getPortName(self, ports: str = "outputPorts", index: int = 0, portId=None):
+    def getPortName(self, ports: str = "outputPorts", index: int = 0, portId=None):
         """
         Return name of port if it exists
         """
@@ -849,7 +843,7 @@ class LGNode:
         dropSpec_socket["autostart"] = 1
         drop_spec.update({"listener_drop": dropSpec_socket})
         dropSpec_socket.addOutput(
-            drop_spec, name=self._getPortName(ports="outputPorts")
+            drop_spec, name=self.getPortName(ports="outputPorts")
         )
         return drop_spec
 
@@ -884,11 +878,11 @@ class LGNode:
             drop_spec["name"],
         )
         if self.dropclass is None or self.dropclass == "":
-            logger.warning(f"Something wrong with this node: {self.jd}")
+            logger.warning("Something wrong with this node: %s", self.jd)
         if self.weight is not None:
             if self.weight < 0:
                 raise GraphException(
-                    "Execution_time must be greater" " than 0 for Node '%s'" % self.name
+                    f"Execution_time must be greater than 0 for Node {self.name}",
                 )
             else:
                 kwargs["weight"] = self.weight
@@ -926,7 +920,7 @@ class LGNode:
             elif self.category == "NGAS":
                 self.dropclass = "dlg.data.drops.ngas.NgasDROP"
             else:
-                raise TypeError("Unknown dropclass for drop: %s", self.jd)
+                raise TypeError("Unknown dropclass for drop: {str(self.jd)}")
         logger.debug("Creating data drop using class: %s", self.dropclass)
         kwargs["dropclass"] = self.dropclass
         kwargs["weight"] = self.weight

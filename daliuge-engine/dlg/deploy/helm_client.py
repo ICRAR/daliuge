@@ -123,7 +123,7 @@ class HelmClient:
         deploy_name,
         chart_name="daliuge-daemon",
         deploy_dir="./",
-        submit=True,
+        submit_to=True,
         chart_version="0.1.0",
         value_config=None,
         physical_graph_file=None,
@@ -148,7 +148,7 @@ class HelmClient:
         self._chart_dir = os.path.join(self._deploy_dir, "daliuge-daemon")
         self._chart_version = chart_version
         self._deploy_name = deploy_name
-        self._submit = submit
+        self._submit = submit_to
         self._value_data = value_config if value_config is not None else {}
         self._submission_endpoint = None
         self._k8s_nodes = find_node_ips()
@@ -159,7 +159,7 @@ class HelmClient:
 
         # Copy in template files.
         library_root = pathlib.Path(os.path.dirname(dlg.__file__)).parent.parent
-        logger.debug(f"Helm chart copied to: {library_root}")
+        logger.debug("Helm chart copied to: %s", library_root)
         if sys.version_info >= (3, 8):
             shutil.copytree(
                 os.path.join(library_root, "daliuge-k8s", "helm"),
@@ -193,7 +193,7 @@ class HelmClient:
             "ip": pod_ips[-1],
             "svc": service_ips[-1],
         }
-        logger.debug(f"Pod details: {self._pod_details}")
+        logger.debug("Pod details: %s",self._pod_details)
 
     def create_helm_chart(self, physical_graph_content, co_host=True):
         """
@@ -234,13 +234,13 @@ class HelmClient:
         print(node_ips)
         data = json.dumps({"nodes": node_ips}).encode("utf-8")
         time.sleep(5)
-        logger.debug(f"Starting manager on {self._submission_endpoint}")
-        client._POST(
+        logger.debug("Starting manager on %s", self._submission_endpoint)
+        client.POST(
             "/managers/island/start",
             content=data,
             content_type="application/json",
         ).read()
-        client._POST(
+        client.POST(
             "/managers/master/start",
             content=data,
             content_type="application/json",
@@ -256,18 +256,18 @@ class HelmClient:
                 ip, self._value_data["service"]["daemon"]["port"], timeout=30
             )
             time.sleep(5)
-            logger.debug(f"Starting node on {ip}")
+            logger.debug("Starting node on %s", ip)
             # node_ips = ['localhost'] + [x['ip'] for x in self._pod_details.values()]
             node_ips = [x["ip"] for x in self._pod_details.values()]
             # data = json.dumps({'nodes': ['localhost']}).encode('utf-8')
             data = json.dumps({"nodes": node_ips}).encode("utf-8")
-            client._POST(
+            client.POST(
                 "/managers/master/start",
                 content=data,
                 content_type="application/json",
             ).read()
 
-    def launch_helm(self, co_host=False):
+    def launch_helm(self):
         """
         Launches the built helm chart using the most straightforward commands possible.
         Assumes all files are prepared and validated.
@@ -287,7 +287,7 @@ class HelmClient:
             process_return_string = subprocess.check_output(
                 [instruction], shell=True
             ).decode("utf-8")
-            logger.info(f"{process_return_string}")
+            logger.info("%s", process_return_string)
             for i in range(self._num_machines):
                 _write_values(
                     self._chart_dir,
@@ -300,7 +300,7 @@ class HelmClient:
                 process_return_string = subprocess.check_output(
                     [instruction], shell=True
                 ).decode("utf-8")
-                logger.info(f"{process_return_string}")
+                logger.info("%s", process_return_string)
                 # TODO: Check running nodes before launching another
             self._find_pod_details()
             if wait_for_pods(self._num_machines):
@@ -311,14 +311,15 @@ class HelmClient:
                 self.teardown()
                 raise RuntimeWarning("K8s pods did not start in timeframe allocated")
         else:
-            logger.info(f"Created helm chart {self._chart_name} in {self._deploy_dir}")
+            logger.info("Created helm chart %s, in %s",
+                        self._chart_name, self._deploy_name)
 
     def teardown(self):
         if not self._k8s_access:
             raise RuntimeError("Cannot access k8s")
         for i in range(self._num_machines - 1, -1, -1):
             subprocess.check_output([f"helm uninstall daliuge-daemon-{i}"], shell=True)
-        subprocess.check_output([f"helm uninstall daliuge-daemon-master"], shell=True)
+        subprocess.check_output(["helm uninstall daliuge-daemon-master"], shell=True)
 
     def _monitor(self, session_id=None):
         def _task():
@@ -330,7 +331,7 @@ class HelmClient:
                         port=NODE_DEFAULT_REST_PORT,
                     )
                     break
-                except:
+                except Exception: # pylint: disable=broad-exception-caught
                     logger.exception("Monitoring failed, attempting to restart")
 
         threads = threading.Thread(target=_task)

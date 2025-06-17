@@ -232,7 +232,7 @@ class MetisPGTP(PGT):
             self._inner_parts = inner_parts
             self._node_list = node_list
 
-    def to_gojs_json(self, string_rep=True, outdict=None, visual=False):
+    def to_gojs_json(self, string_rep=True, visual=False, outdict=None):
         """
         Partition the PGT into a real "PGT with Partitions", thus PGTP, using
         METIS built-in functions
@@ -283,7 +283,7 @@ class MetisPGTP(PGT):
             jsobj = None
         self._parse_metis_output(metis_parts, jsobj)
         self._metis_out = metis_parts
-        self._gojs_json_obj = jsobj  # could be none if not visual
+        self.gojs_json_obj = jsobj  # could be none if not visual
         if string_rep and jsobj is not None:
             return json.dumps(jsobj, indent=2)
         else:
@@ -334,9 +334,9 @@ class MetisPGTP(PGT):
             G.add_edge(int(gl[0]), int(gl[1]), weight=v)
 
         if new_num_parts == 1:
-            (edgecuts, metis_parts) = (0, [0] * len(G.nodes()))
+            (_, metis_parts) = (0, [0] * len(G.nodes()))
         else:
-            (edgecuts, metis_parts) = self._metis.part_graph(
+            (_, metis_parts) = self._metis.part_graph(
                 G, nparts=new_num_parts, ufactor=1
             )
         islands = set()
@@ -508,7 +508,7 @@ class MySarkarPGTP(PGT):
                 for ip in self._inner_parts:
                     ip["group"] = in_out_part_map[ip["key"] - start_k] + start_i
 
-    def to_gojs_json(self, string_rep=True, outdict=None, visual=False):
+    def to_gojs_json(self, string_rep=True, visual=False):
         """
         Partition the PGT into a real "PGT with Partitions", thus PGTP
         """
@@ -547,7 +547,7 @@ class MySarkarPGTP(PGT):
             # so ditch this extra partition!
             new_partitions = []
             for part in self._partitions:
-                if part._gid != root_gid:
+                if part.partition_id != root_gid:
                     new_partitions.append(part)
             self._partitions = new_partitions
             self._num_parts_done = len(new_partitions)
@@ -580,13 +580,13 @@ class MySarkarPGTP(PGT):
 
             self._node_list = node_list
             self._inner_parts = inner_parts
-            self._gojs_json_obj = jsobj
+            self.gojs_json_obj = jsobj
             if string_rep and jsobj is not None:
                 return json.dumps(jsobj, indent=2)
             else:
                 return jsobj
         else:
-            self._gojs_json_obj = None
+            self.gojs_json_obj = None
             return None
 
 

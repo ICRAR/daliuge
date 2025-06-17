@@ -94,7 +94,7 @@ class CDlgApp(ctypes.Structure):
 
     def pack_python(self):
         out = {}
-        for key, val in self._fields_:
+        for key, _ in self._fields_:
             out[key] = repr(getattr(self, key))
         return out
 
@@ -308,7 +308,7 @@ class DynlibAppBase(object):
                 kwargs.pop("lib"), self.oid, self.uid, kwargs
             )
         except InvalidLibrary as e:
-            raise InvalidDropException(self, e.args[0])
+            raise InvalidDropException(self, e.args[0]) from e
 
         # Have we properly set the outputs in the C application structure yet?
         self._c_outputs_set = False
@@ -412,15 +412,15 @@ def _run_in_proc(*args):
         pass
 
 
-def _do_run_in_proc(queue, libname, oid, uid, params, inputs, outputs):
+def _do_run_in_proc(proc_queue, libname, oid, uid, params, inputs, outputs):
     def advance_step(f, *args, **kwargs):
         try:
             r = f(*args, **kwargs)
-            queue.put(None)
+            proc_queue.put(None)
             return r
         except Exception as e:
-            queue.put(e)
-            raise FinishSubprocess()
+            proc_queue.put(e)
+            raise FinishSubprocess() from e
 
     # Step 1: initialise the library and return if there is an error
     lib, c_app = advance_step(load_and_init, libname, oid, uid, params)
@@ -499,9 +499,9 @@ class DynlibProcApp(BarrierAppDROP):
         outputs = [rpc.ProxyInfo.from_data_drop(o) for o in self.outputs]
 
         logger.info("Starting new process to run the dynlib on")
-        queue = multiprocessing.Queue()
+        multi_proc_queue = multiprocessing.Queue()
         args = (
-            queue,
+            multi_proc_queue,
             self.libname,
             self.oid,
             self.uid,
@@ -520,7 +520,7 @@ class DynlibProcApp(BarrierAppDROP):
             )
             for step in steps:
                 logger.info("Subprocess %s", step)
-                error = get_from_subprocess(self.proc, queue)
+                error = get_from_subprocess(self.proc, multi_proc_queue)
                 if error is not None:
                     logger.error("Error in sub-process when %s", step)
                     raise error
@@ -531,5 +531,5 @@ class DynlibProcApp(BarrierAppDROP):
         BarrierAppDROP.cancel(self)
         try:
             self.proc.terminate()
-        except:
+        except multiprocessing.ProcessError:
             logger.exception("Error while terminating process %r", self.proc)

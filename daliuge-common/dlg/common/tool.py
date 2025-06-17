@@ -20,10 +20,12 @@
 #    MA 02111-1307  USA
 #
 
+# pylint: disable=unused-argument
+
 """dlg command line utility"""
 import importlib
 import logging
-import optparse
+import optparse # pylint: disable=deprecated-module
 import subprocess
 import sys
 import time
@@ -106,11 +108,11 @@ def cmdwrap(cmdname, desc, f):
 
     commands[cmdname] = (desc, wrapped)
 
-
 def version(parser, args):
-    from .version import version, git_version
+    from .version import version as vversion
+    from .version import git_version
 
-    print("Version: %s" % version)
+    print("Version: %s" % vversion)
     print("Git version: %s" % git_version)
 
 

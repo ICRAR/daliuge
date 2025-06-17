@@ -238,10 +238,6 @@ class Session(object):
         return self._drops
 
     @property
-    def reprodata(self):
-        return self._graphreprodata
-
-    @property
     def reprostatus(self):
         return self._reprofinished
 
@@ -670,6 +666,10 @@ class Session(object):
     def graphreprodata(self):
         return self._graphreprodata
 
+    @graphreprodata.setter
+    def graphreprodata(self, data):
+        self._graphreprodata = data
+
     def destroy(self):
         try:
             self.file_handler.close()
@@ -694,8 +694,9 @@ class Session(object):
         try:
             drop = self._drops[uid]
             return getattr(drop, prop_name)
-        except AttributeError:
-            raise DaliugeException("%r has no property called %s" % (drop, prop_name))
+        except AttributeError as e:
+            raise DaliugeException(
+                "%r has no property called %s" % (drop, prop_name)) from e
 
     def call_drop(self, uid, method, *args):
         if uid not in self._drops:
@@ -703,8 +704,9 @@ class Session(object):
         try:
             drop = self._drops[uid]
             m = getattr(drop, method)
-        except AttributeError:
-            raise DaliugeException("%r has no method called %s" % (drop, method))
+        except AttributeError as e:
+            raise DaliugeException(
+                "%r has no method called %s" % (drop, method)) from e
         return m(*args)
 
     # Support for the 'with' keyword

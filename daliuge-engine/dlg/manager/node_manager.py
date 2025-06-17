@@ -55,8 +55,6 @@ from dlg.exceptions import (
 )
 from ..lifecycle.dlm import DataLifecycleManager
 
-from dlg.manager.manager_data import Node
-
 logger = logging.getLogger(f"dlg.{__name__}")
 
 
@@ -298,11 +296,11 @@ class NodeManagerBase(DROPManager):
         if max_threads <= 0:
             max_threads = cpu_count(logical=False)
 
-        self._drop_runner: NodeManagerDropRunner
+        self.drop_runner: NodeManagerDropRunner
         if use_processes:
-            self._drop_runner = NodeManagerProcessDropRunner(max_threads)
+            self.drop_runner = NodeManagerProcessDropRunner(max_threads)
         else:
-            self._drop_runner = NodeManagerThreadDropRunner(max_threads)
+            self.drop_runner = NodeManagerThreadDropRunner(max_threads)
 
         # Event handler that only logs status changes
         debugging = logger.isEnabledFor(logging.DEBUG)
@@ -310,12 +308,12 @@ class NodeManagerBase(DROPManager):
 
     def start(self, rpc_endpoint):
         super().start()
-        self._drop_runner.start(rpc_endpoint)
+        self.drop_runner.start(rpc_endpoint)
         self._dlm.startup()
 
     def shutdown(self):
         self._dlm.cleanup()
-        self._drop_runner.close()
+        self.drop_runner.close()
         super().shutdown()
 
     def deliver_event(self, evt):
@@ -350,7 +348,7 @@ class NodeManagerBase(DROPManager):
         return self._sessions[sessionId].reprostatus
 
     def getGraphReproData(self, sessionId):
-        return self._sessions[sessionId].reprodata
+        return self._sessions[sessionId].graphreprodata
 
     def linkGraphParts(self, sessionId, lhOID, rhOID, linkType):
         self._check_session_id(sessionId)
@@ -380,7 +378,7 @@ class NodeManagerBase(DROPManager):
 
         def foreach(drop):
             drop.autofill_environment_variables()
-            drop._drop_runner = self._drop_runner
+            drop.drop_runner = self.drop_runner
             self._dlm.addDrop(drop)
 
             # Remote event forwarding

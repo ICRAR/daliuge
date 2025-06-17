@@ -6,7 +6,6 @@ import logging
 import math
 import threading
 
-from dlg.drop_loaders import load_pickle
 from dlg.drop import track_current_drop
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.data_base import DataDROP
@@ -46,7 +45,7 @@ class SyncDropRunner(DropRunner):
         try:
             res = app_drop.run()
             future.set_result(res)
-        except BaseException as e:
+        except Exception as e: # pylint: disable=broad-exception-caught
             future.set_exception(e)
 
         return future
@@ -61,7 +60,7 @@ def run_on_daemon_thread(func: Callable, *args, **kwargs) -> Future:
         try:
             res = func(*args, **kwargs)
             future.set_result(res)
-        except BaseException as e:
+        except Exception as e: # pylint: disable=broad-exception-caught
             future.set_exception(e)
 
     t = threading.Thread(target=thread_target)
@@ -308,7 +307,7 @@ class AppDROP(ContainerDROP):
         for o in self._outputs.values():
             o.skip()
 
-        logger.debug(f"Moving {self.__repr__()} to SKIPPED")
+        logger.debug("Moving %s to SKIPPED", self.__repr__())
         if prev_execStatus in [AppDROPStates.NOT_RUN]:
             self._fire(
                 "producerFinished",
@@ -322,6 +321,10 @@ class AppDROP(ContainerDROP):
         Getter for the drop runner
         """
         return self._drop_runner
+
+    @drop_runner.setter
+    def drop_runner(self, runner):
+        self._drop_runner = runner
 
 
 class InputFiredAppDROP(AppDROP):
@@ -470,7 +473,7 @@ class InputFiredAppDROP(AppDROP):
     def _execute_and_log_exception(self):
         try:
             self.execute()
-        except:
+        except Exception: # pylint: disable=broad-exception-caught
             logger.exception("Unexpected exception during drop (%r) execution", self)
 
     @track_current_drop
@@ -508,7 +511,7 @@ class InputFiredAppDROP(AppDROP):
                         self._global_log_level,
                     )
                 break
-            except Exception:
+            except Exception: # pylint: disable=broad-exception-caught
                 if self.execStatus == AppDROPStates.CANCELLED:
                     return
                 tries += 1

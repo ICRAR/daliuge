@@ -33,7 +33,7 @@ Current plan (as of 12-April-2016):
 import json
 import logging
 import multiprocessing
-import optparse
+import optparse # pylint: disable=deprecated-module
 import os
 import socket
 import subprocess
@@ -90,13 +90,12 @@ def check_host(host, port: int, timeout: int = 5, check_with_session=False):
             client.create_session(session_id)
             client.destroy_session(session_id)
         return True
-    except:
+    except Exception: #pylint: disable=broad-exception-caught
         return False
 
 
 def check_hosts(
     ips,
-    port: int = NODE_DEFAULT_REST_PORT,
     timeout=None,
     check_with_session=False,
     retry=1,
@@ -113,6 +112,7 @@ def check_hosts(
             port = int(port)
         else:
             ip = ip_addr
+            port = NODE_DEFAULT_REST_PORT
         while ntries:
             if check_host(
                 ip,
@@ -224,7 +224,6 @@ def start_mm(node_list, log_dir, logv=1):
     node_list:  a list of node address that host DIMs
     """
     log_level = "v" * logv
-    parser = optparse.OptionParser()
     args = [
         "-l",
         log_dir,
@@ -246,7 +245,7 @@ def start_mm(node_list, log_dir, logv=1):
 
 
 def _stop(endpoints):
-    LOGGER.info(f"Stopping ThreadPool")
+    LOGGER.info("Stopping ThreadPool")
 
     def _the_stop(endpoint):
         common.BaseDROPManagerClient(endpoint[0], endpoint[1]).stop()
@@ -258,17 +257,17 @@ def _stop(endpoints):
 
 
 def stop_nms(ips):
-    LOGGER.info(f"Stopping node managers on nodes {ips}")
+    LOGGER.info("Stopping node managers on nodes % s", ips)
     _stop([(ip, NODE_DEFAULT_REST_PORT) for ip in ips])
 
 
 def stop_dims(ips):
-    LOGGER.info(f"Stopping island managers on nodes {ips}")
+    LOGGER.info("Stopping island managers on nodes %s", ips)
     _stop([(ip, ISLAND_DEFAULT_REST_PORT) for ip in ips])
 
 
 def stop_mm(ip_addr):
-    LOGGER.info(f"Stopping master managers on node {ip_addr}")
+    LOGGER.info("Stopping master managers on node %s", ip_addr)
     _stop([(ip_addr, MASTER_DEFAULT_REST_PORT)])
 
 
@@ -284,7 +283,8 @@ def submit_and_monitor(physical_graph, opts, host, port, submit=True):
         else:
             session_id = opts.ssid
 
-        LOGGER.info(f"Start monitoring session(s) '{session_id}' on host {host}:{port}")
+        LOGGER.info("Start monitoring session(s) %s on host %s:%s",
+                    session_id, host, port)
         while True:
             try:
                 common.monitor_sessions(
@@ -294,8 +294,8 @@ def submit_and_monitor(physical_graph, opts, host, port, submit=True):
                     status_dump_path=dump_path,
                 )
                 break
-            except:
-                LOGGER.exception(f"Monitoring {host}:{port} failed, restarting it")
+            except Exception: #pylint: disable=broad-exception-caught
+                LOGGER.exception("Monitoring %s:%s failed, restarting it", host, port)
                 time.sleep(5)
 
     threads = threading.Thread(target=_task)
@@ -316,7 +316,7 @@ def start_proxy(dlg_host, dlg_port, monitor_host, monitor_port):
     except KeyboardInterrupt:
         LOGGER.warning("Ctrl C - Stopping DALiuGE Proxy server")
         sys.exit(1)
-    except Exception:
+    except Exception: # pylint: disable=broad-exception-caught
         LOGGER.exception("DALiuGE proxy terminated unexpectedly")
         sys.exit(1)
 
@@ -373,7 +373,8 @@ def get_pg(opts, nms, dims):
         timeout=MM_WAIT_TIME,
         retry=3,
     )
-    LOGGER.info(f"Mapping graph to available resources: nms {nms}, dims {dims}")
+    LOGGER.info("Mapping graph to available resources: nms %s, dims %s",
+                nms, dims)
     physical_graph = init_pg_repro_data(
         pg_generator.resource_map(
             pgt, dims + nms, num_islands=num_dims, co_host_dim=opts.co_host_dim
@@ -623,11 +624,11 @@ def main():
     if options.check_interfaces:
         try:
             print("From netifaces: %s" % get_ip_via_netifaces(options.interface))
-        except:
+        except IndexError:
             LOGGER.exception("Failed to get information via netifaces")
         try:
             print("From ifconfig: %s" % get_ip_via_ifconfig(options.interface))
-        except:
+        except ValueError:
             LOGGER.exception("Failed to get information via ifconfig")
         sys.exit(0)
     elif options.collect_interfaces:
@@ -676,24 +677,24 @@ def main():
 
     # need to dump nodes file first
     if remote.is_highest_level_manager:
-        LOGGER.info(f"Node {remote.my_ip} is hosting the highest level manager")
+        LOGGER.info("Node %s is hosting the highest level manager",
+                    remote.my_ip)
         nodesfile = os.path.join(log_dir, "nodes.txt")
         LOGGER.debug("Dumping list of nodes to %s", nodesfile)
         with open(nodesfile, "wt") as env_file:
             env_file.write("\n".join(remote.sorted_peers))
-    dim_proc = None
     # start the NM
     LOGGER.debug(
-        f"my_ip:{remote.my_ip}; dim_ips:{remote.dim_ips}, node_ips: {remote.nm_ips}"
+        "my_ip:%s; dim_ips:%s, node_ips: %s",
+        remote.my_ip, remote.dim_ips, remote.nm_ips
     )
     if options.num_islands == 1:
-        submit = True
         REST_PORT = ISLAND_DEFAULT_REST_PORT
 
         # need to check for NM first and go on if co-hosted
         if remote.is_nm:
             co_hosted = remote.my_ip in remote.dim_ips
-            nm_proc = start_node_mgr(
+            _ = start_node_mgr(
                 log_dir,
                 remote.my_ip,
                 logv=logv,
@@ -718,8 +719,8 @@ def main():
                 )
         elif remote.my_ip in remote.dim_ips:
             nm_uris = [f"{ip}:{NODE_DEFAULT_REST_PORT}" for ip in remote.nm_ips]
-            LOGGER.info(f"Starting island managers on nodes: {remote.dim_ips}")
-            dim_proc = start_dim(nm_uris, log_dir, remote.my_ip, logv=logv)
+            LOGGER.info("Starting island managers on nodes: %s", remote.dim_ips)
+            _ = start_dim(nm_uris, log_dir, remote.my_ip, logv=logv)
             # whichever way we came from, now we have to wait until session is finished
             # we always monitor the island, else we will have race conditions
             physical_graph = get_pg(options, nm_uris, remote.dim_ips)
@@ -753,7 +754,6 @@ def main():
         # 7. make sure all DIMs are up running
         dim_ips_up = check_hosts(
             remote.dim_ips,
-            ISLAND_DEFAULT_REST_PORT,
             timeout=MM_WAIT_TIME,
             retry=10,
         )
@@ -767,7 +767,7 @@ def main():
         monitoring_thread = submit_and_monitor(
             physical_graph, options, remote.my_ip, MASTER_DEFAULT_REST_PORT
         )
-        mm_proc = start_mm(remote.dim_ips, log_dir, logv=logv)
+        _ = start_mm(remote.dim_ips, log_dir, logv=logv)
         monitoring_thread.join()
         stop_mm(
             remote.my_ip

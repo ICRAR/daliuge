@@ -97,9 +97,6 @@ class SocketListenerApp(BarrierAppDROP):
     bufsize = dlg_int_param("bufsize", 4096)
     reuseAddr = dlg_bool_param("reuseAddr", False)
 
-    def initialize(self, **kwargs):
-        super(SocketListenerApp, self).initialize(**kwargs)
-
     def run(self):
         # At least one output should have been added
         outs = self.outputs

@@ -26,9 +26,6 @@ which will then be deployed and monitored by the Physical Graph Manager
 """
 import copy
 
-if __name__ == "__main__":
-    __package__ = "dlg.dropmake"
-
 import collections
 import datetime
 import logging
@@ -40,7 +37,6 @@ from dlg.common import CategoryType, dropdict
 
 from dlg.dropmake.dm_utils import (
     LG_APPREF,
-    getNodesKeyDict,
     get_lg_ver_type,
     convert_construct,
     convert_fields,
@@ -290,20 +286,20 @@ class LG:
                 if lgn.is_loop:
                     if len(grp_starts) == 0 or len(grp_ends) == 0:
                         raise GInvalidNode(
-                            "Loop '{0}' should have at least one Start "
-                            + "Component and one End Data".format(lgn.name)
+                            f"Loop {lgn.name} should have at least one Start "
+                            "Component and one End Data"
                         )
                     for ge in grp_ends:
                         for gs in grp_starts:  # make an artificial circle
                             lk = {}
-                            if gs not in ge._outputs:
+                            if gs not in ge.outputs:
                                 ge.add_output(gs)
-                            if ge not in gs._inputs:
+                            if ge not in gs.inputs:
                                 gs.add_input(ge)
                             lk["from"] = ge.id
                             lk["to"] = gs.id
                             self._lg_links.append(lk)
-                            logger.debug("Loop constructed: %s", gs._inputs)
+                            logger.debug("Loop constructed: %s", gs.inputs)
                 else:
                     for (
                         gs
@@ -373,7 +369,6 @@ class LG:
             pass
         elif lgn.is_subgraph and lgn.jd["isSubGraphApp"]:
             if lgn.loop_ctx:
-                lpcxt = lpcxt
                 iid = lgn.iid
             src_drop = lgn.make_single_drop(iid, loop_ctx=lpcxt)
             if lgn.subgraph:
@@ -471,11 +466,9 @@ class LG:
         t_type = tlgn.jd["categoryType"]
 
         if self._is_stream_link(s_type, t_type):
-            """
-            1. create a null_drop in the middle
-            2. link sdrop to null_drop
-            3. link tdrop to null_drop as a streamingConsumer
-            """
+            # 1. create a null_drop in the middle
+            # 2. link sdrop to null_drop
+            # 3. link tdrop to null_drop as a streamingConsumer
 
             dropSpec_null = dropdict(
                 {
@@ -495,8 +488,8 @@ class LG:
             tdrop.addStreamingInput(dropSpec_null, name="stream")
             self._drop_dict["new_added"].append(dropSpec_null)
         elif s_type in ["Application", "Control"]:
-            sname = slgn._getPortName("outputPorts", index=-1)
-            tname = tlgn._getPortName("inputPorts", index=-1)
+            sname = slgn.getPortName("outputPorts", index=-1)
+            tname = tlgn.getPortName("inputPorts", index=-1)
 
             # sname is dictionary of all output ports on the sDROP.
             # Therefore there's an expected number of output edges that we need to add
@@ -526,10 +519,10 @@ class LG:
                 # there should be only one port, get the name
                 # ^ TODO This comment is no longer true, need to address
                 portId = llink["fromPort"] if "fromPort" in llink else None
-                sname = slgn._getPortName("outputPorts", portId=portId)
+                sname = slgn.getPortName("outputPorts", portId=portId)
                 # could be multiple ports, need to identify
                 portId = llink["toPort"] if "toPort" in llink else None
-                tname = tlgn._getPortName("inputPorts", portId=portId)
+                tname = tlgn.getPortName("inputPorts", portId=portId)
                 # logger.debug("Found port names: IN: %s, OUT: %s", sname, tname)
                 # logger.debug(
                 #     ">>> link from %s to %s (%s) (%s)",
@@ -608,7 +601,7 @@ class LG:
                         ):
                             # TODO merge this code into the function
                             # def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink)
-                            tname = tlgn._getPortName(port="inputPorts")
+                            tname = tlgn.getPortName(port="inputPorts")
                             # Go through gather cache list
                             for gddrop in self._gather_cache[ga_drop["oid"]][1]:
                                 gddrop.addConsumer(tdrops[j], name=tname)
@@ -736,12 +729,12 @@ class LG:
                             if slgn.group.is_groupby:  # a chain of group bys
                                 try:
                                     src_ctx = gdd["iid"].split("$")[1].split("-")
-                                except IndexError:
+                                except IndexError as e:
                                     raise GraphException(
                                         "The group by hiearchy in the multi-key group by '{0}' is not specified for node '{1}'".format(
                                             slgn.group.name, slgn.name
                                         )
-                                    )
+                                    ) from e
                             else:
                                 src_ctx.reverse()
                             for lid in layer_index:
@@ -762,10 +755,8 @@ class LG:
                         drop_list = grpby_dict[gk]
                         for drp in drop_list:
                             self._link_drops(slgn, tlgn, drp, grpby_drop, lk)
-                            """
-                            drp.addOutput(grpby_drop)
-                            grpby_drop.addInput(drp)
-                            """
+                            # drp.addOutput(grpby_drop)
+                            # grpby_drop.addInput(drp)
                 elif tlgn.is_gather:
                     self._unroll_gather_as_output(
                         slgn, tlgn, sdrops, tdrops, chunk_size, lk
@@ -787,13 +778,14 @@ class LG:
             input_list = v[1]
             try:
                 output_drop = v[2][0]  # "peek" the first element of the output list
-            except:
+            except IndexError as e:
+                logger.warning("Gather has no output drops %s", str(e))
                 continue  # the gather hasn't got output drops, just move on
             llink = v[-1]
             for data_drop in input_list:
                 # TODO merge this code into the function
                 # def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink)
-                sname = slgn._getPortName(ports="outputPorts")
+                sname = slgn.getPortName(ports="outputPorts")
                 if llink.get("is_stream", False):
                     logger.debug(
                         "link stream connection %s to %s",
