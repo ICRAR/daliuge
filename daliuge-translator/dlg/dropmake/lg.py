@@ -40,7 +40,6 @@ from dlg.dropmake.dm_utils import (
     get_lg_ver_type,
     convert_construct,
     convert_fields,
-    convert_mkn,
     convert_subgraphs,
     LG_VER_EAGLE,
     LG_VER_EAGLE_CONVERTED,
@@ -88,7 +87,6 @@ class LG:
             lg = apply_active_configuration(lg)
 
         if LG_VER_EAGLE == lgver:
-            lg = convert_mkn(lg)
             lg = convert_fields(lg)
             lg = convert_construct(lg)
             lg = convert_subgraphs(lg)
@@ -111,20 +109,20 @@ class LG:
         for jd in lg["nodeDataArray"]:
             lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
             self._lgn_list.append(lgn)
-            node_ouput_ports = jd.get("outputPorts", [])
-            node_ouput_ports += jd.get("outputLocalPorts", [])
+            node_ouput_ports = jd.get("outputPorts", {})
+            node_ouput_ports.update(jd.get("outputLocalPorts", {}))
             # check all the outports of this node, and store "stream" output
             if len(node_ouput_ports) > 0:
-                for out_port in node_ouput_ports:
-                    if out_port.get("name", "").lower().endswith("stream"):
+                for name, out_port in node_ouput_ports.items():
+                    if name.lower().endswith("stream"):
                         stream_output_ports[out_port["Id"]] = jd["id"]
         # Need to go through the list again, since done_dict is recursive
         for lgn in self._lgn_list:
-            if lgn.is_start and lgn.jd["category"] not in [
+            if lgn.is_start and lgn.category not in [
                 Categories.COMMENT,
                 Categories.DESCRIPTION,
             ]:
-                if lgn.jd["category"] == Categories.VARIABLES:
+                if lgn.category == Categories.VARIABLES:
                     self._g_var.append(lgn)
                 else:
                     self._start_list.append(lgn)
@@ -133,10 +131,12 @@ class LG:
 
         for lk in self._lg_links:
             src = self._done_dict[lk["from"]]
+            srcPort = lk.get("fromPort", None)
             tgt = self._done_dict[lk["to"]]
+            tgtPort = lk.get("toPort", None)
             self.validate_link(src, tgt)
-            src.add_output(tgt)
-            tgt.add_input(src)
+            src.add_output(tgt, srcPort)
+            tgt.add_input(src, tgtPort)
             # check stream links
             from_port = lk.get("fromPort", "__None__")
             if stream_output_ports.get(from_port, None) == lk["from"]:
@@ -252,7 +252,7 @@ class LG:
             if lpcxt is None:
                 return "{0}".format(idx)
             else:
-                return "{0}/{1}".format(lpcxt, idx)
+                return "{0}-{1}".format(lpcxt, idx)
         else:
             return None
 
@@ -318,15 +318,14 @@ class LG:
             shape = []
             if lgk is not None and len(lgk) > 1:
                 multikey_grpby = True
-                scatters = lgn.group_by_scatter_layers[
-                    2
-                ]  # inner most scatter to outer most scatter
-                shape = [
-                    x.dop for x in scatters
-                ]  # inner most is also the slowest running index
+                # inner most scatter to outer most scatter
+                scatters = lgn.group_by_scatter_layers[2]
+                # inner most is also the slowest running index
+                shape = [x.dop for x in scatters]
 
             for i in range(lgn.dop):
-                miid = "{0}/{1}".format(iid, i)
+                # todo - create iid(?)
+                miid = f"{iid}-{i}"
                 if multikey_grpby:
                     # set up more refined hierarchical context for group by with multiple keys
                     # recover multl-dimension indexes from i
@@ -361,7 +360,7 @@ class LG:
                 if lgn.loop_ctx:
                     lpcxt = lgn.loop_ctx
                     iid = lgn.iid
-                miid = "{0}/{1}".format(iid, i)
+                miid = "{0}-{1}".format(iid, i)
                 src_drop = lgn.make_single_drop(miid, loop_ctx=lpcxt, proc_index=i)
                 self._drop_dict[lgn.id].append(src_drop)
         elif lgn.is_service:
@@ -488,23 +487,26 @@ class LG:
             tdrop.addStreamingInput(dropSpec_null, name="stream")
             self._drop_dict["new_added"].append(dropSpec_null)
         elif s_type in ["Application", "Control"]:
+            logger.debug("Getting source and traget port names and IDs of %s and %s", slgn.name, tlgn.name)
             sname = slgn.getPortName("outputPorts", index=-1)
             tname = tlgn.getPortName("inputPorts", index=-1)
 
+            sout_ids = []
             # sname is dictionary of all output ports on the sDROP.
-            # Therefore there's an expected number of output edges that we need to add
-            # We keep track of this by querying the sDROP's current outputs and seeing 
-            # what is currently 'lowest' in number. Eventual, all output port names will 
-            # be added.
             output_port = sname[llink["fromPort"]]
             input_port = tname[llink["toPort"]]
-            sdrop.addOutput(tdrop, name=output_port)
-            tdrop.addProducer(sdrop, name=input_port)
+            # sdrop.addOutput(tdrop, name=output_port)
+            # tdrop.addProducer(sdrop, name=input_port)
             if "port_map" not in tdrop:
                 tdrop["port_map"] = {input_port:output_port}
             else:
                 tdrop["port_map"][input_port] = output_port
 
+            for output_port in sname.keys():
+                if tdrop["oid"] not in sout_ids:
+                    sdrop.addOutput(tdrop, name=output_port)
+                    tdrop.addProducer(sdrop, name=output_port)
+                    sout_ids = [list(o.keys())[0] for o in sdrop["outputs"]]
             if Categories.BASH_SHELL_APP == s_type:
                 bc = src_drop["command"]
                 bc.add_output_param(tlgn.id, tgt_drop["oid"])
@@ -540,11 +542,6 @@ class LG:
                     sdrop.addStreamingConsumer(tdrop, name=sname)
                     tdrop.addStreamingInput(sdrop, name=sname)
                 else:
-                    # logger.debug(
-                    #     ">>> adding consumer %s to %s",
-                    #     tdrop["categoryType"],
-                    #     sdrop["categoryType"],
-                    # )
                     sdrop.addConsumer(tdrop, name=sname)
                     tdrop.addInput(sdrop, name=tname)
             if Categories.BASH_SHELL_APP == t_type:
@@ -608,11 +605,6 @@ class LG:
                                 tdrops[j].addInput(gddrop, name=tname)
                                 j += 1
 
-                            # if 'gather-data_drop' in ga_drop:
-                            #     gddrop = ga_drop['gather-data_drop'] # this is the "true" target (not source!) drop
-                            #     gddrop.addConsumer(tdrops[j])
-                            #     tdrops[j].addInput(gddrop)
-                            #     j += 1
                 elif slgn.is_subgraph or tlgn.is_subgraph:
                     pass
                 else:
@@ -713,7 +705,7 @@ class LG:
                     grpby_dict = collections.defaultdict(list)
                     layer_index = tlgn.group_by_scatter_layers[1]
                     for gdd in sdrops:
-                        src_ctx = gdd["iid"].split("/")
+                        src_ctx = gdd["iid"].split("-")
                         if tlgn.group_keys is None:
                             # the last bit of iid (current h id) is the local GrougBy key, i.e. inner most loop context id
                             gby = src_ctx[-1]
@@ -721,8 +713,8 @@ class LG:
                                 slgn.h_level - 2 == tlgn.h_level and tlgn.h_level > 0
                             ):  # groupby itself is nested inside a scatter
                                 # group key consists of group context id + inner most loop context id
-                                gctx = "/".join(src_ctx[0:-2])
-                                gby = gctx + "/" + gby
+                                gctx = "-".join(src_ctx[0:-2])
+                                gby = f"{gctx}-{gby}"
                         else:
                             # find the "group by" scatter level
                             gbylist = []
@@ -739,7 +731,7 @@ class LG:
                                 src_ctx.reverse()
                             for lid in layer_index:
                                 gbylist.append(src_ctx[lid])
-                            gby = "/".join(gbylist)
+                            gby = "-".join(gbylist)
                         grpby_dict[gby].append(gdd)
                     grp_keys = grpby_dict.keys()
                     if len(grp_keys) != len(tdrops):
@@ -778,8 +770,7 @@ class LG:
             input_list = v[1]
             try:
                 output_drop = v[2][0]  # "peek" the first element of the output list
-            except IndexError as e:
-                logger.warning("Gather has no output drops %s", str(e))
+            except IndexError:
                 continue  # the gather hasn't got output drops, just move on
             llink = v[-1]
             for data_drop in input_list:

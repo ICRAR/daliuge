@@ -123,7 +123,7 @@ install_requires = [
     "psutil",
     "pyswarm",
     "python-multipart",
-    "uvicorn==0.18",
+    "uvicorn",
     "wheel",
 ]
 extra_requires = {

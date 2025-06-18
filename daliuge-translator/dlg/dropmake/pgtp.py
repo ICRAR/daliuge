@@ -306,6 +306,8 @@ class MetisPGTP(PGT):
 
         island_type:    integer, 0 - data island, 1 - compute island
 
+        new_num_parts: This refers to the num_islands
+
         """
         # 0. parse the output and get all the partitions
         if not self._can_merge(new_num_parts):
@@ -456,6 +458,7 @@ class MySarkarPGTP(PGT):
         island_type:    integer, 0 - data island, 1 - compute island
         """
         if not self._can_merge(new_num_parts):
+            # TODO something about the self._gid_island_id_map
             return
 
         in_out_part_map = dict()

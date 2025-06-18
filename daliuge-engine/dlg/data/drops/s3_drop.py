@@ -65,6 +65,7 @@ from dlg.meta import (
 # @param dropclass dlg.data.drops.s3_drop.S3DROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param base_name s3_drop/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
+# @param io /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Input Output port
 # @par EAGLE_END
 class S3DROP(DataDROP):
     """

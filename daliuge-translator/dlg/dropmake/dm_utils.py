@@ -55,6 +55,23 @@ class GInvalidNode(GraphException):
     pass
 
 
+class Port(dict):
+    """
+    Class to represent a port of a node
+    """
+
+    def __init__(self, port_type, port_name, port_id):
+        self.port_type = port_type
+        self.port_name = port_name
+        self.port_id = port_id
+        self.target_id = ""
+
+    def __str__(self):
+        return f'{{"{self.port_name}":{{"id":"{self.port_id}", "type":"{self.port_type}", "target_id": "{self.target_id}"}}}}'
+
+    def __repr__(self):
+        return f'{{"{self.port_name}":{{"id":"{self.port_id}", "type":"{self.port_type}", "target_id": "{self.target_id}"}}}}'
+
 def get_lg_ver_type(lgo):
     """
     Get the version type of this logical graph
@@ -117,19 +134,34 @@ def getNodesKeyDict(lgo):
     return dict([(x["id"], x) for x in lgo["nodeDataArray"]])
 
 
-def convert_fields(lgo):
+def convert_fields(lgo:dict) -> dict:
+    """Convert fields of all logical graph nodes to node attributes
+
+    Args:
+        lgo: The logical graph object
+
+    Returns:
+        converted logical graph object
+    """
     logger.debug("Converting fields")
     nodes = lgo["nodeDataArray"]
     for node in nodes:
         fields = node["fields"]
+        node["inputPorts"] = {}
+        node["outputPorts"] = {}
         for field in fields:
             name = field.get("name", "")
             if name != "":
-                # Add a node property.
-                # print("Set %s to %s" % (name, field.get('value', '')))
                 node[name] = field.get("value", "")
                 if node[name] == "":
                     node[name] = field.get("defaultValue", "")
+            port = field.get("usage", "")
+            if port in ["InputPort", "OutputPort", "InputOutput"]:
+                node[name] = f"<port>: {Port(port, name, field['id'])}"
+                if port in ["InputPort", "InputOutput"]:
+                    node["inputPorts"][field["id"]] = {"type":port, "name": name, "source_id": ""}
+                elif port in ["OutputPort", "InputOutput"]:
+                    node["outputPorts"][field["id"]] = {"type":port, "name": name, "target_id": ""}
     return lgo
 
 

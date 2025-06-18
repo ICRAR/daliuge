@@ -128,16 +128,21 @@ class dropdict(dict):
     def _addSomething(self, other, key, name=None):
         if key not in self:
             self[key] = []
-            # TODO: self[key] = {}; we want to move to dictionaries, not lists
         if other["oid"] not in self[key]:
-            # TODO: Returning just the other drop OID instead of the named
-            #       port list is not a good solution. Required for the dask
-            #       tests.
+            port_name = None
+            if key in ["outputs", "consumers"] and self.get("outputPorts", None):
+                port_name = [v["name"] for k,v in self["outputPorts"].items() if other["oid"].find(v["target_id"])>-1]
+            if key in ["inputs", "producers"] and self.get("inputPorts", None):
+                port_name = [v["name"] for k,v in self["inputPorts"].items() if other["oid"].find(v["source_id"])>-1]
+            port_name = port_name[0] if port_name and len(port_name) > 0 else None
+            if port_name:
+                name = port_name
             append = {other["oid"]: name} if name else other["oid"]
-            # if name is None:
-            # TODO: self[key][other['oid']: name]
-            # raise ValueError
             self[key].append(append)
+            logger.debug(
+                "Adding %s %s to %s: %s",
+                key, other['oid'], self['oid'], self[key]
+            )
 
     def addConsumer(self, other, name=None):
         self._addSomething(other, "consumers", name=name)

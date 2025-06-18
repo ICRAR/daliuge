@@ -37,6 +37,8 @@ from typing import Union
 from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.data.drops.data_base import DataDROP, logger
 from dlg.data.io import SharedMemoryIO, MemoryIO
+from dlg.drop import track_current_drop
+
 
 def get_builtins()-> dict:
     """
@@ -54,14 +56,24 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
 
     :param pd: either the pydata dictionary from the graph node or the value directly
 
+    This function attempts to identify the type of data so it can appropriately be stored
+    in the right IO buffer (currently supporting BytesIO and StringIO).
+
+    If there is nothing in pydata (e.g. the empty string, ''), then technically the
+    type of the input data is String. However, if this is because the memory drop is
+    expecting data from an InputPort, then this is not a good assumption.
+
     :returns a byte encoded value
     """
     pd_dict = pd if isinstance(pd, dict) else {"value":pd, "type":"raw"}
     pydata = pd_dict["value"]
     logger.debug("pydata value provided: '%s' with type '%s'", pydata, type(pydata))
-
+    empty_strings = ["None", ""]
     if pd_dict["type"].lower() in ["string", "str"]:
-        return pydata if pydata != "None" else None
+        pass
+    if pydata in empty_strings:
+        pydata = bytes() # Treat None/Empty objects as empty object data.
+        pd_dict["type"] = 'object'
     builtin_types = get_builtins()
     if pd_dict["type"] != "raw" and type(pydata) in builtin_types.values() and pd_dict["type"] not in builtin_types.keys():
         logger.warning("Type of pydata %s provided differs from specified type: %s", type(pydata).__name__, pd_dict["type"])
@@ -95,12 +107,13 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
         except JSONDecodeError:
             pydata = pydata.encode()
     elif pd_dict["type"].lower() == "object":
-        pydata = base64.b64decode(pydata.encode())
-        try:
-            pydata = dill.loads(pydata)
-        except dill.PickleError as e:
-            logger.error("Issue loading pydata object with pickle %s", pydata)
-            raise dill.PickleError from e
+        if pydata:
+            pydata = base64.b64decode(pydata.encode())
+            try:
+                pydata = dill.loads(pydata)
+            except dill.PickleError as e:
+                logger.error("Issue loading pydata object with pickle %s", pydata)
+                raise dill.PickleError from e
     elif pd_dict["type"].lower() == "raw":
         pydata = dill.loads(base64.b64decode(pydata))
         logger.debug("Returning pydata of type: %s", type(pydata))
@@ -114,8 +127,8 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
 # @par EAGLE_START
 # @param category Memory
 # @param tag daliuge
-# @param pydata /Object/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param pydata None/Object/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
+# @param io /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Input Output port
 # @param block_skip False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If set the drop will block a skipping chain until the last producer has finished and is not also skipped.
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
@@ -130,6 +143,8 @@ class InMemoryDROP(DataDROP):
     """
 
     # Allow in-memory drops to be automatically removed by default
+
+    @track_current_drop
     def __init__(self, *args, **kwargs):
         if "persist" not in kwargs:
             kwargs["persist"] = False
@@ -142,6 +157,13 @@ class InMemoryDROP(DataDROP):
     def initialize(self, **kwargs):
         """
         If there is a pydata argument use that to populate the DROP
+
+        Note: It is essential to have the type of the initial PyData correct, or it could
+        cause issues with the type of IO system that is used.
+
+        If parse_pydata() determines that the data passed via 'pydata' is a String, it
+        will use StringIO as the buffer. This can have ramifications for none-string
+        encodings used further down the track.
         """
         args = []
         pydata = None
@@ -168,7 +190,8 @@ class InMemoryDROP(DataDROP):
         if pydata:
             args.append(pydata)
             logger.debug("Loaded into memory: %s, %s, %s", pydata, self.data_type, type(pydata))
-        self._buf = io.BytesIO(*args) if self.data_type != "String" else io.StringIO(*args)
+        self._buf = io.BytesIO(*args) if self.data_type != "String" else io.StringIO(
+            dill.loads(*args)) # pylint: disable = no-value-for-parameter
         self.size = len(pydata) if pydata else 0
 
     def getIO(self):
@@ -204,11 +227,12 @@ class InMemoryDROP(DataDROP):
 # @par EAGLE_START
 # @param category PythonObject
 # @param tag daliuge
-# @param self /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Reference to object
+# @param self /Object/ComponentParameter/InputOutput/ReadWrite//False/False/Reference to object
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Object should be serialized
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in the object
 # @param dropclass dlg.data.drops.memory.InMemoryDROP/String/ComponentParameter/NoPort/ReadOnly//False/False/Drop class
-# @param base_name Object/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of class
+# @param base_name memory/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of class
+# @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @par EAGLE_END
 class PythonObjectDROP(InMemoryDROP):
     """
@@ -225,7 +249,7 @@ class PythonObjectDROP(InMemoryDROP):
 # @param category SharedMemory
 # @param tag daliuge
 # @param pydata None/String/ApplicationArgument/NoPort/ReadWrite//False/False/Data to be loaded into memory
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param io /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Input Output port
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
 # @param block_skip False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If set the drop will block a skipping chain until the last producer has finished and is not also skipped.
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node

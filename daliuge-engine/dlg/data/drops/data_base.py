@@ -63,7 +63,7 @@ logger = logging.getLogger(f"dlg.{__name__}")
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param io /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Input Output port
 # @par EAGLE_END
 class DataDROP(AbstractDROP):
     """
@@ -476,7 +476,9 @@ class PathBasedDrop(object):
 # @param base_name data_base/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param persist True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
+# @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
+# @param io /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Input Output port
 # @par EAGLE_END
 class NullDROP(DataDROP):
     """

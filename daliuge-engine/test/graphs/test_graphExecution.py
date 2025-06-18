@@ -72,7 +72,7 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         sessionId = "lalo"
         bs = 10
         count = 2048
-        ddGraphs = ["ddExamplePG.graph","ddExample_mixedPortsPG.graph"]
+        ddGraphs = ["ddExamplePG.graph", "ddExample_mixedPortsPG.graph"]
         for ddGraph in ddGraphs:
             with (files(test_graphs) /ddGraph).open() as f:  # @UndefinedVariable
                 logger.debug(f"Loading graph: {f}")

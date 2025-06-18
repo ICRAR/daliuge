@@ -24,6 +24,8 @@
 from __future__ import annotations
 
 import contextlib
+import dill
+import base64
 import logging
 import pickle
 import socket
@@ -336,10 +338,8 @@ class _AppDrop(_DelayedDrop):
             my_dropdict["func_name"] = self.fname
             my_dropdict["name"] = simple_fname
         if self.fcode is not None:
-            logger.debug("func_code provided: %s", self.fcode)
             my_dropdict["func_code"] = self.fcode
-            # my_dropdict["func_code"] = base64.b64encode(self.fcode)
-            # my_dropdict["func_code"] = utils.b2s(base64.b64encode(self.fcode))
+            logger.debug("func_code provided: %s", dill.loads(base64.b64decode(self.fcode)))
         if self.fdefaults:
             # APPLICATION ARGUMENTS
             my_dropdict["func_defaults"] = self.fdefaults

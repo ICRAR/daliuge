@@ -30,6 +30,7 @@ import sys
 
 from dlg import utils, droputils
 from dlg.apps.app_base import BarrierAppDROP
+from dlg.drop import track_current_drop
 from dlg.named_port_utils import (
     DropParser,
     get_port_reader_function,
@@ -54,6 +55,7 @@ logger = logging.getLogger(f"dlg.{__name__}")
 # @param use_wrapper False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If the command should be executed inside the existing MPI communicator set this to True
 # @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.mpi.MPIApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param base_name mpi/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
@@ -91,6 +93,7 @@ class MPIApp(BarrierAppDROP):
             )
         self._recompute_data = {}
 
+    @track_current_drop
     def run(self):
         from mpi4py import MPI
         logger.debug("Parameters found: %s",

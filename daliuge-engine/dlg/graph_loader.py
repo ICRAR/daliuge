@@ -40,14 +40,13 @@ from .drop import (
     LINKTYPE_1TON_APPEND_METHOD,
 )
 
-from .data.drops.data_base import NullDROP
-from .data.drops.container import ContainerDROP
-
+from dlg.data.drops import InMemoryDROP, SharedMemoryDROP, FileDROP, NgasDROP
+from dlg.data.drops.data_base import NullDROP
 from dlg.data.drops.environmentvar_drop import EnvironmentVarDROP
 from dlg.data.drops.parset_drop import ParameterSetDROP
+from dlg.data.drops.container import ContainerDROP
 from dlg.exceptions import InvalidGraphException
 from dlg.data.drops.json_drop import JsonDROP
-from dlg.data.drops import InMemoryDROP, SharedMemoryDROP, FileDROP, NgasDROP
 
 
 class CategoryType:
@@ -206,6 +205,8 @@ def loadDropSpecs(dropSpecList):
     for n, dropSpec in enumerate(dropSpecList):
         # "categoryType" and 'oid' are mandatory
         check_dropspec(n, dropSpec)
+        dropSpec.pop("input_parser", None)
+        dropSpec.pop("output_parser", None)
         dropType = dropSpec["categoryType"].lower()
 
         cf = __CREATION_FUNCTIONS[dropType]
@@ -247,6 +248,8 @@ def createGraphFromDropSpecList(
         check_dropspec(n, dropSpec)
         #        dropType = dropSpec.pop("categoryType")
         # backwards compatibility
+        dropSpec.pop("input_parser", None)
+        dropSpec.pop("output_parser", None)
         dropType = dropSpec["categoryType"]
         # if dropType.lower() in ["application", "app"]:
         #     dropType = "dropclass"

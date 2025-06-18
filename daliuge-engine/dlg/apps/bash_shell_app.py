@@ -40,10 +40,10 @@ import time
 import types
 import json
 
+from dlg.drop import track_current_drop
 from .. import droputils, utils
 from dlg.named_port_utils import (
     DropParser,
-    get_port_reader_function,
     replace_named_ports,
 )
 from ..ddap_protocol import AppDROPStates, DROPStates
@@ -210,14 +210,12 @@ class BashShellBase:
         cmd = self.command.strip()
         cmd = droputils.replace_placeholders(cmd, inputs, outputs)
 
-        reader = get_port_reader_function(self.input_parser)
         keyargs, pargs = replace_named_ports(
             inputs.items(),
             outputs.items(),
             inport_names,
             outport_names,
             self.appArgs,
-            parser=reader,
         )
 
         for key, value in keyargs.items():
@@ -370,6 +368,7 @@ class BashShellApp(BashShellBase, BarrierAppDROP):
         [dlg_streaming_input("text/*")],
     )
 
+    @track_current_drop
     def run(self):
         self._run_bash(self._inputs, self._outputs)
 

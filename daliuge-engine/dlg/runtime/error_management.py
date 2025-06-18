@@ -19,30 +19,9 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-import pytest
-import subprocess
-import unittest
 
-from dlg import common
-from dlg.common import tool
-from dlg.testutils import ManagerStarter
-
-# Note this test will only run with a full installation of DALiuGE.
-pexpect = pytest.importorskip("dlg.dropmake")
-
-class TestTool(ManagerStarter, unittest.TestCase):
-    def test_cmdhelp(self):
-        """Checks that all dlg commands have a help"""
-        tool._load_commands()
-        for group, commands in tool.commands.items():
-            for cmd in commands['commands']:
-                p = tool.start_process(
-                    cmd, ["-h"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-                )
-                out, err = p.communicate()
-                common.wait_or_kill(p, timeout=10)
-                self.assertEqual(
-                    0,
-                    p.returncode,
-                    "cmd: %s, out: %s" % (cmd + " -h", common.b2s(out + err)),
-                )
+class ErrorInterceptor:
+    """
+    Singleton-style class that is instantiated at startup and then intercepts DALiuGE
+    errors.
+    """

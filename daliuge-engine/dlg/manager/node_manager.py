@@ -362,6 +362,9 @@ class NodeManagerBase(DROPManager):
         self._check_session_id(sessionId)
         return self._sessions[sessionId].getGraphStatus()
 
+    def getDropStatus(self, sessionId, dropId):
+        return self._sessions[sessionId].getDropLogs(dropId)
+
     def getGraph(self, sessionId):
         self._check_session_id(sessionId)
         #  TODO: Ensure returns reproducibility data.

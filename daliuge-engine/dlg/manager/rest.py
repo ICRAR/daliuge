@@ -36,9 +36,9 @@ import tarfile
 import threading
 
 import bottle
-import pkg_resources
 
 from bottle import static_file
+from pathlib import Path
 
 from dlg import constants
 from dlg.manager.client import NodeManagerClient, DataIslandManagerClient
@@ -61,10 +61,9 @@ from dlg.manager.manager_data import Node
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
-
 def file_as_string(fname, enc="utf8"):
-    b = pkg_resources.resource_string(__name__, fname)  # @UndefinedVariable
-    return utils.b2s(b, enc)
+    res = Path(__file__).parent / fname
+    return utils.b2s(res.read_bytes(), enc)
 
 
 def daliuge_aware(func):
@@ -209,6 +208,10 @@ class ManagerRestServer(RestServer):
         # The non-REST mappings that serve HTML-related content
         app.route("/static/<filepath:path>", callback=self.server_static)
         app.get("/session", callback=self.visualizeSession)
+        app.route("/api/sessions/<sessionId>/graph/drop/<dropId>",
+                  callback=self._getDropStatus)
+        app.route("/sessions/<sessionId>/graph/drop/<dropId>",
+                callback=self.getDropStatus)
 
         # sub-class specifics
         self.initializeSpecifics(app)
@@ -364,9 +367,7 @@ class ManagerRestServer(RestServer):
     # non-REST methods
     # ===========================================================================
     def server_static(self, filepath):
-        staticRoot = pkg_resources.resource_filename(
-            __name__, "/web/static"
-        )  # @UndefinedVariable
+        staticRoot = Path(__file__).parent / "web/static"
         return bottle.static_file(filepath, root=staticRoot)
 
     def visualizeSession(self):
@@ -386,6 +387,36 @@ class ManagerRestServer(RestServer):
             dmType=self.dm.__class__.__name__,
         )
 
+    def _getDropStatus(self, sessionId, dropId):
+        return self.dm.getDropStatus(sessionId, dropId)
+
+    def getDropStatus(self, sessionId, dropId):
+        params = bottle.request.params
+        logger.warning("PARAMS: %s", params)
+
+        urlparts = bottle.request.urlparts
+        serverUrl = urlparts.scheme + "://" + urlparts.netloc
+
+        data = self._getDropStatus(sessionId, dropId)
+        if data["logs"]:
+            columns = [col for col in data["logs"][-1].keys()]
+            filter_column = "Level"
+            filter_column_index = columns.index(filter_column)
+        else:
+            columns = []
+            filter_column_index=0
+
+
+        tpl = file_as_string("web/drop_log.html")
+        return bottle.template(
+            tpl,
+            data=data,
+            columns=columns,
+            filter_index=filter_column_index,
+            sessionId=sessionId,
+            serverUrl=serverUrl,
+            dmType=self.dm.__class__.__name__,
+        )
 
 class NMRestServer(ManagerRestServer):
     """

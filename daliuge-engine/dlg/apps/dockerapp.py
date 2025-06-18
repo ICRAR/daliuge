@@ -40,6 +40,7 @@ import docker
 from docker.models.containers import Container
 
 from dlg import utils, droputils
+from dlg.drop import track_current_drop
 from dlg.named_port_utils import replace_named_ports
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import DaliugeException, InvalidDropException
@@ -395,6 +396,7 @@ class DockerApp(BarrierAppDROP):
                 self._waiters.append(ContainerIpWaiter(drop))
                 logger.debug("%r: Added ContainerIpWaiter for %r", self, drop)
 
+    @track_current_drop
     def run(self):
         # lock this object to prevent other processes from signaling until the
         # container object is running.
