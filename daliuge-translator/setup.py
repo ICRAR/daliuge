@@ -46,15 +46,14 @@ def extract_version():
     :return: tuple(int, int, int): major, minor, patch
     """
     TAG_VERSION_FILE = "VERSION"
-    content = ""
     with (Path(__file__).parent / TAG_VERSION_FILE).open(encoding="utf8") as open_file:
         major, minor, patch = open_file.read().strip("v").split(".")
         print("logging details: ", major, minor, patch)
     return int(major), int(minor), int(patch)
 
 
-major, minor, patch = extract_version()
-VERSION = f"{major}.{minor}.{patch}"
+mj, mnr, pch = extract_version()
+VERSION = f"{mj}.{mnr}.{pch}"
 RELEASE = True
 VERSION_FILE = "dlg/translator/version.py"
 
@@ -103,7 +102,7 @@ write_version_info()
 
 def package_files(directory):
     paths = []
-    for path, directories, filenames in os.walk(directory):
+    for path, _, filenames in os.walk(directory):
         for filename in filenames:
             paths.append(os.path.join("..", path, filename))
     return paths

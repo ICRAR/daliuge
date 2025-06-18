@@ -14,7 +14,6 @@ from typing import Tuple, Union
 
 from dlg.drop import AbstractDROP
 
-
 logger = logging.getLogger(f"dlg.{__name__}")
 
 class ArgType(IntEnum):
@@ -59,18 +58,6 @@ class Argument:
     positional: bool = False
 
 
-def serialize_kwargs(keyargs, prefix="--", separator=" "):
-    kwargs = {}
-    for name, value in iter(keyargs.items()):
-        kwargs[name] = value
-    #     if prefix == "--" and len(name) == 1:
-    #         kwargs += [f"-{name} {value}"]
-    #     else:
-    #         kwargs += [f"{prefix.strip()}{name.strip()}{separator}{str(value).strip()}"]
-    # logger.debug("kwargs after serialization: %s", kwargs)
-    return kwargs
-
-
 def clean_applicationArgs(applicationArgs: dict) -> dict:
     """
     Removes arguments with None and False values, if not precious. This
@@ -100,7 +87,7 @@ def clean_applicationArgs(applicationArgs: dict) -> dict:
     return cleanedArgs
 
 
-def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
+def serialize_applicationArgs(applicationArgs):
     """
     Unpacks the applicationArgs dictionary and returns two strings, one for
     positional arguments and one for kw arguments that can be used to construct
@@ -117,7 +104,7 @@ def serialize_applicationArgs(applicationArgs, prefix="--", separator=" "):
         else:
             kwargs.update({name: value})
     logger.info("Constructed command line arguments: %s %s", pargs, kwargs)
-    return (pargs, kwargs)
+    return pargs, kwargs
 
 def identify_named_ports(
     port_dict: dict,
@@ -175,7 +162,7 @@ def identify_named_ports(
             value = port_dict[keys[i]]["path"]
         except KeyError as e:
             logger.debug("portDict: %s does not have key: %s", port_dict, keys[i])
-            raise KeyError("")
+            raise KeyError from e
         if value is None:
             value = ""  # make sure we are passing NULL drop events
         if key in positionalArgs:
@@ -308,8 +295,6 @@ def replace_named_ports(
     # thus we create it here and fill it with values
     positionalPortArgs = collections.OrderedDict(positionalArgs)
     keywordPortArgs = {}
-    # port
-        # names.
     # This needs to be done for both the input ports and output ports on the drop.
     tmp_key, tmp_port = _process_port(
         inport_names,
@@ -355,12 +340,11 @@ def replace_named_ports(
     #  Construct the final keywordArguments and positionalPortArguments
     for k, v in keywordPortArgs.items():
         if not _is_value_empty(v):
-                keywordArgs.update({k: v})
+            keywordArgs.update({k: v})
     for k, v in positionalPortArgs.items():
         if not _is_value_empty(v):
             positionalArgs.update({k: v})
 
-    keywordArgs = serialize_kwargs(keywordArgs)
     pargs = positionalArgs
 
     logger.debug("After port replacement: pargs: %s; keyargs: %s", pargs, keywordArgs)
@@ -513,7 +497,7 @@ def get_port_reader_function(input_parser: DropParser):
     elif ip is DropParser.DILL:
         reader = drop_loaders.load_dill
     elif ip is DropParser.BINARY:
-         reader = drop_loaders.load_binary
+        reader = drop_loaders.load_binary
     else:
         logger.critical("Invalid input parser specified: %s", ip.__repr__())
         return drop_loaders.load_dill

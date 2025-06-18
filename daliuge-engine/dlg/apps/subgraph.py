@@ -23,8 +23,6 @@ import threading
 import time
 import datetime
 
-from typing import List, Dict
-
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.common import get_roots
 from dlg.data.drops.data_base import logger
@@ -186,7 +184,7 @@ class SubGraphLocal(BarrierAppDROP):
             ):
                 logger.info("Running SubGraph externally")
 
-        except Exception as e:
+        except RuntimeError as e:
             logger.debug("Exception when deploying subgraph: %s", e)
             shutdownManager(managers)
             self.execStatus = AppDROPStates.CANCELLED

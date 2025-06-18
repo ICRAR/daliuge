@@ -31,7 +31,7 @@ def check_k8s_env():
     """
     try:
         output = subprocess.run(
-            ["kubectl version"], capture_output=True, shell=True, timeout=2
+            ["kubectl version"], capture_output=True, shell=True, timeout=2, check=False
         ).stdout
         output = output.decode(encoding="utf-8").replace("\n", "")
         pattern = re.compile(r"^Client Version:.*Server Version:.*")

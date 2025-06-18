@@ -21,7 +21,7 @@
 #
 
 try:
-    from importlib.resources import files, as_file
+    from importlib.resources import files
 except ModuleNotFoundError:
     from importlib_resources import files
 

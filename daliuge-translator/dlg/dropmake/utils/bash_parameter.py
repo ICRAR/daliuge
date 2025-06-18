@@ -69,7 +69,7 @@ class BashCommand(object):
         def _get_delimit(matchobj):
             return " " if matchobj.start() == 0 else ","
 
-        for k, cmd in enumerate(self._cmds):
+        for k, _ in enumerate(self._cmds):
             d = self._cmds[k]
             imatch = inp_regex.search(d)
             omatch = out_regex.search(d)

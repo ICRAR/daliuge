@@ -232,7 +232,7 @@ class MetisPGTP(PGT):
             self._inner_parts = inner_parts
             self._node_list = node_list
 
-    def to_gojs_json(self, string_rep=True, outdict=None, visual=False):
+    def to_gojs_json(self, string_rep=True, visual=False, outdict=None):
         """
         Partition the PGT into a real "PGT with Partitions", thus PGTP, using
         METIS built-in functions
@@ -283,14 +283,14 @@ class MetisPGTP(PGT):
             jsobj = None
         self._parse_metis_output(metis_parts, jsobj)
         self._metis_out = metis_parts
-        self._gojs_json_obj = jsobj  # could be none if not visual
+        self.gojs_json_obj = jsobj  # could be none if not visual
         if string_rep and jsobj is not None:
             return json.dumps(jsobj, indent=2)
         else:
             return jsobj
 
     def merge_partitions(
-        self, num_islands, form_island=False, island_type=0, visual=False
+        self, new_num_parts, form_island=False, island_type=0, visual=False
     ):
         """
         This is called during resource mapping - deploying partitioned PGT to
@@ -306,9 +306,11 @@ class MetisPGTP(PGT):
 
         island_type:    integer, 0 - data island, 1 - compute island
 
+        new_num_parts: This refers to the num_islands
+
         """
         # 0. parse the output and get all the partitions
-        if not self._can_merge(num_islands):
+        if not self._can_merge(new_num_parts):
             return
 
         part_edges = defaultdict(int)  # k: from_gid + to_gid, v: sum_of_weight
@@ -333,11 +335,11 @@ class MetisPGTP(PGT):
             gl = glinks.split("**")
             G.add_edge(int(gl[0]), int(gl[1]), weight=v)
 
-        if num_islands == 1:
-            (edgecuts, metis_parts) = (0, [0] * len(G.nodes()))
+        if new_num_parts == 1:
+            (_, metis_parts) = (0, [0] * len(G.nodes()))
         else:
-            (edgecuts, metis_parts) = self._metis.part_graph(
-                G, nparts=num_islands, ufactor=1
+            (_, metis_parts) = self._metis.part_graph(
+                G, nparts=new_num_parts, ufactor=1
             )
         islands = set()
         for gid, island_id in zip(G.nodes(), metis_parts):
@@ -351,7 +353,7 @@ class MetisPGTP(PGT):
                 new_gid = self._gid_island_id_map[old_gid]
                 self._oid_gid_map[oid] = new_gid
                 gnode["gid"] = new_gid
-            self._num_parts_done = num_islands
+            self._num_parts_done = new_num_parts
         else:
             if (
                 island_type == 1
@@ -367,7 +369,7 @@ class MetisPGTP(PGT):
                         e[2]["weight"] /= self._bw_ratio
                 self._data_movement = None  # force to refresh data_movment
             # add GOJS groups for visualisation
-            self._partition_merged = num_islands
+            self._partition_merged = new_num_parts
             if visual:
                 island_label = "%s_Island" % (
                     self._island_labels[island_type % len(self._island_labels)]
@@ -509,7 +511,7 @@ class MySarkarPGTP(PGT):
                 for ip in self._inner_parts:
                     ip["group"] = in_out_part_map[ip["key"] - start_k] + start_i
 
-    def to_gojs_json(self, string_rep=True, outdict=None, visual=False):
+    def to_gojs_json(self, string_rep=True, visual=False):
         """
         Partition the PGT into a real "PGT with Partitions", thus PGTP
         """
@@ -548,7 +550,7 @@ class MySarkarPGTP(PGT):
             # so ditch this extra partition!
             new_partitions = []
             for part in self._partitions:
-                if part._gid != root_gid:
+                if part.partition_id != root_gid:
                     new_partitions.append(part)
             self._partitions = new_partitions
             self._num_parts_done = len(new_partitions)
@@ -581,13 +583,13 @@ class MySarkarPGTP(PGT):
 
             self._node_list = node_list
             self._inner_parts = inner_parts
-            self._gojs_json_obj = jsobj
+            self.gojs_json_obj = jsobj
             if string_rep and jsobj is not None:
                 return json.dumps(jsobj, indent=2)
             else:
                 return jsobj
         else:
-            self._gojs_json_obj = None
+            self.gojs_json_obj = None
             return None
 
 

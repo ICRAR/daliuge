@@ -27,6 +27,6 @@ try:
     from dlg.common import version
 
     __version__ = version.full_version
-except:
+except ModuleNotFoundError:
     # This can happen when running from source
     __version__ = "unknown"

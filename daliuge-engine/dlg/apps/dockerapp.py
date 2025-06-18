@@ -284,7 +284,8 @@ class DockerApp(BarrierAppDROP):
         self._userid = pw.pw_uid
         self._groupid = pw.pw_gid
         logger.debug(
-            f"User for docker container: {self._user} {self._userid}:{self._groupid}"
+            "User for docker container: %s %s:%s",
+            self._user, self._userid,self._groupid
         )
 
         # By default containers are removed from the filesystem, but people
@@ -296,10 +297,10 @@ class DockerApp(BarrierAppDROP):
         # Ports - a comma seperated list of the host port mappings of form:
         # "hostport1:containerport1, hostport2:containerport2"
         self._portMappings = self._popArg(kwargs, "portMappings", "")
-        logger.info(f"portMappings: {self._portMappings}")
+        logger.info("portMappings: %s", self._portMappings)
 
         self._shmSize = self._popArg(kwargs, "shmSize", "")
-        logger.info(f"shmSize: {self._shmSize}")
+        logger.info("shmSize: %s", self._shmSize)
 
         # Additional volume bindings can be specified for existing files/dirs
         # on the host system. They are given either as a list or as a
@@ -419,8 +420,6 @@ class DockerApp(BarrierAppDROP):
                 uid: DockerPath(o.path)
                 for uid, o in fsOutputs.items()
             }
-            dataURLInputs = {uid: i for uid, i in iitems if not droputils.has_path(i)}
-            dataURLOutputs = {uid: o for uid, o in oitems if not droputils.has_path(o)}
 
             # We bind the inputs and outputs inside the docker under the utils.getDlgDir()
             # directory, maintaining the rest of their original paths.
@@ -445,7 +444,7 @@ class DockerApp(BarrierAppDROP):
             binds = list(set(binds))  # make this a unique list else docker complains
             try:
                 binds.remove(":")
-            except:
+            except ValueError:
                 pass
             logger.debug("Volume bindings: %r", binds)
 
@@ -457,13 +456,14 @@ class DockerApp(BarrierAppDROP):
                     else:
                         host_port, container_port = mapping.split(":")
                     if host_port not in portMappings:
-                        logger.debug(f"mapping port {host_port} -> {container_port}")
+                        logger.debug("mapping port %s -> %s",
+                                     host_port, container_port)
                         portMappings[host_port] = int(container_port)
                     else:
                         raise Exception(
                             f"Duplicate port {host_port} in container port mappings"
                         )
-            logger.debug(f"port mappings: {portMappings}")
+            logger.debug("port mappings: %s", portMappings)
 
             # deal with environment variables
             env = {}
@@ -473,7 +473,7 @@ class DockerApp(BarrierAppDROP):
             if self._user is not None:
                 env.update({"USER": self._user, "DLG_ROOT": utils.getDlgDir()})
             if self._env is not None:
-                logger.debug(f"Found environment variable setting: {self._env}")
+                logger.debug("Found environment variable setting: %s", self._env)
                 if (
                     self._env.lower() == "all"
                 ):  # pass on all environment variables from host
@@ -503,7 +503,7 @@ class DockerApp(BarrierAppDROP):
                     logger.warning(
                         "Ignoring provided environment variables: Format wrong! Check documentation"
                     )
-            logger.debug(f"Adding environment variables: {env}")
+            logger.debug("Adding environment variables: %s",env)
 
             # deal with named ports
             appArgs = self._applicationArgs
@@ -559,7 +559,8 @@ class DockerApp(BarrierAppDROP):
                 )
 
             c = DockerApp._get_client()
-            logger.debug(f"Final user for container: {self._user}:{self._userid}")
+            logger.debug("Final user for container: %s:%s",
+                         self._user, self._userid)
 
             # Create container
             self._container = c.containers.create(  # type: ignore
@@ -583,7 +584,7 @@ class DockerApp(BarrierAppDROP):
         else:
             self._containerId = cId = self.container.id
             logger.info("Created container %s for %r", cId, self)
-            logger.debug(f"autoremove container {self._removeContainer}")
+            logger.debug("autoremove container %s", self._removeContainer)
 
             # Start it
             start = time.time()
@@ -601,7 +602,7 @@ class DockerApp(BarrierAppDROP):
             # In docker-py < 3 the .wait() method returns the exit code directly
             # In docker-py >= 3 the .wait() method returns a dictionary with the API response
             x = self.container.wait()
-            logger.debug(f"container {cId} finished")
+            logger.debug("container %s finished", cId)
 
             if isinstance(x, dict) and "StatusCode" in x:
                 self._exitCode = x["StatusCode"]
@@ -639,13 +640,15 @@ class DockerApp(BarrierAppDROP):
                 ):
                     # termination via SIGKILL, SIGSEGV, and SIGTERM is expected for some services
                     logger.warning(
-                        f"{msg}, output follows.\n==STDOUT==\n%s==STDERR==\n%s",
+                        "%s, output follows.\n==STDOUT==\n%s==STDERR==\n%s",
+                        msg,
                         stdout,
                         stderr,
                     )
                 else:
                     logger.error(
-                        f"{msg}, output follows.\n==STDOUT==\n%s==STDERR==\n%s",
+                        "%s, output follows.\n==STDOUT==\n%s==STDERR==\n%s",
+                        msg,
                         stdout,
                         stderr,
                     )
@@ -696,11 +699,9 @@ class DockerApp(BarrierAppDROP):
         return docker.from_env(version="auto", **cls._kwargs_from_env())
 
     @classmethod
-    def _kwargs_from_env(cls, ssl_version=None, assert_hostname=False):
+    def _kwargs_from_env(cls):
         """
         Look for parameters to make Docker work under OS X
-        :param ssl_version:     which SSL version
-        :param assert_hostname: perform hostname checking
         :return:
         """
         config_file_name = os.path.join(utils.getDlgDir(), "dlg.settings")

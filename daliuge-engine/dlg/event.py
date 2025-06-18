@@ -38,8 +38,8 @@ class Event(object):
     attached to individual instances of this class, depending on the event type.
     """
 
-    def __init__(self, type: str):
-        self.type = type
+    def __init__(self, event_type: str):
+        self.type = event_type
 
     def __repr__(self, *args, **kwargs):
         return "<Event %r>" % (self.__dict__)
@@ -79,12 +79,7 @@ class EventFirer(object):
         not `None` then `listener` will only receive events of `eventType` that
         originate from this object, otherwise it will receive all events.
         """
-        # logger.debug(
-        #     "Adding listener to %r eventType=%s: %r",
-        #     self,
-        #     eventType,
-        #     listener,
-        # )
+
         eventType = eventType or EventFirer.__ALL_EVENTS
         self._listeners[eventType].append(listener)
 
@@ -92,16 +87,13 @@ class EventFirer(object):
         """
         Unsubscribes `listener` from events fired by this object.
         """
-        (
+        if hasattr(listener, "oid"):
             logger.debug(
                 "Removing listener to %r eventType=%s: %r",
                 self.oid,
                 eventType,
                 listener.oid,
             )
-            if hasattr(listener, "oid")
-            else None
-        )
 
         eventType = eventType or EventFirer.__ALL_EVENTS
         if listener in self._listeners[eventType]:

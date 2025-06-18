@@ -24,14 +24,11 @@ A module containing utility code for running remote commands over SSH.
 """
 
 import logging
-import os
 import sys
 import time
 
 from paramiko.client import SSHClient, AutoAddPolicy
-from paramiko.rsakey import RSAKey
 import scp
-from typing import Union
 
 logger = logging.getLogger(f"dlg.{__name__}")
 

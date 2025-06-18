@@ -129,8 +129,8 @@ def find_numislands(physical_graph_template_file):
         pgt_data = json.load(f, strict=False)
     try:
         (pgt_name, pgt) = pgt_data
-    except:
-        raise ValueError(type(pgt_data))
+    except TypeError as e:
+        raise ValueError(type(pgt_data)) from e
     try:
         nodes = list(map(lambda x: x["node"], pgt))
         islands = list(map(lambda x: x["island"], pgt))
@@ -190,7 +190,7 @@ def find_service_ips(num_expected, retries=3, timeout=10):
             ip = re.search(ip_pattern, service)
             if ip:
                 ips.append(ip.group(0))
-        logger.info(f"K8s service ips: {ips}")
+        logger.info("K8s service ips: %s", ips)
         time.sleep(timeout)
     return ips
 
@@ -212,7 +212,7 @@ def find_pod_ips(num_expected, retries=3, timeout=10):
             ip = re.search(ip_pattern, pod)
             if ip:
                 ips.append(ip.group(0))
-        logger.info(f"K8s pod ips: {ips}")
+        logger.info("K8s pod ips: %s", ips)
         time.sleep(timeout)
     return ips
 

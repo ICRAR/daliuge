@@ -20,7 +20,11 @@
 #    MA 02111-1307  USA
 #
 import base64
+import binascii
 import builtins
+from json import JSONDecodeError
+from pickle import PickleError
+
 import dill
 import io
 import json
@@ -66,7 +70,7 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
     logger.debug("pydata value provided: '%s' with type '%s'", pydata, type(pydata))
     empty_strings = ["None", ""]
     if pd_dict["type"].lower() in ["string", "str"]:
-        pydata = pydata
+        pass
     if pydata in empty_strings:
         pydata = bytes() # Treat None/Empty objects as empty object data.
         pd_dict["type"] = 'object'
@@ -77,38 +81,39 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
     if pd_dict["type"].lower() == "json":
         try:
             pydata = json.loads(pydata)
-        except Exception:
+        except JSONDecodeError:
             pydata = pydata.encode()
     if pd_dict["type"].lower() == "eval":
         # try:
-        pydata = eval(pydata)
+        pydata = eval(pydata) # pylint: disable=eval-used
         # except Exception:
         #     pydata = pydata.encode()
     elif pd_dict["type"].lower() == "int" or isinstance(pydata, int):
         try:
             pydata = int(pydata)
             pd_dict["type"] = "int"
-        except Exception:
+        except JSONDecodeError:
             pydata = pydata.encode()
     elif pd_dict["type"].lower() == "float" or isinstance(pydata, float):
         try:
             pydata = float(pydata)
             pd_dict["type"] = "float"
-        except Exception:
+        except JSONDecodeError:
             pydata = pydata.encode()
     elif pd_dict["type"].lower() == "boolean" or isinstance(pydata, bool):
         try:
             pydata = bool(pydata)
             pd_dict["type"] = "bool"
-        except Exception:
+        except JSONDecodeError:
             pydata = pydata.encode()
     elif pd_dict["type"].lower() == "object":
         if pydata:
             pydata = base64.b64decode(pydata.encode())
             try:
                 pydata = dill.loads(pydata)
-            except:
-                raise
+            except dill.PickleError as e:
+                logger.error("Issue loading pydata object with pickle %s", pydata)
+                raise dill.PickleError from e
     elif pd_dict["type"].lower() == "raw":
         pydata = dill.loads(base64.b64decode(pydata))
         logger.debug("Returning pydata of type: %s", type(pydata))
@@ -211,7 +216,7 @@ class InMemoryDROP(DataDROP):
         data = b""
         try:
             data = allDropContents(self, self.size)
-        except Exception:
+        except IOError:
             logger.debug("Could not read drop reproduce data")
         return {"data_hash": common_hash(data)}
 
@@ -235,8 +240,6 @@ class PythonObjectDROP(InMemoryDROP):
 
     This is only here to force the creation of the component for the palette.
     """
-
-    pass
 
 
 ##
@@ -275,8 +278,12 @@ class SharedMemoryDROP(DataDROP):
             try:  # test whether given value is valid
                 _ = dill.loads(base64.b64decode(pydata.encode("latin1")))
                 pydata = base64.b64decode(pydata.encode("latin1"))
-            except Exception:
+            except PickleError:
                 pydata = None
+                logger.warning("Unable to load using pickle, default to None")
+            except binascii.Error:
+                pydata = None
+                logger.warning("Unable to load using base64, defaulting to None")
         elif "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]:
             pydata = parse_pydata(kwargs["nodeAttributes"]["pydata"])
         args.append(pydata)

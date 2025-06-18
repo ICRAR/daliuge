@@ -41,7 +41,6 @@ from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
     from dlg.drop import AbstractDROP
-    from dlg.apps.app_base import AppDROP
     from dlg.data.drops.data_base import DataDROP
 
 logger = logging.getLogger(f"dlg.{__name__}")
@@ -129,7 +128,7 @@ def allDropContents(drop, bufsize=65536) -> bytes:
     Returns all the data contained in a given DROP
     """
     buf = io.BytesIO()
-    if hasattr(drop,"_buf") and isinstance(drop._buf, io.StringIO):
+    if hasattr(drop,"buf") and isinstance(drop.buf, io.StringIO):
         buf = io.StringIO()
     desc = drop.open()
 
@@ -366,7 +365,7 @@ class DROPFile(object):
         self.open()
         return self
 
-    def __exit__(self, typ, value, traceback):
+    def __exit__(self, typ, value, tb):
         self.close()
 
     def __del__(self):
@@ -375,12 +374,10 @@ class DROPFile(object):
 
 
 def has_path(x):
-    """Returns `True` if `x` has a `path` attribute"""
-    try:
-        getattr(x, "path")
-        return True
-    except:
-        return False
+    """
+    :returns: `True` if `x` has a `path` attribute
+    """
+    return hasattr(x, "path")
 
 
 def replace_placeholders(cmd, inputs, outputs):

@@ -14,8 +14,6 @@ class ScatterDrop(BarrierAppDROP):
     This only exists to make sure we have a Scatter in the template palette
     """
 
-    pass
-
 
 ##
 # @brief Gather
@@ -31,8 +29,6 @@ class GatherDrop(BarrierAppDROP):
     This only exists to make sure we have a GroupBy in the template palette
     """
 
-    pass
-
 
 ##
 # @brief Loop
@@ -47,8 +43,6 @@ class LoopDrop(BarrierAppDROP):
     This only exists to make sure we have a loop in the template palette
     """
 
-    pass
-
 
 ##
 # @brief MKN
@@ -62,8 +56,6 @@ class MKNDrop(BarrierAppDROP):
     """
     This only exists to make sure we have a MKN in the template palette
     """
-
-    pass
 
 
 ##
@@ -80,8 +72,6 @@ class GroupByDrop(BarrierAppDROP):
     This only exists to make sure we have a GroupBy in the template palette
     """
 
-    pass
-
 
 ##
 # @brief SubGraph
@@ -94,8 +84,6 @@ class SubGraphDrop(BarrierAppDROP):
     """
     This only exists to make sure we have a SubGraph in the template palette
     """
-
-    pass
 
 
 ##
@@ -112,8 +100,6 @@ class CommentDrop(BarrierAppDROP):
     This only exists to make sure we have a comment in the template palette
     """
 
-    pass
-
 
 ##
 # @brief Exclusive Force Node
@@ -128,5 +114,3 @@ class ExclusiveForceDrop(BarrierAppDROP):
     """
     This only exists to make sure we have an exclusive force node in the template palette
     """
-
-    pass

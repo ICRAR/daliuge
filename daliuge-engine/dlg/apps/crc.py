@@ -35,7 +35,7 @@ from ..meta import (
 
 try:
     from crc32c import crc32c as crc32  # @UnusedImport
-except:
+except ImportError:
     from binascii import crc32  # @Reimport
 
 
@@ -49,7 +49,7 @@ class CRCApp(BarrierAppDROP):
 
     component_meta = dlg_component(
         "CRCApp",
-        "A BarrierAppDROP that calculates the " "CRC of the single DROP it consumes",
+        "A BarrierAppDROP that calculates the CRC of the single DROP it consumes",
         [dlg_batch_input("binary/*", [])],
         [dlg_batch_output("binary/*", [])],
         [dlg_streaming_input("binary/*")],
@@ -117,7 +117,7 @@ class CRCStreamApp(AppDROP):
         self.execStatus = AppDROPStates.RUNNING
         self._crc = crc32(data, self._crc)
 
-    def dropCompleted(self, uid, status):
+    def dropCompleted(self, uid, drop_state):
         outputDrop = self.outputs[0]
         outputDrop.write(str(self._crc).encode("utf8"))
         self.execStatus = AppDROPStates.FINISHED

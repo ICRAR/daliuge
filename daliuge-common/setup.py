@@ -20,7 +20,6 @@
 #    MA 02111-1307  USA
 #
 import os
-import io
 from pathlib import Path
 from setuptools import find_packages
 from setuptools import setup
@@ -41,7 +40,6 @@ def extract_version():
     :return: tuple(int, int, int): major, minor, patch
     """
     TAG_VERSION_FILE = "VERSION"
-    content = ""
     with (Path(__file__).parent / TAG_VERSION_FILE).open(encoding="utf8") as open_file:
         major, minor, patch = open_file.read().strip("v").split(".")
         print("logging details: ", major, minor, patch)
@@ -58,7 +56,7 @@ def do_versioning():
     with open(os.path.join("dlg", "version_helper.py")) as f:
         code = f.read()
     _globals = {}
-    exec(code, _globals)
+    exec(code, _globals) # pylint: disable=exec-used
     return _globals["write_version_info"](VERSION, VERSION_FILE, RELEASE)
 
 

@@ -121,30 +121,28 @@ class NgasArchivingApp(ExternalStoreApp):
     ngasTimeout = dlg_int_param("ngasTimeout", 2)
     ngasConnectTimeout = dlg_int_param("ngasConnectTimeout", 2)
 
-    def initialize(self, **kwargs):
-        super(NgasArchivingApp, self).initialize(**kwargs)
 
-    def store(self, inDrop):
+    def store(self, inputDrop):
         logger.debug("NGAS Server %s", self.ngasSrv)
         logger.debug("NGAS Port %s", self.ngasPort)
 
-        if isinstance(inDrop, ContainerDROP):
+        if isinstance(inputDrop, ContainerDROP):
             raise Exception(
                 "ContainerDROPs are not supported as inputs for this application"
             )
 
-        if inDrop.size is None or inDrop.size < 0:
+        if inputDrop.size is None or inputDrop.size < 0:
             logger.error(
                 "NGAS requires content-length to be know, but the given input does not provide a size."
             )
             size = None
         else:
-            size = inDrop.size
+            size = inputDrop.size
             logger.debug("Content-length %s", size)
         try:
             ngasIO = NgasIO(
                 self.ngasSrv,
-                inDrop.uid,
+                inputDrop.uid,
                 self.ngasPort,
                 self.ngasConnectTimeout,
                 self.ngasTimeout,
@@ -155,7 +153,7 @@ class NgasArchivingApp(ExternalStoreApp):
             logger.warning("NgasIO library not available, falling back to NgasLiteIO.")
             ngasIO = NgasLiteIO(
                 self.ngasSrv,
-                inDrop.uid,
+                inputDrop.uid,
                 self.ngasPort,
                 self.ngasConnectTimeout,
                 self.ngasTimeout,
@@ -166,7 +164,7 @@ class NgasArchivingApp(ExternalStoreApp):
         ngasIO.open(OpenMode.OPEN_WRITE)
 
         # Copy in blocks of 4096 bytes
-        with DROPFile(inDrop) as f:
+        with DROPFile(inputDrop) as f:
             while True:
                 buff = f.read(4096)
                 ngasIO.write(buff)

@@ -76,8 +76,8 @@ def check_port(host, port, timeout=0, checking_open=True, return_socket=False):
                     s.close()
             except socket.error as e:
                 s.close()
-                raise
-            except OSError as e:
+                raise e
+            except OSError: # pylint: disable=duplicate-except
                 # logger.debug("Error opening connection!!")
                 logger.error("Unable to connect to %s:%s", host, port)
                 return not checking_open

@@ -219,7 +219,7 @@ def module_as_main():
     parent_comm = MPI.Comm.Get_parent()  # @UndefinedVariable
 
     def handle(signNo, stack_frame):
-        parent_comm.gather(("", "Received signal %d" % (signNo,), -1), root=0)
+        parent_comm.gather(("", "Received signal %d from frame %s" % (signNo, stack_frame), -1), root=0)
 
     signal.signal(signal.SIGINT, handle)
     signal.signal(signal.SIGTERM, handle)
@@ -237,7 +237,7 @@ def module_as_main():
         )
         stdout, stderr = proc.communicate()
         code = proc.returncode
-    except Exception as e:
+    except OSError as e:
         stdout, stderr, code = "", str(e), -1
 
     # Gather the results in the spawner rank and good bye

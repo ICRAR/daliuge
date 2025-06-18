@@ -89,12 +89,10 @@ class Annealer(object):
     @abc.abstractmethod
     def move(self):
         """Create a state change"""
-        pass
 
     @abc.abstractmethod
     def energy(self):
         """Calculate state's energy"""
-        pass
 
     def meet_constraint(self):
         """
@@ -103,7 +101,7 @@ class Annealer(object):
         """
         return True
 
-    def set_user_exit(self, signum, frame):
+    def set_user_exit(self):
         """Raises the user_exit flag, further iterations are stopped"""
         self.user_exit = True
 
@@ -159,7 +157,7 @@ class Annealer(object):
             sys.stdout.flush()
         else:
             remain = (self.steps - step) * (elapsed / step)
-            sys.stdout.write(
+            _  = sys.stdout.write(
                 "\r%12.2f  %12.2f  %7.2f%%  %7.2f%%  %s  %s"
                 % (
                     T,
@@ -260,7 +258,7 @@ class Annealer(object):
             prevState = self.copy_state(self.state)
             prevEnergy = E
             accepts, improves = 0, 0
-            for step in range(steps):
+            for _ in range(steps):
                 self.move()
                 E = self.energy()
                 dE = E - prevEnergy

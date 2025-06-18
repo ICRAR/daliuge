@@ -251,7 +251,7 @@ class Monitor:
                 if e.args and e.args[0] == errno.EINTR:
                     break
                 raise
-            except Exception:
+            except Exception: # pylint: disable=broad-exception-caught
                 logger.exception(
                     "Unexpected exception, some communications might have been lost"
                 )
@@ -313,14 +313,17 @@ class Monitor:
 
     def remove_proxy_socket(self, sock):
 
+        saa = None
+        proxyport = None
         for proxyport, saa in self.proxy_sockets.items():
             if saa.sock == sock:
                 break
 
         # Close the proxy socket itself
-        logger.info("Closing proxy socket %r", saa.addr)
-        del self.proxy_sockets[proxyport]
-        self.close_socket(sock, False)
+        if saa and proxyport:
+            logger.info("Closing proxy socket %r", saa.addr)
+            del self.proxy_sockets[proxyport]
+            self.close_socket(sock, False)
 
         # Close the client listener port associated to this proxy
         # so no more incoming client requests are received
@@ -329,7 +332,7 @@ class Monitor:
             if pp == proxyport:
                 break
         if clientport is None:
-            raise Exception("This shouldn't have happened, sorry :-(")
+            raise RuntimeError("This shouldn't have happened, sorry :-(")
 
         self.remove_clientlistener_socket(clientport)
 

@@ -40,8 +40,6 @@ import re
 import grp
 import pwd
 
-from pathlib import Path
-
 import netifaces
 
 from . import common
@@ -174,7 +172,7 @@ def to_externally_contactable_host(host, prefer_local=False):
             return a
 
     # All addresses were loopbacks! let's return the last one
-    raise a
+    raise addresses[-1] if addresses else ''
 
 
 def getDlgDir():
@@ -187,7 +185,7 @@ def getDlgDir():
     else:
         path = os.path.join(os.path.expanduser("~"), "dlg")
         os.environ["DLG_ROOT"] = path
-    logger.debug(f"DLG_ROOT directory is {path}")
+    logger.debug("DLG_ROOT directory is %s", path)
     return path
 
 
@@ -246,7 +244,7 @@ def createDirIfMissing(path):
     """
     try:
         os.makedirs(path)
-        logger.debug(f"created path {path}")
+        logger.debug("created path %s", path)
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
@@ -505,8 +503,9 @@ def prepareUser(DLG_ROOT=getDlgDir()):
     workdir = f"{DLG_ROOT}/workspace/settings"
     try:
         os.makedirs(workdir, exist_ok=True)
-    except:
-        raise
+    except Exception as e:
+        logger.debug("prepareUser has failed")
+        raise e
     template_dir = os.path.dirname(__file__)
     # get current user info
     pw = pwd.getpwuid(os.getuid())
@@ -517,12 +516,12 @@ def prepareUser(DLG_ROOT=getDlgDir()):
         file.write(
             f"{pw.pw_name}:x:{pw.pw_uid}:{pw.pw_gid}:{pw.pw_gecos}:{DLG_ROOT}:/bin/bash\n"
         )
-        logger.debug(f"passwd file written {file.name}")
+        logger.debug("passwd file written %s", file.name)
     with open(os.path.join(workdir, "group"), "wt") as file:
         file.write(open(os.path.join(template_dir, "group.template"), "rt").read())
         file.write(f"{gr.gr_name}:x:{gr.gr_gid}:\n")
         file.write(f"docker:x:{dgr.gr_gid}\n")
-        logger.debug(f"Group file written {file.name}")
+        logger.debug("Group file written %s", file.name)
 
     return dgr.gr_gid
 

@@ -44,7 +44,7 @@ class ThreadingWSGIServer(
 
 
 class LoggingWSGIRequestHandler(wsgiref.simple_server.WSGIRequestHandler):
-    def log_message(self, fmt, *args):
+    def log_message(self, format, *args): # pylint: disable=redefined-builtin
         pass
         # logger.debug(fmt, *args)
 
@@ -144,13 +144,13 @@ class RestClient(object):
     def _post_form(self, url, content=None):
         if content is not None:
             content = urllib.parse.urlencode(content)
-        ret = self._POST(url, content, content_type="application/x-www-form-urlencoded")
+        ret = self.POST(url, content, content_type="application/x-www-form-urlencoded")
         return json.load(ret) if ret else None
 
     def _post_json(self, url, content, compress=False):
         if not isinstance(content, (str, bytes)):
             content = common.JSONStream(content)
-        ret = self._POST(
+        ret = self.POST(
             url, content, content_type="application/json", compress=compress
         )
         return json.load(ret) if ret else None
@@ -159,7 +159,7 @@ class RestClient(object):
         stream, _ = self._request(url, "GET")
         return stream
 
-    def _POST(self, url, content=None, content_type=None, compress=False):
+    def POST(self, url, content=None, content_type=None, compress=False):
         headers = {}
         if content_type:
             headers["Content-Type"] = content_type
@@ -224,8 +224,8 @@ class RestClient(object):
                     ex = etype(*eargs)
                 if hasattr(ex, "msg"):
                     ex.msg = msg + ex.msg
-            except Exception:
-                ex = RestClientException(msg + "Unknown")
+            except Exception as e: # pylint: disable=broad-exception-caught
+                ex = RestClientException(msg + str(e) + "Unknown")
 
             raise ex
 

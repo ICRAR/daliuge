@@ -31,9 +31,7 @@ import os
 import os.path as osp
 import uuid
 
-from .definition_classes import Categories, ConstructTypes
-
-from typing import Dict
+from .definition_classes import ConstructTypes
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
@@ -175,20 +173,6 @@ def _build_node_index(lgo):
     return ret
 
 
-def _relink_gather(appnode, lgo, gather_newkey, node_index):
-    """
-    for links whose 'from' is gather, 'to' is gather-internal data,
-    relink them such that 'from' is the appnode
-    """
-
-    gather_oldkey = appnode["id"]
-    for link in lgo["linkDataArray"]:
-        if link["from"] == gather_oldkey:
-            node = node_index[link["to"]]
-            if node["parentId"] == gather_oldkey:
-                pass
-
-
 def _check_MKN(m, k, n):
     """
     Need to work with python 2 as well
@@ -266,7 +250,6 @@ def convert_mkn(lgo):
         #        del node_mk["outputAppFields"]
         new_field = {
             "name": "num_of_inputs",
-            "name": "Number of inputs",
             "value": "%d" % (M),
         }
         node_mk["fields"].append(new_field)
@@ -293,7 +276,6 @@ def convert_mkn(lgo):
 
         new_field_kn = {
             "name": "num_of_copies",
-            "name": "Number of copies",
             "value": "%d" % (K),
         }
         node_kn["fields"].append(new_field_kn)
@@ -330,7 +312,6 @@ def convert_mkn(lgo):
 
         new_field_kn = {
             "name": "num_of_copies",
-            "name": "Number of copies",
             "value": "%d" % (N),
         }
         node_split_n["fields"].append(new_field_kn)
@@ -453,22 +434,6 @@ def convert_mkn_all_share_m(lgo):
     # with open('/tmp/MKN_translate.graph', 'w') as f:
     #    json.dump(lgo, f)
     return lgo
-
-
-def getAppRefInputs(lgo):
-    """
-    Function to retrieve the inputs from an App node referenced by a group.
-    Used to recover the Gather node inputs for AppRef format graphs.
-    """
-    for node in lgo["nodeDataArray"]:
-        if node["category"] not in [
-            ConstructTypes.SCATTER,
-            ConstructTypes.GATHER,
-        ]:
-            continue
-        has_app = None
-
-    pass
 
 
 def convert_construct(lgo):
@@ -1022,9 +987,9 @@ def convert_eagle_to_daliuge_json(lg_name):
         with open(new_path, "w") as outfile:
             json.dump(logical_graph, outfile, sort_keys=True, indent=4)
     except Exception as exp:
-        raise Exception(
+        raise RuntimeError(
             "Failed to save a pretranslated graph {0}:{1}".format(lg_name, str(exp))
-        )
+        ) from exp
     finally:
         pass
 

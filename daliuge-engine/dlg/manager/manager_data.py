@@ -73,9 +73,8 @@ class Node:
                 )
         except AttributeError as e:
             raise RuntimeError(
-                "Constructor has been passed non-string object and cannot"
-                "be converted to Node: type %s.",
-                type(host),
+                f"Constructor has been passed non-string object and cannot"
+                f"be converted to Node: type {type(host)}.",
             ) from e
         except ValueError as e:
             logger.error(
