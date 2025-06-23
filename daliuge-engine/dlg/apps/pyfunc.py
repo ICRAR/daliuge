@@ -447,12 +447,13 @@ class PyFuncApp(BarrierAppDROP):
         Get necessary information for populating the argument
         """
         value = self._applicationArgs[arg]["value"]
+        vtype = self._applicationArgs[arg]["type"]
         encoding = self._applicationArgs[arg].get("encoding")
         precious = self._applicationArgs[arg].get("precious")
         positional = self._applicationArgs[arg].get("positional")
         portType = self._applicationArgs[arg].get("usage")
 
-        return value, encoding, precious, positional, portType
+        return value, vtype, encoding, precious, positional, portType
 
     def _populate_arguments_with_graph_data(self, positionalArgsMap, keywordArgsMap):
         """
@@ -490,9 +491,9 @@ class PyFuncApp(BarrierAppDROP):
         # If we overwrite any defaults with what is store in AppArgs "value"
         for arg in self._applicationArgs:
             # check value type and interpret
-            value, encoding, precious, positional, portType = self._get_arg_info(
+            value, vtype, encoding, precious, positional, portType = self._get_arg_info(
                 arg)
-            if self._applicationArgs[arg]["type"] in ["Json", "Complex"]:
+            if vtype in ["Json", "Complex"]:
                 try:
                     value = ast.literal_eval(value)
                     logger.debug(f"Evaluated %s to %s",
@@ -504,7 +505,10 @@ class PyFuncApp(BarrierAppDROP):
             for arg_map in [positionalArgsMap, keywordArgsMap]:
                 if arg in arg_map:
                     argument = arg_map[arg]
-                    argument.value = value or argument.value
+                    if value is not None:
+                        argument.value = value
+                    else:
+                        argument.value = value
                     argument.encoding = encoding or argument.encoding
                     argument.precious = precious or argument.precious
                     argument.positional = positional or argument.positional
