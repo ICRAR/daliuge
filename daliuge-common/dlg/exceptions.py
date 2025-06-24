@@ -191,6 +191,11 @@ class InvalidSessionState(SessionException):
     in the expected state for that operation.
     """
 
+class SessionInterruptError(InvalidSessionException):
+    """
+    Raise when a session is cancled prematurely.
+    """
+
 
 class SubManagerException(DaliugeException):
     """

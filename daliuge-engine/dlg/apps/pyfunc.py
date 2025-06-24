@@ -710,6 +710,7 @@ class PyFuncApp(BarrierAppDROP):
         self.func_name = self.func.__qualname__
         return
 
+
     @track_current_drop
     def initialize(self, **kwargs):
         """
