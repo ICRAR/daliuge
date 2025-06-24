@@ -34,12 +34,14 @@ import time
 
 from inspect import signature
 
-from dlg import utils, droputils
+from dlg import droputils
+from dlg.apps.app_base import BarrierAppDROP
 from dlg.common import dropdict
 from dlg.data.drops.memory import parse_pydata
 from dlg.ddap_protocol import DROPStates
-from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import InvalidDropException
+
+from dlg.utils import connect_to
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
@@ -141,7 +143,7 @@ def compute(value, **kwargs):
     client.deploy_session(session_id, completed_uids=droputils.get_roots(graph))
 
     timeout = kwargs.get("timeout", None)
-    s = utils.connect_to("localhost", port, 10)
+    s = connect_to("localhost", port, 10)
     s.settimeout(timeout)
     with contextlib.closing(s):
         s = s.makefile("rb")

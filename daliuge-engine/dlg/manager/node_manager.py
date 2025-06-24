@@ -39,6 +39,9 @@ import sys
 import threading
 import time
 import typing
+# import dlg.runtime.dlg_logging as logging
+
+
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, Future
 
 from dlg import constants
@@ -51,12 +54,12 @@ from dlg.apps.app_base import AppDROP, DropRunner
 from dlg.exceptions import (
     NoSessionException,
     SessionAlreadyExistsException,
-    DaliugeException,
+    DaliugeException, ErrorManagerCaughtException, SessionInterruptError,
 )
 from ..lifecycle.dlm import DataLifecycleManager
 
-logger = logging.getLogger(f"dlg.{__name__}")
 
+logger = logging.getLogger(f"dlg.{__name__}")
 
 class NMDropEventListener(object):
     def __init__(self, nm, session_id):
@@ -310,10 +313,12 @@ class NodeManagerBase(DROPManager):
 
     def start(self, rpc_endpoint):
         super().start()
+        logger.user("Running NodeManager")
         self.drop_runner.start(rpc_endpoint)
         self._dlm.startup()
 
     def shutdown(self):
+        logger.user("Stopping NodeManager")
         self._dlm.cleanup()
         self.drop_runner.close()
         super().shutdown()
@@ -382,6 +387,9 @@ class NodeManagerBase(DROPManager):
     def getLogDir(self):
         return self.logdir
 
+    from dlg.runtime.error_management import manage_session_failure
+
+    @manage_session_failure
     def deploySession(self, sessionId, completedDrops: list[str] = None):
         self._check_session_id(sessionId)
         session = self.sessions[sessionId]
@@ -413,11 +421,15 @@ class NodeManagerBase(DROPManager):
         if self._error_listener:
             listeners.append(ErrorStatusListener(session, self._error_listener))
 
-        session.deploy(
-            completedDrops=completedDrops,
-            event_listeners=listeners,
-            foreach=foreach,
-        )
+        try:
+            session.deploy(
+                completedDrops=completedDrops,
+                event_listeners=listeners,
+                foreach=foreach,
+            )
+        except ErrorManagerCaughtException:
+            session.cancel(interrupt=True)
+            raise SessionInterruptError("Sesion was interrupted due to Deploy failure")
 
     def cancelSession(self, sessionId):
         logger.info("Cancelling session: %s", sessionId)

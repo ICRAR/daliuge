@@ -689,6 +689,7 @@ class HelloWorldApp(BarrierAppDROP):
 
     greet = dlg_string_param("greet", "World")
 
+    @track_current_drop
     def run(self):
         ins = self.inputs
         # if no inputs use the parameter else use the input

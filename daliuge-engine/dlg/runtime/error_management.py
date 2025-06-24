@@ -19,9 +19,155 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import dill
+import pickle
+import logging
+import dlg.exceptions as ex
 
-class ErrorInterceptor:
+from enum import Enum, auto
+
+
+class ErrorCode(Enum):
+
+    DROP_ERROR = 100
     """
-    Singleton-style class that is instantiated at startup and then intercepts DALiuGE
-    errors.
+    An error occured during DROP initialization that was not expected. Please 
+    double-check your current graph and attempt to resolve the issue based on the 
+    debugging tips for DROP_ERROR codes below. 
+    
+    If none of the fixes address your isse, please consider opening an issue on our GitHub
+    repository `here <https://github.com/ICRAR/daliuge/issues/new/choose>`_.
     """
+
+    INCOMPLETE_DROP_SPEC = auto()
+    """
+    The DROP being initalized was not 
+    """
+
+    BAD_IMPORT = auto()
+    """
+        There was an issue importing the module. Consider:
+        reviewing the current environment
+        reviewing the spelling
+        ensuring there are no missing dependencies
+    """
+
+    ENCODING_ERROR = auto()
+    """There was an issue with reading/writing data in your drop.
+        This is likely caused by using the wrong 'encoding' option when configuring
+        your graph in EAGLE. Please ensure that: 
+            
+            - The OutputPort/InputPort on your Apps are using the same encoding
+            - The Encoding matches the Type (e.g. String types are using UTF-8 encoding)
+            - The DataDROP matches the right type/encoding (e.g. Using a File for its path 
+                is using 'path' encoding'). 
+            
+        These changes will need to be added to the EAGLE graph. 
+    """
+
+    GRAPH_ERROR = 200
+    """
+    An error has occured during graph execution that was not expected. Please 
+    double-check your current graph and attempt to resolve the issue based on the 
+    debugging tips for SESSION_ERROR codes below. 
+
+    If none of the fixes address your isse, please consider opening an issue on our GitHub
+    repository `here <https://github.com/ICRAR/daliuge/issues/new/choose>`_.
+    """
+
+    INVALID_GRAPH_CONFIGURATION = auto()
+    """
+    The graph has failed to be loaded by the DALiuGE Engine. This can be caused by number 
+    of issues: 
+
+        - A python module that your graph relies on is not currently accessible in the 
+            virtual environment in which DALiuGE is being run. 
+        - The graph is missing key arguments - please check the JSON is complete.
+    """
+
+
+    SESSION_ERROR = 300
+    """
+    An error has occured during your session that was not expected. Please 
+    double-check your current graph and attempt to resolve the issue based on the 
+    debugging tips for SESSION_ERROR codes below. 
+    
+    If none of the fixes address your isse, please consider opening an issue on our GitHub
+    repository `here <https://github.com/ICRAR/daliuge/issues/new/choose>`_.
+    """
+
+    SESSION_STATE_ERROR = auto()
+    """
+    """
+
+    SESSION_MISSING_ERROR = auto()
+    """
+    """
+
+    @property
+    def doc_url(self) -> str:
+        log_message = f"Error [{self.value}] - {self.name}"
+        # if os.environ.get('READTHEDOCS', None) == 'True':
+        path =  f"https://daliuge.readthedocs.org/page/errors.html#{self.name}"
+        href = f"<a href={path} target='_blank' rel='noopener noreferrer'>{path}</a>'"
+        # else:
+        #     path =  (f"file:///home/00087932/github/daliuge-new/docs/_build/html"
+        #              f"/debugging/errors.html#{self.name}")
+        return f"{log_message} occured: Please review potential issues at\n {href}"
+
+"""
+ Custom DALiuGE Exceptions
+ 100 - Exceptions that inheret generic InvalidDropException
+ 200 - Exceptions that inheret InvalidGraphException 
+ 300 - Exceptions that inheret InvalidSessionException
+"""
+
+EXCEPTION_MAP = {
+    # Custom DALiUGE Exceptions
+    ex.InvalidDropException: ErrorCode.DROP_ERROR,
+    ex.BadModuleException: ErrorCode.BAD_IMPORT,
+    ex.InvalidEncodingException: ErrorCode.ENCODING_ERROR,
+    ex.IncompleteDROPSpec: ErrorCode.INCOMPLETE_DROP_SPEC,
+    ex.InvalidGraphException: ErrorCode.GRAPH_ERROR,
+    ex.IncompleteGraphError: ErrorCode.INVALID_GRAPH_CONFIGURATION,
+    ex.InvalidRelationshipException: ErrorCode.INVALID_GRAPH_CONFIGURATION,
+    ex.InvalidSessionException: ErrorCode.SESSION_ERROR,
+    ex.InvalidSessionState: ErrorCode.SESSION_STATE_ERROR,
+    ex.NoSessionException: ErrorCode.SESSION_MISSING_ERROR,
+
+    # Standard errors that we may not catch with specific exceptions based on
+    # where they might occur in the code
+    pickle.PickleError: ErrorCode.ENCODING_ERROR,
+    dill.PickleError: ErrorCode.ENCODING_ERROR
+}
+
+def intercept_error(e):
+    """
+    Intercept DALiuGEExceptions during App/DataDROP runtime.
+
+    Some exceptions we want to report and continue on running the session;
+    other exceptions will leave us in an unmanageable state and thus we need
+    to re-raise them to an alternative error to promote session cancellation
+    prematurely.
+
+    """
+
+    logger = logging.getLogger(f"dlg.{__name__}")
+    if type(e) != ex.ErrorManagerCaughtException:
+        errorno = EXCEPTION_MAP[type(e)]
+        logger.user(errorno.doc_url)
+    raise ex.ErrorManagerCaughtException from e
+
+
+def manage_session_failure(f):
+    def manage_session(self, *args, **kwargs):
+        try:
+            return f(self, *args, **kwargs)
+        except ex.InvalidSessionState:
+            # sessionId = kwargs.get('sessionId')
+            if args:
+                session = self._sessions[args[0]]
+                session.cancel()
+                return
+
+    return manage_session

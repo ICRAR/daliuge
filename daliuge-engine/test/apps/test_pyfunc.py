@@ -36,7 +36,8 @@ from dlg.apps.simple_functions import string2json
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
 from dlg.data.drops.memory import InMemoryDROP
 from dlg.droputils import DROPWaiterCtx
-from dlg.exceptions import InvalidDropException
+from dlg.exceptions import InvalidDropException, InvalidSessionState, \
+    ErrorManagerCaughtException, SessionInterruptError
 
 from test.dlg_engine_testutils import NMTestsMixIn
 
@@ -111,18 +112,18 @@ def _PyFuncApp(oid, uid, f, additional_imports=None, global_parsers= False, **kw
 
 class TestPyFuncApp(unittest.TestCase):
     def test_missing_function_param(self):
-        self.assertRaises(InvalidDropException, pyfunc.PyFuncApp, "a", "a")
+        self.assertRaises(ErrorManagerCaughtException, pyfunc.PyFuncApp, "a", "a")
 
     def test_invalid_function_param(self):
         # The function doesn't have a module
         self.assertRaises(
-            InvalidDropException, pyfunc.PyFuncApp, "a", "a", func_name="func1"
+            ErrorManagerCaughtException, pyfunc.PyFuncApp, "a", "a", func_name="func1"
         )
 
     def test_function_invalid_module(self):
         # The function lives in an unknown module/package
         self.assertRaises(
-            InvalidDropException,
+            ErrorManagerCaughtException,
             pyfunc.PyFuncApp,
             "a",
             "a",
@@ -136,7 +137,7 @@ class TestPyFuncApp(unittest.TestCase):
     def test_function_invalid_fname(self):
         # The function lives in an unknown module/package
         self.assertRaises(
-            InvalidDropException,
+            ErrorManagerCaughtException,
             pyfunc.PyFuncApp,
             "a",
             "a",
@@ -546,3 +547,44 @@ class PyFuncAppIntraNMTest(NMTestsMixIn, unittest.TestCase):
         a_data = os.urandom(32)
         c_data = self._test_runGraphInTwoNMs(g1, g2, rels, pickle.dumps(a_data), None)
         self.assertEqual(a_data, pickle.loads(c_data))
+
+    def test_bad_function_session_failure(self):
+        """
+        A test similar in spirit to TestDM.test_runGraphOneDOPerDom, but where
+        application B is a PyFuncApp. This makes sure that PyFuncApp work fine
+        across Node Managers.
+
+        NM #1      NM #2
+        =======    =============
+        | A --|----|-> B --> C |
+        =======    =============
+        """
+        g1 = [
+            {
+                "oid": "A",
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+            }
+        ]
+        g2 = [
+            {
+                "oid": "B",
+                "categoryType": "Application",
+                "dropclass": "dlg.apps.pyfunc.PyFuncApp",
+                "func_name":"function.missing",
+                "inputs": [
+                    {"A": "arg1"},
+                ],
+            },
+            {
+                "oid": "C",
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.memory.InMemoryDROP",
+                "producers": ["B"],
+            },
+        ]
+        rels = [DROPRel("A", DROPLinkType.INPUT, "B")]
+        a_data = os.urandom(32)
+        self.assertRaises(SessionInterruptError,
+                          self._test_runGraphInTwoNMs,g1, g2, rels,
+                          pickle.dumps(a_data), None)

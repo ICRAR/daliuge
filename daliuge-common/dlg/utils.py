@@ -42,8 +42,8 @@ import grp
 import pwd
 
 import netifaces
-
-from . import common
+import dlg.exceptions as ex
+from dlg import common
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
@@ -354,6 +354,9 @@ def object_tracking(name):
                 if "self" in kwargs:
                     kwargs.pop("self")
                 return f(*args, **kwargs)
+            except ex.DaliugeException as e:
+                from dlg.runtime.error_management import intercept_error
+                intercept_error(e)
             finally:
                 setattr(current_object, name, previous)
 

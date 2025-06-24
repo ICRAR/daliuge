@@ -175,6 +175,9 @@ class InMemoryDROP(DataDROP):
             kwargs["expireAfterUse"] = False
         super().__init__(*args, **kwargs)
 
+    # TODO add exception management handler for the initialize here
+    # TODO This should raise DlgMemoryException, which links to documentation for encoding
+
     def initialize(self, **kwargs):
         """
         If there is a pydata argument use that to populate the DROP
