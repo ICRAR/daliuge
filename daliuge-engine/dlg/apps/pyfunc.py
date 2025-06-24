@@ -49,7 +49,7 @@ from dlg.named_port_utils import (
     resolve_drop_parser,
 )
 from dlg.apps.app_base import BarrierAppDROP
-from dlg.exceptions import InvalidDropException
+from dlg.exceptions import BadModuleException, IncompleteDROPSpec
 from dlg.meta import (
     dlg_string_param,
     dlg_dict_param,
@@ -91,7 +91,7 @@ def serialize_func(f, serialize=True):
 
 def import_using_name(app, fname, curr_depth):
     if curr_depth > MAX_IMPORT_RECURSION:
-        raise InvalidDropException(
+        raise BadModuleException(
             app, "Problem importing module %s, search exceeded recursion limit" % fname
         )
 
@@ -107,7 +107,7 @@ def import_using_name(app, fname, curr_depth):
             return b[fname]
         else:
             msg = "%s is not builtin and does not contain a module name" % fname
-            raise InvalidDropException(app, msg)
+            raise BadModuleException(app, msg)
     elif parts[0] in b.keys():
         return b[parts[0]]
     else:
@@ -118,7 +118,7 @@ def import_using_name(app, fname, curr_depth):
             try:
                 mod = importlib.import_module(parts[0], __name__)
             except ImportError as e:
-                raise InvalidDropException(
+                raise BadModuleException(
                     app,
                     "Error when loading module %s: %s" % (parts[0], str(e)),
                 ) from e
@@ -140,7 +140,7 @@ def import_using_name(app, fname, curr_depth):
                         mod = import_using_name(app, fname, curr_depth=curr_depth+1)
                         break
                     except Exception as e: # pylint: disable=broad-exception-caught
-                        raise InvalidDropException(
+                        raise BadModuleException(
                             app, "Problem importing module %s, %s" % (mod, e)
                         ) from e
             logger.debug("Loaded module: %s", mod)
@@ -726,6 +726,7 @@ class PyFuncApp(BarrierAppDROP):
         self.func_name = self.func.__qualname__
         return
 
+
     @track_current_drop
     def initialize(self, **kwargs):
         """
@@ -765,7 +766,7 @@ class PyFuncApp(BarrierAppDROP):
             self._applicationArgs)  # number of additional arguments provided
 
         if not self.func_name and not self.func_code and not self.func:
-            raise InvalidDropException(
+            raise IncompleteDROPSpec(
                 self, "No function specified (either via name, code or function object)"
             )
         if self.func:
@@ -821,6 +822,7 @@ class PyFuncApp(BarrierAppDROP):
 
         """
         self._run()
+        logger.user("Confirm the operator exception works.")
         logger.debug("This object: %s, %s", self, self._humanKey)
         funcargs = {}
         # Keyword arguments are made up of the default values plus the inputs

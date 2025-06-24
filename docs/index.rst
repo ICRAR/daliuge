@@ -39,6 +39,9 @@ Advanced DALiuGE Methods
 ------------------------
 :doc:`/advanced/delayed` |br| 
 
+Debugging
+---------
+:doc:`/debugging/errors` |br|
 
 API Documentation
 -----------------
@@ -81,6 +84,13 @@ API Documentation
    cli/cli_engine
    cli/cli_translator
    cli/cli_remote
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: Debugging
+
+   debugging/errors
 
 .. toctree::
    :caption: Reference

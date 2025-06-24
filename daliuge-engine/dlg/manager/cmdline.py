@@ -51,7 +51,8 @@ from .rest import (
     MasterManagerRestServer,
 )
 from dlg import utils
-from ..runtime import version
+from dlg.runtime import version
+import dlg.runtime.dlg_logging as dlg_logging
 
 
 _terminating = False
@@ -73,8 +74,8 @@ def launchServer(opts):
     logger = logging.getLogger(f"dlg.{__name__}")
     dmName = opts.dmType.__name__
 
-    logger.info("DALiuGE version %s running at %s", version.full_version, os.getcwd())
-    logger.info("Creating %s", dmName)
+    logger.user("DALiuGE version %s running at %s", version.full_version, os.getcwd())
+    logger.user("Creating %s", dmName)
     try:
         dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
     except Exception as e:
@@ -259,17 +260,17 @@ def setupLogging(opts):
         # Let's reset the root handlers
         for h in logging.root.handlers[:]:
             logging.root.removeHandler(h)
-
     levels = [
         logging.NOTSET,
         logging.DEBUG,
         logging.INFO,
+        logging.USER,
         logging.WARNING,
         logging.ERROR,
         logging.CRITICAL,
     ]
 
-    # Default is WARNING
+    # Default is the DALiuGE custom USER level
     lidx = 3
     if opts.verbose:
         lidx -= min((opts.verbose, 3))
@@ -308,14 +309,13 @@ def setupLogging(opts):
     logging.root.addHandler(fileHandler)
 
     # Per-package/module specific levels
-    logging.root.setLevel(level)
+    # logging.root.setLevel(level)
     logging.getLogger("dlg").setLevel(level)
     logging.getLogger("zerorpc").setLevel(logging.WARN)
 
     # Assuming we have selected the default, info-level messages will not show to the
     # user. A Warning message here let's the user know something is happening without
     # us needing to modify the default logging level.
-    logging.warning("Starting with level: %s...", logging.getLevelName(level))
 
     return fileHandler
 

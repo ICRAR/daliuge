@@ -1,6 +1,6 @@
 import heapq
 import logging
-from .data_base import DataDROP
+from dlg.data.drops.data_base import DataDROP
 from dlg.exceptions import InvalidRelationshipException
 from sqlite3 import OperationalError
 from dlg.data.io import (

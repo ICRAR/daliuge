@@ -28,7 +28,6 @@ as a stream of data to the previous/next application.
 """
 
 import contextlib
-import logging
 import os
 import signal
 import socket
@@ -41,15 +40,15 @@ import types
 import json
 
 from dlg.drop import track_current_drop
-from .. import droputils, utils
+from dlg import droputils, utils
 from dlg.named_port_utils import (
     DropParser,
     replace_named_ports,
 )
-from ..ddap_protocol import AppDROPStates, DROPStates
-from ..apps.app_base import BarrierAppDROP, AppDROP
-from ..exceptions import InvalidDropException
-from ..meta import (
+from dlg.ddap_protocol import AppDROPStates, DROPStates
+from dlg.apps.app_base import BarrierAppDROP, AppDROP
+from dlg.exceptions import InvalidDropException
+from dlg.meta import (
     dlg_string_param,
     dlg_component,
     dlg_batch_input,
@@ -58,8 +57,10 @@ from ..meta import (
     dlg_enum_param,
 )
 
-
+# from dlg.runtime.dlg_logging import logproxy, getDLGLogger
+import logging
 logger = logging.getLogger(f"dlg.{__name__}")
+
 
 
 def message_stdouts(prefix, stdout, stderr, enc="utf8"):

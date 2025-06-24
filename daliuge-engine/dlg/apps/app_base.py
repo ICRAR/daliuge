@@ -1,3 +1,6 @@
+"""
+
+"""
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from concurrent.futures import Future
@@ -6,16 +9,18 @@ import logging
 import math
 import threading
 
+from dlg.exceptions import (InvalidDropException, InvalidRelationshipException,
+                            ErrorManagerCaughtException, InvalidDROPState)
 from dlg.drop import track_current_drop
-from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.data_base import DataDROP
+from dlg.data.drops.container import ContainerDROP
 from dlg.ddap_protocol import (
     AppDROPStates,
     DROPLinkType,
     DROPStates,
     DROPRel,
 )
-from dlg.exceptions import InvalidDropException, InvalidRelationshipException
+
 
 from dlg.meta import (
     dlg_int_param,
@@ -89,6 +94,7 @@ class InstanceLogHandler(logging.Handler):
 
         exc = f"{str(record.exc_text)}" if record.exc_text else ""
         # msg = str(record.message).replace("\n", "<br>")
+        # msg = self.format(record)
         msg = (f"<pre>{record.message.encode('utf-8').decode('unicode_escape')}\n"
                f"{exc}</pre>")
         try:
@@ -494,7 +500,7 @@ class InputFiredAppDROP(AppDROP):
         elif drop_state == DROPStates.SKIPPED:
             self._skippedInputs.append(uid)
         else:
-            raise Exception("Invalid DROP state in dropCompleted: %s" % drop_state)
+            raise InvalidDROPState("Invalid DROP state in dropCompleted: %s" % drop_state)
 
         error_len = len(self._errorInputs)
         ok_len = len(self._completedInputs)
@@ -554,7 +560,7 @@ class InputFiredAppDROP(AppDROP):
         #       applications, for the time being they follow their execState.
 
         # Run at most self._n_tries if there are errors during the execution
-        logger.info("Executing %r", f"{self.name}.{self._humanKey}")
+        logger.user("Executing %r", f"{self.name}.{self._humanKey}")
         tries = 0
         drop_state = DROPStates.COMPLETED
         self.execStatus = AppDROPStates.RUNNING
@@ -575,6 +581,10 @@ class InputFiredAppDROP(AppDROP):
                         self._humanKey,
                         self._global_log_level,
                     )
+                break
+            except ErrorManagerCaughtException:
+                self.execStatus = AppDROPStates.ERROR
+                drop_state = DROPStates.ERROR
                 break
             except Exception: # pylint: disable=broad-exception-caught
                 if self.execStatus == AppDROPStates.CANCELLED:

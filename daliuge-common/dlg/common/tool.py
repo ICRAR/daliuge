@@ -24,7 +24,6 @@
 
 """dlg command line utility"""
 import importlib
-import logging
 import optparse # pylint: disable=deprecated-module
 import subprocess
 import sys
@@ -32,8 +31,11 @@ import time
 
 from dataclasses import dataclass
 from importlib.metadata import entry_points
-
-logger = logging.getLogger("dlg")
+import logging
+import dlg.runtime.tool_commands
+# import dlg.runtime.dlg_logging as dlg_logging
+# logger = dlg_logging.getDLGLogger("dlg")
+logger = logging.getLogger(f"dlg.{__name__}")
 
 @dataclass
 class CommandGroup:
@@ -70,6 +72,7 @@ def setup_logging(opts):
         logging.NOTSET,
         logging.DEBUG,
         logging.INFO,
+        logging.USER,
         logging.WARNING,
         logging.ERROR,
         logging.CRITICAL,
