@@ -69,7 +69,6 @@ def setup_logging(opts):
         logging.NOTSET,
         logging.DEBUG,
         logging.INFO,
-        logging.USER,
         logging.WARNING,
         logging.ERROR,
         logging.CRITICAL,
