@@ -96,7 +96,7 @@ class InvalidRelationshipException(InvalidGraphException):
     """
 
     def __init__(self, rel, reason):
-        DaliugeException.__init__(self, rel, reason)
+        InvalidGraphException.__init__(self, rel, reason)
         self.rel = rel
         self.reason = reason
         self.msg = "InvalidRelationshipException <%r>: %s" % (self.rel, self.reason)
@@ -145,7 +145,7 @@ class NoSessionException(InvalidSessionException):
     """
 
     def __init__(self, session_id, reason=None):
-        DaliugeException.__init__(self, session_id, reason)
+        InvalidSessionException.__init__(self, session_id, reason)
         self._session_id = session_id
         self._reason = reason
 
@@ -167,7 +167,7 @@ class SessionAlreadyExistsException(InvalidSessionException):
     """
 
     def __init__(self, session_id, reason=None):
-        DaliugeException.__init__(self, session_id, reason)
+        InvalidSessionException.__init__(self, session_id, reason)
         self._session_id = session_id
         self._reason = reason
 

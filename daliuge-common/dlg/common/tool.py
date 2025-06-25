@@ -32,9 +32,6 @@ import time
 from dataclasses import dataclass
 from importlib.metadata import entry_points
 import logging
-import dlg.runtime.tool_commands
-# import dlg.runtime.dlg_logging as dlg_logging
-# logger = dlg_logging.getDLGLogger("dlg")
 logger = logging.getLogger(f"dlg.{__name__}")
 
 @dataclass

@@ -55,8 +55,6 @@ from .rest import (
 )
 from dlg import utils
 from dlg.runtime import version
-import dlg.runtime.dlg_logging as dlg_logging
-
 
 _terminating = False
 MAX_WATCHDOG_RESTART = 10
