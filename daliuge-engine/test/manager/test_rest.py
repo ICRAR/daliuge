@@ -135,7 +135,7 @@ class TestRest(unittest.TestCase):
                 DEFAULT_TEST_GRAPH_REPRO.copy(),
             ],
         )
-        self.assertRaises(exceptions.InvalidRelationshipException, c.deploySession, sid)
+        self.assertRaises(exceptions.SessionInterruptError, c.deploySession, sid)
 
         # And here we point to an unexisting file, making an invalid drop
         c.destroySession(sid)
@@ -155,7 +155,7 @@ class TestRest(unittest.TestCase):
                 DEFAULT_TEST_GRAPH_REPRO.copy(),
             ],
         )
-        self.assertRaises(exceptions.InvalidDropException, c.deploySession, sid)
+        self.assertRaises(exceptions.SessionInterruptError, c.deploySession, sid)
 
     def test_recursive(self):
         sid = "lala"
@@ -181,7 +181,7 @@ class TestRest(unittest.TestCase):
             )
         ex = cm.exception
         self.assertTrue(Node(hostname) in ex.args[0])
-        self.assertTrue(isinstance(ex.args[0][Node(hostname)], exceptions.SubManagerException))
+        self.assertTrue(isinstance(ex.args[0][Node(hostname)], exceptions.ErrorManagerCaughtException))
 
     def test_reprodata_get(self):
         """
