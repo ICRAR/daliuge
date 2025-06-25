@@ -261,6 +261,7 @@ class NodeManagerBase(DROPManager):
         max_threads=0,
         use_processes=False,
         logdir=utils.getDlgLogsDir(),
+        use_local_time=False
     ):
         self._events_port = events_port
         self._dlm = DataLifecycleManager(
@@ -268,8 +269,9 @@ class NodeManagerBase(DROPManager):
             cleanup_period=dlm_cleanup_period,
             enable_drop_replication=dlm_enable_replication,
         )
-        self._sessions = {}
+        self.sessions = {}
         self.logdir = logdir
+        self.use_local_time=use_local_time
 
         # dlgPath may contain code added by the user with possible
         # DROP applications
@@ -326,54 +328,54 @@ class NodeManagerBase(DROPManager):
         Method called by subclasses when a new event has arrived through the
         subscription mechanism.
         """
-        if not evt.session_id in self._sessions:
+        if not evt.session_id in self.sessions:
             logger.warning(
                 "No session %s found, event (%s) will be dropped",
                 evt.session_id,
                 evt.type,
             )
             return
-        self._sessions[evt.session_id].deliver_event(evt)
+        self.sessions[evt.session_id].deliver_event(evt)
 
     def _check_session_id(self, session_id):
-        if session_id not in self._sessions:
+        if session_id not in self.sessions:
             raise NoSessionException(session_id)
 
     def createSession(self, sessionId):
-        if sessionId in self._sessions:
+        if sessionId in self.sessions:
             raise SessionAlreadyExistsException(sessionId)
-        self._sessions[sessionId] = Session(sessionId, nm=self)
+        self.sessions[sessionId] = Session(sessionId, nm=self)
         logger.info("Created session %s", sessionId)
 
     def getSessionStatus(self, sessionId):
         self._check_session_id(sessionId)
-        return self._sessions[sessionId].status
+        return self.sessions[sessionId].status
 
     def getSessionReproStatus(self, sessionId):
-        return self._sessions[sessionId].reprostatus
+        return self.sessions[sessionId].reprostatus
 
     def getGraphReproData(self, sessionId):
-        return self._sessions[sessionId].graphreprodata
+        return self.sessions[sessionId].graphreprodata
 
     def linkGraphParts(self, sessionId, lhOID, rhOID, linkType):
         self._check_session_id(sessionId)
-        self._sessions[sessionId].linkGraphParts(lhOID, rhOID, linkType)
+        self.sessions[sessionId].linkGraphParts(lhOID, rhOID, linkType)
 
     def addGraphSpec(self, sessionId, graphSpec):
         self._check_session_id(sessionId)
-        self._sessions[sessionId].addGraphSpec(graphSpec)
+        self.sessions[sessionId].addGraphSpec(graphSpec)
 
     def getGraphStatus(self, sessionId):
         self._check_session_id(sessionId)
-        return self._sessions[sessionId].getGraphStatus()
+        return self.sessions[sessionId].getGraphStatus()
 
     def getDropStatus(self, sessionId, dropId):
-        return self._sessions[sessionId].getDropLogs(dropId)
+        return self.sessions[sessionId].getDropLogs(dropId)
 
     def getGraph(self, sessionId):
         self._check_session_id(sessionId)
         #  TODO: Ensure returns reproducibility data.
-        return self._sessions[sessionId].getGraph()
+        return self.sessions[sessionId].getGraph()
 
     def getLogDir(self):
         return self.logdir
@@ -383,7 +385,7 @@ class NodeManagerBase(DROPManager):
     @manage_session_failure
     def deploySession(self, sessionId, completedDrops: list[str] = None):
         self._check_session_id(sessionId)
-        session = self._sessions[sessionId]
+        session = self.sessions[sessionId]
         if hasattr(self, "_memoryManager"):
             self._memoryManager.register_session(sessionId)
 
@@ -427,29 +429,29 @@ class NodeManagerBase(DROPManager):
     def cancelSession(self, sessionId):
         logger.info("Cancelling session: %s", sessionId)
         self._check_session_id(sessionId)
-        self._sessions[sessionId].cancel()
+        self.sessions[sessionId].cancel()
 
     def destroySession(self, sessionId):
         logger.info("Destroying session: %s", sessionId)
         self._check_session_id(sessionId)
-        session = self._sessions.pop(sessionId)
+        session = self.sessions.pop(sessionId)
         if hasattr(self, "_memoryManager"):
             self._memoryManager.shutdown_session(sessionId)
         self._dlm.remove_drops(session.drops)
         session.destroy()
 
     def getSessionIds(self):
-        return list(self._sessions.keys())
+        return list(self.sessions.keys())
 
     def getGraphSize(self, sessionId):
         self._check_session_id(sessionId)
-        session = self._sessions[sessionId]
+        session = self.sessions[sessionId]
         return len(session.graph)
 
     def trigger_drops(self, sessionId, uids):
         self._check_session_id(sessionId)
         t = threading.Thread(
-            target=self._sessions[sessionId].trigger_drops,
+            target=self.sessions[sessionId].trigger_drops,
             name="Drop trigger",
             args=(uids,),
         )
@@ -458,7 +460,7 @@ class NodeManagerBase(DROPManager):
     def add_node_subscriptions(self, sessionId, relationships):
         logger.debug("Received subscription information: %r", relationships)
         self._check_session_id(sessionId)
-        self._sessions[sessionId].add_node_subscriptions(relationships)
+        self.sessions[sessionId].add_node_subscriptions(relationships)
 
         # Set up event channels subscriptions
         for nodesub in relationships:
@@ -478,15 +480,15 @@ class NodeManagerBase(DROPManager):
 
     def has_method(self, sessionId, uid, mname):
         self._check_session_id(sessionId)
-        return self._sessions[sessionId].has_method(uid, mname)
+        return self.sessions[sessionId].has_method(uid, mname)
 
     def get_drop_property(self, sessionId, uuid, prop_name):
         self._check_session_id(sessionId)
-        return self._sessions[sessionId].get_drop_property(uuid, prop_name)
+        return self.sessions[sessionId].get_drop_property(uuid, prop_name)
 
     def call_drop(self, sessionId, uid, method, *args):
         self._check_session_id(sessionId)
-        return self._sessions[sessionId].call_drop(uid, method, *args)
+        return self.sessions[sessionId].call_drop(uid, method, *args)
 
 
 class ZMQPubSubMixIn(object):
