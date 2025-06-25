@@ -115,15 +115,17 @@ class ErrorCode(Enum):
         #              f"/debugging/errors.html#{self.name}")
         return f"{log_message} occured: Please review potential issues at\n {href}"
 
-"""
- Custom DALiuGE Exceptions
- 100 - Exceptions that inheret generic InvalidDropException
- 200 - Exceptions that inheret InvalidGraphException 
- 300 - Exceptions that inheret InvalidSessionException
-"""
+
 
 EXCEPTION_MAP = {
+
+    #################################################################
     # Custom DALiUGE Exceptions
+    # 100 - Exceptions that inheret generic InvalidDropException
+    # 200 - Exceptions that inheret InvalidGraphException
+    # 300 - Exceptions that inheret InvalidSessionException
+    #################################################################
+
     ex.InvalidDropException: ErrorCode.DROP_ERROR,
     ex.BadModuleException: ErrorCode.BAD_IMPORT,
     ex.InvalidEncodingException: ErrorCode.ENCODING_ERROR,
@@ -135,8 +137,11 @@ EXCEPTION_MAP = {
     ex.InvalidSessionState: ErrorCode.SESSION_STATE_ERROR,
     ex.NoSessionException: ErrorCode.SESSION_MISSING_ERROR,
 
-    # Standard errors that we may not catch with specific exceptions based on
-    # where they might occur in the code
+    #################################################################
+    # Standard errors that we may not catch with specific exceptions
+    # based on where they might occur in the code
+    #################################################################
+
     pickle.PickleError: ErrorCode.ENCODING_ERROR,
     dill.PickleError: ErrorCode.ENCODING_ERROR
 }
@@ -166,7 +171,7 @@ def manage_session_failure(f):
         except ex.InvalidSessionState:
             # sessionId = kwargs.get('sessionId')
             if args:
-                session = self._sessions[args[0]]
+                session = self._sessions[args[0]] 
                 session.cancel()
                 return
 
