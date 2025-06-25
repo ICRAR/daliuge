@@ -51,10 +51,10 @@ class BaseDROPManagerClient(RestClient):
         return RestClient._request(self, url, method, content=content, headers=headers)
 
     def stop(self):
-        self._POST("/stop")
+        self.POST("/stop")
 
     def cancelSession(self, sessionId):
-        self._POST(f"/sessions/{quote(sessionId)}/cancel")
+        self.POST(f"/sessions/{quote(sessionId)}/cancel")
 
     def create_session(self, sessionId):
         """
@@ -267,7 +267,7 @@ class CompositeManagerClient(BaseDROPManagerClient):
         return self._get_json("/nodes")
 
     def add_node(self, node):
-        self._POST(f"/node/{node}", content=None)
+        self.POST(f"/node/{node}", content=None)
 
     def remove_node(self, node):
         self._DELETE(f"/node/{node}")
@@ -306,7 +306,7 @@ class MasterManagerClient(CompositeManagerClient):
         return self._get_json("/islands")
 
     def add_dim(self, dim):
-        self._POST(f"/island/{dim}", content=None)
+        self.POST(f"/island/{dim}", content=None)
 
     def remove_dim(self, dim):
         self._DELETE(f"/island/{dim}")
@@ -315,7 +315,7 @@ class MasterManagerClient(CompositeManagerClient):
         """
         Adds a nm to a dim
         """
-        self._POST(
+        self.POST(
             f"/managers/{dim}/node/{nm}",
             content=None,
         )

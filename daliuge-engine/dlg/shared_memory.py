@@ -105,7 +105,7 @@ class DlgSharedMemory:
                 try:
                     self._fd = _posixshmem.shm_open(name, self._flags, mode=self._mode)
                 except FileNotFoundError:
-                    self.__init__(name, size)
+                    self.__init__(name, size) # pylint: disable=non-parent-init-called
                 # Find the size of the written file
                 # Needs to be set so that the file is truncated down to the correct size.
                 size = os.lseek(self._fd, 0, os.SEEK_END)
@@ -177,7 +177,7 @@ class DlgSharedMemory:
         try:
             _posixshmem.shm_unlink(self._name)
         except FileNotFoundError:
-            logger.debug(f"{self.name} tried to unlink twice")
+            logger.debug("%s tried to unlink twice", self.name)
             warnings.warn("Cannot unlink a shared block twice", RuntimeWarning)
 
     def resize(self, new_size):

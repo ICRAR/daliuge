@@ -169,7 +169,7 @@ class TestLGWeb(unittest.TestCase):
         c = RestClient("localhost", lgweb_port, timeout=10)
 
         # an API call with an empty form should cause an error
-        self.assertRaises(RestClientException, c._POST, "/gen_pgt")
+        self.assertRaises(RestClientException, c.POST, "/gen_pgt")
 
         # new logical graph JSON
         fname = os.path.join(lg_dir, "logical_graphs", "test-20190830-110556.graph")
@@ -193,7 +193,7 @@ class TestLGWeb(unittest.TestCase):
         # POST form to /gen_pgt
         try:
             content = urllib.parse.urlencode(form_data)
-            c._POST(
+            c.POST(
                 "/gen_pgt",
                 content,
                 content_type="application/x-www-form-urlencoded",
@@ -206,7 +206,7 @@ class TestLGWeb(unittest.TestCase):
         c = RestClient("localhost", lgweb_port, timeout=10)
 
         # an API call with an empty form should cause an error
-        self.assertRaises(RestClientException, c._POST, "/gen_pgt")
+        self.assertRaises(RestClientException, c.POST, "/gen_pgt")
 
         # new logical graph JSON
         fname = os.path.join(lg_dir, "logical_graphs", "simpleMKN.graph")
@@ -228,7 +228,7 @@ class TestLGWeb(unittest.TestCase):
         # POST form to /gen_pgt
         try:
             content = urllib.parse.urlencode(form_data)
-            c._POST(
+            c.POST(
                 "/gen_pgt",
                 content,
                 content_type="application/x-www-form-urlencoded",
@@ -240,7 +240,7 @@ class TestLGWeb(unittest.TestCase):
         c = RestClient("localhost", lgweb_port, timeout=10)
 
         # an API call with an empty form should cause an error
-        self.assertRaises(RestClientException, c._POST, "/gen_pgt")
+        self.assertRaises(RestClientException, c.POST, "/gen_pgt")
 
         # new logical graph JSON
         with open(
@@ -263,7 +263,7 @@ class TestLGWeb(unittest.TestCase):
         # POST form to /gen_pgt
         try:
             content = urllib.parse.urlencode(form_data)
-            c._POST(
+            c.POST(
                 "/gen_pgt",
                 content,
                 content_type="application/x-www-form-urlencoded",
@@ -358,17 +358,17 @@ class TestLGWeb(unittest.TestCase):
             if content:
                 self.assertRaises(
                     RestClientException,
-                    client._POST,
+                    client.POST,
                     url,
                     content,
                     content_type="application/x-www-form-urlencoded",
                 )
             else:
-                self.assertRaises(RestClientException, client._POST, url)
+                self.assertRaises(RestClientException, client.POST, url)
         else:
             if content:
                 try:
-                    ret = client._POST(
+                    ret = client.POST(
                         url,
                         content,
                         content_type="application/x-www-form-urlencoded",
@@ -377,7 +377,7 @@ class TestLGWeb(unittest.TestCase):
                     self.fail(e)
             else:
                 try:
-                    ret = client._POST(url)
+                    ret = client.POST(url)
                 except RestClientException as e:
                     self.fail(e)
             return json.load(ret)

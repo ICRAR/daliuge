@@ -133,12 +133,12 @@ class NodeManagerThreadDropRunner(NodeManagerDropRunner):
         self._thread_pool = ThreadPoolExecutor(max_workers=self._max_workers)
 
     def run_drop(self, app_drop: AppDROP) -> Future:
-        if logger.getEffectiveLevel() != logging.getLevelName(app_drop._log_level):
-            logging.getLogger("dlg").setLevel(app_drop._log_level)
+        if logger.getEffectiveLevel() != logging.getLevelName(app_drop.log_level):
+            logging.getLogger("dlg").setLevel(app_drop.log_level)
             logger.warning(
                 "Set log-level for %s.%s to %s",
                 app_drop.name,
-                app_drop._humanKey,
+                app_drop.humanKey,
                 logging.getLevelName(logger.getEffectiveLevel()),
             )
         return self._thread_pool.submit(
@@ -190,8 +190,8 @@ class NodeManagerProcessDropRunner(NodeManagerDropRunner):
         # so we create a shallow copy that can be pickled at an indeterminate point in the future
         # See https://github.com/python/cpython/blob/v3.10.13/Lib/multiprocessing/queues.py#L95
         copied_drop = copy.copy(app_drop)
-        copied_drop._inputs = collections.OrderedDict()
-        copied_drop._outputs = collections.OrderedDict()
+        copied_drop.inputs = collections.OrderedDict()
+        copied_drop.outputs = collections.OrderedDict()
 
         return self._process_pool.submit(
             NodeManagerProcessDropRunner._run_app_drop,
@@ -209,7 +209,7 @@ class NodeManagerProcessDropRunner(NodeManagerDropRunner):
     def _setup_drop_proxies(
         cls, app_drop: AppDROP, inputs_proxy_info, outputs_proxy_info
     ):
-        app_drop._rpc_endpoint = cls._rpc_endpoint
+        app_drop.rpc_endpoint = cls._rpc_endpoint
         for input_proxy_info in inputs_proxy_info:
             app_drop.addInput(
                 rpc.DropProxy(cls._rpc_client, input_proxy_info), back=False
@@ -266,7 +266,7 @@ class NodeManagerBase(DROPManager):
             cleanup_period=dlm_cleanup_period,
             enable_drop_replication=dlm_enable_replication,
         )
-        self._sessions = {}
+        self.sessions = {}
         self.logdir = logdir
         self.use_local_time=use_local_time
 
@@ -298,11 +298,11 @@ class NodeManagerBase(DROPManager):
         if max_threads <= 0:
             max_threads = cpu_count(logical=False)
 
-        self._drop_runner: NodeManagerDropRunner
+        self.drop_runner: NodeManagerDropRunner
         if use_processes:
-            self._drop_runner = NodeManagerProcessDropRunner(max_threads)
+            self.drop_runner = NodeManagerProcessDropRunner(max_threads)
         else:
-            self._drop_runner = NodeManagerThreadDropRunner(max_threads)
+            self.drop_runner = NodeManagerThreadDropRunner(max_threads)
 
         # Event handler that only logs status changes
         debugging = logger.isEnabledFor(logging.DEBUG)
@@ -310,12 +310,12 @@ class NodeManagerBase(DROPManager):
 
     def start(self, rpc_endpoint):
         super().start()
-        self._drop_runner.start(rpc_endpoint)
+        self.drop_runner.start(rpc_endpoint)
         self._dlm.startup()
 
     def shutdown(self):
         self._dlm.cleanup()
-        self._drop_runner.close()
+        self.drop_runner.close()
         super().shutdown()
 
     def deliver_event(self, evt):
@@ -323,67 +323,67 @@ class NodeManagerBase(DROPManager):
         Method called by subclasses when a new event has arrived through the
         subscription mechanism.
         """
-        if not evt.session_id in self._sessions:
+        if not evt.session_id in self.sessions:
             logger.warning(
                 "No session %s found, event (%s) will be dropped",
                 evt.session_id,
                 evt.type,
             )
             return
-        self._sessions[evt.session_id].deliver_event(evt)
+        self.sessions[evt.session_id].deliver_event(evt)
 
     def _check_session_id(self, session_id):
-        if session_id not in self._sessions:
+        if session_id not in self.sessions:
             raise NoSessionException(session_id)
 
     def createSession(self, sessionId):
-        if sessionId in self._sessions:
+        if sessionId in self.sessions:
             raise SessionAlreadyExistsException(sessionId)
-        self._sessions[sessionId] = Session(sessionId, nm=self)
+        self.sessions[sessionId] = Session(sessionId, nm=self)
         logger.info("Created session %s", sessionId)
 
     def getSessionStatus(self, sessionId):
         self._check_session_id(sessionId)
-        return self._sessions[sessionId].status
+        return self.sessions[sessionId].status
 
     def getSessionReproStatus(self, sessionId):
-        return self._sessions[sessionId].reprostatus
+        return self.sessions[sessionId].reprostatus
 
     def getGraphReproData(self, sessionId):
-        return self._sessions[sessionId].reprodata
+        return self.sessions[sessionId].graphreprodata
 
     def linkGraphParts(self, sessionId, lhOID, rhOID, linkType):
         self._check_session_id(sessionId)
-        self._sessions[sessionId].linkGraphParts(lhOID, rhOID, linkType)
+        self.sessions[sessionId].linkGraphParts(lhOID, rhOID, linkType)
 
     def addGraphSpec(self, sessionId, graphSpec):
         self._check_session_id(sessionId)
-        self._sessions[sessionId].addGraphSpec(graphSpec)
+        self.sessions[sessionId].addGraphSpec(graphSpec)
 
     def getGraphStatus(self, sessionId):
         self._check_session_id(sessionId)
-        return self._sessions[sessionId].getGraphStatus()
+        return self.sessions[sessionId].getGraphStatus()
 
     def getDropStatus(self, sessionId, dropId):
-        return self._sessions[sessionId].getDropLogs(dropId)
+        return self.sessions[sessionId].getDropLogs(dropId)
 
     def getGraph(self, sessionId):
         self._check_session_id(sessionId)
         #  TODO: Ensure returns reproducibility data.
-        return self._sessions[sessionId].getGraph()
+        return self.sessions[sessionId].getGraph()
 
     def getLogDir(self):
         return self.logdir
 
     def deploySession(self, sessionId, completedDrops: list[str] = None):
         self._check_session_id(sessionId)
-        session = self._sessions[sessionId]
+        session = self.sessions[sessionId]
         if hasattr(self, "_memoryManager"):
             self._memoryManager.register_session(sessionId)
 
         def foreach(drop):
             drop.autofill_environment_variables()
-            drop._drop_runner = self._drop_runner
+            drop.drop_runner = self.drop_runner
             self._dlm.addDrop(drop)
 
             # Remote event forwarding
@@ -415,29 +415,29 @@ class NodeManagerBase(DROPManager):
     def cancelSession(self, sessionId):
         logger.info("Cancelling session: %s", sessionId)
         self._check_session_id(sessionId)
-        self._sessions[sessionId].cancel()
+        self.sessions[sessionId].cancel()
 
     def destroySession(self, sessionId):
         logger.info("Destroying session: %s", sessionId)
         self._check_session_id(sessionId)
-        session = self._sessions.pop(sessionId)
+        session = self.sessions.pop(sessionId)
         if hasattr(self, "_memoryManager"):
             self._memoryManager.shutdown_session(sessionId)
         self._dlm.remove_drops(session.drops)
         session.destroy()
 
     def getSessionIds(self):
-        return list(self._sessions.keys())
+        return list(self.sessions.keys())
 
     def getGraphSize(self, sessionId):
         self._check_session_id(sessionId)
-        session = self._sessions[sessionId]
-        return len(session._graph)
+        session = self.sessions[sessionId]
+        return len(session.graph)
 
     def trigger_drops(self, sessionId, uids):
         self._check_session_id(sessionId)
         t = threading.Thread(
-            target=self._sessions[sessionId].trigger_drops,
+            target=self.sessions[sessionId].trigger_drops,
             name="Drop trigger",
             args=(uids,),
         )
@@ -446,7 +446,7 @@ class NodeManagerBase(DROPManager):
     def add_node_subscriptions(self, sessionId, relationships):
         logger.debug("Received subscription information: %r", relationships)
         self._check_session_id(sessionId)
-        self._sessions[sessionId].add_node_subscriptions(relationships)
+        self.sessions[sessionId].add_node_subscriptions(relationships)
 
         # Set up event channels subscriptions
         for nodesub in relationships:
@@ -466,15 +466,15 @@ class NodeManagerBase(DROPManager):
 
     def has_method(self, sessionId, uid, mname):
         self._check_session_id(sessionId)
-        return self._sessions[sessionId].has_method(uid, mname)
+        return self.sessions[sessionId].has_method(uid, mname)
 
     def get_drop_property(self, sessionId, uuid, prop_name):
         self._check_session_id(sessionId)
-        return self._sessions[sessionId].get_drop_property(uuid, prop_name)
+        return self.sessions[sessionId].get_drop_property(uuid, prop_name)
 
     def call_drop(self, sessionId, uid, method, *args):
         self._check_session_id(sessionId)
-        return self._sessions[sessionId].call_drop(uid, method, *args)
+        return self.sessions[sessionId].call_drop(uid, method, *args)
 
 
 class ZMQPubSubMixIn(object):
@@ -636,7 +636,7 @@ class ZMQPubSubMixIn(object):
                 self._events_in.put(evt)
             except zmq.error.Again:
                 time.sleep(0.01)
-            except Exception:
+            except zmq.error.ZMQError:
                 # Figure out what to do here
                 logger.exception(
                     "Something bad happened in %s:%d to ZMQ :'(",
@@ -664,7 +664,7 @@ class RpcMixIn(rpc.RPCClient, rpc.RPCServer):
 
 # Final NodeManager class
 class NodeManager(NodeManagerBase, EventMixIn, RpcMixIn):
-    def __init__(
+    def __init__( # pylint: disable=keyword-arg-before-vararg
         self,
         host=None,
         rpc_port=constants.NODE_DEFAULT_RPC_PORT,
@@ -678,7 +678,7 @@ class NodeManager(NodeManagerBase, EventMixIn, RpcMixIn):
         RpcMixIn.__init__(self, host, rpc_port)
         self.start()
 
-    def start(self):
+    def start(self): # pylint: disable=arguments-differ
         # We "just know" that our RpcMixIn will have a create_context static
         # method, which in reality means we are using the ZeroRPCServer class
         self._context = RpcMixIn.create_context()

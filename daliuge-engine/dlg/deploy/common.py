@@ -57,9 +57,9 @@ class _StatusDumper(BaseDROPManagerClient):
             self._dump_session_status(session["sessionId"])
         return sessions
 
-    def session(self, session_id):
-        session = super(_StatusDumper, self).session(session_id)
-        self._dump_session_status(session_id)
+    def session(self, sessionId):
+        session = super(_StatusDumper, self).session(sessionId)
+        self._dump_session_status(sessionId)
         return session
 
 

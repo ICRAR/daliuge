@@ -84,7 +84,7 @@ def prepare_lgt(filename, rmode: str):
 
 def filter_dict_to_algo_params(input_dict: dict):
     algo_params = {}
-    for name, typ in ALGO_PARAMS:
+    for name, _ in ALGO_PARAMS:
         if name in input_dict:
             algo_params[name] = input_dict.get(name)
     return algo_params

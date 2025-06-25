@@ -80,10 +80,10 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
             self.createSessionAndAddGraph(ddGraph, graphSpec=graphSpec)
             self.dim.deploySession(ddGraph)
             a, c = [
-                drop for drop in self.dm._sessions[ddGraph].drops.values()
+                drop for drop in self.dm.sessions[ddGraph].drops.values()
                  if isinstance(drop, FileDROP)
             ]
-            x = [ drop for drop in self.dm._sessions[ddGraph].drops.values()
+            x = [ drop for drop in self.dm.sessions[ddGraph].drops.values()
                  if isinstance(drop, InMemoryDROP)
             ]
 
@@ -112,8 +112,8 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
 
         # Deploy now and get OIDs
         self.dim.deploySession(sessionId)
-        fd = self.dm._sessions[sessionId].drops["2022-03-20T04:33:27_-1_0"]
-        init_drop = self.dm._sessions[sessionId].drops[init_oid]
+        fd = self.dm.sessions[sessionId].drops["2022-03-20T04:33:27_-1_0"]
+        init_drop = self.dm.sessions[sessionId].drops[init_oid]
         logger.debug(f"PyfuncAPPDrop: {dir(fd)}")
         for i in fd.parameters["inputs"]:
             logger.debug(f"PyfuncAPPDrop input names:{i}")
@@ -137,8 +137,8 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
 
         # Deploy now and get OIDs
         self.dim.deploySession(sessionId)
-        fd = self.dm._sessions[sessionId].drops["2023-07-04T00:13:32_-5_0"]
-        init_drop = self.dm._sessions[sessionId].drops[init_oid]
+        fd = self.dm.sessions[sessionId].drops["2023-07-04T00:13:32_-5_0"]
+        init_drop = self.dm.sessions[sessionId].drops[init_oid]
         logger.debug(f"PyfuncAPPDrop: {dir(fd)}")
         for i in fd.parameters["inputs"]:
             logger.debug(f"PyfuncAPPDrop input names:{i}")
@@ -166,11 +166,11 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
 
         # Deploy now and get OIDs
         self.dim.deploySession(sessionId)
-        fd = self.dm._sessions[sessionId].drops["2022-03-30T03:46:01_-1_0"]
+        fd = self.dm.sessions[sessionId].drops["2022-03-30T03:46:01_-1_0"]
         i = 0
         start_drops = [InMemoryDROP(x, x) for x in ("a", "b")]
         for oid in init_oids:
-            init_drop = self.dm._sessions[sessionId].drops[oid]
+            init_drop = self.dm.sessions[sessionId].drops[oid]
             init_drop.addInput(start_drops[i])
             i += 1
         logger.debug(f"PyfuncAPPDrop: {dir(fd)}")
@@ -192,8 +192,8 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
 
         # Deploy now and get OIDs
         self.dim.deploySession(sessionId)
-        sd = self.dm._sessions[sessionId].drops["2023-04-27T14:44:39_-2_0"]
-        fd = self.dm._sessions[sessionId].drops["2023-04-27T14:44:39_-1_0"]
+        sd = self.dm.sessions[sessionId].drops["2023-04-27T14:44:39_-2_0"]
+        fd = self.dm.sessions[sessionId].drops["2023-04-27T14:44:39_-1_0"]
         with droputils.DROPWaiterCtx(self, sd, 3):
             fd.setCompleted()
 
@@ -216,8 +216,8 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
 
         # Deploy now and get OIDs
         self.dim.deploySession(sessionId)
-        fd = self.dm._sessions[sessionId].drops["2023-07-05T10:59:43_-11_0/0"]
-        init_drop = self.dm._sessions[sessionId].drops[init_oid]
+        fd = self.dm.sessions[sessionId].drops["2023-07-05T10:59:43_-11_0/0"]
+        init_drop = self.dm.sessions[sessionId].drops[init_oid]
         logger.debug(f"PyfuncAPPDrop: {dir(fd)}")
         for i in fd.parameters["producers"]:
             logger.debug(f"PyfuncAPPDrop producer names:{i}")

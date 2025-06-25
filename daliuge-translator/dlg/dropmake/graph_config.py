@@ -53,7 +53,7 @@ def apply_active_configuration(logical_graph: dict) -> dict:
         activeConfig = logical_graph[CONFIG_KEY][activeConfigurationID]
         nodeDataArray = logical_graph[GRAPH_NODES]
 
-        for node_id, fields in activeConfig["nodes"].items():
+        for node_id, _ in activeConfig["nodes"].items():
             idx = get_key_idx_from_list(node_id, nodeDataArray)
             if idx is None:
                 logger.warning(

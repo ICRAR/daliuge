@@ -48,7 +48,7 @@ class AbstractStore(object):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         super(AbstractStore, self).__init__()
         self._setTotalSpace(0)
         self._setAvailableSpace(0)
@@ -64,7 +64,6 @@ class AbstractStore(object):
             logger.debug(
                 "Available/Total space on %s: %d/%d (%.2f %%)", self, avail, total, perc
             )
-        pass
 
     def _setTotalSpace(self, totalSpace):
         self._totalSpace = totalSpace
@@ -167,10 +166,10 @@ class NgasStore(AbstractStore):
     NgasDROPs and monitors the disks usage of the NGAS system.
     """
 
-    def __init__(self, host=None, port=None, initialCheck=True):
-
+    def __init__(self, host=None, port=None):
+        super(NgasStore, self).__init__()
         try:
-            from ngamsPClient import ngamsPClient  # @UnusedImport
+            from ngamsPClient import ngamsPClient  # pylint: disable=unused-import
         except:
             logger.error("NGAMS client libs not found, cannot use NGAMS as a store")
             raise
@@ -238,7 +237,7 @@ class DirectoryStore(AbstractStore):
     __SIZE_FILE = "SIZE"
 
     def __init__(self, dirName, initialize=False):
-
+        super(DirectoryStore, self).__init__()
         if not dirName:
             raise Exception("No directory given to DirectoryStore")
 

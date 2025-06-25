@@ -23,7 +23,7 @@
 
 import json
 import logging
-import optparse
+import optparse # pylint: disable=deprecated-module
 import os
 import sys
 
@@ -62,10 +62,10 @@ def unroll(lg_path, oid_prefix, zerorun=False, app=None):
     and return the latter.
     This method prepends `oid_prefix` to all generated Drop OIDs.
     """
-    from ..dropmake.pg_generator import unroll
+    from ..dropmake.pg_generator import unroll as pg_unroll
 
     logger.info("Start to unroll %s", lg_path)
-    return unroll(_open_i(lg_path), oid_prefix=oid_prefix, zerorun=zerorun, app=app)
+    return pg_unroll(_open_i(lg_path), oid_prefix=oid_prefix, zerorun=zerorun, app=app)
 
 
 _param_types = {

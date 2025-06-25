@@ -88,22 +88,23 @@ def launchServer(opts):
     logger.info("Creating %s", dmName)
     try:
         dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
-    except:
+    except Exception as e:
         logger.exception(
             "Error while creating/starting our %s, exiting in shame :-(",
             dmName,
         )
-        return
+        raise RuntimeError from e
 
     server = opts.restType(dm, opts.maxreqsize)
 
     # Signal handling
     def handle_signal(signNo, stack_frame):
-        global _terminating
+        global _terminating # pylint: disable=global-statement
         if _terminating:
             return
         _terminating = True
-        logger.info("Exiting from %s", dmName)
+        logger.info("Exiting from %s after receiving signal %s in frame %s",
+                    dmName, signNo, stack_frame)
 
         server.stop_manager()
 
@@ -334,7 +335,6 @@ def setupLogging(opts):
         # Let's reset the root handlers
         for h in logging.root.handlers[:]:
             logging.root.removeHandler(h)
-        pass
 
     levels = [
         logging.NOTSET,
