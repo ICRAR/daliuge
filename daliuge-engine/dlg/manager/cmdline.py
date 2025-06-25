@@ -186,6 +186,13 @@ def addCommonOptions(parser, defaultPort):
         default=utils.getDlgLogsDir(),
     )
 
+    parser.add_option(
+        "--local-time",
+        action="store_true",
+        help="Use local system time when logging",
+        default=False,
+    )
+
 
 def commonOptionsCheck(options, parser):
     # These are all exclusive
@@ -289,12 +296,12 @@ def setupLogging(opts):
         fmt += "[%(session_id)10.10s] [%(drop_uid)10.10s] "
     fmt += "%(name)s#%(funcName)s:%(lineno)s %(message)s"
     fmt = DlgFormatter(fmt)
-    # fmt = logging.Formatter(fmt)
-    fmt.converter = time.gmtime
-
+    fmt.converter = time.localtime if opts.local_time else time.gmtime
+    time_fmt =  "Local" if opts.local_time else "GMT"
     # Let's configure logging now
     # Daemons don't output stuff to the stdout
-    if not opts.daemon:
+    is_daemon_argument = opts.daemon or opts.stop
+    if not is_daemon_argument:
         streamHdlr = logging.StreamHandler(sys.stdout)
         streamHdlr.setFormatter(fmt)
         logging.root.addHandler(streamHdlr)
@@ -316,6 +323,7 @@ def setupLogging(opts):
     # user. A Warning message here let's the user know something is happening without
     # us needing to modify the default logging level.
     logging.warning("Starting with level: %s...", logging.getLevelName(level))
+    logging.warning("Using %s Time for logging...", time_fmt)
 
     return fileHandler
 
@@ -442,6 +450,7 @@ def dlgNM(parser, args):
         "max_threads": options.max_threads,
         "use_processes": options.use_processes,
         "logdir": options.logdir,
+        "use_local_time": options.local_time,
     }
     options.dmAcronym = "NM"
     options.restType = NMRestServer

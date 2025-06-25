@@ -55,8 +55,6 @@ from dlg.exceptions import (
 )
 from ..lifecycle.dlm import DataLifecycleManager
 
-from dlg.manager.manager_data import Node
-
 logger = logging.getLogger(f"dlg.{__name__}")
 
 
@@ -260,6 +258,7 @@ class NodeManagerBase(DROPManager):
         max_threads=0,
         use_processes=False,
         logdir=utils.getDlgLogsDir(),
+        use_local_time=False
     ):
         self._events_port = events_port
         self._dlm = DataLifecycleManager(
@@ -269,6 +268,7 @@ class NodeManagerBase(DROPManager):
         )
         self._sessions = {}
         self.logdir = logdir
+        self.use_local_time=use_local_time
 
         # dlgPath may contain code added by the user with possible
         # DROP applications
