@@ -144,7 +144,7 @@ class lib64_path(install):
 install_requires = [
     "wheel",  # need to get wheel first...
     "bottle",
-    "urllib3<1.27,>=1.25.4",
+    "urllib3>=2.5.0", 
     "boto3",
     "configobj",
     "crc32c",
