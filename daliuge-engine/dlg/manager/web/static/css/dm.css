@@ -156,5 +156,10 @@ tr td.details a:hover{
 }
 
 .table th, .table td {
-    max-width: 700px; /* Limit maximum width of each column */
+    max-width: 800px; /* Limit maximum width of each column */
+}
+
+.wrap-text {
+  white-space: normal !important;
+  word-break: break-word;
 }

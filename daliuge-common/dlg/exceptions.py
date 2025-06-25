@@ -30,6 +30,10 @@ class DaliugeException(Exception):
     The parent of all exceptions thrown by Daliuge
     """
 
+class ErrorManagerCaughtException(DaliugeException):
+    """
+    Raise this as part of managing known exceptions during DALiuGE Runtime.
+    """
 
 class InvalidDropException(DaliugeException):
     """
@@ -53,21 +57,25 @@ class InvalidDropException(DaliugeException):
     def __str__(self, *args, **kwargs):
         return self.msg
 
-
-class InvalidRelationshipException(DaliugeException):
+class IncompleteDROPSpec(InvalidDropException):
     """
-    An exception thrown when a relationship between two Drops has been
-    instructed but is invalid in nature.
+    Raise when expected information is expected from the graph spec but does not exist
     """
 
-    def __init__(self, rel, reason):
-        DaliugeException.__init__(self, rel, reason)
-        self.rel = rel
-        self.reason = reason
-        self.msg = "InvalidRelationshipException <%r>: %s" % (self.rel, self.reason)
+class BadModuleException(InvalidDropException):
+    """
+    Test
+    """
 
-    def __str__(self, *args, **kwargs):
-        return self.msg
+class InvalidEncodingException(InvalidDropException):
+    """
+    Test
+    """
+
+class InvalidDROPState(InvalidDropException):
+    """
+    DROP has entered or attempted to enter a state it is not allowed to be.
+    """
 
 
 class InvalidGraphException(DaliugeException):
@@ -75,6 +83,27 @@ class InvalidGraphException(DaliugeException):
     An exception thrown when an invalid graph, or part of a graph, is given to
     Daliuge.
     """
+
+class IncompleteGraphError(InvalidGraphException):
+    """
+    Graph is missing data 
+    """
+
+class InvalidRelationshipException(InvalidGraphException):
+    """
+    An exception thrown when a relationship between two Drops has been
+    instructed but is invalid in nature.
+    """
+
+    def __init__(self, rel, reason):
+        InvalidGraphException.__init__(self, rel, reason)
+        self.rel = rel
+        self.reason = reason
+        self.msg = "InvalidRelationshipException <%r>: %s" % (self.rel, self.reason)
+
+    def __str__(self, *args, **kwargs):
+        return self.msg
+
 
 class DropChecksumException(DaliugeException):
     """
@@ -105,14 +134,18 @@ class NoDropException(DaliugeException):
             ret += ". Reason: %s" % (self._reason)
         return ret
 
+class InvalidSessionException(DaliugeException):
+    """
 
-class NoSessionException(DaliugeException):
+    """
+
+class NoSessionException(InvalidSessionException):
     """
     An exception thrown when a session ID is pointing to a non-existing session
     """
 
     def __init__(self, session_id, reason=None):
-        DaliugeException.__init__(self, session_id, reason)
+        InvalidSessionException.__init__(self, session_id, reason)
         self._session_id = session_id
         self._reason = reason
 
@@ -127,14 +160,14 @@ class NoSessionException(DaliugeException):
         return self._session_id
 
 
-class SessionAlreadyExistsException(DaliugeException):
+class SessionAlreadyExistsException(InvalidSessionException):
     """
     An exception thrown when a session ID is pointing to an existing session
     but is meant to be used as the ID of a new session.
     """
 
     def __init__(self, session_id, reason=None):
-        DaliugeException.__init__(self, session_id, reason)
+        InvalidSessionException.__init__(self, session_id, reason)
         self._session_id = session_id
         self._reason = reason
 
@@ -149,10 +182,15 @@ class SessionAlreadyExistsException(DaliugeException):
         return self._session_id
 
 
-class InvalidSessionState(DaliugeException):
+class InvalidSessionState(InvalidSessionException):
     """
     An exception thrown when an operation is requested on a session that is not
     in the expected state for that operation.
+    """
+
+class SessionInterruptError(InvalidSessionException):
+    """
+    Raise when a session is cancled prematurely.
     """
 
 
@@ -161,3 +199,5 @@ class SubManagerException(DaliugeException):
     An exception thrown by composite drop managers when there was an error
     invoking one of their underlying drop managers.
     """
+
+

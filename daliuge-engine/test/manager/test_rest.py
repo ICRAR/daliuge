@@ -36,7 +36,7 @@ from dlg.manager.rest import NMRestServer, CompositeManagerRestServer
 from dlg.restutils import RestClient
 
 from test.dlg_engine_testconstants import DEFAULT_TEST_REPRO, DEFAULT_TEST_GRAPH_REPRO
-from test.dlg_engine_testutils import DROPManagerUtils
+from test.dlg_engine_testutils import DROPManagerUtils, run_errormanagement_exception_test
 hostname = "localhost"
 
 
@@ -94,14 +94,15 @@ class TestRest(unittest.TestCase):
         )
 
         # invalid dropspec, it has no oid/type (is completely empty actually)
-        self.assertRaises(exceptions.InvalidGraphException, c.addGraphSpec, sid, gempty)
+        run_errormanagement_exception_test(
+            self, c.addGraphSpec, InvalidGraphException, sid, gempty
+        )
 
         # invalid dropspec, app doesn't exist
-        self.assertRaises(
-            exceptions.InvalidGraphException,
+        run_errormanagement_exception_test(self,
             c.addGraphSpec,
-            sid,
-            [
+            exceptions.InvalidGraphException,
+            sid, [
                 {
                     "oid": "a",
                     "categoryType": "Application",
@@ -109,7 +110,7 @@ class TestRest(unittest.TestCase):
                     "reprodata": DEFAULT_TEST_REPRO.copy(),
                 },
                 DEFAULT_TEST_GRAPH_REPRO.copy(),
-            ],
+            ]
         )
 
         # invalid state, the graph status is only queried when the session is running
@@ -134,7 +135,7 @@ class TestRest(unittest.TestCase):
                 DEFAULT_TEST_GRAPH_REPRO.copy(),
             ],
         )
-        self.assertRaises(exceptions.InvalidRelationshipException, c.deploySession, sid)
+        self.assertRaises(exceptions.SessionInterruptError, c.deploySession, sid)
 
         # And here we point to an unexisting file, making an invalid drop
         c.destroySession(sid)
@@ -154,7 +155,7 @@ class TestRest(unittest.TestCase):
                 DEFAULT_TEST_GRAPH_REPRO.copy(),
             ],
         )
-        self.assertRaises(exceptions.InvalidDropException, c.deploySession, sid)
+        self.assertRaises(exceptions.SessionInterruptError, c.deploySession, sid)
 
     def test_recursive(self):
         sid = "lala"
@@ -180,7 +181,7 @@ class TestRest(unittest.TestCase):
             )
         ex = cm.exception
         self.assertTrue(Node(hostname) in ex.args[0])
-        self.assertTrue(isinstance(ex.args[0][Node(hostname)], InvalidGraphException))
+        self.assertTrue(isinstance(ex.args[0][Node(hostname)], exceptions.ErrorManagerCaughtException))
 
     def test_reprodata_get(self):
         """

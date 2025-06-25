@@ -654,12 +654,17 @@ class Session(object):
 
 
     @track_current_session
-    def cancel(self):
+    def cancel(self, interrupt=False):
         status = self.status
-        if status != SessionStates.RUNNING:
-            raise InvalidSessionState(
-                "Can't cancel this session in its current status: %d" % (status)
-            )
+        if not interrupt:
+            if status != SessionStates.RUNNING and status != SessionStates.CANCELLED:
+                raise InvalidSessionState(
+                    "Can't cancel this session in its current status: %d" % (status)
+                )
+        else:
+            logger.warning("Session %s has been interrupted when in state %s. This was "
+                           "likely triggered by a runtime error that has been caught by "
+                           "the DALiuGE runtime environment to ensure smoother shutdown.")
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [
                 dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
