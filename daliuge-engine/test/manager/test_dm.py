@@ -223,15 +223,15 @@ class NodeManagerTestsBase(NMTestsMixIn):
         DROPManagerUtils.quickDeploy(dm1, sessionId, g1, {DROPManagerUtils.nm_conninfo(1): rels})
         DROPManagerUtils.quickDeploy(dm2, sessionId, g2, {DROPManagerUtils.nm_conninfo(0): rels})
 
-        self.assertEqual(4, len(dm1._sessions[sessionId].drops))
-        self.assertEqual(2, len(dm2._sessions[sessionId].drops))
+        self.assertEqual(4, len(dm1.sessions[sessionId].drops))
+        self.assertEqual(2, len(dm2.sessions[sessionId].drops))
 
         # Run! The sole fact that this doesn't throw exceptions is already
         # a good proof that everything is working as expected
         a, b, c, d = [
-            dm1._sessions[sessionId].drops[x] for x in ("A", "B", "C", "D")
+            dm1.sessions[sessionId].drops[x] for x in ("A", "B", "C", "D")
         ]
-        e, f = [dm2._sessions[sessionId].drops[x] for x in ("E", "F")]
+        e, f = [dm2.sessions[sessionId].drops[x] for x in ("E", "F")]
         with droputils.DROPWaiterCtx(self, f, 5):
             a.write(b"a")
             a.setCompleted()
@@ -345,16 +345,16 @@ class NodeManagerTestsBase(NMTestsMixIn):
                 DROPManagerUtils.nm_conninfo(2): rels_34},
         )
 
-        self.assertEqual(1, len(dm1._sessions[sessionId].drops))
-        self.assertEqual(5, len(dm2._sessions[sessionId].drops))
-        self.assertEqual(5, len(dm3._sessions[sessionId].drops))
-        self.assertEqual(4, len(dm4._sessions[sessionId].drops))
+        self.assertEqual(1, len(dm1.sessions[sessionId].drops))
+        self.assertEqual(5, len(dm2.sessions[sessionId].drops))
+        self.assertEqual(5, len(dm3.sessions[sessionId].drops))
+        self.assertEqual(4, len(dm4.sessions[sessionId].drops))
 
-        a = dm1._sessions[sessionId].drops["A"]
-        o = dm4._sessions[sessionId].drops["O"]
+        a = dm1.sessions[sessionId].drops["A"]
+        o = dm4.sessions[sessionId].drops["O"]
         drops = []
         for x in (dm1, dm2, dm3, dm4):
-            drops += x._sessions[sessionId].drops.values()
+            drops += x.sessions[sessionId].drops.values()
 
         # Run! This should trigger the full execution of the graph
         with droputils.DROPWaiterCtx(self, o, 5):
@@ -406,19 +406,19 @@ class NodeManagerTestsBase(NMTestsMixIn):
         DROPManagerUtils.add_test_reprodata(g2)
         DROPManagerUtils.quickDeploy(dm1, sessionId, g1, {DROPManagerUtils.nm_conninfo(1): rels})
         DROPManagerUtils.quickDeploy(dm2, sessionId, g2, {DROPManagerUtils.nm_conninfo(0): rels})
-        self.assertEqual(1, len(dm1._sessions[sessionId].drops))
-        self.assertEqual(1 + N, len(dm2._sessions[sessionId].drops))
+        self.assertEqual(1, len(dm1.sessions[sessionId].drops))
+        self.assertEqual(1 + N, len(dm2.sessions[sessionId].drops))
 
         # Run! The sole fact that this doesn't throw exceptions is already
         # a good proof that everything is working as expected
-        a = dm1._sessions[sessionId].drops["A"]
-        c = dm2._sessions[sessionId].drops["C"]
+        a = dm1.sessions[sessionId].drops["A"]
+        c = dm2.sessions[sessionId].drops["C"]
         with droputils.DROPWaiterCtx(self, c, 10):
             a.write(b"a")
             a.setCompleted()
 
         for i in range(N):
-            drop = dm2._sessions[sessionId].drops["B%d" % (i,)]
+            drop = dm2.sessions[sessionId].drops["B%d" % (i,)]
             self.assertEqual(DROPStates.COMPLETED, drop.status)
         dm1.destroySession(sessionId)
         dm2.destroySession(sessionId)
@@ -477,10 +477,10 @@ class NodeManagerTestsBase(NMTestsMixIn):
         DROPManagerUtils.quickDeploy(dm1, sessionId, g1, {DROPManagerUtils.nm_conninfo(1): rels})
         DROPManagerUtils.quickDeploy(dm2, sessionId, g2, {DROPManagerUtils.nm_conninfo(0): rels})
 
-        self.assertEqual(3, len(dm1._sessions[sessionId].drops))
-        self.assertEqual(2, len(dm2._sessions[sessionId].drops))
+        self.assertEqual(3, len(dm1.sessions[sessionId].drops))
+        self.assertEqual(2, len(dm2.sessions[sessionId].drops))
 
-        cons_nodes = dm1._sessions[sessionId].drops["D"].get_consumers_nodes()
+        cons_nodes = dm1.sessions[sessionId].drops["D"].get_consumers_nodes()
 
         self.assertTrue(ip_addr_1 in cons_nodes)
         self.assertTrue(ip_addr_2 in cons_nodes)
@@ -586,5 +586,5 @@ class TestDMMultiThreading(NodeManagerTestsBase, unittest.TestCase):
             )
         else:
             DROPManagerUtils.quickDeploy(dm, sessionID, graph)
-            self.assertEqual(1, len(dm._sessions[sessionID].drops))
+            self.assertEqual(1, len(dm.sessions[sessionID].drops))
             dm.destroySession(sessionID)

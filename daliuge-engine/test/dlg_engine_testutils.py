@@ -178,13 +178,13 @@ class NMTestsMixIn:
         DROPManagerUtils.add_test_reprodata(g2)
         DROPManagerUtils.quickDeploy(dm1, sessionId, g1, {DROPManagerUtils.nm_conninfo(1): rels})
         DROPManagerUtils.quickDeploy(dm2, sessionId, g2, {DROPManagerUtils.nm_conninfo(0): rels})
-        self.assertEqual(len(g1), len(dm1._sessions[sessionId].drops))
-        self.assertEqual(len(g2), len(dm2._sessions[sessionId].drops))
+        self.assertEqual(len(g1), len(dm1.sessions[sessionId].drops))
+        self.assertEqual(len(g2), len(dm2.sessions[sessionId].drops))
 
         # Run! We wait until c is completed
         drops = {}
-        drops.update(dm1._sessions[sessionId].drops)
-        drops.update(dm2._sessions[sessionId].drops)
+        drops.update(dm1.sessions[sessionId].drops)
+        drops.update(dm2.sessions[sessionId].drops)
 
         leaf_drop = drops[leaf_oid]
         with droputils.DROPWaiterCtx(self, leaf_drop, 5):
