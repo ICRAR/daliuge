@@ -27,12 +27,14 @@ like DMs and DIMs.
 import logging
 import os
 import signal
+import subprocess
 import sys
 import time
 import re
 
 import daemon
 from lockfile.pidlockfile import PIDLockFile
+from multiprocessing import Process
 
 from .composite_manager import DataIslandManager, MasterManager
 from dlg.constants import (
@@ -55,7 +57,7 @@ from ..runtime import version
 
 
 _terminating = False
-
+MAX_WATCHDOG_RESTART = 10
 
 class DlgFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
@@ -66,6 +68,15 @@ class DlgFormatter(logging.Formatter):
                 record.__dict__[field] = None
 
         return super().format(record)
+
+
+def run_server(server, host, port):
+    """
+    Run the server using the options. Non-nested to avoid issues if needing to be pickled.
+    :param opts: Command line options
+    :return: None
+    """
+    server.start(host, port)
 
 
 def launchServer(opts):
@@ -98,8 +109,60 @@ def launchServer(opts):
 
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
+    # signal.signal(signal.SIGSEGV, handle_signal)
 
-    server.start(opts.host, opts.port)
+    if opts.watchdog_enabled:
+        start_watchdog(server, opts, logger)
+    else:
+        run_server(server, opts.host, opts.port)
+
+
+def start_watchdog(server, opts, logger):
+    """
+    Run the server in a separate process to keep it under observation.
+
+    This is an experimental feature intended to secure complete runtime shutdown when we
+    run potentially memory-unsafe code in child threads of the server.
+
+    If we detect a SIGSEGV, we warn the user and attempt to re-run the server on a new
+    port so that the NodeManager doesn't completely disappear and we avoid any issues with
+    phantom threads using the old port.
+
+    If we recieve any other exitcodes, we do not attempt a restart and instead following
+    existing exit protocols.
+
+    This method only acts as the watchdog, and does not support Session management or
+    any explicit reconnect, and instead leaves that up to the respective manager
+    implementations.
+
+    :param server: server object that we are watching
+    :param opts: runtime options
+    :param logger: runtime logger
+    """
+
+    watchdog = True
+    wait_period = 30
+    current_restart = 0
+    while watchdog:
+        p = Process(target=run_server, args=(server, opts.host, opts.port))
+        p.start()
+        p.join()
+        if p.exitcode == signal.SIGSEGV or p.exitcode == -signal.SIGSEGV:
+            logger.warning(
+                "Threaded server crashed with SIGSEGV (signal 11)."
+                "Restarting in %s seconds...",
+                wait_period
+            )
+            opts.port += 27 # Avoid collisions with more obvious ports, e.g. 8080 or 8888
+            if current_restart < MAX_WATCHDOG_RESTART:
+                current_restart +=1
+            else:
+                watchdog=False
+                logger.warning(
+                    "Watchdog service reached maximum restarts. Shutting Down..."
+            )
+        else:
+            watchdog = False
 
 
 def addCommonOptions(parser, defaultPort):
@@ -184,6 +247,12 @@ def addCommonOptions(parser, defaultPort):
         dest="logdir",
         help="The directory where the logging files will be stored",
         default=utils.getDlgLogsDir(),
+    )
+    parser.add_option(
+        "--watchdog",
+        action="store_true",
+        dest="watchdog_enabled",
+        help="Enable watchdog process wrapper for server (WARNING: Experimental feature)"
     )
 
     parser.add_option(
