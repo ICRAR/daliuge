@@ -830,4 +830,4 @@ class MasterManagerRestServer(CompositeManagerRestServer):
             h = Node(host)
             with DataIslandManagerClient(host=h.host, port=h.port) as dm:
                 nodes += dm.nodes()
-        return [str(n) for n in nodes]
+        return [n for n in nodes]
