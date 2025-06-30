@@ -35,10 +35,7 @@ class ErrorManagerCaughtException(DaliugeException):
     Raise this as part of managing known exceptions during DALiuGE Runtime.
     """
 
-class InvalidDropException(DaliugeException):
-    """
-    An exception thrown when a Drop is created with a set of invalid arguments.
-    """
+class DROPException(DaliugeException):
 
     def __init__(self, drop, reason):
         DaliugeException.__init__(self, drop, reason)
@@ -48,7 +45,7 @@ class InvalidDropException(DaliugeException):
             self.oid = drop.oid
             self.uid = drop.uid
         self.reason = reason
-        self.msg = "InvalidDropException <Drop %s / %s>: %s" % (
+        self.msg = "DROPException <Drop %s / %s>: %s" % (
             self.uid,
             self.oid,
             self.reason,
@@ -56,6 +53,11 @@ class InvalidDropException(DaliugeException):
 
     def __str__(self, *args, **kwargs):
         return self.msg
+
+class InvalidDropException(DaliugeException):
+    """
+    An exception thrown when a Drop is created with a set of invalid arguments.
+    """
 
 class IncompleteDROPSpec(InvalidDropException):
     """
@@ -72,11 +74,15 @@ class InvalidEncodingException(InvalidDropException):
     Test
     """
 
-class InvalidDROPState(InvalidDropException):
+class InvalidDROPState(DROPException):
     """
     DROP has entered or attempted to enter a state it is not allowed to be.
     """
 
+class BashAppRuntimeError(DROPException):
+    """
+    The BashShellApp has reported an error.
+    """
 
 class InvalidGraphException(DaliugeException):
     """
@@ -134,63 +140,50 @@ class NoDropException(DaliugeException):
             ret += ". Reason: %s" % (self._reason)
         return ret
 
-class InvalidSessionException(DaliugeException):
+class SessionException(DaliugeException):
     """
-
+    Broad exception class for DALiuGE sessions
     """
-
-class NoSessionException(InvalidSessionException):
-    """
-    An exception thrown when a session ID is pointing to a non-existing session
-    """
-
     def __init__(self, session_id, reason=None):
-        InvalidSessionException.__init__(self, session_id, reason)
         self._session_id = session_id
         self._reason = reason
 
     def __str__(self):
-        ret = "NoSessionException <session_id: %s>" % (self._session_id)
+        ret = "SessionException <session_id: %s>" % (self._session_id)
         if self._reason:
             ret += ". Reason: %s" % (self._reason)
         return ret
+
 
     @property
     def session_id(self):
         return self._session_id
 
+class NoSessionException(SessionException):
+    """
+    An exception thrown when a session ID is pointing to a non-existing session
+    """
 
-class SessionAlreadyExistsException(InvalidSessionException):
+class SessionInterruptError(SessionException):
+    """
+    Raise when a session is cancled prematurely.
+    """
+
+class InvalidSessionException(SessionException):
+    """
+    Test
+    """
+
+class SessionAlreadyExistsException(SessionException):
     """
     An exception thrown when a session ID is pointing to an existing session
     but is meant to be used as the ID of a new session.
     """
 
-    def __init__(self, session_id, reason=None):
-        InvalidSessionException.__init__(self, session_id, reason)
-        self._session_id = session_id
-        self._reason = reason
-
-    def __str__(self):
-        ret = "SessionAlreadyExistsException <session_id: %s>" % (self._session_id)
-        if self._reason:
-            ret += ". Reason: %s" % (self._reason)
-        return ret
-
-    @property
-    def session_id(self):
-        return self._session_id
-
-
-class InvalidSessionState(InvalidSessionException):
+class InvalidSessionState(SessionException):
     """
     An exception thrown when an operation is requested on a session that is not
     in the expected state for that operation.
-    """
-
-class SessionInterruptError(InvalidSessionException):
-    """
-    Raise when a session is cancled prematurely.
     """
 
 
