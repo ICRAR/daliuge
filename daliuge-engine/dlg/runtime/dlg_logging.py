@@ -93,7 +93,7 @@ def setup_logger_class():
     logging.setLoggerClass(_DlgLogger)
     # logging.logger.user = _Dlglogger.user
     logging.addLevelName(USER, "USER")
-    # logging.user = USER
+    # logging.user = _DlgLogger.user
     logging.USER = USER # CREATE
 
 

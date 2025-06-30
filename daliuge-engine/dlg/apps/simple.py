@@ -682,10 +682,10 @@ class HelloWorldApp(BarrierAppDROP):
             raise Exception("Only one input expected for %r" % self)
         else:  # the input is expected to be a vector. We'll use the first element
             try:
-                phrase = str(pickle.loads(droputils.allDropContents(ins[0]))[0])
-            except _pickle.UnpicklingError:
-                phrase = str(droputils.allDropContents(ins[0]), encoding="utf-8")
-            self.greeting = f"Hello {phrase}"
+                phrase = pickle.loads(droputils.allDropContents(ins[0]))[0]
+            except (_pickle.UnpicklingError, TypeError):
+                phrase = droputils.allDropContents(ins[0])
+            self.greeting = f"Hello, {phrase}"
         logger.debug("Greeting is %s", self.greeting)
 
         outs = self.outputs

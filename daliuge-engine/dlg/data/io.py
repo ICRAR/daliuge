@@ -303,6 +303,9 @@ class MemoryIO(DataIO):
         # TODO: This may also be an issue
         return self._buf.getbuffer() if hasattr(self._buf,  "getbuffer") else self._buf.getvalue()
 
+    @property
+    def buftype(self):
+        return type(self._buf)
 
 # pylint: disable=possibly-used-before-assignment
 class SharedMemoryIO(DataIO):

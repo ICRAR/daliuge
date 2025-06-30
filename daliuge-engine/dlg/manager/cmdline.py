@@ -27,7 +27,6 @@ like DMs and DIMs.
 import logging
 import os
 import signal
-import subprocess
 import sys
 import time
 import re
@@ -382,15 +381,15 @@ def setupLogging(opts):
     logging.root.addHandler(fileHandler)
 
     # Per-package/module specific levels
-    # logging.root.setLevel(level)
-    logging.getLogger("dlg").setLevel(level)
+    logger = logging.getLogger("dlg")
+    logger.setLevel(level)
     logging.getLogger("zerorpc").setLevel(logging.WARN)
 
     # Assuming we have selected the default, info-level messages will not show to the
     # user. A Warning message here let's the user know something is happening without
     # us needing to modify the default logging level.
-    logging.user("Starting with level: %s...", logging.getLevelName(level))
-    logging.user("Using %s Time for logging...", time_fmt)
+    logger.user("Log level: %s", logging.getLevelName(level))
+    logger.user("Logging in: %s time", time_fmt)
 
     return fileHandler
 

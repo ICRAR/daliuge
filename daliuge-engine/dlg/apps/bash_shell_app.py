@@ -47,7 +47,7 @@ from dlg.named_port_utils import (
 )
 from dlg.ddap_protocol import AppDROPStates, DROPStates
 from dlg.apps.app_base import BarrierAppDROP, AppDROP
-from dlg.exceptions import InvalidDropException
+from dlg.exceptions import InvalidDropException, BashAppRuntimeError
 from dlg.meta import (
     dlg_string_param,
     dlg_component,
@@ -187,6 +187,7 @@ class BashShellBase:
         self.appArgs = self._applicationArgs
         self._recompute_data = {}
 
+    # @track_current_drop
     def _run_bash(self, inputs, outputs, stdin=None, stdout=subprocess.PIPE):
         """
         Runs the given `cmd`. If any `inputs` and/or `outputs` are given
@@ -272,7 +273,7 @@ class BashShellBase:
         elif pcode != 0:
             message = "Command didn't finish successfully (exit code %d)" % (pcode,)
             logger.error(message_stdouts(message, pstdout, pstderr))
-            raise Exception(message)
+            raise BashAppRuntimeError(self,message)
 
     def dataURL(self) -> str:
         return type(self).__name__
