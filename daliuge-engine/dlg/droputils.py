@@ -32,6 +32,7 @@ import re
 import threading
 import traceback
 
+import dlg.exceptions as ex
 from dlg.ddap_protocol import DROPStates
 from dlg.data.io import IOForURL, OpenMode
 from dlg import common
@@ -128,15 +129,18 @@ def allDropContents(drop, bufsize=65536) -> bytes:
     Returns all the data contained in a given DROP
     """
     buf = io.BytesIO()
-    if hasattr(drop,"buf") and isinstance(drop.buf, io.StringIO):
+    if hasattr(drop,"_buf") and isinstance(getattr(drop, '_buf'), io.StringIO):
         buf = io.StringIO()
     desc = drop.open()
 
     while True:
-        data = drop.read(desc, bufsize)
-        if not data:
-            break
-        buf.write(data)
+        try:
+            data = drop.read(desc, bufsize)
+            if not data:
+                break
+            buf.write(data)
+        except TypeError as e:
+            raise ex.InvalidEncodingException(drop, 'Type error') from e
     drop.close(desc)
     return buf.getvalue()
 
