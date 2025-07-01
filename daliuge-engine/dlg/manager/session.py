@@ -369,7 +369,7 @@ class Session(object):
             logger.exception(
                 "Can't deploy this session in its current status: %d", status
             )
-            raise InvalidSessionState
+            raise InvalidSessionState(self._sessionId)
 
         if not self._graph and completedDrops:
             logger.exception(

@@ -823,4 +823,4 @@ class MasterManagerRestServer(CompositeManagerRestServer):
         for host in self.dm.dmHosts:
             with DataIslandManagerClient(host=host.host, port=host.port) as dm:
                 nodes += dm.nodes()
-        return [n for n in nodes]
+        return [str(n) for n in nodes]
