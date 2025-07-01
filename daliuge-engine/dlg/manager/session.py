@@ -283,7 +283,7 @@ class Session(object):
                 "BUILDING status: %d",
                 status,
             )
-            raise InvalidSessionState
+            raise InvalidSessionState(self.sessionId)
 
         self.status = SessionStates.BUILDING
 
