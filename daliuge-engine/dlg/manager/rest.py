@@ -391,7 +391,7 @@ class ManagerRestServer(RestServer):
             viewMode=viewMode,
             serverUrl=serverUrl,
             dmType=self.dm.__class__.__name__,
-            sessionDir=sessionUrl
+            sessionDir=sessionId
         )
 
     def _getDropStatus(self, sessionId, dropId):
