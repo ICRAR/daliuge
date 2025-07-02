@@ -30,7 +30,6 @@ A special case (K = 1) of the Maximum Weighted K-families based on
 A detailed proof can be found on Page 2 (Corollary)
     https://link.springer.com/article/10.1007/BF00333130
 """
-from asyncio.log import logger
 import sys
 
 import networkx as nx
@@ -85,7 +84,7 @@ def _get_pi_solution(split_graph):
             H.add_edge(ed[0], ed[1], capacity=Cxy, weight=Axy)
 
     # Step 2
-    flow_value, flow_dict = nx.maximum_flow(H, "s", "t")
+    _, flow_dict = nx.maximum_flow(H, "s", "t")
 
     # Step 3
     R = nx.DiGraph()

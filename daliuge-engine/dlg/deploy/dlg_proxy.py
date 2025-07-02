@@ -112,7 +112,7 @@ class ProxyServer:
                 the_socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
                 logger.info("Connected to %s on port %d", server, port)
                 return the_socket
-            except Exception:
+            except OSError:
                 logger.exception("Failed to connect to %s:%d", server, port)
                 # Sleep for a while before trying to connect again
                 time.sleep(conn_retry_timeout)
@@ -127,7 +127,7 @@ class ProxyServer:
         if not ok:
             the_socket.shutdown(socket.SHUT_RDWR)
             the_socket.close()
-            raise Exception("Monitor rejected us due to duplicated ID")
+            raise RuntimeError("Monitor rejected us due to duplicated ID")
         logger.info("Identification successful!")
         self.monitor_socket = the_socket
 

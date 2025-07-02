@@ -74,7 +74,7 @@ def start_helm(physical_graph_template, num_nodes: int, deploy_dir: str):
         raise exp2
     finally:
         helm_client.teardown()
-        logging.info("Finished deployment")
+        logging.info("Finished deployment on %d", num_nodes)
 
 
 def main():

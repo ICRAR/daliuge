@@ -22,7 +22,7 @@
 """
 Helper classes to aid the translation
 """
-from dataclasses import dataclass, fields, asdict
+from dataclasses import dataclass
 
 
 class Categories:

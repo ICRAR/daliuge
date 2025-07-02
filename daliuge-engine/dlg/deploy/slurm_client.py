@@ -30,7 +30,7 @@ import subprocess
 import shutil
 import tempfile
 import string
-import dlg.remote as remote
+import dlg.remote as dlg_remote
 from dlg.runtime import __git_version__ as git_commit
 
 from dlg.deploy.configs import ConfigFactory, init_tpl, dlg_exec_str
@@ -57,7 +57,6 @@ class SlurmClient:
     def __init__(
         self,
         dlg_root=None,
-        log_root=None,
         host=None,
         acc=None,
         physical_graph_template_file=None,  # filename of physical graph template
@@ -99,7 +98,7 @@ class SlurmClient:
             self.modules = config['modules']
             self.venv = config['venv'] # superceded by slurm_template if present
             self.exec_prefix = config["exec_prefix"]
-            self.username = config['user'] if 'user' in config else sys.exit(1)
+            self.username = config['user'] if 'user' in config else username
             if not self.username:
                 print("Username not configured in INI file, using local username...")
         else:
@@ -133,9 +132,9 @@ class SlurmClient:
         # )
         # 
         # start_dlg_cluster arguments
+        self.visualise_graph = False
         self._logical_graph = logical_graph
         self._physical_graph_template_file = physical_graph_template_file
-        self._visualise_graph = False
         self._run_proxy = run_proxy
         self._mon_host = mon_host
         self._mon_port = mon_port
@@ -227,7 +226,7 @@ class SlurmClient:
             if self._run_proxy
             else ""
         )
-        pardict["GRAPH_VIS_PAR"] = "--dump" if self._visualise_graph else ""
+        pardict["GRAPH_VIS_PAR"] = "--dump" if self.visualise_graph else ""
         pardict["LOGV_PAR"] = "--verbose-level %d" % self._logv
         pardict["ZERORUN_PAR"] = "--zerorun" if self._zerorun else ""
         pardict["MAXTHREADS_PAR"] = "--max-threads %d" % self._max_threads
@@ -296,7 +295,7 @@ class SlurmClient:
                 f"Creating remote session directory on {self.username}@{self.host}: {command}"
             )
             try:
-                remote.execRemote(
+                dlg_remote.execRemote(
                     self.host, command, username=self.username, pkeyPath=self.ssh_key
                 )
             except (TypeError, SSHException) as e:
@@ -325,7 +324,7 @@ class SlurmClient:
         if self._physical_graph_template_file:
             if self._remote:
                 print(f"Copying PGT to: {physical_graph_file_name}")
-                remote.copyTo(
+                dlg_remote.copyTo(
                     self.host,
                     self._physical_graph_template_file,
                     physical_graph_file_name,
@@ -346,7 +345,7 @@ class SlurmClient:
             tjob = tempfile.mktemp()
             with open(tjob, "w+t") as t:
                 t.write(job_desc)
-            remote.copyTo(
+            dlg_remote.copyTo(
                 self.host,
                 tjob,
                 job_file_name,
@@ -366,7 +365,7 @@ class SlurmClient:
             else:
                 command = f"cd {session_dir} && sbatch --parsable {job_file_name}"
                 print(f"Submitting sbatch job: {command}")
-                stdout, stderr, exitStatus = remote.execRemote(
+                stdout, stderr, exitStatus = dlg_remote.execRemote(
                     self.host, command, username=self.username, pkeyPath=self.ssh_key
                 )
                 if exitStatus != 0:

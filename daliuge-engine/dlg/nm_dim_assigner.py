@@ -75,4 +75,3 @@ class NMAssigner:
         else:  # We have lots of DIMs
             # Will do nothing, it's up to the user/deployer to handle this.
             logger.info("Multiple DIMs, handle node assignments externally.")
-            pass

@@ -20,7 +20,6 @@
 #    MA 02111-1307  USA
 #
 import errno
-import logging
 import os
 
 from dlg.common.reproducibility.reproducibility import common_hash
@@ -156,7 +155,8 @@ class FileDROP(DataDROP, PathBasedDrop):
             os.path.join(self.dirname, self.filename) if self.filename else self.dirname
         )
         logger.debug(
-            f"Set path of drop {self._uid}: {self._path} check: {check} {os.path.isfile(self._path)}"
+            "Set path of drop %s: %s check: %s %s",
+            self._uid, self._path, check, os.path.isfile(self._path)
         )
         if check and not os.path.isfile(self._path):
             raise InvalidDropException(
@@ -224,7 +224,7 @@ class FileDROP(DataDROP, PathBasedDrop):
             try:
                 with open(self.path, "wb"):
                     pass
-            except:
+            except IOError:
                 self.status = DROPStates.ERROR
                 logger.error("Path not accessible: %s", self.path)
             self._size = 0
@@ -243,6 +243,6 @@ class FileDROP(DataDROP, PathBasedDrop):
 
         try:
             data = allDropContents(self, self.size)
-        except Exception:
+        except IOError:
             data = b""
         return {"data_hash": common_hash(data)}

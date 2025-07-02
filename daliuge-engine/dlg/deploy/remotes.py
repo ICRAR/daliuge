@@ -44,7 +44,7 @@ class Remote(object):
         self.sorted_peers = None
 
     def _get_ip_from_name(self, hostname):
-        rx = re.compile("^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$")
+        rx = re.compile(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$")
         if rx.match(hostname):  # already an IP??
             return hostname
         else:
@@ -57,7 +57,7 @@ class Remote(object):
         if len(set(sorted_peers)) != self.size:
             raise RuntimeError("More than one task started per node, cannot continue")
         # convert nodes to IP addresses if hostnames
-        self.sorted_peers = list(map(lambda x: self._get_ip_from_name(x), sorted_peers))
+        self.sorted_peers = list(map(self._get_ip_from_name(sorted_peers)))
         nm_range = self._nm_range()
         if nm_range[0] == nm_range[1]:
             raise RuntimeError(
@@ -192,7 +192,3 @@ class DALiuGERemote(FilesystemBasedRemote):
 class DALiuGEHybridRemote(DALiuGERemote):
     """Like DALiuGERemote, but initializes MPI as well"""
 
-    def __init__(self, options, my_ip):
-        from mpi4py import MPI  # @UnusedImport
-
-        super(DALiuGEHybridRemote, self).__init__(options, my_ip)

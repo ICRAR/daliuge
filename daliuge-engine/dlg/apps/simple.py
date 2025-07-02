@@ -20,8 +20,7 @@
 #    MA 02111-1307  USA
 #
 """Applications used as examples, for testing, or in simple situations"""
-import base64
-import dill
+
 import _pickle
 from numbers import Number
 import pickle
@@ -89,8 +88,6 @@ class NullBarrierApp(BarrierAppDROP):
 class DALiuGEApp(BarrierAppDROP):
     """A placeholder BarrierAppDrop that just aids the generation of the palette component"""
 
-    pass
-
 
 ##
 # @brief SleepApp
@@ -121,9 +118,6 @@ class SleepApp(BarrierAppDROP):
         [dlg_streaming_input("binary/*")],
     )
     sleep_time = dlg_float_param("sleep_time", 0)
-
-    def initialize(self, **kwargs):
-        super(SleepApp, self).initialize(**kwargs)
 
     @track_current_drop
     def run(self):
@@ -360,9 +354,6 @@ class AverageArraysApp(BarrierAppDROP):
         super().__init__(oid, kwargs)
         self.marray = []
 
-    def initialize(self, **kwargs):
-        super().initialize(**kwargs)
-
     def run(self):
         # At least one output should have been added
 
@@ -389,7 +380,7 @@ class AverageArraysApp(BarrierAppDROP):
         for inp in ins:
             sarray = droputils.allDropContents(inp)
             if len(sarray) == 0:
-                print(f"Input does not contain data!")
+                print("Input does not contain data!")
             else:
                 sarray = pickle.loads(sarray)
                 if isinstance(sarray, (list, tuple, np.ndarray)):
@@ -436,16 +427,12 @@ class GenericGatherApp(BarrierAppDROP):
     # automatically populated by scatter node
     num_of_inputs: int = dlg_int_param("num_of_inputs", 1)
 
-    def initialize(self, **kwargs):
-        super(GenericGatherApp, self).initialize(**kwargs)
-
     def readWriteData(self):
         inputs = self.inputs
         outputs = self.outputs
-        total_len = 0
         for output in outputs:
-            for input in inputs:
-                value = droputils.allDropContents(input)
+            for ipt in inputs:
+                value = droputils.allDropContents(ipt)
                 output.write(value)
 
     def run(self):
@@ -486,14 +473,13 @@ class DictGatherApp(BarrierAppDROP):
     def readWriteData(self):
         inputs = self.inputs
         outputs = self.outputs
-        total_len = 0
         # for input in inputs:
         #     total_len += input.size
         # logger.debug(f">>>> writing {inputs} to {outputs}")
         for output in outputs:
-            for input in inputs:
-                value = droputils.allDropContents(input)
-                self.value_dict[input.name] = pickle.loads(value)
+            for ipt in inputs:
+                value = droputils.allDropContents(ipt)
+                self.value_dict[ipt.name] = pickle.loads(value)
                 for aa_key, aa_dict in self.kwargs["applicationArgs"].items():
                     if aa_key not in self.value_dict and aa_dict["value"]:
                         self.value_dict[aa_key] = aa_dict["value"]
@@ -539,10 +525,9 @@ class ArrayGatherApp(BarrierAppDROP):
     def readWriteData(self):
         inputs = self.inputs
         outputs = self.outputs
-        total_len = 0
         for output in outputs:
-            for input in inputs:
-                value = droputils.allDropContents(input)
+            for ipt in inputs:
+                value = droputils.allDropContents(ipt)
                 self.value_list.append(pickle.loads(value))
             output.write(pickle.dumps(self.value_list))
 
@@ -625,16 +610,14 @@ class GenericNpyGatherApp(BarrierAppDROP):
         result: Optional[Number] = None
         reduce = getattr(np, f"{self.function}")
         gather = getattr(np, f"{self.functions[self.function]}")
-        for input in self.inputs:
-            data = drop_loaders.load_numpy(input)
+        for ipt in self.inputs:
+            data = drop_loaders.load_numpy(ipt)
             # skip gather for the first input
             result = (
-                # reduce(data, axis=self.reduce_axes, allow_pickle=True)
                 reduce(data, axis=self.reduce_axes)
                 if result is None
                 else gather(
                     result,
-                    # reduce(data, axis=self.reduce_axes, allow_pickle=True),
                     reduce(data, axis=self.reduce_axes),
                 )
             )
@@ -644,8 +627,8 @@ class GenericNpyGatherApp(BarrierAppDROP):
         """gathers each input drop interpreted as an npy drop"""
         result: Optional[Number] = None
         gather = getattr(np, f"{self.function}")
-        for input in self.inputs:
-            data = drop_loaders.load_numpy(input)
+        for ipt in self.inputs:
+            data = drop_loaders.load_numpy(ipt)
             # assign instead of gather for the first input
             # result = data if result is None else gather(result, data, allow_pickle=True)
             result = data if result is None else gather(result, data)
@@ -749,7 +732,7 @@ class UrlRetrieveApp(BarrierAppDROP):
     def run(self):
         try:
             logger.info("Accessing URL %s", self.url)
-            u = requests.get(self.url)
+            u = requests.get(self.url, timeout=30)
         except requests.exceptions.RequestException as e:
             raise e.reason
 
@@ -803,9 +786,6 @@ class GenericScatterApp(BarrierAppDROP):
     num_of_copies: int = dlg_int_param("num_of_copies", 1)
     element: bool = dlg_bool_param("element", False)
 
-    def initialize(self, **kwargs):
-        super(GenericScatterApp, self).initialize(**kwargs)
-
     @track_current_drop
     def run(self):
         numSplit = self.num_of_copies
@@ -813,16 +793,10 @@ class GenericScatterApp(BarrierAppDROP):
         # if the data is of type string it is not pickled, but stored as a binary string.
         try:
             inpArray = pickle.loads(cont)
-        except:
+        except pickle.PickleError:
             inpArray = cont.decode()
-        try:  # just checking whether the object is some object that can be used as an array
-            nObj = np.array(inpArray)
-        except:
-            raise
-        try:
-            result = np.array_split(nObj, numSplit)
-        except IndexError as err:
-            raise err
+        nObj = np.array(inpArray)
+        result = np.array_split(nObj, numSplit)
         for i in range(numSplit):
             o = self.outputs[i]
             if not self.element:
@@ -994,7 +968,7 @@ class Branch(PyFuncApp):
             d = pickle.dumps(self.parameters[self.argnames[0]])
             # d = self.parameters[self.argnames[0]]
             if hasattr(go_drop, "write"):
-                go_drop.write(d) 
+                go_drop.write(d)
 
 
 ##
@@ -1025,8 +999,8 @@ class PickOne(BarrierAppDROP):
         BarrierAppDROP.initialize(self, **kwargs)
 
     def readData(self):
-        input = self.inputs[0]
-        data = pickle.loads(droputils.allDropContents(input))
+        ipt = self.inputs[0]
+        data = pickle.loads(droputils.allDropContents(ipt))
         # data = droputils.allDropContents(input)
         # data = dill.loads(base64.b64decode(data))
 
@@ -1121,7 +1095,7 @@ class ListAppendThrashingApp(BarrierAppDROP):
         marray = []
         for _ in range(int(self.size)):
             marray = []
-            for i in range(int(self.size)):
+            for _ in range(int(self.size)):
                 marray.append(random.random())
         return marray
 

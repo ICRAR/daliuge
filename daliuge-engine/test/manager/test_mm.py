@@ -177,7 +177,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
 
         # Deploy now and get A and C
         self.mm.deploySession(sessionId)
-        a, c = [self.nm._sessions[sessionId].drops[x] for x in ("A", "C")]
+        a, c = [self.nm.sessions[sessionId].drops[x] for x in ("A", "C")]
 
         data = os.urandom(10)
         with droputils.DROPWaiterCtx(self, c, 3):
@@ -192,7 +192,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
 
         # Deploy now and get A
         self.mm.deploySession(sessionId, completedDrops=["A"])
-        c = self.nm._sessions[sessionId].drops["C"]
+        c = self.nm.sessions[sessionId].drops["C"]
 
         # This should be happening before the sleepTime expires
         with droputils.DROPWaiterCtx(self, c, 5):
@@ -239,7 +239,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         self.nm.deploySession(sessionId)
         assertSessionStatus(sessionId, SessionStates.RUNNING)
 
-        a, c = [self.nm._sessions[sessionId].drops[x] for x in ("A", "C")]
+        a, c = [self.nm.sessions[sessionId].drops[x] for x in ("A", "C")]
         data = os.urandom(10)
         with droputils.DROPWaiterCtx(self, c, 3):
             a.write(data)
@@ -275,7 +275,7 @@ class TestMM(DimAndNMStarter, unittest.TestCase):
         self.mm.deploySession(sessionId)
         assertGraphStatus(sessionId, DROPStates.INITIALIZED)
 
-        a, c = [self.nm._sessions[sessionId].drops[x] for x in ("A", "C")]
+        a, c = [self.nm.sessions[sessionId].drops[x] for x in ("A", "C")]
         data = os.urandom(10)
         with droputils.DROPWaiterCtx(self, c, 3):
             a.write(data)

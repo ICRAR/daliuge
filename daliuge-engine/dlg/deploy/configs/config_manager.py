@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 import sys
-import optparse
+import optparse # pylint: disable=deprecated-module
 import shutil
 import textwrap
 import typing
@@ -206,10 +206,11 @@ def run(_, args):
         cfg_manager.setup_user()
         sys.exit(0)
     elif opts.list:
-        print(f"Available facilities:\n")
+        print("Available facilities:\n")
         cfg_manager.print_available_config()
         sys.exit(0)
     else:
+        print(f"Incorrect arguments: {args}")
         parser.print_help()
 
 

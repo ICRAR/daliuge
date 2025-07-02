@@ -58,15 +58,15 @@ def setup_logger_class():
             except AttributeError:
                 drop = None
             try:
-                drop_uid = drop._humanKey if drop else ""
+                drop_uid = drop.humanKey if drop else ""
             except AttributeError:
                 drop_uid = ""
 
             # Do the same with the session_id, which can be found via the drop (if any)
             # or checking if there is a session currently executing something
             session_id = ""
-            if drop and hasattr(drop, "_dlg_session_id"):
-                session_id = drop._dlg_session_id
+            if drop and hasattr(drop, "dlg_session_id"):
+                session_id = drop.dlg_session_id
             else:
                 try:
                     session_id = session.track_current_session.tlocal.session.sessionId

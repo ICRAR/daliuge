@@ -19,13 +19,11 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from abc import abstractmethod, abstractproperty
+from abc import abstractmethod
 import random
 import os
 import logging
 from typing import Union
-
-from dlg.ddap_protocol import DROPStates
 
 from dlg.drop import AbstractDROP, track_current_drop
 from dlg.data.io import (
@@ -45,8 +43,8 @@ try:
     from crc32c import crc32c  # @UnusedImport
 
     _checksumType = ChecksumTypes.CRC_32C
-except:
-    from binascii import crc32  # @Reimport
+except ImportError:
+    from binascii import crc32 # pylint: disable=unused-import
 
     _checksumType = ChecksumTypes.CRC_32
 
@@ -153,7 +151,7 @@ class DataDROP(AbstractDROP):
         if self._wio:
             try:
                 self._wio.close()
-            except:
+            except IOError:
                 pass  # this will make sure that a previous issue does not cause the graph to hang!
                 # raise Exception("Problem closing file!")
             self._wio = None
@@ -187,7 +185,7 @@ class DataDROP(AbstractDROP):
             return self._refCount > 0
 
     @track_current_drop
-    def write(self, data: Union[bytes, memoryview], **kwargs):
+    def write(self, data: Union[bytes, memoryview]):
         """
         Writes the given `data` into this DROP. This method is only meant
         to be called while the DROP is in INITIALIZED or WRITING state;
@@ -208,9 +206,9 @@ class DataDROP(AbstractDROP):
             self._wio = self.getIO()
             try:
                 self._wio.open(OpenMode.OPEN_WRITE)
-            except:
+            except IOError as e:
                 self.status = DROPStates.ERROR
-                raise Exception("Problem opening drop for write!")
+                raise IOError("Problem opening drop for write!") from e
         nbytes = self._wio.write(data)
         nbytes = 0 if nbytes is None else nbytes
 
@@ -385,7 +383,7 @@ class DataDROP(AbstractDROP):
             try:
                 port.items()
             except AttributeError:
-                logging.debug("Producer %s does not have named ports", p.uid)
+                logging.debug("Producer %s does not have named ports", port.uid)
                 continue
             for uid, input_port_name in port.items():
                 try:
@@ -420,7 +418,8 @@ class DataDROP(AbstractDROP):
         """
         return self.getIO().exists()
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def dataURL(self) -> str:
         """
         A URL that points to the data referenced by this DROP. Different

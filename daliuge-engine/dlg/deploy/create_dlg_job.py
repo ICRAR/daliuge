@@ -28,12 +28,11 @@ parse the log result, and produce the plot
 
 import datetime
 import json
-import optparse
+import optparse # pylint: disable=deprecated-module
 import pwd
 import re
 import socket
 import sys
-import tempfile
 import time
 import os
 
@@ -432,8 +431,13 @@ def process_slurm_template(template_file: str):
         return fp.read()
 
 def create_experiment_group(parser: optparse.OptionParser):
-    from optparse import OptionGroup
-    group=OptionGroup(parser, "Experimental Options",
+    """
+    Establish experiment group to separate out experimenatal options
+
+    :param parser: parser that we are updating
+    :return: the group for experiments
+    """
+    group=optparse.OptionGroup(parser, "Experimental Options",
                       "Caution: These are not properly tested and likely to"
                       "be rough around the edges.")
 
@@ -460,16 +464,13 @@ def create_job_group():
     """
     TODO: LIU-424
     """
-    pass
 
 def create_graph_group():
     """
     TODO: LIU-424
     """
-    pass
 
-
-def run(_, args=None):
+def run(_, args):
     parser = optparse.OptionParser(
         usage="\n%prog --action [submit|analyse] -f <facility> [options]\n\n%prog -h for further help"
     )
@@ -664,14 +665,14 @@ def run(_, args=None):
         "--submit",
         dest="submit",
         action="store_true",
-        help=f"If set to False, the job is not submitted, but the script is generated",
+        help="If set to False, the job is not submitted, but the script is generated",
         default=False,
     )
     parser.add_option(
         "--remote",
         dest="remote",
         action="store_true",
-        help=f"If set to True, the job is submitted/created for a remote submission",
+        help="If set to True, the job is submitted/created for a remote submission",
         default=False,
     )
     parser.add_option(
@@ -744,7 +745,7 @@ def run(_, args=None):
                         try:
                             log_parser = LogParser(log_dir)
                             log_parser.parse(out_csv=opts.csv_output)
-                        except Exception as exp:
+                        except Exception as exp: # pylint: disable=broad-exception-caught
                             print("Fail to parse {0}: {1}".format(log_dir, exp))
         else:
             log_parser = LogParser(opts.log_dir)
@@ -810,7 +811,6 @@ def run(_, args=None):
 
         client = SlurmClient(
             dlg_root=opts.dlg_root,
-            log_root=opts.log_root,
             facility=opts.facility,
             job_dur=opts.job_dur,
             num_nodes=opts.num_nodes,
@@ -832,11 +832,11 @@ def run(_, args=None):
             slurm_template=template
         )
 
-        client._visualise_graph = opts.visualise_graph
+        client.visualise_graph = opts.visualise_graph
         client.submit_job()
     else:
         parser.print_help()
-        parser.error("Invalid input!")
+        parser.error(f"Invalid input from args: {args}!")
 
 
 if __name__ == "__main__":

@@ -23,10 +23,9 @@
 
 from __future__ import annotations
 
-import base64
 import contextlib
 import dill
-import inspect
+import base64
 import logging
 import pickle
 import socket
@@ -35,12 +34,12 @@ import time
 
 from inspect import signature
 
-from . import utils, droputils
-from .apps import pyfunc
-from .common import dropdict
-from .ddap_protocol import DROPStates
-from .apps.app_base import BarrierAppDROP
-from .exceptions import InvalidDropException
+from dlg import utils, droputils
+from dlg.apps import pyfunc
+from dlg.common import dropdict
+from dlg.ddap_protocol import DROPStates
+from dlg.apps.app_base import BarrierAppDROP
+from dlg.exceptions import InvalidDropException
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
@@ -186,12 +185,12 @@ class _DelayedDrop(object):
         _DelayedDrop._drop_count = 0
         graph = {}
         visited = set()
-        self._to_physical_graph(visited, graph)
+        self.to_physical_graph(visited, graph)
         for d in visited:
             d.reset()
         return graph
 
-    def _append_to_graph(self, visited, graph):
+    def append_to_graph(self, visited, graph):
         if self in visited:
             return
         oid = str(self.next_drop_oid)
@@ -203,8 +202,8 @@ class _DelayedDrop(object):
         graph[oid] = dd
         logger.debug("Appended %r/%s to the Physical Graph", self, oid)
 
-    def _to_physical_graph(self, visited, graph):
-        self._append_to_graph(visited, graph)
+    def to_physical_graph(self, visited, graph):
+        self.append_to_graph(visited, graph)
         dependencies = self.inputs
         if self.producer:
             dependencies.append(self.producer)
@@ -212,15 +211,15 @@ class _DelayedDrop(object):
             if isinstance(d, list):
                 d = tuple(d)
             if d in visited:
-                self._add_upstream(d)
+                self.add_upstream(d)
                 continue
 
-            d = d._to_physical_graph(visited, graph)
-            self._add_upstream(d)
+            d = d.to_physical_graph(visited, graph)
+            self.add_upstream(d)
 
         return self
 
-    def _add_upstream(self, upstream: _DelayedDrop):
+    def add_upstream(self, upstream: _DelayedDrop):
         """Link the given drop as either a producer or input of this drop"""
         self_dd = self.dropdict
         up_dd = upstream.dropdict
@@ -264,16 +263,16 @@ class _DelayedDrops(_DelayedDrop):
         self.inputs.extend(drops)
         logger.debug("Created %r", self)
 
-    def _to_physical_graph(self, visited, graph):
+    def to_physical_graph(self, visited, graph):
         output = _DataDrop(producer=self)
-        output._append_to_graph(visited, graph)
+        output.append_to_graph(visited, graph)
 
-        self._append_to_graph(visited, graph)
-        output._add_upstream(self)
+        self.append_to_graph(visited, graph)
+        output.add_upstream(self)
 
         for d in self.drops:
-            d._to_physical_graph(visited, graph)
-            self._add_upstream(d)
+            d.to_physical_graph(visited, graph)
+            self.add_upstream(d)
 
         return output
 
@@ -286,8 +285,8 @@ class _DelayedDrops(_DelayedDrop):
     def __getitem__(self, i):
         return self.drops[i]
 
-    def _add_upstream(self, upstream: _DelayedDrop):
-        _DelayedDrop._add_upstream(self, upstream)
+    def add_upstream(self, upstream: _DelayedDrop):
+        _DelayedDrop.add_upstream(self, upstream)
         self.dropdict["inputs"].append(upstream.oid)
 
     def make_dropdict(self):
@@ -346,30 +345,30 @@ class _AppDrop(_DelayedDrop):
             my_dropdict["func_defaults"] = self.fdefaults
         return my_dropdict
 
-    def _add_upstream(self, dep):
-        _DelayedDrop._add_upstream(self, dep)
+    def add_upstream(self, upstream):
+        _DelayedDrop.add_upstream(self, upstream)
         if self.kwarg_names:
             name = self.kwarg_names.pop()
             if name is not None:
                 logger.debug(
                     "Adding %s/%s to function mapping for %s",
                     name,
-                    dep.oid,
+                    upstream.oid,
                     self.fname,
                 )
-                self.dropdict["inputs"].append({dep.oid: name})
-                self.dropdict["func_arg_mapping"][name] = dep.oid
+                self.dropdict["inputs"].append({upstream.oid: name})
+                self.dropdict["func_arg_mapping"][name] = upstream.oid
         if self.arg_names:
             name = self.arg_names.pop()
             if name is not None:
                 logger.debug(
                     "Adding %s/%s to function mapping for %s",
                     name,
-                    dep.oid,
+                    upstream.oid,
                     self.fname,
                 )
-                self.dropdict["inputs"].append({dep.oid: name})
-                self.dropdict["func_arg_mapping"][name] = dep.oid
+                self.dropdict["inputs"].append({upstream.oid: name})
+                self.dropdict["func_arg_mapping"][name] = upstream.oid
 
     def _to_delayed_arg(self, arg):
         logger.info("Turning into delayed arg for %r: %r", self, arg)

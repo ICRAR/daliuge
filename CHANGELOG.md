@@ -1,6 +1,13 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+## v5.5.0
+
+- [Added] Add experimental support for running server under 'watchdog' process: https://github.com/ICRAR/daliuge/pull/339
+- [Added] Add local-time logging option: https://github.com/ICRAR/daliuge/pull/333
+- [Changed] Improve CLI clarity and documentation https://github.com/ICRAR/daliuge/pull/335
+- [Fixed] Translator re-uses DIM tab on deploy: https://github.com/ICRAR/daliuge/pull/338
+
 ## v5.4.0
 
 - [Added] Add named-ports functionality to Branch construct: https://github.com/ICRAR/daliuge/pull/325

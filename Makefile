@@ -54,7 +54,7 @@ test: 		  ## Run tests and generate coverage report.
 	@ pip install pytest
 	@ pip install pytest-cov
 	@ cd daliuge-translator
-	@ $(ENV_PREFIX)py.test --cov --show-capture=no
+	@ $(env_prefix)py.test --cov --show-capture=no
 	@ cd ../daliuge-engine
 	@ $(ENV_PREFIX)py.test --cov --show-capture=no
 

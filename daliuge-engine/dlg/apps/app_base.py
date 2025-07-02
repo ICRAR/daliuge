@@ -2,12 +2,10 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from concurrent.futures import Future
 from typing import List, Callable
-import json
 import logging
 import math
 import threading
 
-from dlg.drop_loaders import load_pickle
 from dlg.drop import track_current_drop
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.data_base import DataDROP
@@ -47,7 +45,7 @@ class SyncDropRunner(DropRunner):
         try:
             res = app_drop.run()
             future.set_result(res)
-        except BaseException as e:
+        except Exception as e: # pylint: disable=broad-exception-caught
             future.set_exception(e)
 
         return future
@@ -62,7 +60,7 @@ def run_on_daemon_thread(func: Callable, *args, **kwargs) -> Future:
         try:
             res = func(*args, **kwargs)
             future.set_result(res)
-        except BaseException as e:
+        except Exception as e: # pylint: disable=broad-exception-caught
             future.set_exception(e)
 
     t = threading.Thread(target=thread_target)
@@ -107,6 +105,7 @@ class InstanceLogHandler(logging.Handler):
 
 class DROPLogFilter(logging.Filter):
     def __init__(self, uid: str, humanKey: str):
+        super().__init__()
         self.uid = uid
         self.humanKey = humanKey
 
@@ -214,6 +213,10 @@ class AppDROP(ContainerDROP):
         """
         return list(self._inputs.values())
 
+    @inputs.setter
+    def inputs(self, inputs):
+        self._inputs = inputs
+
     @track_current_drop
     def addOutput(self, outputDrop: DataDROP, back=True):
         if outputDrop is self:
@@ -238,6 +241,10 @@ class AppDROP(ContainerDROP):
         The list of outputs set into this AppDROP
         """
         return list(self._outputs.values())
+
+    @outputs.setter
+    def outputs(self, outputs):
+        self._outputs = outputs
 
     def addStreamingInput(self, streamingInputDrop, back=True):
         if streamingInputDrop not in self._streamingInputs.values():
@@ -358,13 +365,24 @@ class AppDROP(ContainerDROP):
         for o in self._outputs.values():
             o.skip()
 
-        logger.debug(f"Moving {self.__repr__()} to SKIPPED")
+        logger.debug("Moving %s to SKIPPED", self.__repr__())
         if prev_execStatus in [AppDROPStates.NOT_RUN]:
             self._fire(
                 "producerFinished",
                 status=self.status,
                 execStatus=self.execStatus,
             )
+
+    @property
+    def drop_runner(self):
+        """
+        Getter for the drop runner
+        """
+        return self._drop_runner
+
+    @drop_runner.setter
+    def drop_runner(self, runner):
+        self._drop_runner = runner
 
     def getLogs(self):
         """
@@ -411,8 +429,8 @@ class InputFiredAppDROP(AppDROP):
 
     def initialize(self, **kwargs):
         super(InputFiredAppDROP, self).initialize(**kwargs)
-        if "_dlg_session_id" in kwargs:
-            self._dlg_session_id = kwargs["_dlg_session_id"]
+        if "dlg_session_id" in kwargs:
+            self.dlg_session_id = kwargs["dlg_session_id"]
         self._completedInputs = []
         self._errorInputs = []
         self._skippedInputs = []
@@ -520,7 +538,7 @@ class InputFiredAppDROP(AppDROP):
     def _execute_and_log_exception(self):
         try:
             self.execute()
-        except:
+        except Exception: # pylint: disable=broad-exception-caught
             logger.exception("Unexpected exception during drop (%r) execution", self)
 
     @track_current_drop
@@ -558,7 +576,7 @@ class InputFiredAppDROP(AppDROP):
                         self._global_log_level,
                     )
                 break
-            except Exception:
+            except Exception: # pylint: disable=broad-exception-caught
                 if self.execStatus == AppDROPStates.CANCELLED:
                     return
                 tries += 1
@@ -607,6 +625,7 @@ class InputFiredAppDROP(AppDROP):
     # TODO: another thing we need to check
     def exists(self):
         return True
+
 
 
 class BarrierAppDROP(InputFiredAppDROP):

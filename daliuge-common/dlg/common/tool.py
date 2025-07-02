@@ -20,10 +20,12 @@
 #    MA 02111-1307  USA
 #
 
+# pylint: disable=unused-argument
+
 """dlg command line utility"""
 import importlib
 import logging
-import optparse
+import optparse # pylint: disable=deprecated-module
 import subprocess
 import sys
 import time
@@ -126,16 +128,17 @@ def cmdwrap(cmdname, group, desc, f):
         commands[group.name]["commands"][cmdname] = (desc, wrapped)
 
 def version(parser, args):
-    from .version import version, git_version
+    from .version import version as vversion
+    from .version import git_version
 
-    print("Version: %s" % version)
+    print("Version: %s" % vversion)
     print("Git version: %s" % git_version)
 
 common_group = CommandGroup("common", "Base commands for dlg CLI")
 cmdwrap("version", common_group, "Reports the DALiuGE version and exits", version)
 
 try:
-    import dlg_paletteGen
+    import dlg_paletteGen # pylint: disable=unused-import
     palette_group = CommandGroup("zpalette", "Wrapper for dlg_paletteGen")
     cmdwrap("palette", palette_group, "Generate palettes for EAGLE",
             "dlg_paletteGen.__main__:main")
@@ -154,12 +157,12 @@ def _load_commands():
             entry_point.load().register_commands()
 
 def format_cmd(cmd, data):
-    desc, f = data
+    desc, _ = data
     return f"\t {cmd:25}{desc:25}"
 
 def print_usage(prgname):
     print("Usage: %s [command] [options]\n" % (prgname))
-    for group, grouped_commands in sorted(commands.items()):
+    for _, grouped_commands in sorted(commands.items()):
         print(f"\n{grouped_commands['desc']}")
         print("\n".join([format_cmd(cmd, data)
                          for cmd, data in sorted(grouped_commands['commands'].items())]))
@@ -172,12 +175,6 @@ def _get_cmd(cmd):
         if cmd in grouped_commands['commands']:
             return group, cmd
     return _group, cmd
-
-# def _cmd_exists(cmd):
-#     for group, grouped_commands in sorted(commands.items()):
-#         if cmd in grouped_commands['commands']:
-#             return True
-#     return False
 
 
 def run(args=sys.argv):

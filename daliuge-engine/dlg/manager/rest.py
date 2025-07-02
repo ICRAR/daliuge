@@ -23,8 +23,8 @@
 Module containing the REST layer that exposes the methods of the different
 Data Managers (DROPManager and DataIslandManager) to the outside world.
 """
+# pylint: disable=protected-access
 
-import cgi
 from email.message import Message
 import functools
 import io
@@ -36,7 +36,6 @@ import tarfile
 import threading
 
 import bottle
-import importlib.resources
 
 from bottle import static_file
 from pathlib import Path
@@ -107,16 +106,16 @@ def daliuge_aware(func):
             )
             # logger.debug("Bottle sending back result: %s", jres[: min(len(jres), 80)])
             return jres
-        except Exception as e:
+        except Exception as e: # pylint: disable=broad-exception-caught
             logger.exception("Error while fulfilling request for func %s ", func)
 
             status, eargs = 500, ()
             if isinstance(e, NotImplementedError):
                 status, eargs = 501, e.args
             elif isinstance(e, NoSessionException):
-                status, eargs = 404, (e._session_id,)
+                status, eargs = 404, (e.session_id,)
             elif isinstance(e, SessionAlreadyExistsException):
-                status, eargs = 409, (e._session_id,)
+                status, eargs = 409, (e.session_id,)
             elif isinstance(e, InvalidDropException):
                 status, eargs = 409, ((e.oid, e.uid), e.reason)
             elif isinstance(e, InvalidRelationshipException):
@@ -254,6 +253,7 @@ class ManagerRestServer(RestServer):
 
     @daliuge_aware
     def acceptPreflight2(self, sessionId):
+        logger.info("Preflight2 for %s", sessionId)
         return {}
 
     def sessions(self):
@@ -278,7 +278,7 @@ class ManagerRestServer(RestServer):
         try:
             graphDict = self.dm.getGraph(sessionId)
             directory = self.dm.getSessionDir(sessionId)
-        except:  # Pristine state sessions don't have a graph, yet.
+        except KeyError:  # Pristine state sessions don't have a graph, yet.
             graphDict = {}
             status = 0
             directory = ""
@@ -776,14 +776,14 @@ class MasterManagerRestServer(CompositeManagerRestServer):
         port = constants.DAEMON_DEFAULT_REST_PORT
         logger.debug("Sending NM start request to %s:%s", host, port)
         with RestClient(host=host, port=port, timeout=10) as c:
-            return json.loads(c._POST("/managers/node/start").read())
+            return json.loads(c.POST("/managers/node/start").read())
 
     @daliuge_aware
     def stopNM(self, host):
         port = constants.DAEMON_DEFAULT_REST_PORT
         logger.debug("Sending NM stop request to %s:%s", host, port)
         with RestClient(host=host, port=port, timeout=10) as c:
-            return json.loads(c._POST("/managers/node/stop").read())
+            return json.loads(c.POST("/managers/node/stop").read())
 
     @daliuge_aware
     def addNM(self, host, node):
@@ -791,7 +791,7 @@ class MasterManagerRestServer(CompositeManagerRestServer):
         logger.debug("Adding NM %s to DIM %s", node, host)
         with RestClient(host=host, port=port, timeout=10, url_prefix="/api") as c:
             return json.loads(
-                c._POST(
+                c.POST(
                     f"/node/{node}",
                 ).read()
             )
