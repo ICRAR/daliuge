@@ -208,6 +208,7 @@ class ManagerRestServer(RestServer):
         # The non-REST mappings that serve HTML-related content
         app.route("/static/<filepath:path>", callback=self.server_static)
         app.get("/session", callback=self.visualizeSession)
+        app.route("/api/sessions/<sessionId>/dir", callback=self._getSessionDir)
         app.route("/api/sessions/<sessionId>/graph/drop/<dropId>",
                   callback=self._getDropStatus)
         app.route("/sessions/<sessionId>/graph/drop/<dropId>",
@@ -276,10 +277,12 @@ class ManagerRestServer(RestServer):
         status = self.dm.getSessionStatus(sessionId)
         try:
             graphDict = self.dm.getGraph(sessionId)
+            directory = self.dm.getSessionDir(sessionId)
         except KeyError:  # Pristine state sessions don't have a graph, yet.
             graphDict = {}
             status = 0
-        return {"status": status, "graph": graphDict}
+            directory = ""
+        return {"status": status, "graph": graphDict, "dir":directory}
 
     @daliuge_aware
     def getSessionReproStatus(self, sessionId):
@@ -370,6 +373,9 @@ class ManagerRestServer(RestServer):
         staticRoot = Path(__file__).parent / "web/static"
         return bottle.static_file(filepath, root=staticRoot)
 
+    def _getSessionDir(self, sessionId):
+        return self.dm.getSessionDir(sessionId)
+
     def visualizeSession(self):
         params = bottle.request.params
         sessionId = params["sessionId"] if "sessionId" in params else ""
@@ -385,6 +391,7 @@ class ManagerRestServer(RestServer):
             viewMode=viewMode,
             serverUrl=serverUrl,
             dmType=self.dm.__class__.__name__,
+            sessionDir=sessionId
         )
 
     def _getDropStatus(self, sessionId, dropId):
@@ -405,7 +412,6 @@ class ManagerRestServer(RestServer):
         else:
             columns = []
             filter_column_index=0
-
 
         tpl = file_as_string("web/drop_log.html")
         return bottle.template(

@@ -180,6 +180,20 @@ class BaseDROPManagerClient(RestClient):
         )
         return status
 
+    def session_dir(self, sessionId):
+        """
+        Returns the session directory of session `sessionId`
+        """
+        status = self._get_json(f"/sessions/{quote(sessionId)}/dir")
+        logger.debug(
+            "Successfully read session %s status (%s) from %s:%s",
+            sessionId,
+            status,
+            self.host,
+            self.port,
+        )
+        return status
+
     def session_repro_status(self, sessionId):
         """
         Returns the reproducibility status of session `sessionId`.
@@ -225,6 +239,7 @@ class BaseDROPManagerClient(RestClient):
     createSession = create_session
     destroySession = destroy_session
     getSessionStatus = session_status
+    getSessionDir = session_dir
     addGraphSpec = append_graph
     deploySession = deploy_session
     getGraphStatus = graph_status

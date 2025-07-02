@@ -349,6 +349,9 @@ class NodeManagerBase(DROPManager):
     def getSessionReproStatus(self, sessionId):
         return self.sessions[sessionId].reprostatus
 
+    def getSessionDir(self, sessionId):
+        return {"dir" : self.sessions[sessionId].sessionDir}
+
     def getGraphReproData(self, sessionId):
         return self.sessions[sessionId].graphreprodata
 
