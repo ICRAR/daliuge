@@ -1,6 +1,9 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+## v5.5.1
+- [Fix] Update `urllib3` to resolve Dependabot security issue: https://github.com/ICRAR/daliuge/pull/345
+
 ## v5.5.0
 
 - [Added] Add experimental support for running server under 'watchdog' process: https://github.com/ICRAR/daliuge/pull/339
