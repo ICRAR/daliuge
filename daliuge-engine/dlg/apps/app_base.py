@@ -524,7 +524,7 @@ class InputFiredAppDROP(AppDROP):
                 self.execStatus = AppDROPStates.ERROR
                 self.status = DROPStates.ERROR
                 self._notifyAppIsFinished()
-            elif skipped_len == n_eff_inputs:
+            elif skipped_len > 0:
                 self.skip()
             else:
                 self.async_execute()
