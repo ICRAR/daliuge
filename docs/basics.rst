@@ -1,7 +1,5 @@
 .. _basics:
 
-Moving Forward 
----------------
 
 Having successfully established running installation of DALiuGE applications, it is now possible to begin testing a new workflow!
 
@@ -11,8 +9,24 @@ To continue working on a new workflow, it is recommended to take the following s
 * dlg_paletteGen: This allows you to create and load Python modules as Palettes into EAGLE, and begin creating workflows directly from Python classes, methods, and functions. 
 
 
-"Hello DALiuGE"
----------------
+Hello, World
+#############
+
+
+Basic: Using existing graph
+---------------------------
+
+Basic, Extended: Creating graph with existing applications
+----------------------------------------------------------
+
+Intermediate: Using the PyFuncApp
+----------------------------------
+
+Intermediate: Using the BashShellApp
+------------------------------------
+
+
+
 Having followed the tutorials above, as with all programming related tutorials, we encourage you to try out a simple "Hello, World" example using a BashShellAppDROP and FileDROP. 
 
 To do this, you will need to: 
