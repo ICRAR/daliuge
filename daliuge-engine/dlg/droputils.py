@@ -140,8 +140,8 @@ def allDropContents(drop, bufsize=65536) -> bytes:
             if not data:
                 break
             buf.write(data)
-        except TypeError as e:
-            raise ex.InvalidEncodingException(drop, 'Type error') from e
+        except (TypeError, ValueError, UnicodeDecodeError) as e:
+            raise ex.InvalidEncodingException(drop, f'Encoding error: {e}') from e
     drop.close(desc)
     return buf.getvalue()
 

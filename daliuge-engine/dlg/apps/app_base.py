@@ -479,8 +479,7 @@ class InputFiredAppDROP(AppDROP):
             self._skippedInputs.append(uid)
         else:
             raise InvalidDROPState(
-                "Invalid DROP state in dropCompleted: %s" %
-                drop_state,
+                f"Invalid DROP state in dropCompleted: {drop_state}",
                 f"Drop state in state {drop_state} during completion")
 
         error_len = len(self._errorInputs)
@@ -566,9 +565,10 @@ class InputFiredAppDROP(AppDROP):
                         self._global_log_level,
                     )
                 break
-            except ErrorManagerCaughtException:
+            except ErrorManagerCaughtException as e:
                 self.execStatus = AppDROPStates.ERROR
                 drop_state = DROPStates.ERROR
+                logger.error("Caught ErrorManagerCaughtException: %s", e)
                 break
             except Exception: # pylint: disable=broad-exception-caught
                 if self.execStatus == AppDROPStates.CANCELLED:

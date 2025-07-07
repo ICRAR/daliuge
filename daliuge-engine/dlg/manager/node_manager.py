@@ -430,7 +430,7 @@ class NodeManagerBase(DROPManager):
         except ErrorManagerCaughtException as exc:
             session.cancel(interrupt=True)
             raise SessionInterruptError(
-                "Sesion was interrupted due to Deploy failure"
+                "Session was interrupted due to Deploy failure"
             ) from exc
 
     def cancelSession(self, sessionId):
