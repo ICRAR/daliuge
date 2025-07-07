@@ -562,7 +562,7 @@ class PyFuncApp(BarrierAppDROP):
                     positionalArgsMap.items()}
 
         funcargs.update(tmpPargs)
-
+        logger.debug("positionalArgsMap: %s", positionalArgsMap)
         # Mixin the values from named ports
         portargs = self._ports2args(positionalArgsMap, keywordArgsMap)
 
@@ -667,17 +667,16 @@ class PyFuncApp(BarrierAppDROP):
                 key = list(inport.keys())[0]
                 inputs_dict[key] = {"name": inport[key], "path": None, "drop":
                     self._inputs[key]}
-            parser = (
-                get_port_reader_function(self.input_parser)
-                if hasattr(self, "input_parser")
-                else None
-            )
-            keyPortArgs, _ = identify_named_ports(
+            skip_on_input = True
+            if "componentParams" in self.parameters and "block_skip" in self.parameters['componentParams']:
+                skip_on_input = self.parameters['componentParams']['block_skip']['value']
+            keyPortArgs, posPortArgs = identify_named_ports(
                 inputs_dict,
                 pargsDict,
                 keyargsDict,
                 check_len=check_len,
                 mode="inputs",
+                skip_on_input=skip_on_input,
                 addPositionalToKeyword=True,
                 parser=parser
             )

@@ -2,6 +2,7 @@ import ast
 import logging
 import collections
 
+from dlg.ddap_protocol import DROPStates
 import numpy as np
 
 from dlg.data.drops.data_base import DataDROP
@@ -112,6 +113,7 @@ def identify_named_ports(
     keywordArgs: dict,
     check_len: int = 0,
     mode: str = "inputs",
+    skip_on_input=True,
     parser: callable = None,
     addPositionalToKeyword: bool = False,
 ) -> tuple[dict, dict]:
@@ -125,6 +127,7 @@ def identify_named_ports(
         keywordArgs (dict): keyword arguments
         check_len (int): number of of ports to be checked
         mode (str ["inputs"]): mode, used just for logging messages
+        skip_on_input (bool): skip drop if one input is skipped
         parser (function): parser function for this port
         addPositionalToKeyword (bool): Adds a positional argument to the keyword
             argument dictionary. This is useful when you have arguments
@@ -149,7 +152,6 @@ def identify_named_ports(
         port_dict,
         check_len,
     )
-    logger.debug("Checking against keyargs: %s", keywordArgs)
     keywordPortArgs = {}
     positionalPortArgs = collections.OrderedDict(positionalArgs)
     positionalArgs = list(positionalArgs)
@@ -163,6 +165,7 @@ def identify_named_ports(
         except KeyError as e:
             logger.debug("portDict: %s does not have key: %s", port_dict, keys[i])
             raise KeyError from e
+        logger.debug("Trying to get value for argument %s", key)
         if value is None:
             value = ""  # make sure we are passing NULL drop events
         if key in positionalArgs:
@@ -174,11 +177,13 @@ def identify_named_ports(
             if local_parser is None:
                 # if no parser is passed, we use the one from the port dict
                 local_parser = get_port_reader_function(encoding)
-            if local_parser:
+            if port_dict[keys[i]]["drop"].status == DROPStates.SKIPPED:
+                logger.warning("Input drop skipped! Using %s default value for parg %s", mode, key)
+            elif local_parser:
                 logger.debug("Reading from %s encoded port %s using %s", encoding, key, parser.__repr__())
                 value = local_parser(port_dict[keys[i]]["drop"])
-            positionalPortArgs[key].value = value
-            logger.debug("Using %s '%s' for port %s", mode, value, key)
+                positionalPortArgs[key].value = value
+                logger.debug("Using %s '%s' for port %s", mode, value, key)
             positionalArgs.remove(key)
             # We have positional argument that is also a keyword
             if addPositionalToKeyword:
@@ -191,12 +196,14 @@ def identify_named_ports(
                 continue
             if local_parser is None:
                 local_parser = get_port_reader_function(encoding)
-            if local_parser:
+            if port_dict[keys[i]]["drop"].status == DROPStates.SKIPPED:
+                logger.warning("Input drop skipped! Using %s default value for parg %s", mode, key)
+            elif local_parser:
                 logger.debug("Reading from %s encoded port using %s", encoding, parser.__repr__())
                 value = local_parser(port_dict[keys[i]]["drop"])
             # if not found in appArgs we don't put them into portargs either
             # pargsDict.update({key: value})
-            keywordArgs[key].value = value
+                keywordArgs[key].value = value
             keywordPortArgs.update({key: keywordArgs[key]})
             logger.debug("Using %s of type %s for kwarg %s", mode, type(value), key)
             _ = keywordArgs.pop(key)  # remove from original arg list
