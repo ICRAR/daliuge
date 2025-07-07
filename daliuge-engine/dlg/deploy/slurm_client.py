@@ -337,7 +337,6 @@ class SlurmClient:
 
         job_file_name = "{0}/jobsub.sh".format(session_dir)
         job_desc = self.create_job_desc(physical_graph_file_name)
-        print(job_desc)
 
         if self._remote:
             print(f"Creating SLURM script remotely: {job_file_name}")
