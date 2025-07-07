@@ -144,8 +144,9 @@ class lib64_path(install):
 install_requires = [
     "wheel",  # need to get wheel first...
     "bottle",
-    "urllib3",
-    "boto3",
+    "urllib3>=1.25.4, <1.27 ; python_version < '3.10'",
+    "urllib3>=2.5.0; python_version >= '3.10'",
+    "boto3>=1.38.0",
     "configobj",
     "crc32c",
     "daliuge-common",
