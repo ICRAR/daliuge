@@ -651,6 +651,8 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug("Parameters: %s", self.parameters)
         if "input_parser" in self.parameters:
             self.input_parser = self.parameters["input_parser"]
+        else:
+            self.input_parser = DropParser.DILL
         if "output_parser" in self.parameters:
             self.output_parser = self.parameters["output_parser"]
         if "inputs" in self.parameters and check_ports_dict(self.parameters["inputs"]):
@@ -678,7 +680,7 @@ class PyFuncApp(BarrierAppDROP):
                 mode="inputs",
                 skip_on_input=skip_on_input,
                 addPositionalToKeyword=True,
-                parser=parser
+                parser=get_port_reader_function(self.input_parser)
             )
             portargs.update(keyPortArgs)
         else:
