@@ -478,7 +478,9 @@ class InputFiredAppDROP(AppDROP):
         elif drop_state == DROPStates.SKIPPED:
             self._skippedInputs.append(uid)
         else:
-            raise InvalidDROPState("Invalid DROP state in dropCompleted: %s" % drop_state)
+            raise InvalidDROPState(
+                f"Invalid DROP state in dropCompleted: {drop_state}",
+                f"Drop state in state {drop_state} during completion")
 
         error_len = len(self._errorInputs)
         ok_len = len(self._completedInputs)
