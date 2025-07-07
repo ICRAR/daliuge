@@ -135,9 +135,9 @@ class NoDropException(DaliugeException):
         self._reason = reason
 
     def __str__(self):
-        ret = "NoDropException <drop_uid: %s>" % (self._drop_uid)
+        ret = f"NoDropException <drop_uid: {self._drop_uid}>"
         if self._reason:
-            ret += ". Reason: %s" % (self._reason)
+            ret += f". Reason: {self._reason}"
         return ret
 
 class SessionException(DaliugeException):
@@ -149,9 +149,9 @@ class SessionException(DaliugeException):
         self._reason = reason
 
     def __str__(self):
-        ret = "SessionException <session_id: %s>" % (self._session_id)
+        ret = f"SessionException <session_id: {self._session_id}>"
         if self._reason:
-            ret += ". Reason: %s" % (self._reason)
+            ret += f". Reason: {self._reason}"
         return ret
 
 

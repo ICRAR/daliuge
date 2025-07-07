@@ -197,7 +197,7 @@ def intercept_error(e: Exception):
 
     logger = logging.getLogger(f"dlg.{__name__}")
     if type(e) != ex.ErrorManagerCaughtException:
-        errorno = EXCEPTION_MAP[type(e)]
+        errorno = EXCEPTION_MAP.get(type(e), ErrorCode.DROP_ERROR)
         logger.user(errorno.doc_url)
     raise ex.ErrorManagerCaughtException from e
 
@@ -228,8 +228,9 @@ def manage_session_failure(func):
         except ex.InvalidSessionState:
             # sessionId = kwargs.get('sessionId')
             if args:
-                session = self.sessions[args[0]]
-                session.cancel()
+                session = self.sessions[next(iter(args))]
+                if session:
+                    session.cancel()
                 return
 
     return manage_session
