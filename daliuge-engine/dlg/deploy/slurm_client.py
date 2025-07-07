@@ -257,7 +257,6 @@ class SlurmClient:
             slurm_str = self.apply_slurm_template(self._slurm_template, 
                                                   pardict['SESSION_ID'],
                                                   pardict['DLG_ROOT'])
-            print(slurm_str)
             return string.Template(slurm_str).safe_substitute(pardict)
 
         return init_tpl.safe_substitute(pardict)
