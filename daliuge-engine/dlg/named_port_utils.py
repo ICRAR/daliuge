@@ -157,6 +157,7 @@ def identify_named_ports(
     positionalArgs = list(positionalArgs)
     keys = list(port_dict.keys())
     logger.debug("Checking ports: %s against %s %s", keys, positionalArgs, keywordArgs)
+    local_parser = parser
     for i in range(check_len):
         try:
             key = port_dict[keys[i]]["name"]
@@ -174,12 +175,12 @@ def identify_named_ports(
                 logger.warning("No encoding set for %key: possible default")
                 continue
             local_parser = get_port_reader_function(encoding)
-            if not local_parser and parser:
+            if not local_parser:
                 # we prefer the port based parser if available
                 local_parser = parser
             if port_dict[keys[i]]["drop"].status == DROPStates.SKIPPED:
                 logger.warning("Input drop skipped! Using %s default value for parg %s", mode, key)
-            elif local_parser:
+            if local_parser:
                 logger.debug("Reading from %s encoded port %s using %s", encoding, key, parser.__repr__())
                 value = local_parser(port_dict[keys[i]]["drop"])
                 positionalPortArgs[key].value = value
@@ -194,11 +195,13 @@ def identify_named_ports(
             except ValueError:
                 logger.warning("No encoding set for %key: possible default")
                 continue
-            if local_parser is None:
-                local_parser = get_port_reader_function(encoding)
+            local_parser = get_port_reader_function(encoding)
+            if not local_parser:
+                # we prefer the port based parser if available
+                local_parser = parser
             if port_dict[keys[i]]["drop"].status == DROPStates.SKIPPED:
                 logger.warning("Input drop skipped! Using %s default value for parg %s", mode, key)
-            elif local_parser:
+            if local_parser:
                 logger.debug("Reading from %s encoded port using %s", encoding, parser.__repr__())
                 value = local_parser(port_dict[keys[i]]["drop"])
             # if not found in appArgs we don't put them into portargs either
