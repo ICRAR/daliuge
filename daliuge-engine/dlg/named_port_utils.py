@@ -156,7 +156,7 @@ def identify_named_ports(
     positionalPortArgs = collections.OrderedDict(positionalArgs)
     positionalArgs = list(positionalArgs)
     keys = list(port_dict.keys())
-    logger.debug("Checking ports: %s against %s %s", keys, positionalArgs, keywordArgs)
+    logger.debug("Checking ports: %s against %s %s", keys, positionalPortArgs, keywordArgs)
     local_parser = parser
     for i in range(check_len):
         try:
@@ -179,12 +179,13 @@ def identify_named_ports(
                 # we prefer the port based parser if available
                 local_parser = parser
             if port_dict[keys[i]]["drop"].status == DROPStates.SKIPPED:
+                value = positionalPortArgs[key].value
                 logger.warning("Input drop skipped! Using %s default value for parg %s", mode, key)
-            if local_parser:
+            elif local_parser:
                 logger.debug("Reading from %s encoded port %s using %s", encoding, key, parser.__repr__())
                 value = local_parser(port_dict[keys[i]]["drop"])
                 positionalPortArgs[key].value = value
-                logger.debug("Using %s '%s' for port %s", mode, value, key)
+            logger.debug("Using %s '%s' for port %s", mode, value, key)
             positionalArgs.remove(key)
             # We have positional argument that is also a keyword
             if addPositionalToKeyword:
