@@ -158,7 +158,6 @@ def identify_named_ports(
     keys = list(port_dict.keys())
     logger.debug("Checking ports: %s against %s %s", keys, positionalArgs, keywordArgs)
     for i in range(check_len):
-        local_parser = parser
         try:
             key = port_dict[keys[i]]["name"]
             value = port_dict[keys[i]]["path"]
@@ -174,9 +173,10 @@ def identify_named_ports(
             except ValueError:
                 logger.warning("No encoding set for %key: possible default")
                 continue
-            if local_parser is None:
-                # if no parser is passed, we use the one from the port dict
-                local_parser = get_port_reader_function(encoding)
+            local_parser = get_port_reader_function(encoding)
+            if not local_parser and parser:
+                # we prefer the port based parser if available
+                local_parser = parser
             if port_dict[keys[i]]["drop"].status == DROPStates.SKIPPED:
                 logger.warning("Input drop skipped! Using %s default value for parg %s", mode, key)
             elif local_parser:
