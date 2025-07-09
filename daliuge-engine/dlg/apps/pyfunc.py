@@ -307,7 +307,7 @@ class PyFuncApp(BarrierAppDROP):
         ):
             self.func_defaults = self.func_defaults["kwargs"]
         # we came all this way, now assume that any resulting dict is correct
-        self.func_defaults = self.func_defaults or self.fn_defaults
+        # self.func_defaults = self.func_defaults or self.fn_defaults
         if not isinstance(self.func_defaults, dict):
             logger.error(
                 "Wrong format or type for function defaults for %s: %r, %r",
@@ -317,7 +317,8 @@ class PyFuncApp(BarrierAppDROP):
             )
             raise ValueError
         for name, value in self.func_defaults.items():
-            self.func_defaults[name] = deserialize_data(value) if value else value
+            # self.func_defaults[name] = deserialize_data(value) if value else value
+            self.func_defaults[name] = deserialize_data(value)
         # the fn_defaults are used afterwards, we'll drop the func_defaults
         logger.debug("fn_defaults %s", self.fn_defaults)
         logger.debug("func_defaults %s", self.func_defaults)
@@ -652,8 +653,6 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug("Parameters: %s", self.parameters)
         if "input_parser" in self.parameters:
             self.input_parser = self.parameters["input_parser"]
-        else:
-            self.input_parser = DropParser.DILL
         if "output_parser" in self.parameters:
             self.output_parser = self.parameters["output_parser"]
         if "inputs" in self.parameters and check_ports_dict(self.parameters["inputs"]):
@@ -673,6 +672,11 @@ class PyFuncApp(BarrierAppDROP):
             skip_on_input = True
             if "componentParams" in self.parameters and "block_skip" in self.parameters['componentParams']:
                 skip_on_input = self.parameters['componentParams']['block_skip']['value']
+            parser = (
+                get_port_reader_function(self.input_parser)
+                if hasattr(self, "input_parser")
+                else None
+            )
             keyPortArgs, posPortArgs = identify_named_ports(
                 inputs_dict,
                 pargsDict,
@@ -681,7 +685,7 @@ class PyFuncApp(BarrierAppDROP):
                 mode="inputs",
                 skip_on_input=skip_on_input,
                 addPositionalToKeyword=True,
-                parser=get_port_reader_function(self.input_parser)
+                parser=parser
             )
             portargs.update(keyPortArgs)
         else:

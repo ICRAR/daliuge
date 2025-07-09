@@ -427,7 +427,7 @@ class AbstractDROP(EventFirer, EventHandler):
             has_app_param = (
                     "applicationArgs" in kwargs and attr_name in kwargs["applicationArgs"]
             )
-            c_param = a_param = default_value
+            # c_param = a_param = default_value
             if has_component_param:
                 c_param = kwargs.get(attr_name)
             elif has_app_param:
@@ -437,7 +437,7 @@ class AbstractDROP(EventFirer, EventHandler):
                     "InputOutput",
                 ]:
                     a_param = kwargs["applicationArgs"].get(attr_name).value
-            if (has_component_param and has_app_param) or has_component_param:
+            if has_component_param:
                 # logger.warning(
                 #     "Drop has both component and app param %s. Using component param.",
                 #     attr_name
@@ -445,6 +445,8 @@ class AbstractDROP(EventFirer, EventHandler):
                 return c_param
             elif has_app_param:
                 return a_param
+            else:
+                return default_value
 
         # Take a class dlg defined parameter class attribute and create an instanced attribute on object
         for attr_name, member in self._get_members():
