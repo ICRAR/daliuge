@@ -628,7 +628,7 @@ class InputFiredAppDROP(AppDROP):
                 ni = named_inputs[attr_name]
             # TODO: need to check for event ports before reading
             logger.debug("Identified input: %s", ni.name)
-            if ni.parameters["componentParams"]["dropclass"]["value"] != "dlg.data.drops.data_base.NullDROP" and ni.status == DROPStates.COMPLETED:
+            if "component_parameters" in ni.parameters and ni.parameters["componentParams"]["dropclass"]["value"] != "dlg.data.drops.data_base.NullDROP" and ni.status == DROPStates.COMPLETED:
                 self.__setattr__(attr_name, load_pickle(ni))
                 logger.debug("Input read: %s",getattr(self, attr_name))
             else:
