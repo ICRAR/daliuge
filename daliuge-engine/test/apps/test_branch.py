@@ -63,3 +63,21 @@ class TestBranchSkipping(unittest.TestCase):
         for n in nodes:
             if isinstance(n, PyFuncApp) and not isinstance(n, Branch):
                 self.assertEqual(DROPStates.SKIPPED, n.status)
+
+    def test_loop_branch_exit_multiple_input(self):
+        """
+        Similar to the test_branch_skip_multiple_input but with a more complex graph
+        where the branch is inside a loop.
+
+        This also exposes  event ports as well as multiple cloned inputs to the
+        exit application.
+        """
+
+        f = files(graphs)/'LoopWithBranchExit_multiple_input.graph'
+        g = translate_graph(str(f), 'LoopWithBranchExit_multiple_input.graph')
+
+        roots, leafs = create_and_run_graph_spec(self,g, app_root=True)
+        nodes = [drop for drop, _ in depthFirstTraverse(roots[0])]
+        for n in nodes:
+            if isinstance(n, PyFuncApp) and not isinstance(n, Branch):
+                self.assertEqual(DROPStates.SKIPPED, n.status)

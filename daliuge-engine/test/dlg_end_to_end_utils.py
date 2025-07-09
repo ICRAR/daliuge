@@ -65,7 +65,8 @@ def create_and_run_graph_spec(test_case: unittest.TestCase, appDropSpec: list[di
     with droputils.DROPWaiterCtx(test_case, leafs, timeout=10, expected_states=[
         DROPStates.COMPLETED, DROPStates.SKIPPED, DROPStates.ERROR, DROPStates.CANCELLED]):
         for drop in roots:
-            if app_root:
+            if drop.type != "Data":
+            # if app_root:
                 fut = drop.async_execute()
                 fut.result()
             else:

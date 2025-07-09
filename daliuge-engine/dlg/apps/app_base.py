@@ -7,6 +7,7 @@ import math
 import threading
 
 from dlg.drop import track_current_drop
+from dlg.drop_loaders import load_pickle
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.data_base import DataDROP
 from dlg.ddap_protocol import (
@@ -287,7 +288,7 @@ class AppDROP(ContainerDROP):
             and len(self.parameters[ports]) > 0
             and isinstance(self.parameters[ports], list)
         ):
-            # This enablkes the gather to work
+            # This enables the gather to work
             return {}
         elif "applicationArgs" in self.parameters:
             for key, field in self.parameters["applicationArgs"].items():
@@ -436,9 +437,12 @@ class InputFiredAppDROP(AppDROP):
         self._skippedInputs = []
 
         # Error threshold must be within 0 and 100
+        self.input_error_threshold = self.input_error_threshold or 0
+        self.n_effective_inputs = self.n_effective_inputs or -1
+        self.n_tries = self.n_tries or 1
         if self.input_error_threshold < 0 or self.input_error_threshold > 100:
             raise InvalidDropException(
-                self, "%r: input_error_threshold not within [0,100]" % (self,)
+                self, "%r: input_error_threshold not within [0,100]: %s" % (self,type(self.input_error_threshold))
             )
 
         # Amount of effective inputs
@@ -524,9 +528,10 @@ class InputFiredAppDROP(AppDROP):
                 self.execStatus = AppDROPStates.ERROR
                 self.status = DROPStates.ERROR
                 self._notifyAppIsFinished()
-            elif not self.block_skip and skipped_len > 0:
+            elif (not self.block_skip and skipped_len > 0) or (
+                self.block_skip and skipped_len == n_eff_inputs):
                 self.skip()
-            elif self.block_skip and skipped_len <= n_eff_inputs:
+            elif self.block_skip and skipped_len < n_eff_inputs:
                 self.async_execute()
             else:
                 self.async_execute()
@@ -614,7 +619,21 @@ class InputFiredAppDROP(AppDROP):
             #         attr_name, load_pickle(named_inputs[attr_name])
             #     )
             # else:
-            self.__setattr__(attr_name, named_inputs[attr_name])
+            if isinstance(named_inputs[attr_name], list) and len(named_inputs[attr_name]) > 1:
+                for ni in named_inputs[attr_name]:
+                    if ni.status != DROPStates.COMPLETED:
+                        continue
+                    break # we use the first completed
+            else:
+                ni = named_inputs[attr_name]
+            # TODO: need to check for event ports before reading
+            logger.debug("Identified input: %s", ni.name)
+            if ni.parameters["componentParams"]["dropclass"]["value"] != "dlg.data.drops.data_base.NullDROP" and ni.status == DROPStates.COMPLETED:
+                self.__setattr__(attr_name, load_pickle(ni))
+                logger.debug("Input read: %s",getattr(self, attr_name))
+            else:
+                logger.warning("None of the inputs COMPLETED, falling back to default value.")
+
 
         named_outputs = self._generateNamedPorts("outputs")
         logger.debug("named outputs identified: %s", named_outputs)

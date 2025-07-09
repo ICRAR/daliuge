@@ -277,11 +277,18 @@ class RandomArrayApp(BarrierAppDROP):
         super(RandomArrayApp, self).initialize(**kwargs)
         self._keep_array = keep_array
 
+
+    @track_current_drop
     def run(self):
+        self._run()
         # At least one output should have been added
+        self.low = getattr(self, "low", 0)
+        self.high = getattr(self, "high", 100)
+        self.size = getattr(self, "size", 100)
         outs = self.outputs
         if len(outs) < 1:
             raise Exception("At least one output should have been added to %r" % self)
+        logger.info("Generating %d random numbers between %f and %f", self.size, self.low, self.high)
         marray = self.generateRandomArray()
         if self._keep_array:
             self.marray = marray

@@ -427,28 +427,24 @@ class AbstractDROP(EventFirer, EventHandler):
             has_app_param = (
                     "applicationArgs" in kwargs and attr_name in kwargs["applicationArgs"]
             )
-            param = default_value
-            if has_component_param and has_app_param:
-                logger.warning(
-                    "Drop has both component and app param %s. Using component param.",
-                    attr_name
-                )
+            c_param = a_param = default_value
             if has_component_param:
-                param = kwargs.get(attr_name)
+                c_param = kwargs.get(attr_name)
             elif has_app_param:
-                if kwargs["applicationArgs"].get(attr_name).usage in [
+                if kwargs["applicationArgs"].get(attr_name).usage not in [
                     "InputPort",
                     "OutputPort",
                     "InputOutput",
                 ]:
-                    # inp = kwargs["input"]
-                    # param = pickle.loads(
-                    #     droputils.allDropContents()
-                    #     )
-                    pass
-                else:
-                    param = kwargs["applicationArgs"].get(attr_name).value
-            return param
+                    a_param = kwargs["applicationArgs"].get(attr_name).value
+            if (has_component_param and has_app_param) or has_component_param:
+                # logger.warning(
+                #     "Drop has both component and app param %s. Using component param.",
+                #     attr_name
+                # )
+                return c_param
+            elif has_app_param:
+                return a_param
 
         # Take a class dlg defined parameter class attribute and create an instanced attribute on object
         for attr_name, member in self._get_members():
