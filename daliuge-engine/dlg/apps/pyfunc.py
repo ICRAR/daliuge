@@ -307,6 +307,7 @@ class PyFuncApp(BarrierAppDROP):
         ):
             self.func_defaults = self.func_defaults["kwargs"]
         # we came all this way, now assume that any resulting dict is correct
+        # self.func_defaults = self.func_defaults or self.fn_defaults
         if not isinstance(self.func_defaults, dict):
             logger.error(
                 "Wrong format or type for function defaults for %s: %r, %r",
@@ -316,6 +317,7 @@ class PyFuncApp(BarrierAppDROP):
             )
             raise ValueError
         for name, value in self.func_defaults.items():
+            # self.func_defaults[name] = deserialize_data(value) if value else value
             self.func_defaults[name] = deserialize_data(value)
         # the fn_defaults are used afterwards, we'll drop the func_defaults
         logger.debug("fn_defaults %s", self.fn_defaults)
@@ -562,7 +564,7 @@ class PyFuncApp(BarrierAppDROP):
                     positionalArgsMap.items()}
 
         funcargs.update(tmpPargs)
-
+        logger.debug("positionalArgsMap: %s", positionalArgsMap)
         # Mixin the values from named ports
         portargs = self._ports2args(positionalArgsMap, keywordArgsMap)
 
@@ -672,7 +674,7 @@ class PyFuncApp(BarrierAppDROP):
                 if hasattr(self, "input_parser")
                 else None
             )
-            keyPortArgs, _ = identify_named_ports(
+            keyPortArgs, posPortArgs = identify_named_ports(
                 inputs_dict,
                 pargsDict,
                 keyargsDict,

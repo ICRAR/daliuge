@@ -33,12 +33,13 @@ import unittest
 from importlib.resources import files
 from pathlib import Path
 
+pexpect = pytest.importorskip("dlg.dropmake")
+
 from dlg.ddap_protocol import DROPStates
 from test.dlg_end_to_end_utils import create_and_run_graph_spec_from_graph_file
 from daliuge_tests.engine import test_filedrops as test_graphs
 
 # Note this test will only run with a full installation of DALiuGE.
-pexpect = pytest.importorskip("dlg.dropmake")
 
 class TestBasicApp(unittest.TestCase):
     """

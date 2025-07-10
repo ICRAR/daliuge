@@ -213,7 +213,6 @@ class RestClient(object):
                 error = json.loads(self._resp.read().decode("utf-8"))
                 etype = getattr(exceptions, error["type"])
                 eargs = error["args"]
-
                 if etype == SubManagerException:
                     for host, args in eargs.items():
                         subetype = getattr(exceptions, args["type"])
