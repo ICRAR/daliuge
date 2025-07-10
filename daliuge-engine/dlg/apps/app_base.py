@@ -437,9 +437,6 @@ class InputFiredAppDROP(AppDROP):
         self._skippedInputs = []
 
         # Error threshold must be within 0 and 100
-        self.input_error_threshold = self.input_error_threshold or 0
-        self.n_effective_inputs = self.n_effective_inputs or -1
-        self.n_tries = self.n_tries or 1
         if self.input_error_threshold < 0 or self.input_error_threshold > 100:
             raise InvalidDropException(
                 self, "%r: input_error_threshold not within [0,100]: %s" % (self,type(self.input_error_threshold))
@@ -626,10 +623,13 @@ class InputFiredAppDROP(AppDROP):
                     break # we use the first completed
             else:
                 ni = named_inputs[attr_name]
-            # TODO: need to check for event ports before reading
             logger.debug("Identified input: %s", ni.name)
             if  "componentParams" not in ni.parameters or ni.parameters["componentParams"]["dropclass"]["value"] != "dlg.data.drops.data_base.NullDROP" and ni.status == DROPStates.COMPLETED:
-                self.__setattr__(attr_name, load_pickle(ni))
+                # TODO: need to check for parser before reading
+                if not hasattr(self, attr_name):
+                    self.__setattr__(attr_name, named_inputs[attr_name])
+                else: # temporary hack
+                    self.__setattr__(attr_name, load_pickle(ni))
                 logger.debug("Input read: %s",getattr(self, attr_name))
             else:
                 logger.warning("None of the inputs COMPLETED, falling back to default value.")
