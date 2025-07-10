@@ -423,28 +423,17 @@ class AbstractDROP(EventFirer, EventHandler):
         """
 
         def get_param_value(attr_name, default_value):
-            has_component_param = attr_name in kwargs
-            has_app_param = (
-                    "applicationArgs" in kwargs and attr_name in kwargs["applicationArgs"]
-            )
-            # c_param = a_param = default_value
-            if has_component_param:
-                c_param = kwargs.get(attr_name)
-            elif has_app_param:
-                if kwargs["applicationArgs"].get(attr_name).usage not in [
+
+            if attr_name in kwargs:
+                return kwargs.get(attr_name)
+            elif "applicationArgs" in kwargs and attr_name in kwargs["applicationArgs"] and (
+                kwargs["applicationArgs"].get(attr_name).usage not in [
                     "InputPort",
                     "OutputPort",
                     "InputOutput",
-                ]:
-                    a_param = kwargs["applicationArgs"].get(attr_name).value
-            if has_component_param:
-                # logger.warning(
-                #     "Drop has both component and app param %s. Using component param.",
-                #     attr_name
-                # )
-                return c_param
-            elif has_app_param:
-                return a_param
+                    ]
+                ):
+                    return kwargs["applicationArgs"].get(attr_name).value
             else:
                 return default_value
 

@@ -669,9 +669,6 @@ class PyFuncApp(BarrierAppDROP):
                 key = list(inport.keys())[0]
                 inputs_dict[key] = {"name": inport[key], "path": None, "drop":
                     self._inputs[key]}
-            skip_on_input = True
-            if "componentParams" in self.parameters and "block_skip" in self.parameters['componentParams']:
-                skip_on_input = self.parameters['componentParams']['block_skip']['value']
             parser = (
                 get_port_reader_function(self.input_parser)
                 if hasattr(self, "input_parser")
@@ -683,7 +680,6 @@ class PyFuncApp(BarrierAppDROP):
                 keyargsDict,
                 check_len=check_len,
                 mode="inputs",
-                skip_on_input=skip_on_input,
                 addPositionalToKeyword=True,
                 parser=parser
             )

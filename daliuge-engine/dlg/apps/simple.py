@@ -282,9 +282,6 @@ class RandomArrayApp(BarrierAppDROP):
     def run(self):
         self._run()
         # At least one output should have been added
-        self.low = getattr(self, "low", 0)
-        self.high = getattr(self, "high", 100)
-        self.size = getattr(self, "size", 100)
         outs = self.outputs
         if len(outs) < 1:
             raise Exception("At least one output should have been added to %r" % self)

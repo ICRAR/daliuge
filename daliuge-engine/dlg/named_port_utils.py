@@ -113,7 +113,6 @@ def identify_named_ports(
     keywordArgs: dict,
     check_len: int = 0,
     mode: str = "inputs",
-    skip_on_input=True,
     parser: callable = None,
     addPositionalToKeyword: bool = False,
 ) -> tuple[dict, dict]:

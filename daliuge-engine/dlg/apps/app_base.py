@@ -7,7 +7,7 @@ import math
 import threading
 
 from dlg.drop import track_current_drop
-from dlg.drop_loaders import load_pickle
+from dlg.drop_loaders import load_dill
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.data_base import DataDROP
 from dlg.ddap_protocol import (
@@ -611,11 +611,6 @@ class InputFiredAppDROP(AppDROP):
         named_inputs = self._generateNamedPorts("inputs")
         logger.debug("named inputs identified: %s", named_inputs)
         for attr_name in named_inputs:
-            # if not isinstance(named_inputs[attr_name], list):
-            #     self.__setattr__(
-            #         attr_name, load_pickle(named_inputs[attr_name])
-            #     )
-            # else:
             if isinstance(named_inputs[attr_name], list) and len(named_inputs[attr_name]) > 1:
                 for ni in named_inputs[attr_name]:
                     if ni.status != DROPStates.COMPLETED:
@@ -624,13 +619,19 @@ class InputFiredAppDROP(AppDROP):
             else:
                 ni = named_inputs[attr_name]
             logger.debug("Identified input: %s", ni.name)
-            if  "componentParams" not in ni.parameters or ni.parameters["componentParams"]["dropclass"]["value"] != "dlg.data.drops.data_base.NullDROP" and ni.status == DROPStates.COMPLETED:
-                # TODO: need to check for parser before reading
+            # Ignore NullDROPs: This is the current work-around to pass-on events
+            # In reality we want to check whether the port is an event port, but
+            # that is really hard with the current node data structure.
+            if  "componentParams" not in ni.parameters or (
+                ni.parameters["componentParams"]["dropclass"]["value"] !=
+                "dlg.data.drops.data_base.NullDROP" and ni.status == DROPStates.COMPLETED
+            ):
                 if not hasattr(self, attr_name):
                     self.__setattr__(attr_name, named_inputs[attr_name])
-                else: # temporary hack
-                    self.__setattr__(attr_name, load_pickle(ni))
-                logger.debug("Input read: %s",getattr(self, attr_name))
+                else:
+                    # TODO: need to check for parser before reading
+                    self.__setattr__(attr_name, load_dill(ni))
+                    logger.debug("Input read: %s",getattr(self, attr_name))
             else:
                 logger.warning("None of the inputs COMPLETED, falling back to default value.")
 
@@ -640,8 +641,6 @@ class InputFiredAppDROP(AppDROP):
         for attr_name in named_outputs:
             if not isinstance(named_outputs[attr_name], list):
                 self.__setattr__(attr_name, named_outputs[attr_name])
-        # if "run" in dir(self):  # we might not have implemented the run method
-        #     self.run()
 
     # TODO: another thing we need to check
     def exists(self):
