@@ -64,7 +64,7 @@ API Documentation
    installing
    running
    basics
-   workflows/heatmap
+..   workflows/heatmap
 
 .. toctree::
    :maxdepth: 2
@@ -72,8 +72,8 @@ API Documentation
    :hidden: 
    
    graph_patterns/loop
-   graph_patterns/scatter
    graph_patterns/branch
+   graph_patterns/scatter
    graph_patterns/subgraph
 
 .. toctree::
