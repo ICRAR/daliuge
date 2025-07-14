@@ -182,8 +182,9 @@ extra_requires = {
     # AWS storage types
     "aws": ["boto3"],
     "test": ["pytest",
-    "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@LIU-505"]
-    # "eagle-test-graphs==0.1.8"],
+    # "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@LIU-505"
+    "eagle-test-graphs==0.1.9"
+    ]
 }
 
 setup(
