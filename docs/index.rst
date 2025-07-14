@@ -23,7 +23,6 @@ Quick Start Guide
 :doc:`/installing` |br| 
 :doc:`/running` |br|
 :doc:`/basics`
-:doc:`/workflows/heatmap`
 
 Graph Patterns
 --------------
@@ -64,7 +63,6 @@ API Documentation
    installing
    running
    basics
-..   workflows/heatmap
 
 .. toctree::
    :maxdepth: 2

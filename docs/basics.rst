@@ -96,15 +96,26 @@ In this example, we are going to do functionally the same thing as above, but we
 
 #. Click on the HelloWorld and open the **Fields Table** (Shortcut: T)
 #. You'll see the ``greet`` parameter, as you did in the previous example - fill this in with your chosen greeting
-#. Now, for the n the **Use As** column, click on the drop-down menu for the ``output`` attribute and select **OutputPort**
-#
+#. Now, click on the ``OutputPort``, (the white dot on the HelloWorldApp) and drag the mouse out from the node, then let go. This will open up another search box - type "file" and select ``FileDROP`` from the options. 
 
-Use the hello world app 
+This should put us in a similar state to the original graph. Re-run the Translate-Deploy workflow and open the new output file. 
 
 Intermediate: Using the PyFuncApp
 ==================================
 
-Using the following code: 
+Outcomes
+--------
+
+* Understand PyFuncApp
+* Use the code/ directory
+* Experiment with ``encoding`` options
+
+Steps
+-----
+
+One of the most powerful features of DALiuGE is its ability to run Python code directly from the graph - there's no need to even put it in a script! 
+
+We will start with some existing code (which you are welcome to modify!). 
 
 .. code-block:: python3 
 
@@ -118,13 +129,47 @@ Using the following code:
         """
         return f"Hello, {greet}"
 
+Please copy the code into a new file called ``pyfunc.py`` and save it in the ``dlg/code`` directory. This directory is searched at runtime by the DALiuGE engine, so code imports can be stored relative to here. 
+
+Now, in a new canvas, create a PyFuncApp using the right-click and search method. Click on the new AppDROP and inspect the table: 
+
+- You'll see a parameter called ``func_name``; this is where you should put name function based on its importable name. For our example, this would be ``pyfunc.hello_world``. 
+- The PyFuncApp currently has no Input or OutputPort. A template PyFuncApp also does not start with an output. 
+  - Create a new parameter (using the 'Add Parameter' button at the top of the attribute table). 
+  - Give a name to this output (e.g. ``output``)
+  - In the **Use As** column, click on the drop-down menu for the ``output`` attribute and select **OutputPort**. 
+- Now you can do the same as our previous example and make a ``FileDROP`` from the OutputPort.
+- Translate and deploy the graph, open the Session folder, and open the new file
+
+* You will probably get a message about the encoding not being correct; or, it will look like some random characters are in the file, possibly with some part of the message you typed in. 
+
+This is an opportunity to talk about DALiuGE encoding. The output of an AppDROP may need to be represented in various ways, including: 
+
+- The data goes from one AppDROP to another AppDROP; here, the encoding does not matter (default will be **pickle**)
+- The data goes from an AppDROP to a file; here, if we expect the file to be human-readable, we would want this 'encoded' as **utf-8**. 
+- The data goes from an AppDROP to a file, and we have another AppDROP that wants to read the data in the File; here, the encoding does not matter (default will be **pickle**)
+- The data goes from an AppDROP to a file, and we have another AppDROP that wants the *filename*; here, we need to use the **path** encoding, otherwise DALiuGE will attempt to read the data from the file. 
+
+These are just some examples. For the purpose of this tutorial, we just want you to be aware that picking the correct encoding is important if you are trying to avoid surprises! 
+
+In this example, we want to pick *utf-8*; once doing so, re-translate and deploy the graph and confirm that you do get something legible! 
+
 
 Intermediate: Using the BashShellApp
 ====================================
 
+Outcomes
+--------
+
+* Use DALiuGE with a script
+* Understand the limitations of Bash approach 
+
+Steps
+-----
+
 Finally, let's run a 'complete' script. This approach is most equivalent to existing systems such as Nextflow, and uses our BashShellApp. 
 
-First
+First, we will update the existing `pyfunc.py` code to be more akin to an actual script that you would call with command-line arguments: 
 
 .. code-block:: python3 
 
@@ -148,28 +193,24 @@ First
       print(hello_world(args.greet))
 
 
-Having followed the tutorials above, as with all programming related tutorials, we encourage you to try out a simple "Hello, World" example using a BashShellAppDROP and FileDROP. 
-
-To do this, you will need to: 
+Next, using the tools you are famililar with now: 
 
 #. Create a new graph 
-#. Create a BashShellAppDROP component on the EAGLE Graph Canvas
-#. Click on the BashShellAppDrop and open the **Fields Table**
-#. In the ``command`` row, add the following to the **value** column: ``echo "Hello, World" > {output}``
-#. In the **Fields Table**, click **Add Parameter** and give it the name ``output``, and value ``demo.txt``
+#. Create a BashShellAppDROP component on the EAGLE Graph Canvas (hint: right-click and search)
+#. Click on the BashShellAppDrop and open the **Fields Table** (T)
+#. In the ``command`` row, add the following to the **value** column: ``python3 $DLG_ROOT/code/hello_world.py --greet ICRAR {filepath}``
+#. In the **Fields Table**, click **Add Parameter** and give it the name ``filepath``
 
-  * Note: This is using our string-substituion approach ; the parameter name ``output`` and the string inside the braces (`{}`) need to match.
-  * Note: The demo.txt could also have been used as part of the command line directly; however, this would fix the name of the file to demo.txt which can be a problem if we want to scale the workflow (more on this in further tutorials).
+  - Note: This is using our string-substituion approach ; use the parameter name ``filepath`` and the string inside the braces (`{}`) need to match.
+  - In the **Use As** column, click on the drop-down menu for the ``filepath`` attribute and select **OutputPort**
+  - Note: for this, the ``filepath`` is the output that we are producing as a side-effect of our BashShellApp. Therefore, we want the FileDROP to be linked to it by the ``path``, not the data. This means we want to select the ``path`` encoding. 
+  - For the `FileDrop`, you can add a name to the file as we did in our Basic example (e.g. ``bashapp.txt``). The BashShellApp will query the FileDROP at runtime and check if it has a Filename, and then use that as the output path for the string replacement in the Bash redirect {filepath}.  
+  - *Warning: There is a known issue in EAGLE that can lead to two ``filepath`` attributes being created. Ensure you delete the one that is not connected to an InputPort.*
 
-#. In the **Use As** column, click on the drop-down menu for the ``output`` attribute and select **OutputPort**
-#. This should create an OutputPort on the BashShellAppDROP; add an output FileDROP to the BashShellAppDROP by clicking on the new port and dragging, then selecting **Built-In Components -> File**
-#. Save the graph, either to a repository or locally (EAGLE will not let you translate without saving).  
-#. Start the daliuge-translator and daliuge-engine applications based on your :ref:`current environment<running>`.
-#. Click on the **Translate** button, which should open a new tab to show the translated workflow .
-#. From this tab, click on the **Deploy** button, which will run the workflow on your locally running DROPManagers. 
+#. You should now have an OutputPort on the BashShellAppDROP; create a FileDROP to the BashShellAppDROP by clicking on the new port and dragging, then searching for ``File``
+#. Translate and deploy
 #. If all is successful, you will be able to see a file created in your DALiuGE workspace (/home/dlg/workspace by default.). 
-#. Open the most recent session directory, and check the output in ``demo.txt``
-
+#. Open the most recent session directory, and check the output in ``bashapp.txt``
 
 Conclusion
 ==========
