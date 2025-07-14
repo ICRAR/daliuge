@@ -1,6 +1,3 @@
-"""
-
-"""
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from concurrent.futures import Future
@@ -12,6 +9,8 @@ import threading
 from dlg.exceptions import (InvalidDropException, InvalidRelationshipException,
                             ErrorManagerCaughtException, InvalidDROPState)
 from dlg.drop import track_current_drop
+from dlg.drop_loaders import load_dill
+from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.data_base import DataDROP
 from dlg.data.drops.container import ContainerDROP
 from dlg.ddap_protocol import (
@@ -94,7 +93,6 @@ class InstanceLogHandler(logging.Handler):
 
         exc = f"{str(record.exc_text)}" if record.exc_text else ""
         # msg = str(record.message).replace("\n", "<br>")
-        # msg = self.format(record)
         msg = (f"<pre>{record.message.encode('utf-8').decode('unicode_escape')}\n"
                f"{exc}</pre>")
         try:
@@ -293,7 +291,7 @@ class AppDROP(ContainerDROP):
             and len(self.parameters[ports]) > 0
             and isinstance(self.parameters[ports], list)
         ):
-            # This enablkes the gather to work
+            # This enables the gather to work
             return {}
         elif "applicationArgs" in self.parameters:
             for key, field in self.parameters["applicationArgs"].items():
@@ -444,7 +442,7 @@ class InputFiredAppDROP(AppDROP):
         # Error threshold must be within 0 and 100
         if self.input_error_threshold < 0 or self.input_error_threshold > 100:
             raise InvalidDropException(
-                self, "%r: input_error_threshold not within [0,100]" % (self,)
+                self, "%r: input_error_threshold not within [0,100]: %s" % (self,type(self.input_error_threshold))
             )
 
         # Amount of effective inputs
@@ -532,8 +530,11 @@ class InputFiredAppDROP(AppDROP):
                 self.execStatus = AppDROPStates.ERROR
                 self.status = DROPStates.ERROR
                 self._notifyAppIsFinished()
-            elif skipped_len == n_eff_inputs:
+            elif (not self.block_skip and skipped_len > 0) or (
+                self.block_skip and skipped_len == n_eff_inputs):
                 self.skip()
+            elif self.block_skip and skipped_len < n_eff_inputs:
+                self.async_execute()
             else:
                 self.async_execute()
 
@@ -620,20 +621,36 @@ class InputFiredAppDROP(AppDROP):
         named_inputs = self._generateNamedPorts("inputs")
         logger.debug("named inputs identified: %s", named_inputs)
         for attr_name in named_inputs:
-            # if not isinstance(named_inputs[attr_name], list):
-            #     self.__setattr__(
-            #         attr_name, load_pickle(named_inputs[attr_name])
-            #     )
-            # else:
-            self.__setattr__(attr_name, named_inputs[attr_name])
+            if isinstance(named_inputs[attr_name], list) and len(named_inputs[attr_name]) > 1:
+                for ni in named_inputs[attr_name]:
+                    if ni.status != DROPStates.COMPLETED:
+                        continue
+                    break # we use the first completed
+            else:
+                ni = named_inputs[attr_name]
+            logger.debug("Identified input: %s", ni.name)
+            # Ignore NullDROPs: This is the current work-around to pass-on events
+            # In reality we want to check whether the port is an event port, but
+            # that is really hard with the current node data structure.
+            if  "componentParams" not in ni.parameters or (
+                ni.parameters["componentParams"]["dropclass"]["value"] !=
+                "dlg.data.drops.data_base.NullDROP" and ni.status == DROPStates.COMPLETED
+            ):
+                if not hasattr(self, attr_name):
+                    self.__setattr__(attr_name, named_inputs[attr_name])
+                else:
+                    # TODO: need to check for parser before reading
+                    self.__setattr__(attr_name, load_dill(ni))
+                    logger.debug("Input read: %s",getattr(self, attr_name))
+            else:
+                logger.warning("None of the inputs COMPLETED, falling back to default value.")
+
 
         named_outputs = self._generateNamedPorts("outputs")
         logger.debug("named outputs identified: %s", named_outputs)
         for attr_name in named_outputs:
             if not isinstance(named_outputs[attr_name], list):
                 self.__setattr__(attr_name, named_outputs[attr_name])
-        # if "run" in dir(self):  # we might not have implemented the run method
-        #     self.run()
 
     # TODO: another thing we need to check
     def exists(self):

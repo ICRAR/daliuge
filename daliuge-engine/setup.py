@@ -181,7 +181,11 @@ extra_requires = {
     "MPI": ["mpi4py"],
     # AWS storage types
     "aws": ["boto3"],
-    "test": ["pytest", "eagle-test-graphs==0.1.8"],
+    "test": ["pytest",
+        # Toggle comments below if adding new test graphs
+        "eagle-test-graphs==0.1.9"
+        # "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@branch-name"
+    ]
 }
 
 setup(
