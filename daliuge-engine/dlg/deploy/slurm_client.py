@@ -282,9 +282,9 @@ class SlurmClient:
         elif not self._remote:
             # locally fallback to env var
             if os.environ["DLG_ROOT"]:
-                dlg_root = os.environ["DLG_ROOT"]
+                self.dlg_root = os.environ["DLG_ROOT"]
             else:
-                dlg_root = f"{os.environ['HOME']}.dlg"
+                self.dlg_root = f"{os.environ['HOME']}.dlg"
         session_dir =  self.session_dir
         if not self._remote and not os.path.exists(session_dir):
             os.makedirs(session_dir)
