@@ -307,7 +307,6 @@ class PyFuncApp(BarrierAppDROP):
         ):
             self.func_defaults = self.func_defaults["kwargs"]
         # we came all this way, now assume that any resulting dict is correct
-        # self.func_defaults = self.func_defaults or self.fn_defaults
         if not isinstance(self.func_defaults, dict):
             logger.error(
                 "Wrong format or type for function defaults for %s: %r, %r",
@@ -785,13 +784,13 @@ class PyFuncApp(BarrierAppDROP):
         else:
             self.initialize_with_func_code()
 
-        logger.info("Args summary for %s", self.func_name)
-        logger.info("Args: %s", self.argnames)
-        logger.info("Args defaults:  %s", self.fn_defaults)
-        logger.info("Args pos/kw: %s", list(self.poskw.keys()))
-        logger.info("Args keyword only: %s", list(self.kwonly.keys()))
-        logger.info("VarArgs allowed:  %s", self.varargs)
-        logger.info("VarKwds allowed:  %s", self.varkw)
+        logger.debug("Args summary for %s", self.func_name)
+        logger.debug("Args: %s", self.argnames)
+        logger.debug("Args defaults:  %s", self.fn_defaults)
+        logger.debug("Args pos/kw: %s", list(self.poskw.keys()))
+        logger.debug("Args keyword only: %s", list(self.kwonly.keys()))
+        logger.debug("VarArgs allowed:  %s", self.varargs)
+        logger.debug("VarKwds allowed:  %s", self.varkw)
 
         # Mapping between argument name and input drop uids
         logger.debug("Input mapping provided: %s", self.func_arg_mapping)
@@ -856,8 +855,8 @@ class PyFuncApp(BarrierAppDROP):
                 and "self" in funcargs):
             funcargs.pop("self")
 
-        logger.info("Running %s", self.func_name)
-        logger.debug("Arguments: *%s **%s", pargs, funcargs)
+        logger.user("Running %s", self.func_name)
+        logger.user("Arguments: *%s **%s", pargs, funcargs)
 
         # 4. prepare for execution
         # we capture and log whatever is produced on STDOUT
@@ -877,12 +876,13 @@ class PyFuncApp(BarrierAppDROP):
             else:
                 self.result = self.func(*pargs, **funcargs)
 
-        logger.info(
-            "Captured output from function app '%s: %s'",
-            self.func_name, capture.getvalue()
-        )
-        logger.debug("Returned result from %s: %s", self.func_name, self.result)
-        logger.debug("Finished execution of %s.", self.func_name)
+        logger.user("Returned result from %s: %s", self.func_name, self.result)
+        if capture.getvalue():
+            msg = f"STDOUT/STDERR output from function: '{self.func_name}': {capture.getvalue()}"
+        else:
+            msg = f"No STDOUT/STDERR output from function: '{self.func_name}'"
+        logger.user(msg)
+        logger.debug(f"Finished execution of {self.func_name}.")
 
         # 6. Process results
         # Depending on how many outputs we have we treat our result

@@ -91,7 +91,7 @@ class InstanceLogHandler(logging.Handler):
              we are just interested in extracting and storing Record metadata
         """
 
-        exc = f"{str(record.exc_text)}" if record.exc_text else ""
+        exc = f"{str(record.exc_text)}" if record and record.exc_text else ""
         # msg = str(record.message).replace("\n", "<br>")
         msg = (f"<pre>{record.message.encode('utf-8').decode('unicode_escape')}\n"
                f"{exc}</pre>")
