@@ -844,6 +844,7 @@ def convert_subgraphs(lgo: dict) -> dict:
         if node["category"] != ConstructTypes.SUBGRAPH:
             continue
 
+        logger.info("Converting subgraphs...")
         node["isSubGraphConstruct"] = True
         node["hasInputApp"] = True
         if not _has_app_keywords(node, app_keywords, requires_all=True):
@@ -886,9 +887,37 @@ def convert_subgraphs(lgo: dict) -> dict:
             }
             for n in lgo["nodeDataArray"]:
                 if n["id"] == app_node["id"]:
-                    app_node["subgraph"] = subgraph
+                    n = apply_subgraph_keyword(n, node, subgraph)
 
     return lgo
+
+def apply_subgraph_keyword(app_node, construct_node, subgraph):
+    """
+    Allocate the subgraph to a field in the subgraph input app.
+    If the field does not exist, create it.
+    If no keyword was provided, the default field is "subgraph".
+    """
+    keyword = "subgraph"
+    for f in construct_node["fields"]:
+        if f["name"] == "subgraph_keyword_map":
+            keyword = f["value"]
+
+    subgraph_added = False
+    for f in app_node["fields"]:
+        if f["name"] == keyword:
+            f["value"] = subgraph
+            subgraph_added = True
+            break
+    if not subgraph_added:
+        app_node["fields"].append({
+            "name": keyword,
+            "value": subgraph,
+            "parameterType": "applicationArgument",
+        })
+        logger.warning(f"No subgraph keyword map found for {app_node['name']}. Using"
+                       "'subgraph' as default.")
+    return app_node
+
 
 
 def convert_eagle_to_daliuge_json(lg_name):

@@ -30,13 +30,16 @@ import subprocess
 import shutil
 import tempfile
 import string
+import time
 import dlg.remote as dlg_remote
+
+from pathlib import Path
+from paramiko.ssh_exception import SSHException
 from dlg.runtime import __git_version__ as git_commit
 
 from dlg.deploy.configs import ConfigFactory, init_tpl, dlg_exec_str
 from dlg.deploy.configs import DEFAULT_MON_PORT, DEFAULT_MON_HOST
 from dlg.deploy.deployment_utils import find_numislands, label_job_dur
-from paramiko.ssh_exception import SSHException
 
 
 class SlurmClient:
@@ -56,32 +59,33 @@ class SlurmClient:
 
     def __init__(
         self,
-        dlg_root=None,
-        host=None,
-        acc=None,
-        physical_graph_template_file=None,  # filename of physical graph template
-        logical_graph=None,
-        job_dur=30,
-        num_nodes=None,
-        run_proxy=False,
-        mon_host=DEFAULT_MON_HOST,
-        mon_port=DEFAULT_MON_PORT,
-        logv=1,
-        facility=None,
-        zerorun=False,
-        max_threads=0,
-        sleepncopy=False,
-        num_islands=None,
-        all_nics=False,
-        check_with_session=False,
-        submit=False,
-        remote=True,
-        pip_name=None,
-        username=None,
+        dlg_root: str = "",
+        log_root: str = "",
+        host: str = "",
+        acc: str = "",
+        physical_graph_template_file: str = "",  # filename of physical graph template
+        logical_graph: str="",
+        job_dur: int = 30,
+        num_nodes: int = None,
+        run_proxy: bool = False,
+        mon_host: int = DEFAULT_MON_HOST,
+        mon_port: int = DEFAULT_MON_PORT,
+        logv: int = 1,
+        facility: str = "",
+        zerorun: bool =False,
+        max_threads: int = 0,
+        sleepncopy: bool = False,
+        num_islands: int = None,
+        all_nics: bool = False,
+        check_with_session: bool =False,
+        submit: bool = False,
+        remote: bool = True,
+        pip_name: str = "",
+        username: str = "",
         ssh_key="",
         config=None,
         slurm_template=None,
-        suffix=None
+        suffix=None,
     ):
         ## Here, we want to separate out the following
         ## Config derived from CONFIG Factory - we replace with ini file
@@ -127,10 +131,6 @@ class SlurmClient:
                 self._num_nodes = num_nodes
             self._job_dur = job_dur
 
-        # self._log_root = (
-        #     self._config.getpar("log_root") if (log_root is None) else log_root
-        # )
-        # 
         # start_dlg_cluster arguments
         self.visualise_graph = False
         self._logical_graph = logical_graph
@@ -151,15 +151,18 @@ class SlurmClient:
         self._check_with_session = check_with_session
         self._submit = submit
         self._suffix = self.create_session_suffix(suffix)
-        ni, nn, self._pip_name = find_numislands(self._physical_graph_template_file)
-        if isinstance(ni, int) and ni >= self._num_islands:
-            self._num_islands = ni
-        if nn and nn >= self._num_nodes:
-            self._num_nodes = nn
+        if self._physical_graph_template_file:
+            ni, nn, self._pip_name = find_numislands(self._physical_graph_template_file)
+            if isinstance(ni, int) and ni >= self._num_islands:
+                self._num_islands = ni
+            if nn and nn >= self._num_nodes:
+                self._num_nodes = nn
+
+        self._logical_graph = ""
 
         # used for remote login/directory management.
         self._remote = remote
-        self.ssh_key = ssh_key 
+        self.ssh_key = ssh_key
     
     def create_session_suffix(self, suffix=None):
         """
@@ -194,7 +197,7 @@ class SlurmClient:
         print("Creating job description")
         return ims + "\n\n" + dlg_exec_str
 
-    def create_paramater_mapping(self, session_dir, physical_graph_file):
+    def create_paramater_mapping(self, session_dir, remote_graph_file):
         """
         Map the runtime or configured parameters to the session environment and SLURM 
         script paramteres, in anticipation of using substition. 
@@ -213,11 +216,11 @@ class SlurmClient:
         pardict["PY_BIN"] = "python3" if pardict["VENV"] else sys.executable
         pardict["LOG_DIR"] = session_dir
         pardict["GRAPH_PAR"] = (
-            '--logical-graph "{0}"'.format(self._logical_graph)
+            '--logical-graph "{0}"'.format(remote_graph_file)
             if self._logical_graph
             else (
-                '--physical-graph "{0}"'.format(physical_graph_file)
-                if physical_graph_file
+                '--physical-graph "{0}"'.format(remote_graph_file)
+                if remote_graph_file
                 else ""
             )
         )
@@ -267,6 +270,10 @@ class SlurmClient:
             self.dlg_root, self.get_session_dirname()
         )
 
+    @property
+    def session_id(self):
+        os.path.split(self.session_dir)[-1]
+
     def mk_session_dir(self, dlg_root: str = ""):
         """
         Create the session directory. If dlg_root is provided it is used,
@@ -286,6 +293,7 @@ class SlurmClient:
             else:
                 self.dlg_root = f"{os.environ['HOME']}.dlg"
         session_dir =  self.session_dir
+        # TODO look into if we have permissions to create directory
         if not self._remote and not os.path.exists(session_dir):
             os.makedirs(session_dir)
         if self._remote:
@@ -305,7 +313,8 @@ class SlurmClient:
 
         return session_dir
 
-    def submit_job(self):
+
+    def submit_job(self, logical_graph: dict = None):
         """
         Submits the slurm script to the requested facility
 
@@ -314,29 +323,48 @@ class SlurmClient:
                   during connection. 
         """
         jobId = None
+
+        import json
+        subgraph_dir = Path("/tmp/")
+        subgraph_name = "subgraph.graph"
+        self._logical_graph = subgraph_dir / subgraph_name
+        with open(self._logical_graph, 'w+') as fp:
+            json.dump(logical_graph, fp)
+
         session_dir = self.mk_session_dir()
         if not session_dir:
             print("No session_dir created.")
             return jobId
-
-        physical_graph_file_name = "{0}/{1}".format(session_dir, self._pip_name)
+        if logical_graph:
+            self._pip_name = subgraph_name
+        remote_graph_file_name = "{0}/{1}".format(session_dir, self._pip_name)
+        print(f"{remote_graph_file_name=}")
         if self._physical_graph_template_file:
             if self._remote:
-                print(f"Copying PGT to: {physical_graph_file_name}")
+                print(f"Copying PGT to: {remote_graph_file_name}")
                 dlg_remote.copyTo(
                     self.host,
                     self._physical_graph_template_file,
-                    physical_graph_file_name,
+                    remote_graph_file_name,
                     username=self.username,
                     pkeyPath=self.ssh_key,
                 )
             else:
                 shutil.copyfile(
-                    self._physical_graph_template_file, physical_graph_file_name
+                    self._physical_graph_template_file, remote_graph_file_name
+                )
+        elif self._logical_graph:
+            if self._remote:
+                print(f"Copying LGT to: {remote_graph_file_name}")
+                dlg_remote.copyTo(
+                    self.host,
+                    self._logical_graph,
+                    remote_graph_file_name,
+                    username=self.username,
                 )
 
         job_file_name = "{0}/jobsub.sh".format(session_dir)
-        job_desc = self.create_job_desc(physical_graph_file_name)
+        job_desc = self.create_job_desc(remote_graph_file_name)
 
         if self._remote:
             print(f"Creating SLURM script remotely: {job_file_name}")
@@ -375,4 +403,49 @@ class SlurmClient:
                     print(f"Job with ID {jobId} submitted successfully.")
         else:
             print(f"Created job submission script {job_file_name}")
+
+        return self.fetch_remote_status(jobId)
+
+    def fetch_remote_status(self, jobId: str, timeout: int = 15):
+        #Use sacct --jobs=jobID --format=state --noheader
+        running = True
+        if not jobId:
+            return None
+        job_id = jobId.strip()
+        while running:
+            command = f"sacct --jobs={job_id} --format=state --noheader"
+            stdout, stderr, exitStatus = dlg_remote.execRemote(
+                self.host, command, username=self.username
+            )
+            print(f"{stdout=},{stderr=}")
+            # Process result here
+            curr_jobs = stdout.decode().lower().split()
+            if "failed" in curr_jobs or "cancelled" in curr_jobs:
+                raise RuntimeError(
+                    f"Slurm job did not finish successfully: stdout is: {stdout}\n.")
+            if "pending" in curr_jobs or "running" in curr_jobs:
+                time.sleep(timeout)
+                continue
+            if curr_jobs.count("completed") == len(curr_jobs):
+                # Success!
+                running = False
+
         return jobId
+
+
+    def collect_job_data(self):
+        """
+        1. Zip remote session directory
+        2. Copy it to this machine
+        """
+        command = f"tar -cvfz {self.session_id}.tar.gz {self.session_id}"
+        if self._remote:
+            dlg_remote.execRemote(self.host, command, username=self.username)
+            output_path = f"{self.session_id}.tar.gz"
+            dlg_remote.copyFrom(self.host,
+                            remotePath=f"{self.session_dir}.tar.xz",
+                            localPath=f"{self.session_dir}.tar.xz",
+                            sername=self.username)
+        else:
+            return None
+        return output_path

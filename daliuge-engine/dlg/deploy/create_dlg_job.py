@@ -840,4 +840,4 @@ def run(_, args):
 
 
 if __name__ == "__main__":
-    run(None, sys.argv[1:])
+    main()
